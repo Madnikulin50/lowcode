@@ -163,17 +163,17 @@ module.exports = ({ appFlavour, appLabel, version = process.env.BUILD_VERSION, t
       webSocketServer: 'ws',
       liveReload: false,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': '*'
       },
 
       proxy: {
         '^/custom.css': {
-          target: fetchBaseUrl(),
+          target: fetchBaseUrl()
         },
 
         '^/code-snippets.js': {
-          target: fetchBaseUrl(),
-        },
+          target: fetchBaseUrl()
+        }
       },
 
       watchFiles: {

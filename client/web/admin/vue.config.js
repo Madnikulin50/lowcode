@@ -4,6 +4,6 @@ module.exports = buildVueConfig({
   appFlavour: 'Admin Area',
   appName: 'admin',
   appLabel: 'Corteza Admin',
-  theme: 'corteza-base',
+  theme: 'basic',
   packageAlias: 'corteza-webapp-admin',
 })

@@ -38,7 +38,7 @@ templates:
                             </tr>
                             <tr>
                               <td style="padding:30px;border-top: 1px solid #E4E9EF">
-                                <p>If you have any questions, please contact <a href="mailto:{{ .SignatureEmail }}" style="color:#FF9661;">{{ .SignatureEmail }}</a>.</p>
+                                <p>If you have any questions, please contact <a href="mailto:{{ .SignatureEmail }}" style="color:#61AFFF;">{{ .SignatureEmail }}</a>.</p>
                                 <p>Kind regards, <br>
                                 {{ .SignatureName }}</p>
                               </td>

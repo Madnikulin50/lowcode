@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 	"path"
 	"regexp"
@@ -17,6 +18,7 @@ import (
 	"github.com/cortezaproject/corteza/server/pkg/webapp"
 	systemRest "github.com/cortezaproject/corteza/server/system/rest"
 	"github.com/cortezaproject/corteza/server/system/scim"
+	"github.com/cortezaproject/corteza/server/system/service"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -53,6 +55,13 @@ func (app *CortezaApp) mountHttpRoutes(r chi.Router) {
 		}
 
 		if !ho.WebappEnabled {
+			r.Get(options.CleanBase(ho.BaseUrl, "custom.css"), func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Content-Type", "text/css")
+
+				stylesheet := service.FetchCSS()
+
+				_, _ = fmt.Fprint(w, stylesheet)
+			})
 			app.Log.Info("client web applications disabled")
 			return
 		}
