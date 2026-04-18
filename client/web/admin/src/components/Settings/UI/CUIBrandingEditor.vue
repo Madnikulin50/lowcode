@@ -247,7 +247,7 @@ export default {
       lightModeVariables: {
         black: '#0B344E',
         white: '#FFFFFF',
-        primary: '#FF9661',
+        primary: '#61AFFF',
         secondary: '#758D9B',
         success: '#43AA8B',
         warning: '#E27646',
@@ -261,7 +261,7 @@ export default {
       darkModeVariables: {
         black: '#FBF7F4',
         white: '#0B344E',
-        primary: '#FF9661',
+        primary: '#61AFFF',
         secondary: '#758D9B',
         success: '#43AA8B',
         warning: '#E27646',

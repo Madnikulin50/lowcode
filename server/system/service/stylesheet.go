@@ -1,27 +1,28 @@
 package service
 
 import (
-    "fmt"
-    "github.com/bep/godartsass/v2"
-    "github.com/cespare/xxhash/v2"
-    "github.com/cortezaproject/corteza/server/pkg/sass"
-    "github.com/cortezaproject/corteza/server/system/types"
-    "go.uber.org/zap"
-    "strings"
+	"fmt"
+	"strings"
+
+	"github.com/bep/godartsass/v2"
+	"github.com/cespare/xxhash/v2"
+	"github.com/cortezaproject/corteza/server/pkg/sass"
+	"github.com/cortezaproject/corteza/server/system/types"
+	"go.uber.org/zap"
 )
 
 type (
-    stylesheet struct {
-        transpiler *godartsass.Transpiler
-        logger     *zap.Logger
-    }
+	stylesheet struct {
+		transpiler *godartsass.Transpiler
+		logger     *zap.Logger
+	}
 )
 
 func Stylesheet(transpiler *godartsass.Transpiler, logger *zap.Logger) *stylesheet {
-    return &stylesheet{
-        transpiler: transpiler,
-        logger:     logger,
-    }
+	return &stylesheet{
+		transpiler: transpiler,
+		logger:     logger,
+	}
 }
 
 // GenerateCSS takes care of creating CSS for webapps by reading SASS content from embedded assets,
@@ -56,7 +57,7 @@ func (svc *stylesheet) GenerateCSS(settings *types.AppSettings, sassDirPath stri
 	// transpile sass to css for each theme
 	for _, theme := range studio.Themes {
 		if studio.CustomCSS == nil {
-            err := sass.Transpile(svc.transpiler, log, theme.ID, theme.Values, "", sassDirPath)
+			err := sass.Transpile(svc.transpiler, log, theme.ID, theme.Values, "", sassDirPath)
 			if err != nil {
 				continue
 			}
@@ -64,7 +65,7 @@ func (svc *stylesheet) GenerateCSS(settings *types.AppSettings, sassDirPath stri
 
 		customCSS := processCustomCSS(theme.ID, customCSSMap)
 		// transpile sass to css
-        err := sass.Transpile(svc.transpiler, log, theme.ID, theme.Values, customCSS, sassDirPath)
+		err := sass.Transpile(svc.transpiler, log, theme.ID, theme.Values, customCSS, sassDirPath)
 		if err != nil {
 			continue
 		}
@@ -74,8 +75,9 @@ func (svc *stylesheet) GenerateCSS(settings *types.AppSettings, sassDirPath stri
 }
 
 func (svc *stylesheet) SassInstalled() bool {
-    return svc.transpiler != nil
+	return svc.transpiler != nil
 }
+
 // processCustomCSS, processes CustomCSS input and gives priority to theme specific customCSS
 func processCustomCSS(themeID string, customCSSMap map[string]string) (customCSS string) {
 	var stringsBuilder strings.Builder
@@ -104,7 +106,7 @@ func (svc *stylesheet) updateCSS(current, old, compStyles *types.SettingValue, n
 
 	transpileSASS := func(themeID, themeSASS string, themeCustomCSS map[string]string) {
 		customCSS := processCustomCSS(themeID, themeCustomCSS)
-        err := sass.Transpile(svc.transpiler, log, themeID, themeSASS, customCSS, sassDirPath)
+		err := sass.Transpile(svc.transpiler, log, themeID, themeSASS, customCSS, sassDirPath)
 		if err != nil {
 			log.Error("failed to transpile sass to css", zap.Error(err))
 		}
@@ -176,6 +178,7 @@ func FetchCSS() string {
 	// body css section
 	stringsBuilder.WriteString(sass.StylesheetCache.Get(fmt.Sprintf("%s-%s", sass.SectionMain, sass.LightTheme)))
 	stringsBuilder.WriteString("\n")
-
-	return stringsBuilder.String()
+	processedCSS := stringsBuilder.String()
+	fmt.Println("processe by " + rootLight + " file: " + processedCSS[:512] + "\r\n")
+	return processedCSS
 }
