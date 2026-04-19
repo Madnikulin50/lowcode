@@ -8,7 +8,7 @@ RELEASE_PAGE ?= https://releases.cortezaproject.org/files
 APPS         ?= admin compose workflow reporter discovery privacy
 ALL_APPS     ?= $(APPS) one
 VERSION      ?= $(shell git describe --tags --abbrev=0)
-PACKAGES      = $(addprefix corteza-webapp-,$(addsuffix -$(VERSION).tar.gz,$(ALL_APPS)))
+PACKAGES      = $(addprefix pnp-webapp-,$(addsuffix -$(VERSION).tar.gz,$(ALL_APPS)))
 SOURCE_LOC   ?= "../../webapp-"
 SOURCES       = $(addprefix $(SOURCE_LOC),$(ALL_APPS))
 

@@ -6,41 +6,25 @@ ARG VERSION=2026.1.0
 ARG SASS_VERSION=1.69.5
 ARG SERVER_VERSION=${VERSION}
 ARG WEBAPP_VERSION=${VERSION}
+ARG PNP_WEBAPP_PATH=https://releases.pnpproject.org/files/pnp-webapp-${WEBAPP_VERSION}.tar.gz
 ARG SASS_URL=https://github.com/sass/dart-sass/releases/download/${SASS_VERSION}/dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
-RUN mkdir /pnp/
-ADD ./server/dist/lowcode-server--linux-amd64 /pnp/
+RUN mkdir /pnp
+
+COPY ./server/dist/lowcode-server--linux-amd64 /pnp/tmp
+
+
 
 RUN apk update && apk add --no-cache file
 RUN apk add curl
-
 
 WORKDIR /pnp
 
 RUN rm -rf /pnp/webapp
 
-RUN mkdir /pnp/webapp
-RUN mkdir /pnp/webapp/admin
-RUN mkdir /pnp/webapp/compose
-RUN mkdir /pnp/webapp/discovery
-RUN mkdir /pnp/webapp/privacy
-RUN mkdir /pnp/webapp/reporter
-RUN mkdir /pnp/webapp/workflow
-
-ADD ./client/web/one/dist /pnp/webapp/
-ADD ./client/web/admin/dist /pnp/webapp/admin
-ADD ./client/web/compose/dist /pnp/webapp/compose
-ADD ./client/web/discovery/dist /pnp/webapp/discovery
-ADD ./client/web/privacy/dist /pnp/webapp/privacy
-ADD ./client/web/reporter/dist /pnp/webapp/reporter
-ADD ./client/web/workflow/dist /pnp/webapp/workflow
-
-
-#RUN rm -rf /pnp/webapp
-
-#RUN file "/tmp/webapp/$(basename $PNP_WEBAPP_PATH)" | grep -q 'gzip' && \
-#    mkdir /pnp/webapp && tar zxvf "/tmp/webapp/$(basename $PNP_WEBAPP_PATH)" -C /pnp/webapp || \
-#    cp -a "/tmp/webapp" /pnp/webapp
+RUN file "/tmp/webapp/$(basename $PNP_WEBAPP_PATH)" | grep -q 'gzip' && \
+    mkdir /pnp/webapp && tar zxvf "/tmp/webapp/$(basename $PNP_WEBAPP_PATH)" -C /pnp/webapp || \
+    cp -a "/tmp/webapp" /pnp/webapp
 
 WORKDIR /tmp
 
@@ -48,7 +32,7 @@ RUN curl -sOL $SASS_URL
 RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
 # deploy-stage
-FROM ubuntu:22.04 as deploy-stage
+FROM ubuntu:22.04
 
 RUN apt-get -y update \
  && apt-get -y install \
@@ -75,8 +59,6 @@ HEALTHCHECK --interval=30s --start-period=1m --timeout=30s --retries=3 \
 
 EXPOSE 80
 
-RUN ls .
-
-ENTRYPOINT ["./lowcode-server--linux-amd64"]
+ENTRYPOINT ["./bin/pnp-server"]
 
 CMD ["serve-api"]

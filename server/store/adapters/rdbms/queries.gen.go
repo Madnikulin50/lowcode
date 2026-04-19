@@ -4374,26 +4374,27 @@ var (
 	//
 	// This function is auto-generated
 	resourceTranslationUpsertQuery = func(d goqu.DialectWrapper, res *systemType.ResourceTranslation) *goqu.InsertDataset {
-		var target = `,id`
+		//var target = `,id`
 
 		return resourceTranslationInsertQuery(d, res).
-			OnConflict(
-				goqu.DoUpdate(target[1:],
-					goqu.Record{
-						"lang":       res.Lang,
-						"resource":   res.Resource,
-						"k":          res.K,
-						"message":    res.Message,
-						"created_at": res.CreatedAt,
-						"updated_at": res.UpdatedAt,
-						"deleted_at": res.DeletedAt,
-						"owned_by":   res.OwnedBy,
-						"created_by": res.CreatedBy,
-						"updated_by": res.UpdatedBy,
-						"deleted_by": res.DeletedBy,
-					},
-				),
-			)
+			OnConflict(goqu.DoNothing())
+		/*OnConflict(
+			goqu.DoUpdate(target[1:],
+				goqu.Record{
+					"lang":       res.Lang,
+					"resource":   res.Resource,
+					"k":          res.K,
+					"message":    res.Message,
+					"created_at": res.CreatedAt,
+					"updated_at": res.UpdatedAt,
+					"deleted_at": res.DeletedAt,
+					"owned_by":   res.OwnedBy,
+					"created_by": res.CreatedBy,
+					"updated_by": res.UpdatedBy,
+					"deleted_by": res.DeletedBy,
+				},
+			),
+		)*/
 	}
 
 	// resourceTranslationUpdateQuery assembles query for updating resourceTranslations

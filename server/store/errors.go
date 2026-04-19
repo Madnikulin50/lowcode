@@ -22,6 +22,9 @@ func HandleError(err error, h ErrorHandler) error {
 	if h != nil {
 		err = h(err)
 	}
+	if err == nil {
+		return err
+	}
 
 	if _, wrapped := err.(*errors.Error); wrapped {
 		return err

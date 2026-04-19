@@ -33,13 +33,4 @@ audit:
 	@echo "---Audit clients---"
 	@(cd $(CURDIR)/client && make audit) || true
 
-drelease:
-	@echo "---Build server---"
-	@(cd $(CURDIR)/server  && make release-clean && make build) || true
-	@echo "---Build client---"
-	##@(cd $(CURDIR)/client && make build) || true
-	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build -t pnp-lowcode:2026.1 .)
-
-
 .DEFAULT_GOAL := dev

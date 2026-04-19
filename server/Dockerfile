@@ -40,6 +40,6 @@ ENV PATH "/opt/dart-sass:/corteza/bin:${PATH}"
 
 EXPOSE 80
 
-ENTRYPOINT ["./bin/corteza-server"]
+ENTRYPOINT ["./bin/lowcode-server--linux-amd64"]
 
 CMD ["serve-api"]

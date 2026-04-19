@@ -2,19 +2,19 @@
 
 include Makefile.inc
 
-BUILD_FLAVOUR         ?= lowcode
+BUILD_FLAVOUR         ?= corteza
 BUILD_TIME            ?= $(shell date +%FT%T%z)
 BUILD_VERSION         ?= $(shell git describe --tags --abbrev=0)
 BUILD_ARCH            ?= $(shell $(GO) env GOARCH)
 BUILD_OS              ?= $(shell $(GO) env GOOS)
 BUILD_OS_is_windows    = $(filter windows,$(BUILD_OS))
-BUILD_DEST_DIR        ?= dist
+BUILD_DEST_DIR        ?= build
 BUILD_NAME             = $(BUILD_FLAVOUR)-server-$(BUILD_VERSION)-$(BUILD_OS)-$(BUILD_ARCH)
 BUILD_BIN_NAME         = $(BUILD_NAME)$(if $(BUILD_OS_is_windows),.exe,)
 
 RELEASE_BASEDIR        = $(BUILD_DEST_DIR)/pkg/$(BUILD_FLAVOUR)-server
 RELEASE_NAME           = $(BUILD_NAME).tar.gz
-RELEASE_EXTRA_FILES   ?= README.md LICENSE CONTRIBUTING.md .env.example
+RELEASE_EXTRA_FILES   ?= README.md LICENSE CONTRIBUTING.md DCO .env.example
 RELEASE_PKEY          ?= .upload-rsa
 
 LDFLAGS_VERSION        = -X github.com/cortezaproject/corteza/server/pkg/version.Version=$(BUILD_VERSION)
@@ -53,7 +53,7 @@ DEV_MAILHOG_SMTP_ADDR ?= 1025
 DEV_MAILHOG_HTTP_ADDR ?= 8025
 
 GIN_ARG_LADDR ?= localhost
-GIN_ARGS      ?= --laddr $(GIN_ARG_LADDR) --build cmd/corteza --immediate --bin dist/gin-bin
+GIN_ARGS      ?= --laddr $(GIN_ARG_LADDR) --build cmd/corteza --immediate --bin build/gin-bin
 
 GIN_CORTEZA_ENV_FILE ?= .env
 GIN_CORTEZA_BIN_ARGS ?= --env-file $(GIN_CORTEZA_ENV_FILE)
@@ -81,7 +81,6 @@ help:
 build: $(BUILD_DEST_DIR)/$(BUILD_BIN_NAME)
 
 $(BUILD_DEST_DIR)/$(BUILD_BIN_NAME):
-		@ mkdir -p $(BUILD_DEST_DIR)
 		GOOS=$(BUILD_OS) GOARCH=$(BUILD_ARCH) $(GO) build $(LDFLAGS) -o $@ cmd/corteza/main.go
 
 release: build $(BUILD_DEST_DIR)/$(RELEASE_NAME)
