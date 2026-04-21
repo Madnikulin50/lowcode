@@ -3,10 +3,7 @@ package types
 // This file is auto-generated.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
-//
-// Definitions file that controls how this file is generated:
-// pkg/label/types/types.yaml
+// the code is regenerated from pkg/label/types/types.yaml
 
 type (
 

@@ -3,10 +3,7 @@ package service
 // This file is auto-generated.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
-//
-// Definitions file that controls how this file is generated:
-// system/service/user_actions.yaml
+/// the code is regenerated from system/service/user_actions.yaml
 
 import (
 	"context"

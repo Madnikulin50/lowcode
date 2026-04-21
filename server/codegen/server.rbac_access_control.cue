@@ -19,12 +19,12 @@ import (
 			// All known RBAC resources
 			resources: [
 				for res in cmp.resources if res.rbac != _|_ {
-					resFunc:       "types.\(res.expIdent)RbacResource"
+					resFunc: "types.\(res.expIdent)RbacResource"
 					references: [ for p in res.parents {p}, {param: "id", refField: "ID"}]
 				},
 				{
-					resFunc:       "types.ComponentRbacResource"
-					component:     true
+					resFunc:   "types.ComponentRbacResource"
+					component: true
 				},
 			]
 
@@ -58,7 +58,7 @@ import (
 					const:    "types.\(res.expIdent)ResourceType"
 					resFunc:  "types.\(res.expIdent)RbacResource"
 					funcName: "load\(res.expIdent)"
-					refIndex: [ { 0 }, for i, p in res.parents {i + 1} ]
+					refIndex: [ {0}, for i, p in res.parents {i + 1}]
 				},
 			]
 

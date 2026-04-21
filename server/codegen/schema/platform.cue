@@ -9,7 +9,7 @@ package schema
 
 	resources: {
 		[key=#handle]: #Resource & {
-			"handle": key,
+			"handle":   key
 			"platform": ident
 		}
 	}

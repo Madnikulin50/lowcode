@@ -5,14 +5,14 @@ import (
 )
 
 // fully qualified resource type
-#FQRT: =~ "^corteza::(compose|system|federation|automation):[a-z][a-z0-9-]*$"
+#FQRT: =~"^corteza::(compose|system|federation|automation):[a-z][a-z0-9-]*$"
 
 #Resource: {
 	#_base
 
 	// type: #resourceType | *""
 
-	imports: [...{ import: string }]
+	imports: [...{import: string}]
 
 	// copy field values from #_base
 	handle: handle, ident: ident, expIdent: expIdent
@@ -52,19 +52,19 @@ import (
 
 	features: {
 		// filtering by label
-		labels:   bool | *true
+		labels: bool | *true
 
 		// filtering by flag
-		flags:   bool | *false
+		flags: bool | *false
 
 		// support pagination
-		paging:   bool | *true
+		paging: bool | *true
 
 		// support sorting
-		sorting:   bool | *true
+		sorting: bool | *true
 
 		// support resource check function
-		checkFn:   bool | *true
+		checkFn: bool | *true
 	}
 
 	// All parent resources
@@ -90,15 +90,15 @@ import (
 	}
 
 	envoy?: #resourceEnvoy & {
-		omit: bool | *false
+		omit:           bool | *false
 		$resourceIdent: ident
 	}
 
 	store?: {
 		// how is this resource represented (prefixed/suffixed functions) in the store
-		"ident": #ident | *ident
-		"identPlural": #ident | *"\(store.ident)s"
-		"expIdent": #expIdent | *strings.ToTitle(store.ident)
+		"ident":          #ident | *ident
+		"identPlural":    #ident | *"\(store.ident)s"
+		"expIdent":       #expIdent | *strings.ToTitle(store.ident)
 		"expIdentPlural": #expIdent | *"\(store.expIdent)s"
 
 		api?: {
@@ -136,7 +136,7 @@ import (
 
 #PkgResource: #Resource & {
 	package: {
-		ident: #ident
+		ident:  #ident
 		import: string
 	}
 }
@@ -175,25 +175,25 @@ import (
 		identKeyAlias: [...string] | *[]
 		// identKeys defines all of the identifiers that can be used when
 		// referencing this resource
-		identKeys: [...string] | *([identKeyLabel]+identKeyAlias)
+		identKeys: [...string] | *([identKeyLabel] + identKeyAlias)
 
 		omitEncoder: bool | *false
 
 		extendedResourcePostProcess: bool | *false
-		extendedResourceDecoders: [...{
-			ident: string
+		extendedResourceDecoders:    [...{
+			ident:    string
 			expIdent: string
 			identKeys: [...string]
 
 			supportMappedInput: bool | *true
-			mappedField: string | *""
+			mappedField:        string | *""
 		}] | *[]
 		extendedResourceRefIdent: string | *""
 		// enable or disable offloading unhandled nodes onto a custom default decoder
 		defaultDecoder: bool | *false
 
 		extendedResourceEncoders: [...{
-			ident: string
+			ident:    string
 			expIdent: string
 			identKey: string | *""
 		}] | *[]
@@ -202,18 +202,17 @@ import (
 	// store decode/encode configs
 	store: {
 		// enable or disable custom logic after the resource is imported
-		extendedEncoder: bool | *false
+		extendedEncoder:      bool | *false
 		extendedSubResources: bool | *false
 		// temporary until I figure something better.
 		// the idea here is that after all of the modules (or resources x) are imported
 		// only then we should do something over them (like import records).
 		postSetEncoder: bool | *false
 
-
 		// enable or disable additional custom processing for determining 
 		// resource references
 		extendedRefDecoder: bool | *false
-		handleField: string | *"Handle"
+		handleField:        string | *"Handle"
 
 		customFilterBuilder: bool | *false
 		// extendedFilterBuilder is called after the built-in which you can use

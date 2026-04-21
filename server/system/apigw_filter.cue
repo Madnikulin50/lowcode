@@ -12,36 +12,36 @@ apigw_filter: {
 	model: {
 		attributes: {
 			id: schema.IdField
-			route:  {
+			route: {
 				sortable: true, goType: "uint64", storeIdent: "rel_route"
-				dal: { type: "Ref", refModelResType: "corteza::system:apigw-route" }
+				dal: {type: "Ref", refModelResType: "corteza::system:apigw-route"}
 				identAlias: ["route", "Route", "ApigwRouteID"]
 				envoy: {
 					store: {
 						omitRefFilter: true
 					}
 				}
-		  }
+			}
 			weight: {
-			  sortable: true,
-			  goType: "uint64"
-			  dal: { type: "Number", meta: { "rdbms:type": "integer" } }
+				sortable: true
+				goType:   "uint64"
+				dal: {type: "Number", meta: {"rdbms:type": "integer"}}
 			}
 			kind: {
 				sortable: true
-				dal: { type: "Text", length: 64 }
+				dal: {type: "Text", length: 64}
 			}
 			ref: {
-				dal: { type: "Text", length: 64 }
+				dal: {type: "Text", length: 64}
 			}
 			enabled: {
-				sortable: true,
-				goType: "bool"
-				dal: { type: "Boolean" }
+				sortable: true
+				goType:   "bool"
+				dal: {type: "Boolean"}
 			}
 			params: {
 				goType: "types.ApigwFilterParams"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -55,14 +55,14 @@ apigw_filter: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	envoy: {
 		yaml: {
 			supportMappedInput: false
-			omitEncoder: true
+			omitEncoder:        true
 		}
 		store: {
 			handleField: ""
@@ -73,7 +73,7 @@ apigw_filter: {
 		struct: {
 			apigw_filter_id: {goType: "[]uint64", ident: "apigwFilterID", storeIdent: "id"}
 			route_id: {goType: "uint64", ident: "routeID", storeIdent: "rel_route"}
-			deleted:  {goType: "filter.State", storeIdent: "deleted_at"}
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 			disabled: {goType: "filter.State", storeIdent: "enabled"}
 		}
 

@@ -12,10 +12,10 @@ attachment: {
 	model: {
 		attributes: {
 			id: schema.IdField
-			owner_id:   {
-				storeIdent: "rel_owner",
-				ident: "ownerID"
-				schema.AttributeUserRef,
+			owner_id: {
+				storeIdent: "rel_owner"
+				ident:      "ownerID"
+				schema.AttributeUserRef
 			}
 			kind: {
 				sortable: true
@@ -33,7 +33,7 @@ attachment: {
 			}
 			meta: {
 				goType: "types.AttachmentMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -43,7 +43,7 @@ attachment: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
@@ -62,7 +62,7 @@ attachment: {
 	store: {
 		api: {
 			lookups: [
-				{ fields: ["id"] },
+				{fields: ["id"]},
 			]
 		}
 	}

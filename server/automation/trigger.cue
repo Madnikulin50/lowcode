@@ -8,19 +8,19 @@ trigger: {
 	model: {
 		ident: "automation_triggers"
 		attributes: {
-			id:  schema.IdField
+			id: schema.IdField
 			workflow_id: {
-				sortable: true,
-				ident: "workflowID",
-				goType: "uint64",
+				sortable:   true
+				ident:      "workflowID"
+				goType:     "uint64"
 				storeIdent: "rel_workflow"
-				dal: { type: "Ref", refModelResType: "corteza::automation:workflow" }
+				dal: {type: "Ref", refModelResType: "corteza::automation:workflow"}
 			}
 			step_id: {
-				ident: "stepID",
-				goType: "uint64",
+				ident:      "stepID"
+				goType:     "uint64"
 				storeIdent: "rel_step"
-				dal: { type: "ID" }
+				dal: {type: "ID"}
 				envoy: {
 					yaml: {
 						identKeyAlias: ["stepID", "step_id"]
@@ -28,20 +28,20 @@ trigger: {
 				}
 			}
 			enabled: {
-				sortable: true,
-				goType: "bool"
-				dal: { type: "Boolean", default: true }
+				sortable: true
+				goType:   "bool"
+				dal: {type: "Boolean", default: true}
 			}
 			meta: {
 				goType: "*types.TriggerMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			resource_type: {
-				sortable: true,
-				goType: "string"
-				dal: { length: 64 }
+				sortable: true
+				goType:   "string"
+				dal: {length: 64}
 				envoy: {
 					yaml: {
 						identKeyAlias: ["resourceType", "resource_type"]
@@ -49,8 +49,8 @@ trigger: {
 				}
 			}
 			event_type: {
-				sortable: true,
-				goType: "string"
+				sortable: true
+				goType:   "string"
 				dal: {}
 				envoy: {
 					yaml: {
@@ -60,13 +60,13 @@ trigger: {
 			}
 			constraints: {
 				goType: "types.TriggerConstraintSet"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			input: {
 				goType: "*expr.Vars"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -81,7 +81,7 @@ trigger: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
@@ -97,12 +97,12 @@ trigger: {
 
 	filter: {
 		struct: {
-			deleted: { goType: "filter.State", storeIdent: "deleted_at" }
-			disabled: { goType: "filter.State", storeIdent: "enabled" }
-			trigger_id: { goType: "[]uint64", ident: "triggerID", storeIdent: "id" }
-			workflow_id: { goType: "[]uint64", ident: "workflowID", storeIdent: "rel_workflow" }
-			event_type: { goType: "string" }
-			resource_type: { goType: "string" }
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
+			disabled: {goType: "filter.State", storeIdent: "enabled"}
+			trigger_id: {goType: "[]uint64", ident: "triggerID", storeIdent: "id"}
+			workflow_id: {goType: "[]uint64", ident: "workflowID", storeIdent: "rel_workflow"}
+			event_type: {goType: "string"}
+			resource_type: {goType: "string"}
 		}
 
 		byValue: ["trigger_id", "workflow_id", "event_type", "resource_type"]
@@ -122,7 +122,7 @@ trigger: {
 
 						It returns trigger even if deleted
 						"""
-				}
+				},
 			]
 		}
 	}

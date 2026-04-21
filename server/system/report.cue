@@ -11,25 +11,25 @@ report: {
 			handle: schema.HandleField
 			meta: {
 				goType: "*types.ReportMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			scenarios: {
 				goType: "types.ReportScenarioSet"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			sources: {
 				goType: "types.ReportDataSourceSet"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			blocks: {
 				goType: "types.ReportBlockSet"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -44,14 +44,14 @@ report: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	envoy: {
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["reports"]
 		}
 		store: {}
@@ -59,7 +59,7 @@ report: {
 
 	filter: {
 		struct: {
-			report_id: {goType: "[]uint64", storeIdent: "id", ident: "reportID" }
+			report_id: {goType: "[]uint64", storeIdent: "id", ident: "reportID"}
 			handle: {goType: "string"}
 			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}

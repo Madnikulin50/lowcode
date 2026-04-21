@@ -21,24 +21,24 @@ moduleField: {
 				}
 			}
 			module_id: {
-			  ident: "moduleID",
-				goType: "uint64",
+				ident:      "moduleID"
+				goType:     "uint64"
 				storeIdent: "rel_module"
-				dal: { type: "Ref", refModelResType: "corteza::compose:module" }
+				dal: {type: "Ref", refModelResType: "corteza::compose:module"}
 			}
 			place: {
-				sortable: true,
-				goType: "int"
-				dal: { type: "Number", meta: { "rdbms:type": "integer" } }
+				sortable: true
+				goType:   "int"
+				dal: {type: "Number", meta: {"rdbms:type": "integer"}}
 			}
 			kind: {
-				sortable: true,
-				goType: "string"
+				sortable: true
+				goType:   "string"
 				dal: {}
 			}
 			options: {
 				goType: "types.ModuleFieldOptions"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 				envoy: {
@@ -62,23 +62,23 @@ moduleField: {
 			}
 			config: {
 				goType: "types.ModuleFieldConfig"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			required: {
-				goType: "bool",
+				goType:     "bool"
 				storeIdent: "is_required"
-				dal: { type: "Boolean" }
+				dal: {type: "Boolean"}
 			}
 			multi: {
-				goType: "bool",
+				goType:     "bool"
 				storeIdent: "is_multi"
-				dal: { type: "Boolean" }
+				dal: {type: "Boolean"}
 			}
 			default_value: {
 				goType: "types.RecordValueSet"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 				envoy: {
@@ -89,7 +89,7 @@ moduleField: {
 			}
 			expressions: {
 				goType: "types.ModuleFieldExpr"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 				envoy: {
@@ -104,10 +104,10 @@ moduleField: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"module": { attribute: "module_id" },
+			"primary": {attribute: "id"}
+			"module": {attribute: "module_id"}
 			"unique_name": {
-				fields: [{ attribute: "name", modifiers: ["LOWERCASE"] }, { attribute: "module_id" }]
+				fields: [{attribute: "name", modifiers: ["LOWERCASE"]}, {attribute: "module_id"}]
 				predicate: "name != '' AND deleted_at IS NULL"
 			}
 		}
@@ -115,8 +115,8 @@ moduleField: {
 
 	filter: {
 		struct: {
-			module_id: { goType: "[]uint64", ident: "moduleID", storeIdent: "rel_module" }
-			deleted: { goType: "filter.State", storeIdent: "deleted_at" }
+			module_id: {goType: "[]uint64", ident: "moduleID", storeIdent: "rel_module"}
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
 
 		byNilState: ["deleted"]
@@ -124,8 +124,8 @@ moduleField: {
 	}
 
 	features: {
-		labels: false
-		paging: false
+		labels:  false
+		paging:  false
 		sorting: false
 		checkFn: false
 	}
@@ -134,14 +134,14 @@ moduleField: {
 		scoped: true
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Name"
+			mappedField:        "Name"
 			identKeyAlias: ["module_fields", "modulefields", "fields"]
 		}
 		store: {
-			handleField: ""
+			handleField:         ""
 			customFilterBuilder: true
-			extendedRefDecoder: true
-			sanitizeBeforeSave: true
+			extendedRefDecoder:  true
+			sanitizeBeforeSave:  true
 		}
 	}
 
@@ -205,7 +205,7 @@ moduleField: {
 					description: """
 						searches for compose module field by ID
 						"""
-				}
+				},
 			]
 		}
 	}

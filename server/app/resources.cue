@@ -5,49 +5,48 @@ import (
 )
 
 _allFeaturesDisabled: {
-	labels: false
-	paging: false
+	labels:  false
+	paging:  false
 	sorting: false
 	checkFn: false
 }
 
-resources: { [key=_]: {"handle": key, "component": "system", "platform": "corteza" } & schema.#PkgResource } & {
+resources: {[key=_]: {"handle": key, "component": "system", "platform": "corteza"} & schema.#PkgResource} & {
 	"rbac-rule": {
 		package: {
-			ident: "rbac"
+			ident:  "rbac"
 			import: "github.com/cortezaproject/corteza/server/pkg/rbac"
 		}
 
-		ident: "rule"
+		ident:       "rule"
 		identPlural: "rules"
-		expIdent: "Rule"
+		expIdent:    "Rule"
 
 		features: _allFeaturesDisabled
-
 
 		model: {
 			ident: "rbac_rules"
 			attributes: {
-				role_id:   {
-					goType: "uint64",
-					ident: "roleID",
+				role_id: {
+					goType:     "uint64"
+					ident:      "roleID"
 					storeIdent: "rel_role"
-					dal: { type: "Ref", refModelResType: "corteza::system:role" }
+					dal: {type: "Ref", refModelResType: "corteza::system:role"}
 				}
-				resource:  {
-					dal: { length: 512 }
+				resource: {
+					dal: {length: 512}
 				}
 				operation: {
-					dal: { length: 50 }
+					dal: {length: 50}
 				}
-				access:    {
+				access: {
 					goType: "types.Access"
-					dal: { type: "Number", meta: { "rdbms:type": "integer" } }
+					dal: {type: "Number", meta: {"rdbms:type": "integer"}}
 				}
 			}
 
 			indexes: {
-				"primary": { attributes: [ "role_id", "resource", "operation" ] }
+				"primary": {attributes: [ "role_id", "resource", "operation"]}
 			}
 		}
 
@@ -71,46 +70,46 @@ resources: { [key=_]: {"handle": key, "component": "system", "platform": "cortez
 
 	"label": {
 		package: {
-			ident: "labels"
+			ident:  "labels"
 			import: "github.com/cortezaproject/corteza/server/pkg/label/types"
 		}
 
-		ident: "label"
+		ident:       "label"
 		identPlural: "labels"
-		expIdent: "Label"
+		expIdent:    "Label"
 
 		features: _allFeaturesDisabled
 
 		model: {
 			attributes: {
 				kind: {
-			 		dal: { length: 64 }
+					dal: {length: 64}
 				}
 				resource_id: {
-			 		goType: "uint64",
-			 		ident: "resourceID",
-			 		storeIdent: "rel_resource"
-			 		dal: { type: "ID" }
-			 	}
+					goType:     "uint64"
+					ident:      "resourceID"
+					storeIdent: "rel_resource"
+					dal: {type: "ID"}
+				}
 				name: {
-			 		ignoreCase: true
-			 		dal: { length: 512 }
+					ignoreCase: true
+					dal: {length: 512}
 				}
 				value: {
 					goType: "types.LabelValue"
-			 		dal: { type: "JSON"}
+					dal: {type: "JSON"}
 					omitSetter: true
 					omitGetter: true
 				}
 			}
 
 			indexes: {
-				"primary": { attributes: ["kind", "resource_id", "name"] }
+				"primary": {attributes: ["kind", "resource_id", "name"]}
 				"unique_kind_res_name": {
 					fields: [
-					  { attribute: "kind" },
-						{ attribute: "resource_id" },
-					 	{ attribute: "name", modifiers: [ "LOWERCASE" ] },
+						{attribute: "kind"},
+						{attribute: "resource_id"},
+						{attribute: "name", modifiers: [ "LOWERCASE"]},
 					]
 
 				}
@@ -121,11 +120,11 @@ resources: { [key=_]: {"handle": key, "component": "system", "platform": "cortez
 			expIdent: "LabelFilter"
 			struct: {
 				kind: {}
-				rel_resource: { goType: "[]uint64", ident: "resourceID" }
-				limit: { goType: "uint" }
+				rel_resource: {goType: "[]uint64", ident: "resourceID"}
+				limit: {goType: "uint"}
 			}
 
-			byValue: ["kind" , "rel_resource", ]
+			byValue: ["kind", "rel_resource"]
 		}
 
 		store: {
@@ -143,9 +142,9 @@ resources: { [key=_]: {"handle": key, "component": "system", "platform": "cortez
 					{
 						expIdent: "DeleteExtraLabels"
 						args: [
-							{ident: "kind", goType: "string"},
+							{ident: "kind", goType:       "string"},
 							{ident: "resourceId", goType: "uint64"},
-							{ident: "name", goType: "string", spread: true},
+							{ident: "name", goType:       "string", spread: true},
 						]
 						return: []
 					},
@@ -156,47 +155,47 @@ resources: { [key=_]: {"handle": key, "component": "system", "platform": "cortez
 
 	"flag": {
 		package: {
-			ident: "flag"
+			ident:  "flag"
 			import: "github.com/cortezaproject/corteza/server/pkg/flag/types"
 		}
 
-		ident: "flag"
+		ident:       "flag"
 		identPlural: "flags"
-		expIdent: "Flag"
+		expIdent:    "Flag"
 
 		features: _allFeaturesDisabled
 
 		model: {
 			attributes: {
 				kind: {
-					dal: { length: 64 }
+					dal: {length: 64}
 				}
 				resource_id: {
-					goType: "uint64",
-					ident: "resourceID",
+					goType:     "uint64"
+					ident:      "resourceID"
 					storeIdent: "rel_resource"
-					dal: { type: "ID" }
+					dal: {type: "ID"}
 				}
-				owned_by:   schema.AttributeUserRef
-		  	name:        {
-		  		ignoreCase: true
-					dal: { length: 512 }
+				owned_by: schema.AttributeUserRef
+				name: {
+					ignoreCase: true
+					dal: {length: 512}
 				}
 				active: {
 					goType: "bool"
-					dal: { type: "Boolean" }
+					dal: {type: "Boolean"}
 				}
 			}
 
 			indexes: {
-				"primary": { attributes: ["kind", "resource_id", "owned_by", "name"] }
+				"primary": {attributes: ["kind", "resource_id", "owned_by", "name"]}
 				"unique_kind_res_owner_name": {
-					 fields: [
-						 { attribute: "kind" },
-						 { attribute: "resource_id" },
-						 { attribute: "owned_by" },
-						 { attribute: "name", modifiers: [ "LOWERCASE" ] },
-					 ]
+					fields: [
+						{attribute: "kind"},
+						{attribute: "resource_id"},
+						{attribute: "owned_by"},
+						{attribute: "name", modifiers: [ "LOWERCASE"]},
+					]
 				}
 			}
 		}
@@ -205,13 +204,14 @@ resources: { [key=_]: {"handle": key, "component": "system", "platform": "cortez
 			expIdent: "FlagFilter"
 			struct: {
 				kind: {}
-				resource_id: { goType: "[]uint64",
-				ident: "resourceID", storeIdent: "rel_resource" }
-				owned_by: { goType: "[]uint64", ident: "ownedBy" }
-				name: { goType: "[]string", ident: "name" }
+				resource_id: {goType: "[]uint64"
+							ident: "resourceID", storeIdent: "rel_resource"
+				}
+				owned_by: {goType: "[]uint64", ident: "ownedBy"}
+				name: {goType: "[]string", ident: "name"}
 			}
 
-			byValue: ["kind", "resource_id", "owned_by", "name", ]
+			byValue: ["kind", "resource_id", "owned_by", "name"]
 		}
 
 		store: {
@@ -230,86 +230,86 @@ resources: { [key=_]: {"handle": key, "component": "system", "platform": "cortez
 
 	"actionlog": {
 		package: {
-			ident: "actionlog"
+			ident:  "actionlog"
 			import: "github.com/cortezaproject/corteza/server/pkg/actionlog"
 		}
 
-		ident: "action"
+		ident:       "action"
 		identPlural: "action"
-		expIdent: "Action"
+		expIdent:    "Action"
 
 		features: {
-			labels: false
-			paging: false
+			labels:  false
+			paging:  false
 			checkFn: false
 		}
 
 		model: {
 			ident: "actionlog"
 			attributes: {
-  			id:        schema.IdField
-				timestamp: schema.SortableTimestampField & { storeIdent: "ts" }
+				id:        schema.IdField
+				timestamp: schema.SortableTimestampField & {storeIdent: "ts"}
 				actor_ip_addr: {
 					ident: "actorIPAddr"
-					dal: { type: "Text", length: 64 }
+					dal: {type: "Text", length: 64}
 				}
 				actor_id: {
-					goType: "uint64",
-					ident: "actorID"
-					dal: { type: "Ref", refModelResType: "corteza::system:user" }
+					goType: "uint64"
+					ident:  "actorID"
+					dal: {type: "Ref", refModelResType: "corteza::system:user"}
 				}
 				request_origin: {
-					dal: { type: "Text", length: 32 }
+					dal: {type: "Text", length: 32}
 				}
-				request_id:  {
+				request_id: {
 					ident: "requestID"
-					dal: { type: "Text", length: 256 }
+					dal: {type: "Text", length: 256}
 				}
-				resource:  {
-					dal: { type: "Text", length: 512 }
+				resource: {
+					dal: {type: "Text", length: 512}
 				}
 				action: {
-					dal: { type: "Text", length: 64 }
+					dal: {type: "Text", length: 64}
 				}
 				error: {
 					dal: {}
 				}
 				severity: {
 					goType: "types.Severity"
-					dal: { type: "Number", default: 0, meta: { "rdbms:type": "integer" } }
+					dal: {type: "Number", default: 0, meta: {"rdbms:type": "integer"}}
 				}
 				description: {
 					dal: {}
 				}
-				meta:  {
+				meta: {
 					goType: "types.Meta"
-					dal: { type: "JSON", defaultEmptyObject: true }
+					dal: {type: "JSON", defaultEmptyObject: true}
 				}
 			}
 
 			indexes: {
-				"primary": { attribute: "id" }
-				"action": { attribute: "action"}
-				"actor_id": { attribute: "actor_id"}
-				"rel_resource": { attribute: "resource"}
-				"ts": { attribute: "timestamp"}
+				"primary": {attribute: "id"}
+				"action": {attribute: "action"}
+				"actor_id": {attribute: "actor_id"}
+				"rel_resource": {attribute: "resource"}
+				"ts": {attribute: "timestamp"}
 			}
 		}
 
 		filter: {
 			expIdent: "Filter"
 			struct: {
-				from_timestamp: { goType: "*time.Time" }
-				to_timestamp: { goType: "*time.Time" }
-				before_action_id: { goType: "uint64", ident: "beforeActionID" }
-				actor_id: { goType: "[]uint64", ident: "actorID" }
+				from_timestamp: {goType: "*time.Time"}
+				to_timestamp: {goType: "*time.Time"}
+				before_action_id: {goType: "uint64", ident: "beforeActionID"}
+				actor_id: {goType: "[]uint64", ident: "actorID"}
 				origin: {}
 				resource: {}
 				action: {}
-				limit: { goType: "uint" }
+				limit: {goType: "uint"}
 			}
 
-			byValue: ["action", "resource", "origin", "actor_id" ]
+			byValue: ["action", "resource", "origin", "actor_id"]
 		}
 
 		store: {
@@ -330,13 +330,13 @@ resources: { [key=_]: {"handle": key, "component": "system", "platform": "cortez
 
 	"resource-activity": {
 		package: {
-			ident: "discovery"
+			ident:  "discovery"
 			import: "github.com/cortezaproject/corteza/server/discovery/types"
 		}
 
-		ident: "resourceActivity"
-		identPlural: "resourceActivities"
-		expIdent: "ResourceActivity"
+		ident:          "resourceActivity"
+		identPlural:    "resourceActivities"
+		expIdent:       "ResourceActivity"
 		expIdentPlural: "ResourceActivities"
 
 		features: _allFeaturesDisabled
@@ -344,8 +344,8 @@ resources: { [key=_]: {"handle": key, "component": "system", "platform": "cortez
 		model: {
 			ident: "resource_activity_log"
 			attributes: {
-				id: schema.IdField
-				timestamp: schema.SortableTimestampField & { storeIdent: "ts" }
+				id:        schema.IdField
+				timestamp: schema.SortableTimestampField & {storeIdent: "ts"}
 				resource_type: {
 					dal: {}
 				}
@@ -353,28 +353,28 @@ resources: { [key=_]: {"handle": key, "component": "system", "platform": "cortez
 					dal: {}
 				}
 				resource_id: {
-					goType: "uint64",
-					ident: "resourceID",
+					goType:     "uint64"
+					ident:      "resourceID"
 					storeIdent: "rel_resource"
-					dal: { type: "ID" }
+					dal: {type: "ID"}
 				}
 				meta: {
 					goType: "rawJson"
-					dal: { type: "JSON", defaultEmptyObject: true }
+					dal: {type: "JSON", defaultEmptyObject: true}
 				}
 			}
 
 			indexes: {
-				"primary": { attribute: "id" }
-				"resource": { attribute: "resource_id" }
+				"primary": {attribute: "id"}
+				"resource": {attribute: "resource_id"}
 			}
 		}
 
 		filter: {
 			expIdent: "ResourceActivityFilter"
 			struct: {
-				from_timestamp: { goType: "*time.Time" }
-				to_timestamp: { goType: "*time.Time" }
+				from_timestamp: {goType: "*time.Time"}
+				to_timestamp: {goType: "*time.Time"}
 			}
 		}
 

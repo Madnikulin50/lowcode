@@ -13,25 +13,25 @@ application: {
 				dal: {}
 			}
 			enabled: {
-				goType: "bool"
-				sortable: true,
-				dal: { type: "Boolean", default: true }
+				goType:   "bool"
+				sortable: true
+				dal: {type: "Boolean", default: true}
 			}
 			weight: {
-				goType: "int",
+				goType:   "int"
 				sortable: true
-				dal: { type: "Number", default: 0, meta: { "rdbms:type": "integer" } }
+				dal: {type: "Number", default: 0, meta: {"rdbms:type": "integer"}}
 			}
 			unify: {
 				goType: "*types.ApplicationUnify"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
-			owner_id:   {
-				schema.AttributeUserRef,
-				storeIdent: "rel_owner",
-				ident: "ownerID"
+			owner_id: {
+				schema.AttributeUserRef
+				storeIdent: "rel_owner"
+				ident:      "ownerID"
 				envoy: {
 					store: {
 						omitRefFilter: true
@@ -47,7 +47,7 @@ application: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
@@ -73,7 +73,7 @@ application: {
 	envoy: {
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Name"
+			mappedField:        "Name"
 			identKeyAlias: ["applications", "apps"]
 		}
 		store: {

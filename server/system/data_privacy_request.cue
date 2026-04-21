@@ -15,32 +15,32 @@ data_privacy_request: {
 			id: schema.IdField
 
 			kind: {
-				goType: "types.RequestKind",
+				goType:   "types.RequestKind"
 				sortable: true
 				dal: {}
 			}
 
 			status: {
-				goType: "types.RequestStatus",
+				goType:   "types.RequestStatus"
 				sortable: true
-				dal: { type: "Text", length: 64 }
+				dal: {type: "Text", length: 64}
 
 			}
 			payload: {
 				goType: "types.DataPrivacyRequestPayloadSet"
-				dal: { type: "JSON" }
+				dal: {type: "JSON"}
 			}
 
 			requested_at: schema.SortableTimestampField
 			requested_by: {
 				goType: "uint64"
-				dal: { type: "Ref", refModelResType: "corteza::system:user" }
+				dal: {type: "Ref", refModelResType: "corteza::system:user"}
 			}
 
 			completed_at: schema.SortableTimestampNilField
 			completed_by: {
 				goType: "uint64"
-				dal: { type: "Ref", refModelResType: "corteza::system:user" }
+				dal: {type: "Ref", refModelResType: "corteza::system:user"}
 			}
 
 			created_at: schema.SortableTimestampNowField
@@ -52,14 +52,14 @@ data_privacy_request: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	filter: {
 		struct: {
-			request_id: {goType: "[]uint64", ident: "requestID", storeIdent: "id" }
-			requested_by: {goType: "[]uint64", ident: "requestedBy" }
+			request_id: {goType: "[]uint64", ident: "requestID", storeIdent: "id"}
+			requested_by: {goType: "[]uint64", ident: "requestedBy"}
 			kind: {goType: "[]types.RequestKind"}
 			status: {goType: "[]types.RequestStatus"}
 		}
@@ -91,7 +91,7 @@ data_privacy_request: {
 
 						It returns data privacy request even if deleted
 						"""
-				}
+				},
 			]
 			functions: []
 		}

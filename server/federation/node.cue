@@ -6,54 +6,54 @@ import (
 
 node: {
 	features: {
-		labels: false
-		paging: true
+		labels:  false
+		paging:  true
 		sorting: true
 	}
 
 	model: {
 		ident: "federation_nodes"
 		attributes: {
-      id: schema.IdField
-      shared_node_id: {
-      	sortable: true,
-      	ident: "sharedNodeID",
-      	goType: "uint64"
-				dal: { type: "ID" }
+			id: schema.IdField
+			shared_node_id: {
+				sortable: true
+				ident:    "sharedNodeID"
+				goType:   "uint64"
+				dal: {type: "ID"}
 			}
-      name: {
-      	sortable: true
-      	dal: {}
+			name: {
+				sortable: true
+				dal: {}
 			}
-      base_url: {
-      	sortable: true,
-      	ident: "baseURL"
-      	dal: {}
+			base_url: {
+				sortable: true
+				ident:    "baseURL"
+				dal: {}
 			}
-      status: {
-      	sortable: true,
-      	dal: {}
+			status: {
+				sortable: true
+				dal: {}
 			}
-      contact: {
-      	sortable: true,
-      	dal: {}
+			contact: {
+				sortable: true
+				dal: {}
 			}
-      pair_token: {
-      	dal: {}
+			pair_token: {
+				dal: {}
 			}
-      auth_token: {
-      	dal: {}
+			auth_token: {
+				dal: {}
 			}
-      created_at: schema.SortableTimestampNowField
-      updated_at: schema.SortableTimestampNilField
-      deleted_at: schema.SortableTimestampNilField
+			created_at: schema.SortableTimestampNowField
+			updated_at: schema.SortableTimestampNilField
+			deleted_at: schema.SortableTimestampNilField
 			created_by: schema.AttributeUserRef
 			updated_by: schema.AttributeUserRef
 			deleted_by: schema.AttributeUserRef
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
@@ -63,10 +63,10 @@ node: {
 
 	filter: {
 		struct: {
-			name: { goType: "string" }
-			base_url: { goType: "string", ident: "baseURL" }
-			status: { goType: "string" }
-			deleted: { goType: "filter.State", storeIdent: "deleted_at" }
+			name: {goType: "string"}
+			base_url: {goType: "string", ident: "baseURL"}
+			status: {goType: "string"}
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
 
 		query: ["name", "base_url"]
@@ -102,7 +102,7 @@ node: {
 					description: """
 						searches for node by shared-node-id
 						"""
-				}
+				},
 			]
 		}
 	}

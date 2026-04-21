@@ -17,12 +17,12 @@ import (
 			// Operation/resource validators, grouped by resource
 			types: [
 				for res in cmp.resources {
-					const:   "\(res.expIdent)ResourceType"
-					type:    res.fqrt
+					const: "\(res.expIdent)ResourceType"
+					type:  res.fqrt
 				},
 				{
-					const:     "ComponentResourceType"
-					type:      cmp.fqrt
+					const: "ComponentResourceType"
+					type:  cmp.fqrt
 				},
 			]
 		}
@@ -34,7 +34,7 @@ import (
 			package: "types"
 
 			cmpIdent: cmp.ident
-			resources: [ for res in cmp.resources { res }]
+			resources: [ for res in cmp.resources {res}]
 		}
 	},
 ]

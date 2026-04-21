@@ -23,10 +23,10 @@ chart: {
 			}
 			handle: schema.HandleField
 			namespace_id: {
-			  ident: "namespaceID",
-				goType: "uint64",
+				ident:      "namespaceID"
+				goType:     "uint64"
 				storeIdent: "rel_namespace"
-				dal: { type: "Ref", refModelResType: "corteza::compose:namespace" }
+				dal: {type: "Ref", refModelResType: "corteza::compose:namespace"}
 				envoy: {
 					yaml: {
 						identKeyAlias: ["namespace", "namespace_id", "ns"]
@@ -36,7 +36,7 @@ chart: {
 			name: {
 				sortable: true
 				dal: {}
-		  }
+			}
 			config: {
 				goType: "types.ChartConfig"
 				dal: {}
@@ -48,33 +48,33 @@ chart: {
 						customEncoder: true
 					}
 				}
-		  }
+			}
 			created_at: schema.SortableTimestampNowField
 			updated_at: schema.SortableTimestampNilField
 			deleted_at: schema.SortableTimestampNilField
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"namespace": { attribute: "namespace_id" },
+			"primary": {attribute: "id"}
+			"namespace": {attribute: "namespace_id"}
 			"unique_handle": {
-				fields: [{ attribute: "handle", modifiers: ["LOWERCASE"] }, { attribute: "namespace_id" }]
+				fields: [{attribute: "handle", modifiers: ["LOWERCASE"]}, {attribute: "namespace_id"}]
 				predicate: "handle != '' AND deleted_at IS NULL"
 			}
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	filter: {
 		struct: {
-				chart_id: { goType: "[]uint64", ident: "chartID", storeIdent: "id" }
-				namespace_id: { goType: "uint64", ident: "namespaceID", storeIdent: "rel_namespace" }
-				handle: { goType: "string" }
-				name: { goType: "string" }
-				deleted: { goType: "filter.State", storeIdent: "deleted_at" }
+			chart_id: {goType: "[]uint64", ident: "chartID", storeIdent: "id"}
+			namespace_id: {goType: "uint64", ident: "namespaceID", storeIdent: "rel_namespace"}
+			handle: {goType: "string"}
+			name: {goType: "string"}
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
 
 		query: ["handle", "name"]
@@ -86,7 +86,7 @@ chart: {
 		scoped: true
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["charts", "chrt"]
 		}
 		store: {

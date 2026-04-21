@@ -6,8 +6,8 @@ import (
 
 auth_session: {
 	features: {
-		labels: false
-		paging: false
+		labels:  false
+		paging:  false
 		sorting: false
 		checkFn: false
 	}
@@ -17,19 +17,19 @@ auth_session: {
 
 		attributes: {
 			id: {
-				expIdent: "ID",
-				goType: "string"
-				dal: { length: 64 }
+				expIdent: "ID"
+				goType:   "string"
+				dal: {length: 64}
 			}
-			data:    {
+			data: {
 				goType: "[]byte"
-				dal: { type: "Blob" }
+				dal: {type: "Blob"}
 			}
 			user_id: {
-				goType: "uint64",
-				ident: "userID",
+				goType:     "uint64"
+				ident:      "userID"
 				storeIdent: "rel_user"
-				dal: { type: "Ref", refModelResType: "corteza::system:user", default: 0 }
+				dal: {type: "Ref", refModelResType: "corteza::system:user", default: 0}
 			}
 			remote_addr: {
 				dal: {}
@@ -42,14 +42,14 @@ auth_session: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"expires_at": { attribute: "expires_at" }
+			"primary": {attribute: "id"}
+			"expires_at": {attribute: "expires_at"}
 		}
 	}
 
 	filter: {
 		struct: {
-			user_id: { goType: "uint64", ident: "userID", storeIdent: "rel_user" }
+			user_id: {goType: "uint64", ident: "userID", storeIdent: "rel_user"}
 		}
 
 		byValue: ["user_id"]
@@ -62,12 +62,12 @@ auth_session: {
 	store: {
 		api: {
 			lookups: [
-				{ fields: ["id"] },
+				{fields: ["id"]},
 			]
 
 			functions: [
-				{ expIdent: "DeleteExpiredAuthSessions" },
-				{ expIdent: "DeleteAuthSessionsByUserID",  args: [ { ident: "userID",  goType: "uint64" } ] },
+				{expIdent: "DeleteExpiredAuthSessions"},
+				{expIdent: "DeleteAuthSessionsByUserID", args: [ {ident: "userID", goType: "uint64"}]},
 			]
 		}
 	}

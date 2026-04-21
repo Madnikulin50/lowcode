@@ -20,10 +20,10 @@ locale: schema.#optionsGroup & {
 
 		path: {
 			description: """
-				One or more paths to locale config and translation files, separated by colon
+					One or more paths to locale config and translation files, separated by colon
 
-				When with LOCALE_DEVELOPMENT_MODE=true, default value for path is ../../locale
-			"""
+					When with LOCALE_DEVELOPMENT_MODE=true, default value for path is ../../locale
+				"""
 		}
 
 		query_string_param: {
@@ -37,10 +37,10 @@ locale: schema.#optionsGroup & {
 		}
 
 		resource_translations_enabled: {
-			type:        "bool"
+			type: "bool"
 			description: """
-        When enabled, an editor for resource translations is enabled in UI
-        """
+				When enabled, an editor for resource translations is enabled in UI
+				"""
 		}
 
 		log: {

@@ -6,8 +6,8 @@ import (
 
 auth_confirmed_client: {
 	features: {
-		labels: false
-		paging: false
+		labels:  false
+		paging:  false
 		sorting: false
 		checkFn: false
 	}
@@ -17,28 +17,28 @@ auth_confirmed_client: {
 
 		attributes: {
 			user_id: {
-				goType: "uint64",
-				ident: "userID",
+				goType:     "uint64"
+				ident:      "userID"
 				storeIdent: "rel_user"
-				dal: { type: "Ref", refModelResType: "corteza::system:user", default: 0 }
-		  }
+				dal: {type: "Ref", refModelResType: "corteza::system:user", default: 0}
+			}
 			client_id: {
-				goType: "uint64",
-				ident: "clientID",
+				goType:     "uint64"
+				ident:      "clientID"
 				storeIdent: "rel_client"
-				dal: { type: "Ref", refModelResType: "corteza::system:auth-client", default: 0 }
+				dal: {type: "Ref", refModelResType: "corteza::system:auth-client", default: 0}
 			}
 			confirmed_at: schema.SortableTimestampNowField
 		}
 
 		indexes: {
-			"primary": { attributes: ["user_id", "client_id"] }
+			"primary": {attributes: ["user_id", "client_id"]}
 		}
 	}
 
 	filter: {
 		struct: {
-			user_id:   { goType: "uint64", ident: "userID", storeIdent: "rel_user" }
+			user_id: {goType: "uint64", ident: "userID", storeIdent: "rel_user"}
 		}
 
 		byValue: ["user_id"]
@@ -48,11 +48,10 @@ auth_confirmed_client: {
 		omit: true
 	}
 
-
 	store: {
 		api: {
 			lookups: [
-				{ fields: ["user_id", "client_id"] },
+				{fields: ["user_id", "client_id"]},
 			]
 		}
 	}

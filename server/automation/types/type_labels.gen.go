@@ -3,10 +3,7 @@ package types
 // This file is auto-generated.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
-//
-// Definitions file that controls how this file is generated:
-// automation/types/types.yaml
+
 import (
 	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
 )

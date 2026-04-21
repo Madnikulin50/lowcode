@@ -13,28 +13,28 @@ notification: {
 		omitGetterSetter: true
 
 		attributes: {
-			id:     schema.IdField
+			id: schema.IdField
 			kind: {
 				sortable: true
-				goType: "types.NotificationKind"
-				dal: { type: "Text", length: 32 }
+				goType:   "types.NotificationKind"
+				dal: {type: "Text", length: 32}
 			}
 			config: {
 				goType: "types.NotificationConfig"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 			}
-			recipient: schema.AttributeUserRef
+			recipient:  schema.AttributeUserRef
 			created_by: schema.AttributeUserRef
-			read_at: schema.SortableTimestampNilField
+			read_at:    schema.SortableTimestampNilField
 			created_at: schema.SortableTimestampNowField
 			updated_at: schema.SortableTimestampNilField
 			deleted_at: schema.SortableTimestampNilField
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"recipient": { attribute: "recipient" }
-			"kind": { attribute: "kind" }
+			"primary": {attribute: "id"}
+			"recipient": {attribute: "recipient"}
+			"kind": {attribute: "kind"}
 		}
 	}
 
@@ -58,7 +58,7 @@ notification: {
 	store: {
 		api: {
 			lookups: [
-				{ fields: ["id"] }
+				{fields: ["id"]},
 			]
 		}
 	}

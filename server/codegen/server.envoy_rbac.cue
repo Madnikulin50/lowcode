@@ -129,5 +129,5 @@ import (
 				]
 			}
 		},
-	] if len(tpl.payload.resources) > 0 {tpl}
+	] if len(tpl.payload.resources) > 0 {tpl},
 ]

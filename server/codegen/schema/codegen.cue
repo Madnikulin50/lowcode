@@ -14,6 +14,6 @@ package schema
 	#_ioSpec
 	payload: _
 } | {
-		bulk?: [...#_ioSpec]
-		payload: _
+	bulk?: [...#_ioSpec]
+	payload: _
 }

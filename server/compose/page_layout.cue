@@ -17,12 +17,12 @@ pageLayout: {
 		defaultSetter: true
 
 		attributes: {
-			id: schema.IdField
+			id:     schema.IdField
 			handle: schema.HandleField
 			page_id: {
-				ident: "pageID",
-				goType: "uint64",
-				dal: { type: "Ref", refModelResType: "corteza::compose:page" }
+				ident:  "pageID"
+				goType: "uint64"
+				dal: {type: "Ref", refModelResType: "corteza::compose:page"}
 				sortable: true
 				envoy: {
 					yaml: {
@@ -31,9 +31,9 @@ pageLayout: {
 				}
 			}
 			parent_id: {
-				ident: "parentID",
-				goType: "uint64",
-				dal: { type: "Ref", refModelResType: "corteza::compose:page-layout" }
+				ident:  "parentID"
+				goType: "uint64"
+				dal: {type: "Ref", refModelResType: "corteza::compose:page-layout"}
 				sortable: true
 				envoy: {
 					yaml: {
@@ -43,10 +43,10 @@ pageLayout: {
 			}
 
 			namespace_id: {
-				ident: "namespaceID",
-				goType: "uint64",
+				ident:      "namespaceID"
+				goType:     "uint64"
 				storeIdent: "rel_namespace"
-				dal: { type: "Ref", refModelResType: "corteza::compose:namespace" }
+				dal: {type: "Ref", refModelResType: "corteza::compose:namespace"}
 				envoy: {
 					yaml: {
 						identKeyAlias: ["namespace"]
@@ -55,25 +55,25 @@ pageLayout: {
 			}
 			weight: {
 				goType: "int", sortable: true
-				dal: { type: "Number", default: 0, meta: { "rdbms:type": "integer" } }
+				dal: {type: "Number", default: 0, meta: {"rdbms:type": "integer"}}
 			}
 
 			meta: {
 				goType: "types.PageLayoutMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 
 			config: {
 				goType: "types.PageLayoutConfig"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			blocks: {
 				goType: "types.PageLayoutBlocks"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -85,12 +85,12 @@ pageLayout: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"namespace": { attribute: "namespace_id" },
-			"page_id": { attribute: "page_id" },
-			"parent_id": { attribute: "parent_id" },
+			"primary": {attribute: "id"}
+			"namespace": {attribute: "namespace_id"}
+			"page_id": {attribute: "page_id"}
+			"parent_id": {attribute: "parent_id"}
 			"unique_handle": {
-				fields: [{ attribute: "handle", modifiers: ["LOWERCASE"] }, { attribute: "page_id" }, { attribute: "namespace_id" }]
+				fields: [{attribute: "handle", modifiers: ["LOWERCASE"]}, {attribute: "page_id"}, {attribute: "namespace_id"}]
 				predicate: "handle != '' AND deleted_at IS NULL"
 			}
 		}
@@ -98,13 +98,13 @@ pageLayout: {
 
 	filter: {
 		struct: {
-			page_layout_id: { goType: "[]uint64", ident: "pageLayoutID", storeIdent: "id" }
-			namespace_id: { goType: "uint64", ident: "namespaceID", storeIdent: "rel_namespace" }
-			page_id: { goType: "uint64", ident: "pageID", storeIdent: "page_id" }
-			parent_id: { goType: "uint64", ident: "parentID", storeIdent: "parent_id" }
-			default: { goType: "bool", ident: "default" }
-			handle: { goType: "string" }
-			deleted: { goType: "filter.State", storeIdent: "deleted_at" }
+			page_layout_id: {goType: "[]uint64", ident: "pageLayoutID", storeIdent: "id"}
+			namespace_id: {goType: "uint64", ident: "namespaceID", storeIdent: "rel_namespace"}
+			page_id: {goType: "uint64", ident: "pageID", storeIdent: "page_id"}
+			parent_id: {goType: "uint64", ident: "parentID", storeIdent: "parent_id"}
+			default: {goType: "bool", ident: "default"}
+			handle: {goType: "string"}
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
 
 		query: ["handle"]
@@ -116,7 +116,7 @@ pageLayout: {
 		scoped: true
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["page_layouts", "pagelayouts", "layouts"]
 		}
 		store: {
@@ -204,11 +204,11 @@ pageLayout: {
 				{
 					expIdent: "ReorderComposePageLayouts"
 					args: [
-						{ ident: "namespace_id", goType: "uint64" },
-						{ ident: "page_id", goType: "uint64" },
-						{ ident: "page_layout_ids", goType: "[]uint64" }
+						{ident: "namespace_id", goType:    "uint64"},
+						{ident: "page_id", goType:         "uint64"},
+						{ident: "page_layout_ids", goType: "[]uint64"},
 					]
-				}
+				},
 			]
 		}
 	}

@@ -11,42 +11,42 @@ auth_client: {
 			handle: schema.HandleField
 			meta: {
 				goType: "*types.AuthClientMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			secret: {
 				goType: "string"
-				dal: { type: "Text", length: 64 }
+				dal: {type: "Text", length: 64}
 			}
 			scope: {
 				goType: "string"
-				dal: { type: "Text", length: 512 }
+				dal: {type: "Text", length: 512}
 			}
 			valid_grant: {
 				goType: "string"
-				dal: { type: "Text", length: 32 }
+				dal: {type: "Text", length: 32}
 			}
 			redirect_uri: {
-				goType: "string",
-				ident: "redirectURI"
+				goType: "string"
+				ident:  "redirectURI"
 				dal: {}
 			}
 			enabled: {
-				sortable: true,
-				goType: "bool"
-				dal: { type: "Boolean", default: false }
+				sortable: true
+				goType:   "bool"
+				dal: {type: "Boolean", default: false}
 			}
 			trusted: {
-				sortable: true,
-				goType: "bool"
-				dal: { type: "Boolean", default: false }
+				sortable: true
+				goType:   "bool"
+				dal: {type: "Boolean", default: false}
 			}
 			valid_from: schema.SortableTimestampNilField
 			expires_at: schema.SortableTimestampNilField
 			security: {
 				goType: "*types.AuthClientSecurity"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 				envoy: {
@@ -66,7 +66,7 @@ auth_client: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
@@ -94,7 +94,7 @@ auth_client: {
 	envoy: {
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["authclients"]
 		}
 		store: {

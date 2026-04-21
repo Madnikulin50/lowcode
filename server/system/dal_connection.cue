@@ -16,13 +16,13 @@ dal_connection: {
 
 			config: {
 				goType: "types.ConnectionConfig"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			meta: {
 				goType: "types.ConnectionMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -36,7 +36,7 @@ dal_connection: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
@@ -60,7 +60,7 @@ dal_connection: {
 	envoy: {
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["connection", "connections"]
 		}
 		store: {
@@ -70,9 +70,9 @@ dal_connection: {
 
 	rbac: {
 		operations: {
-			"read": description:         "Read connection"
-			"update": description:       "Update connection"
-			"delete": description:       "Delete connection"
+			"read": description:              "Read connection"
+			"update": description:            "Update connection"
+			"delete": description:            "Delete connection"
 			"dal-config.manage": description: "Manage DAL configuration"
 		}
 	}

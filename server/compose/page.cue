@@ -16,15 +16,15 @@ page: {
 		attributes: {
 			id: schema.IdField
 			title: {
-				goType: "string",
+				goType:   "string"
 				sortable: true
 				dal: {}
 			}
 			handle: schema.HandleField
 			self_id: {
-				ident: "selfID",
-				goType: "uint64",
-				dal: { type: "Ref", refModelResType: "corteza::compose:page" }
+				ident:  "selfID"
+				goType: "uint64"
+				dal: {type: "Ref", refModelResType: "corteza::compose:page"}
 				sortable: true
 				envoy: {
 					store: {
@@ -36,10 +36,10 @@ page: {
 				}
 			}
 			module_id: {
-				ident: "moduleID",
-				goType: "uint64",
+				ident:      "moduleID"
+				goType:     "uint64"
 				storeIdent: "rel_module"
-				dal: { type: "Ref", refModelResType: "corteza::compose:module" }
+				dal: {type: "Ref", refModelResType: "corteza::compose:module"}
 				envoy: {
 					yaml: {
 						identKeyAlias: ["module"]
@@ -47,10 +47,10 @@ page: {
 				}
 			}
 			namespace_id: {
-				ident: "namespaceID",
-				goType: "uint64",
+				ident:      "namespaceID"
+				goType:     "uint64"
 				storeIdent: "rel_namespace"
-				dal: { type: "Ref", refModelResType: "corteza::compose:namespace" }
+				dal: {type: "Ref", refModelResType: "corteza::compose:namespace"}
 				envoy: {
 					yaml: {
 						identKeyAlias: ["namespace"]
@@ -60,19 +60,19 @@ page: {
 
 			meta: {
 				goType: "types.PageMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			config: {
 				goType: "types.PageConfig"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			blocks: {
 				goType: "types.PageBlocks"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 				envoy: {
@@ -83,17 +83,17 @@ page: {
 				}
 			}
 			children: {
-				goType: "types.PageSet", store: false
+				goType:     "types.PageSet", store: false
 				omitSetter: true
 				omitGetter: true
 			}
 			visible: {
 				goType: "bool"
-				dal: { type: "Boolean", default: true }
+				dal: {type: "Boolean", default: true}
 			}
 			weight: {
 				goType: "int", sortable: true
-				dal: { type: "Number", default: 0, meta: { "rdbms:type": "integer" } }
+				dal: {type: "Number", default: 0, meta: {"rdbms:type": "integer"}}
 				envoy: {
 					yaml: {
 						identKeyAlias: ["order"]
@@ -111,12 +111,12 @@ page: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"namespace": { attribute: "namespace_id" },
-			"module": { attribute: "module_id" },
-			"self_id": { attribute: "self_id" },
+			"primary": {attribute: "id"}
+			"namespace": {attribute: "namespace_id"}
+			"module": {attribute: "module_id"}
+			"self_id": {attribute: "self_id"}
 			"unique_handle": {
-				fields: [{ attribute: "handle", modifiers: ["LOWERCASE"] }, { attribute: "namespace_id" }]
+				fields: [{attribute: "handle", modifiers: ["LOWERCASE"]}, {attribute: "namespace_id"}]
 				predicate: "handle != '' AND deleted_at IS NULL"
 			}
 		}
@@ -124,14 +124,14 @@ page: {
 
 	filter: {
 		struct: {
-			page_id: { goType: "[]uint64", ident: "pageID", storeIdent: "id" }
-			namespace_id: { goType: "uint64", ident: "namespaceID", storeIdent: "rel_namespace" }
-			parent_id: { goType: "uint64", ident: "parentID" }
-			module_id: { goType: "uint64", ident: "moduleID", storeIdent: "rel_module" }
-			root: { goType: "bool" }
-			handle: { goType: "string" }
-			title: { goType: "string" }
-			deleted: { goType: "filter.State", storeIdent: "deleted_at" }
+			page_id: {goType: "[]uint64", ident: "pageID", storeIdent: "id"}
+			namespace_id: {goType: "uint64", ident: "namespaceID", storeIdent: "rel_namespace"}
+			parent_id: {goType: "uint64", ident: "parentID"}
+			module_id: {goType: "uint64", ident: "moduleID", storeIdent: "rel_module"}
+			root: {goType: "bool"}
+			handle: {goType: "string"}
+			title: {goType: "string"}
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
 
 		query: ["handle", "title", "description"]
@@ -143,21 +143,21 @@ page: {
 		scoped: true
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["pages", "pg"]
 
 			extendedResourceDecoders: [{
-				ident: "pages"
+				ident:    "pages"
 				expIdent: "Pages"
 				identKeys: ["children", "pages"]
 				supportMappedInput: true
-				mappedField: "Handle"
+				mappedField:        "Handle"
 			}]
 			extendedResourceRefIdent: "SelfID"
 		}
 		store: {
 			extendedFilterBuilder: true
-			extendedRefDecoder: true
+			extendedRefDecoder:    true
 		}
 	}
 
@@ -166,8 +166,8 @@ page: {
 			"read": {}
 			"update": {}
 			"delete": {}
-			"page-layout.create": description:    "Create page layout on namespace"
-			"page-layouts.search": description:   "List, search or filter page layouts on namespace"
+			"page-layout.create": description:  "Create page layout on namespace"
+			"page-layouts.search": description: "List, search or filter page layouts on namespace"
 		}
 	}
 
@@ -227,11 +227,11 @@ page: {
 				{
 					expIdent: "ReorderComposePages"
 					args: [
-						{ ident: "namespace_id", goType: "uint64" },
-						{ ident: "parent_id", goType: "uint64" },
-						{ ident: "page_ids", goType: "[]uint64" }
+						{ident: "namespace_id", goType: "uint64"},
+						{ident: "parent_id", goType:    "uint64"},
+						{ident: "page_ids", goType:     "[]uint64"},
 					]
-				}
+				},
 			]
 		}
 	}

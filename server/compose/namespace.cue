@@ -10,8 +10,8 @@ namespace: {
 		attributes: {
 			id: schema.IdField
 			slug: {
-				sortable: true,
-				goType: "string"
+				sortable: true
+				goType:   "string"
 				dal: {}
 				envoy: {
 					identifier: true
@@ -19,11 +19,11 @@ namespace: {
 			}
 			enabled: {
 				goType: "bool"
-				dal: { type: "Boolean" }
+				dal: {type: "Boolean"}
 			}
 			meta: {
 				goType: "types.NamespaceMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -38,9 +38,9 @@ namespace: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 			"unique_handle": {
-				fields: [{ attribute: "slug", modifiers: ["LOWERCASE"] }]
+				fields: [{attribute: "slug", modifiers: ["LOWERCASE"]}]
 				predicate: "slug != '' AND deleted_at IS NULL"
 			}
 		}
@@ -48,10 +48,10 @@ namespace: {
 
 	filter: {
 		struct: {
-			namespace_id: { goType: "[]uint64", ident: "namespaceID", storeIdent: "id" }
-			slug: { goType: "string" }
-			name: { goType: "string" }
-			deleted: { goType: "filter.State", storeIdent: "deleted_at" }
+			namespace_id: {goType: "[]uint64", ident: "namespaceID", storeIdent: "id"}
+			slug: {goType: "string"}
+			name: {goType: "string"}
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
 
 		query: ["name", "slug"]
@@ -63,11 +63,11 @@ namespace: {
 		scoped: true
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Slug"
+			mappedField:        "Slug"
 			identKeyAlias: ["namespaces", "ns"]
 		}
 		store: {
-			handleField: "Slug"
+			handleField:           "Slug"
 			extendedFilterBuilder: true
 		}
 	}

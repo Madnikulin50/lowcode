@@ -7,37 +7,37 @@ import (
 user_group: {
 	model: {
 		attributes: {
-			id: schema.IdField
+			id:     schema.IdField
 			handle: schema.HandleField
 			meta: {
 				goType: "*types.UserGroupMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 
 			config: {
 				goType: "*types.UserGroupConfig"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 
 			archived_at: schema.SortableTimestampNilField
-			created_at: schema.SortableTimestampNowField
-			updated_at: schema.SortableTimestampNilField
-			deleted_at: schema.SortableTimestampNilField
+			created_at:  schema.SortableTimestampNowField
+			updated_at:  schema.SortableTimestampNilField
+			deleted_at:  schema.SortableTimestampNilField
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	filter: {
 		struct: {
-			user_group_id: {goType: "[]uint64", ident: "userGroupID", storeIdent: "id" }
-			member_id: {goType: "uint64" }
+			user_group_id: {goType: "[]uint64", ident: "userGroupID", storeIdent: "id"}
+			member_id: {goType: "uint64"}
 			handle: {goType: "string"}
 
 			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
@@ -81,7 +81,7 @@ user_group: {
 
 						It returns only valid user group (not deleted, not suspended)
 						"""
-				}
+				},
 			]
 		}
 	}

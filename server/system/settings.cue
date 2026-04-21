@@ -5,43 +5,43 @@ import (
 )
 
 settings: {
-	ident: "settingValue"
+	ident:    "settingValue"
 	expIdent: "SettingValue"
 
 	features: {
-		labels: false
-		paging: false
+		labels:  false
+		paging:  false
 		sorting: false
 		checkFn: false
 	}
 
 	model: {
-		ident: "settings"
+		ident:            "settings"
 		omitGetterSetter: true
 		attributes: {
-			owned_by:    {
-				goType: "uint64",
+			owned_by: {
+				goType:     "uint64"
 				storeIdent: "rel_owner"
-				dal: { type: "Ref", refModelResType: "corteza::system:user" }
+				dal: {type: "Ref", refModelResType: "corteza::system:user"}
 			}
-			name:        {
-				dal: { type: "Text", length: 512 }
+			name: {
+				dal: {type: "Text", length: 512}
 			}
-			value:       {
+			value: {
 				goType: "rawJson"
-				dal: { type: "JSON" }
+				dal: {type: "JSON"}
 				omitSetter: true
 				omitGetter: true
 			}
-			updated_by:  schema.AttributeUserRef
-			updated_at:  schema.SortableTimestampField
+			updated_by: schema.AttributeUserRef
+			updated_at: schema.SortableTimestampField
 		}
 
 		indexes: {
 			"primary": {
 				fields: [
-					{ attribute: "owned_by" },
-				 	{ attribute: "name" },
+					{attribute: "owned_by"},
+					{attribute: "name"},
 				]
 			}
 		}
@@ -52,10 +52,10 @@ settings: {
 
 		struct: {
 			prefix: {}
-			owned_by: { goType: "uint64", storeIdent: "rel_owner" }
+			owned_by: {goType: "uint64", storeIdent: "rel_owner"}
 		}
 
-		byValue: [ "owned_by" ]
+		byValue: [ "owned_by"]
 	}
 
 	envoy: {
@@ -70,7 +70,7 @@ settings: {
 					description: """
 						searches for settings by name and owner
 						"""
-				}
+				},
 			]
 		}
 	}

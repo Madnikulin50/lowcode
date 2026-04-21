@@ -6,7 +6,7 @@ import (
 
 resource_translation: {
 	features: {
-		labels: false
+		labels:  false
 		checkFn: false
 	}
 
@@ -18,16 +18,16 @@ resource_translation: {
 		attributes: {
 			id: schema.IdField
 			lang: {
-		 		goType: "types.Lang"
-				dal: { type: "Text", length: 32 }
+				goType: "types.Lang"
+				dal: {type: "Text", length: 32}
 				omitSetter: true
 				omitGetter: true
-		 	}
+			}
 			resource: {
-				dal: { type: "Text", length: 256 }
+				dal: {type: "Text", length: 256}
 			}
 			k: {
-				dal: { type: "Text", length: 256 }
+				dal: {type: "Text", length: 256}
 			}
 			message: {
 				dal: {}
@@ -43,14 +43,14 @@ resource_translation: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 			"unique_translation": {
-				 fields: [
-				   { attribute: "lang",     modifiers: [ "LOWERCASE" ] },
-				   { attribute: "resource", modifiers: [ "LOWERCASE" ] },
-				 	 { attribute: "k",        modifiers: [ "LOWERCASE" ] },
-				 ]
-		 	}
+				fields: [
+					{attribute: "lang", modifiers: [ "LOWERCASE"]},
+					{attribute: "resource", modifiers: [ "LOWERCASE"]},
+					{attribute: "k", modifiers: [ "LOWERCASE"]},
+				]
+			}
 		}
 	}
 
@@ -61,7 +61,7 @@ resource_translation: {
 
 	filter: {
 		struct: {
-			translation_id: {goType: "[]uint64", ident: "translationID" }
+			translation_id: {goType: "[]uint64", ident: "translationID"}
 			lang: {}
 			resource: {}
 			resourceType: {}
@@ -75,23 +75,23 @@ resource_translation: {
 
 	store: {
 		api: {
-		lookups: [
-			{
-				fields: ["id"]
-				description: """
-					searches for resource translation by ID
-					It also returns deleted resource translations.
-					"""
-			},
-		]
+			lookups: [
+				{
+					fields: ["id"]
+					description: """
+						searches for resource translation by ID
+						It also returns deleted resource translations.
+						"""
+				},
+			]
 
-		functions: [
+			functions: [
 				{
 					expIdent: "TransformResource"
 					args: [
-						{ident: "lang", goType: "language.Tag" },
+						{ident: "lang", goType: "language.Tag"},
 					]
-					return: [ "map[string]map[string]*locale.ResourceTranslation" ]
+					return: [ "map[string]map[string]*locale.ResourceTranslation"]
 				},
 			]
 		}

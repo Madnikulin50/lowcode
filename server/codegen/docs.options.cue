@@ -13,7 +13,7 @@ import (
 		payload: {
 			groups: [
 				for g in app.corteza.options {
-					title: g.title
+					title:  g.title
 					intro?: g.intro
 
 					options: g.options

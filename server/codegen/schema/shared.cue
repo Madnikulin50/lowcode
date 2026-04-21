@@ -4,7 +4,6 @@ import (
 	"strings"
 )
 
-
 // Identifier
 #ident: =~"^[a-z][a-zA-Z0-9_]*$"
 

@@ -13,34 +13,34 @@ reminder: {
 		omitGetterSetter: true
 
 		attributes: {
-			id:     schema.IdField
+			id: schema.IdField
 			resource: {
 				sortable: true
-				dal: { type: "Text", length: 512 }
+				dal: {type: "Text", length: 512}
 			}
 			payload: {
 				goType: "rawJson"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 			}
 			snooze_count: {
 				goType: "uint"
-				dal: { type: "Number", meta: { "rdbms:type": "integer" } }
+				dal: {type: "Number", meta: {"rdbms:type": "integer"}}
 			}
-			assigned_to: schema.AttributeUserRef
-			assigned_by: schema.AttributeUserRef
-			assigned_at: schema.SortableTimestampField
+			assigned_to:  schema.AttributeUserRef
+			assigned_by:  schema.AttributeUserRef
+			assigned_at:  schema.SortableTimestampField
 			dismissed_by: schema.AttributeUserRef
 			dismissed_at: schema.SortableTimestampNilField
-			remind_at: schema.SortableTimestampNilField
-			created_at: schema.SortableTimestampNowField
-			updated_at: schema.SortableTimestampNilField
-			deleted_at: schema.SortableTimestampNilField
+			remind_at:    schema.SortableTimestampNilField
+			created_at:   schema.SortableTimestampNowField
+			updated_at:   schema.SortableTimestampNilField
+			deleted_at:   schema.SortableTimestampNilField
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"assigned_to": { attribute: "assigned_to" }
-			"resource": { attribute: "resource" }
+			"primary": {attribute: "id"}
+			"assigned_to": {attribute: "assigned_to"}
+			"resource": {attribute: "resource"}
 		}
 	}
 
@@ -55,9 +55,9 @@ reminder: {
 			assigned_to: {goType: "uint64"}
 			scheduled_from: {goType: "uint64"}
 			scheduled_until: {goType: "uint64"}
-			exclude_dismissed: { goType: "bool" }
-			include_deleted: { goType: "bool" }
-			scheduled_only: { goType: "bool" }
+			exclude_dismissed: {goType: "bool"}
+			include_deleted: {goType: "bool"}
+			scheduled_only: {goType: "bool"}
 			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
 
@@ -67,7 +67,7 @@ reminder: {
 	store: {
 		api: {
 			lookups: [
-				{ fields: ["id"] }
+				{fields: ["id"]},
 			]
 		}
 	}

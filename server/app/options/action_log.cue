@@ -6,7 +6,7 @@ import (
 
 actionLog: schema.#optionsGroup & {
 	handle: "action-log"
-	env: "ACTIONLOG"
+	env:    "ACTIONLOG"
 	options: {
 		enabled: {
 			type:          "bool"

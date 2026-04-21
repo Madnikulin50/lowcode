@@ -14,13 +14,13 @@ queue: {
 		attributes: {
 			id: schema.IdField
 			consumer: {
-				sortable: true,
-				goType: "string"
+				sortable: true
+				goType:   "string"
 				dal: {}
 			}
 			queue: {
-				sortable: true,
-				goType: "string"
+				sortable: true
+				goType:   "string"
 				dal: {}
 				envoy: {
 					identifier: true
@@ -28,7 +28,7 @@ queue: {
 			}
 			meta: {
 				goType: "types.QueueMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -42,7 +42,7 @@ queue: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
@@ -61,7 +61,7 @@ queue: {
 	envoy: {
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Queue"
+			mappedField:        "Queue"
 			identKeyAlias: []
 		}
 		store: {

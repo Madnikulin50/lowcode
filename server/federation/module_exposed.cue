@@ -16,34 +16,34 @@ exposedModule: {
 	model: {
 		ident: "federation_module_exposed"
 		attributes: {
-			id: schema.IdField
+			id:     schema.IdField
 			handle: schema.HandleField
 			name: {
 				sortable: true
 				dal: {}
 			}
 			node_id: {
-				sortable: true,
-				ident: "nodeID",
-				goType: "uint64",
+				sortable:   true
+				ident:      "nodeID"
+				goType:     "uint64"
 				storeIdent: "rel_node"
-				dal: { type: "Ref", refModelResType: "corteza::federation:node", default: 0 }
+				dal: {type: "Ref", refModelResType: "corteza::federation:node", default: 0}
 			}
 			compose_module_id: {
-				ident: "composeModuleID",
-				goType: "uint64",
+				ident:      "composeModuleID"
+				goType:     "uint64"
 				storeIdent: "rel_compose_module"
-				dal: { type: "ID" }
+				dal: {type: "ID"}
 			}
 			compose_namespace_id: {
-				ident: "composeNamespaceID",
-				goType: "uint64",
+				ident:      "composeNamespaceID"
+				goType:     "uint64"
 				storeIdent: "rel_compose_namespace"
-				dal: { type: "ID" }
+				dal: {type: "ID"}
 			}
 			fields: {
 				goType: "types.ModuleFieldSet"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -57,15 +57,15 @@ exposedModule: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	filter: {
 		struct: {
-			node_id:              { goType: "uint64", ident: "nodeID",             storeIdent: "rel_node" }
-			compose_module_id:    { goType: "uint64", ident: "composeModuleID",    storeIdent: "rel_compose_module" }
-			compose_namespace_id: { goType: "uint64", ident: "composeNamespaceID", storeIdent: "rel_compose_namespace" }
+			node_id: {goType: "uint64", ident: "nodeID", storeIdent: "rel_node"}
+			compose_module_id: {goType: "uint64", ident: "composeModuleID", storeIdent: "rel_compose_module"}
+			compose_namespace_id: {goType: "uint64", ident: "composeNamespaceID", storeIdent: "rel_compose_namespace"}
 		}
 
 		byValue: ["compose_module_id", "compose_namespace_id", "node_id"]
@@ -93,7 +93,7 @@ exposedModule: {
 
 						It returns federation module
 						"""
-				}
+				},
 			]
 		}
 	}

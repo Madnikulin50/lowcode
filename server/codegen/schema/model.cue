@@ -5,24 +5,23 @@ import (
 )
 
 #Model: {
-	ident: string
+	ident:      string
 	attributes: {
-		[name=_]: { "name": name }
+		[name=_]: {"name": name}
 	} & {
 		[string]: #ModelAttribute
 	}
 
 	omitGetterSetter: bool | *false
-	defaultGetter: bool | *false
-	defaultSetter: bool | *false
+	defaultGetter:    bool | *false
+	defaultSetter:    bool | *false
 
 	indexes: ({
-		[name=_]: { "name": name, "modelIdent": ident } & #ModelIndex
+		[name=_]: {"name": name, "modelIdent": ident} & #ModelIndex
 	} & {
 		[string]: #ModelIndex
 	}) | *({})
 }
-
 
 // logic in struct fields is a bit different
 #ModelAttribute: {
@@ -96,7 +95,7 @@ import (
 		identKeyAlias: [...string] | *[]
 		// identKeys defines what identifiers this attribute supports when
 		// decoding yaml documents
-		identKeys: ([identKeyLabel]+identKeyAlias)
+		identKeys: ([identKeyLabel] + identKeyAlias)
 
 		customDecoder: bool | *false
 		customEncoder: bool | *false
@@ -123,27 +122,26 @@ import (
 
 	nullable: bool | *false
 
-
 	if type == "ID" {
 		generatedByStore: bool | *false
-		default?: 0
+		default?:         0
 	}
 
 	if type == "Ref" {
 		refModelResType: #FQRT
-		attribute: #handle | *"id"
-		default?: 0
+		attribute:       #handle | *"id"
+		default?:        0
 	}
 
 	if type == "Timestamp" {
-		timezone: bool | *false
-		precision: number | *(-1)
+		timezone:                 bool | *false
+		precision:                number | *(-1)
 		defaultCurrentTimestamp?: true
 	}
 
 	if type == "Time" {
-		timezone: bool | *false
-		precision: number | *(-1)
+		timezone:                 bool | *false
+		precision:                number | *(-1)
 		defaultCurrentTimestamp?: true
 	}
 
@@ -153,13 +151,13 @@ import (
 
 	if type == "Number" {
 		precision: number | *(-1)
-		scale: number | *(-1)
-		default?: number
-		meta?: { [string]: _ }
+		scale:     number | *(-1)
+		default?:  number
+		meta?: {[string]: _}
 	}
 
 	if type == "Text" {
-		length: number | *0
+		length:   number | *0
 		default?: string
 	}
 
@@ -175,7 +173,7 @@ import (
 	if type == "Geometry" {}
 
 	if type == "JSON" {
-		default?: string | bytes
+		default?:            string | bytes
 		defaultEmptyObject?: true
 	}
 
@@ -198,16 +196,15 @@ import (
 	"Blob" |
 	"UUID"
 
-
 IdField: {
 	// Expecting ID field to always have name ID
-	name:       "id"
-	expIdent:   "ID"
-	unique:     true
+	name:     "id"
+	expIdent: "ID"
+	unique:   true
 
 	// @todo someday we'll replace this with the "ID" type
 	goType: "uint64"
-	dal: { type: "ID" }
+	dal: {type: "ID"}
 
 	envoy: #attributeEnvoy & {
 		identifier: true
@@ -215,12 +212,12 @@ IdField: {
 }
 HandleField: {
 	// Expecting ID field to always have name handle
-	name:   "handle"
-	unique: true
+	name:       "handle"
+	unique:     true
 	ignoreCase: true
 
 	goType: "string"
-	dal: { type: "Text", length: 64 }
+	dal: {type: "Text", length: 64}
 
 	envoy: #attributeEnvoy & {
 		identifier: true
@@ -229,7 +226,7 @@ HandleField: {
 
 AttributeUserRef: {
 	goType: "uint64"
-	dal: { type: "Ref", refModelResType: "corteza::system:user", default: 0 }
+	dal: {type: "Ref", refModelResType: "corteza::system:user", default: 0}
 	envoy: {
 		store: {
 			omitRefFilter: true
@@ -239,20 +236,20 @@ AttributeUserRef: {
 
 SortableTimestampField: {
 	sortable: true
-	goType: "time.Time"
-	dal: { type: "Timestamp", timezone: true, nullable: false }
+	goType:   "time.Time"
+	dal: {type: "Timestamp", timezone: true, nullable: false}
 }
 
 SortableTimestampNowField: {
 	sortable: true
-	goType: "time.Time"
-	dal: { type: "Timestamp", timezone: true, nullable: false, defaultCurrentTimestamp: true }
+	goType:   "time.Time"
+	dal: {type: "Timestamp", timezone: true, nullable: false, defaultCurrentTimestamp: true}
 }
 
 SortableTimestampNilField: {
 	sortable: true
-	goType: "*time.Time"
-	dal: { type: "Timestamp", timezone: true, nullable: true }
+	goType:   "*time.Time"
+	dal: {type: "Timestamp", timezone: true, nullable: true}
 }
 
 #ModelAttributeJsonTag: {
@@ -290,9 +287,9 @@ SortableTimestampNilField: {
 }
 
 #ModelIndex: close({
-	name:   #ident
+	name:       #ident
 	modelIdent: #ident
-	_attributes: { [_]: #ModelAttribute }
+	_attributes: {[_]: #ModelAttribute}
 	_words: strings.Replace(strings.Replace(name, "_", " ", -1), ".", " ", -1)
 
 	_ident: strings.ToCamel(strings.Replace(strings.ToTitle(_words), " ", "", -1))
@@ -301,12 +298,12 @@ SortableTimestampNilField: {
 	ident: #ident | *"\(modelIdent)_\(_ident)"
 
 	primary: bool | *(strings.ToLower(name) == "primary")
-	unique: bool  | *(strings.Contains(name, "unique") || primary)
+	unique:  bool | *(strings.Contains(name, "unique") || primary)
 
 	type: "BTREE" | *"BTREE"
 
- 	// index predicate,
- 	// condition that must be met for the index to be used
+	// index predicate,
+	// condition that must be met for the index to be used
 	predicate?: string
 
 	attribute?: string
@@ -321,7 +318,7 @@ SortableTimestampNilField: {
 		fields: [
 			for a in attributes {
 				{"attribute": a} & #ModelIndexField
-			}
+			},
 		]
 	}
 })
@@ -329,9 +326,9 @@ SortableTimestampNilField: {
 #IndexFieldModifier: "LOWERCASE"
 
 #ModelIndexField: close({
-  attribute: string
+	attribute: string
 	modifiers?: [#IndexFieldModifier, ...]
 	length?: number
-	sort?: "DESC" | "ASC"
-	nulls?: "FIRST" | "LAST"
+	sort?:   "DESC" | "ASC"
+	nulls?:  "FIRST" | "LAST"
 })

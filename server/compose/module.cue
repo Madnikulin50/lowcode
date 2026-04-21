@@ -21,10 +21,10 @@ module: {
 				}
 			}
 			namespace_id: {
-				ident: "namespaceID",
-				goType: "uint64",
+				ident:      "namespaceID"
+				goType:     "uint64"
 				storeIdent: "rel_namespace"
-				dal: { type: "Ref", refModelResType: "corteza::compose:namespace" }
+				dal: {type: "Ref", refModelResType: "corteza::compose:namespace"}
 
 				envoy: {
 					yaml: {
@@ -39,19 +39,19 @@ module: {
 			}
 			meta: {
 				goType: "rawJson"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			config: {
 				goType: "types.ModuleConfig"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			fields: {
-				goType: "types.ModuleFieldSet",
-				store: false
+				goType:     "types.ModuleFieldSet"
+				store:      false
 				omitSetter: true
 				omitGetter: true
 				envoy: {
@@ -66,10 +66,10 @@ module: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"namespace": { attribute: "namespace_id" },
+			"primary": {attribute: "id"}
+			"namespace": {attribute: "namespace_id"}
 			"unique_handle": {
-				fields: [{ attribute: "handle", modifiers: ["LOWERCASE"] }, { attribute: "namespace_id" }]
+				fields: [{attribute: "handle", modifiers: ["LOWERCASE"]}, {attribute: "namespace_id"}]
 				predicate: "handle != '' AND deleted_at IS NULL"
 			}
 		}
@@ -77,11 +77,11 @@ module: {
 
 	filter: {
 		struct: {
-			module_id: { goType: "[]uint64", ident: "moduleID", storeIdent: "id" }
-			namespace_id: { goType: "uint64", ident: "namespaceID", storeIdent: "rel_namespace" }
-			handle: { goType: "string" }
-			name: { goType: "string" }
-			deleted: { goType: "filter.State", storeIdent: "deleted_at" }
+			module_id: {goType: "[]uint64", ident: "moduleID", storeIdent: "id"}
+			namespace_id: {goType: "uint64", ident: "namespaceID", storeIdent: "rel_namespace"}
+			handle: {goType: "string"}
+			name: {goType: "string"}
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
 
 		query: ["handle", "name"]
@@ -93,12 +93,12 @@ module: {
 		scoped: true
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["modules", "mod"]
 
 			extendedResourcePostProcess: true
 			extendedResourceDecoders: [{
-				ident: "source"
+				ident:    "source"
 				expIdent: "Source"
 				// @deprecated records is what the old version used
 				identKeys: ["source", "datasource", "records"]
@@ -106,10 +106,10 @@ module: {
 			}]
 		}
 		store: {
-			postSetEncoder: true
-			extendedEncoder: true
+			postSetEncoder:        true
+			extendedEncoder:       true
 			extendedFilterBuilder: true
-			extendedDecoder: true
+			extendedDecoder:       true
 		}
 	}
 
@@ -118,9 +118,9 @@ module: {
 			"read": {}
 			"update": {}
 			"delete": {}
-			"record.create": description:  "Create record"
-			"owned-record.create": description:  "Create record with custom owner"
-			"records.search": description: "List, search or filter records"
+			"record.create": description:       "Create record"
+			"owned-record.create": description: "Create record with custom owner"
+			"records.search": description:      "List, search or filter records"
 		}
 	}
 

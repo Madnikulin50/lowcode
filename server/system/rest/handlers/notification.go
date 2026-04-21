@@ -3,18 +3,14 @@ package handlers
 // This file is auto-generated.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
-//
-// Definitions file that controls how this file is generated:
-//
+// the code is regenerated from system/rest.yaml
 
 import (
 	"context"
-	"net/http"
-
 	"github.com/cortezaproject/corteza/server/pkg/api"
 	"github.com/cortezaproject/corteza/server/system/rest/request"
 	"github.com/go-chi/chi/v5"
+	"net/http"
 )
 
 type (

@@ -6,7 +6,7 @@ import (
 
 dal_schema_alteration: {
 	features: {
-		labels: false
+		labels:  false
 		checkFn: false
 	}
 
@@ -16,63 +16,63 @@ dal_schema_alteration: {
 		attributes: {
 			id: schema.IdField
 			batchID: {
-				goType: "uint64"
+				goType:     "uint64"
 				storeIdent: "batch_id"
-				dal: { type: "ID" }
+				dal: {type: "ID"}
 			}
 			dependsOn: {
-				goType: "uint64"
+				goType:     "uint64"
 				storeIdent: "depends_on"
-				dal: { type: "Ref", refModelResType: "corteza::system:dal-schema-alteration" }
+				dal: {type: "Ref", refModelResType: "corteza::system:dal-schema-alteration"}
 			}
 			resource: {
 				storeIdent: "resource"
-				dal: { type: "Text", length: 256 }
+				dal: {type: "Text", length: 256}
 			}
 			resourceType: {
 				storeIdent: "resource_type"
-				dal: { type: "Text", length: 256 }
+				dal: {type: "Text", length: 256}
 			}
 			connectionID: {
-				goType: "uint64"
+				goType:     "uint64"
 				storeIdent: "connection_id"
-				dal: { type: "Ref", refModelResType: "corteza::system:dal-connection" }
+				dal: {type: "Ref", refModelResType: "corteza::system:dal-connection"}
 			}
 
 			kind: {
-				dal: { type: "Text", length: 256 }
+				dal: {type: "Text", length: 256}
 			}
 			params: {
 				goType: "*types.DalSchemaAlterationParams"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 
 			error: {
-				dal: { type: "Text" }
+				dal: {type: "Text"}
 			}
 
-			created_at: schema.SortableTimestampNowField
-			updated_at: schema.SortableTimestampNilField
-			deleted_at: schema.SortableTimestampNilField
+			created_at:   schema.SortableTimestampNowField
+			updated_at:   schema.SortableTimestampNilField
+			deleted_at:   schema.SortableTimestampNilField
 			completed_at: schema.SortableTimestampNilField
 			dismissed_at: schema.SortableTimestampNilField
-			created_by: schema.AttributeUserRef
-			updated_by: schema.AttributeUserRef
-			deleted_by: schema.AttributeUserRef
+			created_by:   schema.AttributeUserRef
+			updated_by:   schema.AttributeUserRef
+			deleted_by:   schema.AttributeUserRef
 			completed_by: schema.AttributeUserRef
 			dismissed_by: schema.AttributeUserRef
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 			"unique_alteration": {
-				 fields: [
-				   { attribute: "id" },
-				   { attribute: "batchID" },
-				 ]
-		 	}
+				fields: [
+					{attribute: "id"},
+					{attribute: "batchID"},
+				]
+			}
 		}
 	}
 
@@ -83,10 +83,10 @@ dal_schema_alteration: {
 
 	filter: {
 		struct: {
-			resource: {goType: "[]string", ident: "resource" }
-			resourceType: {goType: "string", ident: "resourceType", storeIdent: "resource_type" }
-			alteration_id: {goType: "[]uint64", ident: "alterationID", storeIdent: "id" }
-			batch_id: {goType: "[]uint64", ident: "batchID" }
+			resource: {goType: "[]string", ident: "resource"}
+			resourceType: {goType: "string", ident: "resourceType", storeIdent: "resource_type"}
+			alteration_id: {goType: "[]uint64", ident: "alterationID", storeIdent: "id"}
+			batch_id: {goType: "[]uint64", ident: "batchID"}
 			kind: {}
 			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 			completed: {goType: "filter.State", storeIdent: "completed_at"}
@@ -99,15 +99,15 @@ dal_schema_alteration: {
 
 	store: {
 		api: {
-		lookups: [
-			{
-				fields: ["id"]
-				description: """
-					searches for resource translation by ID
-					It also returns deleted resource translations.
-					"""
-			},
-		]
+			lookups: [
+				{
+					fields: ["id"]
+					description: """
+						searches for resource translation by ID
+						It also returns deleted resource translations.
+						"""
+				},
+			]
 		}
 	}
 }

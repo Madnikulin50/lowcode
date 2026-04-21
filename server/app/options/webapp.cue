@@ -9,7 +9,7 @@ webapp: schema.#optionsGroup & {
 
 	options: {
 		scss_dir_path: {
-			description:  "Path to custom SCSS source files directory"
+			description: "Path to custom SCSS source files directory"
 		}
 	}
 }

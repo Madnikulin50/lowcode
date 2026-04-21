@@ -8,32 +8,32 @@ component: schema.#component & {
 	handle: "system"
 
 	resources: {
-    "attachment":                   attachment
-    "application":           				application
-    "apigw-route":           				apigw_route
-    "apigw-filter":          				apigw_filter
-    "auth-client":           				auth_client
-    "auth-confirmed-client": 				auth_confirmed_client
-    "auth-session":          				auth_session
-    "auth-oa2token":         				auth_oa2token
-    "credential":            				credential
-    "data-privacy-request":  				data_privacy_request
-    "data-privacy-request-comment": data_privacy_request_comment
-    "queue":                 				queue
-    "queue-message":         				queue_message
-    "reminder":              				reminder
-		"notification":									notification
-    "report":                				report
-    "resource-translation":  				resource_translation
-    "role":                  				role
-    "role-member":           				role_member
-		"user-group":                  	user_group
-    "settings":              				settings
-    "template":              				template
-    "user":                  				user
-    "dal-connection":        				dal_connection
-    "dal-sensitivity-level": 				dal_sensitivity_level
-    "dal-schema-alteration": 				dal_schema_alteration
+		"attachment":                   attachment
+		"application":                  application
+		"apigw-route":                  apigw_route
+		"apigw-filter":                 apigw_filter
+		"auth-client":                  auth_client
+		"auth-confirmed-client":        auth_confirmed_client
+		"auth-session":                 auth_session
+		"auth-oa2token":                auth_oa2token
+		"credential":                   credential
+		"data-privacy-request":         data_privacy_request
+		"data-privacy-request-comment": data_privacy_request_comment
+		"queue":                        queue
+		"queue-message":                queue_message
+		"reminder":                     reminder
+		"notification":                 notification
+		"report":                       report
+		"resource-translation":         resource_translation
+		"role":                         role
+		"role-member":                  role_member
+		"user-group":                   user_group
+		"settings":                     settings
+		"template":                     template
+		"user":                         user
+		"dal-connection":               dal_connection
+		"dal-sensitivity-level":        dal_sensitivity_level
+		"dal-schema-alteration":        dal_schema_alteration
 	}
 
 	rbac: operations: {
@@ -56,7 +56,7 @@ component: schema.#component & {
 		"dal-connection.create": description:  "Create DAL connections"
 		"dal-connections.search": description: "List, search or filter DAL connections"
 
-		"dal-sensitivity-level.manage": description:  "Can manage DAL sensitivity levels"
+		"dal-sensitivity-level.manage": description: "Can manage DAL sensitivity levels"
 
 		"application.create": description:      "Create applications"
 		"applications.search": description:     "List, search or filter auth clients"

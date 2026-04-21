@@ -15,28 +15,28 @@ role: {
 			handle: schema.HandleField
 			meta: {
 				goType: "*types.RoleMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 
 			archived_at: schema.SortableTimestampNilField
-			created_at: schema.SortableTimestampNowField
-			updated_at: schema.SortableTimestampNilField
-			deleted_at: schema.SortableTimestampNilField
+			created_at:  schema.SortableTimestampNowField
+			updated_at:  schema.SortableTimestampNilField
+			deleted_at:  schema.SortableTimestampNilField
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	filter: {
 		struct: {
-			role_id: {goType: "[]uint64", ident: "roleID", storeIdent: "id" }
-			member_id: {goType: "uint64" }
-			user_group_id: {goType: "uint64" }
-			resource: {goType: "string" }
+			role_id: {goType: "[]uint64", ident: "roleID", storeIdent: "id"}
+			member_id: {goType: "uint64"}
+			user_group_id: {goType: "uint64"}
+			resource: {goType: "string"}
 			handle: {goType: "string"}
 			name: {goType: "string"}
 
@@ -52,7 +52,7 @@ role: {
 	envoy: {
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["roles"]
 		}
 		store: {}

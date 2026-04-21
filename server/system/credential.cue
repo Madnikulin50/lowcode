@@ -9,33 +9,33 @@ credential: {
 		omitGetterSetter: true
 
 		attributes: {
-			id:     schema.IdField
-			owner_id: { schema.AttributeUserRef, storeIdent: "rel_owner", ident: "ownerID" }
+			id: schema.IdField
+			owner_id: {schema.AttributeUserRef, storeIdent: "rel_owner", ident: "ownerID"}
 			label: {
 				dal: {}
 			}
 			kind: {
-				dal: { type: "Text", length: 128 }
+				dal: {type: "Text", length: 128}
 			}
 			credentials: {
 				dal: {}
 			}
 			meta: {
 				goType: "rawJson"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 			}
 
-			created_at: schema.SortableTimestampNowField
-			updated_at: schema.SortableTimestampNilField
-			deleted_at: schema.SortableTimestampNilField
+			created_at:   schema.SortableTimestampNowField
+			updated_at:   schema.SortableTimestampNilField
+			deleted_at:   schema.SortableTimestampNilField
 			last_used_at: schema.SortableTimestampNilField
-			expires_at: schema.SortableTimestampNilField
+			expires_at:   schema.SortableTimestampNilField
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 			"owner_kind": {
-				attributes: [ "owner_id", "kind" ]
+				attributes: [ "owner_id", "kind"]
 				predicate: "deleted_at IS NULL"
 			}
 		}
@@ -54,8 +54,8 @@ credential: {
 	}
 
 	features: {
-		labels: false
-		paging: false
+		labels:  false
+		paging:  false
 		sorting: false
 		checkFn: false
 	}

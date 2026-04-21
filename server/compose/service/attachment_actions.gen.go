@@ -3,10 +3,7 @@ package service
 // This file is auto-generated.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
-//
-// Definitions file that controls how this file is generated:
-// compose/service/attachment_actions.yaml
+/// the code is regenerated from compose/service/attachment_actions.yaml
 
 import (
 	"context"

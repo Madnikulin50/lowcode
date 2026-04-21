@@ -3,10 +3,7 @@ package automation
 // This file is auto-generated.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
-//
-// Definitions file that controls how this file is generated:
-// compose/automation/modules_handler.yaml
+/// the code is regenerated from compose/automation/modules_handler.yaml
 
 import (
 	"context"

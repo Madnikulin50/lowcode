@@ -6,8 +6,8 @@ import (
 
 auth_oa2token: {
 	features: {
-		labels: false
-		paging: false
+		labels:  false
+		paging:  false
 		sorting: false
 		checkFn: false
 	}
@@ -16,53 +16,53 @@ auth_oa2token: {
 		omitGetterSetter: true
 
 		attributes: {
-			id:     schema.IdField
+			id: schema.IdField
 			code: {
-				dal: { type: "Text", length: 48 }
+				dal: {type: "Text", length: 48}
 			}
 			access: {
-				dal: { type: "Text", length: 2048 }
+				dal: {type: "Text", length: 2048}
 			}
 			refresh: {
-				dal: { type: "Text", length: 48 }
+				dal: {type: "Text", length: 48}
 			}
 			data: {
 				goType: "rawJson"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 			}
 			remote_addr: {
-				dal: { type: "Text", length: 64 }
+				dal: {type: "Text", length: 64}
 			}
 			user_agent: {
 				dal: {}
 			}
 			client_id: {
-				goType: "uint64",
-				ident: "clientID",
+				goType:     "uint64"
+				ident:      "clientID"
 				storeIdent: "rel_client"
-				dal: { type: "Ref", refModelResType: "corteza::system:auth-client", default: 0 }
+				dal: {type: "Ref", refModelResType: "corteza::system:auth-client", default: 0}
 			}
 			user_id: {
-				goType: "uint64",
-				ident: "userID",
+				goType:     "uint64"
+				ident:      "userID"
 				storeIdent: "rel_user"
-				dal: { type: "Ref", refModelResType: "corteza::system:user", default: 0 }
+				dal: {type: "Ref", refModelResType: "corteza::system:user", default: 0}
 			}
 			created_at: schema.SortableTimestampNowField
 			expires_at: schema.SortableTimestampField
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"client_id": { attribute: "client_id" }
-			"code": { attribute: "code" }
-			"refresh": { attribute: "refresh" }
+			"primary": {attribute: "id"}
+			"client_id": {attribute: "client_id"}
+			"code": {attribute: "code"}
+			"refresh": {attribute: "refresh"}
 		}
 	}
 
 	filter: {
 		struct: {
-			user_id: { goType: "uint64", ident: "userID" }
+			user_id: {goType: "uint64", ident: "userID"}
 		}
 
 		byValue: ["user_id"]
@@ -75,18 +75,18 @@ auth_oa2token: {
 	store: {
 		api: {
 			lookups: [
-				{ fields: ["id"] },
-				{ fields: ["code"] },
-				{ fields: ["access"] },
-				{ fields: ["refresh"] },
+				{fields: ["id"]},
+				{fields: ["code"]},
+				{fields: ["access"]},
+				{fields: ["refresh"]},
 			]
 
 			functions: [
-				{ expIdent: "DeleteExpiredAuthOA2Tokens" },
-				{ expIdent: "DeleteAuthOA2TokenByCode",    args: [ { ident: "code",    goType: "string" } ] },
-				{ expIdent: "DeleteAuthOA2TokenByAccess",  args: [ { ident: "access",  goType: "string" } ] },
-				{ expIdent: "DeleteAuthOA2TokenByRefresh", args: [ { ident: "refresh", goType: "string" } ] },
-				{ expIdent: "DeleteAuthOA2TokenByUserID",  args: [ { ident: "userID",  goType: "uint64" } ] },
+				{expIdent: "DeleteExpiredAuthOA2Tokens"},
+				{expIdent: "DeleteAuthOA2TokenByCode", args: [ {ident:    "code", goType:    "string"}]},
+				{expIdent: "DeleteAuthOA2TokenByAccess", args: [ {ident:  "access", goType:  "string"}]},
+				{expIdent: "DeleteAuthOA2TokenByRefresh", args: [ {ident: "refresh", goType: "string"}]},
+				{expIdent: "DeleteAuthOA2TokenByUserID", args: [ {ident:  "userID", goType:  "uint64"}]},
 			]
 		}
 	}

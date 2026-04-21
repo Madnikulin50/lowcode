@@ -76,7 +76,7 @@ func procRest(mm ...string) (dd []*restDef, err error) {
 			defer f.Close()
 
 			var d = &restDef{}
-
+			d.Source = m
 			if err := yaml.NewDecoder(f).Decode(d); err != nil {
 				return err
 			}

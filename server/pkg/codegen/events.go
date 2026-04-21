@@ -242,6 +242,7 @@ func genEvents(tpl *template.Template, dd ...*eventsDef) (err error) {
 		path.Join("automation", "rest", "eventTypes.gen.go"),
 		tplAutomationRestDefGen,
 		map[string]interface{}{
+			"Source":      dd[0].Source,
 			"Definitions": dd,
 			"Imports":     collectEventDefImports("", dd...),
 		})

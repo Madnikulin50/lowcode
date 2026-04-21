@@ -7,11 +7,9 @@ import (
 	"github.com/cortezaproject/corteza/server/codegen/schema"
 )
 
-
 _StoreResource: {
-	res     = "res":     schema.#Resource
+	res = "res":         schema.#Resource
 	typePkg = "typePkg": string
-
 
 	pkAttrNames: [string, ...]
 	hasPrimaryKey: res.model.indexes.primary != _|_
@@ -20,7 +18,7 @@ _StoreResource: {
 		// primary key flag is no longer explicitly set on
 		// the attribute but via model.indexes.primary
 		pkAttrNames: [
-			for f in res.model.indexes.primary.fields { f.attribute }
+			for f in res.model.indexes.primary.fields {f.attribute},
 		]
 	}
 
@@ -34,7 +32,6 @@ _StoreResource: {
 		goSetType:      "\(typePkg).\(res.expIdent)Set"
 		goFilterType:   "\(typePkg).\(res.filter.expIdent)"
 
-
 		struct: [ for attr in res.model.attributes if attr.store {
 			"ident":      attr.ident
 			"expIdent":   attr.expIdent
@@ -47,26 +44,26 @@ _StoreResource: {
 
 		filter: {
 			// query fields as defined in struct
-			"query":        [ for name in res.filter.query        {res.model.attributes[name]}],
+			"query": [ for name in res.filter.query {res.model.attributes[name]}]
 
 			// filter by nil state as defined in filter
-			"byNilState":   [ for name in res.filter.byNilState   {res.filter.struct[name]}]
+			"byNilState": [ for name in res.filter.byNilState {res.filter.struct[name]}]
 
 			// filter by false as defined in filter
 			"byFalseState": [ for name in res.filter.byFalseState {res.filter.struct[name]}]
 
 			// filter by value as defined in filter
 			// @todo this should be pulled from the struct
-			"byValue":      [ for name in res.filter.byValue      {res.filter.struct[name]}]
-			"byLabel":      res.features.labels
-			"byFlag":       res.features.flags
+			"byValue": [ for name in res.filter.byValue {res.filter.struct[name]}]
+			"byLabel": res.features.labels
+			"byFlag":  res.features.flags
 		}
 
 		auxIdent:  "aux\(expIdent)"
 		auxStruct: struct
 
 		features: {
-			paging: res.features.paging
+			paging:  res.features.paging
 			sorting: res.features.sorting
 			checkFn: res.features.checkFn
 		}
@@ -83,10 +80,10 @@ _StoreResource: {
 
 				if hasPrimaryKey {
 					deleteByPK: {
-						"pkAttrNames": pkAttrNames,
-						attributes:    [ for attr in pkAttrNames { res.model.attributes[attr] } ]
-						_expIdents:    strings.Join([ for attr in pkAttrNames { res.model.attributes[attr].expIdent } ], "")
-						"expFnIdent":  "Delete\(res.store.expIdent)By\(_expIdents)"
+						"pkAttrNames": pkAttrNames
+						attributes: [ for attr in pkAttrNames {res.model.attributes[attr]}]
+						_expIdents:   strings.Join([ for attr in pkAttrNames {res.model.attributes[attr].expIdent}], "")
+						"expFnIdent": "Delete\(res.store.expIdent)By\(_expIdents)"
 					}
 				}
 
@@ -105,15 +102,15 @@ _StoreResource: {
 							for name in l.fields {
 								let attr = res.model.attributes[name]
 
-								"ident":  attr.ident
-								"storeIdent":  attr.storeIdent
-								"goType": attr.goType
+								"ident":      attr.ident
+								"storeIdent": attr.storeIdent
+								"goType":     attr.goType
 								"ignoreCase": attr.ignoreCase
 							},
 						]
 
-						"nullConstraint": l.nullConstraint
-						"returnType":     "\(goType)"
+						"nullConstraint":    l.nullConstraint
+						"returnType":        "\(goType)"
 						"collectionFnIdent": "\(res.store.ident)Collection"
 					},
 				]
@@ -161,9 +158,9 @@ _StoreResource: {
 					fields: [ for attr in res.model.attributes if attr.sortable || attr.unique || list.Contains(pkAttrNames, attr.name) {
 						attr
 						"primaryKey": list.Contains(pkAttrNames, attr.name)
-					} ]
+					}]
 
-					primaryKeys: [ for attr in res.model.attributes if list.Contains(pkAttrNames, attr.name) {attr} ]
+					primaryKeys: [ for attr in res.model.attributes if list.Contains(pkAttrNames, attr.name) {attr}]
 				}
 
 				checkConstraints: {
@@ -212,11 +209,11 @@ _payload: {
 		for cmp in app.corteza.components for res in cmp.resources if res.store != _|_ {
 			// use _Store resource as a function (https://cuetorials.com/patterns/functions/)
 			// and pass res(ource) and type-package string in as "arguments"
-			"\(res.store.ident)": { _StoreResource & { "res": res, "typePkg": "\(cmp.ident)Type" } }.result
-		},
+			"\(res.store.ident)": {_StoreResource & {"res": res, "typePkg": "\(cmp.ident)Type"}}.result
+		}
 
 		for res in app.corteza.resources if res.store != _|_ {
-			"\(res.store.ident)": { _StoreResource & { "res": res, "typePkg": "\(res.package.ident)Type" } }.result
+			"\(res.store.ident)": {_StoreResource & {"res": res, "typePkg": "\(res.package.ident)Type"}}.result
 		}
 	}
 }
@@ -246,6 +243,6 @@ _payload: {
 			},
 		]
 
-		"payload":  { _payload }
+		"payload": {_payload}
 	},
 ]

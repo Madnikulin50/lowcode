@@ -21,11 +21,11 @@ SMTP: schema.#optionsGroup & {
 
 	options: {
 		host: {
-			description:  "The SMTP server hostname."
+			description: "The SMTP server hostname."
 		}
 		port: {
-			type:          "int"
-			description:   "The SMTP post."
+			type:        "int"
+			description: "The SMTP post."
 		}
 		user: {
 			description: "The SMTP username."

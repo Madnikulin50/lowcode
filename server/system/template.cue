@@ -9,53 +9,53 @@ template: {
 		// length for the lang is now a bit shorter
 		// Reason for that is supported index length in MySQL
 		attributes: {
-			id:     schema.IdField
-			owner_id:   {
-				storeIdent: "rel_owner",
-				ident: "ownerID"
-				schema.AttributeUserRef,
+			id: schema.IdField
+			owner_id: {
+				storeIdent: "rel_owner"
+				ident:      "ownerID"
+				schema.AttributeUserRef
 			}
 			handle: schema.HandleField
 			language: {
-				sortable: true,
-				goType: "string"
-				dal: { length: 32 }
+				sortable: true
+				goType:   "string"
+				dal: {length: 32}
 			}
 			type: {
-				sortable: true,
-				goType: "types.DocumentType"
+				sortable: true
+				goType:   "types.DocumentType"
 				dal: {}
 				omitSetter: true
 				omitGetter: true
 			}
 			partial: {
 				goType: "bool"
-				dal: { type: "Boolean" }
+				dal: {type: "Boolean"}
 			}
 			meta: {
 				goType: "types.TemplateMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			template: {
-				sortable: true,
-				goType: "string"
+				sortable: true
+				goType:   "string"
 				dal: {}
 			}
 
-			created_at: schema.SortableTimestampNowField
-			updated_at: schema.SortableTimestampNilField
-			deleted_at: schema.SortableTimestampNilField
+			created_at:   schema.SortableTimestampNowField
+			updated_at:   schema.SortableTimestampNilField
+			deleted_at:   schema.SortableTimestampNilField
 			last_used_at: schema.SortableTimestampNilField
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 			"unique_language_handle": {
 				fields: [
-					{ attribute: "language" },
-					{ attribute: "handle", modifier: [ "LOWERCASE" ] }
+					{attribute: "language"},
+					{attribute: "handle", modifier: [ "LOWERCASE"]},
 				]
 				predicate: "handle != '' AND deleted_at IS NULL"
 			}
@@ -67,7 +67,7 @@ template: {
 			template_id: {goType: "[]uint64", ident: "templateID", storeIdent: "id"}
 			handle: {goType: "string"}
 			type: {goType: "string"}
-			owner_id: {goType: "uint64", storeIdent: "rel_owner", ident: "ownerID" }
+			owner_id: {goType: "uint64", storeIdent: "rel_owner", ident: "ownerID"}
 			partial: {goType: "bool"}
 			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
@@ -80,7 +80,7 @@ template: {
 	envoy: {
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["templates"]
 		}
 		store: {}

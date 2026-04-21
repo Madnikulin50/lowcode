@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"go/format"
 	"io"
@@ -14,6 +15,24 @@ import (
 func goTemplate(dst string, tpl *template.Template, payload interface{}) (err error) {
 	var output io.WriteCloser
 	buf := bytes.Buffer{}
+
+	if os.Getenv("DEBUG") != "" {
+		d, err := json.Marshal(payload)
+		if err != nil {
+			fmt.Println("Error marshalling payload")
+		} else {
+			mp := make(map[string]interface{})
+			err = json.Unmarshal(d, &mp)
+			if err != nil {
+				fmt.Println("Error unmarshalling payload")
+			} else {
+				if mp["source"] == nil && mp["Source"] == nil {
+					fmt.Println("No source")
+				}
+			}
+		}
+
+	}
 
 	if err := tpl.Execute(&buf, payload); err != nil {
 		return err

@@ -6,7 +6,7 @@ import (
 
 queue_message: {
 	features: {
-		labels: false
+		labels:  false
 		checkFn: false
 	}
 
@@ -14,21 +14,21 @@ queue_message: {
 		omitGetterSetter: true
 
 		attributes: {
-		  id:        schema.IdField
-		  queue:     {
-		  	sortable: true
-		  	dal: {}
-		  }
-		  payload:   {
-		  	goType: "[]byte"
-		  	dal: { type: "Blob" }
-		  }
-		  created:   schema.SortableTimestampNilField
-		  processed: schema.SortableTimestampNilField
+			id: schema.IdField
+			queue: {
+				sortable: true
+				dal: {}
+			}
+			payload: {
+				goType: "[]byte"
+				dal: {type: "Blob"}
+			}
+			created:   schema.SortableTimestampNilField
+			processed: schema.SortableTimestampNilField
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 

@@ -11,34 +11,34 @@ apigw_route: {
 
 	model: {
 		attributes: {
-			id:       schema.IdField
+			id: schema.IdField
 			endpoint: {
 				sortable: true
 				dal: {}
 			}
-			method:   {
+			method: {
 				sortable: true
 				dal: {}
 			}
 			enabled: {
-				sortable: true,
-				goType: "bool"
-				dal: { type: "Boolean" }
+				sortable: true
+				goType:   "bool"
+				dal: {type: "Boolean"}
 			}
 			meta: {
 				goType: "types.ApigwRouteMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
-			group:    {
-				sortable: true,
-				goType: "uint64",
+			group: {
+				sortable:   true
+				goType:     "uint64"
 				storeIdent: "rel_group"
-			  dal: {
-			  	type: "Ref",
-			  	// @todo what does this do?
-			  	refModelResType: "corteza::system:apigw-group"
+				dal: {
+					type: "Ref"
+					// @todo what does this do?
+					refModelResType: "corteza::system:apigw-group"
 				}
 				envoy: {
 					store: {
@@ -56,36 +56,36 @@ apigw_route: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	envoy: {
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Endpoint"
+			mappedField:        "Endpoint"
 			identKeyAlias: ["endpoints"]
 			extendedResourceDecoders: [{
-				ident: "filters"
+				ident:    "filters"
 				expIdent: "Filters"
 				identKeys: ["filters"]
 				supportMappedInput: false
 			}]
 			extendedResourceEncoders: [{
-				ident: "apigwFilter"
+				ident:    "apigwFilter"
 				expIdent: "ApigwFilter"
 				identKey: "filters"
 			}]
 		}
 		store: {
-			handleField: "Endpoint"
+			handleField:     "Endpoint"
 			extendedDecoder: true
 		}
 	}
 
 	filter: {
 		struct: {
-			apigw_route_id: { goType: "[]uint64", ident: "apigwRouteID", storeIdent: "id" }
+			apigw_route_id: {goType: "[]uint64", ident: "apigwRouteID", storeIdent: "id"}
 			route: {goType: "string", storeIdent: "id"}
 			endpoint: {goType: "string"}
 			method: {goType: "string"}
@@ -98,7 +98,6 @@ apigw_route: {
 		byNilState: ["deleted"]
 		byFalseState: ["disabled"]
 	}
-
 
 	rbac: {
 		operations: {

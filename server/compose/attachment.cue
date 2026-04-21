@@ -12,37 +12,37 @@ attachment: {
 	model: {
 		ident: "compose_attachment"
 		attributes: {
-			id:       schema.IdField
+			id: schema.IdField
 			namespace_id: {
-				ident: "namespaceID",
-				goType: "uint64",
+				ident:      "namespaceID"
+				goType:     "uint64"
 				storeIdent: "rel_namespace"
-				dal: { type: "Ref", refModelResType: "corteza::compose:namespace" }
+				dal: {type: "Ref", refModelResType: "corteza::compose:namespace"}
 			}
 			owner_id: {
-				sortable: true,
-				goType: "uint64",
-				storeIdent: "rel_owner",
-				ident: "ownerID"
-				dal: { type: "Ref", refModelResType: "corteza::system:user" }
+				sortable:   true
+				goType:     "uint64"
+				storeIdent: "rel_owner"
+				ident:      "ownerID"
+				dal: {type: "Ref", refModelResType: "corteza::system:user"}
 			}
 			kind: {
 				sortable: true
 				dal: {}
 			}
-			url:  {
+			url: {
 				dal: {}
 			}
 			preview_url: {
 				dal: {}
 			}
-			name:        {
+			name: {
 				sortable: true
 				dal: {}
 			}
-			meta:        {
+			meta: {
 				goType: "types.AttachmentMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -52,19 +52,19 @@ attachment: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
-			"namespace": { attribute: "namespace_id" },
+			"primary": {attribute: "id"}
+			"namespace": {attribute: "namespace_id"}
 		}
 	}
 
 	filter: {
 		struct: {
 			kind: {}
-			namespace_id: { goType: "uint64", ident: "namespaceID" }
-			page_id: { goType: "uint64", ident: "pageID" }
-			record_id: { goType: "uint64", ident: "recordID" }
-			module_id: { goType: "uint64", ident: "moduleID" }
-			field_name: { }
+			namespace_id: {goType: "uint64", ident: "namespaceID"}
+			page_id: {goType: "uint64", ident: "pageID"}
+			record_id: {goType: "uint64", ident: "recordID"}
+			module_id: {goType: "uint64", ident: "moduleID"}
+			field_name: {}
 		}
 
 		byValue: ["kind", "namespace_id"]
@@ -79,7 +79,7 @@ attachment: {
 
 		api: {
 			lookups: [
-				{ fields: ["id"] },
+				{fields: ["id"]},
 			]
 		}
 	}

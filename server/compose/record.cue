@@ -20,35 +20,35 @@ record: {
 			id: schema.IdField
 			revision: {
 				goType: "int"
-				dal: { type: "Number", meta: { "rdbms:type": "integer" }, default: 0 }
+				dal: {type: "Number", meta: {"rdbms:type": "integer"}, default: 0}
 			}
 			module_id: {
-			 	ident: "moduleID",
-				goType: "uint64",
+				ident:      "moduleID"
+				goType:     "uint64"
 				storeIdent: "rel_module"
-				dal: { type: "Ref", refModelResType: "corteza::compose:module" }
+				dal: {type: "Ref", refModelResType: "corteza::compose:module"}
 			}
 			module: {
-				goType: "*types.Module",
-				store: false
+				goType:     "*types.Module"
+				store:      false
 				omitSetter: true
 				omitGetter: true
 			}
 			values: {
-				goType: "types.RecordValueSet",
-				dal: { type: "JSON", defaultEmptyObject: true }
+				goType: "types.RecordValueSet"
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
 			meta: {
-				goType: "map[string]any",
-				dal: { type: "JSON", defaultEmptyObject: true }
+				goType: "map[string]any"
+				dal: {type: "JSON", defaultEmptyObject: true}
 			}
 			namespace_id: {
-				ident: "namespaceID",
-				goType: "uint64",
+				ident:      "namespaceID"
+				goType:     "uint64"
 				storeIdent: "rel_namespace"
-				dal: { type: "Ref", refModelResType: "corteza::compose:namespace" }
+				dal: {type: "Ref", refModelResType: "corteza::compose:namespace"}
 			}
 
 			created_at: schema.SortableTimestampNowField
@@ -69,7 +69,7 @@ record: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 			"idx_compose_record_base": {
 				attributes: ["module_id", "namespace_id"]
 				predicate: "deleted_at IS NULL"
@@ -84,10 +84,10 @@ record: {
 
 	filter: {
 		struct: {
-			module_id: { goType: "uint64" }
-			namespace_id: { goType: "uint64" }
-			query: { goType: "string" }
-			deleted: { goType: "filter.State", storeIdent: "deleted_at" }
+			module_id: {goType: "uint64"}
+			namespace_id: {goType: "uint64"}
+			query: {goType: "string"}
+			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
 
 		byNilState: ["deleted"]

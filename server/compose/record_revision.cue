@@ -6,28 +6,28 @@ import (
 
 record_revision: {
 	model: {
-		ident: "compose_record_revisions"
+		ident:            "compose_record_revisions"
 		omitGetterSetter: true
 
 		attributes: {
-			id: schema.IdField
-			timestamp: schema.SortableTimestampField & { storeIdent: "ts" }
+			id:        schema.IdField
+			timestamp: schema.SortableTimestampField & {storeIdent: "ts"}
 			rel_resource: {
-			 	ident: "resourceID",
-				goType: "uint64",
-				dal: { type: "ID" }
+				ident:  "resourceID"
+				goType: "uint64"
+				dal: {type: "ID"}
 			}
 			revision: {
 				goType: "uint"
-				dal: { type: "Number", meta: { "rdbms:type": "integer" } }
+				dal: {type: "Number", meta: {"rdbms:type": "integer"}}
 			}
 			operation: {
 				dal: {}
 			}
-			rel_user:   schema.AttributeUserRef
+			rel_user: schema.AttributeUserRef
 			delta: {
-				goType: "types.RecordValueSet",
-				dal: { type: "JSON", defaultEmptyObject: true }
+				goType: "types.RecordValueSet"
+				dal: {type: "JSON", defaultEmptyObject: true}
 			}
 			comment: {
 				dal: {}
@@ -35,7 +35,7 @@ record_revision: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 

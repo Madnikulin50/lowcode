@@ -10,14 +10,14 @@ dal_sensitivity_level: {
 			id:     schema.IdField
 			handle: schema.HandleField
 			level: {
-				sortable: true,
-				goType: "int"
-				dal: { type: "Number", meta: { "rdbms:type": "integer" } }
+				sortable: true
+				goType:   "int"
+				dal: {type: "Number", meta: {"rdbms:type": "integer"}}
 			}
 
 			meta: {
 				goType: "types.DalSensitivityLevelMeta"
-				dal: { type: "JSON", defaultEmptyObject: true }
+				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
 			}
@@ -30,14 +30,14 @@ dal_sensitivity_level: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	filter: {
 		struct: {
 			dal_sensitivity_level_id: {goType: "[]uint64", ident: "dalSensitivityLevelID", storeIdent: "id"}
-			handle: { goType: "string" }
+			handle: {goType: "string"}
 
 			deleted: {goType: "filter.State", storeIdent: "deleted_at"}
 		}
@@ -49,7 +49,7 @@ dal_sensitivity_level: {
 	envoy: {
 		yaml: {
 			supportMappedInput: true
-			mappedField: "Handle"
+			mappedField:        "Handle"
 			identKeyAlias: ["sensitivity_level"]
 		}
 		store: {}
@@ -69,7 +69,7 @@ dal_sensitivity_level: {
 
 						It returns user even if deleted or suspended
 						"""
-				}
+				},
 			]
 		}
 	}

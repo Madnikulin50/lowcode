@@ -13,10 +13,10 @@ data_privacy_request_comment: {
 		attributes: {
 			id: schema.IdField
 			request_id: {
-				ident: "requestID",
-				goType: "uint64",
+				ident:      "requestID"
+				goType:     "uint64"
 				storeIdent: "rel_request"
-				dal: { type: "Ref", refModelResType: "corteza::system:user" }
+				dal: {type: "Ref", refModelResType: "corteza::system:user"}
 			}
 			comment: {
 				goType: "string"
@@ -32,13 +32,13 @@ data_privacy_request_comment: {
 		}
 
 		indexes: {
-			"primary": { attribute: "id" }
+			"primary": {attribute: "id"}
 		}
 	}
 
 	filter: {
 		struct: {
-			request_id: {goType: "[]uint64", ident: "requestID", storeIdent: "rel_request" }
+			request_id: {goType: "[]uint64", ident: "requestID", storeIdent: "rel_request"}
 		}
 
 		query: []
