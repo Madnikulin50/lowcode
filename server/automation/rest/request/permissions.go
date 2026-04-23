@@ -8,13 +8,14 @@ package request
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/payload"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/go-chi/chi/v5"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"strings"
+
+	"github.com/cortezaproject/corteza/server/pkg/payload"
+	"github.com/cortezaproject/corteza/server/pkg/rbac"
+	"github.com/go-chi/chi/v5"
 )
 
 // dummy vars to prevent
@@ -132,9 +133,6 @@ func (r *PermissionsEffective) Fill(req *http.Request) (err error) {
 
 		if val, ok := tmp["resource"]; ok && len(val) > 0 {
 			r.Resource, err = val[0], nil
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -179,31 +177,16 @@ func (r *PermissionsTrace) Fill(req *http.Request) (err error) {
 
 		if val, ok := tmp["resource[]"]; ok {
 			r.Resource, err = val, nil
-			if err != nil {
-				return err
-			}
 		} else if val, ok := tmp["resource"]; ok {
 			r.Resource, err = val, nil
-			if err != nil {
-				return err
-			}
 		}
 		if val, ok := tmp["userID"]; ok && len(val) > 0 {
 			r.UserID, err = payload.ParseUint64(val[0]), nil
-			if err != nil {
-				return err
-			}
 		}
 		if val, ok := tmp["roleID[]"]; ok {
 			r.RoleID, err = payload.ParseUint64s(val), nil
-			if err != nil {
-				return err
-			}
 		} else if val, ok := tmp["roleID"]; ok {
 			r.RoleID, err = payload.ParseUint64s(val), nil
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -242,14 +225,8 @@ func (r *PermissionsRead) Fill(req *http.Request) (err error) {
 
 		if val, ok := tmp["resource[]"]; ok {
 			r.Resource, err = val, nil
-			if err != nil {
-				return err
-			}
 		} else if val, ok := tmp["resource"]; ok {
 			r.Resource, err = val, nil
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -259,9 +236,6 @@ func (r *PermissionsRead) Fill(req *http.Request) (err error) {
 
 		val = chi.URLParam(req, "roleID")
 		r.RoleID, err = payload.ParseUint64(val), nil
-		if err != nil {
-			return err
-		}
 
 	}
 

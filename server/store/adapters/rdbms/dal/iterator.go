@@ -214,8 +214,12 @@ func (i *iterator) fetch(ctx context.Context) (rows *sql.Rows, err error) {
 // generates slice of ordered-expressions
 func (i *iterator) orderByExp(sort filter.SortExprSet) (oe []exp.OrderedExpression) {
 	for _, s := range sort {
+
 		// assuming all columns were pre-validated!
-		tmp, _ := i.src.table.AttributeExpression(s.Column)
+		tmp, err := i.src.table.AttributeExpression(s.Column)
+		if err != nil {
+			continue
+		}
 
 		if s.Descending {
 			oe = append(oe, i.src.dialect.OrderedExpression(tmp, exp.DescSortDir, exp.NullsLastSortType))

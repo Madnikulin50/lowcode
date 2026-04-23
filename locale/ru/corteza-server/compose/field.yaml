@@ -1,0 +1,14 @@
+system:
+  ID: ID записи
+  moduleID: ID модуля
+  namespaceID: ID пространства
+  revision: Ревизия записи
+  meta: Метаданные
+  recordID: ID записи
+  createdAt: Время создания
+  createdBy: Создал
+  deletedAt: Время удаления
+  deletedBy: Удалил
+  ownedBy: Владелец
+  updatedAt: Время обновления
+  updatedBy: Обновил

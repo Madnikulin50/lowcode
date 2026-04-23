@@ -286,6 +286,10 @@ func (t *Transpiler) input() {
 			break
 		}
 
+        if err == io.EOF {
+
+        }
+
 		plen := int(l)
 		if len(t.msgBuf) < plen {
 			t.msgBuf = make([]byte, plen)

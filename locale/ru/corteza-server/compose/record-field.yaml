@@ -1,0 +1,7 @@
+errors:
+  empty: Обязательное поле
+  invalidValue: Неверное значение поля
+  invalidRef: Invalid field reference
+  duplicateValueInSet: The values [{{value}}] already exist in another record
+  duplicateValue: The value "{{value}}" already exists in another record
+  updateDenied: Нет доступа на изменение поля

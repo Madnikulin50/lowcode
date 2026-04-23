@@ -113,7 +113,10 @@ func (md mockDispatcher) WaitFor(ctx context.Context, ev eventbus.Event) (err er
 
 func tickOnce(tt time.Ticker) {
 	go func() {
-		for ; true; <-tt.C {
+		for {
+			select {
+			case <-tt.C:
+			}
 		}
 	}()
 }

@@ -75,7 +75,7 @@ results:
   status: &rStatus
     wf: String
 
-  stautsCode: &rStatusCode
+  statusCode: &rStatusCode
     wf: Integer
 
   headers: &rHeaders

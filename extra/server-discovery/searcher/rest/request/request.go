@@ -72,66 +72,36 @@ func (r *SearchResources) Fill(req *http.Request) (err error) {
 
 		if val, ok := tmp["q"]; ok && len(val) > 0 {
 			r.Q, err = val[0], nil
-			if err != nil {
-				return err
-			}
 		}
 
 		if val, ok := tmp["size"]; ok && len(val) > 0 {
 			r.Size, err = payload.ParseInt(val[0]), nil
-			if err != nil {
-				return err
-			}
 		}
 
 		if val, ok := tmp["from"]; ok && len(val) > 0 {
 			r.From, err = payload.ParseInt(val[0]), nil
-			if err != nil {
-				return err
-			}
 		}
 
 		if val, ok := tmp["resourceTypes[]"]; ok {
 			r.Rt, err = val, nil
-			if err != nil {
-				return err
-			}
 		} else if val, ok = tmp["resourceTypes"]; ok {
 			r.Rt, err = val, nil
-			if err != nil {
-				return err
-			}
 		}
 
 		if val, ok := tmp["namespaceAggs[]"]; ok {
 			r.NamespaceAggs, err = val, nil
-			if err != nil {
-				return err
-			}
 		} else if val, ok = tmp["namespaceAggs"]; ok {
 			r.NamespaceAggs, err = val, nil
-			if err != nil {
-				return err
-			}
 		}
 
 		if val, ok := tmp["moduleAggs[]"]; ok {
 			r.ModuleAggs, err = val, nil
-			if err != nil {
-				return err
-			}
 		} else if val, ok = tmp["moduleAggs"]; ok {
 			r.ModuleAggs, err = val, nil
-			if err != nil {
-				return err
-			}
 		}
 
 		if val, ok := tmp["dump"]; ok && len(val) > 0 {
 			r.DumpRaw, err = val[0], nil
-			if err != nil {
-				return err
-			}
 		}
 	}
 

@@ -1,0 +1,11 @@
+template:
+  title: Авторизованные клиент
+
+  list:
+    authorized-on: Авторизован на
+    buttons:
+      revoke:
+    empty: Не нейдено авторизованных клиентов
+
+alerts:
+  removed: Удалена авторизация клиента

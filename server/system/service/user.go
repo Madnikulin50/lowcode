@@ -995,8 +995,6 @@ func (svc user) RemoveSynthetic(ctx context.Context) error {
 				}
 			}
 		}
-
-		return
 	})
 
 }

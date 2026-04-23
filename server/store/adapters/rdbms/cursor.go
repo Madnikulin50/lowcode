@@ -292,7 +292,7 @@ func CursorExpression(
 			// Get the key context so we know how to format fields and format typecasts
 			ident, err = identLookup(cc[i])
 			if err != nil {
-				return
+				continue
 			}
 		} else {
 			ident = exp.NewLiteralExpression("?", exp.NewIdentifierExpression("", "", cc[i]))

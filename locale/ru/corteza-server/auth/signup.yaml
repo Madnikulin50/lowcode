@@ -1,0 +1,24 @@
+template:
+  title: Вход
+  form:
+    email:
+      label: Почтовый адрес
+      placeholder: email@domain.tld
+    password:
+      label: Password
+      placeholder: Password
+    name:
+      label: Полное имя
+      placeholder: Your full name
+    nickname:
+      label: Short name, nickname or handle
+      placeholder: Short name, nickname or handle
+    button:
+      sign-up: Подтвердить
+  log-in: Already have an account? <a data-test-id="link-login" href="{{link}}">Log in</a>
+
+alerts:
+  signup-successful: Успешный вход
+  email-confirmed-logged-in: Почтовый адрес address confirmed, you're now logged in.
+  invalid-expired-token: Invalid or expired email confirmation token, please resend confirmation request.
+  signup-disabled: Signup disabled

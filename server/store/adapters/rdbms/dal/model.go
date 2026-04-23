@@ -221,11 +221,16 @@ func (d *model) Search(f filter.Filter) (i *iterator, err error) {
 
 	// validate order-by
 	for _, s := range orderBy {
+		att := d.model.Attributes.FindByIdent(s.Column)
+		if att == nil {
+			continue
+		}
+
 		if _, err = d.table.AttributeExpression(s.Column); err != nil {
 			return nil, err
 		}
 
-		if att := d.model.Attributes.FindByIdent(s.Column); att != nil && att.MultiValue {
+		if att.MultiValue {
 			return nil, fmt.Errorf("not allowed to sort by multi-value attribute: %s", s.Column)
 		}
 
