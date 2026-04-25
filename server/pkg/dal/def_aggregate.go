@@ -202,10 +202,10 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	}
 
 	// Generic validation
-	if len(def.Group) == 0 {
+	/*if len(def.Group) == 0 {
 		err = fmt.Errorf("no group attributes specified")
 		return
-	}
+	}*/
 
 	if len(def.OutAttributes) == 0 {
 		err = fmt.Errorf("no output attributes specified")

@@ -580,7 +580,7 @@ resources:
         update:
           title: Update any page layout
     record:
-      label: Records
+      label: Записи
       operations:
         delete:
           title: Delete any record

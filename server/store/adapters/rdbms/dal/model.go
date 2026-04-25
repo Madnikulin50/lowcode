@@ -326,9 +326,9 @@ func (d *model) Count(ctx context.Context, f filter.Filter) (c uint, err error) 
 //
 // Passing in filter with cursor, empty groupBy or aggrExpr slice will result in an error
 func (d *model) Aggregate(f filter.Filter, groupBy []dal.AggregateAttr, aggrExpr []dal.AggregateAttr, having *ql.ASTNode) (i *iterator, err error) {
-	if len(groupBy) == 0 {
+	/*if len(groupBy) == 0 {
 		return nil, fmt.Errorf("can not run aggregation without group-by")
-	}
+	}*/
 
 	i = &iterator{
 		cursor:  f.Cursor(),
@@ -624,8 +624,11 @@ func (m *model) aggregateSql(f filter.Filter, groupBy []dal.AggregateAttr, out [
 		// Add all group-by columns at the start of selection fields
 		selected = append(selected, expr)
 	}
-
-	q = q.Select(selected...)
+	first := true
+	if len(selected) > 0 {
+		first = false
+		q = q.Select(selected...)
+	}
 
 	for i, c := range out {
 		if expr, err = field(c); err != nil {
@@ -640,7 +643,13 @@ func (m *model) aggregateSql(f filter.Filter, groupBy []dal.AggregateAttr, out [
 		a2expr[alias] = expr
 
 		expr = exp.NewAliasExpression(expr, alias)
-		q = q.SelectAppend(expr)
+		if first {
+			first = false
+			q = q.Select(expr)
+		} else {
+			q = q.SelectAppend(expr)
+		}
+
 	}
 
 	if having != nil {

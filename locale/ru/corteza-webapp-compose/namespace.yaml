@@ -4,9 +4,9 @@ application:
   label: Enable on application list
 clickOpen: Click to open
 import:
-  buttonМетка: Импорт
+  buttonLabel: Импорт
   title: Импорт namespace
-  uploadFileМетка: Upload the file you want to import (.zip format)
+  uploadFileLabel: Upload the file you want to import (.zip format)
   uploadFilePlaceholder: Кликните кнопку или перенесите файл (.zip format)
   back: Назад
   import: Импорт

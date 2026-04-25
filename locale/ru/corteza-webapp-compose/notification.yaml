@@ -143,15 +143,15 @@ page:
       failed: Failed to delete layout
     listFailed: Could not load page layouts
 record:
-  uploadFailed: Could not upload file
+  uploadFailed: Не удалось загрузить файл
   createFailed: Could not create record
   createSuccess: Record created
   updateFailed: Could not update record
   updateSuccess: Запись обновлена
   saveFailed: Could not save records
-  saveSuccess: Records saved
+  saveSuccess: Записи сохранены
   deleteFailed: Could not delete record
-  deleteSuccess: Record deleted
+  deleteSuccess: Запись удалена
   restoreFailed: Could not restore record
   restoreSuccess: Record restored
   deleteBulkFailed: Could not delete selected records
@@ -162,11 +162,11 @@ record:
   restoreBulkSuccess: Successfully restored selected records
   invalidOwnerVar: Can not use ${ownerID} variable in non-record pages
   invalidRecordVar: Can not use ${record...} variable in non-record pages
-  listLoadFailed: Could not load record list
-  loadFailed: Could not load record
+  listLoadFailed: Не удалось загрузить список записей
+  loadFailed: Не удалось загрузить запись
   countFailed: Failed to fetch number of avaiable records
   moduleMismatch: Module incompatible, module mismatch
-  moduleNotDefined: Record module not defined
+  moduleNotDefined: Модуль для записи не определен
   moduleOrPageNotSet: "RecordList block error: module or page option not set"
   unexpectedInput: Unexpected input for values property, should be an array with name-value object pairs
   unexpectedValue: Unexpected value for record module ({{type}})

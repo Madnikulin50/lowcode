@@ -6,22 +6,22 @@ selector:
       ref: Clone with references
       noRef: Clone without references
 automation:
-  addPlaceholderМетка: Добавить placeholder (dummy button)
+  addPlaceholderLabel: Добавить placeholder (dummy button)
   availableScriptsAndWorkflow: Available scripts and workflows ({{count}})
   badge:
     script: script
     workflow: workflow
-  buttonМетка: Метка
+  buttonLabel: Метка
   buttonVariant: Variant
   configuredButtons: Configured buttons
-  dummyButtonМетка: Dummy
+  dummyButtonLabel: Dummy
   editButton: Изменить
   editTitle:
     script: Изменить automation script button
     workflow: Изменить workflow button
   label: Автоматизация
   noDescription: No description
-  noМетка: Unlabeled
+  noLabel: Unlabeled
   noScript: There is no script or workflow configured for this button
   noScripts: There are no manual scripts compatible with this page block
   removeAll: Remove all
@@ -40,7 +40,7 @@ calendar:
     label: Source
   addEventsSource: Добавить events source
   calendarHeader: Calendar header
-  feedМетка: Configure events source
+  feedLabel: Configure events source
   feedPlaceholder: Select an event source
   eventSource: Event source
   hideHeader: Hide calendar header
@@ -49,22 +49,22 @@ calendar:
   hideToday: Hide today button
   label: Calendar
   colorPicker: Выберите цвет
-  colorМетка: Event color
+  colorLabel: Event color
   recordFeed:
     eventAllDay: Show as all-day-events
-    eventEndFieldМетка: Event end
+    eventEndFieldLabel: Event end
     eventEndFieldPlaceholder: Event will last 1 hour
-    eventStartFieldМетка: Event start
+    eventStartFieldLabel: Event start
     eventStartFieldPlaceholder: Поле with event start date
-    moduleМетка: Модуль
+    moduleLabel: Модуль
     modulePlaceholder: Выберите модуль
-    optionМетка: Records
-    prefilterМетка: Prefilter events
+    optionLabel: Записи
+    prefilterLabel: Prefilter events
     prefilterPlaceholder: field1 = 1 AND field2 = 232
-    titleМетка: Event title
+    titleLabel: Event title
     titlePlaceholder: Поле used as event title
   reminderFeed:
-    optionМетка: Reminders
+    optionLabel: Reminders
   today: Сегодня
   view:
     dayGridMonth: Month
@@ -78,7 +78,7 @@ calendar:
     openInSameTab: Open record in the same tab
     openInNewTab: Open record in a new tab
     openInModal: Open record in a modal
-  viewМетка: Calendar
+  viewLabel: Calendar
 chart:
   add: New Диаграмма
   addFunnel: Funnel chart
@@ -86,15 +86,15 @@ chart:
   addRadar: Radar chart
   addGeneric: Generic chart
   createFailed: Could not create a chart
-  enableLiveFilter: Разрешено измение фильтра на странице
+  enableLiveFilter: Разрешено изменение фильтра на странице
   columns:
     name: Имя
     handle: Дескриптор
     changedAt: Время изменения
   configure:
     label: Configure chart
-    reportМетка: Отчет {{l}}
-    reportsМетка: Reports
+    reportLabel: Отчет {{l}}
+    reportsLabel: Reports
   display: Диаграмма отображаемая в блоке
   drillDown:
     label: Проваливание
@@ -151,10 +151,10 @@ file:
   preview:
     label: Файл block
 general:
-  descriptionМетка: Описание
+  descriptionLabel: Описание
   descriptionPlaceholder: Блок description
   headerStyle: Блок header style (color)
-  magnifyМетка: Блок Magnification
+  magnifyLabel: Блок Magnification
   customID:
     label: Custom ID
     placeholder: customID
@@ -220,7 +220,7 @@ general:
     success: Успех вариант
     warning: Предупреждение вариант
   title: Добавить новый блок
-  titleМетка: Заголовок
+  titleLabel: Заголовок
   titlePlaceholder: Блок title
   tooltip:
     dragAndDrop: Переместите для изменения порядка
@@ -230,56 +230,56 @@ iframe:
   pickURLField: Pick an URL field
   srcDesc: Used as a fallback when set in combination with record field.
   srcFieldDesc: Only available on record pages and on modules with existing "url" field kind
-  srcFieldМетка: Поле (URL) from record to use for the iframe
-  srcМетка: URL to show in the iframe
+  srcFieldLabel: Поле (URL) from record to use for the iframe
+  srcLabel: URL to show in the iframe
 metric:
   metricDrillDown: Metric drill down
-  defaultMetricМетка: Unnamed metric
+  defaultMetricLabel: Unnamed metric
   drillDown:
     label: Проваливание
     description: If a record list is selected, it will be used to display the drill down data. If no record list is selected, the drill down data will be shown in a modal.
     openInModal: Open in modal
   edit:
-    bucketМетка: Bucket size
+    bucketLabel: Bucket size
     bucketPlaceholder: Select a bucket size
     dateFormat: Дата format
-    dimensionFieldМетка: Поле
+    dimensionFieldLabel: Поле
     dimensionFieldPlaceholder: Dimension field
-    dimensionМетка: Dimension
-    filterМетка: Filter
+    dimensionLabel: Dimension
+    filterLabel: Filter
     filterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
     transformFootnote: Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available). Make sure to wrap the variables with quotes ("")
-    labelМетка: Метка
+    labelLabel: Метка
     labelPlaceholder: Метка
-    metricFieldМетка: Поле
+    metricFieldLabel: Поле
     metricFieldPlaceholder: Dimension field
-    metricМетка: Metric
+    metricLabel: Metric
     metricFieldSelect: Select field
     metricSelectAggregate: Select aggregation operation
-    metricAggregateМетка: Aggregation operation
-    moduleМетка: Модуль
+    metricAggregateLabel: Aggregation operation
+    moduleLabel: Модуль
     modulePlaceholder: Pick a module
     numberFormat: Number format
     operationAvg: Среднее
-    operationМетка: Aggregation operation
+    operationLabel: Aggregation operation
     operationMax: Максимум
     operationMin: Минимум
     operationPlaceholder: Aggregation operation
     operationStd: Std
     operationSum: Сумма
-    prefixМетка: Prefix
+    prefixLabel: Prefix
     refreshData: Refresh data
-    suffixМетка: Suffix
+    suffixLabel: Suffix
     tabTitle: Metric
     transformFunctionDescription: v - current value; label - current value's label
-    transformFunctionМетка: Transform value
+    transformFunctionLabel: Transform value
   editStyle:
     backgroundColor: Фон color
     color: Text color
     colorPicker: Выберите цвет
     fontSize: Font size in pixels
-    labelМетка: Метка style
-    valueМетка: Значение style
+    labelLabel: Метка style
+    valueLabel: Значение style
   label: Metric
 record:
   referenceRecordField: Reference record
@@ -291,7 +291,7 @@ record:
   invalidOwnerVar: Can not use ${ownerID} variable in non-record pages
   invalidRecordVar: Can not use ${record...} variable in non-record pages
   label: Record
-  listLoadFailed: Could not load record list
+  listLoadFailed: Не удалось загрузить список записей
   moduleOrPageNotSet: "RecordList block error: module or page option not set"
   moduleMismatch: Module incompatible, module mismatch
   horizontalFormLayout: Горизонтальное form layout
@@ -466,7 +466,7 @@ recordList:
       notEqual: Не равно
       between: В диапазоне
       notBetween: Вне диапазона
-    title: Record list filter
+    title: Список записей filter
     update: Update filter
     where: Where
     without: Without
@@ -492,7 +492,7 @@ recordList:
   import:
     dropzoneFileAdded: "{{name}} загружено и готово к импорту ({{count}} record)"
     dropzoneFileAdded_plural: "{{name}} загружено и готово к импорту ({{count}} строк)"
-    dropzoneМетка: Кликните кнопку или перенесите файл (.csv or JSON)
+    dropzoneLabel: Кликните кнопку или перенесите файл (.csv or JSON)
     failed: "Something went wrong during the import. Please try again: {{failReason}}"
     fileColumns: Колонки файлов
     hasRequiredFileFields: "This module has required file upload fields"
@@ -535,7 +535,7 @@ recordList:
       startedAt: Started At
       title: Record import error report
       totalRecords: Всего строк
-  label: Record list
+  label: Список записей
   modulePlaceholder: Выберите модуль
   moduleFootnote: Модули without a {{0}} can only be used in a record list as an inline editor
   moduleFieldsFootnote: If no fields are selected, the default fields will be shown
@@ -548,7 +548,7 @@ recordList:
     single: Единственная страница
     single_other: "{{count}} строк"
     recordsPerPage: На страницу
-    selectМетка: Select an option
+    selectLabel: Select an option
   positionField:
     footnote: Records will be sorted based on this field
     placeholder: Поле that will hold the record position
@@ -567,8 +567,8 @@ recordList:
     resultsCant: Results can not
     resultsPrefiltered: "Results are prefiltered:"
     searchInput: Search inputbox
-    sorting: Sorting
-    tableHeader: Table header
+    sorting: Сортировка
+    tableHeader: Заголовок таблицы
     usersSearchThrough: Users search through the records
     usersSee: Users see {{0}}
     withPresortedRecords: with presorted ({{0}}) record
@@ -584,21 +584,21 @@ recordList:
     hidePaging: User will be able to navigate through pages
     inlineEditor: Inline Options
     inlineEditorAllow: Inline record editor
-    recordsМетка: Records
+    recordsLabel: Записи
     noPermission: No permission to read record
-    perPage: Records per page
+    perPage: Строк на странице
     prefilterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
     prefilterHideSearch: Users will be able to search the record list
     filterHide: Users will be able to filter the list
-    prefilterМетка: Filtering
-    generalМетка: Основные настройки
+    prefilterLabel: Filtering
+    generalLabel: Основные настройки
     prefilterCommand: Prefilter
     prefilterPlaceholder: field1 = 1 AND field2 = 232
     presortFootnote: Simplified SQL condition (ORDER BY ...) syntax is supported
     presortToggleInput: Toggle input type
     presortHideSort: Users will be able to sort the list
-    presortМетка: Sorting
-    presortInputМетка: Presort
+    presortLabel: Сортировка
+    presortInputLabel: Presort
     presortPlaceholder: field1 DESC, field2 ASC
     showTotalCount: Show total record count
     showRecordPerPageOption: User will be able to select records per page
@@ -765,7 +765,7 @@ socialFeed:
   preview:
     socialFeed: Twitter feed
   twitterProfileField: Поле that contains Twitter Профиль URL for a record
-  twitterProfileМетка: Twitter Профиль URL for list pages i.e (https://twitter.com/bloomberg)
+  twitterProfileLabel: Twitter Профиль URL for list pages i.e (https://twitter.com/bloomberg)
 selectBlockFootnote: Some types might be disabled for non-record pages
 field:
   noPermission: No permission to read field value
@@ -829,7 +829,7 @@ navigation:
   appearance: Appearance
   alignment: Alignment
   justify: Justify
-  fieldМетка: Метка
+  fieldLabel: Метка
   enabled: Enabled
   openIn: Открыть в
   navigationItems: Navigation items
@@ -931,8 +931,8 @@ progress:
 
 geometry:
   label: Map
-  viewМетка: Map
-  feedМетка: Configure Sources
+  viewLabel: Map
+  feedLabel: Configure Sources
   source:
     label: Source
   addSource: Добавить источник
@@ -945,25 +945,25 @@ geometry:
   hideGeoSearch: Hide location search
   recordFeed:
     colorPicker: Выберите цвет
-    moduleМетка: Модуль*
+    moduleLabel: Модуль*
     modulePlaceholder: (No module)
-    optionМетка: Records
-    prefilterМетка: Prefilter sources
-    colorМетка: Marker color
-    geometryFieldМетка: Геопозиция field*
-    titleМетка: Заголовок
+    optionLabel: Records
+    prefilterLabel: Prefilter sources
+    colorLabel: Marker color
+    geometryFieldLabel: Геопозиция field*
+    titleLabel: Заголовок
     titlePlaceholder: Заголовок
     geometryFieldPlaceholder: Геопозиция field
     displayMarker: Display marker
     displayPolygon: Display polygon
-  centerМетка: Center
+  centerLabel: Center
   zoom:
-    zoomМетка: Zoom
-    zoomMinМетка: Zoom min
-    zoomMaxМетка: Zoom max
-    zoomStartingМетка: Zoom Starting
+    zoomLabel: Zoom
+    zoomMinLabel: Zoom min
+    zoomMaxLabel: Zoom max
+    zoomStartingLabel: Zoom Starting
   bounds:
-    boundsМетка: Bounds
+    boundsLabel: Bounds
     lockBounds: Lock bounds
     topLeft: Bounds top left
     lowerRight: Bounds lower right

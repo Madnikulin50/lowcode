@@ -6,12 +6,12 @@ required-field: Обязательное поле
 not-configurable: Cannot change settings that affect data storage
 kind:
   bool:
-    checkedValueМетка: Значение когда включено
+    checkedValueLabel: Значение когда включено
     checkedValuePlaceholder: Да
     label: Флажок (Да-Нет)
-    uncheckedValueМетка: Значение when unchecked
+    uncheckedValueLabel: Значение when unchecked
     uncheckedValuePlaceholder: No
-    toggleTypeМетка: Checkbox Тип
+    toggleTypeLabel: Checkbox Тип
     toggleType: Display as switch
   dateTime:
     type:
@@ -42,15 +42,15 @@ kind:
       gallery: Галерея картинок
       grid: Сетка
       list: Список
-      maxSizeМетка: Максимальный размер файла (MB)
+      maxSizeLabel: Максимальный размер файла (MB)
       mimetypesFootnote: 'MIME types, separated with ",". Example: "text/plain,text/csv"'
       webcam:
         enable:
           label: Enable Web-камера Capture
           footnote: Use the webcam to capture a picture and upload it
-      mimetypesМетка: Разрешенные типы файлов
+      mimetypesLabel: Разрешенные типы файлов
       modeFootnote: How files are represented in page blocks
-      modeМетка: Просмотр mode
+      modeLabel: Просмотр mode
       showName: Скрывать имя файла
       enableDownload: Enable download
       single: Single image
@@ -71,16 +71,16 @@ kind:
     exampleFormat: Format
     exampleInput: Input
     exampleResult: Result
-    examplesМетка: Format examples
-    formatМетка: Custom format
+    examplesLabel: Format examples
+    formatLabel: Custom format
     formatPlaceholder: Format
     label: Number
     liveExample: Предпросмотр
-    precisionМетка: Scale
+    precisionLabel: Scale
     precisionTooltip: Number of decimal places
-    prefixМетка: Prefix
+    prefixLabel: Prefix
     prefixPlaceholder: Prefix
-    suffixМетка: Suffix
+    suffixLabel: Suffix
     suffixPlaceholder: Suffix
     step:
       label: Шаг
@@ -122,9 +122,9 @@ kind:
   record:
     currentUnnamedModule: (Current unnamed module)
     label: Record
-    moduleМетка: Модуль
+    moduleLabel: Модуль
     modulePlaceholder: Выберите модуль
-    queryFieldsМетка: Query fields on search
+    queryFieldsLabel: Query fields on search
     queryFieldsPlaceholder: If no fields are picked the Метка полей will be used
     moduleField: Метка полей
     variantField: Variant field
@@ -132,7 +132,7 @@ kind:
     pickField: Pick field
     suggestionPlaceholder: Start typing to search for records
     prefilterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
-    prefilterМетка: Prefilter records
+    prefilterLabel: Prefilter records
     prefilterPlaceholder: field1 = 1 AND field2 = 232
     tooltip:
       moduleField: Selecting a record field will impact performance
@@ -160,7 +160,7 @@ kind:
       label: Display value as
       text: Text
       badge: Badge
-    optionsМетка: Options to select from
+    optionsLabel: Options to select from
     showAsBadge: Show as badge
     placeholder: Select an option by clicking here
   string:
@@ -223,7 +223,7 @@ options:
   multiDelimiter:
     comma: Separated by a comma
     custom: A custom delimiter
-    customМетка: Or use a custom delimiter
+    customLabel: Or use a custom delimiter
     customPlaceholder: Enter a custom delimiter
     label: Multiple value delimiter
     newline: Each value in a new line

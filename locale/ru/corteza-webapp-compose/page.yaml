@@ -36,7 +36,7 @@ page-layout:
     actions:
       label: Действия
       add: Добавить action
-      buttonМетка: Метка
+      buttonLabel: Метка
       variant: Variant
       visible: Видимый
       kind:

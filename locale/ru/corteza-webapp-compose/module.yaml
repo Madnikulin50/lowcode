@@ -16,7 +16,7 @@ allRecords:
 block:
   record:
     recordDeleted: Эта запись удалена
-    loadFailed: Could not load record
+    loadFailed: Не удалось загрузить запись
 createLabel: Новый модуль
 edit:
   create: Создать модуль
@@ -199,7 +199,7 @@ edit:
       title: Уникальные значения
       duplicationDetection: Определение дубликатов
       preventRecordsSave: Prevent record saving if duplicate values are found
-      warningМетка: Предупреждение or error message toast when constraint matches
+      warningLabel: Предупреждение or error message toast when constraint matches
       valueModifiers: Значение modifiers
       multiValues: Multi-field values
       add: Добавить

@@ -131,15 +131,15 @@ reminder:
   recordPageLink: Просмотр record
   edit:
     label: Изменить reminder
-    assigneeМетка: Assignee
+    assigneeLabel: Assignee
     assigneePlaceholder: Myself (default)
-    notesМетка: Notes
+    notesLabel: Notes
     notesPlaceholder: Notes
-    remindAtМетка: Remind me at
+    remindAtLabel: Remind me at
     remindAtNone: Never
-    titleМетка: Заголовок
+    titleLabel: Заголовок
     titlePlaceholder: Заголовок
-  listМетка: Reminders
+  listLabel: Reminders
   routesTo: Метка for page link
   snooze:
     label: Snooze
@@ -204,7 +204,7 @@ editor:
   unsavedChanges: Не сохраненные данные будут потеряны. Вы желаете покинуть страницу?
 webcam:
   title: Web-камера
-  tooltip: Открыть Web-камеру чтобы сделать снимок 
+  tooltip: Открыть Web-камеру чтобы сделать снимок
   buttons:
     cancel: Отменить
     capture: Снять фото

@@ -1,4 +1,4 @@
-colorМетка: '{{count}} colors'
+colorLabel: '{{count}} colors'
 colorScheme:
   label: Цвет scheme
   placeholder: Pick a color scheme
@@ -12,7 +12,7 @@ colorScheme:
       colors:
         label: Colors
 configure:
-  reportsМетка: Reports
+  reportsLabel: Reports
 general:
   label:
     title: Метка
@@ -31,8 +31,8 @@ edit:
   dimension:
     calculateМеткаCount: Calculate how many labels can be shown
     defaultValueFootnote: Use this value for missing dimension values
-    defaultValueМетка: Значение по-умолчанию
-    fieldМетка: Поле *
+    defaultValueLabel: Значение по-умолчанию
+    fieldLabel: Поле *
     fieldPlaceholder: Select a dimension field
     function:
       placeholder: Select dimension modifier (bucket size)
@@ -77,7 +77,7 @@ edit:
   metric:
     title: Metrics
     add: Добавить metric
-    fieldМетка: Поле *
+    fieldLabel: Поле *
     fieldPlaceholder: Select metric field
     fillArea: Fill area below the line
     fixTooltips: Always show labels
@@ -114,7 +114,7 @@ edit:
     gaugeColor: Цвет
     label: Metric
     labelColor: Метка color
-    labelМетка: Метка
+    labelLabel: Метка
     labelPlaceholder: Total
     symbol:
       label: Symbol
@@ -164,7 +164,7 @@ edit:
     rotate:
       label: Rotate labels
       description: Меткаs can be rotated from -90 to 90 degrees
-    labelМетка: Axis label
+    labelLabel: Axis label
     labelPosition:
       label: Метка position
       top: Start
@@ -173,9 +173,9 @@ edit:
     horizontal:
       label: Горизонтальное
     logarithmicScale: Logarithmic scale
-    maxМетка: Максимум value
+    maxLabel: Максимум value
     maxPlaceholder: Максимальное значение
-    minМетка: Минимум value
+    minLabel: Минимум value
     minPlaceholder: Минимальное значение
   additionalConfig:
     legend:
@@ -247,7 +247,7 @@ edit:
         custom: ''
         accounting: Negative numbers are transformed into positive and added in brackets and the value 0 is substituted by a dash
 import: 'Импорт chart(s):'
-newМетка: 'Create a new chart:'
+newLabel: 'Create a new chart:'
 name: Диаграмма name *
 handle: Дескриптор
 generalSettings: Основные settings
