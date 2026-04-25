@@ -1,16 +1,16 @@
-permissions: Permissions
+permissions: Права доступа
 report:
-  builder: Report Builder
-  edit: Edit
+  builder: Отчет Builder
+  edit: Изменить
   list: List of Reports
-  new: New Report
+  new: New Отчет
   delete: Delete
 searchPlaceholder: Search reports
 title: Reports
 tooltip:
-  permissions: Report permissions
+  permissions: Отчет permissions
 untitledTitle: Untitled report
 columns:
-  name: Name
-  handle: Handle
+  name: Имя
+  handle: Дескриптор
   changedAt: Last change

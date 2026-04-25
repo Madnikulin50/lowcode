@@ -1,44 +1,44 @@
-colorLabel: '{{count}} colors'
+colorМетка: '{{count}} colors'
 colorScheme:
-  label: Color scheme
+  label: Цвет scheme
   placeholder: Pick a color scheme
   pickAColor: Pick a color
   custom:
-    add: Add color scheme
-    edit: Edit color scheme
+    add: Добавить color scheme
+    edit: Изменить color scheme
     modal:
       name:
-        label: Name
+        label: Имя
       colors:
         label: Colors
 configure:
-  reportsLabel: Reports
+  reportsМетка: Reports
 general:
   label:
-    title: Label
-    add: Add
-    count: Count
-    permissions: Permissions
-  value: Value
+    title: Метка
+    add: Добавить
+    count: Количество
+    permissions: Права доступа
+  value: Значение
   placeholder:
-    name: Name (e.g. "Sales by month")
-    handle: Unique identifier (a - z, 0 - 9, underscore, dash)
+    name: Имя (e.g. "Sales by month")
+    handle: Уникальный идентификатор (a - z, 0 - 9, _, -)
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
 edit:
   animation:
     label: Animation
     enabled: Animation enabled
   dimension:
-    calculateLabelCount: Calculate how many labels can be shown
+    calculateМеткаCount: Calculate how many labels can be shown
     defaultValueFootnote: Use this value for missing dimension values
-    defaultValueLabel: Default value
-    fieldLabel: Field *
+    defaultValueМетка: Значение по-умолчанию
+    fieldМетка: Поле *
     fieldPlaceholder: Select a dimension field
     function:
       placeholder: Select dimension modifier (bucket size)
       none: No grouping
       auto: Auto
-      date: Date
+      date: Дата
       label: Function
       month: Month
       quarter: Quarter
@@ -47,19 +47,19 @@ edit:
     gaugeSteps: Steps
     label: Dimensions
     skipMissingValues: Skip missing values
-    timeLabels: Time labels
+    timeМеткаs: Время labels
     options:
       label: Options
     optionsPicker:
-      searchPlaceholder: Type here to search among select options
+      searchPlaceholder: Тип here to search among select options
       availableItems: Available options
-      selectAllItems: Select all
+      selectAllItems: Выбрать все
       selectedItems: Selected options
       unselectAllItems: Unselect all
       noItemsFound: No options found
     rotate:
       label: Rotate labels
-      description: Labels can be rotated from -90 to 90 degrees.
+      description: Меткаs can be rotated from -90 to 90 degrees.
   filter:
     customize: Customize filter
     label: Filter
@@ -76,8 +76,8 @@ edit:
   loadData: Load data
   metric:
     title: Metrics
-    add: Add metric
-    fieldLabel: Field *
+    add: Добавить metric
+    fieldМетка: Поле *
     fieldPlaceholder: Select metric field
     fillArea: Fill area below the line
     fixTooltips: Always show labels
@@ -101,7 +101,7 @@ edit:
       label: Line style
       default: Default
       smooth: Smooth
-      step: Step
+      step: Шаг
     angle:
       start: Start angle
       end: End angle
@@ -111,10 +111,10 @@ edit:
         label: Radar shape
         polygon: Polygon
         circle: Circle
-    gaugeColor: Color
+    gaugeColor: Цвет
     label: Metric
-    labelColor: Label color
-    labelLabel: Label
+    labelColor: Метка color
+    labelМетка: Метка
     labelPlaceholder: Total
     symbol:
       label: Symbol
@@ -141,19 +141,19 @@ edit:
     output:
       bar: Bar
       doughnut: Doughnut
-      label: Chart type *
+      label: Диаграмма type *
       line: Line
       pie: Pie
       scatter: Scatter
       placeholder: Select metric output
-    relative: Show relative value
+    relative: Показать связанное value
     relativePrecision: 'Precision:'
     cumulative: Cumulative
   module:
-    label: Module *
+    label: Модуль *
     placeholder: Pick a module
     title: Data Source
-  title: Chart builder
+  title: Диаграмма builder
   unconfiguredReport: Unconfigured report
   yAxis:
     axisOnRight: Place axis on the right side
@@ -163,28 +163,28 @@ edit:
       label: Options
     rotate:
       label: Rotate labels
-      description: Labels can be rotated from -90 to 90 degrees
-    labelLabel: Axis label
+      description: Меткаs can be rotated from -90 to 90 degrees
+    labelМетка: Axis label
     labelPosition:
-      label: Label position
+      label: Метка position
       top: Start
       center: Center
       bottom: End
     horizontal:
-      label: Horizontal
+      label: Горизонтальное
     logarithmicScale: Logarithmic scale
-    maxLabel: Max value
-    maxPlaceholder: Maximum value
-    minLabel: Min value
-    minPlaceholder: Minimum value
+    maxМетка: Максимум value
+    maxPlaceholder: Максимальное значение
+    minМетка: Минимум value
+    minPlaceholder: Минимальное значение
   additionalConfig:
     legend:
       label: Legend
       show: Show legend
       orientation:
-        label: Orientation
-        horizontal: Horizontal
-        vertical: Vertical
+        label: Расположение
+        horizontal: Горизонтальное
+        vertical: Вертикальное
       align:
         label: Align
         left: Left
@@ -202,7 +202,7 @@ edit:
         label: Options
     tooltip:
       label: Tooltip
-      labelNextToChart: Show labels next to chart
+      labelСледующаяToChart: Show labels next to chart
       formatting:
         label: Custom formatting
         description: '{a} - metrics label, {b} - dimension value, {c} - metric value, {d} - metric value percentage'
@@ -220,11 +220,11 @@ edit:
   toolbox:
     label: Tools
     saveAsImage:
-      label: Show "Save as Image" button
+      label: Show "Сохранить как Image" button
     timeline:
       label: Timeline
       options:
-        none: None
+        none: Отсутствует
         x: X-Axis
         y: Y-Axis
         xy: Both
@@ -246,17 +246,17 @@ edit:
       description:
         custom: ''
         accounting: Negative numbers are transformed into positive and added in brackets and the value 0 is substituted by a dash
-import: 'Import chart(s):'
-newLabel: 'Create a new chart:'
-name: Chart name *
-handle: Handle
-generalSettings: General settings
+import: 'Импорт chart(s):'
+newМетка: 'Create a new chart:'
+name: Диаграмма name *
+handle: Дескриптор
+generalSettings: Основные settings
 notification:
   loadFailed: Could not load chart
   saveFailed: Could not save this chart
-  saved: Chart saved
+  saved: Диаграмма saved
   deleteFailed: Could not delete this chart
-  deleted: Chart deleted
+  deleted: Диаграмма удалена
 searchPlaceholder: Search charts in this namespace
-title: List of Charts
+title: Список of Диаграммы
 undefined: undefined

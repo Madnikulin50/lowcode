@@ -7,7 +7,7 @@ errors:
   notAllowedToUndelete: not allowed to undelete this auth client
   notAllowedToUpdate: not allowed to update this auth client
   notFound: auth client not found
-  unableToChangeDefaultClientHandle: unable to change the handle of the default auth client
+  unableToChangeDefaultClientHandle: unable to change the дескриптор of the default auth client
   unableToDeleteDefaultClient: unable to delete the default auth client
   unableToDisableDefaultClient: unable to disable the default auth client
   unknownGrantType: unknown grant type

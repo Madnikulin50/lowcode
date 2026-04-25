@@ -2,7 +2,7 @@ editor:
   title: Compose settings
   basic:
     attachments:
-      max-size: Max size (MB)
+      max-size: Максимум size (MB)
       page: Page attachments
       record: Record attachments
       icon: Icon attachments
@@ -16,7 +16,7 @@ editor:
     sidebar:
       title: Sidebar
       hide-namespace-list: Hide list of namespaces
-      hide-namespace-list-link: Hide link to list of all namespaces
+      hide-namespace-list-link: Hide link to list of все пространства
     record-toolbar:
       title: Record Toolbar
       hide-submit: Hide submit button

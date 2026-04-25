@@ -2,22 +2,22 @@ label:
   add: Add
   general:
     yes: Yes
-    no: No
+    no: Нет
   template:
     single: Template
     plural: Templates
   user:
-    single: User
-    plural: Users
+    single: Пользователь
+    plural: Пользователи
   role:
-    single: Role
-    plural: Roles
+    single: Роль
+    plural: Роли
   user-group:
     single: User Group
     plural: User Groups
   application:
-    single: Application
-    plural: Applications
+    single: Приложение
+    plural: Приложения
   auth-client:
     single: Auth Client
     plural: Auth Clients
@@ -41,18 +41,18 @@ label:
     plural: Workflows
   plus-add: + Add
   clear: Clear
-  all: All
-  none: None
+  all: Все
+  none: Отсутствует
   experimental: Experimental
   now: Now
   openMap: Open Map
-  today: Today
+  today: Сегодня
   routes: Routes
   requests: Requests
   refresh: Refresh
   loadMore: Load more
-  loading: Loading
-  saveAndClose: Save and close
+  loading: Загрузка...
+  saveAndClose: Сохранить and close
   cancel: Cancel
   submit: Подтвердить
   delete: Delete
@@ -64,11 +64,11 @@ editor:
   unsavedChanges:  Unsaved changes will be lost. Do you wish to leave the page?
 resourceList:
   pagination:
-    recordsPerPage: Per page
+    recordsPerPage: На страницу
 themes:
   labels:
-    light: Light
-    dark: Dark
+    light: Светлая
+    dark: Темная
 extendSession:
   labels:
     extend: Extend Session

@@ -1,29 +1,29 @@
-adminPanel: Admin panel
-automation: Automation
-chart: Charts
-configuration: Configuration
+adminPanel: Административная панель
+automation: Автоматизация
+chart: Диаграммы
+configuration: Конфигурация
 help:
-  documentation: Documentation
+  documentation: Документация
   feedback: Send feedback
-  forum: Help
+  forum: Справка
   version: 'Version:'
-module: Modules
-more: More
-namespace: Namespaces
-noPageTitle: No page title
-page: Pages
-publicPages: Public pages
-appMenu: Menu
+module: Модули
+more: Еще
+namespace: Пространства
+noPageTitle: Не указан заголовок страницы
+page: Страницы
+publicPages: Опубликованные страницы
+appMenu: Меню
 userSettings:
-  changePassword: Change password
-  loggedInAs: Logged in as {{user}}
-  logout: Logout
-  profile: Profile
-  theme: Theme
+  changePassword: Изменить пароль
+  loggedInAs: Войти как {{user}}
+  logout: Выйти
+  profile: Профиль
+  theme: Тема
 themes:
   labels:
-    light: Light
-    dark: Dark
+    light: Светлая
+    dark: Темная
 
 extendSession:
   labels:

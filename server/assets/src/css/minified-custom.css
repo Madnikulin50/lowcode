@@ -42,11 +42,13 @@
   --topbar-bg: #F3F5F7;
   --sidebar-width: 320px;
   --sidebar-bg: #FFFFFF;
-  --font-regular: Poppins-Regular;
-  --font-semibold: Poppins-Semibold;
-  --font-family-base: Poppins-Regular;
-  --font-medium: Poppins-Medium;
-  --btn-font-family: Poppins-Medium;
+
+    --font-regular: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-semibold: Poppins-Semibold;
+    --font-family-base: Poppins-Regular;
+    --font-medium: system-ui, sans-serif;
+    --btn-font-family: system-ui, sans-serif;
+
   --btn-padding-x: 1em;
   --btn-padding-y: 0.25em;
   --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -70,11 +72,6 @@
   --topbar-bg: #092B40;
   --sidebar-width: 320px;
   --sidebar-bg: #0B344E;
-  --font-regular: Poppins-Regular;
-  --font-semibold: Poppins-Semibold;
-  --font-family-base: Poppins-Regular;
-  --font-medium: Poppins-Medium;
-  --btn-font-family: Poppins-Medium;
   --btn-padding-x: 1em;
   --btn-padding-y: 0.25em
 }
@@ -1878,7 +1875,7 @@ a[data-color-mode=dark] .badge-extra-light.focus {
 }
 
 [data-color-mode=dark] body {
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-size: .9rem;
   font-weight: 400;
   line-height: 1.5;
@@ -2746,7 +2743,7 @@ a[data-color-mode=dark] .badge-extra-light.focus {
 }
 
 [data-color-mode=dark] .custom-select {
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-size: .9rem;
   font-weight: 400;
   line-height: 1.5;
@@ -2799,7 +2796,7 @@ a[data-color-mode=dark] .badge-extra-light.focus {
 }
 
 [data-color-mode=dark] .custom-file-label {
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-weight: 400;
   line-height: 1.5;
   color: #FBF7F4;
@@ -2809,7 +2806,6 @@ a[data-color-mode=dark] .badge-extra-light.focus {
 }
 
 [data-color-mode=dark] .custom-file-label::after {
-  font-family: "Poppins-Medium";
   line-height: 1.5;
   color: #FBF7F4;
   background-color: #3E5A6F
@@ -2982,7 +2978,7 @@ a[data-color-mode=dark] .badge-extra-light.focus {
 }
 
 [data-color-mode=dark] .form-control {
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-size: .9rem;
   font-weight: 400;
   line-height: 1.5;
@@ -5087,7 +5083,6 @@ a.badge-extra-light.focus {
 
 .btn {
   display: inline-block;
-  font-family: "Poppins-Medium";
   font-weight: 400;
   color: #0B344E;
   text-align: center;
@@ -6462,7 +6457,7 @@ pre code {
   width: 100%;
   height: calc(1.5em + 0.75rem + 4px);
   padding: .375rem 1.75rem .375rem .75rem;
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-size: .9rem;
   font-weight: 400;
   line-height: 1.5;
@@ -6567,7 +6562,7 @@ pre code {
   z-index: 1;
   height: calc(1.5em + 0.75rem + 4px);
   padding: .375rem .75rem;
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-weight: 400;
   line-height: 1.5;
   color: #0B344E;
@@ -6585,7 +6580,6 @@ pre code {
   display: block;
   height: calc(1.5em + 0.75rem);
   padding: .375rem .75rem;
-  font-family: "Poppins-Medium";
   line-height: 1.5;
   color: #0B344E;
   content: "Browse";
@@ -7037,7 +7031,7 @@ pre code {
   width: 100%;
   height: calc(1.5em + 0.75rem + 4px);
   padding: .375rem .75rem;
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-size: .9rem;
   font-weight: 400;
   line-height: 1.5;
@@ -10780,7 +10774,7 @@ textarea.form-control.is-invalid {
   z-index: 1060;
   display: block;
   max-width: 276px;
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
@@ -11077,7 +11071,7 @@ section {
 
 body {
   margin: 0;
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-size: .9rem;
   font-weight: 400;
   line-height: 1.5;
@@ -11912,7 +11906,7 @@ template {
   z-index: 1070;
   display: block;
   margin: 0;
-  font-family: "Poppins-Regular";
+  font-family: Arial, Helvetica, sans-serif;
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
@@ -12206,7 +12200,7 @@ h6,
 .h5,
 .h6 {
   margin-bottom: .5rem;
-  font-family: "Poppins-Bold";
+    font-family: "Times New Roman", Times, serif;
   font-weight: 500;
   line-height: 1.2
 }
@@ -20932,7 +20926,7 @@ fieldset.required legend>div:first-child>span:first-child::after {
   background: var(--dark);
   border-radius: .5rem;
   color: var(--light);
-  font-family: "JetBrainsMono", monospace;
+  font-family:  "JetBrainsMono", monospace;
   margin: 1.5rem 0;
   padding: .75rem 1rem;
   overflow-x: auto;

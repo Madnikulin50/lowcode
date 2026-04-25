@@ -6,8 +6,8 @@ editor:
     createdBy: Создал
     delete: Delete
     deletedAt: Время удаления
-    handle: Handle
-    placeholder-handle: handle (a - z, 0 - 9, underscore, dash)
+    handle: Дескриптор
+    placeholder-handle: дескриптор (a - z, 0 - 9, underscore, dash)
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
     name: Role name *
     title: Basic information
@@ -15,27 +15,27 @@ editor:
     undelete: Undelete
     updatedAt: Время обновления
 
-    description: Description
+    description: Описание
 
     context:
       label: Contextual role
-      expression-label: Expression
+      expression-label: Выражение
       resource-types-label: Resource type
 
   members:
     title: Role members
   new: New Role
-  permissions: Permissions
+  permissions: Права доступа
   title:
     create: Create role
-    edit: Edit role
+    edit: Изменить role
 list:
   columns:
     actions: ""
-    createdAt: Created
+    createdAt: Создано
     enabled: Enabled
-    handle: Handle
-    name: Name
+    handle: Дескриптор
+    name: Имя
     state: State
   delete: Delete
   undelete: Undelete
@@ -61,6 +61,6 @@ list:
       placeholder: Filter roles by name
   loading: Loading roles
   new: New Role
-  permissions: Permissions
-  title: Roles
+  permissions: Права доступа
+  title: Роли
   yaml: YAML

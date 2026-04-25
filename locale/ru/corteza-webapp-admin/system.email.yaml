@@ -9,7 +9,7 @@ editor:
       description: Server name and port. Ports are usually 25 (insecure), 465 or 587 (secure).
 
     user:
-      label: User
+      label: Пользователь
       description: Optional, authentication credentials for your email server.
 
     password:

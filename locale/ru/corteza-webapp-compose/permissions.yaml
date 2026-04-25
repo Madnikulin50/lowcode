@@ -1,34 +1,34 @@
 ui:
-  save: Save changes
-  cancel: Cancel
-  set-for: Set permissions for {{target}}
-  loading: Loading permissions
-  label: Permissions
+  save: Сохранить changes
+  cancel: Отменить
+  set-for: Установить права доступа для {{target}}
+  loading: Загрузка прав доступа
+  label: Права доступа
 
   notification:
     save:
-      success: Permissions saved
+      success: Права доступа saved
       failed: Failed to save permissions
 
   edit:
-    title: Edit permissions
-    label: User roles
-    description: Select role to set permissions
+    title: Изменить права доступа
+    label: Роли пользователя
+    description: Выберите роль для установки прав
 
   evaluate:
-    title: Evaluate permissions
+    title: Вычислить права доступа
     description: Evaluate applied permissions
 
   add:
-    label: Add
-    title: Evaluate permissions
-    save: Save & Close
+    label: Добавить
+    title: Вычислить права доступа
+    save: Сохранить и закрыть
     role:
-      label: Roles
-      placeholder: Select role(s)
+      label: Роли
+      placeholder: Выбрать роли
     user:
-      label: Users
-      placeholder: Search or select a user
+      label: Пользователи
+      placeholder: Поиск или выбор пользователя
 
   tooltip:
     unknown-context:
@@ -36,16 +36,16 @@ ui:
       role: Can not evaluate permission for contextual role on a non-specific resource
 
   access:
-    allow: Allow
-    inherit: Inherit
-    deny: Deny
+    allow: Разрешено
+    inherit: Наследовано
+    deny: Запрещено
 
 resources:
   compose:
     namespace:
-      all: all namespaces
+      all: все пространства
       specific: namespace "{{target}}"
-      tooltip: Namespace permissions
+      tooltip: Пространство permissions
       operations:
         read:
           description: ""
@@ -57,62 +57,62 @@ resources:
           title: Update any namespace
         delete:
           description: ""
-          specific: Delete namespace "{{target}}"
-          title: Delete any namespace
+          specific: Удалить namespace "{{target}}"
+          title: Удалить any namespace
         manage:
           description: Allow access to namespace's admin pages
           specific: Manage namespace "{{target}}"
           title: Manage any namespace
         export:
           description: ""
-          specific: Export namespace "{{target}}"
-          title: Export any namespace
+          specific: Экспорт namespace "{{target}}"
+          title: Экспорт any namespace
         module.create:
           description: ""
           specific: Create modules under namespace "{{target}}"
           title: Create modules under any namespace
         modules.export:
           description: ""
-          specific: Export modules in namespace "{{target}}"
-          title: Export modules in any namespace
+          specific: Экспорт modules in namespace "{{target}}"
+          title: Экспорт modules in any namespace
         modules.search:
           description: ""
-          specific: List and search modules under namespace "{{target}}"
-          title: List and search modules under any namespace
+          specific: Список and search modules under namespace "{{target}}"
+          title: Список and search modules under any namespace
         page.create:
           description: ""
           specific: Create pages under namespace "{{target}}"
           title: Create pages under any namespace
         pages.search:
           description: ""
-          specific: List and search pages under namespace "{{target}}"
-          title: List and search pages under any namespace
+          specific: Список and search pages under namespace "{{target}}"
+          title: Список and search pages under any namespace
         pages.export:
           description: ""
-          specific: Export pages in namespace "{{target}}"
-          title: Export pages in any namespace
+          specific: Экспорт pages in namespace "{{target}}"
+          title: Экспорт pages in any namespace
         chart.create:
           description: ""
           specific: Create charts under namespace "{{target}}"
           title: Create charts under any namespace
         charts.search:
           description: ""
-          specific: List and search charts under namespace "{{target}}"
-          title: List and search charts under any namespace
+          specific: Список and search charts under namespace "{{target}}"
+          title: Список and search charts under any namespace
         charts.export:
           description: ""
-          specific: Export charts in namespace "{{target}}"
-          title: Export charts in any namespace
+          specific: Экспорт charts in namespace "{{target}}"
+          title: Экспорт charts in any namespace
 
     chart:
       all: all charts
       specific: chart "{{target}}"
-      tooltip: Chart permissions
+      tooltip: Диаграмма permissions
       operations:
         delete:
           description: 'Default: deny'
-          specific: Delete chart "{{target}}"
-          title: Delete any chart
+          specific: Удалить chart "{{target}}"
+          title: Удалить any chart
         read:
           description: 'Default: deny'
           specific: Read chart "{{target}}"
@@ -125,12 +125,12 @@ resources:
     module:
       all: all modules
       specific: module "{{target}}"
-      tooltip: Module permissions
+      tooltip: Права доступа к модулю
       operations:
         delete:
           description: 'Default: deny'
-          specific: Delete module "{{target}}"
-          title: Delete any module
+          specific: Удалить module "{{target}}"
+          title: Удалить any module
         read:
           description: 'Default: deny'
           specific: Read module "{{target}}"
@@ -141,8 +141,8 @@ resources:
           title: Create record of any module
         records.search:
           description: 'Default: deny'
-          specific: List and search records of module "{{target}}"
-          title: List and search records of any module
+          specific: Список and search records of module "{{target}}"
+          title: Список and search records of any module
         update:
           description: 'Default: deny'
           specific: Update module "{{target}}"
@@ -177,8 +177,8 @@ resources:
       operations:
         delete:
           description: 'Default: deny'
-          specific: Delete page "{{target}}"
-          title: Delete any page
+          specific: Удалить page "{{target}}"
+          title: Удалить any page
         read:
           description: 'Default: deny'
           specific: Read page "{{target}}"
@@ -193,8 +193,8 @@ resources:
           title: Create page layout
         page-layouts.search:
           description: 'Default: deny'
-          specific: List page layouts for page "{{target}}"
-          title: List page layout
+          specific: Список page layouts for page "{{target}}"
+          title: Список page layout
 
     page-layout:
       all: all page layouts
@@ -214,9 +214,9 @@ resources:
           all-specific: Update page layouts of page "{{ target }}"
         delete:
           description: 'Default: deny'
-          specific: Delete page layout "{{target}}"
-          title: Delete any page layout
-          all-specific: Delete page layouts of page "{{ target }}"
+          specific: Удалить page layout "{{target}}"
+          title: Удалить any page layout
+          all-specific: Удалить page layouts of page "{{ target }}"
 
     record:
       all: all records
@@ -226,9 +226,9 @@ resources:
       operations:
         delete:
           description: 'Default: deny'
-          specific: Delete record "{{target}}"
-          title: Delete records of any module
-          all-specific: Delete records of module "{{ target }}"
+          specific: Удалить record "{{target}}"
+          title: Удалить records of any module
+          all-specific: Удалить records of module "{{ target }}"
         undelete:
           description: 'Default: deny'
           specific: Restore record "{{target}}"

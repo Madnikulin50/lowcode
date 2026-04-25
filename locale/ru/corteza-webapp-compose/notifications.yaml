@@ -1,27 +1,27 @@
-title: Notifications
-empty: No notifications
+title: Уведомления
+empty: Нет уведомлений
 emptyDescription: You will see notifications here when they arrive
 markAllAsRead: Mark all as read
 markAllAsUnread: Mark all as unread
 markAsRead: Mark as read
 markAsUnread: Mark as unread
-delete: Delete
-all: All
+delete: Удалить
+all: Все
 unread: Unread
 read: Read
-success: Success
-allMarkedAsRead: All notifications have been marked as read
-allMarkedAsUnread: All notifications have been marked as unread
+success: Успех
+allMarkedAsRead: Все notifications have been marked as read
+allMarkedAsUnread: Все notifications have been marked as unread
 notificationDeleted: Notification has been deleted
-loadMore: Load More
+loadMore: Загрузить еще
 recordRedirectError: Error navigating to record
-mute: Mute notifications
-unmute: Unmute notifications
-muted: Notifications muted
-unmuted: Notifications unmuted
+mute: Заглушить уведомления
+unmute: Подключить уведомления
+muted: Уведомления заглушены
+unmuted: Уведомления unmuted
 markAllAsReadError: Error marking all notifications as read
 markAllAsUnreadError: Error marking all notifications as unread
 notificationDeletedError: Error deleting notification
-namespaceNotFound: Namespace not found
+namespaceNotFound: Пространство not found
 pageNotFound: Page not found
 recordNotFound: Record not found

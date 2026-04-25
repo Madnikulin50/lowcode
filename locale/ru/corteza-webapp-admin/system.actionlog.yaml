@@ -1,8 +1,8 @@
 list:
   columns:
     action: Action
-    actor: User
-    description: Description
+    actor: Пользователь
+    description: Описание
     requestOrigin: Origin
     resource: Resource
     severity: Severity
@@ -14,34 +14,34 @@ list:
     timestamp: Timestamp
     requestOrigin: Request Origin
     requestID: Request ID
-    actorIPAddr: Actor/User
-    actor: User
-    actorID: User ID
+    actorIPAddr: Actor/Пользователь
+    actor: Пользователь
+    actorID: Пользователь ID
     severity: Severity
     resource: Resource
     action: Action
     headerAdditional: Additional information
-    description: Description
-    error: Error
+    description: Описание
+    error: Ошибка
     meta: Meta
   severity:
     emergency: Emergency
     alert: Alert
     critical: Critical
-    error: Error
-    warning: Warning
+    error: Ошибка
+    warning: Предупреждение
     notice: Notice
     info: Info
     debug: Debug
   filter:
     action: Action
-    actor: User ID
+    actor: Пользователь ID
     choose-date: Choose a date
     from: Starting from
     no-time: No time selected
     resource: Resource
-    search: Search
+    search: Поиск
     to: Ending at
-    today: Today
+    today: Сегодня
   loadOlder: Load older actions
   title: Action log

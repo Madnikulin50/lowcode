@@ -1,30 +1,30 @@
 clear: Clear
-description: Description
+description: Описание
 enabled: Enabled
 enable: Enable
 disable: Disable
-error: Error
+error: Ошибка
 error-expression: Error message (expression)
-export: Export
-general: General
-handle: Handle
+export: Экспорт
+general: Основные
+handle: Дескриптор
 import:
-  json: Import JSON
-  label: Import
+  json: Импорт JSON
+  label: Импорт
   reassign-run-as: "NOTE: the Run as workflow property won't be imported and should be reassigned"
   upload-files: Browse or drop files to upload...
 label:
-  all: All
+  all: Все
   any: Any
   label: Label
   or: Or
-loading: Loading
-name: Name
+loading: Загрузка...
+name: Имя
 new-workflow: New Workflow
-none: None
+none: Отсутствует
 now: Now
 offset: Offset
-permissions: Permissions
+permissions: Права доступа
 reset: Reset
 searchPlaceholder: Search workflows
 subworkflow: Subworkflow
@@ -42,39 +42,39 @@ filter:
     label: Namespace
     placeholder: Select namespace(s)
   module:
-    label: Module
+    label: Модуль
     placeholder: Select module(s)
-    template: "{{namespace}} - Modules"
+    template: "{{namespace}} - Модули"
 workflow-list: List of Workflows
 workflow:
   single: Workflow
   plural: Workflows
-save: Save
-today: Today
+save: Сохранить
+today: Сегодня
 cancel: Cancel
 resourceList:
   notFound: Not found
   noItems: No items to show
   pagination:
-    next: Next
-    prev: Previous
-    showing: '{{from}} - {{to}} of {{count}} {{data}}'
-    single_one: 'One {{data}}'
+    next: Следующая
+    prev: Предыдущая
+    showing: '{{from}} - {{to}} из {{count}} {{data}}'
+    single_one: 'Один {{data}}'
     single_other: '{{count}} {{data}}'
-    recordsPerPage: Per Page
+    recordsPerPage: На странице
 
 tooltip:
   permissions: Workflow permissions
 columns:
-  name: Name
+  name: Имя
   enabled: Enabled
   steps: Steps
   changedAt: Last change
 
 themes:
   labels:
-    light: Light
-    dark: Dark
+    light: Светлая
+    dark: Темная
 
 extendSession:
   labels:

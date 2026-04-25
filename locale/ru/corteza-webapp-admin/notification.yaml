@@ -1,11 +1,11 @@
 general:
-  error: Error
-  success: Success
-  warning: Warning
+  error: Ошибка
+  success: Успех
+  warning: Предупреждение
 notAllowed: Not allowed to access Admin Area. Redirecting
 list:
   load:
-    error: 'Failed to load resource list'
+    error: 'Ошибка загрузки списка ресурсов'
 user:
   external-auth-providers:
     error: External auth providers fetch failed
@@ -98,21 +98,21 @@ userGroup:
     error: User group restore failed
 application:
   fetch:
-    error: Application fetch failed
+    error: Приложение fetch failed
   update:
-    success: Application updated
-    error: Application update failed
+    success: Приложение updated
+    error: Приложение update failed
   create:
-    success: Application created
-    error: Application create failed
+    success: Приложение created
+    error: Приложение create failed
   delete:
-    success: Application deleted
-    error: Application delete failed
+    success: Приложение deleted
+    error: Приложение delete failed
   undelete:
-    success: Application restored
-    error: Application restore failed
+    success: Приложение restored
+    error: Приложение restore failed
   assetsUpload:
-    error: Application assets upload failed
+    error: Приложение assets upload failed
 template:
   fetch:
     error: Template fetch failed
@@ -177,8 +177,8 @@ gateway:
     fetch:
       error: Filter fetch failed
     update:
-      success: Filters updated
-      error: Filters update failed
+      success: Фильтры updated
+      error: Фильтры update failed
   delete:
     success: Route deleted
     error: Route delete failed
@@ -261,7 +261,7 @@ sensitivityLevel:
 settings:
   system:
     fetch:
-      error: System settings fetch failed
+      error: Системные настройки fetch failed
     auth:
       success: Auth settings updated
       error: Auth settings update failed
@@ -320,13 +320,13 @@ settings:
 
 permissions:
   fetch:
-    error: Permissions fetch failed
+    error: Права доступа fetch failed
   update:
-    success: Permissions updated
-    error: Permissions update failed
+    success: Права доступа updated
+    error: Права доступа update failed
   clone:
-    success: Permissions cloned
-    error: Permissions clone failed
+    success: Права доступа cloned
+    error: Права доступа clone failed
   role:
     error: Failed to add role
 connection:

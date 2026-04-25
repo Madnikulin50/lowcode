@@ -22,8 +22,8 @@ delay:
   short: Delay
   tooltip: Delays workflow execution
 error:
-  label: Error
-  short: Error
+  label: Ошибка
+  short: Ошибка
   tooltip: Throws error and stops workflow execution, also prevents saving of records triggered with before trigger
 error-handler:
   label: Error Handler
@@ -31,9 +31,9 @@ error-handler:
   tooltip: Continue workflow from this step if an error is triggered
 expressions:
   configurator:
-    add-expression: + Add Expression
-    expression: Expression
-    expression-placeholder: Expression...
+    add-expression: + Add Выражение
+    expression: Выражение
+    expression-placeholder: Выражение...
     target: Target
   label: Expressions
   short: Expressions
@@ -42,8 +42,8 @@ function:
   configurator:
     arguments: Arguments
     constant: Constant
-    expression: Expression
-    name: Name
+    expression: Выражение
+    name: Имя
     option-select: Select an option
     result: Result
     results: Results
@@ -101,8 +101,8 @@ trigger:
     event*: Event*
     failed-fetch-event-types: Failed to fetch event types
     initial-scope: Initial Scope
-    equal: Equal
-    not-equal: Not equal
+    equal: Равно
+    not-equal: Не равно
     like: Like
     not-like: Not like
     operator: Operator

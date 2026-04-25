@@ -1,11 +1,11 @@
 page-layout:
-  layouts: Layouts
-  title: Title *
-  handle: Handle
-  add: Add layout
+  layouts: Раскладка
+  title: Заголовок *
+  handle: Дескриптор
+  add: Добавить layout
   configure: 'Configure layout - "{{title}}"'
   visibility: Visibility
-  general: General
+  general: Основные
   useTitle: Use layout title
   tooltip:
     title: Use the layout title instead of the record page default. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
@@ -21,26 +21,26 @@ page-layout:
       record-page: "You can use {{0}}, {{1}}, {{2}}, {{3}} inside  the expression, for example: {{4}} or {{5}}"
       non-record-page: "You can use {{0}}, {{1}} inside  the expression, for example: {{2}} or {{3}}"
   roles:
-    label: Roles
+    label: Роли
     placeholder: Pick roles that the layout will be shown to
   recordToolbar:
     label: Record toolbar
     buttons:
-      label: Buttons
-      showBack: Show "Back" button
-      showDelete: Show "Delete" button
-      showClone: Show "Save as copy" button
-      showNew: Show "Add new" button
-      showEdit: Show "Edit" button
-      showSave: Show "Save" button
+      label: Кнопки
+      showBack: Show "Назад" button
+      showDelete: Show "Удалить" button
+      showClone: Show "Сохранить копию" button
+      showNew: Show "Добавить новый" button
+      showEdit: Show "Изменить" button
+      showSave: Show "Сохранить" button
     actions:
-      label: Actions
-      add: Add action
-      buttonLabel: Label
+      label: Действия
+      add: Добавить action
+      buttonМетка: Метка
       variant: Variant
-      visible: Visible
+      visible: Видимый
       kind:
-        label: Type
+        label: Тип
         toLayout: Redirect to layout
         toURL: Redirect to URL
       placement:
@@ -49,7 +49,7 @@ page-layout:
         center: Center
         end: End
       openIn:
-        label: Open in
+        label: Открыть в
         sameTab: Same tab
         newTab: New tab
       toLayout:
@@ -59,9 +59,9 @@ page-layout:
         label: Redirect to URL
         placeholder: No URL specified
   requiredFields:
-    label: Required fields
+    label: Обязательное поле fields
     description: Define fields that should be required based on a condition
-    field: Field
+    field: Поле
     condition: Condition
     selectPlaceholder: Select a field
     conditionPlaceholder: If no condition is set, the field will be required
@@ -70,93 +70,93 @@ page-layout:
 block:
   general:
     label:
-      cancel: Cancel
+      cancel: Отменить
       noHandle: No handle
-      pageBuilder: Page builder
-      saveAndClose: Save and close
+      pageBuilder: Конструктор страниц
+      saveAndClose: Сохранить и закрыть
     placeholder:
-      handle: Unique identifier (a - z, 0 - 9, underscore, dash)
+      handle: Уникальный идентификатор (a - z, 0 - 9, _, -)
       sample: Sample
-    title: Add new block
+    title: Добавить новый блок
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
-changeBlock: Change existing block
+changeBlock: Изменить существующий блок
 referencedBlock: This block is used in other layouts
-copyOf: "Copy of {{title}}"
+copyOf: "Копия {{title}}"
 build:
-  addBlock: Add block
-  selectBlockTitle: Select type of the new block
+  addBlock: Добавить блок
+  selectBlockTitle: Выбрать тип нового блока
   saveAsCopy:
-    ref: With references
-    noRef: Without references
+    ref: Со ссылками
+    noRef: Без ссылок
 edit:
-  create: Create page
-  edit: Edit page
-  otherOptions: Other options
-  pageDescription: Page description
-  visible: Is page visible
+  create: Создать страницу
+  edit: Изменить страницу
+  otherOptions: Прочие настройки
+  pageDescription: Описание страницу
+  visible: Отображать страницу
   notifications:
     enabled: Show record save notifications
 icon:
-  configure: Configure page icon
-  noIcon: No icon
-  page: Page icon
-  upload: Upload icon
-  list: Uploaded icons
-  delete: Delete selected icon
+  configure: Настроить иконку страницу
+  noIcon: Иконка не загружена
+  page: Иконка страницы
+  upload: Загрузить иконку
+  list: Загруженные иконки
+  delete: Удалить выбранную страницу
 url:
-  label: Or add URL to icon
-import: 'Import page(s):'
+  label: Или добавьте URL к иконке
+import: 'Импорт page(s):'
 instructions: Drag and drop pages to adjust the order and hierarchy
-invalid: Invalid configuration
+invalid: Некорректная конфигурация
 label:
-  title: Title *
-  cancel: Cancel
-  description: Description
-  handle: Handle
-  pageBuilder: Page builder
-  permissions: Permissions
-  saveAndClose: Save and close
-  delete: Delete Block
-  createPage: Create page
+  title: Заголовок *
+  cancel: Отменить
+  description: Описание
+  handle: Дескриптор
+  pageBuilder: Конструктор страниц
+  permissions: Права доступа
+  saveAndClose: Сохранить и закрыть
+  delete: Удалить блок
+  createPage: Создать страницу
 placeholder:
-  title: Page title (e.g. "Leads")
-loading: Loading
-moduleEdit: Edit module
+  title: Заголовок страницы (типа "Продажи")
+loading: Загрузка...
+moduleEdit: Изменить модуль
 navigation:
-  page: Pages
-  viewPage: View Page
-  editModule: Edit module
-noBlock: No block added yet
-noPages: No pages
-notVisible: Hidden
-pageMoveFailed: Could not move this page
-reordered: Page reordered
-showSubPages: Expand sub-pages in the sidebar
-customTitle: Use custom title
-title: List of Pages
+  page: Страницы
+  viewPage: Показать страницу
+  editModule: Изменить модуль
+noBlock: Пока нет ни одного блоков
+noPages: Нет страниц
+notVisible: Скрытий
+pageMoveFailed: Ошибка при перемещении страницы
+reordered: Изменен порядок страниц
+showSubPages: Открыть вспомогательные страницы в боковой панели
+customTitle: Использовать кастомный заголовок
+title: Список страниц
 tooltip:
-  view: View page
+  view: Просмотр страницы
   edit:
-    page: Edit page
-    block: Edit block
+    page: Изменить страницу
+    block: Изменить блок
   copy:
-    block: Copy block
+    block: Копировать блок
   clone:
-    block: Clone block
+    block: Клонировать блок
   delete:
-    block: Delete block
-  preview-link: Preview link
+    block: Удалить блок
+  preview-link: Предпросмотр ссылки
   saveAsCopy: Cannot duplicate record page
-view: View
-visible: Visible
+view: Просмотр
+visible: Видимый
 delete:
-  rebase: Update parent of sub-pages
-  cascade: Delete sub-pages
+  rebase: Обновить основную страницу
+  cascade: Удалить вспомогательные страницы
 public:
   record:
     create:
-      title: '{{name}} - Creating Record'
+      title: '{{name}} - Создание записи'
     edit:
-      title: '{{name}} - Editing Record'
+      title: '{{name}} - Редактирование записи'
     view:
-      title: '{{name}} - Viewing Record'
+      title: '{{name}} - Просмотр записи'

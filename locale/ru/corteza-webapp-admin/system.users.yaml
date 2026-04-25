@@ -11,8 +11,8 @@ editor:
     delete: Delete
     deletedAt: Время удаления
     email: Почтовый адрес *
-    handle: Handle
-    placeholder-handle: handle (a - z, 0 - 9, underscore, dash)
+    handle: Дескриптор
+    placeholder-handle: дескриптор (a - z, 0 - 9, underscore, dash)
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
     name: Полное имя
     revokeAllSession: Revoke all active sessions
@@ -26,13 +26,13 @@ editor:
       label: User group
       placeholder: User group
   avatar:
-    title: Profile avatar
+    title: Профиль avatar
     preview:
       label: Avatar
       title: Avatar
     initial:
       color: Text color
-      backgroundColor: Background color
+      backgroundColor: Фон color
     uploader:
       instructions: Upload avatar
       uploading: Uploading user avatar
@@ -67,7 +67,7 @@ editor:
     new: New password
     title: Password
     removePassword: Remove password
-  permissions: Permissions
+  permissions: Права доступа
   roles:
     add: Add
     count: roles
@@ -76,22 +76,22 @@ editor:
     unnamed: Unnamed role
   title:
     create: Create user
-    edit: Edit user
+    edit: Изменить user
 list:
   columns:
     actions: ""
-    createdAt: Created
+    createdAt: Создано
     email: Почтовый адрес
     enabled: Enabled
-    handle: Handle
-    name: Name
+    handle: Дескриптор
+    name: Имя
     state: State
   suspend: Suspend
   unsuspend: Unsuspend
   delete: Delete
   undelete: Undelete
   revokeActiveSession: Revoke Session
-  export: Export
+  export: Экспорт
   rows:
     filters:
       deleted: Deleted
@@ -112,17 +112,17 @@ list:
       label: suspended users
   loading: Loading users
   new: New User
-  permissions: Permissions
-  title: Users
+  permissions: Права доступа
+  title: Пользователи
   yaml: YAML
 export:
-  buttonLabel: Export
-  title: Export users
+  buttonLabel: Экспорт
+  title: Экспорт users
   inclRoleMembership: Include role membership
   inclRoles: Include roles
   membershipRequiredLabel: Roles can only be exported when role membership is selected
-  export: Export
+  export: Экспорт
 import:
-  buttonLabel: Import
-  title: Import users
+  buttonLabel: Импорт
+  title: Импорт users
   uploadFilePlaceholder: Click or drop files here to import

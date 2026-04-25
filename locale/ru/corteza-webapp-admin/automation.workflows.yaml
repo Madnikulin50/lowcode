@@ -5,19 +5,19 @@ editor:
     delete: Delete
     deletedAt: Время удаления
     enabled: Enabled
-    handle: Handle
+    handle: Дескриптор
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
     id: ID
-    name: Name *
+    name: Имя *
     openBuilder: Open builder
     title: Basic information
     undelete: Undelete
     updatedAt: Время обновления
   new: New Workflow
-  permissions: Permissions
+  permissions: Права доступа
   title:
     create: Create workflow
-    edit: Edit workflow
+    edit: Изменить workflow
   triggers:
     and: and
     columns:
@@ -28,15 +28,15 @@ editor:
 list:
   columns:
     actions: ""
-    createdAt: Created
+    createdAt: Создано
     enabled: Enabled
-    handle: Handle
-    name: Name
+    handle: Дескриптор
+    name: Имя
     state: State
   delete: Delete
   undelete: Undelete
 
-  export: Export
+  export: Экспорт
   rows:
     filters:
       deleted: Deleted
@@ -54,6 +54,6 @@ list:
       placeholder: Filter workflows by name
   loading: Loading workflows
   new: New Workflow
-  permissions: Permissions
+  permissions: Права доступа
   title: Workflows
   yaml: YAML

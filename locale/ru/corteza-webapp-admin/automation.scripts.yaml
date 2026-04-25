@@ -1,7 +1,7 @@
 list:
   columns:
-    name: Name
-    updatedAt: Last update
+    name: Имя
+    updatedAt: Обновлено
   filter:
     absoluteTime: Show absolute time
     incScriptsWithErrors: Errors ({{ count }})

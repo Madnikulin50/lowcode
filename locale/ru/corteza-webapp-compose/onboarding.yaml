@@ -3,26 +3,26 @@ message:
   notifyAdministrator: Notify your system administrator
   startBuilding: Follow these steps to start building
 label:
-  pageBuilder: Page builder
-  welcome: Welcome!
+  pageBuilder: Конструктор страниц
+  welcome: Быстрый старт
 navigation:
-  noPageTitle: No page title
+  noPageTitle: Не указан заголовок страницы
 notification:
   module:
-    createFailed: Could not create a module
-    saveFailed: Could not save this module
+    createFailed: Не удалось создать модуль
+    saveFailed: Не удалось сохранить модуль
 step:
   chart:
-    create: Make Chart
-    view: Your Charts
+    create: Сделать диаграмму
+    view: Ваши диаграммы
   module:
-    create: Create Module
-    view: Your Modules
-  optional: This step is optional!
+    create: Создать модуль
+    view: Ваши модули
+  optional: Этот шаг необязательный
   page:
-    create: Build Page
-    view: Your Pages
+    create: Создать страницу
+    view: Ваши страницы
 tooltip:
   page-configuration:
-    edit: Edit page
+    edit: Изменить страницу
     list: Page translations

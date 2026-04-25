@@ -5,11 +5,11 @@ editor:
     createdBy: Создал
     delete: Delete
     deletedAt: Время удаления
-    placeholder-handle: handle (a - z, 0 - 9, underscore, dash)
-    handle: Handle
+    placeholder-handle: дескриптор (a - z, 0 - 9, underscore, dash)
+    handle: Дескриптор
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
-    meta.short: Name *
-    meta.description: Description
+    meta.short: Имя *
+    meta.description: Описание
     title: Basic information
     undelete: Undelete
     updatedAt: Время обновления
@@ -22,7 +22,7 @@ editor:
         label: Relationship name
         placeholder: Enter name for the relationship
   new: New User Group
-  permissions: Permissions
+  permissions: Права доступа
   members:
     title: User Group Members
   roles:
@@ -33,17 +33,17 @@ editor:
     unnamed: Unnamed role
   title:
     create: Create user group
-    edit: Edit user group
+    edit: Изменить user group
 list:
   columns:
     actions: ""
-    createdAt: Created
-    handle: Handle
+    createdAt: Создано
+    handle: Дескриптор
     meta:
-      short: Name
+      short: Имя
   delete: Delete
   undelete: Undelete
-  export: Export
+  export: Экспорт
   rows:
     filters:
       deleted: Deleted
@@ -61,13 +61,13 @@ list:
       placeholder: Filter user groups by handle
   loading: Loading user groups
   new: New User Group
-  permissions: Permissions
+  permissions: Права доступа
   title: User Groups
 export:
-  buttonLabel: Export
-  title: Export user groups
-  export: Export
+  buttonLabel: Экспорт
+  title: Экспорт user groups
+  export: Экспорт
 import:
-  buttonLabel: Import
-  title: Import user groups
+  buttonLabel: Импорт
+  title: Импорт user groups
   uploadFilePlaceholder: Click or drop files here to import

@@ -4,16 +4,16 @@ input-placeholder: Enter search query
 card:
   button-text: Show more
   type: Type
-  handle: Handle
+  handle: Дескриптор
   namespace: Namespace
-  module: Module
+  module: Модуль
   user: User
   email: Почтовый адрес
   record: Record
-  fields: Fields
-range: Showing {{actual}} of {{all}} results
+  fields: Поля
+range: Showing {{actual}} из {{all}} results
 discovering: Discovering
-no-results: No results
+no-results: Ничего не найдено
 show-more: Show more
 loading-more: Loading more
 show-map: Show map

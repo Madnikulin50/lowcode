@@ -1,7 +1,7 @@
 list:
-  title: Sensitive Modules
+  title: Sensitive Модули
   columns:
-    module: Module
+    module: Модуль
     namespace: Namespace
     connection: Connection
     location: Location

@@ -4,8 +4,8 @@ template:
     greeting-paragraph: Hello
     question-for-client: would like to perform actions on this Corteza server on your behalf.
     buttons:
-      allow: Allow
-      deny: Deny
+      allow: Разрешено
+      deny: Запрещено
   links:
     mistake: If this is a mistake, please <a data-test-id="link-logout" href="{{link}}">log out</a>.
   errors:

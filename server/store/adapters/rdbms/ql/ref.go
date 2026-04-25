@@ -295,8 +295,8 @@ var (
 		},
 
 		"std": {
-			HandlerE: func(args ...exp.Expression) (exp.Expression, error) {
-				return nil, fmt.Errorf("STD function not supported on this database")
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewSQLFunctionExpression("stddev", args[0])
 			},
 		},
 	}

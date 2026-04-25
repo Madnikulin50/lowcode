@@ -1,15 +1,15 @@
 general:
   label:
-    attachmentFileInfo: '(File size: {{0}}, uploaded {{1}})'
-    download: Download
-    previewUnavailable: Preview unavailable
+    attachmentFileInfo: '(Размер файла: {{0}}, Загружено {{1}})'
+    download: Выгрузить
+    previewUnavailable: Предпросмотр не доступен
   tooltip:
-    dragAndDrop: Drag and drop to change order
+    dragAndDrop: Переместите для изменения порядка
 pdf:
-  clickToRetry: Click to retry
-  downloadForAll: Download to see all pages
-  firstPagePreview: First page preview
-  loading: Loading
-  noPages: This document is empty
-  pageLoadFailed: Page failed to load
-  pageLoading: Loading
+  clickToRetry: Нажмите для повтора
+  downloadForAll: Выгрузить все страницы
+  firstPagePreview: Предпросмотр первой страницы
+  loading: Загрузка...
+  noPages: Документ пуст
+  pageLoadFailed: Ошибка при загрузке страницы
+  pageLoading: Загрузка...

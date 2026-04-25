@@ -3,8 +3,8 @@ comments:
   label: Comments
   sort:
     first:
-      newest: Newest first
-      oldest: Oldest first
+      newest: Сначала новые
+      oldest: Сначала старые
   submit: Подтвердить
   unknown:
     date: Unknown date
@@ -13,7 +13,7 @@ comments:
 kind:
   correct: Correction Request
   delete: Deletion Request
-  export: Export Request
+  export: Экспорт Request
 
 status:
   canceled: Canceled
@@ -23,7 +23,7 @@ status:
 
 list:
   title: Privacy Requests
-  export: Export
+  export: Экспорт
   columns:
     kind: Type
     requestedAt: Requested at
@@ -36,25 +36,25 @@ list:
 
 edit:
   correct:
-    private-fields: Private Fields
+    private-fields: Private Поля
     no-data-available: No data available
     submit: Подтвердить Correction Request
     connection:
       label: Connection
       placeholder: Select a Connection
   delete:
-    private-fields: Private Fields
+    private-fields: Private Поля
     no-data-available: No data available
     submit: Delete Selected Data
     connection:
       label: Connection
       placeholder: Select a Connection
   export:
-    submit: Export Selected Data
+    submit: Экспорт Selected Data
     data-type:
       label: Data Type to export
-      profile-information: Profile Information
-      application-data: Application Data
+      profile-information: Профиль Information
+      application-data: Приложение Data
     date-range:
       label: Date Range
       all: All of my data
@@ -70,8 +70,8 @@ view:
   export:
     data-type:
       label: Data Type to export
-      profile-information: Profile Information
-      application-data: Application Data
+      profile-information: Профиль Information
+      application-data: Приложение Data
     date-range:
       label: Date Range
       all: All of my data

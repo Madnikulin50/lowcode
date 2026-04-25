@@ -7,13 +7,13 @@ user-options:
   data-overview:
     title: Data Overview
     description: Review your profile information and your personal data stored in Corteza applications
-    button-label: View your data
+    button-label: Просмотр your data
   privacy-requests:
     title: Privacy Requests
     description: Access, manage or export a list of all your privacy-related (deletion, export, correction) requests
     button-label: Your privacy requests
   export:
-    title: Data Export
+    title: Data Экспорт
     description: Open a new data export request by selecting the data type, date range and outcome file format
     button-label: Request data export
   delete:

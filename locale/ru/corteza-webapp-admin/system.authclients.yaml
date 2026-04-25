@@ -18,10 +18,10 @@ editor:
       client_credentials: Will be used to authenticate machines (grant type = client_credentials)
     handle:
       disabledFootnote: Unable to change the handle of the default auth client
-      label: Handle
-      placeholder-handle: handle (a - z, 0 - 9, underscore, dash)
+      label: Дескриптор
+      placeholder-handle: дескриптор (a - z, 0 - 9, underscore, dash)
       invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
-    name: Name *
+    name: Имя *
     no-time: No time selected
     profile: Allow client access to user's profile
     redirectURI: Redirect URI's
@@ -68,18 +68,18 @@ editor:
     discovery: Allow client access to Corteza Discovery API on behalf of user
     openid: Allow client to use OIDC and verify the user's identity
   new: New Auth Client
-  permissions: Permissions
+  permissions: Права доступа
   title:
     create: Create client
-    edit: Edit client
+    edit: Изменить client
 list:
   columns:
     actions: ""
-    createdAt: Created
+    createdAt: Создано
     enabled: Enabled
-    handle: Handle
+    handle: Дескриптор
     meta:
-      name: Name
+      name: Имя
     state: State
   rows:
     filters:
@@ -98,7 +98,7 @@ list:
       placeholder: Filter clients
   loading: Loading clients
   new: New Auth Client
-  permissions: Permissions
+  permissions: Права доступа
   title: Auth Clients
   yaml: YAML
   delete: Delete

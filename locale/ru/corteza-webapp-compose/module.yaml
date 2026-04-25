@@ -2,37 +2,37 @@ allRecords:
   create:
     title: Create record for module "{{name}}"
   edit:
-    title: Edit record for module "{{name}}"
-  label: All records
+    title: Изменить record for module "{{name}}"
+  label: Все записи
   list:
-    title: All records for module "{{name}}"
+    title: Все записи модуля "{{name}}"
   columns:
-    title: Configure columns
+    title: Управление колонками
     description: The columns picked won't be saved after you refresh the page
   tooltip:
     configureColumns: Selecting a large number of fields or displaying record/user fields will impact performance
   view:
-    title: View record for module "{{name}}"
+    title: Просмотр записи модуля "{{name}}"
 block:
   record:
-    recordDeleted: This record was deleted
+    recordDeleted: Эта запись удалена
     loadFailed: Could not load record
-createLabel: New Module
+createLabel: Новый модуль
 edit:
-  create: Create module
-  edit: Edit module
+  create: Создать модуль
+  edit: Изменить модуль
   fields:
-    label: Fields
+    label: Поля
     columns:
       name:
-        label: Name
+        label: Имя
       title:
-        label: Title
+        label: Заголовок
       type:
-        label: Type
+        label: Тип
   federationSettings:
     downstream:
-      allFields: All Fields
+      allFields: Все поля
       description: 'Match federated fields with existing ones:'
       title: Map
     error:
@@ -49,7 +49,7 @@ edit:
     general:
       receive: Receive new records from another organization (downstream)
       send: Send new records to the federated network (upstream)
-      title: General
+      title: Основные
     noNodes: No federated servers available
     noPermission: No permission to manage exposed module
     pickModule: Pick a federated module
@@ -59,7 +59,7 @@ edit:
     title: Federation Settings
     upstream:
       copyFrom: Copy settings from
-      allFields: All Fields
+      allFields: Все поля
       description: Select the fields you want to share with the selected network
       title: Expose
   discoverySettings:
@@ -67,35 +67,35 @@ edit:
     public: Public
     private: Private
     protected: Protected
-  fieldPermissions: Field permissions
+  fieldPermissions: Поле прав доступа
   manageRecordFields: Manage record fields
   moduleFieldSettings: Module field settings
-  moduleInfo: Module info
-  newField: Add new field
+  moduleInfo: Информация о модуле
+  newField: Добавить новый field
   recordPermissions: Record permissions
-  reorderFields: Reorder fields
-  specificFieldSettings: Field settings ({{name}})
+  reorderFields: Изменить порядок полей
+  specificFieldSettings: Настройки поля ({{name}})
   steps:
-    recordList: Page with record list
-    recordPage: Record page
+    recordList: Страница со списком записей
+    recordPage: Страница записи
   systemFields: 'System fields'
   tooltip:
     attributes: Select if the field can hold multiple values, if it's required field or if contains sensitive data
     name: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dashes. Must end with letter or number.
     private: Sensitive data
-    required: Required field
+    required: Обязательное поле field
     title: The name displayed in form input / data lists
 
   issues:
-    label: Issues ({{count}})
+    label: Проблемы ({{count}})
 
   schemaAlterations:
-    title: Schema alterations
+    title: Изменение схемы
     resolve: Resolve
-    resolveAuto: Resolve automatically
+    resolveAuto: Решить автоматически
     resolved: Resolved
     dismiss: Dismiss
-    waitingFor: 'Waiting for {{id}}'
+    waitingFor: 'Ужидаем {{id}}'
     noAlterations: No schema alterations need to be resolved
     columns:
       alteration: Alteration
@@ -103,25 +103,25 @@ edit:
       status: Status
     params:
       attribute:
-        add: Add column {{ident}} encoded as {{storeType}} of type {{attrType}}
-        delete: Delete column {{ident}} encoded as {{storeType}}
+        add: Добавить колонку {{ident}} encoded as {{storeType}} of type {{attrType}}
+        delete: Удалить column {{ident}} encoded as {{storeType}}
         reType: Changing type of column {{ident}} to {{toType}}
         reEncode: Changing encoding of column {{ident}} to {{toType}}
       model:
-        add: Add schema for model {{ident}}
-        delete: Delete schema for model {{ident}}
+        add: Добавить schema for model {{ident}}
+        delete: Удалить schema for model {{ident}}
 
   config:
     dal:
-      title: Data store
+      title: Хранение данных
       connection:
-        label: Database connection
-        placeholder: Select a database connection
+        label: Соединение с БД
+        placeholder: Выбрать соединение
         description: Changing the connection will reset the sensitivity level configuration on the module and fields, if the sensitivity level is incompatible with the new connection
       ident:
-        label: Collection or database table name
+        label: Коллекция или имя БД
         placeholder: compose_record
-        description: "Name of the database table or collection where records can be accessed and stored. Supports partitioning placeholders: {{module}} for module handle and {{namespace}} for namespace handle"
+        description: "Имя of the database table or collection where records can be accessed and stored. Supports partitioning placeholders: {{module}} for module handle and {{namespace}} for namespace handle"
 
       connections:
         fetch-failed: Could not fetch available connections
@@ -132,31 +132,31 @@ edit:
         description: |
           Configure how record fields are stored and read from the database.
           Default behaviour is to encode values into JSON and store them in a single field.
-          Alternatively you can use columns with the same name as the field name (Column)
+          Alternatively you can use columns with the same name as the field name (Колонка)
           or use an Alias and store the value directly in the column.
 
       system-fields:
         label: System field mapping and encoding
         description: |
           System fields are used to store metadata about the record.
-          Configure to skip or store them into a column with the same name (Column),
+          Configure to skip or store them into a column with the same name (Колонка),
           a different column (Alias) or encode them into JSON.
         grouptypes:
-          all: All
-          partition: Partition
-          userReference: User reference
-          timestamps: Timestamps
-          extras: Extras
+          all: Все
+          partition: Разделы
+          userReference: Ссылки на пользователей
+          timestamps: Временные метки
+          extras: Дополнительные
 
 
       encoding-strategy:
         unavailable: unavailable
         ident:
-          placeholder: Field or database table column name
+          placeholder: Поле or database table column name
 
         strategies:
           plain:
-            label: Column
+            label: Колонка
           alias:
             label: Alias
           json:
@@ -164,10 +164,10 @@ edit:
 
 
     privacy:
-      title: Privacy
+      title: Приватность
       sensitivity-level:
-        label: Highest allowed sensitivity level
-        placeholder: Select a sensitivity level
+        label: Максимальный уровень чувствительности
+        placeholder: Выберите уровень чувствительности
         description: Highest allowed level of sensitivity for fields on this module, changing this value will reset the sensitivity level of fields if they are incompatible.
       usage-disclosure:
         label: Sensitive data usage disclosure (visible on data-privacy console)
@@ -176,18 +176,18 @@ edit:
         fetch-failed: Could not fetch sensitivity levels
 
     record-revisions:
-      title: Record Revisions
-      enabled: Enable record revisions
+      title: История записей
+      enabled: Подключить историю записей
       ident:
-        label: Identifier
+        label: Идентификатор
         placeholder: compose_record_revisions
-        description: 'Name of the database table or collection where revisions records can be accessed and stored. Supports partitioning placeholders: {{module}} for module handle and {{namespace}} for namespace handle'
+        description: 'Имя of the database table or collection where revisions records can be accessed and stored. Supports partitioning placeholders: {{module}} for module handle and {{namespace}} for namespace handle'
 
     validation:
-      title: Validation
+      title: Проверка
 
       record-duplication:
-        title: Record duplication detection
+        title: Определение дублей записей
         strict-fields:
           label: Strict duplicate value validation
           description: Record will not be saved when a duplicate value is detected in the selected fields in any existing record of this module
@@ -196,68 +196,68 @@ edit:
           description: Record will be saved and user will be presented with a warning when a duplicate value is detected in the selected fields in any existing record of this module
 
     uniqueValues:
-      title: Unique values
-      duplicationDetection: Duplication detection
+      title: Уникальные значения
+      duplicationDetection: Определение дубликатов
       preventRecordsSave: Prevent record saving if duplicate values are found
-      warningLabel: Warning or error message toast when constraint matches
-      valueModifiers: Value modifiers
+      warningМетка: Предупреждение or error message toast when constraint matches
+      valueModifiers: Значение modifiers
       multiValues: Multi-field values
-      add: Add
-      searchFields: Add field(s) to constraint
-      ignoreCase: Ignore case
-      fuzzyMatch: Fuzzy match
-      soundsLike: Sounds like
-      caseSensitive: Case sensitive
-      oneOf: One of
-      equal: Equal
-      warningMessage: Warning or error message toast when constraint matches
-      field: Field
-      type: Type
-      none: None
-      addNewConstraint: Add new constraint
+      add: Добавить
+      searchFields: Добавить field(s) to constraint
+      ignoreCase: Игнорировать регистр
+      fuzzyMatch: Неточное совпадение
+      soundsLike: Звучит как
+      caseSensitive: Зависимый от регистра
+      oneOf: Один из
+      equal: Равно
+      warningMessage: Предупреждение or error message toast when constraint matches
+      field: Поле
+      type: Тип
+      none: Отсутствует
+      addNewConstraint: Добавить новое ограничение
       uniqueValueConstraint: "Unique value constraint #{{index}}"
       tooltip:
         performance: Using duplication detection will impact performance
 
 federated: Federated
 forModule:
-  recordPage: '{{name}} - Record Page'
+  recordPage: '{{name}} - страница записи'
 general:
-  fields: Module fields
+  fields: Поля модуля
   label:
-    attributes: Attributes
-    handle: Handle
-    name: Module Name *
-    permissions: Permissions
-    title: Title
-    type: Type
-    saveAndClose: Save and close
+    attributes: Атрибуты
+    handle: Дескриптор
+    name: Имя модуля *
+    permissions: Права доступа
+    title: Заголовок
+    type: Тип
+    saveAndClose: Сохранить и закрыть
   placeholder:
-    name: Name (e.g. "Leads")
-    handle: Unique identifier (a - z, 0 - 9, underscore, dash)
+    name: Имя (e.g. "Продажи")
+    handle: Уникальный идентификатор (a - z, 0 - 9, _, -)
     sample: Sample
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
-import: Module import
+import: Импорт модуля
 navigation:
-  module: Modules
-noModule: No modules
+  module: Модули
+noModule: Модули отсутствуют
 noModuleFilter: No module matches your search
 
 list:
   columns:
-    name: Name
-    handle: Handle
-    changedAt: Last change
-  delete: Delete
+    name: Имя
+    handle: Дескриптор
+    changedAt: Время изменения
+  delete: Удалить
 
 recordPage:
-  create: Create record page
-  edit: Edit record page
+  create: Создать страницу для записи
+  edit: Изменить страницу записи
 recordListPage:
-  create: Create record list page
-  edit: Edit record list page
-related-pages: Related Pages
+  create: Создать страницу для списка записей
+  edit: Изменить страницу списка записей
+related-pages: Связанные страницы
 searchPlaceholder: Search modules in this namespace
-title: List of Modules
+title: Список модулей
 tooltip:
-  permissions: Module permissions
+  permissions: Права доступа к модулю

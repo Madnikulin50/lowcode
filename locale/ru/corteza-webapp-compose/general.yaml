@@ -1,213 +1,214 @@
 label:
   app-name:
     namespace:
-      list: Namespaces
-      create: Create Namespace
-      edit: "Edit Namespace - {{label}}"
-      view: Namespace
+      list: Пространства
+      create: Создать пространство
+      edit: "Изменить Пространство - {{label}}"
+      view: Пространство
     module:
-      list: "Modules - {{label}}"
-      create: Create Module
-      edit: "Edit Module - {{label}}"
+      list: "Модули - {{label}}"
+      create: Создать модуль
+      edit: "Изменить Module - {{label}}"
     page:
-      list: "Pages - {{label}}"
+      list: "Страницы - {{label}}"
       builder: "PageBuilder - {{label}}"
-      edit: "Edit Page - {{label}}"
+      edit: "Изменить Page - {{label}}"
       record: "Record - {{label}}"
     chart:
-      list: "Charts - {{label}}"
-      edit: "Edit Chart - {{label}}"
-      create: Create Chart
-  actions: Actions
-  active: Active
-  add: Add
-  add-with-plus: + Add
-  addNew: Add new
-  addValue: Add new value
+      list: "Диаграммы - {{label}}"
+      edit: "Изменить Диаграмма - {{label}}"
+      create: Create Диаграмма
+  actions: Действия
+  active: Включено
+  add: Добавить
+  add-with-plus: + Добавить
+  addNew: Добавить новый
+  addValue: Добавить новый value
   ascending: Ascending
-  attachmentFileInfo: "(File size: {{0}}, uploaded {{1}})"
-  attributes: Attributes
-  back: Back
-  backWithoutSave: Back (without saving changes)
-  block: Block
+  attachmentFileInfo: "(Размер файла: {{0}}, Загружено {{1}})"
+  attributes: Атрибуты
+  back: Назад
+  backWithoutSave: Назад (without saving changes)
+  block: Блок
   browse: Browse
-  buttons: Buttons
-  cancel: Cancel
+  buttons: Кнопки
+  cancel: Отменить
   clear: Clear
   clone: Clone
   close: Close
   create: Create
   createRecordFromDraft: Create Record from Draft
-  delete: Delete
+  delete: Удалить
   default: Default
   restore: Restore
   discard: Discard
   descending: Descending
-  description: Description
-  download: Download
+  description: Описание
+  download: Выгрузить
   dropFiles: Click or drop files here to upload
-  edit: Edit
+  edit: Изменить
   enabled: Enabled
-  export: Export
-  fileTypeNotAllowed: File type not allowed
-  general: General
-  handle: Handle
+  export: Экспорт
+  fileTypeNotAllowed: Файл type not allowed
+  general: Основные
+  handle: Дескриптор
   here: here
   home: Home
-  import: Import
-  all: All
+  import: Импорт
+  all: Все
   importPlaceholder: Upload files to import
-  loading: Loading
+  loading: Загрузка...
   makeDefault: Make default
-  moduleName: Module name
-  multi: Multi
-  name: Name
+  moduleName: Имя модуля
+  multi: Множественное
+  name: Имя
   newRecord: New Record
-  next: Next
-  no: No
+  next: Следующая
+  no: Нет
   noHandle: No handle
-  none: None
+  none: Отсутствует
   now: Now
   ok: Ok
   page: Page
   pageLayout: Page layout
-  pageBuilder: Page builder
-  permissions: Permissions
+  pageBuilder: Конструктор страниц
+  permissions: Права доступа
   private: Private
-  privacy: Privacy
+  privacy: Приватность
   processing: Processing...
   record: Record
-  recordPage: Record page
-  field: Field
+  recordPage: Страница записи
+  field: Поле
   remove: Remove
   removeDefault: Remove default
-  required: Required
+  required: Обязательное поле
   reset: Reset
   examples: Examples
   sensitive: Sensitive
-  save: Save
-  saveAndClose: Save and close
-  saveAs: Save as
-  saveAsCopy: Save as copy
-  search: Search
+  save: Сохранить
+  saveAndClose: Сохранить и закрыть
+  saveAs: Сохранить как
+  saveAsCopy: Сохранить копию
+  search: Поиск
   status: Status
   timeHour: "{{t}}h"
   timeMinute: "{{t}}min"
-  today: Today
-  title: Title
-  type: Type
+  today: Сегодня
+  title: Заголовок
+  type: Тип
   updatedAt: Время обновления
   uploading: Uploading
-  unsavedChanges: Unsaved Changes
+  unsavedChanges: Несохраненные изменения
   urlPlaceholder: https://example.tld
-  validation: Validation
-  view: View
-  yes: Yes
+  validation: Проверка
+  view: Просмотр
+  yes: Да
   chart:
-    single: Chart
-    plural: Charts
+    single: Диаграмма
+    plural: Диаграммы
   namespace:
-    single: Namespace
-    plural: Namespaces
+    single: Пространство
+    plural: Пространства
   module:
-    single: Module
-    plural: Modules
+    single: Модуль
+    plural: Модули
 navigation:
-  chart: Charts
-  namespace: Namespaces
-  module: Modules
-  page: Pages
-  pageLayout: Page Layouts
+  chart: Диаграммы
+  namespace: Пространства
+  module: Модули
+  page: Страницы
+  pageLayout: Раскладка страницы
 placeholder:
-  handle: handle (a - z, 0 - 9, underscore, dash)
+  handle: дескриптор (a - z, 0 - 9, underscore, dash)
   sample: Sample
 reminder:
-  add: Add a reminder
+  add: Добавить a reminder
   dismiss: Dismiss
   dismissed: Dismissed
   dismissedAt: Dismissed at
   undismiss: Undismiss
-  delete: Delete reminder
-  recordPageLink: View record
+  delete: Удалить reminder
+  recordPageLink: Просмотр record
   edit:
-    label: Edit reminder
-    assigneeLabel: Assignee
+    label: Изменить reminder
+    assigneeМетка: Assignee
     assigneePlaceholder: Myself (default)
-    notesLabel: Notes
+    notesМетка: Notes
     notesPlaceholder: Notes
-    remindAtLabel: Remind me at
+    remindAtМетка: Remind me at
     remindAtNone: Never
-    titleLabel: Title
-    titlePlaceholder: Title
-  listLabel: Reminders
-  routesTo: Label for page link
+    titleМетка: Заголовок
+    titlePlaceholder: Заголовок
+  listМетка: Reminders
+  routesTo: Метка for page link
   snooze:
     label: Snooze
     count: Snooze count
 tooltip:
-  dragAndDrop: Drag and drop to change order
+  dragAndDrop: Переместите для изменения порядка
 fieldKinds:
   Bool:
-    label: Checkbox (Y/N)
+    label: Флажок (Да-Нет)
   DateTime:
-    label: Date and time
-  Почтовый адрес:
+    label: Дата и время
+  EMail:
     label: Почтовый адрес input
   File:
-    label: File upload
+    label: Загрузка файла
   Number:
-    label: Number input
+    label: Число
   Record:
-    label: Record selector
+    label: Выбор записи
   Select:
-    label: Select / dropdown
+    label: Выбор из списка
   String:
-    label: Text input (string)
+    label: Строка
   Url:
-    label: URL input
+    label: Ввод URL
   User:
-    label: User selector
+    label: Выбор пользователя
   Geometry:
-    label: Location
+    label: Геопозиция
 field:
-  selectAll: Select all
+  selectAll: Выбрать все
   tooltip:
-    permissions: Field permissions
+    permissions: Поле прав доступа
   unselectAll: Unselect all
   kind:
     user:
       suggestionPlaceholder: Start typing to search for users by email or name
 resourceList:
-  notFound: Not found
-  noItems: No items to show
+  notFound: Не найдено
+  noItems: Нет записей для показа
   pagination:
-    next: Next
-    prev: Previous
-    showing: "{{from}} - {{to}} of {{count}} {{data}}"
-    single_one: "One {{data}}"
+    next: Следующая
+    prev: Предыдущая
+    showing: "{{from}} - {{to}} из {{count}} {{data}}"
+    single: "Один {{data}}"
+    single_one: "Один {{data}}"
     single_other: "{{count}} {{data}}"
-    recordsPerPage: Per Page
+    recordsPerPage: На странице
 recordNavigation:
-  next: Next record
-  prev: Previous record
+  next: Следующая record
+  prev: Предыдущая record
 variants:
-  primary: Primary
-  secondary: Secondary
-  light: Light
-  dark: Dark
-  info: Info
-  success: Success
-  danger: Danger
-  warning: Warning
+  primary: Главное
+  secondary: Вспомогательное
+  light: Светлая
+  dark: Темная
+  info: Информация
+  success: Успех
+  danger: Опасность
+  warning: Предупреждение
 editor:
-  unsavedChanges: Unsaved changes will be lost. Do you wish to leave the page?
+  unsavedChanges: Не сохраненные данные будут потеряны. Вы желаете покинуть страницу?
 webcam:
-  title: Webcam
-  tooltip: Open webcam to capture photo
+  title: Web-камера
+  tooltip: Открыть Web-камеру чтобы сделать снимок 
   buttons:
-    cancel: Cancel
-    capture: Capture photo
-    confirm: Upload photo
+    cancel: Отменить
+    capture: Снять фото
+    confirm: Загрузить фото
   errors:
     camera: Unable to access the camera. Please make sure you have granted camera permissions.
 
@@ -217,8 +218,8 @@ record:
 
 themes:
   labels:
-    light: Light
-    dark: Dark
+    light: Светлая
+    dark: Темная
 
 extendSession:
   labels:

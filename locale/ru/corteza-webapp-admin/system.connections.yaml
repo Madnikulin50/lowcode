@@ -1,7 +1,7 @@
 primary:
-  title: Primary database
-  name: Name
-  handle: Handle
+  title: Главная database
+  name: Имя
+  handle: Дескриптор
   location: Location
   ownership: Ownership
   sensitivity-level: Sensitivity level
@@ -20,27 +20,27 @@ list:
     inclusive:
       label: Including
   columns:
-    name: Name
+    name: Имя
     location: Location
     ownership: Ownership
-    createdAt: Created
+    createdAt: Создано
     actions: ''
   delete: Delete
   undelete: Undelete
 
 editor:
   title:
-    edit: Edit connection
+    edit: Изменить connection
     create: New connection
   basic:
     title: Basic settings
     form:
       name:
-        label: Name *
+        label: Имя *
         placeholder: Data lake
         description: ''
       handle:
-        label: Handle
+        label: Дескриптор
         placeholder: simplified_connection_name
         invalid-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
       location-name:

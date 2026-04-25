@@ -1,46 +1,46 @@
 label:
   add: Add
   and: And
-  all: All
+  all: Все
   ascending: Ascending
-  back: Back
+  back: Назад
   clear: Clear
   cancel: Cancel
   delete: Delete
   descending: Descending
-  loading: Loading
-  name: Name
-  none: None
+  loading: Загрузка...
+  name: Имя
+  none: Отсутствует
   now: Now
   ok: Ok
   or: Or
   openLinkInNewTab: Open link in a new tab
-  save: Save
-  saveAndClose: Save and close
-  clone: Save as copy
-  today: Today
+  save: Сохранить
+  saveAndClose: Сохранить and close
+  clone: Сохранить копию
+  today: Сегодня
   urlPlaceholder: https://example.tld
   default: Default
   report:
-    single: Report
+    single: Отчет
     plural: Reports
 
 resourceList:
   notFound: Not found
   noItems: No items to show
   pagination:
-    next: Next
-    prev: Previous
-    showing: '{{from}} - {{to}} of {{count}} {{data}}'
-    single_one: 'One {{data}}'
+    next: Следующая
+    prev: Предыдущая
+    showing: '{{from}} - {{to}} из {{count}} {{data}}'
+    single_one: 'Один {{data}}'
     single_other: '{{count}} {{data}}'
-    recordsPerPage: Per Page
+    recordsPerPage: На странице
   clone: Clone
 
 themes:
   labels:
-    light: Light
-    dark: Dark
+    light: Светлая
+    dark: Темная
 
 cloneSuffix: copy
 

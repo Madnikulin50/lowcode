@@ -1,6 +1,6 @@
 errors:
   disabled: disabled workflow or trigger
-  handleNotUnique: workflow handle not unique
+  handleNotUnique: workflow дескриптор not unique
   invalidHandle: invalid handle
   invalidID: неверный ID
   notAllowedToCreate: not allowed to create workflows

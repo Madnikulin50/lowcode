@@ -1,6 +1,6 @@
 errors:
-  handleNotUnique: role handle not unique
-  invalidHandle: invalid handle
+  handleNotUnique: role дескриптор not unique
+  invalidHandle: invalid дескриптор
   invalidID: неверный ID
   nameNotUnique: role name not unique
   notAllowedToArchive: not allowed to archive this role

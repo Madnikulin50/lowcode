@@ -3,12 +3,12 @@ title: Filter
 types:
   title: Types
   namespace: Namespace
-  module: Module
+  module: Модуль
   user: User
   record: Record
 
 aggregation-groups:
-  modules: Modules
-  namespaces: Namespaces
+  modules: Модули
+  namespaces: Пространства
 
 reset: Reset

@@ -3,39 +3,39 @@
 #  - inline permission table (admin interface only)
 #  - modal permission table (common perm. interface)
 ui:
-  save: Save changes
+  save: Сохранить changes
   cancel: Cancel
-  set-for: Set permissions for {{target}}
-  loading: Loading permissions
+  set-for: Установить права доступа для {{target}}
+  loading: Загрузка прав доступа
 
   notification:
     save:
-      success: Permissions saved
+      success: Права доступа saved
       failed: Failed to save permissions
 
   edit:
-    title: Edit permissions
-    label: User roles
-    description: Select role to set permissions
+    title: Изменить права доступа
+    label: Роли пользователя
+    description: Выберите роль для установки прав
 
   evaluate:
-    title: Evaluate permissions
+    title: Вычислить права доступа
     description: Evaluate applied permissions
 
   add:
     label: Add
-    title: Evaluate permissions
-    save: Save & Close
+    title: Вычислить права доступа
+    save: Сохранить и закрыть
     edit:
       description: Select a role that you wish to edit permissions for
     evaluate:
       description: Select a combination of roles or a user to evaluate
     role:
-      label: Roles
-      placeholder: Select role(s)
+      label: Роли
+      placeholder: Выбрать роли
     user:
-      label: Users
-      placeholder: Search or select a user
+      label: Пользователи
+      placeholder: Поиск или выбор пользователя
 
   tooltip:
     unknown-context:
@@ -43,17 +43,17 @@ ui:
       role: Can not evaluate permission for contextual role on a non-specific resource
 
   access:
-    allow: Allow
-    inherit: Inherit
-    deny: Deny
+    allow: Разрешено
+    inherit: Наследовано
+    deny: Запрещено
 
   #############################################################################
   # Inline permission table UI:
   click-on-cell-to-allow: Click on permission/role cell to allow a specific operation
-  edit-or-eval: Edit or evaluate permissions
+  edit-or-eval: Изменить or evaluate permissions
 
   title:
-    automation: Automation permissions
+    automation: Автоматизация permissions
     system: System permissions
     compose: Compose permissions
     federation: Federation permissions
@@ -68,7 +68,7 @@ ui:
 resources:
   automation:
     component:
-      label: Automation component
+      label: Автоматизация component
       operations:
         grant:
           title: Grant permissions on automation
@@ -193,7 +193,7 @@ resources:
           title: Create data privacy requests
 
     application:
-      label: Applications
+      label: Приложения
       all: all applications
       specific: application "{{target}}"
       operations:
@@ -271,7 +271,7 @@ resources:
           manage:
             title: Manage any connections
     role:
-      label: Roles
+      label: Роли
       all: all roles
       specific: role "{{target}}"
       operations:
@@ -368,7 +368,7 @@ resources:
           title: Update any report
 
     user:
-      label: Users
+      label: Пользователи
       all: all users
       specific: user "{{target}}"
       operations:
@@ -470,13 +470,13 @@ resources:
           title: Create modules
 
     exposed-module:
-      label: Modules
+      label: Модули
       operations:
         manage:
           title: Manage any module
 
     shared-module:
-      label: Modules
+      label: Модули
       operations:
         map:
           title: Map any module
@@ -498,7 +498,7 @@ resources:
         resource-translations.manage:
           title: Manage resource translations
     chart:
-      label: Charts
+      label: Диаграммы
       operations:
         delete:
           title: Delete any chart
@@ -507,7 +507,7 @@ resources:
         update:
           title: Update any chart
     module:
-      label: Modules
+      label: Модули
       operations:
         delete:
           title: Delete any module
@@ -529,14 +529,14 @@ resources:
         record.value.update:
           title: Update any module field
     namespace:
-      label: Namespaces
+      label: Пространства
       operations:
         chart.create:
           title: Create charts under any namespace
         charts.search:
           title: List and search charts under any namespace
         charts.export:
-          title: Export charts under any namespace
+          title: Экспорт charts under any namespace
         delete:
           title: Delete any namespace
         manage:
@@ -546,7 +546,7 @@ resources:
         modules.search:
           title: List and search modules under any namespace
         modules.export:
-          title: Export modules under any namespace
+          title: Экспорт modules under any namespace
         page.create:
           title: Create pages under any namespace
         pages.search:
@@ -556,9 +556,9 @@ resources:
         update:
           title: Update any namespace
         export:
-          title: Export any namespace
+          title: Экспорт any namespace
     page:
-      label: Pages
+      label: Страницы
       operations:
         delete:
           title: Delete any page

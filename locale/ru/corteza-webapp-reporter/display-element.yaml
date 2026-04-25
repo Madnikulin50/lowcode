@@ -2,16 +2,16 @@ chart:
   configurator:
     begin-axis-at-zero: Always begin axis scale at zero
     chart-title: Chart title
-    color-scheme: Color scheme
+    color-scheme: Цвет scheme
     data: Data
     data-columns: Data columns
     default: Default
-    default-value: Default value
-    general: General
+    default-value: Значение по-умолчанию
+    general: Основные
     label-column: Label column
     logarithmic-scale: Logarithmic scale
     position-description: Values can be set as pixels (20) or as percentages (20%)
-    none: None
+    none: Отсутствует
     place-axis-on-right-side: Place axis on the right side
     skip-missing-values: Skip missing values
     step-size: Step size
@@ -43,8 +43,8 @@ chart:
       line: Line
       pie: Pie
     value:
-      max: Max value
-      min: Min value
+      max: Максимум value
+      min: Минимум value
     x-axis:
       name: X-Axis
       label: Axis label
@@ -66,9 +66,9 @@ chart:
       hide: Hide legend
       scrollable: Scrollable
       orientation:
-        label: Orientation
-        horizontal: Horizontal
-        vertical: Vertical
+        label: Расположение
+        horizontal: Горизонтальное
+        vertical: Вертикальное
       align:
         label: Align
         left: Left
@@ -95,29 +95,29 @@ chart:
 metric:
   configurator:
     color:
-      background: Background color
+      background: Фон color
       text: Text color
       picker: Choose a color
     format: Format
     label-column: Label column
-    none: None
+    none: Отсутствует
     prefix: Prefix
     suffix: Suffix
 table:
   configurator:
-    general: General
+    general: Основные
     data: Data
     columns: Columns
-    dark: Dark
+    dark: Темная
     head-variant: Head Variant
     joined-datasource-handling: Joined datasource handling
-    light: Light
-    none: None
+    light: Светлая
+    none: Отсутствует
     table:
       options:
         bordered: Bordered
         borderless: Borderless
-        dark: Dark
+        dark: Темная
         fixed: Fixed
         hover: Hover
         label: Table Options
@@ -128,13 +128,13 @@ table:
       variant: Table Variant
       variants:
         danger: Danger
-        dark: Dark
+        dark: Темная
         info: Info
-        light: Light
-        primary: Primary
-        secondary: Secondary
-        success: Success
-        warning: Warning
+        light: Светлая
+        primary: Главное
+        secondary: Вспомогательное
+        success: Успех
+        warning: Предупреждение
   view:
-    next: Next
-    previous: Previous
+    next: Следующая
+    previous: Предыдущая

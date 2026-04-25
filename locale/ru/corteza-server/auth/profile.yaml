@@ -9,8 +9,8 @@ template:
       label: Полное имя
       placeholder: Your full name
     handle:
-      label: Handle
-      placeholder: Short name, nickname or handle
+      label: Дескриптор
+      placeholder: Short name, nickname or дескриптор
     avatar:
       label: Avatar
       delete: Delete
@@ -24,7 +24,7 @@ template:
     buttons:
       submit: Update profile
 alerts:
-  profile-updated: Profile successfully updated
+  profile-updated: Профиль successfully updated
   profile-update-fail: Could not update profile due to input errors
-  profile-avatar-uploaded: Profile avatar successfully uploaded
-  profile-avatar-deleted: Profile avatar successfully deleted
+  profile-avatar-uploaded: Профиль avatar successfully uploaded
+  profile-avatar-deleted: Профиль avatar successfully deleted

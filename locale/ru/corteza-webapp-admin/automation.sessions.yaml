@@ -7,7 +7,7 @@ editor:
     delete: Delete
     deletedAt: Время удаления
     suspendedAt: Suspended at
-    error: Error
+    error: Ошибка
     eventType: Event type
     id: ID
     resourceType: Resource type
@@ -20,7 +20,7 @@ editor:
 list:
   columns:
     actions: ""
-    createdAt: Created At
+    createdAt: Создано At
     eventType: Event type
     sessionID: SessionID
     state: State
@@ -28,7 +28,7 @@ list:
     workflowID: WorkflowID
   filterForm:
     all:
-      label: All
+      label: Все
     completed:
       label: Completed
     excluded:

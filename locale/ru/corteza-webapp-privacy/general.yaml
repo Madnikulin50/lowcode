@@ -1,31 +1,31 @@
 label:
-  back: Back
-  all: All
+  back: Назад
+  all: Все
   privacy_request:
     single: Privacy Request
     plural: Privacy Requests
   sensitive_module:
     single: Sensitive Module
-    plural: Sensitive Modules
+    plural: Sensitive Модули
 
 resourceList:
-  loading: Loading
+  loading: Загрузка...
   noItems: No items
   notFound: Not found
   search:
-    placeholder: Search
+    placeholder: Поиск
   pagination:
-    next: Next
-    prev: Previous
-    showing: '{{from}} - {{to}} of {{count}} {{data}}'
-    single_one: 'One {{data}}'
+    next: Следующая
+    prev: Предыдущая
+    showing: '{{from}} - {{to}} из {{count}} {{data}}'
+    single_one: 'Один {{data}}'
     single_plural: '{{count}} {{data}}'
-    recordsPerPage: Per Page
+    recordsPerPage: На странице
 
 themes:
   labels:
-    light: Light
-    dark: Dark
+    light: Светлая
+    dark: Темная
 
 extendSession:
   labels:

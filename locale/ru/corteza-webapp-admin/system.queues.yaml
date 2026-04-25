@@ -17,17 +17,17 @@ editor:
     updatedAt: Время обновления
   new: New Queue
   title:
-    edit: Edit queue
+    edit: Изменить queue
     new: Add a queue
 list:
   columns:
     actions: ''
     consumer: Consumer
-    createdAt: Created At
+    createdAt: Создано At
     createdBy: Создал
     state: State
     queue: Queue
-  export: Export
+  export: Экспорт
   delete: Delete
   undelete: Undelete
   rows:

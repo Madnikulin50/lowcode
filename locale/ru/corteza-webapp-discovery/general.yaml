@@ -1,14 +1,14 @@
 federated: Federated
 no-values: No values
 label:
-  all: All
+  all: Все
 resourceList:
   pagination:
-    recordsPerPage: Per Page
+    recordsPerPage: На странице
 themes:
   labels:
-    light: Light
-    dark: Dark
+    light: Светлая
+    dark: Темная
 
 extendSession:
   labels:
@@ -16,6 +16,6 @@ extendSession:
     warning: You will be logged out in {{ countdownTime }} seconds
 
 recordID: ID записи
-createdBy: Created By
-createdAt: Created At
-updatedAt: Updated At
+createdBy: Создано By
+createdAt: Создано At
+updatedAt: Обновлено At

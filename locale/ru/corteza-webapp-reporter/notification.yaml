@@ -1,13 +1,13 @@
 datasource:
   describe-failed: Failed to describe datasource
 general:
-  error: Error
-  success: Success
-  warning: Warning
+  error: Ошибка
+  success: Успех
+  warning: Предупреждение
   info: Info
 list:
   load:
-    error: Failed to load resource list
+    error: Ошибка загрузки списка ресурсов
 module:
   fetch-failed: Failed to fetch modules
 namespace:
@@ -15,14 +15,14 @@ namespace:
 report:
   createFailed: Failed to create report
   loadFailed: Loading the report failed
-  created: Report created
-  delete: Report deleted
+  created: Отчет created
+  delete: Отчет deleted
   deleteFailed: Failed to delete report
   fetchFailed: Failed to fetch report
   listFetchFailed: Failed to fetch reports
   runFailed: Failed to run report
   updateFailed: Failed to update report
-  updated: Report updated
+  updated: Отчет updated
   notAllowed:
     read: Not allowed to read report
   datasources:

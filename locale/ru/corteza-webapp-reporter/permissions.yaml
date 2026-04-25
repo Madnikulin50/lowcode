@@ -1,34 +1,34 @@
 ui:
-  save: Save changes
+  save: Сохранить changes
   cancel: Cancel
-  set-for: Set permissions for {{target}}
-  loading: Loading permissions
-  label: Permissions
+  set-for: Установить права доступа для {{target}}
+  loading: Загрузка прав доступа
+  label: Права доступа
 
   notification:
     save:
-      success: Permissions saved
+      success: Права доступа saved
       failed: Failed to save permissions
 
   edit:
-    title: Edit permissions
-    label: User roles
-    description: Select role to set permissions
+    title: Изменить права доступа
+    label: Роли пользователя
+    description: Выберите роль для установки прав
 
   evaluate:
-    title: Evaluate permissions
+    title: Вычислить права доступа
     description: Evaluate applied permissions
 
   add:
     label: Add
-    title: Evaluate permissions
-    save: Save & Close
+    title: Вычислить права доступа
+    save: Сохранить и закрыть
     role:
-      label: Roles
-      placeholder: Select role(s)
+      label: Роли
+      placeholder: Выбрать роли
     user:
-      label: Users
-      placeholder: Search or select a user
+      label: Пользователи
+      placeholder: Поиск или выбор пользователя
 
   tooltip:
     unknown-context:
@@ -36,16 +36,16 @@ ui:
       role: Can not evaluate permission for contextual role on a non-specific resource
 
   access:
-    allow: Allow
-    inherit: Inherit
-    deny: Deny
+    allow: Разрешено
+    inherit: Наследовано
+    deny: Запрещено
 
 resources:
   system:
     report:
       all: all reports
       specific: report "{{target}}"
-      tooltip: Report permissions
+      tooltip: Отчет permissions
       operations:
         delete:
           description: ""

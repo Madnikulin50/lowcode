@@ -8,13 +8,13 @@ error: " - ERROR: "
 'failed-fetch-workflow': Failed to fetch workflow
 'failed-fetch-workflows': Failed to fetch workflows
 'failed-load-file': Failed to load file
-'failed-save': Save failed
+'failed-save': Сохранить failed
 'failed-test': Test failed
 'fetch-types-failed': Failed to fetch types
 general:
-  error: Error
-  success: Success
-  warning: Warning
+  error: Ошибка
+  success: Успех
+  warning: Предупреждение
   info: Info
 list:
   load:
@@ -30,10 +30,10 @@ import:
   'imported-workflows': Workflows imported
   'skipped-workflows': Skipped workflows
 'imported-workflow': Workflow imported
-'import-failed': Import failed
+'import-failed': Импорт failed
 'initial-scope-load-failed': Failed to load initial scope
 'resolve-issues': Resolve issues to test workflow
-'save-workflow': Save workflow first to test it
+'save-workflow': Сохранить workflow first to test it
 'started-test': Workflow test started
 'test-completed': Test completed
 'test-in-progress': Test in progress

@@ -1,33 +1,33 @@
-available-items: Available fields
+available-items: Доступные поля
 selected-items: Selected fields
 defaultFieldValue: Default field value
-defaultValue: Default value
+defaultValue: Значение по-умолчанию
 required-field: Обязательное поле
 not-configurable: Cannot change settings that affect data storage
 kind:
   bool:
-    checkedValueLabel: Value when checked
-    checkedValuePlaceholder: Yes
-    label: Checkbox (Y/N)
-    uncheckedValueLabel: Value when unchecked
+    checkedValueМетка: Значение когда включено
+    checkedValuePlaceholder: Да
+    label: Флажок (Да-Нет)
+    uncheckedValueМетка: Значение when unchecked
     uncheckedValuePlaceholder: No
-    toggleTypeLabel: Checkbox Type
+    toggleTypeМетка: Checkbox Тип
     toggleType: Display as switch
   dateTime:
     type:
-      label: Value Type
+      label: Тип значения
       options:
-        dateTime: Date & Time
-        date: Date
-        time: Time
+        dateTime: Дата и время
+        date: Дата
+        time: Время
     constraints:
-      label: Allowed values
+      label: Допустимые значения
       options:
-        all: All values
-        futureValuesOnly: Future Values Only
-        pastValuesOnly: Past Values Only
-    label: Date and time
-    outputFormat: Output format
+        all: Все значения
+        futureValuesOnly: Значение только из будущего
+        pastValuesOnly: Значения только из прошлого
+    label: Дата и время
+    outputFormat: Формат вывода
     outputFormatFootnote: See {{0}} for formatting options
     relativeOutput: 'Output Relative value (eg: 3 days ago, 15 minutes ago)'
     warning:
@@ -37,77 +37,77 @@ kind:
     label: Почтовый адрес
     preventToLink: Don't turn email into a link
   file:
-    label: File
+    label: Файл
     view:
-      gallery: Gallery of images
-      grid: Grid
-      list: List
-      maxSizeLabel: Maximum file size (MB)
+      gallery: Галерея картинок
+      grid: Сетка
+      list: Список
+      maxSizeМетка: Максимальный размер файла (MB)
       mimetypesFootnote: 'MIME types, separated with ",". Example: "text/plain,text/csv"'
       webcam:
         enable:
-          label: Enable Webcam Capture
+          label: Enable Web-камера Capture
           footnote: Use the webcam to capture a picture and upload it
-      mimetypesLabel: File type allow list
+      mimetypesМетка: Разрешенные типы файлов
       modeFootnote: How files are represented in page blocks
-      modeLabel: View mode
-      showName: Hide file name
+      modeМетка: Просмотр mode
+      showName: Скрывать имя файла
       enableDownload: Enable download
       single: Single image
-      previewStyle: Preview style
+      previewStyle: Предпросмотр style
       height: Height
       width: Width
-      maxHeight: Max height
-      maxWidth: Max width
-      borderRadius: Border radius
-      background: Background color
-      colorPicker: Choose a color
+      maxHeight: Максимум height
+      maxWidth: Максимальная ширина
+      borderRadius: Радиус границы
+      background: Фон color
+      colorPicker: Выберите цвет
       margin: Margin
       unitType: Unit type
       px: px
       clickToView: Click to view file
-      description: 'Add unit after value to set it. For example: 50px or 50%'
+      description: 'Добавить unit after value to set it. For example: 50px or 50%'
   number:
     exampleFormat: Format
     exampleInput: Input
     exampleResult: Result
-    examplesLabel: Format examples
-    formatLabel: Custom format
+    examplesМетка: Format examples
+    formatМетка: Custom format
     formatPlaceholder: Format
     label: Number
-    liveExample: Live example
-    precisionLabel: Scale
+    liveExample: Предпросмотр
+    precisionМетка: Scale
     precisionTooltip: Number of decimal places
-    prefixLabel: Prefix
+    prefixМетка: Prefix
     prefixPlaceholder: Prefix
-    suffixLabel: Suffix
+    suffixМетка: Suffix
     suffixPlaceholder: Suffix
     step:
-      label: Step
+      label: Шаг
       description: Set the step size for the number field
     displayType:
       label: Display type
       number: Number
       progress: Progress bar
     progress:
-      maximumValue: Maximum value
-      minimumValue: Minimum value
-      animated: Animated
+      maximumValue: Максимальное значение
+      minimumValue: Минимальное значение
+      animated: Анимированное
       show:
-        value: Show value
-        relative: Show relative
-        progress: Show progress
-      showRelative: Show relative
+        value: Показать значение
+        relative: Показать связанное
+        progress: Показать прогресс
+      showRelative: Показать связанное
       variants:
-        default: Default variant
-        danger: Danger
-        dark: Dark
-        info: Info
-        light: Light
-        primary: Primary
+        default: По-умолчанию
+        danger: Опасность
+        dark: Темная
+        info: Информация
+        light: Светлая
+        primary: Главное
         secondary: Secondary
-        success: Success
-        warning: Warning
+        success: Успех
+        warning: Предупреждение
       thresholds:
         label: Thresholds
         description: Set which variant to show if value is equal or larger than the threshold
@@ -122,31 +122,31 @@ kind:
   record:
     currentUnnamedModule: (Current unnamed module)
     label: Record
-    moduleLabel: Module
-    modulePlaceholder: Select a module
-    queryFieldsLabel: Query fields on search
-    queryFieldsPlaceholder: If no fields are picked the Label field will be used
-    moduleField: Label field
+    moduleМетка: Модуль
+    modulePlaceholder: Выберите модуль
+    queryFieldsМетка: Query fields on search
+    queryFieldsPlaceholder: If no fields are picked the Метка полей will be used
+    moduleField: Метка полей
     variantField: Variant field
-    fieldFromModuleField: Label field from related module field
+    fieldFromModuleField: Метка полей from related module field
     pickField: Pick field
     suggestionPlaceholder: Start typing to search for records
     prefilterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
-    prefilterLabel: Prefilter records
+    prefilterМетка: Prefilter records
     prefilterPlaceholder: field1 = 1 AND field2 = 232
     tooltip:
       moduleField: Selecting a record field will impact performance
-      addRecord: Add a record
+      addRecord: Добавить a record
   select:
     allow-duplicates: Allow duplicates
     label: Select
-    optionAdd: Add
+    optionAdd: Добавить
     options:
-      value: Value
-      label: Label
+      value: Значение
+      label: Метка
       style:
         textColor: Text color
-        backgroundColor: Background color
+        backgroundColor: Фон color
     optionNotSelected: No option selected
     optionRemove: Remove
     optionType:
@@ -160,7 +160,7 @@ kind:
       label: Display value as
       text: Text
       badge: Badge
-    optionsLabel: Options to select from
+    optionsМетка: Options to select from
     showAsBadge: Show as badge
     placeholder: Select an option by clicking here
   string:
@@ -176,15 +176,15 @@ kind:
     trimQuestionMark: Trim '?' from the Url
     trimToDomain: Trim Url down to domain only
   user:
-    label: User
+    label: Пользователь
     na: N/A
     presetWithCurrentUser: Preset with current user
     suggestionPlaceholder: Start typing to search for users by email or name
     roles:
-      label: User roles
+      label: Роли пользователя
       placeholder: Filter by user roles
   geometry:
-    label: Location
+    label: Геопозиция
     latitude: Latitude
     longitude: Longitude
     clickToPlaceMarker: Click to place/remove a marker
@@ -202,13 +202,13 @@ no-items-found: No items found
 options:
   description:
     label:
-      default: Description
-      edit: Description edit
-      view: Description view
+      default: Описание
+      edit: Описание edit
+      view: Описание view
     placeholder:
-      default: Description text...
-      edit: Description when editing record field...
-      view: Description when viewing record field...
+      default: Описание text...
+      edit: Описание when editing record field...
+      view: Описание when viewing record field...
     same: Show same description on view and edit
   hint:
     label:
@@ -223,7 +223,7 @@ options:
   multiDelimiter:
     comma: Separated by a comma
     custom: A custom delimiter
-    customLabel: Or use a custom delimiter
+    customМетка: Or use a custom delimiter
     customPlaceholder: Enter a custom delimiter
     label: Multiple value delimiter
     newline: Each value in a new line
@@ -231,18 +231,18 @@ sanitizers:
   description: Trim spaces from text or do other kinds of value manipulation before validation
   expression:
     placeholder: trim(value)
-  label: Value sanitization
+  label: Значение sanitization
 selector:
-  search: Type here to search among module fields
-  available: Available fields
-  selectAll: Select all
+  search: Тип here to search among module fields
+  available: Доступные поля
+  selectAll: Выбрать все
   selected: Selected fields
-  systemField: (system field)
+  systemField: (системное поле)
   unselectAll: Unselect all
 privacy:
   sensitivity-level:
     label: Sensitivity level
-    placeholder: Select a sensitivity level
+    placeholder: Выберите уровень чувствительности
   usage-disclosure:
     label: Sensitive field usage disclosure (visible on data-privacy console)
 system:
@@ -262,32 +262,32 @@ system:
   updatedBy: Обновил
 validators:
   description: Set of expressions and error pairs that test validity of the input value
-  disableBuiltIn: Disable built-in validators
+  disableBuiltIn: Отключить встроенные проверки
   error:
-    placeholder: Text displayed when expression is true
-    tooltip: Warning text
+    placeholder: Текст отображающий когда выражение истину
+    tooltip: Текст предупреждения
   expression:
     placeholder: value == ""
-    tooltip: Expression
-  label: Value validation
+    tooltip: Выражение
+  label: Проверка значения
 valueExpr:
   description: Insert a formula or expression that calculates numeric values or combines and manipulates text values
-  label: Field value expression
+  label: Выражение для значения  поля
   placeholder: ((floor(numField1) + numField2) / 10) + 0.5
 label:
-  required: Required
-  multi: Multi value
+  required: Обязательное
+  multi: Множественное
 constraints:
-  label: Unique value constraints
-  description: Use unique value constraints for this field
-  ignoreCase: Ignore case
-  fuzzyMatch: Fuzzy match
-  soundsLike: Sounds like
-  caseSensitive: Case sensitive
-  oneOf: One of
-  none: None
-  equal: Equal
-  valueModifiers: Value modifiers
+  label: Значение должно быть уникальным
+  description: Использовать ограничение уникальности значения
+  ignoreCase: Игнорировать регистр
+  fuzzyMatch: Неточное совпадение
+  soundsLike: Звучит как
+  caseSensitive: Зависимый от регистра
+  oneOf: Один из
+  none: Отсутствует
+  equal: Равно
+  valueModifiers: Значение modifiers
   multiValues: Multi-field values
   totalFieldConstraintCount: The field is used in {{total}} other unique value constraint. See "unique values" tab on module editor.
   tooltip:

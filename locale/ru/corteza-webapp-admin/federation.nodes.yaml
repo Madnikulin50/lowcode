@@ -27,13 +27,13 @@ editor:
     url: Server URL *
   title:
     create: Create Federated Node
-    edit: Edit Federated Node
+    edit: Изменить Federated Node
 list:
   columns:
     actions: ""
-    createdAt: Created
+    createdAt: Создано
     enabled: Enabled
-    name: Name
+    name: Имя
     status: Status
     tags: ""
   filterForm:

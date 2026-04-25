@@ -3,10 +3,10 @@ add:
   display-element: Add display element
 available: Available
 block:
-  description: Block description
-  save: Save Block
-  title: Block title
-  configuration: Block configuration
+  description: Блок description
+  save: Сохранить Блок
+  title: Блок title
+  configuration: Блок configuration
 datasource:
   label: Datasource
   types:
@@ -24,8 +24,8 @@ datasource:
       load-datasource: Aggregates data from a load datasource based on a column value and aggregates it, such as counting the number of Accounts with the same status
 datasources:
   label: Datasources
-  save: Save Datasources
-description: Description
+  save: Сохранить Datasources
+description: Описание
 display-elements:
   types:
     text: Text
@@ -35,12 +35,12 @@ display-elements:
 element: Element
 elements: Elements
 filter-expression: Filter expression
-general: General
+general: Основные
 joined-datasource-handling: Joined datasource handling
 layout: Layout
 layout-options:
-  horizontal: Horizontal
-  vertical: Vertical
+  horizontal: Горизонтальное
+  vertical: Вертикальное
 limit: Limit
 no-blocks-added: No blocks added yet
 or: Or
@@ -48,17 +48,17 @@ pick-scenario: Pick a scenario
 prefilter: Prefilter
 presort-order: Presort order
 report:
-  builder: Report Builder
-  view: View Report
-save-button: Save
+  builder: Отчет Builder
+  view: Просмотр Отчет
+save-button: Сохранить
 scenarios:
   label: Scenarios
-  save: Save Scenarios
+  save: Сохранить Scenarios
 title: Title
 tooltip:
   edit:
-    report: Edit report
-    block: Edit block
+    report: Изменить report
+    block: Изменить блок
   add:
     displayElement: Add display element
   delete:
@@ -72,18 +72,18 @@ type-to-search: Type here to search among columns
 selected: Selected
 select-all: Select all
 unselect-all: Unselect all
-value: Value
-name: Name
+value: Значение
+name: Имя
 unsaved-changes: Unsaved changes will be lost. Do you wish to leave the page?
 filter:
   operators:
     like: Like
     notLike: Not Like
-    contains: Contains
-    notContains: Not contains
-    equal: Equal
-    greaterThan: Greater than
-    greaterThanEqualTo: Greater than or equal to
-    lessThanEqualTo: Less than or equal to
-    lessThan: Less than
-    notEqual: Not equal
+    contains: Содержит
+    notContains: Не содержит
+    equal: Равно
+    greaterThan: Больше чем
+    greaterThanEqualTo: Больше чем or equal to
+    lessThanEqualTo: Меньше чем or equal to
+    lessThan: Меньше чем
+    notEqual: Не равно

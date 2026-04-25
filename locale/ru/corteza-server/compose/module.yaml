@@ -1,6 +1,6 @@
 errors:
-  handleNotUnique: handle not unique
-  invalidHandle: invalid handle
+  handleNotUnique: дескриптор not unique
+  invalidHandle: invalid дескриптор
   invalidID: неверный ID
   invalidNamespaceID: invalid or missing namespace ID
   nameNotUnique: name not unique

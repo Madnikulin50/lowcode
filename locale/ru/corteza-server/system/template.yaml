@@ -1,6 +1,6 @@
 errors:
   cannotRenderPartial: cannot render partial templates
-  invalidHandle: invalid handle
+  invalidHandle: invalid дескриптор
   invalidID: неверный ID
   notAllowedToCreate: not allowed to create templates
   notAllowedToDelete: not allowed to delete this template

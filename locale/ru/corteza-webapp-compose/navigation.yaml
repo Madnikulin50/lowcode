@@ -1,33 +1,33 @@
-automation: Automation
-chart: Charts
-configuration: Configuration
-editPage: Edit Page
+automation: Автоматизация
+chart: Диаграммы
+configuration: Конфигурация
+editPage: Изменить Page
 help:
-  documentation: Documentation
+  documentation: Документация
   feedback: Send feedback
-  forum: Help
+  forum: Справка
   version: "Version:"
-module: Modules
-more: More
-namespace: Namespaces
-noPageTitle: No page title
-page: Pages
-appMenu: Menu
+module: Модули
+more: Еще
+namespace: Пространства
+noPageTitle: Не указан заголовок страницы
+page: Страницы
+appMenu: Меню
 userSettings:
-  changePassword: Change password
-  loggedInAs: Logged in as {{user}}
-  logout: Logout
-  profile: Profile
-  theme: Theme
-viewPage: View Page
+  changePassword: Изменить пароль
+  loggedInAs: Войти как {{user}}
+  logout: Выйти
+  profile: Профиль
+  theme: Тема
+viewPage: Показать страницу
 search:
-  label: Search
+  label: Поиск
   placeholder: Search for records
-  noResults: No results found
+  noResults: Ничего не найдено found
   navigate: navigate
   select: select
   close: close
-  notFoundNamespace: Namespace not found
+  notFoundNamespace: Пространство not found
   notFoundPage: Page not found
   recordRedirectError: Error navigating to record
   untitledRecord: Untitled Record
@@ -36,4 +36,4 @@ search:
 
   openInNewTab: Open in new tab
   numberOfResults_one: "{{count}} record"
-  numberOfResults_other: "{{count}} records"
+  numberOfResults_other: "{{count}} строк"

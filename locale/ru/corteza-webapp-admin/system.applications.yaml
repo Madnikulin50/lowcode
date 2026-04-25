@@ -6,19 +6,19 @@ editor:
     deletedAt: Время удаления
     enabled: Enabled
     id: ID
-    name: Name *
+    name: Имя *
     title: Basic information
     undelete: Undelete
     updatedAt: Время обновления
-  new: New Application
-  permissions: Permissions
+  new: New Приложение
+  permissions: Права доступа
   title:
     create: Create application
-    edit: Edit application
+    edit: Изменить application
   unify:
     config:
-      description: Application configuration (JSON)
-      label: Configuration
+      description: Приложение configuration (JSON)
+      label: Конфигурация
     listed: Listed
     logo:
       label: Logo
@@ -27,21 +27,21 @@ editor:
       reset: Reset
     name:
       description: Name used in the application selector
-      label: Name
+      label: Имя
     pinned: Pinned
     title: App selector
     url:
-      description: Application URL
+      description: Приложение URL
       label: URL
 list:
   columns:
     actions: ""
-    createdAt: Created
+    createdAt: Создано
     enabled: Enabled
-    name: Name
+    name: Имя
     appListName: App selector name
     state: State
-  export: Export
+  export: Экспорт
   rows:
     filters:
       deleted: Deleted
@@ -58,9 +58,9 @@ list:
       label: Filter applications list
       placeholder: Filter applications by name
   loading: Loading applications
-  new: New Application
-  permissions: Permissions
-  title: Applications
+  new: New Приложение
+  permissions: Права доступа
+  title: Приложения
   yaml: YAML
   delete: Delete
   undelete: Undelete

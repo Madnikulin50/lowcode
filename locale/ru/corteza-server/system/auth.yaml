@@ -11,7 +11,7 @@ errors:
   invalidCredentials: invalid username and password combination
   invalidEmailFormat: invalid email
   invalidEmailOTP: invalid code
-  invalidHandle: invalid handle
+  invalidHandle: invalid дескриптор
   invalidTOTP: invalid code
   invalidToken: invalid token
   notAllowedToConfigureTOTP: not allowed to configure TOTP

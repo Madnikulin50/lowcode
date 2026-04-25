@@ -6,13 +6,13 @@ editor:
     empty: No snippets yet
     enabled: Enabled
     table-headers:
-      name: Name
+      name: Имя
       enabled: Enabled
       script: Code
     form:
       title: Add Code Snippet
       name:
-        label: Name
+        label: Имя
       code:
         label: Code
         description: Add external script or code snippet. The script must include a valid <script> tag to function.

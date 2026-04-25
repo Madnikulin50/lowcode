@@ -1,5 +1,5 @@
 editor:
-  title: System settings
+  title: Системные настройки
   auth:
     title: Authentication
     url: URL
@@ -28,7 +28,7 @@ editor:
           description: 'Split login into two steps: collect the email input first and show the input for the password on the 2nd screen. Automatically forward user to external identity provider when user does not have his password set and there is only one IdP present'
           label: Enable split-credentials check
       profile-avatar:
-        enabled: Profile avatar enabled
+        enabled: Профиль avatar enabled
       send-user-invite-email:
         title: Invite email
         enabled: Send invite email on user creation
@@ -83,7 +83,7 @@ editor:
     oidc:
       add: Add an OIDC provider
       enabled: Enabled
-      handle: Handle
+      handle: Дескриптор
       title: OpenID Connect
       issuer: OIDC Issuer URL
       issuerHint: Where to find the /.well-known/openid-configuration (without the /.well-known/openid-configuration part)
@@ -106,13 +106,13 @@ editor:
       cert:
         public: Public key
         private: Private key
-      name: Name
-      certificate: Certificate
+      name: Имя
+      certificate: Сертификатор
       idp:
         title: Identity provider
-        ident-handle: Handle field
-        ident-identifier: Identifier field
-        ident-name: Name field
+        ident-handle: Дескриптор поля
+        ident-identifier: Идентификатор поля
+        ident-name: Имя поля
         url: URL
       desc:
         name: IdP name used on the login screen (Login with <name>)
@@ -147,7 +147,7 @@ editor:
 
     image:
       uploader:
-        label: Background image
+        label: Фон image
 
       editor:
         label: Custom CSS

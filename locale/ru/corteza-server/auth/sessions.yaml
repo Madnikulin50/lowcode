@@ -11,7 +11,7 @@ template:
 
     expires: Expires
     expired: Expired
-    today: Today
+    today: Сегодня
     tomorrow: In 1 day
     soon: In {{days}} days
 

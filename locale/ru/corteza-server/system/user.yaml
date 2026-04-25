@@ -1,8 +1,8 @@
 errors:
   emailNotUnique: email not unique
-  handleNotUnique: handle not unique
+  handleNotUnique: дескриптор not unique
   invalidEmail: invalid email
-  invalidHandle: invalid handle
+  invalidHandle: invalid дескриптор
   invalidID: неверный ID
   notAllowedToCreate: not allowed to create users
   notAllowedToCreateSystem: not allowed to create system users

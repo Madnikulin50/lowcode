@@ -20,9 +20,9 @@ editor:
     label:
       default: Default
     tabs:
-      general: General
-      light: Light
-      dark: Dark
+      general: Основные
+      light: Светлая
+      dark: Темная
     theme:
       variables:
         white:
@@ -32,39 +32,39 @@ editor:
           label: Black
           description: Element text color
         primary:
-          label: Primary
-          description: Primary action buttons, links
+          label: Главные
+          description: Главные action buttons, links
         secondary:
           label: Secondary
           description: Disabled and placeholder text color
         success:
-          label: Success
+          label: Успех
           description: Success notification color
         warning:
-          label: Warning
+          label: Предупреждение
           description: Warning notification color
         danger:
           label: Danger
           description: Error notification color
         light:
-          label: Light
+          label: Светлая
           description: Secondary action buttons, table headers
         extra-light:
           label: Extra light
           description: Icon buttons, borders
         body-bg:
           label: Body background
-          description: Background color of the application
+          description: Фон color of the application
         sidebar-bg:
           label: Sidebar background
-          description: Background color of the sidebar
+          description: Фон color of the sidebar
         topbar-bg:
           label: Topbar background
-          description: Background color of the topbar
+          description: Фон color of the topbar
 
   topbar:
     title: Topbar
-    general: General
+    general: Основные
 
     search:
       hide: Hide search
@@ -72,13 +72,13 @@ editor:
     app-selector:
       hide: Hide app selector
     help:
-      title: Help
+      title: Справка
       hide: Hide help
       hide-forum-link: Hide forum link
       hide-documentation-link: Hide documentation link
       hide-feedback-link: Hide feedback link
     profile:
-      title: Profile
+      title: Профиль
       hide: Hide profile
       hide-profile-link: Hide profile link
       hide-change-password-link: Hide change password link
@@ -92,7 +92,7 @@ editor:
 
     links:
       title: Custom links
-      handle: Name
+      handle: Имя
       invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
       url: URL
       new-tab: New tab

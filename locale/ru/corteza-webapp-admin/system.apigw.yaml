@@ -1,9 +1,9 @@
 title: Integration Gateway
 list:
-  export: Export
+  export: Экспорт
   title: Routes
   new: New Route
-  permissions: Permissions
+  permissions: Права доступа
   profiler: Profiler
   yaml: YAML
   loading: Loading routes
@@ -26,7 +26,7 @@ list:
 
   columns:
     endpoint: Endpoint
-    createdAt: Created
+    createdAt: Создано
     enabled: Enabled
     method: Method
     actions: ''
@@ -46,9 +46,9 @@ settings:
     follow: Follow redirects
 
 editor:
-  title: Edit route
+  title: Изменить route
   new: New Route
-  permissions: Permissions
+  permissions: Права доступа
 
   info:
     title: Basic information
@@ -56,7 +56,7 @@ editor:
     id: ID
     endpoint: Endpoint
     method: Method
-    description: Description
+    description: Описание
     enabled: Enabled
 
     delete: Delete
@@ -86,7 +86,7 @@ editor:
 
     modal:
       title: Query parameters verifier
-      ok: Save & Close
+      ok: Сохранить и закрыть
 
     step_title:
       prefilter: Prefiltering
@@ -95,22 +95,22 @@ editor:
 
     list:
       remove: Remove
-      filters: Filters
+      filters: Фильтры
       status: Status
       actions: Actions
       active: Active
       noFilters: No filters
 
     labels:
-      expr: Expression
+      expr: Выражение
       location: URL
       workflow: Workflow
       status: HTTP Status
       jsfunc: Function
       input: Input
       header: Headers
-      name: Name
-      value: Value
+      name: Имя
+      value: Значение
 
     httpStatus:
       none: No Status
@@ -128,7 +128,7 @@ editor:
     help:
       expression:
         example: Example == "match string" && match(SecondParam, "^foo\\s.*$")
-        link: Documentation
+        link: Документация
 
 profiler:
   label: Profiler
@@ -144,7 +144,7 @@ profiler:
   hit:
     title: Request Details
     general:
-      label: General
+      label: Основные
       id: Request ID
       route: Request Route
       URL: Request URL
@@ -164,7 +164,7 @@ profiler:
   columns:
     actions: ''
     path: Route
-    count: Count
+    count: Количество
     content_length: Content Length
     http_method: Method
     http_status_code: Status Code
