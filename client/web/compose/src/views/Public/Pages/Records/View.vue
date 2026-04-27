@@ -192,7 +192,7 @@ import Grid from 'corteza-webapp-compose/src/components/Public/Page/Grid'
 import RecordToolbar from 'corteza-webapp-compose/src/components/Common/RecordToolbar'
 import record from 'corteza-webapp-compose/src/mixins/record'
 import page from 'corteza-webapp-compose/src/mixins/page'
-import { compose, system, NoID } from '@cortezaproject/corteza-js'
+import { compose, system, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
 
 export default {

@@ -23,7 +23,7 @@
 <script>
 
 import { mapGetters } from 'vuex'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import FieldPicker from 'corteza-webapp-compose/src/components/Common/FieldPicker'
 
 export default {

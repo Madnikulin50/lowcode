@@ -72,7 +72,7 @@
   </b-tabs>
 </template>
 <script>
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import base from './base'
 import * as Configurators from './loader'
 import multi from './multi'

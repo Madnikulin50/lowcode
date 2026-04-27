@@ -1,6 +1,6 @@
 // eslint-disable-next-line
 import { default as component } from './CircleStep.vue'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { checkbox, input } = components.C3.controls
 
 const props = {

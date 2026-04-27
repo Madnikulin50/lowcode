@@ -198,7 +198,7 @@
 <script>
 import ReportEdit from './ReportEdit'
 import ChartTranslator from 'corteza-webapp-compose/src/components/Chart/ChartTranslator'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import base from './base'
 
 export default {

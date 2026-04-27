@@ -213,8 +213,8 @@
 </template>
 
 <script>
-import { compose } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { compose } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import moment from 'moment'
 import { throttle } from 'lodash'
 import tz from 'compact-timezone-list'

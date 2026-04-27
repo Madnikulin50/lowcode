@@ -3,7 +3,7 @@ import BootstrapVue from 'bootstrap-vue'
 import Router from 'vue-router'
 import VueNativeSock from 'vue-native-websocket'
 
-import { plugins, websocket } from '@cortezaproject/corteza-vue'
+import { plugins, websocket } from 'corteza-lib/vue/dist'
 
 import pairs from './eventbus-pairs'
 

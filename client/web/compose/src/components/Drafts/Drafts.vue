@@ -92,8 +92,8 @@
 
 <script>
 import { mapGetters, mapActions, mapMutations } from 'vuex'
-import { compose } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { compose } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import DraftItem from 'corteza-webapp-compose/src/components/Drafts/DraftItem.vue'
 
 const { CInputConfirm, CInputSelect } = components

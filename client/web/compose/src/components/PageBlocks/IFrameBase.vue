@@ -14,7 +14,7 @@
 </template>
 <script>
 import base from './base'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 
 export default {

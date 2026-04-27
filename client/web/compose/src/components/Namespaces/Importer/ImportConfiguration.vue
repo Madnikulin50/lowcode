@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import { handle } from '@cortezaproject/corteza-vue'
+import { handle } from 'corteza-lib/vue/dist'
 
 export default {
   i18nOptions: {

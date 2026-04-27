@@ -1,6 +1,6 @@
 // eslint-disable-next-line
 import { default as component } from './index.vue'
-// import { components } from '@cortezaproject/corteza-vue'
+// import { components } from 'corteza-lib/vue/dist'
 // const { checkbox, input } = components.C3.controls
 
 // Property or method "isImage" is not defined on the instance but referenced during render

@@ -196,8 +196,8 @@
 <script>
 import FieldEditor from '../ModuleFields/Editor'
 import { mapGetters } from 'vuex'
-import { compose, validator } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { compose, validator } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
 
 import base from './base'

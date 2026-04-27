@@ -1,5 +1,5 @@
 // eslint-disable-next-line
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import * as fieldTypes from './loader'
 
 const props = {

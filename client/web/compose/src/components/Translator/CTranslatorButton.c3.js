@@ -1,5 +1,5 @@
 import component from './CTranslatorButton.vue'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { input } = components.C3.controls
 
 const props = {

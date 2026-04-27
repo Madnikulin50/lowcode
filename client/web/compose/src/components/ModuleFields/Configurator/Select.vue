@@ -185,9 +185,9 @@
 <script>
 import base from './base'
 import Draggable from 'vuedraggable'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import FieldSelectTranslator from 'corteza-webapp-compose/src/components/Admin/Module/FieldSelectTranslator'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CInputColorPicker } = components
 
 export default {

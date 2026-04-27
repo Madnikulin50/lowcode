@@ -47,7 +47,7 @@
 import { mapGetters } from 'vuex'
 import base from '../../base'
 import * as configs from './configs'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

@@ -538,8 +538,8 @@
 <script>
 import base from './base'
 import { mapGetters } from 'vuex'
-import { components } from '@cortezaproject/corteza-vue'
-import { compose, validator } from '@cortezaproject/corteza-js'
+import { components } from 'corteza-lib/vue/dist'
+import { compose, validator } from 'corteza-lib/js/dist'
 import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
 import FieldViewer from '../ModuleFields/Viewer'
 

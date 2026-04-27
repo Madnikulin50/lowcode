@@ -1052,8 +1052,8 @@
 </template>
 
 <script>
-import { NoID, compose, validator } from '@cortezaproject/corteza-js'
-import { components, url } from '@cortezaproject/corteza-vue'
+import { NoID, compose, validator } from 'corteza-lib/js/dist'
+import { components, url } from 'corteza-lib/vue/dist'
 import axios from 'axios'
 import ColumnPicker from 'corteza-webapp-compose/src/components/Admin/Module/Records/ColumnPicker'
 import RecordListFilter from 'corteza-webapp-compose/src/components/Common/RecordListFilter'

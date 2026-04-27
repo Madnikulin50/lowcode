@@ -320,7 +320,7 @@
 import base from './base'
 import { debounce } from 'lodash'
 import axios from 'axios'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import { mapActions, mapGetters } from 'vuex'
 import { queryToFilter, evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import Pagination from '../Common/Pagination.vue'

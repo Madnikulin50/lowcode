@@ -330,8 +330,8 @@
 
 <script>
 import { isEqual } from 'lodash'
-import { compose, NoID } from '@cortezaproject/corteza-js'
-import { url, handle } from '@cortezaproject/corteza-vue'
+import { compose, NoID } from 'corteza-lib/js/dist'
+import { url, handle } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import NamespaceTranslator from 'corteza-webapp-compose/src/components/Namespaces/NamespaceTranslator'
 import { mapGetters, mapActions } from 'vuex'

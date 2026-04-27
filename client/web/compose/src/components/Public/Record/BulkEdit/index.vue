@@ -107,7 +107,7 @@
 
 <script>
 import FieldEditor from 'corteza-webapp-compose/src/components/ModuleFields/Editor'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import record from 'corteza-webapp-compose/src/mixins/record.js'
 
 export default {

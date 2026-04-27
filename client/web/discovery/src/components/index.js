@@ -3,7 +3,7 @@ import { FontAwesomeIcon, FontAwesomeLayers } from '@fortawesome/vue-fontawesome
 
 import PortalVue from 'portal-vue'
 import './faIcons'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from '../../../../lib/vue/dist'
 
 Vue.use(PortalVue)
 

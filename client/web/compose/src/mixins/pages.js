@@ -1,4 +1,4 @@
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 
 export default {

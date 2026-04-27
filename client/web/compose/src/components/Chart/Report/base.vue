@@ -1,5 +1,5 @@
 <script>
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

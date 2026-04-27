@@ -26,7 +26,7 @@
 <script>
 import axios from 'axios'
 import base from '../base'
-import { system, reporter, NoID } from '@cortezaproject/corteza-js'
+import { system, reporter, NoID } from 'corteza-lib/js/dist'
 import DisplayElement from './DisplayElements'
 
 export default {

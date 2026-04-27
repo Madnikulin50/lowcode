@@ -56,7 +56,7 @@
 <script>
 import errors from '../errors'
 import draggable from 'vuedraggable'
-import { validator } from '@cortezaproject/corteza-js'
+import { validator } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

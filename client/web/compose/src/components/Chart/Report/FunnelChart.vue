@@ -133,7 +133,7 @@
 <script>
 import base from './base'
 import ReportEdit from './ReportEdit'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CItemPicker } = components
 
 export default {

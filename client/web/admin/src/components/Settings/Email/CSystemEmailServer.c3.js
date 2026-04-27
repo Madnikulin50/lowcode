@@ -1,5 +1,5 @@
 import { default as component } from './CSystemEmailServer.vue'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from '../../../../lib/vue/dist'
 const { checkbox } = components.C3.controls
 
 const props = {

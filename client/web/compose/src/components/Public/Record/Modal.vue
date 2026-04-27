@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import { NoID, compose } from '@cortezaproject/corteza-js'
+import { NoID, compose } from 'corteza-lib/js/dist'
 import { mapGetters, mapActions } from 'vuex'
 import record from 'corteza-webapp-compose/src/mixins/record'
 import ViewRecord from 'corteza-webapp-compose/src/views/Public/Pages/Records/View'

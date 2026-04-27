@@ -67,7 +67,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import NamespaceItem from 'corteza-webapp-compose/src/components/Namespaces/NamespaceItem'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CInputSearch } = components
 
 export default {

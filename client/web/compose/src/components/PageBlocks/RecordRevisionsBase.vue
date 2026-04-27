@@ -160,7 +160,7 @@
 </template>
 <script>
 import base from './base'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import users from 'corteza-webapp-compose/src/mixins/users'
 import records from 'corteza-webapp-compose/src/mixins/records'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'

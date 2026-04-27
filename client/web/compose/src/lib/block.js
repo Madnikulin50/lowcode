@@ -1,4 +1,4 @@
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 /**
   * If block has no ID, it is a new block and we need to use tempID
   * to find it in the list of blocks.

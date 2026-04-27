@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-import { mixins } from '@cortezaproject/corteza-vue'
+import { mixins } from 'corteza-lib/vue/dist'
 
 import resourceTranslations from './resource-translations'
 import uiHelpers from './uiHelpers'

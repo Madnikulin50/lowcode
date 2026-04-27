@@ -1,6 +1,6 @@
 /* global jest */
 
-jest.mock('@cortezaproject/corteza-js', () => ({
+jest.mock('corteza-lib/js/dist', () => ({
   compose: {
     Namespace: class {},
     Module: class {},
@@ -8,7 +8,7 @@ jest.mock('@cortezaproject/corteza-js', () => ({
     Record: class {},
   },
 }), { virtual: true })
-jest.mock('@cortezaproject/corteza-vue', () => ({
+jest.mock('corteza-lib/vue/dist', () => ({
   components: {
     CToaster: jest.fn(),
     CPrompts: {

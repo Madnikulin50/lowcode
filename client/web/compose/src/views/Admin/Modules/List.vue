@@ -210,7 +210,7 @@
 </template>
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import listHelpers from 'corteza-webapp-compose/src/mixins/listHelpers'
 import RelatedPages from 'corteza-webapp-compose/src/components/Admin/Module/RelatedPages'
 import Import from 'corteza-webapp-compose/src/components/Admin/Import'

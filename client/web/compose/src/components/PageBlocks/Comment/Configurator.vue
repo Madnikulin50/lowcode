@@ -178,7 +178,7 @@
 </template>
 <script>
 import { mapGetters } from 'vuex'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
 import base from '../base'
 

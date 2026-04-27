@@ -1,6 +1,6 @@
 // eslint-disable-next-line
 import { default as component } from './Configurator.vue'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 
 // TypeError: this.module.systemFields is not a function"
 const props = {

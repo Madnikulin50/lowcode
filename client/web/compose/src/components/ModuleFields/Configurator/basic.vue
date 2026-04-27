@@ -191,7 +191,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { compose, validator, NoID } from '@cortezaproject/corteza-js'
+import { compose, validator, NoID } from 'corteza-lib/js/dist'
 import FieldEditor from '../Editor'
 import FieldTranslator from 'corteza-webapp-compose/src/components/Admin/Module/FieldTranslator'
 

@@ -25,7 +25,7 @@
 <script>
 import List from './List'
 import Edit from './Edit'
-import { system, NoID } from '@cortezaproject/corteza-js'
+import { system, NoID } from 'corteza-lib/js/dist'
 
 export default {
   components: {

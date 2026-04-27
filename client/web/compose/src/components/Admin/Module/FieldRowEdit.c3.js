@@ -1,7 +1,7 @@
 // eslint-disable-next-line
 import { default as component } from './FieldRowEdit.vue'
-import { compose } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { compose } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 const { checkbox } = components.C3.controls
 
 const props = {

@@ -68,8 +68,8 @@
 </template>
 
 <script>
-import { components } from '@cortezaproject/corteza-vue'
-import { compose } from '@cortezaproject/corteza-js'
+import { components } from 'corteza-lib/vue/dist'
+import { compose } from 'corteza-lib/js/dist'
 import { convertRecordListFilter, queryToFilter } from 'corteza-webapp-compose/src/lib/record-filter.js'
 import FilterToolbox from 'corteza-webapp-compose/src/components/Common/FilterToolbox.vue'
 import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'

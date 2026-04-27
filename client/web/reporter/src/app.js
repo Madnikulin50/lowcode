@@ -9,7 +9,7 @@ import './mixins'
 import './components'
 import store from './store'
 
-import { i18n, websocket } from '@cortezaproject/corteza-vue'
+import { i18n, websocket } from '../../../../lib/vue/dist'
 
 import router from './router'
 

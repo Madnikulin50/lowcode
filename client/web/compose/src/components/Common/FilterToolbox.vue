@@ -158,7 +158,7 @@
 </template>
 
 <script>
-import { compose, validator } from '@cortezaproject/corteza-js'
+import { compose, validator } from 'corteza-lib/js/dist'
 import FieldEditor from 'corteza-webapp-compose/src/components/ModuleFields/Editor'
 import { isBetweenOperator } from 'corteza-webapp-compose/src/lib/record-filter.js'
 

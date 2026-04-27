@@ -82,7 +82,7 @@
 </template>
 
 <script>
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import { moduleFieldStrategyConfig, systemFieldStrategyConfig, types } from './encoding-strategy'
 import DalFieldStoreEncoding from 'corteza-webapp-compose/src/components/Admin/Module/DalFieldStoreEncoding'
 

@@ -120,8 +120,8 @@
 
 <script>
 import base from './base'
-import { components } from '@cortezaproject/corteza-vue'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { components } from 'corteza-lib/vue/dist'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
 
 const { CInputExpression } = components

@@ -344,9 +344,9 @@
 import base from './base'
 import FieldPicker from 'corteza-webapp-compose/src/components/Common/FieldPicker'
 import { mapActions } from 'vuex'
-import { NoID, compose } from '@cortezaproject/corteza-js'
+import { NoID, compose } from 'corteza-lib/js/dist'
 import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 
 const { CInputExpression } = components
 

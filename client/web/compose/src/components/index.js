@@ -2,7 +2,7 @@ import Vue from 'vue'
 import { FontAwesomeIcon, FontAwesomeLayers } from '@fortawesome/vue-fontawesome'
 import PortalVue from 'portal-vue'
 import './faIcons'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 
 // import ECharts modules manually to reduce bundle size
 import ECharts from 'vue-echarts'

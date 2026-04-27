@@ -201,6 +201,20 @@
                   </b-col>
                 </b-row>
 
+                <b-row>
+                  <b-col
+                    cols="12"
+                    lg="6"
+                  >
+                    <b-form-group>
+                      <b-form-checkbox
+                        v-model="module.isDatasource"
+                      >
+                        {{ $t('edit.fields.isDatasource') }}
+                      </b-form-checkbox>
+                    </b-form-group>
+                  </b-col>
+                </b-row>
                 <hr>
 
                 <h5 class="mb-3">
@@ -304,11 +318,15 @@
 
                 <hr>
 
-                <h5 class="mb-3">
+                <h5
+                  v-if="systemFieldsEnabled"
+                  class="mb-3">
                   {{ $t('edit.systemFields') }}
                 </h5>
 
-                <b-row no-gutters>
+                <b-row
+                  v-if="systemFieldsEnabled"
+                  no-gutters>
                   <c-form-table-wrapper hide-add-button>
                     <b-table-simple
                       borderless
@@ -472,6 +490,7 @@
       </b-modal>
 
       <dal-schema-alterations
+        v-if="dalAlterationsEnabled"
         :batch="dalSchemaAlterations.batchID"
         :module="module"
         @hide="onDalAlterationsHide"
@@ -529,10 +548,10 @@ import DataPrivacySettings from 'corteza-webapp-compose/src/components/Admin/Mod
 import ModuleTranslator from 'corteza-webapp-compose/src/components/Admin/Module/ModuleTranslator'
 import UniqueValues from 'corteza-webapp-compose/src/components/Admin/Module/UniqueValues'
 import RelatedPages from 'corteza-webapp-compose/src/components/Admin/Module/RelatedPages'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import Export from 'corteza-webapp-compose/src/components/Admin/Export'
-import { handle } from '@cortezaproject/corteza-vue'
+import { handle } from 'corteza-lib/vue/dist'
 
 export default {
   name: 'ModulesEdit',
@@ -676,6 +695,10 @@ export default {
       return valid && unique
     },
 
+    systemFieldsEnabled () {
+      return !this.module.isDatasource
+    },
+
     systemFields () {
       const systemFieldEncoding = this.module.config.dal.systemFieldEncoding || {}
 
@@ -701,6 +724,10 @@ export default {
 
     discoveryEnabled () {
       return this.$Settings.get('discovery.enabled', false)
+    },
+
+    dalAlterationsEnabled () {
+      return !!this.module.isDatasource
     },
 
     hideDelete () {

@@ -26,8 +26,8 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import { chartConstructor } from 'corteza-webapp-compose/src/lib/charts'
-import { compose } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { compose } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 const { CChart } = components
 
 export default {

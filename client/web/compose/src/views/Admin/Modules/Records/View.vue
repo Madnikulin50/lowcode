@@ -106,7 +106,7 @@ import { isEqual } from 'lodash'
 import { mapGetters, mapActions } from 'vuex'
 import RecordToolbar from 'corteza-webapp-compose/src/components/Common/RecordToolbar'
 import record from 'corteza-webapp-compose/src/mixins/record'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import RecordBase from 'corteza-webapp-compose/src/components/PageBlocks/RecordBase'
 import RecordEditor from 'corteza-webapp-compose/src/components/PageBlocks/RecordEditor'
 

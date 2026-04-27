@@ -22,7 +22,7 @@
 <script>
 import Grid from '../../Common/Grid'
 import PageBlock from '../../PageBlocks'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 
 export default {
   name: 'PublicGrid',

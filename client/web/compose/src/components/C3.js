@@ -8,7 +8,7 @@ import * as translator from './Translator/C3'
 import { pageBlockBase, pageBlockConfigurators } from './PageBlocks/C3'
 
 import FileConfigurator from './Admin/EditorToolbar.c3'
-// import * as C3 from '@cortezaproject/corteza-vue'
+// import * as C3 from 'corteza-lib/vue/dist'
 
 export default {
   ...admin,

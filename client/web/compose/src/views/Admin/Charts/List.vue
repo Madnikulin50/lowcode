@@ -126,7 +126,7 @@
 </template>
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import Import from 'corteza-webapp-compose/src/components/Admin/Import'
 import Export from 'corteza-webapp-compose/src/components/Admin/Export'
 import listHelpers from 'corteza-webapp-compose/src/mixins/listHelpers'

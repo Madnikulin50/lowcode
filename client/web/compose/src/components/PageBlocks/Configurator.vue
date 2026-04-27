@@ -348,8 +348,8 @@
 </template>
 
 <script>
-import { compose, NoID } from '@cortezaproject/corteza-js'
-import { handle, components } from '@cortezaproject/corteza-vue'
+import { compose, NoID } from 'corteza-lib/js/dist'
+import { handle, components } from 'corteza-lib/vue/dist'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
 import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
 import PageBlock from './index'

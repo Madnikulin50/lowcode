@@ -35,7 +35,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import NamespaceSidebar from 'corteza-webapp-compose/src/components/Namespaces/NamespaceSidebar'
 import Reminders from 'corteza-webapp-compose/src/components/Namespaces/Reminders'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CReminderSidebar } = components
 
 export default {

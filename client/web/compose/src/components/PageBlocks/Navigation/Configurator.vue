@@ -237,12 +237,12 @@
 <script>
 import base from '../base'
 import Draggable from 'vuedraggable'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import Text from './NavTypes/Text.vue'
 import Url from './NavTypes/Url.vue'
 import Compose from './NavTypes/ComposePage.vue'
 import Dropdown from './NavTypes/Dropdown.vue'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CInputColorPicker } = components
 
 export default {

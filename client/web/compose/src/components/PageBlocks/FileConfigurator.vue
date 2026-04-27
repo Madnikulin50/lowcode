@@ -211,7 +211,7 @@
 <script>
 import base from './base'
 import ListLoader from 'corteza-webapp-compose/src/components/Public/Page/Attachment/ListLoader'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CInputColorPicker, CUploader } = components
 
 export default {

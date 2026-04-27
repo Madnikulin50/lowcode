@@ -1,6 +1,6 @@
 // This mixin is used on View component of Records.
 
-import { NoID, compose, validator } from '@cortezaproject/corteza-js'
+import { NoID, compose, validator } from 'corteza-lib/js/dist'
 import { throttle } from 'lodash'
 import { mapGetters } from 'vuex'
 

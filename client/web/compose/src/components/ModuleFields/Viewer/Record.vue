@@ -72,7 +72,7 @@
 </template>
 
 <script>
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import records from 'corteza-webapp-compose/src/mixins/records'
 import users from 'corteza-webapp-compose/src/mixins/users'
 import { mapGetters } from 'vuex'

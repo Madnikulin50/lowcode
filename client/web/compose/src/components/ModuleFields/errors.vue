@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { validator } from '@cortezaproject/corteza-js'
+import { validator } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import { mapGetters } from 'vuex'
 import CTranslatorButton from 'corteza-webapp-compose/src/components/Translator/CTranslatorButton'
 import moduleResTr from 'corteza-webapp-compose/src/lib/resource-translations/module'

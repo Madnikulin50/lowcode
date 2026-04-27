@@ -1,5 +1,5 @@
 <script>
-import { compose, NoID, validator } from '@cortezaproject/corteza-js'
+import { compose, NoID, validator } from 'corteza-lib/js/dist'
 import Wrap from './Wrap'
 
 export default {

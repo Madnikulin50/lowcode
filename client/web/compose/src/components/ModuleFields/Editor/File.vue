@@ -83,9 +83,9 @@
 </template>
 <script>
 import base from './base'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import ListLoader from 'corteza-webapp-compose/src/components/Public/Page/Attachment/ListLoader'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 const { CUploader } = components
 
 export default {

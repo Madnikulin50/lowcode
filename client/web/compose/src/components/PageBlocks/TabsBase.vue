@@ -140,7 +140,7 @@
 
 <script>
 import base from './base'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
 

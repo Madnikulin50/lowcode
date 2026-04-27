@@ -1,4 +1,4 @@
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
 import { mapActions, mapGetters } from 'vuex'

@@ -60,7 +60,7 @@
 </template>
 <script>
 import base from '../base'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

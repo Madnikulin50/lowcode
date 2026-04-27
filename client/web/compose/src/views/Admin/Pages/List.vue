@@ -111,7 +111,7 @@
 import axios from 'axios'
 import { mapActions } from 'vuex'
 import PageTree from 'corteza-webapp-compose/src/components/Admin/Page/Tree'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

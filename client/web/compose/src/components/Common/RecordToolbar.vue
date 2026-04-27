@@ -154,8 +154,8 @@
 </template>
 
 <script>
-import { components } from '@cortezaproject/corteza-vue'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { components } from 'corteza-lib/vue/dist'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import { throttle } from 'lodash'
 const { CToolbar } = components
 

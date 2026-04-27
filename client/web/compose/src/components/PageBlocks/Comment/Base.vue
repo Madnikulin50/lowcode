@@ -264,8 +264,8 @@
 </template>
 
 <script>
-import { NoID, compose, fmt } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { NoID, compose, fmt } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import axios from 'axios'
 import { evaluatePrefilter, getFieldFilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import records from 'corteza-webapp-compose/src/mixins/records'

@@ -1,4 +1,4 @@
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import * as request from '../lib/request'
 
 const types = {

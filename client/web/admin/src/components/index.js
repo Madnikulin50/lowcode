@@ -5,7 +5,7 @@ import './faIcons'
 import CContentHeader from './CContentHeader'
 import CSystemFields from './CSystemFields'
 import CResourceListStatusFilter from './CResourceListStatusFilter'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from '../../../../lib/vue/dist'
 
 // import ECharts modules manually to reduce bundle size
 import ECharts from 'vue-echarts'

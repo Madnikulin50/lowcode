@@ -140,8 +140,8 @@
 </template>
 
 <script>
-import { system } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { system } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 const { CInputDateTime, CInputUser } = components
 
 export default {

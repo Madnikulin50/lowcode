@@ -1,5 +1,5 @@
 import { default as component } from './CResourceListStatusFilter'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from '../../../../lib/vue/dist'
 const { input, select } = components.C3.controls
 
 const options = [

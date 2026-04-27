@@ -378,7 +378,7 @@
 <script>
 import base from './base'
 import FieldViewer from '../Viewer'
-import { compose, validator } from '@cortezaproject/corteza-js'
+import { compose, validator } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

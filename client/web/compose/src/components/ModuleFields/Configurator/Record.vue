@@ -118,7 +118,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import { nonQueryableFieldKinds } from 'corteza-webapp-compose/src/lib/record-filter'
 import base from './base'
 

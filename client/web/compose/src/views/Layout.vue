@@ -154,7 +154,7 @@
 </template>
 
 <script>
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import { debounce } from 'lodash'

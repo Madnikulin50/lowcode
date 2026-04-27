@@ -1,6 +1,6 @@
 // eslint-disable-next-line
 import { default as component } from './Card.vue'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 
 const props = {
   block: new compose.PageBlock({

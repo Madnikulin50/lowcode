@@ -47,7 +47,7 @@ import numeral from 'numeral'
 import moment from 'moment'
 import { debounce } from 'lodash'
 import MetricItem from './Metric/Item'
-import { NoID, compose } from '@cortezaproject/corteza-js'
+import { NoID, compose } from 'corteza-lib/js/dist'
 import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 
 export default {

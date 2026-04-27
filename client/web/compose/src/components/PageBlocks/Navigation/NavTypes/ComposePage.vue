@@ -84,7 +84,7 @@
 
 <script>
 import base from './base'
-import { NoID, compose } from '@cortezaproject/corteza-js'
+import { NoID, compose } from 'corteza-lib/js/dist'
 
 export default {
   extends: base,

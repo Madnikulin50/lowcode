@@ -373,12 +373,12 @@ import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/Pag
 import Grid from 'corteza-webapp-compose/src/components/Common/Grid'
 import PageBlock from 'corteza-webapp-compose/src/components/PageBlocks'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import Configurator from 'corteza-webapp-compose/src/components/PageBlocks/Configurator'
 import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Modal'
 import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Page/Block/Modal'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
-import { handle } from '@cortezaproject/corteza-vue'
+import { handle } from 'corteza-lib/vue/dist'
 
 export default {
   i18nOptions: {

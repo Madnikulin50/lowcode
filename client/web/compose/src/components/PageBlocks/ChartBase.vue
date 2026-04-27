@@ -131,7 +131,7 @@
 import { mapActions } from 'vuex'
 import base from './base'
 import ChartComponent from '../Chart'
-import { NoID, compose } from '@cortezaproject/corteza-js'
+import { NoID, compose } from 'corteza-lib/js/dist'
 import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 
 export default {

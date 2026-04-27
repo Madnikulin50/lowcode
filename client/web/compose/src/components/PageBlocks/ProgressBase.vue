@@ -35,8 +35,8 @@
 
 <script>
 import base from './base'
-import { NoID } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { NoID } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 const { CProgress } = components
 

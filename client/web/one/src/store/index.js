@@ -2,7 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 
 import applications from './applications'
-import { store as cvStore } from '@cortezaproject/corteza-vue'
+import { store as cvStore } from '../../../../lib/vue/dist'
 
 Vue.use(Vuex)
 

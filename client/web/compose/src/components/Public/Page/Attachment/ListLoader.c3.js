@@ -1,6 +1,6 @@
 // eslint-disable-next-line
 import { default as component } from './ListLoader.vue'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 
 // TypeError: Cannot read property 'attachmentRead' of undefined
 const props = {

@@ -115,8 +115,8 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { NoID } from '@cortezaproject/corteza-js'
-import { components, filter } from '@cortezaproject/corteza-vue'
+import { NoID } from 'corteza-lib/js/dist'
+import { components, filter } from 'corteza-lib/vue/dist'
 import { Portal } from 'portal-vue'
 const { CSidebarNavItems, CInputSearch } = components
 

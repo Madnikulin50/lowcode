@@ -1073,8 +1073,8 @@
 </template>
 
 <script>
-import { NoID, compose } from '@cortezaproject/corteza-js'
-import { components, handle } from '@cortezaproject/corteza-vue'
+import { NoID, compose } from 'corteza-lib/js/dist'
+import { components, handle } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
 import PageLayoutTranslator from 'corteza-webapp-compose/src/components/Admin/PageLayout/PageLayoutTranslator'

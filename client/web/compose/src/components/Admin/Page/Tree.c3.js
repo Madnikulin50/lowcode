@@ -1,7 +1,7 @@
 // eslint-disable-next-line
 import { default as component } from './Tree.vue'
-import { compose } from '@cortezaproject/corteza-js'
-// import { components } from '@cortezaproject/corteza-vue'
+import { compose } from 'corteza-lib/js/dist'
+// import { components } from 'corteza-lib/vue/dist'
 // const { checkbox, input } = components.C3.controls
 
 // TypeError: Cannot read property 'getters' of undefined at VueComponent.mappedGetter

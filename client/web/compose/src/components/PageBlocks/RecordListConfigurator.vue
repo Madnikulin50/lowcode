@@ -986,8 +986,8 @@
 </template>
 
 <script>
-import { NoID } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { NoID } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import ColumnPicker from 'corteza-webapp-compose/src/components/Admin/Module/Records/ColumnPicker'
 import FieldPicker from 'corteza-webapp-compose/src/components/Common/FieldPicker'
 import RecordListFilter from 'corteza-webapp-compose/src/components/Common/RecordListFilter'

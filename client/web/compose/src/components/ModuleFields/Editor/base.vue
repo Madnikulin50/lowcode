@@ -1,7 +1,7 @@
 <script>
 import multi from './multi'
 import errors from '../errors'
-import { compose, validator } from '@cortezaproject/corteza-js'
+import { compose, validator } from 'corteza-lib/js/dist'
 import { mapGetters } from 'vuex'
 
 export default {

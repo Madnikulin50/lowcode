@@ -4,7 +4,7 @@ import Router from 'vue-router'
 import Vuex from 'vuex'
 import VueNativeSock from 'vue-native-websocket'
 
-import { plugins, websocket } from '@cortezaproject/corteza-vue'
+import { plugins, websocket } from '../../../../lib/vue/dist'
 
 Vue.use(BootstrapVue, {
   BToast: {

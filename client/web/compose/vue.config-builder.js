@@ -49,10 +49,9 @@ module.exports = ({ appFlavour, appLabel, version = process.env.BUILD_VERSION, t
 
     configureWebpack: {
       // other webpack options to merge in ...
-
       // Webpack 5 specific configuration
       resolve: {
-        symlinks: true,
+        // symlinks: true,
         fallback: {
           path: false,
           fs: false,
@@ -122,6 +121,7 @@ module.exports = ({ appFlavour, appLabel, version = process.env.BUILD_VERSION, t
       if (packageAlias) {
         config.resolve.alias.set(packageAlias, root)
       }
+      config.resolve.alias.set('corteza-lib', path.resolve('../../lib'))
 
       if (isTest) {
         const scssRule = config.module.rule('scss')
@@ -178,13 +178,16 @@ module.exports = ({ appFlavour, appLabel, version = process.env.BUILD_VERSION, t
 
       watchFiles: {
         paths: [
-          '**/*',
-          '!**/node_modules/!(@cortezaproject)/**',
+          'src/**/*.js',
+          'src/**/*.vue',
+          'src/**/*.scss',
+          'public/**/*',
         ],
         options: {
           usePolling: true,
           aggregateTimeout: 200,
           poll: 1000,
+          ignored: ['**/node_modules', '**/public'],
         },
       },
 

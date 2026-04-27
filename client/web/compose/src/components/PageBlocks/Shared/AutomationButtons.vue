@@ -13,7 +13,7 @@
   </div>
 </template>
 <script>
-import { compose, automation, NoID } from '@cortezaproject/corteza-js'
+import { compose, automation, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import base from '../base'
 

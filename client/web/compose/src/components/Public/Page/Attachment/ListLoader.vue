@@ -135,10 +135,10 @@
 <script>
 import numeral from 'numeral'
 import moment from 'moment'
-import { compose, shared } from '@cortezaproject/corteza-js'
+import { compose, shared } from 'corteza-lib/js/dist'
 import AttachmentLink from './Link'
 import draggable from 'vuedraggable'
-import { url, components } from '@cortezaproject/corteza-vue'
+import { url, components } from 'corteza-lib/vue/dist'
 const { CPreviewInline, canPreview, getExtensionIconType } = components
 
 export default {

@@ -95,7 +95,7 @@
 </template>
 <script>
 import base from '../base'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

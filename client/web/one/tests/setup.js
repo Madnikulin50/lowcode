@@ -1,7 +1,7 @@
 /* global jest */
 
 jest.mock('@cortezaproject/corteza-js', () => ({}), { virtual: true })
-jest.mock('@cortezaproject/corteza-vue', () => ({
+jest.mock('../../../../lib/vue/dist', () => ({
   components: {
     CPrompts: {
       name: 'c-prompts',

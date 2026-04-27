@@ -1,5 +1,5 @@
 <script>
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
 
 export default {

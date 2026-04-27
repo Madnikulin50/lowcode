@@ -6,7 +6,7 @@
   </div>
 </template>
 <script>
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 
 export default {
   props: {

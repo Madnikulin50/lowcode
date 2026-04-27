@@ -222,8 +222,8 @@
 </template>
 
 <script>
-import { fmt } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { fmt } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'
 import CommentReply from './Reply.vue'
 

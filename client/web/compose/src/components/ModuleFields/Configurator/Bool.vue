@@ -59,7 +59,7 @@
 
 <script>
 import base from './base'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import FieldBoolTranslator from 'corteza-webapp-compose/src/components/Admin/Module/FieldBoolTranslator'
 
 export default {

@@ -10,7 +10,7 @@ import record from './record'
 import user from './user'
 import languages from './languages'
 import ui from './ui'
-import { store as cvStore } from '@cortezaproject/corteza-vue'
+import { store as cvStore } from 'corteza-lib/vue/dist'
 
 Vue.use(Vuex)
 

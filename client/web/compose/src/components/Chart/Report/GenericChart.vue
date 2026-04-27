@@ -602,7 +602,7 @@
 <script>
 import ReportEdit from './ReportEdit'
 import ChartTranslator from 'corteza-webapp-compose/src/components/Chart/ChartTranslator'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import base from './base'
 
 const ignoredCharts = [

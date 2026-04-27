@@ -107,7 +107,7 @@
   </wrap>
 </template>
 <script>
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import { mapActions } from 'vuex'
 import axios from 'axios'
 import base from './base'

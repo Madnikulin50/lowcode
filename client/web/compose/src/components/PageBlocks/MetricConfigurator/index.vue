@@ -357,8 +357,8 @@ import { mapGetters } from 'vuex'
 import MetricBase from '../MetricBase'
 import ColumnPicker from 'corteza-webapp-compose/src/components/Admin/Module/Records/ColumnPicker'
 import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
-import { compose, NoID } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { compose, NoID } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 
 const { CInputExpression } = components
 

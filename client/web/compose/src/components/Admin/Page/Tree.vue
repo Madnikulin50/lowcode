@@ -180,7 +180,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import SortableTree from 'vue-sortable-tree'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

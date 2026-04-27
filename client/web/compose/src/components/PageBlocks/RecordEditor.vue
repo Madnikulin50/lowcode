@@ -88,7 +88,7 @@
   </wrap>
 </template>
 <script>
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import base from './base'
 import users from 'corteza-webapp-compose/src/mixins/users'
 import records from 'corteza-webapp-compose/src/mixins/records'

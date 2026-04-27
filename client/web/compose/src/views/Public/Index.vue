@@ -141,7 +141,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import CircleStep from 'corteza-webapp-compose/src/components/Common/CircleStep'
 
 const demoPageHandle = 'demo_page'

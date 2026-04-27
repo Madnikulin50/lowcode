@@ -464,7 +464,7 @@
 
 <script>
 import draggable from 'vuedraggable'
-import { compose } from '@cortezaproject/corteza-js'
+import { compose } from 'corteza-lib/js/dist'
 import base from './base'
 
 const aggregateFunctions = [

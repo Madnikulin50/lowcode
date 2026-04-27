@@ -28,7 +28,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import PageBlock from 'corteza-webapp-compose/src/components/PageBlocks'
 

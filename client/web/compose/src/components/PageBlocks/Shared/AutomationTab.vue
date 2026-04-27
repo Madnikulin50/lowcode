@@ -150,8 +150,8 @@
   </b-tab>
 </template>
 <script>
-import { compose, NoID } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { compose, NoID } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import draggable from 'vuedraggable'
 import base from '../base'
 import { words } from 'lodash'

@@ -1,0 +1,11 @@
+import { system } from '../../../../../lib/js/dist';
+export declare const DRAFT_STORAGE_PREFIX = "corteza:revision:draft:";
+export declare function buildStorageKey(changeID: string): string;
+export declare function isDraftStorageKey(key: string): boolean;
+export declare function extractChangeID(key: string): string | null;
+export declare function getAllDraftKeys(): string[];
+export declare function getDraftFromStorage(changeID: string): system.Revision | null;
+export declare function saveDraftToStorage(changeID: string, revision: system.Revision): void;
+export declare function removeDraftFromStorage(changeID: string): void;
+export declare function clearAllDraftsFromStorage(): void;
+export declare function loadAllDraftsFromStorage(): Map<string, system.Revision>;

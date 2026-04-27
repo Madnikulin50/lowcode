@@ -131,7 +131,7 @@
 </template>
 
 <script>
-import { fmt } from '@cortezaproject/corteza-js'
+import { fmt } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

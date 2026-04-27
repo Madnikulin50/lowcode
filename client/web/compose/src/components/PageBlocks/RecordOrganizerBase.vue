@@ -117,7 +117,7 @@ import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/View
 import users from 'corteza-webapp-compose/src/mixins/users'
 import records from 'corteza-webapp-compose/src/mixins/records'
 import { evaluatePrefilter, getFieldFilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {
