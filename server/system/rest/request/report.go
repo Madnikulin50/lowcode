@@ -8,17 +8,18 @@ package request
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/label"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-	"github.com/cortezaproject/corteza/server/pkg/payload"
-	"github.com/cortezaproject/corteza/server/system/reporting"
-	"github.com/cortezaproject/corteza/server/system/types"
-	"github.com/go-chi/chi/v5"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/cortezaproject/corteza/server/pkg/datasources"
+	"github.com/cortezaproject/corteza/server/pkg/label"
+	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
+	"github.com/cortezaproject/corteza/server/pkg/payload"
+	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/go-chi/chi/v5"
 )
 
 // dummy vars to prevent
@@ -198,7 +199,7 @@ type (
 		// Frames POST parameter
 		//
 		// Report data frame definitions
-		Frames reporting.FrameDefinitionSet
+		Frames datasources.FrameDefinitionSet
 	}
 )
 
@@ -901,7 +902,7 @@ func (r ReportRun) GetReportID() uint64 {
 }
 
 // Auditable returns all auditable/loggable parameters
-func (r ReportRun) GetFrames() reporting.FrameDefinitionSet {
+func (r ReportRun) GetFrames() datasources.FrameDefinitionSet {
 	return r.Frames
 }
 

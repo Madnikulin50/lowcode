@@ -207,11 +207,11 @@
                     lg="6"
                   >
                     <b-form-group>
-                      <b-form-checkbox
-                        v-model="module.isDatasource"
-                      >
-                        {{ $t('edit.fields.isDatasource') }}
-                      </b-form-checkbox>
+                      <b-form-select
+                        v-model="moduleType"
+                        :options="typeValueOptions"
+                        size="sm"
+                      />
                     </b-form-group>
                   </b-col>
                 </b-row>
@@ -280,14 +280,20 @@
                             class="text-primary text-center pr-3"
                             scope="col"
                           >
-                            {{ $t('general:label.required') }}
+                            {{ $t('edit.label.required') }}
+                            <c-hint
+                              :tooltip="$t('edit.tooltip.required')"
+                            />
                           </th>
 
                           <th
                             class="text-primary text-center pl-2"
                             scope="col"
                           >
-                            {{ $t('general:label.multi') }}
+                            {{ $t('edit.label.multi') }}
+                            <c-hint
+                              :tooltip="$t('edit.tooltip.multi')"
+                            />
                           </th>
 
                           <th scope="col" />
@@ -320,13 +326,15 @@
 
                 <h5
                   v-if="systemFieldsEnabled"
-                  class="mb-3">
+                  class="mb-3"
+                >
                   {{ $t('edit.systemFields') }}
                 </h5>
 
                 <b-row
                   v-if="systemFieldsEnabled"
-                  no-gutters>
+                  no-gutters
+                >
                   <c-form-table-wrapper hide-add-button>
                     <b-table-simple
                       borderless
@@ -401,13 +409,25 @@
                 </b-row>
               </b-tab>
 
-              <b-tab :title="$t('edit.config.dal.title')">
+              <b-tab
+                v-if="isBasic"
+                :title="$t('edit.config.dal.title')"
+              >
                 <dal-settings
+                  :module="module"
+                />
+              </b-tab>
+              <b-tab
+                v-if="isDatasource"
+                :title="$t('edit.config.datasource.title')"
+              >
+                <data-source-settings
                   :module="module"
                 />
               </b-tab>
 
               <b-tab
+                v-if="isBasic"
                 :title="$t('edit.config.uniqueValues.title')"
               >
                 <unique-values
@@ -415,7 +435,10 @@
                 />
               </b-tab>
 
-              <b-tab :title="$t('edit.config.record-revisions.title')">
+              <b-tab
+                v-if="isBasic"
+                :title="$t('edit.config.record-revisions.title')"
+              >
                 <record-revisions-settings
                   :module="module"
                 />
@@ -543,6 +566,7 @@ import FederationSettings from 'corteza-webapp-compose/src/components/Admin/Modu
 import DalSchemaAlterations from 'corteza-webapp-compose/src/components/Admin/Module/DalSchemaAlterations'
 import DiscoverySettings from 'corteza-webapp-compose/src/components/Admin/Module/DiscoverySettings'
 import DalSettings from 'corteza-webapp-compose/src/components/Admin/Module/DalSettings'
+import DataSourceSettings from 'corteza-webapp-compose/src/components/Admin/Module/DataSourceSettings'
 import RecordRevisionsSettings from 'corteza-webapp-compose/src/components/Admin/Module/RecordRevisionsSettings'
 import DataPrivacySettings from 'corteza-webapp-compose/src/components/Admin/Module/DataPrivacySettings'
 import ModuleTranslator from 'corteza-webapp-compose/src/components/Admin/Module/ModuleTranslator'
@@ -568,6 +592,7 @@ export default {
     DalSchemaAlterations,
     DiscoverySettings,
     DalSettings,
+    DataSourceSettings,
     RecordRevisionsSettings,
     DataPrivacySettings,
     ModuleTranslator,
@@ -648,6 +673,36 @@ export default {
       return this.moduleID === NoID
     },
 
+    typeValueOptions () {
+      return [
+        { value: 'basic', text: this.$t('edit.type.basic') },
+        { value: 'datasource', text: this.$t('edit.type.datasource') },
+        { value: 'dataframe', text: this.$t('edit.type.dataframe') },
+      ]
+    },
+
+    moduleType: {
+      get () {
+        const ds = this.module.config.type ?? 'basic'
+        return ds ?? false
+      },
+
+      set (value) {
+        this.module.config.type = value
+      },
+    },
+
+    isDatasource: {
+      get () {
+        return this.moduleType === 'datasource'
+      },
+    },
+    isBasic: {
+      get () {
+        return this.moduleType === 'basic'
+      },
+    },
+
     trModule: {
       get () {
         if (!this.module) {
@@ -696,7 +751,7 @@ export default {
     },
 
     systemFieldsEnabled () {
-      return !this.module.isDatasource
+      return this.isBasic
     },
 
     systemFields () {
@@ -727,7 +782,7 @@ export default {
     },
 
     dalAlterationsEnabled () {
-      return !!this.module.isDatasource
+      return !this.isDatasource
     },
 
     hideDelete () {

@@ -68,10 +68,10 @@ edit:
     private: Private
     protected: Protected
   fieldPermissions: Поле прав доступа
-  manageRecordFields: Manage record fields
-  moduleFieldSettings: Module field settings
+  manageRecordFields: Управление полями
+  moduleFieldSettings: Настройки полей
   moduleInfo: Информация о модуле
-  newField: Добавить новый field
+  newField: Добавить новое поле
   recordPermissions: Record permissions
   reorderFields: Изменить порядок полей
   specificFieldSettings: Настройки поля ({{name}})
@@ -79,12 +79,23 @@ edit:
     recordList: Страница со списком записей
     recordPage: Страница записи
   systemFields: 'Системные поля'
-  isDatasource: 'Источник данных'
+  isDatasource: 'Статичный источник данных'
+  type:
+    basic: Базовый
+    datasource: Внешняя ссылка на БД
+    dataframe: Датафрейм
+
+  label:
+    type: Тип модуля
+    required: '*'
+    multi: 1..nn
+
   tooltip:
     attributes: Select if the field can hold multiple values, if it's required field or if contains sensitive data
     name: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dashes. Must end with letter or number.
     private: Sensitive data
-    required: Обязательное поле field
+    required: Обязательное поле
+    multi: Множественное значение
     title: The name displayed in form input / data lists
 
   issues:
@@ -163,7 +174,33 @@ edit:
           json:
             label: JSON
 
+    datasource:
+      title: Источник
+      label: Datasource
+      types:
+        load:
+          label: Загрузка
+          data-from-resource: Loads data from a specified resource, such as Compose records
+        link:
+          label: Связывание
+          load-datasources: Links two Load datasources with a unique column that links them together, such as a Compose record selector
+        join:
+          label: Соединение
+          load-datasources: Joins two datasources with a unique column that joins them together, such as a Compose record selector. The join step produces a single set of rows in contrast to the link step which produces an independent data frame for each local row
+        aggregate:
+          label: Агрегация
+          load-datasource: Aggregates data from a load datasource based on a column value and aggregates it, such as counting the number of Accounts with the same status
+      add:
+        datasource: Добавить источник данных
+        display-element: Add display element
 
+
+      display-elements:
+        types:
+          text: Text
+          metric: Metric
+          table: Table
+          chart: Chart
     privacy:
       title: Приватность
       sensitivity-level:

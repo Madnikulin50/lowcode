@@ -2,4 +2,9 @@ module.exports = {
   presets: [
     ['@vue/app', { useBuiltIns: 'entry' }],
   ],
+  plugins: [
+    '@babel/plugin-transform-class-properties',
+    '@babel/plugin-transform-private-methods',
+    '@babel/plugin-transform-private-property-in-object',
+  ],
 }

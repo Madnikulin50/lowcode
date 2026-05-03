@@ -131,10 +131,10 @@ export default {
   },
 
   created () {
-    const { meta = { ui: {} }, moduleID } = this.module || {}
+    const { meta = { ui: {} }, moduleID, config = { type: 'basic' } } = this.module || {}
 
     let fields = ((meta.ui || {}).admin || {}).fields || []
-    fields = fields.length ? fields : [...this.module.fields.slice(0, 10), ...this.module.systemFields()]
+    fields = fields.length ? fields : (config.type === 'basic' ? [...this.module.fields.slice(0, 10), ...this.module.systemFields()] : [...this.module.fields.slice(0, 10)])
 
     // Init block
     const block = new compose.PageBlockRecordList({
@@ -151,7 +151,7 @@ export default {
         perPage: 14,
         fullPageNavigation: true,
         showTotalCount: true,
-        showDeletedRecordsOption: true,
+        showDeletedRecordsOption: config.type === 'basic',
         presort: 'createdAt DESC',
         enableRecordPageNavigation: true,
         hideConfigureFieldsButton: false,

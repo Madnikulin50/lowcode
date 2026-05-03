@@ -79,12 +79,16 @@ edit:
     recordList: Page with record list
     recordPage: Record page
   systemFields: 'System fields'
-  isDatasource: 'Is Datasource'
+  isDatasource: 'Static data source'
+  label:
+    required: *
+    multi: 1..nn
   tooltip:
     attributes: Select if the field can hold multiple values, if it's required field or if contains sensitive data
     name: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dashes. Must end with letter or number.
     private: Sensitive data
     required: Required field
+    multi: Multi-value field значение
     title: The name displayed in form input / data lists
 
   issues:
@@ -163,7 +167,8 @@ edit:
           json:
             label: JSON
 
-
+    datasource:
+      title: Datasource
     privacy:
       title: Privacy
       sensitivity-level:

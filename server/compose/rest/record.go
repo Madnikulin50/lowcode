@@ -19,8 +19,10 @@ import (
 	"github.com/cortezaproject/corteza/server/pkg/api"
 	"github.com/cortezaproject/corteza/server/pkg/corredor"
 	"github.com/cortezaproject/corteza/server/pkg/dal"
+	"github.com/cortezaproject/corteza/server/pkg/datasources"
 	"github.com/cortezaproject/corteza/server/pkg/envoyx"
 	"github.com/cortezaproject/corteza/server/pkg/filter"
+	"github.com/cortezaproject/corteza/server/pkg/id"
 	"github.com/cortezaproject/corteza/server/pkg/revisions"
 	"github.com/cortezaproject/corteza/server/store"
 	systemEnvoy "github.com/cortezaproject/corteza/server/system/envoy"
@@ -100,6 +102,115 @@ func (ctrl *Record) Report(ctx context.Context, r *request.RecordReport) (interf
 	return ctrl.record.Report(ctx, r.NamespaceID, r.ModuleID, r.Metrics, r.Dimensions, r.Filter)
 }
 
+func (ctrl *Record) enhance(ctx context.Context, ff []*datasources.Frame) (err error) {
+	/*// Preload sys users
+	  uIndex := make(map[uint64]*types.User)
+	  uu, uf, err := svc.users.Find(ctx, types.UserFilter{Paging: filter.Paging{Limit: 1024}})
+	  if err != nil {
+	      return
+	  }
+	  hasMore := uf.NextPage != nil
+	  for i := range uu {
+	      uIndex[uu[i].ID] = uu[i]
+	  }
+
+	  var uID uint64
+	  for _, f := range ff {
+	      userCols := make([]int, 0, len(f.Columns))
+	      for i, c := range f.Columns {
+	          // Translate system columns
+	          if c.System {
+	              pp := strings.Split(c.Name, ".")
+	              c.Label = svc.locale.T(ctx, "compose", fmt.Sprintf("field.system.%s", pp[len(pp)-1]))
+	              f.Columns[i] = c
+	          }
+
+	          // Collect user columns to replace IDs with labels
+	          if c.Kind != "User" {
+	              continue
+	          }
+	          userCols = append(userCols, i)
+	      }
+
+	      for _, r := range f.Rows {
+	          for _, ci := range userCols {
+	              col := r[ci]
+	              if reflect2.IsNil(col) {
+	                  continue
+	              }
+	              uID, err = cast.ToUint64E(col)
+	              if err != nil {
+	                  continue
+	              }
+
+	              user, ok := uIndex[uID]
+	              if !ok && hasMore {
+	                  user, err = svc.users.FindByID(ctx, uID)
+	                  if err != nil && err != store.ErrNotFound {
+	                      return
+	                  }
+	              }
+
+	              if user == nil {
+	                  continue
+	              } else if _, ok := uIndex[uID]; !ok {
+	                  uIndex[uID] = user
+	              }
+
+	              if usr, ok := uIndex[uID]; ok {
+	                  r[ci] = strconv.FormatUint(uID, 10)
+	                  if usr.Name != "" {
+	                      r[ci] = usr.Name
+	                  } else if usr.Username != "" {
+	                      r[ci] = usr.Username
+	                  } else if usr.Email != "" {
+	                      r[ci] = usr.Email
+	                  } else if usr.Handle != "" {
+	                      r[ci] = usr.Handle
+	                  }
+	              }
+	          }
+	      }
+	  }*/
+
+	return nil
+}
+
+func makeNewRecord(m *types.Module, vv ...*types.RecordValue) *types.Record {
+	// minimum data set for new composeRecord
+	var recordID = id.Next()
+
+	for _, v := range vv {
+		v.RecordID = recordID
+	}
+	offset := 0
+	offset++
+	return &types.Record{
+		ID:          recordID,
+		NamespaceID: m.NamespaceID,
+		ModuleID:    m.ID,
+		// if we don't round this up to a second we'll confuse the sorting
+		CreatedAt: time.Now().Round(time.Second).Add(time.Second * time.Duration(offset)),
+		Values:    vv,
+	}
+}
+
+func makeRecordSet(m *types.Module, frm *datasources.Frame) (res *types.RecordSet) {
+	result := types.RecordSet{}
+	for _, row := range frm.Rows {
+		values := []*types.RecordValue{}
+		for ic, c := range frm.Columns {
+			values = append(values, &types.RecordValue{Name: c.Name, Value: row[ic]})
+		}
+		rec := makeNewRecord(m, values...)
+		if rec == nil {
+			continue
+		}
+		result = append(result, rec)
+	}
+	return &result
+}
+
 func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{}, error) {
 	var (
 		m   *types.Module
@@ -130,32 +241,121 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 	if m, err = ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
 		return nil, err
 	}
-
-	if r.Query != "" {
-		// Query param takes preference
-		f.Query = r.Query
-	}
-
 	if r.Limit == 0 {
 		r.Limit = defaultRecordSearchSize
 	}
 
 	r.Limit = uint(math.Min(float64(r.Limit), float64(maxRecordSearchSize)))
 
-	if f.Paging, err = filter.NewPaging(r.Limit, r.PageCursor); err != nil {
-		return nil, err
+	switch m.Config.Type {
+	case "datasource":
+		var (
+			//aaProps = &reportActionProps{}
+
+			iter dal.Iterator
+			ff   []*datasources.Frame
+			out  = make([]*datasources.Frame, 0, 4)
+		)
+
+		err = func() (err error) {
+
+			// Get all of the steps
+			ss := m.Config.Datasource.Items.ReportSteps()
+			//ss = append(ss, r.Blocks.ReportSteps()...)
+			runner := dal.Service()
+			var dd datasources.FrameDefinitionSet
+			if len(dd) == 0 && len(ss) > 0 {
+				lastStep := ss[len(ss)-1]
+				def := datasources.FrameDefinition{Source: lastStep.Name()}
+				def.Columns = datasources.FrameColumnSet{}
+				for _, f := range m.Fields {
+					def.Columns = append(def.Columns, datasources.FrameColumn{
+						Name:  f.Name,
+						Label: f.Name,
+						Kind:  f.Kind,
+					})
+				}
+				dd = append(dd, &def)
+			}
+
+			// Prepare a set of runs for the provided definitions
+			runs, err := datasources.Runs(runner, ss, dd)
+			if err != nil {
+				return
+			}
+
+			// Run the reports and produce the frames
+			// @todo this can be ran in paralel
+			for _, run := range runs {
+				err = func() (err error) {
+					iter, err = runner.Run(ctx, run.Pipeline)
+					if err != nil {
+						return
+					}
+					defer iter.Close()
+
+					ff, err = datasources.Frames(ctx, iter, run)
+					if err != nil {
+						return
+					}
+
+					err = ctrl.enhance(ctx, ff)
+					if err != nil {
+						return
+					}
+
+					out = append(out, ff...)
+					return
+				}()
+
+				if err != nil {
+					return
+				}
+			}
+
+			return nil
+		}()
+		if out == nil || len(out) == 0 {
+			return nil, err
+		}
+		rr := makeRecordSet(m, out[len(out)-1])
+		f = types.RecordFilter{
+			ModuleID:    m.ID,
+			NamespaceID: m.NamespaceID,
+		}
+		f.Limit = 2
+		f.IncPageNavigation = true
+		f.IncTotal = true
+
+		return ctrl.makeFilterPayloadN(ctx, m, *rr, nil, &f, err)
+	default:
+		if r.Query != "" {
+			// Query param takes preference
+			f.Query = r.Query
+		}
+
+		if r.Limit == 0 {
+			r.Limit = defaultRecordSearchSize
+		}
+
+		r.Limit = uint(math.Min(float64(r.Limit), float64(maxRecordSearchSize)))
+
+		if f.Paging, err = filter.NewPaging(r.Limit, r.PageCursor); err != nil {
+			return nil, err
+		}
+
+		f.IncTotal = r.IncTotal
+		f.IncPageNavigation = r.IncPageNavigation
+
+		if f.Sorting, err = filter.NewSorting(r.Sort); err != nil {
+			return nil, err
+		}
+
+		rr, smr, flt, err := ctrl.record.FindN(ctx, f)
+
+		return ctrl.makeFilterPayloadN(ctx, m, rr, smr, &flt, err)
 	}
 
-	f.IncTotal = r.IncTotal
-	f.IncPageNavigation = r.IncPageNavigation
-
-	if f.Sorting, err = filter.NewSorting(r.Sort); err != nil {
-		return nil, err
-	}
-
-	rr, smr, filter, err := ctrl.record.FindN(ctx, f)
-
-	return ctrl.makeFilterPayloadN(ctx, m, rr, smr, &filter, err)
 }
 
 func (ctrl *Record) Read(ctx context.Context, r *request.RecordRead) (interface{}, error) {

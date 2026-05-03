@@ -66,16 +66,17 @@ var (
 func fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings(ctx context.Context, s *Store) (err error) {
 	type (
 		oldS struct {
+			Type      string `json:"type"`
 			Discovery struct {
 				Public    interface{} `json:"public"`
 				Private   interface{} `json:"private"`
 				Protected interface{} `json:"protected"`
 			} `json:"discovery"`
-
 			DAL             interface{} `json:"dal"`
 			Privacy         interface{} `json:"privacy"`
 			RecordRevisions interface{} `json:"recordRevisions"`
 			RecordDeDup     interface{} `json:"recordDeDup"`
+			DataSource      interface{} `json:"dataSource"`
 		}
 
 		result struct {

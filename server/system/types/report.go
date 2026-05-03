@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/cortezaproject/corteza/server/pkg/filter"
+	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
 	"github.com/cortezaproject/corteza/server/pkg/ql"
 	"github.com/cortezaproject/corteza/server/pkg/sql"
 	"github.com/spf13/cast"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-
 )
 
 type (
@@ -138,7 +138,7 @@ type (
 
 		Deleted filter.State `json:"deleted"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		// Check fn is called by store backend for each resource found function can
@@ -296,4 +296,22 @@ func (f *ReportFilterExpr) UnmarshalJSON(data []byte) (err error) {
 	}
 
 	return nil
+}
+
+func (step *ReportStep) Name() string {
+	switch {
+	case step.Load != nil:
+		return step.Load.Name
+
+	case step.Aggregate != nil:
+		return step.Aggregate.Name
+	case step.Join != nil:
+		return step.Join.Name
+	case step.Link != nil:
+		return step.Link.Name
+
+	default:
+		// this should never happen
+		panic(fmt.Errorf("unknown step type: %v", step.Kind))
+	}
 }

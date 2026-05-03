@@ -81,9 +81,9 @@ label:
   field: Field
   remove: Remove
   removeDefault: Remove default
-  required: Required
+  required: Обязательно
   reset: Reset
-  examples: Examples
+  examples: Примеры
   sensitive: Sensitive
   save: Save
   saveAndClose: Save and close

@@ -10,8 +10,8 @@ import (
 
 	"github.com/cortezaproject/corteza/server/pkg/dal"
 	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
 	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
+	"github.com/cortezaproject/corteza/server/pkg/locale"
 )
 
 type (
@@ -48,6 +48,7 @@ type (
 	}
 
 	ModuleConfig struct {
+		Type string `json:"type,omitempty"`
 		// How and where the records of this module are stored in the database
 		DAL ModuleConfigDAL `json:"dal"`
 
@@ -60,6 +61,8 @@ type (
 
 		// RecordDeDup value duplicate detection settings
 		RecordDeDup ModuleConfigRecordDeDup `json:"recordDeDup"`
+
+		Datasource ModuleConfigDataSource `json:"dataSource"`
 	}
 
 	ModuleConfigDAL struct {
@@ -119,7 +122,7 @@ type (
 		Handle      string   `json:"handle"`
 		Name        string   `json:"name"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		Deleted filter.State `json:"deleted"`
@@ -179,8 +182,14 @@ func (set ModuleSet) FindByHandle(handle string) *Module {
 	return nil
 }
 
-func (c *ModuleConfig) Scan(src any) error          { return sql.ParseJSON(src, c) }
-func (c ModuleConfig) Value() (driver.Value, error) { return json.Marshal(c) }
+func (c *ModuleConfig) Scan(src any) error { return sql.ParseJSON(src, c) }
+func (c ModuleConfig) Value() (driver.Value, error) {
+	data, err := json.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
 
 func ParseModuleConfig(ss []string) (m ModuleConfig, err error) {
 	if len(ss) == 0 {

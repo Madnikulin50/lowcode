@@ -1,5 +1,5 @@
 import Vue from 'vue'
 
-import { mixins } from '../../../../lib/vue/dist'
+import { mixins } from 'corteza-lib/vue/dist'
 
 Vue.mixin(mixins.toast)
