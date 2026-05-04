@@ -122,6 +122,7 @@ module.exports = ({ appFlavour, appLabel, version = process.env.BUILD_VERSION, t
       if (packageAlias) {
         config.resolve.alias.set(packageAlias, root)
       }
+      config.resolve.alias.set('corteza-lib', path.resolve('../../lib'))
 
       if (isTest) {
         const scssRule = config.module.rule('scss')

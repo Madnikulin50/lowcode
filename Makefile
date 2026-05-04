@@ -6,6 +6,9 @@ dev:
 	@echo "---Processing clients---"
 	@(cd $(CURDIR)/client && make dev) || (echo "Failed to yarn clients"; exit 1)
 
+build-client:
+	@(cd $(CURDIR)/client && make build)
+
 test:
 	@echo "---Testing libs---"
 	@(cd $(CURDIR)/lib && make test) || (echo "Failed to test libs"; exit 1)
@@ -37,9 +40,9 @@ drelease:
 	@echo "---Build server---"
 	@(cd $(CURDIR)/server  && make release-clean && make build) || true
 	@echo "---Build client---"
-	##@(cd $(CURDIR)/client && make build) || true
+	@(cd $(CURDIR)/client && make build) || true
 	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build -t pnp-lowcode:2026.1 .)
+	@(cd $(CURDIR) && docker build -t pnp-lowcode:2026.6 . && docker push madnikulin50/lowcode:2026.6)
 
 
 .DEFAULT_GOAL := dev
