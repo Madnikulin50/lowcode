@@ -1,6 +1,10 @@
 package sass
 
-import "sync"
+import (
+	"fmt"
+	"runtime/debug"
+	"sync"
+)
 
 type stylesheetCache struct {
 	stylesheet map[string]string
@@ -16,7 +20,7 @@ func newStylesheetCache() *stylesheetCache {
 func (c *stylesheetCache) Set(key, value string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
+	fmt.Printf("start %v by %v from \r\n %v \r\n", key, trimString(value, 128), string(debug.Stack()))
 	c.stylesheet[key] = value
 }
 

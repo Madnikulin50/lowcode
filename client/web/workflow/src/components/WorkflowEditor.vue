@@ -1841,7 +1841,7 @@ export default {
       mxConstants.VERTEX_SELECTION_DASHED = false
       mxConstants.EDGE_SELECTION_COLOR = '#A7D0E3'
       mxConstants.EDGE_SELECTION_STROKEWIDTH = 2 // Changed from 2 to 0 to hide default selection border
-      mxConstants.DEFAULT_FONTFAMILY = 'Poppins-Regular'
+      mxConstants.DEFAULT_FONTFAMILY = 'var(--font-regular)'
       mxConstants.DEFAULT_FONTSIZE = 13
 
       mxConstants.HANDLE_FILLCOLOR = 'var(--primary)'

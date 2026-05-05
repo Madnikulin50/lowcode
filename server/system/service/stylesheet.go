@@ -155,15 +155,24 @@ func themeMap(settingsValue *types.SettingValue) (themeMap map[string]string) {
 	return themeMap
 }
 
+func trimString(s string, l int) string {
+	if len(s) < l {
+		return s
+	}
+	return s[:l]
+}
+
 func FetchCSS() string {
 	var (
 		stringsBuilder strings.Builder
-		rootLight      = sass.StylesheetCache.Get(fmt.Sprintf("%s-%s", sass.SectionRoot, sass.LightTheme))
+		themeKey       = fmt.Sprintf("%s-%s", sass.SectionRoot, sass.LightTheme)
+		rootLight      = sass.StylesheetCache.Get(themeKey)
 	)
 
 	if rootLight == "" {
 		return sass.StylesheetCache.Get("default-theme")
 	}
+	fmt.Printf("start %v by %v", themeKey, trimString(rootLight, 128))
 
 	// root css section
 	stringsBuilder.WriteString(rootLight)
@@ -179,6 +188,6 @@ func FetchCSS() string {
 	stringsBuilder.WriteString(sass.StylesheetCache.Get(fmt.Sprintf("%s-%s", sass.SectionMain, sass.LightTheme)))
 	stringsBuilder.WriteString("\n")
 	processedCSS := stringsBuilder.String()
-	fmt.Println("processe by " + rootLight + " file: " + processedCSS[:512] + "\r\n")
+	fmt.Printf("processe %v file: %v\r\n", rootLight, trimString(processedCSS, 128))
 	return processedCSS
 }

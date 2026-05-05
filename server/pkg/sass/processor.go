@@ -29,6 +29,13 @@ var (
 	sassVariablesPattern = regexp.MustCompile(`(\$[a-zA-Z_-]+):\s*([^;]+);`)
 )
 
+func trimString(s string, l int) string {
+	if len(s) < l {
+		return s
+	}
+	return s[:l]
+}
+
 // DefaultCSS contains css contents from minified-custom.css and custom-css editor content
 func DefaultCSS(log *zap.Logger, customCSS string) string {
 	var strBuilder strings.Builder
@@ -52,7 +59,7 @@ func DefaultCSS(log *zap.Logger, customCSS string) string {
 	processedCSS := strBuilder.String()
 
 	StylesheetCache.Set("default-theme", processedCSS)
-
+	fmt.Println("set default theme to1 " + trimString(processedCSS, 128))
 	return processedCSS
 }
 
@@ -90,6 +97,7 @@ func processSass(transpiler *godartsass.Transpiler, log *zap.Logger, section, th
 	stringsBuilder.WriteString(fmt.Sprintf("$theme-mode: %s;\n", themeID))
 
 	if themeSASS != "" {
+		fmt.Printf("jsonToSass %v \r\n", trimString(themeSASS, 128))
 		err = jsonToSass(themeSASS, &stringsBuilder)
 		if err != nil {
 			log.Error("failed to unmarshal branding sass variables", zap.Error(err))
@@ -116,9 +124,13 @@ func processSass(transpiler *godartsass.Transpiler, log *zap.Logger, section, th
 	if err != nil {
 		return err
 	}
+	if len(sassVariables) == 0 {
+		fmt.Printf("read scss/variables %v\r\n", trimString(sassVariables, 128))
+	}
+
 	stringsBuilder.WriteString(sassVariables)
 	StylesheetCache.Set("sass", stringsBuilder.String())
-
+	fmt.Printf("set style %v by %v", "sass", trimString(stringsBuilder.String(), 128))
 	// start processing a section
 	sassSection, err := readSassFiles(log, path.Join("scss", section))
 	if err != nil {
@@ -129,8 +141,10 @@ func processSass(transpiler *godartsass.Transpiler, log *zap.Logger, section, th
 
 	// when a user provides sets WEBAPP_SCSS_DIR_PATH environment variable
 	if sassDirPath != "" {
+		fmt.Printf("read sassDirPath %v\r\n", sassDirPath)
 		customSass, err := readSassFiles(log, sassDirPath)
 		if err != nil {
+			fmt.Printf("error sassDirPath %v:%v\r\n", sassDirPath, err.Error())
 			return err
 		}
 		stringsBuilder.WriteString(customSass)
@@ -161,7 +175,7 @@ func processSass(transpiler *godartsass.Transpiler, log *zap.Logger, section, th
 	//save the transpiled css to stylesheet cache
 	sectionKey := fmt.Sprintf("%s-%s", section, themeID)
 	StylesheetCache.Set(sectionKey, transpiledCss)
-
+	fmt.Printf("set style %v by %v", sectionKey, trimString(transpiledCss, 128))
 	return nil
 }
 
