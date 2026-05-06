@@ -86,7 +86,7 @@ func Decoder(r io.ReadSeeker, ident string, config map[string]any) (out *decoder
 			out.Reset(nil)
 			out.reader = csv.NewReader(out.src)
 			out.reader.ReuseRecord = true
-			out.reader.LazyQuotes = true
+			//out.reader.LazyQuotes = true
 			out.delimiter = splitter
 			out.reader.Comma = []rune(splitter)[0]
 			aux, err = out.reader.Read()

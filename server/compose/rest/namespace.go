@@ -725,6 +725,7 @@ func (ctrl Namespace) importRecordData(ctx context.Context,
 		importSession.Progress.FinishedAt = &now
 		if err != nil {
 			importSession.Progress.FailReason = err.Error()
+			importSession.Progress.Failed = 1
 			return
 		}
 		return

@@ -875,6 +875,13 @@ func (ctrl *Record) ImportRun(ctx context.Context, r *request.RecordImportRun) (
 			importSession.Progress.FinishedAt = &now
 			if err != nil {
 				importSession.Progress.FailReason = err.Error()
+				importSession.Progress.Failed = 1
+				importSession.Progress.FailLog = &service.FailLog{
+					Errors: service.ErrorIndex{
+						err.Error(): 1,
+					},
+				}
+
 				return
 			}
 			return
