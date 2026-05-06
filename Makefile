@@ -40,7 +40,7 @@ drelease:
 	@echo "---Build server---"
 	@(cd $(CURDIR)/server  && make release-clean && make build) || true
 	@echo "---Build client---"
-	##@(cd $(CURDIR)/client && make build) || true
+	@(cd $(CURDIR)/client && make build) || true
 	@echo "---Build docker---"
 	@(cd $(CURDIR) && docker build -t madnikulin50/pnp-lowcode:2026.6.1 .)
 
