@@ -4,12 +4,18 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 
+	automationEnvoy "github.com/cortezaproject/corteza/server/automation/envoy"
 	automationTypes "github.com/cortezaproject/corteza/server/automation/types"
+	"github.com/cortezaproject/corteza/server/compose/dalutils"
 	composeEnvoy "github.com/cortezaproject/corteza/server/compose/envoy"
 	"github.com/cortezaproject/corteza/server/compose/rest/request"
 	"github.com/cortezaproject/corteza/server/compose/service"
@@ -17,6 +23,7 @@ import (
 	"github.com/cortezaproject/corteza/server/compose/types"
 	"github.com/cortezaproject/corteza/server/pkg/api"
 	"github.com/cortezaproject/corteza/server/pkg/corredor"
+	"github.com/cortezaproject/corteza/server/pkg/dal"
 	"github.com/cortezaproject/corteza/server/pkg/envoyx"
 	"github.com/cortezaproject/corteza/server/pkg/filter"
 	"github.com/cortezaproject/corteza/server/pkg/locale"
@@ -24,6 +31,7 @@ import (
 	systemEnvoy "github.com/cortezaproject/corteza/server/system/envoy"
 	systemService "github.com/cortezaproject/corteza/server/system/service"
 	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/spf13/cast"
 )
 
 type (
@@ -243,7 +251,7 @@ func (ctrl Namespace) Clone(ctx context.Context, r *request.NamespaceClone) (int
 	return ctrl.makePayload(ctx, ns, err)
 }
 
-func (ctrl Namespace) Export(ctx context.Context, r *request.NamespaceExport) (out interface{}, err error) {
+func (ctrl Namespace) exportOld(ctx context.Context, r *request.NamespaceExport) (out interface{}, err error) {
 	nodes, err := ctrl.gatherNodes(ctx, r.NamespaceID)
 	if err != nil {
 		return
@@ -283,6 +291,169 @@ func (ctrl Namespace) Export(ctx context.Context, r *request.NamespaceExport) (o
 	return ctrl.serveExport(ctx, fmt.Sprintf("%s.zip", r.Filename), bytes.NewReader(buf.Bytes()), nil)
 }
 
+func (ctrl Namespace) Export(ctx context.Context, r *request.NamespaceExport) (out interface{}, err error) {
+
+	nodes, err := ctrl.gatherNodes(ctx, r.NamespaceID)
+	if err != nil {
+		return
+	}
+
+	p := envoyx.EncodeParams{
+		Type:   envoyx.EncodeTypeIo,
+		Params: map[string]any{},
+	}
+
+	evsvc := envoyx.Global()
+	gg, err := evsvc.Bake(ctx, p, nil, nodes...)
+	if err != nil {
+		return
+	}
+
+	// Archive encoded resources
+	buf := bytes.NewBuffer(nil)
+	zw := zip.NewWriter(buf)
+
+	f, err := zw.Create(fmt.Sprintf("%s.yaml", r.Filename))
+	if err != nil {
+		return
+	}
+
+	p.Params["writer"] = f
+	err = evsvc.Encode(ctx, p, gg)
+	if err != nil {
+		return
+	}
+
+	mm, _, err := ctrl.module.Find(ctx, types.ModuleFilter{NamespaceID: r.NamespaceID})
+	if err != nil {
+		return
+	}
+	for _, m := range mm {
+		data, err := json.Marshal(m)
+		if err == nil {
+			func() (err error) {
+				defer func() {
+					if recovered := recover(); recovered != nil {
+						err = net.ErrClosed
+					}
+				}()
+				f, err := zw.Create(fmt.Sprintf("modules/%s.json", m.Name))
+				if err != nil {
+					return
+				}
+				f.Write(data)
+				return
+			}()
+			func() (err error) {
+				defer func() {
+					if recovered := recover(); recovered != nil {
+						err = net.ErrClosed
+					}
+				}()
+				fx := make(map[string]bool)
+				for _, f := range m.Fields {
+					fx[f.Name] = true
+				}
+
+				envoySvc := envoyx.New()
+				envoySvc.AddDecoder(envoyx.DecodeTypeStore,
+					composeEnvoy.StoreDecoder{},
+					systemEnvoy.StoreDecoder{},
+					automationEnvoy.StoreDecoder{},
+				)
+
+				envoySvc.AddEncoder(
+					envoyx.EncodeTypeIo,
+					composeEnvoy.JsonlEncoder{},
+				)
+				/*    envoySvc.AddEncoder(
+				      envoyx.EncodeTypeIo,
+				      composeEnvoy.CsvEncoder{},
+				  )*/
+
+				var nodes envoyx.NodeSet
+				nodes, _, err = envoySvc.Decode(ctx, envoyx.DecodeParams{
+					Type: envoyx.DecodeTypeStore,
+					Params: map[string]any{
+						"storer":      service.DefaultStore,
+						"dal":         dal.Service(),
+						"resolveRefs": true,
+					},
+					Filter: map[string]envoyx.ResourceFilter{
+						composeEnvoy.ComposeRecordDatasourceAuxType: {
+							//Query: rf.Query,
+							Refs: map[string]envoyx.Ref{
+								"NamespaceID": {
+									ResourceType: types.NamespaceResourceType,
+									Identifiers:  envoyx.MakeIdentifiers(r.NamespaceID),
+									Scope: envoyx.Scope{
+										ResourceType: types.NamespaceResourceType,
+										Identifiers:  envoyx.MakeIdentifiers(r.NamespaceID)},
+								},
+								"ModuleID": {
+									ResourceType: types.ModuleResourceType,
+									Identifiers:  envoyx.MakeIdentifiers(m.ID),
+									Scope: envoyx.Scope{
+										ResourceType: types.NamespaceResourceType,
+										Identifiers:  envoyx.MakeIdentifiers(r.NamespaceID),
+									},
+								},
+							},
+							Scope: envoyx.Scope{
+								ResourceType: types.NamespaceResourceType,
+								Identifiers:  envoyx.MakeIdentifiers(r.NamespaceID),
+							},
+						},
+					},
+				})
+
+				var gg *envoyx.DepGraph
+				gg, err = envoySvc.Bake(ctx, envoyx.EncodeParams{
+					Type: envoyx.EncodeTypeStore,
+					Params: map[string]any{
+						"storer": service.DefaultStore,
+						"dal":    dal.Service(),
+					},
+				}, nil, nodes...)
+				if err != nil {
+					return
+				}
+				mapping := make([]envoyx.MapEntry, 0, len(m.Fields))
+				for _, f := range m.Fields {
+					mapping = append(mapping, envoyx.MapEntry{
+						Column: f.Name,
+						Field:  f.Name,
+					})
+				}
+				f, err := zw.Create(fmt.Sprintf("data/%s.json", m.Name))
+				if err != nil {
+					return
+				}
+				err = envoySvc.Encode(ctx, envoyx.EncodeParams{
+					Type: envoyx.EncodeTypeIo,
+					Params: map[string]any{
+						"writer":              f,
+						"multiValueDelimiter": ";",
+						"wrapMultiValue":      false,
+					},
+					FieldMapping: mapping,
+				}, gg)
+				if err != nil {
+					return
+				}
+				return
+			}()
+		}
+	}
+
+	err = zw.Close()
+	if err != nil {
+		return
+	}
+
+	return ctrl.serveExport(ctx, fmt.Sprintf("%s.zip", r.Filename), bytes.NewReader(buf.Bytes()), nil)
+}
+
 func (ctrl Namespace) ImportInit(ctx context.Context, r *request.NamespaceImportInit) (interface{}, error) {
 	f, err := r.Upload.Open()
 	if err != nil {
@@ -292,6 +463,272 @@ func (ctrl Namespace) ImportInit(ctx context.Context, r *request.NamespaceImport
 
 	return ctrl.namespace.ImportInit(ctx, f, r.Upload.Size)
 	// return ctrl.namespace.ImportInit(ctx, f, r.Upload.Header.Get("content-type"), r.Upload.Size)
+}
+
+func (ctrl Namespace) importRecordData(ctx context.Context,
+	namespaceID uint64,
+	moduleName string,
+	reader io.ReadSeeker) (err error) {
+	var (
+		ns  *types.Namespace
+		mod *types.Module
+	)
+
+	if mod, err = ctrl.module.FindByName(ctx, namespaceID, moduleName); err != nil {
+		return err
+	}
+	if ns, err = ctrl.namespace.FindByID(ctx, namespaceID); err != nil {
+		return err
+	}
+
+	importSession, err := service.DefaultImportSession.Create(ctx, reader, moduleName+".json",
+		"application/json", ns.ID, mod.ID)
+	if err != nil {
+		return err
+	}
+
+	for i, p := range importSession.Providers {
+		err = p.SetConfigs(map[string]any{
+			"multiValueDelimiter": ";",
+		})
+		if err != nil {
+			return
+		}
+
+		importSession.Providers[i] = p
+	}
+
+	sa := time.Now()
+	importSession.Progress.StartedAt = &sa
+
+	// Some prereq
+	{
+		importSession.Fields = make(map[string]string)
+		for _, f := range mod.Fields {
+			importSession.Fields[f.Name] = f.Name
+		}
+	}
+	// Prep envoy bits
+	var (
+		envoySvc     *envoyx.Service
+		encodeParams envoyx.EncodeParams
+
+		nodeScope    envoyx.Scope
+		nodes        envoyx.NodeSet
+		node         *envoyx.Node
+		storeEncoder = composeEnvoy.StoreEncoder{}
+	)
+	{
+		envoySvc = envoyx.New()
+		// @todo add when/if needed
+		envoySvc.AddEncoder(envoyx.EncodeTypeStore,
+			storeEncoder,
+		)
+
+		encodeParams = envoyx.EncodeParams{
+			Type: envoyx.EncodeTypeStore,
+			Params: map[string]any{
+				"storer": service.DefaultStore,
+				"dal":    dal.Service(),
+			},
+			DeferOk: func() {
+				importSession.Progress.Completed++
+			},
+			DeferNok: func(err error) error {
+				importSession.Progress.Failed++
+
+				if importSession.Progress.FailLog == nil {
+					importSession.Progress.FailLog = &service.FailLog{
+						Errors: make(service.ErrorIndex),
+					}
+				}
+
+				if rve, is := err.(*types.RecordValueErrorSet); is {
+					for _, ve := range rve.Set {
+						for k, v := range ve.Meta {
+							importSession.Progress.FailLog.Errors.Add(fmt.Sprintf("%s %s %v", ve.Kind, k, v))
+						}
+					}
+				} else {
+					importSession.Progress.FailLog.Errors.Add(err.Error())
+				}
+
+				if len(importSession.Progress.FailLog.Records) < service.IMPORT_ERROR_MAX_INDEX_COUNT {
+					// +1 because we indexed them with 1 before
+					importSession.Progress.FailLog.Records = append(importSession.Progress.FailLog.Records, int(importSession.Progress.Completed)+1)
+				} else {
+					importSession.Progress.FailLog.RecordsTruncated = true
+				}
+
+				if importSession.OnError == service.IMPORT_ON_ERROR_SKIP {
+					return nil
+				}
+				return err
+			},
+		}
+
+		nodeScope = envoyx.Scope{
+			ResourceType: types.NamespaceResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(importSession.NamespaceID),
+		}
+
+		fieldMapping := map[string]envoyx.MapEntry{}
+		for c, f := range importSession.Fields {
+			fieldMapping[c] = envoyx.MapEntry{
+				Column: c,
+				Field:  f,
+			}
+		}
+
+		nsNode := &envoyx.Node{
+			Resource:     ns,
+			ResourceType: types.NamespaceResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(ns.Slug, ns.ID),
+			Scope:        nodeScope,
+			Placeholder:  true,
+		}
+
+		modNode := &envoyx.Node{
+			Resource:     mod,
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(mod.Handle, mod.ID),
+			Scope:        nodeScope,
+			References: map[string]envoyx.Ref{
+				"NamespaceID": {
+					ResourceType: types.NamespaceResourceType,
+					Identifiers:  nsNode.Identifiers,
+					Scope:        nsNode.Scope,
+				},
+			},
+			Placeholder: true,
+		}
+		keyField := []string{}
+		// Check if we're mapping the ID field even
+		for _, v := range importSession.Fields {
+			auxf := strings.ToLower(v)
+
+			if auxf == "id" || auxf == "recordid" || auxf == "record_id" {
+				keyField = []string{importSession.Key}
+			}
+		}
+
+		node = &envoyx.Node{
+			Datasource: &composeEnvoy.RecordDatasource{
+				Mapping: envoyx.DatasourceMapping{
+					SourceIdent: importSession.Name,
+					References:  map[string]string{},
+					Scope:       map[string]string{},
+					Defaultable: false,
+					KeyField:    keyField,
+					Mapping: envoyx.FieldMapping{
+						Map: fieldMapping,
+					},
+				},
+
+				CheckExisting: func(ctx context.Context, idents ...[]string) (out []uint64, err error) {
+					qp := make([]string, 0, len(idents))
+					for _, ident := range idents {
+						if len(ident) != 1 {
+							continue
+						}
+
+						rid := cast.ToUint64(ident[0])
+						if rid == 0 {
+							continue
+						}
+
+						qp = append(qp, fmt.Sprintf("recordID='%d'", rid))
+					}
+
+					bong, _, err := dalutils.ComposeRecordsList(ctx, dal.Service(), mod, types.RecordFilter{
+						ModuleID:    mod.ID,
+						NamespaceID: mod.NamespaceID,
+						Query:       strings.Join(qp, " OR "),
+					})
+					if err != nil {
+						return
+					}
+
+					for _, ident := range idents {
+						if len(ident) != 1 {
+							out = append(out, 0)
+							continue
+						}
+
+						rid := cast.ToUint64(ident[0])
+						if rid == 0 {
+							out = append(out, 0)
+							continue
+						}
+
+						// Find the correct one in the fetched slice
+						got := uint64(0)
+						for _, r := range bong {
+							if r.ID == rid {
+								got = r.ID
+								break
+							}
+						}
+
+						out = append(out, got)
+					}
+
+					return
+				},
+			},
+			ResourceType: composeEnvoy.ComposeRecordDatasourceAuxType,
+			Identifiers:  envoyx.MakeIdentifiers(importSession.Name),
+
+			References: map[string]envoyx.Ref{
+				"ModuleID": {
+					ResourceType: types.ModuleResourceType,
+					Identifiers:  envoyx.MakeIdentifiers(importSession.ModuleID),
+					Scope:        nodeScope,
+				},
+				"NamespaceID": {
+					ResourceType: types.NamespaceResourceType,
+					Identifiers:  envoyx.MakeIdentifiers(importSession.NamespaceID),
+					Scope:        nodeScope,
+				},
+			},
+			Scope: nodeScope,
+		}
+
+		nodes = envoyx.NodeSet{nsNode, modNode, node}
+	}
+
+	// encoding stuff
+	var (
+		depGraph *envoyx.DepGraph
+	)
+	{
+		depGraph, err = envoySvc.Bake(ctx, encodeParams, importSession.Providers, nodes...)
+		if err != nil {
+			return
+		}
+
+		// panic("AAAAAA")
+
+		{
+			// @todo this is temporary because the service's logic is a bit flawed for this case
+			err = storeEncoder.Prepare(ctx, encodeParams, composeEnvoy.ComposeRecordDatasourceAuxType, envoyx.NodeSet{node})
+			if err != nil {
+				return
+			}
+
+			err = storeEncoder.Encode(ctx, encodeParams, composeEnvoy.ComposeRecordDatasourceAuxType, envoyx.NodeSet{node}, depGraph)
+			// @note err is handled lower down; bare with
+		}
+
+		// err = envoySvc.Encode(ctx, encodeParams, depGraph)
+		now := time.Now()
+		importSession.Progress.FinishedAt = &now
+		if err != nil {
+			importSession.Progress.FailReason = err.Error()
+			return
+		}
+		return
+	}
 }
 
 func (ctrl Namespace) ImportRun(ctx context.Context, r *request.NamespaceImportRun) (interface{}, error) {
@@ -307,7 +744,7 @@ func (ctrl Namespace) ImportRun(ctx context.Context, r *request.NamespaceImportR
 		dup.Slug = fmt.Sprintf("cl_%d", r.SessionID)
 	}
 
-	ns, err := ctrl.namespace.ImportRun(ctx, r.SessionID, dup)
+	ns, store, err := ctrl.namespace.ImportRun(ctx, r.SessionID, dup)
 	if err != nil {
 		return nil, err
 	}
@@ -320,6 +757,33 @@ func (ctrl Namespace) ImportRun(ctx context.Context, r *request.NamespaceImportR
 			return nil, err
 		}
 	}
+	if store != nil {
+		namespaceID := ns.ID
+		for _, f := range store.File {
+			if strings.HasPrefix(f.Name, "data") &&
+				strings.HasSuffix(f.Name, ".json") {
+				mn := filepath.Base(f.Name)
+				mn = mn[:len(mn)-len(".json")]
+				reader, err := f.Open()
+				if err != nil {
+					continue
+				}
+				data, err := io.ReadAll(reader)
+				if err != nil {
+					continue
+				}
+				defer reader.Close()
+
+				// Create a ReadSeeker from the byte slice
+				readSeeker := bytes.NewReader(data)
+				if len(data) == 0 {
+					continue
+				}
+				ctrl.importRecordData(ctx, namespaceID, mn, readSeeker)
+			}
+		}
+	}
+
 	return ctrl.makePayload(ctx, ns, err)
 }
 

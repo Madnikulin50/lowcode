@@ -307,7 +307,7 @@ func (ip *iteratorProvider) nextResolved(ctx context.Context, out datasource.Raw
 
 		// pull chunk
 		ip.rows = make([]datasource.RawRecord, 0)
-
+		ip.buffIndex = 0
 		for i := 0; i < bufferPullChunkSize; i++ {
 			rowCache := make(datasource.RawRecord)
 			if !ip.iter.Next(ctx) {
@@ -333,6 +333,15 @@ func (ip *iteratorProvider) nextResolved(ctx context.Context, out datasource.Raw
 		err = ip.resolveReferences(ctx, ip.dal)
 		if err != nil {
 			return
+		}
+	}
+	if ip.done {
+		if ip.buffIndex >= len(ip.rows) {
+			return false, nil
+		}
+	} else {
+		if ip.buffIndex >= len(ip.rows) {
+			return false, nil
 		}
 	}
 

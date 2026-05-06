@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	automationService "github.com/cortezaproject/corteza/server/automation/service"
@@ -51,6 +52,7 @@ type (
 		UpdatedAt time.Time `json:"updatedAt"`
 
 		Nodes envoyx.NodeSet `json:"-"`
+		Store *zip.Reader    `json:"-"`
 	}
 
 	namespaceAccessController interface {
@@ -74,7 +76,7 @@ type (
 		Update(ctx context.Context, namespace *types.Namespace) (*types.Namespace, error)
 		Clone(ctx context.Context, namespaceID uint64, dup *types.Namespace, decoder func() (envoyx.NodeSet, error)) (ns *types.Namespace, err error)
 		ImportInit(ctx context.Context, f multipart.File, size int64) (namespaceImportSession, error)
-		ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace) (ns *types.Namespace, err error)
+		ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace) (ns *types.Namespace, store *zip.Reader, err error)
 		DeleteByID(ctx context.Context, namespaceID uint64) error
 	}
 
@@ -382,6 +384,10 @@ func (svc namespace) ImportInit(ctx context.Context, f multipart.File, size int6
 			if zf.FileInfo().IsDir() {
 				continue
 			}
+			name := zf.FileHeader.Name
+			if !strings.HasSuffix(name, ".yaml") {
+				continue
+			}
 
 			f, err := zf.Open()
 			if err != nil {
@@ -410,6 +416,7 @@ func (svc namespace) ImportInit(ctx context.Context, f multipart.File, size int6
 
 			CreatedAt: *now(),
 			Nodes:     nodes,
+			Store:     archive,
 		}
 
 		// find the ns node
@@ -435,7 +442,7 @@ func (svc namespace) ImportInit(ctx context.Context, f multipart.File, size int6
 	return session, svc.recordAction(ctx, aProps, NamespaceActionImportInit, err)
 }
 
-func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace) (ns *types.Namespace, err error) {
+func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace) (ns *types.Namespace, dataStore *zip.Reader, err error) {
 	var (
 		aProps = &namespaceActionProps{namespace: dup}
 	)
@@ -491,6 +498,10 @@ func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types
 			}
 
 			aProps.setNamespace(newNS)
+
+			if session.Store != nil {
+				dataStore = session.Store
+			}
 			return nil
 		})
 		if err != nil {
@@ -502,7 +513,7 @@ func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types
 		return err
 	}()
 
-	return dup, svc.recordAction(ctx, aProps, NamespaceActionImportRun, err)
+	return dup, dataStore, svc.recordAction(ctx, aProps, NamespaceActionImportRun, err)
 }
 
 func (svc namespace) DeleteByID(ctx context.Context, namespaceID uint64) error {

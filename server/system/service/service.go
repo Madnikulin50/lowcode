@@ -162,7 +162,8 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 	sassTranspiler := dartSassTranspiler(log)
 
 	DefaultAccessControl = AccessControl(s)
-
+	CurrentSettings.Auth.Internal.Enabled = true
+	CurrentSettings.Auth.Internal.Signup.Enabled = true
 	DefaultSettings = Settings(ctx, DefaultStore, DefaultLogger, DefaultAccessControl, DefaultActionlog, CurrentSettings, c.Webapps)
 	DefaultStylesheet = Stylesheet(sassTranspiler, log)
 

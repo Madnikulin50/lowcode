@@ -83,6 +83,15 @@ func Decoder(r io.Reader, ident string, config map[string]any) (out *decoder, er
 
 	// Header
 	aux, err := out.reader.Read()
+	if len(aux) == 1 && out.delimiter == "" {
+		t := strings.Split(aux[0], ";")
+		if len(t) > 1 {
+			out.delimiter = ";"
+			out.reader.Comma = []rune(out.delimiter)[0]
+			out.reader.FieldsPerRecord = len(t)
+			aux = t
+		}
+	}
 	out.header = append(out.header, aux...)
 	if err != nil {
 		return

@@ -1,8 +1,6 @@
 package sass
 
 import (
-	"fmt"
-	"runtime/debug"
 	"sync"
 )
 
@@ -20,7 +18,7 @@ func newStylesheetCache() *stylesheetCache {
 func (c *stylesheetCache) Set(key, value string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	fmt.Printf("start %v by %v from \r\n %v \r\n", key, trimString(value, 128), string(debug.Stack()))
+	//	fmt.Printf("start %v by %v from \r\n %v \r\n", key, trimString(value, 128), string(debug.Stack()))
 	c.stylesheet[key] = value
 }
 
