@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
-	"github.com/jmoiron/sqlx/types"
-
 	"github.com/cortezaproject/corteza/server/pkg/dal"
 	"github.com/cortezaproject/corteza/server/pkg/filter"
 	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
 	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/jmoiron/sqlx/types"
 )
 
 type (
@@ -147,6 +146,14 @@ func (m Module) Clone() *Module {
 
 func (m Module) HasIssues() bool {
 	return len(m.Issues) > 0
+}
+
+func (m Module) CanSoftDelete() bool {
+	if m.Config.DAL.SystemFieldEncoding.DeletedAt.Omit {
+		return false
+	}
+	return true
+
 }
 
 // We won't worry about fields at this point

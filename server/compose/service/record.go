@@ -1555,8 +1555,14 @@ func (svc record) processDelete(ctx context.Context, del *types.Record, namespac
 		}
 	}
 
-	if err = dalutils.ComposeRecordSoftDelete(ctx, svc.dal, module, del); err != nil {
-		return nil, err
+	if module.CanSoftDelete() {
+		if err = dalutils.ComposeRecordSoftDelete(ctx, svc.dal, module, del); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = dalutils.ComposeRecordDelete(ctx, svc.dal, module, del); err != nil {
+			return nil, err
+		}
 	}
 
 	// ensure module ref is set before running through records workflows and scripts
