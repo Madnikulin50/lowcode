@@ -54,7 +54,7 @@ func CanDecodeExt(ext string) bool {
 // Decoder inits a new csv decoder from the given reader
 //
 // @todo hold small files in mem to avoid needles disc access
-func Decoder(r io.Reader, ident string, config map[string]any) (out *decoder, err error) {
+func Decoder(r io.ReadSeeker, ident string, config map[string]any) (out *decoder, err error) {
 	out = &decoder{
 		ident: ident,
 	}
@@ -68,29 +68,35 @@ func Decoder(r io.Reader, ident string, config map[string]any) (out *decoder, er
 	if err != nil {
 		return
 	}
-
-	r, err = out.flushTemp(r)
+	out.flushTemp(r)
 	defer out.Reset(nil)
-	if err != nil {
-		return
-	}
 
-	out.reader = csv.NewReader(r)
-	out.reader.ReuseRecord = true
+	var aux []string
 	if out.delimiter != "" {
-		out.reader.Comma = []rune(out.delimiter)[0]
-	}
+		r.Seek(0, 0)
 
-	// Header
-	aux, err := out.reader.Read()
-	if len(aux) == 1 && out.delimiter == "" {
-		t := strings.Split(aux[0], ";")
-		if len(t) > 1 {
-			out.delimiter = ";"
-			out.reader.Comma = []rune(out.delimiter)[0]
-			out.reader.FieldsPerRecord = len(t)
-			aux = t
+		out.reader = csv.NewReader(out.src)
+		out.reader.Comma = []rune(out.delimiter)[0]
+		out.reader.ReuseRecord = true
+		aux, err = out.reader.Read()
+	} else {
+		splitters := []string{";", ","}
+
+		for _, splitter := range splitters {
+			out.Reset(nil)
+			out.reader = csv.NewReader(out.src)
+			out.reader.ReuseRecord = true
+			out.reader.LazyQuotes = true
+			out.delimiter = splitter
+			out.reader.Comma = []rune(splitter)[0]
+			aux, err = out.reader.Read()
+			if len(aux) > 1 {
+				break
+			}
 		}
+	}
+	if err != nil {
+		return nil, err
 	}
 	out.header = append(out.header, aux...)
 	if err != nil {

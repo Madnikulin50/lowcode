@@ -227,6 +227,11 @@ func sDatetime(v interface{}, onlyDate, onlyTime bool) string {
 			"Monday, 02-Jan-06",
 			"Mon, 02 Jan 2006",
 			"2006/_1/_2",
+			"02/01/2006",
+			"02.01.2006",
+			"_2/_1/2006",
+			"2/1/2006",
+			"_2._1.2006",
 		}
 	}
 
