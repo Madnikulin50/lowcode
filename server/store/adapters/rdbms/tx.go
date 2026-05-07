@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/store"
 	"github.com/jmoiron/sqlx"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/store"
 )
 
 type (
@@ -31,7 +31,6 @@ func (s *Store) Tx(ctx context.Context, fn func(context.Context, store.Storer) e
 //
 // It utilizes configured transaction error handlers and max-retry limits
 // to determine if and how many times transaction should be retried
-//
 func txHandler(ctx context.Context, dbc interface{}, max int, reh txRetryOnErrHandler, task func(context.Context, sqlx.ExtContext) error) error {
 	var (
 		lastTaskErr error

@@ -17,7 +17,7 @@ RELEASE_NAME           = $(BUILD_NAME).tar.gz
 RELEASE_EXTRA_FILES   ?= README.md LICENSE CONTRIBUTING.md .env.example
 RELEASE_PKEY          ?= .upload-rsa
 
-LDFLAGS_VERSION        = -X github.com/cortezaproject/corteza/server/pkg/version.Version=$(BUILD_VERSION)
+LDFLAGS_VERSION        = -X github.com/madnikulin50/lowcode/server/pkg/version.Version=$(BUILD_VERSION)
 LDFLAGS_EXTRA         ?=
 LDFLAGS                = -ldflags "$(LDFLAGS_VERSION) $(LDFLAGS_EXTRA)"
 

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
 	"github.com/jmoiron/sqlx/types"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
 	"github.com/spf13/cast"
 )
 

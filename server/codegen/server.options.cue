@@ -2,8 +2,8 @@ package codegen
 
 import (
 	"strings"
-	"github.com/cortezaproject/corteza/server/app"
-	"github.com/cortezaproject/corteza/server/codegen/schema"
+	"github.com/madnikulin50/lowcode/server/app"
+	"github.com/madnikulin50/lowcode/server/codegen/schema"
 )
 
 [...schema.#codegen] &

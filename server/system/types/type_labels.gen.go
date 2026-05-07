@@ -5,7 +5,7 @@ package types
 // Changes to this file may cause incorrect behavior and will be lost if
 
 import (
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 )
 
 // SetLabel adds new label to label map

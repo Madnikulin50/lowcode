@@ -9,7 +9,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
 	"net/http"
 )
 
@@ -50,19 +50,21 @@ func OK() *successWrap {
 
 // Writes response, according to type
 //
-// Primarily this function encodes given payload (directly or indirectly) as compact JSON
+// # Primarily this function encodes given payload (directly or indirectly) as compact JSON
 //
 // In some specific scenarios, when:
-//  - debug mode is enabled,
-//  - no explicit accept header with /json mime-type is sent
+//   - debug mode is enabled,
+//   - no explicit accept header with /json mime-type is sent
+//
 // and,
 //
 // if payload is an error:
-//    it outputs formatted error with extended info
+//
+//	it outputs formatted error with extended info
 //
 // if payload is non-error:
-//    it outputs formatted and indented JSON
 //
+//	it outputs formatted and indented JSON
 func encode(w http.ResponseWriter, r *http.Request, payload interface{}) {
 	var (
 		err error

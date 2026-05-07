@@ -2,7 +2,7 @@ package options
 
 import (
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 )
 
 type (

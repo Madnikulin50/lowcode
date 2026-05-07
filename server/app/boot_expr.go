@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
 )
 
 func (app *CortezaApp) InitExpr(ctx context.Context) (err error) {

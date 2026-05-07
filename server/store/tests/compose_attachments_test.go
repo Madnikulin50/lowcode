@@ -2,10 +2,10 @@ package tests
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/store"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"

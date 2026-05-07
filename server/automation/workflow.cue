@@ -1,7 +1,7 @@
 package automation
 
 import (
-	"github.com/cortezaproject/corteza/server/codegen/schema"
+	"github.com/madnikulin50/lowcode/server/codegen/schema"
 )
 
 workflow: {

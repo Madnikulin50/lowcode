@@ -5,14 +5,14 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/dal"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/dal"
 
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms"
 	mssql "github.com/denisenkom/go-mssqldb"
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms"
 )
 
 const (
@@ -78,7 +78,6 @@ func connectBase(ctx context.Context, cfg *rdbms.ConnConfig) (db *sqlx.DB, err e
 // error in case of incorrect param value
 //
 // See https://github.com/go-sql-driver/mysql for available dsn params
-//
 func NewConfig(dsn string) (c *rdbms.ConnConfig, err error) {
 	const (
 		validScheme = "sqlserver"

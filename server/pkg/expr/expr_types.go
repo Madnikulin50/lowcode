@@ -16,12 +16,11 @@ import (
 	"time"
 
 	"github.com/PaesslerAG/gval"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
-	h "github.com/cortezaproject/corteza/server/pkg/http"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
+	h "github.com/madnikulin50/lowcode/server/pkg/http"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 	"github.com/spf13/cast"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-
 )
 
 type (
@@ -595,7 +594,7 @@ func CastToKV(val interface{}) (out map[string]string, err error) {
 	}
 }
 
-func assignToLabelValue(t *LabelValue, key string, val TypedValue) error{
+func assignToLabelValue(t *LabelValue, key string, val TypedValue) error {
 	if t.value == nil {
 		t.value = make(map[string]labelTypes.LabelValue)
 	}
@@ -608,7 +607,7 @@ func assignToLabelValue(t *LabelValue, key string, val TypedValue) error{
 	default:
 		str, err := cast.ToStringE(untypedVal)
 		if err != nil {
-			return  err
+			return err
 		}
 		t.value[key] = labelTypes.LabelValue{Val: str}
 	}
@@ -617,23 +616,23 @@ func assignToLabelValue(t *LabelValue, key string, val TypedValue) error{
 func CastToLabelValue(val interface{}) (out map[string]labelTypes.LabelValue, err error) {
 	switch val := UntypedValue(val).(type) {
 	case map[string]labelTypes.LabelValue:
-		return val,nil
+		return val, nil
 	case map[string]string:
-		out = make(map[string]labelTypes.LabelValue,len(val))
-		for k, v:= range val {
+		out = make(map[string]labelTypes.LabelValue, len(val))
+		for k, v := range val {
 			out[k] = labelTypes.LabelValue{Val: v}
 		}
-		return out,nil
+		return out, nil
 	case map[string][]string:
-		out = make(map[string]labelTypes.LabelValue,len(val))
-		for k,v := range val {
+		out = make(map[string]labelTypes.LabelValue, len(val))
+		for k, v := range val {
 			out[k] = labelTypes.LabelValue{Values: v}
 		}
-		return out,nil
+		return out, nil
 	case nil:
-		return make(map[string]labelTypes.LabelValue),nil
+		return make(map[string]labelTypes.LabelValue), nil
 	default:
-		return nil,fmt.Errorf("unable to cast type %T to map[string]labelTypes.LabelValue", val)
+		return nil, fmt.Errorf("unable to cast type %T to map[string]labelTypes.LabelValue", val)
 	}
 }
 
@@ -1132,17 +1131,16 @@ func (v *KV) Clone() (out TypedValue, err error) {
 	}
 	return aux, nil
 }
- func (v *LabelValue) Clone() (out TypedValue, err error) {
-  	aux := &LabelValue{
-  		value: make(map[string]labelTypes.LabelValue, len(v.value)),
-  	}
+func (v *LabelValue) Clone() (out TypedValue, err error) {
+	aux := &LabelValue{
+		value: make(map[string]labelTypes.LabelValue, len(v.value)),
+	}
 
-  	for k, v := range v.value {
-  		aux.value[k] = v
-  	}
-  	return aux, nil
-  }
-
+	for k, v := range v.value {
+		aux.value[k] = v
+	}
+	return aux, nil
+}
 
 func (v *KVV) Clone() (out TypedValue, err error) {
 	aux := &KVV{

@@ -1,7 +1,7 @@
 package options
 
 import (
-	"github.com/cortezaproject/corteza/server/codegen/schema"
+	"github.com/madnikulin50/lowcode/server/codegen/schema"
 )
 
 HTTPServer: schema.#optionsGroup & {
@@ -9,7 +9,7 @@ HTTPServer: schema.#optionsGroup & {
 	title:  "HTTP Server"
 
 	imports: [
-		"\"github.com/cortezaproject/corteza/server/pkg/rand\"",
+		"\"github.com/madnikulin50/lowcode/server/pkg/rand\"",
 	]
 
 	options: {

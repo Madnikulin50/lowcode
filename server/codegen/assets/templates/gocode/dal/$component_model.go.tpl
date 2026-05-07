@@ -3,7 +3,7 @@ package {{ .package }}
 {{ template "gocode/header-gentext.tpl" }}
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
 {{- range .imports }}
     {{ . }}
 {{- end }}

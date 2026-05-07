@@ -9,17 +9,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/assets"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/healthcheck"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/version"
-	"github.com/cortezaproject/corteza/server/webconsole"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/madnikulin50/lowcode/server/assets"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/healthcheck"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/version"
+	"github.com/madnikulin50/lowcode/server/webconsole"
 	"go.uber.org/zap"
 )
 
@@ -178,7 +178,8 @@ func mountServiceHandlers(r chi.Router, log *zap.Logger, opt options.HttpServerO
 }
 
 // @todo move all these routes under /console and
-//       output JSON instead of plain raw text
+//
+//	output JSON instead of plain raw text
 func mountDebugHandler(r chi.Router, log *zap.Logger) {
 	log.Debug("route debugger enabled: /__routes")
 	r.Get("/__routes", debugRoutes(r))

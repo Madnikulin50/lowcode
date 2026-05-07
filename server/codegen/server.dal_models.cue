@@ -1,8 +1,8 @@
 package codegen
 
 import (
-	"github.com/cortezaproject/corteza/server/app"
-	"github.com/cortezaproject/corteza/server/codegen/schema"
+	"github.com/madnikulin50/lowcode/server/app"
+	"github.com/madnikulin50/lowcode/server/codegen/schema"
 )
 
 _dalModelFn: {
@@ -127,7 +127,7 @@ _dalModelFn: {
 			package: "model"
 
 			imports: [
-				"\"github.com/cortezaproject/corteza/server/\(cmp.ident)/types\"",
+				"\"github.com/madnikulin50/lowcode/server/\(cmp.ident)/types\"",
 			]
 
 			// Operation/resource validators, grouped by resource

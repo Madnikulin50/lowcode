@@ -3,9 +3,9 @@ package scheduler
 import (
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/logger"
 	"github.com/getsentry/sentry-go"
 	"github.com/gorhill/cronexpr"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
 	"go.uber.org/zap"
 )
 

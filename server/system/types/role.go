@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 )
 
 type (
@@ -18,7 +17,7 @@ type (
 		Name   string `json:"name"`
 		Handle string `json:"handle"`
 
-		Meta   *RoleMeta         `json:"meta"`
+		Meta   *RoleMeta                        `json:"meta"`
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		CreatedAt  time.Time  `json:"createdAt,omitempty"`
@@ -54,7 +53,7 @@ type (
 		Deleted  filter.State `json:"deleted"`
 		Archived filter.State `json:"archived"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		// Check fn is called by store backend for each resource found function can

@@ -6,16 +6,16 @@ import (
 	"strconv"
 	"strings"
 
-	cmpService "github.com/cortezaproject/corteza/server/compose/service"
-	cmpTypes "github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/discovery/service"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	sysService "github.com/cortezaproject/corteza/server/system/service"
-	sysTypes "github.com/cortezaproject/corteza/server/system/types"
+	cmpService "github.com/madnikulin50/lowcode/server/compose/service"
+	cmpTypes "github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/discovery/service"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	sysService "github.com/madnikulin50/lowcode/server/system/service"
+	sysTypes "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
@@ -255,7 +255,7 @@ func (d composeResources) Modules(ctx context.Context, namespaceID uint64, limit
 					}
 					return out
 				}(),
-				 Labels: func() map[string]string {
+				Labels: func() map[string]string {
 					labels := make(map[string]string, len(mod.Labels))
 					for k, v := range mod.Labels {
 						if v.Val != "" {

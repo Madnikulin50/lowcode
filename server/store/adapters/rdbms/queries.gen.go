@@ -7,16 +7,16 @@ package rdbms
 //
 
 import (
-	automationType "github.com/cortezaproject/corteza/server/automation/types"
-	composeType "github.com/cortezaproject/corteza/server/compose/types"
-	discoveryType "github.com/cortezaproject/corteza/server/discovery/types"
-	federationType "github.com/cortezaproject/corteza/server/federation/types"
-	actionlogType "github.com/cortezaproject/corteza/server/pkg/actionlog"
-	flagType "github.com/cortezaproject/corteza/server/pkg/flag/types"
-	labelsType "github.com/cortezaproject/corteza/server/pkg/label/types"
-	rbacType "github.com/cortezaproject/corteza/server/pkg/rbac"
-	systemType "github.com/cortezaproject/corteza/server/system/types"
 	"github.com/doug-martin/goqu/v9"
+	automationType "github.com/madnikulin50/lowcode/server/automation/types"
+	composeType "github.com/madnikulin50/lowcode/server/compose/types"
+	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
+	federationType "github.com/madnikulin50/lowcode/server/federation/types"
+	actionlogType "github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	flagType "github.com/madnikulin50/lowcode/server/pkg/flag/types"
+	labelsType "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	rbacType "github.com/madnikulin50/lowcode/server/pkg/rbac"
+	systemType "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 var (

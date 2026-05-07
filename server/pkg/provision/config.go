@@ -6,14 +6,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	se "github.com/cortezaproject/corteza/server/system/envoy"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	se "github.com/madnikulin50/lowcode/server/system/envoy"
+	"github.com/madnikulin50/lowcode/server/system/types"
 
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
 
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/store"
 	"go.uber.org/zap"
 )
 

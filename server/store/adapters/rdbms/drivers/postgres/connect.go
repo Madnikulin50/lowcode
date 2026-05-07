@@ -7,15 +7,15 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/dal"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/dal"
 
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/instrumentation"
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/instrumentation"
 	"github.com/ngrok/sqlmw"
 )
 

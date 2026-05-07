@@ -3,15 +3,15 @@ package helpers
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/app"
-	"github.com/cortezaproject/corteza/server/pkg/cli"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/rand"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/app"
+	"github.com/madnikulin50/lowcode/server/pkg/cli"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/rand"
+	"github.com/madnikulin50/lowcode/server/system/types"
 
 	// Explicitly register SQLite (not done in the app as for testing only)
-	_ "github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers/sqlite"
+	_ "github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/sqlite"
 )
 
 func NewIntegrationTestApp(ctx context.Context, initTestServices func(*app.CortezaApp) error) *app.CortezaApp {

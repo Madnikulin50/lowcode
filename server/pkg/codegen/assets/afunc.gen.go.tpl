@@ -6,10 +6,10 @@ package {{ .Package }}
 /// the code is regenerated from {{ .Source }}
 
 import (
-	atypes "github.com/cortezaproject/corteza/server/automation/types"
+	atypes "github.com/madnikulin50/lowcode/server/automation/types"
 	"context"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/wfexec"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/wfexec"
 {{- range .Imports }}
   {{ normalizeImport . }}
 {{- end }}

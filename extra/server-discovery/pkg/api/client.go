@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/options"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/options"
 )
 
 type (

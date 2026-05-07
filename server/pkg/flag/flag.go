@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/flag/types"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/pkg/flag/types"
+	"github.com/madnikulin50/lowcode/server/store"
 )
 
 type (
@@ -98,8 +98,8 @@ func Create(ctx context.Context, s store.Storer, r FlaggedResource, ownedBy uint
 // Access control and any other validations should be performed by the caller.
 //
 // This operation has two outcomes:
-// 	* if we are removing a flag defined for a specifc user, it is deleted
-//  * if we are removing a flag defined globally (no owner), we create a new inactive flag
+//   - if we are removing a flag defined for a specifc user, it is deleted
+//   - if we are removing a flag defined globally (no owner), we create a new inactive flag
 func Delete(ctx context.Context, s store.Storer, r FlaggedResource, ownedBy uint64, flag string) error {
 	var (
 		own    *types.Flag

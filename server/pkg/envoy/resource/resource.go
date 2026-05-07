@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	composeTypes "github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/system/types"
+	composeTypes "github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

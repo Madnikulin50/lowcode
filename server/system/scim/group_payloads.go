@@ -3,10 +3,10 @@ package scim
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/system/types"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"io"
 	"strconv"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
 )
 
 const (
@@ -57,6 +57,6 @@ func (req *groupResourceRequest) applyTo(u *types.Role) {
 	}
 
 	if req.ExternalId != nil {
-		u.SetLabel("SCIM_externalId", labelTypes.LabelValue{Val : *req.ExternalId})
+		u.SetLabel("SCIM_externalId", labelTypes.LabelValue{Val: *req.ExternalId})
 	}
 }

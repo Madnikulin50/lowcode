@@ -3,9 +3,9 @@ package yaml
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/envoy"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
-	"github.com/cortezaproject/corteza/server/pkg/y7s"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
+	"github.com/madnikulin50/lowcode/server/pkg/y7s"
 	"gopkg.in/yaml.v3"
 )
 

@@ -2,10 +2,10 @@ package system
 
 import (
 	"context"
-	discoveryType "github.com/cortezaproject/corteza/server/discovery/types"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/service"
+	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/service"
 	"testing"
 )
 

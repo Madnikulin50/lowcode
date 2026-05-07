@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/federation/service/decoder"
-	"github.com/cortezaproject/corteza/server/federation/types"
-	st "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/federation/service/decoder"
+	"github.com/madnikulin50/lowcode/server/federation/types"
+	st "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

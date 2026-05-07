@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ql"
 	"github.com/doug-martin/goqu/v9/exp"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ql"
 )
 
 var (

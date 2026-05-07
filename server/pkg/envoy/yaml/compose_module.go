@@ -1,9 +1,9 @@
 package yaml
 
 import (
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

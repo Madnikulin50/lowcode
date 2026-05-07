@@ -4,7 +4,7 @@ package {{ .package }}
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
 {{- range .imports }}
     {{ . }}
 {{- end }}

@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	agctx "github.com/cortezaproject/corteza/server/pkg/apigw/ctx"
-	"github.com/cortezaproject/corteza/server/pkg/apigw/types"
-	pe "github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
+	agctx "github.com/madnikulin50/lowcode/server/pkg/apigw/ctx"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/types"
+	pe "github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
 )
 
 type (

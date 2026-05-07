@@ -2,7 +2,7 @@ package types
 
 import (
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
 	"strings"
 )
 
@@ -25,7 +25,7 @@ type (
 	paramOpt func(p *Param)
 )
 
-//const
+// const
 func NewParam(name string, opts ...paramOpt) *Param {
 	p := &Param{Name: name}
 	for _, opt := range opts {

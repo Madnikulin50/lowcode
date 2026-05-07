@@ -1,8 +1,8 @@
 package codegen
 
 import (
-	"github.com/cortezaproject/corteza/server/app"
-	"github.com/cortezaproject/corteza/server/codegen/schema"
+	"github.com/madnikulin50/lowcode/server/app"
+	"github.com/madnikulin50/lowcode/server/codegen/schema"
 	// "strings"
 )
 
@@ -14,7 +14,7 @@ import (
 		payload: {
 			package: "envoyx"
 			imports: [
-				"\"github.com/cortezaproject/corteza/server/\(cmp.ident)/types\"",
+				"\"github.com/madnikulin50/lowcode/server/\(cmp.ident)/types\"",
 			]
 
 			resources: [
@@ -37,7 +37,7 @@ import (
 			package: "envoyx"
 			imports: [
 				for cmp in app.corteza.components {
-					"\(cmp.ident)Types \"github.com/cortezaproject/corteza/server/\(cmp.ident)/types\""
+					"\(cmp.ident)Types \"github.com/madnikulin50/lowcode/server/\(cmp.ident)/types\""
 				},
 			]
 
@@ -88,7 +88,7 @@ import (
 			package: "resource"
 			imports: [
 				for cmp in app.corteza.components for res in cmp.resources if res.locale != _|_ {
-					"\(cmp.ident)Types \"github.com/cortezaproject/corteza/server/\(cmp.ident)/types\""
+					"\(cmp.ident)Types \"github.com/madnikulin50/lowcode/server/\(cmp.ident)/types\""
 				},
 			]
 
@@ -115,7 +115,7 @@ import (
 			payload: {
 				package: "resource"
 				imports: [
-					"\"github.com/cortezaproject/corteza/server/\(cmp.ident)/types\"",
+					"\"github.com/madnikulin50/lowcode/server/\(cmp.ident)/types\"",
 				]
 
 				resources: [

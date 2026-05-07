@@ -2,11 +2,11 @@ package rest
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza/server/automation/rest/request"
-	"github.com/cortezaproject/corteza/server/automation/service"
-	"github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/automation/rest/request"
+	"github.com/madnikulin50/lowcode/server/automation/service"
+	"github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
 )
 
 type (

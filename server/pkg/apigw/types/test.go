@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	st "github.com/cortezaproject/corteza/server/system/types"
+	st "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

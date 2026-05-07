@@ -26,10 +26,10 @@ endpoints:
   entrypoint: authClient
   authentication: []
   imports:
-    - github.com/cortezaproject/corteza/server/pkg/label
-    - github.com/cortezaproject/corteza/server/system/types
+    - github.com/madnikulin50/lowcode/server/pkg/label
+    - github.com/madnikulin50/lowcode/server/system/types
     - time
-    - labelTypes github.com/cortezaproject/corteza/server/pkg/label/types
+    - labelTypes github.com/madnikulin50/lowcode/server/pkg/label/types
   apis:
   - name: list
     method: GET
@@ -158,8 +158,8 @@ endpoints:
   endpoint: expressions
   authentication: []
   imports:
-    - github.com/cortezaproject/corteza/server/pkg/label
-    - labelTypes github.com/cortezaproject/corteza/server/pkg/label/types
+    - github.com/madnikulin50/lowcode/server/pkg/label
+    - labelTypes github.com/madnikulin50/lowcode/server/pkg/label/types
   apis:
   - name: evaluate
     method: POST
@@ -181,7 +181,7 @@ endpoints:
   entrypoint: settings
   authentication: []
   imports:
-    - github.com/cortezaproject/corteza/server/system/types
+    - github.com/madnikulin50/lowcode/server/system/types
   apis:
   - name: list
     method: GET
@@ -247,10 +247,10 @@ endpoints:
   - Client ID
   - Session ID
   imports:
-    - github.com/cortezaproject/corteza/server/pkg/label
-    - github.com/cortezaproject/corteza/server/system/types
+    - github.com/madnikulin50/lowcode/server/pkg/label
+    - github.com/madnikulin50/lowcode/server/system/types
     - time
-    - labelTypes github.com/cortezaproject/corteza/server/pkg/label/types
+    - labelTypes github.com/madnikulin50/lowcode/server/pkg/label/types
   apis:
   - name: list
     method: GET
@@ -482,11 +482,11 @@ endpoints:
   - Client ID
   - Session ID
   imports:
-    - github.com/cortezaproject/corteza/server/pkg/label
-    - github.com/cortezaproject/corteza/server/system/types
-    - github.com/cortezaproject/corteza/server/pkg/id
+    - github.com/madnikulin50/lowcode/server/pkg/label
+    - github.com/madnikulin50/lowcode/server/system/types
+    - github.com/madnikulin50/lowcode/server/pkg/id
     - time
-    - labelTypes github.com/cortezaproject/corteza/server/pkg/label/types
+    - labelTypes github.com/madnikulin50/lowcode/server/pkg/label/types
   apis:
   - name: list
     method: GET
@@ -595,10 +595,10 @@ endpoints:
   - Client ID
   - Session ID
   imports:
-    - github.com/cortezaproject/corteza/server/pkg/label
-    - github.com/cortezaproject/corteza/server/system/types
+    - github.com/madnikulin50/lowcode/server/pkg/label
+    - github.com/madnikulin50/lowcode/server/system/types
     - time
-    - labelTypes github.com/cortezaproject/corteza/server/pkg/label/types
+    - labelTypes github.com/madnikulin50/lowcode/server/pkg/label/types
   apis:
   - name: list
     method: GET
@@ -1003,7 +1003,7 @@ endpoints:
   - Client ID
   - Session ID
   imports:
-    - github.com/cortezaproject/corteza/server/system/types
+    - github.com/madnikulin50/lowcode/server/system/types
     - time
   apis:
   - name: list
@@ -1156,7 +1156,7 @@ endpoints:
   - Client ID
   - Session ID
   imports:
-    - github.com/cortezaproject/corteza/server/system/types
+    - github.com/madnikulin50/lowcode/server/system/types
     - time
   apis:
   - name: list
@@ -1228,10 +1228,10 @@ endpoints:
   entrypoint: application
   authentication: []
   imports:
-    - github.com/cortezaproject/corteza/server/pkg/label
+    - github.com/madnikulin50/lowcode/server/pkg/label
     - sqlxTypes github.com/jmoiron/sqlx/types
     - time
-    - labelTypes github.com/cortezaproject/corteza/server/pkg/label/types
+    - labelTypes github.com/madnikulin50/lowcode/server/pkg/label/types
   apis:
   - name: list
     method: GET
@@ -1488,7 +1488,7 @@ endpoints:
   - Client ID
   - Session ID
   imports:
-    - github.com/cortezaproject/corteza/server/pkg/rbac
+    - github.com/madnikulin50/lowcode/server/pkg/rbac
   apis:
   - name: list
     path: "/"
@@ -1930,10 +1930,10 @@ endpoints:
   path: "/template"
   entrypoint: template
   imports:
-    - github.com/cortezaproject/corteza/server/system/types
-    - github.com/cortezaproject/corteza/server/pkg/label
+    - github.com/madnikulin50/lowcode/server/system/types
+    - github.com/madnikulin50/lowcode/server/pkg/label
     - time
-    - labelTypes github.com/cortezaproject/corteza/server/pkg/label/types
+    - labelTypes github.com/madnikulin50/lowcode/server/pkg/label/types
   authentication:
   - Client ID
   - SessionID
@@ -2117,11 +2117,11 @@ endpoints:
   entrypoint: report
   authentication: []
   imports:
-    - github.com/cortezaproject/corteza/server/pkg/label
-    - github.com/cortezaproject/corteza/server/system/types
-    - github.com/cortezaproject/corteza/server/system/reporting
+    - github.com/madnikulin50/lowcode/server/pkg/label
+    - github.com/madnikulin50/lowcode/server/system/types
+    - github.com/madnikulin50/lowcode/server/system/reporting
     - time
-    - labelTypes github.com/cortezaproject/corteza/server/pkg/label/types
+    - labelTypes github.com/madnikulin50/lowcode/server/pkg/label/types
   apis:
   - name: list
     method: GET
@@ -2352,7 +2352,7 @@ endpoints:
   entrypoint: queues
   path: "/queues"
   imports:
-    - github.com/cortezaproject/corteza/server/system/types
+    - github.com/madnikulin50/lowcode/server/system/types
     - time
   apis:
   - name: list
@@ -2415,10 +2415,10 @@ endpoints:
   entrypoint: apigwRoute
   authentication: []
   imports:
-    - github.com/cortezaproject/corteza/server/system/types
-    - github.com/cortezaproject/corteza/server/pkg/label
+    - github.com/madnikulin50/lowcode/server/system/types
+    - github.com/madnikulin50/lowcode/server/pkg/label
     - time
-    - labelTypes github.com/cortezaproject/corteza/server/pkg/label/types
+    - labelTypes github.com/madnikulin50/lowcode/server/pkg/label/types
   apis:
   - name: list
     method: GET
@@ -2480,7 +2480,7 @@ endpoints:
   entrypoint: apigwFilter
   authentication: []
   imports:
-    - github.com/cortezaproject/corteza/server/system/types
+    - github.com/madnikulin50/lowcode/server/system/types
     - time
   apis:
   - name: list
@@ -2671,8 +2671,8 @@ endpoints:
 - title: Data Privacy
   entrypoint: dataPrivacy
   imports:
-    - github.com/cortezaproject/corteza/server/pkg/filter
-    - github.com/cortezaproject/corteza/server/system/types
+    - github.com/madnikulin50/lowcode/server/pkg/filter
+    - github.com/madnikulin50/lowcode/server/system/types
   path: "/data-privacy"
   apis:
     - name: connection list

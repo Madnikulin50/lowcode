@@ -6,21 +6,21 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 )
 
 type (
 	// Workflow represents entire workflow definition
 	Workflow struct {
-		ID      uint64            `json:"workflowID,string"`
-		Handle  string            `json:"handle"`
+		ID      uint64                           `json:"workflowID,string"`
+		Handle  string                           `json:"handle"`
 		Labels  map[string]labelTypes.LabelValue `json:"labels,omitempty"`
-		Meta    *WorkflowMeta     `json:"meta,omitempty"`
-		Enabled bool              `json:"enabled"`
+		Meta    *WorkflowMeta                    `json:"meta,omitempty"`
+		Enabled bool                             `json:"enabled"`
 
 		Trace bool `json:"trace"`
 
@@ -60,7 +60,7 @@ type (
 		// include sub-workflows
 		SubWorkflow filter.State `json:"subWorkflow"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		// Check fn is called by store backend for each resource found function can

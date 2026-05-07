@@ -7,9 +7,9 @@ package handlers
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza/server/federation/rest/request"
-	"github.com/cortezaproject/corteza/server/pkg/api"
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/federation/rest/request"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
 	"net/http"
 )
 

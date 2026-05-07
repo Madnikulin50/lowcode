@@ -6,8 +6,8 @@ import (
 
 	"github.com/bep/godartsass/v2"
 	"github.com/cespare/xxhash/v2"
-	"github.com/cortezaproject/corteza/server/pkg/sass"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/sass"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 )
 

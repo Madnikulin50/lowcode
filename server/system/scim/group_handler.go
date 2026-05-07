@@ -7,12 +7,12 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/go-chi/chi/v5"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

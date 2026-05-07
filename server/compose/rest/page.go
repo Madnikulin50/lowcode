@@ -4,14 +4,14 @@ import (
 	"context"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/compose/rest/request"
-	"github.com/cortezaproject/corteza/server/compose/service"
-	"github.com/cortezaproject/corteza/server/compose/service/event"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/corredor"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/payload"
+	"github.com/madnikulin50/lowcode/server/compose/rest/request"
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/compose/service/event"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/corredor"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/payload"
 )
 
 type (
@@ -253,8 +253,8 @@ func (ctrl *Page) UpdateIcon(ctx context.Context, r *request.PageUpdateIcon) (in
 	var (
 		err  error
 		icon = &types.PageConfigIcon{
-			Type:  r.Type,
-			Src:   r.Source,
+			Type: r.Type,
+			Src:  r.Source,
 			Style: func() map[string]string {
 				style := make(map[string]string, len(r.Style))
 				for k, v := range r.Style {
@@ -266,7 +266,6 @@ func (ctrl *Page) UpdateIcon(ctx context.Context, r *request.PageUpdateIcon) (in
 				}
 				return style
 			}(),
-
 		}
 	)
 

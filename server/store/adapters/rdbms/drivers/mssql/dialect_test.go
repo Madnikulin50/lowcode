@@ -3,7 +3,7 @@ package mssql
 import (
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ddl"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
 	"github.com/stretchr/testify/assert"
 )
 

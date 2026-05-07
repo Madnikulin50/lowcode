@@ -1,7 +1,7 @@
 package locale
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/xss"
+	"github.com/madnikulin50/lowcode/server/pkg/xss"
 )
 
 func SanitizeMessage(in string) string {

@@ -7,11 +7,11 @@ import (
 	"os"
 	"runtime/debug"
 
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
 	"github.com/getsentry/sentry-go/http"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
 	"go.uber.org/zap"
 )
 

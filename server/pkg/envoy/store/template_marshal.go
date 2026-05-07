@@ -3,8 +3,8 @@ package store
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
+	"github.com/madnikulin50/lowcode/server/store"
 )
 
 func NewTemplateFromResource(res *resource.Template, cfg *EncoderConfig) resourceState {

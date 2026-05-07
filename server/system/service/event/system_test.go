@@ -1,7 +1,7 @@
 package event
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

@@ -7,7 +7,7 @@ package types
 //
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/cast2"
+	"github.com/madnikulin50/lowcode/server/pkg/cast2"
 )
 
 func (r Node) GetID() uint64 { return r.ID }

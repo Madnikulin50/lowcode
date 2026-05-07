@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/api"
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/options"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/api"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/options"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"go.uber.org/zap"

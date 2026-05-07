@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/rand"
-	"github.com/cortezaproject/corteza/server/store"
-	// "github.com/cortezaproject/corteza/server/pkg/rh"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/rand"
+	"github.com/madnikulin50/lowcode/server/store"
+	// "github.com/madnikulin50/lowcode/server/pkg/rh"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/stretchr/testify/require"
 )
 

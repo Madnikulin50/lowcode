@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/bep/godartsass/v2"
-	"github.com/cortezaproject/corteza/server/assets"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/assets"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
 	"go.uber.org/zap"
 )
 

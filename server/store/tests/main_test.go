@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers/mssql"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers/mysql"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers/postgres"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers/sqlite"
-	"github.com/cortezaproject/corteza/server/tests/helpers"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/mssql"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/mysql"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/postgres"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/sqlite"
+	"github.com/madnikulin50/lowcode/server/tests/helpers"
 	"go.uber.org/zap"
 )
 

@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/auth/handlers"
-	"github.com/cortezaproject/corteza/server/auth/saml"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
 	s "github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/madnikulin50/lowcode/server/auth/handlers"
+	"github.com/madnikulin50/lowcode/server/auth/saml"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/steinfletcher/apitest"
 	"go.uber.org/zap"
 )

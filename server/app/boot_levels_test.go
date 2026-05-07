@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/auth/external"
-	authSettings "github.com/cortezaproject/corteza/server/auth/settings"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/auth/external"
+	authSettings "github.com/madnikulin50/lowcode/server/auth/settings"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/stretchr/testify/require"
 )
 

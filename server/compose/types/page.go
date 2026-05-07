@@ -7,14 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 	"github.com/modern-go/reflect2"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"github.com/spf13/cast"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-
 )
 
 type (
@@ -78,8 +77,8 @@ type (
 	}
 
 	PageMeta struct {
-		AllowPersonalLayouts bool `json:"allowPersonalLayouts"`
-		Notifications map[string]any `json:"notifications,omitempty"`
+		AllowPersonalLayouts bool           `json:"allowPersonalLayouts"`
+		Notifications        map[string]any `json:"notifications,omitempty"`
 	}
 
 	PageBlockStyle struct {
@@ -139,7 +138,7 @@ type (
 		Title       string   `json:"title"`
 		Query       string   `json:"query"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		Deleted filter.State `json:"deleted"`

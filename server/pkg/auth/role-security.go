@@ -3,13 +3,13 @@ package auth
 import (
 	"sort"
 
-	"github.com/cortezaproject/corteza/server/pkg/slice"
+	"github.com/madnikulin50/lowcode/server/pkg/slice"
 )
 
 // ApplyRoleSecurity takes role security params (set of permitted, prohibited and forced roles)
 // and applies these rules to the set of given roles
 //
-// Filtered set of roles is returned
+// # Filtered set of roles is returned
 //
 // String slices are used intentionally, because of the data source used
 func ApplyRoleSecurity(permitted, prohibited, forced []uint64, rr ...uint64) (out []uint64) {

@@ -4,11 +4,11 @@ import (
 	"context"
 	"os"
 
-	"github.com/cortezaproject/corteza/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 	"go.uber.org/zap"
 
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 func setDefaultUserGroupRefs(ctx context.Context, log *zap.Logger, s store.Storer, authOpt options.AuthOpt) (err error) {

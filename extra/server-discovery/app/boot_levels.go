@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/extra/server-discovery/indexer"
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/auth"
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/es"
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/healthcheck"
-	"github.com/cortezaproject/corteza/extra/server-discovery/searcher"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/indexer"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/auth"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/es"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/healthcheck"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/searcher"
 )
 
 const (

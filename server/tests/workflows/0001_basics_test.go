@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/automation/types"
 	"github.com/stretchr/testify/require"
 )
 

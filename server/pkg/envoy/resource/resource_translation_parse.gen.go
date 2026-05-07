@@ -8,7 +8,7 @@ package resource
 
 import (
 	"fmt"
-	composeTypes "github.com/cortezaproject/corteza/server/compose/types"
+	composeTypes "github.com/madnikulin50/lowcode/server/compose/types"
 	"strings"
 )
 

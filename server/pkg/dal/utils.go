@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 	"github.com/spf13/cast"
 )
 
@@ -150,10 +150,10 @@ func (r *Row) String() string {
 // 1: a is greater then b
 //
 // Multi value rules:
-// - if a has less items then b, a is less then b (-1)
-// - if a has more items then b, a is more then b (1)
-// - if a and b have the same amount of items; if any of the corresponding values
-//   are different, that outcome is used as the result
+//   - if a has less items then b, a is less then b (-1)
+//   - if a has more items then b, a is more then b (1)
+//   - if a and b have the same amount of items; if any of the corresponding values
+//     are different, that outcome is used as the result
 //
 // This function is used to satisfy sort's less function requirement.
 func compareGetters(a, b ValueGetter, ac, bc map[string]uint, attr string) int {
@@ -195,7 +195,9 @@ func compareGetters(a, b ValueGetter, ac, bc map[string]uint, attr string) int {
 // 1: a is greater then b
 //
 // @note I considered using GVal here but it introduces more overhead then
-//       what I've conjured here.
+//
+//	what I've conjured here.
+//
 // @todo look into using generics or some wrapping types here
 func compareValues(va, vb any) int {
 	// simple/edge cases
@@ -330,7 +332,8 @@ func stateConstraintsToExpression(cc map[string]filter.State) string {
 }
 
 // @todo see if the rest of the "conversion" functions should return a QL node
-//       like the cursor one does.
+//
+//	like the cursor one does.
 func prepareGenericRowTester(f internalFilter) (_ tester, err error) {
 	var (
 		parts    = make([]string, 0, 5)

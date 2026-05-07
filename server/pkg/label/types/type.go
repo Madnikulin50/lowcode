@@ -3,7 +3,7 @@ package types
 import (
 	"database/sql/driver"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
 	"encoding/json"
 )

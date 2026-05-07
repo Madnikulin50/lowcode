@@ -5,8 +5,8 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/gorilla/sessions"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

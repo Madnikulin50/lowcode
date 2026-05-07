@@ -1,11 +1,11 @@
 package rest
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/options"
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 
-	"github.com/cortezaproject/corteza/server/federation/rest/handlers"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/federation/rest/handlers"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
 )
 
 func MountRoutes(opts options.LimitOpt) func(r chi.Router) {

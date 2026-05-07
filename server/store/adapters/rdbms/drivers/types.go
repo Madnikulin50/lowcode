@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
 	"github.com/google/uuid"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
 	"github.com/modern-go/reflect2"
 	"github.com/spf13/cast"
 )

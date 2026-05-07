@@ -6,8 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/options"
 	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

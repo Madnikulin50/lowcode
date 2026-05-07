@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/y7s"
-	"github.com/cortezaproject/corteza/server/system/types"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
 	sqlt "github.com/jmoiron/sqlx/types"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/y7s"
+	"github.com/madnikulin50/lowcode/server/system/types"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 )

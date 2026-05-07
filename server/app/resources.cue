@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/cortezaproject/corteza/server/codegen/schema"
+	"github.com/madnikulin50/lowcode/server/codegen/schema"
 )
 
 _allFeaturesDisabled: {
@@ -15,7 +15,7 @@ resources: {[key=_]: {"handle": key, "component": "system", "platform": "corteza
 	"rbac-rule": {
 		package: {
 			ident:  "rbac"
-			import: "github.com/cortezaproject/corteza/server/pkg/rbac"
+			import: "github.com/madnikulin50/lowcode/server/pkg/rbac"
 		}
 
 		ident:       "rule"
@@ -71,7 +71,7 @@ resources: {[key=_]: {"handle": key, "component": "system", "platform": "corteza
 	"label": {
 		package: {
 			ident:  "labels"
-			import: "github.com/cortezaproject/corteza/server/pkg/label/types"
+			import: "github.com/madnikulin50/lowcode/server/pkg/label/types"
 		}
 
 		ident:       "label"
@@ -156,7 +156,7 @@ resources: {[key=_]: {"handle": key, "component": "system", "platform": "corteza
 	"flag": {
 		package: {
 			ident:  "flag"
-			import: "github.com/cortezaproject/corteza/server/pkg/flag/types"
+			import: "github.com/madnikulin50/lowcode/server/pkg/flag/types"
 		}
 
 		ident:       "flag"
@@ -231,7 +231,7 @@ resources: {[key=_]: {"handle": key, "component": "system", "platform": "corteza
 	"actionlog": {
 		package: {
 			ident:  "actionlog"
-			import: "github.com/cortezaproject/corteza/server/pkg/actionlog"
+			import: "github.com/madnikulin50/lowcode/server/pkg/actionlog"
 		}
 
 		ident:       "action"
@@ -331,7 +331,7 @@ resources: {[key=_]: {"handle": key, "component": "system", "platform": "corteza
 	"resource-activity": {
 		package: {
 			ident:  "discovery"
-			import: "github.com/cortezaproject/corteza/server/discovery/types"
+			import: "github.com/madnikulin50/lowcode/server/discovery/types"
 		}
 
 		ident:          "resourceActivity"

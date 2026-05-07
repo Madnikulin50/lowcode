@@ -14,11 +14,11 @@ import (
 
 	"golang.org/x/net/html"
 
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 )
 
@@ -167,9 +167,9 @@ func serveConfig(r chi.Router, config webappConfig) {
 
 		snippetScripts := ""
 		for _, snippet := range codeSnippets {
-            if snippet.Enabled {
-                snippetScripts += snippet.Script
-            }
+			if snippet.Enabled {
+				snippetScripts += snippet.Script
+			}
 		}
 
 		doc, err := html.Parse(strings.NewReader(snippetScripts))

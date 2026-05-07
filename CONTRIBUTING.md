@@ -48,7 +48,7 @@ The [Developer Guide/Corteza Web Applications](https://docs.cortezaproject.org/c
 ### Documentation
 
 The documentation is written in [AsciiDoc](https://asciidoc.org/) and compiled using [Antora](https://antora.org/).
-The source code is available on the [GitHub cortezaproject/corteza-docs repository](https://github.com/cortezaproject/corteza-docs); the generated output is available on the [documentation page](http://docs.cortezaproject.org/).
+The source code is available on the [GitHub cortezaproject/corteza-docs repository](https://github.com/madnikulin50/lowcode-docs); the generated output is available on the [documentation page](http://docs.cortezaproject.org/).
 
 The [Developer Guide/Documentation](https://docs.cortezaproject.org/corteza-docs/2024.9/developer-guide/documentation/index.html) covers the [conventions](https://docs.cortezaproject.org/corteza-docs/2024.9/developer-guide/documentation/index.html#_conventions), [writing guidelines](https://docs.cortezaproject.org/corteza-docs/2024.9/developer-guide/documentation/index.html#documentation-writing-guidelines), as well as some [examples](https://docs.cortezaproject.org/corteza-docs/2024.9/developer-guide/documentation/examples/index.html) to help you get started.
 

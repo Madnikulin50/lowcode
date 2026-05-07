@@ -1,8 +1,8 @@
 package rest
 
 import (
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/auth"
-	"github.com/cortezaproject/corteza/extra/server-discovery/searcher/rest/handlers"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/auth"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/searcher/rest/handlers"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )

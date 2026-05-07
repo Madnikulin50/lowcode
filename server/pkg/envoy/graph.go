@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
 )
 
 type (

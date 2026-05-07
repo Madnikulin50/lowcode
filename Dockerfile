@@ -2,18 +2,22 @@
 FROM alpine:3 as build-stage
 
 # use docker build --build-arg VERSION=2021.9.0 .
-ARG VERSION=2026.5.4
-ARG SASS_VERSION=1.69.5
+ARG VERSION=2026.5.5
+ARG SASS_VERSION=1.99.0
 ARG SERVER_VERSION=${VERSION}
 ARG WEBAPP_VERSION=${VERSION}
 ARG SASS_URL=https://github.com/sass/dart-sass/releases/download/${SASS_VERSION}/dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
-RUN mkdir /pnp/
-ADD ./server/dist/lowcode-server-${VERSION}-linux-amd64 /pnp/lowcode-server--linux-amd64
-
 RUN apk update && apk add --no-cache file
 RUN apk add curl
 
+WORKDIR /tmp
+
+RUN curl -sOL $SASS_URL
+RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
+
+RUN mkdir /pnp/
+ADD ./server/dist/lowcode-server-${VERSION}-linux-amd64 /pnp/lowcode-server--linux-amd64
 
 WORKDIR /pnp
 
@@ -35,17 +39,6 @@ ADD ./client/web/privacy/dist /pnp/webapp/privacy
 ADD ./client/web/reporter/dist /pnp/webapp/reporter
 ADD ./client/web/workflow/dist /pnp/webapp/workflow
 
-
-#RUN rm -rf /pnp/webapp
-
-#RUN file "/tmp/webapp/$(basename $PNP_WEBAPP_PATH)" | grep -q 'gzip' && \
-#    mkdir /pnp/webapp && tar zxvf "/tmp/webapp/$(basename $PNP_WEBAPP_PATH)" -C /pnp/webapp || \
-#    cp -a "/tmp/webapp" /pnp/webapp
-
-WORKDIR /tmp
-
-RUN curl -sOL $SASS_URL
-RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
 # deploy-stage
 FROM ubuntu:22.04 as deploy-stage

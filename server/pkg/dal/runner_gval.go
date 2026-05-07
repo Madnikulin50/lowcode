@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/PaesslerAG/gval"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/gvalfnc"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/gvalfnc"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 )
 
 type (
@@ -338,8 +338,9 @@ func newRunnerGvalParsed(n *ql.ASTNode) (out *runnerGval, err error) {
 // used in the pipeline.
 //
 // @note the subset is limited to simplify the (eventual) offloading to the DB.
-//       At some point, more functions will be supported, and the ones which can't
-//       be offloaded will be performed in some exec. step.
+//
+//	At some point, more functions will be supported, and the ones which can't
+//	be offloaded will be performed in some exec. step.
 func newGval(e string) (gval.Evaluable, error) {
 	return gval.Full(
 		// Extra functions we'll need
@@ -444,9 +445,10 @@ func (c converterGval) refHandler(n *ql.ASTNode, args ...string) (out string, er
 // the first argument
 //
 // @todo this is needed because how the ValueGetters returns multi-value fields so
-//       an edge case where a field would have [a] but here, it would be presented
-//       as a.
-//       This would become obsolete when we address the actual issue.
+//
+//	an edge case where a field would have [a] but here, it would be presented
+//	as a.
+//	This would become obsolete when we address the actual issue.
 func arrHas(arr interface{}, vv ...interface{}) (b bool, err error) {
 	arr = expr.UntypedValue(arr)
 

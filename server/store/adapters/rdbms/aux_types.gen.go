@@ -7,16 +7,16 @@ package rdbms
 //
 
 import (
-	automationType "github.com/cortezaproject/corteza/server/automation/types"
-	composeType "github.com/cortezaproject/corteza/server/compose/types"
-	discoveryType "github.com/cortezaproject/corteza/server/discovery/types"
-	federationType "github.com/cortezaproject/corteza/server/federation/types"
-	actionlogType "github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	flagType "github.com/cortezaproject/corteza/server/pkg/flag/types"
-	labelsType "github.com/cortezaproject/corteza/server/pkg/label/types"
-	rbacType "github.com/cortezaproject/corteza/server/pkg/rbac"
-	systemType "github.com/cortezaproject/corteza/server/system/types"
+	automationType "github.com/madnikulin50/lowcode/server/automation/types"
+	composeType "github.com/madnikulin50/lowcode/server/compose/types"
+	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
+	federationType "github.com/madnikulin50/lowcode/server/federation/types"
+	actionlogType "github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	flagType "github.com/madnikulin50/lowcode/server/pkg/flag/types"
+	labelsType "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	rbacType "github.com/madnikulin50/lowcode/server/pkg/rbac"
+	systemType "github.com/madnikulin50/lowcode/server/system/types"
 	"time"
 )
 

@@ -2,9 +2,9 @@ package tests
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/store"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

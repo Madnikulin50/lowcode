@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/cast2"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ddl"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ql"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/dialect/sqlite3"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/doug-martin/goqu/v9/sqlgen"
+	"github.com/madnikulin50/lowcode/server/pkg/cast2"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ql"
 )
 
 type (
