@@ -95,7 +95,7 @@
 </template>
 
 <script>
-import { fmt, NoID } from '@cortezaproject/corteza-js'
+import { fmt, NoID } from 'corteza-lib/js/dist'
 
 export default {
   i18nOptions: {

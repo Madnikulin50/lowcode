@@ -2,18 +2,18 @@
 FROM alpine:3 as build-stage
 
 # use docker build --build-arg VERSION=2021.9.0 .
-ARG VERSION=2026.5.5
+ARG VERSION=2026.5.7
 ARG SASS_VERSION=1.99.0
 ARG SERVER_VERSION=${VERSION}
 ARG WEBAPP_VERSION=${VERSION}
-ARG SASS_URL=https://github.com/sass/dart-sass/releases/download/${SASS_VERSION}/dart-sass-${SASS_VERSION}-linux-x64.tar.gz
+ARG SASS_URL=https://github.com/sass/dart-sass/releases/download/1.69.5/dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
 RUN apk update && apk add --no-cache file
-RUN apk add curl
 
 WORKDIR /tmp
+COPY ./dart-sass-${SASS_VERSION}-linux-x64.tar.gz ./
+RUN ls ./
 
-RUN curl -sOL $SASS_URL
 RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
 RUN mkdir /pnp/

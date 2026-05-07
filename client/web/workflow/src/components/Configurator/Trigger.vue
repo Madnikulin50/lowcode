@@ -290,7 +290,7 @@
 
 <script>
 import base from './base'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import { objectSearchMaker } from '../../lib/filter'
 import { getConstraintNameLabel } from '../../lib/constraint'
 import { getDocumentationURL } from '../../lib/version'

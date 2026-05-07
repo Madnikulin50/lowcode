@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 import CPermissionClone from 'corteza-webapp-admin/src/components/Permissions/CPermissionClone'
 import CRoleEditorInfo from 'corteza-webapp-admin/src/components/Role/CRoleEditorInfo'
 import CRoleEditorMembers from 'corteza-webapp-admin/src/components/Role/CRoleEditorMembers'

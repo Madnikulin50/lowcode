@@ -98,7 +98,7 @@
 
 <script>
 import CLocation from 'corteza-webapp-admin/src/components/CLocation'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 
 export default {
   components: {

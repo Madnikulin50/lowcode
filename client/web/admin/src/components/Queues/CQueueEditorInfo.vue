@@ -116,8 +116,8 @@
 </template>
 
 <script>
-import { NoID } from '@cortezaproject/corteza-js'
-import { handle } from '@cortezaproject/corteza-vue'
+import { NoID } from 'corteza-lib/js/dist'
+import { handle } from 'corteza-lib/vue/dist'
 
 export default {
   name: 'CQueueEditorInfo',

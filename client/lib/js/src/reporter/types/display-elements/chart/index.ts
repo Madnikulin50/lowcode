@@ -1,4 +1,4 @@
-import { DisplayElementChart, ChartOptionsMaker, ChartOptionsRegistry } from './base'
+import DisplayElementChart, { ChartOptionsMaker, ChartOptionsRegistry } from './base'
 export { BasicChartOptions } from './basic'
 export { FunnelChartOptions } from './funnel'
 

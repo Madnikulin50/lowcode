@@ -92,7 +92,7 @@ import base from '../base.vue'
 import GroupBy from './GroupBy'
 import Aggregate from './Aggregate'
 // import Prefilter from 'corteza-webapp-reporter/src/components/Common/Prefilter'
-// import { components } from '@cortezaproject/corteza-vue'
+// import { components } from 'corteza-lib/vue/dist'
 // const { CInputPresort } = components
 
 export default {

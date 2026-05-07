@@ -17,7 +17,7 @@
 
 <script>
 import WorkflowEditor from '../../components/WorkflowEditor'
-import { automation } from '@cortezaproject/corteza-js'
+import { automation } from 'corteza-lib/js/dist'
 import { throttle } from 'lodash'
 import { mapGetters } from 'vuex'
 

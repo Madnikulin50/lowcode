@@ -127,7 +127,7 @@
 </template>
 
 <script>
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import ReportSidebar from 'corteza-webapp-reporter/src/components/ReportSidebar'
 const { CPermissionsModal, CTopbar, CSidebar, CExtendSession, CNotificationSidebar } = components
 

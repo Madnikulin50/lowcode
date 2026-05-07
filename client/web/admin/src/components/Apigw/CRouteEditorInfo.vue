@@ -137,7 +137,7 @@
 </template>
 
 <script>
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 
 export default {
   name: 'CRouteEditorInfo',

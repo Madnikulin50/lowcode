@@ -123,7 +123,7 @@
 </template>
 
 <script>
-import { components, mixins } from '@cortezaproject/corteza-vue'
+import { components, mixins } from 'corteza-lib/vue/dist'
 import CTheMainNav from 'corteza-webapp-admin/src/components/CTheMainNav'
 import { mapGetters } from 'vuex'
 

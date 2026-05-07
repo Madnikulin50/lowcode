@@ -42,7 +42,7 @@
 import { isEqual } from 'lodash'
 import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
 import CAuthclientEditorInfo from 'corteza-webapp-admin/src/components/Authclient/CAuthclientEditorInfo'
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 import { mapGetters } from 'vuex'
 
 export default {

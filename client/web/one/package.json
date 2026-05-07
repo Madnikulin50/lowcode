@@ -12,7 +12,6 @@
     "dev-env": "vue-cli-service serve src/dev-env.js",
     "build": "vue-cli-service build --mode production",
     "lint": "vue-cli-service lint --fix",
-    "cdeps": "yarn link @cortezaproject/corteza-js @cortezaproject/corteza-vue",
     "test:unit": "vue-cli-service test:unit",
     "test": "yarn test:unit"
   },
@@ -24,8 +23,6 @@
     "postcss": "^8.5.3"
   },
   "dependencies": {
-    "@cortezaproject/corteza-js": "^2024.9.8",
-    "@cortezaproject/corteza-vue": "2024.9.8",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",

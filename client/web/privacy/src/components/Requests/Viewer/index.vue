@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import { fmt, NoID } from '@cortezaproject/corteza-js'
+import { fmt, NoID } from 'corteza-lib/js/dist'
 import base from './base'
 import Correct from './Correct'
 import Delete from './Delete'

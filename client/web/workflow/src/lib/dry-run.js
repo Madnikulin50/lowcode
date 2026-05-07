@@ -1,4 +1,4 @@
-import { automation } from '@cortezaproject/corteza-js'
+import { automation } from 'corteza-lib/js/dist'
 
 export async function encodeInput (initialScope, ComposeAPI, SystemAPI) {
   const ev = { args: {} }

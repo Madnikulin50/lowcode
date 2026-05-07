@@ -1,4 +1,4 @@
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 
 export default {
   data () {

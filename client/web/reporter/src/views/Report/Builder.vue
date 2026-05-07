@@ -378,7 +378,7 @@
 
 <script>
 import { cloneDeep } from 'lodash'
-import { system, reporter } from '@cortezaproject/corteza-js'
+import { system, reporter } from 'corteza-lib/js/dist'
 import report from 'corteza-webapp-reporter/src/mixins/report'
 import Grid from 'corteza-webapp-reporter/src/components/Report/Grid'
 import Block from 'corteza-webapp-reporter/src/components/Report/Blocks'

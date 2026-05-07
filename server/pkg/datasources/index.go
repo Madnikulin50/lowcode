@@ -60,7 +60,7 @@ func Runs(pr ModelFinder, steps types.ReportStepSet, defs FrameDefinitionSet) (o
 		out = append(out, aux)
 
 		// Prepare next definition batch including the current one
-		auxDefs = make(FrameDefinitionSet, 0)
+		//auxDefs = make(FrameDefinitionSet, 0)
 		auxDefs = append(auxDefs, def)
 	}
 
@@ -98,8 +98,8 @@ func makeRun(pr ModelFinder, ss types.ReportStepSet, defs FrameDefinitionSet) (o
 		return
 	}
 
-	out.Defs = defs
-	out.Pipeline = pp.Slice(defs[0].Source)
+	out.Defs = FrameDefinitionSet{defs[len(defs)-1]}
+	out.Pipeline = pp.Slice(defs[len(defs)-1].Source)
 	return
 }
 

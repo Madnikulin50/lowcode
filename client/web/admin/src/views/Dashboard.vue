@@ -254,7 +254,7 @@
 
 <script>
 import * as moment from 'moment'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CChart } = components
 
 export default {

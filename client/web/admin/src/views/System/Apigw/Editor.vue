@@ -59,7 +59,7 @@ import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
 import CRouteEditorInfo from 'corteza-webapp-admin/src/components/Apigw/CRouteEditorInfo'
 import CFiltersStepper from 'corteza-webapp-admin/src/components/Apigw/CFiltersStepper'
 import { mapGetters } from 'vuex'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import CProfilerRouteHits from 'corteza-webapp-admin/src/components/Apigw/Profiler/CProfilerRouteHits'
 
 export default {

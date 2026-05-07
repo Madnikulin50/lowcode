@@ -37,7 +37,7 @@
 
 <script>
 import listHelpers from 'corteza-webapp-privacy/src/mixins/listHelpers'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CResourceList } = components
 
 export default {

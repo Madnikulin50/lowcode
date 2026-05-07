@@ -92,7 +92,7 @@
 <script>
 import base from './base'
 import ColumnSelector from 'corteza-webapp-reporter/src/components/Common/ColumnSelector.vue'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CInputColorPicker } = components
 
 export default {

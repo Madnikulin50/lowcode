@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import { fmt } from '@cortezaproject/corteza-js'
+import { fmt } from 'corteza-lib/js/dist'
 import listHelpers from 'corteza-webapp-admin/src/mixins/listHelpers'
 
 export default {

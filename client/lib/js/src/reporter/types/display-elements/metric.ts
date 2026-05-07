@@ -53,10 +53,10 @@ export class DisplayElementMetric extends DisplayElement {
   }
 
   reportDefinitions (definition: DefinitionOptions = {}): { dataframes: Array<FrameDefinition> } {
-    if (typeof this.options.source === 'object') {
+    /*if (typeof this.options.source === 'object') {
       // @todo allow implicit sources
       throw new Error('metric source must be provided as a reference')
-    }
+    }*/
 
     const dataframes: Array<FrameDefinition> = []
 
@@ -71,12 +71,12 @@ export class DisplayElementMetric extends DisplayElement {
 
       const relatedDefinition = definition[name]
 
-      if (relatedDefinition) {
+    /*  if (relatedDefinition) {
         df.sort = (relatedDefinition.sort ? relatedDefinition.sort : sort) || undefined
 
         if (relatedDefinition.filter && relatedDefinition.filter?.ref) {
           // If element and scenario have filter AND them together
-          if (filter && filter.ref) {
+          if (filter && filter?.ref) {
             df.filter = {
               ref: 'and',
               args: [
@@ -88,11 +88,23 @@ export class DisplayElementMetric extends DisplayElement {
             df.filter = relatedDefinition.filter
           }
         }
-      }
+      }*/
 
       dataframes.push(df)
     })
-
+      Object.keys(definition).forEach(k => {
+          let i = dataframes.find(i => i.source === k)
+          if (i !== undefined) {
+              return
+          }
+          const df: FrameDefinition = {
+              name: k,
+              source: k,
+              ref: k,
+              filter: definition[k].filter
+          }
+          dataframes.unshift(df)
+      })
     return { dataframes }
   }
 }

@@ -62,7 +62,7 @@ import { isEqual } from 'lodash'
 import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
 import CTemplateEditorInfo from 'corteza-webapp-admin/src/components/Template/CTemplateEditorInfo'
 import CTemplateEditorContent from 'corteza-webapp-admin/src/components/Template/CTemplateEditorContent/Index'
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 import { mapGetters } from 'vuex'
 
 export default {

@@ -189,8 +189,8 @@
 </template>
 
 <script>
-import { handle, components } from '@cortezaproject/corteza-vue'
-import { automation } from '@cortezaproject/corteza-js'
+import { handle, components } from 'corteza-lib/vue/dist'
+import { automation } from 'corteza-lib/js/dist'
 import Import from '../Import'
 import Export from '../Export'
 import NamespaceModuleSelector from '../NamespaceModuleSelector'

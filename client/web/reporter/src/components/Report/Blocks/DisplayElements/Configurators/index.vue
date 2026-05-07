@@ -129,7 +129,7 @@
 <script>
 import getDisplayElementConfigurator from './loader'
 import Prefilter from 'corteza-webapp-reporter/src/components/Common/Prefilter'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CInputPresort } = components
 
 export default {

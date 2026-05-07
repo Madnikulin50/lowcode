@@ -139,7 +139,7 @@ import listHelpers from 'corteza-webapp-admin/src/mixins/listHelpers'
 import CUserExportModal from 'corteza-webapp-admin/src/components/User/CUserExportModal'
 import CUserImportModal from 'corteza-webapp-admin/src/components/User/CUserImportModal'
 import { mapGetters } from 'vuex'
-import { url, components } from '@cortezaproject/corteza-vue'
+import { url, components } from 'corteza-lib/vue/dist'
 const { CResourceList } = components
 
 export default {

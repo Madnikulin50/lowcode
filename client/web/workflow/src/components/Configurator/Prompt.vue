@@ -1,6 +1,6 @@
 <script>
 import Function from './Function'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 
 export default {
   extends: Function,

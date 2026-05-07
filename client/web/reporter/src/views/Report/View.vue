@@ -77,7 +77,7 @@
 </template>
 
 <script>
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 import Grid from 'corteza-webapp-reporter/src/components/Report/Grid'
 import Block from 'corteza-webapp-reporter/src/components/Report/Blocks'
 

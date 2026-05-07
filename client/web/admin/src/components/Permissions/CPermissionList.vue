@@ -250,7 +250,7 @@
 
 <script>
 import _ from 'lodash'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CInputRole } = components
 
 export default {

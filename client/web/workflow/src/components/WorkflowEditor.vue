@@ -434,8 +434,8 @@ import Tooltip from '../components/Tooltip.vue'
 import WorkflowConfigurator from '../components/Configurator/Workflow'
 import Help from '../components/Help'
 import VueJsonEditor from 'v-jsoneditor'
-import { NoID } from '@cortezaproject/corteza-js'
-import { components } from '@cortezaproject/corteza-vue'
+import { NoID } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 
 const {
   mxClient,

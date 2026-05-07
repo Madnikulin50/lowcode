@@ -148,7 +148,7 @@
 
 <script>
 import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import { mapGetters } from 'vuex'
 const { CAceEditor } = components
 

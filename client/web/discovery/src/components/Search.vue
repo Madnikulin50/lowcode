@@ -159,7 +159,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import Result from './Results'
 import DiscoveryMap from './DiscoveryMap.vue'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import { Split, SplitArea } from 'vue-split-panel'
 const { CInputSearch } = components
 

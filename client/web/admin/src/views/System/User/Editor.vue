@@ -95,7 +95,7 @@
 </template>
 
 <script>
-import { NoID, system } from '@cortezaproject/corteza-js'
+import { NoID, system } from 'corteza-lib/js/dist'
 import CUserEditorExternalAuthProviders from 'corteza-webapp-admin/src/components/User/CUserEditorExternalAuthProviders'
 import CUserEditorInfo from 'corteza-webapp-admin/src/components/User/CUserEditorInfo'
 import CUserEditorMfa from 'corteza-webapp-admin/src/components/User/CUserEditorMFA'

@@ -147,10 +147,12 @@ export default {
 
       // Generate filter for each load datasource
       if (scenario && scenario.filters) {
-        element.options.datasources.forEach(({ name }) => {
-          scenarioDefinition[name] = {
-            ref: name,
-            filter: scenario.filters[name] || {},
+        // eslint-disable-next-line array-callback-return
+        Object.keys(scenario.filters).map(k => {
+          const v = this.scenario.filters[k]
+          scenarioDefinition[k] = {
+            ref: k,
+            filter: { ...v },
           }
         })
       }

@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 import CUserGroupEditorInfo from 'corteza-webapp-admin/src/components/UserGroup/CUserGroupEditorInfo'
 import CUserGroupEditorMembers from 'corteza-webapp-admin/src/components/UserGroup/CUserGroupEditorMembers'
 import CUserGroupEditorRoles from 'corteza-webapp-admin/src/components/UserGroup/CUserGroupEditorRoles'

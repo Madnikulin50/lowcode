@@ -113,7 +113,7 @@ import EditorToolbox from './EditorToolbox'
 import EditorTextHtml from './EditorTextHtml'
 import EditorTextPlain from './EditorTextPlain'
 import EditorUnsupported from './EditorUnsupported'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 
 const { CAceEditor } = components
 

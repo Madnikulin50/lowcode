@@ -147,8 +147,8 @@
 </template>
 
 <script>
-import { NoID } from '@cortezaproject/corteza-js'
-import { components, handle } from '@cortezaproject/corteza-vue'
+import { NoID } from 'corteza-lib/js/dist'
+import { components, handle } from 'corteza-lib/vue/dist'
 import CLocation from 'corteza-webapp-admin/src/components/CLocation'
 const { CSensitivityLevelPicker } = components
 

@@ -73,7 +73,9 @@
 import Wrap from './Wrap'
 import { Split, SplitArea } from 'vue-split-panel'
 import DisplayElement from './DisplayElements/Viewers'
-import { reporter } from '@cortezaproject/corteza-js'
+import { reporter } from 'corteza-lib/js/dist'
+import lodash from 'lodash'
+const { cloneDeep } = lodash
 
 export default {
   name: 'Block',
@@ -172,10 +174,12 @@ export default {
 
       // Generate filter for each load datasource
       if (this.scenario.filters) {
-        element.options.datasources.forEach(({ name }) => {
-          scenarioDefinition[name] = {
-            ref: name,
-            filter: this.scenario.filters[name] || {},
+        // eslint-disable-next-line array-callback-return
+        Object.keys(this.scenario.filters).map(k => {
+          const v = this.scenario.filters[k]
+          scenarioDefinition[k] = {
+            ref: k,
+            filter: cloneDeep(v),
           }
         })
       }
@@ -195,9 +199,12 @@ export default {
           if (element.elementID === '0') {
             element.elementID = `${key}`
           }
+          const scDefs = this.getScenarioDefinition(element)
 
-          const { dataframes = [] } = element.reportDefinitions(this.getScenarioDefinition(element))
-
+          const { dataframes = [] } = element.reportDefinitions(scDefs)
+          dataframes.forEach(frame => {
+            frame.filter = cloneDeep(frame.filter)
+          })
           frames.push(...dataframes.filter(({ source }) => source))
         }
       })

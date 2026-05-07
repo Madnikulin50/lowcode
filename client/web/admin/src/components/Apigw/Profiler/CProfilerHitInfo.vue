@@ -231,8 +231,8 @@
 </template>
 
 <script>
-import { components } from '@cortezaproject/corteza-vue'
-import { fmt, NoID } from '@cortezaproject/corteza-js'
+import { components } from 'corteza-lib/vue/dist'
+import { fmt, NoID } from 'corteza-lib/js/dist'
 
 const { CAceEditor } = components
 

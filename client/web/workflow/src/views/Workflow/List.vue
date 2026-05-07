@@ -261,7 +261,7 @@ import Import from '../../components/Import'
 import Export from '../../components/Export'
 import WorkflowFilterModal from '../../components/WorkflowFilterModal'
 import listHelpers from '../../mixins/listHelpers'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CResourceList } = components
 
 export default {

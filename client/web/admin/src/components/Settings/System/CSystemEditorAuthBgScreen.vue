@@ -76,7 +76,7 @@
 </template>
 
 <script>
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import { CUSTOM_CSS_AUTO_COMPLETE_VALUES } from 'corteza-webapp-admin/src/lib/cssAutoComplete'
 import CUploaderWithPreview from 'corteza-webapp-admin/src/components/CUploaderWithPreview'
 

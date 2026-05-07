@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 
 // Fixes event with the used resourceType and extend with arguments
 function fix (ev, resourceType, args) {

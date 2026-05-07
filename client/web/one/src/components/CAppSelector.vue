@@ -87,7 +87,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import Draggable from 'vuedraggable'
-import { url, components } from '@cortezaproject/corteza-vue'
+import { url, components } from 'corteza-lib/vue/dist'
 const { CInputSearch } = components
 
 export default {

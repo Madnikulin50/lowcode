@@ -59,9 +59,10 @@ type (
 		Ref     string         `json:"ref"`
 		Columns FrameColumnSet `json:"columns"`
 
-		Filter *types.ReportFilterExpr `json:"filter"`
-		Paging *filter.Paging          `json:"paging"`
-		Sort   filter.SortExprSet      `json:"sort"`
+		Filter      *types.ReportFilterExpr            `json:"filter"`
+		LoadFilters map[string]*types.ReportFilterExpr `json:"loadFilters"`
+		Paging      *filter.Paging                     `json:"paging"`
+		Sort        filter.SortExprSet                 `json:"sort"`
 	}
 	FrameDefinitionSet []*FrameDefinition
 )
@@ -443,8 +444,7 @@ func mappingToFrameCol(m dal.AttributeMapping) FrameColumn {
 func convStepLoad(pr ModelFinder, step types.ReportStepLoad, defs FrameDefinitionSet) (out *dal.Datasource, err error) {
 	// Validation
 	if len(defs) > 1 {
-		err = fmt.Errorf("cannot convert load step: expecting at most one definition, got %d", len(defs))
-		return
+		defs = FrameDefinitionSet{defs[len(defs)-1]}
 	}
 
 	// Get additional filtering
@@ -484,8 +484,7 @@ func convStepLoad(pr ModelFinder, step types.ReportStepLoad, defs FrameDefinitio
 func convStepAggregate(step types.ReportStepAggregate, defs FrameDefinitionSet) (out *dal.Aggregate, err error) {
 	// Validation
 	if len(defs) > 1 {
-		err = fmt.Errorf("cannot convert aggregate step: expecting at most one definition, got %d", len(defs))
-		return
+		defs = FrameDefinitionSet{defs[len(defs)-1]}
 	}
 
 	// Get additional filtering

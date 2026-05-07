@@ -25,7 +25,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CSidebarNavItems } = components
 
 export default {

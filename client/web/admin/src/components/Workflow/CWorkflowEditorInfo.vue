@@ -115,8 +115,8 @@
 </template>
 
 <script>
-import { handle } from '@cortezaproject/corteza-vue'
-import { NoID } from '@cortezaproject/corteza-js'
+import { handle } from 'corteza-lib/vue/dist'
+import { NoID } from 'corteza-lib/js/dist'
 
 export default {
   name: 'CWorkflowEditorInfo',

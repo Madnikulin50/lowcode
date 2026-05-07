@@ -161,8 +161,8 @@
 </template>
 
 <script>
-import { NoID } from '@cortezaproject/corteza-js'
-import { handle, components } from '@cortezaproject/corteza-vue'
+import { NoID } from 'corteza-lib/js/dist'
+import { handle, components } from 'corteza-lib/vue/dist'
 const { CInputUserGroup } = components
 
 export default {

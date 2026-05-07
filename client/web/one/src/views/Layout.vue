@@ -55,7 +55,7 @@
 <script>
 import { mapActions } from 'vuex'
 import CAppSelector from '../components/CAppSelector'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CTopbar, CLoaderLogo, CPrompts, CExtendSession, CNotificationSidebar } = components
 
 export default {

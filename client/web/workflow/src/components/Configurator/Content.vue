@@ -12,7 +12,7 @@
 
 <script>
 import base from './base'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CRichTextInput } = components
 
 export default {

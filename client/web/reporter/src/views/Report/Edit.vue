@@ -187,8 +187,8 @@
 </template>
 
 <script>
-import { system } from '@cortezaproject/corteza-js'
-import { handle } from '@cortezaproject/corteza-vue'
+import { system } from 'corteza-lib/js/dist'
+import { handle } from 'corteza-lib/vue/dist'
 import report from 'corteza-webapp-reporter/src/mixins/report'
 import EditorToolbar from 'corteza-webapp-reporter/src/components/EditorToolbar'
 import { mapGetters } from 'vuex'

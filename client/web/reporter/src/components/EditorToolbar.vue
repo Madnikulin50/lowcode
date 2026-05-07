@@ -59,7 +59,7 @@
 </template>
 
 <script>
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CToolbar } = components
 
 export default {

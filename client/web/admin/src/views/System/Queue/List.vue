@@ -93,7 +93,7 @@
 import * as moment from 'moment'
 import listHelpers from 'corteza-webapp-admin/src/mixins/listHelpers'
 import { mapGetters } from 'vuex'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CResourceList } = components
 
 export default {

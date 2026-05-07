@@ -1,6 +1,7 @@
 import { DisplayElement, DisplayElementInput, Registry } from './base'
 import { FrameDefinition, FrameColumn, DefinitionOptions } from '../frame'
 import { Apply } from '../../../cast'
+import {FilterDefinition} from "../filter";
 
 const kind = 'Table'
 
@@ -83,10 +84,10 @@ export class DisplayElementTable extends DisplayElement {
   }
 
   reportDefinitions (definition: DefinitionOptions = {}): { dataframes: Array<FrameDefinition> } {
-    if (typeof this.options.source === 'object') {
+    /*if (typeof this.options.source === 'object') {
       // @todo allow implicit sources
       throw new Error('table source must be provided as a reference')
-    }
+    }*/
 
     const dataframes: Array<FrameDefinition> = []
 
@@ -95,23 +96,23 @@ export class DisplayElementTable extends DisplayElement {
         name: this.elementID,
         source: this.options.source,
         ref: name,
-        filter,
         sort,
         paging,
       }
 
       const relatedDefinition = definition[name]
+      df.filter = { ...filter} as FilterDefinition
 
-      if (relatedDefinition) {
+    /*  if (relatedDefinition !== undefined) {
         df.sort = (relatedDefinition.sort ? relatedDefinition.sort : sort) || undefined
 
         if (relatedDefinition.filter && relatedDefinition.filter?.ref) {
           // If element and scenario have filter AND them together
-          if (filter && filter.ref) {
+          if (df.filter && df.filter?.ref) {
             df.filter = {
               ref: 'and',
               args: [
-                filter,
+                  df.filter,
                 relatedDefinition.filter,
               ],
             }
@@ -123,7 +124,7 @@ export class DisplayElementTable extends DisplayElement {
         if (relatedDefinition.paging || paging) {
           df.paging = { ...(paging || {}), ...(relatedDefinition.paging || {}) }
         }
-      }
+      }*/
 
       if (df.paging?.limit) {
         df.paging.limit = parseInt((df.paging.limit as any))
@@ -131,6 +132,20 @@ export class DisplayElementTable extends DisplayElement {
 
       dataframes.push(df)
     })
+
+      Object.keys(definition).forEach(k => {
+          let i = dataframes.find(i => i.source === k)
+          if (i !== undefined) {
+              return
+          }
+          const df: FrameDefinition = {
+              name: k,
+              source: k,
+              ref: k,
+              filter: definition[k].filter
+          }
+          dataframes.unshift(df)
+      })
 
     return { dataframes }
   }

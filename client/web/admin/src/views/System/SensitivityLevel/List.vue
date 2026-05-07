@@ -88,7 +88,7 @@
 </template>
 
 <script>
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import listHelpers from 'corteza-webapp-admin/src/mixins/listHelpers'
 import * as moment from 'moment'
 import { mapGetters } from 'vuex'

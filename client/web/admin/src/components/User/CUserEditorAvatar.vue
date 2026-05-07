@@ -105,7 +105,7 @@
 
 <script>
 import CUploaderWithPreview from 'corteza-webapp-admin/src/components/CUploaderWithPreview'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CInputColorPicker } = components
 
 export default {

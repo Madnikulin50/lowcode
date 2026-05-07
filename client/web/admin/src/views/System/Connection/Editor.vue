@@ -44,7 +44,7 @@
 
 <script>
 import { isEqual } from 'lodash'
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
 import CConnectionEditorInfo from 'corteza-webapp-admin/src/components/Connection/CConnectionEditorInfo'
 import CConnectionEditorProperties from 'corteza-webapp-admin/src/components/Connection/CConnectionEditorProperties'

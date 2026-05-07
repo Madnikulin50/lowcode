@@ -149,7 +149,7 @@ export function ChartOptionsMaker<T extends ChartOptions> (options: Partial<Char
   }
 }
 
-export class DisplayElementChart extends DisplayElement {
+class DisplayElementChart extends DisplayElement {
   readonly kind = kind
 
   options: ChartOptions = ChartOptionsMaker({ type: 'bar' })
@@ -166,14 +166,15 @@ export class DisplayElementChart extends DisplayElement {
   }
 
   reportDefinitions (definition: DefinitionOptions = {}): { dataframes: Array<FrameDefinition> } {
-    if (typeof this.options.source === 'object') {
+    /*if (typeof this.options.source === 'object') {
       // @todo allow implicit sources
       throw new Error('chart source must be provided as a reference')
-    }
+    }*/
 
     const dataframes: Array<FrameDefinition> = []
 
-    this.options.datasources.forEach(({ name = '', filter, sort }) => {
+    // @ts-ignore
+      this.options.datasources.forEach(({ name = '', filter, sort, loadFilters }) => {
       const df: FrameDefinition = {
         name: this.elementID,
         source: this.options.source,
@@ -184,12 +185,12 @@ export class DisplayElementChart extends DisplayElement {
 
       const relatedDefinition = definition[name]
 
-      if (relatedDefinition) {
+   /*   if (relatedDefinition) {
         df.sort = (relatedDefinition.sort ? relatedDefinition.sort : sort) || undefined
 
         if (relatedDefinition.filter && relatedDefinition.filter?.ref) {
           // If element and scenario have filter AND them together
-          if (filter && filter.ref) {
+          if (filter && filter?.ref) {
             df.filter = {
               ref: 'and',
               args: [
@@ -201,13 +202,28 @@ export class DisplayElementChart extends DisplayElement {
             df.filter = relatedDefinition.filter
           }
         }
-      }
+      }*/
 
       dataframes.push(df)
     })
 
+      Object.keys(definition).forEach(k => {
+          let i = dataframes.find(i => i.source === k)
+          if (i !== undefined) {
+              return
+          }
+          const df: FrameDefinition = {
+              name: k,
+              source: k,
+              ref: k,
+              filter: definition[k].filter
+          }
+          dataframes.unshift(df)
+      })
     return { dataframes }
   }
 }
+
+export default DisplayElementChart
 
 Registry.set(kind, DisplayElementChart)

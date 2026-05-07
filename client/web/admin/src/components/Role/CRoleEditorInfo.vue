@@ -173,8 +173,8 @@
 </template>
 
 <script>
-import { system, NoID } from '@cortezaproject/corteza-js'
-import { handle } from '@cortezaproject/corteza-vue'
+import { system, NoID } from 'corteza-lib/js/dist'
+import { handle } from 'corteza-lib/vue/dist'
 
 export default {
   name: 'CRoleEditorInfo',

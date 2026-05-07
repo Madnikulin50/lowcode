@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 import { EXPRESSION_EDITOR_AUTO_COMPLETE_VALUES } from '../lib/editor-auto-complete.js'
 
 const { CAceEditor } = components

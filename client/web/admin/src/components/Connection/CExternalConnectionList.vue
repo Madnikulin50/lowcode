@@ -95,7 +95,7 @@
 <script>
 import listHelpers from 'corteza-webapp-admin/src/mixins/listHelpers'
 import moment from 'moment'
-import { components } from '@cortezaproject/corteza-vue'
+import { components } from 'corteza-lib/vue/dist'
 const { CResourceList } = components
 
 export default {

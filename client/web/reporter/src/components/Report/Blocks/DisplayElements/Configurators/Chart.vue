@@ -635,7 +635,7 @@
 import base from './base'
 import ColumnSelector from 'corteza-webapp-reporter/src/components/Common/ColumnSelector.vue'
 import ColumnPicker from 'corteza-webapp-reporter/src/components/Common/ColumnPicker'
-import { reporter, shared } from '@cortezaproject/corteza-js'
+import { reporter, shared } from 'corteza-lib/js/dist'
 const { colorschemes } = shared
 
 export default {

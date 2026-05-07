@@ -515,8 +515,8 @@
 </template>
 
 <script>
-import { NoID } from '@cortezaproject/corteza-js'
-import { handle, components } from '@cortezaproject/corteza-vue'
+import { NoID } from 'corteza-lib/js/dist'
+import { handle, components } from 'corteza-lib/vue/dist'
 import CRolePicker from 'corteza-webapp-admin/src/components/CRolePicker'
 import copy from 'copy-to-clipboard'
 import axios from 'axios'

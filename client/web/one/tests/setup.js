@@ -1,6 +1,6 @@
 /* global jest */
 
-jest.mock('@cortezaproject/corteza-js', () => ({}), { virtual: true })
+jest.mock('madnikulin50/lib-js', () => ({}), { virtual: true })
 jest.mock('../../../../lib/vue/dist', () => ({
   components: {
     CPrompts: {
