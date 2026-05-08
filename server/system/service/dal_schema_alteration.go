@@ -193,7 +193,6 @@ func (svc dalSchemaAlteration) SetAlterations(ctx context.Context, s store.Store
 		case a.AttributeReType != nil:
 			t.Kind = "attributeReType"
 			t.Params.AttributeReType = a.AttributeReType
-
 		case a.AttributeReEncode != nil:
 			t.Kind = "attributeReEncode"
 			t.Params.AttributeReEncode = a.AttributeReEncode

@@ -204,7 +204,19 @@ func (postgresDialect) AttributeToColumn(attr *dal.Attribute) (col *ddl.Column, 
 		}
 
 		col.Default = ddl.DefaultValueCurrentTimestamp(t.DefaultCurrentTimestamp)
+	case *dal.TypeTime:
+		col.Type.Name = "time without time zone"
 
+		if t.Timezone {
+			col.Type.Name = "time with time zone"
+
+		}
+
+		if t.Precision > 0 {
+			col.Type.Name += fmt.Sprintf("(%d)", t.Precision)
+		}
+
+		col.Default = ddl.DefaultValueCurrentTimestamp(t.DefaultCurrentTimestamp)
 	case *dal.TypeDate:
 		col.Type.Name = "DATE"
 		col.Default = ddl.DefaultValueCurrentTimestamp(t.DefaultCurrentTimestamp)

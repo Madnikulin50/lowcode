@@ -233,6 +233,9 @@ func (mysqlDialect) AttributeToColumn(attr *dal.Attribute) (col *ddl.Column, err
 	case *TypeTime:
 		col.Type.Name = "TIME"
 		col.Default = ddl.DefaultValueCurrentTimestamp(t.DefaultCurrentTimestamp)
+	case *dal.TypeTime:
+		col.Type.Name = "TIME"
+		col.Default = ddl.DefaultValueCurrentTimestamp(t.DefaultCurrentTimestamp)
 
 	case *dal.TypeDate:
 		col.Type.Name = "DATE"

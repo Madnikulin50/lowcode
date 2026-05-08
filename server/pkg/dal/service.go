@@ -1351,19 +1351,19 @@ func (svc *service) getSchemaAlterations(ctx context.Context, connection *Connec
 	//       existing ones is not that trivial and doesn't add much value.
 	// @note this merging assumes the two sets are already ok, valid, and without any
 	//       duplications.
-	newAlts = svc.mergeAlterations(currentAlts, newAlts)
+	newAlts2 := svc.mergeAlterations(currentAlts, newAlts)
 	// - run the alterations against the database to take the schema into consideration
-	newAlts, err = connection.connection.AssertSchemaAlterations(ctx, model, newAlts...)
+	newAlts3, err := connection.connection.AssertSchemaAlterations(ctx, model, newAlts2...)
 	if err != nil {
 		return
 	}
 
 	// - set all of the alterations to the same batch ID
-	for _, a := range newAlts {
+	for _, a := range newAlts3 {
 		a.BatchID = batchID
 	}
 
-	return
+	return newAlts3, batchID, nil
 }
 
 func (svc *service) setAlterationsModelIssue(issues *issueHelper, batchID uint64, connection *ConnectionWrap, model *Model, alts []*Alteration) {

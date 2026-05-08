@@ -2,7 +2,6 @@ package dal
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 type (
@@ -316,7 +315,7 @@ func (a Alteration) compare(b Alteration) (cmp bool) {
 		return a.compareModelDelete(b)
 	}
 
-	panic(fmt.Sprintf("unsupported alteration type %v", a))
+	return false
 }
 
 func (a Alteration) compareAttributeAdd(b Alteration) bool {
