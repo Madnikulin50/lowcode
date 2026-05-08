@@ -42,7 +42,7 @@ drelease:
 	@echo "---Build client---"
 	@(cd $(CURDIR)/client && make build) || true
 	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build -t madnikulin50/pnp-lowcode:2026.6.4 .)
+	@(cd $(CURDIR) && docker build -t madnikulin50/pnp-lowcode:2026.6.5 .)
 
 ddebug:
 	@echo "---Build server---"
@@ -54,7 +54,7 @@ ddebug:
 
 dpush:
 	@echo "---Push docker---"
-	@(cd $(CURDIR) && docker push madnikulin50/pnp-lowcode:2026.6.3)
+	@(cd $(CURDIR) && docker push madnikulin50/pnp-lowcode:2026.6.5)
 
 
 .DEFAULT_GOAL := dev
