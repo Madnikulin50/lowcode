@@ -112,7 +112,7 @@ edit:
         polygon: Polygon
         circle: Circle
     gaugeColor: Цвет
-    label: Metric
+    label: Метрика
     labelColor: Метка color
     labelLabel: Метка
     labelPlaceholder: Total

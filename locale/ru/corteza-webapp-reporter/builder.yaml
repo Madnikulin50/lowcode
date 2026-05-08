@@ -28,9 +28,9 @@ datasources:
 description: Описание
 display-elements:
   types:
-    text: Text
-    metric: Metric
-    table: Table
+    text: Текст
+    metric: Метрика
+    table: Таблица
     chart: Chart
 element: Element
 elements: Elements

@@ -90,7 +90,7 @@ label:
   saveAs: Сохранить как
   saveAsCopy: Сохранить копию
   search: Поиск
-  status: Status
+  status: Статус
   timeHour: "{{t}}h"
   timeMinute: "{{t}}min"
   today: Сегодня
@@ -120,10 +120,10 @@ navigation:
   pageLayout: Раскладка страницы
 placeholder:
   handle: дескриптор (a - z, 0 - 9, underscore, dash)
-  sample: Sample
+  sample: Пример
 reminder:
   add: Добавить a reminder
-  dismiss: Dismiss
+  dismiss: Отклонить
   dismissed: Dismissed
   dismissedAt: Dismissed at
   undismiss: Undismiss

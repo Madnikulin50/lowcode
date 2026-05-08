@@ -1,8 +1,8 @@
 allRecords:
   create:
-    title: Create record for module "{{name}}"
+    title: Создать запись для модуля "{{name}}"
   edit:
-    title: Изменить record for module "{{name}}"
+    title: Изменить запись для модуля "{{name}}"
   label: Все записи
   list:
     title: Все записи модуля "{{name}}"
@@ -37,7 +37,7 @@ edit:
       title: Map
     error:
       fetch:
-        data: Error fetching server data
+        data: Ошибка загрузки данных с сервера
         exposed: Error fetching exposed module info
         shared: Error fetching shared module info
         mmap: Error fetching module mapping info
@@ -72,7 +72,7 @@ edit:
   moduleFieldSettings: Настройки полей
   moduleInfo: Информация о модуле
   newField: Добавить новое поле
-  recordPermissions: Record permissions
+  recordPermissions: Права доступа к записи
   reorderFields: Изменить порядок полей
   specificFieldSettings: Настройки поля ({{name}})
   steps:
@@ -93,35 +93,35 @@ edit:
   tooltip:
     attributes: Select if the field can hold multiple values, if it's required field or if contains sensitive data
     name: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dashes. Must end with letter or number.
-    private: Sensitive data
+    private: Чувствительные данные
     required: Обязательное поле
     multi: Множественное значение
-    title: The name displayed in form input / data lists
+    title: Имя отображаемое в списках и в формах
 
   issues:
     label: Проблемы ({{count}})
 
   schemaAlterations:
     title: Изменение схемы
-    resolve: Resolve
+    resolve: Решить
     resolveAuto: Решить автоматически
     resolved: Resolved
-    dismiss: Dismiss
-    waitingFor: 'Ужидаем {{id}}'
+    dismiss: Отклонить
+    waitingFor: 'Ожидаем {{id}}'
     noAlterations: No schema alterations need to be resolved
     columns:
-      alteration: Alteration
-      change: Change
-      status: Status
+      alteration: Изменения
+      change: Изменить
+      status: Статус
     params:
       attribute:
-        add: Добавить колонку {{ident}} encoded as {{storeType}} of type {{attrType}}
-        delete: Удалить column {{ident}} encoded as {{storeType}}
-        reType: Changing type of column {{ident}} to {{toType}}
-        reEncode: Changing encoding of column {{ident}} to {{toType}}
+        add: Добавить колонку {{ident}} кодируемую как {{storeType}} of type {{attrType}}
+        delete: Удалить column {{ident}} кодируемую как {{storeType}}
+        reType: Изменить тип колонки {{ident}} на {{toType}}
+        reEncode: Изменить кодировку колонки {{ident}} на {{toType}}
       model:
-        add: Добавить schema for model {{ident}}
-        delete: Удалить schema for model {{ident}}
+        add: Добавить схему для модуля {{ident}}
+        delete: Удалить схему для модуля {{ident}}
 
   config:
     dal:
@@ -140,7 +140,7 @@ edit:
 
 
       module-fields:
-        label: Module field mapping and encoding
+        label: Соответствие полей колонкам БД
         description: |
           Configure how record fields are stored and read from the database.
           Default behaviour is to encode values into JSON and store them in a single field.
@@ -148,7 +148,7 @@ edit:
           or use an Alias and store the value directly in the column.
 
       system-fields:
-        label: System field mapping and encoding
+        label: Соответвие системных полей колонкам БД
         description: |
           System fields are used to store metadata about the record.
           Configure to skip or store them into a column with the same name (Колонка),
@@ -162,9 +162,9 @@ edit:
 
 
       encoding-strategy:
-        unavailable: unavailable
+        unavailable: недоступно
         ident:
-          placeholder: Поле or database table column name
+          placeholder: Поле или колонка таблицы
 
         strategies:
           plain:
@@ -192,14 +192,14 @@ edit:
           load-datasource: Aggregates data from a load datasource based on a column value and aggregates it, such as counting the number of Accounts with the same status
       add:
         datasource: Добавить источник данных
-        display-element: Add display element
+        display-element: Добавить отображаемый элемент
 
 
       display-elements:
         types:
-          text: Text
-          metric: Metric
-          table: Table
+          text: Текст
+          metric: Метрика
+          table: Таблица
           chart: Chart
     privacy:
       title: Приватность
@@ -208,7 +208,7 @@ edit:
         placeholder: Выберите уровень чувствительности
         description: Highest allowed level of sensitivity for fields on this module, changing this value will reset the sensitivity level of fields if they are incompatible.
       usage-disclosure:
-        label: Sensitive data usage disclosure (visible on data-privacy console)
+        label: Чувствительные данные usage disclosure (visible on data-privacy console)
 
       sensitivity-levels:
         fetch-failed: Could not fetch sensitivity levels
@@ -273,7 +273,7 @@ general:
   placeholder:
     name: Имя (e.g. "Продажи")
     handle: Уникальный идентификатор (a - z, 0 - 9, _, -)
-    sample: Sample
+    sample: Пример
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
 import: Импорт модуля
 navigation:

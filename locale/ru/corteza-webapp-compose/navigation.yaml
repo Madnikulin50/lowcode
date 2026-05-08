@@ -1,12 +1,12 @@
 automation: Автоматизация
 chart: Диаграммы
 configuration: Конфигурация
-editPage: Изменить Page
+editPage: Изменить страницу
 help:
   documentation: Документация
   feedback: Send feedback
   forum: Справка
-  version: "Version:"
+  version: "Версия:"
 module: Модули
 more: Еще
 namespace: Пространства
@@ -32,7 +32,7 @@ search:
   recordRedirectError: Error navigating to record
   untitledRecord: Untitled Record
   recentSearches: Recent Searches
-  clearHistory: Clear
+  clearHistory: Очистить
 
   openInNewTab: Open in new tab
   numberOfResults_one: "{{count}} record"

@@ -17,7 +17,7 @@ editor:
     email: Admin Почтовый адрес
     enabled: Enabled
     name: Server name *
-    status: Status
+    status: Статус
     tags:
       label: Tags
       placeholder: +Add
@@ -34,7 +34,7 @@ list:
     createdAt: Создано
     enabled: Enabled
     name: Имя
-    status: Status
+    status: Статус
     tags: ""
   filterForm:
     query:

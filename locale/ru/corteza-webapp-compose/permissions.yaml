@@ -149,9 +149,9 @@ resources:
           title: Update any module
         'owned-record.create':
           description: 'Default: deny'
-          specific: Manage owner when creating record for module "{{target}}"
+          specific: Manage owner when creating запись для модуля "{{target}}"
           title: Manage owner when creating record for any module
-          all-specific: Manage owner when creating record for module "{{ target }}"
+          all-specific: Manage owner when creating запись для модуля "{{ target }}"
 
     module-field:
       all: all module fields
@@ -222,7 +222,7 @@ resources:
       all: all records
       specific: record "{{target}}"
       all-specific: all records of module "{{ target }}"
-      tooltip: Record permissions
+      tooltip: Права доступа к записи
       operations:
         delete:
           description: 'Default: deny'

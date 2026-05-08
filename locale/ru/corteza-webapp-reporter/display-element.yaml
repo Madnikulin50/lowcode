@@ -120,12 +120,12 @@ table:
         dark: Темная
         fixed: Fixed
         hover: Hover
-        label: Table Options
+        label: Таблица Options
         no-collapse: No border collapse
         responsive: Responsive
         small: Small
         striped: Striped
-      variant: Table Variant
+      variant: Таблица Variant
       variants:
         danger: Danger
         dark: Темная

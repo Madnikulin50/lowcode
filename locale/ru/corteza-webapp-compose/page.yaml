@@ -76,7 +76,7 @@ block:
       saveAndClose: Сохранить и закрыть
     placeholder:
       handle: Уникальный идентификатор (a - z, 0 - 9, _, -)
-      sample: Sample
+      sample: Пример
     title: Добавить новый блок
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
 changeBlock: Изменить существующий блок

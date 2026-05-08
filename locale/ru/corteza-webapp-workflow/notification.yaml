@@ -32,7 +32,7 @@ import:
 'imported-workflow': Workflow imported
 'import-failed': Импорт failed
 'initial-scope-load-failed': Failed to load initial scope
-'resolve-issues': Resolve issues to test workflow
+'resolve-issues': Решить issues to test workflow
 'save-workflow': Сохранить workflow first to test it
 'started-test': Workflow test started
 'test-completed': Test completed

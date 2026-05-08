@@ -96,7 +96,7 @@ editor:
     list:
       remove: Remove
       filters: Фильтры
-      status: Status
+      status: Статус
       actions: Actions
       active: Active
       noFilters: No filters
@@ -105,7 +105,7 @@ editor:
       expr: Выражение
       location: URL
       workflow: Workflow
-      status: HTTP Status
+      status: HTTP Статус
       jsfunc: Function
       input: Input
       header: Headers
@@ -113,7 +113,7 @@ editor:
       value: Значение
 
     httpStatus:
-      none: No Status
+      none: No Статус
       '300': 300 - Multiple Choices
       '301': 301 - Moved Permanently
       '302': 302 - Found
@@ -149,7 +149,7 @@ profiler:
       route: Request Route
       URL: Request URL
       method: Request Method
-      statusCode: Status Code
+      statusCode: Статус Code
       headers: Request Headers
       remoteAddress: Remote Address
       duration: Duration
@@ -167,7 +167,7 @@ profiler:
     count: Количество
     content_length: Content Length
     http_method: Method
-    http_status_code: Status Code
+    http_status_code: Статус Code
     size_min: Size (min)
     size_max: Size (max)
     size_avg: Size (avg)

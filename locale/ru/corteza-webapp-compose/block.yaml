@@ -14,7 +14,7 @@ automation:
   buttonLabel: Метка
   buttonVariant: Variant
   configuredButtons: Configured buttons
-  dummyButtonLabel: Dummy
+  dummyButtonLabel: Пример Workflow
   editButton: Изменить
   editTitle:
     script: Изменить automation script button
@@ -253,7 +253,7 @@ metric:
     labelPlaceholder: Метка
     metricFieldLabel: Поле
     metricFieldPlaceholder: Dimension field
-    metricLabel: Metric
+    metricLabel: Метрика
     metricFieldSelect: Select field
     metricSelectAggregate: Select aggregation operation
     metricAggregateLabel: Aggregation operation
@@ -270,7 +270,7 @@ metric:
     prefixLabel: Prefix
     refreshData: Refresh data
     suffixLabel: Suffix
-    tabTitle: Metric
+    tabTitle: Метрика
     transformFunctionDescription: v - current value; label - current value's label
     transformFunctionLabel: Transform value
   editStyle:
@@ -280,7 +280,7 @@ metric:
     fontSize: Font size in pixels
     labelLabel: Метка style
     valueLabel: Значение style
-  label: Metric
+  label: Метрика
 record:
   referenceRecordField: Reference record
   referenceRecordFieldPlaceholder: Select reference record field
@@ -659,7 +659,7 @@ recordList:
         label: Поле
         placeholder: Поле модуля
       metric:
-        label: Metric
+        label: Метрика
         placeholder: Summary Metric
       role:
         label: Роль
@@ -859,7 +859,7 @@ navigation:
   warning: Предупреждение
   danger: Опасность
   info: Информация
-  text: Text
+  text: Текст
   dropdown: Dropdown
   multi: Многострочный
   sameTab: Same tab

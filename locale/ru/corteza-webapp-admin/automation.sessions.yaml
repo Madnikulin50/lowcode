@@ -11,7 +11,7 @@ editor:
     eventType: Event type
     id: ID
     resourceType: Resource type
-    status: Status
+    status: Статус
     title: Basic information
     workflowID: WorkflowID
     openWorkflow: Open workflow
@@ -24,7 +24,7 @@ list:
     eventType: Event type
     sessionID: SessionID
     state: State
-    status: Status
+    status: Статус
     workflowID: WorkflowID
   filterForm:
     all:

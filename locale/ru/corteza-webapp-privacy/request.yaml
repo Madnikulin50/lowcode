@@ -28,7 +28,7 @@ list:
     kind: Type
     requestedAt: Requested at
     requestedBy: Requested by
-    status: Status
+    status: Статус
   request:
     approve: Approve Requests
     cancel: Cancel Request
