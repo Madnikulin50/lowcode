@@ -273,6 +273,16 @@ var (
 				return exp.NewSQLFunctionExpression("COUNT", arg)
 			},
 		},
+		"dcount": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				var arg exp.Expression = exp.NewLiteralExpression("*")
+				if len(args) > 0 {
+					arg = args[0]
+				}
+
+				return exp.NewSQLFunctionExpression("COUNT", "DISTINCT "+fmt.Sprintf("%v", arg))
+			},
+		},
 		"sum": {
 			Handler: func(args ...exp.Expression) exp.Expression {
 				return exp.NewSQLFunctionExpression("SUM", args[0])

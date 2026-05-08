@@ -185,6 +185,7 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 		exec.groupDefs = append(exec.groupDefs, attr)
 		outAttrs[idtf] = true
 	}
+
 	// - aggregates
 	for i, attr := range def.OutAttributes {
 		// @todo change when needed; currently, all aggregates are numbers
@@ -207,10 +208,10 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 		return
 	}*/
 
-	if len(def.OutAttributes) == 0 {
+	/*if len(def.OutAttributes) == 0 {
 		err = fmt.Errorf("no output attributes specified")
 		return
-	}
+	}*/
 
 	if len(def.SourceAttributes) == 0 {
 		err = fmt.Errorf("no source attributes specified")
