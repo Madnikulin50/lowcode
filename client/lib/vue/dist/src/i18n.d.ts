@@ -25,7 +25,7 @@ interface Options {
  * Initializes i18n options, registers plugin on a given Vue instance and returns the options
  *
  * To be used as:
- * import { i18n } from '@cortezaproject/corteza-vue'
+ * import { i18n } from 'corteza-lib/vue/dist'
  * new Vue({
  *   i18n: i18n(Vue, {
  *     app: 'corteza-webapp-....'

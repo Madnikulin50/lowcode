@@ -55,8 +55,8 @@ edit:
     pickModule: Pick a federated module
     pickModuleField: Pick a module field
     pickServer: Pick a federated server
-    specificTitle: Federation Settings ({{handle}})
-    title: Federation Settings
+    specificTitle: Federation Настройки ({{handle}})
+    title: Federation Настройки
     upstream:
       copyFrom: Copy settings from
       allFields: Все поля

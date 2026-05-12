@@ -17,7 +17,7 @@ editor:
     name: Полное имя
     revokeAllSession: Revoke all active sessions
     suspend: Suspend
-    suspendedAt: Suspended at
+    suspendedAt: Отключенные at
     title: Basic information
     undelete: Undelete
     unsuspend: Unsuspend
@@ -31,12 +31,12 @@ editor:
       label: Avatar
       title: Avatar
     initial:
-      color: Text color
-      backgroundColor: Фон color
+      color: Цвет текста
+      backgroundColor: Цвет фона
     uploader:
       instructions: Upload avatar
       uploading: Uploading user avatar
-    colorPicker: Choose a color
+    colorPicker: Выберите цвет
   mfa:
     TOTP:
       disabled:
@@ -94,8 +94,8 @@ list:
   export: Экспорт
   rows:
     filters:
-      deleted: Deleted
-      suspended: Suspended
+      deleted: Удаленные
+      suspended: Отключенные
   filterForm:
     deleted:
       label: deleted users

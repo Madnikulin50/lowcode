@@ -33,7 +33,7 @@ list:
   undelete: Undelete
   rows:
     filters:
-      deleted: Deleted
+      deleted: Удаленные
   filterForm:
     deleted:
       label: deleted sensitivity levels

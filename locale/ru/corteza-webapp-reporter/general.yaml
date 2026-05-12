@@ -2,7 +2,7 @@ label:
   add: Add
   and: And
   all: Все
-  ascending: Ascending
+  ascending: По возрастанию
   back: Назад
   clear: Clear
   cancel: Cancel
@@ -13,17 +13,17 @@ label:
   none: Отсутствует
   now: Now
   ok: Ok
-  or: Or
+  or: ИЛИ
   openLinkInNewTab: Open link in a new tab
   save: Сохранить
-  saveAndClose: Сохранить and close
+  saveAndClose: Сохранить и закрыть
   clone: Сохранить копию
   today: Сегодня
   urlPlaceholder: https://example.tld
   default: Default
   report:
     single: Отчет
-    plural: Reports
+    plural: Отчеты
 
 resourceList:
   notFound: Not found

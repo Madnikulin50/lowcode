@@ -14,7 +14,7 @@ new:
   label: New label
   name: New name
 none: Отсутствует
-prefilter: Prefilter
+prefilter: Предварительный фильтр
 primary:
   column: Главная колонка
   source: Главный источник

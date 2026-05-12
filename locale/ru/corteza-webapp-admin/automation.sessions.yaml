@@ -6,7 +6,7 @@ editor:
     createdByUserName: Создал - Name
     delete: Delete
     deletedAt: Время удаления
-    suspendedAt: Suspended at
+    suspendedAt: Отключенные at
     error: Ошибка
     eventType: Event type
     id: ID
@@ -48,7 +48,7 @@ list:
     started:
       label: Started
     suspended:
-      label: Suspended
+      label: Отключенные
     canceled:
       label: Canceled
   loading: Loading sessions

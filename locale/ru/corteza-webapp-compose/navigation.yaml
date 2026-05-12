@@ -28,7 +28,7 @@ search:
   select: select
   close: close
   notFoundNamespace: Пространство not found
-  notFoundPage: Page not found
+  notFoundPage: Станицы не найдены
   recordRedirectError: Error navigating to record
   untitledRecord: Untitled Record
   recentSearches: Recent Searches

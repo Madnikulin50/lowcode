@@ -6,7 +6,7 @@ report:
   new: New Отчет
   delete: Delete
 searchPlaceholder: Search reports
-title: Reports
+title: Отчеты
 tooltip:
   permissions: Отчет permissions
 untitledTitle: Untitled report

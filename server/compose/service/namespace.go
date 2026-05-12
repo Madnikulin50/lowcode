@@ -487,7 +487,10 @@ func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types
 
 			aProps.setNamespace(dup)
 
-			newNS, err = svc.envoyRun(ctx, s, session.Nodes, &types.Namespace{ID: session.NamespaceID, Slug: session.Slug, Name: session.Name}, dup)
+			newNS, err = svc.envoyRun(ctx,
+				s,
+				session.Nodes,
+				&types.Namespace{ID: session.NamespaceID, Slug: session.Slug, Name: session.Name}, dup)
 			if err != nil {
 				return err
 			}

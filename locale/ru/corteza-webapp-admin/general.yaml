@@ -52,7 +52,7 @@ label:
   refresh: Refresh
   loadMore: Load more
   loading: Загрузка...
-  saveAndClose: Сохранить and close
+  saveAndClose: Сохранить и закрыть
   cancel: Cancel
   submit: Подтвердить
   delete: Delete
@@ -61,7 +61,7 @@ label:
   uploading: Uploading
   dropFiles: Click or drop files here to upload
 editor:
-  unsavedChanges:  Unsaved changes will be lost. Do you wish to leave the page?
+  unsavedChanges:  Несохраненные изменения will be lost. Do you wish to leave the page?
 resourceList:
   pagination:
     recordsPerPage: На страницу

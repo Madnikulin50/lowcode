@@ -61,7 +61,7 @@
       v-if="isAutoLogoutEnabled"
       :timeout="$Settings.get('auth.autoLogout.timeout')"
       :labels="{
-        extend: $t('general:extendSession.labels.extend'),
+        extFend: $t('general:extendSession.labels.extend'),
         warning: (countdownTime) =>
           $t('general:extendSession.labels.warning', { countdownTime }),
       }"

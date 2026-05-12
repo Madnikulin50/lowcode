@@ -31,7 +31,7 @@ list:
     error: Ошибка
     warning: Предупреждение
     notice: Notice
-    info: Info
+    info: Информация
     debug: Debug
   filter:
     action: Action

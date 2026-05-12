@@ -2,7 +2,7 @@ chart:
   configurator:
     begin-axis-at-zero: Always begin axis scale at zero
     chart-title: Chart title
-    color-scheme: Цвет scheme
+    color-scheme: Цветовая схема
     data: Data
     data-columns: Data columns
     default: Default
@@ -30,11 +30,11 @@ chart:
       unit:
         label: Time unit
         types:
-          date: Date
-          month: Month
-          quarter: Quarter
-          week: Week
-          year: Year
+          date: День
+          month: Месяц
+          quarter: Квартал
+          week: Неделя
+          year: Год
     type: Type
     types:
       bar: Bar
@@ -82,7 +82,7 @@ chart:
         bottom: Bottom
         left: Left
     tooltips:
-      name: Tooltips
+      name: Всплывающие окна
       show:
         always: Always show labels
     offset:
@@ -95,19 +95,19 @@ chart:
 metric:
   configurator:
     color:
-      background: Фон color
-      text: Text color
-      picker: Choose a color
+      background: Цвет фона
+      text: Цвет текста
+      picker: Выберите цвет
     format: Format
     label-column: Label column
     none: Отсутствует
-    prefix: Prefix
-    suffix: Suffix
+    prefix: Префикс
+    suffix: Суффикс
 table:
   configurator:
     general: Основные
-    data: Data
-    columns: Columns
+    data: Данные
+    columns: Колонки
     dark: Темная
     head-variant: Head Variant
     joined-datasource-handling: Joined datasource handling
@@ -115,8 +115,8 @@ table:
     none: Отсутствует
     table:
       options:
-        bordered: Bordered
-        borderless: Borderless
+        bordered: С границей
+        borderless: Без границы
         dark: Темная
         fixed: Fixed
         hover: Hover
@@ -129,7 +129,7 @@ table:
       variants:
         danger: Danger
         dark: Темная
-        info: Info
+        info: Информация
         light: Светлая
         primary: Главное
         secondary: Вспомогательное

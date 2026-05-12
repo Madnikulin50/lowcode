@@ -251,7 +251,7 @@ resources:
           title: Update any client
 
     dal-connection:
-      label: Connections
+      label: Соединения
       all: all connections
       specific: connection "{{target}}"
       operations:
@@ -346,7 +346,7 @@ resources:
 
 
     report:
-      label: Reports
+      label: Отчеты
       all: all reports
       specific: report "{{target}}"
       operations:

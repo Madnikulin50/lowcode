@@ -4,7 +4,7 @@ general:
   error: Ошибка
   success: Успех
   warning: Предупреждение
-  info: Info
+  info: Информация
 list:
   load:
     error: Ошибка загрузки списка ресурсов

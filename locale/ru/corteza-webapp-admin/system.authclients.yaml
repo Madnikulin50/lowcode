@@ -83,7 +83,7 @@ list:
     state: State
   rows:
     filters:
-      deleted: Deleted
+      deleted: Удаленные
   filterForm:
     deleted:
       label: deleted clients

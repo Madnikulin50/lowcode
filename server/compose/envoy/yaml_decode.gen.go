@@ -634,7 +634,7 @@ func (d *auxYamlDoc) unmarshalModuleNode(dctx documentContext, n *yaml.Node, met
 
 			break
 
-		case "id":
+		case "id", "moduleid":
 			// Handle identifiers
 			err = y7s.DecodeScalar(n, "id", &auxNodeValue)
 			if err != nil {

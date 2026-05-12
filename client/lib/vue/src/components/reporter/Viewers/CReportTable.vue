@@ -127,7 +127,7 @@
         class="ml-auto gap-1"
       >
         <b-button
-          :disabled="!hasPrevPage"
+            v-if="hasPrevPage"
           variant="outline-extra-light"
           class="d-flex align-items-center justify-content-center text-dark border-0 p-1"
           @click="goToPage()"
@@ -138,7 +138,7 @@
         </b-button>
 
         <b-button
-          :disabled="!hasPrevPage"
+          v-if="hasPrevPage"
           variant="outline-extra-light"
           class="d-flex align-items-center justify-content-center text-dark border-0 p-1"
           @click="goToPage('prevPage')"
@@ -151,7 +151,7 @@
         </b-button>
 
         <b-button
-          :disabled="!hasNextPage"
+          v-if="hasNextPage"
           variant="outline-extra-light"
           class="d-flex align-items-center justify-content-center text-dark border-0 p-1"
           @click="goToPage('nextPage')"

@@ -17,7 +17,7 @@ label:
   all: Все
   any: Any
   label: Label
-  or: Or
+  or: ИЛИ
 loading: Загрузка...
 name: Имя
 new-workflow: New Workflow
@@ -29,7 +29,7 @@ reset: Reset
 searchPlaceholder: Search workflows
 subworkflow: Subworkflow
 subworkflows: Subworkflows
-deleted: Deleted
+deleted: Удаленные
 disabled: Disabled
 without: Without
 only: Only

@@ -59,7 +59,7 @@ calendar:
     moduleLabel: Модуль
     modulePlaceholder: Выберите модуль
     optionLabel: Записи
-    prefilterLabel: Prefilter events
+    prefilterLabel: Предварительный фильтр events
     prefilterPlaceholder: field1 = 1 AND field2 = 232
     titleLabel: Event title
     titlePlaceholder: Поле used as event title
@@ -67,13 +67,13 @@ calendar:
     optionLabel: Reminders
   today: Сегодня
   view:
-    dayGridMonth: Month
+    dayGridMonth: Месяц
     default: Default view
     enabled: Enabled views
     footnote: Make sure default is one of the available views
     listMonth: Agenda
     timeGridDay: Day
-    timeGridWeek: Week
+    timeGridWeek: Неделя
     onEventClick: On event click
     openInSameTab: Open record in the same tab
     openInNewTab: Open record in a new tab
@@ -94,7 +94,7 @@ chart:
   configure:
     label: Configure chart
     reportLabel: Отчет {{l}}
-    reportsLabel: Reports
+    reportsLabel: Отчеты
   display: Диаграмма отображаемая в блоке
   drillDown:
     label: Проваливание
@@ -267,15 +267,15 @@ metric:
     operationPlaceholder: Aggregation operation
     operationStd: Std
     operationSum: Сумма
-    prefixLabel: Prefix
+    prefixLabel: Префикс
     refreshData: Refresh data
-    suffixLabel: Suffix
+    suffixLabel: Суффикс
     tabTitle: Метрика
     transformFunctionDescription: v - current value; label - current value's label
     transformFunctionLabel: Transform value
   editStyle:
-    backgroundColor: Фон color
-    color: Text color
+    backgroundColor: Цвет фона
+    color: Цвет текста
     colorPicker: Выберите цвет
     fontSize: Font size in pixels
     labelLabel: Метка style
@@ -592,7 +592,7 @@ recordList:
     filterHide: Users will be able to filter the list
     prefilterLabel: Filtering
     generalLabel: Основные настройки
-    prefilterCommand: Prefilter
+    prefilterCommand: Предварительный фильтр
     prefilterPlaceholder: field1 = 1 AND field2 = 232
     presortFootnote: Simplified SQL condition (ORDER BY ...) syntax is supported
     presortToggleInput: Toggle input type
@@ -948,7 +948,7 @@ geometry:
     moduleLabel: Модуль*
     modulePlaceholder: (No module)
     optionLabel: Records
-    prefilterLabel: Prefilter sources
+    prefilterLabel: Предварительный фильтр sources
     colorLabel: Marker color
     geometryFieldLabel: Геопозиция field*
     titleLabel: Заголовок

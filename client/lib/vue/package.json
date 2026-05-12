@@ -1,5 +1,5 @@
 {
-  "name": "corteza-lib/vue/dist",
+  "name": "lib-vue",
   "description": "Corteza Vue.js JavaScript/TypeScript libs",
   "version": "2024.9.8",
   "license": "Apache-2.0",

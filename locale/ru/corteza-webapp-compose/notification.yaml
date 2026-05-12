@@ -73,7 +73,7 @@ module:
   saveFailed: Не удалось сохранить модуль
   saved: Module saved
   columns:
-    saved: Columns saved
+    saved: Колонки saved
     saveFailed: Could not save columns
   recordPage:
     createFailed: Could not create module record page
@@ -107,7 +107,7 @@ page:
   block:
     calendar:
       eventFetchFailed: Could not fetch  list of events
-  notFound: Page not found
+  notFound: Станицы не найдены
   createFailed: Could not create a page
   cloneFailed: Could not clone this page
   deleteFailed: Could not delete this page

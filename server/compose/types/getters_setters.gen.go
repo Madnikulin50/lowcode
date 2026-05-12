@@ -7,6 +7,8 @@ package types
 //
 
 import (
+	"fmt"
+
 	"github.com/madnikulin50/lowcode/server/pkg/cast2"
 )
 
@@ -490,6 +492,11 @@ func (r *Record) GetValue(name string, pos uint) (any, error) {
 }
 
 func (r *Record) SetValue(name string, pos uint, value any) (err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("%v", recovered)
+		}
+	}()
 	if r == nil {
 		r = &Record{}
 	}

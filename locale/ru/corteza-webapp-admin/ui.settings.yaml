@@ -1,9 +1,9 @@
 editor:
-  title: User Interface Settings
+  title: User Interface Настройки
 
   corteza-studio:
     title: Theming
-    colorPicker: Choose a color
+    colorPicker: Выберите цвет
     sassNotInstalled: No dart-sass binaries were detected. For guidance on how to set it up, refer to
     installSassDocs: docs here
     custom-css: Custom CSS
@@ -54,13 +54,13 @@ editor:
           description: Icon buttons, borders
         body-bg:
           label: Body background
-          description: Фон color of the application
+          description: Цвет фона of the application
         sidebar-bg:
           label: Sidebar background
-          description: Фон color of the sidebar
+          description: Цвет фона of the sidebar
         topbar-bg:
           label: Topbar background
-          description: Фон color of the topbar
+          description: Цвет фона of the topbar
 
   topbar:
     title: Topbar

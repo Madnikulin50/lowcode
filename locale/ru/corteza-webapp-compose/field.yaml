@@ -60,7 +60,7 @@ kind:
       maxHeight: Максимум height
       maxWidth: Максимальная ширина
       borderRadius: Радиус границы
-      background: Фон color
+      background: Цвет фона
       colorPicker: Выберите цвет
       margin: Margin
       unitType: Unit type
@@ -78,10 +78,10 @@ kind:
     liveExample: Предпросмотр
     precisionLabel: Scale
     precisionTooltip: Number of decimal places
-    prefixLabel: Prefix
-    prefixPlaceholder: Prefix
-    suffixLabel: Suffix
-    suffixPlaceholder: Suffix
+    prefixLabel: Префикс
+    prefixPlaceholder: Префикс
+    suffixLabel: Суффикс
+    suffixPlaceholder: Суффикс
     step:
       label: Шаг
       description: Set the step size for the number field
@@ -132,7 +132,7 @@ kind:
     pickField: Pick field
     suggestionPlaceholder: Start typing to search for records
     prefilterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
-    prefilterLabel: Prefilter records
+    prefilterLabel: Предварительный фильтр records
     prefilterPlaceholder: field1 = 1 AND field2 = 232
     tooltip:
       moduleField: Selecting a record field will impact performance
@@ -145,8 +145,8 @@ kind:
       value: Значение
       label: Метка
       style:
-        textColor: Text color
-        backgroundColor: Фон color
+        textColor: Цвет текста
+        backgroundColor: Цвет фона
     optionNotSelected: No option selected
     optionRemove: Remove
     optionType:
@@ -223,7 +223,7 @@ options:
   multiDelimiter:
     comma: Separated by a comma
     custom: A custom delimiter
-    customLabel: Or use a custom delimiter
+    customLabel: ИЛИ use a custom delimiter
     customPlaceholder: Enter a custom delimiter
     label: Multiple value delimiter
     newline: Each value in a new line

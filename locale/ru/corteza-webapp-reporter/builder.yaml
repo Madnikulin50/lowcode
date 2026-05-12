@@ -1,89 +1,89 @@
 add:
-  datasource: Add datasource
+  datasource: Добавить источник данных
   display-element: Add display element
-available: Available
+available: Доступно
 block:
-  description: Блок description
-  save: Сохранить Блок
-  title: Блок title
-  configuration: Блок configuration
+  description: Описание блока
+  save: Сохранить блок
+  title: Заголовок блока
+  configuration: Конфигурация блока
 datasource:
-  label: Datasource
+  label: Источник данных
   types:
     load:
-      label: Load
-      data-from-resource: Loads data from a specified resource, such as Compose records
+      label: Загрузка
+      data-from-resource: Загрузка данных из указанного ресурса
     link:
-      label: Link
-      load-datasources: Links two Load datasources with a unique column that links them together, such as a Compose record selector
+      label: Связь
+      load-datasources: Соединение загрузок на основе уникальной колонки. Load datasources with a unique column that links them together, such as a Compose record selector
     join:
-      label: Join
+      label: Соединение
       load-datasources: Joins two datasources with a unique column that joins them together, such as a Compose record selector. The join step produces a single set of rows in contrast to the link step which produces an independent data frame for each local row
     aggregate:
-      label: Aggregate
+      label: Агрегация
       load-datasource: Aggregates data from a load datasource based on a column value and aggregates it, such as counting the number of Accounts with the same status
 datasources:
-  label: Datasources
-  save: Сохранить Datasources
+  label: Источники данных
+  save: Сохранить источник
 description: Описание
 display-elements:
   types:
     text: Текст
     metric: Метрика
     table: Таблица
-    chart: Chart
-element: Element
-elements: Elements
-filter-expression: Filter expression
+    chart: Диаграмма
+element: Элемент
+elements: Элементы
+filter-expression: Фильтрующее выражение
 general: Основные
 joined-datasource-handling: Joined datasource handling
 layout: Layout
 layout-options:
   horizontal: Горизонтальное
   vertical: Вертикальное
-limit: Limit
+limit: Лимит
 no-blocks-added: No blocks added yet
-or: Or
-pick-scenario: Pick a scenario
-prefilter: Prefilter
+or: ИЛИ
+pick-scenario: Выберите сценарий
+prefilter: Предварительный фильтр
 presort-order: Presort order
 report:
-  builder: Отчет Builder
-  view: Просмотр Отчет
+  builder: Конструктор отчета
+  view: Просмотр отчета
 save-button: Сохранить
 scenarios:
-  label: Scenarios
-  save: Сохранить Scenarios
-title: Title
+  label: Сценарии
+  save: Сохранить сценарии
+title: Заголовок
 tooltip:
   edit:
-    report: Изменить report
+    report: Изменить отчет
     block: Изменить блок
   add:
-    displayElement: Add display element
+    displayElement: Добавить виджет
   delete:
-    block: Delete block
-  configure-scenarios: Configure scenarios
-  unsavedChanges: Unsaved changes
-available-columns: Available columns
-selected-columns: Selected columns
-no-columns-found: No columns found
+    block: Удалить блок
+  configure-scenarios: Настройки сценариев
+  unsavedChanges: Несохраненные изменения
+available-columns: Доступные колонки
+selected-columns: Выбранные колонки
+no-columns-found: Не найдено ни одной колонки
 type-to-search: Type here to search among columns
-selected: Selected
-select-all: Select all
-unselect-all: Unselect all
+selected: Выбрано
+select-all: Выбрать все
+unselect-all: Снять выделение
 value: Значение
 name: Имя
-unsaved-changes: Unsaved changes will be lost. Do you wish to leave the page?
+unsaved-changes: Несохраненные изменения will be lost. Do you wish to leave the page?
 filter:
   operators:
-    like: Like
-    notLike: Not Like
+    like: Содержит
+    notLike: Не содержит
     contains: Содержит
     notContains: Не содержит
     equal: Равно
     greaterThan: Больше чем
-    greaterThanEqualTo: Больше чем or equal to
-    lessThanEqualTo: Меньше чем or equal to
+    greaterThanEqualTo: Больше чем или равно
+    lessThanEqualTo: Меньше чем или равно
     lessThan: Меньше чем
     notEqual: Не равно

@@ -9,15 +9,15 @@ system:
     apigw: Integration Gateway
     applications: Приложения
     authclients: Auth Clients
-    connections: Connections
+    connections: Соединения
     code-snippets: Code Snippets
     sensitivityLevel: Sensitivity Levels
     permissions: Права доступа
     queues: Messaging QueuesF
     roles: Роли
-    settings: Auth Settings
+    settings: Auth Настройки
     email: Почтовый адрес settings
-    stats: Stats
+    stats: Статистика
     templates: Templates
 
 compose:
@@ -25,7 +25,7 @@ compose:
   items:
     automation: Автоматизация
     permissions: Права доступа
-    settings: Settings
+    settings: Настройки
 
 automation:
   group: Автоматизация

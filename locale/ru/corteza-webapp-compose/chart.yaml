@@ -12,7 +12,7 @@ colorScheme:
       colors:
         label: Colors
 configure:
-  reportsLabel: Reports
+  reportsLabel: Отчеты
 general:
   label:
     title: Метка
@@ -40,10 +40,10 @@ edit:
       auto: Auto
       date: Дата
       label: Function
-      month: Month
-      quarter: Quarter
-      week: Week
-      year: Year
+      month: Месяц
+      quarter: Квартал
+      week: Неделя
+      year: Год
     gaugeSteps: Steps
     label: Dimensions
     skipMissingValues: Skip missing values
@@ -115,7 +115,7 @@ edit:
     label: Метрика
     labelColor: Метка color
     labelLabel: Метка
-    labelPlaceholder: Total
+    labelPlaceholder: Всего
     symbol:
       label: Symbol
       circle: Circle
@@ -233,10 +233,10 @@ edit:
       label: Format
       placeholder: '0.00'
     prefix:
-      label: Prefix
+      label: Префикс
       placeholder: '#'
     suffix:
-      label: Suffix
+      label: Суффикс
       placeholder: $
     presetFormats:
       label: Format

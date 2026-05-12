@@ -15,7 +15,7 @@ general:
   error: Ошибка
   success: Успех
   warning: Предупреждение
-  info: Info
+  info: Информация
 list:
   load:
     error: Failed to fetch workflows

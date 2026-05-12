@@ -358,6 +358,9 @@ func (e StoreEncoder) recordMaker(ns *types.Namespace, mod *types.Module, record
 				if err != nil {
 					return
 				}
+				if auxv == nil {
+					continue
+				}
 				err = rec.SetValue(k, auxv.Place, auxv.Ref)
 				if err != nil {
 					return

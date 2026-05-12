@@ -1,5 +1,5 @@
 datasource: Datasource
 label: Label
 none: Отсутствует
-prefilter: Prefilter
+prefilter: Предварительный фильтр
 scenario-name: 'Scenario Name...'

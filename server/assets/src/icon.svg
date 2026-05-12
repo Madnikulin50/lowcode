@@ -1,9 +1,80 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.0075 -0.0058 36.9075 38.5121" width="32px" height="32px">
-  <defs>
-    <style type="text/css">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="-0.0075 -0.0058 36.9075 38.5121"
+   width="32px"
+   height="32px"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="icon.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="18.15625"
+     inkscape:cx="20.54389"
+     inkscape:cy="16.991394"
+     inkscape:window-width="1440"
+     inkscape:window-height="831"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <defs
+     id="defs1">
+    <rect
+       x="8.757315"
+       y="-0.11015491"
+       width="23.187608"
+       height="32"
+       id="rect3" />
+    <rect
+       x="0.11015491"
+       y="0.38554217"
+       width="31.889845"
+       height="31.504303"
+       id="rect2" />
+    <rect
+       x="-0.16523236"
+       y="0.11015491"
+       width="32.165232"
+       height="32"
+       id="rect1" />
+    <style
+       type="text/css"
+       id="style1">
 			.st0{fill:#61AFFF;}
 		</style>
   </defs>
-  <path class="st0" d="M2.5,9.4c1.6-2.9,4-5.3,6.9-6.9c3-1.7,6.3-2.5,9.8-2.5c3.9-0.1,7.8,1.1,11.1,3.2c3.2,2.2,5.5,5.3,6.6,9h-8.7 c-0.8-1.7-2-3.1-3.6-4.1c-1.7-0.9-3.5-1.4-5.4-1.3c-2.1,0-4.1,0.5-5.9,1.5c-1.7,1-3.1,2.6-4,4.4c-1,2.1-1.5,4.3-1.4,6.6 c0,2.3,0.4,4.5,1.4,6.6c0.9,1.8,2.3,3.3,4,4.4c1.8,1,3.8,1.6,5.9,1.5c1.9,0,3.8-0.4,5.4-1.4c1.6-1,2.9-2.4,3.6-4.1h8.7 c-1.1,3.7-3.5,6.8-6.6,9c-3.3,2.2-7.2,3.3-11.1,3.2c-3.4,0-6.8-0.8-9.8-2.5c-2.9-1.6-5.2-4-6.9-6.8c-1.7-3-2.6-6.5-2.5-10 C-0.1,15.9,0.8,12.4,2.5,9.4z" id="object-0" style="fill: rgb(97,175,255);"/>
+  <text
+     xml:space="preserve"
+     transform="matrix(1.2035031,0,0,1.2035031,-0.8098,-0.0058)"
+     id="text1"
+     style="font-size:26.6667px;font-family:'Noto Sans Tifinagh Tawellemmet';-inkscape-font-specification:'Noto Sans Tifinagh Tawellemmet';letter-spacing:6px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect1);display:inline;fill:#61afff;fill-opacity:0.803922"><tspan
+       x="-0.16601562"
+       y="56.372744"
+       id="tspan3"><tspan
+         dx="0 14.856789"
+         id="tspan2">LC</tspan></tspan></text>
+  <path
+     d="M 2.7265658,5.2080058 H 5.3567775 V 22.43459 h 9.4661575 v 2.213545 H 2.7265658 Z"
+     id="text2"
+     style="font-size:26.6667px;font-family:'Noto Sans Tifinagh Tawellemmet';-inkscape-font-specification:'Noto Sans Tifinagh Tawellemmet';letter-spacing:6px;white-space:pre;fill:#61afff;fill-opacity:1"
+     transform="matrix(1.4249877,0,0,1.4028264,0.30974057,-2.0684545)"
+     aria-label="L" />
+  <path
+     d="m 25.932313,6.2112629 v 2.773441 Q 24.604187,7.7477232 23.093768,7.1357432 21.59637,6.5237633 19.90366,6.5237633 q -3.333338,0 -5.104173,2.0442734 -1.770836,2.0312523 -1.770836,5.8854243 0,3.84115 1.770836,5.885424 1.770835,2.031252 5.104173,2.031252 1.69271,0 3.190108,-0.611979 1.510419,-0.61198 2.838545,-1.848961 v 2.747399 q -1.38021,0.937501 -2.929691,1.406252 -1.53646,0.468751 -3.255212,0.468751 -4.414068,0 -6.953134,-2.695316 -2.539066,-2.708337 -2.539066,-7.382822 0,-4.6875061 2.539066,-7.382822 2.539066,-2.7083368 6.953134,-2.7083368 1.744794,0 3.281254,0.4687506 1.549481,0.4557297 2.903649,1.3802101 z"
+     id="text3"
+     style="font-size:26.6667px;font-family:'Noto Sans Tifinagh Tawellemmet';-inkscape-font-specification:'Noto Sans Tifinagh Tawellemmet';letter-spacing:6px;white-space:pre;fill:#61afff;fill-opacity:1"
+     transform="matrix(1.4249877,0,0,1.4028264,-5.8905504,-2.0684545)"
+     aria-label="C" />
 </svg>

@@ -44,7 +44,7 @@ list:
   export: Экспорт
   rows:
     filters:
-      deleted: Deleted
+      deleted: Удаленные
   filterForm:
     deleted:
       label: deleted applications

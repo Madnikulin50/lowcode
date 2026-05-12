@@ -33,10 +33,10 @@ list:
     state: State
   rows:
     filters:
-      deleted: Deleted
+      deleted: Удаленные
 
 settings:
-  title: Settings
+  title: Настройки
   profiler:
     label: Profiler
     enabled: Enabled

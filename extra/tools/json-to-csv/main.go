@@ -6,8 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
+	"reflect"
+	"strconv"
 
 	"github.com/madnikulin50/lowcode/server/pkg/cli"
 )
@@ -25,6 +28,20 @@ func init() {
 	flag.StringVar(&jsonFilePath, "in", "./data.json", "location of json data file")
 	flag.StringVar(&outputBase, "out", ".", "base dir for output")
 	flag.Parse()
+}
+
+func isSlice(v interface{}) bool {
+	return reflect.TypeOf(v).Kind() == reflect.Slice || reflect.TypeOf(v).Kind() == reflect.Array
+}
+func getKind(v interface{}) reflect.Kind {
+	kind := reflect.TypeOf(v).Kind()
+
+	if isSlice(v) {
+		kind = reflect.TypeOf(v).Elem().Kind()
+
+	}
+
+	return kind
 }
 
 // Takes JSON input with codegen tasks and definitions and generates files
@@ -102,10 +119,34 @@ func main() {
 			row := make([]string, len(columnsMap))
 			for i, column := range columns {
 				v, ok := m[column]
-				if !ok {
+				if !ok || v == nil {
 					v = ""
 				}
-				row[i] = fmt.Sprintf("%v", v)
+				str := ""
+
+				switch getKind(v) {
+				case reflect.String:
+					str = v.(string)
+				case reflect.Bool:
+					str = fmt.Sprintf("%v", v)
+				case reflect.Float32:
+					t := float64(v.(float32))
+					if math.Ceil(t) == t {
+						str = strconv.FormatInt(int64(t), 10)
+					} else {
+						str = fmt.Sprintf("%v", v)
+					}
+				case reflect.Float64:
+					t := v.(float64)
+					if math.Ceil(t) == t {
+						str = strconv.FormatInt(int64(t), 10)
+					} else {
+						str = fmt.Sprintf("%v", v)
+					}
+				default:
+					str = fmt.Sprintf("%v", v)
+				}
+				row[i] = str
 			}
 			if err := writer.Write(row); err != nil {
 				cli.HandleError(fmt.Errorf("Could not create file %v", err))
