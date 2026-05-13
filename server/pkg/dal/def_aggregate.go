@@ -117,6 +117,15 @@ func (def *Aggregate) dryrun(ctx context.Context) (err error) {
 	return
 }
 
+func isSystemField(field string) bool {
+	switch field {
+	case "createdAt":
+	case "deletedAt":
+		return true
+	}
+	return false
+}
+
 func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, err error) {
 	exec = &aggregate{
 		source: src,
@@ -174,8 +183,12 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	// - groups
 	outAttrs := make(map[string]bool, len(def.Group)+len(def.OutAttributes))
 	for i, attr := range def.Group {
+		name := attr.RawExpr
 		attr, err = prepAttr(attr)
 		if err != nil {
+			if isSystemField(name) {
+				continue
+			}
 			return
 		}
 
@@ -221,8 +234,8 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	// order
 	for _, s := range def.filter.OrderBy() {
 		if _, ok := outAttrs[s.Column]; !ok {
-			err = fmt.Errorf("order by attribute %s does not exist", s.Column)
-			return
+			//err = fmt.Errorf("order by attribute %s does not exist", s.Column)
+			continue
 		}
 	}
 
