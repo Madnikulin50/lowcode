@@ -2,7 +2,7 @@
 FROM alpine:3 as build-stage
 
 
-
+ARG SASS_VERSION=1.99.0
 RUN apk update && apk add --no-cache file
 
 
@@ -15,7 +15,7 @@ RUN ls ./
 RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
 ARG VERSION=2026.5.13-2
-ARG SASS_VERSION=1.99.0
+
 ARG SERVER_VERSION=${VERSION}
 ARG WEBAPP_VERSION=${VERSION}
 

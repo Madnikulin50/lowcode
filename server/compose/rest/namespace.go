@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -70,6 +71,7 @@ type (
 	Namespace struct {
 		namespace  service.NamespaceService
 		module     service.ModuleService
+		alt        *systemService.DalSchemaAlteration
 		page       pageFinder
 		pageLayout pageLayoutFinder
 		chart      chartFinder
@@ -99,6 +101,7 @@ func (Namespace) New() *Namespace {
 	return &Namespace{
 		namespace:  service.DefaultNamespace,
 		module:     service.DefaultModule,
+		alt:        systemService.DefaultDalSchemaAlteration,
 		page:       service.DefaultPage,
 		pageLayout: service.DefaultPageLayout,
 		chart:      service.DefaultChart,
@@ -479,6 +482,36 @@ func (ctrl Namespace) importRecordData(ctx context.Context,
 	}
 	if ns, err = ctrl.namespace.FindByID(ctx, namespaceID); err != nil {
 		return err
+	}
+	msvc := dal.Service()
+	issues := msvc.SearchModelIssues(mod.ID)
+	if len(issues) > 0 {
+		mod, err = ctrl.module.Update(ctx, mod)
+		if err != nil {
+			return err
+		}
+		issues := msvc.SearchModelIssues(mod.ID)
+		for _, issue := range issues {
+			batchId, ok := issue.Meta["batchID"].(string)
+			if !ok {
+				continue
+			}
+			id, err := strconv.ParseUint(batchId, 10, 64)
+			if err != nil {
+				continue
+			}
+			f := systemTypes.DalSchemaAlterationFilter{
+				BatchID: []uint64{id},
+			}
+
+			aa, _, err := ctrl.alt.Search(ctx, f)
+			if err != nil {
+				continue
+			}
+			for _, a := range aa {
+				ctrl.alt.Apply(ctx, a.ID)
+			}
+		}
 	}
 
 	importSession, err := service.DefaultImportSession.Create(ctx, reader, moduleName+".json",

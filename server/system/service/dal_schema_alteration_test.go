@@ -72,7 +72,7 @@ func TestAppliableAlterations(t *testing.T) {
 		},
 	}
 
-	svc := dalSchemaAlteration{}
+	svc := DalSchemaAlteration{}
 	for _, tc := range tcc {
 		t.Run(tc.name, func(t *testing.T) {
 			got := svc.appliableAlterations(tc.in...)

@@ -11332,7 +11332,7 @@ func (s *Store) checkDalConnectionConstraints(ctx context.Context, res *systemTy
 	return nil
 }
 
-// CreateDalSchemaAlteration creates one or more rows in dalSchemaAlteration collection
+// CreateDalSchemaAlteration creates one or more rows in DalSchemaAlteration collection
 //
 // This function is auto-generated
 func (s *Store) CreateDalSchemaAlteration(ctx context.Context, rr ...*systemType.DalSchemaAlteration) (err error) {
@@ -11349,7 +11349,7 @@ func (s *Store) CreateDalSchemaAlteration(ctx context.Context, rr ...*systemType
 	return
 }
 
-// UpdateDalSchemaAlteration updates one or more existing entries in dalSchemaAlteration collection
+// UpdateDalSchemaAlteration updates one or more existing entries in DalSchemaAlteration collection
 //
 // This function is auto-generated
 func (s *Store) UpdateDalSchemaAlteration(ctx context.Context, rr ...*systemType.DalSchemaAlteration) (err error) {
@@ -11366,7 +11366,7 @@ func (s *Store) UpdateDalSchemaAlteration(ctx context.Context, rr ...*systemType
 	return
 }
 
-// UpsertDalSchemaAlteration updates one or more existing entries in dalSchemaAlteration collection
+// UpsertDalSchemaAlteration updates one or more existing entries in DalSchemaAlteration collection
 //
 // This function is auto-generated
 func (s *Store) UpsertDalSchemaAlteration(ctx context.Context, rr ...*systemType.DalSchemaAlteration) (err error) {
@@ -11404,7 +11404,7 @@ func (s *Store) UpsertDalSchemaAlteration(ctx context.Context, rr ...*systemType
 	return
 }
 
-// DeleteDalSchemaAlteration Deletes one or more entries from dalSchemaAlteration collection
+// DeleteDalSchemaAlteration Deletes one or more entries from DalSchemaAlteration collection
 //
 // This function is auto-generated
 func (s *Store) DeleteDalSchemaAlteration(ctx context.Context, rr ...*systemType.DalSchemaAlteration) (err error) {
@@ -11417,7 +11417,7 @@ func (s *Store) DeleteDalSchemaAlteration(ctx context.Context, rr ...*systemType
 	return nil
 }
 
-// DeleteDalSchemaAlterationByID deletes single entry from dalSchemaAlteration collection
+// DeleteDalSchemaAlterationByID deletes single entry from DalSchemaAlteration collection
 //
 // This function is auto-generated
 func (s *Store) DeleteDalSchemaAlterationByID(ctx context.Context, id uint64) error {
@@ -11426,7 +11426,7 @@ func (s *Store) DeleteDalSchemaAlterationByID(ctx context.Context, id uint64) er
 	}))
 }
 
-// TruncateDalSchemaAlterations Deletes all rows from the dalSchemaAlteration collection
+// TruncateDalSchemaAlterations Deletes all rows from the DalSchemaAlteration collection
 func (s *Store) TruncateDalSchemaAlterations(ctx context.Context) error {
 	return s.Exec(ctx, dalSchemaAlterationTruncateQuery(s.Dialect.GOQU()))
 }

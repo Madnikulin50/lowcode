@@ -8,12 +8,13 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
 	"github.com/madnikulin50/lowcode/server/pkg/errors"
 	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"github.com/madnikulin50/lowcode/server/system/types"
-	"strings"
-	"time"
 )
 
 type (
@@ -464,7 +465,7 @@ func DalSchemaAlterationErrNotAllowedToManage(mm ...*dalSchemaAlterationActionPr
 // It will wrap unrecognized/internal errors with generic errors.
 //
 // This function is auto-generated.
-func (svc dalSchemaAlteration) recordAction(ctx context.Context, props *dalSchemaAlterationActionProps, actionFn func(...*dalSchemaAlterationActionProps) *dalSchemaAlterationAction, err error) error {
+func (svc DalSchemaAlteration) recordAction(ctx context.Context, props *dalSchemaAlterationActionProps, actionFn func(...*dalSchemaAlterationActionProps) *dalSchemaAlterationAction, err error) error {
 	if svc.actionlog == nil || actionFn == nil {
 		// action log disabled or no action fn passed, return error as-is
 		return err

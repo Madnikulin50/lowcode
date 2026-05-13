@@ -77,7 +77,7 @@ func testAllGenerated(t *testing.T, s store.Storer) {
 	t.Run("dalConnection", func(t *testing.T) {
 		testDalConnections(t, s)
 	})
-	t.Run("dalSchemaAlteration", func(t *testing.T) {
+	t.Run("DalSchemaAlteration", func(t *testing.T) {
 		testDalSchemaAlterations(t, s)
 	})
 	t.Run("dalSensitivityLevel", func(t *testing.T) {

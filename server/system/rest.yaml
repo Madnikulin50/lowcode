@@ -1082,7 +1082,7 @@ endpoints:
 
 - title: Data access layer schema alterations
   path: "/dal/schema/alterations"
-  entrypoint: dalSchemaAlteration
+  entrypoint: DalSchemaAlteration
   authentication:
   - Client ID
   - Session ID
