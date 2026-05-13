@@ -92,6 +92,8 @@ export default {
       try {
         const out = await this.$ComposeAPI.namespaceImportRun({
           sessionID: this.session.sessionID,
+          connectionID: e.connectionID,
+          importData: e.importData,
           name: e.name,
           slug: e.slug,
         })

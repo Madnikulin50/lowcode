@@ -8,17 +8,18 @@ package request
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	sqlxTypes "github.com/jmoiron/sqlx/types"
 	"github.com/madnikulin50/lowcode/server/pkg/label"
 	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"github.com/madnikulin50/lowcode/server/pkg/payload"
-	"io"
-	"mime/multipart"
-	"net/http"
-	"strings"
-	"time"
 )
 
 // dummy vars to prevent
@@ -212,7 +213,9 @@ type (
 		// Slug POST parameter
 		//
 		// Imported namespace slug
-		Slug string
+		Slug         string
+		ConnectionID uint64 `json:"connectionID,string"`
+		ImportData   bool   `json:"importData"`
 	}
 
 	NamespaceTriggerScript struct {

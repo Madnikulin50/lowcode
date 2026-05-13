@@ -32,7 +32,7 @@ editor:
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
     meta:
       description: Описание
-      short: Short name *
+      short: Короткое имя *
     partial: Partial template
     partialDescription: Partial templates may be used inside other templates such as headers and footers. Partial templates may not be used on their own.
     title: Basic information
@@ -51,7 +51,7 @@ list:
     handle: Дескриптор
     language: Language
     meta:
-      short: Short name
+      short: Короткое имя
     state: State
   delete: Delete
   undelete: Undelete

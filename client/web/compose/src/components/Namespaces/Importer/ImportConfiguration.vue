@@ -28,6 +28,33 @@
       </b-form-invalid-feedback>
     </b-form-group>
 
+    <b-form-group
+      :label="$t('import.connection.label')"
+      label-class="text-primary"
+      class="mb-0"
+    >
+      <c-input-select
+        v-model="connectionID"
+        :options="connections"
+        :clearable="false"
+        :reduce="o => o.connectionID"
+        :placeholder="$t('import.connection.placeholder')"
+        :get-option-label="({ handle, meta }) => meta.name || handle"
+        :get-option-key="getOptionKey"
+      />
+    </b-form-group>
+
+    <b-form-group
+      :label="$t('import.importData.label')"
+      label-class="text-primary"
+      class="mb-0"
+    >
+      <c-input-checkbox
+        v-model="importData"
+        switch
+      />
+    </b-form-group>
+
     <template #footer>
       <b-button
         data-test-id="button-back"
@@ -72,8 +99,15 @@ export default {
 
   data () {
     return {
+      processing: {
+        connections: true,
+        sensitiveData: true,
+      },
       name: '',
       slug: '',
+      connectionID: null,
+      importData: true,
+      connections: [],
     }
   },
 
@@ -91,12 +125,37 @@ export default {
     },
   },
 
+  created () {
+    this.fetchConnections()
+  },
+
   methods: {
+    fetchConnections () {
+      this.processing.connections = true
+
+      this.$SystemAPI.dataPrivacyConnectionList()
+        .then(({ set = [] }) => {
+          this.connections = set
+          const { connectionID } = set[0] || {}
+          this.connectionID = connectionID
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:connection-load-failed')))
+        .finally(() => {
+          this.processing.connections = false
+        })
+    },
+
+
+    getOptionKey ({ connectionID }) {
+      return connectionID
+    },
     nextStep () {
       // convert to api's structure
       const rtr = {
         name: this.name,
         slug: this.slug,
+        connectionID: this.connectionID,
+        importData: this.importData,
       }
 
       this.$emit('configured', rtr)

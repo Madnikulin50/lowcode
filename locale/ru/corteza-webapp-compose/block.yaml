@@ -505,7 +505,7 @@ recordList:
     importing: Importing records
     success: Импорт successful
     to: Импорт to {{modulename}}
-    uploadFile: Upload the file you want to import (.csv or JSON format)
+    uploadFile: Загрузите файл для импорта (.csv or JSON format)
     idFieldDescription: Records with matching ID's will be updated.
     multiValueDelimiter:
       label: Multi value delimiter

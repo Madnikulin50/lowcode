@@ -745,7 +745,7 @@ func (ctrl Namespace) ImportRun(ctx context.Context, r *request.NamespaceImportR
 		dup.Slug = fmt.Sprintf("cl_%d", r.SessionID)
 	}
 
-	ns, store, err := ctrl.namespace.ImportRun(ctx, r.SessionID, dup)
+	ns, store, err := ctrl.namespace.ImportRun(ctx, r.SessionID, dup, r.ConnectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -758,7 +758,7 @@ func (ctrl Namespace) ImportRun(ctx context.Context, r *request.NamespaceImportR
 			return nil, err
 		}
 	}
-	if store != nil {
+	if store != nil && r.ImportData {
 		namespaceID := ns.ID
 		for _, f := range store.File {
 			if strings.HasPrefix(f.Name, "data") &&

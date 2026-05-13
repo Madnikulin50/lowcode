@@ -1,21 +1,21 @@
 manage-view:
-  label: Manage namespaces
+  label: Управление пространствами
 application:
   label: Enable on application list
-clickOpen: Click to open
+clickOpen: Кликните для открытия
 import:
   buttonLabel: Импорт
-  title: Импорт namespace
-  uploadFileLabel: Upload the file you want to import (.zip format)
-  uploadFilePlaceholder: Кликните кнопку или перенесите файл (.zip format)
+  title: Импорт пространства
+  uploadFileLabel: Загрузите файл для импорта (zip-файл)
+  uploadFilePlaceholder: Кликните кнопку или перенесите файл (zip-файл)
   back: Назад
   import: Импорт
   slug:
-    label: Short name *
+    label: Короткое имя *
 description:
   label: Описание пространства
   placeholder: Enter namespace description
-disabled: Пространство is disabled
+disabled: Пространство отключено
 edit: Изменить пространство
 clone: Дублировать пространство
 cloneSuffix: копия
@@ -57,7 +57,7 @@ visit: Просмотр пространства
 configure: Конфигурировать пространства
 
 manage:
-  title: Manage namespaces
+  title: Управление пространствами
   list-view: Назад к списку пространств
   delete: Удалить
 

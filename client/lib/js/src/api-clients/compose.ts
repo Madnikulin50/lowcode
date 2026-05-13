@@ -485,6 +485,8 @@ export default class Compose {
       sessionID,
       name,
       slug,
+      connectionID,
+      importData,
     } = (a as KV) || {}
     if (!sessionID) {
       throw Error('field sessionID is empty')
@@ -502,6 +504,8 @@ export default class Compose {
     cfg.data = {
       name,
       slug,
+        connectionID,
+        importData,
     }
     return this.api().request(cfg).then(result => stdResolve(result))
   }

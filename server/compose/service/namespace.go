@@ -76,7 +76,7 @@ type (
 		Update(ctx context.Context, namespace *types.Namespace) (*types.Namespace, error)
 		Clone(ctx context.Context, namespaceID uint64, dup *types.Namespace, decoder func() (envoyx.NodeSet, error)) (ns *types.Namespace, err error)
 		ImportInit(ctx context.Context, f multipart.File, size int64) (namespaceImportSession, error)
-		ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace) (ns *types.Namespace, store *zip.Reader, err error)
+		ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace, connectionID uint64) (ns *types.Namespace, store *zip.Reader, err error)
 		DeleteByID(ctx context.Context, namespaceID uint64) error
 	}
 
@@ -314,7 +314,7 @@ func (svc namespace) Clone(ctx context.Context, namespaceID uint64, dup *types.N
 			}
 
 			aProps.setNamespace(dup)
-			dup, err = svc.envoyRun(ctx, s, nn, targetNs, dup)
+			dup, err = svc.envoyRun(ctx, s, nn, targetNs, dup, 0)
 			if err != nil {
 				return err
 			}
@@ -442,7 +442,7 @@ func (svc namespace) ImportInit(ctx context.Context, f multipart.File, size int6
 	return session, svc.recordAction(ctx, aProps, NamespaceActionImportInit, err)
 }
 
-func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace) (ns *types.Namespace, dataStore *zip.Reader, err error) {
+func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace, connectionID uint64) (ns *types.Namespace, dataStore *zip.Reader, err error) {
 	var (
 		aProps = &namespaceActionProps{namespace: dup}
 	)
@@ -490,7 +490,7 @@ func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types
 			newNS, err = svc.envoyRun(ctx,
 				s,
 				session.Nodes,
-				&types.Namespace{ID: session.NamespaceID, Slug: session.Slug, Name: session.Name}, dup)
+				&types.Namespace{ID: session.NamespaceID, Slug: session.Slug, Name: session.Name}, dup, connectionID)
 			if err != nil {
 				return err
 			}
@@ -768,7 +768,9 @@ func (svc namespace) canImport(ctx context.Context) error {
 	return nil
 }
 
-func (svc namespace) envoyRun(ctx context.Context, s store.Storer, nodes envoyx.NodeSet, oldNS, newNS *types.Namespace) (ns *types.Namespace, err error) {
+func (svc namespace) envoyRun(ctx context.Context, s store.Storer, nodes envoyx.NodeSet,
+	oldNS, newNS *types.Namespace,
+	connectionID uint64) (ns *types.Namespace, err error) {
 	// Get the NS node
 	oldRef := envoyx.Ref{
 		ResourceType: types.NamespaceResourceType,
@@ -795,6 +797,13 @@ func (svc namespace) envoyRun(ctx context.Context, s store.Storer, nodes envoyx.
 
 	// - all the child refs
 	for _, n := range nodes {
+		if connectionID > 0 && n.ResourceType == types.ModuleResourceType {
+			m, ok := n.Resource.(*types.Module)
+			if !ok {
+				continue
+			}
+			m.Config.DAL.ConnectionID = connectionID
+		}
 		nr := make(map[string]envoyx.Ref)
 		for k, r := range n.References {
 			if r.ResourceType == types.NamespaceResourceType {
