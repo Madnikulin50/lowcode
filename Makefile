@@ -42,9 +42,9 @@ drelease:
 	@echo "---Build client---"
 	@(cd $(CURDIR)/client && make build) || true
 	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build -t madnikulin50/pnp-lowcode:2026.6.6 .)
+	@(cd $(CURDIR) && docker build -t madnikulin50/pnp-lowcode:2026.6.8 .)
 	@echo "---Push docker---"
-	@(cd $(CURDIR) && docker push madnikulin50/pnp-lowcode:2026.6.6)
+	@(cd $(CURDIR) && docker push madnikulin50/pnp-lowcode:2026.6.8)
 
 ddebug:
 	@echo "---Build server---"

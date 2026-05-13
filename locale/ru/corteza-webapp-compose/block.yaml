@@ -261,6 +261,7 @@ metric:
     modulePlaceholder: Pick a module
     numberFormat: Number format
     operationAvg: Среднее
+    operationUniqueCount: Количество уникальных
     operationLabel: Aggregation operation
     operationMax: Максимум
     operationMin: Минимум

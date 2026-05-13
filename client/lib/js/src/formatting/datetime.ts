@@ -25,14 +25,14 @@ function format (input: DateTimeInput, options: DateTimeFormatOptions): string {
  * Outputs locally formatted date and time, no seconds
  *
  * Examples:
- * "Wednesday, September 8, 2021 at 9:41 AM"
- * "sreda, 08. september 2021 09:41"
- * "srijeda, 8. rujna 2021. u 09:42"
+ * "September 8, 2021 at 9:41 AM"
+ * "08 september 2021 09:41"
+ * "8.09.2021 09:42"
  *
  * @param input
  * @param options
  */
-export function fullDateTime (input: DateTimeInput, options: DateTimeFormatOptions = { dateStyle: 'full', timeStyle: 'short' }): string {
+export function fullDateTime (input: DateTimeInput, options: DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' }): string {
   return format(input, options)
 }
 

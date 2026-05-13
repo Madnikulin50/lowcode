@@ -3178,13 +3178,13 @@ if(unsortableFieldKinds.includes(this.kind)){this.isSortable=false;}if(unfiltera
  * Outputs locally formatted date and time, no seconds
  *
  * Examples:
- * "Wednesday, September 8, 2021 at 9:41 AM"
- * "sreda, 08. september 2021 09:41"
- * "srijeda, 8. rujna 2021. u 09:42"
+ * "September 8, 2021 at 9:41 AM"
+ * "08 september 2021 09:41"
+ * "8.09.2021 09:42"
  *
  * @param input
  * @param options
- */function fullDateTime(input){var options=arguments.length>1&&arguments[1]!==undefined?arguments[1]:{dateStyle:'full',timeStyle:'short'};return format(input,options);}/**
+ */function fullDateTime(input){var options=arguments.length>1&&arguments[1]!==undefined?arguments[1]:{dateStyle:'medium',timeStyle:'short'};return format(input,options);}/**
  * Outputs locally formatted date without time
  *
  * Example:

@@ -106,6 +106,11 @@ var (
 				return exp.NewLiteralExpression("? - ?", args[0], args[1])
 			},
 		},
+		"uniquecount": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("count(distinct ?)", args[0])
+			},
+		},
 		"mult": {
 			Handler: func(args ...exp.Expression) exp.Expression {
 				// Handling COUNT(*) scenario:

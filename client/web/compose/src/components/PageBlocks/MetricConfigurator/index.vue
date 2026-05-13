@@ -399,6 +399,10 @@ export default {
           label: this.$t('metric.edit.operationAvg'),
           operation: 'avg',
         },
+        {
+          label: this.$t('metric.edit.operationUniqueCount'),
+          operation: 'uniqueCount',
+        },
       ],
     }
   },
