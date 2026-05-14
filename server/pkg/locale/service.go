@@ -444,16 +444,17 @@ func (svc *service) TResourceFor(tag language.Tag, ns, key string, rr ...string)
 func (svc *service) ResourceTranslations(tag language.Tag, resource string) ResourceTranslationIndex {
 	out := make(ResourceTranslationIndex)
 
-	svc.l.Lock()
-	defer svc.l.Unlock()
-
-	if svc != nil && svc.set != nil {
-		if l, has := svc.set[tag]; has {
-			return l.resourceTranslations(resource)
-		}
-	}
-
 	return out
+	/*svc.l.Lock()
+	  defer svc.l.Unlock()
+
+	  if svc != nil && svc.set != nil {
+	  	if l, has := svc.set[tag]; has {
+	  		return l.resourceTranslations(resource)
+	  	}
+	  }
+
+	  return out*/
 }
 
 // Finds language and uses it to translate the given key
