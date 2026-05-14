@@ -254,33 +254,35 @@ metric:
     metricFieldLabel: Поле
     metricFieldPlaceholder: Dimension field
     metricLabel: Метрика
-    metricFieldSelect: Select field
+    metricFieldSelect: Выберите поле
     metricSelectAggregate: Select aggregation operation
-    metricAggregateLabel: Aggregation operation
+    expressionFieldLabel: Формула для вычисления
+    expressionPlaceholder: count(id) / A
+    metricAggregateLabel: Операция для агрегации
     moduleLabel: Модуль
-    modulePlaceholder: Pick a module
-    numberFormat: Number format
+    modulePlaceholder: Выберите модуль
+    numberFormat: Формат числа
     operationAvg: Среднее
     operationUniqueCount: Количество уникальных
-    operationLabel: Aggregation operation
+    operationLabel: Операция для агрегации
     operationMax: Максимум
     operationMin: Минимум
-    operationPlaceholder: Aggregation operation
+    operationPlaceholder: Операция для агрегации
     operationStd: Std
     operationSum: Сумма
     prefixLabel: Префикс
-    refreshData: Refresh data
+    refreshData: Обновить данные
     suffixLabel: Суффикс
     tabTitle: Метрика
-    transformFunctionDescription: v - current value; label - current value's label
-    transformFunctionLabel: Transform value
+    transformFunctionDescription: v - текущее значение; label - current value's label
+    transformFunctionLabel: Преобразовать значение
   editStyle:
     backgroundColor: Цвет фона
     color: Цвет текста
     colorPicker: Выберите цвет
     fontSize: Font size in pixels
-    labelLabel: Метка style
-    valueLabel: Значение style
+    labelLabel: Стиль метки
+    valueLabel: Стиль занчения
   label: Метрика
 record:
   referenceRecordField: Reference record
@@ -321,7 +323,7 @@ record:
     label: Conditional fields
     action: + Добавить
     placeholder: When should this field be displayed?
-    selectPlaceholder: Select field
+    selectPlaceholder: Выберите поле
     field: Поле
     condition: Condition
     clearOnHide: Clear On Hide
@@ -491,7 +493,7 @@ recordList:
   hideConfigureFieldsButton: Users will be able to configure which fields to display
   enableRecordPageNavigation: Users will be able to navigate to previous/next record
   import:
-    dropzoneFileAdded: "{{name}} загружено и готово к импорту ({{count}} record)"
+    dropzoneFileAdded: "{{name}} загружено и готово к импорту ({{count}} строк)"
     dropzoneFileAdded_plural: "{{name}} загружено и готово к импорту ({{count}} строк)"
     dropzoneLabel: Кликните кнопку или перенесите файл (.csv or JSON)
     failed: "Something went wrong during the import. Please try again: {{failReason}}"
@@ -502,11 +504,11 @@ recordList:
     onError: If any record fails to import
     onErrorFail: Отменить импорт
     onErrorSkip: Skip record
-    pickModuleField: Pick a module field
+    pickModuleField: Выберите модуль field
     importing: Importing records
-    success: Импорт successful
-    to: Импорт to {{modulename}}
-    uploadFile: Загрузите файл для импорта (.csv or JSON format)
+    success: Импорт прошел успешно
+    to: Импорт в {{modulename}}
+    uploadFile: Загрузите файл для импорта (.csv или .json файл)
     idFieldDescription: Records with matching ID's will be updated.
     multiValueDelimiter:
       label: Multi value delimiter
@@ -525,7 +527,7 @@ recordList:
         label: "[value 1|value 2|...|value n]"
     report:
       count: Количество строк
-      detectedErrors: Detected errors
+      detectedErrors: Обнаруженные ошибки
       error: Ошибка
       failedEntries: Failed source entries
       failedEntriesLine: Entry
@@ -888,7 +890,7 @@ progress:
   add: + Добавить
   count: Количество
   aggregate:
-    label: Aggregation operation
+    label: Операция для агрегации
     select: Select aggregation operation
   animated: Анимированное
   default-variant: Вариант по-умолчанию
@@ -896,7 +898,7 @@ progress:
   fetch-failed: Failed to fetch progress bar report
   field:
     label: Поле
-    select: Select field
+    select: Выберите поле
   label: Progress bar
   module:
     select: Select module

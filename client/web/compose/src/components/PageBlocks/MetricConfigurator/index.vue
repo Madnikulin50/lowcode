@@ -190,16 +190,31 @@
               </b-form-group>
 
               <b-form-group
+                v-if="edit.metricField !== 'expression'"
                 :label="$t('metric.edit.metricAggregateLabel')"
                 label-class="text-primary"
               >
                 <c-input-select
                   v-model="edit.operation"
-                  :disabled="edit.metricField === 'count'"
+                  :disabled="edit.metricField === 'count' || edit.metricField === 'expression'"
                   :placeholder="$t('metric.edit.metricSelectAggregate')"
                   :options="aggregationOperations"
                   :get-option-key="getOptionAggregationOperationKey"
-                  :reduce="a => a.operation"
+                  :reduce="a => a.operation"/>
+              </b-form-group>
+
+              <b-form-group
+                v-if="edit.metricField === 'expression'"
+                :label="$t('metric.edit.expressionFieldLabel')"
+                label-class="text-primary"
+              >
+                <c-input-expression
+                  v-model="edit.expression"
+                  auto-complete
+                  placeholder="$t('metric.edit.expressionPlaceholder')"
+                  class="mb-1"
+                  min-height="3.448rem"
+                  :suggestion-params="recordAutoCompleteParams"
                 />
               </b-form-group>
 
@@ -430,6 +445,7 @@ export default {
     metricFields () {
       return [
         { name: 'count', label: 'Count' },
+        { name: 'expression', label: 'Expression' },
         ...this.fields.filter(f => f.kind === 'Number')
           .sort((a, b) => a.label.localeCompare(b.label)),
       ]
@@ -515,7 +531,7 @@ export default {
     },
 
     onMetricFieldChange (field) {
-      if (field === 'count') {
+      if (field === 'count' || field === 'expression') {
         this.edit.operation = undefined
       } else if (!this.edit.operation) {
         this.edit.operation = this.aggregationOperations[0].operation

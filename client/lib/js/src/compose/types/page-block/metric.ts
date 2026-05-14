@@ -35,6 +35,7 @@ interface Metric {
   bucketSize?: string;
   metricField: string;
   operation: string;
+  expression?: string;
   numberFormat?: string;
   prefix?: string;
   suffix?: string;
@@ -54,6 +55,7 @@ const defaultMetric: Readonly<Metric> = Object.freeze({
   bucketSize: '',
   metricField: '',
   operation: '',
+  expression: '',
   numberFormat: '',
   prefix: '',
   suffix: '',
@@ -137,11 +139,16 @@ export class PageBlockMetric extends PageBlock {
   /**
    * Helper to construct reporter's params
    */
-  private formatParams ({ moduleID, filter, metricField, operation = '' }: Metric): ReporterParams {
+  private formatParams ({ moduleID, filter, metricField, operation = '', expression = '' }: Metric): ReporterParams {
     let metrics = ''
 
     if (operation && metricField && metricField !== 'count') {
-      metrics = `${operation}(${metricField}) AS rp`
+        if (metricField !== 'expression') {
+            metrics = `${operation}(${metricField}) AS rp`
+        } else {
+            metrics = `(${expression}) AS rp`
+        }
+
     }
 
     return {

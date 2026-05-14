@@ -256,6 +256,8 @@ metric:
     metricLabel: Metric
     metricFieldSelect: Select field
     metricSelectAggregate: Select aggregation operation
+    expressionFieldLabel: Equation expression
+    expressionPlaceholder: count(id) / A
     metricAggregateLabel: Aggregation operation
     moduleLabel: Module
     modulePlaceholder: Pick a module

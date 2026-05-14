@@ -3425,12 +3425,12 @@ var right='';if(h.views&&h.views.length>=2){right=this.reorderViews(h.views).joi
      * Converts old < V4 view names to >= V4 view names.
      * @note It wil preserve fields that don't need to/can't be converted
      * @param {string[]} views converted view names
-     */},{key:"handleLegacyViews",value:function handleLegacyViews(views){return views.map(function(v){return legacyViewMapping[v]||v;});}},{key:"makeFeed",value:function makeFeed(f){return new Feed$1(f);}}]);}(PageBlock);PageBlockCalendar.feedResources=Object.freeze({record:'compose:record',reminder:'system:reminder'});PageBlockCalendar.ReminderFeed=ReminderFeed;PageBlockCalendar.RecordFeed=RecordFeed$1;Registry.set(kind$7,PageBlockCalendar);var merge$4=lodash.merge;var kind$6='Metric';var defaultMetric=Object.freeze({label:'',moduleID:'',dimensionField:'',dateFormat:'',filter:'',bucketSize:'',metricField:'',operation:'',numberFormat:'',prefix:'',suffix:'',transformFx:'',valueStyle:{backgroundColor:'#FFFFFF00',color:'#000000',fontSize:undefined},drillDown:{enabled:false,blockID:'',recordListOptions:{fields:[]}}});var defaults$6=Object.freeze({metrics:[],refreshRate:0,showRefresh:false,magnifyOption:''});var PageBlockMetric=/*#__PURE__*/function(_PageBlock12){function PageBlockMetric(i){var _this54;_classCallCheck$1(this,PageBlockMetric);_this54=_callSuper(this,PageBlockMetric,[i]);_this54.kind=kind$6;_this54.options=Object.assign({},defaults$6);_this54.applyOptions(i===null||i===void 0?void 0:i.options);return _this54;}_inherits(PageBlockMetric,_PageBlock12);return _createClass(PageBlockMetric,[{key:"applyOptions",value:function applyOptions(o){if(!o)return;Apply(this.options,o,Number,'refreshRate');Apply(this.options,o,Boolean,'showRefresh');Apply(this.options,o,String,'magnifyOption');if(o.metrics){this.options.metrics=o.metrics.map(function(m){return merge$4({},defaultMetric,m);});}}/**
+     */},{key:"handleLegacyViews",value:function handleLegacyViews(views){return views.map(function(v){return legacyViewMapping[v]||v;});}},{key:"makeFeed",value:function makeFeed(f){return new Feed$1(f);}}]);}(PageBlock);PageBlockCalendar.feedResources=Object.freeze({record:'compose:record',reminder:'system:reminder'});PageBlockCalendar.ReminderFeed=ReminderFeed;PageBlockCalendar.RecordFeed=RecordFeed$1;Registry.set(kind$7,PageBlockCalendar);var merge$4=lodash.merge;var kind$6='Metric';var defaultMetric=Object.freeze({label:'',moduleID:'',dimensionField:'',dateFormat:'',filter:'',bucketSize:'',metricField:'',operation:'',expression:'',numberFormat:'',prefix:'',suffix:'',transformFx:'',valueStyle:{backgroundColor:'#FFFFFF00',color:'#000000',fontSize:undefined},drillDown:{enabled:false,blockID:'',recordListOptions:{fields:[]}}});var defaults$6=Object.freeze({metrics:[],refreshRate:0,showRefresh:false,magnifyOption:''});var PageBlockMetric=/*#__PURE__*/function(_PageBlock12){function PageBlockMetric(i){var _this54;_classCallCheck$1(this,PageBlockMetric);_this54=_callSuper(this,PageBlockMetric,[i]);_this54.kind=kind$6;_this54.options=Object.assign({},defaults$6);_this54.applyOptions(i===null||i===void 0?void 0:i.options);return _this54;}_inherits(PageBlockMetric,_PageBlock12);return _createClass(PageBlockMetric,[{key:"applyOptions",value:function applyOptions(o){if(!o)return;Apply(this.options,o,Number,'refreshRate');Apply(this.options,o,Boolean,'showRefresh');Apply(this.options,o,String,'magnifyOption');if(o.metrics){this.options.metrics=o.metrics.map(function(m){return merge$4({},defaultMetric,m);});}}/**
      * Helper function to fetch and parse reporter's reports.
      */},{key:"fetch",value:function fetch(_a,reporter_1){return __awaiter$1(this,arguments,void 0,function(_ref25,reporter){var _this55=this;var m=_ref25.m;return/*#__PURE__*/_regeneratorRuntime().mark(function _callee27(){var w,datasets,rtr;return _regeneratorRuntime().wrap(function _callee27$(_context28){while(1)switch(_context28.prev=_context28.next){case 0:_context28.next=2;return reporter(_this55.formatParams(m));case 2:w=_context28.sent;datasets=w.map(function(r){return r.rp!==undefined?r.rp:r.count;});if(m.operation==='max'){rtr=datasets.sort(function(a,b){return b-a;})[0];}else if(m.operation==='min'){rtr=datasets.sort(function(a,b){return a-b;})[0];}else if(m.operation==='avg'){rtr=datasets.reduce(function(acc,cur){return acc+cur;},0)/datasets.length;}else {rtr=datasets.reduce(function(acc,cur){return acc+cur;},0);}if(m.transformFx){// eslint-disable-next-line no-new-func
 rtr=new Function('v',"return ".concat(m.transformFx))(rtr);}return _context28.abrupt("return",[{value:rtr}]);case 7:case "end":return _context28.stop();}},_callee27);})();});}/**
      * Helper to construct reporter's params
-     */},{key:"formatParams",value:function formatParams(_ref26){var moduleID=_ref26.moduleID,filter=_ref26.filter,metricField=_ref26.metricField,_ref26$operation=_ref26.operation,operation=_ref26$operation===void 0?'':_ref26$operation;var metrics='';if(operation&&metricField&&metricField!=='count'){metrics="".concat(operation,"(").concat(metricField,") AS rp");}return {moduleID:moduleID,filter:filter,metrics:metrics,// Since metric produces one value we want one dataset, deletedAt is the same for all existing records
+     */},{key:"formatParams",value:function formatParams(_ref26){var moduleID=_ref26.moduleID,filter=_ref26.filter,metricField=_ref26.metricField,_ref26$operation=_ref26.operation,operation=_ref26$operation===void 0?'':_ref26$operation,_ref26$expression=_ref26.expression,expression=_ref26$expression===void 0?'':_ref26$expression;var metrics='';if(operation&&metricField&&metricField!=='count'){if(metricField!=='expression'){metrics="".concat(operation,"(").concat(metricField,") AS rp");}else {metrics="(".concat(expression,") AS rp");}}return {moduleID:moduleID,filter:filter,metrics:metrics,// Since metric produces one value we want one dataset, deletedAt is the same for all existing records
 dimensions:'deletedAt'};}},{key:"makeMetric",value:function makeMetric(){return merge$4({},defaultMetric);}}]);}(PageBlock);Registry.set(kind$6,PageBlockMetric);var kind$5='Comment';var defaults$5=Object.freeze({moduleID:NoID,filter:'',titleField:'',contentField:'',replyField:'',sortDirection:'asc',referenceField:'',refreshRate:0,showRefresh:false,magnifyOption:'',attachmentField:'',reactionsField:''});var PageBlockComment=/*#__PURE__*/function(_PageBlock13){function PageBlockComment(i){var _this56;_classCallCheck$1(this,PageBlockComment);_this56=_callSuper(this,PageBlockComment,[i]);_this56.kind=kind$5;_this56.options=Object.assign({},defaults$5);_this56.applyOptions(i===null||i===void 0?void 0:i.options);return _this56;}_inherits(PageBlockComment,_PageBlock13);return _createClass(PageBlockComment,[{key:"applyOptions",value:function applyOptions(o){if(!o)return;Apply(this.options,o,CortezaID,'moduleID');Apply(this.options,o,String,'titleField','contentField','replyField','referenceField','attachmentField','reactionsField','filter','sortDirection','magnifyOption');Apply(this.options,o,Number,'refreshRate');Apply(this.options,o,Boolean,'showRefresh');}}]);}(PageBlock);Registry.set(kind$5,PageBlockComment);var kind$4='Report';var defaults$4=Object.freeze({reportID:NoID,scenarioID:NoID,elementID:NoID,refreshRate:0,showRefresh:false,magnifyOption:''});var PageBlockReport=/*#__PURE__*/function(_PageBlock14){function PageBlockReport(i){var _this57;_classCallCheck$1(this,PageBlockReport);_this57=_callSuper(this,PageBlockReport,[i]);_this57.kind=kind$4;_this57.options=Object.assign({},defaults$4);_this57.applyOptions(i===null||i===void 0?void 0:i.options);return _this57;}_inherits(PageBlockReport,_PageBlock14);return _createClass(PageBlockReport,[{key:"applyOptions",value:function applyOptions(o){if(!o)return;Apply(this.options,o,CortezaID,'reportID','scenarioID','elementID');Apply(this.options,o,Number,'refreshRate');Apply(this.options,o,Boolean,'showRefresh');Apply(this.options,o,String,'magnifyOption');}}]);}(PageBlock);Registry.set(kind$4,PageBlockReport);var ChartType;(function(ChartType){ChartType["pie"]="pie";ChartType["bar"]="bar";ChartType["line"]="line";ChartType["doughnut"]="doughnut";ChartType["funnel"]="funnel";ChartType["gauge"]="gauge";ChartType["radar"]="radar";ChartType["scatter"]="scatter";})(ChartType||(ChartType={}));var aggregateFunctions=[{value:'SUM',text:'sum'},{value:'MAX',text:'max'},{value:'MIN',text:'min'},{value:'AVG',text:'avg'},{value:'STD',text:'std'}];var DimensionFunctions=/*#__PURE__*/function(_Array){function DimensionFunctions(items){_classCallCheck$1(this,DimensionFunctions);return _callSuper(this,DimensionFunctions,_toConsumableArray(items||[]));}_inherits(DimensionFunctions,_Array);return _createClass(DimensionFunctions,[{key:"lookup",value:function lookup(d){return this.find(function(f){return d.modifier===f.value;});}},{key:"convert",value:function convert(d){return (this.lookup(d)||{}).convert(d.field);}}],[{key:"create",value:function create(){return Object.create(DimensionFunctions.prototype);}}]);}(/*#__PURE__*/_wrapNativeSuper(Array));var dimensionFunctions=DimensionFunctions.create();dimensionFunctions.push.apply(dimensionFunctions,[{text:'none',value:'(no grouping / buckets)',convert:function convert(f){return f;}},{text:'date',value:'DATE',convert:function convert(f){return "DATE(".concat(f,")");}},{text:'week',value:'WEEK',convert:function convert(f){return "WEEK(".concat(f,")");}},{text:'month',value:'MONTH',convert:function convert(f){return "DATE_FORMAT(".concat(f,", '%Y-%m-01')");}},{text:'quarter',value:'QUARTER',convert:function convert(f){return "QUARTER(".concat(f,")");}},{text:'year',value:'YEAR',convert:function convert(f){return "DATE_FORMAT(".concat(f,", '%Y-01-01')");}}]);var predefinedFilters=[{value:'YEAR(createdAt) = YEAR(NOW())',text:'recordsCreatedThisYear'},{value:'YEAR(createdAt) = YEAR(NOW()) - 1',text:'recordsCreatedLastYear'},{value:'YEAR(createdAt) = YEAR(NOW()) AND QUARTER(createdAt) = QUARTER(NOW())',text:'recordsCreatedThisQuarter'},{value:'YEAR(createdAt) = YEAR(NOW()) AND QUARTER(createdAt) = QUARTER(DATE_SUB(NOW(), INTERVAL 3 MONTH)',text:'recordsCreatedLastQuarter'},{value:'DATE_FORMAT(createdAt, \'%Y-%m\') = DATE_FORMAT(NOW(), \'%Y-%m\')',text:'recordsCreatedThisMonth'},{value:'DATE_FORMAT(createdAt, \'%Y-%m\') = DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 MONTH), \'%Y-%m\')',text:'recordsCreatedLastMonth'}];dimensionFunctions.lookup=function(d){return dimensionFunctions.find(function(f){return d.modifier===f.value;})||dimensionFunctions[0];};dimensionFunctions.convert=function(d){return dimensionFunctions.lookup(d).convert(d.field);};var isRadialChart=function isRadialChart(_ref27){var type=_ref27.type;return type==='doughnut'||type==='pie';};var hasRelativeDisplay=function hasRelativeDisplay(_ref28){var type=_ref28.type;return isRadialChart({type:type});};// Makes a standardized alias from modifier or dimension report option
 var makeAlias=function makeAlias(_ref29){var alias=_ref29.alias,aggregate=_ref29.aggregate,modifier=_ref29.modifier,field=_ref29.field;return alias||"".concat(aggregate||modifier||'none',"_").concat(field).toLocaleLowerCase();};function formatChartValue(value,formatting){var _a,_b;var n='';// if value contains alphabetic chars parseFloat() will return NaN
 // and n will equal 0
@@ -6642,8 +6642,48 @@ function normalizeComponent(template, style, script, scopeId, isFunctionalTempla
 const __vue_script__$1w = script$1w;
 
 /* template */
-var __vue_render__$1r = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-modal',{attrs:{"centered":"","hide-header":"","hide-footer":"","no-close-on-backdrop":"","no-close-on-esc":"","body-class":"d-flex flex-column justify-content-center align-items-center gap-2 p-4"},on:{"hide":_vm.stopCountdown},model:{value:(_vm.showModal),callback:function ($$v) {_vm.showModal=$$v;},expression:"showModal"}},[_c('h5',[_vm._v(_vm._s(_vm.labels.warning(_vm.countdownTime)))]),_vm._v(" "),_c('b-button',{attrs:{"variant":"primary","size":"lg"},on:{"click":_vm.extendSession}},[_vm._v("\n    "+_vm._s(_vm.labels.extend)+"\n  ")])],1)};
+var __vue_render__$1r = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-modal",
+    {
+      attrs: {
+        centered: "",
+        "hide-header": "",
+        "hide-footer": "",
+        "no-close-on-backdrop": "",
+        "no-close-on-esc": "",
+        "body-class":
+          "d-flex flex-column justify-content-center align-items-center gap-2 p-4",
+      },
+      on: { hide: _vm.stopCountdown },
+      model: {
+        value: _vm.showModal,
+        callback: function ($$v) {
+          _vm.showModal = $$v;
+        },
+        expression: "showModal",
+      },
+    },
+    [
+      _c("h5", [_vm._v(_vm._s(_vm.labels.warning(_vm.countdownTime)))]),
+      _vm._v(" "),
+      _c(
+        "b-button",
+        {
+          attrs: { variant: "primary", size: "lg" },
+          on: { click: _vm.extendSession },
+        },
+        [_vm._v("\n    " + _vm._s(_vm.labels.extend) + "\n  ")]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$1r = [];
+__vue_render__$1r._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1y = undefined;
@@ -6715,8 +6755,36 @@ var script$1v = {
 const __vue_script__$1v = script$1v;
 
 /* template */
-var __vue_render__$1q = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.buttons.length)?_c('b-button-group',{attrs:{"size":_vm.size}},_vm._l((_vm.buttons),function(b,i){return _c('b-button',{key:i,class:_vm.buttonClass,attrs:{"variant":b.variant || _vm.defaultVariant},on:{"click":function($event){return _vm.$emit('click', b)}}},[_vm._v("\n    "+_vm._s(b.label)+"\n  ")])}),1):_vm._e()};
+var __vue_render__$1q = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _vm.buttons.length
+    ? _c(
+        "b-button-group",
+        { attrs: { size: _vm.size } },
+        _vm._l(_vm.buttons, function (b, i) {
+          return _c(
+            "b-button",
+            {
+              key: i,
+              class: _vm.buttonClass,
+              attrs: { variant: b.variant || _vm.defaultVariant },
+              on: {
+                click: function ($event) {
+                  return _vm.$emit("click", b)
+                },
+              },
+            },
+            [_vm._v("\n    " + _vm._s(b.label) + "\n  ")]
+          )
+        }),
+        1
+      )
+    : _vm._e()
+};
 var __vue_staticRenderFns__$1q = [];
+__vue_render__$1q._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1x = undefined;
@@ -7042,18 +7110,115 @@ function addStyle(id, css) {
 const __vue_script__$1u = script$1u;
 
 /* template */
-var __vue_render__$1p = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('vue-dropzone',{ref:"dropzone",staticClass:"uploader",attrs:{"id":"dropzone","use-custom-slot":true,"include-styling":false,"options":_vm.dzOptions},on:{"vdropzone-file-added":_vm.onFileAdded,"vdropzone-file-added-manually":_vm.onFileAdded,"vdropzone-success":_vm.onSuccess,"vdropzone-error":_vm.onError,"vdropzone-upload-progress":_vm.onUploadProgress}},[_c('div',{staticClass:"drop-container w-100 h-100 position-relative bg-light rounded"},[(_vm.processing)?[_c('div',{staticClass:"bg-primary h-100 progress-bar position-absolute",style:(_vm.progressBarStyle)}),_vm._v(" "),_c('span',{staticClass:"d-flex align-items-center h-100 w-100 uploading justify-content-center position-relative py-2"},[_vm._v("\n          "+_vm._s(_vm.uploadingLabel)+"\n        ")])]:_c('div',{staticClass:"d-flex align-items-center h-100 w-100 p-2 droparea justify-content-center",attrs:{"data-test-id":"drop-area"}},[(_vm.error)?_c('span',{staticClass:"text-danger"},[_vm._v("\n          "+_vm._s(_vm.error)+"\n        ")]):(_vm.activeLabel)?_c('span',[_vm._v("\n          "+_vm._s(_vm.activeLabel)+"\n        ")]):_c('span',{staticClass:"text-muted"},[_vm._v("\n          "+_vm._s(_vm.placeholderLabel)+"\n        ")])])],2)])],1)};
+var __vue_render__$1p = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    [
+      _c(
+        "vue-dropzone",
+        {
+          ref: "dropzone",
+          staticClass: "uploader",
+          attrs: {
+            id: "dropzone",
+            "use-custom-slot": true,
+            "include-styling": false,
+            options: _vm.dzOptions,
+          },
+          on: {
+            "vdropzone-file-added": _vm.onFileAdded,
+            "vdropzone-file-added-manually": _vm.onFileAdded,
+            "vdropzone-success": _vm.onSuccess,
+            "vdropzone-error": _vm.onError,
+            "vdropzone-upload-progress": _vm.onUploadProgress,
+          },
+        },
+        [
+          _c(
+            "div",
+            {
+              staticClass:
+                "drop-container w-100 h-100 position-relative bg-light rounded",
+            },
+            [
+              _vm.processing
+                ? [
+                    _c("div", {
+                      staticClass:
+                        "bg-primary h-100 progress-bar position-absolute",
+                      style: _vm.progressBarStyle,
+                    }),
+                    _vm._v(" "),
+                    _c(
+                      "span",
+                      {
+                        staticClass:
+                          "d-flex align-items-center h-100 w-100 uploading justify-content-center position-relative py-2",
+                      },
+                      [
+                        _vm._v(
+                          "\n          " +
+                            _vm._s(_vm.uploadingLabel) +
+                            "\n        "
+                        ),
+                      ]
+                    ),
+                  ]
+                : _c(
+                    "div",
+                    {
+                      staticClass:
+                        "d-flex align-items-center h-100 w-100 p-2 droparea justify-content-center",
+                      attrs: { "data-test-id": "drop-area" },
+                    },
+                    [
+                      _vm.error
+                        ? _c("span", { staticClass: "text-danger" }, [
+                            _vm._v(
+                              "\n          " + _vm._s(_vm.error) + "\n        "
+                            ),
+                          ])
+                        : _vm.activeLabel
+                        ? _c("span", [
+                            _vm._v(
+                              "\n          " +
+                                _vm._s(_vm.activeLabel) +
+                                "\n        "
+                            ),
+                          ])
+                        : _c("span", { staticClass: "text-muted" }, [
+                            _vm._v(
+                              "\n          " +
+                                _vm._s(_vm.placeholderLabel) +
+                                "\n        "
+                            ),
+                          ]),
+                    ]
+                  ),
+            ],
+            2
+          ),
+        ]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$1p = [];
+__vue_render__$1p._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1w = function (inject) {
     if (!inject) return
-    inject("data-v-e52daf28_0", { source: ".drop-container[data-v-e52daf28]:hover{background-color:var(--extra-light)!important}.droparea[data-v-e52daf28]{cursor:pointer}.progress-bar[data-v-e52daf28]{width:0;opacity:.3}.uploading[data-v-e52daf28]{background-size:100% 100%;background-position:right bottom;cursor:wait}", map: undefined, media: undefined })
-,inject("data-v-e52daf28_1", { source: ".uploader .dz-preview{display:none!important}", map: undefined, media: undefined });
+    inject("data-v-262eec26_0", { source: ".drop-container[data-v-262eec26]:hover {\n  background-color: var(--extra-light) !important;\n}\n.droparea[data-v-262eec26] {\n  cursor: pointer;\n}\n.progress-bar[data-v-262eec26] {\n  width: 0;\n  opacity: 0.3;\n}\n.uploading[data-v-262eec26] {\n  background-size: 100% 100%;\n  background-position: right bottom;\n  cursor: wait;\n}\n\n/*# sourceMappingURL=CUploader.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/uploader/CUploader.vue","CUploader.vue"],"names":[],"mappings":"AAuPA;EACA,+CAAA;ACtPA;AD0PA;EACA,eAAA;ACvPA;AD0PA;EACA,QAAA;EACA,YAAA;ACvPA;AD0PA;EACA,0BAAA;EACA,iCAAA;EACA,YAAA;ACvPA;;AAEA,wCAAwC","file":"CUploader.vue","sourcesContent":["<template>\n  <div>\n    <vue-dropzone\n      id=\"dropzone\"\n      ref=\"dropzone\"\n      :use-custom-slot=\"true\"\n      :include-styling=\"false\"\n      :options=\"dzOptions\"\n      class=\"uploader\"\n      @vdropzone-file-added=\"onFileAdded\"\n      @vdropzone-file-added-manually=\"onFileAdded\"\n      @vdropzone-success=\"onSuccess\"\n      @vdropzone-error=\"onError\"\n      @vdropzone-upload-progress=\"onUploadProgress\"\n    >\n      <div\n        class=\"drop-container w-100 h-100 position-relative bg-light rounded\"\n      >\n        <template v-if=\"processing\">\n          <div\n            class=\"bg-primary h-100 progress-bar position-absolute\"\n            :style=\"progressBarStyle\"\n          />\n\n          <span class=\"d-flex align-items-center h-100 w-100 uploading justify-content-center position-relative py-2\">\n            {{ uploadingLabel }}\n          </span>\n        </template>\n\n        <div\n          v-else\n          data-test-id=\"drop-area\"\n          class=\"d-flex align-items-center h-100 w-100 p-2 droparea justify-content-center\"\n        >\n          <span\n            v-if=\"error\"\n            class=\"text-danger\"\n          >\n            {{ error }}\n          </span>\n\n          <span\n            v-else-if=\"activeLabel\"\n          >\n            {{ activeLabel }}\n          </span>\n\n          <span\n            v-else\n            class=\"text-muted\"\n          >\n            {{ placeholderLabel }}\n          </span>\n        </div>\n      </div>\n    </vue-dropzone>\n  </div>\n</template>\n\n<script>\nimport numeral from 'numeral'\nimport vueDropzone from 'vue2-dropzone'\nimport { files } from '@/mixins'\n\nexport default {\n  name: 'CUploader',\n\n  i18nOptions: {\n    namespaces: 'general',\n  },\n\n  components: {\n    vueDropzone,\n  },\n\n  mixins: [\n    files,\n  ],\n\n  props: {\n    endpoint: {\n      type: String,\n      required: true,\n    },\n\n    disabled: {\n      type: Boolean,\n      default: () => false,\n    },\n\n    acceptedFiles: {\n      type: Array,\n      default: () => [],\n    },\n\n    maxFilesize: {\n      type: Number,\n      default: 100,\n    },\n\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    formData: {\n      type: Object,\n      required: false,\n      default: () => ({}),\n    },\n\n    paramName: {\n      type: String,\n      default: 'upload',\n    },\n\n    maxFiles: {\n      type: Number,\n      default: 1000,\n    },\n\n    showUploadedFileName: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      active: null,\n      processing: null,\n      error: null,\n    }\n  },\n\n  computed: {\n    dropzone () {\n      return (this.$refs.dropzone && this.$refs.dropzone.dropzone) ? this.$refs.dropzone.dropzone : false\n    },\n\n    dzOptions () {\n      const vm = this\n\n      return {\n        paramName: this.paramName,\n        maxFilesize: this.maxFilesize, // mb\n        url: () => this.endpoint,\n        thumbnailMethod: 'contain',\n        thumbnailWidth: 320,\n        thumbnailHeight: 180,\n        maxFiles: this.maxFiles,\n        withCredentials: true,\n        autoProcessQueue: true,\n        disablePreviews: true,\n        uploadMultiple: false,\n        parallelUploads: 1,\n        acceptedFiles: null,\n        init: function () {\n          this.on('sending', function (file, xhr, formData) {\n            for (const k in vm.formData || {}) {\n              formData.append(k, vm.formData[k])\n            }\n          })\n        },\n        headers: {\n          // https://github.com/enyo/dropzone/issues/1154\n          'Cache-Control': '',\n          'X-Requested-With': '',\n          Authorization: 'Bearer ' + this.$auth.accessToken,\n        },\n      }\n    },\n\n    progressBarStyle () {\n      return {\n        width: this.processing.progress + '%',\n      }\n    },\n\n    uploadingLabel () {\n      const uploadingLabel = this.labels.uploading || 'Uploading files'\n\n      const { file = {} } = this.processing || {}\n\n      return `${uploadingLabel} ${file.name} (${this.size(file)})`\n    },\n\n    activeLabel () {\n      if (!this.showUploadedFileName || !this.active) {\n        return null\n      }\n\n      return `${this.active.name} (${this.size(this.active)})`\n    },\n\n    placeholderLabel () {\n      return this.labels.placeholder || 'Click or drop files here to upload'\n    },\n  },\n\n  methods: {\n    size (a) {\n      return numeral(a.size).format('0b')\n    },\n\n    onSuccess (file, { response, error }) {\n      if (error) {\n        return this.onError(error, error.message)\n      }\n\n      this.active = file\n      this.processing = null\n      this.error = null\n      this.$emit('upload', response, file)\n      this.$refs.dropzone.removeFile(file)\n    },\n\n    onFileAdded (file) {\n      this.error = null\n\n      // Check if file type is allowed\n      let types = this.acceptedFiles\n      if (!types || !types.length) {\n        types = ['*/*']\n      }\n      if (!this.validateFileType(file.name, types)) {\n        this.$refs.dropzone.removeFile(file)\n        const errorMsg = this.labels.fileTypeNotAllowed || 'File type not allowed'\n        this.onError(null, errorMsg)\n      }\n    },\n\n    onError (e, message) {\n      this.active = null\n      this.error = message\n      this.processing = null\n    },\n\n    onUploadProgress (file, progress, bytesSent) {\n      this.processing = { file, progress, bytesSent }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.drop-container {\n  &:hover {\n    background-color: var(--extra-light) !important;\n  }\n}\n\n.droparea {\n  cursor: pointer;\n}\n\n.progress-bar {\n  width: 0;\n  opacity: 0.3;\n}\n\n.uploading {\n  background-size: 100% 100%;\n  background-position: right bottom;\n  cursor: wait;\n}\n</style>\n\n\n<style lang=\"scss\">\n.uploader {\n  .dz-preview {\n    display: none !important;\n  }\n}\n</style>\n",".drop-container:hover {\n  background-color: var(--extra-light) !important;\n}\n\n.droparea {\n  cursor: pointer;\n}\n\n.progress-bar {\n  width: 0;\n  opacity: 0.3;\n}\n\n.uploading {\n  background-size: 100% 100%;\n  background-position: right bottom;\n  cursor: wait;\n}\n\n/*# sourceMappingURL=CUploader.vue.map */"]}, media: undefined })
+,inject("data-v-262eec26_1", { source: ".uploader .dz-preview {\n  display: none !important;\n}\n\n/*# sourceMappingURL=CUploader.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/uploader/CUploader.vue","CUploader.vue"],"names":[],"mappings":"AA+QA;EACA,wBAAA;AC9QA;;AAEA,wCAAwC","file":"CUploader.vue","sourcesContent":["<template>\n  <div>\n    <vue-dropzone\n      id=\"dropzone\"\n      ref=\"dropzone\"\n      :use-custom-slot=\"true\"\n      :include-styling=\"false\"\n      :options=\"dzOptions\"\n      class=\"uploader\"\n      @vdropzone-file-added=\"onFileAdded\"\n      @vdropzone-file-added-manually=\"onFileAdded\"\n      @vdropzone-success=\"onSuccess\"\n      @vdropzone-error=\"onError\"\n      @vdropzone-upload-progress=\"onUploadProgress\"\n    >\n      <div\n        class=\"drop-container w-100 h-100 position-relative bg-light rounded\"\n      >\n        <template v-if=\"processing\">\n          <div\n            class=\"bg-primary h-100 progress-bar position-absolute\"\n            :style=\"progressBarStyle\"\n          />\n\n          <span class=\"d-flex align-items-center h-100 w-100 uploading justify-content-center position-relative py-2\">\n            {{ uploadingLabel }}\n          </span>\n        </template>\n\n        <div\n          v-else\n          data-test-id=\"drop-area\"\n          class=\"d-flex align-items-center h-100 w-100 p-2 droparea justify-content-center\"\n        >\n          <span\n            v-if=\"error\"\n            class=\"text-danger\"\n          >\n            {{ error }}\n          </span>\n\n          <span\n            v-else-if=\"activeLabel\"\n          >\n            {{ activeLabel }}\n          </span>\n\n          <span\n            v-else\n            class=\"text-muted\"\n          >\n            {{ placeholderLabel }}\n          </span>\n        </div>\n      </div>\n    </vue-dropzone>\n  </div>\n</template>\n\n<script>\nimport numeral from 'numeral'\nimport vueDropzone from 'vue2-dropzone'\nimport { files } from '@/mixins'\n\nexport default {\n  name: 'CUploader',\n\n  i18nOptions: {\n    namespaces: 'general',\n  },\n\n  components: {\n    vueDropzone,\n  },\n\n  mixins: [\n    files,\n  ],\n\n  props: {\n    endpoint: {\n      type: String,\n      required: true,\n    },\n\n    disabled: {\n      type: Boolean,\n      default: () => false,\n    },\n\n    acceptedFiles: {\n      type: Array,\n      default: () => [],\n    },\n\n    maxFilesize: {\n      type: Number,\n      default: 100,\n    },\n\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    formData: {\n      type: Object,\n      required: false,\n      default: () => ({}),\n    },\n\n    paramName: {\n      type: String,\n      default: 'upload',\n    },\n\n    maxFiles: {\n      type: Number,\n      default: 1000,\n    },\n\n    showUploadedFileName: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      active: null,\n      processing: null,\n      error: null,\n    }\n  },\n\n  computed: {\n    dropzone () {\n      return (this.$refs.dropzone && this.$refs.dropzone.dropzone) ? this.$refs.dropzone.dropzone : false\n    },\n\n    dzOptions () {\n      const vm = this\n\n      return {\n        paramName: this.paramName,\n        maxFilesize: this.maxFilesize, // mb\n        url: () => this.endpoint,\n        thumbnailMethod: 'contain',\n        thumbnailWidth: 320,\n        thumbnailHeight: 180,\n        maxFiles: this.maxFiles,\n        withCredentials: true,\n        autoProcessQueue: true,\n        disablePreviews: true,\n        uploadMultiple: false,\n        parallelUploads: 1,\n        acceptedFiles: null,\n        init: function () {\n          this.on('sending', function (file, xhr, formData) {\n            for (const k in vm.formData || {}) {\n              formData.append(k, vm.formData[k])\n            }\n          })\n        },\n        headers: {\n          // https://github.com/enyo/dropzone/issues/1154\n          'Cache-Control': '',\n          'X-Requested-With': '',\n          Authorization: 'Bearer ' + this.$auth.accessToken,\n        },\n      }\n    },\n\n    progressBarStyle () {\n      return {\n        width: this.processing.progress + '%',\n      }\n    },\n\n    uploadingLabel () {\n      const uploadingLabel = this.labels.uploading || 'Uploading files'\n\n      const { file = {} } = this.processing || {}\n\n      return `${uploadingLabel} ${file.name} (${this.size(file)})`\n    },\n\n    activeLabel () {\n      if (!this.showUploadedFileName || !this.active) {\n        return null\n      }\n\n      return `${this.active.name} (${this.size(this.active)})`\n    },\n\n    placeholderLabel () {\n      return this.labels.placeholder || 'Click or drop files here to upload'\n    },\n  },\n\n  methods: {\n    size (a) {\n      return numeral(a.size).format('0b')\n    },\n\n    onSuccess (file, { response, error }) {\n      if (error) {\n        return this.onError(error, error.message)\n      }\n\n      this.active = file\n      this.processing = null\n      this.error = null\n      this.$emit('upload', response, file)\n      this.$refs.dropzone.removeFile(file)\n    },\n\n    onFileAdded (file) {\n      this.error = null\n\n      // Check if file type is allowed\n      let types = this.acceptedFiles\n      if (!types || !types.length) {\n        types = ['*/*']\n      }\n      if (!this.validateFileType(file.name, types)) {\n        this.$refs.dropzone.removeFile(file)\n        const errorMsg = this.labels.fileTypeNotAllowed || 'File type not allowed'\n        this.onError(null, errorMsg)\n      }\n    },\n\n    onError (e, message) {\n      this.active = null\n      this.error = message\n      this.processing = null\n    },\n\n    onUploadProgress (file, progress, bytesSent) {\n      this.processing = { file, progress, bytesSent }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.drop-container {\n  &:hover {\n    background-color: var(--extra-light) !important;\n  }\n}\n\n.droparea {\n  cursor: pointer;\n}\n\n.progress-bar {\n  width: 0;\n  opacity: 0.3;\n}\n\n.uploading {\n  background-size: 100% 100%;\n  background-position: right bottom;\n  cursor: wait;\n}\n</style>\n\n\n<style lang=\"scss\">\n.uploader {\n  .dz-preview {\n    display: none !important;\n  }\n}\n</style>\n",".uploader .dz-preview {\n  display: none !important;\n}\n\n/*# sourceMappingURL=CUploader.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1w = "data-v-e52daf28";
+  const __vue_scope_id__$1w = "data-v-262eec26";
   /* module identifier */
   const __vue_module_identifier__$1w = undefined;
   /* functional template */
@@ -7217,17 +7382,49 @@ var script$1s = {
 const __vue_script__$1s = script$1s;
 
 /* template */
-var __vue_render__$1o = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex inline h-100 mb-1"},[_c('img',{key:_vm.src,ref:"image",class:_vm.getClass,style:(_vm.previewStyle),attrs:{"src":_vm.src,"title":_vm.title,"alt":_vm.alt,"width":_vm.getWidth,"height":_vm.getHeight},on:{"click":function($event){$event.stopPropagation();return _vm.$emit('openPreview', {})},"~error":function($event){return _vm.reloadBrokenImage.apply(null, arguments)},"load":function($event){_vm.loaded=true;}}})])};
+var __vue_render__$1o = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", { staticClass: "d-flex inline h-100 mb-1" }, [
+    _c("img", {
+      key: _vm.src,
+      ref: "image",
+      class: _vm.getClass,
+      style: _vm.previewStyle,
+      attrs: {
+        src: _vm.src,
+        title: _vm.title,
+        alt: _vm.alt,
+        width: _vm.getWidth,
+        height: _vm.getHeight,
+      },
+      on: {
+        click: function ($event) {
+          $event.stopPropagation();
+          return _vm.$emit("openPreview", {})
+        },
+        "~error": function ($event) {
+          return _vm.reloadBrokenImage.apply(null, arguments)
+        },
+        load: function ($event) {
+          _vm.loaded = true;
+        },
+      },
+    }),
+  ])
+};
 var __vue_staticRenderFns__$1o = [];
+__vue_render__$1o._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1u = function (inject) {
     if (!inject) return
-    inject("data-v-df4ec75c_0", { source: "div[data-v-df4ec75c]{object-fit:contain}div img.loaded[data-v-df4ec75c]{width:auto;height:auto;display:block}div.inline img[data-v-df4ec75c]{cursor:zoom-in}div.inline img.disable-zoom-cursor[data-v-df4ec75c]{cursor:default}", map: undefined, media: undefined });
+    inject("data-v-3009f78a_0", { source: "div[data-v-3009f78a] {\n  object-fit: contain;\n}\ndiv img.loaded[data-v-3009f78a] {\n  width: auto;\n  height: auto;\n  display: block;\n}\ndiv.inline img[data-v-3009f78a] {\n  cursor: zoom-in;\n}\ndiv.inline img.disable-zoom-cursor[data-v-3009f78a] {\n  cursor: default;\n}\n\n/*# sourceMappingURL=InlineIMG.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/filePreview/common/types/IMG/InlineIMG.vue","InlineIMG.vue"],"names":[],"mappings":"AAuFA;EACA,mBAAA;ACtFA;ADyFA;EACA,WAAA;EACA,YAAA;EACA,cAAA;ACvFA;AD4FA;EACA,eAAA;AC1FA;AD6FA;EACA,eAAA;AC3FA;;AAEA,wCAAwC","file":"InlineIMG.vue","sourcesContent":["<template>\n  <div class=\"d-flex inline h-100 mb-1\">\n    <img\n      ref=\"image\"\n      :key=\"src\"\n      :src=\"src\"\n      :title=\"title\"\n      :alt=\"alt\"\n      :class=\"getClass\"\n      :style=\"previewStyle\"\n      :width=\"getWidth\"\n      :height=\"getHeight\"\n      @click.stop=\"$emit('openPreview', {})\"\n      @error.once=\"reloadBrokenImage\"\n      @load=\"loaded=true\"\n    >\n  </div>\n</template>\n\n<script lang=\"js\">\nimport base from '../base.vue'\n\nexport default {\n  extends: base,\n\n  props: {\n    alt: {\n      type: String,\n      default: null,\n    },\n\n    title: {\n      type: String,\n      default: null,\n    },\n  },\n\n  data () {\n    return {\n      loaded: false,\n    }\n  },\n\n  computed: {\n    isSvg () {\n      return this.mime === 'image/svg+xml' ||\n        (this.name && this.name.toLowerCase().endsWith('.svg'))\n    },\n\n    getClass () {\n      const rtr = [...this.previewClass]\n      if (this.$listeners.click) {\n        rtr.push('clickable')\n      }\n      if (this.loaded) {\n        rtr.push('loaded')\n      }\n      return rtr\n    },\n\n    getWidth () {\n      if (this.isSvg) return undefined\n      return this.meta.preview.image.width\n    },\n    getHeight () {\n      if (this.isSvg) return undefined\n      return this.meta.preview.image.height\n    },\n  },\n\n  methods: {\n    reloadBrokenImage (ev) {\n      if (ev.target && ev.target.src) {\n        window.setTimeout(() => {\n          if (!ev.target && !ev.target.src) return\n\n          // This forces Vue to re-try image download\n          // eslint-disable-next-line\n          ev.target.src = ev.target.src\n        }, 500)\n      }\n    },\n  },\n}\n</script>\n\n<style scoped lang=\"scss\">\ndiv {\n  object-fit: contain;\n\n  img {\n    &.loaded {\n      width: auto;\n      height: auto;\n      display: block;\n    }\n  }\n\n  &.inline {\n    img {\n      cursor: zoom-in;\n    }\n\n    img.disable-zoom-cursor {\n      cursor: default;\n    }\n  }\n}\n</style>\n","div {\n  object-fit: contain;\n}\ndiv img.loaded {\n  width: auto;\n  height: auto;\n  display: block;\n}\ndiv.inline img {\n  cursor: zoom-in;\n}\ndiv.inline img.disable-zoom-cursor {\n  cursor: default;\n}\n\n/*# sourceMappingURL=InlineIMG.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1u = "data-v-df4ec75c";
+  const __vue_scope_id__$1u = "data-v-3009f78a";
   /* module identifier */
   const __vue_module_identifier__$1u = undefined;
   /* functional template */
@@ -7317,13 +7514,40 @@ var script$1r = {
 const __vue_script__$1r = script$1r;
 
 /* template */
-var __vue_render__$1n = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"popup-img-preview"},[(_vm.isSvg)?_c('div',{staticClass:"svg-preview"},[_c('img',{staticClass:"svg-lightbox-img",attrs:{"src":_vm.src}})]):_c('photo-swipe',{attrs:{"is-open":true,"items":_vm.items,"options":_vm.options},on:{"close":function () { return _vm.$emit('close'); }}})],1)};
+var __vue_render__$1n = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "popup-img-preview" },
+    [
+      _vm.isSvg
+        ? _c("div", { staticClass: "svg-preview" }, [
+            _c("img", {
+              staticClass: "svg-lightbox-img",
+              attrs: { src: _vm.src },
+            }),
+          ])
+        : _c("photo-swipe", {
+            attrs: { "is-open": true, items: _vm.items, options: _vm.options },
+            on: {
+              close: function () {
+                return _vm.$emit("close")
+              },
+            },
+          }),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$1n = [];
+__vue_render__$1n._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1t = function (inject) {
     if (!inject) return
-    inject("data-v-37f93af6_0", { source: ".popup-img-preview .pswp{pointer-events:none}.popup-img-preview .pswp .pswp__img{pointer-events:all}.popup-img-preview .pswp__top-bar{display:none!important}.popup-img-preview .svg-preview{display:flex;align-items:center;justify-content:center;width:100%;height:100%}.popup-img-preview .svg-preview .svg-lightbox-img{max-width:90%;max-height:90%;object-fit:contain}", map: undefined, media: undefined });
+    inject("data-v-16df644d_0", { source: ".popup-img-preview .pswp {\n  pointer-events: none;\n}\n.popup-img-preview .pswp .pswp__img {\n  pointer-events: all;\n}\n.popup-img-preview .pswp__top-bar {\n  display: none !important;\n}\n.popup-img-preview .svg-preview {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100%;\n  height: 100%;\n}\n.popup-img-preview .svg-preview .svg-lightbox-img {\n  max-width: 90%;\n  max-height: 90%;\n  object-fit: contain;\n}\n\n/*# sourceMappingURL=LightboxIMG.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/filePreview/common/types/IMG/LightboxIMG.vue","LightboxIMG.vue"],"names":[],"mappings":"AA6FA;EACA,oBAAA;AC5FA;AD6FA;EACA,mBAAA;AC3FA;AD8FA;EACA,wBAAA;AC5FA;AD+FA;EACA,aAAA;EACA,mBAAA;EACA,uBAAA;EACA,WAAA;EACA,YAAA;AC7FA;AD+FA;EACA,cAAA;EACA,eAAA;EACA,mBAAA;AC7FA;;AAEA,0CAA0C","file":"LightboxIMG.vue","sourcesContent":["<template>\n  <div class=\"popup-img-preview\">\n    <div\n      v-if=\"isSvg\"\n      class=\"svg-preview\"\n    >\n      <img\n        :src=\"src\"\n        class=\"svg-lightbox-img\"\n      >\n    </div>\n    <photo-swipe\n      v-else\n      :is-open=\"true\"\n      :items=\"items\"\n      :options=\"options\"\n      @close=\"() => $emit('close')\"\n    />\n  </div>\n</template>\n\n<script lang=\"js\">\nimport { PhotoSwipe } from 'v-photoswipe'\nimport base from '../base.vue'\n\nexport default {\n  components: {\n    PhotoSwipe,\n  },\n\n  extends: base,\n\n  data () {\n    return {\n      options: {\n        index: 0,\n        bgOpacity: 0,\n        closeOnScroll: false,\n        escKey: false,\n        history: false,\n        arrowKeys: false,\n        modal: false,\n\n        closeEl: false,\n        captionEl: false,\n        fullscreenEl: false,\n        zoomEl: false,\n        shareEl: false,\n        counterEl: false,\n        arrowEl: false,\n        preloaderEl: false,\n\n        clickToCloseNonZoomable: false,\n      },\n    }\n  },\n\n  computed: {\n    isSvg () {\n      return this.mime === 'image/svg+xml' ||\n        (this.name && this.name.toLowerCase().endsWith('.svg'))\n    },\n\n    items () {\n      const { original, preview } = this.meta\n      const image = (original || preview || {}).image\n      if (!image) {\n        this.$emit('close')\n        return []\n      }\n\n      return [{\n        src: this.src,\n        w: image.width,\n        h: image.height,\n      }]\n    },\n  },\n\n  beforeUnmount () {\n    this.setDefaultValues()\n  },\n\n  methods: {\n    setDefaultValues () {\n      this.options = {}\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.popup-img-preview {\n  .pswp {\n    pointer-events: none;\n    .pswp__img {\n      pointer-events: all;\n    }\n  }\n  .pswp__top-bar {\n    display: none!important;\n  }\n\n  .svg-preview {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    width: 100%;\n    height: 100%;\n\n    .svg-lightbox-img {\n      max-width: 90%;\n      max-height: 90%;\n      object-fit: contain;\n    }\n  }\n}\n</style>\n",".popup-img-preview .pswp {\n  pointer-events: none;\n}\n.popup-img-preview .pswp .pswp__img {\n  pointer-events: all;\n}\n.popup-img-preview .pswp__top-bar {\n  display: none !important;\n}\n.popup-img-preview .svg-preview {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100%;\n  height: 100%;\n}\n.popup-img-preview .svg-preview .svg-lightbox-img {\n  max-width: 90%;\n  max-height: 90%;\n  object-fit: contain;\n}\n\n/*# sourceMappingURL=LightboxIMG.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -7692,18 +7916,78 @@ var script$1q = {
 const __vue_script__$1q = script$1q;
 
 /* template */
-var __vue_render__$1m = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{class:_vm.previewClass.concat( ['pdf-preview'], [_vm.inline ? 'inline' : ''], [_vm.$listeners.click ? 'clickable' : '']),style:(_vm.previewStyle),on:{"click":function($event){$event.stopPropagation();return _vm.onPreviewClick.apply(null, arguments)}}},[_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.show),expression:"show"}],ref:"pages",staticClass:"pages shadow-sm"}),_vm._v(" "),(_vm.loadError)?_c('div',{staticClass:"doc-msg doc-err"},[_c('p',{staticClass:"err-message"},[_vm._v("\n      "+_vm._s(_vm.loadError.message)+"\n    ")])]):(!_vm.show && _vm.labels.loading)?_c('div',{staticClass:"doc-msg"},[_c('p',{staticClass:"d-flex align-items-center gap-1"},[_c('b-spinner',{attrs:{"variant":"primary","small":""}}),_vm._v("\n      "+_vm._s(_vm.labels.loading)+"\n    ")],1)]):(!_vm.pageCount && _vm.labels.noPages)?_c('div',{staticClass:"doc-msg doc-err"},[_c('p',[_vm._v(_vm._s(_vm.labels.noPages))])]):_vm._e()])};
+var __vue_render__$1m = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    {
+      class: _vm.previewClass.concat(
+        ["pdf-preview"],
+        [_vm.inline ? "inline" : ""],
+        [_vm.$listeners.click ? "clickable" : ""]
+      ),
+      style: _vm.previewStyle,
+      on: {
+        click: function ($event) {
+          $event.stopPropagation();
+          return _vm.onPreviewClick.apply(null, arguments)
+        },
+      },
+    },
+    [
+      _c("div", {
+        directives: [
+          {
+            name: "show",
+            rawName: "v-show",
+            value: _vm.show,
+            expression: "show",
+          },
+        ],
+        ref: "pages",
+        staticClass: "pages shadow-sm",
+      }),
+      _vm._v(" "),
+      _vm.loadError
+        ? _c("div", { staticClass: "doc-msg doc-err" }, [
+            _c("p", { staticClass: "err-message" }, [
+              _vm._v("\n      " + _vm._s(_vm.loadError.message) + "\n    "),
+            ]),
+          ])
+        : !_vm.show && _vm.labels.loading
+        ? _c("div", { staticClass: "doc-msg" }, [
+            _c(
+              "p",
+              { staticClass: "d-flex align-items-center gap-1" },
+              [
+                _c("b-spinner", { attrs: { variant: "primary", small: "" } }),
+                _vm._v("\n      " + _vm._s(_vm.labels.loading) + "\n    "),
+              ],
+              1
+            ),
+          ])
+        : !_vm.pageCount && _vm.labels.noPages
+        ? _c("div", { staticClass: "doc-msg doc-err" }, [
+            _c("p", [_vm._v(_vm._s(_vm.labels.noPages))]),
+          ])
+        : _vm._e(),
+    ]
+  )
+};
 var __vue_staticRenderFns__$1m = [];
+__vue_render__$1m._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1s = function (inject) {
     if (!inject) return
-    inject("data-v-3e0f4f9c_0", { source: ".doc-msg[data-v-3e0f4f9c]{display:flex;align-items:center;justify-content:center;height:100%;width:100%;background-color:var(--white)}.doc-err[data-v-3e0f4f9c]{cursor:pointer}.doc-err .err-message[data-v-3e0f4f9c]{color:var(--danger)}", map: undefined, media: undefined })
-,inject("data-v-3e0f4f9c_1", { source: ".pdf-preview{text-align:center;width:100%;height:auto}.pdf-preview.inline{cursor:zoom-in}.pdf-preview.inline canvas{width:100%;height:auto}.pdf-preview canvas{margin-bottom:10px;width:80%;height:auto}.pdf-preview canvas:last-of-type{margin-bottom:unset}.pdf-preview .loader{margin-bottom:10px}", map: undefined, media: undefined });
+    inject("data-v-e03986fa_0", { source: ".doc-msg[data-v-e03986fa] {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  height: 100%;\n  width: 100%;\n  background-color: var(--white);\n}\n.doc-err[data-v-e03986fa] {\n  cursor: pointer;\n}\n.doc-err .err-message[data-v-e03986fa] {\n  color: var(--danger);\n}\n\n/*# sourceMappingURL=PDF.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/filePreview/common/types/PDF/PDF.vue","PDF.vue"],"names":[],"mappings":"AAoTA;EACA,aAAA;EACA,mBAAA;EACA,uBAAA;EACA,YAAA;EACA,WAAA;EACA,8BAAA;ACnTA;ADqTA;EACA,eAAA;AClTA;ADoTA;EACA,oBAAA;AClTA;;AAEA,kCAAkC","file":"PDF.vue","sourcesContent":["<template>\n  <div\n    :style=\"previewStyle\"\n    :class=\"[...previewClass, 'pdf-preview', inline ? 'inline' : '', $listeners.click ? 'clickable' : '']\"\n    @click.stop=\"onPreviewClick\"\n  >\n    <!-- Container for pdf's pages -->\n    <div\n      v-show=\"show\"\n      ref=\"pages\"\n      class=\"pages shadow-sm\"\n    />\n\n    <div\n      v-if=\"loadError\"\n      class=\"doc-msg doc-err\"\n    >\n      <p class=\"err-message\">\n        {{ loadError.message }}\n      </p>\n    </div>\n\n    <div\n      v-else-if=\"!show && labels.loading\"\n      class=\"doc-msg\"\n    >\n      <p class=\"d-flex align-items-center gap-1\">\n        <b-spinner\n          variant=\"primary\"\n          small\n        />\n        {{ labels.loading }}\n      </p>\n    </div>\n\n    <div\n      v-else-if=\"!pageCount && labels.noPages\"\n      class=\"doc-msg doc-err\"\n    >\n      <p>{{ labels.noPages }}</p>\n    </div>\n  </div>\n</template>\n\n<script lang=\"js\">\nimport * as pdfjsLib from 'pdfjs-dist'\nimport base from '../base.vue'\nimport { makePlaceholder, makeFailedPage, Page, Document } from './helpers'\n\npdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()\n\nfunction sleep (t) {\n  return new Promise(resolve => setTimeout(resolve, t))\n}\n\nexport default {\n  extends: base,\n\n  props: {\n    retryBackoff: {\n      type: Number,\n      required: false,\n      default: 300,\n    },\n    maxRetries: {\n      type: Number,\n      required: false,\n      default: 10,\n    },\n\n    maxPages: {\n      required: false,\n      type: Number,\n      default: 25,\n    },\n\n    initialScale: {\n      required: false,\n      type: Number,\n      default: 1,\n    },\n  },\n\n  data () {\n    return {\n      document: null,\n      pages: [],\n      show: false,\n      loadError: undefined,\n    }\n  },\n\n  computed: {\n    /**\n     * Helper to provide the number of pages for the given PDF\n     * @returns {Number}\n     */\n    pageCount () {\n      if (!this.document || !this.document.pdf) {\n        return 0\n      }\n      return this.document.pdf.numPages\n    },\n\n    /**\n     * Helper to determine if the given PDF has more pages then we are willing to show\n     * @returns {Boolean}\n     */\n    hasMore () {\n      return this.maxPages < this.pageCount\n    },\n  },\n\n  created () {\n    if (!this.src) {\n      this.stdErr(new Error('src.missing'))\n      return\n    }\n\n    this.$nextTick(() => this.init())\n  },\n\n  beforeUnmount () {\n    this.setDefaultValues()\n  },\n\n  methods: {\n    /**\n     * Helper to handle on preview click. It either requests a retry or\n     * emits an open event\n     */\n    onPreviewClick () {\n      if (this.loadError) {\n        this.init()\n      } else {\n        this.$emit('openPreview', { document: this.document })\n      }\n    },\n\n    /**\n     * Initializes the state, loads the document & renderes it's pages\n     */\n    async init () {\n      this.document = null\n      this.pages = []\n      this.show = false\n      this.loadError = undefined\n\n      return this.loadDocument(this.src)\n        .then(this.renderDocument)\n        .catch(this.stdErr)\n    },\n\n    /**\n     * Helper method to load the given document. Needed for test stubbing\n     * @param {String} src Document's src\n     * @returns {Promise<PDFDocumentProxy>}\n     */\n    async pdfjsLoad (src) {\n      return pdfjsLib.getDocument({\n        url: src,\n        useWorkerFetch: true,\n        isEvalSupported: true,\n        useSystemFonts: true,\n      }).promise\n    },\n\n    /**\n     * Loads the given PDF. It can load it from API or re-use existing document\n     * @param {Document|String} src PDF's source or a Document object\n     * @returns {Document}\n     */\n    async loadDocument (src) {\n      if (src instanceof Document) {\n        this.document = new Document({ ...src, scale: this.initialScale })\n      } else if (typeof src === 'string') {\n        let retries = 0\n        let err\n        const pdfl = async () => {\n          return sleep(retries * this.retryBackoff)\n            .then(() => this.pdfjsLoad(src))\n            .then(pdf => {\n              this.document = new Document({ pdf, src, scale: this.initialScale })\n            })\n        }\n\n        // Retry with backoff it it fails to load\n        while (!this.document && retries < this.maxRetries) {\n          await pdfl().catch(e => {\n            retries++\n            err = e\n          })\n        }\n\n        if (!this.document) {\n          throw err\n        }\n      } else {\n        throw new Error('src.notValid')\n      }\n      return this.document\n    },\n\n    /**\n     * Renders the given PDF\n     * @param {Document} doc The Document to render\n     * @return {Promise<undefined>}\n     */\n    async renderDocument (doc) {\n      const rf = this.$refs.pages\n\n      const pgCount = Math.min(this.pageCount, this.maxPages)\n      this.pages = [...new Array(pgCount)].map((_, i) => new Page({ index: i }))\n\n      if (pgCount <= 0) {\n        this.show = true\n        return\n      }\n\n      // Loadup pages\n      for (let i = 0; i < pgCount; i++) {\n        const node = makePlaceholder(this.labels)\n        rf.appendChild(node)\n        this.pages.splice(i, 1, new Page({ ...this.pages[i], node, loading: true }))\n\n        this.renderPage(this.pages[i], doc, rf)\n          .then(page => {\n            this.pages.splice(page.index, 1, page)\n\n            if (page.index === 0) {\n              this.show = true\n            }\n          })\n          .catch(this.stdErr)\n      }\n    },\n\n    /**\n     * Renders the given page\n     * @param {Page} page The page in question\n     * @param {Document} doc Page source\n     * @param {Node} rf PDF container\n     * @returns {Promise<undefined>}\n     */\n    async renderPage (page, doc, rf) {\n      // pdfjs starts with 1!\n      return doc.pdf.getPage(page.index + 1).then(p => {\n        const np = new Page(page)\n        np.loading = false\n        np.loaded = true\n        np.page = p\n\n        // Render page\n        const canvas = document.createElement('canvas')\n        const scale = doc.scale\n        const viewport = np.page.getViewport({ scale })\n        const canvasContext = canvas.getContext('2d')\n        const renderContext = { canvasContext, viewport }\n\n        canvas.height = viewport.height\n        canvas.width = viewport.width\n\n        return np.page.render(renderContext).promise.then(() => {\n          np.node = canvas\n          np.rendered = true\n          if (this.inline) {\n            canvas.classList.add('inline')\n          }\n          return np\n        })\n\n          .catch(() => {\n            const node = makeFailedPage(this.labels)\n            np.node = node\n            np.rendered = false\n            np.failed = true\n            return np\n          })\n\n          .then(np => {\n            rf.replaceChild(np.node, page.node)\n            return np\n          })\n      })\n    },\n\n    /**\n     * Standard error handler\n     * @param {Error} err The error\n     */\n    stdErr (err) {\n      console.error(err)\n      this.loadError = err\n      this.$emit('error', err)\n    },\n\n    setDefaultValues () {\n      this.document = null\n      this.pages = []\n      this.show = false\n      this.loadError = undefined\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n\n.doc-msg {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  height: 100%;\n  width: 100%;\n  background-color: var(--white);\n}\n.doc-err {\n  cursor: pointer;\n\n  .err-message {\n    color: var(--danger);\n  }\n}\n\n</style>\n\n<style lang=\"scss\">\n// Style not scoped, since pages are manually rendered\n\n.pdf-preview {\n  text-align: center;\n  width: 100%;\n  height: auto;\n\n  &.inline {\n    cursor: zoom-in;\n\n    canvas {\n      width: 100%;\n      height: auto;\n    }\n  }\n\n  canvas {\n    margin-bottom: 10px;\n    width: 80%;\n    height: auto;\n\n    &:last-of-type {\n      margin-bottom: unset;\n    }\n  }\n\n  .loader {\n    margin-bottom: 10px;\n  }\n}\n</style>\n",".doc-msg {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  height: 100%;\n  width: 100%;\n  background-color: var(--white);\n}\n\n.doc-err {\n  cursor: pointer;\n}\n.doc-err .err-message {\n  color: var(--danger);\n}\n\n/*# sourceMappingURL=PDF.vue.map */"]}, media: undefined })
+,inject("data-v-e03986fa_1", { source: ".pdf-preview {\n  text-align: center;\n  width: 100%;\n  height: auto;\n}\n.pdf-preview.inline {\n  cursor: zoom-in;\n}\n.pdf-preview.inline canvas {\n  width: 100%;\n  height: auto;\n}\n.pdf-preview canvas {\n  margin-bottom: 10px;\n  width: 80%;\n  height: auto;\n}\n.pdf-preview canvas:last-of-type {\n  margin-bottom: unset;\n}\n.pdf-preview .loader {\n  margin-bottom: 10px;\n}\n\n/*# sourceMappingURL=PDF.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/filePreview/common/types/PDF/PDF.vue","PDF.vue"],"names":[],"mappings":"AAyUA;EACA,kBAAA;EACA,WAAA;EACA,YAAA;ACxUA;AD0UA;EACA,eAAA;ACxUA;AD0UA;EACA,WAAA;EACA,YAAA;ACxUA;AD4UA;EACA,mBAAA;EACA,UAAA;EACA,YAAA;AC1UA;AD4UA;EACA,oBAAA;AC1UA;AD8UA;EACA,mBAAA;AC5UA;;AAEA,kCAAkC","file":"PDF.vue","sourcesContent":["<template>\n  <div\n    :style=\"previewStyle\"\n    :class=\"[...previewClass, 'pdf-preview', inline ? 'inline' : '', $listeners.click ? 'clickable' : '']\"\n    @click.stop=\"onPreviewClick\"\n  >\n    <!-- Container for pdf's pages -->\n    <div\n      v-show=\"show\"\n      ref=\"pages\"\n      class=\"pages shadow-sm\"\n    />\n\n    <div\n      v-if=\"loadError\"\n      class=\"doc-msg doc-err\"\n    >\n      <p class=\"err-message\">\n        {{ loadError.message }}\n      </p>\n    </div>\n\n    <div\n      v-else-if=\"!show && labels.loading\"\n      class=\"doc-msg\"\n    >\n      <p class=\"d-flex align-items-center gap-1\">\n        <b-spinner\n          variant=\"primary\"\n          small\n        />\n        {{ labels.loading }}\n      </p>\n    </div>\n\n    <div\n      v-else-if=\"!pageCount && labels.noPages\"\n      class=\"doc-msg doc-err\"\n    >\n      <p>{{ labels.noPages }}</p>\n    </div>\n  </div>\n</template>\n\n<script lang=\"js\">\nimport * as pdfjsLib from 'pdfjs-dist'\nimport base from '../base.vue'\nimport { makePlaceholder, makeFailedPage, Page, Document } from './helpers'\n\npdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()\n\nfunction sleep (t) {\n  return new Promise(resolve => setTimeout(resolve, t))\n}\n\nexport default {\n  extends: base,\n\n  props: {\n    retryBackoff: {\n      type: Number,\n      required: false,\n      default: 300,\n    },\n    maxRetries: {\n      type: Number,\n      required: false,\n      default: 10,\n    },\n\n    maxPages: {\n      required: false,\n      type: Number,\n      default: 25,\n    },\n\n    initialScale: {\n      required: false,\n      type: Number,\n      default: 1,\n    },\n  },\n\n  data () {\n    return {\n      document: null,\n      pages: [],\n      show: false,\n      loadError: undefined,\n    }\n  },\n\n  computed: {\n    /**\n     * Helper to provide the number of pages for the given PDF\n     * @returns {Number}\n     */\n    pageCount () {\n      if (!this.document || !this.document.pdf) {\n        return 0\n      }\n      return this.document.pdf.numPages\n    },\n\n    /**\n     * Helper to determine if the given PDF has more pages then we are willing to show\n     * @returns {Boolean}\n     */\n    hasMore () {\n      return this.maxPages < this.pageCount\n    },\n  },\n\n  created () {\n    if (!this.src) {\n      this.stdErr(new Error('src.missing'))\n      return\n    }\n\n    this.$nextTick(() => this.init())\n  },\n\n  beforeUnmount () {\n    this.setDefaultValues()\n  },\n\n  methods: {\n    /**\n     * Helper to handle on preview click. It either requests a retry or\n     * emits an open event\n     */\n    onPreviewClick () {\n      if (this.loadError) {\n        this.init()\n      } else {\n        this.$emit('openPreview', { document: this.document })\n      }\n    },\n\n    /**\n     * Initializes the state, loads the document & renderes it's pages\n     */\n    async init () {\n      this.document = null\n      this.pages = []\n      this.show = false\n      this.loadError = undefined\n\n      return this.loadDocument(this.src)\n        .then(this.renderDocument)\n        .catch(this.stdErr)\n    },\n\n    /**\n     * Helper method to load the given document. Needed for test stubbing\n     * @param {String} src Document's src\n     * @returns {Promise<PDFDocumentProxy>}\n     */\n    async pdfjsLoad (src) {\n      return pdfjsLib.getDocument({\n        url: src,\n        useWorkerFetch: true,\n        isEvalSupported: true,\n        useSystemFonts: true,\n      }).promise\n    },\n\n    /**\n     * Loads the given PDF. It can load it from API or re-use existing document\n     * @param {Document|String} src PDF's source or a Document object\n     * @returns {Document}\n     */\n    async loadDocument (src) {\n      if (src instanceof Document) {\n        this.document = new Document({ ...src, scale: this.initialScale })\n      } else if (typeof src === 'string') {\n        let retries = 0\n        let err\n        const pdfl = async () => {\n          return sleep(retries * this.retryBackoff)\n            .then(() => this.pdfjsLoad(src))\n            .then(pdf => {\n              this.document = new Document({ pdf, src, scale: this.initialScale })\n            })\n        }\n\n        // Retry with backoff it it fails to load\n        while (!this.document && retries < this.maxRetries) {\n          await pdfl().catch(e => {\n            retries++\n            err = e\n          })\n        }\n\n        if (!this.document) {\n          throw err\n        }\n      } else {\n        throw new Error('src.notValid')\n      }\n      return this.document\n    },\n\n    /**\n     * Renders the given PDF\n     * @param {Document} doc The Document to render\n     * @return {Promise<undefined>}\n     */\n    async renderDocument (doc) {\n      const rf = this.$refs.pages\n\n      const pgCount = Math.min(this.pageCount, this.maxPages)\n      this.pages = [...new Array(pgCount)].map((_, i) => new Page({ index: i }))\n\n      if (pgCount <= 0) {\n        this.show = true\n        return\n      }\n\n      // Loadup pages\n      for (let i = 0; i < pgCount; i++) {\n        const node = makePlaceholder(this.labels)\n        rf.appendChild(node)\n        this.pages.splice(i, 1, new Page({ ...this.pages[i], node, loading: true }))\n\n        this.renderPage(this.pages[i], doc, rf)\n          .then(page => {\n            this.pages.splice(page.index, 1, page)\n\n            if (page.index === 0) {\n              this.show = true\n            }\n          })\n          .catch(this.stdErr)\n      }\n    },\n\n    /**\n     * Renders the given page\n     * @param {Page} page The page in question\n     * @param {Document} doc Page source\n     * @param {Node} rf PDF container\n     * @returns {Promise<undefined>}\n     */\n    async renderPage (page, doc, rf) {\n      // pdfjs starts with 1!\n      return doc.pdf.getPage(page.index + 1).then(p => {\n        const np = new Page(page)\n        np.loading = false\n        np.loaded = true\n        np.page = p\n\n        // Render page\n        const canvas = document.createElement('canvas')\n        const scale = doc.scale\n        const viewport = np.page.getViewport({ scale })\n        const canvasContext = canvas.getContext('2d')\n        const renderContext = { canvasContext, viewport }\n\n        canvas.height = viewport.height\n        canvas.width = viewport.width\n\n        return np.page.render(renderContext).promise.then(() => {\n          np.node = canvas\n          np.rendered = true\n          if (this.inline) {\n            canvas.classList.add('inline')\n          }\n          return np\n        })\n\n          .catch(() => {\n            const node = makeFailedPage(this.labels)\n            np.node = node\n            np.rendered = false\n            np.failed = true\n            return np\n          })\n\n          .then(np => {\n            rf.replaceChild(np.node, page.node)\n            return np\n          })\n      })\n    },\n\n    /**\n     * Standard error handler\n     * @param {Error} err The error\n     */\n    stdErr (err) {\n      console.error(err)\n      this.loadError = err\n      this.$emit('error', err)\n    },\n\n    setDefaultValues () {\n      this.document = null\n      this.pages = []\n      this.show = false\n      this.loadError = undefined\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n\n.doc-msg {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  height: 100%;\n  width: 100%;\n  background-color: var(--white);\n}\n.doc-err {\n  cursor: pointer;\n\n  .err-message {\n    color: var(--danger);\n  }\n}\n\n</style>\n\n<style lang=\"scss\">\n// Style not scoped, since pages are manually rendered\n\n.pdf-preview {\n  text-align: center;\n  width: 100%;\n  height: auto;\n\n  &.inline {\n    cursor: zoom-in;\n\n    canvas {\n      width: 100%;\n      height: auto;\n    }\n  }\n\n  canvas {\n    margin-bottom: 10px;\n    width: 80%;\n    height: auto;\n\n    &:last-of-type {\n      margin-bottom: unset;\n    }\n  }\n\n  .loader {\n    margin-bottom: 10px;\n  }\n}\n</style>\n",".pdf-preview {\n  text-align: center;\n  width: 100%;\n  height: auto;\n}\n.pdf-preview.inline {\n  cursor: zoom-in;\n}\n.pdf-preview.inline canvas {\n  width: 100%;\n  height: auto;\n}\n.pdf-preview canvas {\n  margin-bottom: 10px;\n  width: 80%;\n  height: auto;\n}\n.pdf-preview canvas:last-of-type {\n  margin-bottom: unset;\n}\n.pdf-preview .loader {\n  margin-bottom: 10px;\n}\n\n/*# sourceMappingURL=PDF.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1s = "data-v-3e0f4f9c";
+  const __vue_scope_id__$1s = "data-v-e03986fa";
   /* module identifier */
   const __vue_module_identifier__$1s = undefined;
   /* functional template */
@@ -7882,17 +8166,51 @@ var script$1o = {
 const __vue_script__$1o = script$1o;
 
 /* template */
-var __vue_render__$1l = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex align-items-center justify-content-center h-100 mb-2"},[(_vm.inline)?_c('font-awesome-icon',{staticClass:"inline-icon d-block text-secondary",style:(_vm.previewStyle),attrs:{"title":_vm.name,"icon":['far', ("file-" + _vm.icon)]},on:{"click":function($event){$event.stopPropagation();return _vm.$emit('openPreview')}}}):_c('p',{staticClass:"text-secondary"},[_vm._v("\n    "+_vm._s(_vm.labels.previewUnavailable || 'Preview unavailable')+"\n  ")])],1)};
+var __vue_render__$1l = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    {
+      staticClass:
+        "d-flex align-items-center justify-content-center h-100 mb-2",
+    },
+    [
+      _vm.inline
+        ? _c("font-awesome-icon", {
+            staticClass: "inline-icon d-block text-secondary",
+            style: _vm.previewStyle,
+            attrs: { title: _vm.name, icon: ["far", "file-" + _vm.icon] },
+            on: {
+              click: function ($event) {
+                $event.stopPropagation();
+                return _vm.$emit("openPreview")
+              },
+            },
+          })
+        : _c("p", { staticClass: "text-secondary" }, [
+            _vm._v(
+              "\n    " +
+                _vm._s(_vm.labels.previewUnavailable || "Preview unavailable") +
+                "\n  "
+            ),
+          ]),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$1l = [];
+__vue_render__$1l._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1q = function (inject) {
     if (!inject) return
-    inject("data-v-50b4344a_0", { source: ".inline-icon[data-v-50b4344a]{cursor:zoom-in}", map: undefined, media: undefined });
+    inject("data-v-06c799b4_0", { source: ".inline-icon[data-v-06c799b4] {\n  cursor: zoom-in;\n}\n\n/*# sourceMappingURL=NoPreview.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/filePreview/common/types/NoPreview.vue","NoPreview.vue"],"names":[],"mappings":"AAkDA;EACA,eAAA;ACjDA;;AAEA,wCAAwC","file":"NoPreview.vue","sourcesContent":["<template>\n  <div class=\"d-flex align-items-center justify-content-center h-100 mb-2\">\n    <font-awesome-icon\n      v-if=\"inline\"\n      :title=\"name\"\n      :icon=\"['far', `file-${icon}`]\"\n      :style=\"previewStyle\"\n      class=\"inline-icon d-block text-secondary\"\n      @click.stop=\"$emit('openPreview')\"\n    />\n\n    <p\n      v-else\n      class=\"text-secondary\"\n    >\n      {{ labels.previewUnavailable || 'Preview unavailable' }}\n    </p>\n  </div>\n</template>\n\n<script lang=\"js\">\nimport { getExtensionIconType } from '../index.js'\nimport base from '../base.vue'\n\nexport default {\n  extends: base,\n\n  props: {\n    previewStyle: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n  },\n\n  computed: {\n    icon () {\n      const { original = {} } = this.meta || {}\n      const { ext } = original || {}\n      return getExtensionIconType(ext)\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.inline-icon {\n  cursor: zoom-in;\n}\n</style>\n",".inline-icon {\n  cursor: zoom-in;\n}\n\n/*# sourceMappingURL=NoPreview.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1q = "data-v-50b4344a";
+  const __vue_scope_id__$1q = "data-v-06c799b4";
   /* module identifier */
   const __vue_module_identifier__$1q = undefined;
   /* functional template */
@@ -7916,17 +8234,51 @@ var __vue_staticRenderFns__$1l = [];
 /* script */
 
 /* template */
-var __vue_render__$1k = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"lightbox"},[_c('div',{staticClass:"header shadow-sm"},[_c('div',{staticClass:"left"},[_vm._t("header.left")],2),_vm._v(" "),_c('div',{staticClass:"right"},[_vm._t("header.right"),_vm._v(" "),_c('button',{staticClass:"closer",on:{"click":function($event){return _vm.$emit('close')}}},[_vm._v("\n        ×\n      ")])],2)]),_vm._v(" "),_c('div',{staticClass:"main"},[_vm._t("default")],2)])};
+var __vue_render__$1k = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", { staticClass: "lightbox" }, [
+    _c("div", { staticClass: "header shadow-sm" }, [
+      _c("div", { staticClass: "left" }, [_vm._t("header.left")], 2),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "right" },
+        [
+          _vm._t("header.right"),
+          _vm._v(" "),
+          _c(
+            "button",
+            {
+              staticClass: "closer",
+              on: {
+                click: function ($event) {
+                  return _vm.$emit("close")
+                },
+              },
+            },
+            [_vm._v("\n        ×\n      ")]
+          ),
+        ],
+        2
+      ),
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "main" }, [_vm._t("default")], 2),
+  ])
+};
 var __vue_staticRenderFns__$1k = [];
+__vue_render__$1k._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1p = function (inject) {
     if (!inject) return
-    inject("data-v-8fa20558_0", { source: ".lightbox[data-v-8fa20558]{position:fixed;left:0;top:0;right:0;bottom:0;background-color:var(--body-bg);color:var(--body-color);z-index:2000}.lightbox .header[data-v-8fa20558]{display:flex;justify-content:space-between;background-color:var(--white);color:var(--body-color);position:absolute;left:0;top:0;right:0;z-index:1000;height:50px}.lightbox .header .left[data-v-8fa20558]{margin-left:10px}.lightbox .header .right[data-v-8fa20558]{margin-right:10px}.lightbox .header>div[data-v-8fa20558]{display:flex;align-items:center}.lightbox .main[data-v-8fa20558]{position:absolute;top:50px;left:0;right:0;bottom:0;overflow-y:scroll;z-index:1}.lightbox .header button[data-v-8fa20558]{background-color:transparent;border:none;outline:0;font-size:25px;font-weight:700;margin:10px;cursor:pointer;box-sizing:border-box;color:var(--body-color)}.lightbox .header button[data-v-8fa20558]:last-of-type{margin-right:0}", map: undefined, media: undefined });
+    inject("data-v-3982d7f3_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n/* Temporary style; update when messaging is updated with bootstrap */\n.lightbox[data-v-3982d7f3] {\n  position: fixed;\n  left: 0;\n  top: 0;\n  right: 0;\n  bottom: 0;\n\n  background-color: var(--body-bg);\n  color: var(--body-color);\n  z-index: 2000;\n}\n.lightbox .header[data-v-3982d7f3] {\n  display: flex;\n  justify-content: space-between;\n  background-color: var(--white);\n  color: var(--body-color);\n  position: absolute;\n  left: 0;\n  top: 0;\n  right: 0;\n\n  z-index: 1000;\n  height: 50px;\n}\n.lightbox .header .left[data-v-3982d7f3] {\n  margin-left: 10px;\n}\n.lightbox .header .right[data-v-3982d7f3] {\n  margin-right: 10px;\n}\n.lightbox .header > div[data-v-3982d7f3] {\n  display: flex;\n  align-items: center;\n}\n.lightbox .main[data-v-3982d7f3] {\n  position: absolute;\n  top: 50px;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  overflow-y: scroll;\n  z-index: 1;\n}\n.lightbox .header button[data-v-3982d7f3] {\n  background-color: transparent;\n  border: none;\n  outline: none;\n  font-size: 25px;\n  font-weight: bold;\n  margin: 10px;\n  cursor: pointer;\n  box-sizing: border-box;\n  color: var(--body-color);\n}\n.lightbox .header button[data-v-3982d7f3]:last-of-type {\n  margin-right: 0;\n}\n\n", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/lightbox/CLightbox.vue"],"names":[],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;AAwBA,qEAAA;AAEA;EACA,eAAA;EACA,OAAA;EACA,MAAA;EACA,QAAA;EACA,SAAA;;EAEA,gCAAA;EACA,wBAAA;EACA,aAAA;AACA;AAEA;EACA,aAAA;EACA,8BAAA;EACA,8BAAA;EACA,wBAAA;EACA,kBAAA;EACA,OAAA;EACA,MAAA;EACA,QAAA;;EAEA,aAAA;EACA,YAAA;AACA;AAEA;EACA,iBAAA;AACA;AACA;EACA,kBAAA;AACA;AAEA;EACA,aAAA;EACA,mBAAA;AACA;AAEA;EACA,kBAAA;EACA,SAAA;EACA,OAAA;EACA,QAAA;EACA,SAAA;EACA,kBAAA;EACA,UAAA;AACA;AAEA;EACA,6BAAA;EACA,YAAA;EACA,aAAA;EACA,eAAA;EACA,iBAAA;EACA,YAAA;EACA,eAAA;EACA,sBAAA;EACA,wBAAA;AACA;AAEA;EACA,eAAA;AACA","file":"CLightbox.vue","sourcesContent":["<template>\n  <div class=\"lightbox\">\n    <div class=\"header shadow-sm\">\n      <div class=\"left\">\n        <slot name=\"header.left\" />\n      </div>\n      <div class=\"right\">\n        <slot name=\"header.right\" />\n        <button\n          class=\"closer\"\n          @click=\"$emit('close')\"\n        >\n          &times;\n        </button>\n      </div>\n    </div>\n\n    <div class=\"main\">\n      <slot />\n    </div>\n  </div>\n</template>\n\n<style scoped>\n/* Temporary style; update when messaging is updated with bootstrap */\n\n.lightbox {\n  position: fixed;\n  left: 0;\n  top: 0;\n  right: 0;\n  bottom: 0;\n\n  background-color: var(--body-bg);\n  color: var(--body-color);\n  z-index: 2000;\n}\n\n.lightbox .header {\n  display: flex;\n  justify-content: space-between;\n  background-color: var(--white);\n  color: var(--body-color);\n  position: absolute;\n  left: 0;\n  top: 0;\n  right: 0;\n\n  z-index: 1000;\n  height: 50px;\n}\n\n.lightbox .header .left {\n  margin-left: 10px;\n}\n.lightbox .header .right {\n  margin-right: 10px;\n}\n\n.lightbox .header > div {\n  display: flex;\n  align-items: center;\n}\n\n.lightbox .main {\n  position: absolute;\n  top: 50px;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  overflow-y: scroll;\n  z-index: 1;\n}\n\n.lightbox .header button {\n  background-color: transparent;\n  border: none;\n  outline: none;\n  font-size: 25px;\n  font-weight: bold;\n  margin: 10px;\n  cursor: pointer;\n  box-sizing: border-box;\n  color: var(--body-color);\n}\n\n.lightbox .header button:last-of-type {\n  margin-right: 0;\n}\n\n</style>\n"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1p = "data-v-8fa20558";
+  const __vue_scope_id__$1p = "data-v-3982d7f3";
   /* module identifier */
   const __vue_module_identifier__$1p = undefined;
   /* functional template */
@@ -7962,8 +8314,48 @@ var script$1n = {
 const __vue_script__$1n = script$1n;
 
 /* template */
-var __vue_render__$1j = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('c-lightbox',_vm._g({scopedSlots:_vm._u([_vm._l((_vm.$scopedSlots),function(_,slot){return {key:slot,fn:function(scope){return [_vm._t(slot,null,null,scope)]}}})],null,true)},_vm.$listeners),[_vm._v(" "),(_vm.previewType)?_c(_vm.previewType,_vm._g(_vm._b({tag:"component"},'component',_vm.$attrs,false),_vm.$listeners)):_vm._e()],1)};
+var __vue_render__$1j = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "c-lightbox",
+    _vm._g(
+      {
+        scopedSlots: _vm._u(
+          [
+            _vm._l(_vm.$scopedSlots, function (_, slot) {
+              return {
+                key: slot,
+                fn: function (scope) {
+                  return [_vm._t(slot, null, null, scope)]
+                },
+              }
+            }),
+          ],
+          null,
+          true
+        ),
+      },
+      _vm.$listeners
+    ),
+    [
+      _vm._v(" "),
+      _vm.previewType
+        ? _c(
+            _vm.previewType,
+            _vm._g(
+              _vm._b({ tag: "component" }, "component", _vm.$attrs, false),
+              _vm.$listeners
+            )
+          )
+        : _vm._e(),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$1j = [];
+__vue_render__$1j._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1o = undefined;
@@ -8005,8 +8397,37 @@ var script$1m = {
 const __vue_script__$1m = script$1m;
 
 /* template */
-var __vue_render__$1i = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"inline h-100"},[_c('div',{staticClass:"h-100"},[_c(_vm.previewType,_vm._g(_vm._b({tag:"component",attrs:{"max-pages":1,"initial-scale":1.5,"inline":""}},'component',_vm.$attrs,false),_vm.$listeners))],1)])};
+var __vue_render__$1i = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", { staticClass: "inline h-100" }, [
+    _c(
+      "div",
+      { staticClass: "h-100" },
+      [
+        _c(
+          _vm.previewType,
+          _vm._g(
+            _vm._b(
+              {
+                tag: "component",
+                attrs: { "max-pages": 1, "initial-scale": 1.5, inline: "" },
+              },
+              "component",
+              _vm.$attrs,
+              false
+            ),
+            _vm.$listeners
+          )
+        ),
+      ],
+      1
+    ),
+  ])
+};
 var __vue_staticRenderFns__$1i = [];
+__vue_render__$1i._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1n = undefined;
@@ -8145,8 +8566,147 @@ var script$1l = {
 const __vue_script__$1l = script$1l;
 
 /* template */
-var __vue_render__$1h = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-inline-flex gap-1"},[(!_vm.inConfirmation)?_c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.noninteractive.hover",value:({ title: _vm.tooltip, boundary: 'body' }),expression:"{ title: tooltip, boundary: 'body' }",modifiers:{"noninteractive":true,"hover":true}}],class:(_vm.buttonClass + " " + (_vm.borderless ? 'border-0' : '') + " flex-fill"),style:(_vm.buttonStyle),attrs:{"data-test-id":_vm.dataTestId,"variant":_vm.variant,"size":_vm.size,"disabled":_vm.disabled || _vm.processing},on:{"click":function($event){$event.stopPropagation();$event.preventDefault();return _vm.onPrompt.apply(null, arguments)}}},[(_vm.processing)?_c('b-spinner',{staticClass:"align-middle",attrs:{"data-test-id":"spinner","small":""}}):[(_vm.showIcon || !_vm.text)?_c('font-awesome-icon',{class:_vm.iconClass,attrs:{"icon":_vm.icon}}):_vm._e(),_vm._v(" "),(_vm.text)?_c('span',{class:_vm.textClass},[_vm._v("\n        "+_vm._s(_vm.text)+"\n      ")]):_vm._e()]],2):[_c('b-button',{class:[ _vm.borderless && 'border-0', 'flex-fill' ],attrs:{"data-test-id":(_vm.dataTestId + "-confirm"),"variant":_vm.variantOk,"size":_vm.sizeConfirm,"disabled":_vm.okDisabled},on:{"blur":function($event){$event.preventDefault();return _vm.onCancel()},"click":function($event){$event.preventDefault();$event.stopPropagation();return _vm.onConfirmation()}}},[_vm._t("yes",function(){return [_c('font-awesome-icon',{attrs:{"data-test-id":"confirm","icon":['fas', 'check']}})]})],2),_vm._v(" "),_c('b-button',{class:[ _vm.borderless && 'border-0', 'flex-fill' ],attrs:{"data-test-id":(_vm.dataTestId + "-cancel"),"variant":_vm.variantCancel,"size":_vm.sizeConfirm,"disabled":_vm.cancelDisabled},on:{"click":function($event){$event.preventDefault();$event.stopPropagation();return _vm.onCancel()}}},[_vm._t("no",function(){return [_c('font-awesome-icon',{attrs:{"data-test-id":"reject","icon":['fas', 'times']}})]})],2)]],2)};
+var __vue_render__$1h = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "d-inline-flex gap-1" },
+    [
+      !_vm.inConfirmation
+        ? _c(
+            "b-button",
+            {
+              directives: [
+                {
+                  name: "b-tooltip",
+                  rawName: "v-b-tooltip.noninteractive.hover",
+                  value: { title: _vm.tooltip, boundary: "body" },
+                  expression: "{ title: tooltip, boundary: 'body' }",
+                  modifiers: { noninteractive: true, hover: true },
+                },
+              ],
+              class:
+                _vm.buttonClass +
+                " " +
+                (_vm.borderless ? "border-0" : "") +
+                " flex-fill",
+              style: _vm.buttonStyle,
+              attrs: {
+                "data-test-id": _vm.dataTestId,
+                variant: _vm.variant,
+                size: _vm.size,
+                disabled: _vm.disabled || _vm.processing,
+              },
+              on: {
+                click: function ($event) {
+                  $event.stopPropagation();
+                  $event.preventDefault();
+                  return _vm.onPrompt.apply(null, arguments)
+                },
+              },
+            },
+            [
+              _vm.processing
+                ? _c("b-spinner", {
+                    staticClass: "align-middle",
+                    attrs: { "data-test-id": "spinner", small: "" },
+                  })
+                : [
+                    _vm.showIcon || !_vm.text
+                      ? _c("font-awesome-icon", {
+                          class: _vm.iconClass,
+                          attrs: { icon: _vm.icon },
+                        })
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm.text
+                      ? _c("span", { class: _vm.textClass }, [
+                          _vm._v("\n        " + _vm._s(_vm.text) + "\n      "),
+                        ])
+                      : _vm._e(),
+                  ],
+            ],
+            2
+          )
+        : [
+            _c(
+              "b-button",
+              {
+                class: [_vm.borderless && "border-0", "flex-fill"],
+                attrs: {
+                  "data-test-id": _vm.dataTestId + "-confirm",
+                  variant: _vm.variantOk,
+                  size: _vm.sizeConfirm,
+                  disabled: _vm.okDisabled,
+                },
+                on: {
+                  blur: function ($event) {
+                    $event.preventDefault();
+                    return _vm.onCancel()
+                  },
+                  click: function ($event) {
+                    $event.preventDefault();
+                    $event.stopPropagation();
+                    return _vm.onConfirmation()
+                  },
+                },
+              },
+              [
+                _vm._t("yes", function () {
+                  return [
+                    _c("font-awesome-icon", {
+                      attrs: {
+                        "data-test-id": "confirm",
+                        icon: ["fas", "check"],
+                      },
+                    }),
+                  ]
+                }),
+              ],
+              2
+            ),
+            _vm._v(" "),
+            _c(
+              "b-button",
+              {
+                class: [_vm.borderless && "border-0", "flex-fill"],
+                attrs: {
+                  "data-test-id": _vm.dataTestId + "-cancel",
+                  variant: _vm.variantCancel,
+                  size: _vm.sizeConfirm,
+                  disabled: _vm.cancelDisabled,
+                },
+                on: {
+                  click: function ($event) {
+                    $event.preventDefault();
+                    $event.stopPropagation();
+                    return _vm.onCancel()
+                  },
+                },
+              },
+              [
+                _vm._t("no", function () {
+                  return [
+                    _c("font-awesome-icon", {
+                      attrs: {
+                        "data-test-id": "reject",
+                        icon: ["fas", "times"],
+                      },
+                    }),
+                  ]
+                }),
+              ],
+              2
+            ),
+          ],
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$1h = [];
+__vue_render__$1h._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1m = undefined;
@@ -8218,8 +8778,38 @@ var script$1k = {
 const __vue_script__$1k = script$1k;
 
 /* template */
-var __vue_render__$1g = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-button',_vm._g({staticClass:"d-inline-flex align-items-center justify-content-center",attrs:{"variant":_vm.variant,"disabled":_vm.disabled || _vm.processing,"size":_vm.size}},_vm.$listeners),[_vm._t("default"),_vm._v(" "),(_vm.processing)?_c('b-spinner',{staticClass:"ml-1",attrs:{"processing":_vm.processing,"small":""}}):_vm._e()],2)};
+var __vue_render__$1g = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-button",
+    _vm._g(
+      {
+        staticClass: "d-inline-flex align-items-center justify-content-center",
+        attrs: {
+          variant: _vm.variant,
+          disabled: _vm.disabled || _vm.processing,
+          size: _vm.size,
+        },
+      },
+      _vm.$listeners
+    ),
+    [
+      _vm._t("default"),
+      _vm._v(" "),
+      _vm.processing
+        ? _c("b-spinner", {
+            staticClass: "ml-1",
+            attrs: { processing: _vm.processing, small: "" },
+          })
+        : _vm._e(),
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$1g = [];
+__vue_render__$1g._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1l = undefined;
@@ -8375,13 +8965,87 @@ var script$1j = {
 const __vue_script__$1j = script$1j;
 
 /* template */
-var __vue_render__$1f = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"c-input-date-time d-flex flex-wrap w-100 gap-1"},[(!_vm.noDate)?_c('b-form-datepicker',{staticClass:"h-100 overflow-hidden",attrs:{"data-test-id":"picker-date","placeholder":_vm.labels.none,"date-format-options":{ year: 'numeric', month: 'numeric', day: 'numeric' },"min":_vm.minDate,"max":_vm.maxDate,"label-reset-button":_vm.labels.clear,"label-today-button":_vm.labels.today,"locale":_vm.browserLocale,"start-weekday":_vm.weekStartDay,"label-help":"","today-variant":"info","selected-variant":"extra-light","boundary":"window","hide-header":"","reset-button":"","today-button":"","show-decade-nav":""},model:{value:(_vm.date),callback:function ($$v) {_vm.date=$$v;},expression:"date"}}):_vm._e(),_vm._v(" "),(!_vm.noTime)?_c('b-form-timepicker',{staticClass:"h-100 overflow-hidden",attrs:{"data-test-id":"picker-time","placeholder":_vm.labels.none,"label-reset-button":_vm.labels.clear,"label-now-button":_vm.labels.now,"locale":_vm.browserLocale,"boundary":"window","hide-header":"","no-close-button":"","reset-button":"","now-button":""},model:{value:(_vm.time),callback:function ($$v) {_vm.time=$$v;},expression:"time"}}):_vm._e(),_vm._v(" "),_vm._t("default")],2)};
+var __vue_render__$1f = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "c-input-date-time d-flex flex-wrap w-100 gap-1" },
+    [
+      !_vm.noDate
+        ? _c("b-form-datepicker", {
+            staticClass: "h-100 overflow-hidden",
+            attrs: {
+              "data-test-id": "picker-date",
+              placeholder: _vm.labels.none,
+              "date-format-options": {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+              },
+              min: _vm.minDate,
+              max: _vm.maxDate,
+              "label-reset-button": _vm.labels.clear,
+              "label-today-button": _vm.labels.today,
+              locale: _vm.browserLocale,
+              "start-weekday": _vm.weekStartDay,
+              "label-help": "",
+              "today-variant": "info",
+              "selected-variant": "extra-light",
+              boundary: "window",
+              "hide-header": "",
+              "reset-button": "",
+              "today-button": "",
+              "show-decade-nav": "",
+            },
+            model: {
+              value: _vm.date,
+              callback: function ($$v) {
+                _vm.date = $$v;
+              },
+              expression: "date",
+            },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      !_vm.noTime
+        ? _c("b-form-timepicker", {
+            staticClass: "h-100 overflow-hidden",
+            attrs: {
+              "data-test-id": "picker-time",
+              placeholder: _vm.labels.none,
+              "label-reset-button": _vm.labels.clear,
+              "label-now-button": _vm.labels.now,
+              locale: _vm.browserLocale,
+              boundary: "window",
+              "hide-header": "",
+              "no-close-button": "",
+              "reset-button": "",
+              "now-button": "",
+            },
+            model: {
+              value: _vm.time,
+              callback: function ($$v) {
+                _vm.time = $$v;
+              },
+              expression: "time",
+            },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _vm._t("default"),
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$1f = [];
+__vue_render__$1f._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1k = function (inject) {
     if (!inject) return
-    inject("data-v-66cd7185_0", { source: ".c-input-date-time{min-width:120px}.c-input-date-time .btn{padding:.25rem .5rem}.c-input-date-time label{font-family:var(--font-regular);color:var(--black)!important}.c-input-date-time .b-form-datepicker,.c-input-date-time .b-form-timepicker{flex:1 0 130px}.c-input-date-time .b-calendar-inner{background-color:var(--white)}.c-input-date-time .b-calendar-inner .b-calendar-grid-body{height:14rem;display:flex;flex-direction:column;justify-content:center}", map: undefined, media: undefined });
+    inject("data-v-771df2b8_0", { source: ".c-input-date-time {\n  min-width: 120px;\n}\n.c-input-date-time .btn {\n  padding: 0.25rem 0.5rem;\n}\n.c-input-date-time label {\n  font-family: var(--font-regular);\n  color: var(--black) !important;\n}\n.c-input-date-time .b-form-datepicker, .c-input-date-time .b-form-timepicker {\n  flex: 1 0 130px;\n}\n.c-input-date-time .b-calendar-inner {\n  background-color: var(--white);\n}\n.c-input-date-time .b-calendar-inner .b-calendar-grid-body {\n  height: 14rem;\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n}\n\n/*# sourceMappingURL=index.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CInputDateTime/index.vue","index.vue"],"names":[],"mappings":"AAiIA;EACA,gBAAA;AChIA;ADkIA;EACA,uBAAA;AChIA;ADmIA;EACA,gCAAA;EACA,8BAAA;ACjIA;ADoIA;EACA,eAAA;AClIA;ADqIA;EACA,8BAAA;ACnIA;ADqIA;EACA,aAAA;EACA,aAAA;EACA,sBAAA;EACA,uBAAA;ACnIA;;AAEA,oCAAoC","file":"index.vue","sourcesContent":["<template>\n  <div class=\"c-input-date-time d-flex flex-wrap w-100 gap-1\">\n    <b-form-datepicker\n      v-if=\"!noDate\"\n      v-model=\"date\"\n      data-test-id=\"picker-date\"\n      :placeholder=\"labels.none\"\n      :date-format-options=\"{ year: 'numeric', month: 'numeric', day: 'numeric' }\"\n      :min=\"minDate\"\n      :max=\"maxDate\"\n      :label-reset-button=\"labels.clear\"\n      :label-today-button=\"labels.today\"\n      :locale=\"browserLocale\"\n      :start-weekday=\"weekStartDay\"\n      label-help=\"\"\n      today-variant=\"info\"\n      selected-variant=\"extra-light\"\n      boundary=\"window\"\n      hide-header\n      reset-button\n      today-button\n      show-decade-nav\n      class=\"h-100 overflow-hidden\"\n    />\n\n    <b-form-timepicker\n      v-if=\"!noTime\"\n      v-model=\"time\"\n      data-test-id=\"picker-time\"\n      :placeholder=\"labels.none\"\n      :label-reset-button=\"labels.clear\"\n      :label-now-button=\"labels.now\"\n      :locale=\"browserLocale\"\n      boundary=\"window\"\n      hide-header\n      no-close-button\n      reset-button\n      now-button\n      class=\"h-100 overflow-hidden\"\n    />\n\n    <slot />\n  </div>\n</template>\n<script lang=\"js\">\nimport { getDate, setDate, getTime, setTime } from './lib/index.ts'\nimport { shared } from '../../../../../../lib/js/dist'\nconst { getWeekStartDay } = shared\n\nexport default {\n  props: {\n    value: {\n      type: [String, Date],\n      required: false,\n      default: '',\n    },\n\n    noTime: {\n      type: Boolean,\n      default: false,\n    },\n\n    noDate: {\n      type: Boolean,\n      default: false,\n    },\n\n    onlyFuture: {\n      type: Boolean,\n      default: false,\n    },\n\n    onlyPast: {\n      type: Boolean,\n      default: false,\n    },\n\n    size: {\n      type: String,\n      default: 'md',\n    },\n\n    labels: {\n      type: Object,\n      required: true,\n    },\n  },\n\n  computed: {\n    date: {\n      get () {\n        return getDate(this.value)\n      },\n\n      set (date) {\n        this.$emit('input', setDate(date, this.value, this.noDate, this.noTime))\n      },\n    },\n\n    time: {\n      get () {\n        return getTime(this.value)\n      },\n\n      set (time) {\n        this.$emit('input', setTime(time, this.value, this.noDate, this.noTime))\n      },\n    },\n\n    minDate () {\n      return this.onlyFuture ? new Date() : undefined\n    },\n\n    maxDate () {\n      return this.onlyPast ? new Date() : undefined\n    },\n\n    browserLocale () {\n      return navigator.language || navigator.languages?.[0] || 'en-US'\n    },\n\n    weekStartDay () {\n      return getWeekStartDay(this.browserLocale)\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.c-input-date-time {\n  min-width: 120px;\n\n  .btn {\n    padding: 0.25rem 0.5rem;\n  }\n\n  label {\n    font-family: var(--font-regular);\n    color: var(--black) !important;\n  }\n\n  .b-form-datepicker, .b-form-timepicker {\n    flex: 1 0 130px;\n  }\n\n  .b-calendar-inner {\n    background-color: var(--white);\n\n    .b-calendar-grid-body {\n      height: 14rem;\n      display: flex;\n      flex-direction: column;\n      justify-content: center;\n    }\n  }\n}\n</style>\n",".c-input-date-time {\n  min-width: 120px;\n}\n.c-input-date-time .btn {\n  padding: 0.25rem 0.5rem;\n}\n.c-input-date-time label {\n  font-family: var(--font-regular);\n  color: var(--black) !important;\n}\n.c-input-date-time .b-form-datepicker, .c-input-date-time .b-form-timepicker {\n  flex: 1 0 130px;\n}\n.c-input-date-time .b-calendar-inner {\n  background-color: var(--white);\n}\n.c-input-date-time .b-calendar-inner .b-calendar-grid-body {\n  height: 14rem;\n  display: flex;\n  flex-direction: column;\n  justify-content: center;\n}\n\n/*# sourceMappingURL=index.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -8648,16 +9312,133 @@ var script$1i = {
 const __vue_script__$1i = script$1i;
 
 /* template */
-var __vue_render__$1e = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('vue-select',_vm._b({ref:"vueSelect",staticClass:"bg-white rounded",class:_vm.sizeClass,attrs:{"data-test-id":"select","clearable":_vm.clearable,"options":_vm.options,"searchable":_vm.searchable,"disabled":_vm.disabled,"selectable":_vm.selectable,"multiple":_vm.multiple,"loading":_vm.loading,"calculate-position":_vm.calculateDropdownPosition,"append-to-body":_vm.appendToBody},on:{"search":_vm.onSearch},scopedSlots:_vm._u([_vm._l((_vm.$scopedSlots),function(_,name){return {key:name,fn:function(data){return [_vm._t(name,null,null,data)]}}}),(_vm.badge)?{key:"option",fn:function(option){return [_c('span',{staticClass:"badge badge-pill",style:(_vm.getOptionStyle(option))},[_vm._v("\n      "+_vm._s(option.text)+"\n    ")])]}}:null,(!_vm.multiple && _vm.badge)?{key:"selected-option",fn:function(option){return [_c('span',{staticClass:"badge badge-pill",style:(_vm.getOptionStyle(option))},[_vm._v("\n      "+_vm._s(option.text)+"\n    ")])]}}:null,(_vm.multiple && _vm.badge)?{key:"selected-option-container",fn:function(ref){
-var option = ref.option;
-var deselect = ref.deselect;
-return [_c('span',{staticClass:"d-flex align-items-center badge badge-pill mx-1 mt-1 w-auto",style:(_vm.getOptionStyle(option))},[_vm._v("\n      "+_vm._s(option.text)+"\n\n      "),_c('font-awesome-icon',{staticClass:"pointer ml-2",attrs:{"icon":['fas', 'times']},on:{"click":function($event){return deselect(option)}}})],1)]}}:null],null,true),model:{value:(_vm._value),callback:function ($$v) {_vm._value=$$v;},expression:"_value"}},'vue-select',_vm.$attrs,false))};
+var __vue_render__$1e = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "vue-select",
+    _vm._b(
+      {
+        ref: "vueSelect",
+        staticClass: "bg-white rounded",
+        class: _vm.sizeClass,
+        attrs: {
+          "data-test-id": "select",
+          clearable: _vm.clearable,
+          options: _vm.options,
+          searchable: _vm.searchable,
+          disabled: _vm.disabled,
+          selectable: _vm.selectable,
+          multiple: _vm.multiple,
+          loading: _vm.loading,
+          "calculate-position": _vm.calculateDropdownPosition,
+          "append-to-body": _vm.appendToBody,
+        },
+        on: { search: _vm.onSearch },
+        scopedSlots: _vm._u(
+          [
+            _vm._l(_vm.$scopedSlots, function (_, name) {
+              return {
+                key: name,
+                fn: function (data) {
+                  return [_vm._t(name, null, null, data)]
+                },
+              }
+            }),
+            _vm.badge
+              ? {
+                  key: "option",
+                  fn: function (option) {
+                    return [
+                      _c(
+                        "span",
+                        {
+                          staticClass: "badge badge-pill",
+                          style: _vm.getOptionStyle(option),
+                        },
+                        [_vm._v("\n      " + _vm._s(option.text) + "\n    ")]
+                      ),
+                    ]
+                  },
+                }
+              : null,
+            !_vm.multiple && _vm.badge
+              ? {
+                  key: "selected-option",
+                  fn: function (option) {
+                    return [
+                      _c(
+                        "span",
+                        {
+                          staticClass: "badge badge-pill",
+                          style: _vm.getOptionStyle(option),
+                        },
+                        [_vm._v("\n      " + _vm._s(option.text) + "\n    ")]
+                      ),
+                    ]
+                  },
+                }
+              : null,
+            _vm.multiple && _vm.badge
+              ? {
+                  key: "selected-option-container",
+                  fn: function (ref) {
+                    var option = ref.option;
+                    var deselect = ref.deselect;
+                    return [
+                      _c(
+                        "span",
+                        {
+                          staticClass:
+                            "d-flex align-items-center badge badge-pill mx-1 mt-1 w-auto",
+                          style: _vm.getOptionStyle(option),
+                        },
+                        [
+                          _vm._v(
+                            "\n      " + _vm._s(option.text) + "\n\n      "
+                          ),
+                          _c("font-awesome-icon", {
+                            staticClass: "pointer ml-2",
+                            attrs: { icon: ["fas", "times"] },
+                            on: {
+                              click: function ($event) {
+                                return deselect(option)
+                              },
+                            },
+                          }),
+                        ],
+                        1
+                      ),
+                    ]
+                  },
+                }
+              : null,
+          ],
+          null,
+          true
+        ),
+        model: {
+          value: _vm._value,
+          callback: function ($$v) {
+            _vm._value = $$v;
+          },
+          expression: "_value",
+        },
+      },
+      "vue-select",
+      _vm.$attrs,
+      false
+    )
+  )
+};
 var __vue_staticRenderFns__$1e = [];
+__vue_render__$1e._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1j = function (inject) {
     if (!inject) return
-    inject("data-v-3ac6c1e3_0", { source: ":root{--vs-dropdown-bg:var(--white);--vs-dropdown-option--active-bg:var(--light);--vs-state-disabled-color:var(--secondary);--vs-state-disabled-bg:var(--light);--vs-colors--light:var(--black);--vs-colors--dark:var(--black);--vs-dropdown-option-color:var(--black);--vs-dropdown-option--active-color:var(--black);--vs-selected-bg:var(--extra-light);--vs-search-input-color:var(--secondary);--vs-search-input-bg:var(--white)}.v-select{min-width:auto;position:relative;-ms-flex:1 1 auto;flex:1 1 auto;margin-bottom:0;font-size:.9rem!important;font-family:var(--font-regular)}.v-select .vs__selected-options{width:0;padding:0}.v-select .vs__selected{display:flex;white-space:nowrap;text-overflow:ellipsis;max-width:100%;overflow:hidden;border:0;color:var(--black)}.v-select .vs__search{font-size:.9rem;border:0;padding:0 2px;padding-top:.375rem;margin:0}.v-select:not(.vs--open):not(.vs--loading) .vs__selected+.vs__search{width:0;margin:0;border:none;padding:0;height:0}.v-select .vs__dropdown-toggle{min-height:calc(1.5em + .75rem + 4px);padding:.375rem calc(.75rem - 2px);padding-top:0!important;border-width:2px;border-color:var(--extra-light)}.v-select .vs__dropdown-toggle .vs__selected{margin-top:.375rem}.v-select .vs__dropdown-toggle .vs__actions{padding-top:.375rem;padding-right:0}.v-select .vs__clear,.v-select .vs__open-indicator{fill:var(--black);display:inline-flex}.v-select .vs__clear{padding:0;border:0;background-color:transparent;cursor:pointer;margin-right:8px}.v-select.vs--single .vs__selected{margin-left:0;margin-right:0}.vs--open .vs__dropdown-toggle{border-color:var(--primary);border-radius:.25rem!important}.input-group>.v-select:not(:last-child) .vs__dropdown-toggle{border-top-right-radius:0;border-bottom-right-radius:0}.vs__spinner{border:.7em solid var(--dark);border-left-color:var(--white)}.vs__spinner,.vs__spinner::after{width:4em;height:4em}.vs__dropdown-menu{z-index:1100}.vs__dropdown-menu .vs__dropdown-option.vs__dropdown-option--selected{background:var(--vs-dropdown-option--active-bg);color:var(--vs-dropdown-option--active-color)}.vs__dropdown-menu .vs__dropdown-option.vs__dropdown-option--disabled{cursor:var(--vs-state-disabled-cursor)!important;opacity:.5}.vs__dropdown-menu .vs__dropdown-option:active{color:var(--white);background-color:var(--primary)}.c-input-sm{font-size:.7875rem!important}.c-input-sm .vs__search{font-size:.7875rem;padding-top:.25rem}.c-input-sm .vs__dropdown-toggle{min-height:calc(1.5em + .5rem + 4px);padding:.25rem calc(.5rem - 2px);border-radius:.2rem}.c-input-sm .vs__dropdown-toggle .vs__selected{margin-top:.25rem}.c-input-sm .vs__dropdown-toggle .vs__actions{padding-top:.25rem}.c-input-lg{font-size:1.125rem!important}.c-input-lg .vs__search{font-size:1.125rem;padding-top:.5rem}.c-input-lg .vs__dropdown-toggle{min-height:calc(1.5em + 1rem + 4px);padding:.5rem calc(1rem - 2px);border-radius:.3rem}.c-input-lg .vs__dropdown-toggle .vs__selected{margin-top:.5rem}.c-input-lg .vs__dropdown-toggle .vs__actions{padding-top:.5rem}", map: undefined, media: undefined });
+    inject("data-v-f1146e12_0", { source: ":root {\n  --vs-dropdown-bg: var(--white);\n  --vs-dropdown-option--active-bg: var(--light);\n  --vs-state-disabled-color: var(--secondary);\n  --vs-state-disabled-bg: var(--light);\n  --vs-colors--light: var(--black);\n  --vs-colors--dark: var(--black);\n  --vs-dropdown-option-color: var(--black);\n  --vs-dropdown-option--active-color: var(--black);\n  --vs-selected-bg: var(--extra-light);\n  --vs-search-input-color: var(--secondary);\n  --vs-search-input-bg: var(--white);\n}\n.v-select {\n  min-width: auto;\n  position: relative;\n  -ms-flex: 1 1 auto;\n  flex: 1 1 auto;\n  margin-bottom: 0;\n  font-size: 0.9rem !important;\n  font-family: var(--font-regular);\n}\n.v-select .vs__selected-options {\n  width: 0;\n  padding: 0;\n}\n.v-select .vs__selected {\n  display: flex;\n  white-space: nowrap;\n  text-overflow: ellipsis;\n  max-width: 100%;\n  overflow: hidden;\n  border: 0;\n  color: var(--black);\n}\n.v-select .vs__search {\n  font-size: 0.9rem;\n  border: 0;\n  padding: 0 2px;\n  padding-top: 0.375rem;\n  margin: 0;\n}\n.v-select:not(.vs--open):not(.vs--loading) .vs__selected + .vs__search {\n  width: 0;\n  margin: 0;\n  border: none;\n  padding: 0;\n  height: 0;\n}\n.v-select .vs__dropdown-toggle {\n  min-height: calc(1.5em + 0.75rem + 4px);\n  padding: 0.375rem calc(0.75rem - 2px);\n  padding-top: 0 !important;\n  border-width: 2px;\n  border-color: var(--extra-light);\n}\n.v-select .vs__dropdown-toggle .vs__selected {\n  margin-top: 0.375rem;\n}\n.v-select .vs__dropdown-toggle .vs__actions {\n  padding-top: 0.375rem;\n  padding-right: 0;\n}\n.v-select .vs__clear,\n.v-select .vs__open-indicator {\n  fill: var(--black);\n  display: inline-flex;\n}\n.v-select .vs__clear {\n  padding: 0;\n  border: 0;\n  background-color: transparent;\n  cursor: pointer;\n  margin-right: 8px;\n}\n.v-select.vs--single .vs__selected {\n  margin-left: 0;\n  margin-right: 0;\n}\n.vs--open .vs__dropdown-toggle {\n  border-color: var(--primary);\n  border-radius: 0.25rem !important;\n}\n.input-group > .v-select:not(:last-child) .vs__dropdown-toggle {\n  border-top-right-radius: 0;\n  border-bottom-right-radius: 0;\n}\n.vs__spinner {\n  border: 0.7em solid var(--dark);\n  border-left-color: var(--white);\n}\n.vs__spinner, .vs__spinner::after {\n  width: 4em;\n  height: 4em;\n}\n.vs__dropdown-menu {\n  z-index: 1100;\n}\n.vs__dropdown-menu .vs__dropdown-option.vs__dropdown-option--selected {\n  background: var(--vs-dropdown-option--active-bg);\n  color: var(--vs-dropdown-option--active-color);\n}\n.vs__dropdown-menu .vs__dropdown-option.vs__dropdown-option--disabled {\n  cursor: var(--vs-state-disabled-cursor) !important;\n  opacity: 0.5;\n}\n.vs__dropdown-menu .vs__dropdown-option:active {\n  color: var(--white);\n  background-color: var(--primary);\n}\n.c-input-sm {\n  font-size: 0.7875rem !important;\n}\n.c-input-sm .vs__search {\n  font-size: 0.7875rem;\n  padding-top: 0.25rem;\n}\n.c-input-sm .vs__dropdown-toggle {\n  min-height: calc(1.5em + 0.5rem + 4px);\n  padding: 0.25rem calc(0.5rem - 2px);\n  border-radius: 0.2rem;\n}\n.c-input-sm .vs__dropdown-toggle .vs__selected {\n  margin-top: 0.25rem;\n}\n.c-input-sm .vs__dropdown-toggle .vs__actions {\n  padding-top: 0.25rem;\n}\n.c-input-lg {\n  font-size: 1.125rem !important;\n}\n.c-input-lg .vs__search {\n  font-size: 1.125rem;\n  padding-top: 0.5rem;\n}\n.c-input-lg .vs__dropdown-toggle {\n  min-height: calc(1.5em + 1rem + 4px);\n  padding: 0.5rem calc(1rem - 2px);\n  border-radius: 0.3rem;\n}\n.c-input-lg .vs__dropdown-toggle .vs__selected {\n  margin-top: 0.5rem;\n}\n.c-input-lg .vs__dropdown-toggle .vs__actions {\n  padding-top: 0.5rem;\n}\n\n/*# sourceMappingURL=CInputSelect.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CInputSelect.vue","CInputSelect.vue"],"names":[],"mappings":"AA8OA;EACA,8BAAA;EACA,6CAAA;EACA,2CAAA;EACA,oCAAA;EACA,gCAAA;EACA,+BAAA;EACA,wCAAA;EACA,gDAAA;EACA,oCAAA;EACA,yCAAA;EACA,kCAAA;AC7OA;ADgPA;EACA,eAAA;EACA,kBAAA;EACA,kBAAA;EACA,cAAA;EACA,gBAAA;EACA,4BAAA;EACA,gCAAA;AC7OA;AD+OA;EAEA,QAAA;EACA,UAAA;AC9OA;ADiPA;EACA,aAAA;EACA,mBAAA;EACA,uBAAA;EACA,eAAA;EACA,gBAAA;EACA,SAAA;EACA,mBAAA;AC/OA;ADkPA;EACA,iBAAA;EACA,SAAA;EACA,cAAA;EACA,qBAAA;EACA,SAAA;AChPA;ADmPA;EAGA,QAAA;EACA,SAAA;EACA,YAAA;EACA,UAAA;EACA,SAAA;ACnPA;ADsPA;EACA,uCAAA;EACA,qCAAA;EACA,yBAAA;EACA,iBAAA;EACA,gCAAA;ACpPA;ADsPA;EACA,oBAAA;ACpPA;ADuPA;EACA,qBAAA;EACA,gBAAA;ACrPA;ADyPA;;EAEA,kBAAA;EACA,oBAAA;ACvPA;AD0PA;EACA,UAAA;EACA,SAAA;EACA,6BAAA;EACA,eAAA;EACA,iBAAA;ACxPA;AD4PA;EACA,cAAA;EACA,eAAA;AC1PA;ADgQA;EACA,4BAAA;EACA,iCAAA;AC7PA;ADkQA;EACA,0BAAA;EACA,6BAAA;AC/PA;ADmQA;EACA,+BAAA;EACA,+BAAA;AChQA;ADmQA;EACA,UAAA;EACA,WAAA;AChQA;ADmQA;EACA,aAAA;AChQA;ADmQA;EACA,gDAAA;EACA,8CAAA;ACjQA;ADoQA;EACA,kDAAA;EACA,YAAA;AClQA;ADqQA;EACA,mBAAA;EACA,gCAAA;ACnQA;ADwQA;EACA,+BAAA;ACrQA;ADuQA;EACA,oBAAA;EACA,oBAAA;ACrQA;ADwQA;EACA,sCAAA;EACA,mCAAA;EACA,qBAAA;ACtQA;ADwQA;EACA,mBAAA;ACtQA;ADyQA;EACA,oBAAA;ACvQA;AD2QA;EACA,8BAAA;ACxQA;AD0QA;EACA,mBAAA;EACA,mBAAA;ACxQA;AD2QA;EACA,oCAAA;EACA,gCAAA;EACA,qBAAA;ACzQA;AD2QA;EACA,kBAAA;ACzQA;AD4QA;EACA,mBAAA;AC1QA;;AAEA,2CAA2C","file":"CInputSelect.vue","sourcesContent":["<template>\n  <vue-select\n    v-bind=\"$attrs\"\n    ref=\"vueSelect\"\n    v-model=\"_value\"\n    data-test-id=\"select\"\n    :clearable=\"clearable\"\n    :options=\"options\"\n    :searchable=\"searchable\"\n    :disabled=\"disabled\"\n    :selectable=\"selectable\"\n    :multiple=\"multiple\"\n    :loading=\"loading\"\n    :calculate-position=\"calculateDropdownPosition\"\n    :append-to-body=\"appendToBody\"\n    class=\"bg-white rounded\"\n    :class=\"sizeClass\"\n    @search=\"onSearch\"\n  >\n    <template\n      v-for=\"(_, name) in $scopedSlots\"\n      #[name]=\"data\"\n    >\n      <slot\n        :name=\"name\"\n        v-bind=\"data\"\n      />\n    </template>\n\n    <template\n      v-if=\"badge\"\n      #option=\"option\"\n    >\n      <span\n        class=\"badge badge-pill\"\n        :style=\"getOptionStyle(option)\"\n      >\n        {{ option.text }}\n      </span>\n    </template>\n\n    <template\n      v-if=\"!multiple && badge\"\n      #selected-option=\"option\"\n    >\n      <span\n        class=\"badge badge-pill\"\n        :style=\"getOptionStyle(option)\"\n      >\n        {{ option.text }}\n      </span>\n    </template>\n\n    <template\n      v-if=\"multiple && badge\"\n      #selected-option-container=\"{ option, deselect }\"\n    >\n      <span\n        class=\"d-flex align-items-center badge badge-pill mx-1 mt-1 w-auto\"\n        :style=\"getOptionStyle(option)\"\n      >\n        {{ option.text }}\n\n        <font-awesome-icon\n          :icon=\"['fas', 'times']\"\n          class=\"pointer ml-2\"\n          @click=\"deselect(option)\"\n        />\n      </span>\n    </template>\n  </vue-select>\n</template>\n\n<script>\nimport { VueSelect } from 'vue-select'\nimport { createPopper } from '@popperjs/core'\nimport 'vue-select/dist/vue-select.css'\n\nexport default {\n  name: 'CInputSelect',\n\n  components: {\n    VueSelect,\n  },\n\n  props: {\n    value: {\n      type: [String, Array, Object],\n      default: () => '',\n    },\n\n    options: {\n      type: Array,\n      default: () => {\n        return []\n      },\n    },\n\n    clearable: {\n      type: Boolean,\n      default: true,\n    },\n\n    searchable: {\n      type: Boolean,\n      default: true,\n    },\n\n    appendToBody: {\n      type: Boolean,\n      default: true,\n    },\n\n    defaultValue: {\n      type: [String, Array, Object],\n      default: () => '',\n    },\n\n    size: {\n      type: String,\n      default: 'md',\n    },\n\n    disabled: {\n      type: Boolean,\n      default: false,\n    },\n\n    selectable: {\n      type: Function,\n      default: o => !o.disabled,\n    },\n\n    multiple: {\n      type: Boolean,\n      default: false,\n    },\n\n    loading: {\n      type: Boolean,\n      default: false,\n    },\n\n    badge: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      query: '',\n    }\n  },\n\n  computed: {\n    _value: {\n      get () {\n        const fallbackValue = this.multiple ? [] : ''\n        return !!this.defaultValue && (this.value === this.defaultValue) ? fallbackValue : this.value\n      },\n\n      set (v) {\n        this.$emit('input', !v ? this.defaultValue : v)\n      },\n    },\n\n    sizeClass () {\n      return this.size === 'sm' ? 'c-input-sm' : this.size === 'lg' ? 'c-input-lg' : ''\n    },\n  },\n\n  methods: {\n    calculateDropdownPosition (dropdownList, component, { width }) {\n      /**\n       * We need to explicitly define the dropdown width since\n       * it is usually inherited from the parent with CSS.\n       */\n      dropdownList.style.width = width\n\n      /**\n       * Here we position the dropdownList relative to the $refs.toggle Element.\n       *\n       * The 'offset' modifier aligns the dropdown so that the $refs.toggle and\n       * the dropdownList overlap by 1 pixel.\n       *\n       * The 'toggleClass' modifier adds a 'drop-up' class to the Vue Select\n       * wrapper so that we can set some styles for when the dropdown is placed\n       * above.\n       */\n      const popper = createPopper(component.$refs.toggle, dropdownList, {\n        placement: 'bottom',\n        modifiers: [\n          {\n            name: 'offset',\n            options: {\n              offset: [0, -1],\n            },\n          },\n          {\n            name: 'toggleClass',\n            enabled: true,\n            phase: 'write',\n            fn ({ state }) {\n              component.$el.classList.toggle('drop-up', state.placement === 'top')\n            },\n          }],\n      })\n\n      /**\n       * To prevent memory leaks Popper needs to be destroyed.\n       * If you return function, it will be called just before dropdown is removed from DOM.\n       */\n      return () => popper.destroy()\n    },\n\n    onSearch (query, loading) {\n      if (query !== this.query) {\n        this.query = query\n      }\n\n      this.$emit('search', query, loading)\n    },\n\n    getOptionStyle ({ style = {} } = {}) {\n      if (this.badge) {\n        style.fontSize = '0.9rem'\n        style.color = style.textColor || 'var(--dark)'\n        style.backgroundColor = style.backgroundColor || 'var(--extra-light)'\n      }\n\n      return style\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n:root {\n  --vs-dropdown-bg: var(--white);\n  --vs-dropdown-option--active-bg: var(--light);\n  --vs-state-disabled-color: var(--secondary);\n  --vs-state-disabled-bg: var(--light);\n  --vs-colors--light: var(--black);\n  --vs-colors--dark: var(--black);\n  --vs-dropdown-option-color: var(--black);\n  --vs-dropdown-option--active-color: var(--black);\n  --vs-selected-bg: var(--extra-light);\n  --vs-search-input-color: var(--secondary);\n  --vs-search-input-bg: var(--white);\n}\n\n.v-select {\n  min-width: auto;\n  position: relative;\n  -ms-flex: 1 1 auto;\n  flex: 1 1 auto;\n  margin-bottom: 0;\n  font-size: .9rem !important;\n  font-family: var(--font-regular);\n\n  .vs__selected-options {\n    // do not allow growing\n    width: 0;\n    padding: 0;\n  }\n\n  .vs__selected {\n    display: flex;\n    white-space: nowrap;\n    text-overflow: ellipsis;\n    max-width: 100%;\n    overflow: hidden;\n    border: 0;\n    color: var(--black);\n  }\n\n  .vs__search {\n    font-size: .9rem;\n    border: 0;\n    padding: 0 2px;\n    padding-top: 0.375rem;\n    margin: 0;\n  }\n\n  &:not(.vs--open):not(.vs--loading) .vs__selected + .vs__search {\n    // force this to not use any space\n    // we still need it to be rendered for the focus\n    width: 0;\n    margin: 0;\n    border: none;\n    padding: 0;\n    height: 0;\n  }\n\n  .vs__dropdown-toggle {\n    min-height: calc(1.5em + 0.75rem + 4px);\n    padding: 0.375rem calc(0.75rem - 2px);\n    padding-top: 0 !important;\n    border-width: 2px;\n    border-color: var(--extra-light);\n\n    .vs__selected {\n      margin-top: 0.375rem;\n    }\n\n    .vs__actions {\n      padding-top: 0.375rem;\n      padding-right: 0;\n    }\n  }\n\n  .vs__clear,\n  .vs__open-indicator {\n    fill: var(--black);\n    display: inline-flex;\n  }\n\n  .vs__clear {\n    padding: 0;\n    border: 0;\n    background-color: transparent;\n    cursor: pointer;\n    margin-right: 8px\n  }\n\n  &.vs--single {\n    .vs__selected {\n      margin-left: 0;\n      margin-right: 0;\n    }\n  }\n}\n\n.vs--open {\n  .vs__dropdown-toggle {\n    border-color: var(--primary);\n    border-radius: 0.25rem !important;\n  }\n}\n\n.input-group > .v-select:not(:last-child) {\n  .vs__dropdown-toggle {\n    border-top-right-radius: 0;\n    border-bottom-right-radius: 0;\n  }\n}\n\n.vs__spinner {\n  border: .7em solid var(--dark);\n  border-left-color: var(--white);\n}\n\n.vs__spinner, .vs__spinner::after {\n  width: 4em;\n  height: 4em;\n}\n\n.vs__dropdown-menu {\n  z-index: 1100;\n\n  .vs__dropdown-option {\n    &.vs__dropdown-option--selected {\n      background: var(--vs-dropdown-option--active-bg);\n      color: var(--vs-dropdown-option--active-color);\n    }\n\n    &.vs__dropdown-option--disabled {\n      cursor: var(--vs-state-disabled-cursor) !important;\n      opacity: 0.5;\n    }\n\n    &:active {\n      color: var(--white);\n      background-color: var(--primary);\n    }\n  }\n}\n\n.c-input-sm {\n  font-size: 0.7875rem !important;\n\n  .vs__search {\n    font-size: 0.7875rem;\n    padding-top: 0.25rem;\n  }\n\n  .vs__dropdown-toggle {\n    min-height: calc(1.5em + 0.5rem + 4px);\n    padding: 0.25rem calc(0.5rem - 2px);\n    border-radius: 0.2rem;\n\n    .vs__selected {\n      margin-top: 0.25rem;\n    }\n\n    .vs__actions {\n      padding-top: 0.25rem;\n    }\n  }\n}\n.c-input-lg {\n  font-size: 1.125rem !important;\n\n  .vs__search {\n    font-size: 1.125rem;\n    padding-top: .5rem;\n  }\n\n  .vs__dropdown-toggle {\n    min-height: calc(1.5em + 1rem + 4px);\n    padding: .5rem calc(1rem - 2px);\n    border-radius: 0.3rem;\n\n    .vs__selected {\n      margin-top: .5rem;\n    }\n\n    .vs__actions {\n      padding-top: .5rem;\n    }\n  }\n}\n\n</style>\n",":root {\n  --vs-dropdown-bg: var(--white);\n  --vs-dropdown-option--active-bg: var(--light);\n  --vs-state-disabled-color: var(--secondary);\n  --vs-state-disabled-bg: var(--light);\n  --vs-colors--light: var(--black);\n  --vs-colors--dark: var(--black);\n  --vs-dropdown-option-color: var(--black);\n  --vs-dropdown-option--active-color: var(--black);\n  --vs-selected-bg: var(--extra-light);\n  --vs-search-input-color: var(--secondary);\n  --vs-search-input-bg: var(--white);\n}\n\n.v-select {\n  min-width: auto;\n  position: relative;\n  -ms-flex: 1 1 auto;\n  flex: 1 1 auto;\n  margin-bottom: 0;\n  font-size: 0.9rem !important;\n  font-family: var(--font-regular);\n}\n.v-select .vs__selected-options {\n  width: 0;\n  padding: 0;\n}\n.v-select .vs__selected {\n  display: flex;\n  white-space: nowrap;\n  text-overflow: ellipsis;\n  max-width: 100%;\n  overflow: hidden;\n  border: 0;\n  color: var(--black);\n}\n.v-select .vs__search {\n  font-size: 0.9rem;\n  border: 0;\n  padding: 0 2px;\n  padding-top: 0.375rem;\n  margin: 0;\n}\n.v-select:not(.vs--open):not(.vs--loading) .vs__selected + .vs__search {\n  width: 0;\n  margin: 0;\n  border: none;\n  padding: 0;\n  height: 0;\n}\n.v-select .vs__dropdown-toggle {\n  min-height: calc(1.5em + 0.75rem + 4px);\n  padding: 0.375rem calc(0.75rem - 2px);\n  padding-top: 0 !important;\n  border-width: 2px;\n  border-color: var(--extra-light);\n}\n.v-select .vs__dropdown-toggle .vs__selected {\n  margin-top: 0.375rem;\n}\n.v-select .vs__dropdown-toggle .vs__actions {\n  padding-top: 0.375rem;\n  padding-right: 0;\n}\n.v-select .vs__clear,\n.v-select .vs__open-indicator {\n  fill: var(--black);\n  display: inline-flex;\n}\n.v-select .vs__clear {\n  padding: 0;\n  border: 0;\n  background-color: transparent;\n  cursor: pointer;\n  margin-right: 8px;\n}\n.v-select.vs--single .vs__selected {\n  margin-left: 0;\n  margin-right: 0;\n}\n\n.vs--open .vs__dropdown-toggle {\n  border-color: var(--primary);\n  border-radius: 0.25rem !important;\n}\n\n.input-group > .v-select:not(:last-child) .vs__dropdown-toggle {\n  border-top-right-radius: 0;\n  border-bottom-right-radius: 0;\n}\n\n.vs__spinner {\n  border: 0.7em solid var(--dark);\n  border-left-color: var(--white);\n}\n\n.vs__spinner, .vs__spinner::after {\n  width: 4em;\n  height: 4em;\n}\n\n.vs__dropdown-menu {\n  z-index: 1100;\n}\n.vs__dropdown-menu .vs__dropdown-option.vs__dropdown-option--selected {\n  background: var(--vs-dropdown-option--active-bg);\n  color: var(--vs-dropdown-option--active-color);\n}\n.vs__dropdown-menu .vs__dropdown-option.vs__dropdown-option--disabled {\n  cursor: var(--vs-state-disabled-cursor) !important;\n  opacity: 0.5;\n}\n.vs__dropdown-menu .vs__dropdown-option:active {\n  color: var(--white);\n  background-color: var(--primary);\n}\n\n.c-input-sm {\n  font-size: 0.7875rem !important;\n}\n.c-input-sm .vs__search {\n  font-size: 0.7875rem;\n  padding-top: 0.25rem;\n}\n.c-input-sm .vs__dropdown-toggle {\n  min-height: calc(1.5em + 0.5rem + 4px);\n  padding: 0.25rem calc(0.5rem - 2px);\n  border-radius: 0.2rem;\n}\n.c-input-sm .vs__dropdown-toggle .vs__selected {\n  margin-top: 0.25rem;\n}\n.c-input-sm .vs__dropdown-toggle .vs__actions {\n  padding-top: 0.25rem;\n}\n\n.c-input-lg {\n  font-size: 1.125rem !important;\n}\n.c-input-lg .vs__search {\n  font-size: 1.125rem;\n  padding-top: 0.5rem;\n}\n.c-input-lg .vs__dropdown-toggle {\n  min-height: calc(1.5em + 1rem + 4px);\n  padding: 0.5rem calc(1rem - 2px);\n  border-radius: 0.3rem;\n}\n.c-input-lg .vs__dropdown-toggle .vs__selected {\n  margin-top: 0.5rem;\n}\n.c-input-lg .vs__dropdown-toggle .vs__actions {\n  padding-top: 0.5rem;\n}\n\n/*# sourceMappingURL=CInputSelect.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -8755,17 +9536,68 @@ var script$1h = {
 const __vue_script__$1h = script$1h;
 
 /* template */
-var __vue_render__$1d = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"list-background w-100 p-3 rounded border border-light"},[(_vm.loading)?_c('div',{staticClass:"d-flex justify-content-center align-items-center w-100"},[_c('b-spinner')],1):_vm._t("default"),_vm._v(" "),(!_vm.hideAddButton && !_vm.loading)?_c('b-button',{class:_vm.addButtonClass,attrs:{"variant":"primary","size":"sm","data-test-id":_vm.testID,"disabled":_vm.disableAddButton},on:{"click":function($event){return _vm.$emit('add-item')}}},[_c('font-awesome-icon',{staticClass:"mr-1",attrs:{"icon":['fas', 'plus']}}),_vm._v("\n\n    "+_vm._s(_vm.labels.addButton || '')+"\n  ")],1):_vm._e()],2)};
+var __vue_render__$1d = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "list-background w-100 p-3 rounded border border-light" },
+    [
+      _vm.loading
+        ? _c(
+            "div",
+            {
+              staticClass:
+                "d-flex justify-content-center align-items-center w-100",
+            },
+            [_c("b-spinner")],
+            1
+          )
+        : _vm._t("default"),
+      _vm._v(" "),
+      !_vm.hideAddButton && !_vm.loading
+        ? _c(
+            "b-button",
+            {
+              class: _vm.addButtonClass,
+              attrs: {
+                variant: "primary",
+                size: "sm",
+                "data-test-id": _vm.testID,
+                disabled: _vm.disableAddButton,
+              },
+              on: {
+                click: function ($event) {
+                  return _vm.$emit("add-item")
+                },
+              },
+            },
+            [
+              _c("font-awesome-icon", {
+                staticClass: "mr-1",
+                attrs: { icon: ["fas", "plus"] },
+              }),
+              _vm._v("\n\n    " + _vm._s(_vm.labels.addButton || "") + "\n  "),
+            ],
+            1
+          )
+        : _vm._e(),
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$1d = [];
+__vue_render__$1d._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1i = function (inject) {
     if (!inject) return
-    inject("data-v-7ae53668_0", { source: ".list-background[data-v-7ae53668]{background-color:var(--body-bg)}", map: undefined, media: undefined });
+    inject("data-v-768b07dd_0", { source: "\n.list-background[data-v-768b07dd] {\n  background-color: var(--body-bg);\n}\n", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/wrapper/CFormTableWrapper.vue"],"names":[],"mappings":";AAuEA;EACA,gCAAA;AACA","file":"CFormTableWrapper.vue","sourcesContent":["<template>\n  <div class=\"list-background w-100 p-3 rounded border border-light\">\n    <div\n      v-if=\"loading\"\n      class=\"d-flex justify-content-center align-items-center w-100\"\n    >\n      <b-spinner />\n    </div>\n\n    <slot\n      v-else\n    />\n\n    <b-button\n      v-if=\"!hideAddButton && !loading\"\n      variant=\"primary\"\n      size=\"sm\"\n      :data-test-id=\"testID\"\n      :class=\"addButtonClass\"\n      :disabled=\"disableAddButton\"\n      @click=\"$emit('add-item')\"\n    >\n      <font-awesome-icon\n        :icon=\"['fas', 'plus']\"\n        class=\"mr-1\"\n      />\n\n      {{ labels.addButton || '' }}\n    </b-button>\n  </div>\n</template>\n\n<script>\nexport default {\n  name: 'CFormTableWrapper',\n\n  props: {\n    labels: {\n      type: Object,\n      default: () => {},\n    },\n\n    hideAddButton: {\n      type: Boolean,\n      default: false,\n    },\n\n    disableAddButton: {\n      type: Boolean,\n      default: false,\n    },\n\n    addButtonClass: {\n      type: String,\n      default: '',\n    },\n\n    buttonTestId: {\n      type: String,\n      default: '',\n    },\n\n    loading: {\n      type: Boolean,\n      default: false,\n    },\n  },\n}\n</script>\n\n<style scoped>\n.list-background {\n  background-color: var(--body-bg);\n}\n</style>\n"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1i = "data-v-7ae53668";
+  const __vue_scope_id__$1i = "data-v-768b07dd";
   /* module identifier */
   const __vue_module_identifier__$1i = undefined;
   /* functional template */
@@ -9007,8 +9839,201 @@ var script$1g = {
 const __vue_script__$1g = script$1g;
 
 /* template */
-var __vue_render__$1c = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('c-form-table-wrapper',{attrs:{"labels":{ addButton: _vm.labels.addButton },"hide-add-button":_vm.textInput},on:{"add-item":function($event){return _vm.items.push({ field: undefined, descending: false })}}},[(!_vm.textInput)?_c('b-form-group',{attrs:{"label":_vm.labels.title,"label-class":"text-primary"}},[_c('b-table-simple',{staticClass:"mb-0",attrs:{"borderless":"","small":"","responsive":""}},[_c('draggable',{attrs:{"list":_vm.items,"group":"sort","handle":".grab","tag":"tbody"},on:{"update:list":function($event){_vm.items=$event;}}},_vm._l((_vm.items),function(column,index){return _c('tr',{key:index},[_c('td',{staticClass:"grab text-center align-middle",staticStyle:{"width":"40px"}},[_c('font-awesome-icon',{staticClass:"text-secondary",attrs:{"icon":['fas', 'bars']}})],1),_vm._v(" "),_c('td',{staticClass:"align-middle",staticStyle:{"min-width":"250px"}},[_c('c-input-select',{staticClass:"rounded",attrs:{"options":_vm.availableFields,"reduce":function (o) { return o.name; },"placeholder":_vm.labels.none},model:{value:(column.field),callback:function ($$v) {_vm.$set(column, "field", $$v);},expression:"column.field"}})],1),_vm._v(" "),_c('td',{staticClass:"text-center align-middle",staticStyle:{"min-width":"200px"}},[_c('b-form-radio-group',{staticClass:"bg-white",attrs:{"options":_vm.sortDirections,"buttons":"","button-variant":"outline-primary"},model:{value:(column.descending),callback:function ($$v) {_vm.$set(column, "descending", $$v);},expression:"column.descending"}})],1),_vm._v(" "),_c('td',{staticClass:"align-middle text-right",staticStyle:{"min-width":"80px","width":"80px"}},[_c('c-input-confirm',{attrs:{"show-icon":""},on:{"confirmed":function($event){return _vm.items.splice(index, 1)}}})],1)])}),0)],1)],1):_c('div',[_c('b-form-textarea',{attrs:{"placeholder":_vm.labels.placeholder},model:{value:(_vm.presortValue),callback:function ($$v) {_vm.presortValue=$$v;},expression:"presortValue"}}),_vm._v(" "),_c('b-form-text',[_vm._v("\n      "+_vm._s(_vm.labels.footnote)+"\n    ")])],1),_vm._v(" "),(_vm.allowTextInput)?_c('div',{staticClass:"d-flex align-items-center mt-1"},[_c('b-button',{staticClass:"text-decoration-none ml-auto",attrs:{"variant":"link","size":"sm"},on:{"click":function($event){_vm.textInput = !_vm.textInput;}}},[_vm._v("\n      "+_vm._s(_vm.labels.toggleInput)+"\n    ")])],1):_vm._e()],1)};
+var __vue_render__$1c = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "c-form-table-wrapper",
+    {
+      attrs: {
+        labels: { addButton: _vm.labels.addButton },
+        "hide-add-button": _vm.textInput,
+      },
+      on: {
+        "add-item": function ($event) {
+          return _vm.items.push({ field: undefined, descending: false })
+        },
+      },
+    },
+    [
+      !_vm.textInput
+        ? _c(
+            "b-form-group",
+            {
+              attrs: { label: _vm.labels.title, "label-class": "text-primary" },
+            },
+            [
+              _c(
+                "b-table-simple",
+                {
+                  staticClass: "mb-0",
+                  attrs: { borderless: "", small: "", responsive: "" },
+                },
+                [
+                  _c(
+                    "draggable",
+                    {
+                      attrs: {
+                        list: _vm.items,
+                        group: "sort",
+                        handle: ".grab",
+                        tag: "tbody",
+                      },
+                      on: {
+                        "update:list": function ($event) {
+                          _vm.items = $event;
+                        },
+                      },
+                    },
+                    _vm._l(_vm.items, function (column, index) {
+                      return _c("tr", { key: index }, [
+                        _c(
+                          "td",
+                          {
+                            staticClass: "grab text-center align-middle",
+                            staticStyle: { width: "40px" },
+                          },
+                          [
+                            _c("font-awesome-icon", {
+                              staticClass: "text-secondary",
+                              attrs: { icon: ["fas", "bars"] },
+                            }),
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "td",
+                          {
+                            staticClass: "align-middle",
+                            staticStyle: { "min-width": "250px" },
+                          },
+                          [
+                            _c("c-input-select", {
+                              staticClass: "rounded",
+                              attrs: {
+                                options: _vm.availableFields,
+                                reduce: function (o) {
+                                  return o.name
+                                },
+                                placeholder: _vm.labels.none,
+                              },
+                              model: {
+                                value: column.field,
+                                callback: function ($$v) {
+                                  _vm.$set(column, "field", $$v);
+                                },
+                                expression: "column.field",
+                              },
+                            }),
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "td",
+                          {
+                            staticClass: "text-center align-middle",
+                            staticStyle: { "min-width": "200px" },
+                          },
+                          [
+                            _c("b-form-radio-group", {
+                              staticClass: "bg-white",
+                              attrs: {
+                                options: _vm.sortDirections,
+                                buttons: "",
+                                "button-variant": "outline-primary",
+                              },
+                              model: {
+                                value: column.descending,
+                                callback: function ($$v) {
+                                  _vm.$set(column, "descending", $$v);
+                                },
+                                expression: "column.descending",
+                              },
+                            }),
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "td",
+                          {
+                            staticClass: "align-middle text-right",
+                            staticStyle: { "min-width": "80px", width: "80px" },
+                          },
+                          [
+                            _c("c-input-confirm", {
+                              attrs: { "show-icon": "" },
+                              on: {
+                                confirmed: function ($event) {
+                                  return _vm.items.splice(index, 1)
+                                },
+                              },
+                            }),
+                          ],
+                          1
+                        ),
+                      ])
+                    }),
+                    0
+                  ),
+                ],
+                1
+              ),
+            ],
+            1
+          )
+        : _c(
+            "div",
+            [
+              _c("b-form-textarea", {
+                attrs: { placeholder: _vm.labels.placeholder },
+                model: {
+                  value: _vm.presortValue,
+                  callback: function ($$v) {
+                    _vm.presortValue = $$v;
+                  },
+                  expression: "presortValue",
+                },
+              }),
+              _vm._v(" "),
+              _c("b-form-text", [
+                _vm._v("\n      " + _vm._s(_vm.labels.footnote) + "\n    "),
+              ]),
+            ],
+            1
+          ),
+      _vm._v(" "),
+      _vm.allowTextInput
+        ? _c(
+            "div",
+            { staticClass: "d-flex align-items-center mt-1" },
+            [
+              _c(
+                "b-button",
+                {
+                  staticClass: "text-decoration-none ml-auto",
+                  attrs: { variant: "link", size: "sm" },
+                  on: {
+                    click: function ($event) {
+                      _vm.textInput = !_vm.textInput;
+                    },
+                  },
+                },
+                [_vm._v("\n      " + _vm._s(_vm.labels.toggleInput) + "\n    ")]
+              ),
+            ],
+            1
+          )
+        : _vm._e(),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$1c = [];
+__vue_render__$1c._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1h = undefined;
@@ -9201,17 +10226,109 @@ var script$1f = {
 const __vue_script__$1f = script$1f;
 
 /* template */
-var __vue_render__$1b = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"c-input-search d-flex position-relative",class:{ 'submittable': _vm.isSubmittable },staticStyle:{"min-width":"150px"}},[_c('b-input',{ref:"searchInput",staticClass:"text-truncate",attrs:{"data-test-id":"input-search","type":_vm.inputType,"name":"search","value":_vm.localValue,"debounce":_vm.debounce,"disabled":_vm.disabled,"placeholder":_vm.placeholder,"autocomplete":_vm.autocomplete,"size":_vm.size},on:{"input":_vm.onInput,"keyup":function($event){if(!$event.type.indexOf('key')&&_vm._k($event.keyCode,"enter",13,$event.key,"Enter")){ return null; }return _vm.submitQuery.apply(null, arguments)}}}),_vm._v(" "),(_vm.loading)?_c('div',{staticClass:"spinner d-inline-flex align-items-center p-3"},[_c('b-spinner',{attrs:{"small":"","variant":"secondary"}})],1):(_vm.clearable && _vm.localValue && !_vm.disabled)?_c('b-button',{staticClass:"clear-button d-inline-flex align-items-center rounded-0 p-3",attrs:{"variant":"outline-extra-light"},on:{"click":_vm.onClear}},[_c('font-awesome-icon',{staticClass:"text-secondary",attrs:{"icon":['fas', 'times']}})],1):_vm._e(),_vm._v(" "),(_vm.showSubmittable)?_c('b-button',{staticClass:"search-button d-inline-flex align-items-center rounded-0 border-light",class:{ 'border-0 cursor-default': !_vm.isSubmittable },attrs:{"variant":_vm.isSubmittable ? 'outline-light' : 'link',"disabled":_vm.disabled},on:_vm._d({},[_vm.isSubmittable,_vm.submitQuery])},[_c('font-awesome-icon',{staticClass:"align-middle text-primary",attrs:{"icon":['fas', 'search']}})],1):_vm._e()],1)};
+var __vue_render__$1b = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    {
+      staticClass: "c-input-search d-flex position-relative",
+      class: { submittable: _vm.isSubmittable },
+      staticStyle: { "min-width": "150px" },
+    },
+    [
+      _c("b-input", {
+        ref: "searchInput",
+        staticClass: "text-truncate",
+        attrs: {
+          "data-test-id": "input-search",
+          type: _vm.inputType,
+          name: "search",
+          value: _vm.localValue,
+          debounce: _vm.debounce,
+          disabled: _vm.disabled,
+          placeholder: _vm.placeholder,
+          autocomplete: _vm.autocomplete,
+          size: _vm.size,
+        },
+        on: {
+          input: _vm.onInput,
+          keyup: function ($event) {
+            if (
+              !$event.type.indexOf("key") &&
+              _vm._k($event.keyCode, "enter", 13, $event.key, "Enter")
+            ) {
+              return null
+            }
+            return _vm.submitQuery.apply(null, arguments)
+          },
+        },
+      }),
+      _vm._v(" "),
+      _vm.loading
+        ? _c(
+            "div",
+            { staticClass: "spinner d-inline-flex align-items-center p-3" },
+            [_c("b-spinner", { attrs: { small: "", variant: "secondary" } })],
+            1
+          )
+        : _vm.clearable && _vm.localValue && !_vm.disabled
+        ? _c(
+            "b-button",
+            {
+              staticClass:
+                "clear-button d-inline-flex align-items-center rounded-0 p-3",
+              attrs: { variant: "outline-extra-light" },
+              on: { click: _vm.onClear },
+            },
+            [
+              _c("font-awesome-icon", {
+                staticClass: "text-secondary",
+                attrs: { icon: ["fas", "times"] },
+              }),
+            ],
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.showSubmittable
+        ? _c(
+            "b-button",
+            {
+              staticClass:
+                "search-button d-inline-flex align-items-center rounded-0 border-light",
+              class: { "border-0 cursor-default": !_vm.isSubmittable },
+              attrs: {
+                variant: _vm.isSubmittable ? "outline-light" : "link",
+                disabled: _vm.disabled,
+              },
+              on: _vm._d({}, [_vm.isSubmittable, _vm.submitQuery]),
+            },
+            [
+              _c("font-awesome-icon", {
+                staticClass: "align-middle text-primary",
+                attrs: { icon: ["fas", "search"] },
+              }),
+            ],
+            1
+          )
+        : _vm._e(),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$1b = [];
+__vue_render__$1b._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1g = function (inject) {
     if (!inject) return
-    inject("data-v-e7856266_0", { source: "input[data-v-e7856266]:focus::placeholder{color:transparent}.c-input-search .search-button[data-v-e7856266]{position:absolute;right:2px;top:2px;bottom:2px;z-index:4;border-left-width:2px}.c-input-search .clear-button[data-v-e7856266],.c-input-search .spinner[data-v-e7856266]{position:absolute;right:1px;top:1px;bottom:1px;z-index:5;outline:0!important;box-shadow:none!important;border:none!important;background-color:transparent!important}.c-input-search .clear-button[data-v-e7856266]:hover,.c-input-search .spinner[data-v-e7856266]:hover{text-decoration:none}.c-input-search.submittable .clear-button[data-v-e7856266],.c-input-search.submittable .spinner[data-v-e7856266]{right:48px}.c-input-search .form-control[data-v-e7856266]{padding-right:40px}.c-input-search.submittable .form-control[data-v-e7856266]{padding-right:85px}.c-input-search[data-v-e7856266] ::-webkit-search-cancel-button{-webkit-appearance:none;display:none}.cursor-default[data-v-e7856266]{cursor:default!important}", map: undefined, media: undefined });
+    inject("data-v-605303e1_0", { source: "input[data-v-605303e1]:focus::placeholder {\n  color: transparent;\n}\n.c-input-search .search-button[data-v-605303e1] {\n  position: absolute;\n  right: 2px;\n  top: 2px;\n  bottom: 2px;\n  z-index: 4;\n  border-left-width: 2px;\n}\n.c-input-search .clear-button[data-v-605303e1],\n.c-input-search .spinner[data-v-605303e1] {\n  position: absolute;\n  right: 1px;\n  top: 1px;\n  bottom: 1px;\n  z-index: 5;\n  outline: none !important;\n  box-shadow: none !important;\n  border: none !important;\n  background-color: transparent !important;\n}\n.c-input-search .clear-button[data-v-605303e1]:hover,\n.c-input-search .spinner[data-v-605303e1]:hover {\n  text-decoration: none;\n}\n.c-input-search.submittable .clear-button[data-v-605303e1],\n.c-input-search.submittable .spinner[data-v-605303e1] {\n  right: 48px;\n}\n.c-input-search .form-control[data-v-605303e1] {\n  padding-right: 40px;\n}\n.c-input-search.submittable .form-control[data-v-605303e1] {\n  padding-right: 85px;\n}\n.c-input-search[data-v-605303e1] ::-webkit-search-cancel-button {\n  -webkit-appearance: none;\n  display: none;\n}\n.cursor-default[data-v-605303e1] {\n  cursor: default !important;\n}\n\n/*# sourceMappingURL=CInputSearch.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CInputSearch.vue","CInputSearch.vue"],"names":[],"mappings":"AAmKA;EACA,kBAAA;AClKA;ADsKA;EACA,kBAAA;EACA,UAAA;EACA,QAAA;EACA,WAAA;EACA,UAAA;EACA,sBAAA;ACnKA;ADsKA;;EAEA,kBAAA;EACA,UAAA;EACA,QAAA;EACA,WAAA;EACA,UAAA;EACA,wBAAA;EACA,2BAAA;EACA,uBAAA;EACA,wCAAA;ACpKA;ADsKA;;EACA,qBAAA;ACnKA;ADwKA;;EAEA,WAAA;ACtKA;AD0KA;EACA,mBAAA;ACxKA;AD2KA;EACA,mBAAA;ACzKA;AD4KA;EACA,wBAAA;EACA,aAAA;AC1KA;AD8KA;EACA,0BAAA;AC3KA;;AAEA,2CAA2C","file":"CInputSearch.vue","sourcesContent":["<template>\n  <div\n    style=\"min-width: 150px;\"\n    :class=\"{ 'submittable': isSubmittable }\"\n    class=\"c-input-search d-flex position-relative\"\n  >\n    <b-input\n      ref=\"searchInput\"\n      data-test-id=\"input-search\"\n      :type=\"inputType\"\n      name=\"search\"\n      :value=\"localValue\"\n      :debounce=\"debounce\"\n      :disabled=\"disabled\"\n      :placeholder=\"placeholder\"\n      :autocomplete=\"autocomplete\"\n      :size=\"size\"\n      class=\"text-truncate\"\n      @input=\"onInput\"\n      @keyup.enter=\"submitQuery\"\n    />\n\n    <div\n      v-if=\"loading\"\n      class=\"spinner d-inline-flex align-items-center p-3\"\n    >\n      <b-spinner\n        small\n        variant=\"secondary\"\n      />\n    </div>\n\n    <b-button\n      v-else-if=\"clearable && localValue && !disabled\"\n      variant=\"outline-extra-light\"\n      class=\"clear-button d-inline-flex align-items-center rounded-0 p-3\"\n      @click=\"onClear\"\n    >\n      <font-awesome-icon\n        :icon=\"['fas', 'times']\"\n        class=\"text-secondary\"\n      />\n    </b-button>\n\n    <b-button\n      v-if=\"showSubmittable\"\n      :variant=\"isSubmittable ? 'outline-light' : 'link'\"\n      :disabled=\"disabled\"\n      :class=\"{ 'border-0 cursor-default': !isSubmittable }\"\n      class=\"search-button d-inline-flex align-items-center rounded-0 border-light\"\n      @[isSubmittable]=\"submitQuery\"\n    >\n      <font-awesome-icon\n        :icon=\"['fas', 'search']\"\n        class=\"align-middle text-primary\"\n      />\n    </b-button>\n  </div>\n</template>\n\n<script>\nexport default {\n  name: 'CInputSearch',\n\n  props: {\n    value: {\n      type: String,\n      default: '',\n    },\n\n    placeholder: {\n      type: String,\n      default: '',\n    },\n\n    size: {\n      type: String,\n      default: 'md',\n    },\n\n    disabled: {\n      type: Boolean,\n    },\n\n    clearable: {\n      type: Boolean,\n      default: true,\n    },\n\n    submittable: {\n      type: Boolean,\n      default: false,\n    },\n\n    autocomplete: {\n      type: String,\n      default: 'on',\n    },\n\n    debounce: {\n      type: Number,\n      default: 0,\n    },\n    loading: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      localValue: this.value,\n    }\n  },\n\n  computed: {\n    inputType () {\n      return this.clearable ? 'search' : 'text'\n    },\n\n    showSubmittable () {\n      return !this.localValue || this.showSubmittableAndClearable\n    },\n\n    isSubmittable () {\n      return this.submittable && !this.disabled ? 'click' : null\n    },\n\n    showSubmittableAndClearable () {\n      return this.clearable && this.submittable\n    },\n  },\n\n  watch: {\n    value (value) {\n      this.localValue = value\n    },\n  },\n\n  methods: {\n    onInput (value) {\n      this.localValue = value\n      this.$emit('input', value)\n    },\n\n    submitQuery () {\n      if (this.submittable) {\n        this.$emit('search', this.localValue)\n      }\n    },\n\n    onClear () {\n      this.localValue = ''\n      this.$emit('input', '')\n      this.$nextTick(() => {\n        this.$refs.searchInput.focus()\n      })\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\ninput:focus::placeholder {\n  color: transparent;\n}\n\n.c-input-search {\n  .search-button {\n    position: absolute;\n    right: 2px;\n    top: 2px;\n    bottom: 2px;\n    z-index: 4;\n    border-left-width: 2px;\n  }\n\n  .clear-button,\n  .spinner {\n    position: absolute;\n    right: 1px;\n    top: 1px;\n    bottom: 1px;\n    z-index: 5;\n    outline: none !important;\n    box-shadow: none !important;\n    border: none !important;\n    background-color: transparent !important;\n\n    &:hover {\n      text-decoration: none;\n    }\n  }\n\n  &.submittable {\n    .clear-button,\n    .spinner {\n      right: 48px;\n    }\n  }\n\n  .form-control {\n    padding-right: 40px;\n  }\n\n  &.submittable .form-control {\n    padding-right: 85px;\n  }\n\n  ::-webkit-search-cancel-button {\n    -webkit-appearance: none;\n    display: none;\n  }\n}\n\n.cursor-default {\n  cursor: default !important;\n}\n</style>\n","input:focus::placeholder {\n  color: transparent;\n}\n\n.c-input-search .search-button {\n  position: absolute;\n  right: 2px;\n  top: 2px;\n  bottom: 2px;\n  z-index: 4;\n  border-left-width: 2px;\n}\n.c-input-search .clear-button,\n.c-input-search .spinner {\n  position: absolute;\n  right: 1px;\n  top: 1px;\n  bottom: 1px;\n  z-index: 5;\n  outline: none !important;\n  box-shadow: none !important;\n  border: none !important;\n  background-color: transparent !important;\n}\n.c-input-search .clear-button:hover,\n.c-input-search .spinner:hover {\n  text-decoration: none;\n}\n.c-input-search.submittable .clear-button,\n.c-input-search.submittable .spinner {\n  right: 48px;\n}\n.c-input-search .form-control {\n  padding-right: 40px;\n}\n.c-input-search.submittable .form-control {\n  padding-right: 85px;\n}\n.c-input-search ::-webkit-search-cancel-button {\n  -webkit-appearance: none;\n  display: none;\n}\n\n.cursor-default {\n  cursor: default !important;\n}\n\n/*# sourceMappingURL=CInputSearch.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1g = "data-v-e7856266";
+  const __vue_scope_id__$1g = "data-v-605303e1";
   /* module identifier */
   const __vue_module_identifier__$1g = undefined;
   /* functional template */
@@ -9518,18 +10635,261 @@ var script$1e = {
 const __vue_script__$1e = script$1e;
 
 /* template */
-var __vue_render__$1a = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('div',{staticClass:"d-flex align-items-center"},[_c('b-button',{staticClass:"p-0 rounded-circle bg-white border-white shadow-none",style:(("color: " + _vm.value + "; fill: " + _vm.value + ";")),on:{"click":_vm.toggleMenu}},[_c('svg',{staticClass:"border border-light rounded-circle",style:({ width: _vm.width, height: _vm.height }),attrs:{"viewBox":"0 0 32 32"}},[_c('pattern',{attrs:{"id":"checkerboard","width":"12","height":"12","patternUnits":"userSpaceOnUse","fill":"FFF"}},[_c('rect',{attrs:{"fill":"#7080707f","x":"0","width":"6","height":"6","y":"0"}}),_vm._v(" "),_c('rect',{attrs:{"fill":"#7080707f","x":"6","width":"6","height":"6","y":"6"}})]),_vm._v(" "),_c('circle',{attrs:{"cx":"16","cy":"16","r":"16","fill":"url(#checkerboard)"}}),_vm._v(" "),_c('circle',{attrs:{"cx":"16","cy":"16","r":"16"}})])]),_vm._v(" "),(_vm.showText)?_c('span',{staticClass:"ml-2"},[_vm._v("\n      "+_vm._s(_vm.value)+"\n    ")]):_vm._e()],1),_vm._v(" "),_c('b-modal',{attrs:{"visible":_vm.showModal,"title":_vm.translations.modalTitle,"centered":"","size":"md","hide-header":!Boolean(_vm.translations.modalTitle),"body-class":"p-0","no-fade":""},on:{"hide":_vm.closeMenu},scopedSlots:_vm._u([{key:"modal-footer",fn:function(){return [(_vm.defaultValue)?_c('b-button',{attrs:{"variant":"light"},on:{"click":function($event){return _vm.setColor()}}},[_vm._v("\n        "+_vm._s(_vm.translations.defaultBtnLabel || 'Default')+"\n      ")]):_vm._e(),_vm._v(" "),_vm._t("footer"),_vm._v(" "),_c('b-button',{staticClass:"ml-auto text-primary border-0",attrs:{"variant":"outline-light"},on:{"click":_vm.closeMenu}},[_vm._v("\n        "+_vm._s(_vm.translations.cancelBtnLabel || 'Cancel')+"\n      ")]),_vm._v(" "),_c('b-button',{attrs:{"variant":"primary"},on:{"click":_vm.saveColor}},[_vm._v("\n        "+_vm._s(_vm.translations.saveBtnLabel || 'Save')+"\n      ")])]},proxy:true}],null,true)},[_c('chrome',{staticClass:"w-100 shadow-none",attrs:{"value":_vm.currentColor},on:{"input":_vm.updateColor}}),_vm._v(" "),(_vm.themes.length > 0)?_c('div',{staticClass:"d-flex flex-column border-top p-3 gap-2"},_vm._l((_vm.themes),function(theme){return _c('b-form-group',{key:theme.id,staticClass:"mb-0",attrs:{"label":_vm.translations[theme.id],"label-class":"text-primary"}},[_c('div',{staticClass:"d-flex flex-wrap border"},_vm._l((_vm.themeVariables),function(variable){return _c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.noninteractive.hover",value:({ title: variable.label, boundary: 'body' }),expression:"{ title: variable.label, boundary: 'body' }",modifiers:{"noninteractive":true,"hover":true}}],key:variable.key,staticClass:"swatch flex-grow-1 rounded-0",style:({ backgroundColor: theme.values[variable.key], borderColor: theme.values[variable.key] }),on:{"click":function($event){return _vm.setColor(theme.values[variable.key])}}})}),1)])}),1):_vm._e()],1)],1)};
+var __vue_render__$1a = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    [
+      _c(
+        "div",
+        { staticClass: "d-flex align-items-center" },
+        [
+          _c(
+            "b-button",
+            {
+              staticClass:
+                "p-0 rounded-circle bg-white border-white shadow-none",
+              style: "color: " + _vm.value + "; fill: " + _vm.value + ";",
+              on: { click: _vm.toggleMenu },
+            },
+            [
+              _c(
+                "svg",
+                {
+                  staticClass: "border border-light rounded-circle",
+                  style: { width: _vm.width, height: _vm.height },
+                  attrs: { viewBox: "0 0 32 32" },
+                },
+                [
+                  _c(
+                    "pattern",
+                    {
+                      attrs: {
+                        id: "checkerboard",
+                        width: "12",
+                        height: "12",
+                        patternUnits: "userSpaceOnUse",
+                        fill: "FFF",
+                      },
+                    },
+                    [
+                      _c("rect", {
+                        attrs: {
+                          fill: "#7080707f",
+                          x: "0",
+                          width: "6",
+                          height: "6",
+                          y: "0",
+                        },
+                      }),
+                      _vm._v(" "),
+                      _c("rect", {
+                        attrs: {
+                          fill: "#7080707f",
+                          x: "6",
+                          width: "6",
+                          height: "6",
+                          y: "6",
+                        },
+                      }),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c("circle", {
+                    attrs: {
+                      cx: "16",
+                      cy: "16",
+                      r: "16",
+                      fill: "url(#checkerboard)",
+                    },
+                  }),
+                  _vm._v(" "),
+                  _c("circle", { attrs: { cx: "16", cy: "16", r: "16" } }),
+                ]
+              ),
+            ]
+          ),
+          _vm._v(" "),
+          _vm.showText
+            ? _c("span", { staticClass: "ml-2" }, [
+                _vm._v("\n      " + _vm._s(_vm.value) + "\n    "),
+              ])
+            : _vm._e(),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: {
+            visible: _vm.showModal,
+            title: _vm.translations.modalTitle,
+            centered: "",
+            size: "md",
+            "hide-header": !Boolean(_vm.translations.modalTitle),
+            "body-class": "p-0",
+            "no-fade": "",
+          },
+          on: { hide: _vm.closeMenu },
+          scopedSlots: _vm._u(
+            [
+              {
+                key: "modal-footer",
+                fn: function () {
+                  return [
+                    _vm.defaultValue
+                      ? _c(
+                          "b-button",
+                          {
+                            attrs: { variant: "light" },
+                            on: {
+                              click: function ($event) {
+                                return _vm.setColor()
+                              },
+                            },
+                          },
+                          [
+                            _vm._v(
+                              "\n        " +
+                                _vm._s(
+                                  _vm.translations.defaultBtnLabel || "Default"
+                                ) +
+                                "\n      "
+                            ),
+                          ]
+                        )
+                      : _vm._e(),
+                    _vm._v(" "),
+                    _vm._t("footer"),
+                    _vm._v(" "),
+                    _c(
+                      "b-button",
+                      {
+                        staticClass: "ml-auto text-primary border-0",
+                        attrs: { variant: "outline-light" },
+                        on: { click: _vm.closeMenu },
+                      },
+                      [
+                        _vm._v(
+                          "\n        " +
+                            _vm._s(
+                              _vm.translations.cancelBtnLabel || "Cancel"
+                            ) +
+                            "\n      "
+                        ),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _c(
+                      "b-button",
+                      {
+                        attrs: { variant: "primary" },
+                        on: { click: _vm.saveColor },
+                      },
+                      [
+                        _vm._v(
+                          "\n        " +
+                            _vm._s(_vm.translations.saveBtnLabel || "Save") +
+                            "\n      "
+                        ),
+                      ]
+                    ),
+                  ]
+                },
+                proxy: true,
+              },
+            ],
+            null,
+            true
+          ),
+        },
+        [
+          _c("chrome", {
+            staticClass: "w-100 shadow-none",
+            attrs: { value: _vm.currentColor },
+            on: { input: _vm.updateColor },
+          }),
+          _vm._v(" "),
+          _vm.themes.length > 0
+            ? _c(
+                "div",
+                { staticClass: "d-flex flex-column border-top p-3 gap-2" },
+                _vm._l(_vm.themes, function (theme) {
+                  return _c(
+                    "b-form-group",
+                    {
+                      key: theme.id,
+                      staticClass: "mb-0",
+                      attrs: {
+                        label: _vm.translations[theme.id],
+                        "label-class": "text-primary",
+                      },
+                    },
+                    [
+                      _c(
+                        "div",
+                        { staticClass: "d-flex flex-wrap border" },
+                        _vm._l(_vm.themeVariables, function (variable) {
+                          return _c("b-button", {
+                            directives: [
+                              {
+                                name: "b-tooltip",
+                                rawName: "v-b-tooltip.noninteractive.hover",
+                                value: {
+                                  title: variable.label,
+                                  boundary: "body",
+                                },
+                                expression:
+                                  "{ title: variable.label, boundary: 'body' }",
+                                modifiers: {
+                                  noninteractive: true,
+                                  hover: true,
+                                },
+                              },
+                            ],
+                            key: variable.key,
+                            staticClass: "swatch flex-grow-1 rounded-0",
+                            style: {
+                              backgroundColor: theme.values[variable.key],
+                              borderColor: theme.values[variable.key],
+                            },
+                            on: {
+                              click: function ($event) {
+                                return _vm.setColor(theme.values[variable.key])
+                              },
+                            },
+                          })
+                        }),
+                        1
+                      ),
+                    ]
+                  )
+                }),
+                1
+              )
+            : _vm._e(),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$1a = [];
+__vue_render__$1a._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1f = function (inject) {
     if (!inject) return
-    inject("data-v-6774375f_0", { source: ".swatch[data-v-6774375f]{height:58px;min-width:50px}", map: undefined, media: undefined })
-,inject("data-v-6774375f_1", { source: ".vc-chrome{font-family:var(--font-medium)!important}.vc-chrome .vc-chrome-body{background:var(--white)!important}.vc-chrome .vc-chrome-body .vc-input__input{color:var(--black)!important;background-color:var(--white)!important}.vc-chrome .vc-chrome-body .vc-input__label{color:var(--black)!important}.vc-chrome .vc-chrome-body .vc-chrome-toggle-btn path{fill:var(--black)!important}.vc-chrome .vc-chrome-body .vc-chrome-toggle-btn .vc-chrome-toggle-icon-highlight{background:var(--light)!important}", map: undefined, media: undefined });
+    inject("data-v-bb24951a_0", { source: ".swatch[data-v-bb24951a] {\n  height: 58px;\n  min-width: 50px;\n}\n\n/*# sourceMappingURL=CInputColorPicker.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CInputColorPicker.vue","CInputColorPicker.vue"],"names":[],"mappings":"AA8RA;EACA,YAAA;EACA,eAAA;AC7RA;;AAEA,gDAAgD","file":"CInputColorPicker.vue","sourcesContent":["<template>\n  <div>\n    <div class=\"d-flex align-items-center\">\n      <b-button\n        :style=\"`color: ${value}; fill: ${value};`\"\n        class=\"p-0 rounded-circle bg-white border-white shadow-none\"\n        @click=\"toggleMenu\"\n      >\n        <svg\n          viewBox=\"0 0 32 32\"\n          :style=\"{ width: width, height: height }\"\n          class=\"border border-light rounded-circle\"\n        >\n          <pattern\n            id=\"checkerboard\"\n            width=\"12\"\n            height=\"12\"\n            patternUnits=\"userSpaceOnUse\"\n            fill=\"FFF\"\n          >\n            <rect\n              fill=\"#7080707f\"\n              x=\"0\"\n              width=\"6\"\n              height=\"6\"\n              y=\"0\"\n            />\n            <rect\n              fill=\"#7080707f\"\n              x=\"6\"\n              width=\"6\"\n              height=\"6\"\n              y=\"6\"\n            />\n          </pattern>\n\n          <circle\n            cx=\"16\"\n            cy=\"16\"\n            r=\"16\"\n            fill=\"url(#checkerboard)\"\n          />\n\n          <circle\n            cx=\"16\"\n            cy=\"16\"\n            r=\"16\"\n          />\n        </svg>\n      </b-button>\n      <span\n        v-if=\"showText\"\n        class=\"ml-2\"\n      >\n        {{ value }}\n      </span>\n    </div>\n\n    <b-modal\n      :visible=\"showModal\"\n      :title=\"translations.modalTitle\"\n      centered\n      size=\"md\"\n      :hide-header=\"!Boolean(translations.modalTitle)\"\n      body-class=\"p-0\"\n      no-fade\n      @hide=\"closeMenu\"\n    >\n      <chrome\n        :value=\"currentColor\"\n        class=\"w-100 shadow-none\"\n        @input=\"updateColor\"\n      />\n\n      <div\n        v-if=\"themes.length > 0\"\n        class=\"d-flex flex-column border-top p-3 gap-2\"\n      >\n        <b-form-group\n          v-for=\"theme in themes\"\n          :key=\"theme.id\"\n          :label=\"translations[theme.id]\"\n          label-class=\"text-primary\"\n          class=\"mb-0\"\n        >\n          <div\n            class=\"d-flex flex-wrap border\"\n          >\n            <b-button\n              v-for=\"variable in themeVariables\"\n              :key=\"variable.key\"\n              v-b-tooltip.noninteractive.hover=\"{ title: variable.label, boundary: 'body' }\"\n              class=\"swatch flex-grow-1 rounded-0\"\n              :style=\"{ backgroundColor: theme.values[variable.key], borderColor: theme.values[variable.key] }\"\n              @click=\"setColor(theme.values[variable.key])\"\n            />\n          </div>\n        </b-form-group>\n      </div>\n\n      <template #modal-footer>\n        <b-button\n          v-if=\"defaultValue\"\n          variant=\"light\"\n          @click=\"setColor()\"\n        >\n          {{ translations.defaultBtnLabel || 'Default' }}\n        </b-button>\n        <slot name=\"footer\" />\n\n        <b-button\n          variant=\"outline-light\"\n          class=\"ml-auto text-primary border-0\"\n          @click=\"closeMenu\"\n        >\n          {{ translations.cancelBtnLabel || 'Cancel' }}\n        </b-button>\n\n        <b-button\n          variant=\"primary\"\n          @click=\"saveColor\"\n        >\n          {{ translations.saveBtnLabel || 'Save' }}\n        </b-button>\n      </template>\n    </b-modal>\n  </div>\n</template>\n\n<script>\nimport { Chrome } from 'vue-color'\nimport { debounce } from 'lodash'\n\nexport default {\n  name: 'CInputColorPicker',\n\n  components: {\n    Chrome,\n  },\n\n  props: {\n    value: {\n      type: String,\n      default: '#000000FF',\n    },\n\n    defaultValue: {\n      type: String,\n      default: '',\n    },\n\n    translations: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    width: {\n      type: String,\n      default: '32px',\n    },\n\n    height: {\n      type: String,\n      default: '32px',\n    },\n\n    showText: {\n      type: Boolean,\n      default: true,\n    },\n\n    themeSettings: {\n      type: Array,\n      default: () => [],\n    },\n\n    themeVariables: {\n      type: Array,\n      default: () => [\n        {\n          key: 'white',\n          label: 'White',\n        },\n        {\n          key: 'black',\n          label: 'Black',\n        },\n        {\n          key: 'primary',\n          label: 'Primary',\n        },\n        {\n          key: 'secondary',\n          label: 'Secondary',\n        },\n        {\n          key: 'success',\n          label: 'Success',\n        },\n        {\n          key: 'warning',\n          label: 'Warning',\n        },\n        {\n          key: 'danger',\n          label: 'Danger',\n        },\n        {\n          key: 'light',\n          label: 'Light',\n        },\n        {\n          key: 'extra-light',\n          label: 'Extra light',\n        },\n      ],\n    },\n  },\n\n  data () {\n    return {\n      showModal: false,\n      currentColor: '',\n    }\n  },\n\n  computed: {\n    themes () {\n      return this.themeSettings\n        .filter((theme) => theme.id !== 'general') // remove general theme\n        .map((theme) => {\n          return {\n            id: theme.id,\n            values: JSON.parse(theme.values),\n          }\n        })\n    },\n  },\n\n  watch: {\n    value: {\n      immediate: true,\n      handler (value) {\n        this.currentColor = value\n\n        if (!value && this.defaultValue) {\n          this.$emit('input', this.defaultValue)\n        }\n      },\n    },\n  },\n\n  methods: {\n    updateColor: debounce(function ({ hex8 = '' }) {\n      this.currentColor = hex8\n    }, 300),\n\n    setColor (defaultColor = this.defaultValue) {\n      this.currentColor = defaultColor\n    },\n\n    saveColor () {\n      this.$emit('input', this.currentColor)\n      this.closeMenu()\n    },\n\n    toggleMenu () {\n      if (this.showModal) {\n        this.closeMenu()\n      } else {\n        this.openMenu()\n      }\n    },\n\n    openMenu () {\n      this.showModal = true\n    },\n\n    closeMenu () {\n      this.showModal = false\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.swatch {\n  height: 58px;\n  min-width: 50px;\n}\n</style>\n\n<style lang=\"scss\">\n.vc-chrome {\n  font-family: var(--font-medium) !important;\n\n  .vc-chrome-body {\n    background: var(--white) !important;\n\n    .vc-input__input {\n      color: var(--black) !important;\n      background-color: var(--white) !important;\n    }\n\n    .vc-input__label {\n      color: var(--black) !important;\n    }\n\n    .vc-chrome-toggle-btn {\n      path {\n        fill: var(--black) !important;\n      }\n\n      .vc-chrome-toggle-icon-highlight {\n        background: var(--light) !important;\n      }\n    }\n  }\n}\n</style>\n",".swatch {\n  height: 58px;\n  min-width: 50px;\n}\n\n/*# sourceMappingURL=CInputColorPicker.vue.map */"]}, media: undefined })
+,inject("data-v-bb24951a_1", { source: ".vc-chrome {\n  font-family: var(--font-medium) !important;\n}\n.vc-chrome .vc-chrome-body {\n  background: var(--white) !important;\n}\n.vc-chrome .vc-chrome-body .vc-input__input {\n  color: var(--black) !important;\n  background-color: var(--white) !important;\n}\n.vc-chrome .vc-chrome-body .vc-input__label {\n  color: var(--black) !important;\n}\n.vc-chrome .vc-chrome-body .vc-chrome-toggle-btn path {\n  fill: var(--black) !important;\n}\n.vc-chrome .vc-chrome-body .vc-chrome-toggle-btn .vc-chrome-toggle-icon-highlight {\n  background: var(--light) !important;\n}\n\n/*# sourceMappingURL=CInputColorPicker.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CInputColorPicker.vue","CInputColorPicker.vue"],"names":[],"mappings":"AAqSA;EACA,0CAAA;ACpSA;ADsSA;EACA,mCAAA;ACpSA;ADsSA;EACA,8BAAA;EACA,yCAAA;ACpSA;ADuSA;EACA,8BAAA;ACrSA;ADySA;EACA,6BAAA;ACvSA;AD0SA;EACA,mCAAA;ACxSA;;AAEA,gDAAgD","file":"CInputColorPicker.vue","sourcesContent":["<template>\n  <div>\n    <div class=\"d-flex align-items-center\">\n      <b-button\n        :style=\"`color: ${value}; fill: ${value};`\"\n        class=\"p-0 rounded-circle bg-white border-white shadow-none\"\n        @click=\"toggleMenu\"\n      >\n        <svg\n          viewBox=\"0 0 32 32\"\n          :style=\"{ width: width, height: height }\"\n          class=\"border border-light rounded-circle\"\n        >\n          <pattern\n            id=\"checkerboard\"\n            width=\"12\"\n            height=\"12\"\n            patternUnits=\"userSpaceOnUse\"\n            fill=\"FFF\"\n          >\n            <rect\n              fill=\"#7080707f\"\n              x=\"0\"\n              width=\"6\"\n              height=\"6\"\n              y=\"0\"\n            />\n            <rect\n              fill=\"#7080707f\"\n              x=\"6\"\n              width=\"6\"\n              height=\"6\"\n              y=\"6\"\n            />\n          </pattern>\n\n          <circle\n            cx=\"16\"\n            cy=\"16\"\n            r=\"16\"\n            fill=\"url(#checkerboard)\"\n          />\n\n          <circle\n            cx=\"16\"\n            cy=\"16\"\n            r=\"16\"\n          />\n        </svg>\n      </b-button>\n      <span\n        v-if=\"showText\"\n        class=\"ml-2\"\n      >\n        {{ value }}\n      </span>\n    </div>\n\n    <b-modal\n      :visible=\"showModal\"\n      :title=\"translations.modalTitle\"\n      centered\n      size=\"md\"\n      :hide-header=\"!Boolean(translations.modalTitle)\"\n      body-class=\"p-0\"\n      no-fade\n      @hide=\"closeMenu\"\n    >\n      <chrome\n        :value=\"currentColor\"\n        class=\"w-100 shadow-none\"\n        @input=\"updateColor\"\n      />\n\n      <div\n        v-if=\"themes.length > 0\"\n        class=\"d-flex flex-column border-top p-3 gap-2\"\n      >\n        <b-form-group\n          v-for=\"theme in themes\"\n          :key=\"theme.id\"\n          :label=\"translations[theme.id]\"\n          label-class=\"text-primary\"\n          class=\"mb-0\"\n        >\n          <div\n            class=\"d-flex flex-wrap border\"\n          >\n            <b-button\n              v-for=\"variable in themeVariables\"\n              :key=\"variable.key\"\n              v-b-tooltip.noninteractive.hover=\"{ title: variable.label, boundary: 'body' }\"\n              class=\"swatch flex-grow-1 rounded-0\"\n              :style=\"{ backgroundColor: theme.values[variable.key], borderColor: theme.values[variable.key] }\"\n              @click=\"setColor(theme.values[variable.key])\"\n            />\n          </div>\n        </b-form-group>\n      </div>\n\n      <template #modal-footer>\n        <b-button\n          v-if=\"defaultValue\"\n          variant=\"light\"\n          @click=\"setColor()\"\n        >\n          {{ translations.defaultBtnLabel || 'Default' }}\n        </b-button>\n        <slot name=\"footer\" />\n\n        <b-button\n          variant=\"outline-light\"\n          class=\"ml-auto text-primary border-0\"\n          @click=\"closeMenu\"\n        >\n          {{ translations.cancelBtnLabel || 'Cancel' }}\n        </b-button>\n\n        <b-button\n          variant=\"primary\"\n          @click=\"saveColor\"\n        >\n          {{ translations.saveBtnLabel || 'Save' }}\n        </b-button>\n      </template>\n    </b-modal>\n  </div>\n</template>\n\n<script>\nimport { Chrome } from 'vue-color'\nimport { debounce } from 'lodash'\n\nexport default {\n  name: 'CInputColorPicker',\n\n  components: {\n    Chrome,\n  },\n\n  props: {\n    value: {\n      type: String,\n      default: '#000000FF',\n    },\n\n    defaultValue: {\n      type: String,\n      default: '',\n    },\n\n    translations: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    width: {\n      type: String,\n      default: '32px',\n    },\n\n    height: {\n      type: String,\n      default: '32px',\n    },\n\n    showText: {\n      type: Boolean,\n      default: true,\n    },\n\n    themeSettings: {\n      type: Array,\n      default: () => [],\n    },\n\n    themeVariables: {\n      type: Array,\n      default: () => [\n        {\n          key: 'white',\n          label: 'White',\n        },\n        {\n          key: 'black',\n          label: 'Black',\n        },\n        {\n          key: 'primary',\n          label: 'Primary',\n        },\n        {\n          key: 'secondary',\n          label: 'Secondary',\n        },\n        {\n          key: 'success',\n          label: 'Success',\n        },\n        {\n          key: 'warning',\n          label: 'Warning',\n        },\n        {\n          key: 'danger',\n          label: 'Danger',\n        },\n        {\n          key: 'light',\n          label: 'Light',\n        },\n        {\n          key: 'extra-light',\n          label: 'Extra light',\n        },\n      ],\n    },\n  },\n\n  data () {\n    return {\n      showModal: false,\n      currentColor: '',\n    }\n  },\n\n  computed: {\n    themes () {\n      return this.themeSettings\n        .filter((theme) => theme.id !== 'general') // remove general theme\n        .map((theme) => {\n          return {\n            id: theme.id,\n            values: JSON.parse(theme.values),\n          }\n        })\n    },\n  },\n\n  watch: {\n    value: {\n      immediate: true,\n      handler (value) {\n        this.currentColor = value\n\n        if (!value && this.defaultValue) {\n          this.$emit('input', this.defaultValue)\n        }\n      },\n    },\n  },\n\n  methods: {\n    updateColor: debounce(function ({ hex8 = '' }) {\n      this.currentColor = hex8\n    }, 300),\n\n    setColor (defaultColor = this.defaultValue) {\n      this.currentColor = defaultColor\n    },\n\n    saveColor () {\n      this.$emit('input', this.currentColor)\n      this.closeMenu()\n    },\n\n    toggleMenu () {\n      if (this.showModal) {\n        this.closeMenu()\n      } else {\n        this.openMenu()\n      }\n    },\n\n    openMenu () {\n      this.showModal = true\n    },\n\n    closeMenu () {\n      this.showModal = false\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.swatch {\n  height: 58px;\n  min-width: 50px;\n}\n</style>\n\n<style lang=\"scss\">\n.vc-chrome {\n  font-family: var(--font-medium) !important;\n\n  .vc-chrome-body {\n    background: var(--white) !important;\n\n    .vc-input__input {\n      color: var(--black) !important;\n      background-color: var(--white) !important;\n    }\n\n    .vc-input__label {\n      color: var(--black) !important;\n    }\n\n    .vc-chrome-toggle-btn {\n      path {\n        fill: var(--black) !important;\n      }\n\n      .vc-chrome-toggle-icon-highlight {\n        background: var(--light) !important;\n      }\n    }\n  }\n}\n</style>\n",".vc-chrome {\n  font-family: var(--font-medium) !important;\n}\n.vc-chrome .vc-chrome-body {\n  background: var(--white) !important;\n}\n.vc-chrome .vc-chrome-body .vc-input__input {\n  color: var(--black) !important;\n  background-color: var(--white) !important;\n}\n.vc-chrome .vc-chrome-body .vc-input__label {\n  color: var(--black) !important;\n}\n.vc-chrome .vc-chrome-body .vc-chrome-toggle-btn path {\n  fill: var(--black) !important;\n}\n.vc-chrome .vc-chrome-body .vc-chrome-toggle-btn .vc-chrome-toggle-icon-highlight {\n  background: var(--light) !important;\n}\n\n/*# sourceMappingURL=CInputColorPicker.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1f = "data-v-6774375f";
+  const __vue_scope_id__$1f = "data-v-bb24951a";
   /* module identifier */
   const __vue_module_identifier__$1f = undefined;
   /* functional template */
@@ -9724,11 +11084,62 @@ var script$1c = {
 const __vue_script__$1c = script$1c;
 
 /* template */
-var __vue_render__$19 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('b-button',{staticClass:"text-dark font-weight-bold text-decoration-none mb-1",attrs:{"id":("color-popover-" + (_vm.format.type)),"variant":"link"},on:{"click":function($event){$event.stopPropagation();$event.preventDefault();return _vm.showPicker.apply(null, arguments)}}},[_c('span',{style:({
-        backgroundColor: _vm.background ? _vm.selectedColor : 'transparent',
-        'border-bottom': _vm.background ? 'none' : ("2px solid " + _vm.selectedColor),
-      })},[_vm._v("\n      A\n    ")])]),_vm._v(" "),_c('c-input-color-picker',{ref:"picker",staticClass:"d-none",attrs:{"value":_vm.selectedColor,"default-value":_vm.getDefaultColor(),"show-text":false,"width":'0px',"height":'0px'},on:{"input":_vm.applyFromPicker}})],1)};
+var __vue_render__$19 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    [
+      _c(
+        "b-button",
+        {
+          staticClass: "text-dark font-weight-bold text-decoration-none mb-1",
+          attrs: { id: "color-popover-" + _vm.format.type, variant: "link" },
+          on: {
+            click: function ($event) {
+              $event.stopPropagation();
+              $event.preventDefault();
+              return _vm.showPicker.apply(null, arguments)
+            },
+          },
+        },
+        [
+          _c(
+            "span",
+            {
+              style: {
+                backgroundColor: _vm.background
+                  ? _vm.selectedColor
+                  : "transparent",
+                "border-bottom": _vm.background
+                  ? "none"
+                  : "2px solid " + _vm.selectedColor,
+              },
+            },
+            [_vm._v("\n      A\n    ")]
+          ),
+        ]
+      ),
+      _vm._v(" "),
+      _c("c-input-color-picker", {
+        ref: "picker",
+        staticClass: "d-none",
+        attrs: {
+          value: _vm.selectedColor,
+          "default-value": _vm.getDefaultColor(),
+          "show-text": false,
+          width: "0px",
+          height: "0px",
+        },
+        on: { input: _vm.applyFromPicker },
+      }),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$19 = [];
+__vue_render__$19._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1d = undefined;
@@ -10173,13 +11584,105 @@ var script$1b = {
 const __vue_script__$1b = script$1b;
 
 /* template */
-var __vue_render__$18 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"c-emoji-picker"},[_c('div',{staticClass:"c-emoji-picker-search-wrap"},[_c('input',{ref:"searchInput",staticClass:"c-emoji-picker-search-input",attrs:{"type":"text","placeholder":_vm.labels.search || 'Search'},on:{"input":_vm.onSearch,"click":function($event){$event.stopPropagation();},"keydown":function($event){$event.stopPropagation();}}}),_vm._v(" "),_c('svg',{staticClass:"c-emoji-picker-search-icon",attrs:{"viewBox":"0 0 16 16","fill":"currentColor"}},[_c('path',{attrs:{"d":"M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.44 1.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"}})])]),_vm._v(" "),_c('div',{ref:"viewport",staticClass:"c-emoji-picker-viewport",style:({ height: _vm.viewportHeight + 'px', width: _vm.viewportWidth + 'px' }),on:{"scroll":_vm.onScroll}},[_c('div',{ref:"scrollContent",staticClass:"c-emoji-picker-scroll-content"})]),_vm._v(" "),(_vm.showQuickReactions)?_c('div',{staticClass:"c-emoji-picker-quick"},[_c('div',{staticClass:"c-emoji-picker-quick-label"},[_vm._v("\n      "+_vm._s(_vm.labels.quickReactions || 'Quick Reactions')+"\n    ")]),_vm._v(" "),_c('div',{staticClass:"c-emoji-picker-quick-row"},_vm._l((_vm.quickReactionsList),function(qr){return _c('span',{key:qr.emoji,staticClass:"epi",attrs:{"title":qr.name},on:{"click":function($event){$event.stopPropagation();return _vm.onQuickReactionClick(qr)}}},[_vm._v("\n        "+_vm._s(qr.emoji)+"\n      ")])}),0)]):_vm._e()])};
+var __vue_render__$18 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", { staticClass: "c-emoji-picker" }, [
+    _c("div", { staticClass: "c-emoji-picker-search-wrap" }, [
+      _c("input", {
+        ref: "searchInput",
+        staticClass: "c-emoji-picker-search-input",
+        attrs: { type: "text", placeholder: _vm.labels.search || "Search" },
+        on: {
+          input: _vm.onSearch,
+          click: function ($event) {
+            $event.stopPropagation();
+          },
+          keydown: function ($event) {
+            $event.stopPropagation();
+          },
+        },
+      }),
+      _vm._v(" "),
+      _c(
+        "svg",
+        {
+          staticClass: "c-emoji-picker-search-icon",
+          attrs: { viewBox: "0 0 16 16", fill: "currentColor" },
+        },
+        [
+          _c("path", {
+            attrs: {
+              d: "M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.44 1.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z",
+            },
+          }),
+        ]
+      ),
+    ]),
+    _vm._v(" "),
+    _c(
+      "div",
+      {
+        ref: "viewport",
+        staticClass: "c-emoji-picker-viewport",
+        style: {
+          height: _vm.viewportHeight + "px",
+          width: _vm.viewportWidth + "px",
+        },
+        on: { scroll: _vm.onScroll },
+      },
+      [
+        _c("div", {
+          ref: "scrollContent",
+          staticClass: "c-emoji-picker-scroll-content",
+        }),
+      ]
+    ),
+    _vm._v(" "),
+    _vm.showQuickReactions
+      ? _c("div", { staticClass: "c-emoji-picker-quick" }, [
+          _c("div", { staticClass: "c-emoji-picker-quick-label" }, [
+            _vm._v(
+              "\n      " +
+                _vm._s(_vm.labels.quickReactions || "Quick Reactions") +
+                "\n    "
+            ),
+          ]),
+          _vm._v(" "),
+          _c(
+            "div",
+            { staticClass: "c-emoji-picker-quick-row" },
+            _vm._l(_vm.quickReactionsList, function (qr) {
+              return _c(
+                "span",
+                {
+                  key: qr.emoji,
+                  staticClass: "epi",
+                  attrs: { title: qr.name },
+                  on: {
+                    click: function ($event) {
+                      $event.stopPropagation();
+                      return _vm.onQuickReactionClick(qr)
+                    },
+                  },
+                },
+                [_vm._v("\n        " + _vm._s(qr.emoji) + "\n      ")]
+              )
+            }),
+            0
+          ),
+        ])
+      : _vm._e(),
+  ])
+};
 var __vue_staticRenderFns__$18 = [];
+__vue_render__$18._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1c = function (inject) {
     if (!inject) return
-    inject("data-v-5e5b0d5c_0", { source: ".c-emoji-picker-search-wrap{position:relative;padding:.4rem .5rem}.c-emoji-picker-search-input{width:100%;padding:.3rem .5rem .3rem 1.75rem;border:1px solid var(--extra-light,#ddd);border-radius:.35rem;font-size:.8rem;outline:0;background:var(--white,#fff);color:var(--dark,#333)}.c-emoji-picker-search-input:focus{border-color:var(--primary,#4080ff);box-shadow:0 0 0 2px rgba(64,128,255,.15)}.c-emoji-picker-search-input::placeholder{color:var(--secondary,#999)}.c-emoji-picker-search-icon{position:absolute;left:1rem;top:50%;transform:translateY(-50%);width:.8rem;height:.8rem;color:var(--secondary,#999);pointer-events:none}.c-emoji-picker-viewport{overflow-y:auto;position:relative;padding:0 .4rem}.c-emoji-picker-scroll-content{position:relative;width:100%}.c-emoji-picker-section-label{font-size:.7rem;font-weight:700;color:var(--secondary,#888);text-transform:uppercase;letter-spacing:.03em;padding:.3rem .15rem .15rem;background:var(--white,#fff);line-height:1;height:26px;display:flex;align-items:center}.c-emoji-picker-vrow{display:flex}.epi{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;margin:0;border-radius:.25rem;cursor:pointer;font-size:1.15rem;line-height:1}.epi:hover{background-color:var(--light,#f0f0f0);transform:scale(1.15)}.epi:active{transform:scale(.95)}.c-emoji-picker-empty{text-align:center;color:var(--secondary,#999);padding:1.5rem 0;font-size:.8rem}.c-emoji-picker-quick{border-top:1px solid var(--extra-light,#e0e0e0);padding:.25rem .4rem .3rem}.c-emoji-picker-quick-label{font-size:.65rem;font-weight:700;color:var(--secondary,#888);text-transform:uppercase;letter-spacing:.03em;padding:.1rem .15rem}.c-emoji-picker-quick-row{display:flex}", map: undefined, media: undefined });
+    inject("data-v-af4f09fa_0", { source: ".c-emoji-picker-search-wrap {\n  position: relative;\n  padding: 0.4rem 0.5rem;\n}\n.c-emoji-picker-search-input {\n  width: 100%;\n  padding: 0.3rem 0.5rem 0.3rem 1.75rem;\n  border: 1px solid var(--extra-light, #ddd);\n  border-radius: 0.35rem;\n  font-size: 0.8rem;\n  outline: none;\n  background: var(--white, #fff);\n  color: var(--dark, #333);\n}\n.c-emoji-picker-search-input:focus {\n  border-color: var(--primary, #4080ff);\n  box-shadow: 0 0 0 2px rgba(64, 128, 255, 0.15);\n}\n.c-emoji-picker-search-input::placeholder {\n  color: var(--secondary, #999);\n}\n.c-emoji-picker-search-icon {\n  position: absolute;\n  left: 1rem;\n  top: 50%;\n  transform: translateY(-50%);\n  width: 0.8rem;\n  height: 0.8rem;\n  color: var(--secondary, #999);\n  pointer-events: none;\n}\n.c-emoji-picker-viewport {\n  overflow-y: auto;\n  position: relative;\n  padding: 0 0.4rem;\n}\n.c-emoji-picker-scroll-content {\n  position: relative;\n  width: 100%;\n}\n.c-emoji-picker-section-label {\n  font-size: 0.7rem;\n  font-weight: 700;\n  color: var(--secondary, #888);\n  text-transform: uppercase;\n  letter-spacing: 0.03em;\n  padding: 0.3rem 0.15rem 0.15rem;\n  background: var(--white, #fff);\n  line-height: 1;\n  height: 26px;\n  display: flex;\n  align-items: center;\n}\n.c-emoji-picker-vrow {\n  display: flex;\n}\n.epi {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 30px;\n  height: 30px;\n  padding: 0;\n  margin: 0;\n  border-radius: 0.25rem;\n  cursor: pointer;\n  font-size: 1.15rem;\n  line-height: 1;\n}\n.epi:hover {\n  background-color: var(--light, #f0f0f0);\n  transform: scale(1.15);\n}\n.epi:active {\n  transform: scale(0.95);\n}\n.c-emoji-picker-empty {\n  text-align: center;\n  color: var(--secondary, #999);\n  padding: 1.5rem 0;\n  font-size: 0.8rem;\n}\n.c-emoji-picker-quick {\n  border-top: 1px solid var(--extra-light, #e0e0e0);\n  padding: 0.25rem 0.4rem 0.3rem;\n}\n.c-emoji-picker-quick-label {\n  font-size: 0.65rem;\n  font-weight: 700;\n  color: var(--secondary, #888);\n  text-transform: uppercase;\n  letter-spacing: 0.03em;\n  padding: 0.1rem 0.15rem;\n}\n.c-emoji-picker-quick-row {\n  display: flex;\n}\n\n/*# sourceMappingURL=CEmojiPicker.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/CEmojiPicker.vue","CEmojiPicker.vue"],"names":[],"mappings":"AA+ZA;EACA,kBAAA;EACA,sBAAA;AC9ZA;ADiaA;EACA,WAAA;EACA,qCAAA;EACA,0CAAA;EACA,sBAAA;EACA,iBAAA;EACA,aAAA;EACA,8BAAA;EACA,wBAAA;AC9ZA;ADgaA;EACA,qCAAA;EACA,8CAAA;AC9ZA;ADiaA;EACA,6BAAA;AC/ZA;ADmaA;EACA,kBAAA;EACA,UAAA;EACA,QAAA;EACA,2BAAA;EACA,aAAA;EACA,cAAA;EACA,6BAAA;EACA,oBAAA;AChaA;ADmaA;EACA,gBAAA;EACA,kBAAA;EACA,iBAAA;AChaA;ADmaA;EACA,kBAAA;EACA,WAAA;AChaA;ADmaA;EACA,iBAAA;EACA,gBAAA;EACA,6BAAA;EACA,yBAAA;EACA,sBAAA;EACA,+BAAA;EACA,8BAAA;EACA,cAAA;EACA,YAAA;EACA,aAAA;EACA,mBAAA;AChaA;ADmaA;EACA,aAAA;AChaA;ADmaA;EACA,oBAAA;EACA,mBAAA;EACA,uBAAA;EACA,WAAA;EACA,YAAA;EACA,UAAA;EACA,SAAA;EACA,sBAAA;EACA,eAAA;EACA,kBAAA;EACA,cAAA;AChaA;ADkaA;EACA,uCAAA;EACA,sBAAA;AChaA;ADmaA;EACA,sBAAA;ACjaA;ADqaA;EACA,kBAAA;EACA,6BAAA;EACA,iBAAA;EACA,iBAAA;AClaA;ADqaA;EACA,iDAAA;EACA,8BAAA;AClaA;ADqaA;EACA,kBAAA;EACA,gBAAA;EACA,6BAAA;EACA,yBAAA;EACA,sBAAA;EACA,uBAAA;AClaA;ADqaA;EACA,aAAA;AClaA;;AAEA,2CAA2C","file":"CEmojiPicker.vue","sourcesContent":["<template>\n  <div class=\"c-emoji-picker\">\n    <div class=\"c-emoji-picker-search-wrap\">\n      <input\n        ref=\"searchInput\"\n        type=\"text\"\n        class=\"c-emoji-picker-search-input\"\n        :placeholder=\"labels.search || 'Search'\"\n        @input=\"onSearch\"\n        @click.stop\n        @keydown.stop\n      >\n      <svg\n        class=\"c-emoji-picker-search-icon\"\n        viewBox=\"0 0 16 16\"\n        fill=\"currentColor\"\n      >\n        <path d=\"M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.44 1.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z\" />\n      </svg>\n    </div>\n\n    <div\n      ref=\"viewport\"\n      class=\"c-emoji-picker-viewport\"\n      :style=\"{ height: viewportHeight + 'px', width: viewportWidth + 'px' }\"\n      @scroll=\"onScroll\"\n    >\n      <div\n        ref=\"scrollContent\"\n        class=\"c-emoji-picker-scroll-content\"\n      />\n    </div>\n\n    <div\n      v-if=\"showQuickReactions\"\n      class=\"c-emoji-picker-quick\"\n    >\n      <div class=\"c-emoji-picker-quick-label\">\n        {{ labels.quickReactions || 'Quick Reactions' }}\n      </div>\n      <div class=\"c-emoji-picker-quick-row\">\n        <span\n          v-for=\"qr in quickReactionsList\"\n          :key=\"qr.emoji\"\n          class=\"epi\"\n          :title=\"qr.name\"\n          @click.stop=\"onQuickReactionClick(qr)\"\n        >\n          {{ qr.emoji }}\n        </span>\n      </div>\n    </div>\n  </div>\n</template>\n\n<script>\nconst STORAGE_KEY = 'corteza:emoji:frequently-used'\nconst MAX_FREQUENT = 18\n\n// Virtual scroll constants (px)\nconst ITEM_SIZE = 30\nconst LABEL_HEIGHT = 26\nconst ITEMS_PER_ROW = 8\nconst BUFFER_PX = 90\n\nconst EMOJI_BLACKLIST = new Set(['relaxed', 'frowning_face'])\n\nconst GROUP_CONFIG = [\n  { name: 'smileys-people', icon: '😀', label: 'Smileys & People', sources: ['', 'people & body'] },\n  { name: 'animals & nature', icon: '🐶', label: 'Animals & Nature', sources: ['animals & nature'] },\n  { name: 'food & drink', icon: '🍎', label: 'Food & Drink', sources: ['food & drink'] },\n  { name: 'travel & places', icon: '🚗', label: 'Travel & Places', sources: ['travel & places'] },\n  { name: 'activities', icon: '⚽', label: 'Activities', sources: ['activities'] },\n  { name: 'objects', icon: '💡', label: 'Objects', sources: ['objects'] },\n  { name: 'symbols', icon: '❤️', label: 'Symbols', sources: ['symbols'] },\n]\n\nexport default {\n  name: 'CEmojiPicker',\n\n  props: {\n    /**\n     * Override emoji list. If not provided, uses tiptap's built-in emoji data.\n     */\n    emojis: {\n      type: Array,\n      default: () => [],\n    },\n\n    /**\n     * Height of the scrollable emoji viewport in px.\n     */\n    viewportHeight: {\n      type: Number,\n      default: 260,\n    },\n\n    /**\n     * Width of the scrollable emoji viewport in px.\n     */\n    viewportWidth: {\n      type: Number,\n      default: 260,\n    },\n\n    /**\n     * Whether to show the \"Frequently Used\" section.\n     */\n    showFrequent: {\n      type: Boolean,\n      default: true,\n    },\n\n    /**\n     * Whether to show the \"Quick Reactions\" footer.\n     */\n    showQuickReactions: {\n      type: Boolean,\n      default: true,\n    },\n\n    /**\n     * Labels for translatable strings.\n     */\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n  },\n\n  data () {\n    return {\n      search: '',\n      frequentlyUsed: [],\n      virtualRows: [],\n      totalHeight: 0,\n      renderedRange: { start: -1, end: -1 },\n    }\n  },\n\n  computed: {\n    allEmojis () {\n      return this.emojis || []\n    },\n\n    emojiByGroup () {\n      const raw = {}\n      for (const emoji of this.allEmojis) {\n        if (emoji.name.startsWith('regional_indicator')) continue\n        if (EMOJI_BLACKLIST.has(emoji.name)) continue\n        if (!raw[emoji.group]) raw[emoji.group] = []\n        raw[emoji.group].push(emoji)\n      }\n\n      const map = {}\n      for (const group of GROUP_CONFIG) {\n        const merged = []\n        for (const src of group.sources) {\n          if (raw[src]) merged.push(...raw[src])\n        }\n        if (merged.length) map[group.name] = merged\n      }\n\n      return map\n    },\n\n    groups () {\n      const byGroup = this.emojiByGroup\n      return GROUP_CONFIG.filter(g => byGroup[g.name]?.length)\n    },\n\n    frequentEmojis () {\n      if (!this.showFrequent) return []\n      return this.frequentlyUsed\n        .map(name => this.allEmojis.find(e => e.name === name))\n        .filter(Boolean)\n    },\n\n    quickReactionsList () {\n      const names = ['+1', '-1', 'smile', 'tada', 'blush', 'rocket', 'eyes']\n      return names\n        .map(name => this.allEmojis.find(e => e.name === name))\n        .filter(Boolean)\n    },\n\n    filteredEmojis () {\n      if (!this.search) return []\n\n      const q = this.search.toLowerCase()\n      return this.allEmojis.filter((emoji) => {\n        if (emoji.name.startsWith('regional_indicator')) return false\n        if (EMOJI_BLACKLIST.has(emoji.name)) return false\n        if (emoji.name.toLowerCase().includes(q)) return true\n        if (emoji.shortcodes && emoji.shortcodes.some(s => s.toLowerCase().includes(q))) return true\n        if (emoji.tags && emoji.tags.some(t => t.toLowerCase().includes(q))) return true\n        return false\n      }).slice(0, 60)\n    },\n  },\n\n  mounted () {\n    this.loadFrequentlyUsed()\n  },\n\n  methods: {\n    /**\n     * Call this externally after the picker becomes visible (e.g. popover @shown).\n     * Resets search, rebuilds layout, focuses input.\n     */\n    async reset () {\n      this.search = ''\n      this.loadFrequentlyUsed()\n\n      this.$nextTick(() => {\n        if (this.$refs.searchInput) {\n          this.$refs.searchInput.value = ''\n          this.$refs.searchInput.focus()\n        }\n\n        const content = this.$refs.scrollContent\n        if (content && !content._bound) {\n          content.addEventListener('click', this.onEmojiClick)\n          content._bound = true\n        }\n\n        this.rebuildVirtualRows()\n        this.renderedRange = { start: -1, end: -1 }\n        if (this.$refs.viewport) {\n          this.$refs.viewport.scrollTop = 0\n        }\n        this.renderVisible()\n      })\n    },\n\n    loadFrequentlyUsed () {\n      try {\n        const stored = localStorage.getItem(STORAGE_KEY)\n        this.frequentlyUsed = stored ? JSON.parse(stored) : []\n      } catch {\n        this.frequentlyUsed = []\n      }\n    },\n\n    saveFrequentlyUsed (emojiName) {\n      const list = [emojiName, ...this.frequentlyUsed.filter(n => n !== emojiName)].slice(0, MAX_FREQUENT)\n      this.frequentlyUsed = list\n      try {\n        localStorage.setItem(STORAGE_KEY, JSON.stringify(list))\n      } catch {\n        // ignore\n      }\n    },\n\n    onSearch (e) {\n      this.search = e.target.value\n      this.rebuildVirtualRows()\n      this.renderedRange = { start: -1, end: -1 }\n      if (this.$refs.viewport) {\n        this.$refs.viewport.scrollTop = 0\n      }\n      this.renderVisible()\n    },\n\n    onEmojiClick (e) {\n      const el = e.target.closest('[data-emoji]')\n      if (el) {\n        e.stopPropagation()\n        const name = el.dataset.emoji\n        const emoji = this.allEmojis.find(em => em.name === name)\n\n        this.saveFrequentlyUsed(name)\n\n        /**\n         * Emitted when an emoji is selected.\n         * @event select\n         * @property {Object} emojiItem - The full emoji object { emoji, name, shortcodes, tags, group }\n         */\n        this.$emit('select', emoji || { name, emoji: el.textContent })\n      }\n    },\n\n    rebuildVirtualRows () {\n      const rows = []\n      let y = 0\n\n      const addSection = (label, emojis) => {\n        rows.push({ type: 'label', text: label, y, height: LABEL_HEIGHT })\n        y += LABEL_HEIGHT\n\n        for (let i = 0; i < emojis.length; i += ITEMS_PER_ROW) {\n          const chunk = emojis.slice(i, i + ITEMS_PER_ROW)\n          rows.push({ type: 'emojis', items: chunk, y, height: ITEM_SIZE })\n          y += ITEM_SIZE\n        }\n      }\n\n      if (this.search) {\n        const results = this.filteredEmojis\n        if (results.length) {\n          addSection(this.labels.searchResults || 'Search Results', results)\n        } else {\n          rows.push({ type: 'empty', y, height: 60 })\n          y += 60\n        }\n      } else {\n        const freq = this.frequentEmojis\n        if (freq.length) {\n          addSection(this.labels.frequentlyUsed || 'Frequently Used', freq)\n        }\n\n        const byGroup = this.emojiByGroup\n        for (const group of this.groups) {\n          const emojis = byGroup[group.name]\n          if (emojis) {\n            addSection(group.label, emojis)\n          }\n        }\n      }\n\n      this.virtualRows = rows\n      this.totalHeight = y\n    },\n\n    onScroll () {\n      this.renderVisible()\n    },\n\n    renderVisible () {\n      const viewport = this.$refs.viewport\n      const content = this.$refs.scrollContent\n      if (!viewport || !content) return\n\n      const rows = this.virtualRows\n\n      content.style.height = this.totalHeight + 'px'\n\n      if (!rows.length) {\n        content.innerHTML = ''\n        return\n      }\n\n      const scrollTop = viewport.scrollTop\n      const rangeStart = scrollTop - BUFFER_PX\n      const rangeEnd = scrollTop + this.viewportHeight + BUFFER_PX\n\n      let first = this.findFirstRow(rangeStart)\n      let last = this.findLastRow(rangeEnd)\n\n      if (first === this.renderedRange.start && last === this.renderedRange.end) {\n        return\n      }\n      this.renderedRange = { start: first, end: last }\n\n      const parts = []\n      for (let i = first; i <= last; i++) {\n        const row = rows[i]\n        if (row.type === 'label') {\n          parts.push(`<div class=\"c-emoji-picker-section-label\" style=\"position:absolute;top:${row.y}px;left:0;right:0;\">${this.esc(row.text)}</div>`)\n        } else if (row.type === 'emojis') {\n          parts.push(`<div class=\"c-emoji-picker-vrow\" style=\"position:absolute;top:${row.y}px;left:0;right:0;height:${ITEM_SIZE}px;\">`)\n          for (const e of row.items) {\n            parts.push(`<span class=\"epi\" data-emoji=\"${e.name}\" title=\":${e.name}:\">${e.emoji}</span>`)\n          }\n          parts.push('</div>')\n        } else if (row.type === 'empty') {\n          parts.push(`<div class=\"c-emoji-picker-empty\" style=\"position:absolute;top:${row.y}px;left:0;right:0;\">${this.esc(this.labels.noResults || 'No emojis found')}</div>`)\n        }\n      }\n\n      content.innerHTML = parts.join('')\n    },\n\n    findFirstRow (y) {\n      const rows = this.virtualRows\n      let lo = 0\n      let hi = rows.length - 1\n      while (lo < hi) {\n        const mid = (lo + hi) >> 1\n        if (rows[mid].y + rows[mid].height <= y) {\n          lo = mid + 1\n        } else {\n          hi = mid\n        }\n      }\n      return lo\n    },\n\n    findLastRow (y) {\n      const rows = this.virtualRows\n      let lo = 0\n      let hi = rows.length - 1\n      while (lo < hi) {\n        const mid = (lo + hi + 1) >> 1\n        if (rows[mid].y >= y) {\n          hi = mid - 1\n        } else {\n          lo = mid\n        }\n      }\n      return Math.min(lo, rows.length - 1)\n    },\n\n    onQuickReactionClick (emoji) {\n      this.saveFrequentlyUsed(emoji.name)\n      this.$emit('select', emoji)\n    },\n\n    esc (str) {\n      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;')\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.c-emoji-picker-search-wrap {\n  position: relative;\n  padding: 0.4rem 0.5rem;\n}\n\n.c-emoji-picker-search-input {\n  width: 100%;\n  padding: 0.3rem 0.5rem 0.3rem 1.75rem;\n  border: 1px solid var(--extra-light, #ddd);\n  border-radius: 0.35rem;\n  font-size: 0.8rem;\n  outline: none;\n  background: var(--white, #fff);\n  color: var(--dark, #333);\n\n  &:focus {\n    border-color: var(--primary, #4080ff);\n    box-shadow: 0 0 0 2px rgba(64, 128, 255, 0.15);\n  }\n\n  &::placeholder {\n    color: var(--secondary, #999);\n  }\n}\n\n.c-emoji-picker-search-icon {\n  position: absolute;\n  left: 1rem;\n  top: 50%;\n  transform: translateY(-50%);\n  width: 0.8rem;\n  height: 0.8rem;\n  color: var(--secondary, #999);\n  pointer-events: none;\n}\n\n.c-emoji-picker-viewport {\n  overflow-y: auto;\n  position: relative;\n  padding: 0 0.4rem;\n}\n\n.c-emoji-picker-scroll-content {\n  position: relative;\n  width: 100%;\n}\n\n.c-emoji-picker-section-label {\n  font-size: 0.7rem;\n  font-weight: 700;\n  color: var(--secondary, #888);\n  text-transform: uppercase;\n  letter-spacing: 0.03em;\n  padding: 0.3rem 0.15rem 0.15rem;\n  background: var(--white, #fff);\n  line-height: 1;\n  height: 26px;\n  display: flex;\n  align-items: center;\n}\n\n.c-emoji-picker-vrow {\n  display: flex;\n}\n\n.epi {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 30px;\n  height: 30px;\n  padding: 0;\n  margin: 0;\n  border-radius: 0.25rem;\n  cursor: pointer;\n  font-size: 1.15rem;\n  line-height: 1;\n\n  &:hover {\n    background-color: var(--light, #f0f0f0);\n    transform: scale(1.15);\n  }\n\n  &:active {\n    transform: scale(0.95);\n  }\n}\n\n.c-emoji-picker-empty {\n  text-align: center;\n  color: var(--secondary, #999);\n  padding: 1.5rem 0;\n  font-size: 0.8rem;\n}\n\n.c-emoji-picker-quick {\n  border-top: 1px solid var(--extra-light, #e0e0e0);\n  padding: 0.25rem 0.4rem 0.3rem;\n}\n\n.c-emoji-picker-quick-label {\n  font-size: 0.65rem;\n  font-weight: 700;\n  color: var(--secondary, #888);\n  text-transform: uppercase;\n  letter-spacing: 0.03em;\n  padding: 0.1rem 0.15rem;\n}\n\n.c-emoji-picker-quick-row {\n  display: flex;\n}\n</style>\n",".c-emoji-picker-search-wrap {\n  position: relative;\n  padding: 0.4rem 0.5rem;\n}\n\n.c-emoji-picker-search-input {\n  width: 100%;\n  padding: 0.3rem 0.5rem 0.3rem 1.75rem;\n  border: 1px solid var(--extra-light, #ddd);\n  border-radius: 0.35rem;\n  font-size: 0.8rem;\n  outline: none;\n  background: var(--white, #fff);\n  color: var(--dark, #333);\n}\n.c-emoji-picker-search-input:focus {\n  border-color: var(--primary, #4080ff);\n  box-shadow: 0 0 0 2px rgba(64, 128, 255, 0.15);\n}\n.c-emoji-picker-search-input::placeholder {\n  color: var(--secondary, #999);\n}\n\n.c-emoji-picker-search-icon {\n  position: absolute;\n  left: 1rem;\n  top: 50%;\n  transform: translateY(-50%);\n  width: 0.8rem;\n  height: 0.8rem;\n  color: var(--secondary, #999);\n  pointer-events: none;\n}\n\n.c-emoji-picker-viewport {\n  overflow-y: auto;\n  position: relative;\n  padding: 0 0.4rem;\n}\n\n.c-emoji-picker-scroll-content {\n  position: relative;\n  width: 100%;\n}\n\n.c-emoji-picker-section-label {\n  font-size: 0.7rem;\n  font-weight: 700;\n  color: var(--secondary, #888);\n  text-transform: uppercase;\n  letter-spacing: 0.03em;\n  padding: 0.3rem 0.15rem 0.15rem;\n  background: var(--white, #fff);\n  line-height: 1;\n  height: 26px;\n  display: flex;\n  align-items: center;\n}\n\n.c-emoji-picker-vrow {\n  display: flex;\n}\n\n.epi {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 30px;\n  height: 30px;\n  padding: 0;\n  margin: 0;\n  border-radius: 0.25rem;\n  cursor: pointer;\n  font-size: 1.15rem;\n  line-height: 1;\n}\n.epi:hover {\n  background-color: var(--light, #f0f0f0);\n  transform: scale(1.15);\n}\n.epi:active {\n  transform: scale(0.95);\n}\n\n.c-emoji-picker-empty {\n  text-align: center;\n  color: var(--secondary, #999);\n  padding: 1.5rem 0;\n  font-size: 0.8rem;\n}\n\n.c-emoji-picker-quick {\n  border-top: 1px solid var(--extra-light, #e0e0e0);\n  padding: 0.25rem 0.4rem 0.3rem;\n}\n\n.c-emoji-picker-quick-label {\n  font-size: 0.65rem;\n  font-weight: 700;\n  color: var(--secondary, #888);\n  text-transform: uppercase;\n  letter-spacing: 0.03em;\n  padding: 0.1rem 0.15rem;\n}\n\n.c-emoji-picker-quick-row {\n  display: flex;\n}\n\n/*# sourceMappingURL=CEmojiPicker.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -10298,13 +11801,59 @@ var script$1a = {
 const __vue_script__$1a = script$1a;
 
 /* template */
-var __vue_render__$17 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('span',[_c('b-button',{staticClass:"text-dark font-weight-bold text-decoration-none",attrs:{"id":_vm.popoverId,"variant":"link"}},[_c('font-awesome-icon',{attrs:{"icon":['far', 'face-smile']}})],1),_vm._v(" "),_c('b-popover',{attrs:{"target":_vm.popoverId,"triggers":"click blur","placement":"bottom","container":"body","custom-class":"emoji-picker-popover border-light"},on:{"shown":_vm.onShown}},[_c('c-emoji-picker',{ref:"picker",attrs:{"emojis":_vm.allEmojis,"labels":_vm.labels.emojiPicker || {},"show-quick-reactions":false},on:{"select":_vm.onSelect}})],1)],1)};
+var __vue_render__$17 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "span",
+    [
+      _c(
+        "b-button",
+        {
+          staticClass: "text-dark font-weight-bold text-decoration-none",
+          attrs: { id: _vm.popoverId, variant: "link" },
+        },
+        [_c("font-awesome-icon", { attrs: { icon: ["far", "face-smile"] } })],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-popover",
+        {
+          attrs: {
+            target: _vm.popoverId,
+            triggers: "click blur",
+            placement: "bottom",
+            container: "body",
+            "custom-class": "emoji-picker-popover border-light",
+          },
+          on: { shown: _vm.onShown },
+        },
+        [
+          _c("c-emoji-picker", {
+            ref: "picker",
+            attrs: {
+              emojis: _vm.allEmojis,
+              labels: _vm.labels.emojiPicker || {},
+              "show-quick-reactions": false,
+            },
+            on: { select: _vm.onSelect },
+          }),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$17 = [];
+__vue_render__$17._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1b = function (inject) {
     if (!inject) return
-    inject("data-v-782fc970_0", { source: ".emoji-picker-popover{background:var(--white,#fff);max-width:300px}.emoji-picker-popover .popover-body{padding:0}.emoji-picker-popover .arrow::after{border-bottom-color:var(--white,#fff)}", map: undefined, media: undefined });
+    inject("data-v-708da01e_0", { source: ".emoji-picker-popover {\n  background: var(--white, #fff);\n  max-width: 300px;\n}\n.emoji-picker-popover .popover-body {\n  padding: 0;\n}\n.emoji-picker-popover .arrow::after {\n  border-bottom-color: var(--white, #fff);\n}\n\n/*# sourceMappingURL=Emoji.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CRichTextInput/RToolbar/TMark/Emoji.vue","Emoji.vue"],"names":[],"mappings":"AA8FA;EACA,8BAAA;EACA,gBAAA;AC7FA;AD+FA;EACA,UAAA;AC7FA;ADgGA;EACA,uCAAA;AC9FA;;AAEA,oCAAoC","file":"Emoji.vue","sourcesContent":["<template>\n  <span>\n    <b-button\n      :id=\"popoverId\"\n      variant=\"link\"\n      class=\"text-dark font-weight-bold text-decoration-none\"\n    >\n      <font-awesome-icon :icon=\"['far', 'face-smile']\" />\n    </b-button>\n\n    <b-popover\n      :target=\"popoverId\"\n      triggers=\"click blur\"\n      placement=\"bottom\"\n      container=\"body\"\n      custom-class=\"emoji-picker-popover border-light\"\n      @shown=\"onShown\"\n    >\n      <c-emoji-picker\n        ref=\"picker\"\n        :emojis=\"allEmojis\"\n        :labels=\"labels.emojiPicker || {}\"\n        :show-quick-reactions=\"false\"\n        @select=\"onSelect\"\n      />\n    </b-popover>\n  </span>\n</template>\n\n<script>\n// Use ~corteza-vue/ alias to avoid circular self-reference to dist\nimport CEmojiPicker from '~corteza-vue/components/CEmojiPicker.vue'\n\nlet popoverCounter = 0\n\nexport default {\n  name: 'TMarkEmoji',\n\n  components: {\n    CEmojiPicker,\n  },\n\n  props: {\n    editor: {\n      type: Object,\n      required: true,\n    },\n\n    format: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n  },\n\n  data () {\n    return {\n      popoverId: `emoji-picker-${++popoverCounter}`,\n    }\n  },\n\n  computed: {\n    allEmojis () {\n      return this.editor.storage?.emoji?.emojis || []\n    },\n  },\n\n  methods: {\n    onShown () {\n      this.$nextTick(() => {\n        if (this.$refs.picker) {\n          this.$refs.picker.reset()\n        }\n      })\n    },\n\n    onSelect (emoji) {\n      if (emoji && emoji.name) {\n        this.editor.chain().focus().insertContent({\n          type: 'emoji',\n          attrs: { name: emoji.name },\n        }).run()\n      }\n      this.$root.$emit('bv::hide::popover', this.popoverId)\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.emoji-picker-popover {\n  background: var(--white, #fff);\n  max-width: 300px;\n\n  .popover-body {\n    padding: 0;\n  }\n\n  .arrow::after {\n    border-bottom-color: var(--white, #fff);\n  }\n}\n</style>\n",".emoji-picker-popover {\n  background: var(--white, #fff);\n  max-width: 300px;\n}\n.emoji-picker-popover .popover-body {\n  padding: 0;\n}\n.emoji-picker-popover .arrow::after {\n  border-bottom-color: var(--white, #fff);\n}\n\n/*# sourceMappingURL=Emoji.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -10362,8 +11911,39 @@ var script$19 = {
 const __vue_script__$19 = script$19;
 
 /* template */
-var __vue_render__$16 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-button',{staticClass:"text-dark font-weight-bold text-decoration-none",attrs:{"variant":"link"},on:{"click":function($event){return _vm.onClick(_vm.format.type, _vm.format.attrs)}}},[_c('span',{class:_vm.activeClasses(_vm.format.attrs)},[(_vm.format.icon)?_c('font-awesome-icon',{attrs:{"icon":_vm.format.icon}}):_c('span',[_vm._v("\n      "+_vm._s(_vm.format.label)+"\n    ")])],1)])};
+var __vue_render__$16 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-button",
+    {
+      staticClass: "text-dark font-weight-bold text-decoration-none",
+      attrs: { variant: "link" },
+      on: {
+        click: function ($event) {
+          return _vm.onClick(_vm.format.type, _vm.format.attrs)
+        },
+      },
+    },
+    [
+      _c(
+        "span",
+        { class: _vm.activeClasses(_vm.format.attrs) },
+        [
+          _vm.format.icon
+            ? _c("font-awesome-icon", { attrs: { icon: _vm.format.icon } })
+            : _c("span", [
+                _vm._v("\n      " + _vm._s(_vm.format.label) + "\n    "),
+              ]),
+        ],
+        1
+      ),
+    ]
+  )
+};
 var __vue_staticRenderFns__$16 = [];
+__vue_render__$16._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1a = undefined;
@@ -10507,8 +12087,138 @@ var script$18 = {
 const __vue_script__$18 = script$18;
 
 /* template */
-var __vue_render__$15 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"id":"link-popover-container"}},[_c('b-button',{staticClass:"text-dark font-weight-bold text-decoration-none",attrs:{"id":"link-popover","variant":"link"},on:{"click":_vm.showPopover}},[_c('span',{class:_vm.activeClasses(_vm.format.attrs)},[_c('font-awesome-icon',{attrs:{"icon":"link"}})],1)]),_vm._v(" "),(_vm.currentValue)?_c('b-popover',{ref:"popover",attrs:{"show":_vm.visible,"triggers":"focus","target":"link-popover","placement":"auto","container":"link-popover-container","custom-class":"bg-white"},on:{"update:show":function($event){_vm.visible=$event;}}},[_c('b-input-group',{staticStyle:{"min-width":"250px"}},[_c('b-form-input',{attrs:{"type":"url","autofocus":"","placeholder":_vm.labels.urlPlaceholder},on:{"keydown":[function($event){if(!$event.type.indexOf('key')&&_vm._k($event.keyCode,"enter",13,$event.key,"Enter")){ return null; }$event.preventDefault();$event.stopPropagation();return _vm.link.apply(null, arguments)},function($event){if(!$event.type.indexOf('key')&&_vm._k($event.keyCode,"esc",27,$event.key,["Esc","Escape"])){ return null; }$event.preventDefault();$event.stopPropagation();return _vm.close.apply(null, arguments)}]},model:{value:(_vm.attrs.href),callback:function ($$v) {_vm.$set(_vm.attrs, "href", $$v);},expression:"attrs.href"}}),_vm._v(" "),_c('b-input-group-append',[_c('b-button',{attrs:{"variant":"outline-success"},on:{"click":_vm.link}},[_vm._v("\n          "+_vm._s(_vm.labels.ok)+"\n        ")])],1)],1)],1):_vm._e()],1)};
+var __vue_render__$15 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { attrs: { id: "link-popover-container" } },
+    [
+      _c(
+        "b-button",
+        {
+          staticClass: "text-dark font-weight-bold text-decoration-none",
+          attrs: { id: "link-popover", variant: "link" },
+          on: { click: _vm.showPopover },
+        },
+        [
+          _c(
+            "span",
+            { class: _vm.activeClasses(_vm.format.attrs) },
+            [_c("font-awesome-icon", { attrs: { icon: "link" } })],
+            1
+          ),
+        ]
+      ),
+      _vm._v(" "),
+      _vm.currentValue
+        ? _c(
+            "b-popover",
+            {
+              ref: "popover",
+              attrs: {
+                show: _vm.visible,
+                triggers: "focus",
+                target: "link-popover",
+                placement: "auto",
+                container: "link-popover-container",
+                "custom-class": "bg-white",
+              },
+              on: {
+                "update:show": function ($event) {
+                  _vm.visible = $event;
+                },
+              },
+            },
+            [
+              _c(
+                "b-input-group",
+                { staticStyle: { "min-width": "250px" } },
+                [
+                  _c("b-form-input", {
+                    attrs: {
+                      type: "url",
+                      autofocus: "",
+                      placeholder: _vm.labels.urlPlaceholder,
+                    },
+                    on: {
+                      keydown: [
+                        function ($event) {
+                          if (
+                            !$event.type.indexOf("key") &&
+                            _vm._k(
+                              $event.keyCode,
+                              "enter",
+                              13,
+                              $event.key,
+                              "Enter"
+                            )
+                          ) {
+                            return null
+                          }
+                          $event.preventDefault();
+                          $event.stopPropagation();
+                          return _vm.link.apply(null, arguments)
+                        },
+                        function ($event) {
+                          if (
+                            !$event.type.indexOf("key") &&
+                            _vm._k($event.keyCode, "esc", 27, $event.key, [
+                              "Esc",
+                              "Escape",
+                            ])
+                          ) {
+                            return null
+                          }
+                          $event.preventDefault();
+                          $event.stopPropagation();
+                          return _vm.close.apply(null, arguments)
+                        },
+                      ],
+                    },
+                    model: {
+                      value: _vm.attrs.href,
+                      callback: function ($$v) {
+                        _vm.$set(_vm.attrs, "href", $$v);
+                      },
+                      expression: "attrs.href",
+                    },
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "b-input-group-append",
+                    [
+                      _c(
+                        "b-button",
+                        {
+                          attrs: { variant: "outline-success" },
+                          on: { click: _vm.link },
+                        },
+                        [
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(_vm.labels.ok) +
+                              "\n        "
+                          ),
+                        ]
+                      ),
+                    ],
+                    1
+                  ),
+                ],
+                1
+              ),
+            ],
+            1
+          )
+        : _vm._e(),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$15 = [];
+__vue_render__$15._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$19 = undefined;
@@ -21373,20 +23083,51 @@ var script$17 = {
 const __vue_script__$17 = script$17;
 
 /* template */
-var __vue_render__$14 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.items.length)?_c('div',{staticClass:"mention-dropdown"},_vm._l((_vm.items),function(item,index){return _c('button',{key:index,class:[
-      'mention-option',
-      { 'mention-option--highlighted': index === _vm.selectedIndex }
-    ],attrs:{"type":"button"},on:{"click":function($event){return _vm.handleClick(index, $event)},"mouseenter":function($event){_vm.selectedIndex = index;}}},[_vm._v("\n    "+_vm._s(_vm.getDisplayName(item))+"\n  ")])}),0):_vm._e()};
+var __vue_render__$14 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _vm.items.length
+    ? _c(
+        "div",
+        { staticClass: "mention-dropdown" },
+        _vm._l(_vm.items, function (item, index) {
+          return _c(
+            "button",
+            {
+              key: index,
+              class: [
+                "mention-option",
+                { "mention-option--highlighted": index === _vm.selectedIndex },
+              ],
+              attrs: { type: "button" },
+              on: {
+                click: function ($event) {
+                  return _vm.handleClick(index, $event)
+                },
+                mouseenter: function ($event) {
+                  _vm.selectedIndex = index;
+                },
+              },
+            },
+            [_vm._v("\n    " + _vm._s(_vm.getDisplayName(item)) + "\n  ")]
+          )
+        }),
+        0
+      )
+    : _vm._e()
+};
 var __vue_staticRenderFns__$14 = [];
+__vue_render__$14._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$18 = function (inject) {
     if (!inject) return
-    inject("data-v-d2ebe8ce_0", { source: ".mention-dropdown[data-v-d2ebe8ce]{background:var(--white);border:1px solid var(--extra-light);border-radius:.25rem;box-shadow:0 .125rem .25rem rgba(0,0,0,.075);max-height:200px;overflow-y:auto;font-size:.9rem;font-family:var(--font-regular)}.mention-option[data-v-d2ebe8ce]{display:block;width:100%;background:var(--white);color:var(--black);padding:.5rem .75rem;border:none;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mention-option.mention-option--highlighted[data-v-d2ebe8ce],.mention-option[data-v-d2ebe8ce]:hover{background:var(--light);color:var(--black)}.mention-option[data-v-d2ebe8ce]:active,.mention-option[data-v-d2ebe8ce]:focus{color:var(--white);background-color:var(--primary);outline:0}", map: undefined, media: undefined });
+    inject("data-v-6936ae10_0", { source: ".mention-dropdown[data-v-6936ae10] {\n  background: var(--white);\n  border: 1px solid var(--extra-light);\n  border-radius: 0.25rem;\n  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);\n  max-height: 200px;\n  overflow-y: auto;\n  font-size: 0.9rem;\n  font-family: var(--font-regular);\n}\n.mention-option[data-v-6936ae10] {\n  display: block;\n  width: 100%;\n  background: var(--white);\n  color: var(--black);\n  padding: 0.5rem 0.75rem;\n  border: none;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.mention-option[data-v-6936ae10]:hover, .mention-option.mention-option--highlighted[data-v-6936ae10] {\n  background: var(--light);\n  color: var(--black);\n}\n.mention-option[data-v-6936ae10]:active, .mention-option[data-v-6936ae10]:focus {\n  color: var(--white);\n  background-color: var(--primary);\n  outline: none;\n}\n\n/*# sourceMappingURL=MentionList.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CRichTextInput/mentions/MentionList.vue","MentionList.vue"],"names":[],"mappings":"AAyGA;EACA,wBAAA;EACA,oCAAA;EACA,sBAAA;EACA,mDAAA;EACA,iBAAA;EACA,gBAAA;EACA,iBAAA;EACA,gCAAA;ACxGA;AD2GA;EACA,cAAA;EACA,WAAA;EACA,wBAAA;EACA,mBAAA;EACA,uBAAA;EACA,YAAA;EACA,gBAAA;EACA,eAAA;EACA,mBAAA;EACA,gBAAA;EACA,uBAAA;ACxGA;AD0GA;EAEA,wBAAA;EACA,mBAAA;ACzGA;AD4GA;EAEA,mBAAA;EACA,gCAAA;EACA,aAAA;AC3GA;;AAEA,0CAA0C","file":"MentionList.vue","sourcesContent":["<template>\n  <div\n    v-if=\"items.length\"\n    class=\"mention-dropdown\"\n  >\n    <button\n      v-for=\"(item, index) in items\"\n      :key=\"index\"\n      type=\"button\"\n      :class=\"[\n        'mention-option',\n        { 'mention-option--highlighted': index === selectedIndex }\n      ]\"\n      @click=\"handleClick(index, $event)\"\n      @mouseenter=\"selectedIndex = index\"\n    >\n      {{ getDisplayName(item) }}\n    </button>\n  </div>\n</template>\n\n<script>\nexport default {\n  name: 'MentionList',\n\n  props: {\n    items: {\n      type: Array,\n      required: true,\n    },\n\n    command: {\n      type: Function,\n      required: true,\n    },\n  },\n\n  data() {\n    return {\n      selectedIndex: 0,\n    }\n  },\n\n  watch: {\n    items() {\n      this.selectedIndex = 0\n    },\n  },\n\n  methods: {\n    onKeyDown({ event }) {\n      if (event.key === 'ArrowUp') {\n        this.upHandler()\n        return true\n      }\n\n      if (event.key === 'ArrowDown') {\n        this.downHandler()\n        return true\n      }\n\n      if (event.key === 'Enter') {\n        this.enterHandler()\n        return true\n      }\n\n      return false\n    },\n\n    upHandler() {\n      this.selectedIndex = ((this.selectedIndex + this.items.length) - 1) % this.items.length\n    },\n\n    downHandler() {\n      this.selectedIndex = (this.selectedIndex + 1) % this.items.length\n    },\n\n    enterHandler() {\n      this.selectItem(this.selectedIndex)\n    },\n\n    handleClick(index, event) {\n      this.selectItem(index)\n    },\n\n    selectItem(index) {\n      const item = this.items[index]\n\n      if (item) {\n        this.command({\n          id: item.userID,\n          label: this.getDisplayName(item),\n        })\n      }\n    },\n\n    getDisplayName(user) {\n      const { name, username, email, userID } = user\n      return name || username || email || userID\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.mention-dropdown {\n  background: var(--white);\n  border: 1px solid var(--extra-light);\n  border-radius: 0.25rem;\n  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);\n  max-height: 200px;\n  overflow-y: auto;\n  font-size: 0.9rem;\n  font-family: var(--font-regular);\n}\n\n.mention-option {\n  display: block;\n  width: 100%;\n  background: var(--white);\n  color: var(--black);\n  padding: 0.5rem 0.75rem;\n  border: none;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n\n  &:hover,\n  &.mention-option--highlighted {\n    background: var(--light);\n    color: var(--black);\n  }\n\n  &:active,\n  &:focus {\n    color: var(--white);\n    background-color: var(--primary);\n    outline: none;\n  }\n}\n</style>\n",".mention-dropdown {\n  background: var(--white);\n  border: 1px solid var(--extra-light);\n  border-radius: 0.25rem;\n  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);\n  max-height: 200px;\n  overflow-y: auto;\n  font-size: 0.9rem;\n  font-family: var(--font-regular);\n}\n\n.mention-option {\n  display: block;\n  width: 100%;\n  background: var(--white);\n  color: var(--black);\n  padding: 0.5rem 0.75rem;\n  border: none;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.mention-option:hover, .mention-option.mention-option--highlighted {\n  background: var(--light);\n  color: var(--black);\n}\n.mention-option:active, .mention-option:focus {\n  color: var(--white);\n  background-color: var(--primary);\n  outline: none;\n}\n\n/*# sourceMappingURL=MentionList.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$18 = "data-v-d2ebe8ce";
+  const __vue_scope_id__$18 = "data-v-6936ae10";
   /* module identifier */
   const __vue_module_identifier__$18 = undefined;
   /* functional template */
@@ -21626,20 +23367,59 @@ var script$16 = {
 const __vue_script__$16 = script$16;
 
 /* template */
-var __vue_render__$13 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.items.length)?_c('div',{staticClass:"emoji-dropdown"},_vm._l((_vm.items),function(item,index){return _c('button',{key:item.name,class:[
-      'emoji-option',
-      { 'emoji-option--highlighted': index === _vm.selectedIndex }
-    ],attrs:{"type":"button"},on:{"click":function($event){return _vm.handleClick(index)},"mouseenter":function($event){_vm.selectedIndex = index;}}},[_c('span',{staticClass:"emoji-option-emoji"},[_vm._v(_vm._s(item.emoji))]),_vm._v(" "),_c('span',{staticClass:"emoji-option-name"},[_vm._v(":"+_vm._s(item.name)+":")])])}),0):_vm._e()};
+var __vue_render__$13 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _vm.items.length
+    ? _c(
+        "div",
+        { staticClass: "emoji-dropdown" },
+        _vm._l(_vm.items, function (item, index) {
+          return _c(
+            "button",
+            {
+              key: item.name,
+              class: [
+                "emoji-option",
+                { "emoji-option--highlighted": index === _vm.selectedIndex },
+              ],
+              attrs: { type: "button" },
+              on: {
+                click: function ($event) {
+                  return _vm.handleClick(index)
+                },
+                mouseenter: function ($event) {
+                  _vm.selectedIndex = index;
+                },
+              },
+            },
+            [
+              _c("span", { staticClass: "emoji-option-emoji" }, [
+                _vm._v(_vm._s(item.emoji)),
+              ]),
+              _vm._v(" "),
+              _c("span", { staticClass: "emoji-option-name" }, [
+                _vm._v(":" + _vm._s(item.name) + ":"),
+              ]),
+            ]
+          )
+        }),
+        0
+      )
+    : _vm._e()
+};
 var __vue_staticRenderFns__$13 = [];
+__vue_render__$13._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$17 = function (inject) {
     if (!inject) return
-    inject("data-v-a0192fc8_0", { source: ".emoji-dropdown[data-v-a0192fc8]{background:var(--white);border:1px solid var(--extra-light);border-radius:.25rem;box-shadow:0 .125rem .25rem rgba(0,0,0,.075);max-height:200px;overflow-y:auto;font-size:.9rem;font-family:var(--font-regular)}.emoji-option[data-v-a0192fc8]{display:flex;align-items:center;gap:.5rem;width:100%;background:var(--white);color:var(--black);padding:.35rem .75rem;border:none;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.emoji-option.emoji-option--highlighted[data-v-a0192fc8],.emoji-option[data-v-a0192fc8]:hover{background:var(--light);color:var(--black)}.emoji-option[data-v-a0192fc8]:active,.emoji-option[data-v-a0192fc8]:focus{color:var(--white);background-color:var(--primary);outline:0}.emoji-option-emoji[data-v-a0192fc8]{font-size:1.2em;line-height:1}.emoji-option-name[data-v-a0192fc8]{color:var(--secondary);font-size:.85em}", map: undefined, media: undefined });
+    inject("data-v-3c2dcc16_0", { source: ".emoji-dropdown[data-v-3c2dcc16] {\n  background: var(--white);\n  border: 1px solid var(--extra-light);\n  border-radius: 0.25rem;\n  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);\n  max-height: 200px;\n  overflow-y: auto;\n  font-size: 0.9rem;\n  font-family: var(--font-regular);\n}\n.emoji-option[data-v-3c2dcc16] {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  width: 100%;\n  background: var(--white);\n  color: var(--black);\n  padding: 0.35rem 0.75rem;\n  border: none;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.emoji-option[data-v-3c2dcc16]:hover, .emoji-option.emoji-option--highlighted[data-v-3c2dcc16] {\n  background: var(--light);\n  color: var(--black);\n}\n.emoji-option[data-v-3c2dcc16]:active, .emoji-option[data-v-3c2dcc16]:focus {\n  color: var(--white);\n  background-color: var(--primary);\n  outline: none;\n}\n.emoji-option-emoji[data-v-3c2dcc16] {\n  font-size: 1.2em;\n  line-height: 1;\n}\n.emoji-option-name[data-v-3c2dcc16] {\n  color: var(--secondary);\n  font-size: 0.85em;\n}\n\n/*# sourceMappingURL=EmojiList.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CRichTextInput/emoji/EmojiList.vue","EmojiList.vue"],"names":[],"mappings":"AAkGA;EACA,wBAAA;EACA,oCAAA;EACA,sBAAA;EACA,mDAAA;EACA,iBAAA;EACA,gBAAA;EACA,iBAAA;EACA,gCAAA;ACjGA;ADoGA;EACA,aAAA;EACA,mBAAA;EACA,WAAA;EACA,WAAA;EACA,wBAAA;EACA,mBAAA;EACA,wBAAA;EACA,YAAA;EACA,gBAAA;EACA,eAAA;EACA,mBAAA;EACA,gBAAA;EACA,uBAAA;ACjGA;ADmGA;EAEA,wBAAA;EACA,mBAAA;AClGA;ADqGA;EAEA,mBAAA;EACA,gCAAA;EACA,aAAA;ACpGA;ADwGA;EACA,gBAAA;EACA,cAAA;ACrGA;ADwGA;EACA,uBAAA;EACA,iBAAA;ACrGA;;AAEA,wCAAwC","file":"EmojiList.vue","sourcesContent":["<template>\n  <div\n    v-if=\"items.length\"\n    class=\"emoji-dropdown\"\n  >\n    <button\n      v-for=\"(item, index) in items\"\n      :key=\"item.name\"\n      type=\"button\"\n      :class=\"[\n        'emoji-option',\n        { 'emoji-option--highlighted': index === selectedIndex }\n      ]\"\n      @click=\"handleClick(index)\"\n      @mouseenter=\"selectedIndex = index\"\n    >\n      <span class=\"emoji-option-emoji\">{{ item.emoji }}</span>\n      <span class=\"emoji-option-name\">:{{ item.name }}:</span>\n    </button>\n  </div>\n</template>\n\n<script>\nexport default {\n  name: 'EmojiList',\n\n  props: {\n    items: {\n      type: Array,\n      required: true,\n    },\n\n    command: {\n      type: Function,\n      required: true,\n    },\n  },\n\n  data() {\n    return {\n      selectedIndex: 0,\n    }\n  },\n\n  watch: {\n    items() {\n      this.selectedIndex = 0\n    },\n  },\n\n  methods: {\n    onKeyDown({ event }) {\n      if (event.key === 'ArrowUp') {\n        this.upHandler()\n        return true\n      }\n\n      if (event.key === 'ArrowDown') {\n        this.downHandler()\n        return true\n      }\n\n      if (event.key === 'Enter') {\n        this.enterHandler()\n        return true\n      }\n\n      return false\n    },\n\n    upHandler() {\n      this.selectedIndex = ((this.selectedIndex + this.items.length) - 1) % this.items.length\n    },\n\n    downHandler() {\n      this.selectedIndex = (this.selectedIndex + 1) % this.items.length\n    },\n\n    enterHandler() {\n      this.selectItem(this.selectedIndex)\n    },\n\n    handleClick(index) {\n      this.selectItem(index)\n    },\n\n    selectItem(index) {\n      const item = this.items[index]\n\n      if (item) {\n        this.command({ name: item.name })\n      }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.emoji-dropdown {\n  background: var(--white);\n  border: 1px solid var(--extra-light);\n  border-radius: 0.25rem;\n  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);\n  max-height: 200px;\n  overflow-y: auto;\n  font-size: 0.9rem;\n  font-family: var(--font-regular);\n}\n\n.emoji-option {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  width: 100%;\n  background: var(--white);\n  color: var(--black);\n  padding: 0.35rem 0.75rem;\n  border: none;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n\n  &:hover,\n  &.emoji-option--highlighted {\n    background: var(--light);\n    color: var(--black);\n  }\n\n  &:active,\n  &:focus {\n    color: var(--white);\n    background-color: var(--primary);\n    outline: none;\n  }\n}\n\n.emoji-option-emoji {\n  font-size: 1.2em;\n  line-height: 1;\n}\n\n.emoji-option-name {\n  color: var(--secondary);\n  font-size: 0.85em;\n}\n</style>\n",".emoji-dropdown {\n  background: var(--white);\n  border: 1px solid var(--extra-light);\n  border-radius: 0.25rem;\n  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);\n  max-height: 200px;\n  overflow-y: auto;\n  font-size: 0.9rem;\n  font-family: var(--font-regular);\n}\n\n.emoji-option {\n  display: flex;\n  align-items: center;\n  gap: 0.5rem;\n  width: 100%;\n  background: var(--white);\n  color: var(--black);\n  padding: 0.35rem 0.75rem;\n  border: none;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.emoji-option:hover, .emoji-option.emoji-option--highlighted {\n  background: var(--light);\n  color: var(--black);\n}\n.emoji-option:active, .emoji-option:focus {\n  color: var(--white);\n  background-color: var(--primary);\n  outline: none;\n}\n\n.emoji-option-emoji {\n  font-size: 1.2em;\n  line-height: 1;\n}\n\n.emoji-option-name {\n  color: var(--secondary);\n  font-size: 0.85em;\n}\n\n/*# sourceMappingURL=EmojiList.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$17 = "data-v-a0192fc8";
+  const __vue_scope_id__$17 = "data-v-3c2dcc16";
   /* module identifier */
   const __vue_module_identifier__$17 = undefined;
   /* functional template */
@@ -22146,8 +23926,39 @@ var script$14 = {
 const __vue_script__$14 = script$14;
 
 /* template */
-var __vue_render__$12 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-button',{staticClass:"text-dark font-weight-bold text-decoration-none",attrs:{"variant":"link"},on:{"click":function($event){return _vm.onClick(_vm.format.type, _vm.format.attrs)}}},[_c('span',{class:_vm.activeClasses(_vm.format.attrs)},[(_vm.format.icon)?_c('font-awesome-icon',{attrs:{"icon":_vm.format.icon}}):_c('span',[_vm._v("\n      "+_vm._s(_vm.format.label)+"\n    ")])],1)])};
+var __vue_render__$12 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-button",
+    {
+      staticClass: "text-dark font-weight-bold text-decoration-none",
+      attrs: { variant: "link" },
+      on: {
+        click: function ($event) {
+          return _vm.onClick(_vm.format.type, _vm.format.attrs)
+        },
+      },
+    },
+    [
+      _c(
+        "span",
+        { class: _vm.activeClasses(_vm.format.attrs) },
+        [
+          _vm.format.icon
+            ? _c("font-awesome-icon", { attrs: { icon: _vm.format.icon } })
+            : _c("span", [
+                _vm._v("\n      " + _vm._s(_vm.format.label) + "\n    "),
+              ]),
+        ],
+        1
+      ),
+    ]
+  )
+};
 var __vue_staticRenderFns__$12 = [];
+__vue_render__$12._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$15 = undefined;
@@ -22260,19 +24071,95 @@ var script$13 = {
 const __vue_script__$13 = script$13;
 
 /* template */
-var __vue_render__$11 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-dropdown',{attrs:{"menu-class":"text-center bg-white","variant":"link","boundary":"window","no-caret":""},scopedSlots:_vm._u([{key:"button-content",fn:function(){return [_c('span',{staticClass:"text-dark font-weight-bold"},[_c('span',{class:{ 'text-primary': !!_vm.activeType && _vm.activeType !== 'left' }},[(_vm.activeIcon)?_c('font-awesome-icon',{attrs:{"icon":_vm.activeIcon}}):_c('span',[_vm._v("\n          "+_vm._s(_vm.format.label)+"\n        ")])],1)])]},proxy:true}])},[_vm._v(" "),_vm._l((_vm.format.variants),function(v){return _c('b-dropdown-item-button',{key:v.variant,on:{"click":function($event){return _vm.$emit('click', { type: 'alignment', attrs: v.attrs })}}},[(_vm.format.icon)?_c('font-awesome-icon',{attrs:{"icon":v.icon}}):_c('span',[_vm._v("\n      "+_vm._s(v.label)+"\n    ")])],1)})],2)};
+var __vue_render__$11 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-dropdown",
+    {
+      attrs: {
+        "menu-class": "text-center bg-white",
+        variant: "link",
+        boundary: "window",
+        "no-caret": "",
+      },
+      scopedSlots: _vm._u([
+        {
+          key: "button-content",
+          fn: function () {
+            return [
+              _c("span", { staticClass: "text-dark font-weight-bold" }, [
+                _c(
+                  "span",
+                  {
+                    class: {
+                      "text-primary":
+                        !!_vm.activeType && _vm.activeType !== "left",
+                    },
+                  },
+                  [
+                    _vm.activeIcon
+                      ? _c("font-awesome-icon", {
+                          attrs: { icon: _vm.activeIcon },
+                        })
+                      : _c("span", [
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(_vm.format.label) +
+                              "\n        "
+                          ),
+                        ]),
+                  ],
+                  1
+                ),
+              ]),
+            ]
+          },
+          proxy: true,
+        },
+      ]),
+    },
+    [
+      _vm._v(" "),
+      _vm._l(_vm.format.variants, function (v) {
+        return _c(
+          "b-dropdown-item-button",
+          {
+            key: v.variant,
+            on: {
+              click: function ($event) {
+                return _vm.$emit("click", { type: "alignment", attrs: v.attrs })
+              },
+            },
+          },
+          [
+            _vm.format.icon
+              ? _c("font-awesome-icon", { attrs: { icon: v.icon } })
+              : _c("span", [_vm._v("\n      " + _vm._s(v.label) + "\n    ")]),
+          ],
+          1
+        )
+      }),
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$11 = [];
+__vue_render__$11._withStripped = true;
 
   /* style */
-  const __vue_inject_styles__$14 = undefined;
+  const __vue_inject_styles__$14 = function (inject) {
+    if (!inject) return
+    inject("data-v-7e796ea4_0", { source: "\n\n/*# sourceMappingURL=Alignment.vue.map */", map: {"version":3,"sources":["Alignment.vue"],"names":[],"mappings":";;AAEA,wCAAwC","file":"Alignment.vue"}, media: undefined });
+
+  };
   /* scoped */
   const __vue_scope_id__$14 = undefined;
   /* module identifier */
   const __vue_module_identifier__$14 = undefined;
   /* functional template */
   const __vue_is_functional_template__$14 = false;
-  /* style inject */
-  
   /* style inject SSR */
   
   /* style inject shadow dom */
@@ -22287,7 +24174,7 @@ var __vue_staticRenderFns__$11 = [];
     __vue_is_functional_template__$14,
     __vue_module_identifier__$14,
     false,
-    undefined);
+    createInjector);
 
 //
 //
@@ -22386,19 +24273,81 @@ var script$12 = {
 const __vue_script__$12 = script$12;
 
 /* template */
-var __vue_render__$10 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-dropdown',{attrs:{"menu-class":"text-center bg-white","variant":"link","boundary":"window","no-caret":""},scopedSlots:_vm._u([{key:"button-content",fn:function(){return [_c('span',{staticClass:"text-dark font-weight-bold"},[(_vm.format.icon)?_c('font-awesome-icon',{attrs:{"icon":_vm.format.icon}}):_c('span',[_vm._v("\n        "+_vm._s(_vm.format.label)+"\n      ")])],1)]},proxy:true}])},[_vm._v(" "),_vm._l((_vm.format.variants),function(v){return _c('b-dropdown-item-button',{key:v.variant,on:{"click":function($event){return _vm.emitClick(v)}}},[_vm._v("\n    "+_vm._s(v.label)+"\n  ")])})],2)};
+var __vue_render__$10 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-dropdown",
+    {
+      attrs: {
+        "menu-class": "text-center bg-white",
+        variant: "link",
+        boundary: "window",
+        "no-caret": "",
+      },
+      scopedSlots: _vm._u([
+        {
+          key: "button-content",
+          fn: function () {
+            return [
+              _c(
+                "span",
+                { staticClass: "text-dark font-weight-bold" },
+                [
+                  _vm.format.icon
+                    ? _c("font-awesome-icon", {
+                        attrs: { icon: _vm.format.icon },
+                      })
+                    : _c("span", [
+                        _vm._v(
+                          "\n        " + _vm._s(_vm.format.label) + "\n      "
+                        ),
+                      ]),
+                ],
+                1
+              ),
+            ]
+          },
+          proxy: true,
+        },
+      ]),
+    },
+    [
+      _vm._v(" "),
+      _vm._l(_vm.format.variants, function (v) {
+        return _c(
+          "b-dropdown-item-button",
+          {
+            key: v.variant,
+            on: {
+              click: function ($event) {
+                return _vm.emitClick(v)
+              },
+            },
+          },
+          [_vm._v("\n    " + _vm._s(v.label) + "\n  ")]
+        )
+      }),
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$10 = [];
+__vue_render__$10._withStripped = true;
 
   /* style */
-  const __vue_inject_styles__$13 = undefined;
+  const __vue_inject_styles__$13 = function (inject) {
+    if (!inject) return
+    inject("data-v-b474c2ee_0", { source: "\n\n/*# sourceMappingURL=Table.vue.map */", map: {"version":3,"sources":["Table.vue"],"names":[],"mappings":";;AAEA,oCAAoC","file":"Table.vue"}, media: undefined });
+
+  };
   /* scoped */
   const __vue_scope_id__$13 = undefined;
   /* module identifier */
   const __vue_module_identifier__$13 = undefined;
   /* functional template */
   const __vue_is_functional_template__$13 = false;
-  /* style inject */
-  
   /* style inject SSR */
   
   /* style inject shadow dom */
@@ -22413,7 +24362,7 @@ var __vue_staticRenderFns__$10 = [];
     __vue_is_functional_template__$13,
     __vue_module_identifier__$13,
     false,
-    undefined);
+    createInjector);
 
 var nodeAttr = {
   Alignment: __vue_component__$14,
@@ -22582,13 +24531,59 @@ var script$11 = {
 const __vue_script__$11 = script$11;
 
 /* template */
-var __vue_render__$$ = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex flex-wrap"},[_vm._l((_vm.formats),function(f,i){return _c(_vm.getItem(f),_vm._b({key:("" + (f.name) + i),tag:"component",staticClass:"toolbar-item",attrs:{"format":f,"is-active":_vm.isActive(),"get-mark-attrs":_vm.getMarkAttrs,"labels":_vm.labels,"current-value":_vm.currentValue},on:{"click":_vm.triggerCommand}},'component',Object.assign({}, _vm.$props, f.props),false))}),_vm._v(" "),_c('b-button',{staticClass:"toolbar-item text-dark font-weight-bold",attrs:{"variant":"link"},on:{"click":_vm.removeMarks}},[_c('font-awesome-icon',{attrs:{"icon":"remove-format"}})],1)],2)};
+var __vue_render__$$ = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "d-flex flex-wrap" },
+    [
+      _vm._l(_vm.formats, function (f, i) {
+        return _c(
+          _vm.getItem(f),
+          _vm._b(
+            {
+              key: "" + f.name + i,
+              tag: "component",
+              staticClass: "toolbar-item",
+              attrs: {
+                format: f,
+                "is-active": _vm.isActive(),
+                "get-mark-attrs": _vm.getMarkAttrs,
+                labels: _vm.labels,
+                "current-value": _vm.currentValue,
+              },
+              on: { click: _vm.triggerCommand },
+            },
+            "component",
+            Object.assign({}, _vm.$props, f.props),
+            false
+          )
+        )
+      }),
+      _vm._v(" "),
+      _c(
+        "b-button",
+        {
+          staticClass: "toolbar-item text-dark font-weight-bold",
+          attrs: { variant: "link" },
+          on: { click: _vm.removeMarks },
+        },
+        [_c("font-awesome-icon", { attrs: { icon: "remove-format" } })],
+        1
+      ),
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$$ = [];
+__vue_render__$$._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$12 = function (inject) {
     if (!inject) return
-    inject("data-v-7fe4cef0_0", { source: ".toolbar-item{cursor:pointer;display:flex;align-items:center;justify-content:center;padding:.25rem!important;width:2.25rem!important;height:2.25rem!important;border-radius:.25rem!important}.toolbar-item:hover{background-color:var(--light)!important}", map: undefined, media: undefined });
+    inject("data-v-5a1c8a71_0", { source: ".toolbar-item {\n  cursor: pointer;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0.25rem !important;\n  width: 2.25rem !important;\n  height: 2.25rem !important;\n  border-radius: 0.25rem !important;\n}\n.toolbar-item:hover {\n  background-color: var(--light) !important;\n}\n\n/*# sourceMappingURL=index.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CRichTextInput/RToolbar/index.vue","index.vue"],"names":[],"mappings":"AA6JA;EACA,eAAA;EACA,aAAA;EACA,mBAAA;EACA,uBAAA;EACA,2BAAA;EACA,yBAAA;EACA,0BAAA;EACA,iCAAA;AC5JA;AD8JA;EACA,yCAAA;AC5JA;;AAEA,oCAAoC","file":"index.vue","sourcesContent":["<template>\n  <div class=\"d-flex flex-wrap\">\n    <component\n      :is=\"getItem(f)\"\n      v-for=\"(f, i) of formats\"\n      :key=\"`${f.name}${i}`\"\n      :format=\"f\"\n      v-bind=\"{ ...$props, ...f.props }\"\n      :is-active=\"isActive()\"\n      :get-mark-attrs=\"getMarkAttrs\"\n      :labels=\"labels\"\n      :current-value=\"currentValue\"\n      class=\"toolbar-item\"\n      @click=\"triggerCommand\"\n    />\n\n    <!-- Extra button to remove formatting -->\n    <b-button\n      variant=\"link\"\n      class=\"toolbar-item text-dark font-weight-bold\"\n      @click=\"removeMarks\"\n    >\n      <font-awesome-icon icon=\"remove-format\" />\n    </b-button>\n  </div>\n</template>\n\n<script>\nimport cc from './loader'\n\nexport default {\n  inheritAttrs: true,\n\n  props: {\n    editor: {\n      type: Object,\n      required: true,\n    },\n    formats: {\n      type: Array,\n      required: true,\n      default: () => [],\n    },\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n    currentValue: {\n      type: String,\n      default: '',\n    },\n  },\n\n  methods: {\n    isActive () {\n      return new Proxy({}, {\n        get: (_, prop) => (attrs) => this.editor.isActive(prop, attrs),\n      })\n    },\n\n    /**\n     * Helper method to determine what item type we should display.\n     * It can be a simple button (bold, italic, ...) or a dropdown (alignment)\n     * @param {Object} f Format in question\n     * @returns {Component}\n     */\n    getItem (f) {\n      let b\n      if (f.mark) {\n        b = cc.mark\n      } else if (f.node) {\n        b = cc.node\n      } else if (f.nodeAttr) {\n        b = cc.nodeAttr\n      }\n\n      if (!b) {\n        throw new Error('invalid node type')\n      }\n\n      let comp\n      if (f.component) {\n        comp = b[f.component]\n      } else {\n        comp = b.Item\n      }\n\n      if (!comp) {\n        throw new Error('invalid component type')\n      }\n\n      return comp\n    },\n\n    /**\n     * Helper method for removing marks.\n     * It will remove all marks from the current state's range.\n     * @returns {Range}\n     */\n    removeMarks () {\n      this.editor.chain().focus().unsetAllMarks().run()\n    },\n\n    triggerCommand (v) {\n      const e = this.editor.chain().focus()\n      const t = v.type\n      const a = v.attrs || {}\n\n      switch (t) {\n        case 'bold': e.toggleBold().run(); break\n        case 'italic': e.toggleItalic().run(); break\n        case 'underline': e.toggleUnderline().run(); break\n        case 'strike': e.toggleStrike().run(); break\n        case 'color': e.setColor(a.color).run(); break\n        case 'background': e.setBackgroundColor(a.color).run(); break\n        case 'blockquote': e.toggleBlockquote().run(); break\n        case 'codeBlock': e.toggleCodeBlock().run(); break\n        case 'heading': e.setHeading(a).run(); break\n        case 'paragraph': e.setParagraph().run(); break\n        case 'orderedList': e.toggleOrderedList().run(); break\n        case 'bulletList': e.toggleBulletList().run(); break\n        case 'taskList': e.toggleTaskList().run(); break\n        case 'horizontalRule': e.setHorizontalRule().run(); break\n        case 'alignment': e.setTextAlign(a).run(); break\n        case 'link': {\n          if (!a.href) {\n            e.unsetLink().run()\n          } else {\n            e.setLink(a).run()\n          }\n          break\n        }\n\n        // table actions\n        case 'insertTable': e.insertTable(a).run(); break\n        case 'addColumnBefore': e.addColumnBefore().run(); break\n        case 'addColumnAfter': e.addColumnAfter().run(); break\n        case 'deleteColumn': e.deleteColumn().run(); break\n        case 'addRowBefore': e.addRowBefore().run(); break\n        case 'addRowAfter': e.addRowAfter().run(); break\n        case 'deleteRow': e.deleteRow().run(); break\n        case 'mergeCells': e.mergeCells().run(); break\n        case 'splitCell': e.splitCell().run(); break\n        case 'toggleHeaderRow': e.toggleHeaderRow().run(); break\n        case 'toggleHeaderCell': e.toggleHeaderCell().run(); break\n        case 'toggleHeaderColumn': e.toggleHeaderColumn().run(); break\n        case 'deleteTable': e.deleteTable().run(); break\n        case 'emoji': e.setEmoji({ name: a.name }).run(); break\n        default:\n          break\n      }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.toolbar-item {\n  cursor: pointer;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0.25rem !important;\n  width: 2.25rem !important;\n  height: 2.25rem !important;\n  border-radius: 0.25rem !important;\n\n  &:hover {\n    background-color: var(--light) !important;\n  }\n}\n</style>",".toolbar-item {\n  cursor: pointer;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0.25rem !important;\n  width: 2.25rem !important;\n  height: 2.25rem !important;\n  border-radius: 0.25rem !important;\n}\n.toolbar-item:hover {\n  background-color: var(--light) !important;\n}\n\n/*# sourceMappingURL=index.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -22783,13 +24778,73 @@ var script$10 = {
 const __vue_script__$10 = script$10;
 
 /* template */
-var __vue_render__$_ = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-card',{staticClass:"border border-light rounded",attrs:{"header-class":!_vm.hideToolbar ? 'p-0 border-bottom' : 'd-none',"body-class":"p-0"},scopedSlots:_vm._u([(_vm.editor && !_vm.hideToolbar)?{key:"header",fn:function(){return [_c('r-toolbar',{attrs:{"editor":_vm.editor,"formats":_vm.toolbar,"labels":_vm.labels,"current-value":_vm.currentValue}})]},proxy:true}:null],null,true)},[_vm._v(" "),_c('editor-content',{staticClass:"rt-editor-content rt-content p-2",class:_vm.bodyClass,style:({ minHeight: _vm.minBodyHeight, maxHeight: _vm.maxBodyHeight }),attrs:{"editor":_vm.editor},nativeOn:{"drop":function($event){return _vm.onDrop.apply(null, arguments)},"paste":function($event){return _vm.onPaste.apply(null, arguments)},"dragover":function($event){$event.preventDefault();}}})],1)};
+var __vue_render__$_ = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-card",
+    {
+      staticClass: "border border-light rounded",
+      attrs: {
+        "header-class": !_vm.hideToolbar ? "p-0 border-bottom" : "d-none",
+        "body-class": "p-0",
+      },
+      scopedSlots: _vm._u(
+        [
+          _vm.editor && !_vm.hideToolbar
+            ? {
+                key: "header",
+                fn: function () {
+                  return [
+                    _c("r-toolbar", {
+                      attrs: {
+                        editor: _vm.editor,
+                        formats: _vm.toolbar,
+                        labels: _vm.labels,
+                        "current-value": _vm.currentValue,
+                      },
+                    }),
+                  ]
+                },
+                proxy: true,
+              }
+            : null,
+        ],
+        null,
+        true
+      ),
+    },
+    [
+      _vm._v(" "),
+      _c("editor-content", {
+        staticClass: "rt-editor-content rt-content p-2",
+        class: _vm.bodyClass,
+        style: { minHeight: _vm.minBodyHeight, maxHeight: _vm.maxBodyHeight },
+        attrs: { editor: _vm.editor },
+        nativeOn: {
+          drop: function ($event) {
+            return _vm.onDrop.apply(null, arguments)
+          },
+          paste: function ($event) {
+            return _vm.onPaste.apply(null, arguments)
+          },
+          dragover: function ($event) {
+            $event.preventDefault();
+          },
+        },
+      }),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$_ = [];
+__vue_render__$_._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$11 = function (inject) {
     if (!inject) return
-    inject("data-v-1a65583f_0", { source: ".rt-editor-content{height:100%}.rt-editor-content .ProseMirror{height:100%}.rt-editor-content input[type=checkbox]{pointer-events:auto!important;cursor:pointer!important}", map: undefined, media: undefined });
+    inject("data-v-a277b564_0", { source: ".rt-editor-content {\n  height: 100%;\n  /* Make checkboxes only editable inside the editor */\n}\n.rt-editor-content .ProseMirror {\n  height: 100%;\n}\n.rt-editor-content input[type=checkbox] {\n  pointer-events: auto !important;\n  cursor: pointer !important;\n}\n\n/*# sourceMappingURL=index.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CRichTextInput/index.vue","index.vue"],"names":[],"mappings":"AA2KA;EACA,YAAA;EAMA,oDAAA;AC/KA;AD2KA;EACA,YAAA;ACzKA;AD6KA;EACA,+BAAA;EACA,0BAAA;AC3KA;;AAEA,oCAAoC","file":"index.vue","sourcesContent":["<template>\n  <b-card\n    :header-class=\"!hideToolbar ? 'p-0 border-bottom' : 'd-none'\"\n    body-class=\"p-0\"\n    class=\"border border-light rounded\"\n  >\n    <template\n      v-if=\"editor && !hideToolbar\"\n      #header\n    >\n      <r-toolbar\n        :editor=\"editor\"\n        :formats=\"toolbar\"\n        :labels=\"labels\"\n        :current-value=\"currentValue\"\n      />\n    </template>\n\n    <editor-content\n      :editor=\"editor\"\n      :class=\"bodyClass\"\n      class=\"rt-editor-content rt-content p-2\"\n      :style=\"{ minHeight: minBodyHeight, maxHeight: maxBodyHeight }\"\n      @drop.native=\"onDrop\"\n      @paste.native=\"onPaste\"\n      @dragover.native.prevent\n    />\n  </b-card>\n</template>\n\n<script>\nimport { Editor, EditorContent } from '@tiptap/vue-2'\nimport RToolbar from './RToolbar/index.vue'\nimport { getFormats, getToolbar } from './lib'\n\nexport default {\n  name: 'CRichTextInput',\n\n  components: {\n    EditorContent,\n    RToolbar,\n  },\n\n  props: {\n    value: {\n      type: String,\n      required: false,\n      default: null,\n    },\n\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    minBodyHeight: {\n      type: String,\n      default: '10rem',\n    },\n\n    maxBodyHeight: {\n      type: String,\n      default: '',\n    },\n\n    bodyClass: {\n      type: String,\n      default: '',\n    },\n\n    placeholder: {\n      type: String,\n      default: '',\n    },\n\n    hideToolbar: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      formats: getFormats({\n        placeholder: this.placeholder,\n      }),\n      toolbar: getToolbar(),\n      // Helper to determine if current content differs from prop's content\n      emittedContent: false,\n      editor: undefined,\n      currentValue: '',\n    }\n  },\n\n  watch: {\n    value: {\n      handler: function (val) {\n        // Update happened due to external content change, not model change\n        if (!this.emittedContent) {\n          this.editor.commands.setContent(val, false)\n        }\n\n        this.emittedContent = false\n      },\n      deep: true,\n    },\n  },\n\n  mounted () {\n    this.init()\n  },\n\n  beforeDestroy () {\n    if (this.editor) this.editor.destroy()\n  },\n\n  methods: {\n    /**\n     * Initialize the editor, state, ...\n     */\n    init () {\n      this.editor = new Editor({\n        extensions: this.formats,\n        content: this.value || '',\n        parseOptions: {\n          preserveWhitespace: 'full',\n        },\n        onUpdate: this.onUpdate,\n        systemAPI: this.$SystemAPI,\n      })\n    },\n\n    /**\n     * Handle on update events. Process current document & update data model\n     * @note Currently, build-in toHTML function removes empty lines.\n     * Because of this, we are using `view.dom.innerHTML`. This should be improved at a later point\n     */\n    onUpdate () {\n      // Add <br> tags to empty paragraphs\n      const editorValue = this.editor.getHTML().replace(/<p><\\/p>/g, '<p><br></p>')\n\n      this.currentValue = editorValue === '<p><br></p>' ? '' : editorValue\n\n      this.emittedContent = true\n      this.$emit('input', this.currentValue)\n    },\n\n    focus () {\n      if (this.editor) {\n        this.editor.commands.focus()\n      }\n    },\n\n    onDrop (event) {\n      if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {\n        event.preventDefault()\n        this.$emit('upload', event.dataTransfer.files)\n      }\n    },\n\n    onPaste (event) {\n      if (event.clipboardData && event.clipboardData.files && event.clipboardData.files.length > 0) {\n        event.preventDefault()\n        this.$emit('upload', event.clipboardData.files)\n      }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.rt-editor-content {\n  height: 100%;\n\n  .ProseMirror {\n    height: 100%;\n  }\n\n  /* Make checkboxes only editable inside the editor */\n  input[type=\"checkbox\"] {\n    pointer-events: auto !important;\n    cursor: pointer !important;\n  }\n}\n</style>\n",".rt-editor-content {\n  height: 100%;\n  /* Make checkboxes only editable inside the editor */\n}\n.rt-editor-content .ProseMirror {\n  height: 100%;\n}\n.rt-editor-content input[type=checkbox] {\n  pointer-events: auto !important;\n  cursor: pointer !important;\n}\n\n/*# sourceMappingURL=index.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -22887,8 +24942,55 @@ var script$$ = {
 const __vue_script__$$ = script$$;
 
 /* template */
-var __vue_render__$Z = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex align-items-center"},[_c('span',{staticClass:"mb-0 inline-block text-primary",class:_vm.offClass},[_vm._v("\n    "+_vm._s(_vm.labels.off)+"\n  ")]),_vm._v(" "),_c('b-form-checkbox',_vm._g(_vm._b({attrs:{"checked":_vm.value,"value":!_vm.invert,"unchecked-value":_vm.invert}},'b-form-checkbox',_vm.$attrs,false),_vm.$listeners),[_vm._t("default")],2),_vm._v(" "),_c('span',{staticClass:"mb-0 inline-block strong text-primary",class:_vm.onClass},[_vm._v("\n    "+_vm._s(_vm.labels.on)+"\n  ")])],1)};
+var __vue_render__$Z = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "d-flex align-items-center" },
+    [
+      _c(
+        "span",
+        { staticClass: "mb-0 inline-block text-primary", class: _vm.offClass },
+        [_vm._v("\n    " + _vm._s(_vm.labels.off) + "\n  ")]
+      ),
+      _vm._v(" "),
+      _c(
+        "b-form-checkbox",
+        _vm._g(
+          _vm._b(
+            {
+              attrs: {
+                checked: _vm.value,
+                value: !_vm.invert,
+                "unchecked-value": _vm.invert,
+              },
+            },
+            "b-form-checkbox",
+            _vm.$attrs,
+            false
+          ),
+          _vm.$listeners
+        ),
+        [_vm._t("default")],
+        2
+      ),
+      _vm._v(" "),
+      _c(
+        "span",
+        {
+          staticClass: "mb-0 inline-block strong text-primary",
+          class: _vm.onClass,
+        },
+        [_vm._v("\n    " + _vm._s(_vm.labels.on) + "\n  ")]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$Z = [];
+__vue_render__$Z._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$10 = undefined;
@@ -23414,18 +25516,81 @@ var script$_ = {
 const __vue_script__$_ = script$_;
 
 /* template */
-var __vue_render__$Y = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{ref:"container",staticClass:"position-relative ace-editor-wrapper",class:{ 'resizable': _vm.resizable },style:(_vm.containerStyle)},[_c('ace-editor',_vm._g({ref:"aceeditor",class:{ 'border-0 rounded-0': !_vm.border },attrs:{"lang":_vm.lang,"mode":_vm.lang,"theme":"chrome","width":"100%","height":_vm.effectiveHeight},on:{"init":_vm.editorInit},model:{value:(_vm.editorValue),callback:function ($$v) {_vm.editorValue=$$v;},expression:"editorValue"}},_vm.$listeners)),_vm._v(" "),(_vm.showPopout)?_c('b-button',{staticClass:"popout position-absolute px-2 py-1 mr-3",attrs:{"variant":"link"},on:{"click":function($event){return _vm.$emit('open')}}},[_c('font-awesome-icon',{attrs:{"icon":['fas', 'expand-alt']}})],1):_vm._e()],1)};
+var __vue_render__$Y = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    {
+      ref: "container",
+      staticClass: "position-relative ace-editor-wrapper",
+      class: { resizable: _vm.resizable },
+      style: _vm.containerStyle,
+    },
+    [
+      _c(
+        "ace-editor",
+        _vm._g(
+          {
+            ref: "aceeditor",
+            class: { "border-0 rounded-0": !_vm.border },
+            attrs: {
+              lang: _vm.lang,
+              mode: _vm.lang,
+              theme: "chrome",
+              width: "100%",
+              height: _vm.effectiveHeight,
+            },
+            on: { init: _vm.editorInit },
+            model: {
+              value: _vm.editorValue,
+              callback: function ($$v) {
+                _vm.editorValue = $$v;
+              },
+              expression: "editorValue",
+            },
+          },
+          _vm.$listeners
+        )
+      ),
+      _vm._v(" "),
+      _vm.showPopout
+        ? _c(
+            "b-button",
+            {
+              staticClass: "popout position-absolute px-2 py-1 mr-3",
+              attrs: { variant: "link" },
+              on: {
+                click: function ($event) {
+                  return _vm.$emit("open")
+                },
+              },
+            },
+            [
+              _c("font-awesome-icon", {
+                attrs: { icon: ["fas", "expand-alt"] },
+              }),
+            ],
+            1
+          )
+        : _vm._e(),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$Y = [];
+__vue_render__$Y._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$$ = function (inject) {
     if (!inject) return
-    inject("data-v-00e2204c_0", { source: ".popout[data-v-00e2204c]{z-index:7;bottom:0;right:0}.ace-editor-wrapper.resizable[data-v-00e2204c]{resize:vertical;overflow:auto}.ace-editor-wrapper.resizable .ace_editor[data-v-00e2204c]{height:100%!important}", map: undefined, media: undefined })
-,inject("data-v-00e2204c_1", { source: ".ace_editor{color:var(--black)!important;background-color:var(--white)!important;border-radius:.25rem;border:2px solid var(--extra-light);font-size:initial!important}.ace_editor .ace_gutter{background-color:var(--light)!important;color:var(--black)!important}.ace_editor .ace_gutter .ace_gutter-active-line{background-color:var(--extra-light)!important}.ace_editor .ace_hidden-cursors .ace_cursor{color:var(--white)!important}.ace_editor .ace_cursor{color:var(--black)!important}.ace_autocomplete{border:none!important}.ace_autocomplete .ace_active-line{background-color:var(--extra-light)!important}.ace_autocomplete .ace_line-hover{border:none!important;background-color:var(--extra-light)!important}.ace_autocomplete .ace_completion-highlight{color:var(--primary)!important}", map: undefined, media: undefined });
+    inject("data-v-462bc746_0", { source: ".popout[data-v-462bc746] {\n  z-index: 7;\n  bottom: 0;\n  right: 0;\n}\n.ace-editor-wrapper.resizable[data-v-462bc746] {\n  resize: vertical;\n  overflow: auto;\n}\n.ace-editor-wrapper.resizable .ace_editor[data-v-462bc746] {\n  height: 100% !important;\n}\n\n/*# sourceMappingURL=CAceEditor.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CAceEditor.vue","CAceEditor.vue"],"names":[],"mappings":"AAmfA;EACA,UAAA;EACA,SAAA;EACA,QAAA;AClfA;ADsfA;EACA,gBAAA;EACA,cAAA;ACnfA;ADqfA;EACA,uBAAA;ACnfA;;AAEA,yCAAyC","file":"CAceEditor.vue","sourcesContent":["<template>\n  <div\n    ref=\"container\"\n    class=\"position-relative ace-editor-wrapper\"\n    :class=\"{ 'resizable': resizable }\"\n    :style=\"containerStyle\"\n  >\n    <ace-editor\n      ref=\"aceeditor\"\n      v-model=\"editorValue\"\n      :lang=\"lang\"\n      :mode=\"lang\"\n      theme=\"chrome\"\n      width=\"100%\"\n      :height=\"effectiveHeight\"\n      :class=\"{ 'border-0 rounded-0': !border }\"\n      v-on=\"$listeners\"\n      @init=\"editorInit\"\n    />\n\n    <b-button\n      v-if=\"showPopout\"\n      variant=\"link\"\n      class=\"popout position-absolute px-2 py-1 mr-3\"\n      @click=\"$emit('open')\"\n    >\n      <font-awesome-icon\n        :icon=\"['fas', 'expand-alt']\"\n      />\n    </b-button>\n  </div>\n</template>\n\n<script>\nimport AceEditor from 'vue2-ace-editor'\nimport { library } from '@fortawesome/fontawesome-svg-core'\nimport { faExpandAlt } from '@fortawesome/free-solid-svg-icons'\n\nlibrary.add(faExpandAlt)\n\nexport default {\n  components: {\n    AceEditor,\n  },\n\n  props: {\n    value: {\n      type: String,\n      default: '',\n    },\n\n    lang: {\n      type: String,\n      default: 'text',\n    },\n\n    minHeight: {\n      type: String,\n      default: '2.35rem',\n    },\n\n    showLineNumbers: {\n      type: Boolean,\n      default: false,\n    },\n\n    fontSize: {\n      type: String,\n      default: '14px',\n    },\n\n    border: {\n      type: Boolean,\n      default: true,\n    },\n\n    showPopout: {\n      type: Boolean,\n      default: false,\n    },\n\n    readOnly: {\n      type: Boolean,\n      default: false,\n    },\n\n    autoComplete: {\n      type: Boolean,\n      default: false,\n    },\n\n    highlightActiveLine: {\n      type: Boolean,\n      default: false,\n    },\n\n    showPrintMargin: {\n      type: Boolean,\n      default: false,\n    },\n\n    autoCompleteSuggestions: {\n      type: [Array, Object],\n      default: () => ([]),\n    },\n\n    initExpressions: {\n      type: Boolean,\n      required: false,\n    },\n\n    fontFamily: {\n      type: String,\n      default: '',\n    },\n\n    placeholder: {\n      type: String,\n      default: '',\n    },\n\n    resizable: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      resizeObserver: null,\n      manualHeight: null,\n      contentHeight: null,\n      programmaticUpdate: false,\n      resizeTimeout: null,\n    }\n  },\n\n  computed: {\n    editorValue: {\n      get () {\n        return this.value\n      },\n\n      set (value = '') {\n        this.$emit('update:value', value)\n      },\n    },\n\n    containerStyle () {\n      if (this.resizable) {\n        return {\n          minHeight: this.minHeight,\n          height: this.effectiveHeight,\n        }\n      }\n      return {}\n    },\n\n    effectiveHeight () {\n      if (this.resizable) {\n        // Use the larger of manual height, content height, or minimum height\n        const manualHeightPx = this.manualHeight ? this.parseHeight(this.manualHeight) : 0\n        const contentHeightPx = this.contentHeight ? this.parseHeight(this.contentHeight) : 0\n        const minHeightPx = this.parseHeight(this.minHeight)\n        \n        const maxHeight = Math.max(manualHeightPx, contentHeightPx, minHeightPx)\n        return `${maxHeight}px`\n      }\n      return this.minHeight\n    },\n  },\n\n  watch: {\n    value () {\n      if (this.resizable && this.$refs.aceeditor && this.$refs.aceeditor.editor) {\n        this.$nextTick(() => {\n          this.calculateContentHeight(this.$refs.aceeditor.editor)\n        })\n      }\n    },\n  },\n\n  mounted () {\n    if (this.resizable) {\n      this.setupResizeObserver()\n    }\n  },\n\n  beforeDestroy () {\n    if (this.resizeObserver) {\n      this.resizeObserver.disconnect()\n    }\n    if (this.resizeTimeout) {\n      clearTimeout(this.resizeTimeout)\n    }\n  },\n\n  methods: {\n    parseHeight (height) {\n      if (typeof height === 'number') return height\n      if (typeof height === 'string') {\n        // Remove 'px' and parse to number\n        return parseFloat(height.replace('px', '').replace('rem', '')) * (height.includes('rem') ? 16 : 1)\n      }\n      return 0\n    },\n\n    calculateContentHeight (editor) {\n      if (!editor) return\n\n      const session = editor.session\n      const lineCount = session.getLength()\n      const lineHeight = editor.renderer.lineHeight || 16\n      const padding = 14 // Top and bottom padding\n      \n      const contentHeight = (lineCount * lineHeight) + padding\n      \n      // Parse minHeight to ensure we don't go below it\n      const minHeightPx = this.parseHeight(this.minHeight)\n      const finalHeight = Math.max(contentHeight, minHeightPx)\n      \n      // Set flag to prevent ResizeObserver from reacting to this change\n      this.programmaticUpdate = true\n      this.contentHeight = `${finalHeight}px`\n      \n      // Clear the flag after a short delay\n      this.$nextTick(() => {\n        setTimeout(() => {\n          this.programmaticUpdate = false\n        }, 50)\n      })\n    },\n\n    setupResizeObserver () {\n      let lastHeight = null\n      let isInitialized = false\n      \n      this.resizeObserver = new ResizeObserver((entries) => {\n        // Skip if we're in the middle of a programmatic update\n        if (this.programmaticUpdate) {\n          return\n        }\n\n        for (const entry of entries) {\n          const newHeight = entry.contentRect.height\n          \n          // Skip the first observation (initialization)\n          if (!isInitialized) {\n            lastHeight = newHeight\n            isInitialized = true\n            return\n          }\n          \n          // Only update if height actually changed significantly (more than 2px to avoid rounding issues)\n          if (lastHeight !== null && Math.abs(lastHeight - newHeight) > 2) {\n            // Clear any pending timeout\n            if (this.resizeTimeout) {\n              clearTimeout(this.resizeTimeout)\n            }\n            \n            // Debounce the update slightly to prevent flickering\n            this.resizeTimeout = setTimeout(() => {\n              this.manualHeight = `${newHeight}px`\n              this.updateEditorSize()\n              lastHeight = newHeight\n            }, 10)\n          }\n        }\n      })\n\n      if (this.$refs.container) {\n        this.resizeObserver.observe(this.$refs.container)\n      }\n    },\n\n    updateEditorSize () {\n      // Force ace editor to resize\n      this.$nextTick(() => {\n        if (this.$refs.aceeditor && this.$refs.aceeditor.editor) {\n          const editor = this.$refs.aceeditor.editor\n          editor.resize()\n        }\n      })\n    },\n\n    editorInit (editor) {\n      import('brace/mode/text')\n      import('brace/mode/html')\n      import('brace/mode/css')\n      import('brace/mode/scss')\n      import('brace/mode/json')\n      import('brace/mode/javascript')\n\n      import('brace/snippets/text')\n      import('brace/snippets/html')\n      import('brace/snippets/css')\n      import('brace/snippets/scss')\n      import('brace/snippets/json')\n      import('brace/snippets/javascript')\n\n      import('brace/theme/chrome')\n      import('brace/ext/language_tools')\n      import('brace/ext/emmet')\n\n      editor.setOptions({\n        tabSize: 2,\n        fontSize: this.fontSize,\n        wrap: true,\n        indentedSoftWrap: false,\n        showPrintMargin: this.showPrintMargin,\n        showLineNumbers: this.showLineNumbers,\n        showGutter: this.showLineNumbers,\n        displayIndentGuides: this.lang !== 'text',\n        useWorker: false,\n        readOnly: this.readOnly,\n        highlightActiveLine: this.highlightActiveLine,\n        cursorStyle: 'smooth',\n\n        ...(this.autoComplete && {\n          enableBasicAutocompletion: true,\n          enableLiveAutocompletion: true,\n          enableSnippets: true,\n          enableEmmet: true,\n        }),\n\n        ...(this.fontFamily && { fontFamily: this.fontFamily }),\n        ...(this.fontSize && { fontSize: this.fontSize }),\n      })\n\n      editor.on('input', this.updatePlaceholder)\n      this.updatePlaceholder(undefined, editor)\n\n      // Calculate initial content height and listen for changes if resizable\n      if (this.resizable) {\n        // Calculate initial height\n        this.$nextTick(() => {\n          this.calculateContentHeight(editor)\n        })\n\n        // Recalculate on content change\n        editor.session.on('change', () => {\n          this.calculateContentHeight(editor)\n        })\n      }\n\n      if (this.initExpressions) {\n        this.processExpressionAutoComplete(editor)\n      } else if (this.autoComplete) {\n        const staticWordCompleter = {\n          getCompletions: (editor, session, pos, prefix, callback) => {\n            const autoCompleteSuggestions = this.autoCompleteSuggestions\n            callback(\n              null,\n              autoCompleteSuggestions.map(({ caption, value, meta }) => ({\n                caption,\n                value,\n                meta,\n              })),\n            )\n          },\n        }\n\n        editor.completers.push(staticWordCompleter)\n      }\n    },\n\n    updatePlaceholder (_, editor) {\n      if (!this.placeholder) return\n\n      const shouldShow = !editor.session.getValue().length\n      let node = editor.renderer.emptyMessageNode\n\n      if (!shouldShow && node) {\n        editor.renderer.scroller.removeChild(editor.renderer.emptyMessageNode)\n        editor.renderer.emptyMessageNode = null\n      } else if (shouldShow && !node) {\n        node = editor.renderer.emptyMessageNode = document.createElement('div')\n        node.textContent = this.placeholder\n        node.className = 'ace_placeholder'\n        node.style.padding = '7px 10px'\n        node.style.position = 'absolute'\n        node.style.zIndex = 9\n        node.style.opacity = 0.5\n        editor.renderer.scroller.appendChild(node)\n      }\n    },\n\n    processExpressionAutoComplete (editor) {\n      // Extract text context from current cursor position\n      const getTextContext = (pos) => {\n        const session = editor.session\n        const line = session.getLine(pos.row)\n        const lastSpaceIndex = Math.max(0, line.lastIndexOf(' '))\n        const textAfterSpace = line.slice(lastSpaceIndex, pos.column).trim()\n        const lastDotIndex = textAfterSpace.lastIndexOf('.')\n        const searchTextForCaption = lastDotIndex >= 0 ? textAfterSpace.slice(lastDotIndex + 1) : textAfterSpace\n        \n        return { line, textAfterSpace, searchTextForCaption }\n      }\n\n      // Check if suggestion matches search text\n      const matchesSuggestion = (suggestion, textAfterSpace, searchTextForCaption) => {\n        const suggestionValue = typeof suggestion === 'string' ? suggestion : suggestion.value\n        const suggestionCaption = typeof suggestion === 'string' ? suggestion : suggestion.caption\n        return suggestionValue.toLowerCase().startsWith(textAfterSpace.toLowerCase()) ||\n               suggestionCaption.toLowerCase().startsWith(searchTextForCaption.toLowerCase())\n      }\n\n      // Check and trigger autocomplete if there are matching suggestions\n      const checkAndTriggerAutocomplete = () => {\n        setTimeout(() => {\n          const pos = editor.getCursorPosition()\n          const { line, textAfterSpace, searchTextForCaption } = getTextContext(pos)\n          \n          // Don't trigger after closing braces\n          const charBeforeCursor = pos.column > 0 ? line[pos.column - 1] : ''\n          if (charBeforeCursor === '}' || charBeforeCursor === ')' || textAfterSpace.length === 0) {\n            return\n          }\n          \n          const context = this.getContext(editor, editor.session, pos)\n          const suggestions = this.getSuggestionsForContext(context)\n          const hasMatches = suggestions.some(s => matchesSuggestion(s, textAfterSpace, searchTextForCaption))\n          \n          if (hasMatches) {\n            editor.execCommand('startAutocomplete')\n          }\n        }, 10)\n      }\n      \n      const staticWordCompleter = {\n        identifierRegexps: [/[${\\w]+/],\n        getCompletions: (editor, session, pos, prefix, callback) => {\n          const context = this.getContext(editor, session, pos)\n          const suggestions = this.getSuggestionsForContext(context)\n          const { textAfterSpace, searchTextForCaption } = getTextContext(pos)\n          \n          const filteredSuggestions = suggestions\n            .filter(s => matchesSuggestion(s, textAfterSpace, searchTextForCaption))\n            .map(suggestion => {\n              const caption = typeof suggestion === 'string' ? suggestion : suggestion.caption\n              const value = typeof suggestion === 'string' ? suggestion : suggestion.value\n              const captionMatch = caption.toLowerCase().indexOf(searchTextForCaption.toLowerCase())\n              \n              return {\n                caption,\n                value,\n                score: captionMatch === 0 ? 10000 : 1000,\n                meta: 'variable',\n                completer: {\n                  insertMatch: (insertEditor, data) => {\n                    insertEditor.jumpToMatching()\n                    const line = session.getLine(pos.row)\n                    const spaceIndex = line.lastIndexOf(' ')\n                    const startCol = spaceIndex > 0 ? spaceIndex + 1 : 0\n\n                    insertEditor.session.replace({\n                      start: { row: pos.row, column: startCol },\n                      end: { row: pos.row, column: pos.column },\n                    }, data.value)\n                    \n                    checkAndTriggerAutocomplete()\n                  },\n                },\n              }\n            })\n\n          callback(null, filteredSuggestions)\n        },\n      }\n\n      editor.completers = [staticWordCompleter]\n\n      // Only trigger autocomplete automatically when there's a partial match\n      editor.commands.on('afterExec', (e) => {\n        if (['insertstring', 'Return'].includes(e.command.name) || /^[\\w.($]$/.test(e.args)) {\n          checkAndTriggerAutocomplete()\n        }\n      })\n\n      editor.renderer.setScrollMargin(7, 7)\n      editor.renderer.setPadding(10)\n    },\n\n    getContext (editor, session, pos) {\n      const line = session.getLine(pos.row)\n      const lastSpaceIndex = Math.max(0, line.lastIndexOf(' '))\n      const textBeforeCursor = line.slice(lastSpaceIndex, pos.column).trim()\n      return textBeforeCursor.split('.').slice(0, -1).join('.')\n    },\n\n    getSuggestionsForContext (context) {\n      return this.autoCompleteSuggestions[context] || []\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.popout {\n  z-index: 7;\n  bottom: 0;\n  right: 0;\n}\n\n.ace-editor-wrapper {\n  &.resizable {\n    resize: vertical;\n    overflow: auto;\n    \n    .ace_editor {\n      height: 100% !important;\n    }\n  }\n}\n</style>\n\n<style lang=\"scss\">\n.ace_editor {\n  color: var(--black) !important;\n  background-color: var(--white) !important;\n  border-radius: 0.25rem;\n  border: 2px solid var(--extra-light);\n  font-size: initial !important;\n\n  .ace_gutter {\n    background-color: var(--light) !important;\n    color: var(--black) !important;\n\n    .ace_gutter-active-line {\n      background-color: var(--extra-light) !important;\n    }\n  }\n  .ace_hidden-cursors {\n    .ace_cursor {\n      color: var(--white) !important;\n    }\n  }\n\n  .ace_cursor {\n    color: var(--black) !important;\n  }\n}\n\n.ace_autocomplete {\n  border: none !important;\n  .ace_active-line {\n    background-color: var(--extra-light) !important;\n  }\n\n  .ace_line-hover {\n    border: none !important;\n    background-color: var(--extra-light) !important;\n  }\n\n  .ace_completion-highlight {\n    color: var(--primary) !important;\n  }\n}\n</style>\n",".popout {\n  z-index: 7;\n  bottom: 0;\n  right: 0;\n}\n\n.ace-editor-wrapper.resizable {\n  resize: vertical;\n  overflow: auto;\n}\n.ace-editor-wrapper.resizable .ace_editor {\n  height: 100% !important;\n}\n\n/*# sourceMappingURL=CAceEditor.vue.map */"]}, media: undefined })
+,inject("data-v-462bc746_1", { source: ".ace_editor {\n  color: var(--black) !important;\n  background-color: var(--white) !important;\n  border-radius: 0.25rem;\n  border: 2px solid var(--extra-light);\n  font-size: initial !important;\n}\n.ace_editor .ace_gutter {\n  background-color: var(--light) !important;\n  color: var(--black) !important;\n}\n.ace_editor .ace_gutter .ace_gutter-active-line {\n  background-color: var(--extra-light) !important;\n}\n.ace_editor .ace_hidden-cursors .ace_cursor {\n  color: var(--white) !important;\n}\n.ace_editor .ace_cursor {\n  color: var(--black) !important;\n}\n.ace_autocomplete {\n  border: none !important;\n}\n.ace_autocomplete .ace_active-line {\n  background-color: var(--extra-light) !important;\n}\n.ace_autocomplete .ace_line-hover {\n  border: none !important;\n  background-color: var(--extra-light) !important;\n}\n.ace_autocomplete .ace_completion-highlight {\n  color: var(--primary) !important;\n}\n\n/*# sourceMappingURL=CAceEditor.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/input/CAceEditor.vue","CAceEditor.vue"],"names":[],"mappings":"AAsgBA;EACA,8BAAA;EACA,yCAAA;EACA,sBAAA;EACA,oCAAA;EACA,6BAAA;ACrgBA;ADugBA;EACA,yCAAA;EACA,8BAAA;ACrgBA;ADugBA;EACA,+CAAA;ACrgBA;ADygBA;EACA,8BAAA;ACvgBA;AD2gBA;EACA,8BAAA;ACzgBA;AD6gBA;EACA,uBAAA;AC1gBA;AD2gBA;EACA,+CAAA;ACzgBA;AD4gBA;EACA,uBAAA;EACA,+CAAA;AC1gBA;AD6gBA;EACA,gCAAA;AC3gBA;;AAEA,yCAAyC","file":"CAceEditor.vue","sourcesContent":["<template>\n  <div\n    ref=\"container\"\n    class=\"position-relative ace-editor-wrapper\"\n    :class=\"{ 'resizable': resizable }\"\n    :style=\"containerStyle\"\n  >\n    <ace-editor\n      ref=\"aceeditor\"\n      v-model=\"editorValue\"\n      :lang=\"lang\"\n      :mode=\"lang\"\n      theme=\"chrome\"\n      width=\"100%\"\n      :height=\"effectiveHeight\"\n      :class=\"{ 'border-0 rounded-0': !border }\"\n      v-on=\"$listeners\"\n      @init=\"editorInit\"\n    />\n\n    <b-button\n      v-if=\"showPopout\"\n      variant=\"link\"\n      class=\"popout position-absolute px-2 py-1 mr-3\"\n      @click=\"$emit('open')\"\n    >\n      <font-awesome-icon\n        :icon=\"['fas', 'expand-alt']\"\n      />\n    </b-button>\n  </div>\n</template>\n\n<script>\nimport AceEditor from 'vue2-ace-editor'\nimport { library } from '@fortawesome/fontawesome-svg-core'\nimport { faExpandAlt } from '@fortawesome/free-solid-svg-icons'\n\nlibrary.add(faExpandAlt)\n\nexport default {\n  components: {\n    AceEditor,\n  },\n\n  props: {\n    value: {\n      type: String,\n      default: '',\n    },\n\n    lang: {\n      type: String,\n      default: 'text',\n    },\n\n    minHeight: {\n      type: String,\n      default: '2.35rem',\n    },\n\n    showLineNumbers: {\n      type: Boolean,\n      default: false,\n    },\n\n    fontSize: {\n      type: String,\n      default: '14px',\n    },\n\n    border: {\n      type: Boolean,\n      default: true,\n    },\n\n    showPopout: {\n      type: Boolean,\n      default: false,\n    },\n\n    readOnly: {\n      type: Boolean,\n      default: false,\n    },\n\n    autoComplete: {\n      type: Boolean,\n      default: false,\n    },\n\n    highlightActiveLine: {\n      type: Boolean,\n      default: false,\n    },\n\n    showPrintMargin: {\n      type: Boolean,\n      default: false,\n    },\n\n    autoCompleteSuggestions: {\n      type: [Array, Object],\n      default: () => ([]),\n    },\n\n    initExpressions: {\n      type: Boolean,\n      required: false,\n    },\n\n    fontFamily: {\n      type: String,\n      default: '',\n    },\n\n    placeholder: {\n      type: String,\n      default: '',\n    },\n\n    resizable: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      resizeObserver: null,\n      manualHeight: null,\n      contentHeight: null,\n      programmaticUpdate: false,\n      resizeTimeout: null,\n    }\n  },\n\n  computed: {\n    editorValue: {\n      get () {\n        return this.value\n      },\n\n      set (value = '') {\n        this.$emit('update:value', value)\n      },\n    },\n\n    containerStyle () {\n      if (this.resizable) {\n        return {\n          minHeight: this.minHeight,\n          height: this.effectiveHeight,\n        }\n      }\n      return {}\n    },\n\n    effectiveHeight () {\n      if (this.resizable) {\n        // Use the larger of manual height, content height, or minimum height\n        const manualHeightPx = this.manualHeight ? this.parseHeight(this.manualHeight) : 0\n        const contentHeightPx = this.contentHeight ? this.parseHeight(this.contentHeight) : 0\n        const minHeightPx = this.parseHeight(this.minHeight)\n        \n        const maxHeight = Math.max(manualHeightPx, contentHeightPx, minHeightPx)\n        return `${maxHeight}px`\n      }\n      return this.minHeight\n    },\n  },\n\n  watch: {\n    value () {\n      if (this.resizable && this.$refs.aceeditor && this.$refs.aceeditor.editor) {\n        this.$nextTick(() => {\n          this.calculateContentHeight(this.$refs.aceeditor.editor)\n        })\n      }\n    },\n  },\n\n  mounted () {\n    if (this.resizable) {\n      this.setupResizeObserver()\n    }\n  },\n\n  beforeDestroy () {\n    if (this.resizeObserver) {\n      this.resizeObserver.disconnect()\n    }\n    if (this.resizeTimeout) {\n      clearTimeout(this.resizeTimeout)\n    }\n  },\n\n  methods: {\n    parseHeight (height) {\n      if (typeof height === 'number') return height\n      if (typeof height === 'string') {\n        // Remove 'px' and parse to number\n        return parseFloat(height.replace('px', '').replace('rem', '')) * (height.includes('rem') ? 16 : 1)\n      }\n      return 0\n    },\n\n    calculateContentHeight (editor) {\n      if (!editor) return\n\n      const session = editor.session\n      const lineCount = session.getLength()\n      const lineHeight = editor.renderer.lineHeight || 16\n      const padding = 14 // Top and bottom padding\n      \n      const contentHeight = (lineCount * lineHeight) + padding\n      \n      // Parse minHeight to ensure we don't go below it\n      const minHeightPx = this.parseHeight(this.minHeight)\n      const finalHeight = Math.max(contentHeight, minHeightPx)\n      \n      // Set flag to prevent ResizeObserver from reacting to this change\n      this.programmaticUpdate = true\n      this.contentHeight = `${finalHeight}px`\n      \n      // Clear the flag after a short delay\n      this.$nextTick(() => {\n        setTimeout(() => {\n          this.programmaticUpdate = false\n        }, 50)\n      })\n    },\n\n    setupResizeObserver () {\n      let lastHeight = null\n      let isInitialized = false\n      \n      this.resizeObserver = new ResizeObserver((entries) => {\n        // Skip if we're in the middle of a programmatic update\n        if (this.programmaticUpdate) {\n          return\n        }\n\n        for (const entry of entries) {\n          const newHeight = entry.contentRect.height\n          \n          // Skip the first observation (initialization)\n          if (!isInitialized) {\n            lastHeight = newHeight\n            isInitialized = true\n            return\n          }\n          \n          // Only update if height actually changed significantly (more than 2px to avoid rounding issues)\n          if (lastHeight !== null && Math.abs(lastHeight - newHeight) > 2) {\n            // Clear any pending timeout\n            if (this.resizeTimeout) {\n              clearTimeout(this.resizeTimeout)\n            }\n            \n            // Debounce the update slightly to prevent flickering\n            this.resizeTimeout = setTimeout(() => {\n              this.manualHeight = `${newHeight}px`\n              this.updateEditorSize()\n              lastHeight = newHeight\n            }, 10)\n          }\n        }\n      })\n\n      if (this.$refs.container) {\n        this.resizeObserver.observe(this.$refs.container)\n      }\n    },\n\n    updateEditorSize () {\n      // Force ace editor to resize\n      this.$nextTick(() => {\n        if (this.$refs.aceeditor && this.$refs.aceeditor.editor) {\n          const editor = this.$refs.aceeditor.editor\n          editor.resize()\n        }\n      })\n    },\n\n    editorInit (editor) {\n      import('brace/mode/text')\n      import('brace/mode/html')\n      import('brace/mode/css')\n      import('brace/mode/scss')\n      import('brace/mode/json')\n      import('brace/mode/javascript')\n\n      import('brace/snippets/text')\n      import('brace/snippets/html')\n      import('brace/snippets/css')\n      import('brace/snippets/scss')\n      import('brace/snippets/json')\n      import('brace/snippets/javascript')\n\n      import('brace/theme/chrome')\n      import('brace/ext/language_tools')\n      import('brace/ext/emmet')\n\n      editor.setOptions({\n        tabSize: 2,\n        fontSize: this.fontSize,\n        wrap: true,\n        indentedSoftWrap: false,\n        showPrintMargin: this.showPrintMargin,\n        showLineNumbers: this.showLineNumbers,\n        showGutter: this.showLineNumbers,\n        displayIndentGuides: this.lang !== 'text',\n        useWorker: false,\n        readOnly: this.readOnly,\n        highlightActiveLine: this.highlightActiveLine,\n        cursorStyle: 'smooth',\n\n        ...(this.autoComplete && {\n          enableBasicAutocompletion: true,\n          enableLiveAutocompletion: true,\n          enableSnippets: true,\n          enableEmmet: true,\n        }),\n\n        ...(this.fontFamily && { fontFamily: this.fontFamily }),\n        ...(this.fontSize && { fontSize: this.fontSize }),\n      })\n\n      editor.on('input', this.updatePlaceholder)\n      this.updatePlaceholder(undefined, editor)\n\n      // Calculate initial content height and listen for changes if resizable\n      if (this.resizable) {\n        // Calculate initial height\n        this.$nextTick(() => {\n          this.calculateContentHeight(editor)\n        })\n\n        // Recalculate on content change\n        editor.session.on('change', () => {\n          this.calculateContentHeight(editor)\n        })\n      }\n\n      if (this.initExpressions) {\n        this.processExpressionAutoComplete(editor)\n      } else if (this.autoComplete) {\n        const staticWordCompleter = {\n          getCompletions: (editor, session, pos, prefix, callback) => {\n            const autoCompleteSuggestions = this.autoCompleteSuggestions\n            callback(\n              null,\n              autoCompleteSuggestions.map(({ caption, value, meta }) => ({\n                caption,\n                value,\n                meta,\n              })),\n            )\n          },\n        }\n\n        editor.completers.push(staticWordCompleter)\n      }\n    },\n\n    updatePlaceholder (_, editor) {\n      if (!this.placeholder) return\n\n      const shouldShow = !editor.session.getValue().length\n      let node = editor.renderer.emptyMessageNode\n\n      if (!shouldShow && node) {\n        editor.renderer.scroller.removeChild(editor.renderer.emptyMessageNode)\n        editor.renderer.emptyMessageNode = null\n      } else if (shouldShow && !node) {\n        node = editor.renderer.emptyMessageNode = document.createElement('div')\n        node.textContent = this.placeholder\n        node.className = 'ace_placeholder'\n        node.style.padding = '7px 10px'\n        node.style.position = 'absolute'\n        node.style.zIndex = 9\n        node.style.opacity = 0.5\n        editor.renderer.scroller.appendChild(node)\n      }\n    },\n\n    processExpressionAutoComplete (editor) {\n      // Extract text context from current cursor position\n      const getTextContext = (pos) => {\n        const session = editor.session\n        const line = session.getLine(pos.row)\n        const lastSpaceIndex = Math.max(0, line.lastIndexOf(' '))\n        const textAfterSpace = line.slice(lastSpaceIndex, pos.column).trim()\n        const lastDotIndex = textAfterSpace.lastIndexOf('.')\n        const searchTextForCaption = lastDotIndex >= 0 ? textAfterSpace.slice(lastDotIndex + 1) : textAfterSpace\n        \n        return { line, textAfterSpace, searchTextForCaption }\n      }\n\n      // Check if suggestion matches search text\n      const matchesSuggestion = (suggestion, textAfterSpace, searchTextForCaption) => {\n        const suggestionValue = typeof suggestion === 'string' ? suggestion : suggestion.value\n        const suggestionCaption = typeof suggestion === 'string' ? suggestion : suggestion.caption\n        return suggestionValue.toLowerCase().startsWith(textAfterSpace.toLowerCase()) ||\n               suggestionCaption.toLowerCase().startsWith(searchTextForCaption.toLowerCase())\n      }\n\n      // Check and trigger autocomplete if there are matching suggestions\n      const checkAndTriggerAutocomplete = () => {\n        setTimeout(() => {\n          const pos = editor.getCursorPosition()\n          const { line, textAfterSpace, searchTextForCaption } = getTextContext(pos)\n          \n          // Don't trigger after closing braces\n          const charBeforeCursor = pos.column > 0 ? line[pos.column - 1] : ''\n          if (charBeforeCursor === '}' || charBeforeCursor === ')' || textAfterSpace.length === 0) {\n            return\n          }\n          \n          const context = this.getContext(editor, editor.session, pos)\n          const suggestions = this.getSuggestionsForContext(context)\n          const hasMatches = suggestions.some(s => matchesSuggestion(s, textAfterSpace, searchTextForCaption))\n          \n          if (hasMatches) {\n            editor.execCommand('startAutocomplete')\n          }\n        }, 10)\n      }\n      \n      const staticWordCompleter = {\n        identifierRegexps: [/[${\\w]+/],\n        getCompletions: (editor, session, pos, prefix, callback) => {\n          const context = this.getContext(editor, session, pos)\n          const suggestions = this.getSuggestionsForContext(context)\n          const { textAfterSpace, searchTextForCaption } = getTextContext(pos)\n          \n          const filteredSuggestions = suggestions\n            .filter(s => matchesSuggestion(s, textAfterSpace, searchTextForCaption))\n            .map(suggestion => {\n              const caption = typeof suggestion === 'string' ? suggestion : suggestion.caption\n              const value = typeof suggestion === 'string' ? suggestion : suggestion.value\n              const captionMatch = caption.toLowerCase().indexOf(searchTextForCaption.toLowerCase())\n              \n              return {\n                caption,\n                value,\n                score: captionMatch === 0 ? 10000 : 1000,\n                meta: 'variable',\n                completer: {\n                  insertMatch: (insertEditor, data) => {\n                    insertEditor.jumpToMatching()\n                    const line = session.getLine(pos.row)\n                    const spaceIndex = line.lastIndexOf(' ')\n                    const startCol = spaceIndex > 0 ? spaceIndex + 1 : 0\n\n                    insertEditor.session.replace({\n                      start: { row: pos.row, column: startCol },\n                      end: { row: pos.row, column: pos.column },\n                    }, data.value)\n                    \n                    checkAndTriggerAutocomplete()\n                  },\n                },\n              }\n            })\n\n          callback(null, filteredSuggestions)\n        },\n      }\n\n      editor.completers = [staticWordCompleter]\n\n      // Only trigger autocomplete automatically when there's a partial match\n      editor.commands.on('afterExec', (e) => {\n        if (['insertstring', 'Return'].includes(e.command.name) || /^[\\w.($]$/.test(e.args)) {\n          checkAndTriggerAutocomplete()\n        }\n      })\n\n      editor.renderer.setScrollMargin(7, 7)\n      editor.renderer.setPadding(10)\n    },\n\n    getContext (editor, session, pos) {\n      const line = session.getLine(pos.row)\n      const lastSpaceIndex = Math.max(0, line.lastIndexOf(' '))\n      const textBeforeCursor = line.slice(lastSpaceIndex, pos.column).trim()\n      return textBeforeCursor.split('.').slice(0, -1).join('.')\n    },\n\n    getSuggestionsForContext (context) {\n      return this.autoCompleteSuggestions[context] || []\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.popout {\n  z-index: 7;\n  bottom: 0;\n  right: 0;\n}\n\n.ace-editor-wrapper {\n  &.resizable {\n    resize: vertical;\n    overflow: auto;\n    \n    .ace_editor {\n      height: 100% !important;\n    }\n  }\n}\n</style>\n\n<style lang=\"scss\">\n.ace_editor {\n  color: var(--black) !important;\n  background-color: var(--white) !important;\n  border-radius: 0.25rem;\n  border: 2px solid var(--extra-light);\n  font-size: initial !important;\n\n  .ace_gutter {\n    background-color: var(--light) !important;\n    color: var(--black) !important;\n\n    .ace_gutter-active-line {\n      background-color: var(--extra-light) !important;\n    }\n  }\n  .ace_hidden-cursors {\n    .ace_cursor {\n      color: var(--white) !important;\n    }\n  }\n\n  .ace_cursor {\n    color: var(--black) !important;\n  }\n}\n\n.ace_autocomplete {\n  border: none !important;\n  .ace_active-line {\n    background-color: var(--extra-light) !important;\n  }\n\n  .ace_line-hover {\n    border: none !important;\n    background-color: var(--extra-light) !important;\n  }\n\n  .ace_completion-highlight {\n    color: var(--primary) !important;\n  }\n}\n</style>\n",".ace_editor {\n  color: var(--black) !important;\n  background-color: var(--white) !important;\n  border-radius: 0.25rem;\n  border: 2px solid var(--extra-light);\n  font-size: initial !important;\n}\n.ace_editor .ace_gutter {\n  background-color: var(--light) !important;\n  color: var(--black) !important;\n}\n.ace_editor .ace_gutter .ace_gutter-active-line {\n  background-color: var(--extra-light) !important;\n}\n.ace_editor .ace_hidden-cursors .ace_cursor {\n  color: var(--white) !important;\n}\n.ace_editor .ace_cursor {\n  color: var(--black) !important;\n}\n\n.ace_autocomplete {\n  border: none !important;\n}\n.ace_autocomplete .ace_active-line {\n  background-color: var(--extra-light) !important;\n}\n.ace_autocomplete .ace_line-hover {\n  border: none !important;\n  background-color: var(--extra-light) !important;\n}\n.ace_autocomplete .ace_completion-highlight {\n  color: var(--primary) !important;\n}\n\n/*# sourceMappingURL=CAceEditor.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$$ = "data-v-00e2204c";
+  const __vue_scope_id__$$ = "data-v-462bc746";
   /* module identifier */
   const __vue_module_identifier__$$ = undefined;
   /* functional template */
@@ -23617,8 +25782,45 @@ var script$Z = {
 const __vue_script__$Z = script$Z;
 
 /* template */
-var __vue_render__$X = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"position-relative"},[_c('c-ace-editor',_vm._g(_vm._b({attrs:{"auto-complete":"","init-expressions":"","auto-complete-suggestions":_vm.autoCompleteSuggestions},model:{value:(_vm.editorValue),callback:function ($$v) {_vm.editorValue=$$v;},expression:"editorValue"}},'c-ace-editor',Object.assign({}, _vm.$attrs, _vm.$props),false),_vm.$listeners))],1)};
+var __vue_render__$X = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "position-relative" },
+    [
+      _c(
+        "c-ace-editor",
+        _vm._g(
+          _vm._b(
+            {
+              attrs: {
+                "auto-complete": "",
+                "init-expressions": "",
+                "auto-complete-suggestions": _vm.autoCompleteSuggestions,
+              },
+              model: {
+                value: _vm.editorValue,
+                callback: function ($$v) {
+                  _vm.editorValue = $$v;
+                },
+                expression: "editorValue",
+              },
+            },
+            "c-ace-editor",
+            Object.assign({}, _vm.$attrs, _vm.$props),
+            false
+          ),
+          _vm.$listeners
+        )
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$X = [];
+__vue_render__$X._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$_ = undefined;
@@ -23737,8 +25939,51 @@ var script$Y = {
 const __vue_script__$Y = script$Y;
 
 /* template */
-var __vue_render__$W = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-button',{class:_vm.buttonClass,attrs:{"data-test-id":"button-submit","type":"submit","variant":_vm.variant,"disabled":_vm.disabled || _vm.processing || _vm.success,"size":_vm.size,"block":_vm.block,"title":_vm.title},on:{"click":function($event){$event.preventDefault();return _vm.$emit('submit')}}},[(_vm.processing)?_c('b-spinner',{staticClass:"align-middle",attrs:{"data-test-id":"spinner","small":""}}):(_vm.success)?_c('font-awesome-icon',{attrs:{"data-test-id":"icon-success","icon":['fas', 'check']}}):(_vm.text)?_c('span',{attrs:{"data-test-id":"button-text"}},[_vm._v("\n    "+_vm._s(_vm.text)+"\n  ")]):_vm._e()],1)};
+var __vue_render__$W = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-button",
+    {
+      class: _vm.buttonClass,
+      attrs: {
+        "data-test-id": "button-submit",
+        type: "submit",
+        variant: _vm.variant,
+        disabled: _vm.disabled || _vm.processing || _vm.success,
+        size: _vm.size,
+        block: _vm.block,
+        title: _vm.title,
+      },
+      on: {
+        click: function ($event) {
+          $event.preventDefault();
+          return _vm.$emit("submit")
+        },
+      },
+    },
+    [
+      _vm.processing
+        ? _c("b-spinner", {
+            staticClass: "align-middle",
+            attrs: { "data-test-id": "spinner", small: "" },
+          })
+        : _vm.success
+        ? _c("font-awesome-icon", {
+            attrs: { "data-test-id": "icon-success", icon: ["fas", "check"] },
+          })
+        : _vm.text
+        ? _c("span", { attrs: { "data-test-id": "button-text" } }, [
+            _vm._v("\n    " + _vm._s(_vm.text) + "\n  "),
+          ])
+        : _vm._e(),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$W = [];
+__vue_render__$W._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$Z = undefined;
@@ -23898,8 +26143,33 @@ var script$X = {
 const __vue_script__$X = script$X;
 
 /* template */
-var __vue_render__$V = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('c-input-select',{ref:"roleSelect",attrs:{"value":_vm.value,"options":_vm.roles,"placeholder":_vm.placeholder,"get-option-key":function (r) { return r.roleID; },"get-option-label":function (r) { return _vm.getRoleLabel(r); },"filterable":false,"selectable":_vm.selectable,"multiple":_vm.multiple,"clearable":_vm.clearable,"loading":_vm.loading},on:{"search":_vm.search,"input":_vm.updateValue}})};
+var __vue_render__$V = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("c-input-select", {
+    ref: "roleSelect",
+    attrs: {
+      value: _vm.value,
+      options: _vm.roles,
+      placeholder: _vm.placeholder,
+      "get-option-key": function (r) {
+        return r.roleID
+      },
+      "get-option-label": function (r) {
+        return _vm.getRoleLabel(r)
+      },
+      filterable: false,
+      selectable: _vm.selectable,
+      multiple: _vm.multiple,
+      clearable: _vm.clearable,
+      loading: _vm.loading,
+    },
+    on: { search: _vm.search, input: _vm.updateValue },
+  })
+};
 var __vue_staticRenderFns__$V = [];
+__vue_render__$V._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$Y = undefined;
@@ -24070,8 +26340,36 @@ var script$W = {
 const __vue_script__$W = script$W;
 
 /* template */
-var __vue_render__$U = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('c-input-select',_vm._b({ref:"userSelect",attrs:{"value":_vm.user.value,"data-test-id":"select-user","options":_vm.user.options,"get-option-label":_vm.getOptionLabel,"get-option-key":_vm.getOptionKey,"placeholder":_vm.placeholder,"loading":_vm.processing,"filterable":false,"clearable":_vm.clearable},on:{"search":_vm.search,"input":_vm.onUserUpdate}},'c-input-select',_vm.$attrs,false))};
+var __vue_render__$U = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "c-input-select",
+    _vm._b(
+      {
+        ref: "userSelect",
+        attrs: {
+          value: _vm.user.value,
+          "data-test-id": "select-user",
+          options: _vm.user.options,
+          "get-option-label": _vm.getOptionLabel,
+          "get-option-key": _vm.getOptionKey,
+          placeholder: _vm.placeholder,
+          loading: _vm.processing,
+          filterable: false,
+          clearable: _vm.clearable,
+        },
+        on: { search: _vm.search, input: _vm.onUserUpdate },
+      },
+      "c-input-select",
+      _vm.$attrs,
+      false
+    )
+  )
+};
 var __vue_staticRenderFns__$U = [];
+__vue_render__$U._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$X = undefined;
@@ -24221,8 +26519,40 @@ var script$V = {
 const __vue_script__$V = script$V;
 
 /* template */
-var __vue_render__$T = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('c-input-select',_vm._b({attrs:{"data-test-id":"select-user-group","options":_vm.userGroup.options,"get-option-label":_vm.getOptionLabel,"get-option-key":_vm.getOptionKey,"placeholder":_vm.placeholder,"loading":_vm.processing,"filterable":false},on:{"search":_vm.search,"input":_vm.onUserGroupUpdate},model:{value:(_vm.userGroup.value),callback:function ($$v) {_vm.$set(_vm.userGroup, "value", $$v);},expression:"userGroup.value"}},'c-input-select',_vm.$attrs,false))};
+var __vue_render__$T = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "c-input-select",
+    _vm._b(
+      {
+        attrs: {
+          "data-test-id": "select-user-group",
+          options: _vm.userGroup.options,
+          "get-option-label": _vm.getOptionLabel,
+          "get-option-key": _vm.getOptionKey,
+          placeholder: _vm.placeholder,
+          loading: _vm.processing,
+          filterable: false,
+        },
+        on: { search: _vm.search, input: _vm.onUserGroupUpdate },
+        model: {
+          value: _vm.userGroup.value,
+          callback: function ($$v) {
+            _vm.$set(_vm.userGroup, "value", $$v);
+          },
+          expression: "userGroup.value",
+        },
+      },
+      "c-input-select",
+      _vm.$attrs,
+      false
+    )
+  )
+};
 var __vue_staticRenderFns__$T = [];
+__vue_render__$T._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$W = undefined;
@@ -24340,8 +26670,41 @@ var script$U = {
 const __vue_script__$U = script$U;
 
 /* template */
-var __vue_render__$S = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-button',{attrs:{"data-test-id":"button-permissions","title":_vm.tooltip,"variant":_vm.buttonVariant,"size":_vm.size},on:{"click":_vm.onClick}},[_vm._t("default",function(){return [(_vm.showButtonIcon)?_c('font-awesome-icon',{attrs:{"icon":['fas', 'lock']}}):_vm._e(),_vm._v(" "),(_vm.buttonLabel)?_c('span',{staticClass:"permissions-button-label"},[_vm._v("\n      "+_vm._s(_vm.buttonLabel)+"\n    ")]):_vm._e()]})],2)};
+var __vue_render__$S = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-button",
+    {
+      attrs: {
+        "data-test-id": "button-permissions",
+        title: _vm.tooltip,
+        variant: _vm.buttonVariant,
+        size: _vm.size,
+      },
+      on: { click: _vm.onClick },
+    },
+    [
+      _vm._t("default", function () {
+        return [
+          _vm.showButtonIcon
+            ? _c("font-awesome-icon", { attrs: { icon: ["fas", "lock"] } })
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.buttonLabel
+            ? _c("span", { staticClass: "permissions-button-label" }, [
+                _vm._v("\n      " + _vm._s(_vm.buttonLabel) + "\n    "),
+              ])
+            : _vm._e(),
+        ]
+      }),
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$S = [];
+__vue_render__$S._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$V = undefined;
@@ -24425,13 +26788,35 @@ var script$T = {
 const __vue_script__$T = script$T;
 
 /* template */
-var __vue_render__$R = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-form-radio-group',{staticClass:"access rounded",attrs:{"data-test-id":"toggle-role-permissions","buttons":"","disabled":!_vm.enabled,"button-variant":_vm.variant,"options":_vm.options},model:{value:(_vm.selected),callback:function ($$v) {_vm.selected=$$v;},expression:"selected"}})};
+var __vue_render__$R = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("b-form-radio-group", {
+    staticClass: "access rounded",
+    attrs: {
+      "data-test-id": "toggle-role-permissions",
+      buttons: "",
+      disabled: !_vm.enabled,
+      "button-variant": _vm.variant,
+      options: _vm.options,
+    },
+    model: {
+      value: _vm.selected,
+      callback: function ($$v) {
+        _vm.selected = $$v;
+      },
+      expression: "selected",
+    },
+  })
+};
 var __vue_staticRenderFns__$R = [];
+__vue_render__$R._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$U = function (inject) {
     if (!inject) return
-    inject("data-v-0ff0c354_0", { source: ".access .btn{background-color:var(--light);border:none}.access .btn:nth-child(2),.access .btn:nth-child(3){margin-left:.2rem!important}", map: undefined, media: undefined });
+    inject("data-v-eb4bf0e2_0", { source: ".access .btn {\n  background-color: var(--light);\n  border: none;\n}\n.access .btn:nth-child(2), .access .btn:nth-child(3) {\n  margin-left: 0.2rem !important;\n}\n\n/*# sourceMappingURL=Access.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/permissions/form/Access.vue","Access.vue"],"names":[],"mappings":"AAmEA;EACA,8BAAA;EACA,YAAA;AClEA;ADqEA;EACA,8BAAA;ACnEA;;AAEA,qCAAqC","file":"Access.vue","sourcesContent":["<template>\n  <b-form-radio-group\n    v-model=\"selected\"\n    data-test-id=\"toggle-role-permissions\"\n    buttons\n    :disabled=\"!enabled\"\n    :button-variant=\"variant\"\n    :options=\"options\"\n    class=\"access rounded\"\n  />\n</template>\n<script lang=\"js\">\nexport default {\n  props: {\n    enabled: {\n      type: Boolean,\n      default: true,\n    },\n\n    access: {\n      type: String,\n      required: false,\n      default: undefined,\n    },\n\n    current: {\n      type: String,\n      required: false,\n      default: undefined,\n    },\n  },\n\n  computed: {\n    options () {\n      return ['allow', 'inherit', 'deny'].map(value => ({\n        value,\n        text: this.$t('permissions:ui.access.' + value),\n      }))\n    },\n\n    isChanged () {\n      return this.selected !== this.current\n    },\n\n    variant () {\n      return this.isChanged ? 'outline-warning' : 'outline-primary'\n    },\n\n    selected: {\n      get () {\n        return this.access\n      },\n\n      set (sel) {\n        if (this.access !== sel) {\n          this.$emit('update', sel)\n        }\n\n        this.$emit('update:access', sel)\n      },\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.access {\n  .btn {\n    background-color: var(--light);\n    border: none;\n  }\n\n  .btn:nth-child(2), .btn:nth-child(3) {\n    margin-left: 0.2rem !important;\n  }\n}\n</style>\n",".access .btn {\n  background-color: var(--light);\n  border: none;\n}\n.access .btn:nth-child(2), .access .btn:nth-child(3) {\n  margin-left: 0.2rem !important;\n}\n\n/*# sourceMappingURL=Access.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -24535,8 +26920,48 @@ var script$S = {
 const __vue_script__$S = script$S;
 
 /* template */
-var __vue_render__$Q = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"data-test-id":_vm.title || (_vm.operation + " on " + _vm.resource)}},[_c('p',{staticClass:"mb-1 text-truncate",attrs:{"title":_vm.title || (_vm.operation + " on " + _vm.resource)}},[_vm._v("\n    "+_vm._s(_vm.title || (_vm.operation + " on " + _vm.resource))+"\n  ")]),_vm._v(" "),_c('access',{staticClass:"w-100",attrs:{"access":_vm.access,"current":_vm.current,"enabled":_vm.enabled},on:{"update":_vm.onUpdate}})],1)};
+var __vue_render__$Q = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    {
+      attrs: {
+        "data-test-id": _vm.title || _vm.operation + " on " + _vm.resource,
+      },
+    },
+    [
+      _c(
+        "p",
+        {
+          staticClass: "mb-1 text-truncate",
+          attrs: { title: _vm.title || _vm.operation + " on " + _vm.resource },
+        },
+        [
+          _vm._v(
+            "\n    " +
+              _vm._s(_vm.title || _vm.operation + " on " + _vm.resource) +
+              "\n  "
+          ),
+        ]
+      ),
+      _vm._v(" "),
+      _c("access", {
+        staticClass: "w-100",
+        attrs: {
+          access: _vm.access,
+          current: _vm.current,
+          enabled: _vm.enabled,
+        },
+        on: { update: _vm.onUpdate },
+      }),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$Q = [];
+__vue_render__$Q._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$T = undefined;
@@ -24592,8 +27017,33 @@ var script$R = {
 const __vue_script__$R = script$R;
 
 /* template */
-var __vue_render__$P = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{attrs:{"data-test-id":"role-permissions-list"}},_vm._l((_vm.rules),function(p,i){return _c('rule',_vm._b({key:p.resource + p.operation,class:{ 'mt-4': i > 0 },on:{"update":_vm.onUpdate}},'rule',p,false))}),1)};
+var __vue_render__$P = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { attrs: { "data-test-id": "role-permissions-list" } },
+    _vm._l(_vm.rules, function (p, i) {
+      return _c(
+        "rule",
+        _vm._b(
+          {
+            key: p.resource + p.operation,
+            class: { "mt-4": i > 0 },
+            on: { update: _vm.onUpdate },
+          },
+          "rule",
+          p,
+          false
+        )
+      )
+    }),
+    1
+  )
+};
 var __vue_staticRenderFns__$P = [];
+__vue_render__$P._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$S = undefined;
@@ -24989,17 +27439,444 @@ var script$Q = {
 const __vue_script__$Q = script$Q;
 
 /* template */
-var __vue_render__$O = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('b-modal',{staticClass:"h-100 overflow-hidden",attrs:{"id":"permissions-modal","visible":_vm.showModal,"size":"xl","title":_vm.translatedTitle,"lazy":"","scrollable":"","no-fade":"","body-class":"d-flex flex-column p-0"},on:{"hide":_vm.onHide},scopedSlots:_vm._u([{key:"modal-footer",fn:function(){return [_c('b-button',{attrs:{"data-test-id":"button-cancel","variant":"light"},on:{"click":_vm.onHide}},[_vm._v("\n        "+_vm._s(_vm.labels.cancel)+"\n      ")]),_vm._v(" "),_c('c-button-submit',{attrs:{"data-test-id":"button-save","disabled":_vm.submitDisabled,"processing":_vm.submitting,"text":_vm.labels.save},on:{"submit":_vm.onSubmit}})]},proxy:true}])},[_c('b-row',{staticClass:"bg-light border-bottom",attrs:{"no-gutters":""}},[_c('b-col',{staticClass:"p-3",attrs:{"lg":"4"}},[_vm._v("\n        "+_vm._s(_vm.labels.edit.description)+"\n      ")]),_vm._v(" "),_c('b-col',{staticClass:"d-none d-lg-block border-left p-3"},[_vm._v("\n        "+_vm._s(_vm.labels.evaluate.description)+"\n      ")])],1),_vm._v(" "),_c('b-row',{staticClass:"bg-light",attrs:{"no-gutters":"","align-v":"stretch"}},[_c('b-col',{staticClass:"d-flex align-items-center p-3 border-bottom",attrs:{"lg":"4"}},[_c('b-form-group',{staticClass:"mb-0 w-100",attrs:{"label":_vm.labels.edit.label,"label-class":"text-primary"}},[_c('c-input-role',{attrs:{"data-test-id":"select-user-list-roles","visible":_vm.isRoleVisible,"clearable":false,"preselect":""},on:{"input":_vm.onRoleChange},model:{value:(_vm.currentRoleID),callback:function ($$v) {_vm.currentRoleID=$$v;},expression:"currentRoleID"}})],1)],1),_vm._v(" "),_vm._l((_vm.evaluate),function(e,i){return _c('b-col',{key:i,staticClass:"pointer hide-eval border-bottom d-none d-lg-flex flex-column align-items-center justify-content-center overflow-hidden border-left p-3",attrs:{"data-test-id":"icon-remove","lg":"2"},on:{"click":function($event){return _vm.onHideEval(i)}}},[_vm._l((_vm.getEvalName(e)),function(n,index){return _c('label',{key:index,staticClass:"pointer text-center text-primary mb-1",attrs:{"title":n}},[_vm._v("\n          "+_vm._s(n)+"\n        ")])}),_vm._v(" "),_c('font-awesome-icon',{staticClass:"text-secondary rotate mt-1",attrs:{"icon":['fas', 'plus']}})],2)}),_vm._v(" "),(_vm.evaluate.length < 4)?_c('b-col',{directives:[{name:"b-modal",rawName:"v-b-modal.permissions-modal-eval",modifiers:{"permissions-modal-eval":true}}],staticClass:"d-none d-lg-flex pointer border-bottom flex-column align-items-center justify-content-center overflow-hidden border-left p-3",attrs:{"data-test-id":"icon-add"}},[_c('label',{staticClass:"pointer text-center text-primary mb-1"},[_vm._v("\n          "+_vm._s(_vm.labels.add.label)+"\n        ")]),_vm._v(" "),_c('font-awesome-icon',{staticClass:"text-success d-block mx-auto mt-1",attrs:{"icon":['fas', 'plus']}})],1):_vm._e()],2),_vm._v(" "),(_vm.processing)?_c('div',{staticClass:"d-flex flex-column align-items-center justify-content-center h-100 py-4",staticStyle:{"min-height":"50vh"}},[_c('b-spinner'),_vm._v(" "),_c('div',[_vm._v("\n        "+_vm._s(_vm.labels.loading)+"\n      ")])],1):_c('b-row',{attrs:{"no-gutters":""}},[_c('b-col',{staticClass:"p-3",attrs:{"lg":"4"}},[_c('rules',{attrs:{"rules":_vm.rules},on:{"update:rules":function($event){_vm.rules=$event;}}})],1),_vm._v(" "),_vm._l((_vm.evaluate),function(e,i){return _c('b-col',{key:i,staticClass:"d-none d-lg-flex border-left p-3 bg-light not-allowed",attrs:{"lg":"2"}},[_c('div',{staticClass:"d-flex flex-column align-items-center justify-content-between mt-4 w-100"},_vm._l((e.rules),function(r){return _c('h5',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.noninteractive.hover",value:({ title: _vm.getRuleTooltip(r.access === 'unknown-context', !!e.userID), boundary: 'body' }),expression:"{ title: getRuleTooltip(r.access === 'unknown-context', !!e.userID), boundary: 'body' }",modifiers:{"noninteractive":true,"hover":true}}],key:r.operation,staticClass:"text-center mb-1 mt-2 w-100"},[(r.access === 'unknown-context')?_c('font-awesome-icon',{staticClass:"text-secondary",attrs:{"icon":['fas', 'question']}}):(r.access === 'allow')?_c('font-awesome-icon',{staticClass:"text-success",attrs:{"icon":['fas', 'check']}}):_c('font-awesome-icon',{staticClass:"text-danger",attrs:{"icon":['fas', 'times']}})],1)}),0)])}),_vm._v(" "),_c('b-col',{staticClass:"d-none d-lg-block pt-4 border-left"})],2)],1),_vm._v(" "),_c('b-modal',{attrs:{"id":"permissions-modal-eval","title":_vm.labels.add.title,"centered":"","no-fade":""},scopedSlots:_vm._u([{key:"modal-footer",fn:function(){return [_c('c-button-submit',{attrs:{"data-test-id":"button-save","disabled":!_vm.addEnabled,"processing":_vm.processing,"text":_vm.labels.add.save},on:{"submit":_vm.onAddEval}})]},proxy:true}])},[_c('b-form-group',{staticClass:"mb-0",attrs:{"label":_vm.labels.add.role.label,"label-class":"text-primary"}},[_c('c-input-role',{attrs:{"data-test-id":"select-role","placeholder":_vm.labels.add.role.placeholder,"multiple":"","disabled":!!_vm.add.userID},model:{value:(_vm.add.roleID),callback:function ($$v) {_vm.$set(_vm.add, "roleID", $$v);},expression:"add.roleID"}})],1),_vm._v(" "),_c('b-form-group',{staticClass:"mt-3 mb-0",attrs:{"label":_vm.labels.add.user.label,"label-class":"text-primary"}},[_c('c-input-select',{attrs:{"data-test-id":"select-user","disabled":!!_vm.add.roleID.length,"options":_vm.userOptions,"get-option-label":_vm.getUserLabel,"placeholder":_vm.labels.add.user.placeholder,"filterable":false},on:{"search":_vm.searchUsers},model:{value:(_vm.add.userID),callback:function ($$v) {_vm.$set(_vm.add, "userID", $$v);},expression:"add.userID"}})],1)],1)],1)};
+var __vue_render__$O = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    [
+      _c(
+        "b-modal",
+        {
+          staticClass: "h-100 overflow-hidden",
+          attrs: {
+            id: "permissions-modal",
+            visible: _vm.showModal,
+            size: "xl",
+            title: _vm.translatedTitle,
+            lazy: "",
+            scrollable: "",
+            "no-fade": "",
+            "body-class": "d-flex flex-column p-0",
+          },
+          on: { hide: _vm.onHide },
+          scopedSlots: _vm._u([
+            {
+              key: "modal-footer",
+              fn: function () {
+                return [
+                  _c(
+                    "b-button",
+                    {
+                      attrs: {
+                        "data-test-id": "button-cancel",
+                        variant: "light",
+                      },
+                      on: { click: _vm.onHide },
+                    },
+                    [
+                      _vm._v(
+                        "\n        " + _vm._s(_vm.labels.cancel) + "\n      "
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c("c-button-submit", {
+                    attrs: {
+                      "data-test-id": "button-save",
+                      disabled: _vm.submitDisabled,
+                      processing: _vm.submitting,
+                      text: _vm.labels.save,
+                    },
+                    on: { submit: _vm.onSubmit },
+                  }),
+                ]
+              },
+              proxy: true,
+            },
+          ]),
+        },
+        [
+          _c(
+            "b-row",
+            {
+              staticClass: "bg-light border-bottom",
+              attrs: { "no-gutters": "" },
+            },
+            [
+              _c("b-col", { staticClass: "p-3", attrs: { lg: "4" } }, [
+                _vm._v(
+                  "\n        " +
+                    _vm._s(_vm.labels.edit.description) +
+                    "\n      "
+                ),
+              ]),
+              _vm._v(" "),
+              _c(
+                "b-col",
+                { staticClass: "d-none d-lg-block border-left p-3" },
+                [
+                  _vm._v(
+                    "\n        " +
+                      _vm._s(_vm.labels.evaluate.description) +
+                      "\n      "
+                  ),
+                ]
+              ),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-row",
+            {
+              staticClass: "bg-light",
+              attrs: { "no-gutters": "", "align-v": "stretch" },
+            },
+            [
+              _c(
+                "b-col",
+                {
+                  staticClass: "d-flex align-items-center p-3 border-bottom",
+                  attrs: { lg: "4" },
+                },
+                [
+                  _c(
+                    "b-form-group",
+                    {
+                      staticClass: "mb-0 w-100",
+                      attrs: {
+                        label: _vm.labels.edit.label,
+                        "label-class": "text-primary",
+                      },
+                    },
+                    [
+                      _c("c-input-role", {
+                        attrs: {
+                          "data-test-id": "select-user-list-roles",
+                          visible: _vm.isRoleVisible,
+                          clearable: false,
+                          preselect: "",
+                        },
+                        on: { input: _vm.onRoleChange },
+                        model: {
+                          value: _vm.currentRoleID,
+                          callback: function ($$v) {
+                            _vm.currentRoleID = $$v;
+                          },
+                          expression: "currentRoleID",
+                        },
+                      }),
+                    ],
+                    1
+                  ),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _vm._l(_vm.evaluate, function (e, i) {
+                return _c(
+                  "b-col",
+                  {
+                    key: i,
+                    staticClass:
+                      "pointer hide-eval border-bottom d-none d-lg-flex flex-column align-items-center justify-content-center overflow-hidden border-left p-3",
+                    attrs: { "data-test-id": "icon-remove", lg: "2" },
+                    on: {
+                      click: function ($event) {
+                        return _vm.onHideEval(i)
+                      },
+                    },
+                  },
+                  [
+                    _vm._l(_vm.getEvalName(e), function (n, index) {
+                      return _c(
+                        "label",
+                        {
+                          key: index,
+                          staticClass: "pointer text-center text-primary mb-1",
+                          attrs: { title: n },
+                        },
+                        [_vm._v("\n          " + _vm._s(n) + "\n        ")]
+                      )
+                    }),
+                    _vm._v(" "),
+                    _c("font-awesome-icon", {
+                      staticClass: "text-secondary rotate mt-1",
+                      attrs: { icon: ["fas", "plus"] },
+                    }),
+                  ],
+                  2
+                )
+              }),
+              _vm._v(" "),
+              _vm.evaluate.length < 4
+                ? _c(
+                    "b-col",
+                    {
+                      directives: [
+                        {
+                          name: "b-modal",
+                          rawName: "v-b-modal.permissions-modal-eval",
+                          modifiers: { "permissions-modal-eval": true },
+                        },
+                      ],
+                      staticClass:
+                        "d-none d-lg-flex pointer border-bottom flex-column align-items-center justify-content-center overflow-hidden border-left p-3",
+                      attrs: { "data-test-id": "icon-add" },
+                    },
+                    [
+                      _c(
+                        "label",
+                        {
+                          staticClass: "pointer text-center text-primary mb-1",
+                        },
+                        [
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(_vm.labels.add.label) +
+                              "\n        "
+                          ),
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c("font-awesome-icon", {
+                        staticClass: "text-success d-block mx-auto mt-1",
+                        attrs: { icon: ["fas", "plus"] },
+                      }),
+                    ],
+                    1
+                  )
+                : _vm._e(),
+            ],
+            2
+          ),
+          _vm._v(" "),
+          _vm.processing
+            ? _c(
+                "div",
+                {
+                  staticClass:
+                    "d-flex flex-column align-items-center justify-content-center h-100 py-4",
+                  staticStyle: { "min-height": "50vh" },
+                },
+                [
+                  _c("b-spinner"),
+                  _vm._v(" "),
+                  _c("div", [
+                    _vm._v(
+                      "\n        " + _vm._s(_vm.labels.loading) + "\n      "
+                    ),
+                  ]),
+                ],
+                1
+              )
+            : _c(
+                "b-row",
+                { attrs: { "no-gutters": "" } },
+                [
+                  _c(
+                    "b-col",
+                    { staticClass: "p-3", attrs: { lg: "4" } },
+                    [
+                      _c("rules", {
+                        attrs: { rules: _vm.rules },
+                        on: {
+                          "update:rules": function ($event) {
+                            _vm.rules = $event;
+                          },
+                        },
+                      }),
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _vm._l(_vm.evaluate, function (e, i) {
+                    return _c(
+                      "b-col",
+                      {
+                        key: i,
+                        staticClass:
+                          "d-none d-lg-flex border-left p-3 bg-light not-allowed",
+                        attrs: { lg: "2" },
+                      },
+                      [
+                        _c(
+                          "div",
+                          {
+                            staticClass:
+                              "d-flex flex-column align-items-center justify-content-between mt-4 w-100",
+                          },
+                          _vm._l(e.rules, function (r) {
+                            return _c(
+                              "h5",
+                              {
+                                directives: [
+                                  {
+                                    name: "b-tooltip",
+                                    rawName: "v-b-tooltip.noninteractive.hover",
+                                    value: {
+                                      title: _vm.getRuleTooltip(
+                                        r.access === "unknown-context",
+                                        !!e.userID
+                                      ),
+                                      boundary: "body",
+                                    },
+                                    expression:
+                                      "{ title: getRuleTooltip(r.access === 'unknown-context', !!e.userID), boundary: 'body' }",
+                                    modifiers: {
+                                      noninteractive: true,
+                                      hover: true,
+                                    },
+                                  },
+                                ],
+                                key: r.operation,
+                                staticClass: "text-center mb-1 mt-2 w-100",
+                              },
+                              [
+                                r.access === "unknown-context"
+                                  ? _c("font-awesome-icon", {
+                                      staticClass: "text-secondary",
+                                      attrs: { icon: ["fas", "question"] },
+                                    })
+                                  : r.access === "allow"
+                                  ? _c("font-awesome-icon", {
+                                      staticClass: "text-success",
+                                      attrs: { icon: ["fas", "check"] },
+                                    })
+                                  : _c("font-awesome-icon", {
+                                      staticClass: "text-danger",
+                                      attrs: { icon: ["fas", "times"] },
+                                    }),
+                              ],
+                              1
+                            )
+                          }),
+                          0
+                        ),
+                      ]
+                    )
+                  }),
+                  _vm._v(" "),
+                  _c("b-col", {
+                    staticClass: "d-none d-lg-block pt-4 border-left",
+                  }),
+                ],
+                2
+              ),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: {
+            id: "permissions-modal-eval",
+            title: _vm.labels.add.title,
+            centered: "",
+            "no-fade": "",
+          },
+          scopedSlots: _vm._u([
+            {
+              key: "modal-footer",
+              fn: function () {
+                return [
+                  _c("c-button-submit", {
+                    attrs: {
+                      "data-test-id": "button-save",
+                      disabled: !_vm.addEnabled,
+                      processing: _vm.processing,
+                      text: _vm.labels.add.save,
+                    },
+                    on: { submit: _vm.onAddEval },
+                  }),
+                ]
+              },
+              proxy: true,
+            },
+          ]),
+        },
+        [
+          _c(
+            "b-form-group",
+            {
+              staticClass: "mb-0",
+              attrs: {
+                label: _vm.labels.add.role.label,
+                "label-class": "text-primary",
+              },
+            },
+            [
+              _c("c-input-role", {
+                attrs: {
+                  "data-test-id": "select-role",
+                  placeholder: _vm.labels.add.role.placeholder,
+                  multiple: "",
+                  disabled: !!_vm.add.userID,
+                },
+                model: {
+                  value: _vm.add.roleID,
+                  callback: function ($$v) {
+                    _vm.$set(_vm.add, "roleID", $$v);
+                  },
+                  expression: "add.roleID",
+                },
+              }),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-form-group",
+            {
+              staticClass: "mt-3 mb-0",
+              attrs: {
+                label: _vm.labels.add.user.label,
+                "label-class": "text-primary",
+              },
+            },
+            [
+              _c("c-input-select", {
+                attrs: {
+                  "data-test-id": "select-user",
+                  disabled: !!_vm.add.roleID.length,
+                  options: _vm.userOptions,
+                  "get-option-label": _vm.getUserLabel,
+                  placeholder: _vm.labels.add.user.placeholder,
+                  filterable: false,
+                },
+                on: { search: _vm.searchUsers },
+                model: {
+                  value: _vm.add.userID,
+                  callback: function ($$v) {
+                    _vm.$set(_vm.add, "userID", $$v);
+                  },
+                  expression: "add.userID",
+                },
+              }),
+            ],
+            1
+          ),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$O = [];
+__vue_render__$O._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$R = function (inject) {
     if (!inject) return
-    inject("data-v-29bf4ea2_0", { source: ".not-allowed[data-v-29bf4ea2]{cursor:not-allowed}.pointer[data-v-29bf4ea2]{cursor:pointer}.rotate[data-v-29bf4ea2]{transform:rotate(45deg)}.hide-eval:hover .rotate[data-v-29bf4ea2]{color:var(--primary)!important}", map: undefined, media: undefined });
+    inject("data-v-6bfcf095_0", { source: ".not-allowed[data-v-6bfcf095] {\n  cursor: not-allowed;\n}\n.pointer[data-v-6bfcf095] {\n  cursor: pointer;\n}\n.rotate[data-v-6bfcf095] {\n  transform: rotate(45deg);\n}\n.hide-eval:hover .rotate[data-v-6bfcf095] {\n  color: var(--primary) !important;\n}\n\n/*# sourceMappingURL=CPermissionsModal.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/permissions/CPermissionsModal.vue","CPermissionsModal.vue"],"names":[],"mappings":"AA2lBA;EACA,mBAAA;AC1lBA;AD6lBA;EACA,eAAA;AC1lBA;AD4lBA;EACA,wBAAA;ACzlBA;AD6lBA;EACA,gCAAA;AC1lBA;;AAEA,gDAAgD","file":"CPermissionsModal.vue","sourcesContent":["<template>\n  <div>\n    <b-modal\n      id=\"permissions-modal\"\n      :visible=\"showModal\"\n      size=\"xl\"\n      :title=\"translatedTitle\"\n      lazy\n      scrollable\n      no-fade\n      body-class=\"d-flex flex-column p-0\"\n      class=\"h-100 overflow-hidden\"\n      @hide=\"onHide\"\n    >\n      <b-row\n        no-gutters\n        class=\"bg-light border-bottom\"\n      >\n        <b-col\n          lg=\"4\"\n          class=\"p-3\"\n        >\n          {{ labels.edit.description }}\n        </b-col>\n        <b-col\n          class=\"d-none d-lg-block border-left p-3\"\n        >\n          {{ labels.evaluate.description }}\n        </b-col>\n      </b-row>\n\n      <b-row\n        no-gutters\n        align-v=\"stretch\"\n        class=\"bg-light\"\n      >\n        <b-col\n          lg=\"4\"\n          class=\"d-flex align-items-center p-3 border-bottom\"\n        >\n          <b-form-group\n            class=\"mb-0 w-100\"\n            :label=\"labels.edit.label\"\n            label-class=\"text-primary\"\n          >\n            <c-input-role\n              v-model=\"currentRoleID\"\n              data-test-id=\"select-user-list-roles\"\n              :visible=\"isRoleVisible\"\n              :clearable=\"false\"\n              preselect\n              @input=\"onRoleChange\"\n            />\n          </b-form-group>\n        </b-col>\n\n        <b-col\n          v-for=\"(e, i) in evaluate\"\n          :key=\"i\"\n          data-test-id=\"icon-remove\"\n          lg=\"2\"\n          class=\"pointer hide-eval border-bottom d-none d-lg-flex flex-column align-items-center justify-content-center overflow-hidden border-left p-3\"\n          @click=\"onHideEval(i)\"\n        >\n          <label\n            v-for=\"(n, index) in getEvalName(e)\"\n            :key=\"index\"\n            :title=\"n\"\n            class=\"pointer text-center text-primary mb-1\"\n          >\n            {{ n }}\n          </label>\n\n          <font-awesome-icon\n            :icon=\"['fas', 'plus']\"\n            class=\"text-secondary rotate mt-1\"\n          />\n        </b-col>\n\n        <b-col\n          v-if=\"evaluate.length < 4\"\n          v-b-modal.permissions-modal-eval\n          data-test-id=\"icon-add\"\n          class=\"d-none d-lg-flex pointer border-bottom flex-column align-items-center justify-content-center overflow-hidden border-left p-3\"\n        >\n          <label\n            class=\"pointer text-center text-primary mb-1\"\n          >\n            {{ labels.add.label }}\n          </label>\n          <font-awesome-icon\n            :icon=\"['fas', 'plus']\"\n            class=\"text-success d-block mx-auto mt-1\"\n          />\n        </b-col>\n      </b-row>\n\n      <div\n        v-if=\"processing\"\n        class=\"d-flex flex-column align-items-center justify-content-center h-100 py-4\"\n        style=\"min-height: 50vh;\"\n      >\n        <b-spinner />\n\n        <div>\n          {{ labels.loading }}\n        </div>\n      </div>\n\n      <b-row\n        v-else\n        no-gutters\n      >\n        <b-col\n          lg=\"4\"\n          class=\"p-3\"\n        >\n          <rules\n            :rules.sync=\"rules\"\n          />\n        </b-col>\n\n        <b-col\n          v-for=\"(e, i) in evaluate\"\n          :key=\"i\"\n          lg=\"2\"\n          class=\"d-none d-lg-flex border-left p-3 bg-light not-allowed\"\n        >\n          <div\n            class=\"d-flex flex-column align-items-center justify-content-between mt-4 w-100\"\n          >\n            <h5\n              v-for=\"r in e.rules\"\n              :key=\"r.operation\"\n              v-b-tooltip.noninteractive.hover=\"{ title: getRuleTooltip(r.access === 'unknown-context', !!e.userID), boundary: 'body' }\"\n              class=\"text-center mb-1 mt-2 w-100\"\n            >\n              <font-awesome-icon\n                v-if=\"r.access === 'unknown-context'\"\n                :icon=\"['fas', 'question']\"\n                class=\"text-secondary\"\n              />\n\n              <font-awesome-icon\n                v-else-if=\"r.access === 'allow'\"\n                :icon=\"['fas', 'check']\"\n                class=\"text-success\"\n              />\n\n              <font-awesome-icon\n                v-else\n                :icon=\"['fas', 'times']\"\n                class=\"text-danger\"\n              />\n            </h5>\n          </div>\n        </b-col>\n\n        <b-col\n          class=\"d-none d-lg-block pt-4 border-left\"\n        />\n      </b-row>\n\n      <template #modal-footer>\n        <b-button\n          data-test-id=\"button-cancel\"\n          variant=\"light\"\n          @click=\"onHide\"\n        >\n          {{ labels.cancel }}\n        </b-button>\n\n        <c-button-submit\n          data-test-id=\"button-save\"\n          :disabled=\"submitDisabled\"\n          :processing=\"submitting\"\n          :text=\"labels.save\"\n          @submit=\"onSubmit\"\n        />\n      </template>\n    </b-modal>\n\n    <b-modal\n      id=\"permissions-modal-eval\"\n      :title=\"labels.add.title\"\n      centered\n      no-fade\n    >\n      <b-form-group\n        :label=\"labels.add.role.label\"\n        label-class=\"text-primary\"\n        class=\"mb-0\"\n      >\n        <c-input-role\n          v-model=\"add.roleID\"\n          data-test-id=\"select-role\"\n          :placeholder=\"labels.add.role.placeholder\"\n          multiple\n          :disabled=\"!!add.userID\"\n        />\n      </b-form-group>\n\n      <b-form-group\n        :label=\"labels.add.user.label\"\n        label-class=\"text-primary\"\n        class=\"mt-3 mb-0\"\n      >\n        <c-input-select\n          v-model=\"add.userID\"\n          data-test-id=\"select-user\"\n          :disabled=\"!!add.roleID.length\"\n          :options=\"userOptions\"\n          :get-option-label=\"getUserLabel\"\n          :placeholder=\"labels.add.user.placeholder\"\n          :filterable=\"false\"\n          @search=\"searchUsers\"\n        />\n      </b-form-group>\n\n      <template #modal-footer>\n        <c-button-submit\n          data-test-id=\"button-save\"\n          :disabled=\"!addEnabled\"\n          :processing=\"processing\"\n          :text=\"labels.add.save\"\n          @submit=\"onAddEval\"\n        />\n      </template>\n    </b-modal>\n  </div>\n</template>\n<script lang=\"js\">\nimport { modalOpenEventName, split } from './def.ts'\nimport CInputSelect from '../input/CInputSelect.vue'\nimport CInputRole from '../input/CInputRole.vue'\nimport Rules from './form/Rules.vue'\n\nexport default {\n  i18nOptions: {\n    namespaces: 'permissions',\n  },\n\n  components: {\n    Rules,\n    CInputSelect,\n    CInputRole,\n  },\n\n  props: {\n    labels: {\n      required: false,\n      type: Object,\n      default: () => ({}),\n    },\n  },\n\n  data () {\n    return {\n      processing: false,\n      submitting: false,\n\n      backendComponentName: undefined,\n\n      resource: undefined,\n      title: undefined,\n      target: undefined,\n      allSpecific: false,\n\n      userOptions: [],\n\n      // List of available permissions (for a specific resource)\n      permissions: [],\n\n      // List of rules for the current role\n      rules: [],\n\n      currentRoleID: undefined,\n\n      evaluate: [],\n\n      fetchedUsers: {},\n\n      add: {\n        roleID: [],\n        userID: undefined,\n      },\n    }\n  },\n\n  computed: {\n    api () {\n      const s = this.backendComponentName\n      return s ? this['$' + s.charAt(0).toUpperCase() + s.slice(1) + 'API'] : undefined\n    },\n\n    showModal () {\n      return !!(this.resource && this.api)\n    },\n\n    dirty () {\n      return this.collectChangedRules().length > 0\n    },\n\n    submitDisabled () {\n      return !this.dirty || this.processing || this.submitting\n    },\n\n    addEnabled () {\n      const { roleID = [], userID } = this.add\n      return (roleID && roleID.length) || userID\n    },\n\n    translatedTitle () {\n      if (this.resource) {\n        const { i18nPrefix } = split(this.resource)\n\n        let target\n        if (this.allSpecific) {\n          target = this.$t(`permissions:${i18nPrefix}.all-specific`, { target: this.title, interpolation: { escapeValue: false } })\n        } else if (this.title) {\n          target = this.$t(`permissions:${i18nPrefix}.specific`, { target: this.title, interpolation: { escapeValue: false } })\n        } else {\n          target = this.$t(`permissions:${i18nPrefix}.all`)\n        }\n\n        return this.$t('permissions:ui.set-for', { target, interpolation: { escapeValue: false } })\n      }\n\n      return undefined\n    },\n  },\n\n  mounted () {\n    this.searchUsers('', () => {})\n\n    this.$root.$on(modalOpenEventName, this.loadModal)\n  },\n\n  beforeUnmount () {\n    this.destroyEvents()\n    this.setDefaultValues()\n  },\n\n  methods: {\n    loadModal ({ resource, title, target, allSpecific }) {\n      this.processing = true\n\n      this.resource = resource\n      this.title = title\n      this.target = target\n      this.allSpecific = allSpecific\n\n      // <schema>::<backend-component-name>:...\n      this.backendComponentName = resource.split(':')[2]\n\n      this.fetchPermissions().then(() => {\n        if (this.currentRoleID) {\n          const { roleID } = this.currentRoleID\n          return this.reEvaluatePermissions(roleID)\n        }\n      }).finally(() => {\n        this.processing = false\n      })\n    },\n\n    onHide () {\n      this.resource = undefined\n      this.title = undefined\n      this.target = undefined\n    },\n\n    onRoleChange ({ roleID }) {\n      this.processing = true\n\n      this.fetchRules(roleID).finally(() => {\n        this.processing = false\n      })\n    },\n\n    onSubmit () {\n      this.submitting = true\n\n      const rules = this.collectChangedRules()\n      const { roleID } = this.currentRoleID\n\n      this.api.permissionsUpdate({ roleID, rules }).then(() => {\n        this.reEvaluatePermissions(roleID)\n        this.toastSuccess(this.$t('permissions:ui.notification.save.success'))\n      }).catch(this.toastErrorHandler(this.$t('permissions:ui.notification.save.failed')))\n        .finally(() => {\n          setTimeout(() => {\n            this.submitting = false\n          }, 300)\n        })\n    },\n\n    async fetchPermissions () {\n      // clean loaded rules\n      this.rules = []\n      this.permissions = []\n\n      return this.api.permissionsList().then((pp) => {\n        this.permissions = this.filterPermissions(pp)\n      })\n    },\n\n    async fetchRules (roleID) {\n      return this.api.permissionsRead({ roleID, resource: this.resource }).then((rules) => {\n        this.rules = this.normalizeRules(rules)\n      })\n    },\n\n    isRoleVisible ({ isBypass }) {\n      return !isBypass\n    },\n\n    async evaluatePermissions ({ resource = this.resource, roleID, userID }) {\n      this.processing = true\n\n      return this.api.permissionsTrace({ resource, roleID, userID })\n        .then(this.normalizeRules, true)\n        .finally(() => {\n          this.processing = false\n        })\n    },\n\n    async reEvaluatePermissions (roleID) {\n      return this.fetchRules(roleID).then(() => {\n        return Promise.all(this.evaluate.map(e => {\n          let { roleID = [], userID } = e\n          roleID = roleID.map(({ roleID }) => roleID)\n\n          return this.evaluatePermissions({ roleID, userID }).then(rules => {\n            return {\n              ...e,\n              rules,\n            }\n          })\n        })).then(evaluate => {\n          this.evaluate = evaluate\n        })\n      })\n    },\n\n    searchUsers (query = '', loading) {\n      loading(true)\n\n      this.$SystemAPI.userList({ query, limit: 15 })\n        .then(({ set }) => {\n          this.userOptions = set.reduce((acc, { userID, name, username, email, handle }) => {\n            if (!this.fetchedUsers[userID]) {\n              this.fetchedUsers[userID] = name || username || email || `<@${userID}>`\n            }\n\n            acc.push(userID)\n\n            return acc\n          }, [])\n        })\n        .finally(() => {\n          loading(false)\n        })\n    },\n\n    getUserLabel (userID) {\n      return this.fetchedUsers[userID]\n    },\n\n    onAddEval () {\n      const userID = this.add.userID || {}\n      let { roleID = [] } = this.add\n      roleID = roleID.map(({ roleID }) => roleID)\n\n      this.evaluatePermissions({ roleID, userID }).then(rules => {\n        this.evaluate.push({\n          ...this.add,\n          rules,\n        })\n\n        this.add = {\n          roleID: [],\n          userID: undefined,\n        }\n\n        this.$bvModal.hide('permissions-modal-eval')\n      })\n    },\n\n    onHideEval (i) {\n      this.evaluate.splice(i, 1)\n    },\n\n    getEvalName ({ userID, roleID }) {\n      if (userID) {\n        return [this.fetchedUsers[userID]]\n      } else {\n        return roleID.map(({ name }) => name)\n      }\n    },\n\n    normalizeRules (rr, fallback = false) {\n      const inherit = 'inherit'\n\n      // merges roleRules (subset) with list of all permissions\n      const findCurrent = ({ operation }) => {\n        if (!rr) {\n          return inherit\n        }\n\n        let { resolution, access = inherit } = (rr.find(r => r.operation === operation) || {})\n\n        if (resolution === 'unknown-context') {\n          access = 'unknown-context'\n        } else if (fallback && access === inherit) {\n          access = 'deny'\n        }\n\n        return access\n      }\n\n      return this.permissions.map((p) => {\n        const current = findCurrent(p)\n        return { ...p, access: current, current }\n      })\n    },\n\n    // Removes unneeded permissions (ones that do not match resource prop)\n    // and translates the rest\n    filterPermissions (pp) {\n      const [resourceType] = this.resource.split('/', 2)\n      return pp\n        .filter(({ type }) => resourceType === type)\n        .map(({ type, op: operation }) => {\n          return {\n            ...this.describePermission({ resource: type, operation }),\n            operation,\n            // override resource-type with the actual resource-ID\n            resource: this.resource,\n          }\n        })\n    },\n\n    collectChangedRules () {\n      return this.rules.filter(r => r.access !== r.current).map(({ resource, operation, access }) => {\n        return { resource, operation, access }\n      })\n    },\n\n    describePermission ({ resource, operation }) {\n      const i18nPrefix = split(resource).i18nPrefix + `.operations.${operation}`\n\n      let title = ''\n      if (this.allSpecific) {\n        title = this.$t(`permissions:${i18nPrefix}.all-specific`, { target: this.target, interpolation: { escapeValue: false } })\n      } else if (this.target) {\n        title = this.$t(`permissions:${i18nPrefix}.specific`, { target: this.target, interpolation: { escapeValue: false } })\n      } else {\n        title = this.$t(`permissions:${i18nPrefix}.title`)\n      }\n\n      return {\n        title,\n        description: this.$t(`permissions:${i18nPrefix}.description`),\n      }\n    },\n\n    getRuleTooltip (isUnknown = false, isUser) {\n      if (!isUnknown) {\n        return ''\n      }\n\n      return this.$t(`permissions:ui.tooltip.unknown-context.${isUser ? 'user' : 'role'}`)\n    },\n\n    getOptionRoleKey ({ roleID }) {\n      return roleID\n    },\n\n    setDefaultValues () {\n      this.processing = false\n      this.submitting = false\n      this.backendComponentName = undefined\n      this.resource = undefined\n      this.title = undefined\n      this.target = undefined\n      this.allSpecific = false\n      this.userOptions = []\n      this.permissions = []\n      this.rules = []\n      this.currentRoleID = undefined\n      this.evaluate = []\n      this.add = {}\n      this.fetchedUsers = {}\n    },\n\n    destroyEvents () {\n      this.$root.$off(modalOpenEventName)\n    },\n  },\n}\n</script>\n\n<style scoped lang=\"scss\">\n.not-allowed {\n  cursor: not-allowed;\n}\n\n.pointer {\n  cursor: pointer;\n}\n.rotate {\n  transform: rotate(45deg);\n}\n\n.hide-eval:hover {\n  .rotate {\n    color: var(--primary) !important;\n  }\n}\n</style>\n",".not-allowed {\n  cursor: not-allowed;\n}\n\n.pointer {\n  cursor: pointer;\n}\n\n.rotate {\n  transform: rotate(45deg);\n}\n\n.hide-eval:hover .rotate {\n  color: var(--primary) !important;\n}\n\n/*# sourceMappingURL=CPermissionsModal.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$R = "data-v-29bf4ea2";
+  const __vue_scope_id__$R = "data-v-6bfcf095";
   /* module identifier */
   const __vue_module_identifier__$R = undefined;
   /* functional template */
@@ -25115,8 +27992,45 @@ var script$O = {
 const __vue_script__$O = script$O;
 
 /* template */
-var __vue_render__$N = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex flex-column gap-1"},[(!!_vm.message)?_c('p',{staticClass:"text-break",domProps:{"innerHTML":_vm._s(_vm.message)}}):_vm._e(),_vm._v(" "),_c('b-button',{staticClass:"ml-auto",attrs:{"variant":_vm.pVal('buttonVariant', 'primary'),"disabled":_vm.loading},on:{"click":function($event){_vm.$emit('submit', { confirmed: _vm.pRaw(undefined, true, 'Boolean') });}}},[_vm._v("\n    "+_vm._s(_vm.pVal('buttonLabel', 'Ok'))+"\n  ")])],1)};
+var __vue_render__$N = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "d-flex flex-column gap-1" },
+    [
+      !!_vm.message
+        ? _c("p", {
+            staticClass: "text-break",
+            domProps: { innerHTML: _vm._s(_vm.message) },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _c(
+        "b-button",
+        {
+          staticClass: "ml-auto",
+          attrs: {
+            variant: _vm.pVal("buttonVariant", "primary"),
+            disabled: _vm.loading,
+          },
+          on: {
+            click: function ($event) {
+              _vm.$emit("submit", {
+                confirmed: _vm.pRaw(undefined, true, "Boolean"),
+              });
+            },
+          },
+        },
+        [_vm._v("\n    " + _vm._s(_vm.pVal("buttonLabel", "Ok")) + "\n  ")]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$N = [];
+__vue_render__$N._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$P = undefined;
@@ -25153,8 +28067,78 @@ var script$N = {
 const __vue_script__$N = script$N;
 
 /* template */
-var __vue_render__$M = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex flex-column gap-1"},[(!!_vm.message)?_c('p',{staticClass:"text-break",domProps:{"innerHTML":_vm._s(_vm.message)}}):_vm._e(),_vm._v(" "),_c('div',{staticClass:"d-flex flex-wrap align-items-center gap-2"},[_c('b-button',{staticClass:"flex-grow-1",attrs:{"variant":_vm.pVal('confirmButtonVariant', 'primary'),"disabled":_vm.loading},on:{"click":function($event){_vm.$emit('submit', { value: _vm.pRaw('confirmButtonValue', true, 'Boolean') });}}},[_vm._v("\n      "+_vm._s(_vm.pVal('confirmButtonLabel', 'Yes'))+"\n    ")]),_vm._v(" "),_c('b-button',{staticClass:"flex-grow-1",attrs:{"disabled":_vm.loading,"variant":_vm.pVal('rejectButtonVariant', 'light')},on:{"click":function($event){_vm.$emit('submit', { value: _vm.pRaw('rejectButtonValue', false, 'Boolean') });}}},[_vm._v("\n      "+_vm._s(_vm.pVal('rejectButtonLabel', 'No'))+"\n    ")])],1)])};
+var __vue_render__$M = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", { staticClass: "d-flex flex-column gap-1" }, [
+    !!_vm.message
+      ? _c("p", {
+          staticClass: "text-break",
+          domProps: { innerHTML: _vm._s(_vm.message) },
+        })
+      : _vm._e(),
+    _vm._v(" "),
+    _c(
+      "div",
+      { staticClass: "d-flex flex-wrap align-items-center gap-2" },
+      [
+        _c(
+          "b-button",
+          {
+            staticClass: "flex-grow-1",
+            attrs: {
+              variant: _vm.pVal("confirmButtonVariant", "primary"),
+              disabled: _vm.loading,
+            },
+            on: {
+              click: function ($event) {
+                _vm.$emit("submit", {
+                  value: _vm.pRaw("confirmButtonValue", true, "Boolean"),
+                });
+              },
+            },
+          },
+          [
+            _vm._v(
+              "\n      " +
+                _vm._s(_vm.pVal("confirmButtonLabel", "Yes")) +
+                "\n    "
+            ),
+          ]
+        ),
+        _vm._v(" "),
+        _c(
+          "b-button",
+          {
+            staticClass: "flex-grow-1",
+            attrs: {
+              disabled: _vm.loading,
+              variant: _vm.pVal("rejectButtonVariant", "light"),
+            },
+            on: {
+              click: function ($event) {
+                _vm.$emit("submit", {
+                  value: _vm.pRaw("rejectButtonValue", false, "Boolean"),
+                });
+              },
+            },
+          },
+          [
+            _vm._v(
+              "\n      " +
+                _vm._s(_vm.pVal("rejectButtonLabel", "No")) +
+                "\n    "
+            ),
+          ]
+        ),
+      ],
+      1
+    ),
+  ])
+};
 var __vue_staticRenderFns__$M = [];
+__vue_render__$M._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$O = undefined;
@@ -25230,8 +28214,53 @@ var script$M = {
 const __vue_script__$M = script$M;
 
 /* template */
-var __vue_render__$L = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('li',{staticClass:"d-flex mt-1 mx-1"},[_c('b-button',{staticClass:"flex-grow-1",attrs:{"disabled":!_vm.hasPrevPage,"size":"sm"},on:{"click":function($event){return _vm.$emit('prev')}}},[_c('font-awesome-icon',{attrs:{"icon":['fas', 'chevron-left']}})],1),_vm._v(" "),_c('b-button',{staticClass:"flex-grow-1 ml-1",attrs:{"disabled":!_vm.hasNextPage,"size":"sm"},on:{"click":function($event){return _vm.$emit('next')}}},[_c('font-awesome-icon',{attrs:{"icon":['fas', 'chevron-right']}})],1)],1)};
+var __vue_render__$L = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "li",
+    { staticClass: "d-flex mt-1 mx-1" },
+    [
+      _c(
+        "b-button",
+        {
+          staticClass: "flex-grow-1",
+          attrs: { disabled: !_vm.hasPrevPage, size: "sm" },
+          on: {
+            click: function ($event) {
+              return _vm.$emit("prev")
+            },
+          },
+        },
+        [_c("font-awesome-icon", { attrs: { icon: ["fas", "chevron-left"] } })],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-button",
+        {
+          staticClass: "flex-grow-1 ml-1",
+          attrs: { disabled: !_vm.hasNextPage, size: "sm" },
+          on: {
+            click: function ($event) {
+              return _vm.$emit("next")
+            },
+          },
+        },
+        [
+          _c("font-awesome-icon", {
+            attrs: { icon: ["fas", "chevron-right"] },
+          }),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$L = [];
+__vue_render__$L._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$N = undefined;
@@ -25497,8 +28526,99 @@ var script$L = {
 const __vue_script__$L = script$L;
 
 /* template */
-var __vue_render__$K = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex flex-column gap-1"},[(!!_vm.message)?_c('p',{staticClass:"text-break",domProps:{"innerHTML":_vm._s(_vm.message)}}):_vm._e(),_vm._v(" "),_c('b-form-group',{attrs:{"label":_vm.label,"label-class":"text-primary"}},[_c('c-input-select',{staticClass:"w-100",attrs:{"options":_vm.options,"get-option-key":function (r) { return r.recordID; },"loading":_vm.processing,"append-to-body":"","option-value":"recordID","placeholder":_vm.placeholder,"filterable":false,"reduce":function (r) { return r.recordID; }},on:{"search":_vm.search},scopedSlots:_vm._u([{key:"list-footer",fn:function(){return [(_vm.showPagination)?_c('c-pagination',{attrs:{"has-prev-page":_vm.hasPrevPage,"has-next-page":_vm.hasNextPage},on:{"prev":function($event){return _vm.goToPage(false)},"next":function($event){return _vm.goToPage(true)}}}):_vm._e()]},proxy:true}]),model:{value:(_vm.value),callback:function ($$v) {_vm.value=$$v;},expression:"value"}})],1),_vm._v(" "),_c('b-button',{staticClass:"ml-auto",attrs:{"disabled":_vm.loading,"variant":"primary"},on:{"click":function($event){_vm.$emit('submit', { value: _vm.encodeValue() });}}},[_vm._v("\n    "+_vm._s(_vm.pVal('buttonLabel', 'Submit'))+"\n  ")])],1)};
+var __vue_render__$K = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "d-flex flex-column gap-1" },
+    [
+      !!_vm.message
+        ? _c("p", {
+            staticClass: "text-break",
+            domProps: { innerHTML: _vm._s(_vm.message) },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _c(
+        "b-form-group",
+        { attrs: { label: _vm.label, "label-class": "text-primary" } },
+        [
+          _c("c-input-select", {
+            staticClass: "w-100",
+            attrs: {
+              options: _vm.options,
+              "get-option-key": function (r) {
+                return r.recordID
+              },
+              loading: _vm.processing,
+              "append-to-body": "",
+              "option-value": "recordID",
+              placeholder: _vm.placeholder,
+              filterable: false,
+              reduce: function (r) {
+                return r.recordID
+              },
+            },
+            on: { search: _vm.search },
+            scopedSlots: _vm._u([
+              {
+                key: "list-footer",
+                fn: function () {
+                  return [
+                    _vm.showPagination
+                      ? _c("c-pagination", {
+                          attrs: {
+                            "has-prev-page": _vm.hasPrevPage,
+                            "has-next-page": _vm.hasNextPage,
+                          },
+                          on: {
+                            prev: function ($event) {
+                              return _vm.goToPage(false)
+                            },
+                            next: function ($event) {
+                              return _vm.goToPage(true)
+                            },
+                          },
+                        })
+                      : _vm._e(),
+                  ]
+                },
+                proxy: true,
+              },
+            ]),
+            model: {
+              value: _vm.value,
+              callback: function ($$v) {
+                _vm.value = $$v;
+              },
+              expression: "value",
+            },
+          }),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-button",
+        {
+          staticClass: "ml-auto",
+          attrs: { disabled: _vm.loading, variant: "primary" },
+          on: {
+            click: function ($event) {
+              _vm.$emit("submit", { value: _vm.encodeValue() });
+            },
+          },
+        },
+        [_vm._v("\n    " + _vm._s(_vm.pVal("buttonLabel", "Submit")) + "\n  ")]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$K = [];
+__vue_render__$K._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$M = undefined;
@@ -25573,13 +28693,81 @@ var script$K = {
 const __vue_script__$K = script$K;
 
 /* template */
-var __vue_render__$J = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex flex-column gap-1"},[(!!_vm.message)?_c('p',{staticClass:"text-break",domProps:{"innerHTML":_vm._s(_vm.message)}}):_vm._e(),_vm._v(" "),_c('b-form-group',{attrs:{"label":_vm.label,"label-class":"text-primary"}},[(_vm.type === 'date' || _vm.type === 'time' || _vm.type === 'datetime')?_c('c-input-date-time',{attrs:{"no-date":_vm.type === 'time',"no-time":_vm.type === 'date',"disabled":_vm.loading,"labels":{
-        clear: _vm.$t('general:label.clear'),
-        none: _vm.$t('general:label.none'),
-        now: _vm.$t('general:label.now'),
-        today: _vm.$t('general:label.today'),
-      }},model:{value:(_vm.value),callback:function ($$v) {_vm.value=$$v;},expression:"value"}}):_c('b-input',{attrs:{"type":_vm.type,"disabled":_vm.loading},model:{value:(_vm.value),callback:function ($$v) {_vm.value=$$v;},expression:"value"}})],1),_vm._v(" "),_c('b-button',{staticClass:"ml-auto",attrs:{"disabled":_vm.loading,"variant":"primary"},on:{"click":function($event){return _vm.$emit('submit', { value: { '@value': _vm.value, '@type': 'String' }})}}},[_vm._v("\n    "+_vm._s(_vm.pVal('buttonLabel', 'Submit'))+"\n  ")])],1)};
+var __vue_render__$J = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "d-flex flex-column gap-1" },
+    [
+      !!_vm.message
+        ? _c("p", {
+            staticClass: "text-break",
+            domProps: { innerHTML: _vm._s(_vm.message) },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _c(
+        "b-form-group",
+        { attrs: { label: _vm.label, "label-class": "text-primary" } },
+        [
+          _vm.type === "date" || _vm.type === "time" || _vm.type === "datetime"
+            ? _c("c-input-date-time", {
+                attrs: {
+                  "no-date": _vm.type === "time",
+                  "no-time": _vm.type === "date",
+                  disabled: _vm.loading,
+                  labels: {
+                    clear: _vm.$t("general:label.clear"),
+                    none: _vm.$t("general:label.none"),
+                    now: _vm.$t("general:label.now"),
+                    today: _vm.$t("general:label.today"),
+                  },
+                },
+                model: {
+                  value: _vm.value,
+                  callback: function ($$v) {
+                    _vm.value = $$v;
+                  },
+                  expression: "value",
+                },
+              })
+            : _c("b-input", {
+                attrs: { type: _vm.type, disabled: _vm.loading },
+                model: {
+                  value: _vm.value,
+                  callback: function ($$v) {
+                    _vm.value = $$v;
+                  },
+                  expression: "value",
+                },
+              }),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-button",
+        {
+          staticClass: "ml-auto",
+          attrs: { disabled: _vm.loading, variant: "primary" },
+          on: {
+            click: function ($event) {
+              return _vm.$emit("submit", {
+                value: { "@value": _vm.value, "@type": "String" },
+              })
+            },
+          },
+        },
+        [_vm._v("\n    " + _vm._s(_vm.pVal("buttonLabel", "Submit")) + "\n  ")]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$J = [];
+__vue_render__$J._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$L = undefined;
@@ -25622,8 +28810,19 @@ var script$J = {
 const __vue_script__$J = script$J;
 
 /* template */
-var __vue_render__$I = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('p',{staticClass:"mb-0",domProps:{"innerHTML":_vm._s(_vm.message)}})])};
+var __vue_render__$I = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", [
+    _c("p", {
+      staticClass: "mb-0",
+      domProps: { innerHTML: _vm._s(_vm.message) },
+    }),
+  ])
+};
 var __vue_staticRenderFns__$I = [];
+__vue_render__$I._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$K = undefined;
@@ -25733,8 +28932,85 @@ var script$I = {
 const __vue_script__$I = script$I;
 
 /* template */
-var __vue_render__$H = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex flex-column gap-1"},[(!!_vm.message)?_c('p',{staticClass:"text-break",domProps:{"innerHTML":_vm._s(_vm.message)}}):_vm._e(),_vm._v(" "),_c('b-form-group',{attrs:{"label":_vm.label,"label-class":"text-primary"}},[(_vm.inputType === 'select')?_c('c-input-select',{staticClass:"w-100",attrs:{"options":_vm.itemOptions,"disabled":_vm.loading,"multiple":_vm.multiple,"append-to-body":"","label":"text","get-option-key":function (r) { return r.value; },"placeholder":_vm.placeholder,"reduce":function (r) { return r.value; }},model:{value:(_vm.value),callback:function ($$v) {_vm.value=$$v;},expression:"value"}}):(_vm.inputType === 'radio')?_c('b-form-radio-group',{attrs:{"options":_vm.itemOptions,"disabled":_vm.loading},model:{value:(_vm.value),callback:function ($$v) {_vm.value=$$v;},expression:"value"}}):_vm._e()],1),_vm._v(" "),_c('b-button',{staticClass:"ml-auto",attrs:{"disabled":_vm.loading,"variant":"primary"},on:{"click":function($event){_vm.$emit('submit', { value: _vm.encodeValue() });}}},[_vm._v("\n    "+_vm._s(_vm.pVal('buttonLabel', 'Submit'))+"\n  ")])],1)};
+var __vue_render__$H = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "d-flex flex-column gap-1" },
+    [
+      !!_vm.message
+        ? _c("p", {
+            staticClass: "text-break",
+            domProps: { innerHTML: _vm._s(_vm.message) },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _c(
+        "b-form-group",
+        { attrs: { label: _vm.label, "label-class": "text-primary" } },
+        [
+          _vm.inputType === "select"
+            ? _c("c-input-select", {
+                staticClass: "w-100",
+                attrs: {
+                  options: _vm.itemOptions,
+                  disabled: _vm.loading,
+                  multiple: _vm.multiple,
+                  "append-to-body": "",
+                  label: "text",
+                  "get-option-key": function (r) {
+                    return r.value
+                  },
+                  placeholder: _vm.placeholder,
+                  reduce: function (r) {
+                    return r.value
+                  },
+                },
+                model: {
+                  value: _vm.value,
+                  callback: function ($$v) {
+                    _vm.value = $$v;
+                  },
+                  expression: "value",
+                },
+              })
+            : _vm.inputType === "radio"
+            ? _c("b-form-radio-group", {
+                attrs: { options: _vm.itemOptions, disabled: _vm.loading },
+                model: {
+                  value: _vm.value,
+                  callback: function ($$v) {
+                    _vm.value = $$v;
+                  },
+                  expression: "value",
+                },
+              })
+            : _vm._e(),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-button",
+        {
+          staticClass: "ml-auto",
+          attrs: { disabled: _vm.loading, variant: "primary" },
+          on: {
+            click: function ($event) {
+              _vm.$emit("submit", { value: _vm.encodeValue() });
+            },
+          },
+        },
+        [_vm._v("\n    " + _vm._s(_vm.pVal("buttonLabel", "Submit")) + "\n  ")]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$H = [];
+__vue_render__$H._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$J = undefined;
@@ -26180,17 +29456,86 @@ var script$H = {
 const __vue_script__$H = script$H;
 
 /* template */
-var __vue_render__$G = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (!_vm.hideToasts)?_c('div',_vm._l((_vm.toasts),function(ref){
-var prompt = ref.prompt;
-var component = ref.component;
-var passive = ref.passive;
-return _c('b-toast',{key:'wfPromptToast-'+prompt.stateID,attrs:{"id":'wfPromptToast-'+prompt.stateID,"variant":_vm.pVal(prompt, 'variant', 'primary'),"visible":!_vm.isActive,"solid":"","no-auto-hide":!passive,"auto-hide-delay":_vm.pVal(prompt, 'timeout', _vm.defaultTimeout) * 1000},on:{"hide":function($event){return _vm.onToastHide({ prompt: prompt, passive: passive })}},scopedSlots:_vm._u([{key:"toast-title",fn:function(){return [_c('strong',[_vm._v(_vm._s(_vm.pVal(prompt, 'title', 'Workflow prompt')))])]},proxy:true}],null,true)},[_vm._v(" "),(component)?_c(component,{tag:"component",attrs:{"payload":prompt.payload,"loading":_vm.isLoading},on:{"submit":function($event){return _vm.resumeToast({ input: $event, prompt: prompt })}}}):_vm._e()],1)}),1):_vm._e()};
+var __vue_render__$G = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return !_vm.hideToasts
+    ? _c(
+        "div",
+        _vm._l(_vm.toasts, function (ref) {
+          var prompt = ref.prompt;
+          var component = ref.component;
+          var passive = ref.passive;
+          return _c(
+            "b-toast",
+            {
+              key: "wfPromptToast-" + prompt.stateID,
+              attrs: {
+                id: "wfPromptToast-" + prompt.stateID,
+                variant: _vm.pVal(prompt, "variant", "primary"),
+                visible: !_vm.isActive,
+                solid: "",
+                "no-auto-hide": !passive,
+                "auto-hide-delay":
+                  _vm.pVal(prompt, "timeout", _vm.defaultTimeout) * 1000,
+              },
+              on: {
+                hide: function ($event) {
+                  return _vm.onToastHide({ prompt: prompt, passive: passive })
+                },
+              },
+              scopedSlots: _vm._u(
+                [
+                  {
+                    key: "toast-title",
+                    fn: function () {
+                      return [
+                        _c("strong", [
+                          _vm._v(
+                            _vm._s(_vm.pVal(prompt, "title", "Workflow prompt"))
+                          ),
+                        ]),
+                      ]
+                    },
+                    proxy: true,
+                  },
+                ],
+                null,
+                true
+              ),
+            },
+            [
+              _vm._v(" "),
+              component
+                ? _c(component, {
+                    tag: "component",
+                    attrs: { payload: prompt.payload, loading: _vm.isLoading },
+                    on: {
+                      submit: function ($event) {
+                        return _vm.resumeToast({
+                          input: $event,
+                          prompt: prompt,
+                        })
+                      },
+                    },
+                  })
+                : _vm._e(),
+            ],
+            1
+          )
+        }),
+        1
+      )
+    : _vm._e()
+};
 var __vue_staticRenderFns__$G = [];
+__vue_render__$G._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$I = function (inject) {
     if (!inject) return
-    inject("data-v-56e4b8e6_0", { source: ".toast-header{align-items:start;padding:.375rem .75rem}.toast-header strong{word-break:break-word}.toast-header .close{margin-bottom:0!important}.b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter-active,.b-toaster.b-toaster-bottom-left .b-toast.b-toaster-leave-active,.b-toaster.b-toaster-bottom-left .b-toast.b-toaster-move,.b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter-active,.b-toaster.b-toaster-bottom-right .b-toast.b-toaster-leave-active,.b-toaster.b-toaster-bottom-right .b-toast.b-toaster-move,.b-toaster.b-toaster-top-left .b-toast.b-toaster-enter-active,.b-toaster.b-toaster-top-left .b-toast.b-toaster-leave-active,.b-toaster.b-toaster-top-left .b-toast.b-toaster-move,.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter-active,.b-toaster.b-toaster-top-right .b-toast.b-toaster-leave-active,.b-toaster.b-toaster-top-right .b-toast.b-toaster-move{transition:transform .3s ease-in-out;opacity:1}.b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter,.b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter,.b-toaster.b-toaster-top-left .b-toast.b-toaster-enter,.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter{transform:translate(0,-100%);opacity:0}.b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter-active,.b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter-to,.b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter-active,.b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter-to,.b-toaster.b-toaster-top-left .b-toast.b-toaster-enter-active,.b-toaster.b-toaster-top-left .b-toast.b-toaster-enter-to,.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter-active,.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter-to{transform:translate(0,0);opacity:1}.b-toaster.b-toaster-bottom-left .b-toast.b-toaster-leave-active,.b-toaster.b-toaster-bottom-right .b-toast.b-toaster-leave-active,.b-toaster.b-toaster-top-left .b-toast.b-toaster-leave-active,.b-toaster.b-toaster-top-right .b-toast.b-toaster-leave-active{position:absolute;transform:translate(0,-100%);opacity:0}.b-toaster.b-toaster-bottom-left .b-toast.b-toaster-leave-to,.b-toaster.b-toaster-bottom-right .b-toast.b-toaster-leave-to,.b-toaster.b-toaster-top-left .b-toast.b-toaster-leave-to,.b-toaster.b-toaster-top-right .b-toast.b-toaster-leave-to{opacity:0}", map: undefined, media: undefined });
+    inject("data-v-7f986c15_0", { source: ".toast-header {\n  align-items: start;\n  padding: 0.375rem 0.75rem;\n}\n.toast-header strong {\n  word-break: break-word;\n}\n.toast-header .close {\n  margin-bottom: 0 !important;\n}\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-top-right .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-top-right .b-toast.b-toaster-move, .b-toaster.b-toaster-top-left .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-top-left .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-top-left .b-toast.b-toaster-move, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-move, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-move {\n  transition: transform 0.3s ease-in-out; /* Adjust the timing function for smoother transitions */\n  opacity: 1; /* Ensure opacity is set to avoid flickering during transition */\n}\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter, .b-toaster.b-toaster-top-left .b-toast.b-toaster-enter, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter {\n  transform: translate(0, -100%); /* Start off-screen when entering */\n  opacity: 0; /* Start with 0 opacity */\n}\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter-to, .b-toaster.b-toaster-top-right .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-top-left .b-toast.b-toaster-enter-to, .b-toaster.b-toaster-top-left .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter-to, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter-to, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter-active {\n  transform: translate(0, 0); /* Move to the visible position */\n  opacity: 1; /* Fade in during the transition */\n}\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-top-left .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-leave-active {\n  position: absolute;\n  transform: translate(0, -100%); /* Move off-screen when leaving */\n  opacity: 0; /* Fade out during the transition */\n}\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-leave-to, .b-toaster.b-toaster-top-left .b-toast.b-toaster-leave-to, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-leave-to, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-leave-to {\n  opacity: 0; /* Ensure 0 opacity at the end of the transition */\n}\n\n/*# sourceMappingURL=CPromptToast.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/prompts/CPromptToast.vue","CPromptToast.vue"],"names":[],"mappings":"AAkNA;EACA,kBAAA;EACA,yBAAA;ACjNA;ADmNA;EACA,sBAAA;ACjNA;ADoNA;EACA,2BAAA;AClNA;ADgOA;EAGA,sCAAA,EAAA,wDAAA;EACA,UAAA,EAAA,gEAAA;AC/NA;ADkOA;EACA,8BAAA,EAAA,mCAAA;EACA,UAAA,EAAA,yBAAA;AChOA;ADmOA;EAEA,0BAAA,EAAA,iCAAA;EACA,UAAA,EAAA,kCAAA;AClOA;ADqOA;EACA,kBAAA;EACA,8BAAA,EAAA,iCAAA;EACA,UAAA,EAAA,mCAAA;ACnOA;ADsOA;EACA,UAAA,EAAA,kDAAA;ACpOA;;AAEA,2CAA2C","file":"CPromptToast.vue","sourcesContent":["<template>\n  <div v-if=\"!hideToasts\">\n    <b-toast\n      v-for=\"({ prompt, component, passive }) in toasts\"\n      :id=\"'wfPromptToast-'+prompt.stateID\"\n      :key=\"'wfPromptToast-'+prompt.stateID\"\n      :variant=\"pVal(prompt, 'variant', 'primary')\"\n      :visible=\"!isActive\"\n      solid\n      :no-auto-hide=\"!passive\"\n      :auto-hide-delay=\"pVal(prompt, 'timeout', defaultTimeout) * 1000\"\n      @hide=\"onToastHide({ prompt, passive })\"\n    >\n      <template #toast-title>\n        <strong>{{ pVal(prompt, 'title', 'Workflow prompt') }}</strong>\n      </template>\n\n      <component\n        :is=\"component\"\n        v-if=\"component\"\n        :payload=\"prompt.payload\"\n        :loading=\"isLoading\"\n        @submit=\"resumeToast({ input: $event, prompt })\"\n      />\n    </b-toast>\n  </div>\n</template>\n<script>\nimport { mapGetters, mapActions } from 'vuex'\nimport definitions from './kinds/index.ts'\nimport { pVal } from './utils.ts'\n\nexport default {\n  name: 'CPromptToast',\n\n  props: {\n    hideToasts: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      passivePrompts: [],\n\n      hasFocus: null,\n      hasFocusObserver: 0,\n    }\n  },\n\n  computed: {\n    ...mapGetters({\n      prompts: 'wfPrompts/all',\n      isActive: 'wfPrompts/isActive',\n      isLoading: 'wfPrompts/isLoading',\n    }),\n\n    /**\n     * Prompts with handlers, observed with \"watch\"\n     *\n     * Prompts are only returned when document has focus!\n     *\n     * @returns {*}\n     */\n    withHandlers () {\n      return (this.hasFocus ? this.prompts : [])\n        .filter(({ ref }) => !!definitions[ref] && !!definitions[ref].handler)\n        .map(prompt => ({ ...definitions[prompt.ref], prompt }))\n    },\n\n    /**\n     * Prompts with components\n     *\n     * Prompts are only returned when document has focus!\n     *\n     * @returns {*}\n     */\n    withComponents () {\n      return (this.hasFocus ? this.prompts : [])\n        .filter(({ ref }) => !!definitions[ref] && !!definitions[ref].component)\n        .map(prompt => ({ ...definitions[prompt.ref], prompt }))\n    },\n\n    /**\n     * All non-passive prompts with components\n     */\n    activePrompts () {\n      return this.withComponents.filter(({ passive }) => !passive)\n    },\n\n    /**\n     * Returns list of prompts that we can interpret as toasts: display component is defined\n     *\n     * Toasts (prompts with components) are displayed in order received but\n     * passive (no feedback or input from user required) first and the rest later\n     */\n    toasts () {\n      return this.hideToasts\n        ? []\n        : [\n          ...this.passivePrompts,\n          ...this.activePrompts,\n        ]\n    },\n\n    defaultTimeout () {\n      return 7\n    },\n  },\n\n  watch: {\n    // watch prompts with handlers and when a new one arrives\n    // shift it from the stack, resume the prompt and handle it\n    withHandlers (hh) {\n      if (hh.length > 0) {\n        const { handler, prompt } = hh.shift()\n        this.resume({ input: {}, prompt }).then(() => {\n          handler.call(this, prompt.payload)\n        })\n      }\n    },\n\n    /**\n     * Make a copy of prompt if it is defined as passive\n     *\n     * We do this because we do not want it to be removed right away\n     * but through a toast component's timeout\n     */\n    withComponents: {\n      immediate: true,\n      handler (wc) {\n        wc.forEach(p => {\n          if (p.passive && !this.passivePrompts.some(({ prompt }) => prompt.stateID === p.prompt.stateID)) {\n            this.passivePrompts.push(p)\n          }\n        })\n      },\n    },\n  },\n\n  mounted () {\n    this.setDocumentFocusObserver()\n  },\n\n  beforeUnmount () {\n    this.clearDocumentFocusObserver()\n    this.setDefaultValues()\n  },\n\n  methods: {\n    ...mapActions({\n      resume: 'wfPrompts/resume',\n      cancel: 'wfPrompts/cancel',\n      activate: 'wfPrompts/activate',\n    }),\n\n    resumeToast (values) {\n      // Only reset input if prompt is kept open\n      if (values.input && values.input.keep) {\n        values.input = {}\n      }\n\n      this.resume(values)\n    },\n\n    onToastHide ({ prompt, passive }) {\n      setTimeout(() => {\n        if (passive) {\n          this.passivePrompts = this.passivePrompts.filter(({ prompt: p }) => p.stateID !== prompt.stateID)\n        } else {\n          this.cancel(prompt)\n        }\n      }, 300)\n    },\n\n    pVal (prompt, k, def = undefined) {\n      return pVal(prompt.payload, k, def)\n    },\n\n    clearDocumentFocusObserver () {\n      if (this.hasFocusObserver) {\n        window.clearInterval(this.hasFocusObserver)\n      }\n    },\n\n    /**\n     * Interval check if window has focus\n     */\n    setDocumentFocusObserver () {\n      this.clearDocumentFocusObserver()\n\n      this.hasFocusObserver = window.setInterval(() => {\n        const f = document.hasFocus()\n        if (this.hasFocus !== f) {\n          this.hasFocus = f\n        }\n      }, 1000)\n    },\n\n    setDefaultValues () {\n      this.toasts = []\n      this.hasFocus = null\n      this.hasFocusObserver = 0\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.toast-header {\n  align-items: start;\n  padding: 0.375rem 0.75rem;\n\n  strong {\n    word-break: break-word;\n  }\n\n  .close {\n    margin-bottom: 0 !important;\n  }\n}\n\n// .b-toaster-leave-active {\n//   width: 100%;\n// }\n\n.b-toaster {\n  &.b-toaster-top-right,\n  &.b-toaster-top-left,\n  &.b-toaster-bottom-right,\n  &.b-toaster-bottom-left {\n    .b-toast {\n      &.b-toaster-enter-active,\n      &.b-toaster-leave-active,\n      &.b-toaster-move {\n        transition: transform 0.3s ease-in-out; /* Adjust the timing function for smoother transitions */\n        opacity: 1; /* Ensure opacity is set to avoid flickering during transition */\n      }\n\n      &.b-toaster-enter {\n        transform: translate(0, -100%); /* Start off-screen when entering */\n        opacity: 0; /* Start with 0 opacity */\n      }\n\n      &.b-toaster-enter-to,\n      &.b-toaster-enter-active {\n        transform: translate(0, 0); /* Move to the visible position */\n        opacity: 1; /* Fade in during the transition */\n      }\n\n      &.b-toaster-leave-active {\n        position: absolute;\n        transform: translate(0, -100%); /* Move off-screen when leaving */\n        opacity: 0; /* Fade out during the transition */\n      }\n\n      &.b-toaster-leave-to {\n        opacity: 0; /* Ensure 0 opacity at the end of the transition */\n      }\n    }\n  }\n}\n</style>\n",".toast-header {\n  align-items: start;\n  padding: 0.375rem 0.75rem;\n}\n.toast-header strong {\n  word-break: break-word;\n}\n.toast-header .close {\n  margin-bottom: 0 !important;\n}\n\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-top-right .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-top-right .b-toast.b-toaster-move, .b-toaster.b-toaster-top-left .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-top-left .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-top-left .b-toast.b-toaster-move, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-move, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-move {\n  transition: transform 0.3s ease-in-out; /* Adjust the timing function for smoother transitions */\n  opacity: 1; /* Ensure opacity is set to avoid flickering during transition */\n}\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter, .b-toaster.b-toaster-top-left .b-toast.b-toaster-enter, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter {\n  transform: translate(0, -100%); /* Start off-screen when entering */\n  opacity: 0; /* Start with 0 opacity */\n}\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-enter-to, .b-toaster.b-toaster-top-right .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-top-left .b-toast.b-toaster-enter-to, .b-toaster.b-toaster-top-left .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter-to, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-enter-active, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter-to, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-enter-active {\n  transform: translate(0, 0); /* Move to the visible position */\n  opacity: 1; /* Fade in during the transition */\n}\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-top-left .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-leave-active, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-leave-active {\n  position: absolute;\n  transform: translate(0, -100%); /* Move off-screen when leaving */\n  opacity: 0; /* Fade out during the transition */\n}\n.b-toaster.b-toaster-top-right .b-toast.b-toaster-leave-to, .b-toaster.b-toaster-top-left .b-toast.b-toaster-leave-to, .b-toaster.b-toaster-bottom-right .b-toast.b-toaster-leave-to, .b-toaster.b-toaster-bottom-left .b-toast.b-toaster-leave-to {\n  opacity: 0; /* Ensure 0 opacity at the end of the transition */\n}\n\n/*# sourceMappingURL=CPromptToast.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -26279,13 +29624,125 @@ var script$G = {
 const __vue_script__$G = script$G;
 
 /* template */
-var __vue_render__$F = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-modal',{attrs:{"size":"lg","lazy":"","hide-footer":!_vm.current,"title":_vm.current ? _vm.current.title : 'Workflow prompts',"busy":_vm.isLoading,"footer-class":"d-flex","no-fade":""},on:{"hide":function($event){return _vm.deactivate()}},scopedSlots:_vm._u([(_vm.current)?{key:"modal-footer",fn:function(){return [_c('b-button',{staticClass:"mr-auto",attrs:{"variant":"link"},on:{"click":function($event){return _vm.activate(true)}}},[_vm._v("\n      « Back to list\n    ")])]},proxy:true}:null],null,true),model:{value:(_vm.isOpened),callback:function ($$v) {_vm.isOpened=$$v;},expression:"isOpened"}},[(_vm.current)?_c(_vm.current.component,{tag:"component",attrs:{"payload":_vm.current.prompt.payload,"loading":_vm.isLoading},on:{"submit":function($event){return _vm.resume({ input: $event, prompt: _vm.current.prompt })}}}):_c('div',_vm._l((_vm.list),function(ref){
-var key = ref.key;
-var title = ref.title;
-var age = ref.age;
-var prompt = ref.prompt;
-return _c('div',{key:key,staticClass:"d-flex flex-grow-1 align-items-baseline mb-2"},[_c('a',{staticClass:"p-0 mr-auto",on:{"click":function($event){return _vm.activate(prompt)}}},[_vm._v("\n        "+_vm._s(title)+" -\n        "),_c('time',{staticClass:"muted small",attrs:{"datetime":prompt.createdAt}},[_vm._v("\n          "+_vm._s(age)+"\n        ")])])])}),0)],1)};
+var __vue_render__$F = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-modal",
+    {
+      attrs: {
+        size: "lg",
+        lazy: "",
+        "hide-footer": !_vm.current,
+        title: _vm.current ? _vm.current.title : "Workflow prompts",
+        busy: _vm.isLoading,
+        "footer-class": "d-flex",
+        "no-fade": "",
+      },
+      on: {
+        hide: function ($event) {
+          return _vm.deactivate()
+        },
+      },
+      scopedSlots: _vm._u(
+        [
+          _vm.current
+            ? {
+                key: "modal-footer",
+                fn: function () {
+                  return [
+                    _c(
+                      "b-button",
+                      {
+                        staticClass: "mr-auto",
+                        attrs: { variant: "link" },
+                        on: {
+                          click: function ($event) {
+                            return _vm.activate(true)
+                          },
+                        },
+                      },
+                      [_vm._v("\n      « Back to list\n    ")]
+                    ),
+                  ]
+                },
+                proxy: true,
+              }
+            : null,
+        ],
+        null,
+        true
+      ),
+      model: {
+        value: _vm.isOpened,
+        callback: function ($$v) {
+          _vm.isOpened = $$v;
+        },
+        expression: "isOpened",
+      },
+    },
+    [
+      _vm.current
+        ? _c(_vm.current.component, {
+            tag: "component",
+            attrs: {
+              payload: _vm.current.prompt.payload,
+              loading: _vm.isLoading,
+            },
+            on: {
+              submit: function ($event) {
+                return _vm.resume({ input: $event, prompt: _vm.current.prompt })
+              },
+            },
+          })
+        : _c(
+            "div",
+            _vm._l(_vm.list, function (ref) {
+              var key = ref.key;
+              var title = ref.title;
+              var age = ref.age;
+              var prompt = ref.prompt;
+              return _c(
+                "div",
+                {
+                  key: key,
+                  staticClass: "d-flex flex-grow-1 align-items-baseline mb-2",
+                },
+                [
+                  _c(
+                    "a",
+                    {
+                      staticClass: "p-0 mr-auto",
+                      on: {
+                        click: function ($event) {
+                          return _vm.activate(prompt)
+                        },
+                      },
+                    },
+                    [
+                      _vm._v("\n        " + _vm._s(title) + " -\n        "),
+                      _c(
+                        "time",
+                        {
+                          staticClass: "muted small",
+                          attrs: { datetime: prompt.createdAt },
+                        },
+                        [_vm._v("\n          " + _vm._s(age) + "\n        ")]
+                      ),
+                    ]
+                  ),
+                ]
+              )
+            }),
+            0
+          ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$F = [];
+__vue_render__$F._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$H = undefined;
@@ -26350,8 +29807,22 @@ var script$F = {
 const __vue_script__$F = script$F;
 
 /* template */
-var __vue_render__$E = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('c-prompt-toast',{attrs:{"hide-toasts":_vm.hideToasts}}),_vm._v(" "),_c('c-prompt-modal')],1)};
+var __vue_render__$E = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    [
+      _c("c-prompt-toast", { attrs: { "hide-toasts": _vm.hideToasts } }),
+      _vm._v(" "),
+      _c("c-prompt-modal"),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$E = [];
+__vue_render__$E._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$G = undefined;
@@ -26603,17 +30074,34 @@ var script$E = {
 const __vue_script__$E = script$E;
 
 /* template */
-var __vue_render__$D = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-container',{staticClass:"d-flex justify-content-center vh-100 logo",attrs:{"fluid":""}},[(_vm.logo)?_c('img',{staticClass:"w-25 my-auto",attrs:{"src":_vm.logo}}):_vm._e()])};
+var __vue_render__$D = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-container",
+    {
+      staticClass: "d-flex justify-content-center vh-100 logo",
+      attrs: { fluid: "" },
+    },
+    [
+      _vm.logo
+        ? _c("img", { staticClass: "w-25 my-auto", attrs: { src: _vm.logo } })
+        : _vm._e(),
+    ]
+  )
+};
 var __vue_staticRenderFns__$D = [];
+__vue_render__$D._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$F = function (inject) {
     if (!inject) return
-    inject("data-v-b6d894e4_0", { source: ".logo img[data-v-b6d894e4]{animation:pulse-data-v-b6d894e4 4.2s infinite}@keyframes pulse-data-v-b6d894e4{0%{opacity:0}65%{opacity:1}100%{opacity:0}}", map: undefined, media: undefined });
+    inject("data-v-879f74e2_0", { source: ".logo img[data-v-879f74e2] {\n  animation: pulse-data-v-879f74e2 4.2s infinite;\n}\n@keyframes pulse-data-v-879f74e2 {\n0% {\n    opacity: 0;\n}\n65% {\n    opacity: 1;\n}\n100% {\n    opacity: 0;\n}\n}\n\n/*# sourceMappingURL=CLoaderLogo.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/loader/CLoaderLogo.vue","CLoaderLogo.vue"],"names":[],"mappings":"AA0BA;EACA,8CAAA;ACzBA;AD4BA;AACA;IACA,UAAA;AC1BE;AD4BF;IACA,UAAA;AC1BE;AD4BF;IACA,UAAA;AC1BE;AACF;;AAEA,0CAA0C","file":"CLoaderLogo.vue","sourcesContent":["<template>\n  <b-container\n    fluid\n    class=\"d-flex justify-content-center vh-100 logo\"\n  >\n    <img\n      v-if=\"logo\"\n      :src=\"logo\"\n      class=\"w-25 my-auto\"\n    >\n  </b-container>\n</template>\n\n<script>\nexport default {\n  props: {\n    logo: {\n      type: String,\n      default: () => '',\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.logo {\n  img {\n    animation: pulse 4.2s infinite;\n  }\n\n  @keyframes pulse {\n    0% {\n      opacity: 0;\n    }\n    65% {\n      opacity: 1;\n    }\n    100% {\n      opacity: 0;\n    }\n  }\n}\n</style>\n",".logo img {\n  animation: pulse 4.2s infinite;\n}\n@keyframes pulse {\n  0% {\n    opacity: 0;\n  }\n  65% {\n    opacity: 1;\n  }\n  100% {\n    opacity: 0;\n  }\n}\n\n/*# sourceMappingURL=CLoaderLogo.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$F = "data-v-b6d894e4";
+  const __vue_scope_id__$F = "data-v-879f74e2";
   /* module identifier */
   const __vue_module_identifier__$F = undefined;
   /* functional template */
@@ -26684,17 +30172,68 @@ var script$D = {
 const __vue_script__$D = script$D;
 
 /* template */
-var __vue_render__$C = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.hover",value:({ title: _vm.$t('notifications:title'), delay: { show: 500, hide: 0 } }),expression:"{ title: $t('notifications:title'), delay: { show: 500, hide: 0 } }",modifiers:{"hover":true}}],staticClass:"nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center position-relative",attrs:{"variant":"outline-extra-light","size":"lg"},on:{"click":_vm.toggleNotifications}},[_c('font-awesome-icon',{staticClass:"text-dark",attrs:{"icon":['far', 'bell']}}),_vm._v(" "),(_vm.unreadCount > 0 && !_vm.muted)?_c('b-badge',{staticClass:"position-absolute notification-badge",attrs:{"variant":"primary","pill":""}},[_vm._v("\n    "+_vm._s(_vm.unreadCount > 9 ? '9+' : _vm.unreadCount)+"\n  ")]):_vm._e()],1)};
+var __vue_render__$C = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-button",
+    {
+      directives: [
+        {
+          name: "b-tooltip",
+          rawName: "v-b-tooltip.hover",
+          value: {
+            title: _vm.$t("notifications:title"),
+            delay: { show: 500, hide: 0 },
+          },
+          expression:
+            "{ title: $t('notifications:title'), delay: { show: 500, hide: 0 } }",
+          modifiers: { hover: true },
+        },
+      ],
+      staticClass:
+        "nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center position-relative",
+      attrs: { variant: "outline-extra-light", size: "lg" },
+      on: { click: _vm.toggleNotifications },
+    },
+    [
+      _c("font-awesome-icon", {
+        staticClass: "text-dark",
+        attrs: { icon: ["far", "bell"] },
+      }),
+      _vm._v(" "),
+      _vm.unreadCount > 0 && !_vm.muted
+        ? _c(
+            "b-badge",
+            {
+              staticClass: "position-absolute notification-badge",
+              attrs: { variant: "primary", pill: "" },
+            },
+            [
+              _vm._v(
+                "\n    " +
+                  _vm._s(_vm.unreadCount > 9 ? "9+" : _vm.unreadCount) +
+                  "\n  "
+              ),
+            ]
+          )
+        : _vm._e(),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$C = [];
+__vue_render__$C._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$E = function (inject) {
     if (!inject) return
-    inject("data-v-43b22813_0", { source: ".notification-badge[data-v-43b22813]{top:0;right:0;transform:translate(25%,-25%);font-size:.7rem}", map: undefined, media: undefined });
+    inject("data-v-68c8b7c6_0", { source: ".notification-badge[data-v-68c8b7c6] {\n  top: 0;\n  right: 0;\n  transform: translate(25%, -25%);\n  font-size: 0.7rem;\n}\n\n/*# sourceMappingURL=CNotificationButton.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/notifications/CNotificationButton.vue","CNotificationButton.vue"],"names":[],"mappings":"AAiDA;EACA,MAAA;EACA,QAAA;EACA,+BAAA;EACA,iBAAA;AChDA;;AAEA,kDAAkD","file":"CNotificationButton.vue","sourcesContent":["<template>\n  <b-button\n    v-b-tooltip.hover=\"{ title: $t('notifications:title'), delay: { show: 500, hide: 0 } }\"\n    variant=\"outline-extra-light\"\n    size=\"lg\"\n    class=\"nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center position-relative\"\n    @click=\"toggleNotifications\"\n  >\n    <font-awesome-icon\n      :icon=\"['far', 'bell']\"\n      class=\"text-dark\"\n    />\n    <b-badge\n      v-if=\"unreadCount > 0 && !muted\"\n      variant=\"primary\"\n      pill\n      class=\"position-absolute notification-badge\"\n    >\n      {{ unreadCount > 9 ? '9+' : unreadCount }}\n    </b-badge>\n  </b-button>\n</template>\n\n<script>\nimport { mapGetters, mapActions } from 'vuex'\n\nexport default {\n  name: 'CNotificationButton',\n\n  computed: {\n    ...mapGetters({\n      unreadCount: 'notifications/unreadCount',\n      muted: 'notifications/muted',\n    }),\n  },\n\n  methods: {\n    ...mapActions({\n      toggleVisibility: 'notifications/toggleVisibility',\n    }),\n\n    toggleNotifications () {\n      this.toggleVisibility()\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.notification-badge {\n  top: 0;\n  right: 0;\n  transform: translate(25%, -25%);\n  font-size: 0.7rem;\n}\n</style>\n",".notification-badge {\n  top: 0;\n  right: 0;\n  transform: translate(25%, -25%);\n  font-size: 0.7rem;\n}\n\n/*# sourceMappingURL=CNotificationButton.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$E = "data-v-43b22813";
+  const __vue_scope_id__$E = "data-v-68c8b7c6";
   /* module identifier */
   const __vue_module_identifier__$E = undefined;
   /* functional template */
@@ -27069,20 +30608,448 @@ var script$C = {
 const __vue_script__$C = script$C;
 
 /* template */
-var __vue_render__$B = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"header-navigation d-flex flex-wrap align-items-center py-2 pl-3 pr-2 gap-2"},[_c('div',{staticClass:"sidebar-spacer",class:{ 'expanded': _vm.expanded }}),_vm._v(" "),_c('h2',{staticClass:"title mb-0"},[_vm._t("title")],2),_vm._v(" "),_c('div',{staticClass:"tools-wrapper ml-auto"},[_vm._t("tools")],2),_vm._v(" "),_c('div',{staticClass:"d-flex align-items-center ml-auto gap-1"},[(!_vm.hideAppSelector && !_vm.settings.hideAppSelector)?_c('b-button',{staticClass:"text-dark border-0 px-1",attrs:{"data-test-id":"app-selector","variant":"outline-extra-light","href":_vm.appSelectorURL}},[_vm._v("\n      "+_vm._s(_vm.labels.appMenu)+"\n    ")]):_vm._e(),_vm._v(" "),_vm._t("right-tools"),_vm._v(" "),(!_vm.settings.hideNotifications)?_c('c-notification-button'):_vm._e(),_vm._v(" "),(!_vm.settings.hideHelp)?_c('b-dropdown',{staticClass:"nav-icon text-sm-nowrap",attrs:{"data-test-id":"dropdown-helper","size":"lg","variant":"outline-extra-light","toggle-class":"text-decoration-none text-dark rounded-circle border-0 w-100","menu-class":"topbar-dropdown-menu border-0 shadow-sm text-dark mt-2","right":"","no-caret":""},scopedSlots:_vm._u([{key:"button-content",fn:function(){return [_c('div',{staticClass:"d-flex align-items-center justify-content-center"},[_c('font-awesome-icon',{staticClass:"m-0 h5",attrs:{"icon":['far', 'question-circle']}}),_vm._v(" "),_c('span',{staticClass:"sr-only"},[_vm._v("\n            "+_vm._s(_vm.labels.helpForum)+"\n          ")])],1)]},proxy:true}],null,false,1129756517)},[_vm._v(" "),_c('div',[_vm._t("help-dropdown")],2),_vm._v(" "),_vm._l((_vm.helpLinks),function(helpLink,index){return _c('b-dropdown-item',{key:index,attrs:{"href":_vm._f("checkValidURL")(helpLink.url),"target":helpLink.newTab ? '_blank' : ''}},[_vm._v("\n        "+_vm._s(helpLink.handle)+"\n      ")])}),_vm._v(" "),(!_vm.settings.hideForumLink)?_c('b-dropdown-item',{attrs:{"data-test-id":"dropdown-helper-forum","href":"https://forum.cortezaproject.org/","target":"_blank"}},[_vm._v("\n        "+_vm._s(_vm.labels.helpForum)+"\n      ")]):_vm._e(),_vm._v(" "),(!_vm.settings.hideDocumentationLink)?_c('b-dropdown-item',{attrs:{"data-test-id":"dropdown-helper-docs","href":_vm.documentationURL,"target":"_blank"}},[_vm._v("\n        "+_vm._s(_vm.labels.helpDocumentation)+"\n      ")]):_vm._e(),_vm._v(" "),(!_vm.settings.hideFeedbackLink)?_c('b-dropdown-item',{attrs:{"data-test-id":"dropdown-helper-feedback","href":"mailto:info@cortezaproject.org","target":"_blank"}},[_vm._v("\n        "+_vm._s(_vm.labels.helpFeedback)+"\n      ")]):_vm._e(),_vm._v(" "),(!_vm.onlyVersion)?_c('b-dropdown-divider'):_vm._e(),_vm._v(" "),_c('b-dropdown-item',{staticClass:"small",attrs:{"disabled":""}},[_vm._v("\n        "+_vm._s(_vm.labels.helpVersion)+"\n        "),_c('br'),_vm._v("\n        "+_vm._s(_vm.frontendVersion)+"\n      ")])],2):_vm._e(),_vm._v(" "),(!_vm.settings.hideProfile)?_c('b-dropdown',{staticClass:"nav-user-icon",attrs:{"data-test-id":"dropdown-profile","variant":_vm.avatarExists ? 'link' : 'outline-extra-light',"toggle-class":("nav-icon text-decoration-none text-dark rounded-circle border " + (_vm.avatarExists ? 'p-0' : '')),"size":"lg","right":"","menu-class":"topbar-dropdown-menu border-0 shadow-sm text-dark mt-2","no-caret":""},on:{"hide":_vm.preventDropdownClose},scopedSlots:_vm._u([{key:"button-content",fn:function(){return [(_vm.avatarExists)?_c('div',{staticClass:"avatar d-flex h-100",style:({
-            'background-image': _vm.avatarExists ? ("url(" + _vm.profileAvatarUrl + ")") : 'none',
-          })}):_c('div',{staticClass:"d-flex align-items-center justify-content-center"},[_c('font-awesome-icon',{staticClass:"m-0 h5",attrs:{"icon":['far', 'user']}}),_vm._v(" "),_c('span',{staticClass:"sr-only"},[_vm._v("\n            "+_vm._s(_vm.labels.helpForum)+"\n          ")])],1)]},proxy:true}],null,false,1615905304)},[_vm._v(" "),_c('b-dropdown-text',{staticClass:"text-muted mb-2",attrs:{"data-test-id":"dropdown-item-username"}},[_vm._v("\n        "+_vm._s(_vm.labels.userSettingsLoggedInAs)+"\n      ")]),_vm._v(" "),_c('div',[_vm._t("avatar-dropdown")],2),_vm._v(" "),_vm._l((_vm.profileLinks),function(profileLink,index){return _c('b-dropdown-item',{key:index,attrs:{"href":_vm._f("checkValidURL")(profileLink.url),"target":profileLink.newTab ? '_blank' : ''}},[_vm._v("\n        "+_vm._s(profileLink.handle)+"\n      ")])}),_vm._v(" "),(!_vm.settings.hideProfileLink)?_c('b-dropdown-item',{attrs:{"data-test-id":"dropdown-profile-user","href":_vm.userProfileURL,"target":"_blank"}},[_vm._v("\n        "+_vm._s(_vm.labels.userSettingsProfile)+"\n      ")]):_vm._e(),_vm._v(" "),(!_vm.settings.hideChangePasswordLink)?_c('b-dropdown-item',{attrs:{"data-test-id":"dropdown-profile-change-password","href":_vm.changePasswordURL,"target":"_blank"}},[_vm._v("\n        "+_vm._s(_vm.labels.userSettingsChangePassword)+"\n      ")]):_vm._e(),_vm._v(" "),(!_vm.settings.hideThemeSelector)?_c('b-dropdown',{staticClass:"d-flex",attrs:{"id":"theme-dropleft","variant":"link","text":_vm.labels.userSettingsTheme,"dropleft":"","no-caret":"","toggle-class":"text-decoration-none text-left dropdown-item rounded-0"},on:{"show":function($event){_vm.isThemeDropdownVisible = true;},"hide":function($event){_vm.isThemeDropdownVisible = false;},"click":function($event){$event.preventDefault();$event.stopPropagation();}}},_vm._l((_vm.themes),function(theme){return _c('b-dropdown-item-button',{key:theme.id,attrs:{"disabled":_vm.currentTheme === theme.id},on:{"click":function($event){return _vm.saveThemeMode(theme.id)}}},[_vm._v("\n          "+_vm._s(theme.label)+"\n        ")])}),1):_vm._e(),_vm._v(" "),_c('b-dropdown-divider'),_vm._v(" "),_c('b-dropdown-item-button',{staticClass:"mt-2",attrs:{"data-test-id":"dropdown-profile-logout"},on:{"click":function($event){return _vm.$auth.logout()}}},[_vm._v("\n        "+_vm._s(_vm.labels.userSettingsLogout)+"\n      ")])],2):_vm._e()],2)])};
+var __vue_render__$B = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    {
+      staticClass:
+        "header-navigation d-flex flex-wrap align-items-center py-2 pl-3 pr-2 gap-2",
+    },
+    [
+      _c("div", {
+        staticClass: "sidebar-spacer",
+        class: { expanded: _vm.expanded },
+      }),
+      _vm._v(" "),
+      _c("h2", { staticClass: "title mb-0" }, [_vm._t("title")], 2),
+      _vm._v(" "),
+      _c("div", { staticClass: "tools-wrapper ml-auto" }, [_vm._t("tools")], 2),
+      _vm._v(" "),
+      _c(
+        "div",
+        { staticClass: "d-flex align-items-center ml-auto gap-1" },
+        [
+          !_vm.hideAppSelector && !_vm.settings.hideAppSelector
+            ? _c(
+                "b-button",
+                {
+                  staticClass: "text-dark border-0 px-1",
+                  attrs: {
+                    "data-test-id": "app-selector",
+                    variant: "outline-extra-light",
+                    href: _vm.appSelectorURL,
+                  },
+                },
+                [_vm._v("\n      " + _vm._s(_vm.labels.appMenu) + "\n    ")]
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          _vm._t("right-tools"),
+          _vm._v(" "),
+          !_vm.settings.hideNotifications
+            ? _c("c-notification-button")
+            : _vm._e(),
+          _vm._v(" "),
+          !_vm.settings.hideHelp
+            ? _c(
+                "b-dropdown",
+                {
+                  staticClass: "nav-icon text-sm-nowrap",
+                  attrs: {
+                    "data-test-id": "dropdown-helper",
+                    size: "lg",
+                    variant: "outline-extra-light",
+                    "toggle-class":
+                      "text-decoration-none text-dark rounded-circle border-0 w-100",
+                    "menu-class":
+                      "topbar-dropdown-menu border-0 shadow-sm text-dark mt-2",
+                    right: "",
+                    "no-caret": "",
+                  },
+                  scopedSlots: _vm._u(
+                    [
+                      {
+                        key: "button-content",
+                        fn: function () {
+                          return [
+                            _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "d-flex align-items-center justify-content-center",
+                              },
+                              [
+                                _c("font-awesome-icon", {
+                                  staticClass: "m-0 h5",
+                                  attrs: { icon: ["far", "question-circle"] },
+                                }),
+                                _vm._v(" "),
+                                _c("span", { staticClass: "sr-only" }, [
+                                  _vm._v(
+                                    "\n            " +
+                                      _vm._s(_vm.labels.helpForum) +
+                                      "\n          "
+                                  ),
+                                ]),
+                              ],
+                              1
+                            ),
+                          ]
+                        },
+                        proxy: true,
+                      },
+                    ],
+                    null,
+                    false,
+                    1129756517
+                  ),
+                },
+                [
+                  _vm._v(" "),
+                  _c("div", [_vm._t("help-dropdown")], 2),
+                  _vm._v(" "),
+                  _vm._l(_vm.helpLinks, function (helpLink, index) {
+                    return _c(
+                      "b-dropdown-item",
+                      {
+                        key: index,
+                        attrs: {
+                          href: _vm._f("checkValidURL")(helpLink.url),
+                          target: helpLink.newTab ? "_blank" : "",
+                        },
+                      },
+                      [
+                        _vm._v(
+                          "\n        " + _vm._s(helpLink.handle) + "\n      "
+                        ),
+                      ]
+                    )
+                  }),
+                  _vm._v(" "),
+                  !_vm.settings.hideForumLink
+                    ? _c(
+                        "b-dropdown-item",
+                        {
+                          attrs: {
+                            "data-test-id": "dropdown-helper-forum",
+                            href: "https://forum.cortezaproject.org/",
+                            target: "_blank",
+                          },
+                        },
+                        [
+                          _vm._v(
+                            "\n        " +
+                              _vm._s(_vm.labels.helpForum) +
+                              "\n      "
+                          ),
+                        ]
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  !_vm.settings.hideDocumentationLink
+                    ? _c(
+                        "b-dropdown-item",
+                        {
+                          attrs: {
+                            "data-test-id": "dropdown-helper-docs",
+                            href: _vm.documentationURL,
+                            target: "_blank",
+                          },
+                        },
+                        [
+                          _vm._v(
+                            "\n        " +
+                              _vm._s(_vm.labels.helpDocumentation) +
+                              "\n      "
+                          ),
+                        ]
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  !_vm.settings.hideFeedbackLink
+                    ? _c(
+                        "b-dropdown-item",
+                        {
+                          attrs: {
+                            "data-test-id": "dropdown-helper-feedback",
+                            href: "mailto:info@cortezaproject.org",
+                            target: "_blank",
+                          },
+                        },
+                        [
+                          _vm._v(
+                            "\n        " +
+                              _vm._s(_vm.labels.helpFeedback) +
+                              "\n      "
+                          ),
+                        ]
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  !_vm.onlyVersion ? _c("b-dropdown-divider") : _vm._e(),
+                  _vm._v(" "),
+                  _c(
+                    "b-dropdown-item",
+                    { staticClass: "small", attrs: { disabled: "" } },
+                    [
+                      _vm._v(
+                        "\n        " +
+                          _vm._s(_vm.labels.helpVersion) +
+                          "\n        "
+                      ),
+                      _c("br"),
+                      _vm._v(
+                        "\n        " + _vm._s(_vm.frontendVersion) + "\n      "
+                      ),
+                    ]
+                  ),
+                ],
+                2
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          !_vm.settings.hideProfile
+            ? _c(
+                "b-dropdown",
+                {
+                  staticClass: "nav-user-icon",
+                  attrs: {
+                    "data-test-id": "dropdown-profile",
+                    variant: _vm.avatarExists ? "link" : "outline-extra-light",
+                    "toggle-class":
+                      "nav-icon text-decoration-none text-dark rounded-circle border " +
+                      (_vm.avatarExists ? "p-0" : ""),
+                    size: "lg",
+                    right: "",
+                    "menu-class":
+                      "topbar-dropdown-menu border-0 shadow-sm text-dark mt-2",
+                    "no-caret": "",
+                  },
+                  on: { hide: _vm.preventDropdownClose },
+                  scopedSlots: _vm._u(
+                    [
+                      {
+                        key: "button-content",
+                        fn: function () {
+                          return [
+                            _vm.avatarExists
+                              ? _c("div", {
+                                  staticClass: "avatar d-flex h-100",
+                                  style: {
+                                    "background-image": _vm.avatarExists
+                                      ? "url(" + _vm.profileAvatarUrl + ")"
+                                      : "none",
+                                  },
+                                })
+                              : _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "d-flex align-items-center justify-content-center",
+                                  },
+                                  [
+                                    _c("font-awesome-icon", {
+                                      staticClass: "m-0 h5",
+                                      attrs: { icon: ["far", "user"] },
+                                    }),
+                                    _vm._v(" "),
+                                    _c("span", { staticClass: "sr-only" }, [
+                                      _vm._v(
+                                        "\n            " +
+                                          _vm._s(_vm.labels.helpForum) +
+                                          "\n          "
+                                      ),
+                                    ]),
+                                  ],
+                                  1
+                                ),
+                          ]
+                        },
+                        proxy: true,
+                      },
+                    ],
+                    null,
+                    false,
+                    1615905304
+                  ),
+                },
+                [
+                  _vm._v(" "),
+                  _c(
+                    "b-dropdown-text",
+                    {
+                      staticClass: "text-muted mb-2",
+                      attrs: { "data-test-id": "dropdown-item-username" },
+                    },
+                    [
+                      _vm._v(
+                        "\n        " +
+                          _vm._s(_vm.labels.userSettingsLoggedInAs) +
+                          "\n      "
+                      ),
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c("div", [_vm._t("avatar-dropdown")], 2),
+                  _vm._v(" "),
+                  _vm._l(_vm.profileLinks, function (profileLink, index) {
+                    return _c(
+                      "b-dropdown-item",
+                      {
+                        key: index,
+                        attrs: {
+                          href: _vm._f("checkValidURL")(profileLink.url),
+                          target: profileLink.newTab ? "_blank" : "",
+                        },
+                      },
+                      [
+                        _vm._v(
+                          "\n        " + _vm._s(profileLink.handle) + "\n      "
+                        ),
+                      ]
+                    )
+                  }),
+                  _vm._v(" "),
+                  !_vm.settings.hideProfileLink
+                    ? _c(
+                        "b-dropdown-item",
+                        {
+                          attrs: {
+                            "data-test-id": "dropdown-profile-user",
+                            href: _vm.userProfileURL,
+                            target: "_blank",
+                          },
+                        },
+                        [
+                          _vm._v(
+                            "\n        " +
+                              _vm._s(_vm.labels.userSettingsProfile) +
+                              "\n      "
+                          ),
+                        ]
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  !_vm.settings.hideChangePasswordLink
+                    ? _c(
+                        "b-dropdown-item",
+                        {
+                          attrs: {
+                            "data-test-id": "dropdown-profile-change-password",
+                            href: _vm.changePasswordURL,
+                            target: "_blank",
+                          },
+                        },
+                        [
+                          _vm._v(
+                            "\n        " +
+                              _vm._s(_vm.labels.userSettingsChangePassword) +
+                              "\n      "
+                          ),
+                        ]
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  !_vm.settings.hideThemeSelector
+                    ? _c(
+                        "b-dropdown",
+                        {
+                          staticClass: "d-flex",
+                          attrs: {
+                            id: "theme-dropleft",
+                            variant: "link",
+                            text: _vm.labels.userSettingsTheme,
+                            dropleft: "",
+                            "no-caret": "",
+                            "toggle-class":
+                              "text-decoration-none text-left dropdown-item rounded-0",
+                          },
+                          on: {
+                            show: function ($event) {
+                              _vm.isThemeDropdownVisible = true;
+                            },
+                            hide: function ($event) {
+                              _vm.isThemeDropdownVisible = false;
+                            },
+                            click: function ($event) {
+                              $event.preventDefault();
+                              $event.stopPropagation();
+                            },
+                          },
+                        },
+                        _vm._l(_vm.themes, function (theme) {
+                          return _c(
+                            "b-dropdown-item-button",
+                            {
+                              key: theme.id,
+                              attrs: {
+                                disabled: _vm.currentTheme === theme.id,
+                              },
+                              on: {
+                                click: function ($event) {
+                                  return _vm.saveThemeMode(theme.id)
+                                },
+                              },
+                            },
+                            [
+                              _vm._v(
+                                "\n          " +
+                                  _vm._s(theme.label) +
+                                  "\n        "
+                              ),
+                            ]
+                          )
+                        }),
+                        1
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _c("b-dropdown-divider"),
+                  _vm._v(" "),
+                  _c(
+                    "b-dropdown-item-button",
+                    {
+                      staticClass: "mt-2",
+                      attrs: { "data-test-id": "dropdown-profile-logout" },
+                      on: {
+                        click: function ($event) {
+                          return _vm.$auth.logout()
+                        },
+                      },
+                    },
+                    [
+                      _vm._v(
+                        "\n        " +
+                          _vm._s(_vm.labels.userSettingsLogout) +
+                          "\n      "
+                      ),
+                    ]
+                  ),
+                ],
+                2
+              )
+            : _vm._e(),
+        ],
+        2
+      ),
+    ]
+  )
+};
 var __vue_staticRenderFns__$B = [];
+__vue_render__$B._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$D = function (inject) {
     if (!inject) return
-    inject("data-v-5b1f9691_0", { source: ".nav-icon[data-v-5b1f9691]{width:calc(var(--topbar-height) - 24px);height:calc(var(--topbar-height) - 24px)}.nav-user-icon[data-v-5b1f9691]{min-width:calc(var(--topbar-height) - 16px);min-height:calc(var(--topbar-height) - 16px)}.header-navigation[data-v-5b1f9691]{width:100vw;min-height:var(--topbar-height);background-color:var(--topbar-bg)}.header-navigation .sidebar-spacer[data-v-5b1f9691]{display:none;min-width:calc(var(--sidebar-width) - 60px)}@media (min-width:1024px){.header-navigation .sidebar-spacer.expanded[data-v-5b1f9691]{display:block}}.avatar[data-v-5b1f9691]{border-radius:50%;background-size:cover;background-repeat:no-repeat;background-position:center}.avatar[data-v-5b1f9691]:hover{opacity:.8;transition:opacity .25s ease-in-out;-moz-transition:opacity .25s ease-in-out;-webkit-transition:opacity .25s ease-in-out}.title[data-v-5b1f9691]{display:flex;align-items:center;min-height:calc(var(--topbar-height) - 16px);padding-left:47px}.title>*[data-v-5b1f9691]{padding:.25rem 0;display:-webkit-box;display:-ms-flexbox;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;text-overflow:ellipsis}.tools-wrapper[data-v-5b1f9691]{flex-grow:1}.tools-wrapper>*[data-v-5b1f9691]{display:flex;justify-content:end;align-items:center;flex-wrap:wrap}", map: undefined, media: undefined })
-,inject("data-v-5b1f9691_1", { source: ".topbar-dropdown-menu{z-index:1051}#theme-dropleft .btn{font-family:var(--font-regular)}", map: undefined, media: undefined });
+    inject("data-v-1f1878f1_0", { source: ".nav-icon[data-v-1f1878f1] {\n  width: calc(var(--topbar-height) - 24px);\n  height: calc(var(--topbar-height) - 24px);\n}\n.nav-user-icon[data-v-1f1878f1] {\n  min-width: calc(var(--topbar-height) - 16px);\n  min-height: calc(var(--topbar-height) - 16px);\n}\n.header-navigation[data-v-1f1878f1] {\n  width: 100vw;\n  min-height: var(--topbar-height);\n  background-color: var(--topbar-bg);\n}\n.header-navigation .sidebar-spacer[data-v-1f1878f1] {\n  display: none;\n  min-width: calc(var(--sidebar-width) - 60px);\n}\n@media (min-width: 1024px) {\n.header-navigation .sidebar-spacer.expanded[data-v-1f1878f1] {\n    display: block;\n}\n}\n.avatar[data-v-1f1878f1] {\n  border-radius: 50%;\n  background-size: cover;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n.avatar[data-v-1f1878f1]:hover {\n  opacity: 0.8;\n  transition: opacity 0.25s ease-in-out;\n  -moz-transition: opacity 0.25s ease-in-out;\n  -webkit-transition: opacity 0.25s ease-in-out;\n}\n.title[data-v-1f1878f1] {\n  display: flex;\n  align-items: center;\n  min-height: calc(var(--topbar-height) - 16px);\n  padding-left: 47px;\n}\n.title > *[data-v-1f1878f1] {\n  padding: 0.25rem 0;\n  display: -webkit-box; /* For Safari and old versions of Chrome */\n  display: -ms-flexbox; /* For old versions of IE */\n  -webkit-box-orient: vertical; /* For Safari and old versions of Chrome */\n  -webkit-line-clamp: 3; /* Maximum number of lines to display */\n  line-clamp: 3; /* Maximum number of lines to display */\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.tools-wrapper[data-v-1f1878f1] {\n  flex-grow: 1;\n}\n.tools-wrapper > *[data-v-1f1878f1] {\n  display: flex;\n  justify-content: end;\n  align-items: center;\n  flex-wrap: wrap;\n}\n\n/*# sourceMappingURL=CTopbar.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/navigation/CTopbar.vue","CTopbar.vue"],"names":[],"mappings":"AAoWA;EACA,wCAJA;EAKA,yCALA;AC9VA;ADsWA;EACA,4CARA;EASA,6CATA;AC1VA;ADsWA;EACA,YAAA;EACA,gCAAA;EACA,kCAAA;ACnWA;ADqWA;EACA,aAAA;EACA,4CAAA;ACnWA;ADqWA;AACA;IACA,cAAA;ACnWE;AACF;ADwWA;EACA,kBAAA;EACA,sBAAA;EACA,4BAAA;EACA,2BAAA;ACrWA;ADuWA;EACA,YAAA;EACA,qCAAA;EACA,0CAAA;EACA,6CAAA;ACrWA;ADyWA;EACA,aAAA;EACA,mBAAA;EACA,6CA9CA;EA+CA,kBAAA;ACtWA;ADwWA;EACA,kBAAA;EACA,oBAAA,EAAA,0CAAA;EACA,oBAAA,EAAA,2BAAA;EACA,4BAAA,EAAA,0CAAA;EACA,qBAAA,EAAA,uCAAA;EACA,aAAA,EAAA,uCAAA;EACA,gBAAA;EACA,uBAAA;ACtWA;AD0WA;EACA,YAAA;ACvWA;ADyWA;EACA,aAAA;EACA,oBAAA;EACA,mBAAA;EACA,eAAA;ACvWA;;AAEA,sCAAsC","file":"CTopbar.vue","sourcesContent":["<template>\n  <div class=\"header-navigation d-flex flex-wrap align-items-center py-2 pl-3 pr-2 gap-2\">\n    <div\n      class=\"sidebar-spacer\"\n      :class=\"{ 'expanded': expanded }\"\n    />\n\n    <h2 class=\"title mb-0\">\n      <slot name=\"title\" />\n    </h2>\n\n    <div class=\"tools-wrapper ml-auto\">\n      <slot name=\"tools\" />\n    </div>\n\n    <div class=\"d-flex align-items-center ml-auto gap-1\">\n      <b-button\n        v-if=\"!hideAppSelector && !settings.hideAppSelector\"\n        data-test-id=\"app-selector\"\n        variant=\"outline-extra-light\"\n        :href=\"appSelectorURL\"\n        class=\"text-dark border-0 px-1\"\n      >\n        {{ labels.appMenu }}\n      </b-button>\n\n      <slot name=\"right-tools\" />\n\n      <c-notification-button\n        v-if=\"!settings.hideNotifications\"\n      />\n\n      <b-dropdown\n        v-if=\"!settings.hideHelp\"\n        data-test-id=\"dropdown-helper\"\n        size=\"lg\"\n        variant=\"outline-extra-light\"\n        toggle-class=\"text-decoration-none text-dark rounded-circle border-0 w-100\"\n        menu-class=\"topbar-dropdown-menu border-0 shadow-sm text-dark mt-2\"\n        right\n        no-caret\n        class=\"nav-icon text-sm-nowrap\"\n      >\n        <template #button-content>\n          <div\n            class=\"d-flex align-items-center justify-content-center\"\n          >\n            <font-awesome-icon\n              class=\"m-0 h5\"\n              :icon=\"['far', 'question-circle']\"\n            />\n            <span class=\"sr-only\">\n              {{ labels.helpForum }}\n            </span>\n          </div>\n        </template>\n\n        <div>\n          <slot name=\"help-dropdown\" />\n        </div>\n\n        <b-dropdown-item\n          v-for=\"(helpLink, index) in helpLinks\"\n          :key=\"index\"\n          :href=\"helpLink.url | checkValidURL\"\n          :target=\"helpLink.newTab ? '_blank' : ''\"\n        >\n          {{ helpLink.handle }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideForumLink\"\n          data-test-id=\"dropdown-helper-forum\"\n          href=\"https://forum.cortezaproject.org/\"\n          target=\"_blank\"\n        >\n          {{ labels.helpForum }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideDocumentationLink\"\n          data-test-id=\"dropdown-helper-docs\"\n          :href=\"documentationURL\"\n          target=\"_blank\"\n        >\n          {{ labels.helpDocumentation }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideFeedbackLink\"\n          data-test-id=\"dropdown-helper-feedback\"\n          href=\"mailto:info@cortezaproject.org\"\n          target=\"_blank\"\n        >\n          {{ labels.helpFeedback }}\n        </b-dropdown-item>\n\n        <b-dropdown-divider\n          v-if=\"!onlyVersion\"\n        />\n        <b-dropdown-item\n          disabled\n          class=\"small\"\n        >\n          {{ labels.helpVersion }}\n          <br>\n          {{ frontendVersion }}\n        </b-dropdown-item>\n      </b-dropdown>\n\n      <b-dropdown\n        v-if=\"!settings.hideProfile\"\n        data-test-id=\"dropdown-profile\"\n        :variant=\"avatarExists ? 'link' : 'outline-extra-light'\"\n        :toggle-class=\"`nav-icon text-decoration-none text-dark rounded-circle border ${avatarExists ? 'p-0' : ''}`\"\n        size=\"lg\"\n        right\n        menu-class=\"topbar-dropdown-menu border-0 shadow-sm text-dark mt-2\"\n        no-caret\n        class=\"nav-user-icon\"\n        @hide=\"preventDropdownClose\"\n      >\n        <template #button-content>\n          <div\n            v-if=\"avatarExists\"\n            class=\"avatar d-flex h-100\"\n            :style=\"{\n              'background-image': avatarExists ? `url(${profileAvatarUrl})` : 'none',\n            }\"\n          />\n\n          <div\n            v-else\n            class=\"d-flex align-items-center justify-content-center\"\n          >\n            <font-awesome-icon\n              class=\"m-0 h5\"\n              :icon=\"['far', 'user']\"\n            />\n            <span class=\"sr-only\">\n              {{ labels.helpForum }}\n            </span>\n          </div>\n        </template>\n\n        <b-dropdown-text\n          data-test-id=\"dropdown-item-username\"\n          class=\"text-muted mb-2\"\n        >\n          {{ labels.userSettingsLoggedInAs }}\n        </b-dropdown-text>\n\n        <div>\n          <slot name=\"avatar-dropdown\" />\n        </div>\n\n        <b-dropdown-item\n          v-for=\"(profileLink, index) in profileLinks\"\n          :key=\"index\"\n          :href=\"profileLink.url | checkValidURL\"\n          :target=\"profileLink.newTab ? '_blank' : ''\"\n        >\n          {{ profileLink.handle }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideProfileLink\"\n          data-test-id=\"dropdown-profile-user\"\n          :href=\"userProfileURL\"\n          target=\"_blank\"\n        >\n          {{ labels.userSettingsProfile }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideChangePasswordLink\"\n          data-test-id=\"dropdown-profile-change-password\"\n          :href=\"changePasswordURL\"\n          target=\"_blank\"\n        >\n          {{ labels.userSettingsChangePassword }}\n        </b-dropdown-item>\n\n        <b-dropdown\n          v-if=\"!settings.hideThemeSelector\"\n          id=\"theme-dropleft\"\n          variant=\"link\"\n          :text=\"labels.userSettingsTheme\"\n          dropleft\n          no-caret\n          toggle-class=\"text-decoration-none text-left dropdown-item rounded-0\"\n          class=\"d-flex\"\n          @show=\"isThemeDropdownVisible = true\"\n          @hide=\"isThemeDropdownVisible = false\"\n          @click.prevent.stop\n        >\n          <b-dropdown-item-button\n            v-for=\"theme in themes\"\n            :key=\"theme.id\"\n            :disabled=\"currentTheme === theme.id\"\n            @click=\"saveThemeMode(theme.id)\"\n          >\n            {{ theme.label }}\n          </b-dropdown-item-button>\n        </b-dropdown>\n\n        <b-dropdown-divider />\n\n        <b-dropdown-item-button\n          data-test-id=\"dropdown-profile-logout\"\n          class=\"mt-2\"\n          @click=\"$auth.logout()\"\n        >\n          {{ labels.userSettingsLogout }}\n        </b-dropdown-item-button>\n      </b-dropdown>\n    </div>\n  </div>\n</template>\n\n<script>\nimport CNotificationButton from '../notifications/CNotificationButton.vue'\n\nexport default {\n  components: {\n    CNotificationButton,\n  },\n\n  props: {\n    expanded: {\n      type: Boolean,\n      default: false,\n    },\n\n    hideAppSelector: {\n      type: Boolean,\n      required: false,\n      default: false,\n    },\n\n    appSelectorURL: {\n      type: String,\n      default: '../',\n    },\n\n    settings: {\n      type: Object,\n      required: true,\n    },\n\n    labels: {\n      type: Object,\n      required: true,\n    },\n  },\n  data () {\n    return {\n      currentTheme: 'light',\n      isThemeDropdownVisible: false,\n    }\n  },\n\n  computed: {\n    userProfileURL () {\n      return this.$auth.cortezaAuthURL\n    },\n\n    changePasswordURL () {\n      return `${this.$auth.cortezaAuthURL}/change-password`\n    },\n\n    documentationURL () {\n      /* eslint-disable no-undef */\n      const [year, month] = VERSION.split('.')\n      return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/index.html`\n    },\n\n    helpLinks () {\n      const { helpLinks = [] } = this.settings || {}\n      return (helpLinks || []).filter(({ handle, url }) => handle && url)\n    },\n\n    profileLinks () {\n      const { profileLinks = [] } = this.settings || {}\n      return (profileLinks || []).filter(({ handle, url }) => handle && url)\n    },\n\n    onlyVersion () {\n      const {\n        hideForumLink,\n        hideDocumentationLink,\n        hideFeedbackLink,\n      } = this.settings || {}\n\n      return !this.helpLinks.length && hideForumLink && hideDocumentationLink && hideFeedbackLink\n    },\n\n    frontendVersion () {\n      /* eslint-disable no-undef */\n      return VERSION\n    },\n\n    profileAvatarUrl () {\n      return `${this.$SystemAPI.baseURL}/attachment/avatar/${this.$auth.user.meta.avatarID}/original/profile-photo-avatar`\n    },\n\n    avatarExists () {\n      return this.$auth.user.meta.avatarID !== '0' && this.$auth.user.meta.avatarID\n    },\n\n    themes () {\n      return [\n        {\n          id: 'light',\n          label: this.labels.lightTheme,\n        },\n        {\n          id: 'dark',\n          label: this.labels.darkTheme,\n        },\n      ]\n    },\n  },\n\n  watch: {\n    '$auth.user.meta.theme': {\n      immediate: true,\n      handler (theme) {\n        this.currentTheme = theme\n      },\n    },\n  },\n\n  methods: {\n    async saveThemeMode (theme) {\n      this.currentTheme = theme\n      this.$set(this.$auth.user.meta, 'theme', theme)\n\n      this.$SystemAPI.userUpdate(this.$auth.user).then(() => {\n        document.getElementsByTagName('html')[0].setAttribute('data-color-mode', theme)\n      }).catch(console.error)\n    },\n\n    preventDropdownClose (e) {\n      if (this.isThemeDropdownVisible) {\n        e.preventDefault()\n      }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n$nav-icon-size: calc(var(--topbar-height) - 24px);\n$nav-user-icon-size: calc(var(--topbar-height) - 16px);\n\n.nav-icon {\n  width: $nav-icon-size;\n  height: $nav-icon-size;\n}\n\n.nav-user-icon {\n  min-width: $nav-user-icon-size;\n  min-height: $nav-user-icon-size;\n}\n\n.header-navigation {\n  width: 100vw;\n  min-height: var(--topbar-height);\n  background-color: var(--topbar-bg);\n\n  .sidebar-spacer {\n    display: none;\n    min-width: calc(var(--sidebar-width) - 60px);\n\n    @media (min-width: 1024px) {\n      &.expanded {\n        display: block;\n      }\n    }\n  }\n}\n\n.avatar {\n  border-radius: 50%;\n  background-size: cover;\n  background-repeat: no-repeat;\n  background-position: center;\n\n  &:hover {\n    opacity: 0.8;\n    transition: opacity .25s ease-in-out;\n    -moz-transition: opacity .25s ease-in-out;\n    -webkit-transition: opacity .25s ease-in-out;\n  }\n}\n\n.title {\n  display: flex;\n  align-items: center;\n  min-height: $nav-user-icon-size;\n  padding-left: 47px;\n\n  > * {\n    padding: 0.25rem 0;\n    display: -webkit-box; /* For Safari and old versions of Chrome */\n    display: -ms-flexbox; /* For old versions of IE */\n    -webkit-box-orient: vertical; /* For Safari and old versions of Chrome */\n    -webkit-line-clamp: 3; /* Maximum number of lines to display */\n    line-clamp: 3; /* Maximum number of lines to display */\n    overflow: hidden;\n    text-overflow: ellipsis;\n  }\n}\n\n.tools-wrapper {\n  flex-grow: 1;\n\n  > * {\n    display: flex;\n    justify-content: end;\n    align-items: center;\n    flex-wrap: wrap;\n  }\n}\n</style>\n\n<style lang=\"scss\">\n.topbar-dropdown-menu {\n  z-index: 1051;\n}\n\n#theme-dropleft {\n  .btn {\n    font-family: var(--font-regular);\n  }\n}\n\n</style>\n",".nav-icon {\n  width: calc(var(--topbar-height) - 24px);\n  height: calc(var(--topbar-height) - 24px);\n}\n\n.nav-user-icon {\n  min-width: calc(var(--topbar-height) - 16px);\n  min-height: calc(var(--topbar-height) - 16px);\n}\n\n.header-navigation {\n  width: 100vw;\n  min-height: var(--topbar-height);\n  background-color: var(--topbar-bg);\n}\n.header-navigation .sidebar-spacer {\n  display: none;\n  min-width: calc(var(--sidebar-width) - 60px);\n}\n@media (min-width: 1024px) {\n  .header-navigation .sidebar-spacer.expanded {\n    display: block;\n  }\n}\n\n.avatar {\n  border-radius: 50%;\n  background-size: cover;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n.avatar:hover {\n  opacity: 0.8;\n  transition: opacity 0.25s ease-in-out;\n  -moz-transition: opacity 0.25s ease-in-out;\n  -webkit-transition: opacity 0.25s ease-in-out;\n}\n\n.title {\n  display: flex;\n  align-items: center;\n  min-height: calc(var(--topbar-height) - 16px);\n  padding-left: 47px;\n}\n.title > * {\n  padding: 0.25rem 0;\n  display: -webkit-box; /* For Safari and old versions of Chrome */\n  display: -ms-flexbox; /* For old versions of IE */\n  -webkit-box-orient: vertical; /* For Safari and old versions of Chrome */\n  -webkit-line-clamp: 3; /* Maximum number of lines to display */\n  line-clamp: 3; /* Maximum number of lines to display */\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n\n.tools-wrapper {\n  flex-grow: 1;\n}\n.tools-wrapper > * {\n  display: flex;\n  justify-content: end;\n  align-items: center;\n  flex-wrap: wrap;\n}\n\n/*# sourceMappingURL=CTopbar.vue.map */"]}, media: undefined })
+,inject("data-v-1f1878f1_1", { source: ".topbar-dropdown-menu {\n  z-index: 1051;\n}\n#theme-dropleft .btn {\n  font-family: var(--font-regular);\n}\n\n/*# sourceMappingURL=CTopbar.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/navigation/CTopbar.vue","CTopbar.vue"],"names":[],"mappings":"AA4aA;EACA,aAAA;AC3aA;AD+aA;EACA,gCAAA;AC5aA;;AAEA,sCAAsC","file":"CTopbar.vue","sourcesContent":["<template>\n  <div class=\"header-navigation d-flex flex-wrap align-items-center py-2 pl-3 pr-2 gap-2\">\n    <div\n      class=\"sidebar-spacer\"\n      :class=\"{ 'expanded': expanded }\"\n    />\n\n    <h2 class=\"title mb-0\">\n      <slot name=\"title\" />\n    </h2>\n\n    <div class=\"tools-wrapper ml-auto\">\n      <slot name=\"tools\" />\n    </div>\n\n    <div class=\"d-flex align-items-center ml-auto gap-1\">\n      <b-button\n        v-if=\"!hideAppSelector && !settings.hideAppSelector\"\n        data-test-id=\"app-selector\"\n        variant=\"outline-extra-light\"\n        :href=\"appSelectorURL\"\n        class=\"text-dark border-0 px-1\"\n      >\n        {{ labels.appMenu }}\n      </b-button>\n\n      <slot name=\"right-tools\" />\n\n      <c-notification-button\n        v-if=\"!settings.hideNotifications\"\n      />\n\n      <b-dropdown\n        v-if=\"!settings.hideHelp\"\n        data-test-id=\"dropdown-helper\"\n        size=\"lg\"\n        variant=\"outline-extra-light\"\n        toggle-class=\"text-decoration-none text-dark rounded-circle border-0 w-100\"\n        menu-class=\"topbar-dropdown-menu border-0 shadow-sm text-dark mt-2\"\n        right\n        no-caret\n        class=\"nav-icon text-sm-nowrap\"\n      >\n        <template #button-content>\n          <div\n            class=\"d-flex align-items-center justify-content-center\"\n          >\n            <font-awesome-icon\n              class=\"m-0 h5\"\n              :icon=\"['far', 'question-circle']\"\n            />\n            <span class=\"sr-only\">\n              {{ labels.helpForum }}\n            </span>\n          </div>\n        </template>\n\n        <div>\n          <slot name=\"help-dropdown\" />\n        </div>\n\n        <b-dropdown-item\n          v-for=\"(helpLink, index) in helpLinks\"\n          :key=\"index\"\n          :href=\"helpLink.url | checkValidURL\"\n          :target=\"helpLink.newTab ? '_blank' : ''\"\n        >\n          {{ helpLink.handle }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideForumLink\"\n          data-test-id=\"dropdown-helper-forum\"\n          href=\"https://forum.cortezaproject.org/\"\n          target=\"_blank\"\n        >\n          {{ labels.helpForum }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideDocumentationLink\"\n          data-test-id=\"dropdown-helper-docs\"\n          :href=\"documentationURL\"\n          target=\"_blank\"\n        >\n          {{ labels.helpDocumentation }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideFeedbackLink\"\n          data-test-id=\"dropdown-helper-feedback\"\n          href=\"mailto:info@cortezaproject.org\"\n          target=\"_blank\"\n        >\n          {{ labels.helpFeedback }}\n        </b-dropdown-item>\n\n        <b-dropdown-divider\n          v-if=\"!onlyVersion\"\n        />\n        <b-dropdown-item\n          disabled\n          class=\"small\"\n        >\n          {{ labels.helpVersion }}\n          <br>\n          {{ frontendVersion }}\n        </b-dropdown-item>\n      </b-dropdown>\n\n      <b-dropdown\n        v-if=\"!settings.hideProfile\"\n        data-test-id=\"dropdown-profile\"\n        :variant=\"avatarExists ? 'link' : 'outline-extra-light'\"\n        :toggle-class=\"`nav-icon text-decoration-none text-dark rounded-circle border ${avatarExists ? 'p-0' : ''}`\"\n        size=\"lg\"\n        right\n        menu-class=\"topbar-dropdown-menu border-0 shadow-sm text-dark mt-2\"\n        no-caret\n        class=\"nav-user-icon\"\n        @hide=\"preventDropdownClose\"\n      >\n        <template #button-content>\n          <div\n            v-if=\"avatarExists\"\n            class=\"avatar d-flex h-100\"\n            :style=\"{\n              'background-image': avatarExists ? `url(${profileAvatarUrl})` : 'none',\n            }\"\n          />\n\n          <div\n            v-else\n            class=\"d-flex align-items-center justify-content-center\"\n          >\n            <font-awesome-icon\n              class=\"m-0 h5\"\n              :icon=\"['far', 'user']\"\n            />\n            <span class=\"sr-only\">\n              {{ labels.helpForum }}\n            </span>\n          </div>\n        </template>\n\n        <b-dropdown-text\n          data-test-id=\"dropdown-item-username\"\n          class=\"text-muted mb-2\"\n        >\n          {{ labels.userSettingsLoggedInAs }}\n        </b-dropdown-text>\n\n        <div>\n          <slot name=\"avatar-dropdown\" />\n        </div>\n\n        <b-dropdown-item\n          v-for=\"(profileLink, index) in profileLinks\"\n          :key=\"index\"\n          :href=\"profileLink.url | checkValidURL\"\n          :target=\"profileLink.newTab ? '_blank' : ''\"\n        >\n          {{ profileLink.handle }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideProfileLink\"\n          data-test-id=\"dropdown-profile-user\"\n          :href=\"userProfileURL\"\n          target=\"_blank\"\n        >\n          {{ labels.userSettingsProfile }}\n        </b-dropdown-item>\n\n        <b-dropdown-item\n          v-if=\"!settings.hideChangePasswordLink\"\n          data-test-id=\"dropdown-profile-change-password\"\n          :href=\"changePasswordURL\"\n          target=\"_blank\"\n        >\n          {{ labels.userSettingsChangePassword }}\n        </b-dropdown-item>\n\n        <b-dropdown\n          v-if=\"!settings.hideThemeSelector\"\n          id=\"theme-dropleft\"\n          variant=\"link\"\n          :text=\"labels.userSettingsTheme\"\n          dropleft\n          no-caret\n          toggle-class=\"text-decoration-none text-left dropdown-item rounded-0\"\n          class=\"d-flex\"\n          @show=\"isThemeDropdownVisible = true\"\n          @hide=\"isThemeDropdownVisible = false\"\n          @click.prevent.stop\n        >\n          <b-dropdown-item-button\n            v-for=\"theme in themes\"\n            :key=\"theme.id\"\n            :disabled=\"currentTheme === theme.id\"\n            @click=\"saveThemeMode(theme.id)\"\n          >\n            {{ theme.label }}\n          </b-dropdown-item-button>\n        </b-dropdown>\n\n        <b-dropdown-divider />\n\n        <b-dropdown-item-button\n          data-test-id=\"dropdown-profile-logout\"\n          class=\"mt-2\"\n          @click=\"$auth.logout()\"\n        >\n          {{ labels.userSettingsLogout }}\n        </b-dropdown-item-button>\n      </b-dropdown>\n    </div>\n  </div>\n</template>\n\n<script>\nimport CNotificationButton from '../notifications/CNotificationButton.vue'\n\nexport default {\n  components: {\n    CNotificationButton,\n  },\n\n  props: {\n    expanded: {\n      type: Boolean,\n      default: false,\n    },\n\n    hideAppSelector: {\n      type: Boolean,\n      required: false,\n      default: false,\n    },\n\n    appSelectorURL: {\n      type: String,\n      default: '../',\n    },\n\n    settings: {\n      type: Object,\n      required: true,\n    },\n\n    labels: {\n      type: Object,\n      required: true,\n    },\n  },\n  data () {\n    return {\n      currentTheme: 'light',\n      isThemeDropdownVisible: false,\n    }\n  },\n\n  computed: {\n    userProfileURL () {\n      return this.$auth.cortezaAuthURL\n    },\n\n    changePasswordURL () {\n      return `${this.$auth.cortezaAuthURL}/change-password`\n    },\n\n    documentationURL () {\n      /* eslint-disable no-undef */\n      const [year, month] = VERSION.split('.')\n      return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/index.html`\n    },\n\n    helpLinks () {\n      const { helpLinks = [] } = this.settings || {}\n      return (helpLinks || []).filter(({ handle, url }) => handle && url)\n    },\n\n    profileLinks () {\n      const { profileLinks = [] } = this.settings || {}\n      return (profileLinks || []).filter(({ handle, url }) => handle && url)\n    },\n\n    onlyVersion () {\n      const {\n        hideForumLink,\n        hideDocumentationLink,\n        hideFeedbackLink,\n      } = this.settings || {}\n\n      return !this.helpLinks.length && hideForumLink && hideDocumentationLink && hideFeedbackLink\n    },\n\n    frontendVersion () {\n      /* eslint-disable no-undef */\n      return VERSION\n    },\n\n    profileAvatarUrl () {\n      return `${this.$SystemAPI.baseURL}/attachment/avatar/${this.$auth.user.meta.avatarID}/original/profile-photo-avatar`\n    },\n\n    avatarExists () {\n      return this.$auth.user.meta.avatarID !== '0' && this.$auth.user.meta.avatarID\n    },\n\n    themes () {\n      return [\n        {\n          id: 'light',\n          label: this.labels.lightTheme,\n        },\n        {\n          id: 'dark',\n          label: this.labels.darkTheme,\n        },\n      ]\n    },\n  },\n\n  watch: {\n    '$auth.user.meta.theme': {\n      immediate: true,\n      handler (theme) {\n        this.currentTheme = theme\n      },\n    },\n  },\n\n  methods: {\n    async saveThemeMode (theme) {\n      this.currentTheme = theme\n      this.$set(this.$auth.user.meta, 'theme', theme)\n\n      this.$SystemAPI.userUpdate(this.$auth.user).then(() => {\n        document.getElementsByTagName('html')[0].setAttribute('data-color-mode', theme)\n      }).catch(console.error)\n    },\n\n    preventDropdownClose (e) {\n      if (this.isThemeDropdownVisible) {\n        e.preventDefault()\n      }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n$nav-icon-size: calc(var(--topbar-height) - 24px);\n$nav-user-icon-size: calc(var(--topbar-height) - 16px);\n\n.nav-icon {\n  width: $nav-icon-size;\n  height: $nav-icon-size;\n}\n\n.nav-user-icon {\n  min-width: $nav-user-icon-size;\n  min-height: $nav-user-icon-size;\n}\n\n.header-navigation {\n  width: 100vw;\n  min-height: var(--topbar-height);\n  background-color: var(--topbar-bg);\n\n  .sidebar-spacer {\n    display: none;\n    min-width: calc(var(--sidebar-width) - 60px);\n\n    @media (min-width: 1024px) {\n      &.expanded {\n        display: block;\n      }\n    }\n  }\n}\n\n.avatar {\n  border-radius: 50%;\n  background-size: cover;\n  background-repeat: no-repeat;\n  background-position: center;\n\n  &:hover {\n    opacity: 0.8;\n    transition: opacity .25s ease-in-out;\n    -moz-transition: opacity .25s ease-in-out;\n    -webkit-transition: opacity .25s ease-in-out;\n  }\n}\n\n.title {\n  display: flex;\n  align-items: center;\n  min-height: $nav-user-icon-size;\n  padding-left: 47px;\n\n  > * {\n    padding: 0.25rem 0;\n    display: -webkit-box; /* For Safari and old versions of Chrome */\n    display: -ms-flexbox; /* For old versions of IE */\n    -webkit-box-orient: vertical; /* For Safari and old versions of Chrome */\n    -webkit-line-clamp: 3; /* Maximum number of lines to display */\n    line-clamp: 3; /* Maximum number of lines to display */\n    overflow: hidden;\n    text-overflow: ellipsis;\n  }\n}\n\n.tools-wrapper {\n  flex-grow: 1;\n\n  > * {\n    display: flex;\n    justify-content: end;\n    align-items: center;\n    flex-wrap: wrap;\n  }\n}\n</style>\n\n<style lang=\"scss\">\n.topbar-dropdown-menu {\n  z-index: 1051;\n}\n\n#theme-dropleft {\n  .btn {\n    font-family: var(--font-regular);\n  }\n}\n\n</style>\n",".topbar-dropdown-menu {\n  z-index: 1051;\n}\n\n#theme-dropleft .btn {\n  font-family: var(--font-regular);\n}\n\n/*# sourceMappingURL=CTopbar.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$D = "data-v-5b1f9691";
+  const __vue_scope_id__$D = "data-v-1f1878f1";
   /* module identifier */
   const __vue_module_identifier__$D = undefined;
   /* functional template */
@@ -27334,18 +31301,201 @@ var script$B = {
 const __vue_script__$B = script$B;
 
 /* template */
-var __vue_render__$A = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('b-sidebar',{attrs:{"data-test-id":"sidebar","sidebar-class":("sidebar " + (_vm.isExpanded ? 'expanded' : '')),"header-class":("d-block sidebar-header " + (_vm.isExpanded ? 'expanded border-bottom p-2' : '')),"body-class":("" + (_vm.isExpanded ? 'px-3' : '')),"footer-class":("rounded-right " + (_vm.isExpanded ? 'px-2' : '')),"no-header":!_vm.isExpanded,"backdrop":_vm.isMobile,"backdrop-variant":"white","shadow":_vm.isExpanded && 'sm',"no-slide":"","right":_vm.right,"no-close-on-route-change":"","no-close-on-esc":"","z-index":"1037"},scopedSlots:_vm._u([{key:"header",fn:function(){return [_c('div',{staticClass:"d-flex align-items-center justify-content-between pl-2",staticStyle:{"height":"47px"}},[_c('img',{staticClass:"logo w-auto border-0",attrs:{"data-test-id":"img-main-logo","src":_vm.logo}}),_vm._v(" "),_c('b-button',{staticClass:"d-flex align-items-center justify-content-center p-2 border-0 text-secondary",attrs:{"variant":"outline-light"},on:{"click":function($event){return _vm.closeSidebar()}}},[_c('font-awesome-icon',{staticClass:"h6 mb-0",attrs:{"icon":['fas', 'times']}})],1)],1),_vm._v(" "),(_vm.isExpanded)?_c('div',{staticClass:"px-2"},[_vm._t("header-expanded")],2):_vm._e(),_vm._v(" "),(!_vm.isExpanded)?_c('hr',{staticClass:"my-2"}):_vm._e()]},proxy:true},{key:"footer",fn:function(){return [(_vm.isExpanded)?_vm._t("footer-expanded"):_vm._e()]},proxy:true}],null,true),model:{value:(_vm.isExpanded),callback:function ($$v) {_vm.isExpanded=$$v;},expression:"isExpanded"}},[_vm._v(" "),(_vm.isExpanded)?_vm._t("body-expanded"):_vm._e()],2),_vm._v(" "),_c('div',{staticClass:"d-flex align-items-center justify-content-center tab position-absolute p-2"},[(_vm.disabledRoutes.includes(_vm.$route.name))?_c('div',{staticClass:"d-flex align-items-center border-0 p-2"},[_c('img',{staticClass:"icon w-auto border-0",attrs:{"src":_vm.icon}})]):(_vm.expandOnClick)?_c('b-button',{staticClass:"d-flex align-items-center border-0 text-primary",attrs:{"data-test-id":"button-sidebar-open","variant":"outline-extra-light","size":"lg"},on:{"click":function($event){return _vm.openSidebar()}}},[_c('font-awesome-icon',{staticClass:"h4 mb-0",attrs:{"icon":['fas', 'bars']}})],1):_c('b-button',{staticClass:"d-flex align-items-center p-2 border-0 text-primary",attrs:{"data-test-id":"button-home","variant":"outline-extra-light","size":"lg","to":{ name: 'root' }}},[_c('font-awesome-icon',{staticClass:"h4 mb-0",attrs:{"icon":['fas', 'home']}})],1)],1)],1)};
+var __vue_render__$A = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    [
+      _c(
+        "b-sidebar",
+        {
+          attrs: {
+            "data-test-id": "sidebar",
+            "sidebar-class": "sidebar " + (_vm.isExpanded ? "expanded" : ""),
+            "header-class":
+              "d-block sidebar-header " +
+              (_vm.isExpanded ? "expanded border-bottom p-2" : ""),
+            "body-class": "" + (_vm.isExpanded ? "px-3" : ""),
+            "footer-class": "rounded-right " + (_vm.isExpanded ? "px-2" : ""),
+            "no-header": !_vm.isExpanded,
+            backdrop: _vm.isMobile,
+            "backdrop-variant": "white",
+            shadow: _vm.isExpanded && "sm",
+            "no-slide": "",
+            right: _vm.right,
+            "no-close-on-route-change": "",
+            "no-close-on-esc": "",
+            "z-index": "1037",
+          },
+          scopedSlots: _vm._u(
+            [
+              {
+                key: "header",
+                fn: function () {
+                  return [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "d-flex align-items-center justify-content-between pl-2",
+                        staticStyle: { height: "47px" },
+                      },
+                      [
+                        _c("img", {
+                          staticClass: "logo w-auto border-0",
+                          attrs: {
+                            "data-test-id": "img-main-logo",
+                            src: _vm.logo,
+                          },
+                        }),
+                        _vm._v(" "),
+                        _c(
+                          "b-button",
+                          {
+                            staticClass:
+                              "d-flex align-items-center justify-content-center p-2 border-0 text-secondary",
+                            attrs: { variant: "outline-light" },
+                            on: {
+                              click: function ($event) {
+                                return _vm.closeSidebar()
+                              },
+                            },
+                          },
+                          [
+                            _c("font-awesome-icon", {
+                              staticClass: "h6 mb-0",
+                              attrs: { icon: ["fas", "times"] },
+                            }),
+                          ],
+                          1
+                        ),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _vm.isExpanded
+                      ? _c(
+                          "div",
+                          { staticClass: "px-2" },
+                          [_vm._t("header-expanded")],
+                          2
+                        )
+                      : _vm._e(),
+                    _vm._v(" "),
+                    !_vm.isExpanded
+                      ? _c("hr", { staticClass: "my-2" })
+                      : _vm._e(),
+                  ]
+                },
+                proxy: true,
+              },
+              {
+                key: "footer",
+                fn: function () {
+                  return [_vm.isExpanded ? _vm._t("footer-expanded") : _vm._e()]
+                },
+                proxy: true,
+              },
+            ],
+            null,
+            true
+          ),
+          model: {
+            value: _vm.isExpanded,
+            callback: function ($$v) {
+              _vm.isExpanded = $$v;
+            },
+            expression: "isExpanded",
+          },
+        },
+        [_vm._v(" "), _vm.isExpanded ? _vm._t("body-expanded") : _vm._e()],
+        2
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        {
+          staticClass:
+            "d-flex align-items-center justify-content-center tab position-absolute p-2",
+        },
+        [
+          _vm.disabledRoutes.includes(_vm.$route.name)
+            ? _c(
+                "div",
+                { staticClass: "d-flex align-items-center border-0 p-2" },
+                [
+                  _c("img", {
+                    staticClass: "icon w-auto border-0",
+                    attrs: { src: _vm.icon },
+                  }),
+                ]
+              )
+            : _vm.expandOnClick
+            ? _c(
+                "b-button",
+                {
+                  staticClass:
+                    "d-flex align-items-center border-0 text-primary",
+                  attrs: {
+                    "data-test-id": "button-sidebar-open",
+                    variant: "outline-extra-light",
+                    size: "lg",
+                  },
+                  on: {
+                    click: function ($event) {
+                      return _vm.openSidebar()
+                    },
+                  },
+                },
+                [
+                  _c("font-awesome-icon", {
+                    staticClass: "h4 mb-0",
+                    attrs: { icon: ["fas", "bars"] },
+                  }),
+                ],
+                1
+              )
+            : _c(
+                "b-button",
+                {
+                  staticClass:
+                    "d-flex align-items-center p-2 border-0 text-primary",
+                  attrs: {
+                    "data-test-id": "button-home",
+                    variant: "outline-extra-light",
+                    size: "lg",
+                    to: { name: "root" },
+                  },
+                },
+                [
+                  _c("font-awesome-icon", {
+                    staticClass: "h4 mb-0",
+                    attrs: { icon: ["fas", "home"] },
+                  }),
+                ],
+                1
+              ),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$A = [];
+__vue_render__$A._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$C = function (inject) {
     if (!inject) return
-    inject("data-v-4df43386_0", { source: ".tab[data-v-4df43386]{z-index:1021;top:0;height:64px;width:66px}.icon[data-v-4df43386]{max-height:40px;max-width:40px}.logo[data-v-4df43386]{max-height:40px}.sidebar-header[data-v-4df43386]{height:64px}", map: undefined, media: undefined })
-,inject("data-v-4df43386_1", { source: ".b-sidebar{background-color:var(--white)!important}.b-sidebar-backdrop{opacity:.75!important}.sidebar{display:flex!important;left:calc(-320px)!important;transition:left .2s cubic-bezier(.4,0,.2,1)}.sidebar.expanded{left:0!important;transition:left .2s cubic-bezier(.4,0,.2,1)}@media (max-width:1023px){.sidebar{width:400px!important;left:calc(-400px)!important}}[dir=rtl] .sidebar{right:calc(-320px)!important;left:auto!important;transition:right .2s cubic-bezier(.4,0,.2,1)}[dir=rtl] .sidebar.expanded{right:0!important;transition:right .2s cubic-bezier(.4,0,.2,1)}@media (max-width:1023px){[dir=rtl] .sidebar{width:400px!important;right:calc(-400px)!important}}", map: undefined, media: undefined });
+    inject("data-v-0a66c434_0", { source: ".tab[data-v-0a66c434] {\n  z-index: 1021;\n  top: 0;\n  height: 64px;\n  width: 66px;\n}\n.icon[data-v-0a66c434] {\n  max-height: 40px;\n  max-width: 40px;\n}\n.logo[data-v-0a66c434] {\n  max-height: 40px;\n}\n.sidebar-header[data-v-0a66c434] {\n  height: 64px;\n}\n\n/*# sourceMappingURL=CSidebar.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/navigation/CSidebar.vue","CSidebar.vue"],"names":[],"mappings":"AAwOA;EACA,aAAA;EACA,MAAA;EACA,YALA;EAMA,WAAA;ACvOA;AD0OA;EACA,gBAAA;EACA,eAAA;ACvOA;AD0OA;EACA,gBAAA;ACvOA;AD0OA;EACA,YAnBA;ACpNA;;AAEA,uCAAuC","file":"CSidebar.vue","sourcesContent":["<template>\n  <div>\n    <b-sidebar\n      v-model=\"isExpanded\"\n      data-test-id=\"sidebar\"\n      :sidebar-class=\"`sidebar ${isExpanded ? 'expanded' : ''}`\"\n      :header-class=\"`d-block sidebar-header ${isExpanded ? 'expanded border-bottom p-2' : ''}`\"\n      :body-class=\"`${isExpanded ? 'px-3' : ''}`\"\n      :footer-class=\"`rounded-right ${isExpanded ? 'px-2' : ''}`\"\n      :no-header=\"!isExpanded\"\n      :backdrop=\"isMobile\"\n      backdrop-variant=\"white\"\n      :shadow=\"isExpanded && 'sm'\"\n      no-slide\n      :right=\"right\"\n      no-close-on-route-change\n      no-close-on-esc\n      z-index=\"1037\"\n    >\n      <template #header>\n        <div\n          class=\"d-flex align-items-center justify-content-between pl-2\"\n          style=\"height: 47px;\"\n        >\n          <img\n            data-test-id=\"img-main-logo\"\n            class=\"logo w-auto border-0\"\n            :src=\"logo\"\n          >\n\n          <b-button\n            variant=\"outline-light\"\n            class=\"d-flex align-items-center justify-content-center p-2 border-0 text-secondary\"\n            @click=\"closeSidebar()\"\n          >\n            <font-awesome-icon\n              :icon=\"['fas', 'times']\"\n              class=\"h6 mb-0\"\n            />\n          </b-button>\n        </div>\n\n        <div\n          v-if=\"isExpanded\"\n          class=\"px-2\"\n        >\n          <slot\n            name=\"header-expanded\"\n          />\n        </div>\n\n        <hr\n          v-if=\"!isExpanded\"\n          class=\"my-2\"\n        >\n      </template>\n\n      <slot\n        v-if=\"isExpanded\"\n        name=\"body-expanded\"\n      />\n\n      <template #footer>\n        <slot\n          v-if=\"isExpanded\"\n          name=\"footer-expanded\"\n        />\n      </template>\n    </b-sidebar>\n\n    <div\n      class=\"d-flex align-items-center justify-content-center tab position-absolute p-2\"\n    >\n      <div\n        v-if=\"disabledRoutes.includes($route.name)\"\n        class=\"d-flex align-items-center border-0 p-2\"\n      >\n        <img\n          class=\"icon w-auto border-0\"\n          :src=\"icon\"\n        >\n      </div>\n\n      <b-button\n        v-else-if=\"expandOnClick\"\n        data-test-id=\"button-sidebar-open\"\n        variant=\"outline-extra-light\"\n        size=\"lg\"\n        class=\"d-flex align-items-center border-0 text-primary\"\n        @click=\"openSidebar()\"\n      >\n        <font-awesome-icon\n          :icon=\"['fas', 'bars']\"\n          class=\"h4 mb-0\"\n        />\n      </b-button>\n\n      <b-button\n        v-else\n        data-test-id=\"button-home\"\n        variant=\"outline-extra-light\"\n        size=\"lg\"\n        class=\"d-flex align-items-center p-2 border-0 text-primary\"\n        :to=\"{ name: 'root' }\"\n      >\n        <font-awesome-icon\n          :icon=\"['fas', 'home']\"\n          class=\"h4 mb-0\"\n        />\n      </b-button>\n    </div>\n  </div>\n</template>\n\n<script>\nimport { throttle } from 'lodash'\n\nexport default {\n  props: {\n    expanded: {\n      type: Boolean,\n      default: false,\n    },\n\n    expandOnClick: {\n      type: Boolean,\n      default: false,\n    },\n\n    disabledRoutes: {\n      type: Array,\n      default: () => [],\n    },\n\n    icon: {\n      type: String,\n      default: () => '',\n    },\n\n    logo: {\n      type: String,\n      default: () => '',\n    },\n\n    right: {\n      type: Boolean,\n      default: false,\n    },\n\n    storageKey: {\n      type: String,\n      default: 'sidebar-expanded',\n    },\n  },\n\n  data () {\n    return {\n      isMobile: false,\n    }\n  },\n\n  computed: {\n    isExpanded: {\n      get () {\n        return this.expanded\n      },\n\n      set (expanded) {\n        this.$emit('update:expanded', expanded)\n      },\n    },\n  },\n\n  watch: {\n    '$route.name': {\n      handler () {\n        this.checkSidebar()\n      },\n    },\n\n    disabledRoutes: {\n      handler () {\n        this.checkSidebar()\n      },\n    },\n  },\n\n  mounted () {\n    this.checkSidebar(true)\n    this.checkIfMobile()\n\n    this.$root.$on('close-sidebar', this.closeSidebar)\n    window.addEventListener('resize', this.checkIfMobile)\n  },\n\n  beforeUnmount () {\n    this.$root.$off('close-sidebar', this.closeSidebar)\n    window.removeEventListener('resize', this.checkIfMobile)\n  },\n\n  methods: {\n    checkIfMobile: throttle(function () {\n      this.isMobile = window.innerWidth < 1024\n    }, 500),\n\n    checkSidebar (initial = false) {\n      // If sidebar should be disabled on route, close and unpin when navigating to route\n      if (this.disabledRoutes.includes(this.$route.name)) {\n        this.isExpanded = false\n      } else if (!this.isMobile && initial) {\n        const stored = localStorage.getItem(this.storageKey)\n        // Default to closed if no stored value\n        this.isExpanded = stored ? stored === 'true' : true\n      }\n    },\n\n    openSidebar () {\n      this.isExpanded = true\n      localStorage.setItem(this.storageKey, 'true')\n    },\n\n    closeSidebar () {\n      this.isExpanded = false\n      localStorage.setItem(this.storageKey, 'false')\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n$header-height: 64px;\n\n.tab {\n  z-index: 1021;\n  top: 0;\n  height: $header-height;\n  width: 66px;\n}\n\n.icon {\n  max-height: 40px;\n  max-width: 40px;\n}\n\n.logo {\n  max-height: 40px;\n}\n\n.sidebar-header {\n  height: $header-height;\n}\n</style>\n\n<style lang=\"scss\">\n$nav-width: 320px;\n$nav-width-mobile: 400px;\n\n.b-sidebar {\n  background-color: var(--white) !important;\n}\n\n.b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n\n.sidebar {\n  display: flex !important;\n  left: calc(-#{$nav-width}) !important;\n  transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n\n  &.expanded {\n    left: 0 !important;\n    transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n  }\n}\n\n// Mobile sidebar should be 400px wide to match notifications and drafts\n@media (max-width: 1023px) {\n  .sidebar {\n    width: $nav-width-mobile !important;\n    left: calc(-#{$nav-width-mobile}) !important;\n  }\n}\n\n[dir=\"rtl\"] {\n  .sidebar {\n    right: calc(-#{$nav-width}) !important;\n    left: auto !important;\n    transition: right 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n\n    &.expanded {\n      right: 0 !important;\n      transition: right 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n    }\n  }\n\n  @media (max-width: 1023px) {\n    .sidebar {\n      width: $nav-width-mobile !important;\n      right: calc(-#{$nav-width-mobile}) !important;\n    }\n  }\n}\n</style>\n",".tab {\n  z-index: 1021;\n  top: 0;\n  height: 64px;\n  width: 66px;\n}\n\n.icon {\n  max-height: 40px;\n  max-width: 40px;\n}\n\n.logo {\n  max-height: 40px;\n}\n\n.sidebar-header {\n  height: 64px;\n}\n\n/*# sourceMappingURL=CSidebar.vue.map */"]}, media: undefined })
+,inject("data-v-0a66c434_1", { source: ".b-sidebar {\n  background-color: var(--white) !important;\n}\n.b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n.sidebar {\n  display: flex !important;\n  left: calc(-320px) !important;\n  transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.sidebar.expanded {\n  left: 0 !important;\n  transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n@media (max-width: 1023px) {\n.sidebar {\n    width: 400px !important;\n    left: calc(-400px) !important;\n}\n}\n[dir=rtl] .sidebar {\n  right: calc(-320px) !important;\n  left: auto !important;\n  transition: right 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n[dir=rtl] .sidebar.expanded {\n  right: 0 !important;\n  transition: right 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n@media (max-width: 1023px) {\n[dir=rtl] .sidebar {\n    width: 400px !important;\n    right: calc(-400px) !important;\n}\n}\n\n/*# sourceMappingURL=CSidebar.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/navigation/CSidebar.vue","CSidebar.vue"],"names":[],"mappings":"AAiQA;EACA,yCAAA;AChQA;ADmQA;EACA,wBAAA;AChQA;ADmQA;EACA,wBAAA;EACA,6BAAA;EACA,kDAAA;AChQA;ADkQA;EACA,kBAAA;EACA,kDAAA;AChQA;ADqQA;AACA;IACA,uBAAA;IACA,6BAAA;AClQE;AACF;ADsQA;EACA,8BAAA;EACA,qBAAA;EACA,mDAAA;ACpQA;ADsQA;EACA,mBAAA;EACA,mDAAA;ACpQA;ADwQA;AACA;IACA,uBAAA;IACA,8BAAA;ACtQE;AACF;;AAEA,uCAAuC","file":"CSidebar.vue","sourcesContent":["<template>\n  <div>\n    <b-sidebar\n      v-model=\"isExpanded\"\n      data-test-id=\"sidebar\"\n      :sidebar-class=\"`sidebar ${isExpanded ? 'expanded' : ''}`\"\n      :header-class=\"`d-block sidebar-header ${isExpanded ? 'expanded border-bottom p-2' : ''}`\"\n      :body-class=\"`${isExpanded ? 'px-3' : ''}`\"\n      :footer-class=\"`rounded-right ${isExpanded ? 'px-2' : ''}`\"\n      :no-header=\"!isExpanded\"\n      :backdrop=\"isMobile\"\n      backdrop-variant=\"white\"\n      :shadow=\"isExpanded && 'sm'\"\n      no-slide\n      :right=\"right\"\n      no-close-on-route-change\n      no-close-on-esc\n      z-index=\"1037\"\n    >\n      <template #header>\n        <div\n          class=\"d-flex align-items-center justify-content-between pl-2\"\n          style=\"height: 47px;\"\n        >\n          <img\n            data-test-id=\"img-main-logo\"\n            class=\"logo w-auto border-0\"\n            :src=\"logo\"\n          >\n\n          <b-button\n            variant=\"outline-light\"\n            class=\"d-flex align-items-center justify-content-center p-2 border-0 text-secondary\"\n            @click=\"closeSidebar()\"\n          >\n            <font-awesome-icon\n              :icon=\"['fas', 'times']\"\n              class=\"h6 mb-0\"\n            />\n          </b-button>\n        </div>\n\n        <div\n          v-if=\"isExpanded\"\n          class=\"px-2\"\n        >\n          <slot\n            name=\"header-expanded\"\n          />\n        </div>\n\n        <hr\n          v-if=\"!isExpanded\"\n          class=\"my-2\"\n        >\n      </template>\n\n      <slot\n        v-if=\"isExpanded\"\n        name=\"body-expanded\"\n      />\n\n      <template #footer>\n        <slot\n          v-if=\"isExpanded\"\n          name=\"footer-expanded\"\n        />\n      </template>\n    </b-sidebar>\n\n    <div\n      class=\"d-flex align-items-center justify-content-center tab position-absolute p-2\"\n    >\n      <div\n        v-if=\"disabledRoutes.includes($route.name)\"\n        class=\"d-flex align-items-center border-0 p-2\"\n      >\n        <img\n          class=\"icon w-auto border-0\"\n          :src=\"icon\"\n        >\n      </div>\n\n      <b-button\n        v-else-if=\"expandOnClick\"\n        data-test-id=\"button-sidebar-open\"\n        variant=\"outline-extra-light\"\n        size=\"lg\"\n        class=\"d-flex align-items-center border-0 text-primary\"\n        @click=\"openSidebar()\"\n      >\n        <font-awesome-icon\n          :icon=\"['fas', 'bars']\"\n          class=\"h4 mb-0\"\n        />\n      </b-button>\n\n      <b-button\n        v-else\n        data-test-id=\"button-home\"\n        variant=\"outline-extra-light\"\n        size=\"lg\"\n        class=\"d-flex align-items-center p-2 border-0 text-primary\"\n        :to=\"{ name: 'root' }\"\n      >\n        <font-awesome-icon\n          :icon=\"['fas', 'home']\"\n          class=\"h4 mb-0\"\n        />\n      </b-button>\n    </div>\n  </div>\n</template>\n\n<script>\nimport { throttle } from 'lodash'\n\nexport default {\n  props: {\n    expanded: {\n      type: Boolean,\n      default: false,\n    },\n\n    expandOnClick: {\n      type: Boolean,\n      default: false,\n    },\n\n    disabledRoutes: {\n      type: Array,\n      default: () => [],\n    },\n\n    icon: {\n      type: String,\n      default: () => '',\n    },\n\n    logo: {\n      type: String,\n      default: () => '',\n    },\n\n    right: {\n      type: Boolean,\n      default: false,\n    },\n\n    storageKey: {\n      type: String,\n      default: 'sidebar-expanded',\n    },\n  },\n\n  data () {\n    return {\n      isMobile: false,\n    }\n  },\n\n  computed: {\n    isExpanded: {\n      get () {\n        return this.expanded\n      },\n\n      set (expanded) {\n        this.$emit('update:expanded', expanded)\n      },\n    },\n  },\n\n  watch: {\n    '$route.name': {\n      handler () {\n        this.checkSidebar()\n      },\n    },\n\n    disabledRoutes: {\n      handler () {\n        this.checkSidebar()\n      },\n    },\n  },\n\n  mounted () {\n    this.checkSidebar(true)\n    this.checkIfMobile()\n\n    this.$root.$on('close-sidebar', this.closeSidebar)\n    window.addEventListener('resize', this.checkIfMobile)\n  },\n\n  beforeUnmount () {\n    this.$root.$off('close-sidebar', this.closeSidebar)\n    window.removeEventListener('resize', this.checkIfMobile)\n  },\n\n  methods: {\n    checkIfMobile: throttle(function () {\n      this.isMobile = window.innerWidth < 1024\n    }, 500),\n\n    checkSidebar (initial = false) {\n      // If sidebar should be disabled on route, close and unpin when navigating to route\n      if (this.disabledRoutes.includes(this.$route.name)) {\n        this.isExpanded = false\n      } else if (!this.isMobile && initial) {\n        const stored = localStorage.getItem(this.storageKey)\n        // Default to closed if no stored value\n        this.isExpanded = stored ? stored === 'true' : true\n      }\n    },\n\n    openSidebar () {\n      this.isExpanded = true\n      localStorage.setItem(this.storageKey, 'true')\n    },\n\n    closeSidebar () {\n      this.isExpanded = false\n      localStorage.setItem(this.storageKey, 'false')\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n$header-height: 64px;\n\n.tab {\n  z-index: 1021;\n  top: 0;\n  height: $header-height;\n  width: 66px;\n}\n\n.icon {\n  max-height: 40px;\n  max-width: 40px;\n}\n\n.logo {\n  max-height: 40px;\n}\n\n.sidebar-header {\n  height: $header-height;\n}\n</style>\n\n<style lang=\"scss\">\n$nav-width: 320px;\n$nav-width-mobile: 400px;\n\n.b-sidebar {\n  background-color: var(--white) !important;\n}\n\n.b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n\n.sidebar {\n  display: flex !important;\n  left: calc(-#{$nav-width}) !important;\n  transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n\n  &.expanded {\n    left: 0 !important;\n    transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n  }\n}\n\n// Mobile sidebar should be 400px wide to match notifications and drafts\n@media (max-width: 1023px) {\n  .sidebar {\n    width: $nav-width-mobile !important;\n    left: calc(-#{$nav-width-mobile}) !important;\n  }\n}\n\n[dir=\"rtl\"] {\n  .sidebar {\n    right: calc(-#{$nav-width}) !important;\n    left: auto !important;\n    transition: right 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n\n    &.expanded {\n      right: 0 !important;\n      transition: right 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n    }\n  }\n\n  @media (max-width: 1023px) {\n    .sidebar {\n      width: $nav-width-mobile !important;\n      right: calc(-#{$nav-width-mobile}) !important;\n    }\n  }\n}\n</style>\n",".b-sidebar {\n  background-color: var(--white) !important;\n}\n\n.b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n\n.sidebar {\n  display: flex !important;\n  left: calc(-320px) !important;\n  transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n.sidebar.expanded {\n  left: 0 !important;\n  transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n\n@media (max-width: 1023px) {\n  .sidebar {\n    width: 400px !important;\n    left: calc(-400px) !important;\n  }\n}\n[dir=rtl] .sidebar {\n  right: calc(-320px) !important;\n  left: auto !important;\n  transition: right 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n[dir=rtl] .sidebar.expanded {\n  right: 0 !important;\n  transition: right 0.2s cubic-bezier(0.4, 0, 0.2, 1);\n}\n@media (max-width: 1023px) {\n  [dir=rtl] .sidebar {\n    width: 400px !important;\n    right: calc(-400px) !important;\n  }\n}\n\n/*# sourceMappingURL=CSidebar.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$C = "data-v-4df43386";
+  const __vue_scope_id__$C = "data-v-0a66c434";
   /* module identifier */
   const __vue_module_identifier__$C = undefined;
   /* functional template */
@@ -27530,21 +31680,154 @@ var script$A = {
 const __vue_script__$A = script$A;
 
 /* template */
-var __vue_render__$z = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"nav-sidebar",class:{ 'mt-1': _vm.root }},_vm._l((_vm.items),function(ref){
-var page = ref.page; if ( page === void 0 ) page = {};
-var params = ref.params; if ( params === void 0 ) params = {};
-var children = ref.children; if ( children === void 0 ) children = [];
-return _c('div',{key:_vm.pageKey(page),class:{ 'mb-1': _vm.root }},[_c('div',{staticClass:"d-flex align-items-start pointer pb-1"},[_c('b-button',{staticClass:"nav-item d-flex align-items-center text-decoration-none rounded flex-grow-1 text-left pl-1 py-1 gap-1",attrs:{"variant":"link","active-class":"nav-active","exact-active-class":"nav-exact-active","title":page.title,"to":{ name: page.name || _vm.defaultRouteName, params: params }},on:{"click":function($event){return _vm.onItemClick()}}},[(page.icon)?[(Array.isArray(page.icon))?_c('font-awesome-icon',{staticClass:"icon",staticStyle:{"height":"1rem","width":"1rem"},attrs:{"icon":page.icon}}):_c('img',{staticClass:"mr-1",staticStyle:{"height":"1rem","width":"1rem"},attrs:{"src":page.icon}})]:_vm._e(),_vm._v(" "),_c('label',{staticClass:"title pointer mb-0",class:{ 'root': _vm.root }},[_vm._v("\n          "+_vm._s(page.title)+"\n        ")])],2),_vm._v(" "),(children.length)?_c('b-button',{staticClass:"p-0 border-0 ml-auto",staticStyle:{"min-width":"2rem","min-height":"2rem"},attrs:{"variant":"outline-light"},on:{"click":function($event){return _vm.toggle(page)}}},[(!_vm.collapses[_vm.pageKey(page)])?_c('font-awesome-icon',{staticClass:"text-dark",attrs:{"icon":['fas', 'chevron-down']}}):_c('font-awesome-icon',{staticClass:"text-primary",attrs:{"icon":['fas', 'chevron-up']}})],1):_vm._e()],1),_vm._v(" "),(children.length)?_c('b-collapse',{attrs:{"visible":_vm.collapses[_vm.pageKey(page)]}},[_c('c-sidebar-nav-items',_vm._g({staticClass:"py-1 ml-2",attrs:{"items":children,"start-expanded":_vm.startExpanded,"default-route-name":_vm.defaultRouteName,"root":false}},_vm.$listeners))],1):_vm._e()],1)}),0)};
+var __vue_render__$z = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "nav-sidebar", class: { "mt-1": _vm.root } },
+    _vm._l(_vm.items, function (ref) {
+      var page = ref.page;
+      if (page === void 0) page = {};
+      var params = ref.params;
+      if (params === void 0) params = {};
+      var children = ref.children;
+      if (children === void 0) children = [];
+      return _c(
+        "div",
+        { key: _vm.pageKey(page), class: { "mb-1": _vm.root } },
+        [
+          _c(
+            "div",
+            { staticClass: "d-flex align-items-start pointer pb-1" },
+            [
+              _c(
+                "b-button",
+                {
+                  staticClass:
+                    "nav-item d-flex align-items-center text-decoration-none rounded flex-grow-1 text-left pl-1 py-1 gap-1",
+                  attrs: {
+                    variant: "link",
+                    "active-class": "nav-active",
+                    "exact-active-class": "nav-exact-active",
+                    title: page.title,
+                    to: {
+                      name: page.name || _vm.defaultRouteName,
+                      params: params,
+                    },
+                  },
+                  on: {
+                    click: function ($event) {
+                      return _vm.onItemClick()
+                    },
+                  },
+                },
+                [
+                  page.icon
+                    ? [
+                        Array.isArray(page.icon)
+                          ? _c("font-awesome-icon", {
+                              staticClass: "icon",
+                              staticStyle: { height: "1rem", width: "1rem" },
+                              attrs: { icon: page.icon },
+                            })
+                          : _c("img", {
+                              staticClass: "mr-1",
+                              staticStyle: { height: "1rem", width: "1rem" },
+                              attrs: { src: page.icon },
+                            }),
+                      ]
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _c(
+                    "label",
+                    {
+                      staticClass: "title pointer mb-0",
+                      class: { root: _vm.root },
+                    },
+                    [_vm._v("\n          " + _vm._s(page.title) + "\n        ")]
+                  ),
+                ],
+                2
+              ),
+              _vm._v(" "),
+              children.length
+                ? _c(
+                    "b-button",
+                    {
+                      staticClass: "p-0 border-0 ml-auto",
+                      staticStyle: {
+                        "min-width": "2rem",
+                        "min-height": "2rem",
+                      },
+                      attrs: { variant: "outline-light" },
+                      on: {
+                        click: function ($event) {
+                          return _vm.toggle(page)
+                        },
+                      },
+                    },
+                    [
+                      !_vm.collapses[_vm.pageKey(page)]
+                        ? _c("font-awesome-icon", {
+                            staticClass: "text-dark",
+                            attrs: { icon: ["fas", "chevron-down"] },
+                          })
+                        : _c("font-awesome-icon", {
+                            staticClass: "text-primary",
+                            attrs: { icon: ["fas", "chevron-up"] },
+                          }),
+                    ],
+                    1
+                  )
+                : _vm._e(),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          children.length
+            ? _c(
+                "b-collapse",
+                { attrs: { visible: _vm.collapses[_vm.pageKey(page)] } },
+                [
+                  _c(
+                    "c-sidebar-nav-items",
+                    _vm._g(
+                      {
+                        staticClass: "py-1 ml-2",
+                        attrs: {
+                          items: children,
+                          "start-expanded": _vm.startExpanded,
+                          "default-route-name": _vm.defaultRouteName,
+                          root: false,
+                        },
+                      },
+                      _vm.$listeners
+                    )
+                  ),
+                ],
+                1
+              )
+            : _vm._e(),
+        ],
+        1
+      )
+    }),
+    0
+  )
+};
 var __vue_staticRenderFns__$z = [];
+__vue_render__$z._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$B = function (inject) {
     if (!inject) return
-    inject("data-v-fe6818d4_0", { source: ".nav-sidebar .nav-item[data-v-fe6818d4]{transition:background-color .2s ease-out}.nav-sidebar .nav-item .icon[data-v-fe6818d4]{color:var(--black);transition:color .3s ease-in-out}.nav-sidebar .nav-item .title[data-v-fe6818d4]{color:var(--black);font-family:var(--font-regular)!important;transition:color .3s ease-in-out;text-align:left}.nav-sidebar .nav-item[data-v-fe6818d4]:hover{background-color:var(--light)}.nav-sidebar .nav-active .icon[data-v-fe6818d4]{color:var(--primary)}.nav-sidebar .nav-active .title[data-v-fe6818d4]{font-family:var(--font-medium)!important;color:var(--primary)}", map: undefined, media: undefined });
+    inject("data-v-05c76536_0", { source: ".nav-sidebar .nav-item[data-v-05c76536] {\n  transition: background-color 0.2s ease-out;\n}\n.nav-sidebar .nav-item .icon[data-v-05c76536] {\n  color: var(--black);\n  transition: color 0.3s ease-in-out;\n}\n.nav-sidebar .nav-item .title[data-v-05c76536] {\n  color: var(--black);\n  font-family: var(--font-regular) !important;\n  transition: color 0.3s ease-in-out;\n  text-align: left;\n}\n.nav-sidebar .nav-item[data-v-05c76536]:hover {\n  background-color: var(--light);\n}\n.nav-sidebar .nav-active .icon[data-v-05c76536] {\n  color: var(--primary);\n}\n.nav-sidebar .nav-active .title[data-v-05c76536] {\n  font-family: var(--font-medium) !important;\n  color: var(--primary);\n}\n\n/*# sourceMappingURL=CSidebarNavItems.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/navigation/CSidebarNavItems.vue","CSidebarNavItems.vue"],"names":[],"mappings":"AAmKA;EACA,0CAAA;AClKA;ADoKA;EACA,mBAAA;EACA,kCAAA;AClKA;ADqKA;EACA,mBAAA;EACA,2CAAA;EACA,kCAAA;EACA,gBAAA;ACnKA;ADsKA;EACA,8BAAA;ACpKA;ADyKA;EACA,qBAAA;ACvKA;AD0KA;EACA,0CAAA;EACA,qBAAA;ACxKA;;AAEA,+CAA+C","file":"CSidebarNavItems.vue","sourcesContent":["<template>\n  <div\n    class=\"nav-sidebar\"\n    :class=\"{ 'mt-1': root }\"\n  >\n    <div\n      v-for=\"({page = {}, params = {}, children = []}) of items\"\n      :key=\"pageKey(page)\"\n      :class=\"{ 'mb-1': root }\"\n    >\n      <div class=\"d-flex align-items-start pointer pb-1\">\n        <b-button\n          variant=\"link\"\n          active-class=\"nav-active\"\n          exact-active-class=\"nav-exact-active\"\n          :title=\"page.title\"\n          :to=\"{ name: page.name || defaultRouteName, params }\"\n          class=\"nav-item d-flex align-items-center text-decoration-none rounded flex-grow-1 text-left pl-1 py-1 gap-1\"\n          @click=\"onItemClick()\"\n        >\n          <template v-if=\"page.icon\">\n            <font-awesome-icon\n              v-if=\"Array.isArray(page.icon)\"\n              :icon=\"page.icon\"\n              class=\"icon\"\n              style=\"height: 1rem; width: 1rem;\"\n            />\n            <img\n              v-else\n              :src=\"page.icon\"\n              class=\"mr-1\"\n              style=\"height: 1rem; width: 1rem;\"\n            >\n          </template>\n\n          <label\n            class=\"title pointer mb-0\"\n            :class=\"{ 'root': root }\"\n          >\n            {{ page.title }}\n          </label>\n        </b-button>\n\n        <b-button\n          v-if=\"children.length\"\n          variant=\"outline-light\"\n          class=\"p-0 border-0 ml-auto\"\n          style=\"min-width: 2rem; min-height: 2rem;\"\n          @click=\"toggle(page)\"\n        >\n          <font-awesome-icon\n            v-if=\"!collapses[pageKey(page)]\"\n            class=\"text-dark\"\n            :icon=\"['fas', 'chevron-down']\"\n          />\n          <font-awesome-icon\n            v-else\n            class=\"text-primary\"\n            :icon=\"['fas', 'chevron-up']\"\n          />\n        </b-button>\n      </div>\n\n      <b-collapse\n        v-if=\"children.length\"\n        :visible=\"collapses[pageKey(page)]\"\n      >\n        <c-sidebar-nav-items\n          :items=\"children\"\n          :start-expanded=\"startExpanded\"\n          :default-route-name=\"defaultRouteName\"\n          :root=\"false\"\n          class=\"py-1 ml-2\"\n          v-on=\"$listeners\"\n        />\n      </b-collapse>\n    </div>\n  </div>\n</template>\n\n<script>\nexport default {\n  name: 'CSidebarNavItems',\n\n  props: {\n    /*\n    * {\n        page: { name, title }\n        params: {...}\n      }\n    */\n    items: {\n      type: Array,\n      required: true,\n      default: () => [],\n    },\n    root: {\n      type: Boolean,\n      default: true,\n    },\n    defaultRouteName: {\n      type: String,\n      required: true,\n    },\n    startExpanded: {\n      type: Boolean,\n      required: false,\n    },\n  },\n\n  data () {\n    return {\n      collapses: {},\n    }\n  },\n\n  watch: {\n    items: {\n      immediate: true,\n      handler (items = []) {\n        items.forEach(({ page, params, children }) => {\n          const px = this.pageKey(page)\n          // Apply startExpanded only if page isn't currently expanded\n          this.$set(this.collapses, px, this.startExpanded || page.expanded || this.showChildren({ params, children }))\n        })\n      },\n    },\n  },\n\n  methods: {\n    onItemClick () {\n      if (window.innerWidth < 1024) {\n        this.$root.$emit('close-sidebar')\n      }\n    },\n\n    pageKey (p) {\n      return p.pageID || p.name || p.title\n    },\n\n    toggle (p) {\n      const px = this.pageKey(p)\n      this.$set(this.collapses, px, !this.collapses[px])\n    },\n\n    // Recursively check for child pages that are open, so that parents can open as well\n    showChildren ({ params = {}, children = [] }) {\n      const partialParamsMatch = Object.entries(params).some(([key, value]) => {\n        return this.$route.params[key] === value\n      })\n\n      if (partialParamsMatch) {\n        return partialParamsMatch\n      }\n\n      return children.map(c => this.showChildren(c)).some(isOpen => isOpen)\n    },\n  },\n}\n</script>\n\n<style scoped lang=\"scss\">\n.nav-sidebar {\n  .nav-item {\n    transition: background-color 0.2s ease-out;\n\n    .icon {\n      color: var(--black);\n      transition: color 0.3s ease-in-out;\n    }\n\n    .title {\n      color: var(--black);\n      font-family: var(--font-regular) !important;\n      transition: color 0.3s ease-in-out;\n      text-align: left;\n    }\n\n    &:hover {\n      background-color: var(--light);\n    }\n  }\n\n  .nav-active {\n    .icon {\n      color: var(--primary);\n    }\n\n    .title {\n      font-family: var(--font-medium) !important;\n      color: var(--primary);\n    }\n  }\n\n}\n</style>\n\n",".nav-sidebar .nav-item {\n  transition: background-color 0.2s ease-out;\n}\n.nav-sidebar .nav-item .icon {\n  color: var(--black);\n  transition: color 0.3s ease-in-out;\n}\n.nav-sidebar .nav-item .title {\n  color: var(--black);\n  font-family: var(--font-regular) !important;\n  transition: color 0.3s ease-in-out;\n  text-align: left;\n}\n.nav-sidebar .nav-item:hover {\n  background-color: var(--light);\n}\n.nav-sidebar .nav-active .icon {\n  color: var(--primary);\n}\n.nav-sidebar .nav-active .title {\n  font-family: var(--font-medium) !important;\n  color: var(--primary);\n}\n\n/*# sourceMappingURL=CSidebarNavItems.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$B = "data-v-fe6818d4";
+  const __vue_scope_id__$B = "data-v-05c76536";
   /* module identifier */
   const __vue_module_identifier__$B = undefined;
   /* functional template */
@@ -27620,8 +31903,29 @@ var script$y = {
 const __vue_script__$y = script$y;
 
 /* template */
-var __vue_render__$y = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-button',_vm._b({on:{"click":function($event){return _vm.$emit('action')}}},'b-button',_vm.options,false),[_c('span',{domProps:{"innerHTML":_vm._s(_vm.label)}})])};
+var __vue_render__$y = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-button",
+    _vm._b(
+      {
+        on: {
+          click: function ($event) {
+            return _vm.$emit("action")
+          },
+        },
+      },
+      "b-button",
+      _vm.options,
+      false
+    ),
+    [_c("span", { domProps: { innerHTML: _vm._s(_vm.label) } })]
+  )
+};
 var __vue_staticRenderFns__$y = [];
+__vue_render__$y._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$z = undefined;
@@ -27663,8 +31967,58 @@ var script$x = {
 const __vue_script__$x = script$x;
 
 /* template */
-var __vue_render__$x = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-dropdown',_vm._b({scopedSlots:_vm._u([{key:"button-content",fn:function(){return [_c('span',{domProps:{"innerHTML":_vm._s(_vm.label)}})]},proxy:true}])},'b-dropdown',_vm.options,false),[_vm._v(" "),_vm._l((_vm.options.items || []),function(opt,i){return _c(_vm.fromKind(opt),_vm._b({key:i,tag:"component",on:{"click":function($event){return _vm.$emit('action', opt.value)}}},'component',opt,false),[_c('span',{domProps:{"innerHTML":_vm._s(opt.label)}})])})],2)};
+var __vue_render__$x = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-dropdown",
+    _vm._b(
+      {
+        scopedSlots: _vm._u([
+          {
+            key: "button-content",
+            fn: function () {
+              return [
+                _c("span", { domProps: { innerHTML: _vm._s(_vm.label) } }),
+              ]
+            },
+            proxy: true,
+          },
+        ]),
+      },
+      "b-dropdown",
+      _vm.options,
+      false
+    ),
+    [
+      _vm._v(" "),
+      _vm._l(_vm.options.items || [], function (opt, i) {
+        return _c(
+          _vm.fromKind(opt),
+          _vm._b(
+            {
+              key: i,
+              tag: "component",
+              on: {
+                click: function ($event) {
+                  return _vm.$emit("action", opt.value)
+                },
+              },
+            },
+            "component",
+            opt,
+            false
+          ),
+          [_c("span", { domProps: { innerHTML: _vm._s(opt.label) } })]
+        )
+      }),
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$x = [];
+__vue_render__$x._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$y = undefined;
@@ -27700,8 +32054,62 @@ var script$w = {
 const __vue_script__$w = script$w;
 
 /* template */
-var __vue_render__$w = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-form-select',_vm._b({staticClass:"w-auto",attrs:{"value":null},on:{"change":function($event){return _vm.$emit('action', $event)}},scopedSlots:_vm._u([{key:"first",fn:function(){return [_c('option',{attrs:{"disabled":""},domProps:{"value":null,"innerHTML":_vm._s(_vm.label)}})]},proxy:true}])},'b-form-select',_vm.options,false),[_vm._v(" "),_vm._l((_vm.options.items || []),function(opt,i){return _c('option',_vm._b({key:i,domProps:{"value":opt.value,"innerHTML":_vm._s(opt.label)}},'option',opt,false))})],2)};
+var __vue_render__$w = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-form-select",
+    _vm._b(
+      {
+        staticClass: "w-auto",
+        attrs: { value: null },
+        on: {
+          change: function ($event) {
+            return _vm.$emit("action", $event)
+          },
+        },
+        scopedSlots: _vm._u([
+          {
+            key: "first",
+            fn: function () {
+              return [
+                _c("option", {
+                  attrs: { disabled: "" },
+                  domProps: { value: null, innerHTML: _vm._s(_vm.label) },
+                }),
+              ]
+            },
+            proxy: true,
+          },
+        ]),
+      },
+      "b-form-select",
+      _vm.options,
+      false
+    ),
+    [
+      _vm._v(" "),
+      _vm._l(_vm.options.items || [], function (opt, i) {
+        return _c(
+          "option",
+          _vm._b(
+            {
+              key: i,
+              domProps: { value: opt.value, innerHTML: _vm._s(opt.label) },
+            },
+            "option",
+            opt,
+            false
+          )
+        )
+      }),
+    ],
+    2
+  )
+};
 var __vue_staticRenderFns__$w = [];
+__vue_render__$w._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$x = undefined;
@@ -27749,8 +32157,22 @@ var script$v = {
 const __vue_script__$v = script$v;
 
 /* template */
-var __vue_render__$v = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('router-link',{attrs:{"to":_vm.link}},[_vm._v("\n    "+_vm._s(_vm.link.label)+"\n  ")])],1)};
+var __vue_render__$v = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    [
+      _c("router-link", { attrs: { to: _vm.link } }, [
+        _vm._v("\n    " + _vm._s(_vm.link.label) + "\n  "),
+      ]),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$v = [];
+__vue_render__$v._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$w = undefined;
@@ -27813,16 +32235,99 @@ var script$u = {
 const __vue_script__$u = script$u;
 
 /* template */
-var __vue_render__$u = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',_vm._l((_vm.toasts),function(t){return _c('b-toast',_vm._b({key:t.id,attrs:{"visible":"","title":t.payload.title,"no-close-button":!t.actions.hide,"toast-class":"overflow-unset"},on:{"hide":function($event){t.actions.hide ? t.actions.hide.cb(t) : _vm.evtSink;}}},'b-toast',t.options || {},false),[_c('b-card',{staticClass:"border-0",attrs:{"header-bg-variant":"transparent","bg-variant":"transparent","body-class":"p-0"}},[(t.payload.notes)?_c('b-card-text',[_vm._v("\n        "+_vm._s(t.payload.notes)+"\n      ")]):_vm._e(),_vm._v(" "),(t.payload.link)?_c('b-card-text',[_c('c-toaster-link',{attrs:{"link":t.payload.link}})],1):_vm._e(),_vm._v(" "),_vm._l((_vm.extraActions(t)),function(ref){
-var name = ref[0];
-var act = ref[1];
-return _c(_vm.actComponent(act),_vm._b({key:name,tag:"component",staticClass:"mr-1",on:{"action":function($event){act.cb ? act.cb(t, $event) : _vm.evtSink;}}},'component',act,false))})],2)],1)}),1)};
+var __vue_render__$u = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    _vm._l(_vm.toasts, function (t) {
+      return _c(
+        "b-toast",
+        _vm._b(
+          {
+            key: t.id,
+            attrs: {
+              visible: "",
+              title: t.payload.title,
+              "no-close-button": !t.actions.hide,
+              "toast-class": "overflow-unset",
+            },
+            on: {
+              hide: function ($event) {
+                t.actions.hide ? t.actions.hide.cb(t) : _vm.evtSink;
+              },
+            },
+          },
+          "b-toast",
+          t.options || {},
+          false
+        ),
+        [
+          _c(
+            "b-card",
+            {
+              staticClass: "border-0",
+              attrs: {
+                "header-bg-variant": "transparent",
+                "bg-variant": "transparent",
+                "body-class": "p-0",
+              },
+            },
+            [
+              t.payload.notes
+                ? _c("b-card-text", [
+                    _vm._v("\n        " + _vm._s(t.payload.notes) + "\n      "),
+                  ])
+                : _vm._e(),
+              _vm._v(" "),
+              t.payload.link
+                ? _c(
+                    "b-card-text",
+                    [_c("c-toaster-link", { attrs: { link: t.payload.link } })],
+                    1
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _vm._l(_vm.extraActions(t), function (ref) {
+                var name = ref[0];
+                var act = ref[1];
+                return _c(
+                  _vm.actComponent(act),
+                  _vm._b(
+                    {
+                      key: name,
+                      tag: "component",
+                      staticClass: "mr-1",
+                      on: {
+                        action: function ($event) {
+                          act.cb ? act.cb(t, $event) : _vm.evtSink;
+                        },
+                      },
+                    },
+                    "component",
+                    act,
+                    false
+                  )
+                )
+              }),
+            ],
+            2
+          ),
+        ],
+        1
+      )
+    }),
+    1
+  )
+};
 var __vue_staticRenderFns__$u = [];
+__vue_render__$u._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$v = function (inject) {
     if (!inject) return
-    inject("data-v-1244b576_0", { source: ".toast.overflow-unset{overflow:unset!important}", map: undefined, media: undefined });
+    inject("data-v-1581fbbb_0", { source: ".toast.overflow-unset {\n  overflow: unset !important;\n}\n\n/*# sourceMappingURL=CToaster.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/toaster/CToaster.vue","CToaster.vue"],"names":[],"mappings":"AA6EA;EACA,0BAAA;AC5EA;;AAEA,uCAAuC","file":"CToaster.vue","sourcesContent":["<template>\n  <div>\n    <b-toast\n      v-for=\"t in toasts\"\n      :key=\"t.id\"\n      visible\n      v-bind=\"t.options || {}\"\n      :title=\"t.payload.title\"\n      :no-close-button=\"!t.actions.hide\"\n      toast-class=\"overflow-unset\"\n      @hide=\"t.actions.hide ? t.actions.hide.cb(t) : evtSink\"\n    >\n      <b-card\n        header-bg-variant=\"transparent\"\n        bg-variant=\"transparent\"\n        body-class=\"p-0\"\n        class=\"border-0\"\n      >\n        <b-card-text v-if=\"t.payload.notes\">\n          {{ t.payload.notes }}\n        </b-card-text>\n\n        <b-card-text v-if=\"t.payload.link\">\n          <c-toaster-link :link=\"t.payload.link\" />\n        </b-card-text>\n\n        <component\n          :is=\"actComponent(act)\"\n          v-for=\"([name, act]) in extraActions(t)\"\n          :key=\"name\"\n          class=\"mr-1\"\n          v-bind=\"act\"\n          @action=\"act.cb ? act.cb(t, $event) : evtSink\"\n        />\n      </b-card>\n    </b-toast>\n  </div>\n</template>\n\n<script lang=\"js\">\nimport * as actions from './actions'\nimport CToasterLink from './CToasterLink.vue'\n\nexport default {\n  components: {\n    CToasterLink,\n  },\n\n  props: {\n    toasts: {\n      type: Array,\n      required: false,\n      default: () => [],\n    },\n  },\n\n  methods: {\n    extraActions ({ actions = {} }) {\n      const { hide, ...act } = actions\n      return Object.entries(act)\n    },\n\n    actComponent ({ kind }) {\n      const act = actions[kind]\n      if (!act) {\n        throw new Error('toast.actionKind.unknown')\n      }\n      return act\n    },\n\n    evtSink () {},\n  },\n}\n</script>\n\n<style lang=\"scss\">\n// BS only provides overflow-[auto, hidden]\n.toast.overflow-unset {\n  overflow: unset!important;\n}\n</style>\n",".toast.overflow-unset {\n  overflow: unset !important;\n}\n\n/*# sourceMappingURL=CToaster.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -27918,13 +32423,82 @@ var script$t = {
 const __vue_script__$t = script$t;
 
 /* template */
-var __vue_render__$t = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-sidebar',{attrs:{"title":_vm.title,"header-class":"d-flex align-items-center justify-content-between bg-white pr-2 pl-3 py-3 border-bottom","body-class":"d-flex flex-column overflow-hidden bg-white","sidebar-class":"reminder-sidebar","bg-variant":"white","backdrop":_vm.isMobile,"backdrop-variant":"white","no-footer":"","right":"","shadow":"","no-close-on-route-change":"","no-close-on-esc":"","width":"400px"},scopedSlots:_vm._u([{key:"header",fn:function(){return [_c('h5',{staticClass:"text-primary mb-0"},[_c('b',[_vm._v(_vm._s(_vm.title))])]),_vm._v(" "),_c('b-button',{staticClass:"d-flex align-items-center justify-content-center p-2 border-0 text-secondary",attrs:{"variant":"outline-light"},on:{"click":function($event){_vm.isVisible = false;}}},[_c('font-awesome-icon',{staticClass:"h6 mb-0",attrs:{"icon":['fas', 'times']}})],1)]},proxy:true}]),model:{value:(_vm.isVisible),callback:function ($$v) {_vm.isVisible=$$v;},expression:"isVisible"}},[_vm._v(" "),_vm._t("default")],2)};
+var __vue_render__$t = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-sidebar",
+    {
+      attrs: {
+        title: _vm.title,
+        "header-class":
+          "d-flex align-items-center justify-content-between bg-white pr-2 pl-3 py-3 border-bottom",
+        "body-class": "d-flex flex-column overflow-hidden bg-white",
+        "sidebar-class": "reminder-sidebar",
+        "bg-variant": "white",
+        backdrop: _vm.isMobile,
+        "backdrop-variant": "white",
+        "no-footer": "",
+        right: "",
+        shadow: "",
+        "no-close-on-route-change": "",
+        "no-close-on-esc": "",
+        width: "400px",
+      },
+      scopedSlots: _vm._u([
+        {
+          key: "header",
+          fn: function () {
+            return [
+              _c("h5", { staticClass: "text-primary mb-0" }, [
+                _c("b", [_vm._v(_vm._s(_vm.title))]),
+              ]),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  staticClass:
+                    "d-flex align-items-center justify-content-center p-2 border-0 text-secondary",
+                  attrs: { variant: "outline-light" },
+                  on: {
+                    click: function ($event) {
+                      _vm.isVisible = false;
+                    },
+                  },
+                },
+                [
+                  _c("font-awesome-icon", {
+                    staticClass: "h6 mb-0",
+                    attrs: { icon: ["fas", "times"] },
+                  }),
+                ],
+                1
+              ),
+            ]
+          },
+          proxy: true,
+        },
+      ]),
+      model: {
+        value: _vm.isVisible,
+        callback: function ($$v) {
+          _vm.isVisible = $$v;
+        },
+        expression: "isVisible",
+      },
+    },
+    [_vm._v(" "), _vm._t("default")],
+    2
+  )
+};
 var __vue_staticRenderFns__$t = [];
+__vue_render__$t._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$u = function (inject) {
     if (!inject) return
-    inject("data-v-cceea0da_0", { source: ".b-sidebar-backdrop{opacity:.75!important}@media (min-width:1024px){.b-sidebar.reminder-sidebar{top:calc(var(--topbar-height) + .5rem)!important;right:.5rem!important;height:calc(100% - var(--topbar-height) - 1rem)!important;border-radius:1rem!important;border:none!important;z-index:1048!important}.b-sidebar.reminder-sidebar .b-sidebar-header{border-top-left-radius:1rem!important;border-top-right-radius:1rem!important}.b-sidebar.reminder-sidebar .b-sidebar-body{border-bottom-left-radius:1rem!important;border-bottom-right-radius:1rem!important}}", map: undefined, media: undefined });
+    inject("data-v-8f698f14_0", { source: ".b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n@media (min-width: 1024px) {\n.b-sidebar.reminder-sidebar {\n    top: calc(var(--topbar-height) + 0.5rem) !important;\n    right: 0.5rem !important;\n    height: calc(100% - var(--topbar-height) - 1rem) !important;\n    border-radius: 1rem !important;\n    border: none !important;\n    z-index: 1048 !important;\n}\n.b-sidebar.reminder-sidebar .b-sidebar-header {\n    border-top-left-radius: 1rem !important;\n    border-top-right-radius: 1rem !important;\n}\n.b-sidebar.reminder-sidebar .b-sidebar-body {\n    border-bottom-left-radius: 1rem !important;\n    border-bottom-right-radius: 1rem !important;\n}\n}\n\n/*# sourceMappingURL=CReminderSidebar.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/reminders/CReminderSidebar.vue","CReminderSidebar.vue"],"names":[],"mappings":"AAgHA;EACA,wBAAA;AC/GA;ADkHA;AACA;IACA,mDAAA;IACA,wBAAA;IACA,2DAAA;IACA,8BAAA;IACA,uBAAA;IACA,wBAAA;AC/GE;ADiHF;IACA,uCAAA;IACA,wCAAA;AC/GE;ADkHF;IACA,0CAAA;IACA,2CAAA;AChHE;AACF;;AAEA,+CAA+C","file":"CReminderSidebar.vue","sourcesContent":["<template>\n  <b-sidebar\n    v-model=\"isVisible\"\n    :title=\"title\"\n    header-class=\"d-flex align-items-center justify-content-between bg-white pr-2 pl-3 py-3 border-bottom\"\n    body-class=\"d-flex flex-column overflow-hidden bg-white\"\n    sidebar-class=\"reminder-sidebar\"\n    bg-variant=\"white\"\n    :backdrop=\"isMobile\"\n    backdrop-variant=\"white\"\n    no-footer\n    right\n    shadow\n    no-close-on-route-change\n    no-close-on-esc\n    width=\"400px\"\n  >\n    <template #header>\n      <h5\n        class=\"text-primary mb-0\"\n      >\n        <b>{{ title }}</b>\n      </h5>\n\n      <b-button\n        variant=\"outline-light\"\n        class=\"d-flex align-items-center justify-content-center p-2 border-0 text-secondary\"\n        @click=\"isVisible = false\"\n      >\n        <font-awesome-icon\n          :icon=\"['fas', 'times']\"\n          class=\"h6 mb-0\"\n        />\n      </b-button>\n    </template>\n\n    <slot />\n  </b-sidebar>\n</template>\n\n<script lang=\"js\">\nimport { throttle } from 'lodash'\n\nexport default {\n  props: {\n    title: {\n      type: String,\n      default: '',\n    },\n\n    visible: {\n      type: Boolean,\n      required: false,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      isMobile: false,\n    }\n  },\n\n  computed: {\n    isVisible: {\n      get () {\n        return this.visible\n      },\n\n      set (visible) {\n        this.$emit('update:visible', visible)\n      },\n    },\n  },\n\n  watch: {\n    isVisible (visible) {\n      if (visible) {\n        this.$root.$emit('right-sidebar:opened', 'reminders')\n      }\n    },\n  },\n\n  created () {\n    this.$root.$on('right-sidebar:opened', this.handleSidebarOpened)\n  },\n\n  mounted () {\n    this.checkIfMobile()\n    window.addEventListener('resize', this.checkIfMobile)\n  },\n\n  beforeDestroy () {\n    this.$root.$off('right-sidebar:opened', this.handleSidebarOpened)\n    window.removeEventListener('resize', this.checkIfMobile)\n  },\n\n  methods: {\n    checkIfMobile: throttle(function () {\n      this.isMobile = window.innerWidth < 1024\n    }, 500),\n\n    handleSidebarOpened (name) {\n      if (name !== 'reminders') {\n        this.isVisible = false\n      }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n\n@media (min-width: 1024px) {\n  .b-sidebar.reminder-sidebar {\n    top: calc(var(--topbar-height) + 0.5rem) !important;\n    right: 0.5rem !important;\n    height: calc(100% - var(--topbar-height) - 1rem) !important;\n    border-radius: 1rem !important;\n    border: none !important;\n    z-index: 1048 !important;\n\n    .b-sidebar-header {\n      border-top-left-radius: 1rem !important;\n      border-top-right-radius: 1rem !important;\n    }\n\n    .b-sidebar-body {\n      border-bottom-left-radius: 1rem !important;\n      border-bottom-right-radius: 1rem !important;\n    }\n  }\n}\n</style>\n",".b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n\n@media (min-width: 1024px) {\n  .b-sidebar.reminder-sidebar {\n    top: calc(var(--topbar-height) + 0.5rem) !important;\n    right: 0.5rem !important;\n    height: calc(100% - var(--topbar-height) - 1rem) !important;\n    border-radius: 1rem !important;\n    border: none !important;\n    z-index: 1048 !important;\n  }\n  .b-sidebar.reminder-sidebar .b-sidebar-header {\n    border-top-left-radius: 1rem !important;\n    border-top-right-radius: 1rem !important;\n  }\n  .b-sidebar.reminder-sidebar .b-sidebar-body {\n    border-bottom-left-radius: 1rem !important;\n    border-bottom-right-radius: 1rem !important;\n  }\n}\n\n/*# sourceMappingURL=CReminderSidebar.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -28033,10 +32607,94 @@ var script$s = {
 const __vue_script__$s = script$s;
 
 /* template */
-var __vue_render__$s = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex align-items-center"},[(!_vm.disabled && !_vm.disabledSorting && !_vm.hideIcons)?_c('font-awesome-icon',{staticClass:"align-baseline mr-3 text-primary",class:{
-      'text-muted': _vm.disabledDragging,
-    },attrs:{"icon":['fas', 'grip-vertical']}}):_vm._e(),_vm._v(" "),_c('b',{staticClass:"text-truncate"},[_vm._t("default",function(){return [_vm._v("\n      "+_vm._s(_vm.item[_vm.textField])+"\n    ")]},null,_vm.item)],2),_vm._v(" "),(_vm._hideIcons)?_c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.noninteractive.hover",value:({ title: _vm.selected ? 'Unselect' : 'Select', boundary: 'body' , delay: 1000 }),expression:"{ title: selected ? 'Unselect' : 'Select', boundary: 'body' , delay: 1000 }",modifiers:{"noninteractive":true,"hover":true}}],staticClass:"d-flex align-items-center ml-auto p-2 border-0",attrs:{"data-test-id":("button-" + (_vm.selected ? 'unselect' : 'select')),"variant":"outline-light"},on:{"click":function($event){$event.preventDefault();$event.stopPropagation();return _vm.$emit(_vm.selected ? 'unselect' : 'select')}}},[_c('font-awesome-icon',{staticClass:"text-muted",attrs:{"icon":[_vm.selected ? 'far' : 'fas', _vm.selected ? 'eye' : 'eye-slash']}})],1):_vm._e()],1)};
+var __vue_render__$s = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "d-flex align-items-center" },
+    [
+      !_vm.disabled && !_vm.disabledSorting && !_vm.hideIcons
+        ? _c("font-awesome-icon", {
+            staticClass: "align-baseline mr-3 text-primary",
+            class: {
+              "text-muted": _vm.disabledDragging,
+            },
+            attrs: { icon: ["fas", "grip-vertical"] },
+          })
+        : _vm._e(),
+      _vm._v(" "),
+      _c(
+        "b",
+        { staticClass: "text-truncate" },
+        [
+          _vm._t(
+            "default",
+            function () {
+              return [
+                _vm._v("\n      " + _vm._s(_vm.item[_vm.textField]) + "\n    "),
+              ]
+            },
+            null,
+            _vm.item
+          ),
+        ],
+        2
+      ),
+      _vm._v(" "),
+      _vm._hideIcons
+        ? _c(
+            "b-button",
+            {
+              directives: [
+                {
+                  name: "b-tooltip",
+                  rawName: "v-b-tooltip.noninteractive.hover",
+                  value: {
+                    title: _vm.selected ? "Unselect" : "Select",
+                    boundary: "body",
+                    delay: 1000,
+                  },
+                  expression:
+                    "{ title: selected ? 'Unselect' : 'Select', boundary: 'body' , delay: 1000 }",
+                  modifiers: { noninteractive: true, hover: true },
+                },
+              ],
+              staticClass: "d-flex align-items-center ml-auto p-2 border-0",
+              attrs: {
+                "data-test-id":
+                  "button-" + (_vm.selected ? "unselect" : "select"),
+                variant: "outline-light",
+              },
+              on: {
+                click: function ($event) {
+                  $event.preventDefault();
+                  $event.stopPropagation();
+                  return _vm.$emit(_vm.selected ? "unselect" : "select")
+                },
+              },
+            },
+            [
+              _c("font-awesome-icon", {
+                staticClass: "text-muted",
+                attrs: {
+                  icon: [
+                    _vm.selected ? "far" : "fas",
+                    _vm.selected ? "eye" : "eye-slash",
+                  ],
+                },
+              }),
+            ],
+            1
+          )
+        : _vm._e(),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$s = [];
+__vue_render__$s._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$t = undefined;
@@ -28546,21 +33204,440 @@ var script$r = {
 const __vue_script__$r = script$r;
 
 /* template */
-var __vue_render__$r = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"overflow-hidden d-flex flex-column w-100 vh-100"},[_c('b-card',{staticClass:"h-100",attrs:{"no-body":""}},[_c('b-card-header',{staticClass:"p-0"},[(!_vm.hideFilter)?_c('c-input-search',{attrs:{"disabled":_vm._disabledFilter,"placeholder":_vm.labels.searchPlaceholder},model:{value:(_vm.query),callback:function ($$v) {_vm.query=(typeof $$v === 'string'? $$v.trim(): $$v);},expression:"query"}}):_vm._e()],1),_vm._v(" "),_c('b-card-body',{staticClass:"d-flex p-0"},[_c('b-card',{staticClass:"col-sm-6 col-12 h-100 p-0",attrs:{"no-body":""}},[_c('b-card-header',{staticClass:"py-2 pl-0 pr-2"},[_c('div',{staticClass:"d-flex align-items-center"},[_c('label',{staticClass:"text-primary mb-0 py-1"},[_vm._v("\n              "+_vm._s(_vm.labels.availableItems)+"\n            ")]),_vm._v(" "),_c('b-button',{directives:[{name:"show",rawName:"v-show",value:(_vm.filteredAvailable.length && !_vm.disabled),expression:"filteredAvailable.length && !disabled"}],staticClass:"ml-auto border-0 text-muted",attrs:{"data-test-id":"link-select-all","variant":"outline-light"},on:{"click":function($event){return _vm.selectAll()}}},[_vm._v("\n              "+_vm._s(_vm.labels.selectAllItems)+"\n            ")])],1)]),_vm._v(" "),_c('b-card-body',{staticClass:"overflow-auto py-0 pl-0 pr-2"},[_c('b-list-group',{staticClass:"h-100",attrs:{"vertical":""}},[_c('draggable',{staticClass:"overflow-auto h-100",attrs:{"sort":!_vm._disabledSorting,"move":_vm._disableDragging,"disabled":_vm.query,"draggable":".item","group":"items"},scopedSlots:_vm._u([{key:"footer",fn:function(){return [(!_vm.filteredAvailable.length && _vm.query)?_c('h6',{staticClass:"text-center my-4"},[_vm._v("\n                  "+_vm._s(_vm.labels.noItemsFound)+"\n                ")]):_vm._e()]},proxy:true}]),model:{value:(_vm.filteredAvailable),callback:function ($$v) {_vm.filteredAvailable=$$v;},expression:"filteredAvailable"}},_vm._l((_vm.filteredAvailable),function(item){return _c('b-list-group-item',{key:item.value,staticClass:"item mb-3 border rounded",class:{
-                  'handle': !_vm.isDraggable
-                },on:{"dblclick":function($event){return _vm.select(item)}}},[_c('c-item-picker-item',{attrs:{"item":item,"disabled":_vm.disabled,"disabled-dragging":_vm.isDraggable,"disabled-sorting":_vm.disabledSorting,"hide-icons":_vm.hideIcons},on:{"select":function($event){return _vm.select(item)}},scopedSlots:_vm._u([_vm._l((_vm.$scopedSlots),function(_,slot){return {key:slot,fn:function(scope){return [_vm._t(slot,null,{"textField":_vm.textField,"disabled":_vm.disabled,"disabledDragging":_vm.isDraggable,"disabledSorting":_vm.disabledSorting,"hideIcons":_vm.hideIcons},scope)]}}})],null,true)})],1)}),1)],1)],1)],1),_vm._v(" "),_c('b-card',{staticClass:"h-100 pl-sm-0 col-sm-6 col-12 p-0",attrs:{"no-body":""}},[_c('b-card-header',{staticClass:"py-2 pl-2 pr-0"},[_c('div',{staticClass:"d-flex align-items-center"},[_c('label',{staticClass:"text-primary mb-0 py-1"},[_vm._v("\n              "+_vm._s(_vm.labels.selectedItems)+"\n            ")]),_vm._v(" "),_c('b-button',{directives:[{name:"show",rawName:"v-show",value:(_vm.filteredSelected.length && !_vm.disabled),expression:"filteredSelected.length && !disabled"}],staticClass:"ml-auto border-0 text-muted",attrs:{"data-test-id":"link-unselect-all","variant":"outline-light"},on:{"click":function($event){return _vm.unselectAll()}}},[_vm._v("\n              "+_vm._s(_vm.labels.unselectAllItems)+"\n            ")])],1)]),_vm._v(" "),_c('b-card-body',{staticClass:"overflow-auto py-0 pl-2 pr-0"},[_c('b-list-group',{staticClass:"h-100",attrs:{"vertical":""}},[_c('draggable',{staticClass:"overflow-auto h-100",attrs:{"sort":!_vm._disabledSorting,"move":_vm._disableDragging,"disabled":_vm.query,"draggable":".item","group":"items"},scopedSlots:_vm._u([{key:"footer",fn:function(){return [(!_vm.filteredSelected.length && _vm.query)?_c('h6',{staticClass:"text-center my-4"},[_vm._v("\n                  "+_vm._s(_vm.labels.noItemsFound)+"\n                ")]):_vm._e()]},proxy:true}]),model:{value:(_vm.filteredSelected),callback:function ($$v) {_vm.filteredSelected=$$v;},expression:"filteredSelected"}},_vm._l((_vm.filteredSelected),function(item){return _c('b-list-group-item',{key:item.value,staticClass:"item mb-3 border rounded",class:{
-                  'handle': !_vm.isDraggable
-                },on:{"dblclick":function($event){return _vm.unselect(item)}}},[_c('c-item-picker-item',{attrs:{"item":item,"disabled":_vm.disabled,"disabled-dragging":_vm.isDraggable,"disabled-sorting":_vm.disabledSorting,"hide-icons":_vm.hideIcons,"selected":""},on:{"unselect":function($event){return _vm.unselect(item)}},scopedSlots:_vm._u([_vm._l((_vm.$scopedSlots),function(_,slot){return {key:slot,fn:function(scope){return [_vm._t(slot,null,{"textField":_vm.textField,"disabled":_vm.disabled,"disabledDragging":_vm.isDraggable,"disabledSorting":_vm.disabledSorting,"hideIcons":_vm.hideIcons},scope)]}}})],null,true)})],1)}),1)],1)],1)],1)],1)],1)],1)};
+var __vue_render__$r = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "overflow-hidden d-flex flex-column w-100 vh-100" },
+    [
+      _c(
+        "b-card",
+        { staticClass: "h-100", attrs: { "no-body": "" } },
+        [
+          _c(
+            "b-card-header",
+            { staticClass: "p-0" },
+            [
+              !_vm.hideFilter
+                ? _c("c-input-search", {
+                    attrs: {
+                      disabled: _vm._disabledFilter,
+                      placeholder: _vm.labels.searchPlaceholder,
+                    },
+                    model: {
+                      value: _vm.query,
+                      callback: function ($$v) {
+                        _vm.query = typeof $$v === "string" ? $$v.trim() : $$v;
+                      },
+                      expression: "query",
+                    },
+                  })
+                : _vm._e(),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-card-body",
+            { staticClass: "d-flex p-0" },
+            [
+              _c(
+                "b-card",
+                {
+                  staticClass: "col-sm-6 col-12 h-100 p-0",
+                  attrs: { "no-body": "" },
+                },
+                [
+                  _c("b-card-header", { staticClass: "py-2 pl-0 pr-2" }, [
+                    _c(
+                      "div",
+                      { staticClass: "d-flex align-items-center" },
+                      [
+                        _c("label", { staticClass: "text-primary mb-0 py-1" }, [
+                          _vm._v(
+                            "\n              " +
+                              _vm._s(_vm.labels.availableItems) +
+                              "\n            "
+                          ),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "b-button",
+                          {
+                            directives: [
+                              {
+                                name: "show",
+                                rawName: "v-show",
+                                value:
+                                  _vm.filteredAvailable.length && !_vm.disabled,
+                                expression:
+                                  "filteredAvailable.length && !disabled",
+                              },
+                            ],
+                            staticClass: "ml-auto border-0 text-muted",
+                            attrs: {
+                              "data-test-id": "link-select-all",
+                              variant: "outline-light",
+                            },
+                            on: {
+                              click: function ($event) {
+                                return _vm.selectAll()
+                              },
+                            },
+                          },
+                          [
+                            _vm._v(
+                              "\n              " +
+                                _vm._s(_vm.labels.selectAllItems) +
+                                "\n            "
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "b-card-body",
+                    { staticClass: "overflow-auto py-0 pl-0 pr-2" },
+                    [
+                      _c(
+                        "b-list-group",
+                        { staticClass: "h-100", attrs: { vertical: "" } },
+                        [
+                          _c(
+                            "draggable",
+                            {
+                              staticClass: "overflow-auto h-100",
+                              attrs: {
+                                sort: !_vm._disabledSorting,
+                                move: _vm._disableDragging,
+                                disabled: _vm.query,
+                                draggable: ".item",
+                                group: "items",
+                              },
+                              scopedSlots: _vm._u([
+                                {
+                                  key: "footer",
+                                  fn: function () {
+                                    return [
+                                      !_vm.filteredAvailable.length && _vm.query
+                                        ? _c(
+                                            "h6",
+                                            { staticClass: "text-center my-4" },
+                                            [
+                                              _vm._v(
+                                                "\n                  " +
+                                                  _vm._s(
+                                                    _vm.labels.noItemsFound
+                                                  ) +
+                                                  "\n                "
+                                              ),
+                                            ]
+                                          )
+                                        : _vm._e(),
+                                    ]
+                                  },
+                                  proxy: true,
+                                },
+                              ]),
+                              model: {
+                                value: _vm.filteredAvailable,
+                                callback: function ($$v) {
+                                  _vm.filteredAvailable = $$v;
+                                },
+                                expression: "filteredAvailable",
+                              },
+                            },
+                            _vm._l(_vm.filteredAvailable, function (item) {
+                              return _c(
+                                "b-list-group-item",
+                                {
+                                  key: item.value,
+                                  staticClass: "item mb-3 border rounded",
+                                  class: {
+                                    handle: !_vm.isDraggable,
+                                  },
+                                  on: {
+                                    dblclick: function ($event) {
+                                      return _vm.select(item)
+                                    },
+                                  },
+                                },
+                                [
+                                  _c("c-item-picker-item", {
+                                    attrs: {
+                                      item: item,
+                                      disabled: _vm.disabled,
+                                      "disabled-dragging": _vm.isDraggable,
+                                      "disabled-sorting": _vm.disabledSorting,
+                                      "hide-icons": _vm.hideIcons,
+                                    },
+                                    on: {
+                                      select: function ($event) {
+                                        return _vm.select(item)
+                                      },
+                                    },
+                                    scopedSlots: _vm._u(
+                                      [
+                                        _vm._l(
+                                          _vm.$scopedSlots,
+                                          function (_, slot) {
+                                            return {
+                                              key: slot,
+                                              fn: function (scope) {
+                                                return [
+                                                  _vm._t(
+                                                    slot,
+                                                    null,
+                                                    {
+                                                      textField: _vm.textField,
+                                                      disabled: _vm.disabled,
+                                                      disabledDragging:
+                                                        _vm.isDraggable,
+                                                      disabledSorting:
+                                                        _vm.disabledSorting,
+                                                      hideIcons: _vm.hideIcons,
+                                                    },
+                                                    scope
+                                                  ),
+                                                ]
+                                              },
+                                            }
+                                          }
+                                        ),
+                                      ],
+                                      null,
+                                      true
+                                    ),
+                                  }),
+                                ],
+                                1
+                              )
+                            }),
+                            1
+                          ),
+                        ],
+                        1
+                      ),
+                    ],
+                    1
+                  ),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c(
+                "b-card",
+                {
+                  staticClass: "h-100 pl-sm-0 col-sm-6 col-12 p-0",
+                  attrs: { "no-body": "" },
+                },
+                [
+                  _c("b-card-header", { staticClass: "py-2 pl-2 pr-0" }, [
+                    _c(
+                      "div",
+                      { staticClass: "d-flex align-items-center" },
+                      [
+                        _c("label", { staticClass: "text-primary mb-0 py-1" }, [
+                          _vm._v(
+                            "\n              " +
+                              _vm._s(_vm.labels.selectedItems) +
+                              "\n            "
+                          ),
+                        ]),
+                        _vm._v(" "),
+                        _c(
+                          "b-button",
+                          {
+                            directives: [
+                              {
+                                name: "show",
+                                rawName: "v-show",
+                                value:
+                                  _vm.filteredSelected.length && !_vm.disabled,
+                                expression:
+                                  "filteredSelected.length && !disabled",
+                              },
+                            ],
+                            staticClass: "ml-auto border-0 text-muted",
+                            attrs: {
+                              "data-test-id": "link-unselect-all",
+                              variant: "outline-light",
+                            },
+                            on: {
+                              click: function ($event) {
+                                return _vm.unselectAll()
+                              },
+                            },
+                          },
+                          [
+                            _vm._v(
+                              "\n              " +
+                                _vm._s(_vm.labels.unselectAllItems) +
+                                "\n            "
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "b-card-body",
+                    { staticClass: "overflow-auto py-0 pl-2 pr-0" },
+                    [
+                      _c(
+                        "b-list-group",
+                        { staticClass: "h-100", attrs: { vertical: "" } },
+                        [
+                          _c(
+                            "draggable",
+                            {
+                              staticClass: "overflow-auto h-100",
+                              attrs: {
+                                sort: !_vm._disabledSorting,
+                                move: _vm._disableDragging,
+                                disabled: _vm.query,
+                                draggable: ".item",
+                                group: "items",
+                              },
+                              scopedSlots: _vm._u([
+                                {
+                                  key: "footer",
+                                  fn: function () {
+                                    return [
+                                      !_vm.filteredSelected.length && _vm.query
+                                        ? _c(
+                                            "h6",
+                                            { staticClass: "text-center my-4" },
+                                            [
+                                              _vm._v(
+                                                "\n                  " +
+                                                  _vm._s(
+                                                    _vm.labels.noItemsFound
+                                                  ) +
+                                                  "\n                "
+                                              ),
+                                            ]
+                                          )
+                                        : _vm._e(),
+                                    ]
+                                  },
+                                  proxy: true,
+                                },
+                              ]),
+                              model: {
+                                value: _vm.filteredSelected,
+                                callback: function ($$v) {
+                                  _vm.filteredSelected = $$v;
+                                },
+                                expression: "filteredSelected",
+                              },
+                            },
+                            _vm._l(_vm.filteredSelected, function (item) {
+                              return _c(
+                                "b-list-group-item",
+                                {
+                                  key: item.value,
+                                  staticClass: "item mb-3 border rounded",
+                                  class: {
+                                    handle: !_vm.isDraggable,
+                                  },
+                                  on: {
+                                    dblclick: function ($event) {
+                                      return _vm.unselect(item)
+                                    },
+                                  },
+                                },
+                                [
+                                  _c("c-item-picker-item", {
+                                    attrs: {
+                                      item: item,
+                                      disabled: _vm.disabled,
+                                      "disabled-dragging": _vm.isDraggable,
+                                      "disabled-sorting": _vm.disabledSorting,
+                                      "hide-icons": _vm.hideIcons,
+                                      selected: "",
+                                    },
+                                    on: {
+                                      unselect: function ($event) {
+                                        return _vm.unselect(item)
+                                      },
+                                    },
+                                    scopedSlots: _vm._u(
+                                      [
+                                        _vm._l(
+                                          _vm.$scopedSlots,
+                                          function (_, slot) {
+                                            return {
+                                              key: slot,
+                                              fn: function (scope) {
+                                                return [
+                                                  _vm._t(
+                                                    slot,
+                                                    null,
+                                                    {
+                                                      textField: _vm.textField,
+                                                      disabled: _vm.disabled,
+                                                      disabledDragging:
+                                                        _vm.isDraggable,
+                                                      disabledSorting:
+                                                        _vm.disabledSorting,
+                                                      hideIcons: _vm.hideIcons,
+                                                    },
+                                                    scope
+                                                  ),
+                                                ]
+                                              },
+                                            }
+                                          }
+                                        ),
+                                      ],
+                                      null,
+                                      true
+                                    ),
+                                  }),
+                                ],
+                                1
+                              )
+                            }),
+                            1
+                          ),
+                        ],
+                        1
+                      ),
+                    ],
+                    1
+                  ),
+                ],
+                1
+              ),
+            ],
+            1
+          ),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$r = [];
+__vue_render__$r._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$s = function (inject) {
     if (!inject) return
-    inject("data-v-01fe4d3a_0", { source: ".handle[data-v-01fe4d3a]{cursor:grab}.handle[data-v-01fe4d3a]:active{cursor:grabbing}", map: undefined, media: undefined });
+    inject("data-v-3435ae07_0", { source: ".handle[data-v-3435ae07] {\n  cursor: grab;\n}\n.handle[data-v-3435ae07]:active {\n  cursor: grabbing;\n}\n\n/*# sourceMappingURL=CItemPicker.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/itemPicker/CItemPicker.vue","CItemPicker.vue"],"names":[],"mappings":"AAmeA;EACA,YAAA;ACleA;ADqeA;EACA,gBAAA;ACleA;;AAEA,0CAA0C","file":"CItemPicker.vue","sourcesContent":["<template>\n  <div\n    class=\"overflow-hidden d-flex flex-column w-100 vh-100\"\n  >\n    <b-card\n      no-body\n      class=\"h-100\"\n    >\n      <b-card-header\n        class=\"p-0\"\n      >\n        <c-input-search\n          v-if=\"!hideFilter\"\n          v-model.trim=\"query\"\n          :disabled=\"_disabledFilter\"\n          :placeholder=\"labels.searchPlaceholder\"\n        />\n      </b-card-header>\n\n      <b-card-body\n        class=\"d-flex p-0\"\n      >\n        <b-card\n          no-body\n          class=\"col-sm-6 col-12 h-100 p-0\"\n        >\n          <b-card-header\n            class=\"py-2 pl-0 pr-2\"\n          >\n            <div\n              class=\"d-flex align-items-center\"\n            >\n              <label\n                class=\"text-primary mb-0 py-1\"\n              >\n                {{ labels.availableItems }}\n              </label>\n              <b-button\n                v-show=\"filteredAvailable.length && !disabled\"\n                data-test-id=\"link-select-all\"\n                variant=\"outline-light\"\n                class=\"ml-auto border-0 text-muted\"\n                @click=\"selectAll()\"\n              >\n                {{ labels.selectAllItems }}\n              </b-button>\n            </div>\n          </b-card-header>\n\n          <b-card-body\n            class=\"overflow-auto py-0 pl-0 pr-2\"\n          >\n            <b-list-group\n              vertical\n              class=\"h-100\"\n            >\n              <draggable\n                v-model=\"filteredAvailable\"\n                :sort=\"!_disabledSorting\"\n                :move=\"_disableDragging\"\n                :disabled=\"query\"\n                draggable=\".item\"\n                group=\"items\"\n                class=\"overflow-auto h-100\"\n              >\n                <b-list-group-item\n                  v-for=\"item in filteredAvailable\"\n                  :key=\"item.value\"\n                  class=\"item mb-3 border rounded\"\n                  :class=\"{\n                    'handle': !isDraggable\n                  }\"\n                  @dblclick=\"select(item)\"\n                >\n                  <c-item-picker-item\n                    :item=\"item\"\n                    :disabled=\"disabled\"\n                    :disabled-dragging=\"isDraggable\"\n                    :disabled-sorting=\"disabledSorting\"\n                    :hide-icons=\"hideIcons\"\n                    @select=\"select(item)\"\n                  >\n                    <template\n                      v-for=\"(_, slot) of $scopedSlots\"\n                      #[slot]=\"scope\"\n                    >\n                      <slot\n                        :name=\"slot\"\n                        :text-field=\"textField\"\n                        :disabled=\"disabled\"\n                        :disabled-dragging=\"isDraggable\"\n                        :disabled-sorting=\"disabledSorting\"\n                        :hide-icons=\"hideIcons\"\n                        v-bind=\"scope\"\n                      />\n                    </template>\n                  </c-item-picker-item>\n                </b-list-group-item>\n\n                <template #footer>\n                  <h6\n                    v-if=\"!filteredAvailable.length && query\"\n                    class=\"text-center my-4\"\n                  >\n                    {{ labels.noItemsFound }}\n                  </h6>\n                </template>\n              </draggable>\n            </b-list-group>\n          </b-card-body>\n        </b-card>\n\n        <b-card\n          no-body\n          class=\"h-100 pl-sm-0 col-sm-6 col-12 p-0\"\n        >\n          <b-card-header\n            class=\"py-2 pl-2 pr-0\"\n          >\n            <div\n              class=\"d-flex align-items-center\"\n            >\n              <label\n                class=\"text-primary mb-0 py-1\"\n              >\n                {{ labels.selectedItems }}\n              </label>\n              <b-button\n                v-show=\"filteredSelected.length && !disabled\"\n                data-test-id=\"link-unselect-all\"\n                variant=\"outline-light\"\n                class=\"ml-auto border-0 text-muted\"\n                @click=\"unselectAll()\"\n              >\n                {{ labels.unselectAllItems }}\n              </b-button>\n            </div>\n          </b-card-header>\n\n          <b-card-body\n            class=\"overflow-auto py-0 pl-2 pr-0\"\n          >\n            <b-list-group\n              vertical\n              class=\"h-100\"\n            >\n              <draggable\n                v-model=\"filteredSelected\"\n                :sort=\"!_disabledSorting\"\n                :move=\"_disableDragging\"\n                :disabled=\"query\"\n                draggable=\".item\"\n                group=\"items\"\n                class=\"overflow-auto h-100\"\n              >\n                <b-list-group-item\n                  v-for=\"item in filteredSelected\"\n                  :key=\"item.value\"\n                  class=\"item mb-3 border rounded\"\n                  :class=\"{\n                    'handle': !isDraggable\n                  }\"\n                  @dblclick=\"unselect(item)\"\n                >\n                  <c-item-picker-item\n                    :item=\"item\"\n                    :disabled=\"disabled\"\n                    :disabled-dragging=\"isDraggable\"\n                    :disabled-sorting=\"disabledSorting\"\n                    :hide-icons=\"hideIcons\"\n                    selected\n                    @unselect=\"unselect(item)\"\n                  >\n                    <template\n                      v-for=\"(_, slot) of $scopedSlots\"\n                      #[slot]=\"scope\"\n                    >\n                      <slot\n                        :name=\"slot\"\n                        :text-field=\"textField\"\n                        :disabled=\"disabled\"\n                        :disabled-dragging=\"isDraggable\"\n                        :disabled-sorting=\"disabledSorting\"\n                        :hide-icons=\"hideIcons\"\n                        v-bind=\"scope\"\n                      />\n                    </template>\n                  </c-item-picker-item>\n                </b-list-group-item>\n\n                <template #footer>\n                  <h6\n                    v-if=\"!filteredSelected.length && query\"\n                    class=\"text-center my-4\"\n                  >\n                    {{ labels.noItemsFound }}\n                  </h6>\n                </template>\n              </draggable>\n            </b-list-group>\n          </b-card-body>\n        </b-card>\n      </b-card-body>\n    </b-card>\n  </div>\n</template>\n<script>\nimport draggable from 'vuedraggable'\nimport CItemPickerItem from './CItemPickerItem.vue'\nimport CInputSearch from '../input/CInputSearch.vue'\nimport { throttle } from 'lodash'\n\nexport default {\n  name: 'CItemPicker',\n\n  components: {\n    draggable,\n    CItemPickerItem,\n    CInputSearch,\n  },\n\n  props: {\n    /**\n     * List of all items, available and selected/picked\n     *\n     * Internally, we'll build 2 arrays for each group (available + selected)\n     * and work with them.\n     * On the outside, we'll always deal input array of (full) items and\n     * array of selected/picked values of those items.\n     *\n     * This component mimics the behaviour of <b-form-select> component from\n     * Vue Bootstrap and could serve as a drop-in replacement!\n     */\n    options: {\n      type: Array,\n      required: true,\n    },\n\n    /**\n     * List of values that can be found in the items\n     */\n    value: {\n      type: Array,\n      required: true,\n    },\n\n    valueField: {\n      type: String,\n      default: 'value',\n    },\n\n    textField: {\n      type: String,\n      default: 'text',\n    },\n\n    labels: {\n      type: Object,\n      default: () => ({\n        searchPlaceholder: 'Filter items',\n        availableItems: 'Available',\n        selectAllItems: 'Select all',\n        selectedItems: 'Selected',\n        unselectAllItems: 'Unselect all',\n        noItemsFound: 'No items found',\n      }),\n    },\n\n    disabled: {\n      type: Boolean,\n    },\n\n    disabledFilter: {\n      type: Boolean,\n    },\n\n    disabledSorting: {\n      type: Boolean,\n    },\n\n    disabledDragging: {\n      type: Boolean,\n    },\n\n    hideIcons: {\n      type: Boolean,\n    },\n\n    hideFilter: {\n      type: Boolean,\n    },\n  },\n\n  data () {\n    return {\n      query: '',\n      available: [],\n      selected: [],\n    }\n  },\n\n  computed: {\n    _disabledFilter () {\n      return this.disabled || this.disabledFilter\n    },\n\n    _disabledSorting () {\n      return this.disabled || this.disabledSorting\n    },\n\n    /**\n     * Provides list of all available items, filtered by query\n     * and a setter for draggable component to update available items on drag\n     */\n    filteredAvailable: {\n      get () {\n        const q = this.query.toLowerCase()\n        return this.available.filter(i => i.text.toLowerCase().indexOf(q) > -1)\n      },\n\n      set (items) {\n        this.available = items\n      },\n    },\n\n    /**\n     * Provides list of all selected items, filtered by query\n     * and a setter for draggable component to update selected items on drag\n     */\n    filteredSelected: {\n      get () {\n        const q = this.query.toLowerCase()\n        return this.selected.filter(i => i.text.toLowerCase().indexOf(q) > -1)\n      },\n\n      set (items) {\n        this.selected = items\n      },\n    },\n\n    isDraggable () {\n      return this.disabledDragging || this.query.length > 0\n    },\n  },\n\n  watch: {\n    /**\n     * Update parent component (if needed)\n     * @param v\n     */\n    selected: {\n      immediate: false,\n      handler (items) {\n        const value = items.map(i => i[this.valueField])\n\n        // satisfy value.sync\n        this.$emit('update:value', value)\n\n        // satisfy v-model\n        this.$emit('input', value)\n      },\n    },\n\n    options: {\n      deep: true,\n      immediate: true,\n      handler () {\n        this.sync()\n      },\n    },\n\n    value: {\n      immediate: false,\n      handler (value = [], oldValue = []) {\n        /**\n        * Make sure we do not fall into an infinite loop\n        *\n        * If we update the value then sync will trigger recomputation of selected\n        * Which then emits the update event and the loop will begin\n        */\n        if (value.length === oldValue.length) {\n          if (value.filter(v => !oldValue.includes(v)).length === 0) {\n            return\n          }\n        }\n\n        this.sync()\n      },\n    },\n  },\n\n  created () {\n    this.options.forEach(o => {\n      if (typeof o !== 'object') {\n        throw new Error('expecting array of objects for options prop')\n      }\n    })\n  },\n\n  beforeUnmount () {\n    this.setDefaultValues()\n  },\n\n  methods: {\n    _disableDragging (e) {\n      if (this.disabledDragging && e.to !== e.from) {\n        return false\n      }\n    },\n\n    selectAll () {\n      this.selected.push(...this.filteredAvailable)\n      this.available = this.frozen().filter(i => !this.selected.includes(i))\n    },\n\n    select: throttle(function (item) {\n      // remove available\n      this.available = this.available.filter(i => i !== item)\n\n      // put the selected item in the place where it was (if sorting is disabled)\n      // or at the end\n      if (this.disabledSorting) {\n        this.selected = this.frozen().filter(i => !this.available.includes(i))\n      } else {\n        if (!this.selected.some(({ value = '' }) => value === item.value)) {\n          this.selected.push(item)\n        }\n      }\n    }, 300),\n\n    unselectAll () {\n      this.filteredSelected.forEach(this.unselect)\n    },\n\n    unselect (item) {\n      // filtering out the unselected item\n      this.selected = this.selected.filter(i => i !== item)\n\n      // sync available from the list of frozen items without selected\n      this.available = this.frozen().filter(i => !this.selected.includes(i))\n    },\n\n    /**\n     * Returns true given item is selected or not\n     *\n     * Item is considered selected if value of item's value-field is inside the selected array.\n     *\n     * @param item object\n     * @returns boolean\n     */\n    isPicked (item) {\n      return item[this.valueField] && this.value.includes(item[this.valueField])\n    },\n\n    sync () {\n      /**\n       * filter all unpicked options, freeze each item in the array and\n       * build list of available items\n       */\n      this.available = this.frozen().filter(opt => !this.isPicked(opt))\n\n      /**\n       * filter all unpicked options, freeze each item in the array and\n       * build list of selected items, traverse value to keep order\n       */\n      this.selected = this.value.map(v => {\n        return this.frozen().find(item => item[this.valueField] === v)\n      }).filter(f => f)\n    },\n\n    frozen () {\n      return this.options.map(Object.freeze)\n    },\n\n    setDefaultValues () {\n      this.query = ''\n      this.available = []\n      this.selected = []\n    },\n  },\n}\n</script>\n<style lang=\"scss\" scoped>\n.handle {\n  cursor: grab;\n}\n\n.handle:active {\n  cursor: grabbing;\n}\n</style>\n",".handle {\n  cursor: grab;\n}\n\n.handle:active {\n  cursor: grabbing;\n}\n\n/*# sourceMappingURL=CItemPicker.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$s = "data-v-01fe4d3a";
+  const __vue_scope_id__$s = "data-v-3435ae07";
   /* module identifier */
   const __vue_module_identifier__$s = undefined;
   /* functional template */
@@ -28675,8 +33752,24 @@ var script$p = {
 const __vue_script__$p = script$p;
 
 /* template */
-var __vue_render__$q = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('e-charts',_vm._g({ref:"chart",staticClass:"position-absolute w-100 h-100 overflow-hidden",attrs:{"option":_vm.chart,"theme":_vm.theme,"autoresize":""}},_vm.$listeners))};
+var __vue_render__$q = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "e-charts",
+    _vm._g(
+      {
+        ref: "chart",
+        staticClass: "position-absolute w-100 h-100 overflow-hidden",
+        attrs: { option: _vm.chart, theme: _vm.theme, autoresize: "" },
+      },
+      _vm.$listeners
+    )
+  )
+};
 var __vue_staticRenderFns__$q = [];
+__vue_render__$q._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$q = undefined;
@@ -28780,8 +33873,26 @@ var script$o = {
 const __vue_script__$o = script$o;
 
 /* template */
-var __vue_render__$p = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex h-100 position-relative"},[(_vm.chart)?_c('c-chart',{staticClass:"flex-fill p-1",attrs:{"chart":_vm.chart}}):_vm._e()],1)};
+var __vue_render__$p = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "d-flex h-100 position-relative" },
+    [
+      _vm.chart
+        ? _c("c-chart", {
+            staticClass: "flex-fill p-1",
+            attrs: { chart: _vm.chart },
+          })
+        : _vm._e(),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$p = [];
+__vue_render__$p._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$p = undefined;
@@ -28911,8 +34022,48 @@ var script$n = {
 const __vue_script__$n = script$n;
 
 /* template */
-var __vue_render__$o = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.options)?_c('div',{staticClass:"d-flex align-items-center justify-content-center overflow-hidden h-100 px-2 rounded",style:(_vm.style)},[_c('svg',{staticClass:"h-100 w-100 align-items-end d-flex",attrs:{"viewBox":_vm.viewbox,"width":"100%","height":"100%"}},[_c('text',{ref:"metricItem",attrs:{"y":"50%","x":"50%","text-anchor":"middle","dominant-baseline":"central","text-rendering":"geometricPrecision"}},[_vm._v("\n      "+_vm._s(_vm.displayedMetric)+"\n    ")])])]):_vm._e()};
+var __vue_render__$o = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _vm.options
+    ? _c(
+        "div",
+        {
+          staticClass:
+            "d-flex align-items-center justify-content-center overflow-hidden h-100 px-2 rounded",
+          style: _vm.style,
+        },
+        [
+          _c(
+            "svg",
+            {
+              staticClass: "h-100 w-100 align-items-end d-flex",
+              attrs: { viewBox: _vm.viewbox, width: "100%", height: "100%" },
+            },
+            [
+              _c(
+                "text",
+                {
+                  ref: "metricItem",
+                  attrs: {
+                    y: "50%",
+                    x: "50%",
+                    "text-anchor": "middle",
+                    "dominant-baseline": "central",
+                    "text-rendering": "geometricPrecision",
+                  },
+                },
+                [_vm._v("\n      " + _vm._s(_vm.displayedMetric) + "\n    ")]
+              ),
+            ]
+          ),
+        ]
+      )
+    : _vm._e()
+};
 var __vue_staticRenderFns__$o = [];
+__vue_render__$o._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$o = undefined;
@@ -29475,19 +34626,298 @@ var script$m = {
 const __vue_script__$m = script$m;
 
 /* template */
-var __vue_render__$n = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-card',{staticClass:"h-100 rounded-0",attrs:{"no-body":""}},[_c('b-table-simple',{staticClass:"flex-grow-1 mh-100 mb-0",attrs:{"table-variant":_vm.options.tableVariant,"dark":_vm.options.dark,"bordered":_vm.options.bordered,"borderless":_vm.options.borderless,"outlined":_vm.options.outlined,"striped":_vm.options.striped,"responsive":_vm.options.responsive,"fixed":_vm.options.fixed,"hover":_vm.options.hover,"small":_vm.options.small,"no-border-collapse":_vm.options.noCollapse,"sticky-header":""}},[_vm._l((_vm.tabelify.colgroups),function(cg,i){return _c('colgroup',{key:i,class:{ local: cg.isLocal, foreign: !cg.isLocal },attrs:{"span":cg.size}})}),_vm._v(" "),_c('b-thead',{attrs:{"head-variant":_vm.options.headVariant}},[(_vm.dataframes.length > 1)?_c('b-tr',_vm._l((_vm.tabelify.header),function(c,i){return _c('b-th',_vm._b({key:i,staticClass:"border-0"},'b-th',c.column ? c.column.attrs : {},false),[(c.sourceName)?_c('p',{staticClass:"m-0"},[_vm._v("\n            "+_vm._s(c.sourceName)+"\n          ")]):_vm._e()])}),1):_vm._e(),_vm._v(" "),_c('b-tr',_vm._l((_vm.tabelify.header),function(c,i){return _c('b-th',{key:i,staticClass:"border-0"},[_c('div',{staticClass:"d-flex align-items-center"},[(c.column ? c.column.label : '')?_c('div',{staticClass:"d-flex text-nowrap"},[_vm._v("\n              "+_vm._s(c.column.label)+"\n            ")]):_vm._e(),_vm._v(" "),(!c.meta.tmp_noSort)?_c('b-button',{staticClass:"d-flex align-items-center text-secondary d-print-none border-0 px-1 ml-1",attrs:{"variant":"outline-extra-light"},on:{"click":function($event){return _vm.handleSort(c.meta.sortKey)}}},[_c('font-awesome-layers',{staticClass:"d-print-none"},[_c('font-awesome-icon',{staticClass:"mb-1",class:{ 'text-primary': _vm.sort.field === c.meta.sortKey && !_vm.sort.descending },attrs:{"icon":['fas', 'angle-up']}}),_vm._v(" "),_c('font-awesome-icon',{staticClass:"mt-1",class:{ 'text-primary': _vm.sort.field === c.meta.sortKey && _vm.sort.descending },attrs:{"icon":['fas', 'angle-down']}})],1)],1):_vm._e()],1)])}),1)],1),_vm._v(" "),_c('b-tbody',{staticClass:"h-100"},_vm._l((_vm.tabelify.rows),function(r,i){return _c('b-tr',{key:i,class:{
-          separator: !!(r[0] || {}).separator,
-        }},_vm._l((r),function(c,j){return _c('b-td',_vm._b({key:j},'b-td',c.attrs || {},false),[_vm._v("\n          "+_vm._s(c.value)+"\n        ")])}),1)}),1)],2),_vm._v(" "),_c('b-card-footer',{staticClass:"d-flex rounded-0 bg-light p-2"},[_c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.hover",value:('Export to CSV'),expression:"'Export to CSV'",modifiers:{"hover":true}}],staticClass:"text-dark border-0 mr-auto py-1 px-2",attrs:{"variant":"outline-extra-light"},on:{"click":_vm.exportCSV}},[_c('font-awesome-icon',{attrs:{"icon":['fas', 'download']}})],1),_vm._v(" "),_c('b-button-group',{staticClass:"ml-auto gap-1"},[(_vm.hasPrevPage)?_c('b-button',{staticClass:"d-flex align-items-center justify-content-center text-dark border-0 p-1",attrs:{"variant":"outline-extra-light"},on:{"click":function($event){return _vm.goToPage()}}},[_c('font-awesome-icon',{attrs:{"icon":['fas', 'angle-double-left']}})],1):_vm._e(),_vm._v(" "),(_vm.hasPrevPage)?_c('b-button',{staticClass:"d-flex align-items-center justify-content-center text-dark border-0 p-1",attrs:{"variant":"outline-extra-light"},on:{"click":function($event){return _vm.goToPage('prevPage')}}},[_c('font-awesome-icon',{staticClass:"mr-1",attrs:{"icon":['fas', 'angle-left']}}),_vm._v("\n        "+_vm._s(_vm.labels.previous)+"\n      ")],1):_vm._e(),_vm._v(" "),(_vm.hasNextPage)?_c('b-button',{staticClass:"d-flex align-items-center justify-content-center text-dark border-0 p-1",attrs:{"variant":"outline-extra-light"},on:{"click":function($event){return _vm.goToPage('nextPage')}}},[_vm._v("\n        "+_vm._s(_vm.labels.next)+"\n        "),_c('font-awesome-icon',{staticClass:"ml-1",attrs:{"icon":['fas', 'angle-right']}})],1):_vm._e()],1)],1)],1)};
+var __vue_render__$n = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-card",
+    { staticClass: "h-100 rounded-0", attrs: { "no-body": "" } },
+    [
+      _c(
+        "b-table-simple",
+        {
+          staticClass: "flex-grow-1 mh-100 mb-0",
+          attrs: {
+            "table-variant": _vm.options.tableVariant,
+            dark: _vm.options.dark,
+            bordered: _vm.options.bordered,
+            borderless: _vm.options.borderless,
+            outlined: _vm.options.outlined,
+            striped: _vm.options.striped,
+            responsive: _vm.options.responsive,
+            fixed: _vm.options.fixed,
+            hover: _vm.options.hover,
+            small: _vm.options.small,
+            "no-border-collapse": _vm.options.noCollapse,
+            "sticky-header": "",
+          },
+        },
+        [
+          _vm._l(_vm.tabelify.colgroups, function (cg, i) {
+            return _c("colgroup", {
+              key: i,
+              class: { local: cg.isLocal, foreign: !cg.isLocal },
+              attrs: { span: cg.size },
+            })
+          }),
+          _vm._v(" "),
+          _c(
+            "b-thead",
+            { attrs: { "head-variant": _vm.options.headVariant } },
+            [
+              _vm.dataframes.length > 1
+                ? _c(
+                    "b-tr",
+                    _vm._l(_vm.tabelify.header, function (c, i) {
+                      return _c(
+                        "b-th",
+                        _vm._b(
+                          { key: i, staticClass: "border-0" },
+                          "b-th",
+                          c.column ? c.column.attrs : {},
+                          false
+                        ),
+                        [
+                          c.sourceName
+                            ? _c("p", { staticClass: "m-0" }, [
+                                _vm._v(
+                                  "\n            " +
+                                    _vm._s(c.sourceName) +
+                                    "\n          "
+                                ),
+                              ])
+                            : _vm._e(),
+                        ]
+                      )
+                    }),
+                    1
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _c(
+                "b-tr",
+                _vm._l(_vm.tabelify.header, function (c, i) {
+                  return _c("b-th", { key: i, staticClass: "border-0" }, [
+                    _c(
+                      "div",
+                      { staticClass: "d-flex align-items-center" },
+                      [
+                        (c.column ? c.column.label : "")
+                          ? _c("div", { staticClass: "d-flex text-nowrap" }, [
+                              _vm._v(
+                                "\n              " +
+                                  _vm._s(c.column.label) +
+                                  "\n            "
+                              ),
+                            ])
+                          : _vm._e(),
+                        _vm._v(" "),
+                        !c.meta.tmp_noSort
+                          ? _c(
+                              "b-button",
+                              {
+                                staticClass:
+                                  "d-flex align-items-center text-secondary d-print-none border-0 px-1 ml-1",
+                                attrs: { variant: "outline-extra-light" },
+                                on: {
+                                  click: function ($event) {
+                                    return _vm.handleSort(c.meta.sortKey)
+                                  },
+                                },
+                              },
+                              [
+                                _c(
+                                  "font-awesome-layers",
+                                  { staticClass: "d-print-none" },
+                                  [
+                                    _c("font-awesome-icon", {
+                                      staticClass: "mb-1",
+                                      class: {
+                                        "text-primary":
+                                          _vm.sort.field === c.meta.sortKey &&
+                                          !_vm.sort.descending,
+                                      },
+                                      attrs: { icon: ["fas", "angle-up"] },
+                                    }),
+                                    _vm._v(" "),
+                                    _c("font-awesome-icon", {
+                                      staticClass: "mt-1",
+                                      class: {
+                                        "text-primary":
+                                          _vm.sort.field === c.meta.sortKey &&
+                                          _vm.sort.descending,
+                                      },
+                                      attrs: { icon: ["fas", "angle-down"] },
+                                    }),
+                                  ],
+                                  1
+                                ),
+                              ],
+                              1
+                            )
+                          : _vm._e(),
+                      ],
+                      1
+                    ),
+                  ])
+                }),
+                1
+              ),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-tbody",
+            { staticClass: "h-100" },
+            _vm._l(_vm.tabelify.rows, function (r, i) {
+              return _c(
+                "b-tr",
+                {
+                  key: i,
+                  class: {
+                    separator: !!(r[0] || {}).separator,
+                  },
+                },
+                _vm._l(r, function (c, j) {
+                  return _c(
+                    "b-td",
+                    _vm._b({ key: j }, "b-td", c.attrs || {}, false),
+                    [_vm._v("\n          " + _vm._s(c.value) + "\n        ")]
+                  )
+                }),
+                1
+              )
+            }),
+            1
+          ),
+        ],
+        2
+      ),
+      _vm._v(" "),
+      _c(
+        "b-card-footer",
+        { staticClass: "d-flex rounded-0 bg-light p-2" },
+        [
+          _c(
+            "b-button",
+            {
+              directives: [
+                {
+                  name: "b-tooltip",
+                  rawName: "v-b-tooltip.hover",
+                  value: "Export to CSV",
+                  expression: "'Export to CSV'",
+                  modifiers: { hover: true },
+                },
+              ],
+              staticClass: "text-dark border-0 mr-auto py-1 px-2",
+              attrs: { variant: "outline-extra-light" },
+              on: { click: _vm.exportCSV },
+            },
+            [_c("font-awesome-icon", { attrs: { icon: ["fas", "download"] } })],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-button-group",
+            { staticClass: "ml-auto gap-1" },
+            [
+              _vm.hasPrevPage
+                ? _c(
+                    "b-button",
+                    {
+                      staticClass:
+                        "d-flex align-items-center justify-content-center text-dark border-0 p-1",
+                      attrs: { variant: "outline-extra-light" },
+                      on: {
+                        click: function ($event) {
+                          return _vm.goToPage()
+                        },
+                      },
+                    },
+                    [
+                      _c("font-awesome-icon", {
+                        attrs: { icon: ["fas", "angle-double-left"] },
+                      }),
+                    ],
+                    1
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.hasPrevPage
+                ? _c(
+                    "b-button",
+                    {
+                      staticClass:
+                        "d-flex align-items-center justify-content-center text-dark border-0 p-1",
+                      attrs: { variant: "outline-extra-light" },
+                      on: {
+                        click: function ($event) {
+                          return _vm.goToPage("prevPage")
+                        },
+                      },
+                    },
+                    [
+                      _c("font-awesome-icon", {
+                        staticClass: "mr-1",
+                        attrs: { icon: ["fas", "angle-left"] },
+                      }),
+                      _vm._v(
+                        "\n        " + _vm._s(_vm.labels.previous) + "\n      "
+                      ),
+                    ],
+                    1
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _vm.hasNextPage
+                ? _c(
+                    "b-button",
+                    {
+                      staticClass:
+                        "d-flex align-items-center justify-content-center text-dark border-0 p-1",
+                      attrs: { variant: "outline-extra-light" },
+                      on: {
+                        click: function ($event) {
+                          return _vm.goToPage("nextPage")
+                        },
+                      },
+                    },
+                    [
+                      _vm._v(
+                        "\n        " + _vm._s(_vm.labels.next) + "\n        "
+                      ),
+                      _c("font-awesome-icon", {
+                        staticClass: "ml-1",
+                        attrs: { icon: ["fas", "angle-right"] },
+                      }),
+                    ],
+                    1
+                  )
+                : _vm._e(),
+            ],
+            1
+          ),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$n = [];
+__vue_render__$n._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$n = function (inject) {
     if (!inject) return
-    inject("data-v-df639fee_0", { source: ".foreign[data-v-df639fee]{border:1px solid rgba(var(--black),.8);border-top:0;border-bottom:0}.separator[data-v-df639fee]{border-top:2px solid rgba(var(--black),.5)}.card-rounded[data-v-df639fee]{border-radius:1rem 1rem 0 0}", map: undefined, media: undefined });
+    inject("data-v-afef8c30_0", { source: ".foreign[data-v-afef8c30] {\n  border: 1px solid rgba(var(--black), 0.8);\n  border-top: 0;\n  border-bottom: 0;\n}\n.separator[data-v-afef8c30] {\n  border-top: 2px solid rgba(var(--black), 0.5);\n}\n.card-rounded[data-v-afef8c30] {\n  border-radius: 1rem 1rem 0 0;\n}\n\n/*# sourceMappingURL=CReportTable.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/reporter/Viewers/CReportTable.vue","CReportTable.vue"],"names":[],"mappings":"AAshBA;EACA,yCAAA;EACA,aAAA;EACA,gBAAA;ACrhBA;ADwhBA;EACA,6CAAA;ACrhBA;ADwhBA;EACA,4BAAA;ACrhBA;;AAEA,2CAA2C","file":"CReportTable.vue","sourcesContent":["<template>\n  <b-card\n    no-body\n    class=\"h-100 rounded-0\"\n  >\n    <b-table-simple\n      :table-variant=\"options.tableVariant\"\n      :dark=\"options.dark\"\n      :bordered=\"options.bordered\"\n      :borderless=\"options.borderless\"\n      :outlined=\"options.outlined\"\n      :striped=\"options.striped\"\n      :responsive=\"options.responsive\"\n      :fixed=\"options.fixed\"\n      :hover=\"options.hover\"\n      :small=\"options.small\"\n      :no-border-collapse=\"options.noCollapse\"\n      sticky-header\n      class=\"flex-grow-1 mh-100 mb-0\"\n    >\n      <colgroup\n        v-for=\"(cg, i) in tabelify.colgroups\"\n        :key=\"i\"\n        :class=\"{ local: cg.isLocal, foreign: !cg.isLocal }\"\n        :span=\"cg.size\"\n      />\n\n      <b-thead\n        :head-variant=\"options.headVariant\"\n      >\n        <b-tr\n          v-if=\"dataframes.length > 1\"\n        >\n          <b-th\n            v-for=\"(c, i) in tabelify.header\"\n            :key=\"i\"\n            v-bind=\"c.column ? c.column.attrs : {}\"\n            class=\"border-0\"\n          >\n            <p\n              v-if=\"c.sourceName\"\n              class=\"m-0\"\n            >\n              {{ c.sourceName }}\n            </p>\n          </b-th>\n        </b-tr>\n        <b-tr>\n          <b-th\n            v-for=\"(c, i) in tabelify.header\"\n            :key=\"i\"\n            class=\"border-0\"\n          >\n            <div\n              class=\"d-flex align-items-center\"\n            >\n              <div\n                v-if=\"c.column ? c.column.label : ''\"\n                class=\"d-flex text-nowrap\"\n              >\n                {{ c.column.label }}\n              </div>\n\n              <b-button\n                v-if=\"!c.meta.tmp_noSort\"\n                variant=\"outline-extra-light\"\n                class=\"d-flex align-items-center text-secondary d-print-none border-0 px-1 ml-1\"\n                @click=\"handleSort(c.meta.sortKey)\"\n              >\n                <font-awesome-layers\n                  class=\"d-print-none\"\n                >\n                  <font-awesome-icon\n                    :icon=\"['fas', 'angle-up']\"\n                    class=\"mb-1\"\n                    :class=\"{ 'text-primary': sort.field === c.meta.sortKey && !sort.descending }\"\n                  />\n                  <font-awesome-icon\n                    :icon=\"['fas', 'angle-down']\"\n                    class=\"mt-1\"\n                    :class=\"{ 'text-primary': sort.field === c.meta.sortKey && sort.descending }\"\n                  />\n                </font-awesome-layers>\n              </b-button>\n            </div>\n          </b-th>\n        </b-tr>\n      </b-thead>\n\n      <b-tbody\n        class=\"h-100\"\n      >\n        <b-tr\n          v-for=\"(r, i) in tabelify.rows\"\n          :key=\"i\"\n\n          :class=\"{\n            separator: !!(r[0] || {}).separator,\n          }\"\n        >\n          <b-td\n            v-for=\"(c, j) in r\"\n            :key=\"j\"\n            v-bind=\"c.attrs || {}\"\n          >\n            {{ c.value }}\n          </b-td>\n        </b-tr>\n      </b-tbody>\n    </b-table-simple>\n\n    <b-card-footer\n      class=\"d-flex rounded-0 bg-light p-2\"\n    >\n      <b-button\n        v-b-tooltip.hover=\"'Export to CSV'\"\n        variant=\"outline-extra-light\"\n        class=\"text-dark border-0 mr-auto py-1 px-2\"\n        @click=\"exportCSV\"\n      >\n        <font-awesome-icon\n          :icon=\"['fas', 'download']\"\n        />\n      </b-button>\n\n      <b-button-group\n        class=\"ml-auto gap-1\"\n      >\n        <b-button\n            v-if=\"hasPrevPage\"\n          variant=\"outline-extra-light\"\n          class=\"d-flex align-items-center justify-content-center text-dark border-0 p-1\"\n          @click=\"goToPage()\"\n        >\n          <font-awesome-icon\n            :icon=\"['fas', 'angle-double-left']\"\n          />\n        </b-button>\n\n        <b-button\n          v-if=\"hasPrevPage\"\n          variant=\"outline-extra-light\"\n          class=\"d-flex align-items-center justify-content-center text-dark border-0 p-1\"\n          @click=\"goToPage('prevPage')\"\n        >\n          <font-awesome-icon\n            :icon=\"['fas', 'angle-left']\"\n            class=\"mr-1\"\n          />\n          {{ labels.previous }}\n        </b-button>\n\n        <b-button\n          v-if=\"hasNextPage\"\n          variant=\"outline-extra-light\"\n          class=\"d-flex align-items-center justify-content-center text-dark border-0 p-1\"\n          @click=\"goToPage('nextPage')\"\n        >\n          {{ labels.next }}\n          <font-awesome-icon\n            :icon=\"['fas', 'angle-right']\"\n            class=\"ml-1\"\n          />\n        </b-button>\n      </b-button-group>\n    </b-card-footer>\n  </b-card>\n</template>\n\n<script>\nimport base from './base.vue'\n\nexport default {\n  extends: base,\n\n  data () {\n    return {\n      sort: {\n        field: '',\n        descending: false,\n      },\n\n      cursors: [],\n      cursor: undefined,\n    }\n  },\n\n  computed: {\n    localDataframe () {\n      return this.dataframes[0]\n    },\n\n    // indexFrames groups frames based on the related DS identifiers\n    // for easier work.\n    indexFrames () {\n      const ix = {}\n      for (const df of this.dataframes || []) {\n        if (!df.relSource) {\n          continue\n        }\n\n        if (!ix[df.relSource]) {\n          ix[df.relSource] = {}\n        }\n        if (!ix[df.relSource][df.refValue]) {\n          ix[df.relSource][df.refValue] = []\n        }\n        ix[df.relSource][df.refValue].push(df)\n      }\n\n      return ix\n    },\n\n    tabelify () {\n      if (!this.dataframes.length) {\n        return {}\n      }\n\n      return this.tabelifyFrame(this.localDataframe)\n    },\n\n    hasPrevPage () {\n      return !!this.cursors.length\n    },\n\n    nextPage () {\n      if (this.localDataframe) {\n        const { nextPage } = this.localDataframe.paging || {}\n        return nextPage\n      }\n\n      return undefined\n    },\n\n    hasNextPage () {\n      return !!this.nextPage\n    },\n  },\n\n  watch: {\n    localDataframe: {\n      immediate: true,\n      handler (dataframe, oldDataframe) {\n        if (dataframe && !oldDataframe) {\n          const firstField = dataframe.sort.includes(',') ? dataframe.sort.split(',')[0] : dataframe.sort\n\n          if (firstField.includes('DESC')) {\n            this.sort.descending = true\n            this.sort.field = firstField.split(' ')[0]\n          } else {\n            this.sort.field = firstField\n          }\n        }\n      },\n    },\n  },\n\n  methods: {\n    // keyColumns returns all of the key columns with indexes for all of the\n    // columns that are used in joins.\n    keyColumns (frame) {\n      const foreignFrames = this.getForeignFrames(frame)\n      const keys = {}\n      if (foreignFrames === undefined) {\n        return keys\n      }\n\n      for (const ff of Object.values(foreignFrames)) {\n        for (const f of ff) {\n          keys[f.relColumn] = frame.columns.findIndex(({ name }) => name === f.relColumn)\n        }\n      }\n\n      return keys\n    },\n\n    getForeignFrames (frame) {\n      return this.indexFrames[frame.ref]\n    },\n\n    // tabelifyFrame returns a set of rows and columns that should be shown\n    // for this frame.\n    //\n    // Flow outline:\n    //  * for each row of the frame:\n    //  ** find all foreign frames\n    //  ** tabelify foreign frames\n    //  ** merge with the current tabelified result\n    tabelifyFrame (frame) {\n      const outRows = []\n      const isLocal = frame.ref === this.localDataframe.ref\n\n      // Index selected columns\n      const selectedCols = new Set()\n      for (const c of this.options.columns[frame.ref] || []) {\n        selectedCols.add(frame.columns.findIndex(({ name }) => name === c.name))\n      }\n\n      const hSeanFrames = {}\n      const outHeader = [...selectedCols].map(index => {\n        const column = frame.columns[index]\n        const columnName = column ? column.name : ''\n        return {\n          column,\n          meta: {\n            ref: frame.ref,\n            sortKey: isLocal ? columnName : `${frame.ref}.${columnName}`,\n            tmp_noSort: !isLocal,\n          },\n        }\n      })\n\n      const outColgroups = [{ size: outHeader.length, isLocal }]\n\n      const relFrames = this.getForeignFrames(frame)\n      const usedKeys = this.keyColumns(frame)\n\n      for (const r of frame.rows || []) {\n        let maxSize = 1\n\n        const row = this.tabelifyRow(r, [...selectedCols])\n\n        const auxRows = []\n        for (const colIndex of Object.values(usedKeys)) {\n          const relFrame = relFrames[r[colIndex]]\n\n          // Determine the largest frame so our maxSize will match\n          for (const rf of relFrame || []) {\n            maxSize = Math.max(maxSize, rf.rows.length)\n          }\n\n          // Tabelify related frames\n          for (const rf of relFrame || []) {\n            // const refColumnIndexes = (this.options.columns[rf.ref] || []).map(({ name }) => {\n            //   return frame.columns.findIndex(fc => fc.name === name)\n            // })\n\n            const aux = this.tabelifyFrame(rf)\n\n            // Optionally append header\n            if (!hSeanFrames[rf.ref]) {\n              const x = [...aux.header]\n              x[0].sourceName = rf.ref\n              outHeader.push(...x)\n              hSeanFrames[rf.ref] = true\n              outColgroups.push(...aux.colgroups)\n            }\n\n            // Rowspan smaller frames so the table is nice and aligned\n            if (aux.rows.length < maxSize) {\n              for (const col of aux.rows[aux.rows.length - 1]) {\n                col.attrs = { rowspan: (maxSize - aux.rows.length) + 1 }\n              }\n            }\n\n            auxRows.push(aux.rows)\n          }\n        }\n\n        // Merge the original row with joined rows\n        // - the forst row of the merged row gets joined with the original row\n        // - the rest are appended to the list (they are offsetted by rowspan)\n        if (auxRows.length > 0) {\n          for (const c of row) {\n            c.attrs = { rowspan: maxSize }\n          }\n\n          if (row.length) {\n            row[0].separator = true\n          }\n\n          const merged = this.mergeRows(auxRows).pop()\n          row.push(...merged[0])\n          outRows.push(row)\n          outRows.push(...merged.slice(1))\n        } else {\n          outRows.push(row)\n        }\n      }\n\n      return { rows: outRows, header: outHeader, colgroups: outColgroups }\n    },\n\n    mergeRows (auxRows, maxSize) {\n      if (auxRows.length <= 1) {\n        return auxRows\n      }\n\n      const a = auxRows[auxRows.length - 2]\n      const b = auxRows[auxRows.length - 1]\n\n      const tmpRows = []\n      for (let i = 0; i < a.length; i++) {\n        const row = a[i]\n        if (i >= b.length) {\n          tmpRows.push(row)\n          continue\n        }\n        row.push(...b[i])\n        tmpRows.push(row)\n      }\n\n      if (b.length > a.length) {\n        tmpRows.push(...b.slice(a.length))\n      }\n\n      auxRows.splice(auxRows.length - 2, 2, tmpRows)\n      return this.mergeRows(auxRows)\n    },\n\n    tabelifyRow (row, selectedCols = []) {\n      const out = []\n\n      selectedCols.forEach(index => {\n        out.push({ value: row[index] })\n      })\n\n      return out\n    },\n\n    // Sorting\n    handleSort (fieldName) {\n      let relatedDatasource\n\n      if (fieldName) {\n        const { field, descending } = this.sort\n\n        if (this.cursor) {\n          this.cursor = undefined\n          this.cursors = []\n        }\n\n        if (fieldName === field) {\n          this.sort.descending = !descending\n        } else {\n          this.sort.field = fieldName\n          this.sort.descending = false\n        }\n      }\n\n      this.updateDefinition(relatedDatasource)\n    },\n\n    goToPage (dir) {\n      switch (dir) {\n        case 'nextPage':\n          if (!this.cursors.length) {\n            this.cursors.push(undefined)\n          }\n          this.cursors.push(this.nextPage)\n          this.cursor = this.nextPage\n          break\n\n        case 'prevPage':\n          this.cursors.pop()\n          this.cursor = this.cursors.pop()\n          break\n\n        default:\n          this.cursor = undefined\n          this.cursors = []\n      }\n\n      this.updateDefinition()\n    },\n\n    // Meta\n    updateDefinition (updatedDatasource) {\n      if (this.localDataframe) {\n        // Get related datasource\n        let ref = this.localDataframe.ref\n\n        if (updatedDatasource) {\n          ref = (this.dataframes.find(({ ref }) => ref === updatedDatasource) || {}).ref\n        }\n\n        if (ref) {\n          const def = {\n            ref,\n          }\n\n          // Sorting\n          const { field, descending } = this.sort\n          if (field) {\n            // Generate sort string\n            const sort = descending ? `${field} DESC` : field\n            def.sort = sort\n          }\n\n          // Paging\n          if (this.cursor) {\n            let { limit } = this.localDataframe.paging || {}\n\n            if (!limit) {\n              limit = this.options.datasources[0] ? this.options.datasources[0].paging.limit || 20 : 20\n            }\n\n            def.paging = {\n              cursor: this.cursor,\n              limit,\n            }\n          }\n\n          const definition = {}\n          definition[ref] = def\n\n          this.$emit('update', definition)\n        }\n      }\n    },\n\n    exportCSV () {\n      const header = this.tabelify.header.map(({ column }) => {\n        const value = column ? column.label : ''\n        return value.includes(',') ? `\"${value}\"` : value\n      })\n\n      const rows = this.tabelify.rows.map(row => row.map(({ value }) => value.includes(',') ? `\"${value}\"` : value))\n\n      const csv = [header, ...rows].map(row => row.join(',')).join('\\n')\n      const blob = new Blob([csv], { type: 'text/csv' })\n      const url = URL.createObjectURL(blob)\n\n      const a = document.createElement('a')\n      a.href = url\n      a.download = `${this.displayElement.name || 'report'}-${new Date().toISOString()}.csv`\n      a.click()\n      URL.revokeObjectURL(url)\n    },\n  },\n}\n</script>\n\n<style scoped lang=\"scss\">\n.foreign {\n  border: 1px solid rgba(var(--black), 0.8);\n  border-top: 0;\n  border-bottom: 0;\n}\n\n.separator {\n  border-top: 2px solid rgba(var(--black), 0.5);\n}\n\n.card-rounded {\n  border-radius: 1rem 1rem 0 0;\n}\n</style>\n",".foreign {\n  border: 1px solid rgba(var(--black), 0.8);\n  border-top: 0;\n  border-bottom: 0;\n}\n\n.separator {\n  border-top: 2px solid rgba(var(--black), 0.5);\n}\n\n.card-rounded {\n  border-radius: 1rem 1rem 0 0;\n}\n\n/*# sourceMappingURL=CReportTable.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$n = "data-v-df639fee";
+  const __vue_scope_id__$n = "data-v-afef8c30";
   /* module identifier */
   const __vue_module_identifier__$n = undefined;
   /* functional template */
@@ -29526,8 +34956,19 @@ var script$l = {
 const __vue_script__$l = script$l;
 
 /* template */
-var __vue_render__$m = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.options)?_c('div',{staticClass:"rt-content p-3",domProps:{"innerHTML":_vm._s(_vm.options.value)}}):_vm._e()};
+var __vue_render__$m = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _vm.options
+    ? _c("div", {
+        staticClass: "rt-content p-3",
+        domProps: { innerHTML: _vm._s(_vm.options.value) },
+      })
+    : _vm._e()
+};
 var __vue_staticRenderFns__$m = [];
+__vue_render__$m._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$m = undefined;
@@ -29662,19 +35103,42 @@ var script$k = {
 const __vue_script__$k = script$k;
 
 /* template */
-var __vue_render__$l = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('c-input-select',{attrs:{"data-test-id":"select-sens-lvl","value":_vm._value,"disabled":_vm._disabled,"options":_vm.sensitivityLevels,"get-option-label":_vm.getLabel,"get-option-key":_vm.getOptionKey,"placeholder":_vm.placeholder,"reduce":function (l) { return l.sensitivityLevelID; },"append-to-body":""},on:{"input":_vm.onInput}})};
+var __vue_render__$l = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("c-input-select", {
+    attrs: {
+      "data-test-id": "select-sens-lvl",
+      value: _vm._value,
+      disabled: _vm._disabled,
+      options: _vm.sensitivityLevels,
+      "get-option-label": _vm.getLabel,
+      "get-option-key": _vm.getOptionKey,
+      placeholder: _vm.placeholder,
+      reduce: function (l) {
+        return l.sensitivityLevelID
+      },
+      "append-to-body": "",
+    },
+    on: { input: _vm.onInput },
+  })
+};
 var __vue_staticRenderFns__$l = [];
+__vue_render__$l._withStripped = true;
 
   /* style */
-  const __vue_inject_styles__$l = undefined;
+  const __vue_inject_styles__$l = function (inject) {
+    if (!inject) return
+    inject("data-v-837d3442_0", { source: "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", map: {"version":3,"sources":[],"names":[],"mappings":"","file":"CSensitivityLevelPicker.vue"}, media: undefined });
+
+  };
   /* scoped */
   const __vue_scope_id__$l = undefined;
   /* module identifier */
   const __vue_module_identifier__$l = undefined;
   /* functional template */
   const __vue_is_functional_template__$l = false;
-  /* style inject */
-  
   /* style inject SSR */
   
   /* style inject shadow dom */
@@ -29689,7 +35153,7 @@ var __vue_staticRenderFns__$l = [];
     __vue_is_functional_template__$l,
     __vue_module_identifier__$l,
     false,
-    undefined);
+    createInjector);
 
 //
 //
@@ -30208,17 +35672,519 @@ var script$j = {
 const __vue_script__$j = script$j;
 
 /* template */
-var __vue_render__$k = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-card',{staticClass:"shadow-sm",staticStyle:{"min-height":"45rem"},attrs:{"id":"resource-list-wrapper","no-body":"","footer-bg-variant":"light","footer-class":"p-0","header-class":("border-0 " + _vm.cardHeaderClass)},scopedSlots:_vm._u([{key:"header",fn:function(){return [_c('b-container',{staticClass:"d-flex flex-column p-0 gap-2 d-print-none",attrs:{"fluid":""}},[_c('b-row',{staticClass:"d-flex align-items-center justify-content-between gap-1",attrs:{"no-gutters":""}},[_c('div',{class:("d-flex align-items-center flex-grow-1 flex-wrap flex-fill-child gap-1 " + _vm.headerClass)},[_vm._t("header",null,{"selected":_vm.selected})],2),_vm._v(" "),(!_vm.hideSearch)?_c('div',{staticClass:"flex-fill"},[_c('c-input-search',{attrs:{"value":_vm.filter[_vm.queryField],"placeholder":_vm.translations.searchPlaceholder,"submittable":true},on:{"search":_vm.handleSearch}})],1):_vm._e()]),_vm._v(" "),(_vm.$slots.toolbar)?_c('b-row',{staticClass:"gap-1"},[_vm._t("toolbar")],2):_vm._e()],1)]},proxy:true},(_vm.showFooter)?{key:"footer",fn:function(){return [_c('div',{staticClass:"resource-list-footer d-flex align-items-center flex-wrap px-3 py-2 gap-2"},[_c('div',{staticClass:"d-flex align-items-center flex-wrap gap-2"},[(!_vm.hideTotal)?_c('div',{staticClass:"text-nowrap text-truncate py-1"},[_vm._v("\n          "+_vm._s(_vm.getPagination)+"\n        ")]):_vm._e(),_vm._v(" "),(!_vm.hidePerPageOption)?_c('div',{staticClass:"d-flex align-items-center gap-1 text-nowrap ml-auto"},[_c('span',[_vm._v("\n            "+_vm._s(_vm.$t('general:resourceList.pagination.recordsPerPage'))+"\n          ")]),_vm._v(" "),_c('b-form-select',{attrs:{"value":_vm.pagination.limit,"options":_vm.perPageOptions,"size":"sm"},on:{"change":_vm.handlePerPageChange}})],1):_vm._e()]),_vm._v(" "),(!_vm.hidePagination)?_c('div',{staticClass:"d-flex align-items-center ml-auto"},[_c('b-button-group',{staticClass:"gap-1"},[_c('b-button',{staticClass:"d-flex align-items-center text-dark border-0 p-1",attrs:{"disabled":!_vm.hasPrevPage,"variant":"outline-extra-light"},on:{"click":function($event){return _vm.goToPage()}}},[_c('font-awesome-icon',{attrs:{"icon":['fas', 'angle-double-left']}})],1),_vm._v(" "),_c('b-button',{staticClass:"d-flex align-items-center text-dark border-0 p-1",attrs:{"disabled":!_vm.hasPrevPage,"variant":"outline-extra-light"},on:{"click":function($event){return _vm.goToPage('prevPage')}}},[_c('font-awesome-icon',{staticClass:"mr-1",attrs:{"icon":['fas', 'angle-left']}}),_vm._v("\n\n            "+_vm._s(_vm.translations.prevPagination)+"\n          ")],1),_vm._v(" "),_c('b-button',{staticClass:"d-flex align-items-center justify-content-center text-dark border-0 p-1",attrs:{"disabled":!_vm.hasNextPage,"variant":"outline-extra-light"},on:{"click":function($event){return _vm.goToPage('nextPage')}}},[_vm._v("\n            "+_vm._s(_vm.translations.nextPagination)+"\n\n            "),_c('font-awesome-icon',{staticClass:"ml-1",attrs:{"icon":['fas', 'angle-right']}})],1)],1)],1):_vm._e()])]},proxy:true}:null],null,true)},[_vm._v(" "),_c('b-card-body',{staticClass:"p-0"},[_c('b-table',{ref:"resourceList",staticClass:"mh-100 h-100 mb-0",attrs:{"id":"resource-list","fields":_vm._fields,"items":_vm._items,"sticky-header":_vm.stickyHeader,"tbody-tr-class":_vm.tableRowClasses,"hover":"","responsive":"","show-empty":"","no-sort-reset":"","no-local-sorting":"","head-variant":"light","foot-variant":"light","primary-key":_vm.primaryKey},on:{"row-clicked":function($event){return _vm.$emit('row-clicked', $event)}},scopedSlots:_vm._u([{key:"head()",fn:function(field){return [_c('div',{staticClass:"d-flex align-items-center",on:{"click":function($event){$event.preventDefault();$event.stopPropagation();}}},[_c('div',{staticClass:"flex-fill text-nowrap"},[_vm._v("\n            "+_vm._s(field.label)+"\n\n            "),(field.field.sort)?_c('b-button',{staticClass:"d-inline-flex align-items-center text-secondary d-print-none border-0 px-1 ml-1",staticStyle:{"margin-right":"-0.25rem"},attrs:{"variant":"outline-extra-light"},on:{"click":function($event){return _vm.handleSort(field)}}},[_c('font-awesome-layers',{staticClass:"d-print-none"},[_c('font-awesome-icon',{staticClass:"mb-1",class:{ 'text-primary': field.column === _vm.sorting.sortBy && !_vm.sorting.sortDesc },attrs:{"icon":['fas', 'angle-up']}}),_vm._v(" "),_c('font-awesome-icon',{staticClass:"mt-1",class:{ 'text-primary': field.column === _vm.sorting.sortBy && _vm.sorting.sortDesc },attrs:{"icon":['fas', 'angle-down']}})],1)],1):_vm._e()],1)])]}},{key:"empty",fn:function(){return [_c('p',{staticClass:"text-center text-dark",staticStyle:{"margin-top":"1vh"},attrs:{"data-test-id":"no-matches"}},[_vm._v("\n          "+_vm._s(_vm.translations.noItems)+"\n        ")])]},proxy:true},{key:"table-busy",fn:function(){return [_c('div',{staticClass:"text-center m-5"},[_c('div',[_c('b-spinner',{staticClass:"align-middle m-2"})],1),_vm._v("\n          "+_vm._s(_vm.translations.loading)+"\n        ")])]},proxy:true},(_vm.selectable)?{key:"head(select)",fn:function(){return [_c('b-checkbox',{staticClass:"ml-1",attrs:{"disabled":_vm.disableSelectAll,"checked":_vm.allRowsSelected && !_vm.disableSelectAll},on:{"change":_vm.selectAllRows}})]},proxy:true}:null,{key:"cell(select)",fn:function(ref){
-var item = ref.item;
-return [(_vm.isItemSelectable(item))?_c('b-form-checkbox',{staticClass:"ml-1",attrs:{"checked":_vm.selected.includes(item[_vm.primaryKey])},on:{"change":function($event){return _vm.onSelectRow($event, item[_vm.primaryKey])}}}):_vm._e()]}},_vm._l((_vm.customFieldSlots),function(field){return {key:("cell(" + field + ")"),fn:function(ref){
-var item = ref.item;
-return [_vm._t(field,null,{"item":item})]}}})],null,true)})],1)],1)};
+var __vue_render__$k = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-card",
+    {
+      staticClass: "shadow-sm",
+      staticStyle: { "min-height": "45rem" },
+      attrs: {
+        id: "resource-list-wrapper",
+        "no-body": "",
+        "footer-bg-variant": "light",
+        "footer-class": "p-0",
+        "header-class": "border-0 " + _vm.cardHeaderClass,
+      },
+      scopedSlots: _vm._u(
+        [
+          {
+            key: "header",
+            fn: function () {
+              return [
+                _c(
+                  "b-container",
+                  {
+                    staticClass: "d-flex flex-column p-0 gap-2 d-print-none",
+                    attrs: { fluid: "" },
+                  },
+                  [
+                    _c(
+                      "b-row",
+                      {
+                        staticClass:
+                          "d-flex align-items-center justify-content-between gap-1",
+                        attrs: { "no-gutters": "" },
+                      },
+                      [
+                        _c(
+                          "div",
+                          {
+                            class:
+                              "d-flex align-items-center flex-grow-1 flex-wrap flex-fill-child gap-1 " +
+                              _vm.headerClass,
+                          },
+                          [_vm._t("header", null, { selected: _vm.selected })],
+                          2
+                        ),
+                        _vm._v(" "),
+                        !_vm.hideSearch
+                          ? _c(
+                              "div",
+                              { staticClass: "flex-fill" },
+                              [
+                                _c("c-input-search", {
+                                  attrs: {
+                                    value: _vm.filter[_vm.queryField],
+                                    placeholder:
+                                      _vm.translations.searchPlaceholder,
+                                    submittable: true,
+                                  },
+                                  on: { search: _vm.handleSearch },
+                                }),
+                              ],
+                              1
+                            )
+                          : _vm._e(),
+                      ]
+                    ),
+                    _vm._v(" "),
+                    _vm.$slots.toolbar
+                      ? _c(
+                          "b-row",
+                          { staticClass: "gap-1" },
+                          [_vm._t("toolbar")],
+                          2
+                        )
+                      : _vm._e(),
+                  ],
+                  1
+                ),
+              ]
+            },
+            proxy: true,
+          },
+          _vm.showFooter
+            ? {
+                key: "footer",
+                fn: function () {
+                  return [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "resource-list-footer d-flex align-items-center flex-wrap px-3 py-2 gap-2",
+                      },
+                      [
+                        _c(
+                          "div",
+                          {
+                            staticClass:
+                              "d-flex align-items-center flex-wrap gap-2",
+                          },
+                          [
+                            !_vm.hideTotal
+                              ? _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "text-nowrap text-truncate py-1",
+                                  },
+                                  [
+                                    _vm._v(
+                                      "\n          " +
+                                        _vm._s(_vm.getPagination) +
+                                        "\n        "
+                                    ),
+                                  ]
+                                )
+                              : _vm._e(),
+                            _vm._v(" "),
+                            !_vm.hidePerPageOption
+                              ? _c(
+                                  "div",
+                                  {
+                                    staticClass:
+                                      "d-flex align-items-center gap-1 text-nowrap ml-auto",
+                                  },
+                                  [
+                                    _c("span", [
+                                      _vm._v(
+                                        "\n            " +
+                                          _vm._s(
+                                            _vm.$t(
+                                              "general:resourceList.pagination.recordsPerPage"
+                                            )
+                                          ) +
+                                          "\n          "
+                                      ),
+                                    ]),
+                                    _vm._v(" "),
+                                    _c("b-form-select", {
+                                      attrs: {
+                                        value: _vm.pagination.limit,
+                                        options: _vm.perPageOptions,
+                                        size: "sm",
+                                      },
+                                      on: { change: _vm.handlePerPageChange },
+                                    }),
+                                  ],
+                                  1
+                                )
+                              : _vm._e(),
+                          ]
+                        ),
+                        _vm._v(" "),
+                        !_vm.hidePagination
+                          ? _c(
+                              "div",
+                              {
+                                staticClass:
+                                  "d-flex align-items-center ml-auto",
+                              },
+                              [
+                                _c(
+                                  "b-button-group",
+                                  { staticClass: "gap-1" },
+                                  [
+                                    _c(
+                                      "b-button",
+                                      {
+                                        staticClass:
+                                          "d-flex align-items-center text-dark border-0 p-1",
+                                        attrs: {
+                                          disabled: !_vm.hasPrevPage,
+                                          variant: "outline-extra-light",
+                                        },
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.goToPage()
+                                          },
+                                        },
+                                      },
+                                      [
+                                        _c("font-awesome-icon", {
+                                          attrs: {
+                                            icon: ["fas", "angle-double-left"],
+                                          },
+                                        }),
+                                      ],
+                                      1
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "b-button",
+                                      {
+                                        staticClass:
+                                          "d-flex align-items-center text-dark border-0 p-1",
+                                        attrs: {
+                                          disabled: !_vm.hasPrevPage,
+                                          variant: "outline-extra-light",
+                                        },
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.goToPage("prevPage")
+                                          },
+                                        },
+                                      },
+                                      [
+                                        _c("font-awesome-icon", {
+                                          staticClass: "mr-1",
+                                          attrs: {
+                                            icon: ["fas", "angle-left"],
+                                          },
+                                        }),
+                                        _vm._v(
+                                          "\n\n            " +
+                                            _vm._s(
+                                              _vm.translations.prevPagination
+                                            ) +
+                                            "\n          "
+                                        ),
+                                      ],
+                                      1
+                                    ),
+                                    _vm._v(" "),
+                                    _c(
+                                      "b-button",
+                                      {
+                                        staticClass:
+                                          "d-flex align-items-center justify-content-center text-dark border-0 p-1",
+                                        attrs: {
+                                          disabled: !_vm.hasNextPage,
+                                          variant: "outline-extra-light",
+                                        },
+                                        on: {
+                                          click: function ($event) {
+                                            return _vm.goToPage("nextPage")
+                                          },
+                                        },
+                                      },
+                                      [
+                                        _vm._v(
+                                          "\n            " +
+                                            _vm._s(
+                                              _vm.translations.nextPagination
+                                            ) +
+                                            "\n\n            "
+                                        ),
+                                        _c("font-awesome-icon", {
+                                          staticClass: "ml-1",
+                                          attrs: {
+                                            icon: ["fas", "angle-right"],
+                                          },
+                                        }),
+                                      ],
+                                      1
+                                    ),
+                                  ],
+                                  1
+                                ),
+                              ],
+                              1
+                            )
+                          : _vm._e(),
+                      ]
+                    ),
+                  ]
+                },
+                proxy: true,
+              }
+            : null,
+        ],
+        null,
+        true
+      ),
+    },
+    [
+      _vm._v(" "),
+      _c(
+        "b-card-body",
+        { staticClass: "p-0" },
+        [
+          _c("b-table", {
+            ref: "resourceList",
+            staticClass: "mh-100 h-100 mb-0",
+            attrs: {
+              id: "resource-list",
+              fields: _vm._fields,
+              items: _vm._items,
+              "sticky-header": _vm.stickyHeader,
+              "tbody-tr-class": _vm.tableRowClasses,
+              hover: "",
+              responsive: "",
+              "show-empty": "",
+              "no-sort-reset": "",
+              "no-local-sorting": "",
+              "head-variant": "light",
+              "foot-variant": "light",
+              "primary-key": _vm.primaryKey,
+            },
+            on: {
+              "row-clicked": function ($event) {
+                return _vm.$emit("row-clicked", $event)
+              },
+            },
+            scopedSlots: _vm._u(
+              [
+                {
+                  key: "head()",
+                  fn: function (field) {
+                    return [
+                      _c(
+                        "div",
+                        {
+                          staticClass: "d-flex align-items-center",
+                          on: {
+                            click: function ($event) {
+                              $event.preventDefault();
+                              $event.stopPropagation();
+                            },
+                          },
+                        },
+                        [
+                          _c(
+                            "div",
+                            { staticClass: "flex-fill text-nowrap" },
+                            [
+                              _vm._v(
+                                "\n            " +
+                                  _vm._s(field.label) +
+                                  "\n\n            "
+                              ),
+                              field.field.sort
+                                ? _c(
+                                    "b-button",
+                                    {
+                                      staticClass:
+                                        "d-inline-flex align-items-center text-secondary d-print-none border-0 px-1 ml-1",
+                                      staticStyle: {
+                                        "margin-right": "-0.25rem",
+                                      },
+                                      attrs: { variant: "outline-extra-light" },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.handleSort(field)
+                                        },
+                                      },
+                                    },
+                                    [
+                                      _c(
+                                        "font-awesome-layers",
+                                        { staticClass: "d-print-none" },
+                                        [
+                                          _c("font-awesome-icon", {
+                                            staticClass: "mb-1",
+                                            class: {
+                                              "text-primary":
+                                                field.column ===
+                                                  _vm.sorting.sortBy &&
+                                                !_vm.sorting.sortDesc,
+                                            },
+                                            attrs: {
+                                              icon: ["fas", "angle-up"],
+                                            },
+                                          }),
+                                          _vm._v(" "),
+                                          _c("font-awesome-icon", {
+                                            staticClass: "mt-1",
+                                            class: {
+                                              "text-primary":
+                                                field.column ===
+                                                  _vm.sorting.sortBy &&
+                                                _vm.sorting.sortDesc,
+                                            },
+                                            attrs: {
+                                              icon: ["fas", "angle-down"],
+                                            },
+                                          }),
+                                        ],
+                                        1
+                                      ),
+                                    ],
+                                    1
+                                  )
+                                : _vm._e(),
+                            ],
+                            1
+                          ),
+                        ]
+                      ),
+                    ]
+                  },
+                },
+                {
+                  key: "empty",
+                  fn: function () {
+                    return [
+                      _c(
+                        "p",
+                        {
+                          staticClass: "text-center text-dark",
+                          staticStyle: { "margin-top": "1vh" },
+                          attrs: { "data-test-id": "no-matches" },
+                        },
+                        [
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(_vm.translations.noItems) +
+                              "\n        "
+                          ),
+                        ]
+                      ),
+                    ]
+                  },
+                  proxy: true,
+                },
+                {
+                  key: "table-busy",
+                  fn: function () {
+                    return [
+                      _c("div", { staticClass: "text-center m-5" }, [
+                        _c(
+                          "div",
+                          [
+                            _c("b-spinner", {
+                              staticClass: "align-middle m-2",
+                            }),
+                          ],
+                          1
+                        ),
+                        _vm._v(
+                          "\n          " +
+                            _vm._s(_vm.translations.loading) +
+                            "\n        "
+                        ),
+                      ]),
+                    ]
+                  },
+                  proxy: true,
+                },
+                _vm.selectable
+                  ? {
+                      key: "head(select)",
+                      fn: function () {
+                        return [
+                          _c("b-checkbox", {
+                            staticClass: "ml-1",
+                            attrs: {
+                              disabled: _vm.disableSelectAll,
+                              checked:
+                                _vm.allRowsSelected && !_vm.disableSelectAll,
+                            },
+                            on: { change: _vm.selectAllRows },
+                          }),
+                        ]
+                      },
+                      proxy: true,
+                    }
+                  : null,
+                {
+                  key: "cell(select)",
+                  fn: function (ref) {
+                    var item = ref.item;
+                    return [
+                      _vm.isItemSelectable(item)
+                        ? _c("b-form-checkbox", {
+                            staticClass: "ml-1",
+                            attrs: {
+                              checked: _vm.selected.includes(
+                                item[_vm.primaryKey]
+                              ),
+                            },
+                            on: {
+                              change: function ($event) {
+                                return _vm.onSelectRow(
+                                  $event,
+                                  item[_vm.primaryKey]
+                                )
+                              },
+                            },
+                          })
+                        : _vm._e(),
+                    ]
+                  },
+                },
+                _vm._l(_vm.customFieldSlots, function (field) {
+                  return {
+                    key: "cell(" + field + ")",
+                    fn: function (ref) {
+                      var item = ref.item;
+                      return [_vm._t(field, null, { item: item })]
+                    },
+                  }
+                }),
+              ],
+              null,
+              true
+            ),
+          }),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$k = [];
+__vue_render__$k._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$k = function (inject) {
     if (!inject) return
-    inject("data-v-6eb187b4_0", { source: "#resource-list td.actions{padding-top:8px;right:0;opacity:0;position:sticky;transition:opacity .25s;width:1%;font-family:var(--font-regular)!important}#resource-list tr:hover td.actions{opacity:1;z-index:1;background-color:var(--light)}#resource-list>thead>tr>[aria-sort=ascending],#resource-list>thead>tr>[aria-sort=descending],#resource-list>thead>tr>[aria-sort=none]{background-image:none!important}.resource-list-footer{font-family:var(--font-medium)}", map: undefined, media: undefined });
+    inject("data-v-c39b65e4_0", { source: "#resource-list td.actions {\n  padding-top: 8px;\n  right: 0;\n  opacity: 0;\n  position: sticky;\n  transition: opacity 0.25s;\n  width: 1%;\n  font-family: var(--font-regular) !important;\n}\n#resource-list tr:hover td.actions {\n  opacity: 1;\n  z-index: 1;\n  background-color: var(--light);\n}\n#resource-list > thead > tr > [aria-sort=ascending], #resource-list > thead > tr > [aria-sort=descending], #resource-list > thead > tr > [aria-sort=none] {\n  background-image: none !important;\n}\n.resource-list-footer {\n  font-family: var(--font-medium);\n}\n\n/*# sourceMappingURL=CResourceList.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/resourceList/CResourceList.vue","CResourceList.vue"],"names":[],"mappings":"AAqgBA;EACA,gBAAA;EACA,QAAA;EACA,UAAA;EACA,gBAAA;EACA,yBAAA;EACA,SAAA;EACA,2CAAA;ACpgBA;ADugBA;EACA,UAAA;EACA,UAAA;EACA,8BAAA;ACrgBA;ADwgBA;EAGA,iCAAA;ACxgBA;AD4gBA;EACA,+BAAA;ACzgBA;;AAEA,4CAA4C","file":"CResourceList.vue","sourcesContent":["<template>\n  <b-card\n    id=\"resource-list-wrapper\"\n    no-body\n    footer-bg-variant=\"light\"\n    footer-class=\"p-0\"\n    :header-class=\"`border-0 ${cardHeaderClass}`\"\n    class=\"shadow-sm\"\n    style=\"min-height: 45rem;\"\n  >\n    <template #header>\n      <b-container\n        fluid\n        class=\"d-flex flex-column p-0 gap-2 d-print-none\"\n      >\n        <b-row\n          no-gutters\n          class=\"d-flex align-items-center justify-content-between gap-1\"\n        >\n          <div :class=\"`d-flex align-items-center flex-grow-1 flex-wrap flex-fill-child gap-1 ${headerClass}`\">\n            <slot\n              name=\"header\"\n              :selected=\"selected\"\n            />\n          </div>\n\n          <div\n            v-if=\"!hideSearch\"\n            class=\"flex-fill\"\n          >\n            <c-input-search\n              :value=\"filter[queryField]\"\n              :placeholder=\"translations.searchPlaceholder\"\n              :submittable=\"true\"\n              @search=\"handleSearch\"\n            />\n          </div>\n        </b-row>\n\n        <b-row\n          v-if=\"$slots.toolbar\"\n          class=\"gap-1\"\n        >\n          <slot\n            name=\"toolbar\"\n          />\n        </b-row>\n      </b-container>\n    </template>\n\n    <b-card-body\n      class=\"p-0\"\n    >\n      <b-table\n        id=\"resource-list\"\n        ref=\"resourceList\"\n        :fields=\"_fields\"\n        :items=\"_items\"\n        :sticky-header=\"stickyHeader\"\n        :tbody-tr-class=\"tableRowClasses\"\n        hover\n        responsive\n        show-empty\n        no-sort-reset\n        no-local-sorting\n        head-variant=\"light\"\n        foot-variant=\"light\"\n        :primary-key=\"primaryKey\"\n        class=\"mh-100 h-100 mb-0\"\n        @row-clicked=\"$emit('row-clicked', $event)\"\n      >\n        <template #head()=\"field\">\n          <div\n            class=\"d-flex align-items-center\"\n            @click.prevent.stop\n          >\n            <div class=\"flex-fill text-nowrap\">\n              {{ field.label }}\n\n              <b-button\n                v-if=\"field.field.sort\"\n                variant=\"outline-extra-light\"\n                class=\"d-inline-flex align-items-center text-secondary d-print-none border-0 px-1 ml-1\"\n                style=\"margin-right: -0.25rem;\"\n                @click=\"handleSort(field)\"\n              >\n                <font-awesome-layers\n                  class=\"d-print-none\"\n                >\n                  <font-awesome-icon\n                    :icon=\"['fas', 'angle-up']\"\n                    class=\"mb-1\"\n                    :class=\"{ 'text-primary': field.column === sorting.sortBy && !sorting.sortDesc }\"\n                  />\n                  <font-awesome-icon\n                    :icon=\"['fas', 'angle-down']\"\n                    class=\"mt-1\"\n                    :class=\"{ 'text-primary': field.column === sorting.sortBy && sorting.sortDesc }\"\n                  />\n                </font-awesome-layers>\n              </b-button>\n            </div>\n          </div>\n        </template>\n\n        <template #empty>\n          <p\n            data-test-id=\"no-matches\"\n            class=\"text-center text-dark\"\n            style=\"margin-top: 1vh;\"\n          >\n            {{ translations.noItems }}\n          </p>\n        </template>\n\n        <template #table-busy>\n          <div class=\"text-center m-5\">\n            <div>\n              <b-spinner\n                class=\"align-middle m-2\"\n              />\n            </div>\n            {{ translations.loading }}\n          </div>\n        </template>\n\n        <template\n          v-if=\"selectable\"\n          #head(select)\n        >\n          <b-checkbox\n            :disabled=\"disableSelectAll\"\n            :checked=\"allRowsSelected && !disableSelectAll\"\n            class=\"ml-1\"\n            @change=\"selectAllRows\"\n          />\n        </template>\n\n        <template #cell(select)=\"{ item }\">\n          <b-form-checkbox\n            v-if=\"isItemSelectable(item)\"\n            class=\"ml-1\"\n            :checked=\"selected.includes(item[primaryKey])\"\n            @change=\"onSelectRow($event, item[primaryKey])\"\n          />\n        </template>\n\n        <!-- Magic; Make slots if parent provides them -->\n        <template\n          v-for=\"field in customFieldSlots\"\n          #[`cell(${field})`]=\"{ item }\"\n        >\n          <slot\n            :name=\"field\"\n            :item=\"item\"\n          />\n        </template>\n      </b-table>\n    </b-card-body>\n\n    <template\n      v-if=\"showFooter\"\n      #footer\n    >\n      <div class=\"resource-list-footer d-flex align-items-center flex-wrap px-3 py-2 gap-2\">\n        <div class=\"d-flex align-items-center flex-wrap gap-2\">\n          <div\n            v-if=\"!hideTotal\"\n            class=\"text-nowrap text-truncate py-1\"\n          >\n            {{ getPagination }}\n          </div>\n\n          <div\n            v-if=\"!hidePerPageOption\"\n            class=\"d-flex align-items-center gap-1 text-nowrap ml-auto\"\n          >\n            <span>\n              {{ $t('general:resourceList.pagination.recordsPerPage') }}\n            </span>\n\n            <b-form-select\n              :value=\"pagination.limit\"\n              :options=\"perPageOptions\"\n              size=\"sm\"\n              @change=\"handlePerPageChange\"\n            />\n          </div>\n        </div>\n\n        <div\n          v-if=\"!hidePagination\"\n          class=\"d-flex align-items-center ml-auto\"\n        >\n          <b-button-group class=\"gap-1\">\n            <b-button\n              :disabled=\"!hasPrevPage\"\n              variant=\"outline-extra-light\"\n              class=\"d-flex align-items-center text-dark border-0 p-1\"\n              @click=\"goToPage()\"\n            >\n              <font-awesome-icon :icon=\"['fas', 'angle-double-left']\" />\n            </b-button>\n\n            <b-button\n              :disabled=\"!hasPrevPage\"\n              variant=\"outline-extra-light\"\n              class=\"d-flex align-items-center text-dark border-0 p-1\"\n              @click=\"goToPage('prevPage')\"\n            >\n              <font-awesome-icon\n                :icon=\"['fas', 'angle-left']\"\n                class=\"mr-1\"\n              />\n\n              {{ translations.prevPagination }}\n            </b-button>\n\n            <b-button\n              :disabled=\"!hasNextPage\"\n              variant=\"outline-extra-light\"\n              class=\"d-flex align-items-center justify-content-center text-dark border-0 p-1\"\n              @click=\"goToPage('nextPage')\"\n            >\n              {{ translations.nextPagination }}\n\n              <font-awesome-icon\n                :icon=\"['fas', 'angle-right']\"\n                class=\"ml-1\"\n              />\n            </b-button>\n          </b-button-group>\n        </div>\n      </div>\n    </template>\n  </b-card>\n</template>\n\n<script>\nimport CInputSearch from '../input/CInputSearch.vue'\n\nexport default {\n  name: 'ResourceList',\n\n  components: {\n    CInputSearch,\n  },\n\n  props: {\n    primaryKey: {\n      type: String,\n      required: true,\n    },\n\n    filter: {\n      type: Object,\n      required: true,\n    },\n\n    sorting: {\n      type: Object,\n      required: true,\n    },\n\n    pagination: {\n      type: Object,\n      required: true,\n    },\n\n    fields: {\n      type: Array,\n      required: true,\n    },\n\n    // Promise that resolves with an array\n    items: {\n      type: Function,\n      required: true,\n    },\n\n    hideSearch: {\n      type: Boolean,\n    },\n\n    hideTotal: {\n      type: Boolean,\n    },\n\n    hidePagination: {\n      type: Boolean,\n    },\n\n    stickyHeader: {\n      type: Boolean,\n    },\n\n    // Are rows clickable\n    clickable: {\n      type: Boolean,\n      default: false,\n    },\n\n    selectable: {\n      type: Boolean,\n      default: false,\n    },\n\n    isItemSelectable: {\n      type: Function,\n      default: () => true,\n    },\n\n    cardHeaderClass: {\n      type: String,\n      default: '',\n    },\n\n    headerClass: {\n      type: String,\n      default: '',\n    },\n\n    rowClass: {\n      type: Function,\n      default: () => {},\n    },\n\n    translations: {\n      type: Object,\n      required: true,\n    },\n\n    queryField: {\n      type: String,\n      default: 'query',\n    },\n\n    hidePerPageOption: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      selected: [],\n      selectableItemIDs: [],\n    }\n  },\n\n  computed: {\n    _fields () {\n      const select = this.selectable\n        ? [\n          {\n            key: 'select',\n            label: '',\n            thStyle: 'width: 0; white-space: nowrap;',\n          },\n        ]\n        : []\n\n      return [\n        ...select,\n        ...this.fields,\n      ].map(f => {\n        return { ...f, thClass: `${f.thClass || 'border-0'} table-b-table-default b-table-sticky-column`, sortable: false, sort: f.sortable }\n      })\n    },\n\n    customFieldSlots () {\n      return [\n        ...Object.keys(this.$slots),\n        ...Object.keys(this.$scopedSlots),\n      ].filter(s => s !== 'header')\n    },\n\n    perPageOptions () {\n      const defaultText = this.pagination.limit === 0 ? this.$t('general:label.all') : this.pagination.limit.toString()\n\n      return [\n        { text: defaultText, value: this.pagination.limit },\n        { text: '25', value: 25 },\n        { text: '50', value: 50 },\n        { text: '100', value: 100 },\n      ].filter((v, i) => i === 0 || v.value !== this.pagination.limit).sort((a, b) => {\n        if (a.value === 0) return 1\n        if (b.value === 0) return -1\n        return a.value - b.value\n      })\n    },\n\n    disableSelectAll () {\n      return !this.selectableItemIDs.length\n    },\n\n    allRowsSelected () {\n      return this.selected.length === this.selectableItemIDs.length\n    },\n\n    getPagination () {\n      let { total = 0, limit = 10, page = 1 } = this.pagination\n      total = isNaN(total) ? 0 : total\n\n      const pagination = {\n        from: ((page - 1) * limit) + 1,\n        to: limit > 0 ? Math.min((page * limit), total) : total,\n        count: total,\n        data: total === 1 ? this.translations.resourceSingle : this.translations.resourcePlural,\n      }\n\n      return this.$t(this.translations[total > limit ? 'showingPagination' : 'singlePluralPagination'], pagination)\n    },\n\n    hasPrevPage () {\n      return !!this.pagination.prevPage\n    },\n\n    hasNextPage () {\n      return !!this.pagination.nextPage\n    },\n\n    showFooter () {\n      return !(this.hideTotal && this.hidePagination && this.hidePerPageOption)\n    },\n  },\n\n  beforeUnmount () {\n    this.setDefaultValues()\n  },\n\n  methods: {\n    tableRowClasses (item = {}) {\n      return {\n        pointer: this.clickable,\n        ...this.rowClass(item),\n      }\n    },\n\n    _items () {\n      this.selected = []\n      this.selectableItemIDs = []\n\n      return this.items().then((items = []) => {\n        this.selectableItemIDs = items.filter(this.isItemSelectable).map(i => i[this.primaryKey])\n        return items\n      })\n    },\n\n    onSelectRow (selected, itemID) {\n      if (selected) {\n        if (this.selected.includes(itemID)) {\n          return\n        }\n\n        this.selected.push(itemID)\n      } else {\n        const i = this.selected.indexOf(itemID)\n        if (i < 0) {\n          return\n        }\n\n        this.selected.splice(i, 1)\n      }\n    },\n\n    selectAllRows (allSelected = false) {\n      if (allSelected) {\n        this.selected = this.selectableItemIDs\n      } else {\n        this.selected = []\n      }\n    },\n\n    goToPage (destination) {\n      const pageCursor = this.pagination[destination] || ''\n\n      let { page = 1 } = this.pagination\n\n      if (destination === 'nextPage') {\n        page++\n      } else if (destination === 'prevPage') {\n        page--\n      } else {\n        page = 1\n      }\n\n      this.$router.replace({ query: { ...this.$route.query, page, pageCursor } })\n    },\n\n    handlePerPageChange (limit) {\n      this.$router.replace({ query: { ...this.$route.query, page: 1, limit } })\n      this.$refs.resourceList.refresh()\n    },\n\n    setDefaultValues () {\n      this.selected = []\n      this.selectableItemIDs = []\n    },\n\n    handleSort ({ field }) {\n      this.sorting.sortBy = field.key\n      this.sorting.sortDesc = !this.sorting.sortDesc\n      this.pagination.page = 1\n      this.$refs.resourceList.refresh()\n    },\n\n    handleSearch (searchQuery) {\n      this.filter[this.queryField] = searchQuery ? searchQuery.trim() : ''\n      this.$emit('search')\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n#resource-list {\n  td.actions {\n    padding-top: 8px;\n    right: 0;\n    opacity: 0;\n    position: sticky;\n    transition: opacity 0.25s;\n    width: 1%;\n    font-family: var(--font-regular) !important;\n  }\n\n  tr:hover td.actions {\n    opacity: 1;\n    z-index: 1;\n    background-color: var(--light);\n  }\n\n  & > thead > tr > [aria-sort=ascending],\n  & > thead > tr > [aria-sort=descending],\n  & > thead > tr > [aria-sort=none] {\n    background-image: none !important;\n  }\n}\n\n.resource-list-footer {\n  font-family: var(--font-medium);\n}\n</style>\n","#resource-list td.actions {\n  padding-top: 8px;\n  right: 0;\n  opacity: 0;\n  position: sticky;\n  transition: opacity 0.25s;\n  width: 1%;\n  font-family: var(--font-regular) !important;\n}\n#resource-list tr:hover td.actions {\n  opacity: 1;\n  z-index: 1;\n  background-color: var(--light);\n}\n#resource-list > thead > tr > [aria-sort=ascending], #resource-list > thead > tr > [aria-sort=descending], #resource-list > thead > tr > [aria-sort=none] {\n  background-image: none !important;\n}\n\n.resource-list-footer {\n  font-family: var(--font-medium);\n}\n\n/*# sourceMappingURL=CResourceList.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -30382,8 +36348,43 @@ var script$i = {
 const __vue_script__$i = script$i;
 
 /* template */
-var __vue_render__$j = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-progress',{staticClass:"bg-light position-relative",attrs:{"max":_vm.maxValue}},[_c('b-progress-bar',{attrs:{"value":_vm.progressValue < 0 ? 0 : _vm.progressValue,"striped":_vm.striped,"animated":_vm.animated,"variant":_vm.progressVariant}},[_c('strong',{staticClass:"d-flex align-items-center justify-content-center position-absolute mb-0 w-100",class:_vm.textVariant,style:(_vm.textStyle)},[_vm._v("\n      "+_vm._s(_vm.progressLabel)+"\n    ")])])],1)};
+var __vue_render__$j = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-progress",
+    { staticClass: "bg-light position-relative", attrs: { max: _vm.maxValue } },
+    [
+      _c(
+        "b-progress-bar",
+        {
+          attrs: {
+            value: _vm.progressValue < 0 ? 0 : _vm.progressValue,
+            striped: _vm.striped,
+            animated: _vm.animated,
+            variant: _vm.progressVariant,
+          },
+        },
+        [
+          _c(
+            "strong",
+            {
+              staticClass:
+                "d-flex align-items-center justify-content-center position-absolute mb-0 w-100",
+              class: _vm.textVariant,
+              style: _vm.textStyle,
+            },
+            [_vm._v("\n      " + _vm._s(_vm.progressLabel) + "\n    ")]
+          ),
+        ]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$j = [];
+__vue_render__$j._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$j = undefined;
@@ -30414,17 +36415,60 @@ var __vue_staticRenderFns__$j = [];
 /* script */
 
 /* template */
-var __vue_render__$i = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"c-toolbar d-flex flex-column flex-sm-row bg-white gap-1 flex-wrap"},[_c('div',{staticClass:"d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap"},[_vm._t("start")],2),_vm._v(" "),_c('div',{staticClass:"d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto"},[_vm._t("center")],2),_vm._v(" "),_c('div',{staticClass:"d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto"},[_vm._t("end")],2)])};
+var __vue_render__$i = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    {
+      staticClass:
+        "c-toolbar d-flex flex-column flex-sm-row bg-white gap-1 flex-wrap",
+    },
+    [
+      _c(
+        "div",
+        {
+          staticClass:
+            "d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap",
+        },
+        [_vm._t("start")],
+        2
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        {
+          staticClass:
+            "d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto",
+        },
+        [_vm._t("center")],
+        2
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        {
+          staticClass:
+            "d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto",
+        },
+        [_vm._t("end")],
+        2
+      ),
+    ]
+  )
+};
 var __vue_staticRenderFns__$i = [];
+__vue_render__$i._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$i = function (inject) {
     if (!inject) return
-    inject("data-v-1dca7463_0", { source: ".c-toolbar[data-v-1dca7463]{z-index:1036;position:relative;min-height:42px;padding:.75rem}.fill-width>*[data-v-1dca7463]{flex:1}", map: undefined, media: undefined });
+    inject("data-v-9e1a4100_0", { source: ".c-toolbar[data-v-9e1a4100] {\n  z-index: 1036;\n  position: relative;\n  min-height: 42px;\n  padding: 0.75rem;\n}\n.fill-width > *[data-v-9e1a4100] {\n  flex: 1;\n}\n\n/*# sourceMappingURL=CToolbar.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/toolbar/CToolbar.vue","CToolbar.vue"],"names":[],"mappings":"AA0BA;EACA,aAAA;EACA,kBAAA;EACA,gBAAA;EACA,gBAAA;ACzBA;AD4BA;EACA,OAAA;ACzBA;;AAEA,uCAAuC","file":"CToolbar.vue","sourcesContent":["<template>\n  <div class=\"c-toolbar d-flex flex-column flex-sm-row bg-white gap-1 flex-wrap\">\n    <div\n      class=\"d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap\"\n    >\n      <slot name=\"start\" />\n    </div>\n\n    <div\n      class=\"d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto\"\n    >\n      <slot\n        name=\"center\"\n        class=\"d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto\"\n      />\n    </div>\n\n    <div\n      class=\"d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto\"\n    >\n      <slot name=\"end\" />\n    </div>\n  </div>\n</template>\n\n<style scoped lang=\"scss\">\n.c-toolbar {\n  z-index: 1036;\n  position: relative;\n  min-height: 42px;\n  padding: 0.75rem;\n}\n\n.fill-width > * {\n  flex: 1;\n}\n</style>\n",".c-toolbar {\n  z-index: 1036;\n  position: relative;\n  min-height: 42px;\n  padding: 0.75rem;\n}\n\n.fill-width > * {\n  flex: 1;\n}\n\n/*# sourceMappingURL=CToolbar.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$i = "data-v-1dca7463";
+  const __vue_scope_id__$i = "data-v-9e1a4100";
   /* module identifier */
   const __vue_module_identifier__$i = undefined;
   /* functional template */
@@ -30488,8 +36532,42 @@ var script$h = {
 const __vue_script__$h = script$h;
 
 /* template */
-var __vue_render__$h = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.tooltip)?_c('div',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.noninteractive.hover.right",value:({ variant: _vm.tooltipVariant, title: _vm.tooltip, boundary: 'body' }),expression:"{ variant: tooltipVariant, title: tooltip, boundary: 'body' }",modifiers:{"noninteractive":true,"hover":true,"right":true}}],staticClass:"d-flex align-items-center ml-1"},[_c('font-awesome-icon',{class:_vm.iconClass,attrs:{"icon":_vm.icon}})],1):_vm._e()};
+var __vue_render__$h = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _vm.tooltip
+    ? _c(
+        "div",
+        {
+          directives: [
+            {
+              name: "b-tooltip",
+              rawName: "v-b-tooltip.noninteractive.hover.right",
+              value: {
+                variant: _vm.tooltipVariant,
+                title: _vm.tooltip,
+                boundary: "body",
+              },
+              expression:
+                "{ variant: tooltipVariant, title: tooltip, boundary: 'body' }",
+              modifiers: { noninteractive: true, hover: true, right: true },
+            },
+          ],
+          staticClass: "d-flex align-items-center ml-1",
+        },
+        [
+          _c("font-awesome-icon", {
+            class: _vm.iconClass,
+            attrs: { icon: _vm.icon },
+          }),
+        ],
+        1
+      )
+    : _vm._e()
+};
 var __vue_staticRenderFns__$h = [];
+__vue_render__$h._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$h = undefined;
@@ -30904,24 +36982,245 @@ var script$g = {
 const __vue_script__$g = script$g;
 
 /* template */
-var __vue_render__$g = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"position-relative"},[(!_vm.hideGeoSearch)?_c('div',{staticClass:"geosearch-container",on:{"mouseover":_vm.disableMap,"mouseleave":_vm.enableMap}},[_c('c-input-search',{attrs:{"placeholder":_vm.labels.geosearchInputPlaceholder,"autocomplete":'off',"debounce":300},on:{"input":_vm.onGeoSearch},model:{value:(_vm.geoSearch.query),callback:function ($$v) {_vm.$set(_vm.geoSearch, "query", $$v);},expression:"geoSearch.query"}}),_vm._v(" "),_c('div',{staticClass:"geosearch-results"},_vm._l((_vm.geoSearch.results),function(result,idx){return _c('div',{key:idx,staticClass:"geosearch-result",on:{"click":function($event){return _vm.placeGeoSearchMarker(result)}}},[_vm._v("\n        "+_vm._s(result.label)+"\n      ")])}),0)],1):_vm._e(),_vm._v(" "),_c('l-map',{ref:"map",staticClass:"w-100 h-100",attrs:{"zoom":_vm.mapOptions.zoom,"center":_vm.mapOptions.center,"min-zoom":_vm.mapOptions.minZoom,"max-zoom":_vm.mapOptions.maxZoom,"bounds":_vm.mapOptions.bounds,"max-bounds":_vm.mapOptions.maxBounds},on:{"click":_vm.onMapClick,"locationfound":_vm.onLocationFound,"update:zoom":_vm.onZoom,"update:center":_vm.onCenter,"update:bounds":_vm.onBoundsUpdate}},[_c('l-tile-layer',{attrs:{"url":"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png","attribution":_vm.mapOptions.attribution}}),_vm._v(" "),_vm._l((_vm.polygons),function(geometry,i){return _c('l-polygon',{key:("polygon-" + i),attrs:{"lat-lngs":geometry.map(function (value) { return value.geometry; }),"color":(geometry.find(function (g) { return g; }) || {}).color}})}),_vm._v(" "),_vm._l((_vm.markerValues),function(marker,i){return _c('l-marker',{key:("marker-" + i),attrs:{"lat-lng":marker.value,"icon":_vm.getIcon(marker.color),"opacity":marker.opacity || 1.0},on:{"click":function($event){return _vm.onMarkerClick(i, marker)}}},[(_vm.$scopedSlots['marker-tooltip'] || marker.title)?_c('l-tooltip',{attrs:{"options":{
-          offset: [-1, 5],
-          direction: 'bottom',
-        }}},[_vm._t("marker-tooltip",function(){return [_vm._v("\n          "+_vm._s(marker.title)+"\n        ")]},{"marker":marker})],2):_vm._e()],1)}),_vm._v(" "),(_vm.geoSearch.marker)?_c('l-marker',{attrs:{"lat-lng":_vm.geoSearch.marker.latlng,"icon":_vm.getIcon(_vm.getCSSVariable('--secondary'))}},[_c('l-tooltip',{attrs:{"options":{
-          offset: [-1, 5],
-          direction: 'bottom',
-        }}},[_vm._v("\n        "+_vm._s(_vm.geoSearch.marker.title)+"\n      ")])],1):_vm._e(),_vm._v(" "),_c('l-control',{staticClass:"leaflet-bar"},[(!_vm.hideCurrentLocationButton)?_c('a',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.noninteractive.hover",value:({ title: _vm.labels.tooltip && _vm.labels.tooltip.goToCurrentLocation, boundary: 'body' }),expression:"{ title: labels.tooltip && labels.tooltip.goToCurrentLocation, boundary: 'body' }",modifiers:{"noninteractive":true,"hover":true}}],staticClass:"d-flex justify-content-center align-items-center",attrs:{"role":"button"},on:{"click":_vm.goToCurrentLocation}},[_c('font-awesome-icon',{attrs:{"icon":['fas', 'location-crosshairs']}})],1):_vm._e()])],2)],1)};
+var __vue_render__$g = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "position-relative" },
+    [
+      !_vm.hideGeoSearch
+        ? _c(
+            "div",
+            {
+              staticClass: "geosearch-container",
+              on: { mouseover: _vm.disableMap, mouseleave: _vm.enableMap },
+            },
+            [
+              _c("c-input-search", {
+                attrs: {
+                  placeholder: _vm.labels.geosearchInputPlaceholder,
+                  autocomplete: "off",
+                  debounce: 300,
+                },
+                on: { input: _vm.onGeoSearch },
+                model: {
+                  value: _vm.geoSearch.query,
+                  callback: function ($$v) {
+                    _vm.$set(_vm.geoSearch, "query", $$v);
+                  },
+                  expression: "geoSearch.query",
+                },
+              }),
+              _vm._v(" "),
+              _c(
+                "div",
+                { staticClass: "geosearch-results" },
+                _vm._l(_vm.geoSearch.results, function (result, idx) {
+                  return _c(
+                    "div",
+                    {
+                      key: idx,
+                      staticClass: "geosearch-result",
+                      on: {
+                        click: function ($event) {
+                          return _vm.placeGeoSearchMarker(result)
+                        },
+                      },
+                    },
+                    [_vm._v("\n        " + _vm._s(result.label) + "\n      ")]
+                  )
+                }),
+                0
+              ),
+            ],
+            1
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _c(
+        "l-map",
+        {
+          ref: "map",
+          staticClass: "w-100 h-100",
+          attrs: {
+            zoom: _vm.mapOptions.zoom,
+            center: _vm.mapOptions.center,
+            "min-zoom": _vm.mapOptions.minZoom,
+            "max-zoom": _vm.mapOptions.maxZoom,
+            bounds: _vm.mapOptions.bounds,
+            "max-bounds": _vm.mapOptions.maxBounds,
+          },
+          on: {
+            click: _vm.onMapClick,
+            locationfound: _vm.onLocationFound,
+            "update:zoom": _vm.onZoom,
+            "update:center": _vm.onCenter,
+            "update:bounds": _vm.onBoundsUpdate,
+          },
+        },
+        [
+          _c("l-tile-layer", {
+            attrs: {
+              url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+              attribution: _vm.mapOptions.attribution,
+            },
+          }),
+          _vm._v(" "),
+          _vm._l(_vm.polygons, function (geometry, i) {
+            return _c("l-polygon", {
+              key: "polygon-" + i,
+              attrs: {
+                "lat-lngs": geometry.map(function (value) {
+                  return value.geometry
+                }),
+                color: (
+                  geometry.find(function (g) {
+                    return g
+                  }) || {}
+                ).color,
+              },
+            })
+          }),
+          _vm._v(" "),
+          _vm._l(_vm.markerValues, function (marker, i) {
+            return _c(
+              "l-marker",
+              {
+                key: "marker-" + i,
+                attrs: {
+                  "lat-lng": marker.value,
+                  icon: _vm.getIcon(marker.color),
+                  opacity: marker.opacity || 1.0,
+                },
+                on: {
+                  click: function ($event) {
+                    return _vm.onMarkerClick(i, marker)
+                  },
+                },
+              },
+              [
+                _vm.$scopedSlots["marker-tooltip"] || marker.title
+                  ? _c(
+                      "l-tooltip",
+                      {
+                        attrs: {
+                          options: {
+                            offset: [-1, 5],
+                            direction: "bottom",
+                          },
+                        },
+                      },
+                      [
+                        _vm._t(
+                          "marker-tooltip",
+                          function () {
+                            return [
+                              _vm._v(
+                                "\n          " +
+                                  _vm._s(marker.title) +
+                                  "\n        "
+                              ),
+                            ]
+                          },
+                          { marker: marker }
+                        ),
+                      ],
+                      2
+                    )
+                  : _vm._e(),
+              ],
+              1
+            )
+          }),
+          _vm._v(" "),
+          _vm.geoSearch.marker
+            ? _c(
+                "l-marker",
+                {
+                  attrs: {
+                    "lat-lng": _vm.geoSearch.marker.latlng,
+                    icon: _vm.getIcon(_vm.getCSSVariable("--secondary")),
+                  },
+                },
+                [
+                  _c(
+                    "l-tooltip",
+                    {
+                      attrs: {
+                        options: {
+                          offset: [-1, 5],
+                          direction: "bottom",
+                        },
+                      },
+                    },
+                    [
+                      _vm._v(
+                        "\n        " +
+                          _vm._s(_vm.geoSearch.marker.title) +
+                          "\n      "
+                      ),
+                    ]
+                  ),
+                ],
+                1
+              )
+            : _vm._e(),
+          _vm._v(" "),
+          _c("l-control", { staticClass: "leaflet-bar" }, [
+            !_vm.hideCurrentLocationButton
+              ? _c(
+                  "a",
+                  {
+                    directives: [
+                      {
+                        name: "b-tooltip",
+                        rawName: "v-b-tooltip.noninteractive.hover",
+                        value: {
+                          title:
+                            _vm.labels.tooltip &&
+                            _vm.labels.tooltip.goToCurrentLocation,
+                          boundary: "body",
+                        },
+                        expression:
+                          "{ title: labels.tooltip && labels.tooltip.goToCurrentLocation, boundary: 'body' }",
+                        modifiers: { noninteractive: true, hover: true },
+                      },
+                    ],
+                    staticClass:
+                      "d-flex justify-content-center align-items-center",
+                    attrs: { role: "button" },
+                    on: { click: _vm.goToCurrentLocation },
+                  },
+                  [
+                    _c("font-awesome-icon", {
+                      attrs: { icon: ["fas", "location-crosshairs"] },
+                    }),
+                  ],
+                  1
+                )
+              : _vm._e(),
+          ]),
+        ],
+        2
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$g = [];
+__vue_render__$g._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$g = function (inject) {
     if (!inject) return
-    inject("data-v-43b68d35_0", { source: ".leaflet-touch .leaflet-bar{border:1px solid transparent;border-radius:.3rem}.leaflet-bar a{background-color:var(--white)!important;color:var(--primary)!important;text-decoration:none!important}.leaflet-bar a:hover{background-color:var(--white)!important;transition:background-color .15s ease}.geosearch-result:hover{background-color:var(--light)!important;color:var(--black)}.geosearch-result:active{color:var(--white)!important;background-color:var(--primary)!important}", map: undefined, media: undefined })
-,inject("data-v-43b68d35_1", { source: ".geosearch-container[data-v-43b68d35]{position:absolute;display:block;height:auto;width:50%;max-width:50%;cursor:auto;z-index:1030;left:50%;transform:translateX(-50%);top:10px}.geosearch-results[data-v-43b68d35]{margin:1px;border-radius:2px;background-color:var(--white);max-height:50%;overflow:auto}.geosearch-result[data-v-43b68d35]{border-radius:2px;line-height:32px;padding:0 8px;font-size:12px;white-space:nowrap}.geosearch-result[data-v-43b68d35]:hover{background-color:var(--gray-200);cursor:pointer}", map: undefined, media: undefined });
+    inject("data-v-f895b192_0", { source: ".leaflet-touch .leaflet-bar {\n  border: 1px solid transparent;\n  border-radius: 0.3rem;\n}\n.leaflet-bar a {\n  background-color: var(--white) !important;\n  color: var(--primary) !important;\n  text-decoration: none !important;\n}\n.leaflet-bar a:hover {\n  background-color: var(--white) !important;\n  transition: background-color 0.15s ease;\n}\n.geosearch-result:hover {\n  background-color: var(--light) !important;\n  color: var(--black);\n}\n.geosearch-result:active {\n  color: var(--white) !important;\n  background-color: var(--primary) !important;\n}\n\n/*# sourceMappingURL=CMap.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/map/CMap.vue","CMap.vue"],"names":[],"mappings":"AA6YA;EACA,6BAAA;EACA,qBAAA;AC5YA;AD+YA;EACA,yCAAA;EACA,gCAAA;EACA,gCAAA;AC5YA;AD8YA;EACA,yCAAA;EACA,uCAAA;AC5YA;ADiZA;EACA,yCAAA;EACA,mBAAA;AC9YA;ADiZA;EACA,8BAAA;EACA,2CAAA;AC/YA;;AAEA,mCAAmC","file":"CMap.vue","sourcesContent":["<template>\n  <div\n    class=\"position-relative\"\n  >\n    <div\n      v-if=\"!hideGeoSearch\"\n      class=\"geosearch-container\"\n      @mouseover=\"disableMap\"\n      @mouseleave=\"enableMap\"\n    >\n      <c-input-search\n        v-model=\"geoSearch.query\"\n        :placeholder=\"labels.geosearchInputPlaceholder\"\n        :autocomplete=\"'off'\"\n        :debounce=\"300\"\n        @input=\"onGeoSearch\"\n      />\n\n      <div class=\"geosearch-results\">\n        <div\n          v-for=\"(result, idx) in geoSearch.results\"\n          :key=\"idx\"\n          class=\"geosearch-result\"\n          @click=\"placeGeoSearchMarker(result)\"\n        >\n          {{ result.label }}\n        </div>\n      </div>\n    </div>\n\n    <l-map\n      ref=\"map\"\n      :zoom=\"mapOptions.zoom\"\n      :center=\"mapOptions.center\"\n      :min-zoom=\"mapOptions.minZoom\"\n      :max-zoom=\"mapOptions.maxZoom\"\n      :bounds=\"mapOptions.bounds\"\n      :max-bounds=\"mapOptions.maxBounds\"\n      class=\"w-100 h-100\"\n      @click=\"onMapClick\"\n      @locationfound=\"onLocationFound\"\n      @update:zoom=\"onZoom\"\n      @update:center=\"onCenter\"\n      @update:bounds=\"onBoundsUpdate\"\n    >\n      <l-tile-layer\n        url=\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\"\n        :attribution=\"mapOptions.attribution\"\n      />\n\n      <l-polygon\n        v-for=\"(geometry, i) in polygons\"\n        :key=\"`polygon-${i}`\"\n        :lat-lngs=\"geometry.map(value => value.geometry)\"\n        :color=\"(geometry.find(g => g) || {}).color\"\n      />\n\n      <l-marker\n        v-for=\"(marker, i) in markerValues\"\n        :key=\"`marker-${i}`\"\n        :lat-lng=\"marker.value\"\n        :icon=\"getIcon(marker.color)\"\n        :opacity=\"marker.opacity || 1.0\"\n        @click=\"onMarkerClick(i, marker)\"\n      >\n        <l-tooltip\n          v-if=\"$scopedSlots['marker-tooltip'] || marker.title\"\n          :options=\"{\n            offset: [-1, 5],\n            direction: 'bottom',\n          }\"\n        >\n          <slot\n            name=\"marker-tooltip\"\n            :marker=\"marker\"\n          >\n            {{ marker.title }}\n          </slot>\n        </l-tooltip>\n      </l-marker>\n\n      <l-marker\n        v-if=\"geoSearch.marker\"\n        :lat-lng=\"geoSearch.marker.latlng\"\n        :icon=\"getIcon(getCSSVariable('--secondary'))\"\n      >\n        <l-tooltip\n          :options=\"{\n            offset: [-1, 5],\n            direction: 'bottom',\n          }\"\n        >\n          {{ geoSearch.marker.title }}\n        </l-tooltip>\n      </l-marker>\n\n      <l-control class=\"leaflet-bar\">\n        <a\n          v-if=\"!hideCurrentLocationButton\"\n          v-b-tooltip.noninteractive.hover=\"{ title: labels.tooltip && labels.tooltip.goToCurrentLocation, boundary: 'body' }\"\n          role=\"button\"\n          class=\"d-flex justify-content-center align-items-center\"\n          @click=\"goToCurrentLocation\"\n        >\n          <font-awesome-icon\n            :icon=\"['fas', 'location-crosshairs']\"\n          />\n        </a>\n      </l-control>\n    </l-map>\n  </div>\n</template>\n\n<script>\nimport { divIcon, latLng, latLngBounds } from 'leaflet'\nimport {\n  OpenStreetMapProvider,\n  OpenCageProvider,\n  EsriProvider,\n  GeoapifyProvider,\n  GeocodeEarthProvider,\n  GoogleProvider,\n  LocationIQProvider,\n} from 'leaflet-geosearch'\nimport { isNumber } from 'lodash'\nimport { LControl, LMap, LMarker, LPolygon, LTileLayer, LTooltip } from 'vue2-leaflet'\nimport CInputSearch from '../input/CInputSearch.vue'\n\nimport 'leaflet/dist/leaflet.css'\n\nexport default {\n  components: {\n    LControl,\n    CInputSearch,\n    LPolygon,\n    LTileLayer,\n    LMarker,\n    LMap,\n    LTooltip,\n  },\n\n  props: {\n    hideCurrentLocationButton: {\n      type: Boolean,\n      default: false,\n    },\n\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    map: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    markers: {\n      type: Array,\n      default: () => ([]),\n    },\n\n    polygons: {\n      type: Array,\n      default: () => ([]),\n    },\n\n    hideGeoSearch: {\n      type: Boolean,\n      default: false,\n    },\n\n    disabled: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      geoSearch: {\n        query: '',\n        results: [],\n        marker: null,\n      },\n    }\n  },\n\n  computed: {\n    markerValues () {\n      return this.markers.map((m) => {\n        return {\n          ...m,\n          value: this.getLatLng(m.value),\n        }\n      }).filter(c => c.value) || []\n    },\n\n    mapOptions () {\n      const map = { ...this.map }\n      const defaultOptions = {\n        zoom: 3,\n        center: [30, 30],\n        rotation: 0,\n        attribution: '&copy; <a target=\"_blank\" href=\"http://osm.org/copyright\">OpenStreetMap</a>',\n      }\n\n      map.bounds = map.bounds ? latLngBounds(map.bounds) : null\n\n      return {\n        ...defaultOptions,\n        ...map,\n      }\n    },\n\n    geoSearchApiKey () {\n      return this.$Settings.get('ui.location.geoSearchApiKey', '')\n    },\n\n    geoSearchProviderName () {\n      return this.$Settings.get('ui.location.geoSearchProvider', '')\n    },\n\n    geoSearchProvider () {\n      const providerName = this.geoSearchProviderName.toLowerCase() || 'openstreetmap'\n      const apiKey = this.geoSearchApiKey\n\n      // Map of available providers\n      const providers = {\n        openstreetmap: () => new OpenStreetMapProvider(),\n        opencage: () => new OpenCageProvider({\n          params: { key: apiKey },\n        }),\n        esri: () => new EsriProvider(),\n        geoapify: () => new GeoapifyProvider({\n          params: { apiKey },\n        }),\n        geocodeearth: () => new GeocodeEarthProvider({\n          params: { api_key: apiKey },\n        }),\n        google: () => new GoogleProvider({\n          apiKey,\n        }),\n        locationiq: () => new LocationIQProvider({\n          params: { key: apiKey },\n        }),\n      }\n\n      if (providers[providerName]) {\n        return providers[providerName]()\n      }\n\n      console.warn(`Unknown geosearch provider: ${providerName}, falling back to OpenStreetMap`)\n      return new OpenStreetMapProvider()\n    },\n\n    tileProviderUrl () {\n      return ''\n    },\n\n    tileProvider () {\n      if (this.tileProviderUrl) {\n        return this.tileProviderUrl\n      }\n\n      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'\n    },\n  },\n\n  mounted () {\n    if (this.$refs.map && this.$refs.map.mapObject) {\n      this.onBoundsUpdate(this.$refs.map.mapObject.getBounds())\n    }\n  },\n\n  methods: {\n    onGeoSearch (query) {\n      if (!query || !this.geoSearchProvider) {\n        this.geoSearch.results = []\n        this.geoSearch.marker = null\n        return\n      }\n\n      this.geoSearchProvider.search({ query }).then(results => {\n        this.geoSearch.results = results.map(result => {\n          // Different providers return coordinates in different formats\n          let lat, lng\n\n          if (result.y !== undefined && result.x !== undefined) {\n            // ESRI and some others use x, y\n            lat = result.y\n            lng = result.x\n          } else if (result.raw) {\n            // Most providers (OpenStreetMap, OpenCage, etc.) use raw.lat/lon or raw.latitude/longitude\n            lat = result.raw.lat || result.raw.latitude\n            lng = result.raw.lon || result.raw.lng || result.raw.longitude\n          }\n\n          return {\n            ...result,\n            latlng: {\n              lat,\n              lng,\n            },\n          }\n        })\n      }).catch(() => {\n        this.$emit('on-geosearch-error')\n      })\n    },\n\n    placeGeoSearchMarker (result) {\n      const zoom = this.$refs.map.mapObject._zoom >= 15 ? this.$refs.map.mapObject._zoom : 15\n      this.$refs.map.mapObject.flyTo([result.latlng.lat, result.latlng.lng], zoom, { animate: false })\n      this.geoSearch.marker = { title: result.label, latlng: result.latlng }\n      this.geoSearch.results = []\n      this.onMapClick(result)\n    },\n\n    getLatLng (coordinates = [undefined, undefined]) {\n      const [lat, lng] = coordinates\n\n      if (isNumber(lat) && isNumber(lng)) {\n        return latLng(lat, lng)\n      }\n    },\n\n    onLocationFound ({ latitude, longitude }) {\n      const zoom = this.$refs.map.mapObject._zoom >= 15 ? this.$refs.map.mapObject._zoom : 15\n      this.$refs.map.mapObject.flyTo([latitude, longitude], zoom)\n      this.$emit('location-found', { latlng: { lat: latitude, lng: longitude } })\n    },\n\n    disableMap () {\n      if (this.disabled) this.$refs.map.mapObject._handlers.forEach(handler => handler.disable())\n    },\n\n    enableMap () {\n      if (this.disabled) this.$refs.map.mapObject._handlers.forEach(handler => handler.enable())\n    },\n\n    onMarkerClick (index, marker) {\n      this.$emit('on-marker-click', { index, marker })\n    },\n\n    goToCurrentLocation () {\n      this.$refs.map.mapObject.locate()\n    },\n\n    onMapClick (e) {\n      this.$emit('on-map-click', e)\n    },\n\n    getCSSVariable (variable) {\n      return getComputedStyle(document.documentElement).getPropertyValue(variable)\n    },\n\n    getIcon (markerColor = this.getCSSVariable('--primary')) {\n      const markerIconHtml = `<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 34.892337\" height=\"60\" width=\"40\" style=\"margin-top: -40px;margin-left: -15px;height: 35px;\">\n          <g transform=\"translate(-814.59595,-274.38623)\">\n            <g transform=\"matrix(1.1855854,0,0,1.1855854,-151.17715,-57.3976)\">\n              <path d=\"m 817.11249,282.97118 c -1.25816,1.34277 -2.04623,3.29881 -2.01563,5.13867 0.0639,3.84476 1.79693,5.3002 4.56836,10.59179 0.99832,2.32851 2.04027,4.79237 3.03125,8.87305 0.13772,0.60193 0.27203,1.16104 0.33416,1.20948 0.0621,0.0485 0.19644,-0.51262 0.33416,-1.11455 0.99098,-4.08068 2.03293,-6.54258 3.03125,-8.87109 2.77143,-5.29159 4.50444,-6.74704 4.56836,-10.5918 0.0306,-1.83986 -0.75942,-3.79785 -2.01758,-5.14062 -1.43724,-1.53389 -3.60504,-2.66908 -5.91619,-2.71655 -2.31115,-0.0475 -4.4809,1.08773 -5.91814,2.62162 z\" style=\"fill:${markerColor};stroke:${markerColor};\"/>\n              <circle r=\"3.0355\" cy=\"288.25278\" cx=\"823.03064\" id=\"path3049\" style=\"display:inline;fill:#FFFFFF;\"/>\n            </g>\n          </g>\n        </svg>`\n\n      return divIcon({\n        className: 'marker-pin',\n        html: markerIconHtml,\n      })\n    },\n\n    onZoom (e) {\n      this.$emit('on-zoom', e)\n    },\n\n    onCenter (e) {\n      this.$emit('on-center', e)\n    },\n\n    onBoundsUpdate (value) {\n      this.$nextTick(() => {\n        setTimeout(() => {\n          this.$refs.map.mapObject.invalidateSize()\n        }, 100)\n      })\n\n      value = value || this.$refs.map.mapObject.getBounds()\n\n      this.$emit('on-bounds-update', value)\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.leaflet-touch .leaflet-bar {\n  border: 1px solid transparent;\n  border-radius: 0.3rem;\n}\n\n.leaflet-bar a {\n  background-color: var(--white) !important;\n  color: var(--primary) !important;\n  text-decoration: none !important;\n\n  &:hover {\n    background-color: var(--white) !important;\n    transition: background-color 0.15s ease;\n  }\n}\n\n.geosearch-result {\n  &:hover {\n    background-color: var(--light) !important;\n    color: var(--black);\n  }\n\n  &:active {\n    color: var(--white) !important;\n    background-color: var(--primary) !important;\n  }\n}\n</style>\n\n<style scoped>\n.geosearch-container {\n  position: absolute;\n  display: block;\n  height: auto;\n  width: 50%;\n  max-width: 50%;\n  cursor: auto;\n  z-index: 1030;\n  left: 50%;\n  transform: translateX(-50%);\n  top: 10px;\n}\n\n.geosearch-results {\n  margin: 1px;\n  border-radius: 2px;\n  background-color: var(--white);\n  max-height: 50%;\n  overflow: auto;\n}\n\n.geosearch-result {\n  border-radius: 2px;\n  line-height: 32px;\n  padding: 0 8px;\n  font-size: 12px;\n  white-space: nowrap;\n}\n\n.geosearch-result:hover {\n  background-color: var(--gray-200);\n  cursor: pointer;\n}\n</style>\n",".leaflet-touch .leaflet-bar {\n  border: 1px solid transparent;\n  border-radius: 0.3rem;\n}\n\n.leaflet-bar a {\n  background-color: var(--white) !important;\n  color: var(--primary) !important;\n  text-decoration: none !important;\n}\n.leaflet-bar a:hover {\n  background-color: var(--white) !important;\n  transition: background-color 0.15s ease;\n}\n\n.geosearch-result:hover {\n  background-color: var(--light) !important;\n  color: var(--black);\n}\n.geosearch-result:active {\n  color: var(--white) !important;\n  background-color: var(--primary) !important;\n}\n\n/*# sourceMappingURL=CMap.vue.map */"]}, media: undefined })
+,inject("data-v-f895b192_1", { source: "\n.geosearch-container[data-v-f895b192] {\n  position: absolute;\n  display: block;\n  height: auto;\n  width: 50%;\n  max-width: 50%;\n  cursor: auto;\n  z-index: 1030;\n  left: 50%;\n  transform: translateX(-50%);\n  top: 10px;\n}\n.geosearch-results[data-v-f895b192] {\n  margin: 1px;\n  border-radius: 2px;\n  background-color: var(--white);\n  max-height: 50%;\n  overflow: auto;\n}\n.geosearch-result[data-v-f895b192] {\n  border-radius: 2px;\n  line-height: 32px;\n  padding: 0 8px;\n  font-size: 12px;\n  white-space: nowrap;\n}\n.geosearch-result[data-v-f895b192]:hover {\n  background-color: var(--gray-200);\n  cursor: pointer;\n}\n", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/map/CMap.vue"],"names":[],"mappings":";AA2aA;EACA,kBAAA;EACA,cAAA;EACA,YAAA;EACA,UAAA;EACA,cAAA;EACA,YAAA;EACA,aAAA;EACA,SAAA;EACA,2BAAA;EACA,SAAA;AACA;AAEA;EACA,WAAA;EACA,kBAAA;EACA,8BAAA;EACA,eAAA;EACA,cAAA;AACA;AAEA;EACA,kBAAA;EACA,iBAAA;EACA,cAAA;EACA,eAAA;EACA,mBAAA;AACA;AAEA;EACA,iCAAA;EACA,eAAA;AACA","file":"CMap.vue","sourcesContent":["<template>\n  <div\n    class=\"position-relative\"\n  >\n    <div\n      v-if=\"!hideGeoSearch\"\n      class=\"geosearch-container\"\n      @mouseover=\"disableMap\"\n      @mouseleave=\"enableMap\"\n    >\n      <c-input-search\n        v-model=\"geoSearch.query\"\n        :placeholder=\"labels.geosearchInputPlaceholder\"\n        :autocomplete=\"'off'\"\n        :debounce=\"300\"\n        @input=\"onGeoSearch\"\n      />\n\n      <div class=\"geosearch-results\">\n        <div\n          v-for=\"(result, idx) in geoSearch.results\"\n          :key=\"idx\"\n          class=\"geosearch-result\"\n          @click=\"placeGeoSearchMarker(result)\"\n        >\n          {{ result.label }}\n        </div>\n      </div>\n    </div>\n\n    <l-map\n      ref=\"map\"\n      :zoom=\"mapOptions.zoom\"\n      :center=\"mapOptions.center\"\n      :min-zoom=\"mapOptions.minZoom\"\n      :max-zoom=\"mapOptions.maxZoom\"\n      :bounds=\"mapOptions.bounds\"\n      :max-bounds=\"mapOptions.maxBounds\"\n      class=\"w-100 h-100\"\n      @click=\"onMapClick\"\n      @locationfound=\"onLocationFound\"\n      @update:zoom=\"onZoom\"\n      @update:center=\"onCenter\"\n      @update:bounds=\"onBoundsUpdate\"\n    >\n      <l-tile-layer\n        url=\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\"\n        :attribution=\"mapOptions.attribution\"\n      />\n\n      <l-polygon\n        v-for=\"(geometry, i) in polygons\"\n        :key=\"`polygon-${i}`\"\n        :lat-lngs=\"geometry.map(value => value.geometry)\"\n        :color=\"(geometry.find(g => g) || {}).color\"\n      />\n\n      <l-marker\n        v-for=\"(marker, i) in markerValues\"\n        :key=\"`marker-${i}`\"\n        :lat-lng=\"marker.value\"\n        :icon=\"getIcon(marker.color)\"\n        :opacity=\"marker.opacity || 1.0\"\n        @click=\"onMarkerClick(i, marker)\"\n      >\n        <l-tooltip\n          v-if=\"$scopedSlots['marker-tooltip'] || marker.title\"\n          :options=\"{\n            offset: [-1, 5],\n            direction: 'bottom',\n          }\"\n        >\n          <slot\n            name=\"marker-tooltip\"\n            :marker=\"marker\"\n          >\n            {{ marker.title }}\n          </slot>\n        </l-tooltip>\n      </l-marker>\n\n      <l-marker\n        v-if=\"geoSearch.marker\"\n        :lat-lng=\"geoSearch.marker.latlng\"\n        :icon=\"getIcon(getCSSVariable('--secondary'))\"\n      >\n        <l-tooltip\n          :options=\"{\n            offset: [-1, 5],\n            direction: 'bottom',\n          }\"\n        >\n          {{ geoSearch.marker.title }}\n        </l-tooltip>\n      </l-marker>\n\n      <l-control class=\"leaflet-bar\">\n        <a\n          v-if=\"!hideCurrentLocationButton\"\n          v-b-tooltip.noninteractive.hover=\"{ title: labels.tooltip && labels.tooltip.goToCurrentLocation, boundary: 'body' }\"\n          role=\"button\"\n          class=\"d-flex justify-content-center align-items-center\"\n          @click=\"goToCurrentLocation\"\n        >\n          <font-awesome-icon\n            :icon=\"['fas', 'location-crosshairs']\"\n          />\n        </a>\n      </l-control>\n    </l-map>\n  </div>\n</template>\n\n<script>\nimport { divIcon, latLng, latLngBounds } from 'leaflet'\nimport {\n  OpenStreetMapProvider,\n  OpenCageProvider,\n  EsriProvider,\n  GeoapifyProvider,\n  GeocodeEarthProvider,\n  GoogleProvider,\n  LocationIQProvider,\n} from 'leaflet-geosearch'\nimport { isNumber } from 'lodash'\nimport { LControl, LMap, LMarker, LPolygon, LTileLayer, LTooltip } from 'vue2-leaflet'\nimport CInputSearch from '../input/CInputSearch.vue'\n\nimport 'leaflet/dist/leaflet.css'\n\nexport default {\n  components: {\n    LControl,\n    CInputSearch,\n    LPolygon,\n    LTileLayer,\n    LMarker,\n    LMap,\n    LTooltip,\n  },\n\n  props: {\n    hideCurrentLocationButton: {\n      type: Boolean,\n      default: false,\n    },\n\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    map: {\n      type: Object,\n      default: () => ({}),\n    },\n\n    markers: {\n      type: Array,\n      default: () => ([]),\n    },\n\n    polygons: {\n      type: Array,\n      default: () => ([]),\n    },\n\n    hideGeoSearch: {\n      type: Boolean,\n      default: false,\n    },\n\n    disabled: {\n      type: Boolean,\n      default: false,\n    },\n  },\n\n  data () {\n    return {\n      geoSearch: {\n        query: '',\n        results: [],\n        marker: null,\n      },\n    }\n  },\n\n  computed: {\n    markerValues () {\n      return this.markers.map((m) => {\n        return {\n          ...m,\n          value: this.getLatLng(m.value),\n        }\n      }).filter(c => c.value) || []\n    },\n\n    mapOptions () {\n      const map = { ...this.map }\n      const defaultOptions = {\n        zoom: 3,\n        center: [30, 30],\n        rotation: 0,\n        attribution: '&copy; <a target=\"_blank\" href=\"http://osm.org/copyright\">OpenStreetMap</a>',\n      }\n\n      map.bounds = map.bounds ? latLngBounds(map.bounds) : null\n\n      return {\n        ...defaultOptions,\n        ...map,\n      }\n    },\n\n    geoSearchApiKey () {\n      return this.$Settings.get('ui.location.geoSearchApiKey', '')\n    },\n\n    geoSearchProviderName () {\n      return this.$Settings.get('ui.location.geoSearchProvider', '')\n    },\n\n    geoSearchProvider () {\n      const providerName = this.geoSearchProviderName.toLowerCase() || 'openstreetmap'\n      const apiKey = this.geoSearchApiKey\n\n      // Map of available providers\n      const providers = {\n        openstreetmap: () => new OpenStreetMapProvider(),\n        opencage: () => new OpenCageProvider({\n          params: { key: apiKey },\n        }),\n        esri: () => new EsriProvider(),\n        geoapify: () => new GeoapifyProvider({\n          params: { apiKey },\n        }),\n        geocodeearth: () => new GeocodeEarthProvider({\n          params: { api_key: apiKey },\n        }),\n        google: () => new GoogleProvider({\n          apiKey,\n        }),\n        locationiq: () => new LocationIQProvider({\n          params: { key: apiKey },\n        }),\n      }\n\n      if (providers[providerName]) {\n        return providers[providerName]()\n      }\n\n      console.warn(`Unknown geosearch provider: ${providerName}, falling back to OpenStreetMap`)\n      return new OpenStreetMapProvider()\n    },\n\n    tileProviderUrl () {\n      return ''\n    },\n\n    tileProvider () {\n      if (this.tileProviderUrl) {\n        return this.tileProviderUrl\n      }\n\n      return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'\n    },\n  },\n\n  mounted () {\n    if (this.$refs.map && this.$refs.map.mapObject) {\n      this.onBoundsUpdate(this.$refs.map.mapObject.getBounds())\n    }\n  },\n\n  methods: {\n    onGeoSearch (query) {\n      if (!query || !this.geoSearchProvider) {\n        this.geoSearch.results = []\n        this.geoSearch.marker = null\n        return\n      }\n\n      this.geoSearchProvider.search({ query }).then(results => {\n        this.geoSearch.results = results.map(result => {\n          // Different providers return coordinates in different formats\n          let lat, lng\n\n          if (result.y !== undefined && result.x !== undefined) {\n            // ESRI and some others use x, y\n            lat = result.y\n            lng = result.x\n          } else if (result.raw) {\n            // Most providers (OpenStreetMap, OpenCage, etc.) use raw.lat/lon or raw.latitude/longitude\n            lat = result.raw.lat || result.raw.latitude\n            lng = result.raw.lon || result.raw.lng || result.raw.longitude\n          }\n\n          return {\n            ...result,\n            latlng: {\n              lat,\n              lng,\n            },\n          }\n        })\n      }).catch(() => {\n        this.$emit('on-geosearch-error')\n      })\n    },\n\n    placeGeoSearchMarker (result) {\n      const zoom = this.$refs.map.mapObject._zoom >= 15 ? this.$refs.map.mapObject._zoom : 15\n      this.$refs.map.mapObject.flyTo([result.latlng.lat, result.latlng.lng], zoom, { animate: false })\n      this.geoSearch.marker = { title: result.label, latlng: result.latlng }\n      this.geoSearch.results = []\n      this.onMapClick(result)\n    },\n\n    getLatLng (coordinates = [undefined, undefined]) {\n      const [lat, lng] = coordinates\n\n      if (isNumber(lat) && isNumber(lng)) {\n        return latLng(lat, lng)\n      }\n    },\n\n    onLocationFound ({ latitude, longitude }) {\n      const zoom = this.$refs.map.mapObject._zoom >= 15 ? this.$refs.map.mapObject._zoom : 15\n      this.$refs.map.mapObject.flyTo([latitude, longitude], zoom)\n      this.$emit('location-found', { latlng: { lat: latitude, lng: longitude } })\n    },\n\n    disableMap () {\n      if (this.disabled) this.$refs.map.mapObject._handlers.forEach(handler => handler.disable())\n    },\n\n    enableMap () {\n      if (this.disabled) this.$refs.map.mapObject._handlers.forEach(handler => handler.enable())\n    },\n\n    onMarkerClick (index, marker) {\n      this.$emit('on-marker-click', { index, marker })\n    },\n\n    goToCurrentLocation () {\n      this.$refs.map.mapObject.locate()\n    },\n\n    onMapClick (e) {\n      this.$emit('on-map-click', e)\n    },\n\n    getCSSVariable (variable) {\n      return getComputedStyle(document.documentElement).getPropertyValue(variable)\n    },\n\n    getIcon (markerColor = this.getCSSVariable('--primary')) {\n      const markerIconHtml = `<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 34.892337\" height=\"60\" width=\"40\" style=\"margin-top: -40px;margin-left: -15px;height: 35px;\">\n          <g transform=\"translate(-814.59595,-274.38623)\">\n            <g transform=\"matrix(1.1855854,0,0,1.1855854,-151.17715,-57.3976)\">\n              <path d=\"m 817.11249,282.97118 c -1.25816,1.34277 -2.04623,3.29881 -2.01563,5.13867 0.0639,3.84476 1.79693,5.3002 4.56836,10.59179 0.99832,2.32851 2.04027,4.79237 3.03125,8.87305 0.13772,0.60193 0.27203,1.16104 0.33416,1.20948 0.0621,0.0485 0.19644,-0.51262 0.33416,-1.11455 0.99098,-4.08068 2.03293,-6.54258 3.03125,-8.87109 2.77143,-5.29159 4.50444,-6.74704 4.56836,-10.5918 0.0306,-1.83986 -0.75942,-3.79785 -2.01758,-5.14062 -1.43724,-1.53389 -3.60504,-2.66908 -5.91619,-2.71655 -2.31115,-0.0475 -4.4809,1.08773 -5.91814,2.62162 z\" style=\"fill:${markerColor};stroke:${markerColor};\"/>\n              <circle r=\"3.0355\" cy=\"288.25278\" cx=\"823.03064\" id=\"path3049\" style=\"display:inline;fill:#FFFFFF;\"/>\n            </g>\n          </g>\n        </svg>`\n\n      return divIcon({\n        className: 'marker-pin',\n        html: markerIconHtml,\n      })\n    },\n\n    onZoom (e) {\n      this.$emit('on-zoom', e)\n    },\n\n    onCenter (e) {\n      this.$emit('on-center', e)\n    },\n\n    onBoundsUpdate (value) {\n      this.$nextTick(() => {\n        setTimeout(() => {\n          this.$refs.map.mapObject.invalidateSize()\n        }, 100)\n      })\n\n      value = value || this.$refs.map.mapObject.getBounds()\n\n      this.$emit('on-bounds-update', value)\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.leaflet-touch .leaflet-bar {\n  border: 1px solid transparent;\n  border-radius: 0.3rem;\n}\n\n.leaflet-bar a {\n  background-color: var(--white) !important;\n  color: var(--primary) !important;\n  text-decoration: none !important;\n\n  &:hover {\n    background-color: var(--white) !important;\n    transition: background-color 0.15s ease;\n  }\n}\n\n.geosearch-result {\n  &:hover {\n    background-color: var(--light) !important;\n    color: var(--black);\n  }\n\n  &:active {\n    color: var(--white) !important;\n    background-color: var(--primary) !important;\n  }\n}\n</style>\n\n<style scoped>\n.geosearch-container {\n  position: absolute;\n  display: block;\n  height: auto;\n  width: 50%;\n  max-width: 50%;\n  cursor: auto;\n  z-index: 1030;\n  left: 50%;\n  transform: translateX(-50%);\n  top: 10px;\n}\n\n.geosearch-results {\n  margin: 1px;\n  border-radius: 2px;\n  background-color: var(--white);\n  max-height: 50%;\n  overflow: auto;\n}\n\n.geosearch-result {\n  border-radius: 2px;\n  line-height: 32px;\n  padding: 0 8px;\n  font-size: 12px;\n  white-space: nowrap;\n}\n\n.geosearch-result:hover {\n  background-color: var(--gray-200);\n  cursor: pointer;\n}\n</style>\n"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$g = "data-v-43b68d35";
+  const __vue_scope_id__$g = "data-v-f895b192";
   /* module identifier */
   const __vue_module_identifier__$g = undefined;
   /* functional template */
@@ -31145,8 +37444,154 @@ var script$f = {
 const __vue_script__$f = script$f;
 
 /* template */
-var __vue_render__$f = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[_c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.noninteractive.hover",value:({ title: _vm.labels.tooltip, boundary: 'body' }),expression:"{ title: labels.tooltip, boundary: 'body' }",modifiers:{"noninteractive":true,"hover":true}}],class:_vm.buttonClass,attrs:{"variant":"light"},on:{"click":function($event){$event.preventDefault();return _vm.openWebcamModal.apply(null, arguments)}}},[_vm._t("default")],2),_vm._v(" "),_c('b-modal',{ref:"webcamModal",attrs:{"title":_vm.labels.modalTitle,"size":"lg","centered":"","body-class":"p-0"},on:{"show":_vm.initializeWebcam,"hidden":_vm.closeCamera},scopedSlots:_vm._u([{key:"modal-footer",fn:function(){return [_c('div',{staticClass:"d-flex align-items-center gap-2"},[_c('b-button',{attrs:{"variant":"light"},on:{"click":_vm.handleCloseClick}},[_vm._v("\n          "+_vm._s(_vm.labels.cancelButtonLabel)+"\n        ")]),_vm._v(" "),_c('b-button',{attrs:{"disabled":_vm.processingWebcam,"variant":"primary"},on:{"click":_vm.handleCaptureClick}},[_vm._v("\n          "+_vm._s(_vm.hasCapturedImage ? _vm.labels.confirmButtonLabel : _vm.labels.captureButtonLabel)+"\n        ")])],1)]},proxy:true}])},[(_vm.showErrorMessage)?_c('div',{staticClass:"p-3 text-danger"},[_vm._v("\n      "+_vm._s(_vm.labels.cameraErrorMessage)+"\n    ")]):_c('div',{staticClass:"embed-responsive embed-responsive-4by3 d-flex justify-content-center align-items-center"},[(_vm.processingWebcam)?_c('b-spinner',{attrs:{"variant":"primary"}}):_vm._e(),_vm._v(" "),_c('video',{directives:[{name:"show",rawName:"v-show",value:(!_vm.processingWebcam && !_vm.hasCapturedImage),expression:"!processingWebcam && !hasCapturedImage"}],ref:"video",attrs:{"autoplay":"","playsinline":""}}),_vm._v(" "),(_vm.hasCapturedImage)?_c('img',{staticClass:"embed-responsive-item",attrs:{"src":_vm.capturedImage,"alt":"Captured image"}}):_vm._e()],1)])],1)};
+var __vue_render__$f = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    [
+      _c(
+        "b-button",
+        {
+          directives: [
+            {
+              name: "b-tooltip",
+              rawName: "v-b-tooltip.noninteractive.hover",
+              value: { title: _vm.labels.tooltip, boundary: "body" },
+              expression: "{ title: labels.tooltip, boundary: 'body' }",
+              modifiers: { noninteractive: true, hover: true },
+            },
+          ],
+          class: _vm.buttonClass,
+          attrs: { variant: "light" },
+          on: {
+            click: function ($event) {
+              $event.preventDefault();
+              return _vm.openWebcamModal.apply(null, arguments)
+            },
+          },
+        },
+        [_vm._t("default")],
+        2
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          ref: "webcamModal",
+          attrs: {
+            title: _vm.labels.modalTitle,
+            size: "lg",
+            centered: "",
+            "body-class": "p-0",
+          },
+          on: { show: _vm.initializeWebcam, hidden: _vm.closeCamera },
+          scopedSlots: _vm._u([
+            {
+              key: "modal-footer",
+              fn: function () {
+                return [
+                  _c(
+                    "div",
+                    { staticClass: "d-flex align-items-center gap-2" },
+                    [
+                      _c(
+                        "b-button",
+                        {
+                          attrs: { variant: "light" },
+                          on: { click: _vm.handleCloseClick },
+                        },
+                        [
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(_vm.labels.cancelButtonLabel) +
+                              "\n        "
+                          ),
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "b-button",
+                        {
+                          attrs: {
+                            disabled: _vm.processingWebcam,
+                            variant: "primary",
+                          },
+                          on: { click: _vm.handleCaptureClick },
+                        },
+                        [
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(
+                                _vm.hasCapturedImage
+                                  ? _vm.labels.confirmButtonLabel
+                                  : _vm.labels.captureButtonLabel
+                              ) +
+                              "\n        "
+                          ),
+                        ]
+                      ),
+                    ],
+                    1
+                  ),
+                ]
+              },
+              proxy: true,
+            },
+          ]),
+        },
+        [
+          _vm.showErrorMessage
+            ? _c("div", { staticClass: "p-3 text-danger" }, [
+                _vm._v(
+                  "\n      " + _vm._s(_vm.labels.cameraErrorMessage) + "\n    "
+                ),
+              ])
+            : _c(
+                "div",
+                {
+                  staticClass:
+                    "embed-responsive embed-responsive-4by3 d-flex justify-content-center align-items-center",
+                },
+                [
+                  _vm.processingWebcam
+                    ? _c("b-spinner", { attrs: { variant: "primary" } })
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _c("video", {
+                    directives: [
+                      {
+                        name: "show",
+                        rawName: "v-show",
+                        value: !_vm.processingWebcam && !_vm.hasCapturedImage,
+                        expression: "!processingWebcam && !hasCapturedImage",
+                      },
+                    ],
+                    ref: "video",
+                    attrs: { autoplay: "", playsinline: "" },
+                  }),
+                  _vm._v(" "),
+                  _vm.hasCapturedImage
+                    ? _c("img", {
+                        staticClass: "embed-responsive-item",
+                        attrs: {
+                          src: _vm.capturedImage,
+                          alt: "Captured image",
+                        },
+                      })
+                    : _vm._e(),
+                ],
+                1
+              ),
+        ]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$f = [];
+__vue_render__$f._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$f = undefined;
@@ -31218,8 +37663,22 @@ var script$e = {
 const __vue_script__$e = script$e;
 
 /* template */
-var __vue_render__$e = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex flex-column"},[_c('h5',{staticClass:"font-weight-bold text-break"},[_vm._v("\n    "+_vm._s(_vm.title)+"\n  ")]),_vm._v(" "),_c('div',{staticClass:"text-secondary mb-1 text-break"},[_vm._v("\n    "+_vm._s(_vm.description)+"\n  ")])])};
+var __vue_render__$e = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", { staticClass: "d-flex flex-column" }, [
+    _c("h5", { staticClass: "font-weight-bold text-break" }, [
+      _vm._v("\n    " + _vm._s(_vm.title) + "\n  "),
+    ]),
+    _vm._v(" "),
+    _c("div", { staticClass: "text-secondary mb-1 text-break" }, [
+      _vm._v("\n    " + _vm._s(_vm.description) + "\n  "),
+    ]),
+  ])
+};
 var __vue_staticRenderFns__$e = [];
+__vue_render__$e._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$e = undefined;
@@ -31379,8 +37838,29 @@ var script$d = {
 const __vue_script__$d = script$d;
 
 /* template */
-var __vue_render__$d = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"d-flex flex-column",on:{"click":_vm.handleRecordNavigation}},[_c('h5',{staticClass:"font-weight-bold text-break"},[_vm._v("\n    "+_vm._s(_vm.title)+"\n  ")]),_vm._v(" "),_c('div',{staticClass:"text-secondary mb-1 text-break"},[_vm._v("\n    "+_vm._s(_vm.description)+"\n  ")])])};
+var __vue_render__$d = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    {
+      staticClass: "d-flex flex-column",
+      on: { click: _vm.handleRecordNavigation },
+    },
+    [
+      _c("h5", { staticClass: "font-weight-bold text-break" }, [
+        _vm._v("\n    " + _vm._s(_vm.title) + "\n  "),
+      ]),
+      _vm._v(" "),
+      _c("div", { staticClass: "text-secondary mb-1 text-break" }, [
+        _vm._v("\n    " + _vm._s(_vm.description) + "\n  "),
+      ]),
+    ]
+  )
+};
 var __vue_staticRenderFns__$d = [];
+__vue_render__$d._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$d = undefined;
@@ -31527,17 +38007,181 @@ var script$c = {
 const __vue_script__$c = script$c;
 
 /* template */
-var __vue_render__$c = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"notification-item-container px-3 pt-3 pb-2 border-bottom"},[_c('b-list-group-item',{staticClass:"notification-item border rounded bg-white p-3 position-relative",class:{ 'read': _vm.notification.readAt },on:{"click":function($event){return _vm.$emit('click', _vm.notification)}}},[_c('div',{staticClass:"action-menu bg-white pb-2 pl-2",staticStyle:{"margin-left":"-1rem"}},[_c('b-dropdown',{attrs:{"right":"","variant":"outline-extra-light","toggle-class":"text-decoration-none border-0 dropdown-toggle-no-caret","no-caret":""},scopedSlots:_vm._u([{key:"button-content",fn:function(){return [_c('font-awesome-icon',{staticClass:"text-secondary",staticStyle:{"margin-top":"0.3rem"},attrs:{"icon":['fas', 'ellipsis-v']}})]},proxy:true}])},[_vm._v(" "),(!_vm.notification.readAt)?_c('b-dropdown-item',{on:{"click":function($event){$event.stopPropagation();return _vm.$emit('mark-read', _vm.notification)}}},[_c('font-awesome-icon',{staticClass:"text-primary",attrs:{"icon":['far', 'envelope-open']}}),_vm._v("\n          "+_vm._s(_vm.$t('markAsRead'))+"\n        ")],1):_c('b-dropdown-item',{on:{"click":function($event){$event.stopPropagation();return _vm.$emit('mark-unread', _vm.notification)}}},[_c('font-awesome-icon',{staticClass:"text-primary",attrs:{"icon":['far', 'envelope']}}),_vm._v("\n          "+_vm._s(_vm.$t('markAsUnread'))+"\n        ")],1),_vm._v(" "),_c('b-dropdown-divider'),_vm._v(" "),_c('c-input-confirm',{staticClass:"w-100",attrs:{"text":_vm.$t('delete'),"show-icon":"","borderless":"","variant":"link","size":"md","button-class":"dropdown-item","icon-class":"text-danger"},on:{"confirmed":function($event){return _vm.$emit('delete', _vm.notification)}}})],1)],1),_vm._v(" "),_c(_vm.notificationComponent,{tag:"component",staticClass:"notification-item-content",attrs:{"notification":_vm.notification}})],1),_vm._v(" "),_c('div',{staticClass:"d-flex justify-content-end mt-2"},[_c('div',{staticClass:"text-muted small cursor-pointer",attrs:{"title":_vm.notification.createdAt},on:{"click":function($event){return _vm.$emit('click', _vm.notification)}}},[_vm._v("\n      "+_vm._s(_vm._f("locFullDateTime")(_vm.notification.createdAt))+"\n    ")])])],1)};
+var __vue_render__$c = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "notification-item-container px-3 pt-3 pb-2 border-bottom" },
+    [
+      _c(
+        "b-list-group-item",
+        {
+          staticClass:
+            "notification-item border rounded bg-white p-3 position-relative",
+          class: { read: _vm.notification.readAt },
+          on: {
+            click: function ($event) {
+              return _vm.$emit("click", _vm.notification)
+            },
+          },
+        },
+        [
+          _c(
+            "div",
+            {
+              staticClass: "action-menu bg-white pb-2 pl-2",
+              staticStyle: { "margin-left": "-1rem" },
+            },
+            [
+              _c(
+                "b-dropdown",
+                {
+                  attrs: {
+                    right: "",
+                    variant: "outline-extra-light",
+                    "toggle-class":
+                      "text-decoration-none border-0 dropdown-toggle-no-caret",
+                    "no-caret": "",
+                  },
+                  scopedSlots: _vm._u([
+                    {
+                      key: "button-content",
+                      fn: function () {
+                        return [
+                          _c("font-awesome-icon", {
+                            staticClass: "text-secondary",
+                            staticStyle: { "margin-top": "0.3rem" },
+                            attrs: { icon: ["fas", "ellipsis-v"] },
+                          }),
+                        ]
+                      },
+                      proxy: true,
+                    },
+                  ]),
+                },
+                [
+                  _vm._v(" "),
+                  !_vm.notification.readAt
+                    ? _c(
+                        "b-dropdown-item",
+                        {
+                          on: {
+                            click: function ($event) {
+                              $event.stopPropagation();
+                              return _vm.$emit("mark-read", _vm.notification)
+                            },
+                          },
+                        },
+                        [
+                          _c("font-awesome-icon", {
+                            staticClass: "text-primary",
+                            attrs: { icon: ["far", "envelope-open"] },
+                          }),
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(_vm.$t("markAsRead")) +
+                              "\n        "
+                          ),
+                        ],
+                        1
+                      )
+                    : _c(
+                        "b-dropdown-item",
+                        {
+                          on: {
+                            click: function ($event) {
+                              $event.stopPropagation();
+                              return _vm.$emit("mark-unread", _vm.notification)
+                            },
+                          },
+                        },
+                        [
+                          _c("font-awesome-icon", {
+                            staticClass: "text-primary",
+                            attrs: { icon: ["far", "envelope"] },
+                          }),
+                          _vm._v(
+                            "\n          " +
+                              _vm._s(_vm.$t("markAsUnread")) +
+                              "\n        "
+                          ),
+                        ],
+                        1
+                      ),
+                  _vm._v(" "),
+                  _c("b-dropdown-divider"),
+                  _vm._v(" "),
+                  _c("c-input-confirm", {
+                    staticClass: "w-100",
+                    attrs: {
+                      text: _vm.$t("delete"),
+                      "show-icon": "",
+                      borderless: "",
+                      variant: "link",
+                      size: "md",
+                      "button-class": "dropdown-item",
+                      "icon-class": "text-danger",
+                    },
+                    on: {
+                      confirmed: function ($event) {
+                        return _vm.$emit("delete", _vm.notification)
+                      },
+                    },
+                  }),
+                ],
+                1
+              ),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(_vm.notificationComponent, {
+            tag: "component",
+            staticClass: "notification-item-content",
+            attrs: { notification: _vm.notification },
+          }),
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "d-flex justify-content-end mt-2" }, [
+        _c(
+          "div",
+          {
+            staticClass: "text-muted small cursor-pointer",
+            attrs: { title: _vm.notification.createdAt },
+            on: {
+              click: function ($event) {
+                return _vm.$emit("click", _vm.notification)
+              },
+            },
+          },
+          [
+            _vm._v(
+              "\n      " +
+                _vm._s(_vm._f("locFullDateTime")(_vm.notification.createdAt)) +
+                "\n    "
+            ),
+          ]
+        ),
+      ]),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$c = [];
+__vue_render__$c._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$c = function (inject) {
     if (!inject) return
-    inject("data-v-8c1f0428_0", { source: ".notification-item-container[data-v-8c1f0428]:hover{background-color:var(--light)!important}.notification-item-container .notification-item[data-v-8c1f0428]{transition:background-color .2s ease;cursor:pointer}.notification-item-container .notification-item.read .notification-item-content[data-v-8c1f0428]{opacity:.5!important}.notification-item-container:hover .action-menu[data-v-8c1f0428]{opacity:1!important;pointer-events:auto}.notification-item-container .action-menu[data-v-8c1f0428]{position:absolute;top:.5rem;right:.5rem;z-index:2;opacity:0;pointer-events:none;transition:opacity .2s ease}", map: undefined, media: undefined });
+    inject("data-v-5318a314_0", { source: ".notification-item-container[data-v-5318a314]:hover {\n  background-color: var(--light) !important;\n}\n.notification-item-container .notification-item[data-v-5318a314] {\n  transition: background-color 0.2s ease;\n  cursor: pointer;\n}\n.notification-item-container .notification-item.read .notification-item-content[data-v-5318a314] {\n  opacity: 0.5 !important;\n}\n.notification-item-container:hover .action-menu[data-v-5318a314] {\n  opacity: 1 !important;\n  pointer-events: auto;\n}\n.notification-item-container .action-menu[data-v-5318a314] {\n  position: absolute;\n  top: 0.5rem;\n  right: 0.5rem;\n  z-index: 2;\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity 0.2s ease;\n}\n\n/*# sourceMappingURL=NotificationItem.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/notifications/NotificationItem.vue","NotificationItem.vue"],"names":[],"mappings":"AAmHA;EACA,yCAAA;AClHA;ADqHA;EACA,sCAAA;EACA,eAAA;ACnHA;ADsHA;EACA,uBAAA;ACpHA;AD0HA;EACA,qBAAA;EACA,oBAAA;ACxHA;AD2HA;EACA,kBAAA;EACA,WAAA;EACA,aAAA;EACA,UAAA;EACA,UAAA;EACA,oBAAA;EACA,6BAAA;ACzHA;;AAEA,+CAA+C","file":"NotificationItem.vue","sourcesContent":["<template>\n  <div class=\"notification-item-container px-3 pt-3 pb-2 border-bottom\">\n    <b-list-group-item\n      class=\"notification-item border rounded bg-white p-3 position-relative\"\n      :class=\"{ 'read': notification.readAt }\"\n      @click=\"$emit('click', notification)\"\n    >\n      <div\n        class=\"action-menu bg-white pb-2 pl-2\"\n        style=\"margin-left: -1rem;\"\n      >\n        <b-dropdown\n          right\n          variant=\"outline-extra-light\"\n          toggle-class=\"text-decoration-none border-0 dropdown-toggle-no-caret\"\n          no-caret\n        >\n          <template #button-content>\n            <font-awesome-icon\n              :icon=\"['fas', 'ellipsis-v']\"\n              class=\"text-secondary\"\n              style=\"margin-top: 0.3rem;\"\n            />\n          </template>\n\n          <b-dropdown-item\n            v-if=\"!notification.readAt\"\n            @click.stop=\"$emit('mark-read', notification)\"\n          >\n            <font-awesome-icon\n              :icon=\"['far', 'envelope-open']\"\n              class=\"text-primary\"\n            />\n            {{ $t('markAsRead') }}\n          </b-dropdown-item>\n\n          <b-dropdown-item\n            v-else\n            @click.stop=\"$emit('mark-unread', notification)\"\n          >\n            <font-awesome-icon\n              :icon=\"['far', 'envelope']\"\n              class=\"text-primary\"\n            />\n            {{ $t('markAsUnread') }}\n          </b-dropdown-item>\n\n          <b-dropdown-divider />\n\n          <c-input-confirm\n            :text=\"$t('delete')\"\n            show-icon\n            borderless\n            variant=\"link\"\n            size=\"md\"\n            button-class=\"dropdown-item\"\n            icon-class=\"text-danger\"\n            class=\"w-100\"\n            @confirmed=\"$emit('delete', notification)\"\n          />\n        </b-dropdown>\n      </div>\n\n      <component\n        :is=\"notificationComponent\"\n        :notification=\"notification\"\n        class=\"notification-item-content\"\n      />\n    </b-list-group-item>\n\n    <div class=\"d-flex justify-content-end mt-2\">\n      <div\n        :title=\"notification.createdAt\"\n        class=\"text-muted small cursor-pointer\"\n        @click=\"$emit('click', notification)\"\n      >\n        {{ notification.createdAt | locFullDateTime }}\n      </div>\n    </div>\n  </div>\n</template>\n\n<script>\nimport NotificationTypes from './types/index.js'\nimport CInputConfirm from '../input/CInputConfirm.vue'\n\nexport default {\n  i18nOptions: {\n    namespaces: 'notifications',\n  },\n\n  components: {\n    CInputConfirm,\n  },\n\n  props: {\n    notification: {\n      type: Object,\n      required: true,\n    },\n  },\n\n  computed: {\n    notificationComponent () {\n      let { kind } = this.notification\n      kind = kind.charAt(0).toUpperCase() + kind.slice(1)\n\n      return NotificationTypes[`Notification${kind}`]\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.notification-item-container {\n  &:hover {\n    background-color: var(--light) !important;\n  }\n\n  .notification-item {\n    transition: background-color 0.2s ease;\n    cursor: pointer;\n\n    &.read {\n      .notification-item-content {\n        opacity: 0.5 !important;\n      }\n    }\n  }\n\n  &:hover {\n    .action-menu {\n      opacity: 1 !important;\n      pointer-events: auto;\n    }\n  }\n  .action-menu {\n    position: absolute;\n    top: 0.5rem;\n    right: 0.5rem;\n    z-index: 2;\n    opacity: 0;\n    pointer-events: none;\n    transition: opacity 0.2s ease;\n  }\n}\n</style>\n",".notification-item-container:hover {\n  background-color: var(--light) !important;\n}\n.notification-item-container .notification-item {\n  transition: background-color 0.2s ease;\n  cursor: pointer;\n}\n.notification-item-container .notification-item.read .notification-item-content {\n  opacity: 0.5 !important;\n}\n.notification-item-container:hover .action-menu {\n  opacity: 1 !important;\n  pointer-events: auto;\n}\n.notification-item-container .action-menu {\n  position: absolute;\n  top: 0.5rem;\n  right: 0.5rem;\n  z-index: 2;\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity 0.2s ease;\n}\n\n/*# sourceMappingURL=NotificationItem.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$c = "data-v-8c1f0428";
+  const __vue_scope_id__$c = "data-v-5318a314";
   /* module identifier */
   const __vue_module_identifier__$c = undefined;
   /* functional template */
@@ -31868,8 +38512,345 @@ var script$b = {
 const __vue_script__$b = script$b;
 
 /* template */
-var __vue_render__$b = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"h-100 d-flex flex-column"},[_c('b-tabs',{staticClass:"h-100 d-flex flex-column",attrs:{"card":"","fill":"","nav-class":"border-bottom","content-class":"h-100 overflow-hidden"},scopedSlots:_vm._u([{key:"tabs-end",fn:function(){return [_c('div',{staticClass:"d-flex align-items-center justify-content-end",staticStyle:{"min-width":"6rem"}},[(_vm.hasUnread)?_c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.hover",value:({ title: _vm.$t('markAllAsRead'), delay: { show: 500, hide: 0 } }),expression:"{ title: $t('markAllAsRead'), delay: { show: 500, hide: 0 } }",modifiers:{"hover":true}}],staticClass:"p-2 border-0 d-flex align-items-center justify-content-center",staticStyle:{"width":"2rem","height":"2rem"},attrs:{"variant":"outline-light"},on:{"click":_vm.handleMarkAllAsRead}},[_c('font-awesome-icon',{staticClass:"h6 mb-0 text-primary",attrs:{"icon":['fas', 'check-double']}})],1):_vm._e(),_vm._v(" "),_c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.hover",value:({ title: _vm.$t(_vm.muted ? 'unmute' : 'mute'), delay: { show: 500, hide: 0 } }),expression:"{ title: $t(muted ? 'unmute' : 'mute'), delay: { show: 500, hide: 0 } }",modifiers:{"hover":true}}],staticClass:"p-2 border-0 d-flex align-items-center justify-content-center",staticStyle:{"width":"2rem","height":"2rem"},attrs:{"variant":"outline-light"},on:{"click":_vm.toggleMuted}},[_c('font-awesome-icon',{staticClass:"h6 mb-0",class:{ 'text-secondary': _vm.muted, 'text-primary': !_vm.muted },attrs:{"icon":['fas', _vm.muted ? 'bell-slash' : 'bell']}})],1)],1)]},proxy:true}]),model:{value:(_vm.activeTab),callback:function ($$v) {_vm.activeTab=$$v;},expression:"activeTab"}},[_vm._v(" "),_c('b-tab',{staticClass:"d-flex flex-column h-100 p-0",attrs:{"title":_vm.$t('unread'),"active":""}},[_c('div',{staticClass:"overflow-auto flex-grow-1 h-100"},[(_vm.loading)?_c('div',{staticClass:"d-flex justify-content-center p-5"},[_c('b-spinner',{attrs:{"variant":"primary"}})],1):(_vm.notifications.length > 0)?_c('b-list-group',[_vm._l((_vm.notifications),function(notification){return _c('notification-item',{key:notification.notificationID,attrs:{"notification":notification},on:{"click":function($event){return _vm.onNotificationClick(notification)},"mark-read":_vm.onMarkAsRead,"mark-unread":_vm.onMarkAsUnread,"delete":_vm.onDeleteNotification}})}),_vm._v(" "),(_vm.hasMorePages)?_c('div',{staticClass:"text-center my-3"},[_c('b-button',{attrs:{"variant":"outline-primary","size":"sm","disabled":_vm.loadingMore},on:{"click":function($event){return _vm.loadMore()}}},[(_vm.loadingMore)?_c('b-spinner',{attrs:{"small":""}}):_c('span',[_vm._v(_vm._s(_vm.$t('loadMore')))])],1)],1):_vm._e()],2):_c('div',{staticClass:"text-center p-5"},[_c('font-awesome-icon',{staticClass:"text-secondary mb-3",attrs:{"icon":['far', 'bell'],"size":"3x"}}),_vm._v(" "),_c('p',{staticClass:"text-secondary"},[_vm._v("\n            "+_vm._s(_vm.$t('empty'))+"\n          ")]),_vm._v(" "),_c('p',{staticClass:"text-muted small"},[_vm._v("\n            "+_vm._s(_vm.$t('emptyDescription'))+"\n          ")])],1)],1)]),_vm._v(" "),_c('b-tab',{staticClass:"d-flex flex-column h-100 p-0",attrs:{"title":_vm.$t('all')}},[_c('div',{staticClass:"overflow-auto flex-grow-1 h-100"},[(_vm.loading)?_c('div',{staticClass:"d-flex justify-content-center p-5"},[_c('b-spinner',{attrs:{"variant":"primary"}})],1):(_vm.notifications.length > 0)?_c('b-list-group',[_vm._l((_vm.notifications),function(notification){return _c('notification-item',{key:notification.notificationID,attrs:{"notification":notification},on:{"click":function($event){return _vm.onNotificationClick(notification)},"mark-read":_vm.onMarkAsRead,"delete":_vm.onDeleteNotification}})}),_vm._v(" "),(_vm.hasMorePages)?_c('div',{staticClass:"text-center my-3"},[_c('b-button',{attrs:{"variant":"outline-primary","size":"sm","disabled":_vm.loadingMore},on:{"click":function($event){return _vm.loadMore()}}},[(_vm.loadingMore)?_c('b-spinner',{attrs:{"small":""}}):_c('span',[_vm._v(_vm._s(_vm.$t('loadMore')))])],1)],1):_vm._e()],2):_c('div',{staticClass:"text-center p-5"},[_c('font-awesome-icon',{staticClass:"text-secondary mb-3",attrs:{"icon":['far', 'bell'],"size":"3x"}}),_vm._v(" "),_c('p',{staticClass:"text-secondary"},[_vm._v("\n            "+_vm._s(_vm.$t('empty'))+"\n          ")]),_vm._v(" "),_c('p',{staticClass:"text-muted small"},[_vm._v("\n            "+_vm._s(_vm.$t('emptyDescription'))+"\n          ")])],1)],1)])],1)],1)};
+var __vue_render__$b = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    { staticClass: "h-100 d-flex flex-column" },
+    [
+      _c(
+        "b-tabs",
+        {
+          staticClass: "h-100 d-flex flex-column",
+          attrs: {
+            card: "",
+            fill: "",
+            "nav-class": "border-bottom",
+            "content-class": "h-100 overflow-hidden",
+          },
+          scopedSlots: _vm._u([
+            {
+              key: "tabs-end",
+              fn: function () {
+                return [
+                  _c(
+                    "div",
+                    {
+                      staticClass:
+                        "d-flex align-items-center justify-content-end",
+                      staticStyle: { "min-width": "6rem" },
+                    },
+                    [
+                      _vm.hasUnread
+                        ? _c(
+                            "b-button",
+                            {
+                              directives: [
+                                {
+                                  name: "b-tooltip",
+                                  rawName: "v-b-tooltip.hover",
+                                  value: {
+                                    title: _vm.$t("markAllAsRead"),
+                                    delay: { show: 500, hide: 0 },
+                                  },
+                                  expression:
+                                    "{ title: $t('markAllAsRead'), delay: { show: 500, hide: 0 } }",
+                                  modifiers: { hover: true },
+                                },
+                              ],
+                              staticClass:
+                                "p-2 border-0 d-flex align-items-center justify-content-center",
+                              staticStyle: { width: "2rem", height: "2rem" },
+                              attrs: { variant: "outline-light" },
+                              on: { click: _vm.handleMarkAllAsRead },
+                            },
+                            [
+                              _c("font-awesome-icon", {
+                                staticClass: "h6 mb-0 text-primary",
+                                attrs: { icon: ["fas", "check-double"] },
+                              }),
+                            ],
+                            1
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _c(
+                        "b-button",
+                        {
+                          directives: [
+                            {
+                              name: "b-tooltip",
+                              rawName: "v-b-tooltip.hover",
+                              value: {
+                                title: _vm.$t(_vm.muted ? "unmute" : "mute"),
+                                delay: { show: 500, hide: 0 },
+                              },
+                              expression:
+                                "{ title: $t(muted ? 'unmute' : 'mute'), delay: { show: 500, hide: 0 } }",
+                              modifiers: { hover: true },
+                            },
+                          ],
+                          staticClass:
+                            "p-2 border-0 d-flex align-items-center justify-content-center",
+                          staticStyle: { width: "2rem", height: "2rem" },
+                          attrs: { variant: "outline-light" },
+                          on: { click: _vm.toggleMuted },
+                        },
+                        [
+                          _c("font-awesome-icon", {
+                            staticClass: "h6 mb-0",
+                            class: {
+                              "text-secondary": _vm.muted,
+                              "text-primary": !_vm.muted,
+                            },
+                            attrs: {
+                              icon: ["fas", _vm.muted ? "bell-slash" : "bell"],
+                            },
+                          }),
+                        ],
+                        1
+                      ),
+                    ],
+                    1
+                  ),
+                ]
+              },
+              proxy: true,
+            },
+          ]),
+          model: {
+            value: _vm.activeTab,
+            callback: function ($$v) {
+              _vm.activeTab = $$v;
+            },
+            expression: "activeTab",
+          },
+        },
+        [
+          _vm._v(" "),
+          _c(
+            "b-tab",
+            {
+              staticClass: "d-flex flex-column h-100 p-0",
+              attrs: { title: _vm.$t("unread"), active: "" },
+            },
+            [
+              _c(
+                "div",
+                { staticClass: "overflow-auto flex-grow-1 h-100" },
+                [
+                  _vm.loading
+                    ? _c(
+                        "div",
+                        { staticClass: "d-flex justify-content-center p-5" },
+                        [_c("b-spinner", { attrs: { variant: "primary" } })],
+                        1
+                      )
+                    : _vm.notifications.length > 0
+                    ? _c(
+                        "b-list-group",
+                        [
+                          _vm._l(_vm.notifications, function (notification) {
+                            return _c("notification-item", {
+                              key: notification.notificationID,
+                              attrs: { notification: notification },
+                              on: {
+                                click: function ($event) {
+                                  return _vm.onNotificationClick(notification)
+                                },
+                                "mark-read": _vm.onMarkAsRead,
+                                "mark-unread": _vm.onMarkAsUnread,
+                                delete: _vm.onDeleteNotification,
+                              },
+                            })
+                          }),
+                          _vm._v(" "),
+                          _vm.hasMorePages
+                            ? _c(
+                                "div",
+                                { staticClass: "text-center my-3" },
+                                [
+                                  _c(
+                                    "b-button",
+                                    {
+                                      attrs: {
+                                        variant: "outline-primary",
+                                        size: "sm",
+                                        disabled: _vm.loadingMore,
+                                      },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.loadMore()
+                                        },
+                                      },
+                                    },
+                                    [
+                                      _vm.loadingMore
+                                        ? _c("b-spinner", {
+                                            attrs: { small: "" },
+                                          })
+                                        : _c("span", [
+                                            _vm._v(_vm._s(_vm.$t("loadMore"))),
+                                          ]),
+                                    ],
+                                    1
+                                  ),
+                                ],
+                                1
+                              )
+                            : _vm._e(),
+                        ],
+                        2
+                      )
+                    : _c(
+                        "div",
+                        { staticClass: "text-center p-5" },
+                        [
+                          _c("font-awesome-icon", {
+                            staticClass: "text-secondary mb-3",
+                            attrs: { icon: ["far", "bell"], size: "3x" },
+                          }),
+                          _vm._v(" "),
+                          _c("p", { staticClass: "text-secondary" }, [
+                            _vm._v(
+                              "\n            " +
+                                _vm._s(_vm.$t("empty")) +
+                                "\n          "
+                            ),
+                          ]),
+                          _vm._v(" "),
+                          _c("p", { staticClass: "text-muted small" }, [
+                            _vm._v(
+                              "\n            " +
+                                _vm._s(_vm.$t("emptyDescription")) +
+                                "\n          "
+                            ),
+                          ]),
+                        ],
+                        1
+                      ),
+                ],
+                1
+              ),
+            ]
+          ),
+          _vm._v(" "),
+          _c(
+            "b-tab",
+            {
+              staticClass: "d-flex flex-column h-100 p-0",
+              attrs: { title: _vm.$t("all") },
+            },
+            [
+              _c(
+                "div",
+                { staticClass: "overflow-auto flex-grow-1 h-100" },
+                [
+                  _vm.loading
+                    ? _c(
+                        "div",
+                        { staticClass: "d-flex justify-content-center p-5" },
+                        [_c("b-spinner", { attrs: { variant: "primary" } })],
+                        1
+                      )
+                    : _vm.notifications.length > 0
+                    ? _c(
+                        "b-list-group",
+                        [
+                          _vm._l(_vm.notifications, function (notification) {
+                            return _c("notification-item", {
+                              key: notification.notificationID,
+                              attrs: { notification: notification },
+                              on: {
+                                click: function ($event) {
+                                  return _vm.onNotificationClick(notification)
+                                },
+                                "mark-read": _vm.onMarkAsRead,
+                                delete: _vm.onDeleteNotification,
+                              },
+                            })
+                          }),
+                          _vm._v(" "),
+                          _vm.hasMorePages
+                            ? _c(
+                                "div",
+                                { staticClass: "text-center my-3" },
+                                [
+                                  _c(
+                                    "b-button",
+                                    {
+                                      attrs: {
+                                        variant: "outline-primary",
+                                        size: "sm",
+                                        disabled: _vm.loadingMore,
+                                      },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.loadMore()
+                                        },
+                                      },
+                                    },
+                                    [
+                                      _vm.loadingMore
+                                        ? _c("b-spinner", {
+                                            attrs: { small: "" },
+                                          })
+                                        : _c("span", [
+                                            _vm._v(_vm._s(_vm.$t("loadMore"))),
+                                          ]),
+                                    ],
+                                    1
+                                  ),
+                                ],
+                                1
+                              )
+                            : _vm._e(),
+                        ],
+                        2
+                      )
+                    : _c(
+                        "div",
+                        { staticClass: "text-center p-5" },
+                        [
+                          _c("font-awesome-icon", {
+                            staticClass: "text-secondary mb-3",
+                            attrs: { icon: ["far", "bell"], size: "3x" },
+                          }),
+                          _vm._v(" "),
+                          _c("p", { staticClass: "text-secondary" }, [
+                            _vm._v(
+                              "\n            " +
+                                _vm._s(_vm.$t("empty")) +
+                                "\n          "
+                            ),
+                          ]),
+                          _vm._v(" "),
+                          _c("p", { staticClass: "text-muted small" }, [
+                            _vm._v(
+                              "\n            " +
+                                _vm._s(_vm.$t("emptyDescription")) +
+                                "\n          "
+                            ),
+                          ]),
+                        ],
+                        1
+                      ),
+                ],
+                1
+              ),
+            ]
+          ),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$b = [];
+__vue_render__$b._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$b = undefined;
@@ -31971,13 +38952,94 @@ var script$a = {
 const __vue_script__$a = script$a;
 
 /* template */
-var __vue_render__$a = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-sidebar',{attrs:{"header-class":"d-flex align-items-center justify-content-between bg-white pr-2 pl-3 py-3","body-class":"d-flex flex-column overflow-hidden bg-white","sidebar-class":"notification-sidebar","bg-variant":"white","backdrop":_vm.isMobile,"backdrop-variant":"white","no-footer":"","right":"","shadow":"","no-close-on-route-change":"","no-close-on-esc":"","width":"400px"},scopedSlots:_vm._u([{key:"header",fn:function(){return [_c('h5',{staticClass:"text-primary mb-0"},[_c('b',[_vm._v(_vm._s(_vm.$t('title')))])]),_vm._v(" "),_c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.hover",value:({ title: _vm.$t('general:label.close'), delay: { show: 500, hide: 0 } }),expression:"{ title: $t('general:label.close'), delay: { show: 500, hide: 0 } }",modifiers:{"hover":true}}],staticClass:"d-flex align-items-center justify-content-center p-2 border-0 text-secondary",attrs:{"variant":"outline-light"},on:{"click":function($event){_vm.isVisible = false;}}},[_c('font-awesome-icon',{staticClass:"h6 mb-0",attrs:{"icon":['fas', 'times']}})],1)]},proxy:true}]),model:{value:(_vm.isVisible),callback:function ($$v) {_vm.isVisible=$$v;},expression:"isVisible"}},[_vm._v(" "),_c('notifications')],1)};
+var __vue_render__$a = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-sidebar",
+    {
+      attrs: {
+        "header-class":
+          "d-flex align-items-center justify-content-between bg-white pr-2 pl-3 py-3",
+        "body-class": "d-flex flex-column overflow-hidden bg-white",
+        "sidebar-class": "notification-sidebar",
+        "bg-variant": "white",
+        backdrop: _vm.isMobile,
+        "backdrop-variant": "white",
+        "no-footer": "",
+        right: "",
+        shadow: "",
+        "no-close-on-route-change": "",
+        "no-close-on-esc": "",
+        width: "400px",
+      },
+      scopedSlots: _vm._u([
+        {
+          key: "header",
+          fn: function () {
+            return [
+              _c("h5", { staticClass: "text-primary mb-0" }, [
+                _c("b", [_vm._v(_vm._s(_vm.$t("title")))]),
+              ]),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  directives: [
+                    {
+                      name: "b-tooltip",
+                      rawName: "v-b-tooltip.hover",
+                      value: {
+                        title: _vm.$t("general:label.close"),
+                        delay: { show: 500, hide: 0 },
+                      },
+                      expression:
+                        "{ title: $t('general:label.close'), delay: { show: 500, hide: 0 } }",
+                      modifiers: { hover: true },
+                    },
+                  ],
+                  staticClass:
+                    "d-flex align-items-center justify-content-center p-2 border-0 text-secondary",
+                  attrs: { variant: "outline-light" },
+                  on: {
+                    click: function ($event) {
+                      _vm.isVisible = false;
+                    },
+                  },
+                },
+                [
+                  _c("font-awesome-icon", {
+                    staticClass: "h6 mb-0",
+                    attrs: { icon: ["fas", "times"] },
+                  }),
+                ],
+                1
+              ),
+            ]
+          },
+          proxy: true,
+        },
+      ]),
+      model: {
+        value: _vm.isVisible,
+        callback: function ($$v) {
+          _vm.isVisible = $$v;
+        },
+        expression: "isVisible",
+      },
+    },
+    [_vm._v(" "), _c("notifications")],
+    1
+  )
+};
 var __vue_staticRenderFns__$a = [];
+__vue_render__$a._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$a = function (inject) {
     if (!inject) return
-    inject("data-v-3fd9a463_0", { source: ".b-sidebar-backdrop{opacity:.75!important}@media (min-width:1024px){.b-sidebar.notification-sidebar{top:calc(var(--topbar-height) + .5rem)!important;right:.5rem!important;height:calc(100% - var(--topbar-height) - 1rem)!important;border-radius:1rem!important;border:none!important;z-index:1048!important}.b-sidebar.notification-sidebar .b-sidebar-header{border-top-left-radius:1rem!important;border-top-right-radius:1rem!important}.b-sidebar.notification-sidebar .b-sidebar-body{border-bottom-left-radius:1rem!important;border-bottom-right-radius:1rem!important}}", map: undefined, media: undefined });
+    inject("data-v-24955a99_0", { source: ".b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n@media (min-width: 1024px) {\n.b-sidebar.notification-sidebar {\n    top: calc(var(--topbar-height) + 0.5rem) !important;\n    right: 0.5rem !important;\n    height: calc(100% - var(--topbar-height) - 1rem) !important;\n    border-radius: 1rem !important;\n    border: none !important;\n    z-index: 1048 !important;\n}\n.b-sidebar.notification-sidebar .b-sidebar-header {\n    border-top-left-radius: 1rem !important;\n    border-top-right-radius: 1rem !important;\n}\n.b-sidebar.notification-sidebar .b-sidebar-body {\n    border-bottom-left-radius: 1rem !important;\n    border-bottom-right-radius: 1rem !important;\n}\n}\n\n/*# sourceMappingURL=CNotificationSidebar.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/notifications/CNotificationSidebar.vue","CNotificationSidebar.vue"],"names":[],"mappings":"AAqHA;EACA,wBAAA;ACpHA;ADuHA;AACA;IACA,mDAAA;IACA,wBAAA;IACA,2DAAA;IACA,8BAAA;IACA,uBAAA;IACA,wBAAA;ACpHE;ADsHF;IACA,uCAAA;IACA,wCAAA;ACpHE;ADuHF;IACA,0CAAA;IACA,2CAAA;ACrHE;AACF;;AAEA,mDAAmD","file":"CNotificationSidebar.vue","sourcesContent":["<template>\n  <b-sidebar\n    v-model=\"isVisible\"\n    header-class=\"d-flex align-items-center justify-content-between bg-white pr-2 pl-3 py-3\"\n    body-class=\"d-flex flex-column overflow-hidden bg-white\"\n    sidebar-class=\"notification-sidebar\"\n    bg-variant=\"white\"\n    :backdrop=\"isMobile\"\n    backdrop-variant=\"white\"\n    no-footer\n    right\n    shadow\n    no-close-on-route-change\n    no-close-on-esc\n    width=\"400px\"\n  >\n    <template #header>\n      <h5\n        class=\"text-primary mb-0\"\n      >\n        <b>{{ $t('title') }}</b>\n      </h5>\n\n      <b-button\n        v-b-tooltip.hover=\"{ title: $t('general:label.close'), delay: { show: 500, hide: 0 } }\"\n        variant=\"outline-light\"\n        class=\"d-flex align-items-center justify-content-center p-2 border-0 text-secondary\"\n        @click=\"isVisible = false\"\n      >\n        <font-awesome-icon\n          :icon=\"['fas', 'times']\"\n          class=\"h6 mb-0\"\n        />\n      </b-button>\n    </template>\n\n    <notifications />\n  </b-sidebar>\n</template>\n\n<script lang=\"js\">\nimport Notifications from './Notifications.vue'\nimport { mapGetters, mapMutations } from 'vuex'\nimport { throttle } from 'lodash'\n\nexport default {\n  i18nOptions: {\n    namespaces: 'notifications',\n  },\n\n  components: {\n    Notifications,\n  },\n\n  data () {\n    return {\n      isMobile: false,\n    }\n  },\n\n  computed: {\n    ...mapGetters({\n      visible: 'notifications/visible',\n    }),\n\n    isVisible: {\n      get () {\n        return this.visible\n      },\n\n      set (visible) {\n        this.setVisible(visible)\n      },\n    },\n  },\n\n  watch: {\n    isVisible (visible) {\n      if (visible) {\n        this.$root.$emit('right-sidebar:opened', 'notifications')\n      }\n    },\n  },\n\n  created () {\n    this.$root.$on('right-sidebar:opened', this.handleSidebarOpened)\n  },\n\n  mounted () {\n    this.checkIfMobile()\n    window.addEventListener('resize', this.checkIfMobile)\n  },\n\n  beforeDestroy () {\n    this.$root.$off('right-sidebar:opened', this.handleSidebarOpened)\n    window.removeEventListener('resize', this.checkIfMobile)\n  },\n\n  methods: {\n    ...mapMutations({\n      setVisible: 'notifications/setVisible',\n    }),\n\n    checkIfMobile: throttle(function () {\n      this.isMobile = window.innerWidth < 1024\n    }, 500),\n\n    handleSidebarOpened (name) {\n      if (name !== 'notifications') {\n        this.isVisible = false\n      }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\">\n.b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n\n@media (min-width: 1024px) {\n  .b-sidebar.notification-sidebar {\n    top: calc(var(--topbar-height) + 0.5rem) !important;\n    right: 0.5rem !important;\n    height: calc(100% - var(--topbar-height) - 1rem) !important;\n    border-radius: 1rem !important;\n    border: none !important;\n    z-index: 1048 !important;\n\n    .b-sidebar-header {\n      border-top-left-radius: 1rem !important;\n      border-top-right-radius: 1rem !important;\n    }\n\n    .b-sidebar-body {\n      border-bottom-left-radius: 1rem !important;\n      border-bottom-right-radius: 1rem !important;\n    }\n  }\n}\n</style>\n",".b-sidebar-backdrop {\n  opacity: 0.75 !important;\n}\n\n@media (min-width: 1024px) {\n  .b-sidebar.notification-sidebar {\n    top: calc(var(--topbar-height) + 0.5rem) !important;\n    right: 0.5rem !important;\n    height: calc(100% - var(--topbar-height) - 1rem) !important;\n    border-radius: 1rem !important;\n    border: none !important;\n    z-index: 1048 !important;\n  }\n  .b-sidebar.notification-sidebar .b-sidebar-header {\n    border-top-left-radius: 1rem !important;\n    border-top-right-radius: 1rem !important;\n  }\n  .b-sidebar.notification-sidebar .b-sidebar-body {\n    border-bottom-left-radius: 1rem !important;\n    border-bottom-right-radius: 1rem !important;\n  }\n}\n\n/*# sourceMappingURL=CNotificationSidebar.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -32056,17 +39118,78 @@ var script$9 = {
 const __vue_script__$9 = script$9;
 
 /* template */
-var __vue_render__$9 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"hit-container p-2",on:{"click":function($event){return _vm.$emit('click')}}},[_c('b-list-group-item',{staticClass:"search-card border rounded bg-white p-2 position-relative",attrs:{"id":("search-hit-" + (_vm.hit.value.recordID))}},[_c('b-button',{staticClass:"open-in-new-tab border-0 text-secondary px-2",attrs:{"title":_vm.labels.openInNewTab || 'Open in new tab',"size":"sm","variant":"outline-extra-light"},on:{"click":function($event){$event.stopPropagation();return _vm.$emit('open-new-tab')}}},[_c('font-awesome-icon',{attrs:{"icon":['fas', 'external-link-alt']}})],1),_vm._v(" "),_c('label',{staticClass:"text-primary font-weight-bold mb-0"},[_vm._v("\n      "+_vm._s(_vm.hit.highlight.label)+"\n    ")]),_vm._v(" "),_c('p',{staticClass:"text-dark mb-0 text-truncate"},[_vm._v("\n      "+_vm._s(_vm.hit.highlight.value)+"\n    ")])],1)],1)};
+var __vue_render__$9 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    {
+      staticClass: "hit-container p-2",
+      on: {
+        click: function ($event) {
+          return _vm.$emit("click")
+        },
+      },
+    },
+    [
+      _c(
+        "b-list-group-item",
+        {
+          staticClass:
+            "search-card border rounded bg-white p-2 position-relative",
+          attrs: { id: "search-hit-" + _vm.hit.value.recordID },
+        },
+        [
+          _c(
+            "b-button",
+            {
+              staticClass: "open-in-new-tab border-0 text-secondary px-2",
+              attrs: {
+                title: _vm.labels.openInNewTab || "Open in new tab",
+                size: "sm",
+                variant: "outline-extra-light",
+              },
+              on: {
+                click: function ($event) {
+                  $event.stopPropagation();
+                  return _vm.$emit("open-new-tab")
+                },
+              },
+            },
+            [
+              _c("font-awesome-icon", {
+                attrs: { icon: ["fas", "external-link-alt"] },
+              }),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c("label", { staticClass: "text-primary font-weight-bold mb-0" }, [
+            _vm._v("\n      " + _vm._s(_vm.hit.highlight.label) + "\n    "),
+          ]),
+          _vm._v(" "),
+          _c("p", { staticClass: "text-dark mb-0 text-truncate" }, [
+            _vm._v("\n      " + _vm._s(_vm.hit.highlight.value) + "\n    "),
+          ]),
+        ],
+        1
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$9 = [];
+__vue_render__$9._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$9 = function (inject) {
     if (!inject) return
-    inject("data-v-834e07f0_0", { source: ".hit-container[data-v-834e07f0]{transition:background-color .2s ease;cursor:pointer}.hit-container .search-card[data-v-834e07f0]{transition:all .2s ease}.hit-container[data-v-834e07f0]:hover{background-color:var(--light)!important}.hit-container:hover .open-in-new-tab[data-v-834e07f0]{opacity:1!important;pointer-events:auto}.open-in-new-tab[data-v-834e07f0]{position:absolute;top:.5rem;right:.5rem;z-index:2;opacity:0;pointer-events:none;transition:opacity .2s ease}", map: undefined, media: undefined });
+    inject("data-v-5f9ae37a_0", { source: ".hit-container[data-v-5f9ae37a] {\n  transition: background-color 0.2s ease;\n  cursor: pointer;\n}\n.hit-container .search-card[data-v-5f9ae37a] {\n  transition: all 0.2s ease;\n}\n.hit-container[data-v-5f9ae37a]:hover {\n  background-color: var(--light) !important;\n}\n.hit-container:hover .open-in-new-tab[data-v-5f9ae37a] {\n  opacity: 1 !important;\n  pointer-events: auto;\n}\n.open-in-new-tab[data-v-5f9ae37a] {\n  position: absolute;\n  top: 0.5rem;\n  right: 0.5rem;\n  z-index: 2;\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity 0.2s ease;\n}\n\n/*# sourceMappingURL=RecordItem.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/search/items/RecordItem.vue","RecordItem.vue"],"names":[],"mappings":"AAsDA;EACA,sCAAA;EACA,eAAA;ACrDA;ADuDA;EACA,yBAAA;ACrDA;ADwDA;EACA,yCAAA;ACtDA;ADwDA;EACA,qBAAA;EACA,oBAAA;ACtDA;AD2DA;EACA,kBAAA;EACA,WAAA;EACA,aAAA;EACA,UAAA;EACA,UAAA;EACA,oBAAA;EACA,6BAAA;ACxDA;;AAEA,yCAAyC","file":"RecordItem.vue","sourcesContent":["<template>\n  <div\n    class=\"hit-container p-2\"\n    @click=\"$emit('click')\"\n  >\n    <b-list-group-item\n      :id=\"`search-hit-${hit.value.recordID}`\"\n      class=\"search-card border rounded bg-white p-2 position-relative\"\n    >\n      <b-button\n        class=\"open-in-new-tab border-0 text-secondary px-2\"\n        :title=\"labels.openInNewTab || 'Open in new tab'\"\n        size=\"sm\"\n        variant=\"outline-extra-light\"\n        @click.stop=\"$emit('open-new-tab')\"\n      >\n        <font-awesome-icon\n          :icon=\"['fas', 'external-link-alt']\"\n        />\n      </b-button>\n\n      <label class=\"text-primary font-weight-bold mb-0\">\n        {{ hit.highlight.label }}\n      </label>\n      <p class=\"text-dark mb-0 text-truncate\">\n        {{ hit.highlight.value }}\n      </p>\n    </b-list-group-item>\n  </div>\n</template>\n\n<script>\nimport { library } from '@fortawesome/fontawesome-svg-core'\nimport { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'\n\nlibrary.add(faExternalLinkAlt)\n\nexport default {\n  name: 'RecordItem',\n\n  props: {\n    hit: {\n      type: Object,\n      required: true,\n    },\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.hit-container {\n  transition: background-color 0.2s ease;\n  cursor: pointer;\n\n  .search-card {\n    transition: all 0.2s ease;\n  }\n\n  &:hover {\n    background-color: var(--light) !important;\n\n    .open-in-new-tab {\n      opacity: 1 !important;\n      pointer-events: auto;\n    }\n  }\n}\n\n.open-in-new-tab {\n  position: absolute;\n  top: 0.5rem;\n  right: 0.5rem;\n  z-index: 2;\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity 0.2s ease;\n}\n</style>\n",".hit-container {\n  transition: background-color 0.2s ease;\n  cursor: pointer;\n}\n.hit-container .search-card {\n  transition: all 0.2s ease;\n}\n.hit-container:hover {\n  background-color: var(--light) !important;\n}\n.hit-container:hover .open-in-new-tab {\n  opacity: 1 !important;\n  pointer-events: auto;\n}\n\n.open-in-new-tab {\n  position: absolute;\n  top: 0.5rem;\n  right: 0.5rem;\n  z-index: 2;\n  opacity: 0;\n  pointer-events: none;\n  transition: opacity 0.2s ease;\n}\n\n/*# sourceMappingURL=RecordItem.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$9 = "data-v-834e07f0";
+  const __vue_scope_id__$9 = "data-v-5f9ae37a";
   /* module identifier */
   const __vue_module_identifier__$9 = undefined;
   /* functional template */
@@ -32184,17 +39307,107 @@ var script$8 = {
 const __vue_script__$8 = script$8;
 
 /* template */
-var __vue_render__$8 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return (_vm.items.length > 0)?_c('div',[_c('div',{directives:[{name:"b-toggle",rawName:"v-b-toggle:[collapseId]",arg:_vm.collapseId}],staticClass:"group-header d-flex align-items-center justify-content-between text-muted shadow-sm",class:{ 'bg-white border-left border-bottom p-2 pr-3': _vm.subgroup, 'bg-light p-2 pr-3': !_vm.subgroup },style:({ top: _vm.subgroup ? '36px' : '0', zIndex: _vm.subgroup ? 10 : 20 })},[_c('div',{staticClass:"d-flex align-items-center gap-1"},[_c('b-badge',{staticStyle:{"font-size":"90%"},attrs:{"variant":_vm.subgroup ? 'extra-light' : 'primary'}},[_vm._v("\n        "+_vm._s(_vm.title)+"\n      ")]),_vm._v(" "),(_vm.labels.numberOfResults)?_c('span',{staticClass:"small text-muted"},[_vm._v("\n        "+_vm._s(_vm.labels.numberOfResults(_vm.items.length))+"\n      ")]):_vm._e()],1),_vm._v(" "),_c('font-awesome-icon',{staticClass:"chevron-icon ml-2 small",class:{ 'chevron-collapsed': !_vm.internalExpanded },attrs:{"icon":['fas', 'chevron-right']}})],1),_vm._v(" "),_c('b-collapse',{staticClass:"border-bottom",attrs:{"id":_vm.collapseId,"visible":""},model:{value:(_vm.internalExpanded),callback:function ($$v) {_vm.internalExpanded=$$v;},expression:"internalExpanded"}},[_vm._t("default")],2)],1):_vm._e()};
+var __vue_render__$8 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _vm.items.length > 0
+    ? _c(
+        "div",
+        [
+          _c(
+            "div",
+            {
+              directives: [
+                {
+                  name: "b-toggle",
+                  rawName: "v-b-toggle:[collapseId]",
+                  arg: _vm.collapseId,
+                },
+              ],
+              staticClass:
+                "group-header d-flex align-items-center justify-content-between text-muted shadow-sm",
+              class: {
+                "bg-white border-left border-bottom p-2 pr-3": _vm.subgroup,
+                "bg-light p-2 pr-3": !_vm.subgroup,
+              },
+              style: {
+                top: _vm.subgroup ? "36px" : "0",
+                zIndex: _vm.subgroup ? 10 : 20,
+              },
+            },
+            [
+              _c(
+                "div",
+                { staticClass: "d-flex align-items-center gap-1" },
+                [
+                  _c(
+                    "b-badge",
+                    {
+                      staticStyle: { "font-size": "90%" },
+                      attrs: {
+                        variant: _vm.subgroup ? "extra-light" : "primary",
+                      },
+                    },
+                    [_vm._v("\n        " + _vm._s(_vm.title) + "\n      ")]
+                  ),
+                  _vm._v(" "),
+                  _vm.labels.numberOfResults
+                    ? _c("span", { staticClass: "small text-muted" }, [
+                        _vm._v(
+                          "\n        " +
+                            _vm._s(
+                              _vm.labels.numberOfResults(_vm.items.length)
+                            ) +
+                            "\n      "
+                        ),
+                      ])
+                    : _vm._e(),
+                ],
+                1
+              ),
+              _vm._v(" "),
+              _c("font-awesome-icon", {
+                staticClass: "chevron-icon ml-2 small",
+                class: { "chevron-collapsed": !_vm.internalExpanded },
+                attrs: { icon: ["fas", "chevron-right"] },
+              }),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-collapse",
+            {
+              staticClass: "border-bottom",
+              attrs: { id: _vm.collapseId, visible: "" },
+              model: {
+                value: _vm.internalExpanded,
+                callback: function ($$v) {
+                  _vm.internalExpanded = $$v;
+                },
+                expression: "internalExpanded",
+              },
+            },
+            [_vm._t("default")],
+            2
+          ),
+        ],
+        1
+      )
+    : _vm._e()
+};
 var __vue_staticRenderFns__$8 = [];
+__vue_render__$8._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$8 = function (inject) {
     if (!inject) return
-    inject("data-v-4a69ac02_0", { source: ".group-header[data-v-4a69ac02]{position:sticky;cursor:pointer;transition:all .2s ease}.group-header .chevron-icon[data-v-4a69ac02]{transition:transform .2s ease;transform:rotate(90deg)}.group-header .chevron-collapsed[data-v-4a69ac02]{transform:rotate(0)}.group-header:hover .chevron-icon[data-v-4a69ac02]{color:var(--primary)!important}", map: undefined, media: undefined });
+    inject("data-v-c6f285b8_0", { source: ".group-header[data-v-c6f285b8] {\n  position: sticky;\n  cursor: pointer;\n  transition: all 0.2s ease;\n}\n.group-header .chevron-icon[data-v-c6f285b8] {\n  transition: transform 0.2s ease;\n  transform: rotate(90deg);\n}\n.group-header .chevron-collapsed[data-v-c6f285b8] {\n  transform: rotate(0deg);\n}\n.group-header:hover .chevron-icon[data-v-c6f285b8] {\n  color: var(--primary) !important;\n}\n\n/*# sourceMappingURL=ItemGroup.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/search/items/ItemGroup.vue","ItemGroup.vue"],"names":[],"mappings":"AAiGA;EACA,gBAAA;EACA,eAAA;EACA,yBAAA;AChGA;ADkGA;EACA,+BAAA;EACA,wBAAA;AChGA;ADmGA;EACA,uBAAA;ACjGA;ADqGA;EACA,gCAAA;ACnGA;;AAEA,wCAAwC","file":"ItemGroup.vue","sourcesContent":["<template>\n  <div\n    v-if=\"items.length > 0\"\n  >\n    <!-- Group Header -->\n    <div\n      v-b-toggle:[collapseId]\n      class=\"group-header d-flex align-items-center justify-content-between text-muted shadow-sm\"\n      :class=\"{ 'bg-white border-left border-bottom p-2 pr-3': subgroup, 'bg-light p-2 pr-3': !subgroup }\"\n      :style=\"{ top: subgroup ? '36px' : '0', zIndex: subgroup ? 10 : 20 }\"\n    >\n      <div class=\"d-flex align-items-center gap-1\">\n        <b-badge\n          :variant=\"subgroup ? 'extra-light' : 'primary'\"\n          style=\"font-size: 90%;\"\n        >\n          {{ title }}\n        </b-badge>\n        <span\n          v-if=\"labels.numberOfResults\"\n          class=\"small text-muted\"\n        >\n          {{ labels.numberOfResults(items.length) }}\n        </span>\n      </div>\n      <font-awesome-icon\n        :icon=\"['fas', 'chevron-right']\"\n        class=\"chevron-icon ml-2 small\"\n        :class=\"{ 'chevron-collapsed': !internalExpanded }\"\n      />\n    </div>\n    <!-- Group Content -->\n    <b-collapse\n      :id=\"collapseId\"\n      v-model=\"internalExpanded\"\n      visible\n      class=\"border-bottom\"\n    >\n      <slot />\n    </b-collapse>\n  </div>\n</template>\n\n<script>\nimport { library } from '@fortawesome/fontawesome-svg-core'\nimport { faChevronRight } from '@fortawesome/free-solid-svg-icons'\n\nlibrary.add(faChevronRight)\n\nexport default {\n  name: 'ItemGroup',\n\n  props: {\n    title: {\n      type: String,\n      required: true,\n    },\n    items: {\n      type: Array,\n      required: true,\n    },\n    collapseId: {\n      type: String,\n      required: true,\n    },\n    expanded: {\n      type: Boolean,\n      default: true,\n    },\n    subgroup: {\n      type: Boolean,\n      default: false,\n    },\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n  },\n\n  data () {\n    return {\n      internalExpanded: this.expanded,\n    }\n  },\n\n  watch: {\n    expanded (val) {\n      this.internalExpanded = val\n    },\n    internalExpanded (val) {\n      this.$emit('update:expanded', val)\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n.group-header {\n  position: sticky;\n  cursor: pointer;\n  transition: all 0.2s ease;\n\n  .chevron-icon {\n    transition: transform 0.2s ease;\n    transform: rotate(90deg);\n  }\n  \n  .chevron-collapsed {\n    transform: rotate(0deg);\n  }\n\n  &:hover {\n    .chevron-icon {\n      color: var(--primary) !important;\n    }\n  }\n}\n</style>\n",".group-header {\n  position: sticky;\n  cursor: pointer;\n  transition: all 0.2s ease;\n}\n.group-header .chevron-icon {\n  transition: transform 0.2s ease;\n  transform: rotate(90deg);\n}\n.group-header .chevron-collapsed {\n  transform: rotate(0deg);\n}\n.group-header:hover .chevron-icon {\n  color: var(--primary) !important;\n}\n\n/*# sourceMappingURL=ItemGroup.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$8 = "data-v-4a69ac02";
+  const __vue_scope_id__$8 = "data-v-c6f285b8";
   /* module identifier */
   const __vue_module_identifier__$8 = undefined;
   /* functional template */
@@ -32684,18 +39897,279 @@ var script$7 = {
 const __vue_script__$7 = script$7;
 
 /* template */
-var __vue_render__$7 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-modal',{attrs:{"hide-footer":"","hide-header":"","size":"lg","body-class":"p-0","content-class":"overflow-hidden border-0 shadow-lg","dialog-class":"search-modal-dialog"},on:{"shown":_vm.onShown},model:{value:(_vm.showModal),callback:function ($$v) {_vm.showModal=$$v;},expression:"showModal"}},[_c('div',{staticClass:"search-container d-flex flex-column",staticStyle:{"max-height":"70vh"}},[_c('div',{staticClass:"border-bottom"},[_c('c-input-search',{staticClass:"topbar-search-input",attrs:{"placeholder":_vm.labels.placeholder,"loading":_vm.loading,"submittable":""},on:{"search":_vm.submitSearch},model:{value:(_vm.query),callback:function ($$v) {_vm.query=$$v;},expression:"query"}})],1),_vm._v(" "),(_vm.query.length < 2 && _vm.recentSearches.length > 0)?[_c('div',{staticClass:"flex-grow-1 overflow-auto"},[_c('div',{staticClass:"px-3 py-2 bg-extra-light border-bottom d-flex align-items-center justify-content-between text-muted"},[_c('span',{staticClass:"small font-weight-bold text-uppercase"},[_vm._v(_vm._s(_vm.labels.recentSearches))]),_vm._v(" "),_c('b-button',{staticClass:"px-1 py-0 text-muted small border-0 shadow-none",attrs:{"variant":"outline-light"},on:{"click":_vm.clearRecentSearches}},[_vm._v("\n            "+_vm._s(_vm.labels.clearHistory)+"\n          ")])],1),_vm._v(" "),_vm._l((_vm.recentSearches),function(s,index){return _c('div',{key:index,staticClass:"recent-search-item d-flex align-items-center justify-content-between px-3 py-2 cursor-pointer",on:{"click":function($event){return _vm.useRecentSearch(s)}}},[_c('div',{staticClass:"d-flex align-items-center"},[_c('font-awesome-icon',{staticClass:"text-muted mr-3 small",attrs:{"icon":['fas', 'history']}}),_vm._v(" "),_c('span',{staticClass:"text-dark"},[_vm._v(_vm._s(s))])],1),_vm._v(" "),_c('b-button',{staticClass:"remove-btn px-2 text-muted small border-0 shadow-none",attrs:{"variant":"outline-extra-light"},on:{"click":function($event){$event.stopPropagation();return _vm.removeRecentSearch(index)}}},[_c('font-awesome-icon',{attrs:{"icon":['fas', 'times']}})],1)],1)})],2)]:_vm._e(),_vm._v(" "),(_vm.query.length >= 2 && (_vm.hasResults || _vm.hasSearched || !_vm.loading))?[(!_vm.hasResults && !_vm.loading && _vm.hasSearched)?_c('div',{staticClass:"flex-grow-1 overflow-auto p-5 text-center text-muted"},[_c('p',[_vm._v(_vm._s(_vm.labels.noResults()))])]):(_vm.hasResults)?_c('div',{ref:"resultsList",staticClass:"search-results-list d-flex flex-column flex-grow-1 overflow-auto"},_vm._l((_vm.sortedGroups),function(ns){return _c('div',{key:ns.id,staticClass:"border-bottom"},[_c('item-group',{attrs:{"title":ns.name,"items":ns.items,"collapse-id":("collapse-" + (ns.id)),"expanded":ns.expanded,"labels":_vm.labels},on:{"update:expanded":function (val) { return _vm.$set(_vm.expandedGroups, ns.id, val); }}},_vm._l((ns.sortedModules),function(mod){return _c('item-group',{key:mod.id,attrs:{"title":mod.name,"items":mod.items,"collapse-id":("collapse-" + (ns.id) + "-" + (mod.id)),"expanded":mod.expanded,"labels":_vm.labels,"subgroup":""},on:{"update:expanded":function (val) { return _vm.$set(_vm.expandedGroups, ((ns.id) + "-" + (mod.id)), val); }}},_vm._l((mod.items),function(hit){return _c('record-item',{key:hit.id,attrs:{"hit":hit,"labels":_vm.labels},on:{"click":function($event){return _vm.onResultClick(hit)},"open-new-tab":function($event){return _vm.onOpenNewTab(hit)}}})}),1)}),1)],1)}),0):_vm._e()]:_vm._e()],2)])};
+var __vue_render__$7 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-modal",
+    {
+      attrs: {
+        "hide-footer": "",
+        "hide-header": "",
+        size: "lg",
+        "body-class": "p-0",
+        "content-class": "overflow-hidden border-0 shadow-lg",
+        "dialog-class": "search-modal-dialog",
+      },
+      on: { shown: _vm.onShown },
+      model: {
+        value: _vm.showModal,
+        callback: function ($$v) {
+          _vm.showModal = $$v;
+        },
+        expression: "showModal",
+      },
+    },
+    [
+      _c(
+        "div",
+        {
+          staticClass: "search-container d-flex flex-column",
+          staticStyle: { "max-height": "70vh" },
+        },
+        [
+          _c(
+            "div",
+            { staticClass: "border-bottom" },
+            [
+              _c("c-input-search", {
+                staticClass: "topbar-search-input",
+                attrs: {
+                  placeholder: _vm.labels.placeholder,
+                  loading: _vm.loading,
+                  submittable: "",
+                },
+                on: { search: _vm.submitSearch },
+                model: {
+                  value: _vm.query,
+                  callback: function ($$v) {
+                    _vm.query = $$v;
+                  },
+                  expression: "query",
+                },
+              }),
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _vm.query.length < 2 && _vm.recentSearches.length > 0
+            ? [
+                _c(
+                  "div",
+                  { staticClass: "flex-grow-1 overflow-auto" },
+                  [
+                    _c(
+                      "div",
+                      {
+                        staticClass:
+                          "px-3 py-2 bg-extra-light border-bottom d-flex align-items-center justify-content-between text-muted",
+                      },
+                      [
+                        _c(
+                          "span",
+                          {
+                            staticClass:
+                              "small font-weight-bold text-uppercase",
+                          },
+                          [_vm._v(_vm._s(_vm.labels.recentSearches))]
+                        ),
+                        _vm._v(" "),
+                        _c(
+                          "b-button",
+                          {
+                            staticClass:
+                              "px-1 py-0 text-muted small border-0 shadow-none",
+                            attrs: { variant: "outline-light" },
+                            on: { click: _vm.clearRecentSearches },
+                          },
+                          [
+                            _vm._v(
+                              "\n            " +
+                                _vm._s(_vm.labels.clearHistory) +
+                                "\n          "
+                            ),
+                          ]
+                        ),
+                      ],
+                      1
+                    ),
+                    _vm._v(" "),
+                    _vm._l(_vm.recentSearches, function (s, index) {
+                      return _c(
+                        "div",
+                        {
+                          key: index,
+                          staticClass:
+                            "recent-search-item d-flex align-items-center justify-content-between px-3 py-2 cursor-pointer",
+                          on: {
+                            click: function ($event) {
+                              return _vm.useRecentSearch(s)
+                            },
+                          },
+                        },
+                        [
+                          _c(
+                            "div",
+                            { staticClass: "d-flex align-items-center" },
+                            [
+                              _c("font-awesome-icon", {
+                                staticClass: "text-muted mr-3 small",
+                                attrs: { icon: ["fas", "history"] },
+                              }),
+                              _vm._v(" "),
+                              _c("span", { staticClass: "text-dark" }, [
+                                _vm._v(_vm._s(s)),
+                              ]),
+                            ],
+                            1
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "b-button",
+                            {
+                              staticClass:
+                                "remove-btn px-2 text-muted small border-0 shadow-none",
+                              attrs: { variant: "outline-extra-light" },
+                              on: {
+                                click: function ($event) {
+                                  $event.stopPropagation();
+                                  return _vm.removeRecentSearch(index)
+                                },
+                              },
+                            },
+                            [
+                              _c("font-awesome-icon", {
+                                attrs: { icon: ["fas", "times"] },
+                              }),
+                            ],
+                            1
+                          ),
+                        ],
+                        1
+                      )
+                    }),
+                  ],
+                  2
+                ),
+              ]
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.query.length >= 2 &&
+          (_vm.hasResults || _vm.hasSearched || !_vm.loading)
+            ? [
+                !_vm.hasResults && !_vm.loading && _vm.hasSearched
+                  ? _c(
+                      "div",
+                      {
+                        staticClass:
+                          "flex-grow-1 overflow-auto p-5 text-center text-muted",
+                      },
+                      [_c("p", [_vm._v(_vm._s(_vm.labels.noResults()))])]
+                    )
+                  : _vm.hasResults
+                  ? _c(
+                      "div",
+                      {
+                        ref: "resultsList",
+                        staticClass:
+                          "search-results-list d-flex flex-column flex-grow-1 overflow-auto",
+                      },
+                      _vm._l(_vm.sortedGroups, function (ns) {
+                        return _c(
+                          "div",
+                          { key: ns.id, staticClass: "border-bottom" },
+                          [
+                            _c(
+                              "item-group",
+                              {
+                                attrs: {
+                                  title: ns.name,
+                                  items: ns.items,
+                                  "collapse-id": "collapse-" + ns.id,
+                                  expanded: ns.expanded,
+                                  labels: _vm.labels,
+                                },
+                                on: {
+                                  "update:expanded": function (val) {
+                                    return _vm.$set(
+                                      _vm.expandedGroups,
+                                      ns.id,
+                                      val
+                                    )
+                                  },
+                                },
+                              },
+                              _vm._l(ns.sortedModules, function (mod) {
+                                return _c(
+                                  "item-group",
+                                  {
+                                    key: mod.id,
+                                    attrs: {
+                                      title: mod.name,
+                                      items: mod.items,
+                                      "collapse-id":
+                                        "collapse-" + ns.id + "-" + mod.id,
+                                      expanded: mod.expanded,
+                                      labels: _vm.labels,
+                                      subgroup: "",
+                                    },
+                                    on: {
+                                      "update:expanded": function (val) {
+                                        return _vm.$set(
+                                          _vm.expandedGroups,
+                                          ns.id + "-" + mod.id,
+                                          val
+                                        )
+                                      },
+                                    },
+                                  },
+                                  _vm._l(mod.items, function (hit) {
+                                    return _c("record-item", {
+                                      key: hit.id,
+                                      attrs: { hit: hit, labels: _vm.labels },
+                                      on: {
+                                        click: function ($event) {
+                                          return _vm.onResultClick(hit)
+                                        },
+                                        "open-new-tab": function ($event) {
+                                          return _vm.onOpenNewTab(hit)
+                                        },
+                                      },
+                                    })
+                                  }),
+                                  1
+                                )
+                              }),
+                              1
+                            ),
+                          ],
+                          1
+                        )
+                      }),
+                      0
+                    )
+                  : _vm._e(),
+              ]
+            : _vm._e(),
+        ],
+        2
+      ),
+    ]
+  )
+};
 var __vue_staticRenderFns__$7 = [];
+__vue_render__$7._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$7 = function (inject) {
     if (!inject) return
-    inject("data-v-74d990c6_0", { source: ".text-truncate[data-v-74d990c6]{min-width:0}.cursor-pointer[data-v-74d990c6]{cursor:pointer}.recent-search-item[data-v-74d990c6]{transition:background-color .2s ease}.recent-search-item .remove-btn[data-v-74d990c6]{opacity:0;transition:opacity .2s ease,color .2s ease}.recent-search-item[data-v-74d990c6]:hover{background-color:var(--light)}.recent-search-item:hover .remove-btn[data-v-74d990c6]{opacity:1}", map: undefined, media: undefined })
-,inject("data-v-74d990c6_1", { source: ".search-modal-dialog{margin-top:calc(var(--topbar-height) + 1rem)!important;max-width:700px}.topbar-search-input input{border:none!important;background:0 0!important}.topbar-search-input .search-button{top:0!important;bottom:0!important;right:0!important;border-top:none!important;border-right:none!important;border-bottom:none!important}", map: undefined, media: undefined });
+    inject("data-v-37950692_0", { source: "/* Help labels truncate in flex row */\n.text-truncate[data-v-37950692] {\n  min-width: 0;\n}\n.cursor-pointer[data-v-37950692] {\n  cursor: pointer;\n}\n.recent-search-item[data-v-37950692] {\n  transition: background-color 0.2s ease;\n}\n.recent-search-item .remove-btn[data-v-37950692] {\n  opacity: 0;\n  transition: opacity 0.2s ease, color 0.2s ease;\n}\n.recent-search-item[data-v-37950692]:hover {\n  background-color: var(--light);\n}\n.recent-search-item:hover .remove-btn[data-v-37950692] {\n  opacity: 1;\n}\n\n/*# sourceMappingURL=CTopbarSearch.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/search/CTopbarSearch.vue","CTopbarSearch.vue"],"names":[],"mappings":"AAydA,qCAAA;AACA;EACA,YAAA;ACxdA;AD2dA;EACA,eAAA;ACxdA;AD2dA;EACA,sCAAA;ACxdA;AD0dA;EACA,UAAA;EACA,8CAAA;ACxdA;AD2dA;EACA,8BAAA;ACzdA;AD2dA;EACA,UAAA;ACzdA;;AAEA,4CAA4C","file":"CTopbarSearch.vue","sourcesContent":["<template>\n  <b-modal\n    v-model=\"showModal\"\n    hide-footer\n    hide-header\n    size=\"lg\"\n    body-class=\"p-0\"\n    content-class=\"overflow-hidden border-0 shadow-lg\"\n    dialog-class=\"search-modal-dialog\"\n    @shown=\"onShown\"\n  >\n    <div\n      class=\"search-container d-flex flex-column\"\n      style=\"max-height: 70vh;\"\n    >\n      <!-- Header / Input -->\n      <div\n        class=\"border-bottom\"\n      >\n        <c-input-search\n          v-model=\"query\"\n          :placeholder=\"labels.placeholder\"\n          :loading=\"loading\"\n          submittable\n          class=\"topbar-search-input\"\n          @search=\"submitSearch\"\n        />\n      </div>\n\n      <!-- Recent Searches -->\n      <template v-if=\"query.length < 2 && recentSearches.length > 0\">\n        <div class=\"flex-grow-1 overflow-auto\">\n          <div class=\"px-3 py-2 bg-extra-light border-bottom d-flex align-items-center justify-content-between text-muted\">\n            <span class=\"small font-weight-bold text-uppercase\">{{ labels.recentSearches }}</span>\n            <b-button\n              variant=\"outline-light\"\n              class=\"px-1 py-0 text-muted small border-0 shadow-none\"\n              @click=\"clearRecentSearches\"\n            >\n              {{ labels.clearHistory }}\n            </b-button>\n          </div>\n          <div\n            v-for=\"(s, index) in recentSearches\"\n            :key=\"index\"\n            class=\"recent-search-item d-flex align-items-center justify-content-between px-3 py-2 cursor-pointer\"\n            @click=\"useRecentSearch(s)\"\n          >\n            <div class=\"d-flex align-items-center\">\n              <font-awesome-icon\n                :icon=\"['fas', 'history']\"\n                class=\"text-muted mr-3 small\"\n              />\n              <span class=\"text-dark\">{{ s }}</span>\n            </div>\n            <b-button\n              variant=\"outline-extra-light\"\n              class=\"remove-btn px-2 text-muted small border-0 shadow-none\"\n              @click.stop=\"removeRecentSearch(index)\"\n            >\n              <font-awesome-icon\n                :icon=\"['fas', 'times']\"\n              />\n            </b-button>\n          </div>\n        </div>\n      </template>\n\n      <template v-if=\"query.length >= 2 && (hasResults || hasSearched || !loading)\">\n        <!-- Results List -->\n        <div\n          v-if=\"!hasResults && !loading && hasSearched\"\n          class=\"flex-grow-1 overflow-auto p-5 text-center text-muted\"\n        >\n          <p>{{ labels.noResults() }}</p>\n        </div>\n\n        <div\n          v-else-if=\"hasResults\"\n          ref=\"resultsList\"\n          class=\"search-results-list d-flex flex-column flex-grow-1 overflow-auto\"\n        >\n          <div\n            v-for=\"ns in sortedGroups\"\n            :key=\"ns.id\"\n            class=\"border-bottom\"\n          >\n            <item-group\n              :title=\"ns.name\"\n              :items=\"ns.items\"\n              :collapse-id=\"`collapse-${ns.id}`\"\n              :expanded=\"ns.expanded\"\n              :labels=\"labels\"\n              @update:expanded=\"(val) => $set(expandedGroups, ns.id, val)\"\n            >\n              <item-group\n                v-for=\"mod in ns.sortedModules\"\n                :key=\"mod.id\"\n                :title=\"mod.name\"\n                :items=\"mod.items\"\n                :collapse-id=\"`collapse-${ns.id}-${mod.id}`\"\n                :expanded=\"mod.expanded\"\n                :labels=\"labels\"\n                subgroup\n                @update:expanded=\"(val) => $set(expandedGroups, `${ns.id}-${mod.id}`, val)\"\n              >\n                <record-item\n                  v-for=\"hit in mod.items\"\n                  :key=\"hit.id\"\n                  :hit=\"hit\"\n                  :labels=\"labels\"\n                  @click=\"onResultClick(hit)\"\n                  @open-new-tab=\"onOpenNewTab(hit)\"\n                />\n              </item-group>\n            </item-group>\n          </div>\n        </div>\n      </template>\n    </div>\n  </b-modal>\n</template>\n\n<script>\nimport axios from 'axios'\nimport { library } from '@fortawesome/fontawesome-svg-core'\nimport { faTimes, faHistory } from '@fortawesome/free-solid-svg-icons'\nimport RecordItem from './items/RecordItem.vue'\nimport ItemGroup from './items/ItemGroup.vue'\nimport { CInputSearch } from '../input'\n\nlibrary.add(faTimes, faHistory)\n\nexport default {\n  name: 'CTopbarSearch',\n\n  components: {\n    RecordItem,\n    ItemGroup,\n    CInputSearch,\n  },\n\n  props: {\n    labels: {\n      type: Object,\n      default: () => ({\n        numberOfResults: (count) => `${count} results`,\n      }),\n    },\n  },\n\n  data () {\n    return {\n      showModal: false,\n      query: '',\n      loading: false,\n      results: [],\n      hasSearched: false,\n      recentSearches: [],\n      cancelRequest: null,\n      expandedGroups: {},\n    }\n  },\n\n  computed: {\n    // Get the current namespace slug from route params\n    currentNamespaceSlug () {\n      return this.$route.params.slug || ''\n    },\n\n    // All results as a flat list (used when not on a namespace)\n    allResults () {\n      return this.results\n        .map(hit => {\n          const highlight = this.getHitHighlight(hit)\n          return {\n            ...hit,\n            highlight,\n          }\n        })\n        .filter(hit => hit.highlight.label)\n    },\n\n    // Groups results by namespace and then by module, sorts by relevance/first appearance\n    sortedGroups () {\n      const currentNs = this.currentNamespaceSlug\n      const nsOrder = [] // Track order of first appearance for namespaces\n      const namespaces = {}\n\n      this.allResults.forEach(hit => {\n        const ns = hit.value.namespace || {}\n        const nsID = ns.namespaceID || 'unknown'\n        const nsSlug = ns.slug || nsID\n        const mod = hit.value.module || {}\n        const modID = mod.moduleID || 'unknown'\n\n        if (!namespaces[nsID]) {\n          namespaces[nsID] = {\n            id: nsID,\n            name: ns.name || nsSlug,\n            slug: nsSlug,\n            modules: {},\n            moduleOrder: [], // Track order of first appearance for modules within this NS\n            expanded: this.expandedGroups[nsID] !== false,\n          }\n          nsOrder.push(nsID)\n        }\n\n        const nsObj = namespaces[nsID]\n        if (!nsObj.modules[modID]) {\n          nsObj.modules[modID] = {\n            id: modID,\n            name: mod.name || modID,\n            items: [],\n            expanded: this.expandedGroups[`${nsID}-${modID}`] !== false,\n          }\n          nsObj.moduleOrder.push(modID)\n        }\n\n        nsObj.modules[modID].items.push(hit)\n      })\n\n      // Convert to array and sort namespaces\n      return nsOrder\n        .map(nsID => {\n          const ns = namespaces[nsID]\n          // Convert modules to sorted array\n          ns.sortedModules = ns.moduleOrder.map(modID => ns.modules[modID])\n          // Add total item count for NS badge\n          ns.items = ns.sortedModules.reduce((acc, mod) => acc.concat(mod.items), [])\n          return ns\n        })\n        .sort((a, b) => {\n          // Current namespace always first\n          if (a.slug === currentNs || a.id === currentNs) return -1\n          if (b.slug === currentNs || b.id === currentNs) return 1\n          // Otherwise keep original order (relevance)\n          return 0\n        })\n    },\n\n    // Check if there are any results at all\n    hasResults () {\n      return this.allResults.length > 0\n    },\n  },\n\n  watch: {\n    showModal (val) {\n      if (val) {\n        this.query = ''\n        this.results = []\n        this.hasSearched = false\n      }\n    },\n    query (newVal) {\n      // Clear results when query is cleared or too short\n      if (newVal.length < 2) {\n        this.loading = false\n        this.results = []\n        this.hasSearched = false\n      }\n    },\n  },\n\n\n  mounted () {\n    window.addEventListener('keydown', this.handleKeydown)\n    this.$root.$on('search:open', this.openSearch)\n    this.loadRecentSearches()\n  },\n\n  beforeDestroy () {\n    window.removeEventListener('keydown', this.handleKeydown)\n    this.$root.$off('search:open', this.openSearch)\n  },\n\n  methods: {\n    openSearch () {\n      this.showModal = true\n    },\n\n    onShown () {\n      if (this.$refs.searchInput) {\n        this.$refs.searchInput.focus()\n      }\n    },\n\n    closeSearch () {\n      this.showModal = false\n    },\n\n    handleKeydown (e) {\n      // Global shortcut to open search\n      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {\n        e.preventDefault()\n        this.openSearch()\n        return\n      }\n\n      // Escape to close\n      if (this.showModal && e.key === 'Escape') {\n        this.closeSearch()\n      }\n    },\n\n    loadRecentSearches () {\n      const saved = localStorage.getItem('discovery-recent-searches')\n      if (saved) {\n        try {\n          this.recentSearches = JSON.parse(saved)\n        } catch (e) {\n          this.recentSearches = []\n        }\n      }\n    },\n\n    addToRecent (q) {\n      if (!q || q.length < 2) return\n      const list = [q, ...this.recentSearches.filter(s => s !== q)].slice(0, 5)\n      this.recentSearches = list\n      localStorage.setItem('discovery-recent-searches', JSON.stringify(list))\n    },\n\n    clearRecentSearches () {\n      this.recentSearches = []\n      localStorage.removeItem('discovery-recent-searches')\n    },\n\n    removeRecentSearch (index) {\n      this.recentSearches.splice(index, 1)\n      localStorage.setItem('discovery-recent-searches', JSON.stringify(this.recentSearches))\n    },\n\n    useRecentSearch (s) {\n      this.query = s\n      this.submitSearch()\n    },\n\n    submitSearch () {\n      if (this.query.length >= 2) {\n        this.addToRecent(this.query)\n        this.loading = true\n        this.performSearch(this.query)\n      }\n    },\n\n    async performSearch (query) {\n      if (query.length < 2) {\n        return\n      }\n\n      // Cancel any pending request\n      if (this.cancelRequest) {\n        this.cancelRequest()\n      }\n\n      this.loading = true\n\n      const { response, cancel } = this.$DiscoveryAPI.queryCancellable({\n        query,\n        resourceTypes: ['compose:record'],\n        size: 20,\n      })\n\n      this.cancelRequest = cancel\n\n      try {\n        const { hits = [] } = await response()\n\n        this.results = hits || []\n      } catch (e) {\n        // Ignore cancel errors, they're expected when cancelling\n        if (axios.isCancel(e)) {\n          return\n        }\n        console.error('Search failed', e)\n        this.results = []\n      } finally {\n        this.loading = false\n        this.hasSearched = true\n      }\n    },\n\n    getHitHighlight (hit) {\n      const matchingFields = hit.value.matching_fields || {}\n      const fieldName = Object.keys(matchingFields)[0]\n      const values = hit.value.values || []\n\n      // Use matching_fields to identify which field matched, then get its clean value\n      const field = fieldName\n        ? values.find(v => v.name === fieldName)\n        : values[0]\n\n      return {\n        label: field ? (field.label || field.name) : '',\n        value: field && field.value ? field.value[0] : '',\n      }\n    },\n\n    async resolveRecordRoute (hit) {\n      const { recordID, module, namespace } = hit.value\n      const { namespaceID } = namespace\n      const { moduleID } = module\n\n      const ns = await this.$ComposeAPI.namespaceRead({ namespaceID })\n      if (!ns) {\n        this.toastDanger(this.labels.notFoundNamespace)\n        return null\n      }\n\n      const slug = ns.slug || ns.namespaceID\n\n      const pages = await this.$ComposeAPI.pageList({ namespaceID, moduleID })\n      const recordPage = (pages.set || []).find(p => p.moduleID === moduleID)\n\n      if (!recordPage) {\n        this.toastDanger(this.labels.notFoundPage)\n        return null\n      }\n\n      return {\n        name: 'page.record',\n        params: { slug, pageID: recordPage.pageID, recordID },\n      }\n    },\n\n    async onResultClick (hit) {\n      if (hit.type !== 'compose:record') return\n\n      this.closeSearch()\n      this.addToRecent(this.query)\n\n      try {\n        const route = await this.resolveRecordRoute(hit)\n        if (!route) return\n\n        const isPagesRoute = this.$route && (['pages', 'page', 'page.record', 'page.record.edit', 'page.record.create'].includes(this.$route.name))\n        const sameNamespace = route.params.slug === this.$route.params.slug\n\n        if (isPagesRoute && sameNamespace) {\n          this.$root.$emit('show-record-modal', {\n            recordID: route.params.recordID,\n            recordPageID: route.params.pageID,\n          })\n        } else {\n          this.$router.push(route)\n        }\n      } catch (e) {\n        this.toastErrorHandler(this.labels.recordRedirectError)(e)\n      }\n    },\n\n    async onOpenNewTab (hit) {\n      if (hit.type !== 'compose:record') return\n\n      this.addToRecent(this.query)\n\n      try {\n        const route = await this.resolveRecordRoute(hit)\n        if (!route) return\n\n        const url = this.$router.resolve(route).href\n        window.open(url, '_blank')\n      } catch (e) {\n        this.toastErrorHandler(this.labels.recordRedirectError)(e)\n      }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n  /* Help labels truncate in flex row */\n.text-truncate {\n  min-width: 0;\n}\n\n.cursor-pointer {\n  cursor: pointer;\n}\n\n.recent-search-item {\n  transition: background-color 0.2s ease;\n\n  .remove-btn {\n    opacity: 0;\n    transition: opacity 0.2s ease, color 0.2s ease;\n  }\n\n  &:hover {\n    background-color: var(--light);\n\n    .remove-btn {\n      opacity: 1;\n    }\n  }\n}\n</style>\n\n<style lang=\"scss\">\n.search-modal-dialog {\n  margin-top: calc(var(--topbar-height) + 1rem) !important;\n  max-width: 700px;\n}\n\n.topbar-search-input {\n  input {\n    border: none !important;\n    background: transparent !important;\n  }\n\n  .search-button {\n    top: 0 !important;\n    bottom: 0 !important;\n    right: 0 !important;\n    border-top: none !important;\n    border-right: none !important;\n    border-bottom: none !important;\n  }\n}\n</style>\n","/* Help labels truncate in flex row */\n.text-truncate {\n  min-width: 0;\n}\n\n.cursor-pointer {\n  cursor: pointer;\n}\n\n.recent-search-item {\n  transition: background-color 0.2s ease;\n}\n.recent-search-item .remove-btn {\n  opacity: 0;\n  transition: opacity 0.2s ease, color 0.2s ease;\n}\n.recent-search-item:hover {\n  background-color: var(--light);\n}\n.recent-search-item:hover .remove-btn {\n  opacity: 1;\n}\n\n/*# sourceMappingURL=CTopbarSearch.vue.map */"]}, media: undefined })
+,inject("data-v-37950692_1", { source: ".search-modal-dialog {\n  margin-top: calc(var(--topbar-height) + 1rem) !important;\n  max-width: 700px;\n}\n.topbar-search-input input {\n  border: none !important;\n  background: transparent !important;\n}\n.topbar-search-input .search-button {\n  top: 0 !important;\n  bottom: 0 !important;\n  right: 0 !important;\n  border-top: none !important;\n  border-right: none !important;\n  border-bottom: none !important;\n}\n\n/*# sourceMappingURL=CTopbarSearch.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/search/CTopbarSearch.vue","CTopbarSearch.vue"],"names":[],"mappings":"AAqfA;EACA,wDAAA;EACA,gBAAA;ACpfA;ADwfA;EACA,uBAAA;EACA,kCAAA;ACrfA;ADwfA;EACA,iBAAA;EACA,oBAAA;EACA,mBAAA;EACA,2BAAA;EACA,6BAAA;EACA,8BAAA;ACtfA;;AAEA,4CAA4C","file":"CTopbarSearch.vue","sourcesContent":["<template>\n  <b-modal\n    v-model=\"showModal\"\n    hide-footer\n    hide-header\n    size=\"lg\"\n    body-class=\"p-0\"\n    content-class=\"overflow-hidden border-0 shadow-lg\"\n    dialog-class=\"search-modal-dialog\"\n    @shown=\"onShown\"\n  >\n    <div\n      class=\"search-container d-flex flex-column\"\n      style=\"max-height: 70vh;\"\n    >\n      <!-- Header / Input -->\n      <div\n        class=\"border-bottom\"\n      >\n        <c-input-search\n          v-model=\"query\"\n          :placeholder=\"labels.placeholder\"\n          :loading=\"loading\"\n          submittable\n          class=\"topbar-search-input\"\n          @search=\"submitSearch\"\n        />\n      </div>\n\n      <!-- Recent Searches -->\n      <template v-if=\"query.length < 2 && recentSearches.length > 0\">\n        <div class=\"flex-grow-1 overflow-auto\">\n          <div class=\"px-3 py-2 bg-extra-light border-bottom d-flex align-items-center justify-content-between text-muted\">\n            <span class=\"small font-weight-bold text-uppercase\">{{ labels.recentSearches }}</span>\n            <b-button\n              variant=\"outline-light\"\n              class=\"px-1 py-0 text-muted small border-0 shadow-none\"\n              @click=\"clearRecentSearches\"\n            >\n              {{ labels.clearHistory }}\n            </b-button>\n          </div>\n          <div\n            v-for=\"(s, index) in recentSearches\"\n            :key=\"index\"\n            class=\"recent-search-item d-flex align-items-center justify-content-between px-3 py-2 cursor-pointer\"\n            @click=\"useRecentSearch(s)\"\n          >\n            <div class=\"d-flex align-items-center\">\n              <font-awesome-icon\n                :icon=\"['fas', 'history']\"\n                class=\"text-muted mr-3 small\"\n              />\n              <span class=\"text-dark\">{{ s }}</span>\n            </div>\n            <b-button\n              variant=\"outline-extra-light\"\n              class=\"remove-btn px-2 text-muted small border-0 shadow-none\"\n              @click.stop=\"removeRecentSearch(index)\"\n            >\n              <font-awesome-icon\n                :icon=\"['fas', 'times']\"\n              />\n            </b-button>\n          </div>\n        </div>\n      </template>\n\n      <template v-if=\"query.length >= 2 && (hasResults || hasSearched || !loading)\">\n        <!-- Results List -->\n        <div\n          v-if=\"!hasResults && !loading && hasSearched\"\n          class=\"flex-grow-1 overflow-auto p-5 text-center text-muted\"\n        >\n          <p>{{ labels.noResults() }}</p>\n        </div>\n\n        <div\n          v-else-if=\"hasResults\"\n          ref=\"resultsList\"\n          class=\"search-results-list d-flex flex-column flex-grow-1 overflow-auto\"\n        >\n          <div\n            v-for=\"ns in sortedGroups\"\n            :key=\"ns.id\"\n            class=\"border-bottom\"\n          >\n            <item-group\n              :title=\"ns.name\"\n              :items=\"ns.items\"\n              :collapse-id=\"`collapse-${ns.id}`\"\n              :expanded=\"ns.expanded\"\n              :labels=\"labels\"\n              @update:expanded=\"(val) => $set(expandedGroups, ns.id, val)\"\n            >\n              <item-group\n                v-for=\"mod in ns.sortedModules\"\n                :key=\"mod.id\"\n                :title=\"mod.name\"\n                :items=\"mod.items\"\n                :collapse-id=\"`collapse-${ns.id}-${mod.id}`\"\n                :expanded=\"mod.expanded\"\n                :labels=\"labels\"\n                subgroup\n                @update:expanded=\"(val) => $set(expandedGroups, `${ns.id}-${mod.id}`, val)\"\n              >\n                <record-item\n                  v-for=\"hit in mod.items\"\n                  :key=\"hit.id\"\n                  :hit=\"hit\"\n                  :labels=\"labels\"\n                  @click=\"onResultClick(hit)\"\n                  @open-new-tab=\"onOpenNewTab(hit)\"\n                />\n              </item-group>\n            </item-group>\n          </div>\n        </div>\n      </template>\n    </div>\n  </b-modal>\n</template>\n\n<script>\nimport axios from 'axios'\nimport { library } from '@fortawesome/fontawesome-svg-core'\nimport { faTimes, faHistory } from '@fortawesome/free-solid-svg-icons'\nimport RecordItem from './items/RecordItem.vue'\nimport ItemGroup from './items/ItemGroup.vue'\nimport { CInputSearch } from '../input'\n\nlibrary.add(faTimes, faHistory)\n\nexport default {\n  name: 'CTopbarSearch',\n\n  components: {\n    RecordItem,\n    ItemGroup,\n    CInputSearch,\n  },\n\n  props: {\n    labels: {\n      type: Object,\n      default: () => ({\n        numberOfResults: (count) => `${count} results`,\n      }),\n    },\n  },\n\n  data () {\n    return {\n      showModal: false,\n      query: '',\n      loading: false,\n      results: [],\n      hasSearched: false,\n      recentSearches: [],\n      cancelRequest: null,\n      expandedGroups: {},\n    }\n  },\n\n  computed: {\n    // Get the current namespace slug from route params\n    currentNamespaceSlug () {\n      return this.$route.params.slug || ''\n    },\n\n    // All results as a flat list (used when not on a namespace)\n    allResults () {\n      return this.results\n        .map(hit => {\n          const highlight = this.getHitHighlight(hit)\n          return {\n            ...hit,\n            highlight,\n          }\n        })\n        .filter(hit => hit.highlight.label)\n    },\n\n    // Groups results by namespace and then by module, sorts by relevance/first appearance\n    sortedGroups () {\n      const currentNs = this.currentNamespaceSlug\n      const nsOrder = [] // Track order of first appearance for namespaces\n      const namespaces = {}\n\n      this.allResults.forEach(hit => {\n        const ns = hit.value.namespace || {}\n        const nsID = ns.namespaceID || 'unknown'\n        const nsSlug = ns.slug || nsID\n        const mod = hit.value.module || {}\n        const modID = mod.moduleID || 'unknown'\n\n        if (!namespaces[nsID]) {\n          namespaces[nsID] = {\n            id: nsID,\n            name: ns.name || nsSlug,\n            slug: nsSlug,\n            modules: {},\n            moduleOrder: [], // Track order of first appearance for modules within this NS\n            expanded: this.expandedGroups[nsID] !== false,\n          }\n          nsOrder.push(nsID)\n        }\n\n        const nsObj = namespaces[nsID]\n        if (!nsObj.modules[modID]) {\n          nsObj.modules[modID] = {\n            id: modID,\n            name: mod.name || modID,\n            items: [],\n            expanded: this.expandedGroups[`${nsID}-${modID}`] !== false,\n          }\n          nsObj.moduleOrder.push(modID)\n        }\n\n        nsObj.modules[modID].items.push(hit)\n      })\n\n      // Convert to array and sort namespaces\n      return nsOrder\n        .map(nsID => {\n          const ns = namespaces[nsID]\n          // Convert modules to sorted array\n          ns.sortedModules = ns.moduleOrder.map(modID => ns.modules[modID])\n          // Add total item count for NS badge\n          ns.items = ns.sortedModules.reduce((acc, mod) => acc.concat(mod.items), [])\n          return ns\n        })\n        .sort((a, b) => {\n          // Current namespace always first\n          if (a.slug === currentNs || a.id === currentNs) return -1\n          if (b.slug === currentNs || b.id === currentNs) return 1\n          // Otherwise keep original order (relevance)\n          return 0\n        })\n    },\n\n    // Check if there are any results at all\n    hasResults () {\n      return this.allResults.length > 0\n    },\n  },\n\n  watch: {\n    showModal (val) {\n      if (val) {\n        this.query = ''\n        this.results = []\n        this.hasSearched = false\n      }\n    },\n    query (newVal) {\n      // Clear results when query is cleared or too short\n      if (newVal.length < 2) {\n        this.loading = false\n        this.results = []\n        this.hasSearched = false\n      }\n    },\n  },\n\n\n  mounted () {\n    window.addEventListener('keydown', this.handleKeydown)\n    this.$root.$on('search:open', this.openSearch)\n    this.loadRecentSearches()\n  },\n\n  beforeDestroy () {\n    window.removeEventListener('keydown', this.handleKeydown)\n    this.$root.$off('search:open', this.openSearch)\n  },\n\n  methods: {\n    openSearch () {\n      this.showModal = true\n    },\n\n    onShown () {\n      if (this.$refs.searchInput) {\n        this.$refs.searchInput.focus()\n      }\n    },\n\n    closeSearch () {\n      this.showModal = false\n    },\n\n    handleKeydown (e) {\n      // Global shortcut to open search\n      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {\n        e.preventDefault()\n        this.openSearch()\n        return\n      }\n\n      // Escape to close\n      if (this.showModal && e.key === 'Escape') {\n        this.closeSearch()\n      }\n    },\n\n    loadRecentSearches () {\n      const saved = localStorage.getItem('discovery-recent-searches')\n      if (saved) {\n        try {\n          this.recentSearches = JSON.parse(saved)\n        } catch (e) {\n          this.recentSearches = []\n        }\n      }\n    },\n\n    addToRecent (q) {\n      if (!q || q.length < 2) return\n      const list = [q, ...this.recentSearches.filter(s => s !== q)].slice(0, 5)\n      this.recentSearches = list\n      localStorage.setItem('discovery-recent-searches', JSON.stringify(list))\n    },\n\n    clearRecentSearches () {\n      this.recentSearches = []\n      localStorage.removeItem('discovery-recent-searches')\n    },\n\n    removeRecentSearch (index) {\n      this.recentSearches.splice(index, 1)\n      localStorage.setItem('discovery-recent-searches', JSON.stringify(this.recentSearches))\n    },\n\n    useRecentSearch (s) {\n      this.query = s\n      this.submitSearch()\n    },\n\n    submitSearch () {\n      if (this.query.length >= 2) {\n        this.addToRecent(this.query)\n        this.loading = true\n        this.performSearch(this.query)\n      }\n    },\n\n    async performSearch (query) {\n      if (query.length < 2) {\n        return\n      }\n\n      // Cancel any pending request\n      if (this.cancelRequest) {\n        this.cancelRequest()\n      }\n\n      this.loading = true\n\n      const { response, cancel } = this.$DiscoveryAPI.queryCancellable({\n        query,\n        resourceTypes: ['compose:record'],\n        size: 20,\n      })\n\n      this.cancelRequest = cancel\n\n      try {\n        const { hits = [] } = await response()\n\n        this.results = hits || []\n      } catch (e) {\n        // Ignore cancel errors, they're expected when cancelling\n        if (axios.isCancel(e)) {\n          return\n        }\n        console.error('Search failed', e)\n        this.results = []\n      } finally {\n        this.loading = false\n        this.hasSearched = true\n      }\n    },\n\n    getHitHighlight (hit) {\n      const matchingFields = hit.value.matching_fields || {}\n      const fieldName = Object.keys(matchingFields)[0]\n      const values = hit.value.values || []\n\n      // Use matching_fields to identify which field matched, then get its clean value\n      const field = fieldName\n        ? values.find(v => v.name === fieldName)\n        : values[0]\n\n      return {\n        label: field ? (field.label || field.name) : '',\n        value: field && field.value ? field.value[0] : '',\n      }\n    },\n\n    async resolveRecordRoute (hit) {\n      const { recordID, module, namespace } = hit.value\n      const { namespaceID } = namespace\n      const { moduleID } = module\n\n      const ns = await this.$ComposeAPI.namespaceRead({ namespaceID })\n      if (!ns) {\n        this.toastDanger(this.labels.notFoundNamespace)\n        return null\n      }\n\n      const slug = ns.slug || ns.namespaceID\n\n      const pages = await this.$ComposeAPI.pageList({ namespaceID, moduleID })\n      const recordPage = (pages.set || []).find(p => p.moduleID === moduleID)\n\n      if (!recordPage) {\n        this.toastDanger(this.labels.notFoundPage)\n        return null\n      }\n\n      return {\n        name: 'page.record',\n        params: { slug, pageID: recordPage.pageID, recordID },\n      }\n    },\n\n    async onResultClick (hit) {\n      if (hit.type !== 'compose:record') return\n\n      this.closeSearch()\n      this.addToRecent(this.query)\n\n      try {\n        const route = await this.resolveRecordRoute(hit)\n        if (!route) return\n\n        const isPagesRoute = this.$route && (['pages', 'page', 'page.record', 'page.record.edit', 'page.record.create'].includes(this.$route.name))\n        const sameNamespace = route.params.slug === this.$route.params.slug\n\n        if (isPagesRoute && sameNamespace) {\n          this.$root.$emit('show-record-modal', {\n            recordID: route.params.recordID,\n            recordPageID: route.params.pageID,\n          })\n        } else {\n          this.$router.push(route)\n        }\n      } catch (e) {\n        this.toastErrorHandler(this.labels.recordRedirectError)(e)\n      }\n    },\n\n    async onOpenNewTab (hit) {\n      if (hit.type !== 'compose:record') return\n\n      this.addToRecent(this.query)\n\n      try {\n        const route = await this.resolveRecordRoute(hit)\n        if (!route) return\n\n        const url = this.$router.resolve(route).href\n        window.open(url, '_blank')\n      } catch (e) {\n        this.toastErrorHandler(this.labels.recordRedirectError)(e)\n      }\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n  /* Help labels truncate in flex row */\n.text-truncate {\n  min-width: 0;\n}\n\n.cursor-pointer {\n  cursor: pointer;\n}\n\n.recent-search-item {\n  transition: background-color 0.2s ease;\n\n  .remove-btn {\n    opacity: 0;\n    transition: opacity 0.2s ease, color 0.2s ease;\n  }\n\n  &:hover {\n    background-color: var(--light);\n\n    .remove-btn {\n      opacity: 1;\n    }\n  }\n}\n</style>\n\n<style lang=\"scss\">\n.search-modal-dialog {\n  margin-top: calc(var(--topbar-height) + 1rem) !important;\n  max-width: 700px;\n}\n\n.topbar-search-input {\n  input {\n    border: none !important;\n    background: transparent !important;\n  }\n\n  .search-button {\n    top: 0 !important;\n    bottom: 0 !important;\n    right: 0 !important;\n    border-top: none !important;\n    border-right: none !important;\n    border-bottom: none !important;\n  }\n}\n</style>\n",".search-modal-dialog {\n  margin-top: calc(var(--topbar-height) + 1rem) !important;\n  max-width: 700px;\n}\n\n.topbar-search-input input {\n  border: none !important;\n  background: transparent !important;\n}\n.topbar-search-input .search-button {\n  top: 0 !important;\n  bottom: 0 !important;\n  right: 0 !important;\n  border-top: none !important;\n  border-right: none !important;\n  border-bottom: none !important;\n}\n\n/*# sourceMappingURL=CTopbarSearch.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$7 = "data-v-74d990c6";
+  const __vue_scope_id__$7 = "data-v-37950692";
   /* module identifier */
   const __vue_module_identifier__$7 = undefined;
   /* functional template */
@@ -32753,17 +40227,51 @@ var script$6 = {
 const __vue_script__$6 = script$6;
 
 /* template */
-var __vue_render__$6 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-button',{directives:[{name:"b-tooltip",rawName:"v-b-tooltip.hover",value:({ title: _vm.labels.search || 'Search', delay: { show: 500, hide: 0 } }),expression:"{ title: labels.search || 'Search', delay: { show: 500, hide: 0 } }",modifiers:{"hover":true}}],staticClass:"nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center",attrs:{"variant":"outline-extra-light","size":"lg"},on:{"click":_vm.openSearch}},[_c('font-awesome-icon',{staticClass:"text-dark",attrs:{"icon":['fas', 'search']}})],1)};
+var __vue_render__$6 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-button",
+    {
+      directives: [
+        {
+          name: "b-tooltip",
+          rawName: "v-b-tooltip.hover",
+          value: {
+            title: _vm.labels.search || "Search",
+            delay: { show: 500, hide: 0 },
+          },
+          expression:
+            "{ title: labels.search || 'Search', delay: { show: 500, hide: 0 } }",
+          modifiers: { hover: true },
+        },
+      ],
+      staticClass:
+        "nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center",
+      attrs: { variant: "outline-extra-light", size: "lg" },
+      on: { click: _vm.openSearch },
+    },
+    [
+      _c("font-awesome-icon", {
+        staticClass: "text-dark",
+        attrs: { icon: ["fas", "search"] },
+      }),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$6 = [];
+__vue_render__$6._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$6 = function (inject) {
     if (!inject) return
-    inject("data-v-5487b54a_0", { source: ".nav-icon[data-v-5487b54a]{width:calc(var(--topbar-height) - 24px)!important;height:calc(var(--topbar-height) - 24px)!important;padding:0!important}", map: undefined, media: undefined });
+    inject("data-v-24c0dbb2_0", { source: ".nav-icon[data-v-24c0dbb2] {\n  width: calc(var(--topbar-height) - 24px) !important;\n  height: calc(var(--topbar-height) - 24px) !important;\n  padding: 0 !important;\n}\n\n/*# sourceMappingURL=CSearchButton.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/search/CSearchButton.vue","CSearchButton.vue"],"names":[],"mappings":"AAqCA;EACA,mDAAA;EACA,oDAAA;EACA,qBAAA;ACpCA;;AAEA,4CAA4C","file":"CSearchButton.vue","sourcesContent":["<template>\n  <b-button\n    v-b-tooltip.hover=\"{ title: labels.search || 'Search', delay: { show: 500, hide: 0 } }\"\n    variant=\"outline-extra-light\"\n    size=\"lg\"\n    class=\"nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center\"\n    @click=\"openSearch\"\n  >\n    <font-awesome-icon\n      :icon=\"['fas', 'search']\"\n      class=\"text-dark\"\n    />\n  </b-button>\n</template>\n\n<script>\nexport default {\n  name: 'CSearchButton',\n\n  props: {\n    labels: {\n      type: Object,\n      default: () => ({}),\n    },\n  },\n\n  methods: {\n    openSearch () {\n      this.$root.$emit('search:open')\n    },\n  },\n}\n</script>\n\n<style lang=\"scss\" scoped>\n$nav-icon-size: calc(var(--topbar-height) - 24px);\n\n.nav-icon {\n  width: $nav-icon-size !important;\n  height: $nav-icon-size !important;\n  padding: 0 !important;\n}\n</style>\n",".nav-icon {\n  width: calc(var(--topbar-height) - 24px) !important;\n  height: calc(var(--topbar-height) - 24px) !important;\n  padding: 0 !important;\n}\n\n/*# sourceMappingURL=CSearchButton.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$6 = "data-v-5487b54a";
+  const __vue_scope_id__$6 = "data-v-24c0dbb2";
   /* module identifier */
   const __vue_module_identifier__$6 = undefined;
   /* functional template */
@@ -32904,17 +40412,83 @@ var script$5 = {
 const __vue_script__$5 = script$5;
 
 /* template */
-var __vue_render__$5 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',[(!_vm.root)?_c('h5',{staticClass:"mb-0"},[_vm._v("\n    "+_vm._s(_vm.group)+"\n  ")]):_vm._e(),_vm._v(" "),(_vm.subgroups.length > 0 || _vm.components.length > 0)?_c('div',[_vm._l((_vm.components),function(cmp,i){return _c('div',{key:i,staticClass:"component ml-2",on:{"click":function($event){return _vm.$emit('select', cmp)}}},[_vm._v("\n      "+_vm._s(cmp.name || cmp.component.name || 'Untitled')+"\n      "),(cmp.wip)?_c('b-badge',{staticClass:"float-right",attrs:{"variant":"warning"}},[_vm._v("\n        wip\n      ")]):_vm._e()],1)}),_vm._v(" "),_vm._l((_vm.subgroups),function(g){return _c('component-list',{key:g,staticClass:"my-3",attrs:{"catalogue":_vm.catalogue,"path":_vm.path.concat( [g])},on:{"select":function($event){return _vm.$emit('select', $event)}}})})],2):_vm._e()])};
+var __vue_render__$5 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", [
+    !_vm.root
+      ? _c("h5", { staticClass: "mb-0" }, [
+          _vm._v("\n    " + _vm._s(_vm.group) + "\n  "),
+        ])
+      : _vm._e(),
+    _vm._v(" "),
+    _vm.subgroups.length > 0 || _vm.components.length > 0
+      ? _c(
+          "div",
+          [
+            _vm._l(_vm.components, function (cmp, i) {
+              return _c(
+                "div",
+                {
+                  key: i,
+                  staticClass: "component ml-2",
+                  on: {
+                    click: function ($event) {
+                      return _vm.$emit("select", cmp)
+                    },
+                  },
+                },
+                [
+                  _vm._v(
+                    "\n      " +
+                      _vm._s(cmp.name || cmp.component.name || "Untitled") +
+                      "\n      "
+                  ),
+                  cmp.wip
+                    ? _c(
+                        "b-badge",
+                        {
+                          staticClass: "float-right",
+                          attrs: { variant: "warning" },
+                        },
+                        [_vm._v("\n        wip\n      ")]
+                      )
+                    : _vm._e(),
+                ],
+                1
+              )
+            }),
+            _vm._v(" "),
+            _vm._l(_vm.subgroups, function (g) {
+              return _c("component-list", {
+                key: g,
+                staticClass: "my-3",
+                attrs: { catalogue: _vm.catalogue, path: _vm.path.concat([g]) },
+                on: {
+                  select: function ($event) {
+                    return _vm.$emit("select", $event)
+                  },
+                },
+              })
+            }),
+          ],
+          2
+        )
+      : _vm._e(),
+  ])
+};
 var __vue_staticRenderFns__$5 = [];
+__vue_render__$5._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$5 = function (inject) {
     if (!inject) return
-    inject("data-v-71f1a1ab_0", { source: ".component[data-v-71f1a1ab]{cursor:pointer}", map: undefined, media: undefined });
+    inject("data-v-6bdba06f_0", { source: ".component[data-v-6bdba06f] {\n  cursor: pointer;\n}\n\n/*# sourceMappingURL=ComponentList.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/c3/ComponentList.vue","ComponentList.vue"],"names":[],"mappings":"AA+EA;EACA,eAAA;AC9EA;;AAEA,4CAA4C","file":"ComponentList.vue","sourcesContent":["<template>\n  <div>\n    <h5\n      v-if=\"!root\"\n      class=\"mb-0\"\n    >\n      {{ group }}\n    </h5>\n\n    <div\n      v-if=\"subgroups.length > 0 || components.length > 0\"\n    >\n      <div\n        v-for=\"(cmp, i) in components\"\n        :key=\"i\"\n        class=\"component ml-2\"\n        @click=\"$emit('select', cmp)\"\n      >\n        {{ cmp.name || cmp.component.name || 'Untitled' }}\n        <b-badge\n          v-if=\"cmp.wip\"\n          variant=\"warning\"\n          class=\"float-right\"\n        >\n          wip\n        </b-badge>\n      </div>\n      <component-list\n        v-for=\"(g) in subgroups\"\n        :key=\"g\"\n        :catalogue=\"catalogue\"\n        :path=\"[...path, g]\"\n        class=\"my-3\"\n        @select=\"$emit('select', $event)\"\n      />\n    </div>\n  </div>\n</template>\n<script>\nimport { ExtractComponents, ExtractSubgroups } from './helpers.ts'\n\nexport default {\n  name: 'ComponentList',\n  props: {\n    catalogue: {\n      required: true,\n      type: Object,\n    },\n\n    path: {\n      type: Array,\n      default: () => [],\n    },\n  },\n\n  computed: {\n    // name of the current group\n    root () {\n      return this.path.length === 0\n    },\n\n    // name of the current group\n    group () {\n      return this.root ? undefined : this.path[this.path.length - 1]\n    },\n\n    // returns all groups at this level\n    subgroups () {\n      return ExtractSubgroups(this.catalogue, ...this.path)\n    },\n\n    components () {\n      // return ExtractComponents(this.catalogue, ...this.path)\n      return ExtractComponents(this.catalogue, ...this.path)\n    },\n  },\n}\n</script>\n<style lang=\"scss\" scoped>\n.component {\n  cursor: pointer;\n}\n</style>\n",".component {\n  cursor: pointer;\n}\n\n/*# sourceMappingURL=ComponentList.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$5 = "data-v-71f1a1ab";
+  const __vue_scope_id__$5 = "data-v-6bdba06f";
   /* module identifier */
   const __vue_module_identifier__$5 = undefined;
   /* functional template */
@@ -33074,13 +40648,137 @@ var script$4 = {
 const __vue_script__$4 = script$4;
 
 /* template */
-var __vue_render__$4 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"layout"},[_c('aside',{staticClass:"sidebar p-2"},[_c('h5',{staticClass:"border-bottom"},[_vm._v("\n      C3: Component Catalogue\n    ")]),_vm._v(" "),_c('component-list',{attrs:{"catalogue":_vm.catalogue},on:{"select":function($event){return _vm.setCurrent($event)}}})],1),_vm._v(" "),_c('main',{staticClass:"p-5"},[(_vm.current)?_c(_vm.current.component,_vm._b({tag:"component"},'component',_vm.current.props,false)):_c('p',{staticClass:"text-center"},[_vm._v("\n      Select a component from the C3 Catalogue and start hacking :)\n    ")])],1),_vm._v(" "),(_vm.current)?_c('div',{staticClass:"controls px-5 py-2 mt-2"},[_vm._l((_vm.controlGroups),function(cg,g){return _c('div',{key:("control-group-" + g),staticClass:"control-group mr-2"},[_c('h3',[_vm._v("\n        Controls\n      ")]),_vm._v(" "),_vm._l((cg),function(c,i){return _c(c.component,_vm._b({key:i,tag:"component",attrs:{"value":c.value(_vm.current.props)},on:{"update":function($event){return c.update(_vm.current.props, $event)}}},'component',c.props,false))})],2)}),_vm._v(" "),(_vm.current.scenarios)?_c('div',{staticClass:"control-group float-right"},[_c('h3',[_vm._v("\n        Pre-set controls\n      ")]),_vm._v(" "),_c('ul',{staticClass:"pl-0"},_vm._l((_vm.current.scenarios),function(s,i){return _c('li',{key:i,staticClass:"list-unstyled scenario",on:{"click":function($event){return _vm.setScenario(s)}}},[_vm._v("\n          "+_vm._s(s.label)+"\n        ")])}),0)]):_vm._e()],2):_vm._e()])};
+var __vue_render__$4 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", { staticClass: "layout" }, [
+    _c(
+      "aside",
+      { staticClass: "sidebar p-2" },
+      [
+        _c("h5", { staticClass: "border-bottom" }, [
+          _vm._v("\n      C3: Component Catalogue\n    "),
+        ]),
+        _vm._v(" "),
+        _c("component-list", {
+          attrs: { catalogue: _vm.catalogue },
+          on: {
+            select: function ($event) {
+              return _vm.setCurrent($event)
+            },
+          },
+        }),
+      ],
+      1
+    ),
+    _vm._v(" "),
+    _c(
+      "main",
+      { staticClass: "p-5" },
+      [
+        _vm.current
+          ? _c(
+              _vm.current.component,
+              _vm._b(
+                { tag: "component" },
+                "component",
+                _vm.current.props,
+                false
+              )
+            )
+          : _c("p", { staticClass: "text-center" }, [
+              _vm._v(
+                "\n      Select a component from the C3 Catalogue and start hacking :)\n    "
+              ),
+            ]),
+      ],
+      1
+    ),
+    _vm._v(" "),
+    _vm.current
+      ? _c(
+          "div",
+          { staticClass: "controls px-5 py-2 mt-2" },
+          [
+            _vm._l(_vm.controlGroups, function (cg, g) {
+              return _c(
+                "div",
+                {
+                  key: "control-group-" + g,
+                  staticClass: "control-group mr-2",
+                },
+                [
+                  _c("h3", [_vm._v("\n        Controls\n      ")]),
+                  _vm._v(" "),
+                  _vm._l(cg, function (c, i) {
+                    return _c(
+                      c.component,
+                      _vm._b(
+                        {
+                          key: i,
+                          tag: "component",
+                          attrs: { value: c.value(_vm.current.props) },
+                          on: {
+                            update: function ($event) {
+                              return c.update(_vm.current.props, $event)
+                            },
+                          },
+                        },
+                        "component",
+                        c.props,
+                        false
+                      )
+                    )
+                  }),
+                ],
+                2
+              )
+            }),
+            _vm._v(" "),
+            _vm.current.scenarios
+              ? _c("div", { staticClass: "control-group float-right" }, [
+                  _c("h3", [_vm._v("\n        Pre-set controls\n      ")]),
+                  _vm._v(" "),
+                  _c(
+                    "ul",
+                    { staticClass: "pl-0" },
+                    _vm._l(_vm.current.scenarios, function (s, i) {
+                      return _c(
+                        "li",
+                        {
+                          key: i,
+                          staticClass: "list-unstyled scenario",
+                          on: {
+                            click: function ($event) {
+                              return _vm.setScenario(s)
+                            },
+                          },
+                        },
+                        [
+                          _vm._v(
+                            "\n          " + _vm._s(s.label) + "\n        "
+                          ),
+                        ]
+                      )
+                    }),
+                    0
+                  ),
+                ])
+              : _vm._e(),
+          ],
+          2
+        )
+      : _vm._e(),
+  ])
+};
 var __vue_staticRenderFns__$4 = [];
+__vue_render__$4._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$4 = function (inject) {
     if (!inject) return
-    inject("data-v-b945f7be_0", { source: ".layout{height:100vh;width:100vw;display:grid;grid-template-rows:auto 400px;grid-template-columns:300px auto;align-content:stretch;grid-template-areas:\"side main\" \"side controls\"}.layout aside{grid-area:side;overflow:auto}.layout main{grid-area:main;background-image:linear-gradient(135deg,#f9fafb 21.43%,#fff 21.43%,#fff 50%,#f9fafb 50%,#f9fafb 71.43%,#fff 71.43%,#fff 100%);background-size:35px 35px;overflow:auto}.layout .controls{grid-area:controls;overflow:auto}.layout .controls .control-group{float:left}.layout .scenario{cursor:pointer}", map: undefined, media: undefined });
+    inject("data-v-54023c36_0", { source: ".layout {\n  height: 100vh;\n  width: 100vw;\n  display: grid;\n  grid-template-rows: auto 400px;\n  grid-template-columns: 300px auto;\n  align-content: stretch;\n  grid-template-areas: \"side main\" \"side controls\";\n}\n.layout aside {\n  grid-area: side;\n  overflow: auto;\n}\n.layout main {\n  grid-area: main;\n  background-image: linear-gradient(135deg, #F9FAFB 21.43%, #FFFFFF 21.43%, #FFFFFF 50%, #F9FAFB 50%, #F9FAFB 71.43%, #FFFFFF 71.43%, #FFFFFF 100%);\n  background-size: 35px 35px;\n  overflow: auto;\n}\n.layout .controls {\n  grid-area: controls;\n  overflow: auto;\n}\n.layout .controls .control-group {\n  float: left;\n}\n.layout .scenario {\n  cursor: pointer;\n}\n\n/*# sourceMappingURL=C3.vue.map */", map: {"version":3,"sources":["/home/maxim/work/lowcode/client/lib/vue/src/components/c3/C3.vue","C3.vue"],"names":[],"mappings":"AAyIA;EACA,aAAA;EACA,YAAA;EAEA,aAAA;EACA,8BAAA;EACA,iCAAA;EACA,sBAAA;EACA,gDACA;AC1IA;AD8IA;EACA,eAAA;EACA,cAAA;AC5IA;AD+IA;EACA,eAAA;EACA,iJAAA;EAUA,0BAAA;EACA,cAAA;ACtJA;ADyJA;EACA,mBAAA;EACA,cAAA;ACvJA;ADyJA;EACA,WAAA;ACvJA;AD2JA;EACA,eAAA;ACzJA;;AAEA,iCAAiC","file":"C3.vue","sourcesContent":["<template>\n  <div class=\"layout\">\n    <aside class=\"sidebar p-2\">\n      <h5\n        class=\"border-bottom\"\n      >\n        C3: Component Catalogue\n      </h5>\n      <component-list\n        :catalogue=\"catalogue\"\n        @select=\"setCurrent($event)\"\n      />\n    </aside>\n\n    <main\n      class=\"p-5\"\n    >\n      <component\n        :is=\"current.component\"\n        v-if=\"current\"\n        v-bind=\"current.props\"\n      />\n      <p\n        v-else\n        class=\"text-center\"\n      >\n        Select a component from the C3 Catalogue and start hacking :)\n      </p>\n    </main>\n\n    <div\n      v-if=\"current\"\n      class=\"controls px-5 py-2 mt-2\"\n    >\n      <div\n        v-for=\"(cg, g) in controlGroups\"\n        :key=\"`control-group-${g}`\"\n        class=\"control-group mr-2\"\n      >\n        <h3>\n          Controls\n        </h3>\n        <component\n          :is=\"c.component\"\n          v-for=\"(c, i) in cg\"\n          :key=\"i\"\n          :value=\"c.value(current.props)\"\n          v-bind=\"c.props\"\n          @update=\"c.update(current.props, $event)\"\n        />\n      </div>\n\n      <div\n        v-if=\"current.scenarios\"\n        class=\"control-group float-right\"\n      >\n        <h3>\n          Pre-set controls\n        </h3>\n        <ul\n          class=\"pl-0\"\n        >\n          <li\n            v-for=\"(s, i) in current.scenarios\"\n            :key=\"i\"\n            class=\"list-unstyled scenario\"\n            @click=\"setScenario(s)\"\n          >\n            {{ s.label }}\n          </li>\n        </ul>\n      </div>\n    </div>\n  </div>\n</template>\n<script>\nimport ComponentList from './ComponentList.vue'\n\nexport default {\n  name: 'C3',\n\n  components: {\n    ComponentList,\n  },\n\n  props: {\n    catalogue: {\n      required: true,\n      type: Object,\n    },\n  },\n\n  data () {\n    return {\n      current: undefined,\n    }\n  },\n\n  computed: {\n    controlGroups () {\n      if (this.current.controls.length === 0) {\n        return []\n      }\n\n      if (Array.isArray(this.current.controls[0])) {\n        // already grouped\n        return this.current.controls\n      }\n\n      // make one virtual group holding all controls\n      return [this.current.controls]\n    },\n  },\n\n  methods: {\n    setCurrent (component) {\n      this.current = { props: {}, ...component }\n      this.setScenario(this.current)\n    },\n\n    setScenario ({ props = {}, controls = [] }) {\n      // create missing props from controls\n      const apply = (c, props) => c.update(props, c.value(props) || null)\n      controls.forEach(c => {\n        if (Array.isArray(c)) {\n          c.forEach(c => apply(c, props))\n        } else {\n          apply(c, props)\n        }\n      })\n\n      this.current.props = props\n    },\n  },\n}\n</script>\n<style lang=\"scss\">\n.layout {\n  height: 100vh;\n  width: 100vw;\n\n  display: grid;\n  grid-template-rows: auto 400px;\n  grid-template-columns: 300px auto;\n  align-content: stretch;\n  grid-template-areas:\n    \"side main\"\n    \"side controls\"\n  ;\n\n  aside {\n    grid-area: side;\n    overflow: auto;\n  }\n\n  main {\n    grid-area: main;\n    background-image: linear-gradient(\n      135deg,\n      #F9FAFB 21.43%,\n      #FFFFFF 21.43%,\n      #FFFFFF 50%,\n      #F9FAFB 50%,\n      #F9FAFB 71.43%,\n      #FFFFFF 71.43%,\n      #FFFFFF 100%\n    );\n    background-size: 35.00px 35.00px;\n    overflow: auto;\n  }\n\n  .controls {\n    grid-area: controls;\n    overflow: auto;\n\n    .control-group {\n      float: left;\n    }\n  }\n\n  .scenario {\n    cursor: pointer;\n  }\n}\n</style>\n",".layout {\n  height: 100vh;\n  width: 100vw;\n  display: grid;\n  grid-template-rows: auto 400px;\n  grid-template-columns: 300px auto;\n  align-content: stretch;\n  grid-template-areas: \"side main\" \"side controls\";\n}\n.layout aside {\n  grid-area: side;\n  overflow: auto;\n}\n.layout main {\n  grid-area: main;\n  background-image: linear-gradient(135deg, #F9FAFB 21.43%, #FFFFFF 21.43%, #FFFFFF 50%, #F9FAFB 50%, #F9FAFB 71.43%, #FFFFFF 71.43%, #FFFFFF 100%);\n  background-size: 35px 35px;\n  overflow: auto;\n}\n.layout .controls {\n  grid-area: controls;\n  overflow: auto;\n}\n.layout .controls .control-group {\n  float: left;\n}\n.layout .scenario {\n  cursor: pointer;\n}\n\n/*# sourceMappingURL=C3.vue.map */"]}, media: undefined });
 
   };
   /* scoped */
@@ -33134,8 +40832,28 @@ var script$3 = {
 const __vue_script__$3 = script$3;
 
 /* template */
-var __vue_render__$3 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-form-group',{attrs:{"label":_vm.label}},[_c('b-form-input',{attrs:{"value":_vm.value},on:{"update":function($event){return _vm.$emit('update', $event)}}})],1)};
+var __vue_render__$3 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-form-group",
+    { attrs: { label: _vm.label } },
+    [
+      _c("b-form-input", {
+        attrs: { value: _vm.value },
+        on: {
+          update: function ($event) {
+            return _vm.$emit("update", $event)
+          },
+        },
+      }),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$3 = [];
+__vue_render__$3._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$3 = undefined;
@@ -33192,8 +40910,28 @@ var script$2 = {
 const __vue_script__$2 = script$2;
 
 /* template */
-var __vue_render__$2 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-form-group',{attrs:{"label":_vm.label}},[_c('b-form-textarea',{attrs:{"value":_vm.value},on:{"update":function($event){return _vm.$emit('update', $event)}}})],1)};
+var __vue_render__$2 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-form-group",
+    { attrs: { label: _vm.label } },
+    [
+      _c("b-form-textarea", {
+        attrs: { value: _vm.value },
+        on: {
+          update: function ($event) {
+            return _vm.$emit("update", $event)
+          },
+        },
+      }),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$2 = [];
+__vue_render__$2._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$2 = undefined;
@@ -33249,8 +40987,31 @@ var script$1 = {
 const __vue_script__$1 = script$1;
 
 /* template */
-var __vue_render__$1 = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-form-group',[_c('b-form-checkbox',{attrs:{"checked":_vm.value},on:{"change":function($event){return _vm.$emit('update', $event)}}},[_vm._v("\n    "+_vm._s(_vm.label)+"\n  ")])],1)};
+var __vue_render__$1 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-form-group",
+    [
+      _c(
+        "b-form-checkbox",
+        {
+          attrs: { checked: _vm.value },
+          on: {
+            change: function ($event) {
+              return _vm.$emit("update", $event)
+            },
+          },
+        },
+        [_vm._v("\n    " + _vm._s(_vm.label) + "\n  ")]
+      ),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__$1 = [];
+__vue_render__$1._withStripped = true;
 
   /* style */
   const __vue_inject_styles__$1 = undefined;
@@ -33312,8 +41073,28 @@ var script = {
 const __vue_script__ = script;
 
 /* template */
-var __vue_render__ = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('b-form-group',{attrs:{"label":_vm.label}},[_c('b-form-select',{attrs:{"value":_vm.value,"options":_vm.options},on:{"input":function($event){return _vm.$emit('update', $event)}}})],1)};
+var __vue_render__ = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "b-form-group",
+    { attrs: { label: _vm.label } },
+    [
+      _c("b-form-select", {
+        attrs: { value: _vm.value, options: _vm.options },
+        on: {
+          input: function ($event) {
+            return _vm.$emit("update", $event)
+          },
+        },
+      }),
+    ],
+    1
+  )
+};
 var __vue_staticRenderFns__ = [];
+__vue_render__._withStripped = true;
 
   /* style */
   const __vue_inject_styles__ = undefined;

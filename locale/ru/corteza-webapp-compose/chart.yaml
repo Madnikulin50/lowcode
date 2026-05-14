@@ -151,7 +151,7 @@ edit:
     cumulative: Cumulative
   module:
     label: Модуль *
-    placeholder: Pick a module
+    placeholder: Выберите модуль
     title: Data Source
   title: Диаграмма builder
   unconfiguredReport: Unconfigured report

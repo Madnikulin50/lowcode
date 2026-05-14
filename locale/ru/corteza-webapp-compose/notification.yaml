@@ -59,7 +59,7 @@ general:
   import:
     failed: Импорт failed
     readingError: Error reading file
-    successful: Импорт successful
+    successful: Импорт прошел успешно
     typeMissmatch: 'Импорт error: trying to import object of type "{{type1}}" into a list of objects of type "{{type2}}"'
 list:
   load:
