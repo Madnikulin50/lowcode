@@ -470,6 +470,10 @@ func keysFromExpr(nn ...*ql.ASTNode) (out []string, hasConstants bool) {
 		}
 	}
 
+	if len(nn) == 0 {
+		hasConstants = true
+	}
+
 	for k := range auxOut {
 		out = append(out, k)
 	}

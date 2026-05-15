@@ -137,6 +137,7 @@ export default {
   data () {
     return {
       pageTitle: '',
+
     }
   },
 

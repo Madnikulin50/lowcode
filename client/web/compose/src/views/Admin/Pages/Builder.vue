@@ -11,6 +11,33 @@
     </portal>
 
     <portal to="topbar-tools">
+
+      <b-input-group style="max-width: 300px;">
+        <c-input-select
+          v-model="scenarios.selected"
+          :options="scenarioOptions"
+          :get-option-key="getScenarioOptionKey"
+          :placeholder="$t('builder:pick-scenario')"
+          :disabled="processing"
+          size="sm"
+          @input="refreshReport()"
+        />
+        <b-input-group-append>
+          <b-button
+            v-b-tooltip.noninteractive.hover="{ title: $t('builder:tooltip.configure-scenarios'), boundary: 'body' }"
+            variant="extra-light"
+            :disabled="!page.canUpdatePage"
+            size="sm"
+            @click="openScenarioConfigurator"
+          >
+            <font-awesome-icon
+              :icon="['fas', 'cog']"
+              class="text-primary"
+            />
+          </b-button>
+        </b-input-group-append>
+      </b-input-group>
+
       <c-input-select
         v-if="page && layout && layouts.length > 1"
         ref="layoutSelect"
@@ -228,7 +255,7 @@
         </div>
       </template>
 
-      <configurator
+      <page-blocks-configurator
         v-if="showCreator"
         :namespace="namespace"
         :module="module"
@@ -262,7 +289,7 @@
         </div>
       </template>
 
-      <configurator
+      <page-blocks-configurator
         v-if="showEditor"
         :namespace="namespace"
         :module="module"
@@ -302,6 +329,44 @@
           </b-button>
         </div>
       </template>
+    </b-modal>
+
+    <b-modal
+      v-model="scenarios.showConfigurator"
+      size="xl"
+      scrollable
+      :ok-title="$t('builder:scenarios.save')"
+      ok-variant="primary"
+      cancel-variant="light"
+      :title="$t('builder:scenarios.label')"
+      body-class="py-3"
+      no-fade
+    >
+      <common-configurator
+        v-if="page"
+        :items="currentScenarios"
+        :current-index="scenarios.currentIndex"
+        draggable
+        @select="setCurrentScenario"
+        @add="addScenario()"
+        @delete="deleteCurrentScenario()"
+      >
+        <template #label="{ item: { label } }">
+          <span
+            class="d-inline-block text-truncate"
+          >
+            {{ label }}
+          </span>
+        </template>
+        <template #configurator>
+          <scenario-configurator
+            v-if="currentScenario"
+            :current-index="scenarios.currentIndex"
+            :module="module"
+            :scenario.sync="currentScenario"
+          />
+        </template>
+      </common-configurator>
     </b-modal>
 
     <portal to="admin-toolbar">
@@ -374,11 +439,13 @@ import Grid from 'corteza-webapp-compose/src/components/Common/Grid'
 import PageBlock from 'corteza-webapp-compose/src/components/PageBlocks'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import { compose, NoID } from 'corteza-lib/js/dist'
-import Configurator from 'corteza-webapp-compose/src/components/PageBlocks/Configurator'
+import CommonConfigurator from 'corteza-webapp-reporter/src/components/Common/Configurator'
+import PageBlocksConfigurator from 'corteza-webapp-compose/src/components/PageBlocks/Configurator'
 import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Modal'
 import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Page/Block/Modal'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import { handle } from 'corteza-lib/vue/dist'
+import ScenarioConfigurator from 'corteza-webapp-compose/src/components/Public/Page/Scenarios'
 
 export default {
   i18nOptions: {
@@ -386,7 +453,9 @@ export default {
   },
 
   components: {
-    Configurator,
+    ScenarioConfigurator,
+    PageBlocksConfigurator,
+    CommonConfigurator,
     Grid,
     NewBlockSelector,
     PageBlock,
@@ -441,6 +510,14 @@ export default {
       editor: undefined,
 
       unsavedBlocks: new Set(),
+
+      scenarios: {
+        showConfigurator: false,
+
+        currentIndex: undefined,
+
+        selected: undefined,
+      },
     }
   },
 
@@ -577,6 +654,36 @@ export default {
 
       return [handle.handleState(customID), handle.classState(customCSSClass)].includes(false)
     },
+
+    currentScenarios: {
+      get () {
+        return this.page ? (this.page.scenarios || []) : []
+      },
+
+      set (scenarios) {
+        this.page.scenarios = scenarios
+      },
+    },
+
+    currentScenario: {
+      get () {
+        return this.scenarios.currentIndex !== undefined ? this.currentScenarios[this.scenarios.currentIndex] : undefined
+      },
+
+      set (scenario) {
+        if (this.scenarios.currentIndex !== undefined) {
+          this.currentScenarios[this.scenarios.currentIndex] = scenario
+        }
+      },
+    },
+
+    currentSelectedScenario () {
+      return this.scenarios.selected ? this.currentScenarios.find(({ label }) => label === this.scenarios.selected) : undefined
+    },
+
+    scenarioOptions () {
+      return this.currentScenarios.map(({ label }) => label)
+    },
   },
 
   watch: {
@@ -658,6 +765,40 @@ export default {
       setPageHandle: 'ui/setPageHandle',
       setLayoutHandle: 'ui/setLayoutHandle',
     }),
+    openScenarioConfigurator () {
+      this.scenarios.showConfigurator = true
+
+      if (this.currentScenarios.length) {
+        this.setCurrentScenario(0)
+      }
+    },
+
+    setCurrentScenario (index = -1) {
+      this.scenarios.currentIndex = this.currentScenarios.length && index >= 0 ? index : undefined
+    },
+
+    addScenario () {
+      if (!this.currentScenarios) {
+        this.currentScenarios = []
+      }
+
+      this.currentScenarios.push({
+        label: 'Scenario Name',
+        filters: {},
+      })
+
+      this.setCurrentScenario(this.currentScenarios.length - 1)
+    },
+
+    deleteCurrentScenario () {
+      this.currentScenarios.splice(this.scenarios.currentIndex, 1)
+      this.scenarios.currentIndex = this.currentScenarios.length ? 0 : undefined
+      this.setCurrentScenario(this.scenarios.currentIndex)
+    },
+
+    getScenarioOptionKey (scenario) {
+      return scenario
+    },
 
     fulfilEditRequest (blockID) {
       // this ensures whatever changes in tabs is not lost before we lose its configurator

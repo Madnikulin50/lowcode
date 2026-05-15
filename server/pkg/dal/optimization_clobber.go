@@ -19,42 +19,44 @@ func pipelineClobberSteps(in Pipeline) (Pipeline, error) {
 	// The clobbering for a branch ends when there is a node that can't be clobbered.
 	// The progression ends because application level nodes can't be offloaded to.
 	ll := wrapPpSteps(in)
-	for _, l := range ll {
-		for {
-			// When there is no parent, we can't progress further
-			if l.parent == nil {
-				break
-			}
+	if len(in) < 3 {
+		for _, l := range ll {
+			for {
+				// When there is no parent, we can't progress further
+				if l.parent == nil {
+					break
+				}
 
-			// if step can't clobber, skip
-			cs, ok := l.step.(clobberableStep)
-			if !ok {
-				break
-			}
+				// if step can't clobber, skip
+				cs, ok := l.step.(clobberableStep)
+				if !ok {
+					break
+				}
 
-			// if child fails to clobber parent, skip to the next child
-			// @note for now we can end the clobbering if any of the steps
-			//       can't be clobbered as all of the application defined steps
-			//       are focused on the single op. and can't do anything else.
-			if !cs.clobber(l.parent.step) {
-				break
-			}
+				// if child fails to clobber parent, skip to the next child
+				// @note for now we can end the clobbering if any of the steps
+				//       can't be clobbered as all of the application defined steps
+				//       are focused on the single op. and can't do anything else.
+				if !cs.clobber(l.parent.step) {
+					break
+				}
 
-			// if clobbered successfully, update references
-			if l.parent != nil && l.parent.parent != nil {
-				// - update child ref of the parent's parent
-				for i, c := range l.parent.parent.child {
-					if c == l.parent {
-						l.parent.parent.child[i] = l
+				// if clobbered successfully, update references
+				if l.parent != nil && l.parent.parent != nil {
+					// - update child ref of the parent's parent
+					for i, c := range l.parent.parent.child {
+						if c == l.parent {
+							l.parent.parent.child[i] = l
+						}
 					}
 				}
+
+				l.parent = l.parent.parent
+
+				// @todo for now, clobbering ends after one successfull instance; this is due
+				//       to the current DB implementation doesn't allow nested things.
+				break
 			}
-
-			l.parent = l.parent.parent
-
-			// @todo for now, clobbering ends after one successfull instance; this is due
-			//       to the current DB implementation doesn't allow nested things.
-			break
 		}
 	}
 
