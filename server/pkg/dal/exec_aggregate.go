@@ -165,6 +165,20 @@ func (xs *aggregate) More(limit uint, v ValueGetter) (err error) {
 
 func (s *aggregate) Err() error { return s.err }
 
+func (s *aggregate) resultType(name string) Type {
+	for _, a := range s.groupDefs {
+		if a.Identifier == name {
+			return a.Type
+		}
+	}
+	for _, a := range s.aggregateDefs {
+		if a.Identifier == name {
+			return a.Type
+		}
+	}
+	return nil
+}
+
 func (s *aggregate) Scan(dst ValueSetter) (err error) {
 	if s.i < 0 {
 		return fmt.Errorf("@todo err not initialized; next first")
@@ -175,6 +189,16 @@ func (s *aggregate) Scan(dst ValueSetter) (err error) {
 		for i := uint(0); i < cc; i++ {
 			// omitting err here since it won't happen
 			v, _ = s.scanRow.GetValue(name, i)
+			str, ok := v.(string)
+			if ok {
+				t := s.resultType(name)
+				if t != nil {
+					q, err := t.FromString(str)
+					if err == nil {
+						v = q
+					}
+				}
+			}
 			err = dst.SetValue(name, i, v)
 			if err != nil {
 				return err

@@ -298,8 +298,12 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 	limit := uint(0)
 	counter := uint(0)
 	builder := newReportFrameBuilder(def)
+	incTotal := false
+	incPageNavigation := false
 	if def.Paging != nil {
 		limit = def.Paging.Limit
+		incTotal = def.Paging.IncTotal
+		incPageNavigation = def.Paging.IncPageNavigation
 	}
 
 	// Helper to determine if we need a next cursor
@@ -311,6 +315,7 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 	for iter.Next(ctx) {
 		if limit > 0 && counter >= limit {
 			nextCursor = true
+			counter++
 			break
 		}
 		row.Reset()
@@ -319,6 +324,7 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 		builder.addRow(row)
 		counter++
 	}
+
 	if err = iter.Err(); err != nil {
 		return
 	}
@@ -331,6 +337,38 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 		builder.frame.Paging.NextPage, err = iter.ForwardCursor(row)
 		if err != nil {
 			return
+		}
+		if incTotal || incPageNavigation {
+			var curPage uint = 1
+			builder.frame.Paging.PageNavigation = []*filter.Page{}
+			pg := &filter.Page{}
+			pg.Page = curPage
+			pg.Count = counter - 1
+			pg.Cursor = nil
+
+			builder.frame.Paging.PageNavigation = append(builder.frame.Paging.PageNavigation, pg)
+			pg = &filter.Page{}
+			curPage++
+			pg.Page = curPage
+			pg.Count = 1
+			pg.Cursor, err = iter.ForwardCursor(row)
+
+			for iter.Next(ctx) {
+				row.Reset()
+				_ = iter.Scan(row)
+				pg.Count++
+				if pg.Count == limit {
+					builder.frame.Paging.PageNavigation = append(builder.frame.Paging.PageNavigation, pg)
+					curPage++
+					pg = &filter.Page{}
+					pg.Page = curPage
+					pg.Count = 1
+					pg.Cursor, err = iter.ForwardCursor(row)
+				}
+				counter++
+			}
+			builder.frame.Paging.PageNavigation = append(builder.frame.Paging.PageNavigation, pg)
+			builder.frame.Paging.Total = counter
 		}
 	}
 

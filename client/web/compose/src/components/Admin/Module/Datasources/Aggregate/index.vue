@@ -125,7 +125,9 @@ export default {
 
       this.datasources.forEach(({ step }, index) => {
         Object.entries(step).forEach(([kind, { name }]) => {
-          options.push({ value: name || `${index}`, text: name || `${index}` })
+          if (index !== this.index) {
+            options.push({ value: name || `${index}`, text: name || `${index}` })
+          }
         })
       })
 

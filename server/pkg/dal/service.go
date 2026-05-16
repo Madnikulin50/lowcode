@@ -544,6 +544,7 @@ func (svc *service) Dryrun(ctx context.Context, pp Pipeline) (err error) {
 func (svc *service) run(ctx context.Context, s PipelineStep, dry bool) (it Iterator, err error) {
 	switch s := s.(type) {
 	case *Datasource:
+
 		err = s.init(ctx)
 		if err != nil {
 			return

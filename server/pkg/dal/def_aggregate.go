@@ -189,6 +189,7 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 			if isSystemField(name) {
 				continue
 			}
+			err = fmt.Errorf("prepare aggregate %v when group: %w", def.Ident, err)
 			return
 		}
 
@@ -205,6 +206,7 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 		attr.Type = &TypeNumber{}
 		attr, err = prepAttr(attr)
 		if err != nil {
+			err = fmt.Errorf("prepare aggregate %v on output: %w", def.Ident, err)
 			return
 		}
 
@@ -234,7 +236,10 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	// order
 	for _, s := range def.filter.OrderBy() {
 		if _, ok := outAttrs[s.Column]; !ok {
-			//err = fmt.Errorf("order by attribute %s does not exist", s.Column)
+			if isSystemField(s.Column) {
+				continue
+			}
+			err = fmt.Errorf("prepare aggregate %v on sort: %w", def.Ident, err)
 			continue
 		}
 	}

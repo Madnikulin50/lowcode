@@ -35,6 +35,9 @@ export default {
   name: 'CFormTableWrapper',
 
   props: {
+    data: {
+      testID: "CFormTableWrapper"
+    },
     labels: {
       type: Object,
       default: () => {},

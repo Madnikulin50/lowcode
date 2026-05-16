@@ -396,6 +396,7 @@ func (xs *joinLeft) mergeValuesFrom(inIdent, outIdent string, out *Row, sources 
 		for c := uint(0); c < src.CountValues()[inIdent]; c++ {
 			aux, _ = src.GetValue(inIdent, c)
 			out.SetValue(outIdent, c, aux)
+			out.SetValue(inIdent, c, aux)
 		}
 	}
 }

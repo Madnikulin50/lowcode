@@ -59,6 +59,7 @@ var (
 		"min":   true,
 		"max":   true,
 		"avg":   true,
+		"":      true,
 	}
 )
 
@@ -179,7 +180,8 @@ func (a *aggregator) aggregate(ctx context.Context, attr aggregateDef, i int, v 
 
 	case "max":
 		return a.max(ctx, attr, i, v)
-
+	case "":
+		return a.max(ctx, attr, i, v)
 	case "avg":
 		return a.avg(ctx, attr, i, v)
 	}
@@ -337,12 +339,14 @@ func unpackExpressionNode(n *ql.ASTNode) (aggOp string, expr *ql.ASTNode, err er
 		aggOp = strings.ToLower(n.Ref)
 	}
 	if !aggregateFunctionIndex[aggOp] {
-		err = fmt.Errorf("root expression must be an aggregate function")
-		return
+		//err = fmt.Errorf("root expression must be an aggregate function")
+		return "", n, nil
 	}
 
 	if len(n.Args) > 0 {
 		expr = n.Args[0]
+	} else {
+		return "", n, nil
 	}
 	return
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/revisions"
 	"github.com/madnikulin50/lowcode/server/store"
 	systemEnvoy "github.com/madnikulin50/lowcode/server/system/envoy"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/spf13/cast"
 )
 
@@ -211,6 +212,69 @@ func makeRecordSet(m *types.Module, frm *datasources.Frame) (res *types.RecordSe
 	return &result
 }
 
+func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) (out systemTypes.ReportStepSet, err error) {
+	if r.Load != nil {
+		moduleID, ok := r.Load.Definition["moduleID"].(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse moduleID")
+		}
+		mid, _ := strconv.ParseInt(moduleID, 10, 64)
+		namespaceID, ok := r.Load.Definition["namespaceID"].(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse namespaceID")
+		}
+		nid, _ := strconv.ParseInt(namespaceID, 10, 64)
+		loadModel, err := ctrl.module.FindByID(ctx, uint64(nid), uint64(mid))
+		if err != nil {
+			return nil, fmt.Errorf("failed to find module with id %d: %w", mid, err)
+		}
+		if loadModel.Config.Type != "datasource" {
+			return nil, nil
+		}
+
+		ss := loadModel.Config.Datasource.Items.ReportSteps()
+
+		for _, s := range ss {
+			s.ResetName(fmt.Sprintf("%v/%v", moduleID, s.Name()))
+			s.SetSourcePrefix(moduleID)
+		}
+		for {
+			changed := false
+			for i, s := range ss {
+				cur, err := ctrl.prepareStep(ctx, s)
+				if err != nil {
+					return nil, err
+				}
+				if cur == nil {
+					continue
+				}
+				changed = true
+				last := cur[len(cur)-1]
+				last.ResetName(s.Name())
+				n := make(systemTypes.ReportStepSet, 0)
+				n = append(n, ss[:i]...)
+				suffix := ss[i+1:]
+				n = append(n, cur...)
+
+				if len(suffix) != 0 {
+					n = append(n, suffix...)
+				}
+				ss = n
+				break
+			}
+			if !changed {
+				break
+			}
+		}
+		last := ss[len(ss)-1]
+		last.ResetName(r.Name())
+		return ss, nil
+
+	}
+
+	return nil, nil
+}
+
 func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{}, error) {
 	var (
 		m   *types.Module
@@ -256,11 +320,44 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 			ff   []*datasources.Frame
 			out  = make([]*datasources.Frame, 0, 4)
 		)
-
+		flt := types.RecordFilter{
+			ModuleID:    m.ID,
+			NamespaceID: m.NamespaceID,
+		}
+		flt.Limit = r.Limit
+		flt.IncTotal = r.IncTotal
+		flt.IncPageNavigation = true
+		flt.Paging = filter.Paging{Limit: r.Limit}
 		err = func() (err error) {
 
 			// Get all of the steps
 			ss := m.Config.Datasource.Items.ReportSteps()
+			for {
+				changed := false
+				for i, s := range ss {
+					cur, err := ctrl.prepareStep(ctx, s)
+					if err != nil {
+						return err
+					}
+					if cur == nil {
+						continue
+					}
+					changed = true
+					n := make(systemTypes.ReportStepSet, 0)
+					n = append(n, ss[:i]...)
+					suffix := ss[i+1:]
+					n = append(n, cur...)
+
+					if len(suffix) != 0 {
+						n = append(n, suffix...)
+					}
+					ss = n
+					break
+				}
+				if !changed {
+					break
+				}
+			}
 			//ss = append(ss, r.Blocks.ReportSteps()...)
 			runner := dal.Service()
 			var dd datasources.FrameDefinitionSet
@@ -275,6 +372,11 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 						Kind:  f.Kind,
 					})
 				}
+
+				paging, _ := filter.NewPaging(r.Limit, r.PageCursor)
+				def.Paging = &paging
+				def.Paging.IncTotal = r.IncTotal
+				def.Paging.IncPageNavigation = r.IncPageNavigation
 				dd = append(dd, &def)
 			}
 
@@ -299,17 +401,22 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 						return
 					}
 
+					for _, f := range ff {
+						flt.Paging = *f.Paging
+					}
 					err = ctrl.enhance(ctx, ff)
 					if err != nil {
 						return
 					}
-
 					out = append(out, ff...)
 					return
 				}()
 
 				if err != nil {
 					return
+				}
+				if len(out) > int(r.Limit) {
+					break
 				}
 			}
 
@@ -319,15 +426,8 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 			return nil, err
 		}
 		rr := makeRecordSet(m, out[len(out)-1])
-		f = types.RecordFilter{
-			ModuleID:    m.ID,
-			NamespaceID: m.NamespaceID,
-		}
-		f.Limit = 2
-		f.IncPageNavigation = true
-		f.IncTotal = true
 
-		return ctrl.makeFilterPayloadN(ctx, m, *rr, nil, &f, err)
+		return ctrl.makeFilterPayloadN(ctx, m, *rr, nil, &flt, err)
 	default:
 		if r.Query != "" {
 			// Query param takes preference
@@ -1191,7 +1291,12 @@ func (ctrl Record) makePayload(ctx context.Context, m *types.Module, r *types.Re
 	}, nil
 }
 
-func (ctrl Record) makeFilterPayloadN(ctx context.Context, m *types.Module, rr types.RecordSet, smr map[string]types.RecordSummary, f *types.RecordFilter, err error) (*recordSetPayload, error) {
+func (ctrl Record) makeFilterPayloadN(ctx context.Context,
+	m *types.Module,
+	rr types.RecordSet,
+	smr map[string]types.RecordSummary,
+	f *types.RecordFilter,
+	err error) (*recordSetPayload, error) {
 	if err != nil {
 		return nil, err
 	}

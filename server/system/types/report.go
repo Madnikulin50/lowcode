@@ -315,3 +315,43 @@ func (step *ReportStep) Name() string {
 		panic(fmt.Errorf("unknown step type: %v", step.Kind))
 	}
 }
+
+func (step *ReportStep) ResetName(name string) {
+	switch {
+	case step.Load != nil:
+		step.Load.Name = name
+
+	case step.Aggregate != nil:
+
+		step.Aggregate.Name = name
+	case step.Join != nil:
+		step.Join.Name = name
+	case step.Link != nil:
+		step.Link.Name = name
+
+	default:
+		// this should never happen
+		panic(fmt.Errorf("unknown step type: %v", step.Kind))
+	}
+}
+
+func (step *ReportStep) SetSourcePrefix(prefix string) {
+	switch {
+	case step.Load != nil:
+		step.Load.Source = prefix + "/" + step.Load.Source
+
+	case step.Aggregate != nil:
+
+		step.Aggregate.Source = prefix + "/" + step.Aggregate.Source
+	case step.Join != nil:
+		step.Join.LocalSource = prefix + "/" + step.Join.LocalSource
+		step.Join.ForeignSource = prefix + "/" + step.Join.ForeignSource
+	case step.Link != nil:
+		step.Link.LocalSource = prefix + "/" + step.Link.LocalSource
+		step.Link.ForeignSource = prefix + "/" + step.Link.ForeignSource
+
+	default:
+		// this should never happen
+		panic(fmt.Errorf("unknown step type: %v", step.Kind))
+	}
+}

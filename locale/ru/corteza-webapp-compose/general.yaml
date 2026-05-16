@@ -151,8 +151,8 @@ fieldKinds:
     label: Флажок (Да-Нет)
   DateTime:
     label: Дата и время
-  EMail:
-    label: Почтовый адрес input
+  Email:
+    label: Почтовый адрес
   File:
     label: Загрузка файла
   Number:
@@ -169,6 +169,8 @@ fieldKinds:
     label: Выбор пользователя
   Geometry:
     label: Геопозиция
+  Expression:
+    label: Выражение
 field:
   selectAll: Выбрать все
   tooltip:

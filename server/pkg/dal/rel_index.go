@@ -3,6 +3,7 @@ package dal
 import (
 	"fmt"
 
+	"github.com/madnikulin50/lowcode/server/pkg/cast2"
 	"github.com/spf13/cast"
 )
 
@@ -45,7 +46,8 @@ func newRelIndex(t Type, track ...string) (out *relIndex, err error) {
 func (ri *relIndex) Add(k any, r *Row) {
 	switch ri.keyType.(type) {
 	case TypeNumber, *TypeNumber:
-		ri.addInt(cast.ToInt64(k), r)
+		id, _ := cast2.ToInt64E(k)
+		ri.addInt(id, r)
 		return
 
 	case TypeText, *TypeText:
@@ -65,14 +67,16 @@ func (ri *relIndex) Add(k any, r *Row) {
 func (ri *relIndex) Get(k any) (out *relIndexBuffer, ok bool) {
 	switch ri.keyType.(type) {
 	case TypeNumber, *TypeNumber:
-		return ri.getInt(cast.ToInt64(k))
+		id, _ := cast2.ToInt64E(k)
+		return ri.getInt(id)
 
 	case TypeText, *TypeText:
 		return ri.getString(cast.ToString(k))
 
 	case TypeID, *TypeID,
 		TypeRef, *TypeRef:
-		return ri.getID(cast.ToUint64(k))
+		id, _ := cast2.ToInt64E(k)
+		return ri.getID(uint64(id))
 	}
 
 	// @note this is validated when initializing
