@@ -123,6 +123,9 @@ func isSystemField(field string) bool {
 	case "deletedAt":
 		return true
 	}
+	if strings.HasPrefix(field, "dimension_") {
+		return true
+	}
 	return false
 }
 
