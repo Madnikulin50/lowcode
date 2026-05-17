@@ -1,7 +1,8 @@
 <template>
   <div
     :style="genStyle(metric.valueStyle)"
-    class="h-100 text-center"
+    class="text-center"
+    :class="{'h-100': metric.valueStyle.notFitVertical !== true}"
   >
     <!--    This div is here because .svg metrics dont render with print to PDF option-->
     <div
@@ -17,20 +18,17 @@
       </template>
     </div>
 
-    <svg
-      :viewBox="getVB"
-      class="h-100 w-100 d-flex d-print-none"
-      width="100%"
-      height="100%"
-    >
-      <text
-        ref="metricItem"
-        y="50%"
-        x="50%"
-        text-anchor="middle"
-        dominant-baseline="central"
-        text-rendering="geometricPrecision"
+    <template v-if="metric.valueStyle.notFitVertical || metric.valueStyle.notFitHorizontal" >
+      <div
+        class="d-print-flex align-items-center justify-content-center overflow-hidden"
+        :style="genStyle(metric.valueStyle)"
       >
+        <span
+          v-if="metric.showLabel"
+          :style="genStyle(metric.valueStyle, true)"
+        >
+          {{ metric.label }}:&nbsp;
+        </span>
         <template v-if="metric.prefix">
           {{ metric.prefix }}
         </template>
@@ -38,8 +36,38 @@
         <template v-if="metric.suffix">
           {{ metric.suffix }}
         </template>
-      </text>
-    </svg>
+      </div>
+    </template>
+    <template v-else >
+      <svg
+        :viewBox="getVB"
+        class="h-100 w-100 d-flex d-print-none"
+        width="100%"
+        height="100%"
+      >
+        <text
+          ref="metricItem"
+          y="50%"
+          x="50%"
+          text-anchor="middle"
+          dominant-baseline="central"
+          text-rendering="geometricPrecision"
+        >
+          <template
+            v-if="metric.showLabel"
+          >
+            {{ metric.label }}:&nbsp;
+          </template>
+          <template v-if="metric.prefix">
+            {{ metric.prefix }}
+          </template>
+          {{ value.value }}
+          <template v-if="metric.suffix">
+            {{ metric.suffix }}
+          </template>
+        </text>
+      </svg>
+    </template>
   </div>
 </template>
 
@@ -100,12 +128,12 @@ export default {
       })
     },
 
-    genStyle (s = {}) {
+    genStyle (s = {}, forLabel = false) {
       const d = {
-        fill: s.color,
+        fill: forLabel ? (s.labelColor || s.color) : s.color,
         backgroundColor: s.backgroundColor,
         fontSize: s.fontSize ? s.fontSize + 'px' : undefined,
-        color: s.color,
+        color: forLabel ? (s.labelColor || s.color) : s.color,
       }
 
       for (const v of Object.keys(d)) {

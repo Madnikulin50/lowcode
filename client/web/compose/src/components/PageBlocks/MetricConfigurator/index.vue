@@ -67,6 +67,21 @@
                 />
               </b-form-group>
             </fieldset>
+            <b-form-group>
+              <b-form-checkbox
+                v-model="edit.showLabel"
+              >
+                {{ $t('metric.edit.showLabel') }}
+              </b-form-checkbox>
+            </b-form-group>
+
+            <b-form-group>
+              <b-form-checkbox
+                v-model="edit.showLabelTooltip"
+              >
+                {{ $t('metric.edit.showLabelTooltip') }}
+              </b-form-checkbox>
+            </b-form-group>
 
             <fieldset>
               <h5>
@@ -329,6 +344,9 @@
               {{ $t('metric.editStyle.valueLabel') }}
             </h5>
           </m-style>
+
+
+
         </b-col>
 
         <b-col
@@ -396,6 +414,8 @@ export default {
   data () {
     return {
       edit: undefined,
+      showLabel: false,
+      showLabelTooltip: false,
       dimensionModifiers: compose.chartUtil.dimensionFunctions.map(df => ({ ...df, text: this.$t(`chart.edit.dimension.function.${df.text}`) })),
       aggregationOperations: [
         {

@@ -274,15 +274,19 @@ metric:
     refreshData: Обновить данные
     suffixLabel: Суффикс
     tabTitle: Метрика
-    transformFunctionDescription: v - текущее значение; label - current value's label
+    transformFunctionDescription: v - текущее значение; label - метка текущего значения
     transformFunctionLabel: Преобразовать значение
+    showLabel: Отображать метку
+    showLabelTooltip: Отображать метку как тултип
   editStyle:
     backgroundColor: Цвет фона
     color: Цвет текста
     colorPicker: Выберите цвет
     fontSize: Font size in pixels
     labelLabel: Стиль метки
-    valueLabel: Стиль занчения
+    valueLabel: Стиль значения
+    notFitVertical: Не растягивать по вертикали
+    notFitHorizontal: Не растягивать по горизонтали
   label: Метрика
 record:
   referenceRecordField: Reference record

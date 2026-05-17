@@ -22,6 +22,24 @@
       </b-form-group>
 
       <b-form-group
+        :label="$t('metric.editStyle.labelColor')"
+        label-class="text-primary"
+      >
+        <c-input-color-picker
+          v-model="options.labelColor"
+          :translations="{
+            modalTitle: $t('metric.editStyle.colorPicker'),
+            light: $t('general:themes.labels.light'),
+            dark: $t('general:themes.labels.dark'),
+            cancelBtnLabel: $t('general:label.cancel'),
+            saveBtnLabel: $t('general:label.saveAndClose')
+          }"
+          :theme-settings="themeSettings"
+          class="mb-1"
+        />
+      </b-form-group>
+
+      <b-form-group
         :label="$t('metric.editStyle.backgroundColor')"
         label-class="text-primary"
       >
@@ -51,6 +69,21 @@
           step="0.1"
           class="mb-1"
         />
+      </b-form-group>
+
+      <b-form-group>
+        <b-form-checkbox
+          v-model="options.notFitVertical"
+        >
+          {{ $t('metric.editStyle.notFitVertical') }}
+        </b-form-checkbox>
+      </b-form-group>
+      <b-form-group>
+        <b-form-checkbox
+          v-model="options.notFitHorizontal"
+        >
+          {{ $t('metric.editStyle.notFitHorizontal') }}
+        </b-form-checkbox>
       </b-form-group>
     </fieldset>
   </b-card>

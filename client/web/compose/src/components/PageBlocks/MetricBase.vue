@@ -22,13 +22,17 @@
       <div
         v-for="(m, mi) in options.metrics"
         :key="mi"
-        class="d-flex align-items-center justify-content-center overflow-hidden h-100"
+        class="d-flex align-items-center justify-content-center overflow-hidden"
+
+        :class="{'h-100': m.valueStyle.notFitVertical !== true}"
       >
         <div
           v-for="(v, i) in formatResponse(m, mi)"
           :key="i"
-          class="w-100 h-100 px-2 py-1"
-          :class="m.drillDown.enabled ? 'pointer' : ''"
+          class="px-2 py-1"
+          :class="{'pointer': m.drillDown.enabled,
+                   'w-100': m.valueStyle.notFitHorizontal !== true,
+                   'h-100':m.valueStyle.notFitVertical !== true}"
           @click="drillDown(m, mi)"
         >
           <metric-item

@@ -136,13 +136,23 @@ func (str TokenConsumerNumber) Consume(s RuneReader) Token {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
 	buf.WriteRune(s.read())
-
+	hasDecimal := false
 	for {
 		if ch := s.read(); ch == eof {
 			break
 		} else if !isDigit(ch) {
-			s.unread()
-			break
+			if hasDecimal {
+				s.unread()
+				break
+			}
+			switch ch {
+			case '.', ',':
+				hasDecimal = true
+				_, _ = buf.WriteRune(ch)
+			default:
+				s.unread()
+				break
+			}
 		} else {
 			_, _ = buf.WriteRune(ch)
 		}
