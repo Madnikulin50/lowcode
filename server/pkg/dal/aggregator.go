@@ -24,6 +24,7 @@ type (
 		// @note we'll use float64 for all values, but it might make more sense to split it up
 		//       in the future. For now, it'll be ok.
 		aggregates []float64
+		items      []*map[float64]bool
 
 		// counts holds the number of values for each aggregate including multi value fields.
 		// Counts are currently only used for average.
@@ -54,12 +55,13 @@ var (
 	//
 	// @todo consider making this expandable via some registry/plugin/...
 	aggregateFunctionIndex = map[string]bool{
-		"count": true,
-		"sum":   true,
-		"min":   true,
-		"max":   true,
-		"avg":   true,
-		"":      true,
+		"count":       true,
+		"sum":         true,
+		"min":         true,
+		"max":         true,
+		"avg":         true,
+		"":            true,
+		"uniquecount": true,
 	}
 )
 
@@ -70,6 +72,7 @@ var (
 func Aggregator() *aggregator {
 	return &aggregator{
 		aggregates: make([]float64, 0, 16),
+		items:      make([]*map[float64]bool, 0, 16),
 		counts:     make([]int, 0, 16),
 	}
 }
@@ -119,6 +122,7 @@ func (a *aggregator) AddAggregate(ident string, expr *ql.ASTNode) (err error) {
 	}
 
 	a.aggregates = append(a.aggregates, 0)
+	a.items = append(a.items, &map[float64]bool{})
 	a.counts = append(a.counts, 0)
 	a.def = append(a.def, def)
 	return
@@ -184,6 +188,8 @@ func (a *aggregator) aggregate(ctx context.Context, attr aggregateDef, i int, v 
 		return a.max(ctx, attr, i, v)
 	case "avg":
 		return a.avg(ctx, attr, i, v)
+	case "uniquecount":
+		return a.uniqueCount(ctx, attr, i, v)
 	}
 
 	return fmt.Errorf("unsupported aggregate function: %s", attr.aggOp)
@@ -307,6 +313,23 @@ func (a *aggregator) avg(ctx context.Context, attr aggregateDef, i int, v ValueG
 	return
 }
 
+func (a *aggregator) uniqueCount(ctx context.Context, attr aggregateDef, i int, v ValueGetter) (err error) {
+	err = a.walkValues(ctx, v, v.CountValues(), attr, func(v any, isNil bool) {
+		if isNil {
+			return
+		}
+
+		(*a.items[i])[cast.ToFloat64(v)] = true
+
+		a.counts[i]++
+	})
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func (a *aggregator) completePartials() {
 	a.completeAverage()
 }
@@ -318,6 +341,12 @@ func (a *aggregator) completeAverage() {
 				return
 			}
 			a.aggregates[i] = a.aggregates[i] / float64(a.counts[i])
+		}
+		if attr.aggOp == "uniquecount" {
+			if a.counts[i] == 0 {
+				return
+			}
+			a.aggregates[i] = float64(len(*a.items[i]))
 		}
 	}
 }

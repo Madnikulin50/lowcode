@@ -24,19 +24,23 @@
         :key="mi"
         class="d-flex align-items-center justify-content-center overflow-hidden"
 
-        :class="{'h-100': m.valueStyle.notFitVertical !== true}"
+        :class="{'h-100': options.likeRecordList !== true && m.valueStyle.notFitVertical !== true,
+         'px-3': options.likeRecordList === true,
+         'pt-3': options.likeRecordList === true && mi === 0}"
       >
         <div
           v-for="(v, i) in formatResponse(m, mi)"
           :key="i"
-          class="px-2 py-1"
-          :class="{'pointer': m.drillDown.enabled,
-                   'w-100': m.valueStyle.notFitHorizontal !== true,
-                   'h-100':m.valueStyle.notFitVertical !== true}"
+          class="py-1"
+          :class="{'px-2': options.likeRecordList !== true,
+                   'pointer': m.drillDown.enabled,
+                   'w-100': options.likeRecordList === true || m.valueStyle.notFitHorizontal !== true,
+                   'h-100': (options.likeRecordList !== true && m.valueStyle.notFitVertical !== true)}"
           @click="drillDown(m, mi)"
         >
           <metric-item
             :metric="m"
+            :options="options"
             :value="v"
           />
         </div>

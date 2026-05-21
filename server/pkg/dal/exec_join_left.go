@@ -109,6 +109,10 @@ func (xs *joinLeft) Scan(s ValueSetter) (err error) {
 			if err != nil {
 				return
 			}
+			short := shortAttrFromLong(k)
+			if short != k {
+				err = s.SetValue(short, i, v)
+			}
 		}
 	}
 

@@ -3,6 +3,7 @@ package dal
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 type (
@@ -138,6 +139,32 @@ func (pp Pipeline) Slice(ident string) (out Pipeline) {
 	}
 
 	return pp.slice(r)
+}
+
+func (pp Pipeline) FullNameFromShort(shortName string) string {
+	if len(pp) == 0 {
+		return shortName
+	}
+	for _, s := range pp[0].Attributes() {
+		for _, src := range s {
+			if src.Identifier() == shortName {
+				return src.Identifier()
+			}
+		}
+	}
+	for _, s := range pp[0].Attributes() {
+		for _, src := range s {
+			id := src.Identifier()
+			li := strings.LastIndex(id, ".")
+			if li != -1 {
+				id = id[li+1:]
+				if id == shortName {
+					return src.Identifier()
+				}
+			}
+		}
+	}
+	return shortName
 }
 
 // slice is the recursive counterpart for the Slice method

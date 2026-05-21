@@ -25,12 +25,17 @@ type (
 )
 
 // newReportFrameBuilder initializes a new report frame builder
-func newReportFrameBuilder(def *FrameDefinition) *reportFrameBuilder {
+func newReportFrameBuilder(def *FrameDefinition, r Run) *reportFrameBuilder {
 	// Index cols for easier lookups
 	attrMap := make(map[string]int)
 	mvDelMap := make(map[string]string)
+
 	for i, c := range def.Columns {
 		attrMap[c.Name] = i
+		n := r.Pipeline.FullNameFromShort(c.Name)
+		if n != c.Name {
+			attrMap[n] = i
+		}
 
 		if c.Multivalue {
 			mvDelMap[c.Name] = c.MultivalueDelimiter
@@ -64,6 +69,7 @@ func (b *reportFrameBuilder) addRow(r *dal.Row) {
 	for k, cc := range r.CountValues() {
 		ix, ok := b.attrMapping[k]
 		if !ok {
+
 			continue
 		}
 

@@ -3,6 +3,50 @@
     <b-tab
       :title="$t('metric.edit.tabTitle')"
     >
+
+      <b-form-group>
+        <b-form-checkbox
+          v-model="likeRecordList"
+        >
+          {{ $t('metric.likeRecordList') }}
+        </b-form-checkbox>
+      </b-form-group>
+      <template v-if="likeRecordList">
+        <b-col
+          cols="12"
+          lg="6"
+        >
+          <b-form-group
+            :label="$t('record.horizontalFormLayout')"
+            label-class="text-primary"
+          >
+            <c-input-checkbox
+              v-model="options.horizontalFieldLayoutEnabled"
+              switch
+              :disabled="options.recordFieldLayoutOption === 'noWrap'"
+              :labels="checkboxLabel"
+            />
+          </b-form-group>
+        </b-col>
+
+        <b-col
+          cols="12"
+          lg="6"
+        >
+          <b-form-group
+            :label="$t('record.fieldsLayoutMode.label')"
+            label-class="text-primary"
+          >
+            <c-input-select
+              v-model="options.recordFieldLayoutOption"
+              :options="recordFieldLayoutOptions"
+              :reduce="option => option.value"
+              :get-option-key="option => option.label"
+              @input="handleRecordFieldLayout"
+            />
+          </b-form-group>
+        </b-col>
+      </template>
       <b-row no-gutters>
         <b-col cols="12">
           <div
@@ -67,21 +111,23 @@
                 />
               </b-form-group>
             </fieldset>
-            <b-form-group>
-              <b-form-checkbox
-                v-model="edit.showLabel"
-              >
-                {{ $t('metric.edit.showLabel') }}
-              </b-form-checkbox>
-            </b-form-group>
+            <template v-if="likeRecordList !== true">
+              <b-form-group>
+                <b-form-checkbox
+                  v-model="edit.showLabel"
+                >
+                  {{ $t('metric.edit.showLabel') }}
+                </b-form-checkbox>
+              </b-form-group>
 
-            <b-form-group>
-              <b-form-checkbox
-                v-model="edit.showLabelTooltip"
-              >
-                {{ $t('metric.edit.showLabelTooltip') }}
-              </b-form-checkbox>
-            </b-form-group>
+              <b-form-group>
+                <b-form-checkbox
+                  v-model="edit.showLabelTooltip"
+                >
+                  {{ $t('metric.edit.showLabelTooltip') }}
+                </b-form-checkbox>
+              </b-form-group>
+            </template>
 
             <fieldset>
               <h5>
@@ -337,6 +383,7 @@
           </b-card>
 
           <m-style
+            v-if="likeRecordList !== true"
             class="mt-2"
             :options="edit.valueStyle"
           >
@@ -344,9 +391,6 @@
               {{ $t('metric.editStyle.valueLabel') }}
             </h5>
           </m-style>
-
-
-
         </b-col>
 
         <b-col
@@ -414,8 +458,6 @@ export default {
   data () {
     return {
       edit: undefined,
-      showLabel: false,
-      showLabelTooltip: false,
       dimensionModifiers: compose.chartUtil.dimensionFunctions.map(df => ({ ...df, text: this.$t(`chart.edit.dimension.function.${df.text}`) })),
       aggregationOperations: [
         {
@@ -470,6 +512,14 @@ export default {
           .sort((a, b) => a.label.localeCompare(b.label)),
       ]
     },
+    likeRecordList: {
+      get () {
+        return this.options.likeRecordList || false
+      },
+      set (check) {
+        this.options.likeRecordList = check
+      },
+    },
 
     metrics: {
       get () {
@@ -492,6 +542,14 @@ export default {
 
     recordAutoCompleteParams () {
       return this.processRecordAutoCompleteParams({ module: this.selectedMetricModule })
+    },
+
+    recordFieldLayoutOptions () {
+      return [
+        { value: 'default', label: this.$t('record.fieldsLayoutMode.default') },
+        { value: 'noWrap', label: this.$t('record.fieldsLayoutMode.noWrap') },
+        { value: 'wrap', label: this.$t('record.fieldsLayoutMode.wrap') },
+      ]
     },
   },
 
@@ -566,6 +624,11 @@ export default {
       this.edit = undefined
       this.dimensionModifiers = []
       this.aggregationOperations = []
+    },
+    handleRecordFieldLayout (v) {
+      if (v !== 'noWrap') return
+
+      this.options.horizontalFieldLayoutEnabled = false
     },
   },
 }

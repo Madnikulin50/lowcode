@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/madnikulin50/lowcode/server/pkg/datasources"
 	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
 	"github.com/madnikulin50/lowcode/server/pkg/ql"
@@ -329,6 +330,73 @@ func (svc record) FindByID(ctx context.Context, namespaceID, moduleID, recordID 
 	})
 }
 
+func (svc record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) (out systemTypes.ReportStepSet, err error) {
+	if r.Load != nil {
+		moduleID, ok := r.Load.Definition["moduleID"].(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse moduleID")
+		}
+		mid, _ := strconv.ParseInt(moduleID, 10, 64)
+		namespaceID, ok := r.Load.Definition["namespaceID"].(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse namespaceID")
+		}
+		nid, _ := strconv.ParseInt(namespaceID, 10, 64)
+		loadModel, err := loadModule(ctx, svc.store, uint64(nid), uint64(mid))
+		if err != nil {
+			return nil, fmt.Errorf("failed to find module with id %d: %w", mid, err)
+		}
+		if loadModel.Config.Type != "datasource" {
+			return nil, nil
+		}
+
+		ss := loadModel.Config.Datasource.Items.ReportSteps()
+
+		for _, s := range ss {
+			s.ResetName(fmt.Sprintf("%v/%v", moduleID, s.Name()))
+			s.SetSourcePrefix(moduleID)
+		}
+		for {
+			changed := false
+			for i, s := range ss {
+				cur, err := svc.prepareStep(ctx, s)
+				if err != nil {
+					return nil, err
+				}
+				if cur == nil {
+					continue
+				}
+				changed = true
+				last := cur[len(cur)-1]
+				last.ResetName(s.Name())
+				n := make(systemTypes.ReportStepSet, 0)
+				n = append(n, ss[:i]...)
+				suffix := ss[i+1:]
+				n = append(n, cur...)
+
+				if len(suffix) != 0 {
+					n = append(n, suffix...)
+				}
+				ss = n
+				break
+			}
+			if !changed {
+				break
+			}
+		}
+		last := ss[len(ss)-1]
+		last.ResetName(r.Name())
+		return ss, nil
+
+	}
+
+	return nil, nil
+}
+
+func (svc record) enhance(ctx context.Context, ff []*datasources.Frame) (err error) {
+	return nil
+}
+
 // Report generates report for a given module using metrics, dimensions and filter
 // @note will eventually be removed in favor of the system report endpoints
 func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metrics, dimensions, f string) (_ any, err error) {
@@ -353,30 +421,174 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 			return RecordErrNotAllowedToSearch()
 		}
 
-		pp, agg, err := recordReportToDalPipeline(m, metrics, dimensions, f)
-		if err != nil {
+		switch m.Config.Type {
+		case "datasource":
+			var (
+				//aaProps = &reportActionProps{}
+
+				iter dal.Iterator
+				ff   []*datasources.Frame
+				out  = make([]*datasources.Frame, 0, 4)
+			)
+			flt := types.RecordFilter{
+				ModuleID:    m.ID,
+				NamespaceID: m.NamespaceID,
+			}
+			flt.Limit = 1
+			flt.IncTotal = false
+			flt.IncPageNavigation = true
+			err = func() (err error) {
+
+				// Get all of the steps
+				ss := m.Config.Datasource.Items.ReportSteps()
+				for {
+					changed := false
+					for i, s := range ss {
+						cur, err := svc.prepareStep(ctx, s)
+						if err != nil {
+							return err
+						}
+						if cur == nil {
+							continue
+						}
+						changed = true
+						n := make(systemTypes.ReportStepSet, 0)
+						n = append(n, ss[:i]...)
+						suffix := ss[i+1:]
+						n = append(n, cur...)
+
+						if len(suffix) != 0 {
+							n = append(n, suffix...)
+						}
+						ss = n
+						break
+					}
+					if !changed {
+						break
+					}
+				}
+				//ss = append(ss, r.Blocks.ReportSteps()...)
+				runner := dal.Service()
+				var dd datasources.FrameDefinitionSet
+				if len(dd) == 0 && len(ss) > 0 {
+					lastStep := ss[len(ss)-1]
+					def := datasources.FrameDefinition{Source: lastStep.Name()}
+					def.Columns = datasources.FrameColumnSet{}
+
+					var agg *dal.Aggregate
+
+					agg, err = recordReportToAggPipelineStep(m, metrics, dimensions, f)
+					if err != nil {
+						return
+					}
+
+					for _, f := range agg.Group {
+						col := datasources.FrameColumn{
+							Name:  f.Identifier,
+							Label: f.Identifier,
+						}
+						if f.Type != nil {
+							col.Kind = string(f.Type.Type())
+						}
+
+						def.Columns = append(def.Columns, col)
+					}
+
+					for _, f := range agg.OutAttributes {
+						def.Columns = append(def.Columns, datasources.FrameColumn{
+							Name:  f.Identifier,
+							Label: f.Identifier,
+							Kind:  string(f.Type.Type()),
+						})
+					}
+
+					dd = append(dd, &def)
+				}
+
+				// Prepare a set of runs for the provided definitions
+				runs, err := datasources.Runs(runner, ss, dd)
+				if err != nil {
+					return
+				}
+
+				// Run the reports and produce the frames
+				// @todo this can be ran in paralel
+				for _, run := range runs {
+					err = func() (err error) {
+						var agg *dal.Aggregate
+
+						agg, err = recordReportToAggPipelineStep(m, metrics, dimensions, f)
+						if err != nil {
+							return
+						}
+						agg.RelSource = run.Pipeline[0].Identifier()
+						run.Pipeline = append(run.Pipeline, agg)
+						iter, err = runner.Run(ctx, run.Pipeline)
+						if err != nil {
+							return
+						}
+						defer iter.Close()
+
+						ff, err = datasources.Frames(ctx, iter, run)
+						if err != nil {
+							return
+						}
+						err = svc.enhance(ctx, ff)
+						if err != nil {
+							return
+						}
+
+						for _, f := range ff {
+							for _, r := range f.Rows {
+								item := recordReportEntry{}
+								for i, c := range f.Columns {
+									item[c.Name] = r[i]
+								}
+								reportItems = append(reportItems, item)
+							}
+
+						}
+						return
+					}()
+
+					if err != nil {
+						return
+					}
+					if len(out) > 1 {
+						break
+					}
+				}
+
+				return nil
+			}()
 			return err
-		}
-
-		// Run it
-		iter, err = svc.dal.Run(ctx, pp)
-		if err != nil {
-			return err
-		}
-
-		defer iter.Close()
-
-		for iter.Next(ctx) {
-			item := recordReportEntry{}
-			err = iter.Scan(item)
-			recordReportCorrectTypes(agg, item)
+		default:
+			pp, agg, err := recordReportToDalPipeline(m, metrics, dimensions, f)
 			if err != nil {
 				return err
 			}
 
-			reportItems = append(reportItems, item)
+			// Run it
+			iter, err = svc.dal.Run(ctx, pp)
+			if err != nil {
+				return err
+			}
+
+			defer iter.Close()
+
+			for iter.Next(ctx) {
+				item := recordReportEntry{}
+				err = iter.Scan(item)
+				recordReportCorrectTypes(agg, item)
+				if err != nil {
+					return err
+				}
+
+				reportItems = append(reportItems, item)
+			}
+			return iter.Err()
 		}
-		return iter.Err()
+
 	}()
 
 	return reportItems, svc.recordAction(ctx, aProps, RecordActionReport, err)
@@ -2478,30 +2690,48 @@ func loadRecord(ctx context.Context, s store.Storer, namespaceID, moduleID, reco
 	return
 }
 
-func recordReportToDalPipeline(m *types.Module, metrics, dimensions, f string) (pp dal.Pipeline, _ *dal.Aggregate, err error) {
-	// Map dimension to the aggregate group
-	// @note we only ever used a single dimension so this is ok
+func recordReportToAggPipelineStep(m *types.Module, metrics, dimensions, f string) (agg *dal.Aggregate, err error) {
+
 	auxDim := dal.AggregateAttr{
 		Identifier: "dimension_0",
 		RawExpr:    dimensions,
 		Key:        true,
 	}
-
+	dim := []dal.AggregateAttr{}
+	oo := filter.SortExprSet{}
 	ff := m.Fields.FindByName(dimensions)
 	if ff != nil {
 		auxDim.MultiValue = ff.Multi
 		auxDim.Label = ff.Label
+
+	}
+	if ff != nil || m.Config.Type != "datasource" {
+		dim = append(dim, auxDim)
+		oo = append(oo, &filter.SortExpr{Column: dim[0].Identifier})
 	}
 
-	dim := []dal.AggregateAttr{auxDim}
-	oo := filter.SortExprSet{{Column: dim[0].Identifier}}
+	var colId string
+	for _, f := range m.Fields {
+		if strings.ToLower(f.Name) == "id" {
+			colId = "ID"
+			break
+		}
+	}
+	if colId == "" && len(m.Fields) > 0 {
+		if m.Config.Type == "datasource" {
+			colId = m.Fields[0].Name
+		}
+	}
 
+	if colId == "" {
+		colId = "ID"
+	}
 	// Map metrics to the aggregate attrs
 	// - count is always present
 	mms := []dal.AggregateAttr{
 		{
 			Identifier: "count",
-			RawExpr:    "count(ID)",
+			RawExpr:    fmt.Sprintf("count(%v)", colId),
 			Type:       &dal.TypeNumber{},
 		},
 	}
@@ -2526,7 +2756,7 @@ func recordReportToDalPipeline(m *types.Module, metrics, dimensions, f string) (
 		}
 	}
 
-	agg := &dal.Aggregate{
+	agg = &dal.Aggregate{
 		Ident:         "agg",
 		RelSource:     "ds",
 		Group:         dim,
@@ -2535,8 +2765,17 @@ func recordReportToDalPipeline(m *types.Module, metrics, dimensions, f string) (
 			filter.WithOrderBy(oo),
 		),
 	}
+	return agg, nil
+}
 
-	// Build the pipeline
+func recordReportToDalPipeline(m *types.Module, metrics, dimensions, f string) (pp dal.Pipeline, _ *dal.Aggregate, err error) {
+	// Map dimension to the aggregate group
+	// @note we only ever used a single dimension so this is ok
+	agg, err := recordReportToAggPipelineStep(m, metrics, dimensions, f)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	pp = dal.Pipeline{
 		&dal.Datasource{
 			Ident:  "ds",
@@ -2549,6 +2788,8 @@ func recordReportToDalPipeline(m *types.Module, metrics, dimensions, f string) (
 		},
 		agg,
 	}
+
+	// Build the pipeline
 
 	return pp, agg, pp.LinkSteps()
 }

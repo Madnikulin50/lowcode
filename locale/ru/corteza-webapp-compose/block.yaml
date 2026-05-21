@@ -99,7 +99,7 @@ chart:
   drillDown:
     label: Проваливание
     description: If a record list is selected, it will be used to display the drill down data. If no record list is selected, the drill down data will be shown in a modal.
-    openInModal: Open in modal
+    openInModal: Открыть в модальном окне
     configureColumns: Choose the default fields
   edit:
     label: Изменить chart
@@ -233,12 +233,13 @@ iframe:
   srcFieldLabel: Поле (URL) from record to use for the iframe
   srcLabel: URL to show in the iframe
 metric:
-  metricDrillDown: Metric drill down
-  defaultMetricLabel: Unnamed metric
+  metricDrillDown: Проваливание при нажатии на метрику
+  defaultMetricLabel: Безымянная метрика
+  likeRecordList: Отображать как запись
   drillDown:
     label: Проваливание
     description: If a record list is selected, it will be used to display the drill down data. If no record list is selected, the drill down data will be shown in a modal.
-    openInModal: Open in modal
+    openInModal: Открыть в модальном окне
   edit:
     bucketLabel: Bucket size
     bucketPlaceholder: Select a bucket size

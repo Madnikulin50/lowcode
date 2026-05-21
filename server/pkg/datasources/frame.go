@@ -146,7 +146,7 @@ func (dd FrameDefinitionSet) FilterBySource(ident string) FrameDefinitionSet {
 func Describe(ctx context.Context, rr dryRunner, ss types.ReportStepSet, sources []string) (out []*FrameDescription, err error) {
 	// Make a run for the whole thing
 	pp, err := makePipeline(rr, ss, nil)
-	if err != nil {
+	if len(pp) == 0 && err != nil {
 		return
 	}
 
@@ -184,8 +184,8 @@ func stepLinkFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame,
 	counters := make(map[bool]uint)
 
 	builders := make(map[bool]*reportFrameBuilder)
-	builders[true] = newReportFrameBuilder(defLeft)
-	builders[false] = newReportFrameBuilder(defRight)
+	builders[true] = newReportFrameBuilder(defLeft, r)
+	builders[false] = newReportFrameBuilder(defRight, r)
 	builders[false].linked(defLink.On.Right, defLink.On.Left, defLink.RelLeft)
 
 	limits := make(map[bool]uint)
@@ -297,7 +297,7 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 	// Init vars to keep track of the progress
 	limit := uint(0)
 	counter := uint(0)
-	builder := newReportFrameBuilder(def)
+	builder := newReportFrameBuilder(def, r)
 	incTotal := false
 	incPageNavigation := false
 	if def.Paging != nil {

@@ -80,6 +80,9 @@ interface Options {
   metrics: Array<Metric>;
   refreshRate: number;
   showRefresh: boolean;
+    likeRecordList: boolean;
+    recordFieldLayoutOption: string;
+    horizontalFieldLayoutEnabled: boolean;
   magnifyOption: string;
 }
 
@@ -87,6 +90,9 @@ const defaults: Readonly<Options> = Object.freeze({
   metrics: [],
   refreshRate: 0,
   showRefresh: false,
+  likeRecordList: false,
+    recordFieldLayoutOption: 'default',
+    horizontalFieldLayoutEnabled: false,
   magnifyOption: '',
 })
 
@@ -104,6 +110,9 @@ export class PageBlockMetric extends PageBlock {
     if (!o) return
     Apply(this.options, o, Number, 'refreshRate')
     Apply(this.options, o, Boolean, 'showRefresh')
+      Apply(this.options, o, String, 'recordFieldLayoutOption')
+      Apply(this.options, o, Boolean, 'horizontalFieldLayoutEnabled')
+    Apply(this.options, o, Boolean, 'likeRecordList')
     Apply(this.options, o, String, 'magnifyOption')
     if (o.metrics) {
       this.options.metrics = o.metrics.map((m) => merge({}, defaultMetric, m))

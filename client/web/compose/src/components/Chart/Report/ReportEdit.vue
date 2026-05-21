@@ -488,6 +488,10 @@ const aggregateFunctions = [
     value: 'STD',
     text: 'std',
   },
+  {
+    value: 'uniqueCount',
+    text: 'uniqueCount',
+  },
 ]
 
 export default {
