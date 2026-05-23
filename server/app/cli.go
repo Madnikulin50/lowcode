@@ -110,7 +110,15 @@ func (app *CortezaApp) InitCLI() {
 		return
 	})
 
+	envoyInit := func(ctx context.Context) (svc *envoyx.Service, err error) {
+		err = app.initEnvoy(ctx, app.Log)
+		return envoyx.Global(), err
+	}
 	provisionCmd := cli.ProvisionCommand(func() (err error) {
+		if _, err = envoyInit(ctx); err != nil {
+			return
+		}
+
 		if err = app.Provision(ctx); err != nil {
 			return
 		}
@@ -126,11 +134,6 @@ func (app *CortezaApp) InitCLI() {
 	dalInit := func(ctx context.Context) (dal.FullService, error) {
 		err := app.initDAL(ctx, app.Log)
 		return dal.Service(), err
-	}
-
-	envoyInit := func(ctx context.Context) (svc *envoyx.Service, err error) {
-		err = app.initEnvoy(ctx, app.Log)
-		return envoyx.Global(), err
 	}
 
 	app.Command.AddCommand(

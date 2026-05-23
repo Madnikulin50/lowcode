@@ -151,7 +151,7 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	srcAttrs := indexAttrs(def.SourceAttributes...)
 	pp := newQlParser(func(ident ql.Ident) (_ ql.Ident, err error) {
 		if _, ok := srcAttrs[ident.Value]; !ok {
-			return ident, fmt.Errorf("unknown attribute %s", ident.Value)
+			return ident, fmt.Errorf("unknown attribute %s for aggregate", ident.Value)
 		}
 		return ident, nil
 	})
@@ -185,6 +185,7 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	// Convert & validate group definitions
 	// - groups
 	outAttrs := make(map[string]bool, len(def.Group)+len(def.OutAttributes))
+
 	for i, attr := range def.Group {
 		name := attr.RawExpr
 		attr, err = prepAttr(attr)
@@ -200,6 +201,18 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 		idtf := attr.Identifier
 
 		exec.groupDefs = append(exec.groupDefs, attr)
+		outAttrs[idtf] = true
+	}
+	if len(exec.groupDefs) == 0 {
+		idtf := ""
+
+		exec.groupDefs = append(exec.groupDefs, AggregateAttr{
+			RawExpr: "",
+			Type: &TypeNumber{HasDefault: true,
+				DefaultValue: 0,
+				Precision:    -1, Scale: -1,
+			},
+		})
 		outAttrs[idtf] = true
 	}
 

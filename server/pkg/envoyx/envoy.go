@@ -149,7 +149,8 @@ func SetGlobal(n *Service) {
 // Global gets the global envoy service
 func Global() *Service {
 	if global == nil {
-		panic("global service not defined")
+		svc := New()
+		SetGlobal(svc)
 	}
 
 	return global

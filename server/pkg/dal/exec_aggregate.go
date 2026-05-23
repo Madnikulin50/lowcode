@@ -590,6 +590,9 @@ func makeExprRunners(kk ...*ql.ASTNode) (out []*runnerGval, err error) {
 	out = make([]*runnerGval, len(kk))
 
 	for i, k := range kk {
+		if k == nil {
+			continue
+		}
 		out[i], err = newRunnerGvalParsed(k)
 		if err != nil {
 			return

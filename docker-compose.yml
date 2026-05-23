@@ -1,7 +1,7 @@
 
 services:
   server:
-    image: pnp-lowcode:${VERSION}
+    image: docker.io/madnikulin50/pnp-lowcode:${VERSION}
     restart: always
     extra_hosts:
       - "host.docker.internal:${LOCAL}"

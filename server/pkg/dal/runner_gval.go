@@ -391,6 +391,9 @@ func (e *runnerGval) Test(ctx context.Context, rows any) (bool, error) {
 }
 
 func (e *runnerGval) Eval(ctx context.Context, rows any) (any, error) {
+	if e == nil {
+		return "", nil
+	}
 	o, err := e.eval(ctx, rows)
 	if err != nil {
 		return nil, err

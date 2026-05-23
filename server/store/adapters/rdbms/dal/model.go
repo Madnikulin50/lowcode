@@ -591,6 +591,10 @@ func (m *model) aggregateSql(f filter.Filter, groupBy []dal.AggregateAttr, out [
 				return m.convertQuery(c.Expression)
 			}
 
+			if c.Identifier == "" {
+				return nil, nil
+			}
+
 			return m.table.AttributeExpression(c.Identifier)
 		}
 	)

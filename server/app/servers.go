@@ -62,6 +62,25 @@ func (app *CortezaApp) mountHttpRoutes(r chi.Router) {
 
 				_, _ = fmt.Fprint(w, stylesheet)
 			})
+			r.Get(options.CleanBase(ho.WebappBaseUrl, "custom.css"), func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Content-Type", "text/css")
+				//DB_DSN=postgres://postgres:Zse45rdx@127.0.0.1:5432/test3?sslmode\=disable
+				stylesheet := service.FetchCSS()
+
+				_, _ = fmt.Fprint(w, stylesheet)
+			})
+
+			/*r.Get(options.CleanBase(ho.BaseUrl, "config.js"), func(w http.ResponseWriter, r *http.Request) {
+
+				// Assure the content-type
+				// The presence of the X-Content-Type-Options: nosniff header breaks web applications
+				w.Header().Add("Content-Type", "text/javascript")
+
+				const line = "window.%s = '%s';\n"
+				_, _ = fmt.Fprintf(w, line, "CortezaAPI", options.CleanBase(ho.ApiBaseUrl, ho.ApiBaseUrl, "api"))
+				_, _ = fmt.Fprintf(w, line, "CortezaAuth", options.CleanBase(ho.ApiBaseUrl, ho.ApiBaseUrl, "auth"))
+			})*/
+
 			app.Log.Info("client web applications disabled")
 			return
 		}

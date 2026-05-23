@@ -14,7 +14,7 @@ RUN ls ./
 
 RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
-ARG VERSION=2026.5.18
+ARG VERSION=2026.5.21
 
 ARG SERVER_VERSION=${VERSION}
 ARG WEBAPP_VERSION=${VERSION}
@@ -23,6 +23,8 @@ RUN mkdir /pnp/
 ADD ./server/dist/lowcode-server-${VERSION}-linux-amd64 /pnp/lowcode-server--linux-amd64
 
 WORKDIR /pnp
+RUN mkdir /pnp/provision
+ADD ./server/provision /pnp/provision/
 
 RUN rm -rf /pnp/webapp
 

@@ -157,7 +157,7 @@ module.exports = ({ appFlavour, appLabel, version = process.env.BUILD_VERSION, t
     },
 
     devServer: {
-      host: '0.0.0.0',
+      host: '127.0.0.1',
       port: 8080,
       hot: true,
       allowedHosts: 'all',
