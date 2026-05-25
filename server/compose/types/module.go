@@ -10,7 +10,9 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
 	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 	"github.com/madnikulin50/lowcode/server/pkg/sql"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
@@ -205,4 +207,51 @@ func ParseModuleConfig(ss []string) (m ModuleConfig, err error) {
 
 	err = json.Unmarshal([]byte(ss[0]), &m)
 	return
+}
+
+func (m *Module) UpdateReportsSteps(ss systemTypes.ReportStepSet) (res systemTypes.ReportStepSet) {
+	for _, f := range m.Fields {
+		if len(f.Expressions.ValueExpr) == 0 {
+			continue
+		}
+		attr := systemTypes.ReportAggregateColumn{
+			Def:   &systemTypes.ReportFilterExpr{ASTNode: &ql.ASTNode{Raw: f.Expressions.ValueExpr}},
+			Name:  f.Name,
+			Label: f.Label,
+		}
+		step := ss[len(ss)-1]
+
+		if step.Aggregate != nil {
+			step.Aggregate.Columns = append(step.Aggregate.Columns, &attr)
+		} else {
+			cols := systemTypes.ReportAggregateColumnSet{}
+			keys := systemTypes.ReportAggregateColumnSet{}
+			for _, f := range m.Fields {
+				def := systemTypes.ReportFilterExpr{ASTNode: &ql.ASTNode{Symbol: f.Name}}
+				if len(f.Expressions.ValueExpr) != 0 {
+					def = systemTypes.ReportFilterExpr{ASTNode: &ql.ASTNode{Raw: f.Expressions.ValueExpr}}
+				}
+				attr := systemTypes.ReportAggregateColumn{
+					Def:   &def,
+					Name:  f.Name,
+					Label: f.Label,
+				}
+				if len(f.Expressions.ValueExpr) != 0 {
+					cols = append(cols, &attr)
+				} else {
+					keys = append(keys, &attr)
+				}
+			}
+			s := systemTypes.ReportStep{}
+			s.Aggregate = &systemTypes.ReportStepAggregate{
+				Name:    "calc",
+				Source:  step.Name(),
+				Columns: cols,
+				Keys:    keys,
+			}
+			ss = append(ss, &s)
+			break
+		}
+	}
+	return ss
 }

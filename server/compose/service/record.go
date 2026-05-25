@@ -351,6 +351,7 @@ func (svc record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) (o
 		}
 
 		ss := loadModel.Config.Datasource.Items.ReportSteps()
+		ss = loadModel.UpdateReportsSteps(ss)
 
 		for _, s := range ss {
 			s.ResetName(fmt.Sprintf("%v/%v", moduleID, s.Name()))
@@ -383,6 +384,9 @@ func (svc record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) (o
 			if !changed {
 				break
 			}
+		}
+		if len(ss) == 0 {
+			return nil, nil
 		}
 		last := ss[len(ss)-1]
 		last.ResetName(r.Name())
@@ -441,6 +445,8 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 
 				// Get all of the steps
 				ss := m.Config.Datasource.Items.ReportSteps()
+				ss = m.UpdateReportsSteps(ss)
+
 				for {
 					changed := false
 					for i, s := range ss {
@@ -500,6 +506,23 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 							Label: f.Identifier,
 							Kind:  string(f.Type.Type()),
 						})
+					}
+					for _, f := range m.Fields {
+						if len(f.Expressions.ValueExpr) == 0 {
+							continue
+						}
+						def.Columns = append(def.Columns, datasources.FrameColumn{
+							Name:  f.Name,
+							Label: f.Label,
+							Kind:  f.Kind,
+						})
+						attr := dal.AggregateAttr{
+							RawExpr:    f.Expressions.ValueExpr,
+							Identifier: f.Name,
+							Label:      f.Label,
+							Type:       dal.TypeNumber{},
+						}
+						agg.OutAttributes = append(agg.OutAttributes, attr)
 					}
 
 					dd = append(dd, &def)
@@ -2761,10 +2784,19 @@ func recordReportToAggPipelineStep(m *types.Module, metrics, dimensions, f strin
 		RelSource:     "ds",
 		Group:         dim,
 		OutAttributes: mms,
-		Filter: filter.Generic(
-			filter.WithOrderBy(oo),
-		),
 	}
+	if len(oo) > 0 || len(f) > 0 {
+		if m.Config.Type != "datasource" {
+			agg.Filter = filter.Generic(
+				filter.WithOrderBy(oo))
+		} else {
+			agg.Filter = filter.Generic(
+				filter.WithOrderBy(oo),
+				filter.WithExpression(f))
+		}
+
+	}
+
 	return agg, nil
 }
 

@@ -24,7 +24,8 @@ type (
 		// @note we'll use float64 for all values, but it might make more sense to split it up
 		//       in the future. For now, it'll be ok.
 		aggregates []float64
-		items      []*map[float64]bool
+		last       ValueGetter
+		unique     []*map[float64]bool
 
 		// counts holds the number of values for each aggregate including multi value fields.
 		// Counts are currently only used for average.
@@ -72,7 +73,8 @@ var (
 func Aggregator() *aggregator {
 	return &aggregator{
 		aggregates: make([]float64, 0, 16),
-		items:      make([]*map[float64]bool, 0, 16),
+		last:       nil,
+		unique:     make([]*map[float64]bool, 0, 16),
 		counts:     make([]int, 0, 16),
 	}
 }
@@ -122,7 +124,8 @@ func (a *aggregator) AddAggregate(ident string, expr *ql.ASTNode) (err error) {
 	}
 
 	a.aggregates = append(a.aggregates, 0)
-	a.items = append(a.items, &map[float64]bool{})
+	a.last = nil
+	a.unique = append(a.unique, &map[float64]bool{})
 	a.counts = append(a.counts, 0)
 	a.def = append(a.def, def)
 	return
@@ -158,6 +161,21 @@ func (a *aggregator) Scan(s ValueSetter) (err error) {
 	a.scanned = true
 
 	// Set the values
+
+	if a.last != nil {
+		m := a.last.CountValues()
+		for k, v := range m {
+			var i uint
+			for i = 0; i < v; i++ {
+				val, err := a.last.GetValue(k, i)
+				if err != nil {
+					continue
+				}
+				err = s.SetValue(k, i, val)
+			}
+		}
+	}
+
 	for i, attr := range a.def {
 		// @note each aggregated value can be at most one so no need for multi-value
 		//       suport here.
@@ -166,12 +184,12 @@ func (a *aggregator) Scan(s ValueSetter) (err error) {
 			return
 		}
 	}
-
 	return
 }
 
 // aggregate applies the provided value into the requested aggregate
 func (a *aggregator) aggregate(ctx context.Context, attr aggregateDef, i int, v ValueGetter) (err error) {
+	a.last = v
 	switch attr.aggOp {
 	case "count":
 		return a.count(ctx, attr, i, v)
@@ -319,7 +337,7 @@ func (a *aggregator) uniqueCount(ctx context.Context, attr aggregateDef, i int, 
 			return
 		}
 
-		(*a.items[i])[cast.ToFloat64(v)] = true
+		(*a.unique[i])[cast.ToFloat64(v)] = true
 
 		a.counts[i]++
 	})
@@ -346,7 +364,7 @@ func (a *aggregator) completeAverage() {
 			if a.counts[i] == 0 {
 				return
 			}
-			a.aggregates[i] = float64(len(*a.items[i]))
+			a.aggregates[i] = float64(len(*a.unique[i]))
 		}
 	}
 }
@@ -386,6 +404,8 @@ func unpackExpressionNode(n *ql.ASTNode) (aggOp string, expr *ql.ASTNode, err er
 func (a *aggregator) reset() {
 	for i := 0; i < len(a.aggregates); i++ {
 		a.aggregates[i] = 0
+		a.unique[i] = &map[float64]bool{}
+		a.last = nil
 		a.counts[i] = 0
 	}
 	a.scanned = false

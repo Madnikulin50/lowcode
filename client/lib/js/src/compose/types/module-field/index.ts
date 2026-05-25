@@ -10,8 +10,6 @@ export { ModuleFieldString } from './string'
 export { ModuleFieldUrl } from './url'
 export { ModuleFieldUser } from './user'
 export { ModuleFieldGeometry } from './geometry'
-export { ModuleFieldExpression } from './expression'
-
 
 export function ModuleFieldMaker (i: { kind?: string }): ModuleField {
   if (!i.kind) {
@@ -19,7 +17,7 @@ export function ModuleFieldMaker (i: { kind?: string }): ModuleField {
   }
 
   if (!Registry.has(i.kind)) {
-    throw new Error(`unknown module field kind '${i.kind}'`)
+     i.kind = 'String'
   }
 
   return new (Registry.get(i.kind) as typeof ModuleField)(i)

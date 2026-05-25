@@ -97,6 +97,10 @@ func WithMetaConstraints(mc map[string]any) filterOpt {
 
 // WithExpression sets expression to filter
 func WithExpression(e string) filterOpt {
+	if e == "" {
+		return func(f *filter) {
+		}
+	}
 	return func(f *filter) {
 		f.expression = e
 	}

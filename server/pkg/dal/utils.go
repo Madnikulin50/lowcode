@@ -131,6 +131,20 @@ func (r *Row) GetValue(name string, pos uint) (any, error) {
 	return r.values[name][pos], nil
 }
 
+func (r Row) DeepCopy() *Row {
+	row := &Row{
+		counters: make(map[string]uint),
+		values:   make(valueSet),
+	}
+	for key, value := range r.values {
+		row.values[key] = append([]any{}, value...)
+	}
+	for key, value := range r.counters {
+		row.counters[key] = value
+	}
+	return row
+}
+
 func (r *Row) String() string {
 	out := make([]string, 0, 20)
 

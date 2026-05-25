@@ -169,8 +169,6 @@ fieldKinds:
     label: Выбор пользователя
   Geometry:
     label: Геопозиция
-  Expression:
-    label: Выражение
 field:
   selectAll: Выбрать все
   tooltip:

@@ -152,7 +152,7 @@ export class PageBlockMetric extends PageBlock {
     let metrics = ''
 
     if (operation && metricField && metricField !== 'count') {
-        if (metricField !== 'expression') {
+        if (metricField !== 'number_expression') {
             metrics = `${operation}(${metricField}) AS rp`
         } else {
             metrics = `(${expression}) AS rp`

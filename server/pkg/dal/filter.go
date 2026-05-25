@@ -35,6 +35,10 @@ func (f internalFilter) OrderBy() filter.SortExprSet               { return f.or
 func (f internalFilter) Limit() uint                               { return f.limit }
 func (f internalFilter) Cursor() *filter.PagingCursor              { return f.cursor }
 
+func (f internalFilter) IsEmpty() bool {
+	return f.limit == 0 && f.cursor == nil && f.orderBy == nil && f.expParsed == nil && f.expression == "" && len(f.stateConstraints) == 0 && len(f.metaConstraints) == 0 && len(f.constraints) == 0
+}
+
 // toInternalFilter converts filter.Filter to internalFilter for easier manipulation
 //
 // nil filters are returned as zeroed-out internalFilters.

@@ -104,6 +104,10 @@ func (def *Join) iterator(ctx context.Context, left, right Iterator) (out Iterat
 		}
 	}
 
+	if pt == nil {
+		pt = TypeText{}
+	}
+
 	return exec, exec.init(ctx, pt)
 }
 
@@ -199,9 +203,10 @@ func (def *Join) init(ctx context.Context, left, right Iterator) (exec *joinLeft
 	}
 
 	if def.On.Left == "" {
-		return nil, fmt.Errorf("no left attribute in the join predicate specified")
-	}
-	if def.On.Right == "" {
+		if def.On.Right != "" {
+			return nil, fmt.Errorf("no left attribute in the join predicate specified")
+		}
+	} else if def.On.Right == "" {
 		return nil, fmt.Errorf("no right attribute in the join predicate specified")
 	}
 

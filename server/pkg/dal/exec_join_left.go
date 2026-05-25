@@ -294,10 +294,11 @@ func (xs *joinLeft) joinRight(ctx context.Context, left *Row) (err error) {
 	for _, b := range bb {
 		for _, right := range b.rows {
 			// Merge the two
-			xs.mergeRows(xs.def.OutAttributes, right, left, right)
+			row := right.DeepCopy()
+			xs.mergeRows(xs.def.OutAttributes, row, left, right)
 
 			// Assert if we want to keep
-			k, err := xs.keep(ctx, right)
+			k, err := xs.keep(ctx, row)
 			if err != nil {
 				return err
 			}
@@ -305,7 +306,7 @@ func (xs *joinLeft) joinRight(ctx context.Context, left *Row) (err error) {
 				continue
 			}
 
-			xs.outSorted.Set(right)
+			xs.outSorted.Set(row)
 		}
 	}
 
@@ -315,14 +316,21 @@ func (xs *joinLeft) joinRight(ctx context.Context, left *Row) (err error) {
 // getRelatedBuffers returns all of the right rows corresponding to the given left row
 func (xs *joinLeft) getRelatedBuffers(l *Row) (out []*relIndexBuffer, ok bool, err error) {
 	var aux *relIndexBuffer
-	for c := uint(0); c < l.CountValues()[xs.def.On.Left]; c++ {
-		// @note internal Row struct never errors
-		v, _ := l.GetValue(xs.def.On.Left, c)
-		aux, ok = xs.relIndex.Get(v)
-		if !ok {
-			continue
+	if xs.def.On.Left == "" {
+		aux, ok = xs.relIndex.Get("")
+		if ok {
+			out = append(out, aux)
 		}
-		out = append(out, aux)
+	} else {
+		for c := uint(0); c < l.CountValues()[xs.def.On.Left]; c++ {
+			// @note internal Row struct never errors
+			v, _ := l.GetValue(xs.def.On.Left, c)
+			aux, ok = xs.relIndex.Get(v)
+			if !ok {
+				continue
+			}
+			out = append(out, aux)
+		}
 	}
 
 	return

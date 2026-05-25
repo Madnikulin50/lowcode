@@ -198,28 +198,28 @@ kind:
       openMap: Open map
     geosearchInputPlaceholder: Enter address, place or postcode
 noPermission: No permission to read field value
-no-items-found: No items found
+no-items-found: Не найдено элементов
 options:
   description:
     label:
       default: Описание
-      edit: Описание edit
-      view: Описание view
+      edit: Описание при редактировании
+      view: Описание при просмотре
     placeholder:
-      default: Описание text...
+      default: Текст описания...
       edit: Описание when editing record field...
       view: Описание when viewing record field...
     same: Show same description on view and edit
   hint:
     label:
-      default: Hint
-      edit: Hint edit
-      view: Hint view
+      default: Подсказка
+      edit: Подсказка при редактировании
+      view: Подсказка при просмотре
     placeholder:
-      default: Hint text...
+      default: Текст подсказки...
       edit: Hint when editing record field...
       view: Hint when viewing record field...
-    same: Show same hint on view and edit
+    same: Показывать одинаковую подсказку при просмотре и редактировании
   multiDelimiter:
     comma: Separated by a comma
     custom: A custom delimiter
@@ -236,9 +236,9 @@ selector:
   search: Тип here to search among module fields
   available: Доступные поля
   selectAll: Выбрать все
-  selected: Selected fields
+  selected: Выбранные поля
   systemField: (системное поле)
-  unselectAll: Unselect all
+  unselectAll: Снять выделение
 privacy:
   sensitivity-level:
     label: Sensitivity level

@@ -287,11 +287,21 @@ func (xs *aggregate) pullEntireSource(ctx context.Context) (err error) {
 		if err != nil {
 			return
 		}
+		if xs.rowTester != nil {
+			needKeep, err := xs.keep(ctx, r)
+			if err == nil && !needKeep {
+				continue
+			}
+		}
 
 		// Get the key for this row
 		// @todo we probably can reuse the key or at least cache keys and avoid re-computation.
 		//       My fairly hacky attempt boosted performance by ~20%
-		err = xs.keyWalker(ctx, r, xs.addToGroup)
+		row := r
+		if xs.rowTester != nil {
+			row = r.DeepCopy()
+		}
+		err = xs.keyWalker(ctx, row, xs.addToGroup)
 		if err != nil {
 			return
 		}

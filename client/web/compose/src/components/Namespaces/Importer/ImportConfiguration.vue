@@ -145,7 +145,6 @@ export default {
         })
     },
 
-
     getOptionKey ({ connectionID }) {
       return connectionID
     },

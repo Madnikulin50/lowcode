@@ -233,7 +233,7 @@ func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) 
 		}
 
 		ss := loadModel.Config.Datasource.Items.ReportSteps()
-
+		ss = loadModel.UpdateReportsSteps(ss)
 		for _, s := range ss {
 			s.ResetName(fmt.Sprintf("%v/%v", moduleID, s.Name()))
 			s.SetSourcePrefix(moduleID)
@@ -266,8 +266,13 @@ func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) 
 				break
 			}
 		}
-		last := ss[len(ss)-1]
-		last.ResetName(r.Name())
+		if len(ss) > 0 {
+			last := ss[len(ss)-1]
+			last.ResetName(r.Name())
+		} else {
+			ss = nil
+		}
+
 		return ss, nil
 
 	}
@@ -332,6 +337,7 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 
 			// Get all of the steps
 			ss := m.Config.Datasource.Items.ReportSteps()
+			ss = m.UpdateReportsSteps(ss)
 			for {
 				changed := false
 				for i, s := range ss {

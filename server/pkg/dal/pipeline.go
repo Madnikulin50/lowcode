@@ -81,20 +81,20 @@ func (pp Pipeline) LinkSteps() (err error) {
 				rs.relLeft = steps[rs.RelLeft]
 				rs.relRight = steps[rs.RelRight]
 				if rs.relLeft == nil {
-					return fmt.Errorf("join: missing left relation %s", rs.relLeft)
+					return fmt.Errorf("join: missing left relation %s for %v", rs.relLeft, rs.Identifier())
 				}
 				if rs.relRight == nil {
-					return fmt.Errorf("join: missing right relation %s", rs.relRight)
+					return fmt.Errorf("join: missing right relation %s for %v", rs.relRight, rs.Identifier())
 				}
 
 			case *Link:
 				rs.relLeft = steps[rs.RelLeft]
 				rs.relRight = steps[rs.RelRight]
 				if rs.relLeft == nil {
-					return fmt.Errorf("link: missing left relation %s", rs.relLeft)
+					return fmt.Errorf("link: missing left relation %s for %v", rs.relLeft, rs.Identifier())
 				}
 				if rs.relRight == nil {
-					return fmt.Errorf("link: missing right relation %s", rs.relRight)
+					return fmt.Errorf("link: missing right relation %s for %v", rs.relRight, rs.Identifier())
 				}
 			}
 		}

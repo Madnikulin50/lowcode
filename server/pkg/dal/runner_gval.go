@@ -432,6 +432,9 @@ func (c converterGval) convert(n *ql.ASTNode) (_ string, err error) {
 			return
 		}
 	}
+	if n.Ref == "" && len(n.Raw) > 0 {
+		return n.Raw, nil
+	}
 
 	return c.refHandler(n, args...)
 }

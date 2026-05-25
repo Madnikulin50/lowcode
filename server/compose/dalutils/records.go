@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/madnikulin50/lowcode/server/compose/service/values"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/dal"
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
@@ -120,6 +121,10 @@ func WalkIterator(ctx context.Context, iter dal.Iterator, mod *types.Module, f f
 		r := prepareRecordTarget(mod)
 		if err = iter.Scan(r); err != nil {
 			return
+		}
+
+		if len(r.Values) < len(mod.Fields) {
+			values.Expression(ctx, mod, r, nil, nil)
 		}
 
 		if err = f(r); err != nil {
