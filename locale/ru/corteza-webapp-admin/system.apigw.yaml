@@ -9,18 +9,18 @@ list:
   loading: Loading routes
   filterForm:
     query:
-      label: Filter route list
-      placeholder: Filter routes by name
+      label: Фильтр route list
+      placeholder: Фильтр routes by name
     excluded:
       label: Without
     inclusive:
-      label: Including
+      label: Включая
     exclusive:
       label: Only
     deleted:
       label: deleted routes
     handle:
-      placeholder: Filter endpoints by path
+      placeholder: Фильтр endpoints by path
   delete: Delete
   undelete: Undelete
 
@@ -75,14 +75,14 @@ editor:
       invalidCharacters: Endpoint contains invalid characters
 
   filters:
-    title: Filter list
+    title: Фильтр list
     enabled: Enabled
     disabled: Disabled
     add: Add
     addFilter: Add filter
     addHeader: Add header
     params: Params
-    filterListEmpty: Filter list is empty!
+    filterListEmpty: Фильтр list is empty!
 
     modal:
       title: Query parameters verifier
@@ -104,9 +104,9 @@ editor:
     labels:
       expr: Выражение
       location: URL
-      workflow: Workflow
+      workflow: Процесс
       status: HTTP Статус
-      jsfunc: Function
+      jsfunc: Функция
       input: Input
       header: Headers
       name: Имя

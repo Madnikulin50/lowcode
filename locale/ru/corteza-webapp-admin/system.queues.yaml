@@ -41,10 +41,10 @@ list:
     exclusive:
       label: Only
     handle:
-      label: Filter queues list
-      placeholder: Filter queues by name
+      label: Фильтр queues list
+      placeholder: Фильтр queues by name
     inclusive:
-      label: Including
+      label: Включая
   loading: Loading messaging queues
   new: New Queue
   title: Messaging queues

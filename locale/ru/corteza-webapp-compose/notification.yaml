@@ -3,15 +3,15 @@ automation:
 chart:
   created: Диаграмма создана
   createFailed: Could not create a chart
-  deleteFailed: Could not delete this chart
+  deleteFailed: Невозможно удалить эту диаграмму
   deleted: Диаграмма удалена
   invalidConfig:
     missingDimensionsField: Dimensions field not defined
     missingDimensionsModifier: Dimensions modifier not defined
     missingDimensionsSteps: Dimensions steps are not defined
-    missingMetricsAggregate: Metrics aggregate not defined
-    missingMetricsField: Metrics field not defined
-    missingMetricsType: Metrics chart type not defined
+    missingMetricsAggregate: Метрики aggregate not defined
+    missingMetricsField: Метрики field not defined
+    missingMetricsType: Метрики chart type not defined
     missingModuleID: Module not defined
     missingReports: Reports not defined
   loadFailed: Could not load chart
@@ -23,14 +23,14 @@ chart:
     fetch:
       failed: Failed to fetch custom color schemes
     create:
-      success: Цвет scheme created
-      failed: Failed to create color scheme
+      success: Схема цветов created
+      failed: Failed to create схему цветов
     update:
-      success: Цвет scheme updated
-      failed: Failed to update color scheme
+      success: Схема цветов updated
+      failed: Failed to update схему цветов
     delete:
-      success: Цвет scheme deleted
-      failed: Failed to delete color scheme
+      success: Схема цветов deleted
+      failed: Failed to delete схему цветов
 color:
   RGBA:
     invalid: Invalid RGBA color format
@@ -145,7 +145,7 @@ page:
 record:
   uploadFailed: Не удалось загрузить файл
   createFailed: Could not create record
-  createSuccess: Record created
+  createSuccess: Запись создана
   updateFailed: Could not update record
   updateSuccess: Запись обновлена
   saveFailed: Could not save records

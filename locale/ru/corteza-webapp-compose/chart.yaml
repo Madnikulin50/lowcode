@@ -1,16 +1,16 @@
-colorLabel: '{{count}} colors'
+colorLabel: '{{count}} цветов'
 colorScheme:
-  label: Цвет scheme
-  placeholder: Pick a color scheme
-  pickAColor: Pick a color
+  label: Схема цветов
+  placeholder: Выберите схему цветов
+  pickAColor: Выберите color
   custom:
-    add: Добавить color scheme
-    edit: Изменить color scheme
+    add: Добавить схему цветов
+    edit: Изменить схему цветов
     modal:
       name:
         label: Имя
       colors:
-        label: Colors
+        label: Цвета
 configure:
   reportsLabel: Отчеты
 general:
@@ -26,8 +26,8 @@ general:
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
 edit:
   animation:
-    label: Animation
-    enabled: Animation enabled
+    label: Анимация
+    enabled: Анимация включена
   dimension:
     calculateМеткаCount: Calculate how many labels can be shown
     defaultValueFootnote: Use this value for missing dimension values
@@ -39,53 +39,53 @@ edit:
       none: No grouping
       auto: Auto
       date: Дата
-      label: Function
+      label: Функция
       month: Месяц
       quarter: Квартал
       week: Неделя
       year: Год
     gaugeSteps: Steps
     label: Dimensions
-    skipMissingValues: Skip missing values
-    timeМеткаs: Время labels
+    skipMissingValues: Пропускать отсутсвующие значения
+    timeLabels: Метки времени
     options:
-      label: Options
+      label: Свойства
     optionsPicker:
       searchPlaceholder: Тип here to search among select options
       availableItems: Available options
       selectAllItems: Выбрать все
       selectedItems: Selected options
-      unselectAllItems: Unselect all
+      unselectAllItems: Снять выделение
       noItemsFound: No options found
     rotate:
-      label: Rotate labels
-      description: Меткаs can be rotated from -90 to 90 degrees.
+      label: Повернуть метки
+      description: Метки могут быть повернуты от -90 до 90 градусов.
   filter:
     customize: Customize filter
-    label: Filter
-    preset: Preset filters
+    label: Фильтр
+    preset: Предустановленные фильтры
     footnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
     placeholder: field1 = 1 AND field2 = 232
-    noFilter: Select a filter
-    recordsCreatedLastMonth: Records created last month
-    recordsCreatedLastQuarter: Records created last quarter
-    recordsCreatedLastYear: Records created last year
-    recordsCreatedThisMonth: Records created this month
-    recordsCreatedThisQuarter: Records created this quarter
-    recordsCreatedThisYear: Records created this year
-  loadData: Load data
+    noFilter: Выберите фильтр
+    recordsCreatedLastMonth: Записи созданные за последний месяц
+    recordsCreatedLastQuarter: Записи созданные за последний квартал
+    recordsCreatedLastYear: Записи созданные за последний год
+    recordsCreatedThisMonth: Записи созданные в этом месяце
+    recordsCreatedThisQuarter: Записи созданные в этом кватрале
+    recordsCreatedThisYear: Записи созданные в этом году
+  loadData: Загрузка данных
   metric:
-    title: Metrics
-    add: Добавить metric
+    title: Метрики
+    add: Добавить метрику
     fieldLabel: Поле *
-    fieldPlaceholder: Select metric field
-    fillArea: Fill area below the line
-    fixTooltips: Always show labels
+    fieldPlaceholder: Выберите поле метрики
+    fillArea: Залить под графиком
+    fixTooltips: Всегда показывать метки
     options:
-      label: Options
+      label: Свойства
     function:
       avg: AVG
-      label: Function
+      label: Функция
       max: MAX
       min: MIN
       placeholder: Select metric aggregate function
@@ -93,44 +93,44 @@ edit:
       sum: SUM
     fx:
       description: n - current dataset value, m - previous dataset value
-      label: Post processing function
+      label: Функция постобработки
     stack:
-      label: Stack
-      description: Metrics with same value will be stacked
+      label: Стэк
+      description: Метрики with same value will be stacked
     lineStyle:
-      label: Line style
-      default: Default
-      smooth: Smooth
+      label: Стиль линии
+      default: По-умолчанию
+      smooth: Сглаженная
       step: Шаг
     angle:
-      start: Start angle
-      end: End angle
-    rose: Rose
+      start: Начальный угол
+      end: Конечный угол
+    rose: Роза
     radar:
       shape:
-        label: Radar shape
-        polygon: Polygon
-        circle: Circle
+        label: Радар
+        polygon: Полигон
+        circle: Круг
     gaugeColor: Цвет
     label: Метрика
-    labelColor: Метка color
+    labelColor: Цвет
     labelLabel: Метка
     labelPlaceholder: Всего
     symbol:
-      label: Symbol
-      circle: Circle
-      triangle: Triangle
-      diamond: Diamond
+      label: Символ
+      circle: Кружок
+      triangle: Треугольнк
+      diamond: Ромб
       pin: Pin
-      arrow: Arrow
-      rect: Rectangle
-      roundRect: Rounded Rectangle
+      arrow: Стрелка
+      rect: Прямоугольник
+      roundRect: Скругленный прямоугольник
     legend:
-      bottom: Bottom
-      left: Left
-      positionPlaceholder: Legend position
-      right: Right
-      top: Top
+      bottom: Низ
+      left: Лево
+      positionPlaceholder: Положение легенды
+      right: Право
+      top: Верх
     lineTension:
       curvy: Big curvatures
       label: Line tension
@@ -139,98 +139,98 @@ edit:
       slight: Small curvatures
       straight: Straight lines
     output:
-      bar: Bar
-      doughnut: Doughnut
-      label: Диаграмма type *
-      line: Line
-      pie: Pie
-      scatter: Scatter
-      placeholder: Select metric output
-    relative: Показать связанное value
-    relativePrecision: 'Precision:'
-    cumulative: Cumulative
+      bar: Столбцы
+      doughnut: Пончик
+      label: Тип диаграммы *
+      line: Кривая
+      pie: Пирог
+      scatter: Рассеивание
+      placeholder: Выберите вывод метрики
+    relative: Показать связанное значение
+    relativePrecision: 'Точность:'
+    cumulative: Кумулятивный
   module:
     label: Модуль *
     placeholder: Выберите модуль
-    title: Data Source
-  title: Диаграмма builder
-  unconfiguredReport: Unconfigured report
+    title: Источник данных
+  title: Конструктор диаграмм
+  unconfiguredReport: Несконфигурированный отчет
   yAxis:
-    axisOnRight: Place axis on the right side
-    axisScaleFromZero: Always begin axis scale at zero
-    label: Y-axis
+    axisOnRight: Расположить оси справа
+    axisScaleFromZero: Всегда откладывать значения от 0
+    label: Ось Y
     options:
-      label: Options
+      label: Свойства
     rotate:
-      label: Rotate labels
-      description: Меткаs can be rotated from -90 to 90 degrees
-    labelLabel: Axis label
+      label: Повернуть метки
+      description: Метки могут быть повернуты от -90 до 90 градусов
+    labelLabel: Метка оси
     labelPosition:
-      label: Метка position
-      top: Start
-      center: Center
-      bottom: End
+      label: Позиция метки
+      top: Начало
+      center: Центр
+      bottom: Конец
     horizontal:
       label: Горизонтальное
-    logarithmicScale: Logarithmic scale
-    maxLabel: Максимум value
+    logarithmicScale: Логарифмическая шкала
+    maxLabel: Максимум
     maxPlaceholder: Максимальное значение
-    minLabel: Минимум value
+    minLabel: Минимум
     minPlaceholder: Минимальное значение
   additionalConfig:
     legend:
-      label: Legend
-      show: Show legend
+      label: Легенда
+      show: Отображать легенду
       orientation:
         label: Расположение
         horizontal: Горизонтальное
         vertical: Вертикальное
       align:
-        label: Align
-        left: Left
-        right: Right
-        center: Center
-      scrollable: Scrollable
+        label: Выравнивание
+        left: Лево
+        right: Право
+        center: Центр
+      scrollable: Масштабировать
       position:
-        customize: Default position
-        top: Top
-        right: Right
-        bottom: Bottom
-        left: Left
-      valueRange: Values can be set as pixels 20 or as percentages 20%
+        customize: Позиция по-умолчанию
+        top: Верх
+        right: Право
+        bottom: Низ
+        left: Лево
+      valueRange: Значения могут быть установлены в пикселях 20 или в процентах 20%
       options:
-        label: Options
+        label: Свойства
     tooltip:
-      label: Tooltip
-      labelСледующаяToChart: Show labels next to chart
+      label: Всплывающая посказка
+      labelNextToChart: Показывть метки за диаграммой
       formatting:
         label: Custom formatting
-        description: '{a} - metrics label, {b} - dimension value, {c} - metric value, {d} - metric value percentage'
+        description: '{a} - метка  метрики, {b} - dimension value, {c} - значение метрики, {d} - значение метрики percentage'
         placeholder: '{a}<br />{b} : {c} ({d}%)'
         disclaimer: Adding a value to the formatting field will disable the fields number format, prefix, and suffix and vice versa
     offset:
-      label: Offset
-      default: Default offset
+      label: Смещение
+      default: Смещение по умолчанию
       position:
-        top: Top
-        right: Right
-        bottom: Bottom
-        left: Left
-      valueRange: Values can be set as pixels 20 or as percentages 20%
+        top: Верх
+        right: Право
+        bottom: Низ
+        left: Лево
+      valueRange: Значения могут быть установлены в пикселях 20 или в процентах 20%
   toolbox:
-    label: Tools
+    label: Инструменты
     saveAsImage:
-      label: Show "Сохранить как Image" button
+      label: Показывать кнопку "Сохранить как картинку"
     timeline:
-      label: Timeline
+      label: Ось времени
       options:
         none: Отсутствует
-        x: X-Axis
-        y: Y-Axis
-        xy: Both
+        x: Ось X
+        y: Ось Y
+        xy: Обе
   formatting:
     format:
-      label: Format
+      label: Формат
       placeholder: '0.00'
     prefix:
       label: Префикс
@@ -239,24 +239,24 @@ edit:
       label: Суффикс
       placeholder: $
     presetFormats:
-      label: Format
+      label: Формат
       options:
-        custom: Custom
-        accounting: Accounting number
+        custom: Пользовательский
+        accounting: Число
       description:
         custom: ''
         accounting: Negative numbers are transformed into positive and added in brackets and the value 0 is substituted by a dash
-import: 'Импорт chart(s):'
-newLabel: 'Create a new chart:'
-name: Диаграмма name *
+import: 'Импорт диаграмм:'
+newLabel: 'Создать новую диаграмму:'
+name: Имя диаграммы *
 handle: Дескриптор
-generalSettings: Основные settings
+generalSettings: Основные настройки
 notification:
-  loadFailed: Could not load chart
-  saveFailed: Could not save this chart
-  saved: Диаграмма saved
-  deleteFailed: Could not delete this chart
+  loadFailed: Ошибка загрузки диаграммы
+  saveFailed: Ошибка сохранения диаграммы
+  saved: Диаграмма сохранена
+  deleteFailed: Невозможно удалить эту диаграмму
   deleted: Диаграмма удалена
-searchPlaceholder: Search charts in this namespace
-title: Список of Диаграммы
-undefined: undefined
+searchPlaceholder: Искать диаграммы в пространстве
+title: Список диаграмм
+undefined: незадано

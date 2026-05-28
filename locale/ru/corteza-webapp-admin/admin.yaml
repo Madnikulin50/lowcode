@@ -20,7 +20,7 @@ automation:
         fields:
           bcc: BCC
           cc: CC
-          from: From
+          from: Отправитель
           placeholder: Mail header field
           replyTo: Reply To
           subject: Subject
@@ -30,7 +30,7 @@ automation:
           equal-ci: Match full
           placeholder: Operator
           prefix-ci: Match prefix
-          regex: Regex
+          regex: Регулярное выражение
           suffix-ci: Match suffix
           user: Existing user
       tabLabel: Mail triggers
@@ -73,7 +73,7 @@ automation:
 general:
   resource-list:
     no-items: No matches for your search
-  notFound: 'Not found'
+  notFound: 'Не найдено'
   loading: Загрузка...
   label:
     "no": "Нет"

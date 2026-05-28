@@ -125,19 +125,19 @@ func (df *DecodeFilter) automationFromResource(rr ...string) *DecodeFilter {
 			continue
 		}
 
-		id := ""
+		queryId := ""
 		if strings.Count(r, ":") == 2 && !strings.HasSuffix(r, "*") {
 			// There is an identifier
 			aux := strings.Split(r, ":")
 
-			id = aux[len(aux)-1]
+			queryId = aux[len(aux)-1]
 			r = strings.Join(aux[:len(aux)-1], ":")
 		}
 
 		switch strings.ToLower(r) {
 		case "automation:workflow":
 			df = df.AutomationWorkflows(&types.WorkflowFilter{
-				Query:    id,
+				Query:    queryId,
 				Disabled: filter.StateInclusive,
 			})
 		}

@@ -20,32 +20,32 @@ list:
   load:
     error: Failed to fetch workflows
   enable:
-    success: Workflow enabled
+    success: Процесс enabled
     failed: Failed to enable workflow
   disable:
-    success: Workflow disabled
+    success: Процесс disabled
     failed: Failed to disable workflow
 import:
   'failed-import': Failed to import
-  'imported-workflows': Workflows imported
+  'imported-workflows': Процессы imported
   'skipped-workflows': Skipped workflows
-'imported-workflow': Workflow imported
+'imported-workflow': Процесс imported
 'import-failed': Импорт failed
 'initial-scope-load-failed': Failed to load initial scope
 'resolve-issues': Решить issues to test workflow
 'save-workflow': Сохранить workflow first to test it
-'started-test': Workflow test started
+'started-test': Процесс test started
 'test-completed': Test completed
 'test-in-progress': Test in progress
 'trace-unavailable': Trace not available
 'trigger-paths-changed': Trigger paths changed
-'workflow-test-completed': Workflow test completed
+'workflow-test-completed': Процесс test completed
 update:
-  success: Workflow updated
+  success: Процесс updated
   failed: Failed to update workflow
 delete:
-  success: Workflow deleted
+  success: Процесс deleted
   failed: Failed to delete workflow
 undelete:
-  success: Workflow restored
+  success: Процесс restored
   failed: Failed to restore workflow

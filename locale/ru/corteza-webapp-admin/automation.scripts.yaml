@@ -8,7 +8,7 @@ list:
     incScriptsWithIterator: Iterator ({{ count }})
     incScriptsWithSecurity: Security ({{ count }})
     incScriptsWithTriggers: Triggers ({{ count }})
-    searchQuery: Search query
+    searchQuery: Фильтр поиска
   flags:
     iterator: Iterator
     security: Security

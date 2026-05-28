@@ -14,7 +14,7 @@ automation:
   buttonLabel: Метка
   buttonVariant: Variant
   configuredButtons: Configured buttons
-  dummyButtonLabel: Пример Workflow
+  dummyButtonLabel: Пример Процесс
   editButton: Изменить
   editTitle:
     script: Изменить automation script button
@@ -25,11 +25,11 @@ automation:
   noScript: There is no script or workflow configured for this button
   noScripts: There are no manual scripts compatible with this page block
   removeAll: Remove all
-  searchPlaceholder: Filter available scripts by label, script name and description
+  searchPlaceholder: Фильтр available scripts by label, script name and description
   stepID: "Starting step ID: {{stepID}}"
   variants:
     primary: Главный
-    secondary: Secondary
+    secondary: Вторичное
     light: Светлая
     dark: Темная
     success: Успех
@@ -106,7 +106,7 @@ chart:
     dimension:
       function:
         date: DATE
-        label: Function
+        label: Функция
         month: MONTH
         none: (no grouping / buckets)
         placeholder: Select dimension modifier (bucket size)
@@ -114,7 +114,7 @@ chart:
         week: WEEK
         year: YEAR
   label: Диаграмма
-  pick: Pick a chart
+  pick: Выберите chart
   delete: Удалить
   preview:
     chartId: Диаграмма preview (ID {{0}})
@@ -123,18 +123,18 @@ chart:
   openChartList: Open chart list
   filter:
     modal:
-      title: Диаграмма Filter
+      title: Диаграмма Фильтр
       originalFilter:
         label: Original filter
       liveFilter:
         label: Live filter
-        placeholder: Select a filter
+        placeholder: Выберите фильтр
       filterPreview:
-        label: Filter Предпросмотр
+        label: Фильтр Предпросмотр
       options:
-        label: Filter options
+        label: Фильтр options
         and: Join filters with AND
-        or: Join filters with OR
+        or: Join filters with ИЛИ
         overwrite: Overwrite original filter
 content:
   ok: Ok
@@ -158,12 +158,12 @@ general:
   customID:
     label: Custom ID
     placeholder: customID
-    description: Used to reference the block in Custom CSS (#customID). Must be unique on the page.
+    description: Used to reference the block in Пользовательский CSS (#customID). Must be unique on the page.
     invalid-state: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dashes. Must end with letter or number
   customCSSClass:
-    label: Custom CSS Class
+    label: Пользовательский CSS Class
     placeholder: custom-class-1   custom-class-2
-    description: Used to reference the block in Custom CSS (.custom-class)
+    description: Used to reference the block in Пользовательский CSS (.custom-class)
     invalid-state: Can contain only letters, numbers, underscores and dashes. Must end with letter or number. Use spaces to separate multiple classes
   visibility:
     label: Visibility
@@ -216,7 +216,7 @@ general:
     danger: Опасность вариант
     default: Темный вариант
     primary: Основной вариант
-    secondary: Secondary вариант
+    secondary: Вторичный вариант
     success: Успех вариант
     warning: Предупреждение вариант
   title: Добавить новый блок
@@ -245,15 +245,15 @@ metric:
     bucketPlaceholder: Select a bucket size
     dateFormat: Дата format
     dimensionFieldLabel: Поле
-    dimensionFieldPlaceholder: Dimension field
-    dimensionLabel: Dimension
-    filterLabel: Filter
+    dimensionFieldPlaceholder: Поле измерения
+    dimensionLabel: Измерение
+    filterLabel: Фильтр
     filterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
     transformFootnote: Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available). Make sure to wrap the variables with quotes ("")
     labelLabel: Метка
     labelPlaceholder: Метка
     metricFieldLabel: Поле
-    metricFieldPlaceholder: Dimension field
+    metricFieldPlaceholder: Поле измерения
     metricLabel: Метрика
     metricFieldSelect: Выберите поле
     metricSelectAggregate: Select aggregation operation
@@ -282,8 +282,9 @@ metric:
   editStyle:
     backgroundColor: Цвет фона
     color: Цвет текста
+    labelColor: Цвет метки
     colorPicker: Выберите цвет
-    fontSize: Font size in pixels
+    fontSize: Размер шрифта в пикселях
     labelLabel: Стиль метки
     valueLabel: Стиль значения
     notFitVertical: Не растягивать по вертикали
@@ -298,18 +299,18 @@ record:
   deleteRecord: Удалить record
   invalidOwnerVar: Can not use ${ownerID} variable in non-record pages
   invalidRecordVar: Can not use ${record...} variable in non-record pages
-  label: Record
+  label: Запись
   listLoadFailed: Не удалось загрузить список записей
   moduleOrPageNotSet: "RecordList block error: module or page option not set"
   moduleMismatch: Module incompatible, module mismatch
-  horizontalFormLayout: Горизонтальное form layout
+  horizontalFormLayout: Горизонтальное раскладка формы
   inlineEdit:
-    enabled: Inline value editing enabled
-    allowAddField: Allow adding fields to inline edit
+    enabled: Разрешить редактирование значений по месту
+    allowAddField: Разрешить добавление полей для  редактирования значений по месту
     button:
-      title: Изменить value
+      title: Изменить значение
     modal:
-      title: Update record values
+      title: Обновить занчения полей
   fieldsLayoutMode:
     label: Поля layout mode
     default: Default
@@ -340,42 +341,42 @@ record:
   recordSelectorCanAddRecord: Can add records via record selector
   recordSelectorAddRecordDisplayOption: When adding a record via record selector
 recordList:
-  noModule: No module selected
+  noModule: Модуль не выбран
   addRecord: Добавить
   cancelSelection: Отменить
-  customFilter: Custom filter
+  customFilter: Кастомный фильтр
   prefilter:
-    toggleInputType: Toggle input type
-  filterByValue: Filter by value
+    toggleInputType: Переключить тип ввода
+  filterByValue: Фильтровать по значению
   filterPresets:
     filterName: Имя фильтра
-    saveFilterAsPreset: Сохранить filter as preset
+    saveFilterAsPreset: Сохранить фильтр как предустановленных
   inlineValueFilter:
-    enabled: Enable inline value filtering
+    enabled: Разрешить фильтрацию значений по месту
   inlineEdit:
-    enabled: Inline value editing enabled
-    allowAddField: Allow adding fields to inline edit
+    enabled: Разрешить редактирование значений по месту
+    allowAddField: Разрешить добавление полей для  редактирования значений по месту
     fields:
       configure:
         tooltip: Configure the fields for inline editing
     button:
-      title: Изменить value
+      title: Изменить значение
     modal:
-      title: Update record values
+      title: Обновить значения полей
   bulkRecord:
-    title: Update selected records
+    title: Обновить выбранные записи
     field:
-      add: Добавить a field to update
-      addAnother: Добавить another field to update
-      remove: Remove field
-    reset: Reset
+      add: Добавить поле для обновления
+      addAnother: Добавить другое поле для обновления
+      remove: Удалить поле
+    reset: Сбросить
   drillDown:
     filter:
-      label: Проваливание filter
+      label: Фильтр для проваливания
   tooltip:
-    saveChanges: Сохранить changes
-    discardChanges: Discard changes
-    deleteSelected: Удалить selected records
+    saveChanges: Сохранить изменения
+    discardChanges: Отменить изменения
+    deleteSelected: Удалить выбранные записи
     performance:
       impact: Using this feature will impact performance
       moduleFields: Selecting a large number of fields or displaying record/user fields will impact performance
@@ -388,7 +389,7 @@ recordList:
     csv: CSV Экспорт
     dateRange: Select date range
     multiValueDelimiter:
-      label: Multi value delimiter
+      label: Разделитель значений
 
       semicolon:
         label: value 1;value 2;...;value n
@@ -403,14 +404,14 @@ recordList:
       pipeArray:
         label: "[value 1|value 2|...|value n]"
     query:
-      label: Search query
+      label: Фильтр поиска
       placeholder: Поиск...
     filter:
-      label: Record filter
+      label: Фильтр записей
       placeholder: field1 = 1 AND field2 = 232
       footnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
-      createdAt: Record created
-      custom: Custom
+      createdAt: Запись создана
+      custom: Пользовательский
       lastMonth: Последний месяц
       lastWeek: Последняя неделя
       thisMonth: Этот месяц
@@ -420,12 +421,12 @@ recordList:
       to: To
       updatedAt: Запись обновлена
     inRange: Диапазон
-    includeQuery: Filter by search query
+    includeQuery: Фильтр для поискового запроса
     json: JSON Экспорт
     limitations: "CSV export limitation: only the first value in the multi value fields will be exported"
-    rangeBy: Set range by
-    recordCount: "{{count}} строк ready for export"
-    selectFields: "Select fields you want to export:"
+    rangeBy: Диапазон по
+    recordCount: "{{count}} строк готово к экспорту"
+    selectFields: "Выберите поля для экспорта:"
     selection: Выбранные записи
     specifyTimezone: Экспорт to timezone
     timezonePlaceholder: Select timezone
@@ -436,12 +437,12 @@ recordList:
   fields: Поля модуля
   filter:
     addField: Добавить новый фильтр для поля
-    byValue: Filter records based on field value
-    addFilterToPreset: Сохранить как preset
+    byValue: Фильтровать записи по значениям полей
+    addFilterToPreset: Сохранить как предустановленный
     nil: "NULL"
     conditions:
-      and: AND
-      or: OR
+      and: И
+      or: ИЛИ
     operatorLabels:
       is: is
       equal: is equal
@@ -455,12 +456,12 @@ recordList:
       between: is between
       notBetween: is not between
     deletedRecords: Удаленные записи
-    field: Filter field
-    fieldPlaceholder: Pick a field
-    fieldValue: Поле value
-    fieldValuePlaceholder: Input field filter
-    including: Including
-    label: Filter
+    field: Фильтруемое поле
+    fieldPlaceholder: Выберите поле
+    fieldValue: Поле значения
+    fieldValuePlaceholder: Введите фильтр для поля
+    including: Включая
+    label: Фильтр
     note: "Note: If Поле value is undefined, the filter will look for records where that field value is undefined."
     only: Only
     operators:
@@ -474,12 +475,12 @@ recordList:
       notEqual: Не равно
       between: В диапазоне
       notBetween: Вне диапазона
-    title: Список записей filter
-    update: Update filter
+    title: Фильтр списка записей
+    update: Обновить фильтр
     where: Where
     without: Without
-    presets: Filter presets
-    reset: Reset Filter
+    presets: Предустановленный фильтр
+    reset: Сбросить фильтр
     filters:
       label: Фильтры
       active: "Включенные фильтры:"
@@ -508,15 +509,15 @@ recordList:
     moduleFields: Поля модуля
     onError: If any record fails to import
     onErrorFail: Отменить импорт
-    onErrorSkip: Skip record
-    pickModuleField: Выберите модуль field
-    importing: Importing records
+    onErrorSkip: Пропустить запись
+    pickModuleField: Выберите поле модуля
+    importing: Идет импорт записей
     success: Импорт прошел успешно
     to: Импорт в {{modulename}}
     uploadFile: Загрузите файл для импорта (.csv или .json файл)
     idFieldDescription: Records with matching ID's will be updated.
     multiValueDelimiter:
-      label: Multi value delimiter
+      label: Разделитель в списках значений
 
       semicolon:
         label: value 1;value 2;...;value n
@@ -552,7 +553,7 @@ recordList:
     next: Следующая
     prev: Предыдущая
     showing: "{{from}} - {{to}} из {{count}} строк"
-    single_one: One record
+    single_one: Одна запись
     single: Единственная страница
     single_other: "{{count}} строк"
     recordsPerPage: На страницу
@@ -562,8 +563,8 @@ recordList:
     placeholder: Поле that will hold the record position
     label: Record sort field
   preview:
-    addRecordButton: Добавить record button
-    bePaged: "{{0}} be paged."
+    addRecordButton: Добавить кнопку записи
+    bePaged: "{{0}} страниц."
     isDisabled: "{{0}} выключено."
     isEnabled: "{{0}} включено."
     isHidden: "{{0}} скрыто."
@@ -573,7 +574,7 @@ recordList:
     recordsPerPage: "{{0}} строк are shown per page."
     resultsCan: Results can
     resultsCant: Results can not
-    resultsPrefiltered: "Results are prefiltered:"
+    resultsPrefiltered: "Результаты отфильтрованы:"
     searchInput: Search inputbox
     sorting: Сортировка
     tableHeader: Заголовок таблицы
@@ -598,12 +599,12 @@ recordList:
     prefilterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
     prefilterHideSearch: Users will be able to search the record list
     filterHide: Users will be able to filter the list
-    prefilterLabel: Filtering
+    prefilterLabel: Идет фильтрация
     generalLabel: Основные настройки
     prefilterCommand: Предварительный фильтр
     prefilterPlaceholder: field1 = 1 AND field2 = 232
     presortFootnote: Simplified SQL condition (ORDER BY ...) syntax is supported
-    presortToggleInput: Toggle input type
+    presortToggleInput: Переключить тип ввода
     presortHideSort: Users will be able to sort the list
     presortLabel: Сортировка
     presortInputLabel: Presort
@@ -728,7 +729,7 @@ recordRevisions:
       disabled-on-module: Ревизии записи are disabled on this module
 
     show-revisions: Show record revisions ({{ revision }})
-    show-changes: "{{ count }} change(s)"
+    show-changes: "{{ count }} изменения(-й)"
 
     operations:
       created: Создано
@@ -740,9 +741,9 @@ recordRevisions:
     revisions:
       columns:
         timestamp:
-          label: Timestamp
+          label: Временная метка
         operation:
-          label: Operation
+          label: Операция
         user:
           label: Пользователь
     changes:
@@ -781,7 +782,7 @@ field:
     available: Доступные поля
     systemField: (системное поле)
 comment:
-  label: Comments
+  label: Комментарии
   module:
     placeholder: Выберите модуль
   titleField:
@@ -855,12 +856,12 @@ navigation:
   unnamedLayout: Unnamed Layout
   tabs: Закладки
   pills: Pills
-  small: Small
-  center: Center
-  left: Left
-  right: Right
-  bottom: Bottom
-  top: Top
+  small: Маленький
+  center: Центр
+  left: Лево
+  right: Право
+  bottom: Низ
+  top: Верх
   primary: Главное
   secondary: Вспомогательный
   success: Успех
@@ -904,9 +905,9 @@ progress:
   field:
     label: Поле
     select: Выберите поле
-  label: Progress bar
+  label: Столбик прогресса
   module:
-    select: Select module
+    select: Выбор модуля
     label: Модуль
   preview: Предпросмотр
   show:
@@ -915,7 +916,7 @@ progress:
     progress: Показать прогресс
   tab:
     label: Progress
-  thresholds: Thresholds
+  thresholds: Порог
   threshold:
     label: Threshold
     variant: Set which variant to show if value is equal or larger than the threshold
@@ -950,7 +951,7 @@ geometry:
   openInSameTab: Открыть на текущей закладке
   openInNewTab: Открыть на новой закладке
   openInModal: Открыть в модальном окне
-  hideGeoSearch: Hide location search
+  hideGeoSearch: Скрыть строку поиска
   recordFeed:
     colorPicker: Выберите цвет
     moduleLabel: Модуль*
@@ -964,7 +965,7 @@ geometry:
     geometryFieldPlaceholder: Геопозиция field
     displayMarker: Display marker
     displayPolygon: Display polygon
-  centerLabel: Center
+  centerLabel: Центр
   zoom:
     zoomLabel: Zoom
     zoomMinLabel: Zoom min
@@ -976,7 +977,7 @@ geometry:
     topLeft: Bounds top left
     lowerRight: Bounds lower right
   tooltip:
-    goToCurrentLocation: Go to current location
+    goToCurrentLocation: Переместиться в текущее расположение
 
 tabs:
   label: Закладки
@@ -996,12 +997,12 @@ tabs:
       label: Appearance
       tabs: Закладки
       pills: Pills
-      small: Small
+      small: Маленький
     alignment:
       label: Alignment
-      left: Left
-      center: Center
-      right: Right
+      left: Лево
+      center: Центр
+      right: Право
     justify:
       label: Justify
       justify: Justify

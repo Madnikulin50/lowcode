@@ -1,6 +1,6 @@
 comments:
   enter: Enter comment...
-  label: Comments
+  label: Комментарии
   sort:
     first:
       newest: Сначала новые
@@ -31,7 +31,7 @@ list:
     status: Статус
   request:
     approve: Approve Requests
-    cancel: Cancel Request
+    cancel: Отменить Request
     reject: Reject Requests
 
 edit:
@@ -50,32 +50,32 @@ edit:
       label: Connection
       placeholder: Select a Connection
   export:
-    submit: Экспорт Selected Data
+    submit: Экспорт выбранных данных
     data-type:
-      label: Data Type to export
-      profile-information: Профиль Information
-      application-data: Приложение Data
+      label: Формат данных для экспорта
+      profile-information: Информация профиля
+      application-data: Данные приложения
     date-range:
-      label: Date Range
+      label: Диапазон дат
       all: All of my data
     file-format:
-      label: File Format
+      label: Формат файла
       json: JSON
       csv: CSV
 
 view:
   approve: Approve request
-  cancel: Cancel request
+  cancel: Отменить request
   reject: Reject request
   export:
     data-type:
-      label: Data Type to export
+      label: Формат данных для экспорта
       profile-information: Профиль Information
-      application-data: Приложение Data
+      application-data: Данные приложения
     date-range:
-      label: Date Range
+      label: Диапазон дат
       all: All of my data
     file-format:
-      label: File Format
+      label: Формат файла
       json: JSON
       csv: CSV

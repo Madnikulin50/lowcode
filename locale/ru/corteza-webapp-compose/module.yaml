@@ -52,9 +52,9 @@ edit:
       title: Основные
     noNodes: No federated servers available
     noPermission: No permission to manage exposed module
-    pickModule: Pick a federated module
+    pickModule: Выберите federated module
     pickModuleField: Выберите модуль field
-    pickServer: Pick a federated server
+    pickServer: Выберите federated server
     specificTitle: Federation Настройки ({{handle}})
     title: Federation Настройки
     upstream:

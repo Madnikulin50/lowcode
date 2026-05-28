@@ -3,10 +3,10 @@ editor:
   basic:
     attachments:
       max-size: Максимум size (MB)
-      page: Page attachments
-      record: Record attachments
-      icon: Icon attachments
-      namespace: Namespace attachments
+      page: Вложения на странице
+      record: Вложения в записи
+      icon: Вложения иконки
+      namespace: Вложение в пространстве
       type:
         description: 'MIME types, separated with ",". Example: "text/plain,text/csv"'
         whitelist: File type whitelist
@@ -15,10 +15,10 @@ editor:
     title: User interface
     sidebar:
       title: Sidebar
-      hide-namespace-list: Hide list of namespaces
+      hide-namespace-list: Скрыть список пространств
       hide-namespace-list-link: Hide link to list of все пространства
     record-toolbar:
-      title: Record Toolbar
+      title: Панель инструментов записи
       hide-submit: Hide submit button
       hide-delete: Hide delete button
       hide-edit: Hide edit button

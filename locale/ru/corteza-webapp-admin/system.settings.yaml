@@ -150,4 +150,4 @@ editor:
         label: Фон image
 
       editor:
-        label: Custom CSS
+        label: Пользовательский CSS

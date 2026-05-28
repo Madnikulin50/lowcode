@@ -6,7 +6,7 @@ editor:
     colorPicker: Выберите цвет
     sassNotInstalled: No dart-sass binaries were detected. For guidance on how to set it up, refer to
     installSassDocs: docs here
-    custom-css: Custom CSS
+    custom-css: Пользовательский CSS
     mainLogo:
       title: Main logo
       uploader:
@@ -35,7 +35,7 @@ editor:
           label: Главные
           description: Главные action buttons, links
         secondary:
-          label: Secondary
+          label: Вторичное
           description: Disabled and placeholder text color
         success:
           label: Успех
@@ -48,7 +48,7 @@ editor:
           description: Error notification color
         light:
           label: Светлая
-          description: Secondary action buttons, table headers
+          description: Вторичное action buttons, table headers
         extra-light:
           label: Extra light
           description: Icon buttons, borders

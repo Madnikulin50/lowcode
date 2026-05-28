@@ -6,7 +6,7 @@ labels:
   label: Labels
 name:
   label: Имя *
-  placeholder: Workflow name
+  placeholder: Процесс name
 handle:
   label: Дескриптор
   placeholder: дескриптор (a - z, 0 - 9, underscore, dash)

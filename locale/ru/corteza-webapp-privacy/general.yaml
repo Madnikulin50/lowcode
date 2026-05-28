@@ -11,7 +11,7 @@ label:
 resourceList:
   loading: Загрузка...
   noItems: No items
-  notFound: Not found
+  notFound: Не найдено
   search:
     placeholder: Поиск
   pagination:

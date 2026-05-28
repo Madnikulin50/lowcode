@@ -46,7 +46,7 @@ page-layout:
       placement:
         label: Placement
         start: Start
-        center: Center
+        center: Центр
         end: End
       openIn:
         label: Открыть в
@@ -106,7 +106,7 @@ icon:
 url:
   label: Или добавьте URL к иконке
 import: 'Импорт page(s):'
-instructions: Drag and drop pages to adjust the order and hierarchy
+instructions: Перетаскивайте страницы для изменения порядка и иерархии
 invalid: Некорректная конфигурация
 label:
   title: Заголовок *

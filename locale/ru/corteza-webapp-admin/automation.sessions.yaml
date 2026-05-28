@@ -15,7 +15,7 @@ editor:
     title: Basic information
     workflowID: WorkflowID
     openWorkflow: Open workflow
-    cancel: Cancel session
+    cancel: Отменить session
   title: Session
 list:
   columns:
@@ -40,7 +40,7 @@ list:
     inProgress:
       label: completed sessions
     inclusive:
-      label: Including
+      label: Включая
     prompted:
       label: Prompted
     sessions:

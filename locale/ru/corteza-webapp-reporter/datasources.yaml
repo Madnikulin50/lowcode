@@ -5,7 +5,7 @@ compose-records: Compose records
 datasource-name: 'Datasource Name...'
 expression: Выражение
 group-by: Group by
-label: Label
+label: Метка
 module: Модуль
 name-required: Имя *
 name: Имя

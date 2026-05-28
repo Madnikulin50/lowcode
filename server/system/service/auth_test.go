@@ -359,9 +359,9 @@ func TestAuth_multiCreateUserTokenForPasswordReset(t *testing.T) {
 
 		// load credentials from token
 		t2c = func(token string) *types.Credential {
-			id, _ := validateToken(token)
-			req.NotZero(id)
-			c, err := store.LookupCredentialByID(ctx, svc.store, id)
+			tokenID, _ := validateToken(token)
+			req.NotZero(tokenID)
+			c, err := store.LookupCredentialByID(ctx, svc.store, tokenID)
 			req.NoError(err)
 			return c
 		}

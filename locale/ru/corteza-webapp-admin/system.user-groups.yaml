@@ -55,10 +55,10 @@ list:
     exclusive:
       label: Only
     inclusive:
-      label: Including
+      label: Включая
     query:
-      label: Filter user groups list
-      placeholder: Filter user groups by handle
+      label: Фильтр user groups list
+      placeholder: Фильтр user groups by handle
   loading: Loading user groups
   new: New User Group
   permissions: Права доступа

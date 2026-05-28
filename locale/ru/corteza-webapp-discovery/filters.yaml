@@ -1,4 +1,4 @@
-title: Filter
+title: Фильтр
 
 types:
   title: Types
@@ -11,4 +11,4 @@ aggregation-groups:
   modules: Модули
   namespaces: Пространства
 
-reset: Reset
+reset: Сбросить

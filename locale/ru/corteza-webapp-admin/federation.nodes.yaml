@@ -38,8 +38,8 @@ list:
     tags: ""
   filterForm:
     query:
-      label: Filter servers list
-      placeholder: Filter servers by name
+      label: Фильтр servers list
+      placeholder: Фильтр servers by name
   loading: Loading federated nodes
   new: New Federated Node
   pair:

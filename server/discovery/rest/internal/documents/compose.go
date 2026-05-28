@@ -536,11 +536,11 @@ func (d composeResources) getUserInfo(ctx context.Context, ID uint64, users map[
 }
 
 func stringifyUints64(uints []uint64) []string {
-	strings := make([]string, len(uints))
+	res := make([]string, len(uints))
 	for i, num := range uints {
-		strings[i] = strconv.FormatUint(num, 10)
+		res[i] = strconv.FormatUint(num, 10)
 	}
-	return strings
+	return res
 }
 
 func clampString(input string, maxLength int) string {

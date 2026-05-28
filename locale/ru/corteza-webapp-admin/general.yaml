@@ -37,8 +37,8 @@ label:
     single: Session
     plural: Sessions
   workflow:
-    single: Workflow
-    plural: Workflows
+    single: Процесс
+    plural: Процессы
   plus-add: + Add
   clear: Clear
   all: Все
@@ -53,13 +53,13 @@ label:
   loadMore: Load more
   loading: Загрузка...
   saveAndClose: Сохранить и закрыть
-  cancel: Cancel
+  cancel: Отменить
   submit: Подтвердить
   delete: Delete
   undelete: Undelete
   fileTypeNotAllowed: File type not allowed
   uploading: Uploading
-  dropFiles: Click or drop files here to upload
+  dropFiles: Кликните или перенесите файл
 editor:
   unsavedChanges:  Несохраненные изменения will be lost. Do you wish to leave the page?
 resourceList:

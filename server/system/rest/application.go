@@ -87,8 +87,8 @@ func (ctrl *Application) List(ctx context.Context, r *request.ApplicationList) (
 		return nil, err
 	}
 
-	set, filter, err := ctrl.application.Search(ctx, f)
-	return ctrl.makeFilterPayload(ctx, set, filter, err)
+	set, flt, err := ctrl.application.Search(ctx, f)
+	return ctrl.makeFilterPayload(ctx, set, flt, err)
 }
 
 func (ctrl *Application) Create(ctx context.Context, r *request.ApplicationCreate) (interface{}, error) {

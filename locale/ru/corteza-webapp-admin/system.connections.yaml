@@ -4,7 +4,7 @@ primary:
   handle: Дескриптор
   location: Location
   ownership: Ownership
-  sensitivity-level: Sensitivity level
+  sensitivity-level: Уровень чувствительности
 
 list:
   title: List of database connections
@@ -18,7 +18,7 @@ list:
     exclusive:
       label: Only
     inclusive:
-      label: Including
+      label: Включая
   columns:
     name: Имя
     location: Location

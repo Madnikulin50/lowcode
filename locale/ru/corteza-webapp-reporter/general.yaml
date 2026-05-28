@@ -5,7 +5,7 @@ label:
   ascending: По возрастанию
   back: Назад
   clear: Clear
-  cancel: Cancel
+  cancel: Отменить
   delete: Delete
   descending: Descending
   loading: Загрузка...
@@ -26,8 +26,8 @@ label:
     plural: Отчеты
 
 resourceList:
-  notFound: Not found
-  noItems: No items to show
+  notFound: Не найдено
+  noItems: Нет записей для отображения
   pagination:
     next: Следующая
     prev: Предыдущая

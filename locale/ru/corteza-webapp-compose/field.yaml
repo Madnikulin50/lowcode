@@ -1,6 +1,6 @@
 available-items: Доступные поля
-selected-items: Selected fields
-defaultFieldValue: Default field value
+selected-items: Выбранные поля
+defaultFieldValue: Значение по-умолчанию
 defaultValue: Значение по-умолчанию
 required-field: Обязательное поле
 not-configurable: Cannot change settings that affect data storage
@@ -9,10 +9,10 @@ kind:
     checkedValueLabel: Значение когда включено
     checkedValuePlaceholder: Да
     label: Флажок (Да-Нет)
-    uncheckedValueLabel: Значение when unchecked
-    uncheckedValuePlaceholder: No
-    toggleTypeLabel: Checkbox Тип
-    toggleType: Display as switch
+    uncheckedValueLabel: Значение когда выключен
+    uncheckedValuePlaceholder: Нет
+    toggleTypeLabel: Тип флажка
+    toggleType: Отображать как рычажок
   dateTime:
     type:
       label: Тип значения
@@ -28,14 +28,14 @@ kind:
         pastValuesOnly: Значения только из прошлого
     label: Дата и время
     outputFormat: Формат вывода
-    outputFormatFootnote: See {{0}} for formatting options
-    relativeOutput: 'Output Relative value (eg: 3 days ago, 15 minutes ago)'
+    outputFormatFootnote: В {{0}} информация об опциях
+    relativeOutput: 'Отображать относительное значение (eg: 3 дней назад, 15 минут назад)'
     warning:
       futureValuesOnly: Only dates in the future will be saved
       pastValuesOnly: Only dates in the past will be saved
   email:
     label: Почтовый адрес
-    preventToLink: Don't turn email into a link
+    preventToLink: Не преобразовывать в ссылку
   file:
     label: Файл
     view:
@@ -46,49 +46,49 @@ kind:
       mimetypesFootnote: 'MIME types, separated with ",". Example: "text/plain,text/csv"'
       webcam:
         enable:
-          label: Enable Web-камера Capture
-          footnote: Use the webcam to capture a picture and upload it
+          label: Подключить возможность использования камеры
+          footnote: Использовать камеру для захвата картинки
       mimetypesLabel: Разрешенные типы файлов
-      modeFootnote: How files are represented in page blocks
+      modeFootnote: Как файлы отображаются в блоке страницы
       modeLabel: Просмотр mode
       showName: Скрывать имя файла
-      enableDownload: Enable download
-      single: Single image
-      previewStyle: Предпросмотр style
-      height: Height
-      width: Width
-      maxHeight: Максимум height
+      enableDownload: Разрешить скачивание
+      single: Одна картинка
+      previewStyle: Стиль предпросмотра
+      height: Высота
+      width: Ширина
+      maxHeight: Максимальная высота
       maxWidth: Максимальная ширина
       borderRadius: Радиус границы
       background: Цвет фона
       colorPicker: Выберите цвет
-      margin: Margin
-      unitType: Unit type
+      margin: Внешний отступ
+      unitType: Единица измерения
       px: px
-      clickToView: Click to view file
-      description: 'Добавить unit after value to set it. For example: 50px or 50%'
+      clickToView: Кликните для просмотра файла
+      description: 'Добавить единицу измерения после значения. Например: 50px or 50%'
   number:
-    exampleFormat: Format
-    exampleInput: Input
-    exampleResult: Result
-    examplesLabel: Format examples
-    formatLabel: Custom format
-    formatPlaceholder: Format
-    label: Number
+    exampleFormat: Формат
+    exampleInput: Вход
+    exampleResult: Результат
+    examplesLabel: Образцы формата
+    formatLabel: Формат вывода
+    formatPlaceholder: Формат
+    label: Число
     liveExample: Предпросмотр
-    precisionLabel: Scale
-    precisionTooltip: Number of decimal places
+    precisionLabel: Точность
+    precisionTooltip: Число десятичных знаков
     prefixLabel: Префикс
     prefixPlaceholder: Префикс
     suffixLabel: Суффикс
     suffixPlaceholder: Суффикс
     step:
       label: Шаг
-      description: Set the step size for the number field
+      description: Установите шаг для числового поля
     displayType:
-      label: Display type
-      number: Number
-      progress: Progress bar
+      label: Тип отображения
+      number: Число
+      progress: Столбик прогресса
     progress:
       maximumValue: Максимальное значение
       minimumValue: Минимальное значение
@@ -105,41 +105,41 @@ kind:
         info: Информация
         light: Светлая
         primary: Главное
-        secondary: Secondary
+        secondary: Вторичное
         success: Успех
         warning: Предупреждение
       thresholds:
-        label: Thresholds
+        label: Порог
         description: Set which variant to show if value is equal or larger than the threshold
     presetFormats:
-      label: Format
+      label: Формат
       options:
-        custom: Custom
-        accounting: Accounting
+        custom: Пользовательский
+        accounting: Число
       description:
         custom: ''
         accounting: Negative numbers are transformed into positive and added in brackets and the value 0 is substituted by a dash
   record:
-    currentUnnamedModule: (Current unnamed module)
-    label: Record
+    currentUnnamedModule: (Текущий безымянный модуль)
+    label: Запись
     moduleLabel: Модуль
     modulePlaceholder: Выберите модуль
-    queryFieldsLabel: Query fields on search
+    queryFieldsLabel: Запрашивать поля при поиске
     queryFieldsPlaceholder: If no fields are picked the Метка полей will be used
     moduleField: Метка полей
     variantField: Variant field
-    fieldFromModuleField: Метка полей from related module field
-    pickField: Pick field
-    suggestionPlaceholder: Start typing to search for records
+    fieldFromModuleField: Метка полей из выбранной записи
+    pickField: Выберите поле
+    suggestionPlaceholder: Начните писать для выбора записи
     prefilterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
-    prefilterLabel: Предварительный фильтр records
+    prefilterLabel: Предварительный фильтр записей
     prefilterPlaceholder: field1 = 1 AND field2 = 232
     tooltip:
-      moduleField: Selecting a record field will impact performance
-      addRecord: Добавить a record
+      moduleField: Выбор полей ускоряет поиск
+      addRecord: Добавить запись
   select:
-    allow-duplicates: Allow duplicates
-    label: Select
+    allow-duplicates: Допускать дубли
+    label: Выбор значения(-й)
     optionAdd: Добавить
     options:
       value: Значение
@@ -147,28 +147,28 @@ kind:
       style:
         textColor: Цвет текста
         backgroundColor: Цвет фона
-    optionNotSelected: No option selected
-    optionRemove: Remove
+    optionNotSelected: Не выбрано ни одно значение
+    optionRemove: Удалить
     optionType:
-      default: Single input
-      each: Input for each value
-      label: Select type
-      multiple: Multiple select
-      checkbox: Checkbox Group
-      radio: Radio Group
+      default: Единое поле ввода
+      each: Новое поле для каждого значения
+      label: Выберите тип
+      multiple: Множественный выбор
+      checkbox: Множественный выбор значений
+      radio: Выбор одного значения
     displayType:
-      label: Display value as
+      label: Отображать значение как
       text: Текст
-      badge: Badge
-    optionsLabel: Options to select from
-    showAsBadge: Show as badge
-    placeholder: Select an option by clicking here
+      badge: Плашка
+    optionsLabel: Список значений
+    showAsBadge: Отображать как плашку
+    placeholder: Выберите значение
   string:
-    label: String
-    multiLine: Multi line
-    richText: Use Rich Text Editor
+    label: Строка
+    multiLine: Многострочный текст
+    richText: Использовать редактор форматированного текста
   url:
-    example: 'Example URL: https://example.com'
+    example: 'Пример URL: https://example.com'
     label: URL
     preventToLink: Don't turn Url into a link
     sshOnly: Only allow SSL (https) Url
@@ -177,25 +177,25 @@ kind:
     trimToDomain: Trim Url down to domain only
   user:
     label: Пользователь
-    na: N/A
-    presetWithCurrentUser: Preset with current user
+    na: Не задано
+    presetWithCurrentUser: Установить начальное значение в текущего пользователя
     suggestionPlaceholder: Start typing to search for users by email or name
     roles:
       label: Роли пользователя
-      placeholder: Filter by user roles
+      placeholder: Фильтр by user roles
   geometry:
     label: Геопозиция
-    latitude: Latitude
-    longitude: Longitude
-    clickToPlaceMarker: Click to place/remove a marker
-    initialZoomAndPosition: Set initial map zoom and position
-    prefillWithCurrentLocation: Prefill with current location
-    hideCurrentLocationButton: Hide current location button
-    hideGeoSearch: Hide location search
+    latitude: Широта
+    longitude: Долгота
+    clickToPlaceMarker: Кликните в точку/уберите маркер
+    initialZoomAndPosition: Установить начальное положение и масштаб
+    prefillWithCurrentLocation: Предварительно устанавливать текущее расположения
+    hideCurrentLocationButton: Скрыть кнопку текущего расположения
+    hideGeoSearch: Скрыть строку поиска
     tooltip:
-      goToCurrentLocation: Go to current location
-      useCurrentLocation: Use current location
-      openMap: Open map
+      goToCurrentLocation: Переместиться в текущее расположение
+      useCurrentLocation: Использовать текущее расположение
+      openMap: Открыть карту
     geosearchInputPlaceholder: Enter address, place or postcode
 noPermission: No permission to read field value
 no-items-found: Не найдено элементов
@@ -207,9 +207,9 @@ options:
       view: Описание при просмотре
     placeholder:
       default: Текст описания...
-      edit: Описание when editing record field...
-      view: Описание when viewing record field...
-    same: Show same description on view and edit
+      edit: Описание при редактировании поля...
+      view: Описание при просмотре поля...
+    same: Показывать одинаковое описание при просмотре и редактировании
   hint:
     label:
       default: Подсказка
@@ -217,15 +217,15 @@ options:
       view: Подсказка при просмотре
     placeholder:
       default: Текст подсказки...
-      edit: Hint when editing record field...
-      view: Hint when viewing record field...
+      edit: Подсказка при редактировании поля...
+      view: Подсказка при просмотре поля...
     same: Показывать одинаковую подсказку при просмотре и редактировании
   multiDelimiter:
     comma: Separated by a comma
-    custom: A custom delimiter
+    custom: Кастомный разделитель
     customLabel: ИЛИ use a custom delimiter
     customPlaceholder: Enter a custom delimiter
-    label: Multiple value delimiter
+    label: Разделитель между значениями
     newline: Each value in a new line
 sanitizers:
   description: Trim spaces from text or do other kinds of value manipulation before validation
@@ -233,7 +233,7 @@ sanitizers:
     placeholder: trim(value)
   label: Значение sanitization
 selector:
-  search: Тип here to search among module fields
+  search: Строка для пооиска по полям модуля
   available: Доступные поля
   selectAll: Выбрать все
   selected: Выбранные поля
@@ -241,7 +241,7 @@ selector:
   unselectAll: Снять выделение
 privacy:
   sensitivity-level:
-    label: Sensitivity level
+    label: Уровень чувствительности
     placeholder: Выберите уровень чувствительности
   usage-disclosure:
     label: Sensitive field usage disclosure (visible on data-privacy console)
@@ -271,7 +271,7 @@ validators:
     tooltip: Выражение
   label: Проверка значения
 valueExpr:
-  description: Insert a formula or expression that calculates numeric values or combines and manipulates text values
+  description: Вставьте формулу для вычисления чисел или выражение для манипулирования строками
   label: Выражение для значения  поля
   placeholder: ((floor(numField1) + numField2) / 10) + 0.5
 label:
@@ -287,9 +287,9 @@ constraints:
   oneOf: Один из
   none: Отсутствует
   equal: Равно
-  valueModifiers: Значение modifiers
-  multiValues: Multi-field values
+  valueModifiers: Модификаторы значений
+  multiValues: Множественные значения
   totalFieldConstraintCount: The field is used in {{total}} other unique value constraint. See "unique values" tab on module editor.
   tooltip:
-    performance: Using unique value constraints will impact performance
+    performance: Используйте ограничение на уникальность значения для ускорения работы
 

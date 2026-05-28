@@ -13,7 +13,7 @@ editor:
     title: Basic information
     undelete: Undelete
     updatedAt: Время обновления
-  new: New Workflow
+  new: New Процесс
   permissions: Права доступа
   title:
     create: Create workflow
@@ -48,12 +48,12 @@ list:
     exclusive:
       label: Only
     inclusive:
-      label: Including
+      label: Включая
     query:
-      label: Filter workflows list
-      placeholder: Filter workflows by name
+      label: Фильтр workflows list
+      placeholder: Фильтр workflows by name
   loading: Loading workflows
-  new: New Workflow
+  new: New Процесс
   permissions: Права доступа
-  title: Workflows
+  title: Процессы
   yaml: YAML

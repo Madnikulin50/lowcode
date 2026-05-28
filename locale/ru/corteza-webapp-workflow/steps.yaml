@@ -45,7 +45,7 @@ function:
     expression: Выражение
     name: Имя
     option-select: Select an option
-    result: Result
+    result: Результат
     results: Results
     target: Target
     add-result: + Add result
@@ -53,21 +53,21 @@ function:
     select-function: Select function
     type: Type
     type*: Type*
-  label: Function
-  short: Function
+  label: Функция
+  short: Функция
   tooltip: Execute the chosen predefined function
 exec-workflow:
-  label: Execute Workflow
-  short: Workflow
+  label: Execute Процесс
+  short: Процесс
   tooltip: Execute a workflow and map variables from its scope to the current one
 gatewayExclusive:
   label: Gateway (Exclusive)
   short: Gateway
-  tooltip: Workflow execution can continue on first path that fits condition
+  tooltip: Процесс execution can continue on first path that fits condition
 gatewayInclusive:
   label: Gateway (Inclusive)
   short: Gateway
-  tooltip: Workflow execution can continue on all paths that fit condition
+  tooltip: Процесс execution can continue on all paths that fit condition
 gatewayParallel:
   label: Gateway (Fork/Join)
   short: Gateway

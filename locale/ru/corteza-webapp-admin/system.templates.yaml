@@ -67,10 +67,10 @@ list:
     exclusive:
       label: Only
     handle:
-      label: Filter templates list
-      placeholder: Filter templates by handle
+      label: Фильтр templates list
+      placeholder: Фильтр templates by handle
     inclusive:
-      label: Including
+      label: Включая
   loading: Loading templates
   new: New Template
   permissions: Права доступа

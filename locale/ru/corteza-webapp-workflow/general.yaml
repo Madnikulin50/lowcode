@@ -15,17 +15,17 @@ import:
   upload-files: Browse or drop files to upload...
 label:
   all: Все
-  any: Any
-  label: Label
+  any: Любой
+  label: Метка
   or: ИЛИ
 loading: Загрузка...
 name: Имя
-new-workflow: New Workflow
+new-workflow: Новый процесс
 none: Отсутствует
 now: Now
-offset: Offset
+offset: Смещение
 permissions: Права доступа
-reset: Reset
+reset: Сбросить
 searchPlaceholder: Search workflows
 subworkflow: Subworkflow
 subworkflows: Subworkflows
@@ -33,28 +33,28 @@ deleted: Удаленные
 disabled: Disabled
 without: Without
 only: Only
-including: Including
+including: Включая
 filter:
-  label: Filter
-  title: Filter Workflows
-  apply: Apply Filter
+  label: Фильтр
+  title: Фильтр Процессы
+  apply: Apply Фильтр
   namespace:
     label: Namespace
     placeholder: Select namespace(s)
   module:
     label: Модуль
-    placeholder: Select module(s)
+    placeholder: Выберите модуль(s)
     template: "{{namespace}} - Модули"
-workflow-list: List of Workflows
+workflow-list: Список процессов
 workflow:
-  single: Workflow
-  plural: Workflows
+  single: Процесс
+  plural: Процессы
 save: Сохранить
 today: Сегодня
-cancel: Cancel
+cancel: Отменить
 resourceList:
-  notFound: Not found
-  noItems: No items to show
+  notFound: Не найдено
+  noItems: Нет записей для отображения
   pagination:
     next: Следующая
     prev: Предыдущая
@@ -64,12 +64,12 @@ resourceList:
     recordsPerPage: На странице
 
 tooltip:
-  permissions: Workflow permissions
+  permissions: Разрешения для процесса
 columns:
   name: Имя
-  enabled: Enabled
-  steps: Steps
-  changedAt: Last change
+  enabled: Включен
+  steps: Шаги
+  changedAt: Время изменения
 
 themes:
   labels:

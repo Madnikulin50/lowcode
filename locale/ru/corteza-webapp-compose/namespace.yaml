@@ -20,7 +20,7 @@ edit: Изменить пространство
 clone: Дублировать пространство
 cloneSuffix: копия
 cloneWarning:
-  wfInclusion: Workflows and other automation are not cloned. Use the workflow editor interface to clone the ones you need.
+  wfInclusion: Процессы and other automation are not cloned. Use the workflow editor interface to clone the ones you need.
 create: Создать пространство
 export: Экспорт
 enabled:
@@ -35,7 +35,7 @@ logo:
   placeholder: Choose an image for namespace logo or drop it here...
   show: Показывать логотип
   preview: Предпросмотр
-  reset: Reset
+  reset: Сбросить
 name:
   label: Полное имя пространства *
   placeholder: Enter namespace name

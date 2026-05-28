@@ -55,10 +55,10 @@ list:
     exclusive:
       label: Only
     inclusive:
-      label: Including
+      label: Включая
     query:
-      label: Filter roles list
-      placeholder: Filter roles by name
+      label: Фильтр roles list
+      placeholder: Фильтр roles by name
   loading: Loading roles
   new: New Role
   permissions: Права доступа

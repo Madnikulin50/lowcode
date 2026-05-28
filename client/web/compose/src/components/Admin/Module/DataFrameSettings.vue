@@ -30,7 +30,6 @@
       </template>
     </configurator>
 
-
     <b-modal
       v-model="datasources.showSelector"
       size="lg"

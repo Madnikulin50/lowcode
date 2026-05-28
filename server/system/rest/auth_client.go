@@ -80,8 +80,8 @@ func (ctrl *AuthClient) List(ctx context.Context, r *request.AuthClientList) (in
 		return nil, err
 	}
 
-	set, filter, err := ctrl.authClient.Search(ctx, f)
-	return ctrl.makeFilterPayload(ctx, set, filter, err)
+	set, flt, err := ctrl.authClient.Search(ctx, f)
+	return ctrl.makeFilterPayload(ctx, set, flt, err)
 }
 
 func (ctrl *AuthClient) Create(ctx context.Context, r *request.AuthClientCreate) (interface{}, error) {

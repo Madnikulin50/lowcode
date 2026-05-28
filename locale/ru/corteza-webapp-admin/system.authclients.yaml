@@ -47,7 +47,7 @@ editor:
     title: Basic information
     tooltip:
       regenerate-secret: Regenerate secret
-      reset-value: Reset value
+      reset-value: Сбросить value
       show-client-secret: Show client secret
       hide-client-secret: Hide client secret
       copy-access-token: Copy access token
@@ -92,10 +92,10 @@ list:
     exclusive:
       label: Only
     inclusive:
-      label: Including
+      label: Включая
     query:
-      label: Filter clients list
-      placeholder: Filter clients
+      label: Фильтр clients list
+      placeholder: Фильтр clients
   loading: Loading clients
   new: New Auth Client
   permissions: Права доступа

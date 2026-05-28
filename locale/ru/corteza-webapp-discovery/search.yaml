@@ -9,7 +9,7 @@ card:
   module: Модуль
   user: User
   email: Почтовый адрес
-  record: Record
+  record: Запись
   fields: Поля
 range: Showing {{actual}} из {{all}} results
 discovering: Discovering

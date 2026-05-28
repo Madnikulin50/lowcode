@@ -5,11 +5,11 @@ data-types:
     title: Профиль Information
     description: Your contact information, names, surname, nickname, profile picture
   application-data:
-    title: Приложение Data
+    title: Данные приложения
     description: Your personal data stored in Corteza
 
 application:
-  title: Приложение Data
+  title: Данные приложения
   connection:
     label: Connection
     placeholder: Select a Connection

@@ -28,63 +28,63 @@ label:
   attachmentFileInfo: "(Размер файла: {{0}}, Загружено {{1}})"
   attributes: Атрибуты
   back: Назад
-  backWithoutSave: Назад (without saving changes)
+  backWithoutSave: Назад (без сохранения)
   block: Блок
   browse: Browse
   buttons: Кнопки
   cancel: Отменить
-  clear: Clear
-  clone: Clone
-  close: Close
-  create: Create
+  clear: Очистить
+  clone: Скопировать
+  close: Закрыть
+  create: Создать
   createRecordFromDraft: Create Record from Draft
   delete: Удалить
-  default: Default
-  restore: Restore
+  default: По-умолчанию
+  restore: Восстановить
   discard: Discard
-  descending: Descending
+  descending: По убыванию
   description: Описание
   download: Выгрузить
-  dropFiles: Click or drop files here to upload
+  dropFiles: Кликните или перенесите файл
   edit: Изменить
-  enabled: Enabled
+  enabled: Включено
   export: Экспорт
-  fileTypeNotAllowed: Файл type not allowed
+  fileTypeNotAllowed: Тип файла не поддерживается
   general: Основные
   handle: Дескриптор
-  here: here
-  home: Home
+  here: здесь
+  home: Домой
   import: Импорт
   all: Все
-  importPlaceholder: Upload files to import
+  importPlaceholder: Загрузите файлы для импорта
   loading: Загрузка...
-  makeDefault: Make default
+  makeDefault: Установить по-умолчанию
   moduleName: Имя модуля
   multi: Множественное
   name: Имя
-  newRecord: New Record
+  newRecord: Новая запись
   next: Следующая
   no: Нет
   noHandle: No handle
   none: Отсутствует
-  now: Now
+  now: Сейчас
   ok: Ok
-  page: Page
-  pageLayout: Page layout
+  page: Страница
+  pageLayout: Раскладка страницы
   pageBuilder: Конструктор страниц
   permissions: Права доступа
-  private: Private
+  private: Приватный
   privacy: Приватность
-  processing: Processing...
+  processing: В процессе обработки...
   record: Record
   recordPage: Страница записи
   field: Поле
-  remove: Remove
-  removeDefault: Remove default
+  remove: Удалить
+  removeDefault: Удалить по-умолчанию
   required: Обязательное поле
-  reset: Reset
-  examples: Examples
-  sensitive: Sensitive
+  reset: Сбросить
+  examples: Примеры
+  sensitive: Чувствительный
   save: Сохранить
   saveAndClose: Сохранить и закрыть
   saveAs: Сохранить как
@@ -97,7 +97,7 @@ label:
   title: Заголовок
   type: Тип
   updatedAt: Время обновления
-  uploading: Uploading
+  uploading: Идет загрузка
   unsavedChanges: Несохраненные изменения
   urlPlaceholder: https://example.tld
   validation: Проверка
@@ -122,25 +122,25 @@ placeholder:
   handle: дескриптор (a - z, 0 - 9, underscore, dash)
   sample: Пример
 reminder:
-  add: Добавить a reminder
+  add: Добавить в напоминание
   dismiss: Отклонить
-  dismissed: Dismissed
-  dismissedAt: Dismissed at
-  undismiss: Undismiss
-  delete: Удалить reminder
-  recordPageLink: Просмотр record
+  dismissed: Отклонено
+  dismissedAt: Время отклонения
+  undismiss: Отменить отклонение
+  delete: Удалить напоминание
+  recordPageLink: Просмотр записи
   edit:
-    label: Изменить reminder
-    assigneeLabel: Assignee
+    label: Изменить напоминание
+    assigneeLabel: Ответственный
     assigneePlaceholder: Myself (default)
-    notesLabel: Notes
-    notesPlaceholder: Notes
+    notesLabel: Заметки
+    notesPlaceholder: Заметки
     remindAtLabel: Remind me at
-    remindAtNone: Never
+    remindAtNone: Никогда
     titleLabel: Заголовок
     titlePlaceholder: Заголовок
   listLabel: Reminders
-  routesTo: Метка for page link
+  routesTo: Метка для ссылки на страницу
   snooze:
     label: Snooze
     count: Snooze count
@@ -173,7 +173,7 @@ field:
   selectAll: Выбрать все
   tooltip:
     permissions: Поле прав доступа
-  unselectAll: Unselect all
+  unselectAll: Снять выделение
   kind:
     user:
       suggestionPlaceholder: Start typing to search for users by email or name
@@ -213,8 +213,8 @@ webcam:
     camera: Unable to access the camera. Please make sure you have granted camera permissions.
 
 record:
-  unsavedChanges: Несохраненные изменения will be lost. Do you wish to leave?
-  unsavedChangesDraft: Несохраненные изменения will be discarded, but can still be found in Drafts. Do you wish to leave?
+  unsavedChanges: Несохраненные изменения будут потеряны. Вы хотите покинуть?
+  unsavedChangesDraft: Несохраненные изменения будут потеряны, но будут сохранены в черновиках. Вы хотите покинуть?
 
 themes:
   labels:

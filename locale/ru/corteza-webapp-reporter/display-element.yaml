@@ -1,6 +1,6 @@
 chart:
   configurator:
-    begin-axis-at-zero: Always begin axis scale at zero
+    begin-axis-at-zero: Всегда откладывать значения от 0
     chart-title: Chart title
     color-scheme: Цветовая схема
     data: Data
@@ -8,23 +8,23 @@ chart:
     default: Default
     default-value: Значение по-умолчанию
     general: Основные
-    label-column: Label column
+    label-column: Метка column
     logarithmic-scale: Logarithmic scale
     position-description: Values can be set as pixels (20) or as percentages (20%)
     none: Отсутствует
-    place-axis-on-right-side: Place axis on the right side
-    skip-missing-values: Skip missing values
+    place-axis-on-right-side: Расположить оси справа
+    skip-missing-values: Пропускать отсутсвующие значения
     step-size: Step size
     animation:
-      enabled: Animation enabled
+      enabled: Анимация включена
     metrics:
-      label: Metrics
+      label: Метрики
       field: Field
       stack:
         label: Stack
-        description: Metrics with same value will be stacked
+        description: Метрики with same value will be stacked
       label-field:
-        label: Label
+        label: Метка
     time:
       label: Time
       unit:
@@ -46,59 +46,59 @@ chart:
       max: Максимум value
       min: Минимум value
     x-axis:
-      name: X-Axis
-      label: Axis label
+      name: Ось X
+      label: Метка оси
       type: Axis type
       labelRotation:
-        label: Rotate labels
+        label: Повернуть метки
     y-axis:
-      name: Y-Axis
-      label: Axis label
+      name: Ось Y
+      label: Метка оси
       labelPosition:
-        label: Label position
-        top: Top
-        center: Center
-        bottom: Bottom
+        label: Позиция метки
+        top: Верх
+        center: Центр
+        bottom: Низ
       labelRotation:
-        label: Rotate labels
+        label: Повернуть метки
     legend:
       name: Legend
       hide: Hide legend
-      scrollable: Scrollable
+      scrollable: Масштабировать
       orientation:
         label: Расположение
         horizontal: Горизонтальное
         vertical: Вертикальное
       align:
-        label: Align
-        left: Left
-        right: Right
-        center: Center
+        label: Выравнивание
+        left: Лево
+        right: Право
+        center: Центр
       position:
         description: Values c
         default: Default position
-        top: Top
-        right: Right
-        bottom: Bottom
-        left: Left
+        top: Верх
+        right: Право
+        bottom: Низ
+        left: Лево
     tooltips:
       name: Всплывающие окна
       show:
-        always: Always show labels
+        always: Всегда показывать метки
     offset:
-      name: Offset
-      default: Default offset
-      top: Top
-      right: Right
-      bottom: Bottom
-      left: Left
+      name: Смещение
+      default: Смещение по умолчанию
+      top: Верх
+      right: Право
+      bottom: Низ
+      left: Лево
 metric:
   configurator:
     color:
       background: Цвет фона
       text: Цвет текста
       picker: Выберите цвет
-    format: Format
+    format: Формат
     label-column: Label column
     none: Отсутствует
     prefix: Префикс
@@ -120,10 +120,10 @@ table:
         dark: Темная
         fixed: Fixed
         hover: Hover
-        label: Таблица Options
+        label: Свойства таблицы
         no-collapse: No border collapse
         responsive: Responsive
-        small: Small
+        small: Маленький
         striped: Striped
       variant: Таблица Variant
       variants:

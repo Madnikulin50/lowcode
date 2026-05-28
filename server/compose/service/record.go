@@ -2884,7 +2884,7 @@ func (ri RecordIndex) MarshalJSON() ([]byte, error) {
 			continue
 		}
 
-		// If the index increases for more then 1, the set is complete
+		// If the index increases for more than 1, the set is complete
 		if ri[i]-crt > 1 {
 			rr = append(rr, []int{start, crt})
 			start = ri[i]

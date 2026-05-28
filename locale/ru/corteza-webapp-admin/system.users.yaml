@@ -1,6 +1,6 @@
 editor:
   external-auth-providers:
-    label: Label
+    label: Метка
     title: Manage external auth providers
     type: Type
   info:
@@ -104,10 +104,10 @@ list:
     exclusive:
       label: Only
     inclusive:
-      label: Including
+      label: Включая
     query:
-      label: Filter users list
-      placeholder: Filter users by name, email
+      label: Фильтр users list
+      placeholder: Фильтр users by name, email
     suspended:
       label: suspended users
   loading: Loading users

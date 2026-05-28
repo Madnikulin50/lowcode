@@ -10,7 +10,7 @@
       background: Left click on background
       drag: Left click & drag
       label: Left click
-    pan: Scroll, Middle click & drag, or Right click & drag
+    pan: Scroll, Middle click & drag, or Право click & drag
     zoom: Ctrl + Scroll
 'basic-controls-label': Basic controls
 'keyboard-shortcuts':
@@ -25,7 +25,7 @@
     save: Сохранить
     'hide-guides': Hide guides
     'show-help': Show help
-    'reset-view-to-start-point': Reset view to starting point
+    'reset-view-to-start-point': Сбросить view to starting point
     'select-all': Select all
     undo: Undo
   shortcut:

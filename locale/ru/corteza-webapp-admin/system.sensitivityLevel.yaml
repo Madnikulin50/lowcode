@@ -42,4 +42,4 @@ list:
     exclusive:
       label: Only
     inclusive:
-      label: Including
+      label: Включая

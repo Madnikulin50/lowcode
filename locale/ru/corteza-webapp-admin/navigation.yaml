@@ -33,7 +33,7 @@ automation:
     permissions: Права доступа
     scripts: Corredor Scripts
     sessions: Sessions
-    workflows: Workflows
+    workflows: Процессы
 
 federation:
   group: Federation
