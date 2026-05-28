@@ -76,6 +76,11 @@ func getModelAttrs(pr ModelFinder, mfr dal.ModelRef) (attrs dal.AttributeSet, er
 	if m == nil {
 		return nil, fmt.Errorf("model not found: %v", mfr)
 	}
+	for _, attr := range m.Attributes {
+		if attr.Type == nil {
+			return nil, fmt.Errorf("model does not have attribute type: %v", mfr)
+		}
+	}
 
 	return m.Attributes, nil
 }

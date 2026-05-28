@@ -155,7 +155,7 @@ func (a *aggregator) Aggregate(ctx context.Context, v ValueGetter) (err error) {
 func (a *aggregator) Scan(s ValueSetter) (err error) {
 	// On first scan, complete partial aggregates
 	if !a.scanned {
-		a.completePartials()
+		a.completePartials(context.TODO())
 	}
 
 	a.scanned = true
@@ -220,7 +220,7 @@ func (a *aggregator) walkValues(ctx context.Context, r ValueGetter, cc map[strin
 		if attr.eval != nil {
 			out, err = attr.eval.Eval(ctx, r)
 			if err != nil {
-				return
+				return nil
 			}
 		} else {
 			out = r
@@ -348,11 +348,8 @@ func (a *aggregator) uniqueCount(ctx context.Context, attr aggregateDef, i int, 
 	return
 }
 
-func (a *aggregator) completePartials() {
-	a.completeAverage()
-}
-
-func (a *aggregator) completeAverage() {
+func (a *aggregator) completePartials(ctx context.Context) {
+	hasExprs := false
 	for i, attr := range a.def {
 		if attr.aggOp == "avg" {
 			if a.counts[i] == 0 {
@@ -365,6 +362,34 @@ func (a *aggregator) completeAverage() {
 				return
 			}
 			a.aggregates[i] = float64(len(*a.unique[i]))
+		}
+		if attr.inIdent == "" && attr.eval != nil {
+			hasExprs = true
+		}
+
+	}
+	if hasExprs {
+		record := map[string]any{}
+		for i, attr := range a.def {
+			if attr.inIdent == "" {
+				continue
+			}
+			record[attr.outIdent] = a.aggregates[i]
+		}
+		for i, attr := range a.def {
+			if attr.inIdent != "" {
+				continue
+			}
+			out, e := attr.eval.Eval(ctx, record)
+			if e == nil {
+				fl, ok := out.(float64)
+				if ok {
+					a.aggregates[i] = fl
+					record[attr.outIdent] = a.aggregates[i]
+				}
+
+			}
+
 		}
 	}
 }

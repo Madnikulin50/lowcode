@@ -18,18 +18,23 @@
           <span
             class="d-flex"
             style="margin-top: 0.1rem;"
+            :style="genStyle(metric.valueStyle, true)"
           >
             {{ metric.label }}
           </span>
         </div>
       </template>
-      <template v-if="metric.prefix">
-        {{ metric.prefix }}
-      </template>
-      {{ displayValue }}
-      <template v-if="metric.suffix">
-        {{ metric.suffix }}
-      </template>
+      <span
+        :style="genStyle(metric.valueStyle)"
+      >
+        <template v-if="metric.prefix">
+          {{ metric.prefix }}
+        </template>
+        {{ displayValue }}
+        <template v-if="metric.suffix">
+          {{ metric.suffix }}
+        </template>
+      </span>
     </b-form-group>
   </div>
   <div

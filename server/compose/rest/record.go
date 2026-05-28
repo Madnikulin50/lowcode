@@ -333,6 +333,7 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 		flt.IncTotal = r.IncTotal
 		flt.IncPageNavigation = true
 		flt.Paging = filter.Paging{Limit: r.Limit}
+		flt.Sorting, _ = filter.NewSorting(r.Sort)
 		err = func() (err error) {
 
 			// Get all of the steps
@@ -383,6 +384,7 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 				def.Paging = &paging
 				def.Paging.IncTotal = r.IncTotal
 				def.Paging.IncPageNavigation = r.IncPageNavigation
+				def.Sort = flt.Sort
 				dd = append(dd, &def)
 			}
 

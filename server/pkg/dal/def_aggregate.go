@@ -319,6 +319,9 @@ func (def *Aggregate) determineAttrType(base AggregateAttr, ss []AttributeMappin
 }
 
 func (a AggregateAttr) toSimpleAttr() SimpleAttr {
+	if a.Type == nil {
+		fmt.Printf("null attribute type for %v\n", a.Label)
+	}
 	return SimpleAttr{
 		Ident: a.Identifier,
 		Props: MapProperties{

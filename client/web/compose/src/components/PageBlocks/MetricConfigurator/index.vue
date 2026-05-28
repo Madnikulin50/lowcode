@@ -383,7 +383,6 @@
           </b-card>
 
           <m-style
-            v-if="likeRecordList !== true"
             class="mt-2"
             :options="edit.valueStyle"
           >

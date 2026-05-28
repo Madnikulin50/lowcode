@@ -519,7 +519,7 @@ func convStepLoad(pr ModelFinder, step types.ReportStepLoad, defs FrameDefinitio
 }
 
 // convStepAggregate converts ReportStepAggregate to dal.Aggregate
-func convStepAggregate(step types.ReportStepAggregate, defs FrameDefinitionSet) (out *dal.Aggregate, err error) {
+func convStepAggregate(step types.ReportStepAggregate, pp dal.Pipeline, defs FrameDefinitionSet) (out *dal.Aggregate, err error) {
 	// Validation
 	if len(defs) > 1 {
 		defs = FrameDefinitionSet{defs[len(defs)-1]}
@@ -539,20 +539,27 @@ func convStepAggregate(step types.ReportStepAggregate, defs FrameDefinitionSet) 
 
 	ggs := make([]dal.AggregateAttr, 0, len(step.Keys))
 	for _, c := range step.Keys {
+		tp := pp.TypeForAttribute(c.Name)
 		ggs = append(ggs, dal.AggregateAttr{
 			Key:        true,
 			Identifier: c.Name,
 			Label:      c.Label,
 			Expression: c.Def.Node(),
+			Type:       tp,
 		})
 	}
 
 	vvs := make([]dal.AggregateAttr, 0, len(step.Columns))
 	for _, c := range step.Columns {
+		tp := pp.TypeForAttribute(c.Name)
+		if tp == nil {
+			tp = &dal.TypeNumber{}
+		}
 		vvs = append(vvs, dal.AggregateAttr{
 			Identifier: c.Name,
 			Label:      c.Label,
 			Expression: c.Def.Node(),
+			Type:       tp,
 		})
 	}
 

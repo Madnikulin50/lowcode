@@ -115,21 +115,21 @@ func makePipeline(mf ModelFinder, ss types.ReportStepSet, defs FrameDefinitionSe
 			pp = append(pp, aux)
 
 		case step.Aggregate != nil:
-			aux, err := convStepAggregate(*step.Aggregate, defs.FilterBySource(step.Aggregate.Name))
+			aux, err := convStepAggregate(*step.Aggregate, pp, defs.FilterBySource(step.Aggregate.Name))
 			if err != nil {
 				return nil, err
 			}
 			pp = append(pp, aux)
 
 		case step.Join != nil:
-			aux, err := convStepJoin(*step.Join, defs.FilterBySource(step.Join.Name))
+			aux, err := convStepJoin(*step.Join, pp, defs.FilterBySource(step.Join.Name))
 			if err != nil {
 				return nil, err
 			}
 			pp = append(pp, aux)
 
 		case step.Link != nil:
-			aux, err := convStepLink(*step.Link, defs.FilterBySource(step.Link.Name))
+			aux, err := convStepLink(*step.Link, pp, defs.FilterBySource(step.Link.Name))
 			if err != nil {
 				return nil, err
 			}

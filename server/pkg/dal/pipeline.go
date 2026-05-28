@@ -167,6 +167,23 @@ func (pp Pipeline) FullNameFromShort(shortName string) string {
 	return shortName
 }
 
+func (pp Pipeline) TypeForAttribute(shortName string) Type {
+	if len(pp) == 0 {
+		return nil
+	}
+	for i := len(pp) - 1; i >= 0; i-- {
+		for _, s := range pp[i].Attributes() {
+			for _, src := range s {
+				if src.Identifier() == shortName {
+					return src.Properties().Type
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // slice is the recursive counterpart for the Slice method
 func (pp Pipeline) slice(s PipelineStep) (out Pipeline) {
 	out = append(out, s)
