@@ -84,19 +84,20 @@ edit:
     options:
       label: Свойства
     function:
-      avg: AVG
+      avg: Среднее
       label: Функция
-      max: MAX
-      min: MIN
-      placeholder: Select metric aggregate function
-      std: STD
-      sum: SUM
+      max: Максимум
+      min: Минимум
+      placeholder: Выберите функцию агрегации для метрики
+      std: Стандартное отклонение
+      sum: Сумма
+      uniqueCount: Количество уникальных
     fx:
-      description: n - current dataset value, m - previous dataset value
+      description: n - текущее значение, m - предыдущее значение
       label: Функция постобработки
     stack:
       label: Стэк
-      description: Метрики with same value will be stacked
+      description: Метрики с одним значением будут слиты
     lineStyle:
       label: Стиль линии
       default: По-умолчанию
@@ -132,12 +133,12 @@ edit:
       right: Право
       top: Верх
     lineTension:
-      curvy: Big curvatures
+      curvy: Большая кривизна
       label: Line tension
-      medium: Medium curvatures
+      medium: Средняя кривизна
       placeholder: Line tension
-      slight: Small curvatures
-      straight: Straight lines
+      slight: Малая кривизна
+      straight: Прямые линии
     output:
       bar: Столбцы
       doughnut: Пончик

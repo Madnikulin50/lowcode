@@ -22,7 +22,7 @@ chart:
       field: Field
       stack:
         label: Stack
-        description: Метрики with same value will be stacked
+        description: Метрики с одним значением будут слиты
       label-field:
         label: Метка
     time:
