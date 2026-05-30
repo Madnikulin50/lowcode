@@ -213,7 +213,9 @@ func (def *Join) init(ctx context.Context, left, right Iterator) (exec *joinLeft
 	// order
 	for _, s := range def.filter.OrderBy() {
 		if _, ok := outAttrs[s.Column]; !ok {
-			return nil, fmt.Errorf("order attribute %s does not exist", s.Column)
+			if !isSystemField(s.Column) {
+				return nil, fmt.Errorf("order attribute %s does not exist", s.Column)
+			}
 		}
 	}
 

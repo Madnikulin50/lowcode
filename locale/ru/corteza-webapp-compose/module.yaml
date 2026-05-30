@@ -83,7 +83,6 @@ edit:
   type:
     basic: Базовый
     datasource: Внешняя ссылка на БД
-    dataframe: Датафрейм
 
   label:
     type: Тип модуля

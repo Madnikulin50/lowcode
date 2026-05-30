@@ -19,7 +19,7 @@
 
     <template #toolbar>
       <b-container
-        v-if="recordListModule"
+        v-if="recordListModule && needHeaderBlock"
         ref="toolbar"
         fluid
         class="d-flex flex-column gap-2 p-3 d-print-none"
@@ -1222,6 +1222,14 @@ export default {
         perPage,
         count,
       }
+    },
+
+    needHeaderBlock () {
+      return this.recordListModule.canCreateRecord ||
+        (this.options.allowExport && !this.inlineEditing) ||
+        (this.filterPresets.length) ||
+        (!this.options.hideConfigureFieldsButton) ||
+        (!this.options.hideSearch)
     },
 
     hasPrevPage () {

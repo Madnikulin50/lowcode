@@ -10,6 +10,10 @@ import:
   uploadFilePlaceholder: Click or drop file here to upload (.zip format)
   back: Back
   import: Import
+  connection:
+    label: Connection
+  importData:
+    label: Import data
   slug:
     label: Short name *
 description:
@@ -37,7 +41,7 @@ logo:
   preview: Preview
   reset: Reset
 name:
-  label: Полное имя пространства *
+  label: Full namespace name *
   placeholder: Enter namespace name
 noResults: No namespaces found
 searchPlaceholder: Search namespaces

@@ -119,8 +119,7 @@ func (def *Aggregate) dryrun(ctx context.Context) (err error) {
 
 func isSystemField(field string) bool {
 	switch field {
-	case "createdAt":
-	case "deletedAt":
+	case "deletedAt", "createdAt":
 		return true
 	}
 	if strings.HasPrefix(field, "dimension_") {

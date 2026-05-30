@@ -8,6 +8,7 @@ import (
 
 	"github.com/madnikulin50/lowcode/server/pkg/expr"
 	"github.com/spf13/cast"
+	"gopkg.in/yaml.v3"
 )
 
 type (
@@ -71,6 +72,15 @@ func WrapValue(v expr.TypedValue) *typedValue {
 	return &typedValue{
 		V: v,
 	}
+}
+func (c *typedValue) UnmarshalYAML(value *yaml.Node) error {
+	// 1. Unmarshal into an intermediate generic map first
+	var intermediate map[string]interface{}
+	if err := value.Decode(&intermediate); err != nil {
+		return err
+	}
+	c.V = nil
+	return nil
 }
 
 func (t *typedValue) UnmarshalJSON(in []byte) (err error) {

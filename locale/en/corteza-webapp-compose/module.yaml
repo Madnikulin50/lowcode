@@ -80,8 +80,11 @@ edit:
     recordPage: Record page
   systemFields: 'System fields'
   isDatasource: 'Static data source'
+  type:
+    basic: Basic
+    datasource: Aggregate
   label:
-    required: *
+    required: '*'
     multi: 1..nn
   tooltip:
     attributes: Select if the field can hold multiple values, if it's required field or if contains sensitive data
@@ -168,7 +171,7 @@ edit:
             label: JSON
 
     datasource:
-      title: Datasource
+      title: Aggregate
     privacy:
       title: Privacy
       sensitivity-level:
