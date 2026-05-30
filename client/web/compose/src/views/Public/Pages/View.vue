@@ -14,6 +14,15 @@
       v-if="!isRecordPage"
       to="topbar-tools"
     >
+      <c-input-search
+        v-if="enableAI"
+        v-model.trim="aiPrompt"
+        class="mr-2"
+        :ai="true"
+        :aria-label="$t('AI')"
+        :placeholder="$t('prompt for start AI magic...')"
+        :autocomplete="'off'"
+      />
       <b-button-group
         v-if="page && page.canUpdatePage"
         size="sm"
@@ -95,8 +104,11 @@ import { mapGetters, mapActions } from 'vuex'
 import Grid from 'corteza-webapp-compose/src/components/Public/Page/Grid'
 import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Modal'
 import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Page/Block/Modal'
+import { components } from 'corteza-lib/vue/dist'
+
 import { NoID } from 'corteza-lib/js/dist'
 import page from 'corteza-webapp-compose/src/mixins/page'
+const { CInputSearch } = components
 
 export default {
   i18nOptions: {
@@ -107,6 +119,7 @@ export default {
     Grid,
     RecordModal,
     MagnificationModal,
+    CInputSearch,
   },
 
   mixins: [
@@ -137,6 +150,7 @@ export default {
   data () {
     return {
       pageTitle: '',
+      aiPrompt: '',
 
     }
   },
@@ -156,6 +170,9 @@ export default {
 
     uniqueID () {
       return [this.page.pageID, this.$route.query.layoutID]
+    },
+    enableAI () {
+      return true
     },
   },
 

@@ -16,6 +16,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import Draggable from 'vuedraggable';
 import { VueSelect } from 'vue-select';
 import { createPopper } from '@popperjs/core';
+import { library } from '@fortawesome/fontawesome-svg-core';
 import { VueRenderer, EditorContent, Editor } from '@tiptap/vue-2';
 import { Chrome } from 'vue-color';
 import Mention from '@tiptap/extension-mention';
@@ -26,7 +27,6 @@ import { TextStyleKit } from '@tiptap/extension-text-style';
 import StarterKit from '@tiptap/starter-kit';
 import { Placeholder } from '@tiptap/extension-placeholder';
 import AceEditor from 'vue2-ace-editor';
-import { library } from '@fortawesome/fontawesome-svg-core';
 import { faExpandAlt, faLock, faExternalLinkAlt, faChevronRight, faTimes, faHistory } from '@fortawesome/free-solid-svg-icons';
 import { mapActions, mapGetters, mapMutations } from 'vuex';
 import { divIcon, latLng, latLngBounds } from 'leaflet';
@@ -9078,6 +9078,7 @@ var __vue_staticRenderFns__$1c = [];
 //
 //
 
+
 var script$1f = {
   name: 'CInputSearch',
 
@@ -9098,6 +9099,10 @@ var script$1f = {
     },
 
     disabled: {
+      type: Boolean,
+    },
+
+    ai: {
       type: Boolean,
     },
 
@@ -9182,17 +9187,17 @@ var script$1f = {
 const __vue_script__$1f = script$1f;
 
 /* template */
-var __vue_render__$1b = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"c-input-search d-flex position-relative",class:{ 'submittable': _vm.isSubmittable },staticStyle:{"min-width":"150px"}},[_c('b-input',{ref:"searchInput",staticClass:"text-truncate",attrs:{"data-test-id":"input-search","type":_vm.inputType,"name":"search","value":_vm.localValue,"debounce":_vm.debounce,"disabled":_vm.disabled,"placeholder":_vm.placeholder,"autocomplete":_vm.autocomplete,"size":_vm.size},on:{"input":_vm.onInput,"keyup":function($event){if(!$event.type.indexOf('key')&&_vm._k($event.keyCode,"enter",13,$event.key,"Enter")){ return null; }return _vm.submitQuery.apply(null, arguments)}}}),_vm._v(" "),(_vm.loading)?_c('div',{staticClass:"spinner d-inline-flex align-items-center p-3"},[_c('b-spinner',{attrs:{"small":"","variant":"secondary"}})],1):(_vm.clearable && _vm.localValue && !_vm.disabled)?_c('b-button',{staticClass:"clear-button d-inline-flex align-items-center rounded-0 p-3",attrs:{"variant":"outline-extra-light"},on:{"click":_vm.onClear}},[_c('font-awesome-icon',{staticClass:"text-secondary",attrs:{"icon":['fas', 'times']}})],1):_vm._e(),_vm._v(" "),(_vm.showSubmittable)?_c('b-button',{staticClass:"search-button d-inline-flex align-items-center rounded-0 border-light",class:{ 'border-0 cursor-default': !_vm.isSubmittable },attrs:{"variant":_vm.isSubmittable ? 'outline-light' : 'link',"disabled":_vm.disabled},on:_vm._d({},[_vm.isSubmittable,_vm.submitQuery])},[_c('font-awesome-icon',{staticClass:"align-middle text-primary",attrs:{"icon":['fas', 'search']}})],1):_vm._e()],1)};
+var __vue_render__$1b = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"c-input-search d-flex position-relative",class:{ 'submittable': _vm.isSubmittable },staticStyle:{"min-width":"150px"}},[_c('b-input',{ref:"searchInput",staticClass:"text-truncate",attrs:{"data-test-id":"input-search","type":_vm.inputType,"name":"search","value":_vm.localValue,"debounce":_vm.debounce,"disabled":_vm.disabled,"placeholder":_vm.placeholder,"autocomplete":_vm.autocomplete,"size":_vm.size},on:{"input":_vm.onInput,"keyup":function($event){if(!$event.type.indexOf('key')&&_vm._k($event.keyCode,"enter",13,$event.key,"Enter")){ return null; }return _vm.submitQuery.apply(null, arguments)}}}),_vm._v(" "),(_vm.loading)?_c('div',{staticClass:"spinner d-inline-flex align-items-center p-3"},[_c('b-spinner',{attrs:{"small":"","variant":"secondary"}})],1):(_vm.clearable && _vm.localValue && !_vm.disabled)?_c('b-button',{staticClass:"clear-button d-inline-flex align-items-center rounded-0 p-3",attrs:{"variant":"outline-extra-light"},on:{"click":_vm.onClear}},[_c('font-awesome-icon',{staticClass:"text-secondary",attrs:{"icon":['fas', 'times']}})],1):_vm._e(),_vm._v(" "),(_vm.showSubmittable)?_c('b-button',{staticClass:"search-button d-inline-flex align-items-center rounded-0 border-light",class:{ 'border-0 cursor-default': !_vm.isSubmittable },attrs:{"variant":_vm.isSubmittable ? 'outline-light' : 'link',"disabled":_vm.disabled},on:_vm._d({},[_vm.isSubmittable,_vm.submitQuery])},[_c('font-awesome-icon',{staticClass:"align-middle text-primary",attrs:{"icon":['fas', this.ai ? 'brain' : 'search']}})],1):_vm._e()],1)};
 var __vue_staticRenderFns__$1b = [];
 
   /* style */
   const __vue_inject_styles__$1g = function (inject) {
     if (!inject) return
-    inject("data-v-e7856266_0", { source: "input[data-v-e7856266]:focus::placeholder{color:transparent}.c-input-search .search-button[data-v-e7856266]{position:absolute;right:2px;top:2px;bottom:2px;z-index:4;border-left-width:2px}.c-input-search .clear-button[data-v-e7856266],.c-input-search .spinner[data-v-e7856266]{position:absolute;right:1px;top:1px;bottom:1px;z-index:5;outline:0!important;box-shadow:none!important;border:none!important;background-color:transparent!important}.c-input-search .clear-button[data-v-e7856266]:hover,.c-input-search .spinner[data-v-e7856266]:hover{text-decoration:none}.c-input-search.submittable .clear-button[data-v-e7856266],.c-input-search.submittable .spinner[data-v-e7856266]{right:48px}.c-input-search .form-control[data-v-e7856266]{padding-right:40px}.c-input-search.submittable .form-control[data-v-e7856266]{padding-right:85px}.c-input-search[data-v-e7856266] ::-webkit-search-cancel-button{-webkit-appearance:none;display:none}.cursor-default[data-v-e7856266]{cursor:default!important}", map: undefined, media: undefined });
+    inject("data-v-b0a6daa4_0", { source: "input[data-v-b0a6daa4]:focus::placeholder{color:transparent}.c-input-search .search-button[data-v-b0a6daa4]{position:absolute;right:2px;top:2px;bottom:2px;z-index:4;border-left-width:2px}.c-input-search .clear-button[data-v-b0a6daa4],.c-input-search .spinner[data-v-b0a6daa4]{position:absolute;right:1px;top:1px;bottom:1px;z-index:5;outline:0!important;box-shadow:none!important;border:none!important;background-color:transparent!important}.c-input-search .clear-button[data-v-b0a6daa4]:hover,.c-input-search .spinner[data-v-b0a6daa4]:hover{text-decoration:none}.c-input-search.submittable .clear-button[data-v-b0a6daa4],.c-input-search.submittable .spinner[data-v-b0a6daa4]{right:48px}.c-input-search .form-control[data-v-b0a6daa4]{padding-right:40px}.c-input-search.submittable .form-control[data-v-b0a6daa4]{padding-right:85px}.c-input-search[data-v-b0a6daa4] ::-webkit-search-cancel-button{-webkit-appearance:none;display:none}.cursor-default[data-v-b0a6daa4]{cursor:default!important}", map: undefined, media: undefined });
 
   };
   /* scoped */
-  const __vue_scope_id__$1g = "data-v-e7856266";
+  const __vue_scope_id__$1g = "data-v-b0a6daa4";
   /* module identifier */
   const __vue_module_identifier__$1g = undefined;
   /* functional template */

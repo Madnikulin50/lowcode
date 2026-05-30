@@ -677,7 +677,6 @@ export default {
       return [
         { value: 'basic', text: this.$t('edit.type.basic') },
         { value: 'datasource', text: this.$t('edit.type.datasource') },
-        { value: 'dataframe', text: this.$t('edit.type.dataframe') },
       ]
     },
 

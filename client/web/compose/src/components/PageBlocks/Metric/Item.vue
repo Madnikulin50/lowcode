@@ -9,7 +9,7 @@
       :content-cols-md="options.horizontalFieldLayoutEnabled && '6'"
       :content-cols-xl="options.horizontalFieldLayoutEnabled && '7'"
       :style="fieldWidth"
-      class="field-container"
+      class="field-container mb-0"
     >
       <template #label>
         <div

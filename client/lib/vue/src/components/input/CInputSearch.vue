@@ -51,7 +51,7 @@
       @[isSubmittable]="submitQuery"
     >
       <font-awesome-icon
-        :icon="['fas', 'search']"
+        :icon="['fas', this.ai ? 'brain' : 'search']"
         class="align-middle text-primary"
       />
     </b-button>
@@ -59,6 +59,9 @@
 </template>
 
 <script>
+
+import { library } from '@fortawesome/fontawesome-svg-core'
+
 export default {
   name: 'CInputSearch',
 
@@ -79,6 +82,10 @@ export default {
     },
 
     disabled: {
+      type: Boolean,
+    },
+
+    ai: {
       type: Boolean,
     },
 

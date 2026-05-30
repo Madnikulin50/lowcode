@@ -76,6 +76,8 @@ import {
   faUnderline,
   faUserCog,
   faWrench,
+  faRobot,
+  faBrain,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -111,6 +113,8 @@ library.add(
   faSortAmountDown,
   faSortAmountUp,
   faWrench,
+  faRobot,
+  faBrain,
   faGripVertical,
   faDownload,
   faFileAlt,
