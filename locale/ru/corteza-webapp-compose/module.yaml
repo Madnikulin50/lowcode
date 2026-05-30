@@ -82,8 +82,7 @@ edit:
   isDatasource: 'Статичный источник данных'
   type:
     basic: Базовый
-    datasource: Внешняя ссылка на БД
-
+    datasource: Источник
   label:
     type: Тип модуля
     required: '*'
