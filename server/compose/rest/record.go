@@ -212,13 +212,18 @@ func makeRecordSet(m *types.Module, frm *datasources.Frame) (res *types.RecordSe
 	return &result
 }
 
-func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) (out systemTypes.ReportStepSet, err error) {
+func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep, moduleStack []uint64) (out systemTypes.ReportStepSet, err error) {
 	if r.Load != nil {
 		moduleID, ok := r.Load.Definition["moduleID"].(string)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse moduleID")
 		}
 		mid, _ := strconv.ParseInt(moduleID, 10, 64)
+		for _, m := range moduleStack {
+			if m == uint64(mid) {
+				return nil, fmt.Errorf("failed by recursion")
+			}
+		}
 		namespaceID, ok := r.Load.Definition["namespaceID"].(string)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse namespaceID")
@@ -241,7 +246,7 @@ func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) 
 		for {
 			changed := false
 			for i, s := range ss {
-				cur, err := ctrl.prepareStep(ctx, s)
+				cur, err := ctrl.prepareStep(ctx, s, []uint64{loadModel.ID})
 				if err != nil {
 					return nil, err
 				}
@@ -338,11 +343,14 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 
 			// Get all of the steps
 			ss := m.Config.Datasource.Items.ReportSteps()
+			if len(ss) == 0 {
+				return fmt.Errorf("no report steps found for %v", m.Name)
+			}
 			ss = m.UpdateReportsSteps(ss)
 			for {
 				changed := false
 				for i, s := range ss {
-					cur, err := ctrl.prepareStep(ctx, s)
+					cur, err := ctrl.prepareStep(ctx, s, []uint64{m.ID})
 					if err != nil {
 						return err
 					}

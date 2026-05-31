@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/PaesslerAG/gval"
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/madnikulin50/lowcode/server/pkg/expr"
 	"github.com/madnikulin50/lowcode/server/pkg/gvalfnc"
 	"github.com/madnikulin50/lowcode/server/pkg/ql"
@@ -327,6 +328,10 @@ func newRunnerGvalParsed(n *ql.ASTNode) (out *runnerGval, err error) {
 	if err != nil {
 		return
 	}
+	switch expr {
+	case "date":
+		expr = "$[\"date\"]"
+	}
 
 	out.eval, err = newGval(expr)
 	return
@@ -359,6 +364,7 @@ func newGval(e string) (gval.Evaluable, error) {
 		gval.Function("string", gvalfnc.CastString),
 		gval.Function("concat", gvalfnc.ConcatStrings),
 		gval.Function("has", arrHas),
+		jsonpath.Language(),
 	).NewEvaluable(e)
 }
 

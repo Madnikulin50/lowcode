@@ -237,7 +237,8 @@ func (i *iterator) Scan(r dal.ValueSetter) (err error) {
 	}
 
 	if err = i.rows.Scan(i.scanBuf...); err != nil {
-		return err
+		fmt.Errorf("scanrows err: %w\r\n", err)
+		//return err
 	}
 
 	if err = i.dst.table.Decode(i.scanBuf, r); err != nil {

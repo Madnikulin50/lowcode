@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
@@ -354,4 +355,14 @@ func (step *ReportStep) SetSourcePrefix(prefix string) {
 		// this should never happen
 		panic(fmt.Errorf("unknown step type: %v", step.Kind))
 	}
+}
+
+func (r *ReportStep) SetValue(name string, pos uint, value any) (err error) {
+	switch name {
+	case "moduleID", "ModuleID":
+		r.Load.Definition["moduleID"] = strconv.FormatUint(cast.ToUint64(value), 10)
+	case "namespaceID", "NamespaceID":
+		r.Load.Definition["namespaceID"] = strconv.FormatUint(cast.ToUint64(value), 10)
+	}
+	return
 }

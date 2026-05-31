@@ -330,13 +330,14 @@ func (svc record) FindByID(ctx context.Context, namespaceID, moduleID, recordID 
 	})
 }
 
-func (svc record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) (out systemTypes.ReportStepSet, err error) {
+func (svc record) prepareStep(ctx context.Context, r *systemTypes.ReportStep, moduleStack []uint64) (out systemTypes.ReportStepSet, err error) {
 	if r.Load != nil {
 		moduleID, ok := r.Load.Definition["moduleID"].(string)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse moduleID")
 		}
 		mid, _ := strconv.ParseInt(moduleID, 10, 64)
+
 		namespaceID, ok := r.Load.Definition["namespaceID"].(string)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse namespaceID")
@@ -346,13 +347,21 @@ func (svc record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) (o
 		if err != nil {
 			return nil, fmt.Errorf("failed to find module with id %d: %w", mid, err)
 		}
+
+		for _, m := range moduleStack {
+			if m == uint64(mid) {
+				return nil, fmt.Errorf("failed by recursion load module %v", loadModel.Name)
+			}
+		}
 		if loadModel.Config.Type != "datasource" {
 			return nil, nil
 		}
 
 		ss := loadModel.Config.Datasource.Items.ReportSteps()
 		ss = loadModel.UpdateReportsSteps(ss)
-
+		if len(ss) == 0 {
+			return nil, fmt.Errorf("no report steps found for %v", loadModel.Name)
+		}
 		for _, s := range ss {
 			s.ResetName(fmt.Sprintf("%v/%v", moduleID, s.Name()))
 			s.SetSourcePrefix(moduleID)
@@ -360,7 +369,7 @@ func (svc record) prepareStep(ctx context.Context, r *systemTypes.ReportStep) (o
 		for {
 			changed := false
 			for i, s := range ss {
-				cur, err := svc.prepareStep(ctx, s)
+				cur, err := svc.prepareStep(ctx, s, append(moduleStack, uint64(mid)))
 				if err != nil {
 					return nil, err
 				}
@@ -445,12 +454,15 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 
 				// Get all of the steps
 				ss := m.Config.Datasource.Items.ReportSteps()
+				if len(ss) == 0 {
+					return fmt.Errorf("no report steps found for %v", m.Name)
+				}
 				ss = m.UpdateReportsSteps(ss)
 
 				for {
 					changed := false
 					for i, s := range ss {
-						cur, err := svc.prepareStep(ctx, s)
+						cur, err := svc.prepareStep(ctx, s, []uint64{m.ID})
 						if err != nil {
 							return err
 						}

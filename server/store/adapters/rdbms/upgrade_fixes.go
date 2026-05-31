@@ -48,7 +48,7 @@ var (
 		fix_2022_09_00_addMissingNodeIdOnFederationMapping,
 		fix_2023_03_00_migrateComposeModuleConfigForRecordDeDup,
 		fix_2022_09_07_changePostgresIdColumnsDatatype,
-		fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings,
+		//fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings,
 		fix_2023_03_00_migrateComposePageMeta,
 		fix_2024_09_03_dropFederationNodeSyncPrimaryKey,
 		fix_2024_09_03_renameFederationNodeSyncNodeID,
@@ -76,7 +76,7 @@ func fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings(ctx context.Cont
 			Privacy         interface{} `json:"privacy"`
 			RecordRevisions interface{} `json:"recordRevisions"`
 			RecordDeDup     interface{} `json:"recordDeDup"`
-			DataSource      interface{} `json:"dataSource"`
+			DataSource      interface{} `json:"datasource"`
 		}
 
 		result struct {
