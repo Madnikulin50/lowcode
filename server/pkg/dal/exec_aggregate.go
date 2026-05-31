@@ -435,7 +435,9 @@ func (s *aggregate) sortGroups() {
 				va = ga.key[x]
 			} else {
 				x := inKeys(s.def.OutAttributes, o.Column)
-				va = ga.agg.aggregates[x]
+				if x > -1 {
+					va = ga.agg.aggregates[x]
+				}
 			}
 
 			x = inKeys(s.def.Group, o.Column)
@@ -443,7 +445,9 @@ func (s *aggregate) sortGroups() {
 				vb = gb.key[x]
 			} else {
 				x := inKeys(s.def.OutAttributes, o.Column)
-				vb = gb.agg.aggregates[x]
+				if x > -1 {
+					vb = gb.agg.aggregates[x]
+				}
 			}
 
 			cmp := compareValues(va, vb)
