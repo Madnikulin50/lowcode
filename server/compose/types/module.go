@@ -3,6 +3,7 @@ package types
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx/types"
@@ -13,6 +14,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/ql"
 	"github.com/madnikulin50/lowcode/server/pkg/sql"
 	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
+	"github.com/spf13/cast"
 )
 
 type (
@@ -180,6 +182,20 @@ func (m *Module) ModelRef() dal.ModelRef {
 	}
 }
 
+func (c *Module) setValue(name string, pos uint, value any) (err error) {
+	pp := strings.Split(name, ".")
+
+	switch pp[0] {
+	case "Config":
+		if pp[1] == "Datasource" {
+			step := c.Config.Datasource.Items[cast.ToInt(pp[2])].Step
+			return step.SetValue(pp[3], 0, value)
+		}
+	}
+
+	return
+}
+
 // FindByHandle finds module by it's handle
 func (set ModuleSet) FindByHandle(handle string) *Module {
 	for i := range set {
@@ -210,6 +226,12 @@ func ParseModuleConfig(ss []string) (m ModuleConfig, err error) {
 }
 
 func (m *Module) UpdateReportsSteps(ss systemTypes.ReportStepSet) (res systemTypes.ReportStepSet) {
+	if len(ss) == 0 {
+		return ss
+	}
+	if len(m.Fields) == 0 {
+		return systemTypes.ReportStepSet{}
+	}
 	for _, f := range m.Fields {
 		if len(f.Expressions.ValueExpr) == 0 {
 			continue

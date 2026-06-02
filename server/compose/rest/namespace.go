@@ -480,6 +480,9 @@ func (ctrl Namespace) importRecordData(ctx context.Context,
 	if mod, err = ctrl.module.FindByName(ctx, namespaceID, moduleName); err != nil {
 		return err
 	}
+	if mod.Config.Type == "datasource" {
+		return nil
+	}
 	if ns, err = ctrl.namespace.FindByID(ctx, namespaceID); err != nil {
 		return err
 	}
@@ -796,6 +799,9 @@ func (ctrl Namespace) ImportRun(ctx context.Context, r *request.NamespaceImportR
 		for _, f := range store.File {
 			if strings.HasPrefix(f.Name, "data") &&
 				strings.HasSuffix(f.Name, ".json") {
+				if f.UncompressedSize64 == 0 {
+					continue
+				}
 				mn := filepath.Base(f.Name)
 				mn = mn[:len(mn)-len(".json")]
 				reader, err := f.Open()
@@ -949,6 +955,9 @@ func (ctrl Namespace) exportCompose(ctx context.Context, namespaceID uint64) (re
 	}
 	for _, m := range mm {
 		var aux *envoyx.Node
+		if len(m.Handle) == 0 {
+			m.Handle = m.Name
+		}
 		aux, err = composeEnvoy.ModuleToEnvoyNode(m)
 		if err != nil {
 			return
@@ -999,6 +1008,9 @@ func (ctrl Namespace) exportCompose(ctx context.Context, namespaceID uint64) (re
 	}
 	for _, c := range cc {
 		var aux *envoyx.Node
+		if len(c.Handle) == 0 {
+			c.Handle = c.Name
+		}
 		aux, err = composeEnvoy.ChartToEnvoyNode(c)
 		if err != nil {
 			return

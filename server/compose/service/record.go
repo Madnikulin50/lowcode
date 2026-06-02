@@ -2724,6 +2724,18 @@ func loadRecord(ctx context.Context, s store.Storer, namespaceID, moduleID, reco
 	_, _, res, err = loadRecordCombo(ctx, s, dal.Service(), namespaceID, moduleID, recordID)
 	return
 }
+func fieldNameFromDimension(dim string) string {
+	i := strings.Index(dim, "(")
+	if i == -1 {
+		return dim
+	}
+	d := dim[i+1:]
+	i = strings.Index(d, ")")
+	if i == -1 {
+		return dim
+	}
+	return d[:i]
+}
 
 func recordReportToAggPipelineStep(m *types.Module, metrics, dimensions, f string) (agg *dal.Aggregate, err error) {
 
@@ -2734,7 +2746,7 @@ func recordReportToAggPipelineStep(m *types.Module, metrics, dimensions, f strin
 	}
 	dim := []dal.AggregateAttr{}
 	oo := filter.SortExprSet{}
-	ff := m.Fields.FindByName(dimensions)
+	ff := m.Fields.FindByName(fieldNameFromDimension(dimensions))
 	if ff != nil {
 		auxDim.MultiValue = ff.Multi
 		auxDim.Label = ff.Label

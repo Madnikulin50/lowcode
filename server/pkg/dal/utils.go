@@ -460,6 +460,13 @@ func shortAttrFromLong(attrName string) string {
 	}
 	return attrName
 }
+func globalAttrFromLong(attrName string) string {
+	ind := strings.LastIndex(attrName, "/")
+	if ind != -1 {
+		return attrName[ind+1:]
+	}
+	return attrName
+}
 
 func indexAttrs(aa ...AttributeMapping) (out map[string]bool) {
 	out = make(map[string]bool, len(aa))
@@ -471,13 +478,21 @@ func indexAttrs(aa ...AttributeMapping) (out map[string]bool) {
 func indexAttrsInto(dst map[string]bool, aa ...AttributeMapping) {
 	for _, a := range aa {
 		dst[a.Identifier()] = true
-		if a.Identifier() != a.Source() {
+		id := a.Identifier()
+		if id != a.Source() {
 			dst[a.Source()] = true
 		}
-		shortAttr := shortAttrFromLong(a.Identifier())
+		shortAttr := shortAttrFromLong(id)
 		if shortAttr != a.Identifier() {
 			dst[shortAttr] = true
 		}
+		globalAttr := globalAttrFromLong(id)
+		if globalAttr != a.Identifier() {
+			dst[globalAttr] = true
+			shortAttr = globalAttr
+			dst[shortAttr] = true
+		}
+
 	}
 }
 

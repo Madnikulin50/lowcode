@@ -15,6 +15,35 @@ func (e YamlEncoder) encode(ctx context.Context, base *yaml.Node, p envoyx.Encod
 	return
 }
 
+func (e YamlEncoder) encodeModuleConfigC(ctx context.Context,
+	p envoyx.EncodeParams,
+	tt envoyx.Traverser,
+	n *envoyx.Node, module *types.Module, cfg types.ModuleConfig) (_ any, err error) {
+
+	for i, item := range cfg.Datasource.Items {
+		if item.Step.Load != nil {
+			modRef, ok := n.References[fmt.Sprintf("Config.Datasource.%d.ModuleID", i)]
+			if ok {
+				item.Step.Load.Definition["moduleID"] = safeParentIdentifier(tt, n, modRef)
+			}
+
+			ns, _ := e.encodeRef(p, module.NamespaceID, "NamespaceID", n, tt)
+
+			item.Step.Load.Definition["namespaceID"] = ns
+			cfg.Datasource.Items[i] = item
+		}
+	}
+
+	return y7s.MakeMap(
+		"type", cfg.Type,
+		"datasource", cfg.Datasource,
+		"dal", cfg.DAL,
+		"privacy", cfg.Privacy,
+		"discovery", cfg.Discovery,
+		"recordrevisions", cfg.RecordRevisions,
+		"recorddedup", cfg.RecordDeDup)
+}
+
 func (e YamlEncoder) encodeChartConfigC(ctx context.Context, p envoyx.EncodeParams, tt envoyx.Traverser, n *envoyx.Node, chart *types.Chart, cfg types.ChartConfig) (_ any, err error) {
 
 	reports, _ := y7s.MakeSeq()

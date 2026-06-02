@@ -1,14 +1,12 @@
 package rdbms
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	"strings"
-
 	"github.com/doug-martin/goqu/v9"
 	automationType "github.com/madnikulin50/lowcode/server/automation/types"
 	composeType "github.com/madnikulin50/lowcode/server/compose/types"
@@ -20,6 +18,7 @@ import (
 	rbacType "github.com/madnikulin50/lowcode/server/pkg/rbac"
 	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers"
 	systemType "github.com/madnikulin50/lowcode/server/system/types"
+	"strings"
 )
 
 type (
@@ -94,7 +93,7 @@ type (
 		// optional dalConnection filter function called after the generated function
 		DalConnection func(*Store, systemType.DalConnectionFilter) ([]goqu.Expression, systemType.DalConnectionFilter, error)
 
-		// optional DalSchemaAlteration filter function called after the generated function
+		// optional dalSchemaAlteration filter function called after the generated function
 		DalSchemaAlteration func(*Store, systemType.DalSchemaAlterationFilter) ([]goqu.Expression, systemType.DalSchemaAlterationFilter, error)
 
 		// optional dalSensitivityLevel filter function called after the generated function

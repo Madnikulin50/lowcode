@@ -211,6 +211,7 @@ export default (options = {}) => {
       'general',
       'module',
       'namespace',
+      'datasources',
       'navigation',
       'notification',
       'notifications',

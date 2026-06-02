@@ -11,6 +11,7 @@ module: {
 	]
 
 	model: {
+		defaultSetter: true
 		ident: "compose_module"
 		attributes: {
 			id: schema.IdField & {
@@ -48,6 +49,12 @@ module: {
 				dal: {type: "JSON", defaultEmptyObject: true}
 				omitSetter: true
 				omitGetter: true
+				envoy: {
+					yaml: {
+						customDecoder: true
+						customEncoder: true
+					}
+				}
 			}
 			fields: {
 				goType:     "types.ModuleFieldSet"
@@ -101,7 +108,7 @@ module: {
 				ident:    "source"
 				expIdent: "Source"
 				// @deprecated records is what the old version used
-				identKeys: ["source", "datasource", "records"]
+				identKeys: ["source", "records"]
 				supportMappedInput: false
 			}]
 		}
@@ -110,6 +117,7 @@ module: {
 			extendedEncoder:       true
 			extendedFilterBuilder: true
 			extendedDecoder:       true
+			extendedRefDecoder: 	 true
 		}
 	}
 

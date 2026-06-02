@@ -1,0 +1,24 @@
+
+add: Add
+aggregate: Aggregate
+compose-records: Compose records
+datasource-name: 'Datasource Name...'
+expression: Выражение
+group-by: Group by
+label: Метка
+module: Модуль
+name-required: Имя *
+name: Имя
+namespace: Namespace
+new:
+  label: New label
+  name: New name
+none: Отсутствует
+prefilter: Предварительный фильтр
+primary:
+  column: Главная колонка
+  source: Главный источник
+secondary:
+  column: Вспомогательная колонка
+  source: Вспомогательный источник
+source: Source

@@ -18,6 +18,115 @@ const (
 
 func (d *auxYamlDoc) unmarshalYAML(k string, n *yaml.Node) (out envoyx.NodeSet, err error) { return }
 
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceItemStepLoadDefinitionNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	refs = map[string]envoyx.Ref{}
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+		switch strings.ToLower(k.Value) {
+		case "module", "mod", "moduleid", "module_id":
+			var auxi any
+			y7s.DecodeScalar(v, "moduleID", &auxi)
+			refs[fmt.Sprintf("Config.Datasource.%d.ModuleID", index)] = envoyx.Ref{
+				ResourceType: types.ModuleResourceType,
+				Identifiers:  envoyx.MakeIdentifiers(auxi),
+			}
+		case "namespave", "ns", "namespaceid", "namespace_id":
+			var auxi any
+			y7s.DecodeScalar(v, "namespaceID", &auxi)
+			refs[fmt.Sprintf("Config.Datasource.%d.NamespaceID", index)] = envoyx.Ref{
+				ResourceType: types.NamespaceResourceType,
+				Identifiers:  envoyx.MakeIdentifiers(auxi),
+			}
+		}
+		return nil
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceItemStepLoadNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+
+		if k.Value != "definition" {
+			return nil
+		}
+		refs, idents, err = d.unmarshalModuleConfigDatasourceItemStepLoadDefinitionNode(r, v, index)
+		return err
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceItemStepNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+
+		if k.Value != "load" {
+			return nil
+		}
+		refs, idents, err = d.unmarshalModuleConfigDatasourceItemStepLoadNode(r, v, index)
+		return err
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceItemNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+
+		if k.Value != "step" {
+			return nil
+		}
+		refs, idents, err = d.unmarshalModuleConfigDatasourceItemStepNode(r, v, index)
+		return err
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+
+		if k.Value != "items" {
+			return nil
+		}
+		if y7s.IsSeq(v) {
+			var (
+				auxRefs   = make(map[string]envoyx.Ref)
+				auxIdents envoyx.Identifiers
+				i         = -1
+			)
+			err = y7s.EachSeq(v, func(c *yaml.Node) error {
+				i++
+
+				auxRefs, auxIdents, err = d.unmarshalModuleConfigDatasourceItemNode(r, c, i)
+				refs = envoyx.MergeRefs(refs, auxRefs)
+				idents = idents.Merge(auxIdents)
+				return err
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			refs, idents, err = d.unmarshalModuleConfigDatasourceItemNode(r, v, 0)
+			return err
+		}
+
+		return nil
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigNode(r *types.Module, n *yaml.Node) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	if r.Config.Type != "datasource" {
+		return
+	}
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+		if k.Value != "datasource" {
+			return nil
+		}
+
+		refs, idents, err = d.unmarshalModuleConfigDatasourceNode(r, v, 0)
+		return nil
+	})
+
+	return
+}
+
 func (d *auxYamlDoc) unmarshalChartConfigNode(r *types.Chart, n *yaml.Node) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
 	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
 		if k.Value != "reports" {

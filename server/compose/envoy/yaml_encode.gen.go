@@ -1,9 +1,9 @@
 package envoy
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
@@ -226,7 +226,10 @@ func (e YamlEncoder) encodeModule(ctx context.Context, p envoyx.EncodeParams, no
 	res := node.Resource.(*types.Module)
 
 	// Pre-compute some map values so we can omit error checking when encoding yaml nodes
-
+	auxConfig, err := e.encodeModuleConfigC(ctx, p, tt, node, res, res.Config)
+	if err != nil {
+		return
+	}
 	auxCreatedAt, err := e.encodeTimestamp(p, res.CreatedAt)
 	if err != nil {
 		return
@@ -246,7 +249,7 @@ func (e YamlEncoder) encodeModule(ctx context.Context, p envoyx.EncodeParams, no
 	}
 
 	out, err = y7s.AddMap(out,
-		"config", res.Config,
+		"config", auxConfig,
 		"createdAt", auxCreatedAt,
 		"deletedAt", auxDeletedAt,
 		"handle", res.Handle,

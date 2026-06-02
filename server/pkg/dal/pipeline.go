@@ -57,6 +57,26 @@ type (
 	}
 )
 
+func (pp Pipeline) findStepByName(steps *map[string]PipelineStep, name string) PipelineStep {
+	p := (*steps)[name]
+	if p != nil {
+		return p
+	}
+	for k, v := range *steps {
+		if k == name {
+			return v
+		}
+		parts := strings.Split(k, "/")
+		if len(parts) != 2 {
+			continue
+		}
+		if parts[1] == name {
+			return v
+		}
+	}
+	return nil
+}
+
 // LinkSteps links related steps into a tree structure
 //
 // @todo make it return a new slice and not mutate the original
@@ -64,6 +84,9 @@ func (pp Pipeline) LinkSteps() (err error) {
 	// map steps by identifiers
 	steps := make(map[string]PipelineStep)
 	for _, s := range pp {
+		if s == nil {
+			return fmt.Errorf("nil argument for step")
+		}
 		steps[s.Identifier()] = s
 	}
 
@@ -72,14 +95,14 @@ func (pp Pipeline) LinkSteps() (err error) {
 		for _, s := range pp {
 			switch rs := s.(type) {
 			case *Aggregate:
-				rs.rel = steps[rs.RelSource]
+				rs.rel = pp.findStepByName(&steps, rs.RelSource)
 				if rs.rel == nil {
 					return fmt.Errorf("aggregate: missing source relation %s", rs.RelSource)
 				}
 
 			case *Join:
-				rs.relLeft = steps[rs.RelLeft]
-				rs.relRight = steps[rs.RelRight]
+				rs.relLeft = pp.findStepByName(&steps, rs.RelLeft)
+				rs.relRight = pp.findStepByName(&steps, rs.RelRight)
 				if rs.relLeft == nil {
 					return fmt.Errorf("join: missing left relation %s for %v", rs.relLeft, rs.Identifier())
 				}
@@ -88,8 +111,8 @@ func (pp Pipeline) LinkSteps() (err error) {
 				}
 
 			case *Link:
-				rs.relLeft = steps[rs.RelLeft]
-				rs.relRight = steps[rs.RelRight]
+				rs.relLeft = pp.findStepByName(&steps, rs.RelLeft)
+				rs.relRight = pp.findStepByName(&steps, rs.RelRight)
 				if rs.relLeft == nil {
 					return fmt.Errorf("link: missing left relation %s for %v", rs.relLeft, rs.Identifier())
 				}

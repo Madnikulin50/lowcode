@@ -1,14 +1,12 @@
 package types
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	"fmt"
-
 	"github.com/madnikulin50/lowcode/server/pkg/cast2"
 )
 
@@ -178,6 +176,8 @@ func (r *Module) SetValue(name string, pos uint, value any) (err error) {
 		return cast2.Uint64(value, &r.NamespaceID)
 	case "updatedAt", "UpdatedAt":
 		return cast2.TimePtr(value, &r.UpdatedAt)
+	default:
+		return r.setValue(name, pos, value)
 
 	}
 	return nil
@@ -492,11 +492,6 @@ func (r *Record) GetValue(name string, pos uint) (any, error) {
 }
 
 func (r *Record) SetValue(name string, pos uint, value any) (err error) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("%v", recovered)
-		}
-	}()
 	if r == nil {
 		r = &Record{}
 	}

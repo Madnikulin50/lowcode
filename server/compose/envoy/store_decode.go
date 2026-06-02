@@ -116,7 +116,39 @@ func (d StoreDecoder) extendedModuleDecoder(ctx context.Context, s store.Storer,
 			mod.Fields = append(mod.Fields, f.Resource.(*types.ModuleField))
 		}
 
+		/*  if mod.Config.Datasource.Items != nil {
+		    f.References = envoyx.MergeRefs(f.References, b.References, map[string]envoyx.Ref{
+		        "ModuleID": b.ToRef(),
+		    })
+		    for k, ref := range f.References {
+		        ref.Scope = b.Scope
+		        f.References[k] = ref
+		    }
+		}*/
 		out = append(out, ff...)
+	}
+
+	return
+}
+
+func decodeModuleRefs(c *types.Module) (refs map[string]envoyx.Ref) {
+	refs = make(map[string]envoyx.Ref, len(c.Config.Datasource.Items))
+
+	for i, r := range c.Config.Datasource.Items {
+		if r.Step.Load == nil {
+			continue
+		}
+		moduleId := r.Step.Load.Definition["moduleID"]
+		nsID := r.Step.Load.Definition["namespaceID"]
+
+		refs[fmt.Sprintf("Config.Datasource.%d.ModuleID", i)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(moduleId),
+		}
+		refs[fmt.Sprintf("Config.Datasource.%d.NamespaceID", i)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(nsID),
+		}
 	}
 
 	return

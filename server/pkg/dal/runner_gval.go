@@ -331,9 +331,14 @@ func newRunnerGvalParsed(n *ql.ASTNode) (out *runnerGval, err error) {
 	switch expr {
 	case "date":
 		expr = "$[\"date\"]"
+	case "date(date)":
+		expr = "date($[\"date\"])"
 	}
 
 	out.eval, err = newGval(expr)
+	if out.eval == nil {
+		return
+	}
 	return
 }
 

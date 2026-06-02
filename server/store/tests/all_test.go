@@ -1,9 +1,9 @@
 package tests
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated from {{ .Source }}
+// the code is regenerated from <no value>
 //
 
 import (
@@ -77,7 +77,7 @@ func testAllGenerated(t *testing.T, s store.Storer) {
 	t.Run("dalConnection", func(t *testing.T) {
 		testDalConnections(t, s)
 	})
-	t.Run("DalSchemaAlteration", func(t *testing.T) {
+	t.Run("dalSchemaAlteration", func(t *testing.T) {
 		testDalSchemaAlterations(t, s)
 	})
 	t.Run("dalSensitivityLevel", func(t *testing.T) {

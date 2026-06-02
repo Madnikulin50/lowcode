@@ -371,9 +371,6 @@ func (a *aggregator) completePartials(ctx context.Context) {
 	if hasExprs {
 		record := map[string]any{}
 		for i, attr := range a.def {
-			if attr.inIdent == "" {
-				continue
-			}
 			record[attr.outIdent] = a.aggregates[i]
 		}
 		for i, attr := range a.def {
