@@ -96,7 +96,7 @@
 
       <b-button
         v-if="workflow.workflowID"
-        variant="light"
+        variant="outline-secondary"
         @click="openWorkflowBuilder()"
       >
         {{ $t('openBuilder') }}

@@ -127,7 +127,7 @@
           hover
           responsive
           class="mb-0"
-          head-variant="light"
+          head-variant="outline-secondary"
           :items="filtered"
           :fields="fields"
           :empty-text="$t('admin:general.notFound')"

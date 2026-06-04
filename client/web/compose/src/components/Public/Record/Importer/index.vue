@@ -2,7 +2,7 @@
   <div class="d-flex">
     <b-button
       size="lg"
-      variant="light"
+      variant="outline-secondary"
       class="flex-fill"
       @click="showModal=true"
     >

@@ -47,7 +47,7 @@
           <b-btn
             v-if="canPreviewHTML"
             data-test-id="button-preview-html-template"
-            variant="light"
+            variant="outline-secondary"
             @click="openPreview('html')"
           >
             {{ $t('preview.html') }}
@@ -56,7 +56,7 @@
           <b-btn
             v-if="canPreviewPDF"
             data-test-id="button-preview-pdf-template"
-            variant="light"
+            variant="outline-secondary"
             @click="openPreview('pdf')"
           >
             {{ $t('preview.pdf') }}

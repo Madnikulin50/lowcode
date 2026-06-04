@@ -75,7 +75,7 @@
           class="d-flex justify-content-between align-items-center"
         >
           <b-button
-            variant="light"
+            variant="outline-secondary"
             :disabled="processing"
             @click="onReset"
           >
@@ -84,7 +84,7 @@
 
           <div class="d-flex gap-1">
             <b-button
-              variant="light"
+              variant="outline-secondary"
               rounded
               @click="showModal = false"
             >

@@ -4,7 +4,7 @@
       hover
       class="mb-0"
     >
-      <b-thead head-variant="light">
+      <b-thead head-variant="outline-secondary">
         <b-tr>
           <b-th />
           <b-th>{{ $t('filters.list.filters') }}</b-th>

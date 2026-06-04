@@ -149,7 +149,7 @@
           v-else-if="isDeleted"
           size="md"
           size-confirm="md"
-          variant="light"
+          variant="outline-secondary"
           :processing="processingDelete"
           :text="$t('editor:undelete')"
           :borderless="false"
@@ -158,7 +158,7 @@
 
         <b-button
           v-if="workflow.workflowID === '0'"
-          variant="light"
+          variant="outline-secondary"
           @click="$router.back()"
         >
           {{ $t('editor:back') }}
@@ -167,7 +167,7 @@
         <div class="d-flex ml-auto">
           <b-button
             v-if="workflow.workflowID !== '0'"
-            variant="light"
+            variant="outline-secondary"
             class="ml-auto"
             @click="handleCancel"
           >

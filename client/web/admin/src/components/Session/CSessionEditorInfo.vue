@@ -123,7 +123,7 @@
       #footer
     >
       <b-button
-        variant="light"
+        variant="outline-secondary"
         :to="{ name: 'automation.workflow.edit', params: { workflowID: session.workflowID } }"
       >
         {{ $t('openWorkflow') }}

@@ -23,7 +23,7 @@
 
     <template #modal-footer>
       <b-button
-        variant="light"
+        variant="outline-secondary"
         @click="onModalHide"
       >
         {{ $t('general.label.cancel') }}

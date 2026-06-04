@@ -152,7 +152,7 @@
       :ok-title="$t('builder:save-button')"
       :visible="showEditor"
       ok-variant="primary"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       scrollable
       size="xl"
       body-class="p-0 border-top-0"
@@ -235,7 +235,7 @@
     <b-modal
       v-model="datasources.showConfigurator"
       :title="$t('builder:datasources.label')"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       :cancel-disabled="datasources.processing"
       scrollable
       size="xl"
@@ -315,7 +315,7 @@
       scrollable
       :ok-title="$t('builder:scenarios.save')"
       ok-variant="primary"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       :title="$t('builder:scenarios.label')"
       body-class="py-3"
       no-fade
@@ -360,7 +360,7 @@
         @save="handleReportSave"
       >
         <b-button
-          variant="light"
+          variant="outline-secondary"
           size="lg"
           :disabled="processing"
           @click="createBlock"

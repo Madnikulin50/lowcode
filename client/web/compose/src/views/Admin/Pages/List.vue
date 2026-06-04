@@ -52,7 +52,7 @@
               v-if="namespace.canGrant"
               data-test-id="dropdown-permissions"
               size="lg"
-              variant="light"
+              variant="outline-secondary"
               class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill"
             >
               <template #button-content>

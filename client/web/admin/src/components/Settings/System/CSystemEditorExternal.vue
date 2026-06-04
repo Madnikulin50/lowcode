@@ -39,7 +39,7 @@
       :items="providerItems"
       :fields="providerFields"
       :tbody-tr-class="(i) => i.rowBackground"
-      head-variant="light"
+      head-variant="outline-secondary"
       hover
       class="mb-0"
     >

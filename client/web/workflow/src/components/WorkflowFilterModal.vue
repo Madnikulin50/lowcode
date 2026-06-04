@@ -17,7 +17,7 @@
     <template #modal-footer>
       <div class="d-flex gap-1 w-100">
         <b-button
-          variant="light"
+          variant="outline-secondary"
           @click="handleReset"
         >
           {{ $t('general:reset') }}
@@ -25,7 +25,7 @@
 
         <div class="d-flex ml-auto gap-1">
           <b-button
-            variant="light"
+            variant="outline-secondary"
             @click="handleCancel"
           >
             {{ $t('general:cancel') }}

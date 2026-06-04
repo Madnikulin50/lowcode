@@ -72,15 +72,6 @@ export default {
   computed: {
     datasourceOptions () {
       const options = [{ value: '', text: this.$t('general:label.none') }]
-
-      this.datasources.forEach(({ step }, index) => {
-        Object.entries(step).forEach(([kind, { name }]) => {
-          if (['load'].includes(kind)) {
-            options.push({ value: name || `${index}`, text: name || `${index}` })
-          }
-        })
-      })
-
       return options
     },
   },
@@ -112,17 +103,6 @@ export default {
   methods: {
     async getSourceColumns () {
       this.columns = []
-
-      if (this.currentDatasourceName) {
-        const steps = this.datasources.map(({ step }) => step)
-
-        this.$SystemAPI.reportDescribe({ steps, describe: [this.currentDatasourceName] })
-          .then((frames = []) => {
-            this.columns = ((frames[0] || {}).columns || [])
-          }).catch((e) => {
-            this.toastErrorHandler(this.$t('notification:datasource.describe-failed'))(e)
-          })
-      }
     },
   },
 }

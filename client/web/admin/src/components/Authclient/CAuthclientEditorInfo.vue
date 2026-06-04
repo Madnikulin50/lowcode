@@ -433,7 +433,7 @@
             <b-button
               v-else
               data-test-id="button-test-cURL"
-              variant="light"
+              variant="outline-secondary"
               @click="getAccessTokenAPI()"
             >
               {{ $t('generateAccessToken') }}

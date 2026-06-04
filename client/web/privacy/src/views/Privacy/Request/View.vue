@@ -39,7 +39,7 @@
           :disabled="!request || !isPending"
           :processing="processingCancel"
           :text="$t('cancel')"
-          variant="light"
+          variant="outline-secondary"
           size="lg"
           size-confirm="lg"
           @confirmed="handleRequest('canceled')"

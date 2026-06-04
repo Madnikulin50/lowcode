@@ -139,7 +139,7 @@
 
           <div class="d-flex justify-content-end gap-1 my-1">
             <b-button
-              variant="light"
+              variant="outline-secondary"
               size="sm"
               @click="onCancel"
             >

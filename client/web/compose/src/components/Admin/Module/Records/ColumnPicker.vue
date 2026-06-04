@@ -17,7 +17,7 @@
       size="lg"
       scrollable
       :ok-title="$t('general.label.saveAndClose')"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       title-class="d-flex align-items-center p-0"
       @ok="onSave"
     >

@@ -8,7 +8,7 @@
         <div class="bg-white sticky-top py-2">
           <b-button
             data-test-id="button-report-list"
-            variant="light"
+            variant="outline-secondary"
             class="w-100 mb-2"
             :to="{ name: 'report.list' }"
           >

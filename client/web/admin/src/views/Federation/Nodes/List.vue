@@ -41,7 +41,7 @@
 
         <b-button
           v-if="canCreate"
-          variant="light"
+          variant="outline-secondary"
           size="lg"
           @click="openPairModal()"
         >

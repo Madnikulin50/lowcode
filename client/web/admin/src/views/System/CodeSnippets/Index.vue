@@ -25,7 +25,7 @@
       <b-table
         :items="codeSnippets"
         :fields="codeSnippetsFields"
-        head-variant="light"
+        head-variant="outline-secondary"
         show-empty
         hover
         sort
@@ -126,7 +126,7 @@
           />
 
           <b-button
-            variant="light"
+            variant="outline-secondary"
             class="ml-auto"
             @click="cancel()"
           >

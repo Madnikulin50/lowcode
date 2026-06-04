@@ -4,7 +4,7 @@
   >
     <b-button
       data-test-id="button-clone"
-      variant="light"
+      variant="outline-secondary"
       class="mr-2"
       @click="showModal = true"
     >
@@ -15,7 +15,7 @@
       v-model="showModal"
       data-test-id="modal-clone-permission"
       ok-variant="primary"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       centered
       :title="$t('ui.clone.title')"
       :ok-title="$t('ui.clone.clone')"

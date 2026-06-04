@@ -65,7 +65,7 @@
             :disabled="processing || !selected.length"
             :processing="processingCancel"
             :text="$t('request.cancel')"
-            variant="light"
+            variant="outline-secondary"
             size="lg"
             size-confirm="lg"
             @confirmed="handleSelectedRequests(selected, 'canceled')"
@@ -73,7 +73,7 @@
 
           <!-- <b-button
             :disabled="processing"
-            variant="light"
+            variant="outline-secondary"
             size="lg"
             class="ml-1"
             @click="exportRequests()"

@@ -46,7 +46,7 @@
         id="hit-list"
         hover
         responsive
-        head-variant="light"
+        head-variant="outline-secondary"
         class="mb-0"
         primary-key="hitID"
         :sort-by.sync="sorting.sortBy"
@@ -89,7 +89,7 @@
     <template #footer>
       <b-button
         v-if="items.length"
-        variant="light"
+        variant="outline-secondary"
         :disabled="!hasNextPage || loading"
         @click="loadMore()"
       >

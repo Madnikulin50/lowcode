@@ -3,7 +3,7 @@
     <b-button
       data-test-id="button-import"
       size="lg"
-      variant="light"
+      variant="outline-secondary"
       class="flex-fill"
       @click="showModal=true"
     >

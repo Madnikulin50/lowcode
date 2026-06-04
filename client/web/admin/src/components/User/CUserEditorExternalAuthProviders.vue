@@ -15,7 +15,7 @@
     <b-table
       :items="value"
       :fields="fields"
-      head-variant="light"
+      head-variant="outline-secondary"
       responsive
       hover
       class="mb-0"

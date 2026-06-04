@@ -45,7 +45,7 @@
         outlined
         fixed
         class="mb-0"
-        head-variant="light"
+        head-variant="outline-secondary"
         :items="errorList"
         :fields="fields"
       />
@@ -80,7 +80,7 @@
 
     <div slot="footer">
       <b-button
-        variant="light"
+        variant="outline-secondary"
         class="float-right"
         @click="$emit('close')"
       >

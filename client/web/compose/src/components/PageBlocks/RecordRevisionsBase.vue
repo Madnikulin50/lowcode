@@ -22,7 +22,7 @@
 
       <b-button
         v-else-if="!preloadRevisions && !loadedRevisions"
-        variant="light"
+        variant="outline-secondary"
         class="my-auto"
         @click="refresh()"
       >
@@ -89,7 +89,7 @@
           <template #row-details="row">
             <div class="overflow-hidden">
               <b-table-simple
-                table-variant="light"
+                table-variant="outline-secondary"
                 class="mb-0"
               >
                 <b-thead>

@@ -101,7 +101,7 @@
       <template #modal-footer>
         <b-button
           v-if="defaultValue"
-          variant="light"
+          variant="outline-secondary"
           @click="setColor()"
         >
           {{ translations.defaultBtnLabel || 'Default' }}

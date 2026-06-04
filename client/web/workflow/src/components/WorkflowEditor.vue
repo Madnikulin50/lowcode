@@ -373,7 +373,7 @@
       :ok-title="`${dryRun.lookup ? $t('editor:load-and-configure') : $t('editor:run-workflow')}`"
       :cancel-title="$t('editor:back')"
       ok-variant="success"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       no-fade
       @cancel.prevent="dryRun.lookup = true"
       @ok="dryRunOk"

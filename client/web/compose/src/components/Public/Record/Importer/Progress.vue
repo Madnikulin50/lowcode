@@ -26,7 +26,7 @@
       </span>
 
       <b-button
-        variant="light"
+        variant="outline-secondary"
         class="ml-auto"
         @click="$emit('close')"
       >
@@ -43,7 +43,7 @@
       </span>
 
       <b-button
-        variant="light"
+        variant="outline-secondary"
         class="ml-auto"
         @click="$emit('close')"
       >

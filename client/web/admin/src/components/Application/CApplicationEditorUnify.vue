@@ -55,7 +55,7 @@
                 <b-button
                   v-if="showLogoPreview"
                   data-test-id="button-logo-reset"
-                  variant="light"
+                  variant="outline-secondary"
                   size="sm"
                   class="py-0 ml-2"
                   @click="resetLogo()"

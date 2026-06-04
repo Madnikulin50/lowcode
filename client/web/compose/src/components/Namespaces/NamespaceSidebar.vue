@@ -59,7 +59,7 @@
           <b-button
             v-if="isAdminPage"
             data-test-id="button-public"
-            variant="light"
+            variant="outline-secondary"
             class="w-100 mb-2"
             :to="{ name: 'pages', params: { slug: namespace.slug || namespace.namespaceID } }"
           >
@@ -69,7 +69,7 @@
           <b-button
             v-else-if="namespace.canManageNamespace"
             data-test-id="button-admin"
-            variant="light"
+            variant="outline-secondary"
             class="w-100 mb-2"
             :to="{ name: 'admin.modules', params: { slug: namespace.slug || namespace.namespaceID } }"
           >

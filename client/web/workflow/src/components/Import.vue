@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex">
     <b-button
-      variant="light"
+      variant="outline-secondary"
       size="lg"
       class="flex-fill"
       @click="show = true"

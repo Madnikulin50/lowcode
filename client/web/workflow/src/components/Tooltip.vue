@@ -4,7 +4,7 @@
     :target="kind"
     triggers="hover"
     placement="right"
-    variant="light"
+    variant="outline-secondary"
     custom-class="ml-2"
     boundary="window"
     noninteractive

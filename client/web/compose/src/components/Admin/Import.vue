@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex">
     <b-btn
-      variant="light"
+      variant="outline-secondary"
       size="lg"
       class="flex-fill"
       @click="showModal=true"
@@ -39,14 +39,14 @@
               class="mb-3"
             >
               <b-button
-                variant="light"
+                variant="outline-secondary"
                 @click="selectAll(true)"
               >
                 {{ $t('field.selectAll') }}
               </b-button>
               <b-button
                 class="ml-2"
-                variant="light"
+                variant="outline-secondary"
                 @click="selectAll(false)"
               >
                 {{ $t('field.unselectAll') }}

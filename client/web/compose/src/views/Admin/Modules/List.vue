@@ -60,7 +60,7 @@
         <b-dropdown
           v-if="namespace.canGrant"
           size="lg"
-          variant="light"
+          variant="outline-secondary"
         >
           <template #button-content>
             <font-awesome-icon :icon="['fas', 'lock']" />

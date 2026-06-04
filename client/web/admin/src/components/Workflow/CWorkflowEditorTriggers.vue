@@ -9,7 +9,7 @@
       :fields="triggerFields"
       hover
       responsive
-      head-variant="light"
+      head-variant="outline-secondary"
       class="mb-0"
     >
       <template #cell(constraints)="trigger">

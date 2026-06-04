@@ -65,7 +65,7 @@
             <b-btn
               v-if="namespace.canExportNamespace"
               data-test-id="button-export-namespace"
-              variant="light"
+              variant="outline-secondary"
               size="lg"
               @click="exportNamespace"
             >
@@ -79,7 +79,7 @@
               :target="namespace.name || namespace.slug || namespace.namespaceID"
               :resource="`corteza::compose:namespace/${namespace.namespaceID}`"
               :button-label="$t('label.permissions')"
-              button-variant="light"
+              button-variant="outline-secondary"
               class="btn-lg"
             />
           </template>
@@ -174,7 +174,7 @@
                   <b-button
                     v-if="!!namespace.meta.logo"
                     data-test-id="button-logo-reset"
-                    variant="light"
+                    variant="outline-secondary"
                     size="sm"
                     class="py-0 ml-2"
                     @click="resetLogo()"

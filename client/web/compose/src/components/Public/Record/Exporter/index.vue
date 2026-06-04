@@ -2,7 +2,7 @@
   <div class="d-flex">
     <b-button
       size="lg"
-      variant="light"
+      variant="outline-secondary"
       class="flex-fill"
       @click="toggleModal"
     >
@@ -191,7 +191,7 @@
             v-if="allowJSON"
             :processing="processing"
             :disabled="exportDisabled"
-            variant="light"
+            variant="outline-secondary"
             @click="doExport('json')"
           >
             {{ $t('recordList.export.json') }}
@@ -200,7 +200,7 @@
             v-if="allowCSV"
             :processing="processing"
             :disabled="exportDisabled"
-            variant="light"
+            variant="outline-secondary"
             class="ml-2"
             @click="doExport('csv')"
           >

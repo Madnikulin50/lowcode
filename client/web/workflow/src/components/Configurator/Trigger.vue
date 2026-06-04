@@ -100,7 +100,7 @@
           fixed
           borderless
           hover
-          head-variant="light"
+          head-variant="outline-secondary"
           details-td-class="bg-white"
           :items="item.triggers.constraints"
           :fields="constraintFields"
@@ -274,7 +274,7 @@
           id="variable"
           fixed
           borderless
-          head-variant="light"
+          head-variant="outline-secondary"
           class="mb-4"
           :items="eventType.properties || []"
           :fields="scopeFields"

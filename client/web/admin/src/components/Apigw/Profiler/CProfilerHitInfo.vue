@@ -167,7 +167,7 @@
         >
           <b-button
             v-if="showOpenRoute"
-            variant="light"
+            variant="outline-secondary"
             :to="{ name: 'system.apigw.edit', params: { routeID: request.routeID } }"
           >
             {{ $t('general.openRoute') }}

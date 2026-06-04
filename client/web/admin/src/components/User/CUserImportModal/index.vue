@@ -2,7 +2,7 @@
   <div class="d-flex">
     <b-button
       data-test-id="button-import"
-      variant="light"
+      variant="outline-secondary"
       size="lg"
       class="flex-fill"
       @click="showModal=true"

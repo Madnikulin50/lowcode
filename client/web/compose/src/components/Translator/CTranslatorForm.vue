@@ -1,13 +1,13 @@
 <template>
   <b-form @submit.prevent="onSubmit">
-    <b-table-simple head-variant="light">
+    <b-table-simple head-variant="outline-secondary">
       <b-thead class="bg-light">
         <b-tr>
           <b-th class="key py-2 px-1">
             <b-dropdown
               data-test-id="dropdown-add-language"
               :text="$t('add-language')"
-              variant="light"
+              variant="outline-secondary"
               size="sm"
               boundary="window"
             >

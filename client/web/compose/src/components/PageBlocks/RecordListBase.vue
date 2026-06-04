@@ -76,7 +76,7 @@
             <b-dropdown
               v-if="filterPresets.length"
               ref="filterPresets"
-              variant="light"
+              variant="outline-secondary"
               size="lg"
               menu-class="shadow-sm"
               boundary="viewport"
@@ -221,7 +221,7 @@
                       </span>
 
                       <b-button
-                        variant="light"
+                        variant="outline-secondary"
                         class="d-flex align-items-center p-1 active-filter-close-btn bg-transparent border-0"
                         @click="removeFilter(filterGroup.originalIndex, filterIndex)"
                       >

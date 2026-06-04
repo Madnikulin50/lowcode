@@ -171,7 +171,7 @@
         ui-page="user-group/editor"
         ui-slot="infoFooter"
         resource-type="system:user-group"
-        default-variant="light"
+        default-variant="outline-secondary"
         @click="dispatchCortezaSystemUserGroupEvent($event, { userGroup })"
       />
 

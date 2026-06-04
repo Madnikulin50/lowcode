@@ -36,7 +36,7 @@
     <b-card-body class="d-flex flex-column flex-wrap gap-2">
       <div v-if="Object.keys(hit.value.labels || { }).includes('federation')">
         <b-badge
-          variant="light"
+          variant="outline-secondary"
           class="h6 mb-0"
         >
           {{ $t('general:federated') }}

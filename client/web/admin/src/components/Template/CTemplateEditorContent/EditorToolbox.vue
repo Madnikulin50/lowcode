@@ -18,7 +18,7 @@
       >
         <b-btn
           :data-test-id="toolboxSectionLabelCypressId(sec.key)"
-          variant="light"
+          variant="outline-secondary"
           class="mb-2"
           block
           @click="openSection(sec.key)"

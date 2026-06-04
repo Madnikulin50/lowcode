@@ -147,7 +147,7 @@
       id="custom-css-editor"
       v-model="customCSSModal.show"
       :title="$t('custom-css')"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       size="xl"
       scrollable
       :ok-title="$t('general:label.saveAndClose')"
@@ -247,11 +247,11 @@ export default {
       lightModeVariables: {
         black: '#0B344E',
         white: '#FFFFFF',
-        primary: '#61AFFF',
-        secondary: '#758D9B',
+        primary: '#4e73df',
+        secondary: '#858796',
         success: '#43AA8B',
         warning: '#E27646',
-        danger: '#E54122',
+        danger: '#4e73df',
         light: '#F3F5F7',
         'extra-light': '#E4E9EF',
         'body-bg': '#F3F5F7',
@@ -261,11 +261,11 @@ export default {
       darkModeVariables: {
         black: '#FBF7F4',
         white: '#0B344E',
-        primary: '#61AFFF',
-        secondary: '#758D9B',
+        primary: '#4e73df',
+        secondary: '#858796',
         success: '#43AA8B',
         warning: '#E27646',
-        danger: '#E54122',
+        danger: '#4e73df',
         light: '#23495F',
         'extra-light': '#3E5A6F',
         'body-bg': '#092B40',

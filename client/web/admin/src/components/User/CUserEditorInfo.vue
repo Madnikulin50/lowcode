@@ -117,7 +117,7 @@
         v-if="!fresh"
         :data-test-id="suspendButtonStatusCypressId"
         :text="getSuspendStatus"
-        variant="light"
+        variant="outline-secondary"
         size="md"
         @confirmed="$emit('status')"
       />
@@ -127,14 +127,14 @@
         data-test-id="button-sessions-revoke"
         :text="$t('revokeAllSession')"
         :disabled="user.userID === userID"
-        variant="light"
+        variant="outline-secondary"
         size="md"
         @confirmed="$emit('sessionsRevoke')"
       />
 
       <b-button
         v-if="!fresh && !user.emailConfirmed"
-        variant="light"
+        variant="outline-secondary"
         @click="$emit('patch', '/emailConfirmed', true)"
       >
         {{ $t('confirmEmail') }}
@@ -144,7 +144,7 @@
         ui-page="user/editor"
         ui-slot="infoFooter"
         resource-type="system:user"
-        default-variant="light"
+        default-variant="outline-secondary"
         @click="dispatchCortezaSystemUserEvent($event, { user })"
       />
 

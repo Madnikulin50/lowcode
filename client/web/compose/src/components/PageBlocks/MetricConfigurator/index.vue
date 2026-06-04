@@ -55,7 +55,7 @@
             class="mb-2"
           >
             <b-btn
-              variant="light"
+              variant="outline-secondary"
               class="mr-1"
               @click="editMetric(m)"
             >

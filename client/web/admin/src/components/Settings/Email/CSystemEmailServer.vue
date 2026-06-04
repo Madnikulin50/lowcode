@@ -162,7 +162,7 @@
         :processing="processingSMTPTest"
         :success="successSMTPTest"
         :text="$t('testSmtpConfigs.button')"
-        variant="light"
+        variant="outline-secondary"
         @submit="smtpConnectionCheck()"
       />
 

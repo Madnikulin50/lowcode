@@ -17,14 +17,14 @@
           v-model="scenarios.selected"
           :options="scenarioOptions"
           :get-option-key="getScenarioOptionKey"
-          :placeholder="$t('builder:pick-scenario')"
+          :placeholder="$t('scenarios:pick-scenario')"
           :disabled="processing"
           size="sm"
           @input="refreshReport()"
         />
         <b-input-group-append>
           <b-button
-            v-b-tooltip.noninteractive.hover="{ title: $t('builder:tooltip.configure-scenarios'), boundary: 'body' }"
+            v-b-tooltip.noninteractive.hover="{ title: $t('scenarios:tooltip.configure-scenarios'), boundary: 'body' }"
             variant="extra-light"
             :disabled="!page.canUpdatePage"
             size="sm"
@@ -232,7 +232,7 @@
       :ok-title="$t('build.addBlock')"
       ok-variant="primary"
       :ok-disabled="blockEditorOkDisabled"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       :cancel-title="$t('block.general.label.cancel')"
       size="xl"
       :visible="showCreator"
@@ -312,7 +312,7 @@
 
         <div>
           <b-button
-            variant="light"
+            variant="outline-secondary"
             class="mr-2"
             @click="cancel()"
           >
@@ -335,10 +335,10 @@
       v-model="scenarios.showConfigurator"
       size="xl"
       scrollable
-      :ok-title="$t('builder:scenarios.save')"
+      :ok-title="$t('scenarios:scenarios.save')"
       ok-variant="primary"
-      cancel-variant="light"
-      :title="$t('builder:scenarios.label')"
+      cancel-variant="outline-secondary"
+      :title="$t('scenarios:scenarios.label')"
       body-class="py-3"
       no-fade
     >
@@ -387,7 +387,7 @@
           v-if="page.canUpdatePage"
           v-b-modal.createBlockSelector
           data-test-id="button-add-block"
-          variant="light"
+          variant="outline-secondary"
           size="lg"
         >
           + {{ $t('build.addBlock') }}
@@ -400,7 +400,7 @@
             :text="$t('general:label.saveAsCopy')"
             :disabled="processing"
             size="lg"
-            variant="light"
+            variant="outline-secondary"
           >
             <b-dropdown-item-button
               data-test-id="dropdown-item-saveAsCopy-ref"
@@ -667,7 +667,7 @@ export default {
 
     currentScenario: {
       get () {
-        return this.scenarios.currentIndex !== undefined ? this.currentScenarios[this.scenarios.currentIndex] : undefined
+        return this.scenarios.currentIndex !== undefined ? this.currentScenarios[this.scenarios.currentIndex] : {}
       },
 
       set (scenario) {

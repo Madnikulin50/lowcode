@@ -35,7 +35,7 @@
         :ok-title="$t('general:label.saveAndClose')"
         centered
         size="lg"
-        cancel-variant="light"
+        cancel-variant="outline-secondary"
         no-fade
         @ok="updateLiveFilter"
         @hide="liveFilterModal.show = undefined"
@@ -98,7 +98,7 @@
           >
             <b-button
               type="button"
-              variant="light"
+              variant="outline-secondary"
               @click="resetLiveFilter()"
             >
               {{ $t('general:label.reset') }}
@@ -106,7 +106,7 @@
 
             <div class="d-flex gap-1">
               <b-button
-                variant="light"
+                variant="outline-secondary"
                 type="button"
                 rounded
                 @click="cancelLiveFilter()"

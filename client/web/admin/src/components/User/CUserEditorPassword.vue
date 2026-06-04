@@ -60,7 +60,7 @@
       <c-input-confirm
         data-test-id="button-remove-password"
         :text="$t('removePassword')"
-        variant="light"
+        variant="outline-secondary"
         size="md"
         @confirmed="$emit('submit')"
       />
@@ -69,7 +69,7 @@
         ui-page="user/editor"
         ui-slot="passwordFooter"
         resource-type="system:user"
-        default-variant="light"
+        default-variant="outline-secondary"
         @click="dispatchCortezaSystemEvent($event)"
       />
 

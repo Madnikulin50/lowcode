@@ -64,7 +64,7 @@
         <b-button
           data-test-id="button-request-deletion"
           :disabled="processing.connections || processing.sensitiveData"
-          variant="light"
+          variant="outline-secondary"
           size="lg"
           class="ml-1"
           @click="$router.push({ name: 'request.create', params: { kind: 'delete', connection } })"

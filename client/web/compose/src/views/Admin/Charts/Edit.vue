@@ -337,7 +337,7 @@
       :ok-title="$t('general:label.saveAndClose')"
       centered
       size="md"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       no-fade
     >
       <b-form-group
@@ -403,7 +403,7 @@
         />
 
         <b-button
-          variant="light"
+          variant="outline-secondary"
           class="ml-auto"
           :disabled="colorSchemeModal.processing"
           @click="closeColorSchemeModal"

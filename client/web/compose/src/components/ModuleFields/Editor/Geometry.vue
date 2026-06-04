@@ -36,7 +36,7 @@
     <b-button
       v-if="field.isMulti"
       v-b-tooltip.noninteractive.hover="{ title: $t('tooltip.openMap'), boundary: 'body' }"
-      variant="light"
+      variant="outline-secondary"
       class="w-100 mb-3"
       @click="openMap()"
     >
@@ -155,7 +155,7 @@
         {{ $t('clickToPlaceMarker') }}
 
         <b-button
-          variant="light"
+          variant="outline-secondary"
           class="ml-auto"
           @click="closeMap()"
         >

@@ -15,7 +15,7 @@
       <b-table
         :fields="tableFields"
         :items="rows"
-        head-variant="light"
+        head-variant="outline-secondary"
         sticky-header
         style="max-height: 70vh;"
         class="field-table mb-0"
@@ -55,7 +55,7 @@
 
     <div class="mt-auto p-3">
       <b-button
-        variant="light"
+        variant="outline-secondary"
         class="float-left"
         @click="$emit('back')"
       >

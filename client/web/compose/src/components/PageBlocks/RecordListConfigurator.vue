@@ -139,7 +139,7 @@
               >
                 <column-picker
                   size="sm"
-                  variant="light"
+                  variant="outline-secondary"
                   :module="recordListModule"
                   :fields="options.textStyles.wrappedFields || []"
                   :field-subset="options.fields.length ? options.fields : recordListModule.fields"
@@ -275,7 +275,7 @@
               >
                 <column-picker
                   size="sm"
-                  variant="light"
+                  variant="outline-secondary"
                   :module="recordListModule"
                   :fields="options.searchableFields"
                   :field-subset="queryableFields"

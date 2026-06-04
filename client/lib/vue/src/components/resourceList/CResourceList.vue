@@ -2,7 +2,7 @@
   <b-card
     id="resource-list-wrapper"
     no-body
-    footer-bg-variant="light"
+    footer-bg-variant="outline-secondary"
     footer-class="p-0"
     :header-class="`border-0 ${cardHeaderClass}`"
     class="shadow-sm"
@@ -63,8 +63,8 @@
         show-empty
         no-sort-reset
         no-local-sorting
-        head-variant="light"
-        foot-variant="light"
+        head-variant="outline-secondary"
+        foot-variant="outline-secondary"
         :primary-key="primaryKey"
         class="mh-100 h-100 mb-0"
         @row-clicked="$emit('row-clicked', $event)"

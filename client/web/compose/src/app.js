@@ -221,6 +221,7 @@ export default (options = {}) => {
       'preview',
       'sidebar',
       'resource-translator',
+      'scenarios',
     ),
 
     // Any additional options we want to merge

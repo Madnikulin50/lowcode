@@ -62,7 +62,7 @@
                 <b-button
                   v-if="federationEnabled"
                   data-test-id="button-federation-settings"
-                  variant="light"
+                  variant="outline-secondary"
                   size="lg"
                   class="mr-1"
                   @click="federationSettings.modal = true"
@@ -77,7 +77,7 @@
                 <b-button
                   v-if="discoveryEnabled"
                   data-test-id="button-discovery-settings"
-                  variant="light"
+                  variant="outline-secondary"
                   size="lg"
                   class="mr-1"
                   @click="discoverySettings.modal = true"
@@ -99,7 +99,7 @@
                   v-if="module.canGrant"
                   data-test-id="dropdown-permissions"
                   size="lg"
-                  variant="light"
+                  variant="outline-secondary"
                   class="mr-1"
                 >
                   <template #button-content>

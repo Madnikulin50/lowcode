@@ -39,7 +39,7 @@
         data-test-id="button-clone"
         :disabled="cloneDisabled || processingClone || processing"
         :processing="processingClone"
-        variant="light"
+        variant="outline-secondary"
         :text="$t('general:label.clone')"
         class="text-nowrap"
         size="lg"

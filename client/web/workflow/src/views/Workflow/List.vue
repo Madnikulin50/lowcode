@@ -54,7 +54,7 @@
         <export size="lg" />
 
         <b-button
-          variant="light"
+          variant="outline-secondary"
           size="lg"
           @click="$bvModal.show('workflow-filter')"
         >

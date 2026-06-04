@@ -13,7 +13,7 @@
       sticky-header
       responsive
       hover
-      head-variant="light"
+      head-variant="outline-secondary"
       class="mb-0"
       style="min-height: 300px; max-height: 75vh;"
     >
@@ -100,7 +100,7 @@
                 v-if="!a.completedAt"
                 :disabled="!canDismiss(a) || a.processing || processing"
                 :text="$t('dismiss')"
-                variant="light"
+                variant="outline-secondary"
                 size="sm"
                 class="mx-1"
                 @click.stop
@@ -133,7 +133,7 @@
       <b-button
         :disabled="processing"
         class="text-primary border-0"
-        variant="light"
+        variant="outline-secondary"
         @click="showModal = false"
       >
         {{ canResolveAlterations ? $t('general:label.cancel') : $t('general:label.close') }}

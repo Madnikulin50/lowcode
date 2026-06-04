@@ -27,7 +27,7 @@
         <span class="text-nowrap">
           <b-badge
             v-if="Object.keys(hit.value.labels || { }).includes('federation')"
-            variant="light"
+            variant="outline-secondary"
             class="mr-1 h5 p-2 mb-0"
           >
             {{ $t('general:federated') }}

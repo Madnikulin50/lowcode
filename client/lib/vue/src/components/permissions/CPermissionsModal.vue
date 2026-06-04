@@ -164,7 +164,7 @@
       <template #modal-footer>
         <b-button
           data-test-id="button-cancel"
-          variant="light"
+          variant="outline-secondary"
           @click="onHide"
         >
           {{ labels.cancel }}

@@ -2,7 +2,7 @@
   <div>
     <b-button
       v-b-tooltip.noninteractive.hover="{ title: labels.tooltip, boundary: 'body' }"
-      variant="light"
+      variant="outline-secondary"
       :class="buttonClass"
       @click.prevent="openWebcamModal"
     >
@@ -52,7 +52,7 @@
       <template #modal-footer>
         <div class="d-flex align-items-center gap-2">
           <b-button
-            variant="light"
+            variant="outline-secondary"
             @click="handleCloseClick"
           >
             {{ labels.cancelButtonLabel }}

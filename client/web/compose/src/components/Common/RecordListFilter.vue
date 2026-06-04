@@ -43,7 +43,7 @@
 
         <b-card-footer class="d-flex justify-content-between shadow-sm rounded">
           <b-button
-            variant="light"
+            variant="outline-secondary"
             @click="resetFilter"
           >
             {{ $t('general:label.reset') }}

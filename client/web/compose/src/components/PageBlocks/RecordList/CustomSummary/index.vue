@@ -57,7 +57,7 @@
       />
 
       <b-button
-        variant="light"
+        variant="outline-secondary"
         class="ml-auto"
         @click="onModalHide"
       >

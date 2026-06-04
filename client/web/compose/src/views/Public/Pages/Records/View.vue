@@ -76,7 +76,7 @@
     <b-alert
       v-if="isDraft"
       show
-      variant="light"
+      variant="outline-secondary"
       class="d-flex align-items-center mx-1 my-2"
     >
       {{ $t('drafts:activeDraft') }}

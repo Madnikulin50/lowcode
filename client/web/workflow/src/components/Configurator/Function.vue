@@ -71,7 +71,7 @@
           fixed
           borderless
           hover
-          head-variant="light"
+          head-variant="outline-secondary"
           details-td-class="bg-white"
           :items="args"
           :fields="argumentFields"
@@ -254,7 +254,7 @@
           fixed
           borderless
           hover
-          head-variant="light"
+          head-variant="outline-secondary"
           details-td-class="bg-white"
           class="mb-4"
           :items="results"
@@ -311,7 +311,7 @@
       scrollable
       :ok-title="$t('general:save')"
       :cancel-title="$t('general:cancel')"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       body-class="p-0"
       no-fade
       @ok="saveExpression"

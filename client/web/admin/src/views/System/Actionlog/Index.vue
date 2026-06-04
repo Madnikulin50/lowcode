@@ -128,7 +128,7 @@
         responsive
         hover
         class="mb-0 small"
-        head-variant="light"
+        head-variant="outline-secondary"
         :busy="processing"
         :items="items"
         :fields="fields"
@@ -318,7 +318,7 @@
         <b-button
           v-if="items.length"
           data-test-id="button-load-older-actions"
-          variant="light"
+          variant="outline-secondary"
           class="mx-auto"
           :disabled="processing"
           @click.stop="load()"

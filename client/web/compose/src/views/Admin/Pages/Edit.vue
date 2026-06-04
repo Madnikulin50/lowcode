@@ -82,7 +82,7 @@
             v-if="page.canGrant || namespace.canGrant"
             data-test-id="dropdown-permissions"
             size="lg"
-            variant="light"
+            variant="outline-secondary"
             class="mr-1"
           >
             <template #button-content>
@@ -403,7 +403,7 @@
       :ok-title="$t('general:label.saveAndClose')"
       ok-variant="primary"
       :ok-disabled="!layoutEditor.layout.meta.title"
-      cancel-variant="light"
+      cancel-variant="outline-secondary"
       size="xl"
       scrollable
       no-fade
@@ -921,7 +921,7 @@
 
         <div class="ml-auto">
           <b-button
-            variant="light"
+            variant="outline-secondary"
             @click="closeIconModal"
           >
             {{ $t('general:label.cancel') }}
@@ -969,7 +969,7 @@
                 v-b-modal.logo
                 v-b-tooltip.noninteractive.hover="{ title: $t('tooltip.preview-link'), boundary: 'body' }"
                 :disabled="!linkUrl"
-                variant="light"
+                variant="outline-secondary"
                 rounded
                 class="d-flex align-items-center btn-light"
               >

@@ -5,7 +5,7 @@
       <b-badge
         v-if="buttons.length > 0"
         pill
-        variant="light"
+        variant="outline-secondary"
       >
         {{ buttons.length }}
       </b-badge>
@@ -110,7 +110,7 @@
                     </b-badge>
                     <b-badge
                       v-else-if="b.script"
-                      variant="light"
+                      variant="outline-secondary"
                     >
                       {{ $t('badge.script') }}
                     </b-badge>

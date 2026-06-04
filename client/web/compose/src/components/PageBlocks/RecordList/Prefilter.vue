@@ -46,7 +46,7 @@
 
         <div class="d-flex align-items-center justify-content-end mt-1 gap-1">
           <b-button
-            variant="light"
+            variant="outline-secondary"
             size="sm"
             @click="toggleFilterInputType"
           >

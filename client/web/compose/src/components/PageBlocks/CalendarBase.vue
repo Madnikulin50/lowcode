@@ -47,7 +47,7 @@
             <b-btn
               v-for="view in views"
               :key="view"
-              variant="light"
+              variant="outline-secondary"
               class="mr-1 mb-1"
               @click="api().changeView(view)"
             >
@@ -64,7 +64,7 @@
             class="d-flex justify-content-end"
           >
             <b-btn
-              variant="light"
+              variant="outline-secondary"
               class="mb-1 w-100"
               @click="api().today()"
             >
