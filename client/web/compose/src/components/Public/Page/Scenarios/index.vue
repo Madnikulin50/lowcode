@@ -11,36 +11,23 @@
         :placeholder="$t('scenarios:scenario-name')"
       />
     </b-form-group>
-
     <b-form-group
-      :label="$t('scenarios:datasource')"
+      :label="$t('scenarios:values')"
       label-class="text-primary"
     >
-      <b-form-select
-        v-model="currentDatasourceName"
-        :options="datasourceOptions"
-      />
-    </b-form-group>
-
-    <b-form-group
-      v-if="currentDatasourceName && scenario.filters[currentDatasourceName]"
-      :label="$t('scenarios:prefilter')"
-      label-class="text-primary"
-    >
-      <prefilter
-        :filter="scenario.filters[currentDatasourceName]"
-        :columns="columns"
+      <values
+        :values.sync="values"
       />
     </b-form-group>
   </div>
 </template>
 
 <script>
-import Prefilter from 'corteza-webapp-compose/src/components/Common/Prefilter'
+import Values from 'corteza-webapp-compose/src/components/Common/Values'
 
 export default {
   components: {
-    Prefilter,
+    Values,
   },
 
   props: {
@@ -52,7 +39,7 @@ export default {
     scenario: {
       type: Object,
       required: true,
-      default: () => ({}),
+      default: () => ({ values: { list: [] } }),
     },
 
     module: {
@@ -63,16 +50,12 @@ export default {
   },
 
   data () {
-    return {
-      currentDatasourceName: '',
-      columns: [],
-    }
+
   },
 
   computed: {
-    datasourceOptions () {
-      const options = [{ value: '', text: this.$t('general:label.none') }]
-      return options
+    values () {
+      return this.scenario.values
     },
   },
 

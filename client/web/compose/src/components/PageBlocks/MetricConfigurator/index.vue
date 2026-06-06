@@ -3,7 +3,6 @@
     <b-tab
       :title="$t('metric.edit.tabTitle')"
     >
-
       <b-form-group>
         <b-form-checkbox
           v-model="likeRecordList"
@@ -261,7 +260,8 @@
                   :placeholder="$t('metric.edit.metricSelectAggregate')"
                   :options="aggregationOperations"
                   :get-option-key="getOptionAggregationOperationKey"
-                  :reduce="a => a.operation"/>
+                  :reduce="a => a.operation"
+                />
               </b-form-group>
 
               <b-form-group

@@ -1,7 +1,8 @@
 <template>
   <div
     v-if="options.likeRecordList"
-    ref="fieldContainer">
+    ref="fieldContainer"
+  >
     <b-form-group
       :key="`${metric.label}`"
       :label-cols-md="options.horizontalFieldLayoutEnabled && '6'"
@@ -112,10 +113,9 @@
 
 <script>
 import { fmt } from 'corteza-lib/js/dist'
-import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer/index.vue'
 
 export default {
-  components: { FieldViewer },
+  components: { },
   props: {
     metric: {
       type: Object,

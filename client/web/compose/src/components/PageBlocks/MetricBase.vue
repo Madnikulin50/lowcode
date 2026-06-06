@@ -25,8 +25,8 @@
         class="d-flex align-items-center justify-content-center overflow-hidden"
 
         :class="{'h-100': options.likeRecordList !== true && m.valueStyle.notFitVertical !== true,
-         'px-3': options.likeRecordList === true,
-         'pt-3': options.likeRecordList === true && mi === 0}"
+                 'px-3': options.likeRecordList === true,
+                 'pt-3': options.likeRecordList === true && mi === 0}"
       >
         <div
           v-for="(v, i) in formatResponse(m, mi)"

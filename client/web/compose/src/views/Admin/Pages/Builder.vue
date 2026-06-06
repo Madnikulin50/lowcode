@@ -362,7 +362,6 @@
           <scenario-configurator
             v-if="currentScenario"
             :current-index="scenarios.currentIndex"
-            :module="module"
             :scenario.sync="currentScenario"
           />
         </template>
