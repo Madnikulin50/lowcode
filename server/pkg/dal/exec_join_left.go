@@ -249,6 +249,10 @@ func (xs *joinLeft) pullEntireRightSource(ctx context.Context) (err error) {
 		if err != nil {
 			return
 		}
+		if len(xs.def.On.Right) == 0 {
+			r.counters[""] = 1
+			r.values[""] = []any{""}
+		}
 
 		err = xs.indexRightRow(r)
 		if err != nil {
@@ -270,6 +274,10 @@ func (xs *joinLeft) pullEntireLeftSource(ctx context.Context) (err error) {
 		err = xs.leftSource.Scan(l)
 		if err != nil {
 			return
+		}
+		if len(xs.def.On.Left) == 0 {
+			l.counters[""] = 1
+			l.values[""] = []any{""}
 		}
 
 		err = xs.joinRight(ctx, l)

@@ -150,7 +150,7 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	srcAttrs := indexAttrs(def.SourceAttributes...)
 	pp := newQlParser(func(ident ql.Ident) (_ ql.Ident, err error) {
 		if _, ok := srcAttrs[ident.Value]; !ok {
-			return ident, fmt.Errorf("unknown attribute %s for aggregate", ident.Value)
+			return ident, fmt.Errorf("unknown attribute %s for aggregate %v", ident.Value, def.Ident)
 		}
 		return ident, nil
 	})
@@ -169,7 +169,7 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 					return true, a, nil
 				}
 				if _, ok := srcAttrs[a.Symbol]; !ok {
-					return false, nil, fmt.Errorf("unknown attribute %s", a.Symbol)
+					return false, nil, fmt.Errorf("unknown attribute %s for aggregate %v", a.Symbol, def.Ident)
 				}
 
 				return true, a, nil

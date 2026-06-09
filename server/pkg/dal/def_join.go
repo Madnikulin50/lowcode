@@ -185,11 +185,11 @@ func (def *Join) init(ctx context.Context, left, right Iterator) (exec *joinLeft
 	}
 
 	// Generic validation
-	if !leftSrcAttrs[def.On.Left] {
-		return nil, fmt.Errorf("unknown join predicate attribute %s", def.On.Left)
+	if len(def.On.Left) > 0 && !leftSrcAttrs[def.On.Left] {
+		return nil, fmt.Errorf("unknown join left predicate attribute %s", def.On.Left)
 	}
-	if !rightSrcAttrs[def.On.Right] {
-		return nil, fmt.Errorf("unknown join predicate attribute %s", def.On.Right)
+	if len(def.On.Right) > 0 && !rightSrcAttrs[def.On.Right] {
+		return nil, fmt.Errorf("unknown join right predicate attribute %s", def.On.Right)
 	}
 
 	if len(def.OutAttributes) == 0 {

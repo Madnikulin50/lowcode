@@ -59,7 +59,7 @@ func DefaultCSS(log *zap.Logger, customCSS string) string {
 	processedCSS := strBuilder.String()
 
 	StylesheetCache.Set("default-theme", processedCSS)
-	fmt.Println("set default theme to1 " + trimString(processedCSS, 128))
+	log.Debug("set default theme to 1 place " + trimString(processedCSS, 128) + "...")
 	return processedCSS
 }
 

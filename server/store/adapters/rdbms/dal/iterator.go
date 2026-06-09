@@ -207,7 +207,9 @@ func (i *iterator) fetch(ctx context.Context) (rows *sql.Rows, err error) {
 		// no rows, no error
 		return nil, nil
 	}
-
+	if err != nil {
+		err = fmt.Errorf("request error %v: %w", query, err)
+	}
 	return
 }
 

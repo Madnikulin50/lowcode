@@ -136,7 +136,7 @@ func (t *GenericTableCodec) attributeExpression(quoted bool, ident string) (exp.
 	attr := t.model.Attributes.FindByIdent(ident)
 
 	if attr == nil {
-		return nil, fmt.Errorf("unknown attribute %q", ident)
+		return nil, fmt.Errorf("unknown attribute %q in module %v", ident, t.model.Ident)
 	}
 
 	switch s := attr.Store.(type) {

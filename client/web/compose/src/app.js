@@ -222,6 +222,7 @@ export default (options = {}) => {
       'sidebar',
       'resource-translator',
       'scenarios',
+      'builder',
     ),
 
     // Any additional options we want to merge

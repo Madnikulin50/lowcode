@@ -28,6 +28,16 @@ func convStepJoin(step types.ReportStepJoin, pp dal.Pipeline, defs FrameDefiniti
 		return
 	}
 
+	if len(step.LocalColumn) == 0 {
+		if len(step.ForeignColumn) != 0 {
+			step.LocalColumn = step.ForeignColumn
+		}
+	}
+	if len(step.ForeignColumn) == 0 {
+		if len(step.LocalColumn) != 0 {
+			step.ForeignColumn = step.LocalColumn
+		}
+	}
 	// Make pipeline step
 	out = &dal.Join{
 		Ident:    step.Name,

@@ -27,6 +27,7 @@ func NumericFunctions() []gval.Language {
 		gval.Function("random", random),
 		gval.Function("int", toInt64),
 		gval.Function("float", gvalfnc.CastFloat),
+		gval.Function("anomality", gvalfnc.Anomality),
 	}
 }
 

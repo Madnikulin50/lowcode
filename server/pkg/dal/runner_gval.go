@@ -226,6 +226,96 @@ var (
 			},
 			OutType: &TypeNumber{},
 		},
+		"this_month": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_month(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"this_month_prev_year_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_month_prev_year_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_month": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_month(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_month_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_month_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"this_week": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_week(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"anomality": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("anomality(%s, %s, %s)", args[0], args[1], args[2])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_week": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_week(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_week_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_week_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"this_quarter": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_quarter(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_quarter": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_quarter(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_quarter_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_quarter_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"day_of": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("day_of(%s)", args[0])
+			},
+			OutType: &TypeDate{},
+		},
+		"this_year": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_year(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_year": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_year(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_year_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_year_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
 		"date_format": {
 			Handler: func(args ...string) string {
 				return fmt.Sprintf("strftime(%s, %s)", args[0], args[1])
@@ -333,6 +423,28 @@ func newRunnerGvalParsed(n *ql.ASTNode) (out *runnerGval, err error) {
 		expr = "$[\"date\"]"
 	case "date(date)":
 		expr = "date($[\"date\"])"
+	case "day_of(date)":
+		expr = "day_of($[\"date\"])"
+	case "this_year(date)":
+		expr = "this_year($[\"date\"])"
+	case "prev_year(date)":
+		expr = "prev_year($[\"date\"])"
+	case "prev_year_truncated(date)":
+		expr = "prev_year($[\"date\"])"
+	case "this_week(date)":
+		expr = "this_week($[\"date\"])"
+	case "prev_week(date)":
+		expr = "prev_week($[\"date\"])"
+	case "prev_month(date)":
+		expr = "prev_month($[\"date\"])"
+	case "prev_month_truncated(date)":
+		expr = "prev_month_truncated($[\"date\"])"
+	case "this_quarter(date)":
+		expr = "this_quarter($[\"date\"])"
+	case "prev_quarter(date)":
+		expr = "prev_quarter($[\"date\"])"
+	case "prev_quarter_truncated(date)":
+		expr = "prev_quarter_truncated($[\"date\"])"
 	}
 
 	out.eval, err = newGval(expr)
@@ -363,6 +475,19 @@ func newGval(e string) (gval.Evaluable, error) {
 		gval.Function("strftime", gvalfnc.StrfTime),
 		gval.Function("date", gvalfnc.Date),
 		gval.Function("day", gvalfnc.Day),
+		gval.Function("day_of", gvalfnc.DayOf),
+		gval.Function("this_year", gvalfnc.ThisYear),
+		gval.Function("prev_year", gvalfnc.PrevYear),
+		gval.Function("prev_year_truncated", gvalfnc.PrevYearTruncated),
+		gval.Function("this_week", gvalfnc.ThisWeek),
+		gval.Function("prev_week", gvalfnc.PrevWeek),
+		gval.Function("prev_week_truncated", gvalfnc.PrevWeekTruncated),
+		gval.Function("this_month", gvalfnc.ThisMonth),
+		gval.Function("prev_month", gvalfnc.PrevMonth),
+		gval.Function("prev_month_truncated", gvalfnc.PrevMonthTruncated),
+		gval.Function("this_quarter", gvalfnc.ThisQuarter),
+		gval.Function("prev_quarter", gvalfnc.PrevQuarter),
+		gval.Function("prev_quarter_truncated", gvalfnc.PrevQuarterTruncated),
 		gval.Function("isNil", gvalfnc.IsNil),
 		gval.Function("float", gvalfnc.CastFloat),
 		gval.Function("int", gvalfnc.CastInt),
@@ -488,4 +613,19 @@ func arrHas(arr interface{}, vv ...interface{}) (b bool, err error) {
 
 func isMap(v interface{}) bool {
 	return reflect.TypeOf(v).Kind() == reflect.Map
+}
+
+func TypeOfRef(ref string) (res Type) {
+	r := strings.ToLower(ref)
+	tmp := refToGvalExp[r]
+	if tmp == nil || tmp.OutType == nil || tmp.OutTypeUnknown {
+		switch r {
+		case "count", "sum", "min", "max", "avg", "uniquecount":
+			res = TypeNumber{}
+			return res
+		}
+
+		return nil
+	}
+	return tmp.OutType
 }

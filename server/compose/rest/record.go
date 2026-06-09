@@ -246,7 +246,7 @@ func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep, 
 		for {
 			changed := false
 			for i, s := range ss {
-				cur, err := ctrl.prepareStep(ctx, s, []uint64{loadModel.ID})
+				cur, err := ctrl.prepareStep(ctx, s, append(moduleStack, loadModel.ID))
 				if err != nil {
 					return nil, err
 				}
@@ -381,11 +381,12 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 				def := datasources.FrameDefinition{Source: lastStep.Name()}
 				def.Columns = datasources.FrameColumnSet{}
 				for _, f := range m.Fields {
-					def.Columns = append(def.Columns, datasources.FrameColumn{
+					col := datasources.FrameColumn{
 						Name:  f.Name,
 						Label: f.Name,
 						Kind:  f.Kind,
-					})
+					}
+					def.Columns = append(def.Columns, col)
 				}
 
 				paging, _ := filter.NewPaging(r.Limit, r.PageCursor)

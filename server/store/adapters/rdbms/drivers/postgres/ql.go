@@ -3,8 +3,10 @@ package postgres
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/doug-martin/goqu/v9/exp"
+	"github.com/madnikulin50/lowcode/server/pkg/gvalfnc"
 	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ql"
 )
 
@@ -60,6 +62,82 @@ var (
 				)
 			},
 		},
+		"this_month": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("?::timestamp > DATE_TRUNC('month', NOW()::timestamp)::timestamp AND ?::timestamp < NOW()::timestamp", args[0], args[0])
+			},
+		},
+		"prev_month": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(?::timestamp >= date_trunc('month', NOW()::timestamp - interval '1 month')::timestamp  AND ?::timestamp < date_trunc('month', NOW()::timestamp)::timestamp)", args[0], args[0])
+			},
+		},
+		"prev_month_truncated": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				tm := time.Now()
+				interval := fmt.Sprintf("%v days", tm.Day())
+				return exp.NewLiteralExpression("(?::timestamp >= date_trunc('month', NOW()::timestamp - interval '1 month')::timestamp AND ?::timestamp < (date_trunc('month', NOW()::timestamp - interval '1 month')+ interval '"+interval+"')::timestamp)", args[0], args[0])
+			},
+		},
+		"this_year": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("?::timestamp > DATE_TRUNC('year', NOW()::timestamp)::timestamp AND ?::timestamp < NOW()::timestamp", args[0], args[0])
+			},
+		},
+		"prev_year": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(?::timestamp >= date_trunc('year', NOW()::timestamp - interval '1 year')::timestamp  AND ?::timestamp < date_trunc('year', NOW()::timestamp)::timestamp)", args[0], args[0])
+			},
+		},
+		"prev_year_truncated": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				tm := time.Now()
+				interval := fmt.Sprintf("%v days", tm.YearDay())
+				return exp.NewLiteralExpression("(?::timestamp >= date_trunc('year', NOW()::timestamp - interval '1 year')::timestamp AND ?::timestamp < (date_trunc('year', NOW()::timestamp - interval '1 year')+ interval '"+interval+"')::timestamp)", args[0], args[0])
+			},
+		},
+
+		"this_week": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("?::timestamp > DATE_TRUNC('week', NOW()::timestamp)::timestamp AND ?::timestamp < NOW()::timestamp", args[0], args[0])
+			},
+		},
+		"prev_week": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(?::timestamp >= date_trunc('week', NOW()::timestamp - interval '1 week')::timestamp  AND ?::timestamp < date_trunc('week', NOW()::timestamp)::timestamp)", args[0], args[0])
+			},
+		},
+		"prev_week_truncated": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				tm := time.Now()
+				interval := fmt.Sprintf("%v days + %v hours + %v minutes",
+					int(tm.Weekday()), tm.Hour(), tm.Minute())
+				return exp.NewLiteralExpression("(?::timestamp >= date_trunc('week', NOW()::timestamp - interval '1 week')::timestamp AND ?::timestamp < (date_trunc('week', NOW()::timestamp - interval '1 week')+ interval '"+interval+"')::timestamp)", args[0], args[0])
+			},
+		},
+		"this_quarter": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("?::timestamp > DATE_TRUNC('quarter', NOW()::timestamp)::timestamp AND ?::timestamp < NOW()::timestamp", args[0], args[0])
+			},
+		},
+		"prev_quarter": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(?::timestamp >= date_trunc('quarter', NOW()::timestamp - interval '90 days')::timestamp  AND ?::timestamp < date_trunc('quarter', NOW()::timestamp)::timestamp)", args[0], args[0])
+			},
+		},
+		"prev_quarter_truncated": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				tm := time.Now()
+				interval := fmt.Sprintf("%v days", gvalfnc.DayOfQuarter(tm))
+				return exp.NewLiteralExpression("(?::timestamp >= date_trunc('quarter', NOW()::timestamp - interval '90 days')::timestamp AND ?::timestamp < (date_trunc('quarter', NOW()::timestamp - interval '90 days')+ interval '"+interval+"')::timestamp)", args[0], args[0])
+			},
+		},
+		"day_of": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("date_trunc('day', ?::timestamp)::timestamp", args[0])
+			},
+		},
+
 		"timestamp": {
 			Handler: func(args ...exp.Expression) exp.Expression {
 				return exp.NewLiteralExpression("?::TIMESTAMPTZ", args[0])

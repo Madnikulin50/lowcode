@@ -7,6 +7,7 @@ import (
 
 	"github.com/madnikulin50/lowcode/server/pkg/dal"
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/spf13/cast"
 )
@@ -518,6 +519,65 @@ func convStepLoad(pr ModelFinder, step types.ReportStepLoad, defs FrameDefinitio
 	}, nil
 }
 
+func TypeForAggAttribute(step types.ReportStepAggregate, shortName string) dal.Type {
+	var result dal.Type
+	for _, key := range step.Keys {
+		if key.Name == shortName {
+			if key.Def.Node() != nil {
+				key.Def.Node().Traverse(func(a *ql.ASTNode) (bool, *ql.ASTNode, error) {
+					if a.Symbol != "" {
+						return false, a, nil
+					}
+
+					if a.Ref != "" {
+						t := dal.TypeOfRef(a.Ref)
+						if t == nil {
+							return true, a, nil
+						}
+
+						if t != nil {
+							result = t
+							return false, a, nil
+						}
+					}
+					return true, a, nil
+				})
+
+			}
+		}
+	}
+	if result != nil {
+		return result
+	}
+	for _, key := range step.Columns {
+		if key.Name == shortName {
+			if key.Def.Node() != nil {
+				key.Def.Node().Traverse(func(a *ql.ASTNode) (bool, *ql.ASTNode, error) {
+					if a.Symbol != "" {
+						return false, a, nil
+					}
+
+					if a.Ref != "" {
+						t := dal.TypeOfRef(a.Ref)
+						if t == nil {
+							return true, a, nil
+						}
+
+						if t != nil {
+							result = t
+							return false, a, nil
+						}
+					}
+					return true, a, nil
+				})
+
+			}
+		}
+	}
+
+	return result
+}
+
 // convStepAggregate converts ReportStepAggregate to dal.Aggregate
 func convStepAggregate(step types.ReportStepAggregate, pp dal.Pipeline, defs FrameDefinitionSet) (out *dal.Aggregate, err error) {
 	// Validation
@@ -539,7 +599,11 @@ func convStepAggregate(step types.ReportStepAggregate, pp dal.Pipeline, defs Fra
 
 	ggs := make([]dal.AggregateAttr, 0, len(step.Keys))
 	for _, c := range step.Keys {
-		tp := pp.TypeForAttribute(c.Name)
+		tp := TypeForAggAttribute(step, c.Name)
+		if tp == nil {
+			tp = pp.TypeForAttribute(c.Name)
+		}
+
 		ggs = append(ggs, dal.AggregateAttr{
 			Key:        true,
 			Identifier: c.Name,
@@ -551,7 +615,10 @@ func convStepAggregate(step types.ReportStepAggregate, pp dal.Pipeline, defs Fra
 
 	vvs := make([]dal.AggregateAttr, 0, len(step.Columns))
 	for _, c := range step.Columns {
-		tp := pp.TypeForAttribute(c.Name)
+		tp := TypeForAggAttribute(step, c.Name)
+		if tp == nil {
+			tp = pp.TypeForAttribute(c.Name)
+		}
 		if tp == nil {
 			tp = &dal.TypeNumber{}
 		}

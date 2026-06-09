@@ -2804,7 +2804,7 @@ func recordReportToAggPipelineStep(m *types.Module, metrics, dimensions, f strin
 	}
 
 	agg = &dal.Aggregate{
-		Ident:         "agg",
+		Ident:         "agg for " + m.Name,
 		RelSource:     "ds",
 		Group:         dim,
 		OutAttributes: mms,

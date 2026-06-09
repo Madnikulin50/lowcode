@@ -283,6 +283,67 @@ export default {
           text: this.$t('builder:filter.operators.notContains'),
           isMulti: true,
         },
+        {
+          value: 'this_month',
+          text: this.$t('builder:filter.operators.thisMonth'),
+          isMulti: false,
+          onlyDate: true,
+        },
+        {
+          value: 'this_month_prev_year_truncated',
+          text: this.$t('builder:filter.operators.thisMonthPrevYearTruncated'),
+          isMulti: false,
+          onlyDate: true,
+        },
+        {
+          value: 'prev_month',
+          text: this.$t('builder:filter.operators.prevMonth'),
+          isMulti: false,
+          onlyDate: true,
+        },
+        {
+          value: 'prev_month_truncated',
+          text: this.$t('builder:filter.operators.prevMonthTruncated'),
+          isMulti: false,
+          onlyDate: true,
+        },
+        {
+          value: 'this_week',
+          text: this.$t('builder:filter.operators.thisWeek'),
+          isMulti: false,
+          onlyDate: true,
+        },
+        {
+          value: 'prev_week',
+          text: this.$t('builder:filter.operators.prevWeek'),
+          isMulti: false,
+          onlyDate: true,
+        },
+        {
+          value: 'prev_week_truncated',
+          text: this.$t('builder:filter.operators.prevWeekTruncated'),
+          isMulti: false,
+          onlyDate: true,
+        },
+        {
+          value: 'this_year',
+          text: this.$t('builder:filter.operators.thisYear'),
+          isMulti: false,
+          onlyDate: true,
+        },
+        {
+          value: 'prev_year',
+          text: this.$t('builder:filter.operators.prevYear'),
+          isMulti: false,
+          onlyDate: true,
+        },
+        {
+          value: 'prev_year_truncated',
+          text: this.$t('builder:filter.operators.prevYearTruncated'),
+          isMulti: false,
+          onlyDate: true,
+        },
+
       ],
     }
   },
