@@ -39,7 +39,7 @@ filter:
   title: Фильтр Процессы
   apply: Apply Фильтр
   namespace:
-    label: Namespace
+    label: Пространство
     placeholder: Select namespace(s)
   module:
     label: Модуль

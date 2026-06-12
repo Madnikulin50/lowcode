@@ -23,6 +23,7 @@ interface Options {
   horizontalFieldLayoutEnabled: boolean;
   recordFieldLayoutOption: string;
   inlineRecordEditAllowAddField: boolean;
+  viewStyle: object;
 }
 
 const defaults: Readonly<Options> = Object.freeze({
@@ -39,6 +40,7 @@ const defaults: Readonly<Options> = Object.freeze({
   inlineRecordEditAllowAddField: false,
   horizontalFieldLayoutEnabled: false,
   recordFieldLayoutOption: 'default',
+  viewStyle:{}
 })
 
 export class PageBlockRecord extends PageBlock {
@@ -64,6 +66,9 @@ export class PageBlockRecord extends PageBlock {
     if (o.fieldConditions) {
       this.options.fieldConditions = o.fieldConditions
     }
+      if (o.viewStyle) {
+          this.options.viewStyle = o.viewStyle
+      }
   }
 }
 

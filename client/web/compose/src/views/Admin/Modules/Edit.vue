@@ -410,7 +410,7 @@
               </b-tab>
 
               <b-tab
-                v-if="isBasic"
+                v-if="isBasic || isDbRef"
                 :title="$t('edit.config.dal.title')"
               >
                 <dal-settings
@@ -677,6 +677,7 @@ export default {
       return [
         { value: 'basic', text: this.$t('edit.type.basic') },
         { value: 'datasource', text: this.$t('edit.type.datasource') },
+        { value: 'dbref', text: this.$t('edit.type.dbref') },
       ]
     },
 
@@ -699,6 +700,11 @@ export default {
     isBasic: {
       get () {
         return this.moduleType === 'basic'
+      },
+    },
+    isDbRef: {
+      get () {
+        return this.moduleType === 'dbref'
       },
     },
 
@@ -754,6 +760,9 @@ export default {
     },
 
     systemFields () {
+      if (!this.isBasic) {
+        return []
+      }
       const systemFieldEncoding = this.module.config.dal.systemFieldEncoding || {}
 
       return this.module.systemFields().map(sf => {

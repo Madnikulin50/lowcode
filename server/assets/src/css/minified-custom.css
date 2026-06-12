@@ -4707,8 +4707,13 @@ a[data-color-mode=dark] .badge-extra-light.focus {
   white-space: nowrap;
   vertical-align: baseline;
   border-radius: .25rem;
+    &.badge-large {
+        font-size: 100%;
+    }
   transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out
 }
+
+
 
 @media (prefers-reduced-motion:reduce) {
   .badge {
@@ -13718,6 +13723,7 @@ button.bg-extra-light:focus {
 
 @supports (position:sticky) {
   .sticky-top {
+    background-color: var(--sidebar-bg);
     position: sticky;
     top: 0;
     z-index: 1020

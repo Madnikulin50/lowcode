@@ -4,7 +4,7 @@
     <!-- eslint-disable-next-line -->
     <div v-if="field.options.display === 'number'" :class="classes">{{ formatted }}</div>
 
-    <template v-else>
+    <template v-if="field.options.display === 'progress'">
       <c-progress
         v-for="(v, i) in formatted"
         :key="i"
@@ -22,17 +22,40 @@
         style="height: 1.5rem; min-width: 15rem;"
       />
     </template>
+    <template v-if="field.options.display === 'colorGrade'">
+      <c-color-grade-number
+        v-for="(v, i) in formatted"
+        :key="i"
+        :value="parseFloat(v)"
+        :variant="field.options.variant"
+        :thresholds="field.options.thresholds"
+        :class="{ 'mt-2': i }"
+      />
+    </template>
+    <template v-if="field.options.display === 'trafficLight'">
+      <c-traffic-light
+        v-for="(v, i) in formatted"
+        :key="i"
+        :value="parseFloat(v)"
+        :variant="field.options.variant"
+        :thresholds="field.options.thresholds"
+        :class="{ 'mt-2': i }"
+        style="height: 2rem; min-width: 5rem;"
+      />
+    </template>
   </div>
 </template>
 
 <script>
 import base from './base'
 import { components } from 'corteza-lib/vue/dist'
-const { CProgress } = components
+const { CProgress, CColorGradeNumber, CTrafficLight } = components
 
 export default {
   components: {
     CProgress,
+    CColorGradeNumber,
+    CTrafficLight,
   },
 
   extends: base,

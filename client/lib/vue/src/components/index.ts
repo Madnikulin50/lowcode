@@ -92,6 +92,14 @@ export {
 } from './progress'
 
 export {
+    CTrafficLight,
+} from './trafficLight'
+
+export {
+    CColorGradeNumber,
+} from './colorGradeNumber'
+
+export {
   CToolbar,
 } from './toolbar'
 

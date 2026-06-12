@@ -82,7 +82,8 @@ edit:
   isDatasource: 'Статичный источник данных'
   type:
     basic: Базовый
-    datasource: Источник
+    datasource: Агрегат
+    dbref: Ссылка на БД
   label:
     type: Тип модуля
     required: '*'
@@ -173,8 +174,8 @@ edit:
             label: JSON
 
     datasource:
-      title: Источник
-      label: Datasource
+      title: Агрегат
+      label: Агрегат
       types:
         load:
           label: Загрузка

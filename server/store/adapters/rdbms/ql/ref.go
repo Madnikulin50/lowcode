@@ -314,6 +314,11 @@ var (
 				return exp.NewSQLFunctionExpression("stddev", args[0])
 			},
 		},
+		"stddev": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewSQLFunctionExpression("stddev", args[0])
+			},
+		},
 	}
 )
 

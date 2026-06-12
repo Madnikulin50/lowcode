@@ -56,6 +56,16 @@ func Day(in any) (int, error) {
 func DayOf(in any) (time.Time, error) {
 	return Date(in)
 }
+func WeekOf(in any) (time.Time, error) {
+	t, _, err := PrepMod(in, 0)
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).
+		AddDate(0, 0, -int(t.Weekday())), err
+}
+
+func MonthOf(in any) (time.Time, error) {
+	t, _, err := PrepMod(in, 0)
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()), err
+}
 
 func ThisWeek(in any) (bool, error) {
 	t, _, err := PrepMod(in, 0)

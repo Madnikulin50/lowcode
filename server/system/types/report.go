@@ -88,6 +88,7 @@ type (
 		Source     string                 `json:"source"`
 		Definition map[string]interface{} `json:"definition"`
 		Filter     *ReportFilterExpr      `json:"filter,omitempty"`
+
 	}
 
 	ReportStepJoin struct {

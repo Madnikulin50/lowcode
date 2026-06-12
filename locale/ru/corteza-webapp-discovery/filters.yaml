@@ -2,7 +2,7 @@ title: Фильтр
 
 types:
   title: Types
-  namespace: Namespace
+  namespace: Пространство
   module: Модуль
   user: User
   record: Record

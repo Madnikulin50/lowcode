@@ -1337,6 +1337,9 @@ func (svc *service) mergeAlterations(base, added AlterationSet) (out AlterationS
 
 func (svc *service) getSchemaAlterations(ctx context.Context, connection *ConnectionWrap, currentAlts []*Alteration, oldModel, model *Model) (newAlts []*Alteration, batchID uint64, err error) {
 	// - use the diff between the two models as a starting point to see what we should do to support the change
+	if model.Static {
+		return nil, 0, nil
+	}
 	df := oldModel.Diff(model)
 	newAlts = df.Alterations()
 	batchID = nextID()

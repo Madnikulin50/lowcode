@@ -128,7 +128,7 @@ export default {
     },
 
     textVariant () {
-      return ['dark', 'primary'].includes(this.progressVariant) ? 'text-white' : 'text-dark'
+      return ['light'].includes(this.progressVariant) ? 'text-dark' : 'text-light'
     },
   },
 }

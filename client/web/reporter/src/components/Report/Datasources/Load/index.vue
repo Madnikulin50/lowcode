@@ -34,7 +34,6 @@
     />
 
     <b-form-group
-      v-if="columns.length"
       :label="$t('datasources:prefilter')"
       label-class="text-primary"
     >
@@ -132,9 +131,12 @@ export default {
 
       if (steps.length && describe.length) {
         this.$SystemAPI.reportDescribe({ steps, describe })
-          .then((frames = []) => {
+          .then((frames = [], warnings = []) => {
             const { columns = [] } = frames.find(({ source }) => describe.includes(source)) || {}
             this.columns = columns
+            warnings.forEach((warning) => {
+              this.toastErrorHandler(this.$t('notification:datasource.describe-failed'))(warning)
+            })
           }).catch((e) => {
             this.toastErrorHandler(this.$t('notification:datasource.describe-failed'))(e)
           })

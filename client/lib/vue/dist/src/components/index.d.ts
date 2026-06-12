@@ -16,6 +16,8 @@ export { CSensitivityLevelPicker, } from './privacy';
 export { CResourceList, } from './resourceList';
 export { CChart, } from './chart';
 export { CProgress, } from './progress';
+export { CTrafficLight, } from './trafficLight';
+export { CColorGradeNumber, } from './colorGradeNumber';
 export { CToolbar, } from './toolbar';
 export { CHint, } from './hint';
 export { CMap, } from './map';

@@ -182,8 +182,9 @@
         </b-col>
       </template>
 
-      <template v-if="f.options.display === 'progress'">
+      <template v-if="f.options.display === 'progress' || f.options.display === 'colorGrade' || f.options.display === 'trafficLight'">
         <b-col
+          v-if="f.options.display === 'progress'"
           cols="12"
           lg="6"
         >
@@ -200,6 +201,7 @@
         </b-col>
 
         <b-col
+          v-if="f.options.display === 'progress'"
           cols="12"
           lg="6"
         >
@@ -231,6 +233,7 @@
         </b-col>
 
         <b-col
+          v-if="f.options.display === 'progress'"
           cols="12"
           sm="3"
         >
@@ -253,6 +256,7 @@
         </b-col>
 
         <b-col
+          v-if="f.options.display === 'progress'"
           cols="12"
           sm="3"
         >
@@ -308,7 +312,7 @@
             >
               <b-col>
                 <b-input-group
-                  append="%"
+                  :append="f.options.display === 'progress' ? '%' : ''"
                 >
                   <b-form-input
                     v-model="t.value"
@@ -398,6 +402,8 @@ export default {
       displayOptions: [
         { text: this.$t('kind.number.displayType.number'), value: 'number' },
         { text: this.$t('kind.number.displayType.progress'), value: 'progress' },
+        { text: this.$t('kind.number.displayType.colorGrade'), value: 'colorGrade' },
+        { text: this.$t('kind.number.displayType.trafficLight'), value: 'trafficLight' },
       ],
 
       variants: [

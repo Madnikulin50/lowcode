@@ -49,6 +49,7 @@
     </b-form-group>
 
     <b-form-group
+      v-if="isBasic"
       :label="$t('system-fields.label')"
       :description="$t('system-fields.description')"
       label-class="text-primary"
@@ -149,6 +150,20 @@ export default {
     moduleFieldDefaultEncodingStrategy () {
       return types.JSON
     },
+    moduleType () {
+      const ds = this.module.config.type ?? 'basic'
+      return ds ?? false
+    },
+    isDbRef: {
+      get () {
+        return this.moduleType === 'dbref'
+      },
+    },
+    isBasic: {
+      get () {
+        return this.moduleType === 'basic'
+      },
+    },
   },
 
   watch: {
@@ -248,6 +263,10 @@ export default {
     },
 
     applySelectedSystemFields (selectedOption) {
+      if (this.isDbRef) {
+        this.systemFieldEncoding = []
+        return
+      }
       this.systemFieldEncoding = this.systemFields.reduce((enc, { field, group }) => {
         if (field !== 'id') {
           if (selectedOption === 'all') {

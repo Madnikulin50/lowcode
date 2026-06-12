@@ -42,6 +42,7 @@ type (
 
 		Constraints map[string][]any `json:"constraints"`
 		Indexes     IndexSet         `json:"indexes"`
+		Static      bool             `json:"static"`
 	}
 
 	ModelSet []*Model

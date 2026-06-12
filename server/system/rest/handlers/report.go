@@ -7,10 +7,11 @@ package handlers
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
 	"github.com/madnikulin50/lowcode/server/system/rest/request"
-	"net/http"
 )
 
 type (
@@ -22,7 +23,7 @@ type (
 		Read(context.Context, *request.ReportRead) (interface{}, error)
 		Delete(context.Context, *request.ReportDelete) (interface{}, error)
 		Undelete(context.Context, *request.ReportUndelete) (interface{}, error)
-		Describe(context.Context, *request.ReportDescribe) (interface{}, error)
+		Describe(context.Context, *request.ReportDescribe) (interface{}, interface{}, error)
 		Run(context.Context, *request.ReportRun) (interface{}, error)
 	}
 
@@ -145,7 +146,7 @@ func NewReport(h ReportAPI) *Report {
 				return
 			}
 
-			value, err := h.Describe(r.Context(), params)
+			value, _, err := h.Describe(r.Context(), params)
 			if err != nil {
 				api.Send(w, r, err)
 				return

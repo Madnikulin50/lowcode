@@ -2,14 +2,14 @@
 add: Add
 aggregate: Aggregate
 compose-records: Compose records
-datasource-name: 'Datasource Name...'
+datasource-name: 'Имя источника данных...'
 expression: Выражение
 group-by: Group by
 label: Метка
 module: Модуль
 name-required: Имя *
 name: Имя
-namespace: Namespace
+namespace: Пространство
 new:
   label: New label
   name: New name
@@ -17,8 +17,8 @@ none: Отсутствует
 prefilter: Предварительный фильтр
 primary:
   column: Главная колонка
-  source: Главный источник
+  source: Основной модуль
 secondary:
   column: Вспомогательная колонка
-  source: Вспомогательный источник
-source: Source
+  source: Вспомогательный модуль
+source: Источник

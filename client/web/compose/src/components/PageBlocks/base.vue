@@ -139,32 +139,6 @@ export default {
   },
 
   methods: {
-    setBaseDefaultValues () {
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval)
-        this.refreshInterval = null
-      }
-
-      this.processing = false
-      this.key = 0
-    },
-
-    /**
-     *
-     * @param {*} refreshFunction
-     * If reloading data does not refresh the page block
-     * You should attach :key="key" to it and increment it in the refreshFunction
-     */
-    refreshBlock (refreshFunction, ...params) {
-      if (!this.autoRefreshEnabled || this.refreshInterval) return
-
-      const interval = setInterval(() => {
-        refreshFunction(...params)
-      }, this.options.refreshRate * 1000)
-
-      this.refreshInterval = interval
-    },
-
     /**
      * Returns errors, filtered for a specific field
      * @param name
@@ -185,6 +159,52 @@ export default {
       }
 
       return errors
+    },
+
+    genStyle (s = {}, options = { forLabel: false, addStyle: {} }) {
+      const d = {
+        fill: options.forLabel ? (s.labelColor || s.color) : s.color,
+        backgroundColor: s.backgroundColor,
+        fontSize: s.fontSize ? s.fontSize + 'px' : undefined,
+        color: options.forLabel ? (s.labelColor || s.color) : s.color,
+      }
+      for (const v of Object.keys(options.addStyle)) {
+        if (d[v] === undefined) {
+          d[v] = options.addStyle[v]
+        }
+      }
+      for (const v of Object.keys(d)) {
+        if (d[v] === undefined) {
+          delete d[v]
+        }
+      }
+
+      return d
+    },
+
+    /**
+     *
+     * @param {*} refreshFunction
+     * If reloading data does not refresh the page block
+     * You should attach :key="key" to it and increment it in the refreshFunction
+     * @param params
+     */
+    refreshBlock (refreshFunction, ...params) {
+      if (!this.autoRefreshEnabled || this.refreshInterval) return
+
+      this.refreshInterval = setInterval(() => {
+        refreshFunction(...params)
+      }, this.options.refreshRate * 1000)
+    },
+
+    setBaseDefaultValues () {
+      if (this.refreshInterval) {
+        clearInterval(this.refreshInterval)
+        this.refreshInterval = null
+      }
+
+      this.processing = false
+      this.key = 0
     },
   },
 }

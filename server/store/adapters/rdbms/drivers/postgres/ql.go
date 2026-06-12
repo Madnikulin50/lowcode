@@ -137,6 +137,16 @@ var (
 				return exp.NewLiteralExpression("date_trunc('day', ?::timestamp)::timestamp", args[0])
 			},
 		},
+		"week_of": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("date_trunc('week', ?::timestamp)::timestamp", args[0])
+			},
+		},
+		"month_of": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("date_trunc('month', ?::timestamp)::timestamp", args[0])
+			},
+		},
 
 		"timestamp": {
 			Handler: func(args ...exp.Expression) exp.Expression {

@@ -132,6 +132,10 @@ func (a *issueHelper) mergeWith(b *issueHelper) {
 
 // Op check utils
 func (svc *service) canOpData(ref ModelRef) (err error) {
+	var mod = svc.FindModelByRef(ref)
+	if mod == nil {
+		return errModelNotFound(ref.ResourceID)
+	}
 	if svc.hasConnectionIssues(ref.ConnectionID) {
 		for _, i := range svc.connectionIssues[ref.ConnectionID] {
 			svc.logger.Debug(
@@ -139,13 +143,7 @@ func (svc *service) canOpData(ref ModelRef) (err error) {
 				zap.Any("ref", ref.ResourceID),
 			)
 		}
-
 		return errRecordOpProblematicConnection(ref.ConnectionID)
-	}
-
-	var mod = svc.FindModelByRef(ref)
-	if mod == nil {
-		return errModelNotFound(ref.ResourceID)
 	}
 
 	if svc.hasModelIssues(mod.ResourceID) {
@@ -155,8 +153,8 @@ func (svc *service) canOpData(ref ModelRef) (err error) {
 				zap.Any("ref", ref.ResourceID),
 			)
 		}
-
-		return errRecordOpProblematicModel(mod.ResourceID)
+		return nil
+		//return errRecordOpProblematicModel(mod.ResourceID)
 	}
 
 	return nil

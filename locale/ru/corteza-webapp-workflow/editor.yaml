@@ -21,8 +21,8 @@ issues: Issues
 reset: Сбросить
 'run-as': "Run as:"
 'run-workflow': Run Процесс
-'required-namespace': Namespace required
-'required-namespace-and-module': Namespace and Module required
+'required-namespace': Пространство required
+'required-namespace-and-module': Пространство and Module required
 save: Сохранить
 saving: Saving
 spinning: Spinning

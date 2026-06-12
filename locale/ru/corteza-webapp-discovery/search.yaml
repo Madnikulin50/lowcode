@@ -5,7 +5,7 @@ card:
   button-text: Show more
   type: Type
   handle: Дескриптор
-  namespace: Namespace
+  namespace: Пространство
   module: Модуль
   user: User
   email: Почтовый адрес

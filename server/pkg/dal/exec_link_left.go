@@ -3,10 +3,11 @@ package dal
 import (
 	"context"
 	"fmt"
-	"github.com/madnikulin50/lowcode/server/pkg/filter"
 	"io"
 	"sort"
 	"strconv"
+
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 )
 
 type (
@@ -496,7 +497,11 @@ func (xs *linkLeft) collectPrimaryAttributes() (out []string) {
 // convertStringToIntForColumn converts the string value that have numeric data in the specified column
 // and updates the Row value datatype to int, if the conversion is successful
 func convertStringToIntForColumn(column string, row *Row) *Row {
-	if strValue, ok := row.values[column][0].(string); ok {
+	t, ok := row.values[column]
+	if !ok {
+		return row
+	}
+	if strValue, ok := t[0].(string); ok {
 		if rowVal, err := strconv.Atoi(strValue); err == nil {
 			row.values[column][0] = rowVal
 		}

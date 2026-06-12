@@ -298,6 +298,18 @@ var (
 			},
 			OutType: &TypeDate{},
 		},
+		"week_of": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("week_of(%s)", args[0])
+			},
+			OutType: &TypeDate{},
+		},
+		"month_of": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("month_of(%s)", args[0])
+			},
+			OutType: &TypeDate{},
+		},
 		"this_year": {
 			Handler: func(args ...string) string {
 				return fmt.Sprintf("this_year(%s)", args[0])
@@ -464,10 +476,8 @@ func newRunnerGvalParsed(n *ql.ASTNode) (out *runnerGval, err error) {
 //	At some point, more functions will be supported, and the ones which can't
 //	be offloaded will be performed in some exec. step.
 func newGval(e string) (gval.Evaluable, error) {
-	return gval.Full(
-		// Extra functions we'll need
-		// @note don't bring in all of the expr. pkg functions as we'll need to
-		//       support these on the DB as well
+
+	funcs := []gval.Language{
 		gval.Function("now", gvalfnc.Now),
 		gval.Function("quarter", gvalfnc.Quarter),
 		gval.Function("year", gvalfnc.Year),
@@ -476,6 +486,8 @@ func newGval(e string) (gval.Evaluable, error) {
 		gval.Function("date", gvalfnc.Date),
 		gval.Function("day", gvalfnc.Day),
 		gval.Function("day_of", gvalfnc.DayOf),
+		gval.Function("week_of", gvalfnc.WeekOf),
+		gval.Function("month_of", gvalfnc.MonthOf),
 		gval.Function("this_year", gvalfnc.ThisYear),
 		gval.Function("prev_year", gvalfnc.PrevYear),
 		gval.Function("prev_year_truncated", gvalfnc.PrevYearTruncated),
@@ -490,12 +502,16 @@ func newGval(e string) (gval.Evaluable, error) {
 		gval.Function("prev_quarter_truncated", gvalfnc.PrevQuarterTruncated),
 		gval.Function("isNil", gvalfnc.IsNil),
 		gval.Function("float", gvalfnc.CastFloat),
+		gval.Function("anomality", gvalfnc.Anomality),
 		gval.Function("int", gvalfnc.CastInt),
 		gval.Function("string", gvalfnc.CastString),
 		gval.Function("concat", gvalfnc.ConcatStrings),
 		gval.Function("has", arrHas),
 		jsonpath.Language(),
-	).NewEvaluable(e)
+	}
+	funcs = append(funcs, expr.NumericFunctions()...)
+	return gval.Full(
+		funcs...).NewEvaluable(e)
 }
 
 func newQlParser(onIdent ...ql.IdentHandler) *ql.Parser {
@@ -620,7 +636,7 @@ func TypeOfRef(ref string) (res Type) {
 	tmp := refToGvalExp[r]
 	if tmp == nil || tmp.OutType == nil || tmp.OutTypeUnknown {
 		switch r {
-		case "count", "sum", "min", "max", "avg", "uniquecount":
+		case "count", "sum", "min", "max", "avg", "uniquecount", "stddev":
 			res = TypeNumber{}
 			return res
 		}

@@ -303,9 +303,9 @@ func (svc *report) Undelete(ctx context.Context, ID uint64) (err error) {
 }
 
 // @todo actionlog?
-func (svc *report) Describe(ctx context.Context, src types.ReportDataSourceSet, st types.ReportStepSet, sources ...string) (out []*datasources.FrameDescription, err error) {
+func (svc *report) Describe(ctx context.Context, src types.ReportDataSourceSet, st types.ReportStepSet, sources ...string) (out []*datasources.FrameDescription, warnings []error, err error) {
 	out = make([]*datasources.FrameDescription, 0, len(sources)*2)
-
+	warnings = make([]error, 0)
 	err = func() (err error) {
 		if !svc.ac.CanCreateReport(ctx) {
 			return ReportErrNotAllowedToCreate()
@@ -314,11 +314,11 @@ func (svc *report) Describe(ctx context.Context, src types.ReportDataSourceSet, 
 		ss := src.ReportSteps()
 		ss = append(ss, st...)
 
-		out, err = datasources.Describe(ctx, svc.pipelineRunner, ss, sources)
+		out, warnings, err = datasources.Describe(ctx, svc.pipelineRunner, ss, sources)
 		return err
 	}()
 
-	return out, err
+	return out, warnings, err
 }
 
 func (svc *report) Run(ctx context.Context, reportID uint64, dd datasources.FrameDefinitionSet) (_ []*datasources.Frame, err error) {

@@ -354,6 +354,9 @@ func CursorExpression(
 			)
 		}
 	}
+	if curCond == nil {
+		return nil, nil
+	}
 
 	return curCond.Expression(), nil
 }

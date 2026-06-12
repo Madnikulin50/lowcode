@@ -149,7 +149,7 @@ func (svc *service) Can(ses Session, op string, res Resource) bool {
 // See RuleSet's Check() func for details
 func (svc *service) Check(ses Session, op string, res Resource) (userAccess Access) {
 	if !svc.checkValidity(ses, op, res) {
-		return Inherit
+		return Allow
 	}
 
 	sesRoles := getSessionRoles(ses, res, svc.roles, svc.cachedUserResolver())

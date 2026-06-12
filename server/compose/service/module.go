@@ -700,6 +700,7 @@ func (svc module) uniqueCheck(ctx context.Context, m *types.Module) (err error) 
 
 func (svc module) handleUpdate(ctx context.Context, upd *types.Module) moduleUpdateHandler {
 	return func(ctx context.Context, ns *types.Namespace, res *types.Module) (changes moduleChanges, err error) {
+
 		if isStale(upd.UpdatedAt, res.UpdatedAt, res.CreatedAt) {
 			return moduleUnchanged, ModuleErrStaleData()
 		}
@@ -1152,7 +1153,12 @@ func modulesForNamespace(ns *types.Namespace, mm types.ModuleSet) (out types.Mod
 }
 
 // Replaces all given connections
-func DalModelReplace(ctx context.Context, s store.Storer, am schemaAltManager, dmm dalModelManager, ns *types.Namespace, modules ...*types.Module) (err error) {
+func DalModelReplace(ctx context.Context,
+	s store.Storer,
+	am schemaAltManager,
+	dmm dalModelManager,
+	ns *types.Namespace,
+	modules ...*types.Module) (err error) {
 	var (
 		models      dal.ModelSet
 		currentAlts []*dal.Alteration
@@ -1240,6 +1246,9 @@ func ModulesToModelSet(dmm dalModelManager, ns *types.Namespace, mm ...*types.Mo
 					Resource:   mod.RbacResource(),
 					ResourceID: mod.ID,
 				}
+				if mod.Config.Type == "dbref" {
+					model.Static = true
+				}
 
 				out = append(out, model)
 				continue
@@ -1318,6 +1327,10 @@ func ModuleToModel(ns *types.Namespace, mod *types.Module, inhIdent string) (mod
 		ResourceID:         mod.ID,
 		ResourceType:       types.ModuleResourceType,
 		SensitivityLevelID: mod.Config.Privacy.SensitivityLevelID,
+	}
+
+	if mod.Config.Type == "dbref" {
+		model.Static = true
 	}
 
 	userDefinedFieldIdents := make(map[string]bool)
@@ -1437,6 +1450,10 @@ func moduleSystemFieldsToAttributes(mod *types.Module) (out dal.AttributeSet, er
 			return
 		}
 	)
+
+	if mod.Config.Type == "dbref" {
+		return nil, err
+	}
 
 	aa := filterSkippedAttribtues(
 		dal.PrimaryAttribute(sysID, mfc(colSysID, sysEnc.ID)),

@@ -219,11 +219,6 @@ func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep, 
 			return nil, fmt.Errorf("failed to parse moduleID")
 		}
 		mid, _ := strconv.ParseInt(moduleID, 10, 64)
-		for _, m := range moduleStack {
-			if m == uint64(mid) {
-				return nil, fmt.Errorf("failed by recursion")
-			}
-		}
 		namespaceID, ok := r.Load.Definition["namespaceID"].(string)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse namespaceID")
@@ -233,6 +228,12 @@ func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep, 
 		if err != nil {
 			return nil, fmt.Errorf("failed to find module with id %d: %w", mid, err)
 		}
+		for _, m := range moduleStack {
+			if m == uint64(mid) {
+				return nil, fmt.Errorf("failed by recursion of model %v", loadModel.Name)
+			}
+		}
+
 		if loadModel.Config.Type != "datasource" {
 			return nil, nil
 		}
@@ -271,11 +272,44 @@ func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep, 
 				break
 			}
 		}
+		var last *systemTypes.ReportStep
 		if len(ss) > 0 {
-			last := ss[len(ss)-1]
+			last = ss[len(ss)-1]
 			last.ResetName(r.Name())
 		} else {
 			ss = nil
+		}
+		if r.Load != nil {
+			if r.Load.Filter != nil && r.Load.Filter.ASTNode != nil {
+				if last != nil {
+					if last.Load != nil {
+						last.Load.Filter = r.Load.Filter
+					}
+					if last.Aggregate != nil {
+						finalStep := systemTypes.ReportStep{}
+						finalStep.Aggregate = &systemTypes.ReportStepAggregate{
+							Name:    "having",
+							Source:  last.Name(),
+							Columns: last.Aggregate.Columns,
+							Keys:    last.Aggregate.Keys,
+							Filter:  r.Load.Filter,
+						}
+						n := make(systemTypes.ReportStepSet, len(ss)+1)
+						for i, v := range ss {
+							n[i] = v
+						}
+						n[len(ss)] = &finalStep
+						ss = n
+						last = ss[len(ss)-1]
+					}
+					if last.Join != nil {
+						last.Join.Filter = r.Load.Filter
+					}
+					if last.Link != nil {
+						last.Link.Filter = r.Load.Filter
+					}
+				}
+			}
 		}
 
 		return ss, nil

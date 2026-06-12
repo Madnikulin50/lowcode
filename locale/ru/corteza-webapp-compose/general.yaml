@@ -69,6 +69,8 @@ label:
   none: Отсутствует
   now: Сейчас
   ok: Ok
+  or: ИЛИ
+  and: И
   page: Страница
   pageLayout: Раскладка страницы
   pageBuilder: Конструктор страниц

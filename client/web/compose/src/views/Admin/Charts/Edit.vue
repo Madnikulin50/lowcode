@@ -544,6 +544,9 @@ export default {
     }),
 
     colorSchemes () {
+      const getCssVariable = (variableName) => {
+        return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
+      }
       const capitalize = w => `${w[0].toUpperCase()}${w.slice(1)}`
       const splicer = sc => {
         const rr = (/(\D+)(\d+)$/gi).exec(sc)
@@ -553,7 +556,17 @@ export default {
         }
       }
 
-      const rr = [...this.customColorSchemes]
+      const colors = ['blue', 'indigo', 'purple', 'pink', 'red', 'orange', 'yellow', 'green', 'teal', 'cyan'].map(variable => {
+        return getCssVariable(`--${variable}`)
+      })
+      const rr = []
+      const scheme = {
+        id: 'lowcode',
+        name: 'Lowcode Platform',
+        colors,
+      }
+      rr.push(scheme)
+      rr.push(...this.customColorSchemes)
       for (const g in colorschemes) {
         for (const sc in colorschemes[g]) {
           const gn = splicer(sc)

@@ -283,7 +283,7 @@ export default {
           text: this.$t('builder:filter.operators.notContains'),
           isMulti: true,
         },
-        {
+        /* {
           value: 'this_month',
           text: this.$t('builder:filter.operators.thisMonth'),
           isMulti: false,
@@ -342,7 +342,7 @@ export default {
           text: this.$t('builder:filter.operators.prevYearTruncated'),
           isMulti: false,
           onlyDate: true,
-        },
+        },*/
 
       ],
     }

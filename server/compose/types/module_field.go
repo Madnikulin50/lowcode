@@ -108,9 +108,6 @@ type (
 	// EncodingStrategy is used by both: Module (for system fields) and ModuleField
 	//
 	EncodingStrategy struct {
-		//Type       string         `json:"type"`
-		//TypeParams map[string]any `json:"typeParams"`
-
 		Omit bool `json:"omit,omitempty"`
 
 		*EncodingStrategyAlias `json:"alias,omitempty"`
@@ -126,7 +123,9 @@ type (
 		Ident string `json:"ident"`
 	}
 
-	EncodingStrategyPlain struct{}
+	EncodingStrategyPlain struct {
+		Ident string `json:"ident"`
+	}
 
 	ModuleFieldFilter struct {
 		ModuleID []uint64

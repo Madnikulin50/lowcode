@@ -144,7 +144,7 @@ func (dd FrameDefinitionSet) FilterBySource(ident string) FrameDefinitionSet {
 }
 
 // Describe returns a set of frame descriptions based on the given pipeline
-func Describe(ctx context.Context, rr dryRunner, ss types.ReportStepSet, sources []string) (out []*FrameDescription, err error) {
+func Describe(ctx context.Context, rr dryRunner, ss types.ReportStepSet, sources []string) (out []*FrameDescription, warnings []error, err error) {
 	// Make a run for the whole thing
 	pp, err := makePipeline(rr, ss, nil)
 	if len(pp) == 0 && err != nil {
@@ -155,20 +155,24 @@ func Describe(ctx context.Context, rr dryRunner, ss types.ReportStepSet, sources
 	for _, src := range sources {
 		// Use the requested source as root
 		sub := pp.Slice(src)
-		err = rr.Dryrun(ctx, sub)
-		if err != nil {
-			return
-		}
 
 		s := sub[0]
+		if s == nil {
+			return nil, nil, fmt.Errorf("no frame definition found for source %s", src)
+		}
 		aux, err = describePipeline(s, src)
 		if err != nil {
 			return
 		}
 		out = append(out, aux...)
+		err = rr.Dryrun(ctx, sub)
+		if err != nil {
+			warnings = append(warnings, err)
+		}
+
 	}
 
-	return
+	return out, warnings, err
 }
 
 // stepLinkFrames is dedicated for the link step due to it's unique output

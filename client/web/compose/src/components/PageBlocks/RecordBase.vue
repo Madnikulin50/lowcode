@@ -26,7 +26,7 @@
           :content-cols-md="options.horizontalFieldLayoutEnabled && '6'"
           :content-cols-xl="options.horizontalFieldLayoutEnabled && '7'"
           :class="columnWrapClass"
-          :style="fieldWidth"
+          :style="genStyle(options.viewStyle, { addStyle: fieldWidth})"
           class="field-container"
         >
           <template #label>

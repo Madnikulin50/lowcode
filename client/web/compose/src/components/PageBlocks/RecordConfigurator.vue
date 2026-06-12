@@ -71,7 +71,6 @@
             />
           </b-form-group>
         </b-col>
-
         <b-col
           cols="12"
           lg="6"
@@ -109,6 +108,24 @@
               @input="updateReferenceModule($event, [])"
             />
           </b-form-group>
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col
+          cols="12"
+          lg="12"
+        >
+          <block-style
+            class="mt-2"
+            :value-color="true"
+            :label-color="true"
+            :font-size="true"
+            :options="viewStyle"
+          >
+            <h5 slot="title">
+              {{ $t('metric.editStyle.valueLabel') }}
+            </h5>
+          </block-style>
         </b-col>
       </b-row>
     </div>
@@ -342,6 +359,7 @@
 </template>
 <script>
 import base from './base'
+import BlockStyle from './BlockStyle'
 import FieldPicker from 'corteza-webapp-compose/src/components/Common/FieldPicker'
 import { mapActions } from 'vuex'
 import { NoID, compose } from 'corteza-lib/js/dist'
@@ -358,6 +376,7 @@ export default {
   name: 'Record',
 
   components: {
+    BlockStyle,
     FieldPicker,
     CInputExpression,
   },
@@ -413,6 +432,16 @@ export default {
       },
       set (v) {
         this.options.inlineRecordEditEnabled = v
+      },
+    },
+
+    viewStyle: {
+      get () {
+        const { viewStyle = { fontSize: 20 } } = this.block.options
+        return viewStyle
+      },
+      set (v) {
+        this.block.options.viewStyle = v
       },
     },
 

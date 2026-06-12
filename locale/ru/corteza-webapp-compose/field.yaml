@@ -89,6 +89,8 @@ kind:
       label: Тип отображения
       number: Число
       progress: Столбик прогресса
+      colorGrade: Цветовая индикация
+      trafficLight: Светофор
     progress:
       maximumValue: Максимальное значение
       minimumValue: Минимальное значение
