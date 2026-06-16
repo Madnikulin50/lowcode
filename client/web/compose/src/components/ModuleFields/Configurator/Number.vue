@@ -59,7 +59,7 @@
     <hr>
 
     <b-row>
-      <template v-if="f.options.display === 'number'">
+      <template v-if="f.options.display === 'number' || f.options.display === 'colorGrade' || f.options.display === 'trafficLight'">
         <b-col
           cols="12"
           lg="6"
@@ -91,7 +91,7 @@
         </b-col>
       </template>
 
-      <template v-if="f.options.display === 'number'">
+      <template v-if="f.options.display === 'number' || f.options.display === 'colorGrade' || f.options.display === 'trafficLight'">
         <b-col
           cols="12"
           lg="6"
@@ -129,7 +129,7 @@
           cols="12"
         >
           <b-form-group
-            v-if="f.options.display === 'number'"
+            v-if="f.options.display === 'number' || f.options.display === 'colorGrade' || f.options.display === 'trafficLight'"
             :label="$t('kind.number.examplesLabel')"
             label-class="text-primary"
           >

@@ -287,8 +287,10 @@ func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep, 
 					}
 					if last.Aggregate != nil {
 						finalStep := systemTypes.ReportStep{}
+						prevName := last.Name()
+						last.ResetName(prevName + "_inner")
 						finalStep.Aggregate = &systemTypes.ReportStepAggregate{
-							Name:    "having",
+							Name:    prevName,
 							Source:  last.Name(),
 							Columns: last.Aggregate.Columns,
 							Keys:    last.Aggregate.Keys,

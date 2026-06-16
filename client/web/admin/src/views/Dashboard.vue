@@ -259,11 +259,11 @@ const { CChart } = components
 
 export default {
   i18nOptions: {
-    namespaces: 'dashboard',
+    namespaces: 'dashboard'
   },
 
   components: {
-    CChart,
+    CChart
   },
 
   data () {
@@ -277,19 +277,19 @@ export default {
         dailyCreated: [],
         dailyUpdated: [],
         dailySuspended: [],
-        dailyDeleted: [],
+        dailyDeleted: []
       },
       roles: {
         total: 0,
         valid: 0,
         archived: 0,
-        deleted: 0,
+        deleted: 0
       },
       applications: {
         total: 0,
         valid: 0,
-        deleted: 0,
-      },
+        deleted: 0
+      }
     }
   },
 
@@ -322,41 +322,41 @@ export default {
 
       this.userChart = {
         tooltip: {
-          trigger: 'axis',
+          trigger: 'axis'
         },
         textStyle: {
           fontFamily: themeVariables['font-regular'],
-          color: themeVariables.black,
+          color: themeVariables.black
         },
         xAxis: {
           type: 'category',
           data: dates,
           boundaryGap: false,
           axisTick: {
-            show: false,
+            show: false
           },
           axisLine: {
-            show: false,
-          },
+            show: false
+          }
         },
         yAxis: {
           type: 'value',
           axisLine: {
             show: false,
-            onZero: false,
+            onZero: false
           },
           splitLine: {
             lineStyle: {
-              color: [themeVariables['extra-light']],
-            },
-          },
+              color: [themeVariables['extra-light']]
+            }
+          }
         },
         grid: {
           top: 20,
           right: 50,
           bottom: 20,
           left: 40,
-          containLabel: true,
+          containLabel: true
         },
         series: [
           {
@@ -365,10 +365,10 @@ export default {
             data: values,
             smooth: 0.5,
             areaStyle: {
-              opacity: 0.5,
-            },
-          },
-        ],
+              opacity: 0.5
+            }
+          }
+        ]
       }
     },
 
@@ -430,7 +430,7 @@ export default {
       }
 
       return 'day'
-    },
-  },
+    }
+  }
 }
 </script>

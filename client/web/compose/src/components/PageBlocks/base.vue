@@ -132,6 +132,10 @@ export default {
       const { recordID = NoID } = this.record || {}
       return recordID === NoID ? 'parent:0' : recordID
     },
+
+    themeSettings () {
+      return this.$Settings.get('ui.studio.themes', [])
+    },
   },
 
   beforeDestroy () {
@@ -180,6 +184,22 @@ export default {
       }
 
       return d
+    },
+
+    getColor (value) {
+      if (value[0] === '#') {
+        return value
+      }
+      const themes = this.themeSettings
+        .filter((theme) => theme.id !== 'general') // remove general theme
+        .map((theme) => {
+          return {
+            id: theme.id,
+            values: JSON.parse(theme.values),
+          }
+        })
+
+      return themes[0].values[value] || value
     },
 
     /**

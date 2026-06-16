@@ -196,6 +196,9 @@ export default {
   methods: {
     update () {
       this.$nextTick(() => {
+        if (this.$refs.metricItem === undefined) {
+          return
+        }
         const { width, height } = this.$refs.metricItem.getBBox()
         const tmp = [...this.vvb]
         tmp[2] = parseInt(Math.ceil(width))

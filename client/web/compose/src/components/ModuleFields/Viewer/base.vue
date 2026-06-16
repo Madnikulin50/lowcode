@@ -88,6 +88,27 @@ export default {
 
       return !!recordPageID || !!magnifiedBlockID
     },
+
+    themeSettings () {
+      return this.$Settings.get('ui.studio.themes', [])
+    },
+  },
+  methods: {
+    getColor (value) {
+      if (value[0] === '#') {
+        return value
+      }
+      const themes = this.themeSettings
+        .filter((theme) => theme.id !== 'general') // remove general theme
+        .map((theme) => {
+          return {
+            id: theme.id,
+            values: JSON.parse(theme.values),
+          }
+        })
+
+      return themes[0].values[value] || value
+    },
   },
 }
 </script>

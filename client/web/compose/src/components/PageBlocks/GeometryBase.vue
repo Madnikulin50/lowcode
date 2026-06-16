@@ -90,7 +90,7 @@ export default {
               values.push({
                 title: value.title,
                 value: subValue || {},
-                color: value.color,
+                color: this.getColor(value.color),
                 recordID: value.recordID,
                 moduleID: value.moduleID,
               })

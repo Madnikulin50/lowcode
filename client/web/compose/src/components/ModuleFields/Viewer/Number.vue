@@ -24,22 +24,20 @@
     </template>
     <template v-if="field.options.display === 'colorGrade'">
       <c-color-grade-number
-        v-for="(v, i) in formatted"
-        :key="i"
-        :value="parseFloat(v)"
+        :formatted="formatted"
+        :value="parseFloat(value)"
         :variant="field.options.variant"
         :thresholds="field.options.thresholds"
-        :class="{ 'mt-2': i }"
+        :class="{ 'mt-2': false }"
       />
     </template>
     <template v-if="field.options.display === 'trafficLight'">
       <c-traffic-light
-        v-for="(v, i) in formatted"
-        :key="i"
-        :value="parseFloat(v)"
+        :formatted="formatted"
+        :value="parseFloat(value)"
         :variant="field.options.variant"
         :thresholds="field.options.thresholds"
-        :class="{ 'mt-2': i }"
+        :class="{ 'mt-2': false }"
         style="height: 2rem; min-width: 5rem;"
       />
     </template>
@@ -68,7 +66,7 @@ export default {
 
       const value = this.field.isMulti ? this.value : [this.value]
 
-      if (this.field.options.display === 'number') {
+      if (this.field.options.display !== 'progress') {
         return value.map(v => this.field.formatValue(v)).join(this.field.options.multiDelimiter)
       } else {
         return value.length ? value : [this.field.options.min]

@@ -63,8 +63,8 @@ export default {
       if (this.field.options.displayType === 'badge') {
         const optStyle = opt.style || {}
         style.fontSize = '0.9rem'
-        style.color = optStyle.textColor || 'var(--dark)'
-        style.backgroundColor = optStyle.backgroundColor || 'var(--extra-light)'
+        style.color = this.getColor(optStyle.textColor) || 'var(--dark)'
+        style.backgroundColor = this.getColor(optStyle.backgroundColor) || 'var(--extra-light)'
       }
 
       return style

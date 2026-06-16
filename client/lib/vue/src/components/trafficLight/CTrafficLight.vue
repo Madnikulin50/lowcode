@@ -5,7 +5,7 @@
       class="d-inline-block mb-0 ml-2 d-inline-flex align-items-center"
   >
     <div class="align-content-centere mb-0 w-100">
-      {{ value }}
+      {{ formatted }}
     </div>
   </b-badge>
 
@@ -17,6 +17,10 @@ export default {
   props: {
     value: {
       type: Number,
+      required: true,
+    },
+    formatted: {
+      type: String,
       required: true,
     },
 

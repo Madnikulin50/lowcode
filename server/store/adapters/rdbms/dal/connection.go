@@ -73,7 +73,7 @@ func (c *connection) withModel(m *dal.Model, fn func(m *model) error) error {
 		return fn(cached)
 	}
 
-	return fmt.Errorf("model %q (%d) not loaded", key, m.ResourceID)
+	return fmt.Errorf("model %v - (%d) not loaded", m.Ident, m.ResourceID)
 }
 
 func (c *connection) Operations() dal.OperationSet {

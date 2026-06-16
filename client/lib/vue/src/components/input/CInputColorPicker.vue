@@ -2,7 +2,7 @@
   <div>
     <div class="d-flex align-items-center">
       <b-button
-        :style="`color: ${value}; fill: ${value};`"
+        :style="`color: ${viewColor}; fill: ${viewColor};`"
         class="p-0 rounded-circle bg-white border-white shadow-none"
         @click="toggleMenu"
       >
@@ -92,7 +92,7 @@
               v-b-tooltip.noninteractive.hover="{ title: variable.label, boundary: 'body' }"
               class="swatch flex-grow-1 rounded-0"
               :style="{ backgroundColor: theme.values[variable.key], borderColor: theme.values[variable.key] }"
-              @click="setColor(theme.values[variable.key])"
+              @click="setColor(theme.values[variable.key], variable.key)"
             />
           </div>
         </b-form-group>
@@ -128,8 +128,8 @@
 </template>
 
 <script>
-import { Chrome } from 'vue-color'
-import { debounce } from 'lodash'
+import {Chrome} from 'vue-color'
+import {debounce} from 'lodash'
 
 export default {
   name: 'CInputColorPicker',
@@ -141,7 +141,7 @@ export default {
   props: {
     value: {
       type: String,
-      default: '#000000FF',
+      default: 'black',
     },
 
     defaultValue: {
@@ -221,10 +221,14 @@ export default {
     return {
       showModal: false,
       currentColor: '',
+      colorValue: ''
     }
   },
 
   computed: {
+    viewColor () {
+      return this.colorFromValue(this.value)
+    },
     themes () {
       return this.themeSettings
         .filter((theme) => theme.id !== 'general') // remove general theme
@@ -237,11 +241,15 @@ export default {
     },
   },
 
+
+
   watch: {
     value: {
       immediate: true,
-      handler (value) {
-        this.currentColor = value
+      handler: function (value) {
+        this.currentValue = value
+
+        this.currentColor = this.colorFromValue(value)
 
         if (!value && this.defaultValue) {
           this.$emit('input', this.defaultValue)
@@ -251,16 +259,30 @@ export default {
   },
 
   methods: {
+    colorFromValue (value) {
+      if (value[0] === "#") {
+        return value
+      }
+      return this.themes[0].values[value] || value
+    },
+
     updateColor: debounce(function ({ hex8 = '' }) {
-      this.currentColor = hex8
+      if (this.currentColor !== hex8) {
+        this.currentColor = hex8
+        this.currentValue = hex8
+      }
     }, 300),
 
-    setColor (defaultColor = this.defaultValue) {
-      this.currentColor = defaultColor
+    setColor (color = this.defaultValue, key) {
+      if (key === undefined) {
+        key = color
+      }
+      this.currentColor = color
+      this.currentValue = key
     },
 
     saveColor () {
-      this.$emit('input', this.currentColor)
+       this.$emit('input', this.currentValue)
       this.closeMenu()
     },
 

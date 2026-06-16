@@ -1,7 +1,7 @@
 <template>
   <div
       :class="textClass">
-    {{ value }}
+    {{ formatted }}
   </div>
 </template>
 
@@ -10,6 +10,10 @@ export default {
   props: {
     value: {
       type: Number,
+      required: true,
+    },
+    formatted: {
+      type: String,
       required: true,
     },
 
