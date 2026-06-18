@@ -3,49 +3,7 @@
     <b-tab
       :title="$t('metric.edit.tabTitle')"
     >
-      <b-form-group>
-        <b-form-checkbox
-          v-model="likeRecordList"
-        >
-          {{ $t('metric.likeRecordList') }}
-        </b-form-checkbox>
-      </b-form-group>
-      <template v-if="likeRecordList">
-        <b-col
-          cols="12"
-          lg="6"
-        >
-          <b-form-group
-            :label="$t('record.horizontalFormLayout')"
-            label-class="text-primary"
-          >
-            <c-input-checkbox
-              v-model="options.horizontalFieldLayoutEnabled"
-              switch
-              :disabled="options.recordFieldLayoutOption === 'noWrap'"
-              :labels="checkboxLabel"
-            />
-          </b-form-group>
-        </b-col>
 
-        <b-col
-          cols="12"
-          lg="6"
-        >
-          <b-form-group
-            :label="$t('record.fieldsLayoutMode.label')"
-            label-class="text-primary"
-          >
-            <c-input-select
-              v-model="options.recordFieldLayoutOption"
-              :options="recordFieldLayoutOptions"
-              :reduce="option => option.value"
-              :get-option-key="option => option.label"
-              @input="handleRecordFieldLayout"
-            />
-          </b-form-group>
-        </b-col>
-      </template>
       <b-row no-gutters>
         <b-col cols="12">
           <div
@@ -381,7 +339,52 @@
               </b-form-group>
             </fieldset>
           </b-card>
+          <b-form-group>
+            <b-form-checkbox
+              v-model="likeRecordList"
+            >
+              {{ $t('metric.likeRecordList') }}
+            </b-form-checkbox>
+          </b-form-group>
+          <template v-if="likeRecordList">
+            <b-row no-gutters>
+              <b-col
+                cols="12"
+                lg="6"
+              >
+                <b-form-group
+                  :label="$t('record.horizontalFormLayout')"
+                  label-class="text-primary"
+                >
+                  <c-input-checkbox
+                    v-model="options.horizontalFieldLayoutEnabled"
+                    switch
+                    :disabled="options.recordFieldLayoutOption === 'noWrap'"
+                    :labels="checkboxLabel"
+                  />
+                </b-form-group>
+              </b-col>
 
+              <b-col
+                cols="12"
+                lg="6"
+              >
+                <b-form-group
+                  :label="$t('record.fieldsLayoutMode.label')"
+                  label-class="text-primary"
+                >
+                  <c-input-select
+                    v-model="options.recordFieldLayoutOption"
+                    :options="recordFieldLayoutOptions"
+                    :reduce="option => option.value"
+                    :get-option-key="option => option.label"
+                    @input="handleRecordFieldLayout"
+                  />
+                </b-form-group>
+              </b-col>
+            </b-row>
+
+          </template>
           <m-style
             class="mt-2"
             :options="edit.valueStyle"
