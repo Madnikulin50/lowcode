@@ -75,7 +75,7 @@ calendar:
     timeGridDay: Day
     timeGridWeek: Неделя
     onEventClick: On event click
-    openInSameTab: Open record in the same tab
+    openInSameTab: Открыть на текущей закладке
     openInNewTab: Open record in a new tab
     openInModal: Open record in a modal
   viewLabel: Calendar
@@ -281,6 +281,9 @@ metric:
     showLabelTooltip: Отображать метку как тултип
   editStyle:
     backgroundColor: Цвет фона
+    thresholds:
+      label: Пороги цветов текста
+      description: Укажите какой вариант показывать если значение равно или больше порога
     color: Цвет текста
     labelColor: Цвет метки
     colorPicker: Выберите цвет
@@ -322,7 +325,7 @@ record:
     untitled: Untitled
   recordDeleted: Эта запись удалена
   recordSelectorDisplayOptions: When clicking on record field value
-  openInSameTab: Open record in the same tab
+  openInSameTab: Открыть на текущей закладке
   openInNewTab: Open record in a new tab
   openInModal: Open record in a modal
   fieldConditions:
@@ -616,7 +619,11 @@ recordList:
     searchableFields: Searchable fields
     searchableFieldsFootnote: If no fields are selected, the search will be performed on all available visible fields
     configureSearchableFields: Select fields that will be used for search
-    openInSameTab: Open record in the same tab
+    openInSameTab: Открыть на текущей закладке
+    openInSameTabSelectedModule: Открыть на текущей закладке другой модуль
+    recordDisplayTargetModuleID: Открываемый модуль
+    recordDisplayTargetModuleField: Поле в открываемом модуле
+    recordDisplayListField: Поле в текущем модуле
     openInNewTab: Open record in a new tab
     openInModal: Open record in a modal
     doNothing: Do nothing
@@ -633,12 +640,12 @@ recordList:
       reminder: Reminder
       view: Просмотр
       permissions: Права доступа
-    recordDisplayOptions: On record click
+    recordDisplayOptions: При клике на запись
     recordSelectorDisplayOptions: On record value click
     addRecordOptions: On add record click
     textStyles: Text Styles
     configureWrappedFields: Select fields that will be wrapped
-  recordPage: record page
+  recordPage: Страница записи
   refField:
     footnote: Поле that links records with the parent record
     label: Parent field
@@ -919,7 +926,7 @@ progress:
   thresholds: Порог
   threshold:
     label: Threshold
-    variant: Set which variant to show if value is equal or larger than the threshold
+    variant: Укажите какой вариант показывать если значение равно или больше  порога
   value:
     label: Значение
     min: Минимальное значение
@@ -955,16 +962,16 @@ geometry:
   recordFeed:
     colorPicker: Выберите цвет
     moduleLabel: Модуль*
-    modulePlaceholder: (No module)
+    modulePlaceholder: (Модуль не выбран)
     optionLabel: Records
     prefilterLabel: Предварительный фильтр sources
     colorLabel: Marker color
-    geometryFieldLabel: Геопозиция field*
+    geometryFieldLabel: Поле геопозиции*
     titleLabel: Заголовок
     titlePlaceholder: Заголовок
-    geometryFieldPlaceholder: Геопозиция field
-    displayMarker: Display marker
-    displayPolygon: Display polygon
+    geometryFieldPlaceholder: Поле геопозиции
+    displayMarker: Отображать маркер
+    displayPolygon: Отображать ломанную линию
   centerLabel: Центр
   zoom:
     zoomLabel: Zoom

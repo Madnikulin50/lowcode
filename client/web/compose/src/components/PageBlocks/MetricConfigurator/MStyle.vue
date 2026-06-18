@@ -21,6 +21,64 @@
         />
       </b-form-group>
 
+      <b-col
+        cols="12"
+      >
+        <b-form-group>
+          <template #label>
+            <div
+              class="d-flex align-items-center text-primary"
+            >
+              {{ $t('metric.editStyle.thresholds.label') }}
+              <b-button
+                variant="link"
+                class="text-decoration-none ml-1"
+                @click="addThreshold()"
+              >
+                {{ $t('general:label.add-with-plus') }}
+              </b-button>
+            </div>
+
+            <small
+              class="text-muted"
+            >
+              {{ $t('metric.editStyle.thresholds.description') }}
+            </small>
+          </template>
+
+          <b-row
+            v-for="(t, i) in options.colorThresholds"
+            :key="i"
+            align-v="center"
+            :class="{ 'mt-2': i }"
+          >
+            <b-col>
+              <b-form-input
+                v-model="t.value"
+                :placeholder="'Threshold'"
+                type="number"
+                number
+              />
+            </b-col>
+
+            <b-col
+              class="d-flex align-items-center justify-content-center"
+            >
+              <b-form-select
+                v-model="t.variant"
+                :options="variants"
+              />
+
+              <font-awesome-icon
+                :icon="['fas', 'times']"
+                class="pointer text-danger ml-3"
+                @click="removeThreshold(i)"
+              />
+            </b-col>
+          </b-row>
+        </b-form-group>
+      </b-col>
+
       <b-form-group
         :label="$t('metric.editStyle.labelColor')"
         label-class="text-primary"
@@ -109,10 +167,36 @@ export default {
       default: () => ({}),
     },
   },
+  data () {
+    return {
+      variants: [
+        { text: this.$t('general:variants.primary'), value: 'primary' },
+        { text: this.$t('general:variants.secondary'), value: 'secondary' },
+        { text: this.$t('general:variants.success'), value: 'success' },
+        { text: this.$t('general:variants.warning'), value: 'warning' },
+        { text: this.$t('general:variants.danger'), value: 'danger' },
+        { text: this.$t('general:variants.info'), value: 'info' },
+        { text: this.$t('general:variants.light'), value: 'light' },
+        { text: this.$t('general:variants.dark'), value: 'dark' },
+      ],
+    }
+  },
 
   computed: {
     themeSettings () {
       return this.$Settings.get('ui.studio.themes', [])
+    },
+  },
+
+  methods: {
+    addThreshold () {
+      this.options.colorThresholds.push({ value: 0, variant: 'success' })
+    },
+
+    removeThreshold (index) {
+      if (index > -1) {
+        this.options.colorThresholds.splice(index, 1)
+      }
     },
   },
 }

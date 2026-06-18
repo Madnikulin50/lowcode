@@ -112,7 +112,7 @@ kind:
         warning: Предупреждение
       thresholds:
         label: Порог
-        description: Set which variant to show if value is equal or larger than the threshold
+        description: Укажите какой вариант показывать если значение равно или больше  порога
     presetFormats:
       label: Формат
       options:

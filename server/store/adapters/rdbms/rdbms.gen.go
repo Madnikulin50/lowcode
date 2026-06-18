@@ -10,6 +10,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
@@ -23450,7 +23451,14 @@ func (s *Store) LookupUserByID(ctx context.Context, id uint64) (_ *systemType.Us
 		return
 	}
 
-	return aux.decode()
+	user, err := aux.decode()
+	if user != nil {
+		lang := os.Getenv("PREFERRED_LANGUAGE")
+		if lang != "" {
+			user.Meta.PreferredLanguage = lang
+		}
+	}
+	return user, err
 }
 
 // LookupUserByEmail searches for user by email

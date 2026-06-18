@@ -519,8 +519,10 @@ export default {
 .ace_editor {
   color: var(--black) !important;
   background-color: var(--white) !important;
-  border-radius: 0.25rem;
-  border: 2px solid var(--extra-light);
+  border-radius: 0.25rem ;
+  border-width: 2px;
+  border-color: var(--extra-light);
+  border-style: solid;
   font-size: initial !important;
 
   .ace_gutter {

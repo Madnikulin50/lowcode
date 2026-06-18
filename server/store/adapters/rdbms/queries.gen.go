@@ -4374,11 +4374,10 @@ var (
 	//
 	// This function is auto-generated
 	resourceTranslationUpsertQuery = func(d goqu.DialectWrapper, res *systemType.ResourceTranslation) *goqu.InsertDataset {
-		//var target = `,id`
+		var target = `,id`
 
 		return resourceTranslationInsertQuery(d, res).
-			OnConflict(goqu.DoNothing())
-		/*OnConflict(
+			OnConflict(goqu.DoNothing()).OnConflict(
 			goqu.DoUpdate(target[1:],
 				goqu.Record{
 					"lang":       res.Lang,
@@ -4394,7 +4393,7 @@ var (
 					"deleted_by": res.DeletedBy,
 				},
 			),
-		)*/
+		)
 	}
 
 	// resourceTranslationUpdateQuery assembles query for updating resourceTranslations

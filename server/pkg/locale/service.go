@@ -443,18 +443,19 @@ func (svc *service) TResourceFor(tag language.Tag, ns, key string, rr ...string)
 // The response is indexed by translation key for nicer lookups.
 func (svc *service) ResourceTranslations(tag language.Tag, resource string) ResourceTranslationIndex {
 	out := make(ResourceTranslationIndex)
+	if os.Getenv("LOCALE_RESOURCE_TRANSLATIONS_ENABLED") == "" {
+		return out
+	}
+	svc.l.Lock()
+	defer svc.l.Unlock()
+
+	if svc != nil && svc.set != nil {
+		if l, has := svc.set[tag]; has {
+			return l.resourceTranslations(resource)
+		}
+	}
 
 	return out
-	/*svc.l.Lock()
-	  defer svc.l.Unlock()
-
-	  if svc != nil && svc.set != nil {
-	  	if l, has := svc.set[tag]; has {
-	  		return l.resourceTranslations(resource)
-	  	}
-	  }
-
-	  return out*/
 }
 
 // Finds language and uses it to translate the given key

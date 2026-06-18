@@ -41,6 +41,7 @@
           <metric-item
             :metric="m"
             :options="options"
+            :theme-settings="themeSettings"
             :value="v"
           />
         </div>

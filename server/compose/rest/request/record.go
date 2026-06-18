@@ -8,14 +8,15 @@ package request
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/madnikulin50/lowcode/server/compose/types"
-	"github.com/madnikulin50/lowcode/server/pkg/payload"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/payload"
 )
 
 // dummy vars to prevent
@@ -302,7 +303,8 @@ type (
 		// RecordID PATH parameter
 		//
 		// Record ID
-		RecordID uint64 `json:",string"`
+		RecordID     uint64 `json:",string"`
+		RecordFilter string `json:",string"`
 	}
 
 	RecordUpdate struct {
@@ -1546,8 +1548,10 @@ func (r *RecordRead) Fill(req *http.Request) (err error) {
 
 		val = chi.URLParam(req, "recordID")
 		r.RecordID, err = payload.ParseUint64(val), nil
-		if err != nil {
-			return err
+		if r.RecordID == 0 {
+			if len(val) > 0 {
+				r.RecordFilter = val
+			}
 		}
 
 	}

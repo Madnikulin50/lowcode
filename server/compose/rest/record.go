@@ -520,8 +520,24 @@ func (ctrl *Record) Read(ctx context.Context, r *request.RecordRead) (interface{
 	if m, err = ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
 		return nil, err
 	}
+	var record *types.Record
+	var dd *types.RecordValueErrorSet
 
-	record, dd, err := ctrl.record.FindByID(ctx, r.NamespaceID, r.ModuleID, r.RecordID)
+	if len(r.RecordFilter) > 0 {
+		var set types.RecordSet
+		recordFilter := types.RecordFilter{}
+		recordFilter.ModuleID = r.ModuleID
+		recordFilter.NamespaceID = r.NamespaceID
+		recordFilter.Query = r.RecordFilter
+		recordFilter.Limit = 1
+		set, _, err = ctrl.record.Find(ctx, recordFilter)
+		if err == nil {
+			record = set[0]
+		}
+	} else {
+		record, dd, err = ctrl.record.FindByID(ctx, r.NamespaceID, r.ModuleID, r.RecordID)
+
+	}
 
 	// Temp workaround until we do proper by-module filtering for record findByID
 	if record != nil && record.ModuleID != r.ModuleID {

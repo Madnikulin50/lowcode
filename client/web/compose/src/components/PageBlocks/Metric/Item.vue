@@ -207,6 +207,26 @@ export default {
       })
     },
 
+    themeSettings () {
+      return this.$Settings.get('ui.studio.themes', [])
+    },
+
+    getColor (value) {
+      if (value[0] === '#') {
+        return value
+      }
+      const themes = this.themeSettings()
+        .filter((theme) => theme.id !== 'general') // remove general theme
+        .map((theme) => {
+          return {
+            id: theme.id,
+            values: JSON.parse(theme.values),
+          }
+        })
+
+      return themes[0].values[value] || value
+    },
+
     genStyle (s = {}, forLabel = false) {
       const d = {
         fill: forLabel ? (s.labelColor || s.color) : s.color,
@@ -214,13 +234,23 @@ export default {
         fontSize: s.fontSize ? s.fontSize + 'px' : undefined,
         color: forLabel ? (s.labelColor || s.color) : s.color,
       }
+      if (s.colorThresholds && forLabel === false) {
+        const value = this.value.value
+        const { variant } = [...s.colorThresholds].sort((a, b) => b.value - a.value).find(t => value >= t.value) || {}
+        if (variant !== undefined) {
+          d.color = variant
+          d.fill = variant
+        }
+      }
 
       for (const v of Object.keys(d)) {
         if (d[v] === undefined) {
           delete d[v]
         }
       }
-
+      d.color = this.getColor(d.color)
+      d.backgroundColor = this.getColor(d.backgroundColor)
+      d.fill = this.getColor(d.fill)
       return d
     },
 

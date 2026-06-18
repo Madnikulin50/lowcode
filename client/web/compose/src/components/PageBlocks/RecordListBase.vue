@@ -1291,10 +1291,15 @@ export default {
     // Tries to determine ID of the page we're supposed to redirect
     recordPageID () {
       // Relying on pages having unique moduleID,
-      const { moduleID } = this.recordListModule || {}
+      let { moduleID } = this.recordListModule || {}
       if (!moduleID) {
         return undefined
       }
+      const { recordDisplayTargetModuleID } = this.options || {}
+      if (recordDisplayTargetModuleID !== undefined && recordDisplayTargetModuleID !== '0') {
+        moduleID = recordDisplayTargetModuleID
+      }
+
 
       const { pageID } = this.pages.find(p => p.moduleID === moduleID) || {}
       if (!pageID) {
@@ -2192,12 +2197,23 @@ export default {
       this.processing = false
     },
 
-    handleRowClick ({ r: { recordID } }) {
+    handleRowClick (item) {
+      let { recordID } = item.r
+      const { values = {} } = item.r
+      if (this.options.recordDisplayListField) {
+        const paramId = values[this.options.recordDisplayListField]
+        if (paramId !== undefined) {
+          recordID = this.options.recordDisplayTargetModuleField + '=' + paramId
+        }
+      }
+
       if (this.options.recordDisplayOption === 'doNothing') {
         return
       }
 
-      if (this.inlineEditing || (!this.recordPageID && !this.options.rowViewUrl)) {
+      const pageID = this.recordPageID
+
+      if (this.inlineEditing || (!pageID && !this.options.rowViewUrl)) {
         return
       }
 
@@ -2213,13 +2229,13 @@ export default {
       if (this.options.recordDisplayOption === 'modal' || this.inModal) {
         this.$root.$emit('show-record-modal', {
           recordID,
-          recordPageID: this.recordPageID,
+          recordPageID: pageID,
           edit: this.options.openRecordInEditMode,
         })
         return
       }
 
-      const pageID = this.recordPageID
+
       const name = this.options.openRecordInEditMode ? this.options.rowEditUrl || 'page.record.edit' : this.options.rowViewUrl || 'page.record'
       const route = {
         name,

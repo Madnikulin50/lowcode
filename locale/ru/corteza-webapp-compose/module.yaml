@@ -278,7 +278,7 @@ import: Импорт модуля
 navigation:
   module: Модули
 noModule: Модули отсутствуют
-noModuleFilter: No module matches your search
+noModuleFilter: Нет модулей удовлетваряющих условию поиска
 
 list:
   columns:

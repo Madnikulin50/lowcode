@@ -55,6 +55,9 @@ export interface Options {
   allowExport: boolean;
   perPage: number;
   recordDisplayOption: string;
+  recordDisplayTargetModuleID: string;
+  recordDisplayTargetModuleField: string;
+  recordDisplayListField: string;
   recordSelectorDisplayOption: string;
   addRecordDisplayOption: string;
   magnifyOption: string;
@@ -127,6 +130,9 @@ const defaults: Readonly<Options> = Object.freeze({
   allowExport: true,
   perPage: 20,
   recordDisplayOption: 'sameTab',
+  recordDisplayTargetModuleID: NoID,
+  recordDisplayTargetModuleField: '',
+  recordDisplayListField: '',
   recordSelectorDisplayOption: 'sameTab',
   addRecordDisplayOption: 'sameTab',
   magnifyOption: '',
@@ -183,7 +189,7 @@ export class PageBlockRecordList extends PageBlock {
   applyOptions (o?: Partial<Options>): void {
     if (!o) return
 
-    Apply(this.options, o, CortezaID, 'moduleID')
+    Apply(this.options, o, CortezaID, 'moduleID', 'recordDisplayTargetModuleID')
 
     Apply(this.options, o, String,
       'prefilter',
@@ -192,6 +198,8 @@ export class PageBlockRecordList extends PageBlock {
       'positionField',
       'refField',
       'recordDisplayOption',
+      'recordDisplayTargetModuleField',
+      'recordDisplayListField',
       'magnifyOption',
       'recordSelectorDisplayOption',
       'addRecordDisplayOption',

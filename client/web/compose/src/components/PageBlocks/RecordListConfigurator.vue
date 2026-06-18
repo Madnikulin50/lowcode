@@ -692,7 +692,7 @@
               >
                 <b-form-select
                   v-model="options.recordDisplayOption"
-                  :options="recordDisplayOptions"
+                  :options="recordDisplayOptionsOnSelect"
                 />
               </b-form-group>
             </b-col>
@@ -709,6 +709,62 @@
                   v-model="options.recordSelectorDisplayOption"
                   :options="recordDisplayOptions"
                 />
+              </b-form-group>
+            </b-col>
+          </b-row>
+
+          <b-row
+            v-if="options.recordDisplayOption === 'sameTabSelectedModule'">
+            <b-col
+              cols="12"
+              lg="6"
+            >
+              <b-form-group
+                :label="$t('recordList.record.recordDisplayTargetModuleID')"
+                variant="primary"
+                label-class="text-primary"
+              >
+                <c-input-select
+                  v-model="options.recordDisplayTargetModuleID"
+                  :options="modules"
+                  label="name"
+                  :reduce="module => module.moduleID"
+                  :placeholder="$t('recordList.modulePlaceholder')"
+                  default-value="0"
+                  required
+                />
+              </b-form-group>
+            </b-col>
+            <b-col
+              cols="12"
+              lg="6"
+            >
+              <b-form-group
+                :label="$t('recordList.record.recordDisplayTargetModuleField')"
+                variant="primary"
+                label-class="text-primary"
+              >
+                <b-input-group>
+                  <b-form-input
+                    v-model="options.recordDisplayTargetModuleField"
+                  />
+                </b-input-group>
+              </b-form-group>
+            </b-col>
+            <b-col
+              cols="12"
+              lg="6"
+            >
+              <b-form-group
+                :label="$t('recordList.record.recordDisplayListField')"
+                variant="primary"
+                label-class="text-primary"
+              >
+                <b-input-group>
+                  <b-form-input
+                    v-model="options.recordDisplayListField"
+                  />
+                </b-input-group>
               </b-form-group>
             </b-col>
           </b-row>
@@ -1045,6 +1101,17 @@ export default {
         { value: 'doNothing', text: this.$t('recordList.record.doNothing') },
       ]
     },
+
+    recordDisplayOptionsOnSelect () {
+      return [
+        { value: 'sameTab', text: this.$t('recordList.record.openInSameTab') },
+        { value: 'sameTabSelectedModule', text: this.$t('recordList.record.openInSameTabSelectedModule') },
+        { value: 'newTab', text: this.$t('recordList.record.openInNewTab') },
+        { value: 'modal', text: this.$t('recordList.record.openInModal') },
+        { value: 'doNothing', text: this.$t('recordList.record.doNothing') },
+      ]
+    },
+
 
     recordCreateOptions () {
       return [

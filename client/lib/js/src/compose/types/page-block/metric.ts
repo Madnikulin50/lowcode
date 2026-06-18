@@ -20,8 +20,16 @@ interface ReporterParams {
   dimensions: string;
 }
 
+
+interface Threshold {
+    value: number;
+    variant: string;
+}
+
+
 interface Style {
   color: string;
+  colorThresholds:  Threshold[];
   backgroundColor: string;
   fontSize?: string;
 }
@@ -63,6 +71,7 @@ const defaultMetric: Readonly<Metric> = Object.freeze({
 
   valueStyle: {
     backgroundColor: '#FFFFFF00',
+    colorThresholds: [],
     color: '#000000',
     fontSize: undefined,
   },
