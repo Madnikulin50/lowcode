@@ -58,7 +58,7 @@ editor:
     auto-logout:
       title: Auto logout
       enabled:
-        label: Enabled
+        label: Включено
         description: Automatically log out users after a certain period of inactivity
       timeout:
         label: Timeout
@@ -70,19 +70,19 @@ editor:
 
     table:
       header:
-        enabled: Enabled
+        enabled: Включено
         provider: Provider
         info: Issuer, client ID
 
     standard:
-      enabled: Enabled
+      enabled: Включено
       apiAccess: Api access
       clientKey: Client key
       clientSecret: Secret
 
     oidc:
       add: Add an OIDC provider
-      enabled: Enabled
+      enabled: Включено
       handle: Дескриптор
       title: OpenID Connect
       issuer: OIDC Issuer URL
@@ -94,7 +94,7 @@ editor:
       scopeHint: Use space delimited string
 
     saml:
-      enabled: Enabled
+      enabled: Включено
       title: SAML
       requests:
         title: Requests

@@ -24,7 +24,7 @@
     redo: Redo
     save: Сохранить
     'hide-guides': Hide guides
-    'show-help': Show help
+    'show-help': Показывать help
     'reset-view-to-start-point': Сбросить view to starting point
     'select-all': Select all
     undo: Undo

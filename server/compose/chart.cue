@@ -114,6 +114,15 @@ chart: {
 				path: ["metrics", {part: "metricID", var: true}, "label"]
 				customHandler: true
 			}
+			reportsMetricPrefix: {
+				path: ["metrics", {part: "metricID", var: true}, "prefix"]
+				customHandler: true
+			}
+			reportsMetricSuffix: {
+				path: ["metrics", {part: "metricID", var: true}, "suffix"]
+				customHandler: true
+			}
+
 			reportsDimensionStepLabel: {
 				path: ["dimensions", {part: "dimensionID", var: true}, "meta", "steps", {part: "stepID", var: true}, "label"]
 				customHandler: true

@@ -59,8 +59,8 @@ ui:
     federation: Federation permissions
 
   clone:
-    clone: Clone
-    label: Clone permissions
+    clone: Клонировать
+    label: Клонировать permissions
     pick-role: Start typing to search for roles
     title: Apply permissions to
     description: This will clone all the permissions of the current role and apply them  to the selected
@@ -382,12 +382,12 @@ resources:
           title: Delete any user
         email.unmask:
           description: 'Default: deny'
-          specific: Show email details for {{target}}
-          title: Show email details for any user
+          specific: Показывать email details for {{target}}
+          title: Показывать email details for any user
         name.unmask:
           description: 'Default: deny'
-          specific: Show name details for {{target}}
-          title: Show name details for any user
+          specific: Показывать name details for {{target}}
+          title: Показывать name details for any user
         impersonate:
           description: 'Default: deny'
           specific: Impersonate this user {{target}}

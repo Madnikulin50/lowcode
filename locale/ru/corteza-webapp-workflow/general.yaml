@@ -1,6 +1,6 @@
 clear: Clear
 description: Описание
-enabled: Enabled
+enabled: Включено
 enable: Enable
 disable: Disable
 error: Ошибка
@@ -30,7 +30,7 @@ searchPlaceholder: Search workflows
 subworkflow: Subworkflow
 subworkflows: Subworkflows
 deleted: Удаленные
-disabled: Disabled
+disabled: Отключено
 without: Without
 only: Only
 including: Включая
@@ -79,4 +79,4 @@ themes:
 extendSession:
   labels:
     extend: Extend Session
-    warning: You will be logged out in {{ countdownTime }} seconds
+    warning: You will be logged out in {{ countdownTime }} секунд

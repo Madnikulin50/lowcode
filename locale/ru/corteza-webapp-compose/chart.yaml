@@ -33,7 +33,7 @@ edit:
     defaultValueFootnote: Use this value for missing dimension values
     defaultValueLabel: Значение по-умолчанию
     fieldLabel: Поле *
-    fieldPlaceholder: Select a dimension field
+    fieldPlaceholder: Выберите поле метрики
     function:
       placeholder: Select dimension modifier (bucket size)
       none: No grouping
@@ -44,7 +44,7 @@ edit:
       quarter: Квартал
       week: Неделя
       year: Год
-    gaugeSteps: Steps
+    gaugeSteps: Шаги
     label: Dimensions
     skipMissingValues: Пропускать отсутсвующие значения
     timeLabels: Метки времени
@@ -56,15 +56,15 @@ edit:
       selectAllItems: Выбрать все
       selectedItems: Selected options
       unselectAllItems: Снять выделение
-      noItemsFound: No options found
+      noItemsFound: Свойства не найдены
     rotate:
       label: Повернуть метки
       description: Метки могут быть повернуты от -90 до 90 градусов.
   filter:
-    customize: Customize filter
+    customize: Изменить фильтр
     label: Фильтр
     preset: Предустановленные фильтры
-    footnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
+    footnote: Упрощенное SQL-условие (WHERE ...) синтаксис не поддерживается. Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно
     placeholder: field1 = 1 AND field2 = 232
     noFilter: Выберите фильтр
     recordsCreatedLastMonth: Записи созданные за последний месяц
@@ -205,7 +205,7 @@ edit:
       label: Всплывающая посказка
       labelNextToChart: Показывть метки за диаграммой
       formatting:
-        label: Custom formatting
+        label: Пользовательский формат вывода
         description: '{a} - метка  метрики, {b} - dimension value, {c} - значение метрики, {d} - значение метрики percentage'
         placeholder: '{a}<br />{b} : {c} ({d}%)'
         disclaimer: Adding a value to the formatting field will disable the fields number format, prefix, and suffix and vice versa

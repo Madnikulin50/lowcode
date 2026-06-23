@@ -3,8 +3,8 @@ selector:
     placeholder: Blocks from other layouts
   tooltip:
     clone:
-      ref: Clone with references
-      noRef: Clone without references
+      ref: Клонировать with references
+      noRef: Клонировать without references
 automation:
   addPlaceholderLabel: Добавить placeholder (dummy button)
   availableScriptsAndWorkflow: Available scripts and workflows ({{count}})
@@ -51,7 +51,7 @@ calendar:
   colorPicker: Выберите цвет
   colorLabel: Event color
   recordFeed:
-    eventAllDay: Show as all-day-events
+    eventAllDay: Показывать as all-day-events
     eventEndFieldLabel: Event end
     eventEndFieldPlaceholder: Event will last 1 hour
     eventStartFieldLabel: Event start
@@ -69,15 +69,15 @@ calendar:
   view:
     dayGridMonth: Месяц
     default: Default view
-    enabled: Enabled views
+    enabled: Включено views
     footnote: Make sure default is one of the available views
     listMonth: Agenda
     timeGridDay: Day
     timeGridWeek: Неделя
     onEventClick: On event click
     openInSameTab: Открыть на текущей закладке
-    openInNewTab: Open record in a new tab
-    openInModal: Open record in a modal
+    openInNewTab: Открыть запись в новой закладке
+    openInModal: Открыть запись в сплывающем окне
   viewLabel: Calendar
 chart:
   add: New Диаграмма
@@ -152,9 +152,9 @@ file:
     label: Файл block
 general:
   descriptionLabel: Описание
-  descriptionPlaceholder: Блок description
-  headerStyle: Блок header style (color)
-  magnifyLabel: Блок Magnification
+  descriptionPlaceholder: Описание блока
+  headerStyle: Цвет заголовка
+  magnifyLabel: Кнопка увеличения
   customID:
     label: Custom ID
     placeholder: customID
@@ -166,34 +166,34 @@ general:
     description: Used to reference the block in Пользовательский CSS (.custom-class)
     invalid-state: Can contain only letters, numbers, underscores and dashes. Must end with letter or number. Use spaces to separate multiple classes
   visibility:
-    label: Visibility
+    label: Видимость
     roles:
       label: Роли
       placeholder: Pick roles that the block will be shown to
     condition:
-      label: Condition
+      label: Условие
       placeholder: When will the block be shown
       description:
-        record-page: "You can use {{0}}, {{1}}, {{2}}, {{3}} inside  the expression, for example: {{4}} or {{5}}"
-        non-record-page: "You can use {{0}}, {{1}} inside  the expression, for example: {{2}} or {{3}}"
+        record-page: "Вы можете использовать {{0}}, {{1}}, {{2}}, {{3}} inside  the expression, for example: {{4}} or {{5}}"
+        non-record-page: "Вы можете использовать {{0}}, {{1}} inside  the expression, for example: {{2}} or {{3}}"
     tooltip:
       performance:
         condition: Using visibility conditions will impact performance
   magnifyOptions:
-    disabled: Disabled
-    modal: Modal
-    fullscreen: Fullscreen
-  wrap: Display block as a card
+    disabled: Отключено
+    modal: Всплывающее окно
+    fullscreen: Полный экран
+  wrap: Показывать блок как карточку
   hidden:
     label: Скрытий
   refresh:
     label: Refresh
-    auto: Auto refresh
-    show: Show refresh button
-    description: Setting value to 5 seconds or more enables auto-refresh
-    rate: seconds
+    auto: Автоматическое обновление
+    show: Показывать кнопку обновить
+    description: Setting value to 5 секунд or more enables auto-refresh
+    rate: секунд
   border:
-    show: Show border
+    show: Показывать границу
   label:
     add: Добавить
     back: Назад
@@ -208,8 +208,8 @@ general:
     save: Сохранить
     cancel: Отменить
     search: Поиск
-    refresh: Refresh block
-    magnify: Magnify block
+    refresh: Обновить блок
+    magnify: Увеличение блока
     and: And
   module: Модуль
   style:
@@ -221,7 +221,7 @@ general:
     warning: Предупреждение вариант
   title: Добавить новый блок
   titleLabel: Заголовок
-  titlePlaceholder: Блок title
+  titlePlaceholder: Заголовок блока
   tooltip:
     dragAndDrop: Переместите для изменения порядка
     translations: Поле translations
@@ -248,15 +248,15 @@ metric:
     dimensionFieldPlaceholder: Поле измерения
     dimensionLabel: Измерение
     filterLabel: Фильтр
-    filterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
-    transformFootnote: Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available). Make sure to wrap the variables with quotes ("")
+    filterFootnote: Упрощенное SQL-условие (WHERE ...) синтаксис не поддерживается. Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно
+    transformFootnote: Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно. Переменные должны быть заключены в двойные кавычки
     labelLabel: Метка
     labelPlaceholder: Метка
     metricFieldLabel: Поле
     metricFieldPlaceholder: Поле измерения
     metricLabel: Метрика
     metricFieldSelect: Выберите поле
-    metricSelectAggregate: Select aggregation operation
+    metricSelectAggregate: Выберите операцию для агрегации
     expressionFieldLabel: Формула для вычисления
     expressionPlaceholder: count(id) / A
     metricAggregateLabel: Операция для агрегации
@@ -269,7 +269,7 @@ metric:
     operationMax: Максимум
     operationMin: Минимум
     operationPlaceholder: Операция для агрегации
-    operationStd: Std
+    operationStd: Среднеквадратичное отклонение
     operationSum: Сумма
     prefixLabel: Префикс
     refreshData: Обновить данные
@@ -326,15 +326,15 @@ record:
   recordDeleted: Эта запись удалена
   recordSelectorDisplayOptions: When clicking on record field value
   openInSameTab: Открыть на текущей закладке
-  openInNewTab: Open record in a new tab
-  openInModal: Open record in a modal
+  openInNewTab: Открыть запись в новой закладке
+  openInModal: Открыть запись в сплывающем окне
   fieldConditions:
     label: Conditional fields
     action: + Добавить
     placeholder: When should this field be displayed?
     selectPlaceholder: Выберите поле
     field: Поле
-    condition: Condition
+    condition: Условие
     clearOnHide: Clear On Hide
     clearOnHideTooltip: Automatically clear this field's value when it becomes hidden
     clearAllOnHide: Clear all conditional fields when hidden
@@ -387,10 +387,10 @@ recordList:
     restoreSelected: Restore selected records
   editFields: Editable module fields
   export:
-    all: Экспорт all records
-    allow: Users will be able to export records
+    all: Экспорт всех записей
+    allow: Пользователям разрешено экспортировать записи
     csv: CSV Экспорт
-    dateRange: Select date range
+    dateRange: Выберите диапозон данных
     multiValueDelimiter:
       label: Разделитель значений
 
@@ -412,7 +412,7 @@ recordList:
     filter:
       label: Фильтр записей
       placeholder: field1 = 1 AND field2 = 232
-      footnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
+      footnote: Упрощенное SQL-условие (WHERE ...) синтаксис не поддерживается. Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно
       createdAt: Запись создана
       custom: Пользовательский
       lastMonth: Последний месяц
@@ -500,7 +500,7 @@ recordList:
   hideRecordViewButton: Скрывать кнопку просмотра записи
   hideRecordDeleteButton: Скрывать кнопку удаления записи
   hideConfigureFieldsButton: Users will be able to configure which fields to display
-  enableRecordPageNavigation: Users will be able to navigate to previous/next record
+  enableRecordPageNavigation: Пользователям разрешена навигация предудущая/следующая запись
   import:
     dropzoneFileAdded: "{{name}} загружено и готово к импорту ({{count}} строк)"
     dropzoneFileAdded_plural: "{{name}} загружено и готово к импорту ({{count}} строк)"
@@ -550,7 +550,7 @@ recordList:
   label: Список записей
   modulePlaceholder: Выберите модуль
   moduleFootnote: Модули without a {{0}} can only be used in a record list as an inline editor
-  moduleFieldsFootnote: If no fields are selected, the default fields will be shown
+  moduleFieldsFootnote: Если поля не выбраны-отображаются поля по-умолчанию
   noRecords: There are no records matching your request
   pagination:
     next: Следующая
@@ -560,11 +560,11 @@ recordList:
     single: Единственная страница
     single_other: "{{count}} строк"
     recordsPerPage: На страницу
-    selectLabel: Select an option
+    selectLabel: Выберите опцию
   positionField:
-    footnote: Records will be sorted based on this field
+    footnote: Записи сортируются на основе этого поля
     placeholder: Поле that will hold the record position
-    label: Record sort field
+    label: Сортировка по полю
   preview:
     addRecordButton: Добавить кнопку записи
     bePaged: "{{0}} страниц."
@@ -586,73 +586,73 @@ recordList:
     withPresortedRecords: with presorted ({{0}}) record
   record:
     draggable: Можете перемещать поля для определения их порядка
-    editMode: Open records in edit mode by default
-    fullPageNavigation: Full page navigation
-    hideAddButton: Users will be able to add new records
-    hideImportButton: Users will be able to import records
+    editMode: Открывать  записи в режиме редактирования
+    fullPageNavigation: Управление страницами вперед-назад
+    hideAddButton: Пользователям разрешено добавлять записи
+    hideImportButton: Пользователям разрешено импортировать записи
     pagingLabel: Paging
     pagingOptions: Paging Options
     moreOptions: More Options
     hidePaging: User will be able to navigate through pages
     inlineEditor: Inline Options
-    inlineEditorAllow: Inline record editor
+    inlineEditorAllow: Редактирование записи по месту
     recordsLabel: Записи
     noPermission: No permission to read record
     perPage: Строк на странице
-    prefilterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
+    prefilterFootnote: Упрощенное SQL-условие (WHERE ...) синтаксис не поддерживается. Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно
     prefilterHideSearch: Users will be able to search the record list
     filterHide: Users will be able to filter the list
     prefilterLabel: Идет фильтрация
     generalLabel: Основные настройки
     prefilterCommand: Предварительный фильтр
     prefilterPlaceholder: field1 = 1 AND field2 = 232
-    presortFootnote: Simplified SQL condition (ORDER BY ...) syntax is supported
+    presortFootnote: Упрощенное SQL-условие (ORDER BY ...) syntax is supported
     presortToggleInput: Переключить тип ввода
     presortHideSort: Users will be able to sort the list
     presortLabel: Сортировка
     presortInputLabel: Presort
     presortPlaceholder: field1 DESC, field2 ASC
-    showTotalCount: Show total record count
+    showTotalCount: Показывать общее количество записей
     showRecordPerPageOption: User will be able to select records per page
-    showDeletedRecordsOption: Show option to see deleted records
+    showDeletedRecordsOption: Показывать кнопку просмотра удаленных записей
     setCustomFilterPresets: User will be able to set custom filter presets
-    searchableFields: Searchable fields
+    searchableFields: Поля для поиска
     searchableFieldsFootnote: If no fields are selected, the search will be performed on all available visible fields
-    configureSearchableFields: Select fields that will be used for search
+    configureSearchableFields: Выберите поля используемые для поиска
     openInSameTab: Открыть на текущей закладке
     openInSameTabSelectedModule: Открыть на текущей закладке другой модуль
     recordDisplayTargetModuleID: Открываемый модуль
     recordDisplayTargetModuleField: Поле в открываемом модуле
     recordDisplayListField: Поле в текущем модуле
-    openInNewTab: Open record in a new tab
-    openInModal: Open record in a modal
-    doNothing: Do nothing
-    createInSameTab: Create record in the same tab
-    createInNewTab: Create record in a new tab
-    createInModal: Create record in a modal
-    enableBulkRecordEdit: Enable bulk record edit
+    openInNewTab: Открыть запись в новой закладке
+    openInModal: Открыть запись в сплывающем окне
+    doNothing: Ничего не делать
+    createInSameTab: Создать запись в текущей вкладке
+    createInNewTab: Создать запись в новой вкладке
+    createInModal: Создать запись во всплывающем окне
+    enableBulkRecordEdit: Включить массовое редактирование полей
     buttons: Кнопки записи
     tooltip:
-      clone: Clone
+      clone: Клонировать
       edit: Изменить
       delete: Удалить
-      restore: Restore
+      restore: Восстановить
       reminder: Reminder
       view: Просмотр
       permissions: Права доступа
     recordDisplayOptions: При клике на запись
-    recordSelectorDisplayOptions: On record value click
-    addRecordOptions: On add record click
-    textStyles: Text Styles
-    configureWrappedFields: Select fields that will be wrapped
+    recordSelectorDisplayOptions: При клике на значение
+    addRecordOptions: При клике на кнопку "Добавить"
+    textStyles: Стили текста
+    configureWrappedFields: Выберите поля которые могут быть свернуты
   recordPage: Страница записи
   refField:
     footnote: Поле that links records with the parent record
-    label: Parent field
-  selectable: Users will be able to select records
-  selected: "{{count}} из {{total}} строк selected"
-  selectedFromAllPages: "Все {{count}} строк from all pages selected"
-  selectAllRecords: Выбрать все records on all pages
+    label: Родительское поле
+  selectable: Пользователи могут выбирать записи
+  selected: "{{count}} из {{total}} строк выбрано"
+  selectedFromAllPages: "Все {{count}} строк выбрано со всех страниц"
+  selectAllRecords: Выбрать все записи на всех страницах
   unselectAllRecords: Сбросить выбор
   sort:
     tooltip: Сортировать по колонке
@@ -670,13 +670,13 @@ recordList:
     param:
       label:
         label: Метка
-        placeholder: Summary Метка
+        placeholder: Метка сводки
       field:
         label: Поле
         placeholder: Поле модуля
       metric:
         label: Метрика
-        placeholder: Summary Metric
+        placeholder: Метрика сводки
       role:
         label: Роль
         placeholder: Roles that will be able to see the summary
@@ -710,17 +710,17 @@ recordOrganizer:
     label: Значение ключа
   groupField:
     footnote: Поле whose value will change when a record is moved into the record organizer
-    label: Key field
+    label: Ключевое поле
   label: Организация записей
   labelField:
-    footnote: Поле value will be used as record label
+    footnote: Значение поля используется как метка записи
     label: Метка полей
   noRecords: No records in module linked with record organizer. Drag and drop records here.
   notConfigured: Организация записей is not configured correctly
   positionField:
-    footnote: Records will be sorted based on this field. That field value will be updated based on the position of the record.
+    footnote: Записи сортируются на основе этого поля. That field value will be updated based on the position of the record.
     placeholder: Поле that will hold the record position
-    label: Record sort field
+    label: Сортировка по полю
   preview:
     label: "Record Organizer block for module {{0}}. Метка полей {{1}}, Описание поля {{2}}. Значение setting field: {{3}}, Sorted by position field: {{4}}."
     moduleNotSelected: Record Organizer module not selected
@@ -732,10 +732,10 @@ recordRevisions:
   viewer:
     errors:
       no-record: No record found to display revisions for
-      no-revisions: No record revisions found
-      disabled-on-module: Ревизии записи are disabled on this module
+      no-revisions: Ревизии записи не найдено
+      disabled-on-module: Ревизии записи отключены для этого модуля
 
-    show-revisions: Show record revisions ({{ revision }})
+    show-revisions: Показывать ревизии записей ({{ revision }})
     show-changes: "{{ count }} изменения(-й)"
 
     operations:
@@ -764,7 +764,7 @@ recordRevisions:
 
   configurator:
     label: Ревизии записи
-    preload: Preload record revisions
+    preload: Загружать ревизии записей
     sortDirection:
       label: Направление сортировки
       footnote: Sort revisions by when they were created
@@ -773,7 +773,7 @@ recordRevisions:
     errors:
       invalid-module-id: Поле does not contain a valid module ID.
     fields:
-      label: Поля to display in record revisions changes
+      label: Поля для просмотра измененных ревизий записей changes
 
 socialFeed:
   label: Twitter feed
@@ -839,30 +839,30 @@ comment:
 navigation:
   chart: Диаграммы
   colorPicker: Выберите цвет
-  noNavigationItems: No navigation item configured
+  noNavigationItems: Навигация не сконфигурирована
   label: Navigation
   displayOptions: Параметры отображения
   appearance: Appearance
   alignment: Alignment
   justify: Justify
   fieldLabel: Метка
-  enabled: Enabled
+  enabled: Включено
   openIn: Открыть в
   navigationItems: Navigation items
   type: Тип
-  disabled: Disabled
+  disabled: Отключено
   color: Цвет
   background: Фон
   url: URL
   drop: Dropdown position
-  add: Добавить navigation item
-  addDropdown: Добавить dropdown item
+  add: Добавить навигационный элемент
+  addDropdown: Добавить элемент списка
   composePage: Compose page
-  pageLayout: Page Layout
-  defaultLayout: Default Layout
+  pageLayout: Раскладка страницы
+  defaultLayout: Раскладка по умолчанию
   unnamedLayout: Unnamed Layout
   tabs: Закладки
-  pills: Pills
+  pills: Пилюли
   small: Маленький
   center: Центр
   left: Лево
@@ -878,7 +878,7 @@ navigation:
   text: Текст
   dropdown: Dropdown
   multi: Многострочный
-  sameTab: Same tab
+  sameTab: Новой вкладке
   selectOpenInType: Select open in type
   newTab: New tab
   dropdownItems: Dropdown items
@@ -904,7 +904,7 @@ progress:
   count: Количество
   aggregate:
     label: Операция для агрегации
-    select: Select aggregation operation
+    select: Выберите операцию для агрегации
   animated: Анимированное
   default-variant: Вариант по-умолчанию
   display-options: Параметры отображения
@@ -1040,4 +1040,4 @@ tabs:
     addBlock: Добавить новый блок
 
 noConfiguration: Блок not configured correctly
-interpolationFootnote: Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
+interpolationFootnote: Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно

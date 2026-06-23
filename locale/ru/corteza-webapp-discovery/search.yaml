@@ -2,7 +2,7 @@ notification:
   search-error: There was problem getting search result
 input-placeholder: Enter search query
 card:
-  button-text: Show more
+  button-text: Показывать more
   type: Type
   handle: Дескриптор
   namespace: Пространство
@@ -14,7 +14,7 @@ card:
 range: Showing {{actual}} из {{all}} results
 discovering: Discovering
 no-results: Ничего не найдено
-show-more: Show more
+show-more: Показывать more
 loading-more: Loading more
-show-map: Show map
+show-map: Показывать map
 hide-map: Hide map

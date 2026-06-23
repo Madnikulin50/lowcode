@@ -27,7 +27,7 @@ list:
   columns:
     endpoint: Endpoint
     createdAt: Создано
-    enabled: Enabled
+    enabled: Включено
     method: Method
     actions: ''
     state: State
@@ -39,8 +39,8 @@ settings:
   title: Настройки
   profiler:
     label: Profiler
-    enabled: Enabled
-    global: Enabled globally
+    enabled: Включено
+    global: Включено globally
   proxy:
     label: Proxy
     follow: Follow redirects
@@ -57,7 +57,7 @@ editor:
     endpoint: Endpoint
     method: Method
     description: Описание
-    enabled: Enabled
+    enabled: Включено
 
     delete: Delete
     undelete: Undelete
@@ -76,8 +76,8 @@ editor:
 
   filters:
     title: Фильтр list
-    enabled: Enabled
-    disabled: Disabled
+    enabled: Включено
+    disabled: Отключено
     add: Add
     addFilter: Add filter
     addHeader: Add header

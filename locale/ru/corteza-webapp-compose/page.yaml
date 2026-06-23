@@ -4,45 +4,45 @@ page-layout:
   handle: Дескриптор
   add: Добавить layout
   configure: 'Configure layout - "{{title}}"'
-  visibility: Visibility
+  visibility: Видимость
   general: Основные
-  useTitle: Use layout title
+  useTitle: Использовать заголовок раскладки
   tooltip:
-    title: Use the layout title instead of the record page default. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
+    title: Use the layout title instead of the record page default. Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно
     configure: Configure layout
     builder: Open layout in builder
     performance:
       condition: Using visibility conditions will impact performance
       requiredFields: Using required fields will impact performance
   condition:
-    label: Condition
+    label: Условие
     placeholder: When will the layout be shown
     description:
-      record-page: "You can use {{0}}, {{1}}, {{2}}, {{3}} inside  the expression, for example: {{4}} or {{5}}"
-      non-record-page: "You can use {{0}}, {{1}} inside  the expression, for example: {{2}} or {{3}}"
+      record-page: "Вы можете использовать {{0}}, {{1}}, {{2}}, {{3}} inside  the expression, for example: {{4}} or {{5}}"
+      non-record-page: "Вы можете использовать {{0}}, {{1}} inside  the expression, for example: {{2}} or {{3}}"
   roles:
     label: Роли
     placeholder: Pick roles that the layout will be shown to
   recordToolbar:
-    label: Record toolbar
+    label: Панель инструментов записи
     buttons:
       label: Кнопки
-      showBack: Show "Назад" button
-      showDelete: Show "Удалить" button
-      showClone: Show "Сохранить копию" button
-      showNew: Show "Добавить новый" button
-      showEdit: Show "Изменить" button
-      showSave: Show "Сохранить" button
+      showBack: Показывать кнопку "Назад"
+      showDelete: Показывать кнопку "Удалить"
+      showClone: Показывать кнопку "Сохранить копию"
+      showNew: Показывать кнопку "Добавить новый"
+      showEdit: Показывать кнопку "Изменить"
+      showSave: Показывать кнопку "Сохранить"
     actions:
       label: Действия
-      add: Добавить action
+      add: Добавить действие
       buttonLabel: Метка
       variant: Variant
       visible: Видимый
       kind:
         label: Тип
-        toLayout: Redirect to layout
-        toURL: Redirect to URL
+        toLayout: Переключить на раскладку
+        toURL: Перенаправление на URL
       placement:
         label: Placement
         start: Start
@@ -50,28 +50,28 @@ page-layout:
         end: End
       openIn:
         label: Открыть в
-        sameTab: Same tab
+        sameTab: Новой вкладке
         newTab: New tab
       toLayout:
-        label: Redirect to layout
-        placeholder: No layout selected
+        label: Переключить на раскладку
+        placeholder: Раскладка не выбрана
       toURL:
-        label: Redirect to URL
-        placeholder: No URL specified
+        label: Перенаправление на URL
+        placeholder: URL не задан
   requiredFields:
-    label: Обязательное поле fields
+    label: Обязательные поля
     description: Define fields that should be required based on a condition
     field: Поле
-    condition: Condition
-    selectPlaceholder: Select a field
-    conditionPlaceholder: If no condition is set, the field will be required
-    help: "You can use {{0}}, {{1}}, {{2}} inside the expression to define when a field should be required"
+    condition: Условие
+    selectPlaceholder: Выберите поле
+    conditionPlaceholder: Если условие не задано, то поле не обязательно
+    help: "Вы можете использовать {{0}}, {{1}}, {{2}} inside the expression to define when a field should be required"
 
 block:
   general:
     label:
       cancel: Отменить
-      noHandle: No handle
+      noHandle: Задайте дескриптор
       pageBuilder: Конструктор страниц
       saveAndClose: Сохранить и закрыть
     placeholder:
@@ -80,7 +80,7 @@ block:
     title: Добавить новый блок
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
 changeBlock: Изменить существующий блок
-referencedBlock: This block is used in other layouts
+referencedBlock: Этот блок используется в другой раскладке
 copyOf: "Копия {{title}}"
 build:
   addBlock: Добавить блок
@@ -95,7 +95,7 @@ edit:
   pageDescription: Описание страницу
   visible: Отображать страницу
   notifications:
-    enabled: Show record save notifications
+    enabled: Показывать предупреждение о сохранении записи
 icon:
   configure: Настроить иконку страницу
   noIcon: Иконка не загружена

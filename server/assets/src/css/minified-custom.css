@@ -1972,25 +1972,25 @@ a[data-color-mode=dark] .badge-extra-light.focus {
 }
 
 [data-color-mode=dark] .bg-warning {
-  background-color: #E27646 !important
+  background-color:  var(--warning) !important
 }
 
 [data-color-mode=dark] a.bg-warning:hover,
 [data-color-mode=dark] a.bg-warning:focus,
 [data-color-mode=dark] button.bg-warning:hover,
 [data-color-mode=dark] button.bg-warning:focus {
-  background-color: rgb(211.7990654206, 88.1542056075, 33.2009345794) !important
+  background-color: var(--warning) !important
 }
 
 [data-color-mode=dark] .bg-danger {
-  background-color: #e74a3b !important
+  background-color: var(--danger) !important
 }
 
 [data-color-mode=dark] a.bg-danger:hover,
 [data-color-mode=dark] a.bg-danger:focus,
 [data-color-mode=dark] button.bg-danger:hover,
 [data-color-mode=dark] button.bg-danger:focus {
-  background-color: rgb(189.6842105263, 48.9230769231, 22.3157894737) !important
+  background-color: var(--danger) !important
 }
 
 [data-color-mode=dark] .bg-light {
@@ -12213,25 +12213,25 @@ button.bg-info:focus {
 }
 
 .bg-warning {
-  background-color: #E27646 !important
+  background-color: var(--warning) !important
 }
 
 a.bg-warning:hover,
 a.bg-warning:focus,
 button.bg-warning:hover,
 button.bg-warning:focus {
-  background-color: rgb(211.7990654206, 88.1542056075, 33.2009345794) !important
+  background-color: var(--warning) !important
 }
 
 .bg-danger {
-  background-color: #e74a3b !important
+  background-color: var(--danger) !important
 }
 
 a.bg-danger:hover,
 a.bg-danger:focus,
 button.bg-danger:hover,
 button.bg-danger:focus {
-  background-color: rgb(189.6842105263, 48.9230769231, 22.3157894737) !important
+  background-color: var(--danger) !important
 }
 
 .bg-light {
@@ -12354,15 +12354,15 @@ button.bg-extra-light:focus {
 }
 
 .border-warning {
-  border-color: #E27646 !important
+  border-color: var(--warning) !important
 }
 
 .border-danger {
-  border-color: #e74a3b !important
+  border-color: var(--danger) !important
 }
 
 .border-light {
-  border-color: #F3F5F7 !important
+  border-color: var(--light) !important
 }
 
 .border-dark {

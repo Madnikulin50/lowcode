@@ -4,7 +4,7 @@ editor:
     createdBy: Создал
     delete: Delete
     deletedAt: Время удаления
-    enabled: Enabled
+    enabled: Включено
     id: ID
     name: Имя *
     title: Basic information
@@ -37,7 +37,7 @@ list:
   columns:
     actions: ""
     createdAt: Создано
-    enabled: Enabled
+    enabled: Включено
     name: Имя
     appListName: App selector name
     state: State

@@ -7,7 +7,7 @@ delete: Delete
 deleted: Удаленные
 'detected-changes': "Changes detected "
 'detected-issues': Issues detected
-disabled: Disabled
+disabled: Отключено
 help: Справка
 handle: (Дескриптор)
 id: "ID:"

@@ -182,6 +182,7 @@ func (p *Page) decodeTranslations(tt locale.ResourceTranslationIndex) {
 		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDTitle.Path)); aux != nil {
 			p.Blocks[i].Title = aux.Msg
 		}
+
 		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDDescription.Path)); aux != nil {
 			p.Blocks[i].Description = aux.Msg
 		}
@@ -200,6 +201,10 @@ func (p *Page) decodeTranslations(tt locale.ResourceTranslationIndex) {
 			if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDContentBody.Path)); aux != nil {
 				block.Options["body"] = aux.Msg
 			}
+		case "Metric":
+
+			bb, _ := block.Options["metrics"].([]interface{})
+			p.decodeMetrics(tt, bb, blockID)
 		}
 	}
 }
@@ -207,8 +212,8 @@ func (p *Page) decodeTranslations(tt locale.ResourceTranslationIndex) {
 func (p *Page) decodeRecordListButtons(tt locale.ResourceTranslationIndex, bb []interface{}, blockID uint64) {
 	var aux *locale.ResourceTranslation
 
-	for j, auxBtn := range bb {
-		btn := auxBtn.(map[string]interface{})
+	for j, metric := range bb {
+		btn := metric.(map[string]interface{})
 
 		buttonID := uint64(0)
 		if aux, ok := btn["buttonID"]; ok {
@@ -223,6 +228,37 @@ func (p *Page) decodeRecordListButtons(tt locale.ResourceTranslationIndex, bb []
 
 		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDButtonButtonIDLabel.Path)); aux != nil {
 			btn["label"] = aux.Msg
+		}
+	}
+}
+
+func (p *Page) decodeMetrics(tt locale.ResourceTranslationIndex, bb []interface{}, blockID uint64) {
+	var aux *locale.ResourceTranslation
+
+	for j, auxBtn := range bb {
+		btn := auxBtn.(map[string]interface{})
+
+		metricID := uint64(0)
+		if aux, ok := btn["metricID"]; ok {
+			metricID = cast.ToUint64(aux)
+		} else {
+			metricID = uint64(j)
+		}
+		metricID = locale.ContentID(metricID, j)
+
+		rpl := strings.NewReplacer(
+			"{{blockID}}", strconv.FormatUint(blockID, 10),
+			"{{metricID}}", strconv.FormatUint(metricID, 10),
+		)
+
+		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDMetricsMetricIDLabel.Path)); aux != nil {
+			btn["label"] = aux.Msg
+		}
+		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDMetricsMetricIDPrefix.Path)); aux != nil {
+			btn["prefix"] = aux.Msg
+		}
+		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDMetricsMetricIDSuffix.Path)); aux != nil {
+			btn["suffix"] = aux.Msg
 		}
 	}
 }
@@ -260,6 +296,10 @@ func (p *Page) encodeTranslations() (out locale.ResourceTranslationSet) {
 			bb, _ := block.Options["buttons"].([]interface{})
 			out = append(out, p.encodeRecordListButtons(bb, blockID)...)
 
+		case "Metric":
+			bb, _ := block.Options["metrics"].([]interface{})
+			out = append(out, p.encodeMetrics(bb, blockID)...)
+
 		case "RecordList":
 			bb, _ := block.Options["selectionButtons"].([]interface{})
 			out = append(out, p.encodeRecordListButtons(bb, blockID)...)
@@ -278,6 +318,36 @@ func (p *Page) encodeTranslations() (out locale.ResourceTranslationSet) {
 }
 
 func (p *Page) encodeRecordListButtons(bb []interface{}, blockID uint64) (out locale.ResourceTranslationSet) {
+	for j, auxBtn := range bb {
+		btn := auxBtn.(map[string]interface{})
+
+		if _, ok := btn["label"]; !ok {
+			continue
+		}
+
+		buttonID := uint64(0)
+		if aux, ok := btn["buttonID"]; ok {
+			buttonID = cast.ToUint64(aux)
+		}
+		buttonID = locale.ContentID(buttonID, j)
+
+		rpl := strings.NewReplacer(
+			"{{blockID}}", strconv.FormatUint(blockID, 10),
+			"{{buttonID}}", strconv.FormatUint(buttonID, 10),
+		)
+
+		out = append(out, &locale.ResourceTranslation{
+			Resource: p.ResourceTranslation(),
+			Key:      rpl.Replace(LocaleKeyPagePageBlockBlockIDButtonButtonIDLabel.Path),
+			Msg:      btn["label"].(string),
+		})
+
+	}
+
+	return
+}
+
+func (p *Page) encodeMetrics(bb []interface{}, blockID uint64) (out locale.ResourceTranslationSet) {
 	for j, auxBtn := range bb {
 		btn := auxBtn.(map[string]interface{})
 

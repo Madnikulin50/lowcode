@@ -15,7 +15,7 @@ editor:
     delete: Delete
     deletedAt: Время удаления
     email: Admin Почтовый адрес
-    enabled: Enabled
+    enabled: Включено
     name: Server name *
     status: Статус
     tags:
@@ -32,7 +32,7 @@ list:
   columns:
     actions: ""
     createdAt: Создано
-    enabled: Enabled
+    enabled: Включено
     name: Имя
     status: Статус
     tags: ""

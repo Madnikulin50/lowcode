@@ -99,11 +99,29 @@ func (c Chart) decodeTranslations(tt locale.ResourceTranslationIndex) {
 			mpl := strings.NewReplacer("{{metricID}}", metricID)
 
 			aux = tt.FindByKey(mpl.Replace(LocaleKeyChartMetricsMetricIDLabel.Path))
-			if aux == nil {
-				return
+			if aux != nil {
+				metric["label"] = aux.Msg
+			}
+			aux = tt.FindByKey(mpl.Replace(LocaleKeyChartMetricsMetricIDPrefix.Path))
+			if aux != nil {
+				formatting, ok := metric["formatting"].(map[string]interface{})
+				if ok {
+					formatting["prefix"] = aux.Msg
+					metric["formatting"] = formatting
+				}
+
 			}
 
-			metric["label"] = aux.Msg
+			aux = tt.FindByKey(mpl.Replace(LocaleKeyChartMetricsMetricIDSuffix.Path))
+			if aux != nil {
+				formatting, ok := metric["formatting"].(map[string]interface{})
+				if ok {
+					formatting["suffix"] = aux.Msg
+					metric["formatting"] = formatting
+				}
+
+			}
+
 		})
 
 		// apply translated labels for each dimension/step
@@ -147,6 +165,19 @@ func (c Chart) encodeTranslations() (out locale.ResourceTranslationSet) {
 				Key:      mpl.Replace(LocaleKeyChartMetricsMetricIDLabel.Path),
 				Msg:      cast.ToString(m["label"]),
 			})
+
+			out = append(out, &locale.ResourceTranslation{
+				Resource: c.ResourceTranslation(),
+				Key:      mpl.Replace(LocaleKeyChartMetricsMetricIDPrefix.Path),
+				Msg:      cast.ToString(m["prefix"]),
+			})
+
+			out = append(out, &locale.ResourceTranslation{
+				Resource: c.ResourceTranslation(),
+				Key:      mpl.Replace(LocaleKeyChartMetricsMetricIDSuffix.Path),
+				Msg:      cast.ToString(m["suffix"]),
+			})
+
 		})
 
 		// collect labels from chart config: dimensions/steps

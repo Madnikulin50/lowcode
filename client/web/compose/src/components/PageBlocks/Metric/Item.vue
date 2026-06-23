@@ -27,6 +27,7 @@
       </template>
       <span
         :style="genStyle(metric.valueStyle)"
+        :class="{ 'metric-hover-value': hover }"
       >
         <template v-if="metric.prefix">
           {{ metric.prefix }}
@@ -46,8 +47,9 @@
   >
     <!--    This div is here because .svg metrics dont render with print to PDF option-->
     <div
-      class="d-none d-print-flex w-100 align-items-center justify-content-center overflow-hidden"
+      class="d-none d-print-flex w-100 align-items-center justify-content-center overflow-hidden metric-value"
       :style="genStyle(metric.valueStyle)"
+      :class="{ 'metric-hover-value': hover }"
     >
       <template v-if="metric.prefix">
         {{ metric.prefix }}
@@ -69,13 +71,17 @@
         >
           {{ metric.label }}:&nbsp;
         </span>
-        <template v-if="metric.prefix">
-          {{ metric.prefix }}
-        </template>
-        {{ displayValue }}
-        <template v-if="metric.suffix">
-          {{ metric.suffix }}
-        </template>
+        <span
+          :class="{ 'metric-hover-value': hover }"
+        >
+          <template v-if="metric.prefix">
+            {{ metric.prefix }}
+          </template>
+          {{ displayValue }}
+          <template v-if="metric.suffix">
+            {{ metric.suffix }}
+          </template>
+        </span>
       </div>
     </template>
     <template v-else>
@@ -92,6 +98,7 @@
           text-anchor="middle"
           dominant-baseline="central"
           text-rendering="geometricPrecision"
+          :class="{ 'metric-hover-value': hover }"
         >
           <template
             v-if="metric.showLabel"
@@ -131,6 +138,11 @@ export default {
       type: Object,
       required: false,
       default: () => ({}),
+    },
+    hover: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
   },
 
@@ -260,3 +272,11 @@ export default {
   },
 }
 </script>
+<style lang="scss">
+.metric-hover-value {
+  &:hover {
+    transform: translateY(-5px); /* Moves up 5 pixels */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); /* Softens and deepens shadow */
+  }
+}
+</style>

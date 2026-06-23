@@ -82,7 +82,7 @@ list:
     actions: ""
     createdAt: Создано
     email: Почтовый адрес
-    enabled: Enabled
+    enabled: Включено
     handle: Дескриптор
     name: Имя
     state: State

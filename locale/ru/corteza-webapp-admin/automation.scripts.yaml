@@ -3,7 +3,7 @@ list:
     name: Имя
     updatedAt: Обновлено
   filter:
-    absoluteTime: Show absolute time
+    absoluteTime: Показывать absolute time
     incScriptsWithErrors: Errors ({{ count }})
     incScriptsWithIterator: Iterator ({{ count }})
     incScriptsWithSecurity: Security ({{ count }})

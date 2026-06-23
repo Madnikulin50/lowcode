@@ -133,7 +133,7 @@ kind:
     fieldFromModuleField: Метка полей из выбранной записи
     pickField: Выберите поле
     suggestionPlaceholder: Начните писать для выбора записи
-    prefilterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
+    prefilterFootnote: Упрощенное SQL-условие (WHERE ...) синтаксис не поддерживается. Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно
     prefilterLabel: Предварительный фильтр записей
     prefilterPlaceholder: field1 = 1 AND field2 = 232
     tooltip:

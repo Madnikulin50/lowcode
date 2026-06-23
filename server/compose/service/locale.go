@@ -58,6 +58,21 @@ func (svc resourceTranslationsManager) moduleExtended(ctx context.Context, res *
 				Msg:      svc.locale.TResourceFor(tag, f.ResourceTranslation(), k.Path),
 			})
 
+			k = types.LocaleKeyModuleFieldMetaPrefix
+			out = append(out, &locale.ResourceTranslation{
+				Resource: f.ResourceTranslation(),
+				Lang:     tag.String(),
+				Key:      k.Path,
+				Msg:      svc.locale.TResourceFor(tag, f.ResourceTranslation(), k.Path),
+			})
+			k = types.LocaleKeyModuleFieldMetaSuffix
+			out = append(out, &locale.ResourceTranslation{
+				Resource: f.ResourceTranslation(),
+				Lang:     tag.String(),
+				Key:      k.Path,
+				Msg:      svc.locale.TResourceFor(tag, f.ResourceTranslation(), k.Path),
+			})
+
 			// Expressions
 			set, err = svc.moduleFieldExpressionsHandler(ctx, tag, f)
 			if err != nil {
@@ -212,6 +227,13 @@ func (svc resourceTranslationsManager) pageExtended(ctx context.Context, res *ty
 				Key:      rpl.Replace(k.Path),
 				Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), rpl.Replace(k.Path)),
 			})
+			k = types.LocaleKeyPagePageBlockBlockIDTitle
+			out = append(out, &locale.ResourceTranslation{
+				Resource: res.ResourceTranslation(),
+				Lang:     tag.String(),
+				Key:      rpl.Replace(k.Path),
+				Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), rpl.Replace(k.Path)),
+			})
 
 			k = types.LocaleKeyPagePageBlockBlockIDDescription
 			out = append(out, &locale.ResourceTranslation{
@@ -231,6 +253,13 @@ func (svc resourceTranslationsManager) pageExtended(ctx context.Context, res *ty
 				out = append(out, aux...)
 			case "RecordList":
 				aux, err = svc.pageExtendedRecordListBlock(tag, res, block, pbContentID)
+				if err != nil {
+					return nil, err
+				}
+
+				out = append(out, aux...)
+			case "Metric":
+				aux, err = svc.pageExtendedMetricBlock(tag, res, block, pbContentID)
 				if err != nil {
 					return nil, err
 				}
@@ -325,6 +354,8 @@ func (svc resourceTranslationsManager) chartExtended(_ context.Context, res *typ
 	var (
 		yAxisLabelK   = types.LocaleKeyChartYAxisLabel
 		metricLabelK  = types.LocaleKeyChartMetricsMetricIDLabel
+		metricPrefixK = types.LocaleKeyChartMetricsMetricIDPrefix
+		metricSuffixK = types.LocaleKeyChartMetricsMetricIDSuffix
 		dimStepLabelK = types.LocaleKeyChartDimensionsDimensionIDMetaStepsStepIDLabel
 	)
 
@@ -350,6 +381,21 @@ func (svc resourceTranslationsManager) chartExtended(_ context.Context, res *typ
 					Key:      mpl.Replace(metricLabelK.Path),
 					Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), mpl.Replace(metricLabelK.Path)),
 				})
+
+				out = append(out, &locale.ResourceTranslation{
+					Resource: res.ResourceTranslation(),
+					Lang:     tag.String(),
+					Key:      mpl.Replace(metricPrefixK.Path),
+					Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), mpl.Replace(metricPrefixK.Path)),
+				})
+
+				out = append(out, &locale.ResourceTranslation{
+					Resource: res.ResourceTranslation(),
+					Lang:     tag.String(),
+					Key:      mpl.Replace(metricSuffixK.Path),
+					Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), mpl.Replace(metricSuffixK.Path)),
+				})
+
 			}
 		})
 
@@ -387,6 +433,61 @@ func (svc resourceTranslationsManager) pageExtendedRecordListBlock(tag language.
 	)
 
 	return svc.pageBlockButtons(tag, res, blockID, bb)
+}
+func (svc resourceTranslationsManager) pageExtendedMetricBlock(tag language.Tag, res *types.Page, block types.PageBlock, blockID uint64) (locale.ResourceTranslationSet, error) {
+	var (
+		bb, _ = block.Options["metrics"].([]interface{})
+	)
+
+	return svc.pageBlockMetrics(tag, res, blockID, bb)
+}
+
+func (svc resourceTranslationsManager) pageBlockMetrics(tag language.Tag, res *types.Page, blockID uint64, bb []interface{}) (locale.ResourceTranslationSet, error) {
+	var (
+		label  = types.LocaleKeyPagePageBlockBlockIDMetricsMetricIDLabel
+		prefix = types.LocaleKeyPagePageBlockBlockIDMetricsMetricIDPrefix
+		suffix = types.LocaleKeyPagePageBlockBlockIDMetricsMetricIDSuffix
+		out    = make(locale.ResourceTranslationSet, 0, 10)
+	)
+
+	for j, auxBtn := range bb {
+		btn := auxBtn.(map[string]interface{})
+
+		bContentID := uint64(0)
+		if aux, ok := btn["metricID"]; ok {
+			bContentID = cast.ToUint64(aux)
+		} else {
+			bContentID = uint64(j)
+		}
+
+		bContentID = locale.ContentID(bContentID, j)
+
+		rpl := strings.NewReplacer(
+			"{{blockID}}", strconv.FormatUint(blockID, 10),
+			"{{metricID}}", strconv.FormatUint(bContentID, 10),
+		)
+
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      rpl.Replace(label.Path),
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), rpl.Replace(label.Path)),
+		})
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      rpl.Replace(prefix.Path),
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), rpl.Replace(prefix.Path)),
+		})
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      rpl.Replace(suffix.Path),
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), rpl.Replace(suffix.Path)),
+		})
+	}
+
+	return out, nil
 }
 
 func (svc resourceTranslationsManager) pageBlockButtons(tag language.Tag, res *types.Page, blockID uint64, bb []interface{}) (locale.ResourceTranslationSet, error) {

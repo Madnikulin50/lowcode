@@ -8,8 +8,9 @@ package types
 
 import (
 	"fmt"
-	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"strconv"
+
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 )
 
 type (
@@ -35,12 +36,16 @@ var (
 	// @todo can we remove LocaleKey struct for string constant?
 	LocaleKeyChartYAxisLabel                                = LocaleKey{Path: "yAxis.label"}
 	LocaleKeyChartMetricsMetricIDLabel                      = LocaleKey{Path: "metrics.{{metricID}}.label"}
+	LocaleKeyChartMetricsMetricIDPrefix                     = LocaleKey{Path: "metrics.{{metricID}}.prefix"}
+	LocaleKeyChartMetricsMetricIDSuffix                     = LocaleKey{Path: "metrics.{{metricID}}.suffix"}
 	LocaleKeyChartDimensionsDimensionIDMetaStepsStepIDLabel = LocaleKey{Path: "dimensions.{{dimensionID}}.meta.steps.{{stepID}}.label"}
 	LocaleKeyModuleName                                     = LocaleKey{Path: "name"}
 	LocaleKeyModuleFieldLabel                               = LocaleKey{Path: "label"}
 	LocaleKeyModuleFieldMetaDescriptionView                 = LocaleKey{Path: "meta.description.view"}
 	LocaleKeyModuleFieldMetaDescriptionEdit                 = LocaleKey{Path: "meta.description.edit"}
 	LocaleKeyModuleFieldMetaHintView                        = LocaleKey{Path: "meta.hint.view"}
+	LocaleKeyModuleFieldMetaPrefix                          = LocaleKey{Path: "meta.prefix"}
+	LocaleKeyModuleFieldMetaSuffix                          = LocaleKey{Path: "meta.suffix"}
 	LocaleKeyModuleFieldMetaHintEdit                        = LocaleKey{Path: "meta.hint.edit"}
 	LocaleKeyModuleFieldExpressionValidatorValidatorIDError = LocaleKey{Path: "expression.validator.{{validatorID}}.error"}
 	LocaleKeyModuleFieldMetaOptionsValueText                = LocaleKey{Path: "meta.options.{{value}}.text"}
@@ -52,6 +57,9 @@ var (
 	LocaleKeyPageDescription                                = LocaleKey{Path: "description"}
 	LocaleKeyPagePageBlockBlockIDTitle                      = LocaleKey{Path: "pageBlock.{{blockID}}.title"}
 	LocaleKeyPagePageBlockBlockIDDescription                = LocaleKey{Path: "pageBlock.{{blockID}}.description"}
+	LocaleKeyPagePageBlockBlockIDMetricsMetricIDLabel       = LocaleKey{Path: "pageBlock.{{blockID}}.metrics.{{metricID}}.label"}
+	LocaleKeyPagePageBlockBlockIDMetricsMetricIDPrefix      = LocaleKey{Path: "pageBlock.{{blockID}}.metrics.{{metricID}}.prefix"}
+	LocaleKeyPagePageBlockBlockIDMetricsMetricIDSuffix      = LocaleKey{Path: "pageBlock.{{blockID}}.metrics.{{metricID}}.suffix"}
 	LocaleKeyPagePageBlockBlockIDButtonButtonIDLabel        = LocaleKey{Path: "pageBlock.{{blockID}}.button.{{buttonID}}.label"}
 	LocaleKeyPagePageBlockBlockIDContentBody                = LocaleKey{Path: "pageBlock.{{blockID}}.content.body"}
 	LocaleKeyPageLayoutMetaTitle                            = LocaleKey{Path: "meta.title"}
@@ -199,6 +207,8 @@ func (r *ModuleField) DecodeTranslations(tt locale.ResourceTranslationIndex) {
 	r.decodeTranslationsMetaHintView(tt)
 
 	r.decodeTranslationsMetaHintEdit(tt)
+	r.decodeTranslationsMetaPrefix(tt)
+	r.decodeTranslationsMetaSuffix(tt)
 
 	r.decodeTranslationsExpressionValidatorValidatorIDError(tt)
 
@@ -224,6 +234,10 @@ func (r *ModuleField) EncodeTranslations() (out locale.ResourceTranslationSet) {
 	out = append(out, r.encodeTranslationsMetaHintView()...)
 
 	out = append(out, r.encodeTranslationsMetaHintEdit()...)
+
+	out = append(out, r.encodeTranslationsMetaPrefix()...)
+
+	out = append(out, r.encodeTranslationsMetaSuffix()...)
 
 	out = append(out, r.encodeTranslationsExpressionValidatorValidatorIDError()...)
 

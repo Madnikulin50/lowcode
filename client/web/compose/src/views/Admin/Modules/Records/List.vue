@@ -148,7 +148,7 @@ export default {
         hideRecordPermissionsButton: false,
         selectable: true,
         allowExport: true,
-        perPage: 14,
+        perPage: 1000,
         fullPageNavigation: true,
         showTotalCount: true,
         showDeletedRecordsOption: config.type === 'basic',

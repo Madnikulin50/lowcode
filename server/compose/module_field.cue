@@ -169,7 +169,15 @@ moduleField: {
 				path: ["meta", "hint", "view"]
 				customHandler: true
 			}
-			hintEdit: {
+			prefix: {
+				path: ["meta", "prefix"]
+				customHandler: true
+			}
+			suffix: {
+				path: ["meta", "suffix"]
+				customHandler: true
+			}
+			intEdit: {
 				path: ["meta", "hint", "edit"]
 				customHandler: true
 			}

@@ -3,7 +3,6 @@
     <b-tab
       :title="$t('metric.edit.tabTitle')"
     >
-
       <b-row no-gutters>
         <b-col cols="12">
           <div
@@ -383,7 +382,6 @@
                 </b-form-group>
               </b-col>
             </b-row>
-
           </template>
           <m-style
             class="mt-2"

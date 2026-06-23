@@ -41,6 +41,7 @@
           <metric-item
             :metric="m"
             :options="options"
+            :hover="m.drillDown.enabled"
             :theme-settings="themeSettings"
             :value="v"
           />

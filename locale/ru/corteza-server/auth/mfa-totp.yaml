@@ -11,7 +11,7 @@ template:
     This will enable additional security for your account.
     <br />
     <br />
-    You can use one of the following applications:
+    Вы можете использовать one of the following applications:
 
   lastpass: <a target="_blank" href="{{ link }}">LastPass Authenticator</a>
   gauth: Google Authenticator for <a target="_blank" href="{{ android }}">Android</a> or <a target="_blank" href="{{ iphone }}">iPhone</a>

@@ -17,13 +17,13 @@ label:
     chart:
       list: "Диаграммы - {{label}}"
       edit: "Изменить Диаграмма - {{label}}"
-      create: Create Диаграмма
+      create: Создать диаграмму
   actions: Действия
   active: Включено
   add: Добавить
   add-with-plus: + Добавить
   addNew: Добавить новый
-  addValue: Добавить новый value
+  addValue: Добавить новое значение
   ascending: По возрастанию
   attachmentFileInfo: "(Размер файла: {{0}}, Загружено {{1}})"
   attributes: Атрибуты
@@ -65,7 +65,7 @@ label:
   newRecord: Новая запись
   next: Следующая
   no: Нет
-  noHandle: No handle
+  noHandle: Задайте дескриптор
   none: Отсутствует
   now: Сейчас
   ok: Ok
@@ -226,7 +226,7 @@ themes:
 extendSession:
   labels:
     extend: Extend Session
-    warning: You will be logged out in {{ countdownTime }} seconds
+    warning: You will be logged out in {{ countdownTime }} секунд
 
 changes_one: "{{count}} change"
 changes_other: "{{count}} changes"

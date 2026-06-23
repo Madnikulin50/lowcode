@@ -9,7 +9,7 @@ editor:
     deletedAt: Время удаления
     enabled:
       disabledFootnote: Unable to disable the default client
-      label: Enabled
+      label: Включено
     expiresAt:
       description: If not defined the client has no expiration date
       label: Expires at
@@ -48,7 +48,7 @@ editor:
     tooltip:
       regenerate-secret: Regenerate secret
       reset-value: Сбросить value
-      show-client-secret: Show client secret
+      show-client-secret: Показывать client secret
       hide-client-secret: Hide client secret
       copy-access-token: Copy access token
       copy-cURL: Copy cURL
@@ -76,7 +76,7 @@ list:
   columns:
     actions: ""
     createdAt: Создано
-    enabled: Enabled
+    enabled: Включено
     handle: Дескриптор
     meta:
       name: Имя

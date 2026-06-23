@@ -35,7 +35,7 @@ resourceList:
     single_one: 'Один {{data}}'
     single_other: '{{count}} {{data}}'
     recordsPerPage: На странице
-  clone: Clone
+  clone: Клонировать
 
 themes:
   labels:
@@ -47,4 +47,4 @@ cloneSuffix: copy
 extendSession:
   labels:
     extend: Extend Session
-    warning: You will be logged out in {{ countdownTime }} seconds
+    warning: You will be logged out in {{ countdownTime }} секунд

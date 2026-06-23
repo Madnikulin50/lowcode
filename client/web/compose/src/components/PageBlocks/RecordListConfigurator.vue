@@ -714,7 +714,8 @@
           </b-row>
 
           <b-row
-            v-if="options.recordDisplayOption === 'sameTabSelectedModule'">
+            v-if="options.recordDisplayOption === 'sameTabSelectedModule'"
+          >
             <b-col
               cols="12"
               lg="6"
@@ -1111,7 +1112,6 @@ export default {
         { value: 'doNothing', text: this.$t('recordList.record.doNothing') },
       ]
     },
-
 
     recordCreateOptions () {
       return [

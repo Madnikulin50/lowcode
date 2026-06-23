@@ -1300,7 +1300,6 @@ export default {
         moduleID = recordDisplayTargetModuleID
       }
 
-
       const { pageID } = this.pages.find(p => p.moduleID === moduleID) || {}
       if (!pageID) {
         return undefined
@@ -2234,7 +2233,6 @@ export default {
         })
         return
       }
-
 
       const name = this.options.openRecordInEditMode ? this.options.rowEditUrl || 'page.record.edit' : this.options.rowViewUrl || 'page.record'
       const route = {

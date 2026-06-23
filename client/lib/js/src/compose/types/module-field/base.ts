@@ -31,6 +31,8 @@ export interface Options {
     view: string;
     edit: string | undefined;
   };
+  suffix: string;
+  prefix: string;
 }
 
 export const defaultOptions = (): Readonly<Options> => Object.freeze({
@@ -42,6 +44,8 @@ export const defaultOptions = (): Readonly<Options> => Object.freeze({
     view: '',
     edit: undefined,
   },
+    suffix: '';
+    prefix: '',
 })
 
 interface Config {
@@ -142,6 +146,14 @@ export class ModuleField {
 
       this.options.hint.edit = this.options.hint.edit || undefined
     }
+      if (o.suffix) {
+          this.options.hint = {
+              ...this.options.hint,
+              ...o.hint,
+          }
+
+          this.options.hint.edit = this.options.hint.edit || undefined
+      }
   }
 
   clone (): ModuleField {

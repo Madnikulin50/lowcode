@@ -342,7 +342,7 @@ export default {
           text: this.$t('builder:filter.operators.prevYearTruncated'),
           isMulti: false,
           onlyDate: true,
-        },*/
+        }, */
 
       ],
     }

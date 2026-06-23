@@ -221,6 +221,22 @@ func (f *ModuleField) decodeTranslationsMetaHintView(tt locale.ResourceTranslati
 	}
 }
 
+func (f *ModuleField) decodeTranslationsMetaPrefix(tt locale.ResourceTranslationIndex) {
+	var aux *locale.ResourceTranslation
+
+	if aux = tt.FindByKey(LocaleKeyModuleFieldMetaPrefix.Path); aux != nil {
+		f.setOptionKey(aux.Msg, "prefix")
+	}
+}
+
+func (f *ModuleField) decodeTranslationsMetaSuffix(tt locale.ResourceTranslationIndex) {
+	var aux *locale.ResourceTranslation
+
+	if aux = tt.FindByKey(LocaleKeyModuleFieldMetaSuffix.Path); aux != nil {
+		f.setOptionKey(aux.Msg, "suffix")
+	}
+}
+
 func (f *ModuleField) decodeTranslationsMetaHintEdit(tt locale.ResourceTranslationIndex) {
 	var aux *locale.ResourceTranslation
 
@@ -360,6 +376,32 @@ func (f *ModuleField) encodeTranslationsMetaHintView() (out locale.ResourceTrans
 		Key:      LocaleKeyModuleFieldMetaHintView.Path,
 	}
 	if v := f.getOptionKey("hint", "view"); v != nil {
+		t.Msg = cast.ToString(v)
+	}
+	out = append(out, t)
+	return out
+}
+
+func (f *ModuleField) encodeTranslationsMetaPrefix() (out locale.ResourceTranslationSet) {
+	out = locale.ResourceTranslationSet{}
+	t := &locale.ResourceTranslation{
+		Resource: f.ResourceTranslation(),
+		Key:      LocaleKeyModuleFieldMetaHintView.Path,
+	}
+	if v := f.getOptionKey("prefix"); v != nil {
+		t.Msg = cast.ToString(v)
+	}
+	out = append(out, t)
+	return out
+}
+
+func (f *ModuleField) encodeTranslationsMetaSuffix() (out locale.ResourceTranslationSet) {
+	out = locale.ResourceTranslationSet{}
+	t := &locale.ResourceTranslation{
+		Resource: f.ResourceTranslation(),
+		Key:      LocaleKeyModuleFieldMetaHintView.Path,
+	}
+	if v := f.getOptionKey("suffix"); v != nil {
 		t.Msg = cast.ToString(v)
 	}
 	out = append(out, t)

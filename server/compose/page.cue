@@ -189,6 +189,18 @@ page: {
 				path: ["pageBlock", {part: "blockID", var: true}, "button", {part: "buttonID", var: true}, "label"]
 				customHandler: true
 			}
+			blockMetricsLabel: {
+				path: ["pageBlock", {part: "blockID", var: true}, "metrics", {part: "metricID", var: true}, "label"]
+				customHandler: true
+			}
+			blockMetricsPrefix: {
+				path: ["pageBlock", {part: "blockID", var: true}, "metrics", {part: "metricID", var: true}, "prefix"]
+				customHandler: true
+			}
+			blockMetricsSuffix: {
+				path: ["pageBlock", {part: "blockID", var: true}, "metrics", {part: "metricID", var: true}, "suffix"]
+				customHandler: true
+			}
 			blockContentBody: {
 				path: ["pageBlock", {part: "blockID", var: true}, "content", "body"]
 				customHandler: true
