@@ -22,6 +22,8 @@
         :aria-label="$t('AI')"
         :placeholder="$t('prompt for start AI magic...')"
         :autocomplete="'off'"
+        submittable
+        @search="handleAiSearch"
       />
       <b-button-group
         v-if="page && page.canUpdatePage"
@@ -247,6 +249,16 @@ export default {
       setLayoutHandle: 'ui/setLayoutHandle',
       setRecordPageHandle: 'ui/setRecordPageHandle',
     }),
+
+    handleAiSearch (query) {
+      const { moduleID, namespaceID } = this.page
+
+      return this.$ComposeAPI
+        .pageAiPrompt({ namespaceID, moduleID, prompt: query })
+        .then(set => {
+          alert(set.response)
+        })
+    },
 
     setDefaultValues () {
       this.layouts = []

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/compose/mcp"
 	"github.com/madnikulin50/lowcode/server/pkg/options"
 	"go.uber.org/zap"
 )
@@ -72,7 +73,7 @@ func Test(o *options.Options) error {
 // Activate reconfigures server to use active routes
 func (s *server) Activate(mm ...func(chi.Router)) {
 	s.demux.Router(active, activeRoutes(s.log, mm, s.opts))
-
+	mcp.InitMcp(context.Background())
 	s.log.Debug("entering active state")
 	s.demux.State(active)
 }

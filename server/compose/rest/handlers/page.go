@@ -7,10 +7,12 @@ package handlers
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/compose/mcp"
 	"github.com/madnikulin50/lowcode/server/compose/rest/request"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
-	"net/http"
 )
 
 type (
@@ -56,6 +58,7 @@ func NewPage(h PageAPI) *Page {
 				api.Send(w, r, err)
 				return
 			}
+			mcp.ApplyToServer(context.TODO(), params.NamespaceID)
 
 			value, err := h.List(r.Context(), params)
 			if err != nil {

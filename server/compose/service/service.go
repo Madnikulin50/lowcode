@@ -75,6 +75,7 @@ var (
 	DefaultModule              ModuleService
 	DefaultChart               *chart
 	DefaultPage                *page
+	DefaultChat                *chat
 	DefaultPageLayout          *pageLayout
 	DefaultAttachment          AttachmentService
 	DefaultNotification        *notification

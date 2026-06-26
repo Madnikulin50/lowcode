@@ -4445,4 +4445,61 @@ export default class Compose {
     return '/automation/trigger'
   }
 
+
+    async pageAiPrompt (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            selfID,
+            moduleID,
+            pageID,
+            prompt,
+            meta,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.pageAiPromptEndpoint({
+                namespaceID,
+                pageID
+            }),
+        }
+        cfg.data = {
+            selfID,
+            moduleID,
+            meta,
+            prompt,
+            pageID
+        }
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    pageAiPromptCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.pageCreate(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    pageAiPromptEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            pageID,
+        } = a || {}
+        if (!pageID) {
+            return `/namespace/${namespaceID}/prompt`
+        }
+        return `/namespace/${namespaceID}/page/${pageID}/prompt`
+    }
+
+
+
 }

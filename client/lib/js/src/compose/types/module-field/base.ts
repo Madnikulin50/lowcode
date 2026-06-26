@@ -44,7 +44,7 @@ export const defaultOptions = (): Readonly<Options> => Object.freeze({
     view: '',
     edit: undefined,
   },
-    suffix: '';
+    suffix: '',
     prefix: '',
 })
 

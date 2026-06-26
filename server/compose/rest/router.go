@@ -12,6 +12,7 @@ func MountRoutes() func(r chi.Router) {
 		var (
 			namespace    = Namespace{}.New()
 			module       = Module{}.New()
+			chat         = Chat{}.New()
 			record       = Record{}.New()
 			page         = Page{}.New()
 			pageIcon     = Icon{}.New()
@@ -36,6 +37,7 @@ func MountRoutes() func(r chi.Router) {
 			handlers.NewPermissions(Permissions{}.New()).MountRoutes(r)
 			handlers.NewNamespace(namespace).MountRoutes(r)
 			handlers.NewPage(page).MountRoutes(r)
+			handlers.NewChat(chat).MountRoutes(r)
 			handlers.NewIcon(pageIcon).MountRoutes(r)
 			handlers.NewPageLayout(pageLayout).MountRoutes(r)
 			handlers.NewAutomation(automation).MountRoutes(r)
