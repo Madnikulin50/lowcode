@@ -74,6 +74,7 @@ type (
 	docPartialComposeNamespaceMeta struct {
 		Subtitle    string `json:"subtitle,omitempty"`
 		Description string `json:"description,omitempty"`
+		Prompt      string `json:"prompt,omitempty"`
 	}
 
 	docPartialComposeNamespace struct {

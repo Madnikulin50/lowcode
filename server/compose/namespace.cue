@@ -96,6 +96,9 @@ namespace: {
 			metaSubtitle: {
 				path: ["meta", "subtitle"]
 			}
+			metaPrompt: {
+				path: ["meta", "prompt"]
+			}
 			metaDescription: {
 				path: ["meta", "description"]
 			}

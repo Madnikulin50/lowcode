@@ -289,3 +289,10 @@ export default {
   },
 }
 </script>
+
+<style>
+.leaflet-touch .leaflet-control-attribution, .leaflet-touch .leaflet-control-layers, .leaflet-touch .leaflet-bar {
+  box-shadow: none;
+  height: 0px;
+}
+</style>

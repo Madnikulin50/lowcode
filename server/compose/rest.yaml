@@ -321,6 +321,10 @@ endpoints:
         required: true
         title: Title
       - type: string
+        name: prompt
+        required: true
+        title: Prompt
+      - type: string
         name: handle
         required: false
         title: Handle
@@ -391,6 +395,10 @@ endpoints:
         name: title
         required: true
         title: Title
+      - type: string
+        name: prompt
+        required: true
+        title: Prompt
       - type: string
         name: handle
         required: false

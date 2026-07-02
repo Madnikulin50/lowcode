@@ -7,6 +7,8 @@ package rdbms
 //
 
 import (
+	"time"
+
 	automationType "github.com/madnikulin50/lowcode/server/automation/types"
 	composeType "github.com/madnikulin50/lowcode/server/compose/types"
 	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
@@ -17,7 +19,6 @@ import (
 	labelsType "github.com/madnikulin50/lowcode/server/pkg/label/types"
 	rbacType "github.com/madnikulin50/lowcode/server/pkg/rbac"
 	systemType "github.com/madnikulin50/lowcode/server/system/types"
-	"time"
 )
 
 type (

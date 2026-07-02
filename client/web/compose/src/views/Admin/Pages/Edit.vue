@@ -173,7 +173,32 @@
               />
             </b-form-group>
           </b-col>
-
+          <b-col
+            cols="12"
+          >
+            <b-form-group
+              :label="$t('prompt.label')"
+              label-class="text-primary"
+              class="mb-3"
+            >
+              <b-input-group>
+                <b-form-textarea
+                  v-model="page.config.prompt"
+                  data-test-id="input-prompt"
+                  rows="1"
+                  :placeholder="$t('prompt.placeholder')"
+                />
+                <b-input-group-append>
+                  <page-translator
+                    :page.sync="page"
+                    :page-layouts.sync="layouts"
+                    button-variant="extra-light"
+                    style="margin-left:2px;"
+                  />
+                </b-input-group-append>
+              </b-input-group>
+            </b-form-group>
+          </b-col>
           <b-col
             cols="12"
             lg="6"
@@ -1083,6 +1108,7 @@ import pages from 'corteza-webapp-compose/src/mixins/pages'
 import { isEqual } from 'lodash'
 import Draggable from 'vuedraggable'
 import { mapActions, mapGetters } from 'vuex'
+import ModuleTranslator from "corteza-webapp-compose/src/components/Admin/Module/ModuleTranslator.vue";
 const { CInputRole, CInputExpression, CUploader, CInputSelect } = components
 
 export default {
@@ -1093,6 +1119,7 @@ export default {
   name: 'PageEdit',
 
   components: {
+    ModuleTranslator,
     EditorToolbar,
     PageTranslator,
     PageLayoutTranslator,

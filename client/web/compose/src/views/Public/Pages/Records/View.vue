@@ -7,6 +7,19 @@
     </portal>
 
     <portal to="topbar-tools">
+
+      <c-input-search
+        v-if="enableAI"
+        v-model.trim="aiPrompt"
+        class="mr-2"
+        :ai="true"
+        :aria-label="$t('AI')"
+        :placeholder="$t('aiChat.startPrompt')"
+        :autocomplete="'off'"
+        submittable
+        @search="handleAiSearch"
+      />
+
       <b-button
         v-if="page && isRecordPage && page.canUpdatePage"
         variant="primary"
@@ -21,6 +34,8 @@
           class="ml-2"
         />
       </b-button>
+
+
 
       <b-button-group
         v-if="page && page.canUpdatePage"
@@ -72,7 +87,11 @@
     >
       {{ $t('block:record.recordDeleted') }}
     </b-alert>
-
+    <ai-chat-modal
+      :namespace="page.namespaceID"
+      :page="page.pageID"
+      :module="page.moduleID"
+    />
     <b-alert
       v-if="isDraft"
       show
@@ -194,7 +213,9 @@ import record from 'corteza-webapp-compose/src/mixins/record'
 import page from 'corteza-webapp-compose/src/mixins/page'
 import { compose, system, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
-
+import AiChatModal from 'corteza-webapp-compose/src/components/Public/Page/AiChat/Modal.vue'
+import { components } from 'corteza-lib/vue/dist'
+const { CInputSearch } = components
 export default {
   i18nOptions: {
     namespaces: 'page',
@@ -205,6 +226,8 @@ export default {
   components: {
     Grid,
     RecordToolbar,
+    AiChatModal,
+    CInputSearch,
   },
 
   mixins: [
@@ -266,6 +289,8 @@ export default {
   data () {
     return {
       inEditing: this.edit,
+
+      aiPrompt: '',
 
       loading: false,
 
@@ -393,6 +418,10 @@ export default {
     isDraft () {
       return !!this.$route.query.draftID
     },
+
+    enableAI () {
+      return true
+    },
   },
 
   watch: {
@@ -460,6 +489,7 @@ export default {
         }
       },
     },
+
 
     title: {
       immediate: true,
@@ -966,6 +996,17 @@ export default {
       }
 
       return changes
+    },
+
+    handleAiSearch (query) {
+      const { moduleID, namespaceID, pageID } = this.page
+
+      this.$root.$emit('show-chat-modal', {
+        namespace: namespaceID,
+        module: moduleID,
+        page: pageID,
+        prompt: query,
+      })
     },
 
     valueToArray (value) {

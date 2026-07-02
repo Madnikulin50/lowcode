@@ -19,8 +19,8 @@ type (
 		PageID      uint64 `json:",string"`
 		ModuleID    uint64 `json:",string"`
 		RecordID    uint64 `json:",string"`
-
-		Prompt string
+		Facts       []string
+		Prompt      string
 	}
 )
 
@@ -79,6 +79,13 @@ func (r *ChatAsk) Fill(req *http.Request) (err error) {
 				return err
 			}
 		}
+		if val, ok := data["pageID"]; ok && len(val) > 0 {
+			r.PageID, err = payload.ParseUint64(val), nil
+			if err != nil {
+				return err
+			}
+		}
+
 		if val, ok := data["prompt"]; ok && len(val) > 0 {
 			r.Prompt, err = val, nil
 			if err != nil {

@@ -80,7 +80,7 @@
 
       <b-card-body
         :body-class="bodyClass"
-        class="p-0 flex-fill"
+        class="p-0 flex-fill fixed-corner-container"
         :class="{ 'overflow-auto': scrollableBody }"
       >
         <slot
@@ -106,3 +106,9 @@ export default {
   extends: base,
 }
 </script>
+
+<style scoped>
+.fixed-corner-container {
+  position: relative; /* Обязательно: задает систему координат для кнопки */
+}
+</style>

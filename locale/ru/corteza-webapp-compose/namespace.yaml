@@ -49,7 +49,10 @@ slug:
   invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
 subtitle:
   label: Подзаголовок
-  placeholder: Enter namespace subtitle
+  placeholder: Введите подзаголовок пространства
+prompt:
+  label: ИИ-промпт
+  placeholder: Введите ИИ-промпт пространства
 title: Пространства
 tooltip:
   translations: Переводы пространства

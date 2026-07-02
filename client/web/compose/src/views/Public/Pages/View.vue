@@ -20,7 +20,7 @@
         class="mr-2"
         :ai="true"
         :aria-label="$t('AI')"
-        :placeholder="$t('prompt for start AI magic...')"
+        :placeholder="$t('aiChat.startPrompt')"
         :autocomplete="'off'"
         submittable
         @search="handleAiSearch"
@@ -99,6 +99,11 @@
     <magnification-modal
       :namespace="namespace"
     />
+    <ai-chat-modal
+      :namespace="namespace.namespaceID"
+      :page="this.page.pageID"
+      :module="this.page.moduleID"
+    />
   </div>
 </template>
 <script>
@@ -106,6 +111,7 @@ import { mapGetters, mapActions } from 'vuex'
 import Grid from 'corteza-webapp-compose/src/components/Public/Page/Grid'
 import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Modal'
 import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Page/Block/Modal'
+import AiChatModal from 'corteza-webapp-compose/src/components/Public/Page/AiChat/Modal'
 import { components } from 'corteza-lib/vue/dist'
 
 import { NoID } from 'corteza-lib/js/dist'
@@ -121,6 +127,7 @@ export default {
     Grid,
     RecordModal,
     MagnificationModal,
+    AiChatModal,
     CInputSearch,
   },
 
@@ -176,6 +183,7 @@ export default {
     enableAI () {
       return true
     },
+
   },
 
   watch: {
@@ -251,13 +259,14 @@ export default {
     }),
 
     handleAiSearch (query) {
-      const { moduleID, namespaceID } = this.page
+      const { moduleID, namespaceID, pageID } = this.page
 
-      return this.$ComposeAPI
-        .pageAiPrompt({ namespaceID, moduleID, prompt: query })
-        .then(set => {
-          alert(set.response)
-        })
+      this.$root.$emit('show-chat-modal', {
+        namespace: namespaceID,
+        module: moduleID,
+        page: pageID,
+        prompt: query,
+      })
     },
 
     setDefaultValues () {

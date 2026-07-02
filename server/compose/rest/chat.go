@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/madnikulin50/lowcode/server/compose/rest/request"
 	"github.com/madnikulin50/lowcode/server/compose/service"
@@ -30,7 +31,7 @@ func (Chat) New() *Chat {
 
 func (ctrl *Chat) Ask(ctx context.Context, r *request.ChatAsk) (interface{}, error) {
 	res, err := ctrl.chat.Ask(ctx,
-		&service.ChatPromptArguments{Prompt: r.Prompt})
+		&service.ChatPromptArguments{Prompt: r.Prompt, Namespace: r.NamespaceID, Page: r.PageID, Facts: r.Facts})
 
 	return ctrl.makePayload(ctx, res, err)
 }
@@ -43,7 +44,9 @@ func (ctrl Chat) makePayload(ctx context.Context, itf interface{}, err error) (*
 	if !ok {
 		return nil, fmt.Errorf("invalid payload type: %T", itf)
 	}
-	p := &chatPayload{Response: m["response"].(string)}
+	response := m["response"].(string)
+	response = strings.Replace(response, "\n", "\r\n", -1)
+	p := &chatPayload{Response: response}
 
 	return p, nil
 }

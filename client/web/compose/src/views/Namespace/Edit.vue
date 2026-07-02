@@ -255,6 +255,29 @@
                 </b-input-group-append>
               </b-input-group>
             </b-form-group>
+
+            <b-form-group
+              :label="$t('prompt.label')"
+              label-class="text-primary"
+              class="mb-3"
+            >
+              <b-input-group>
+                <b-form-textarea
+                  v-model="namespace.meta.prompt"
+                  data-test-id="input-prompt"
+                  rows="1"
+                  :placeholder="$t('prompt.placeholder')"
+                />
+                <b-input-group-append>
+                  <namespace-translator
+                    :namespace="namespace"
+                    highlight-key="meta.prompt"
+                    :disabled="isNew"
+                  />
+                </b-input-group-append>
+              </b-input-group>
+            </b-form-group>
+
             <hr>
 
             <b-form-group
@@ -510,6 +533,7 @@ export default {
 
       this.namespace.meta = {
         subtitle: '',
+        prompt: '',
         description: '',
         hideSidebar: false,
         logoEnabled: null,

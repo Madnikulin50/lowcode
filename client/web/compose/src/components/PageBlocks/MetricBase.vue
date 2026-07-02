@@ -1,6 +1,7 @@
 <template>
   <wrap
     v-bind="$props"
+    class="fixed-corner-container"
     v-on="$listeners"
     @refreshBlock="refresh"
   >
@@ -19,6 +20,18 @@
     </label>
 
     <template v-else>
+      <b-button
+        v-b-tooltip.noninteractive.hover="{ title: $t('ai.askAboutMetrics'), boundary: 'body' }"
+        variant="outline-extra-light"
+        :disabled="editable"
+        size="sm"
+        class="text-secondary border-0 fixed-corner-button"
+        @click="promptAiChat"
+      >
+        <font-awesome-icon
+          :icon="['fas', 'brain']"
+        />
+      </b-button>
       <div
         v-for="(m, mi) in options.metrics"
         :key="mi"
@@ -297,6 +310,47 @@ export default {
       }
     },
 
+    promptAiChat: function () {
+      const block = this.block
+      const page = this.page
+      const namespace = this.namespace
+      const locale = this.browserLocale()
+      let prompt = block.prompt || page.config.prompt || namespace.prompt || ''
+      if (prompt.length === 0) {
+        switch (locale) {
+          case 'en-US':
+            prompt = 'What is this? '
+            break
+          case 'ru-RU':
+            prompt = 'Что это за показатели? Зачем о чем они говорят? '
+            break
+        }
+        prompt += '\r\n '
+      }
+
+      prompt += page.title + '\r\n' + block.title + '\r\n'
+
+      for (const mi in this.options.metrics) {
+        const m = this.options.metrics[mi]
+        if (m.moduleID) {
+          const vals = this.formatResponse(m, mi).map(item => {
+            if (item.label !== undefined) {
+              return item.label + ': ' + m.prefix + item.value + m.suffix
+            }
+            return m.prefix + item.value + m.suffix
+          })
+          prompt += m.label + ' = ' + vals.join('; ') + '\r\n'
+        }
+      }
+
+      this.$root.$emit('show-chat-modal', {
+        namespace: page.namespaceID,
+        module: page.moduleID,
+        prompt,
+      })
+    },
+
+
     destroyEvents () {
       this.$root.$off('metric.update', this.refresh)
       this.$root.$off('drill-down-chart', this.drillDown)
@@ -310,5 +364,12 @@ export default {
 <style scoped lang="scss">
 h3 {
   line-height: 1;
+}
+.fixed-corner-button {
+  position: absolute; /* Включает абсолютное позиционирование */
+  top: 20px;           /* Выравнивание по вертикали (середина) */
+  right: 0;          /* Отступ справа в пикселях */
+  transform: translateY(-50%); /* Корректировка для точного центрирования кнопки */
+  z-index: 10;
 }
 </style>

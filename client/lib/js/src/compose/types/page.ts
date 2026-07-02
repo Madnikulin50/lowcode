@@ -30,6 +30,7 @@ interface PageConfig {
     };
     expanded: false;
   };
+  prompt: string
 }
 
 export class Page {
@@ -59,6 +60,7 @@ export class Page {
       },
       expanded: false,
     },
+    prompt: ''
   }
 
   public meta: PageMeta = {

@@ -20881,3 +20881,8 @@ fieldset.required legend>div:first-child>span:first-child::after {
 .ProseMirror.ProseMirror-focused {
   outline: none
 }
+
+.leaflet-touch .leaflet-control-attribution, .leaflet-touch .leaflet-control-layers, .leaflet-touch .leaflet-bar {
+    box-shadow: none;
+    height: 0px;
+}

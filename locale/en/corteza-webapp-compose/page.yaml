@@ -126,6 +126,9 @@ navigation:
   page: Pages
   viewPage: View Page
   editModule: Edit module
+prompt:
+  label: AI Prompt
+  placeholder: Enter namespace AI prompt
 noBlock: No block added yet
 noPages: No pages
 notVisible: Hidden
@@ -160,3 +163,12 @@ public:
       title: '{{name}} - Editing Record'
     view:
       title: '{{name}} - Viewing Record'
+
+aiChat:
+  greeting: I'm LowCooode AI assistant
+  startPrompt: prompt for start AI magic...
+  sendMessage:
+    button: Send
+    placeholder: Enter prompt...
+
+

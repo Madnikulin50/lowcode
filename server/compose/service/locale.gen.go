@@ -8,6 +8,7 @@ package service
 
 import (
 	"context"
+
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
 	intAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
@@ -225,6 +226,14 @@ func (svc resourceTranslationsManager) Namespace(ctx context.Context, id uint64)
 		})
 
 		k = types.LocaleKeyNamespaceMetaDescription
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+
+		k = types.LocaleKeyNamespaceMetaPrompt
 		out = append(out, &locale.ResourceTranslation{
 			Resource: res.ResourceTranslation(),
 			Lang:     tag.String(),

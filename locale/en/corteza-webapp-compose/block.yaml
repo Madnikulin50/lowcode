@@ -1027,3 +1027,13 @@ tabs:
 
 noConfiguration: Block not configured correctly
 interpolationFootnote: Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
+
+ai:
+  askAboutMetrics: Ask what AI thinking about metrics
+  askAboutRecord: Ask what AI thinking about record
+  tab:
+    title: AI
+  prompt:
+    label: Default Prompt
+    placeholder: Enter default prompt
+

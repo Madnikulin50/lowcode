@@ -54,6 +54,9 @@ slug:
 subtitle:
   label: Subtitle
   placeholder: Enter namespace subtitle
+prompt:
+  label: AI Prompt
+  placeholder: Enter namespace AI prompt
 title: Namespaces
 tooltip:
   translations: Namespace translations

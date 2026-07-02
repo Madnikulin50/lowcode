@@ -53,6 +53,7 @@ var (
 	LocaleKeyNamespaceName                                  = LocaleKey{Path: "name"}
 	LocaleKeyNamespaceMetaSubtitle                          = LocaleKey{Path: "meta.subtitle"}
 	LocaleKeyNamespaceMetaDescription                       = LocaleKey{Path: "meta.description"}
+	LocaleKeyNamespaceMetaPrompt                            = LocaleKey{Path: "meta.prompt"}
 	LocaleKeyPageTitle                                      = LocaleKey{Path: "title"}
 	LocaleKeyPageDescription                                = LocaleKey{Path: "description"}
 	LocaleKeyPagePageBlockBlockIDTitle                      = LocaleKey{Path: "pageBlock.{{blockID}}.title"}
@@ -286,6 +287,10 @@ func (r *Namespace) DecodeTranslations(tt locale.ResourceTranslationIndex) {
 		r.Meta.Subtitle = aux.Msg
 	}
 
+	if aux = tt.FindByKey(LocaleKeyNamespaceMetaPrompt.Path); aux != nil {
+		r.Meta.Prompt = aux.Msg
+	}
+
 	if aux = tt.FindByKey(LocaleKeyNamespaceMetaDescription.Path); aux != nil {
 		r.Meta.Description = aux.Msg
 	}
@@ -304,6 +309,12 @@ func (r *Namespace) EncodeTranslations() (out locale.ResourceTranslationSet) {
 		Resource: r.ResourceTranslation(),
 		Key:      LocaleKeyNamespaceMetaSubtitle.Path,
 		Msg:      locale.SanitizeMessage(r.Meta.Subtitle),
+	})
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyNamespaceMetaPrompt.Path,
+		Msg:      locale.SanitizeMessage(r.Meta.Prompt),
 	})
 
 	out = append(out, &locale.ResourceTranslation{

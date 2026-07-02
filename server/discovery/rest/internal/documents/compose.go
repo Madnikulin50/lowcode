@@ -162,6 +162,7 @@ func (d composeResources) Namespaces(ctx context.Context, limit uint, cur string
 				Meta: docPartialComposeNamespaceMeta{
 					Subtitle:    ns.Meta.Subtitle,
 					Description: ns.Meta.Description,
+					Prompt:      ns.Meta.Prompt,
 				},
 				Created: makePartialChange(&ns.CreatedAt),
 				Updated: makePartialChange(ns.UpdatedAt),

@@ -334,6 +334,52 @@
       class="mh-tab overflow-auto"
       v-on="$listeners"
     />
+    <b-tab
+      data-test-id="ai-tab"
+      :title="$t('ai.tab.title')"
+      title-item-class="order-first"
+    >
+      <b-row>
+        <b-col cols="12">
+          <b-form-group
+            :label="$t('ai.prompt.label')"
+            label-class="text-primary"
+          >
+            <b-input-group>
+              <c-input-expression
+                id="prompt"
+                v-model="block.prompt"
+                auto-complete
+                :placeholder="$t('ai.prompt.placehoder')"
+                :suggestion-params="recordAutoCompleteParams"
+                class="flex-grow-1"
+              />
+
+              <b-input-group-append>
+                <page-translator
+                  v-if="page"
+                  :page="page"
+                  :block.sync="block"
+                  :disabled="isNew"
+                  :highlight-key="`pageBlock.${block.blockID}.prompt`"
+                />
+              </b-input-group-append>
+            </b-input-group>
+
+            <i18next
+              path="interpolationFootnote"
+              tag="small"
+              class="text-muted"
+            >
+              <code>${record.values.fieldName}</code>
+              <code>${recordID}</code>
+              <code>${ownerID}</code>
+              <span><code>${userID}</code>, <code>${user.name}</code></span>
+            </i18next>
+          </b-form-group>
+        </b-col>
+      </b-row>
+    </b-tab>
 
     <template #tabs-end>
       <page-translator

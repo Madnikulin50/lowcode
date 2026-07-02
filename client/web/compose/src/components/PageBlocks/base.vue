@@ -148,6 +148,11 @@ export default {
      * @param name
      * @returns {validator.Validated} filtered validation results
      */
+
+    browserLocale () {
+      return navigator.language || navigator.languages?.[0] || 'en-US'
+    },
+
     fieldErrors (name) {
       if (!this.errors) {
         this.$emit('errors', { errors: undefined, id: `${this.errorID}:${name}` })
@@ -229,3 +234,16 @@ export default {
   },
 }
 </script>
+<style scoped>
+.fixed-corner-container {
+  position: relative; /* Обязательно: задает систему координат для кнопки */
+}
+
+.fixed-corner-button {
+  position: absolute; /* Включает абсолютное позиционирование */
+  top: 3px;           /* Выравнивание по вертикали (середина) */
+  right: 0px;          /* Отступ справа в пикселях */
+  transform: translateY(-50%); /* Корректировка для точного центрирования кнопки */
+  z-index: 10;
+}
+</style>

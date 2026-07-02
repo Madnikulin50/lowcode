@@ -4455,9 +4455,6 @@ export default class Compose {
             prompt,
             meta,
         } = (a as KV) || {}
-        if (!namespaceID) {
-            throw Error('field namespaceID is empty')
-        }
 
         const cfg: AxiosRequestConfig = {
             ...extra,
@@ -4470,6 +4467,7 @@ export default class Compose {
         cfg.data = {
             selfID,
             moduleID,
+            namespaceID,
             meta,
             prompt,
             pageID

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
 	"github.com/madnikulin50/lowcode/server/store"
@@ -27,6 +28,7 @@ type (
 
 	ChatPromptArguments struct {
 		Prompt    string
+		Facts     []string
 		Namespace uint64
 		Module    uint64
 		Page      uint64
@@ -37,29 +39,27 @@ type (
 	}
 )
 
-func (c *chat) getClient() (*api.Client, error) {
+func (c *chat) getClient(needStart bool) (*api.Client, error) {
 	client, err := api.ClientFromEnvironment()
 	if err != nil {
 		return nil, err
 	}
 
-	messages := []api.Message{
-		{
+	messages := []api.Message{}
+	if needStart {
+		messages = append(messages, api.Message{
 			Role:    "system",
 			Content: "Provide very brief, concise responses",
-		},
-		{
+		}, api.Message{
 			Role:    "user",
 			Content: "Name some unusual animals",
-		},
-		{
+		}, api.Message{
 			Role:    "assistant",
 			Content: "Monotreme, platypus, echidna",
-		},
-		{
+		}, api.Message{
 			Role:    "user",
 			Content: "which of these is the most dangerous?",
-		},
+		})
 	}
 
 	ctx := context.Background()
@@ -81,8 +81,13 @@ func (c *chat) getClient() (*api.Client, error) {
 }
 
 func (c *chat) Ask(ctx context.Context, ask *ChatPromptArguments) (interface{}, error) {
-	client, err := c.getClient()
 
+	needStartInstructions := true
+	if strings.Contains(ask.Prompt, "<system_prompt>") {
+		needStartInstructions = false
+	}
+
+	client, err := c.getClient(needStartInstructions)
 	messages := []api.Message{
 		{
 			Role:    "user",
@@ -90,7 +95,9 @@ func (c *chat) Ask(ctx context.Context, ask *ChatPromptArguments) (interface{}, 
 		},
 	}
 	req := &api.ChatRequest{
-		Model:    "llama3.2",
+		//Model: "llama3.2",
+		//Model:    "Qwen3.5",
+		Model:    "deepseek-v2",
 		Messages: messages,
 	}
 	out := ""
@@ -99,8 +106,8 @@ func (c *chat) Ask(ctx context.Context, ask *ChatPromptArguments) (interface{}, 
 		return nil
 	}
 
-	err = client.Chat(ctx, req, respFunc)
-	if err != nil {
+	err = client.Chat(context.Background(), req, respFunc)
+	if err != nil && len(out) == 0 {
 		return nil, err
 	}
 

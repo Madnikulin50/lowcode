@@ -1041,3 +1041,12 @@ tabs:
 
 noConfiguration: Блок not configured correctly
 interpolationFootnote: Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно
+
+ai:
+  askAboutMetrics: Спросить ИИ что она думает о показателях
+  askAboutRecord: Спросить ИИ что она думает о записи
+  tab:
+    title: ИИ
+  prompt:
+    label: Запрос
+    placeholder: Введите настройки запроса

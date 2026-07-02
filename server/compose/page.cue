@@ -20,6 +20,11 @@ page: {
 				sortable: true
 				dal: {}
 			}
+			prompt: {
+				goType:   "string"
+				sortable: true
+				dal: {}
+			}
 			handle: schema.HandleField
 			self_id: {
 				ident:  "selfID"

@@ -160,3 +160,10 @@ public:
       title: '{{name}} - Редактирование записи'
     view:
       title: '{{name}} - Просмотр записи'
+
+aiChat:
+  greeting: Я LowCooooode ИИ-ассистент
+  startPrompt: Введите запрос к ИИ...
+  sendMessage:
+    button: Отправить
+    placeholder: Введите запрос к ИИ...

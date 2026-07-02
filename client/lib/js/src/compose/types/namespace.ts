@@ -11,6 +11,7 @@ interface MetaAdmin {
 
 interface Meta {
   subtitle: string;
+  prompt: string;
   description: string;
   hideSidebar: boolean;
   // Temporary icon & logo URLs

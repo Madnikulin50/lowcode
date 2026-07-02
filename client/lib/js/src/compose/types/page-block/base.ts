@@ -46,6 +46,8 @@ export class PageBlock {
   public title = '';
   public description = '';
 
+  public prompt = '';
+
   public xywh: number[] = defaultXYWH
 
   public options = {}
@@ -81,7 +83,7 @@ export class PageBlock {
   apply (i?: PageBlockInput): void {
     if (!i) return
 
-    Apply(this, i, String, 'title', 'description', 'blockID')
+    Apply(this, i, String, 'title', 'description', 'prompt', 'blockID')
 
     if (i.xywh) {
       if (!Array.isArray(i.xywh)) {

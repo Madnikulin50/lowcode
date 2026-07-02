@@ -94,6 +94,7 @@ type (
 			Expanded bool            `json:"expanded"`
 			Icon     *PageConfigIcon `json:"icon,omitempty"`
 		} `json:"navItem"`
+		Prompt string `json:"prompt,omitempty"`
 	}
 
 	PageConfigIcon struct {

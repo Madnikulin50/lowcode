@@ -201,6 +201,29 @@
                   </b-col>
                 </b-row>
 
+                <b-form-group
+                  :label="$t('prompt.label')"
+                  label-class="text-primary"
+                  class="mb-3"
+                >
+                  <b-input-group>
+                    <b-form-textarea
+                      v-model="module.meta.prompt"
+                      data-test-id="input-prompt"
+                      rows="1"
+                      :placeholder="$t('prompt.placeholder')"
+                    />
+                    <b-input-group-append>
+                      <module-translator
+                        v-if="module"
+                        :module.sync="trModule"
+                        highlight-key="meta.prompt"
+                        :disabled="isNew"
+                      />
+                    </b-input-group-append>
+                  </b-input-group>
+                </b-form-group>
+
                 <b-row>
                   <b-col
                     cols="12"

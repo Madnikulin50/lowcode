@@ -15,6 +15,8 @@ func init() {
 	// use standard html escaping policy
 	p = bluemonday.UGCPolicy()
 
+	p.AllowElements("system_prompt", "instructions", "format", "examples", "example", "input", "output")
+	p.AllowNoAttrs().OnElements("system_prompt", "instructions", "format", "examples", "example", "input", "output")
 	// match only colors for html editor elements on style attr
 	p.AllowAttrs("style").OnElements("span", "p")
 	// Support both hex colors (#ff0000, #f00) and RGB colors (rgb(255, 0, 0))
@@ -54,6 +56,9 @@ func init() {
 
 // RichText assures safe HTML content
 func RichText(in string) string {
+	if len(in) == 0 {
+		return ""
+	}
 	sanitized := p.Sanitize(in)
 
 	// handle escaped strings and unescape them

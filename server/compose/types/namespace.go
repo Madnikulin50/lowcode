@@ -71,6 +71,7 @@ type (
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
 		Description string `json:"description,omitempty"`
+		Prompt      string `json:"prompt,omitempty"`
 	}
 )
 

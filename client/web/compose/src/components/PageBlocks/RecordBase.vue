@@ -14,8 +14,22 @@
     <div
       v-else-if="fieldModule"
       ref="fieldContainer"
+      class="fixed-corner-container"
       :class="fieldLayoutClass"
     >
+
+      <b-button
+        v-b-tooltip.noninteractive.hover="{ title: $t('ai.askAboutRecord'), boundary: 'body' }"
+        variant="outline-extra-light"
+        :disabled="editable"
+        size="sm"
+        class="text-secondary border-0 fixed-corner-button"
+        @click="promptAiChat"
+      >
+        <font-awesome-icon
+          :icon="['fas', 'brain']"
+        />
+      </b-button>
       <template v-for="field in fields">
         <b-form-group
           v-if="canDisplay(field)"
@@ -353,6 +367,50 @@ export default {
         })
     },
 
+    browserLocale () {
+      return navigator.language || navigator.languages?.[0] || 'en-US'
+    },
+
+
+    promptAiChat () {
+      const record = this.record
+      const page = this.page
+      const namespace = this.namespace;
+      const locale = this.browserLocale()
+      let prompt = record.prompt || page.prompt || namespace.meta.prompt || ''
+
+      if (prompt.length === 0) {
+        switch (locale) {
+          case 'en-US':
+            prompt = 'What is this? '
+            break
+          case 'ru-RU':
+            prompt = 'Что это? Зачем это?'
+            break
+        }
+      }
+
+      prompt += '\r\n'
+
+      for (const i in this.fields) {
+        const field = this.fields[i]
+        if (field.isSystem) {
+          continue
+        }
+        const val = record.values[field.name]
+        if (!val) {
+          continue
+        }
+        prompt += field.label + '=' + val + '\r\n'
+      }
+
+      this.$root.$emit('show-chat-modal', {
+        namespace: page.namespaceID,
+        module: page.moduleID,
+        prompt,
+      })
+    },
+
     editInlineField (record, field) {
       this.inlineEdit.fields = [field.name]
       this.inlineEdit.record = record.clone()
@@ -397,5 +455,16 @@ export default {
 .field-col > * {
   margin-left: 1rem;
   margin-right: 1rem;
+}
+.fixed-corner-container {
+  position: relative; /* Обязательно: задает систему координат для кнопки */
+}
+
+.fixed-corner-button {
+  position: absolute; /* Включает абсолютное позиционирование */
+  top: 3px;           /* Выравнивание по вертикали (середина) */
+  right: 0px;          /* Отступ справа в пикселях */
+  transform: translateY(-50%); /* Корректировка для точного центрирования кнопки */
+  z-index: 10;
 }
 </style>

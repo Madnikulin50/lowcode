@@ -114,6 +114,11 @@ export default {
               // eslint-disable-next-line vue/no-side-effects-in-computed-properties
               this.namespace.meta.description = tr.message
             }
+            tr = find('meta.prompt')
+            if (tr !== undefined) {
+              // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+              this.namespace.meta.prompt = tr.message
+            }
           })
       }
     },
