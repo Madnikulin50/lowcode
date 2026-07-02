@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/xml_to_map"
 	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/ollama/ollama/api"
 )
@@ -27,6 +28,7 @@ type (
 	}
 
 	ChatPromptArguments struct {
+		Session   string
 		Prompt    string
 		Facts     []string
 		Namespace uint64
@@ -94,10 +96,19 @@ func (c *chat) Ask(ctx context.Context, ask *ChatPromptArguments) (interface{}, 
 			Content: ask.Prompt,
 		},
 	}
+	model := "deepseek-v2"
+	data, err := xml_to_map.ParseXMLToMap(strings.NewReader(ask.Prompt))
+	if err == nil {
+		m, ok := data["model"]
+		if ok {
+			model = m
+		}
+	}
+
 	req := &api.ChatRequest{
 		//Model: "llama3.2",
 		//Model:    "Qwen3.5",
-		Model:    "deepseek-v2",
+		Model:    model,
 		Messages: messages,
 	}
 	out := ""

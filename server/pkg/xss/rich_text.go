@@ -15,7 +15,7 @@ func init() {
 	// use standard html escaping policy
 	p = bluemonday.UGCPolicy()
 
-	p.AllowElements("system_prompt", "instructions", "format", "examples", "example", "input", "output")
+	p.AllowElements("model", "system_prompt", "instructions", "format", "examples", "example", "input", "output")
 	p.AllowNoAttrs().OnElements("system_prompt", "instructions", "format", "examples", "example", "input", "output")
 	// match only colors for html editor elements on style attr
 	p.AllowAttrs("style").OnElements("span", "p")
