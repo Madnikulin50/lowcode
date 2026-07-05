@@ -25,13 +25,18 @@ func NewChat(h ChatAPI) *Chat {
 			defer r.Body.Close()
 			params := request.NewChatAsk()
 			if err := params.Fill(r); err != nil {
-				api.Send(w, r, err)
+				api.Send(w, r, map[string]any{
+					"response": err.Error(),
+				})
 				return
 			}
 
 			value, err := h.Ask(r.Context(), params)
 			if err != nil {
-				api.Send(w, r, err)
+				api.Send(w, r,
+					map[string]any{
+						"response": err.Error(),
+					})
 				return
 			}
 

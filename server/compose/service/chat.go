@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
@@ -62,23 +61,23 @@ func (c *chat) getClient(needStart bool) (*api.Client, error) {
 			Role:    "user",
 			Content: "which of these is the most dangerous?",
 		})
+		ctx := context.Background()
+		req := &api.ChatRequest{
+			Model:    "deepseek-v2",
+			Messages: messages,
+		}
+
+		respFunc := func(resp api.ChatResponse) error {
+			fmt.Print(resp.Message.Content)
+			return nil
+		}
+
+		err = client.Chat(ctx, req, respFunc)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	ctx := context.Background()
-	req := &api.ChatRequest{
-		Model:    "llama3.2",
-		Messages: messages,
-	}
-
-	respFunc := func(resp api.ChatResponse) error {
-		fmt.Print(resp.Message.Content)
-		return nil
-	}
-
-	err = client.Chat(ctx, req, respFunc)
-	if err != nil {
-		log.Fatal(err)
-	}
 	return client, nil
 }
 
@@ -90,6 +89,9 @@ func (c *chat) Ask(ctx context.Context, ask *ChatPromptArguments) (interface{}, 
 	}
 
 	client, err := c.getClient(needStartInstructions)
+	if err != nil {
+		return nil, err
+	}
 	messages := []api.Message{
 		{
 			Role:    "user",
