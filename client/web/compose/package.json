@@ -54,6 +54,7 @@
     "i18next": "^23.16.8",
     "i18next-browser-languagedetector": "^8.0.4",
     "lodash": "^4.17.21",
+    "markdown-it": "^14.3.0",
     "moment": "2.30.1",
     "numeral": "^2.0.6",
     "portal-vue": "^2.1.7",

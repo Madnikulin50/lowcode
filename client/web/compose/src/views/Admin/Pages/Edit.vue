@@ -1108,7 +1108,7 @@ import pages from 'corteza-webapp-compose/src/mixins/pages'
 import { isEqual } from 'lodash'
 import Draggable from 'vuedraggable'
 import { mapActions, mapGetters } from 'vuex'
-import ModuleTranslator from "corteza-webapp-compose/src/components/Admin/Module/ModuleTranslator.vue";
+import ModuleTranslator from 'corteza-webapp-compose/src/components/Admin/Module/ModuleTranslator.vue';
 const { CInputRole, CInputExpression, CUploader, CInputSelect } = components
 
 export default {

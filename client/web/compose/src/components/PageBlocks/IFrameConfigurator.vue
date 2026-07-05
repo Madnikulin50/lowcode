@@ -36,6 +36,16 @@
         <span><code>${userID}</code>, <code>${user.name}</code></span>
       </i18next>
     </b-form-group>
+    <b-form-group
+      class="mb-0"
+    >
+      <b-form-checkbox
+        v-model="options.displayAsImage"
+        class="mb-2"
+      >
+        {{ $t('iframe.displayAsImageLabel') }}
+      </b-form-checkbox>
+    </b-form-group>
   </b-tab>
 </template>
 <script>

@@ -7,9 +7,10 @@ package options
 //
 
 import (
+	"time"
+
 	"github.com/madnikulin50/lowcode/server/pkg/rand"
 	"github.com/madnikulin50/lowcode/server/pkg/version"
-	"time"
 )
 
 type (
@@ -278,6 +279,14 @@ type (
 
 	WebappOpt struct {
 		ScssDirPath string `env:"WEBAPP_SCSS_DIR_PATH"`
+	}
+
+	ImageSearchOpt struct {
+		Enabled bool `env:"IMAGE_SEARCH_ENABLED"`
+	}
+
+	CacheOpt struct {
+		ReportTTL time.Duration `env:"CACHE_REPORT_TTL"`
 	}
 )
 
@@ -1123,6 +1132,60 @@ func Attachment() (o *AttachmentOpt) {
 // This function is auto-generated
 func Webapp() (o *WebappOpt) {
 	o = &WebappOpt{}
+
+	// Custom defaults
+	func(o interface{}) {
+		if def, ok := o.(interface{ Defaults() }); ok {
+			def.Defaults()
+		}
+	}(o)
+
+	fill(o)
+
+	// Custom cleanup
+	func(o interface{}) {
+		if def, ok := o.(interface{ Cleanup() }); ok {
+			def.Cleanup()
+		}
+	}(o)
+
+	return
+}
+
+// ImageSearch initializes and returns a ImageSearchOpt with default values
+//
+// This function is auto-generated
+func ImageSearch() (o *ImageSearchOpt) {
+	o = &ImageSearchOpt{
+		Enabled: true,
+	}
+
+	// Custom defaults
+	func(o interface{}) {
+		if def, ok := o.(interface{ Defaults() }); ok {
+			def.Defaults()
+		}
+	}(o)
+
+	fill(o)
+
+	// Custom cleanup
+	func(o interface{}) {
+		if def, ok := o.(interface{ Cleanup() }); ok {
+			def.Cleanup()
+		}
+	}(o)
+
+	return
+}
+
+// Cache initializes and returns a CacheOpt with default values
+//
+// This function is auto-generated
+func Cache() (o *CacheOpt) {
+	o = &CacheOpt{
+		ReportTTL: 5 * time.Minute,
+	}
 
 	// Custom defaults
 	func(o interface{}) {

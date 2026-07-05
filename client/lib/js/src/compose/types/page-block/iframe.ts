@@ -6,6 +6,7 @@ const kind = 'IFrame'
 interface Options {
   srcField: string;
   src: string;
+  displayAsImage: boolean;
   wrap: PageBlockWrap;
   refreshRate: number;
   showRefresh: boolean;
@@ -15,6 +16,7 @@ interface Options {
 const defaults: Readonly<Options> = Object.freeze({
   srcField: '',
   src: '',
+  displayAsImage:false,
   wrap: 'Plain',
   refreshRate: 0,
   showRefresh: false,
@@ -36,7 +38,7 @@ export class PageBlockIFrame extends PageBlock {
 
     Apply(this.options, o, String, 'srcField', 'src', 'wrap', 'magnifyOption')
     Apply(this.options, o, Number, 'refreshRate')
-    Apply(this.options, o, Boolean, 'showRefresh')
+    Apply(this.options, o, Boolean, 'showRefresh', 'displayAsImage')
   }
 }
 

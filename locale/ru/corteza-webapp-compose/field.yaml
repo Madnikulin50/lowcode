@@ -50,7 +50,7 @@ kind:
           footnote: Использовать камеру для захвата картинки
       mimetypesLabel: Разрешенные типы файлов
       modeFootnote: Как файлы отображаются в блоке страницы
-      modeLabel: Просмотр mode
+      modeLabel: Режим просмотра
       showName: Скрывать имя файла
       enableDownload: Разрешить скачивание
       single: Одна картинка

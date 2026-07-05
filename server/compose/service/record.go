@@ -17,6 +17,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/revisions"
 	"github.com/spf13/cast"
 
+	"github.com/madnikulin50/lowcode/server/pkg/cache"
 	"github.com/madnikulin50/lowcode/server/pkg/dal"
 	"github.com/madnikulin50/lowcode/server/pkg/locale"
 
@@ -41,6 +42,14 @@ const (
 )
 
 type (
+	reportCacheKey struct {
+		NamespaceID uint64
+		ModuleID    uint64
+		Metrics     string
+		Dimensions  string
+		Filter      string
+	}
+
 	record struct {
 		dal dalDater
 
@@ -57,6 +66,8 @@ type (
 		opt RecordOptions
 
 		revisions *recordRevisions
+
+		reportCache *cache.Cache[reportCacheKey, []recordReportEntry]
 
 		formatter   recordValuesFormatter
 		sanitizer   recordValuesSanitizer
@@ -160,7 +171,8 @@ type (
 	}
 
 	RecordOptions struct {
-		LimitRecords int
+		LimitRecords   int
+		ReportCacheTTL time.Duration
 	}
 
 	RecordImportSession struct {
@@ -208,6 +220,11 @@ type (
 )
 
 func Record(opts RecordOptions) *record {
+	reportCacheTTL := opts.ReportCacheTTL
+	if reportCacheTTL <= 0 {
+		reportCacheTTL = 5 * time.Minute
+	}
+
 	svc := &record{
 		actionlog: DefaultActionlog,
 		ac:        DefaultAccessControl,
@@ -220,7 +237,8 @@ func Record(opts RecordOptions) *record {
 
 		opt: opts,
 
-		revisions: &recordRevisions{revisions.Service(dal.Service())},
+		revisions:   &recordRevisions{revisions.Service(dal.Service())},
+		reportCache: cache.New[reportCacheKey, []recordReportEntry](reportCacheTTL, reportCacheTTL/2),
 
 		formatter:   values.Formatter(),
 		sanitizer:   values.Sanitizer(),
@@ -410,9 +428,18 @@ func (svc record) enhance(ctx context.Context, ff []*datasources.Frame) (err err
 	return nil
 }
 
+func (svc record) invalidateModuleReportCache(moduleID uint64) {
+	svc.reportCache.DeleteBy(func(k reportCacheKey) bool {
+		return k.ModuleID == moduleID
+	})
+}
+
 // Report generates report for a given module using metrics, dimensions and filter
 // @note will eventually be removed in favor of the system report endpoints
 func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metrics, dimensions, f string) (_ any, err error) {
+	if cached, ok := svc.reportCache.Get(reportCacheKey{namespaceID, moduleID, metrics, dimensions, f}); ok {
+		return cached, nil
+	}
 	var (
 		ns     *types.Namespace
 		m      *types.Module
@@ -625,6 +652,10 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 		}
 
 	}()
+
+	if err == nil {
+		svc.reportCache.Set(reportCacheKey{namespaceID, moduleID, metrics, dimensions, f}, reportItems)
+	}
 
 	return reportItems, svc.recordAction(ctx, aProps, RecordActionReport, err)
 }
@@ -1025,6 +1056,14 @@ func (svc record) Bulk(ctx context.Context, skipFailed bool, oo ...*types.Record
 		return nil
 	}()
 
+	if err == nil {
+		for _, p := range oo {
+			if p.Record != nil {
+				svc.invalidateModuleReportCache(p.Record.ModuleID)
+			}
+		}
+	}
+
 	if len(oo) == 1 {
 		// was not really a bulk operation, and we already recorded the action
 		// inside transaction loop
@@ -1113,6 +1152,12 @@ func (svc record) BulkModifyByFilter(ctx context.Context, f types.RecordFilter, 
 
 		return nil
 	})
+
+	if err == nil {
+		svc.invalidateModuleReportCache(f.ModuleID)
+	}
+
+	return
 }
 
 // Raw create function that is responsible for value validation, event dispatching
@@ -1619,6 +1664,10 @@ func (svc record) Create(ctx context.Context, new *types.Record) (rec *types.Rec
 		return err
 	}()
 
+	if err == nil && rec != nil {
+		svc.invalidateModuleReportCache(rec.ModuleID)
+	}
+
 	return rec, dd, svc.recordAction(ctx, aProps, RecordActionCreate, err)
 }
 
@@ -1685,6 +1734,10 @@ func (svc record) Update(ctx context.Context, upd *types.Record) (rec *types.Rec
 		aProps.setRecord(rec)
 		return err
 	}()
+
+	if err == nil && rec != nil {
+		svc.invalidateModuleReportCache(rec.ModuleID)
+	}
 
 	return rec, dd, svc.recordAction(ctx, aProps, RecordActionUpdate, err)
 }
@@ -1944,6 +1997,7 @@ func (svc record) DeleteByID(ctx context.Context, namespaceID, moduleID uint64, 
 	// all errors (if any) were recorded
 	// and in case of error for a non-bulk record deletion
 	// error is already returned
+	svc.invalidateModuleReportCache(moduleID)
 	return nil
 }
 
@@ -2004,6 +2058,7 @@ func (svc record) UndeleteByID(ctx context.Context, namespaceID, moduleID uint64
 		}
 	}
 
+	svc.invalidateModuleReportCache(moduleID)
 	return nil
 }
 

@@ -49,7 +49,7 @@
 
 <script>
 import { nextTick } from 'vue'
-//import { marked } from 'marked'
+import markdownIt from 'markdown-it'
 
 export default {
   i18nOptions: {
@@ -138,8 +138,22 @@ export default {
         }
       })
     },
+
+
     formatMessage: (text) => {
-      return text.replace(/\n/g, '<br>') //marked.parse(text)
+      const needMarkdown = (text) => {
+        const symbolRegex = /[`*#]/
+        return symbolRegex.test(text)
+      }
+      if (needMarkdown(text)) {
+        const md = markdownIt({
+          html: true, // Enable HTML tags in source
+          linkify: true, // Autoconvert URL-like text to links
+        })
+
+        return md.render(text)
+      }
+      return text.replace(/\n/g, '<br>')
     },
   },
 }

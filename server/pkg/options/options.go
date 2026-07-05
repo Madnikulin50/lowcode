@@ -30,6 +30,8 @@ type (
 		Apigw       ApigwOpt
 		Attachment  AttachmentOpt
 		Webapp      WebappOpt
+		ImageSearch ImageSearchOpt
+		Cache       CacheOpt
 	}
 )
 
@@ -63,5 +65,7 @@ func Init() *Options {
 		Apigw:       *Apigw(),
 		Attachment:  *Attachment(),
 		Webapp:      *Webapp(),
+		ImageSearch: *ImageSearch(),
+		Cache:       *Cache(),
 	}
 }

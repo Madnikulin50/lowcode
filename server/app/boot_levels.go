@@ -417,6 +417,7 @@ func (app *CortezaApp) InitServices(ctx context.Context) (err error) {
 		Discovery:        app.Opt.Discovery,
 		Storage:          app.Opt.ObjStore,
 		Limit:            app.Opt.Limit,
+		ImageSearch:      app.Opt.ImageSearch,
 		UserFinder:       sysService.DefaultUser,
 		SchemaAltManager: sysService.DefaultDalSchemaAlteration,
 	})

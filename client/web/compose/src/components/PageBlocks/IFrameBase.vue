@@ -4,8 +4,14 @@
     v-on="$listeners"
     @refreshBlock="refresh"
   >
+    <img
+      v-if="src && true"
+      ref="iframe"
+      class="h-100 w-100 border-0"
+      :src="src | checkValidURL"
+    >
     <iframe
-      v-if="src"
+      v-if="src&&false"
       ref="iframe"
       class="h-100 w-100 border-0"
       :src="src | checkValidURL"
@@ -32,13 +38,16 @@ export default {
         }
       }
 
-      const interpolatedURL = evaluatePrefilter(url, {
+      let interpolatedURL = evaluatePrefilter(url, {
         record: this.record,
         user: this.$auth.user || {},
         recordID: (this.record || {}).recordID || NoID,
         ownerID: (this.record || {}).ownedBy || NoID,
         userID: (this.$auth.user || {}).userID || NoID,
       })
+      if (interpolatedURL[0] !== 'h') {
+        interpolatedURL = window.CortezaAPI + interpolatedURL
+      }
 
       return interpolatedURL || blank
     },
@@ -76,3 +85,10 @@ export default {
   },
 }
 </script>
+<style scoped lang="scss">
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+</style>

@@ -35,8 +35,6 @@
         />
       </b-button>
 
-
-
       <b-button-group
         v-if="page && page.canUpdatePage"
         size="sm"

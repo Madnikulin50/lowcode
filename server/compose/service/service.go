@@ -44,6 +44,8 @@ type (
 		Discovery        options.DiscoveryOpt
 		Storage          options.ObjectStoreOpt
 		Limit            options.LimitOpt
+		ImageSearch      options.ImageSearchOpt
+		Cache            options.CacheOpt
 		UserFinder       userFinder
 		SchemaAltManager schemaAltManager
 	}
@@ -81,6 +83,7 @@ var (
 	DefaultNotification        *notification
 	DefaultResourceTranslation ResourceTranslationsManagerService
 	DefaultDataPrivacy         DataPrivacyService
+	DefaultImageSearch         ImageSearchService
 
 	// wrapper around time.Now() that will aid service testing
 	now = func() *time.Time {
@@ -188,13 +191,14 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	DefaultModule = Module(c.SchemaAltManager)
 
 	DefaultImportSession = ImportSession()
-	DefaultRecord = Record(RecordOptions{LimitRecords: c.Limit.RecordCountPerModule})
+	DefaultRecord = Record(RecordOptions{LimitRecords: c.Limit.RecordCountPerModule, ReportCacheTTL: c.Cache.ReportTTL})
 	DefaultPage = Page()
 	DefaultPageLayout = PageLayout()
 	DefaultChart = Chart()
 	DefaultNotification = Notification(c.UserFinder)
 	DefaultAttachment = Attachment(DefaultObjectStore, dal.Service())
 	DefaultDataPrivacy = DataPrivacy()
+	DefaultImageSearch = ImageSearch(c.ImageSearch.Enabled)
 
 	RegisterIteratorProviders()
 

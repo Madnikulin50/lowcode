@@ -16,7 +16,7 @@ func init() {
 	p = bluemonday.UGCPolicy()
 
 	p.AllowElements("model", "system_prompt", "instructions", "format", "examples", "example", "input", "output")
-	p.AllowNoAttrs().OnElements("system_prompt", "instructions", "format", "examples", "example", "input", "output")
+	p.AllowNoAttrs().OnElements("model", "system_prompt", "instructions", "format", "examples", "example", "input", "output")
 	// match only colors for html editor elements on style attr
 	p.AllowAttrs("style").OnElements("span", "p")
 	// Support both hex colors (#ff0000, #f00) and RGB colors (rgb(255, 0, 0))

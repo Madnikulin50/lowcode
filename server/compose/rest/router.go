@@ -22,6 +22,7 @@ func MountRoutes() func(r chi.Router) {
 			attachment   = Attachment{}.New()
 			automation   = Automation{}.New()
 			dataPrivacy  = DataPrivacy{}.New()
+			imageSearch  = ImageSearch{}.New()
 		)
 
 		// Initialize handlers & controllers.
@@ -46,6 +47,7 @@ func MountRoutes() func(r chi.Router) {
 			handlers.NewChart(chart).MountRoutes(r)
 			handlers.NewNotification(notification).MountRoutes(r)
 			handlers.NewDataPrivacy(dataPrivacy).MountRoutes(r)
+			handlers.NewImageSearch(imageSearch).MountRoutes(r)
 		})
 	}
 }
