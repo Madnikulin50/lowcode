@@ -17,7 +17,7 @@
           class="d-flex align-items-center text-primary mb-0"
         >
           <span
-            class="d-flex"
+            class="d-flex metric-label"
             style="margin-top: 0.1rem;"
             :style="genStyle(metric.valueStyle, true)"
           >
@@ -278,5 +278,9 @@ export default {
     transform: translateY(-5px); /* Moves up 5 pixels */
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); /* Softens and deepens shadow */
   }
+}
+
+.metric-label {
+  overflow: hidden;
 }
 </style>

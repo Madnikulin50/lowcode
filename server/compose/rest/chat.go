@@ -17,6 +17,7 @@ type (
 	Chat struct {
 		chat interface {
 			Ask(ctx context.Context, params *service.ChatPromptArguments) (interface{}, error)
+			AskStream(ctx context.Context, params *service.ChatPromptArguments, stream service.ChatStreamFunc) error
 		}
 		namespace service.NamespaceService
 	}
@@ -34,6 +35,15 @@ func (ctrl *Chat) Ask(ctx context.Context, r *request.ChatAsk) (interface{}, err
 		&service.ChatPromptArguments{Prompt: r.Prompt, Namespace: r.NamespaceID, Page: r.PageID, Facts: r.Facts})
 
 	return ctrl.makePayload(ctx, res, err)
+}
+
+func (ctrl *Chat) AskStream(ctx context.Context, r *request.ChatAsk, stream service.ChatStreamFunc) error {
+	return ctrl.chat.AskStream(ctx, &service.ChatPromptArguments{
+		Prompt:    r.Prompt,
+		Namespace: r.NamespaceID,
+		Page:      r.PageID,
+		Facts:     r.Facts,
+	}, stream)
 }
 
 func (ctrl Chat) makePayload(ctx context.Context, itf interface{}, err error) (*chatPayload, error) {

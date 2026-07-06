@@ -105,27 +105,31 @@ export default {
       const text = this.inputText.trim()
       if (!text || this.loading) return
 
-      // Добавляем сообщение пользователя
       this.messages.push({ role: 'user', content: text })
       this.inputText = ''
       this.scrollToBottom()
 
+      const msgIdx = this.messages.length
+      this.messages.push({ role: 'assistant', content: '' })
       this.loading = true
-      return this.$ComposeAPI
-        .pageAiPrompt({
+      this.scrollToBottom()
+
+      try {
+        await this.$ComposeAPI.pageAiPromptStream({
           prompt: text,
           namespaceID: this.namespace,
           pageID: this.page,
           moduleID: this.module,
-        })
-        .then(set => {
-          this.messages.push({ role: 'assistant', content: set.response })
+        }, (token) => {
+          this.messages[msgIdx].content += token
           this.scrollToBottom()
         })
-        .finally(() => {
-          this.loading = false
-          this.scrollToBottom()
-        })
+      } catch (e) {
+        this.messages[msgIdx].content = e.message || 'Error'
+      } finally {
+        this.loading = false
+        this.scrollToBottom()
+      }
     },
     scrollToBottom: () => {
       if (this === null || this === undefined) {

@@ -116,7 +116,7 @@ import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/l
 const { getWeekStartDay } = shared
 
 /**
- * FullCalendar Corteza theme definition.
+ * FullCalendar Lowcooode theme definition.
  */
 export class CortezaTheme extends BootstrapTheme {}
 CortezaTheme.prototype.classes.widget = 'corteza-unthemed'

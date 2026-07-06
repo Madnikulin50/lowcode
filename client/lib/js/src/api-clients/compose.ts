@@ -4475,6 +4475,69 @@ export default class Compose {
         return this.api().request(cfg).then(result => stdResolve(result))
     }
 
+    async pageAiPromptStream (a: KV, onToken: (token: string) => void): Promise<void> {
+        const {
+            namespaceID,
+            selfID,
+            moduleID,
+            pageID,
+            prompt,
+            meta,
+        } = (a as KV) || {}
+
+        const endpoint = this.pageAiPromptEndpoint({ namespaceID, pageID }) + '/stream'
+        const url = this.baseURL ? `${this.baseURL.replace(/\/+$/, '')}${endpoint}` : endpoint
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        }
+        const accessToken = this.accessTokenFn ? this.accessTokenFn() : undefined
+        if (accessToken) {
+            headers['Authorization'] = 'Bearer ' + accessToken
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers,
+            credentials: 'include',
+            body: JSON.stringify({
+                selfID,
+                moduleID,
+                namespaceID,
+                meta,
+                prompt,
+                pageID,
+            }),
+        })
+
+        if (!response.ok) {
+            const text = await response.text()
+            throw new Error(text || `HTTP ${response.status}`)
+        }
+
+        const reader = response.body!.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() || ''
+
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue
+                const data = JSON.parse(line.slice(6))
+                if (data.done) return
+                if (data.token) {
+                    onToken(data.token)
+                }
+            }
+        }
+    }
+
     pageAiPromptCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
         const cancelTokenSource = axios.CancelToken.source();
         const options = {...extra, cancelToken: cancelTokenSource.token }
