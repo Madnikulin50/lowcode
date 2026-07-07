@@ -168,4 +168,4 @@ require (
 
 replace github.com/doug-martin/goqu/v9 => ./lib/goqu
 
-replace github.com/PaesslerAG/gval => github.com/cortezaproject/gval v1.2.4
+replace github.com/PaesslerAG/gval => ./lib/gval
