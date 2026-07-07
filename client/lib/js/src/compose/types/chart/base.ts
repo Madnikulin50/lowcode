@@ -119,6 +119,8 @@ export class BaseChart {
     this.config = (conf ? _.merge(this.defConfig(), conf) : false) || this.config || this.defConfig()
 
     this.config.reports?.forEach(report => {
+      Object.assign(report, _.merge(this.defReport(), report))
+
       const { dimensions = [], metrics = [] } = report || {}
 
       report.dimensions = dimensions.map(d => {
@@ -353,6 +355,14 @@ export class BaseChart {
       filter: '',
       dimensions: [this.defDimension()],
       metrics: [this.defMetric()],
+      anomaly: {
+        enabled: false,
+        method: 'zscore' as 'zscore' | 'iqr' | 'fixed' | 'pct_change',
+        threshold: 2,
+        min: undefined,
+        max: undefined,
+        color: '',
+      },
       yAxis: {
         axisType: 'linear',
         axisPosition: 'left',

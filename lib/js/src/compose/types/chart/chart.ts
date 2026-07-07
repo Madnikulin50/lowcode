@@ -246,34 +246,29 @@ export default class Chart extends BaseChart {
           left: offset?.isDefault ? defaultOffset.left : offset?.left,
           containLabel: true,
         }
+        const values = data.map((v: any) => v?.y != null ? v.y : v)
         const anomalyCfg = report.anomaly || (this.config.reports?.[0]?.anomaly)
-        const anomalyFlags = anomalyCfg?.enabled ? detectAnomalies(data, anomalyCfg) : []
-        const hasAnomaly = anomalyFlags.length > 0
+        const anomalyFlags = anomalyCfg?.enabled ? detectAnomalies(values, anomalyCfg) : []
 
-
-        if (hasAnomaly) {
-          const anomalyColor = anomalyCfg!.color
+        if (anomalyFlags.length) {
+          const anomalyColor = anomalyCfg!.color || themeVariables?.danger || '#ff4444'
           if (horizontal) {
             data = labels.map((name: string, i: number) => {
-              const item: any = { value: [data[i], name] }
-              if (anomalyFlags[i]) item.itemStyle = { color: anomalyColor }
-              return item
+              return anomalyFlags[i] ? { value: [values[i], name], itemStyle: { color: anomalyColor } } : [values[i], name]
             })
           } else {
             data = labels.map((name: string, i: number) => {
-              const item: any = { name, value: data[i] }
-              if (anomalyFlags[i]) item.itemStyle = { color: anomalyColor }
-              return item
+              return anomalyFlags[i] ? { value: [name, values[i]], itemStyle: { color: anomalyColor } } : [name, values[i]]
             })
           }
         } else {
           if (horizontal) {
             data = labels.map((name: string, i: number) => {
-              return [data[i], name]
+              return [values[i], name]
             })
           } else {
             data = labels.map((name: string, i: number) => {
-              return [name, data[i]]
+              return [name, values[i]]
             })
           }
         }

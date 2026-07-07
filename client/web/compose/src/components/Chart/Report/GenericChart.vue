@@ -796,7 +796,7 @@ export default {
             threshold: 2,
             min: undefined,
             max: undefined,
-            color: '#ff4444',
+            color: '',
           })
         }
       },
