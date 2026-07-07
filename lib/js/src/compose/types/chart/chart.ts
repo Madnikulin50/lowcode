@@ -6,6 +6,7 @@ import {
   formatChartValue,
   formatChartTooltip,
   TooltipParams,
+  detectAnomalies,
 } from './util'
 import { getColorschemeColors } from '../../../shared'
 
@@ -43,6 +44,7 @@ export default class Chart extends BaseChart {
 
   makeOptions (data: any): any {
     const { reports = [], colorScheme, noAnimation = false, toolbox } = this.config
+    const report = reports[0] || {}
     const { saveAsImage, timeline = '' } = toolbox || {}
 
     const options: any = {
@@ -57,6 +59,8 @@ export default class Chart extends BaseChart {
       },
     }
 
+    const getVal = (v: any): any => Array.isArray(v) ? v[1] : v
+
     const { labels, datasets = [], themeVariables = {} } = data
     const {
       dimensions: [dimension] = [],
@@ -64,7 +68,7 @@ export default class Chart extends BaseChart {
       offset,
       tooltip: t,
       legend: l,
-    } = reports[0] || {}
+    } = report
 
     const hasAxis = datasets.some(({ type }: any) => ['bar', 'line', 'scatter'].includes(type))
     let horizontal = false
@@ -242,15 +246,36 @@ export default class Chart extends BaseChart {
           left: offset?.isDefault ? defaultOffset.left : offset?.left,
           containLabel: true,
         }
+        const anomalyCfg = report.anomaly || (this.config.reports?.[0]?.anomaly)
+        const anomalyFlags = anomalyCfg?.enabled ? detectAnomalies(data, anomalyCfg) : []
+        const hasAnomaly = anomalyFlags.length > 0
 
-        if (horizontal) {
-          data = labels.map((name: string, i: number) => {
-            return [data[i], name]
-          })
+
+        if (hasAnomaly) {
+          const anomalyColor = anomalyCfg!.color
+          if (horizontal) {
+            data = labels.map((name: string, i: number) => {
+              const item: any = { value: [data[i], name] }
+              if (anomalyFlags[i]) item.itemStyle = { color: anomalyColor }
+              return item
+            })
+          } else {
+            data = labels.map((name: string, i: number) => {
+              const item: any = { name, value: data[i] }
+              if (anomalyFlags[i]) item.itemStyle = { color: anomalyColor }
+              return item
+            })
+          }
         } else {
-          data = labels.map((name: string, i: number) => {
-            return [name, data[i]]
-          })
+          if (horizontal) {
+            data = labels.map((name: string, i: number) => {
+              return [data[i], name]
+            })
+          } else {
+            data = labels.map((name: string, i: number) => {
+              return [name, data[i]]
+            })
+          }
         }
 
         return {
@@ -274,15 +299,16 @@ export default class Chart extends BaseChart {
             // display the same tooltip format name <br/> seriesName value if trigger: 'axis'
 
             // works when trigger is set to axis
-            valueFormatter: (value: string | number): string => formatChartValue(value, formatting),
+            valueFormatter: (value: string | number): string => formatChartValue(getVal(value), formatting),
             // works when trigger is set to item
             formatter: (params: { seriesName?: string; name?: string;value: Array<any>, percent: string | number, marker: string;}): string => {
-              const { value = [], percent = '' } = params
+              const { value: rawValue, percent = '' } = params
+              const value = getVal(rawValue)
 
-              const formattedValue = formatChartValue(value[1], formatting)
+              const formattedValue = formatChartValue(value, formatting)
 
               if (t?.formatting) {
-                return formatChartTooltip(t?.formatting, { ...params, value: value[1], percent })
+                return formatChartTooltip(t?.formatting, { ...params, value, percent })
               }
 
               return `${params.seriesName}<br>${params.marker}${params.name}<span style="float: right; margin-left: 20px">${formattedValue}${relative ? ' (' + params.percent + '%)' : ''}</span>`
@@ -297,9 +323,10 @@ export default class Chart extends BaseChart {
               trigger: 'axis',
             },
             formatter: (params: { seriesName: string, name: string, value: Array<any>, percent: string | number }): string => {
-              const { value = [], percent = '' } = params
+              const { value: rawValue, percent = '' } = params
+              const value = getVal(rawValue)
 
-              return `${formatChartValue(value[1], formatting)}${relative ? ` (${percent}%)` : ''}`
+              return `${formatChartValue(value, formatting)}${relative ? ` (${percent}%)` : ''}`
             },
           },
           data,

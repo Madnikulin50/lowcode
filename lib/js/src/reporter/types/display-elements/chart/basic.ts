@@ -171,6 +171,23 @@ export class BasicChartOptions extends ChartOptions {
       options.yAxis = [tempYAxis]
 
       options.series = datasets.map(({ label, data, stack }) => {
+        const anomalyFlags = this.anomaly.enabled ? this.detectAnomalies(data) : []
+
+        let seriesData: any
+        if (xType === 'time') {
+          seriesData = labels.map((name, i) => {
+            const val = data[i]
+            const point = [moment(name).valueOf() || undefined, val]
+            return anomalyFlags[i] ? { value: point, itemStyle: { color: this.anomaly.color } } : point
+          })
+        } else {
+          seriesData = anomalyFlags.length
+            ? data.map((val: number, i: number) => {
+                return anomalyFlags[i] ? { value: val, itemStyle: { color: this.anomaly.color } } : val
+              })
+            : data
+        }
+
         return {
           name: label,
           type: this.type,
@@ -184,9 +201,7 @@ export class BasicChartOptions extends ChartOptions {
             align: 'center',
             verticalAlign: 'middle',
           },
-          data: xType === 'time' ? labels.map((name, i) => {
-            return [moment(name).valueOf() || undefined, data[i]]
-          }) : data,
+          data: seriesData,
         }
       })
     }
@@ -233,6 +248,44 @@ export class BasicChartOptions extends ChartOptions {
     if (!dataframe || !dataframe.columns) return -1
 
     return dataframe.columns.findIndex(({ name }) => name === col)
+  }
+
+  detectAnomalies (values: number[]): boolean[] {
+    if (!values.length) return values.map(() => false)
+    const n = values.length
+    const flags = new Array(n).fill(false)
+    const cfg = this.anomaly
+
+    if (cfg.method === 'zscore') {
+      const mean = values.reduce((a, b) => a + b, 0) / n
+      const std = Math.sqrt(values.reduce((s, v) => s + (v - mean) ** 2, 0) / n) || 1
+      values.forEach((v, i) => { if (Math.abs(v - mean) / std > cfg.threshold) flags[i] = true })
+    }
+
+    if (cfg.method === 'iqr') {
+      const sorted = [...values].sort((a, b) => a - b)
+      const q1 = sorted[Math.floor(n * 0.25)]
+      const q3 = sorted[Math.floor(n * 0.75)]
+      const iqr = q3 - q1
+      values.forEach((v, i) => { if (v < q1 - 1.5 * iqr || v > q3 + 1.5 * iqr) flags[i] = true })
+    }
+
+    if (cfg.method === 'fixed') {
+      values.forEach((v, i) => {
+        if ((cfg.min != null && v < cfg.min) || (cfg.max != null && v > cfg.max)) flags[i] = true
+      })
+    }
+
+    if (cfg.method === 'pct_change') {
+      values.forEach((v, i) => {
+        if (i === 0) return
+        const prev = values[i - 1]
+        if (prev === 0) { if (v !== 0) flags[i] = true; return }
+        if (Math.abs(v - prev) / prev > cfg.threshold) flags[i] = true
+      })
+    }
+
+    return flags
   }
 
   getData (localDataframe: FrameDefinition, dataframes: Array<FrameDefinition>) {

@@ -595,6 +595,119 @@
           </b-col>
         </b-row>
       </div>
+
+      <template v-if="hasAxis">
+        <hr>
+
+        <div class="px-3">
+          <h5 class="mb-3">
+            {{ $t('edit.additionalConfig.anomaly.label') }}
+          </h5>
+
+          <b-row>
+            <b-col
+              cols="12"
+              lg="6"
+            >
+              <b-form-group
+                :label="$t('edit.additionalConfig.anomaly.enable')"
+                label-class="text-primary"
+              >
+                <c-input-checkbox
+                  v-model="report.anomaly.enabled"
+                  switch
+                  :labels="checkboxLabel"
+                />
+              </b-form-group>
+            </b-col>
+          </b-row>
+
+          <template v-if="report.anomaly.enabled">
+            <b-row>
+              <b-col
+                cols="12"
+                lg="6"
+              >
+                <b-form-group
+                  :label="$t('edit.additionalConfig.anomaly.method')"
+                  label-class="text-primary"
+                >
+                  <b-form-select
+                    v-model="report.anomaly.method"
+                    :options="anomalyMethods"
+                  />
+                </b-form-group>
+              </b-col>
+
+              <b-col
+                cols="12"
+                lg="6"
+              >
+                <b-form-group
+                  :label="$t('edit.additionalConfig.anomaly.threshold')"
+                  label-class="text-primary"
+                >
+                  <b-form-input
+                    v-model="report.anomaly.threshold"
+                    type="number"
+                    step="0.1"
+                  />
+                </b-form-group>
+              </b-col>
+            </b-row>
+
+            <b-row v-if="report.anomaly.method === 'fixed'">
+              <b-col
+                cols="12"
+                lg="6"
+              >
+                <b-form-group
+                  :label="$t('edit.additionalConfig.anomaly.min')"
+                  label-class="text-primary"
+                >
+                  <b-form-input
+                    v-model="report.anomaly.min"
+                    type="number"
+                  />
+                </b-form-group>
+              </b-col>
+
+              <b-col
+                cols="12"
+                lg="6"
+              >
+                <b-form-group
+                  :label="$t('edit.additionalConfig.anomaly.max')"
+                  label-class="text-primary"
+                >
+                  <b-form-input
+                    v-model="report.anomaly.max"
+                    type="number"
+                  />
+                </b-form-group>
+              </b-col>
+            </b-row>
+
+            <b-row>
+              <b-col
+                cols="12"
+                lg="6"
+              >
+                <b-form-group
+                  :label="$t('edit.additionalConfig.anomaly.color')"
+                  label-class="text-primary"
+                >
+                  <b-form-input
+                    v-model="report.anomaly.color"
+                    type="color"
+                    class="color-picker"
+                  />
+                </b-form-group>
+              </b-col>
+            </b-row>
+          </template>
+        </div>
+      </template>
     </template>
   </report-edit>
 </template>
@@ -662,7 +775,32 @@ export default {
         { value: 'rect', text: this.$t('edit.metric.symbol.rect') },
         { value: 'roundRect', text: this.$t('edit.metric.symbol.roundRect') },
       ],
+
+      anomalyMethods: [
+        { value: 'zscore', text: this.$t('edit.additionalConfig.anomaly.methodZscore') },
+        { value: 'iqr', text: this.$t('edit.additionalConfig.anomaly.methodIqr') },
+        { value: 'fixed', text: this.$t('edit.additionalConfig.anomaly.methodFixed') },
+        { value: 'pct_change', text: this.$t('edit.additionalConfig.anomaly.methodPctChange') },
+      ],
     }
+  },
+
+  watch: {
+    report: {
+      immediate: true,
+      handler (r) {
+        if (r && !r.anomaly) {
+          this.$set(r, 'anomaly', {
+            enabled: false,
+            method: 'zscore',
+            threshold: 2,
+            min: undefined,
+            max: undefined,
+            color: '#ff4444',
+          })
+        }
+      },
+    },
   },
 
   beforeDestroy () {

@@ -119,9 +119,11 @@ export class BaseChart {
     this.config = (conf ? _.merge(this.defConfig(), conf) : false) || this.config || this.defConfig()
 
     this.config.reports?.forEach(report => {
-      const { dimensions = [], metrics = [] } = report || {}
+      if (!report) return
 
-      report.dimensions = dimensions.map(d => {
+      Object.assign(report, _.merge(this.defReport(), report))
+
+      report.dimensions = (report.dimensions || []).map(d => {
         // Legacy support
         if (d.modifier === 'auto') {
           d.timeLabels = true
@@ -135,7 +137,7 @@ export class BaseChart {
         return _.merge(this.defDimension(), d)
       })
 
-      report.metrics = metrics.map(m => _.merge(this.defMetric(), m))
+      report.metrics = (report.metrics || []).map(m => _.merge(this.defMetric(), m))
     })
   }
 
@@ -353,6 +355,14 @@ export class BaseChart {
       filter: '',
       dimensions: [this.defDimension()],
       metrics: [this.defMetric()],
+      anomaly: {
+        enabled: false,
+        method: 'zscore' as 'zscore' | 'iqr' | 'fixed' | 'pct_change',
+        threshold: 2,
+        min: undefined,
+        max: undefined,
+        color: '#ff4444',
+      },
       yAxis: {
         axisType: 'linear',
         axisPosition: 'left',

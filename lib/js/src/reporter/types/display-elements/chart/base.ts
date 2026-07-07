@@ -47,6 +47,15 @@ interface Offset {
   left?: string;
 }
 
+interface AnomalyOptions {
+  enabled: boolean;
+  method: string;
+  threshold: number;
+  min?: number;
+  max?: number;
+  color: string;
+}
+
 export class ChartOptions {
   public title = ''
   public type = 'bar'
@@ -95,6 +104,15 @@ export class ChartOptions {
     left: undefined,
   }
 
+  public anomaly: AnomalyOptions = {
+    enabled: false,
+    method: 'zscore',
+    threshold: 2,
+    min: undefined,
+    max: undefined,
+    color: '#ff4444',
+  }
+
   constructor (o: PartialChartOptions = {}) {
     if (!o) return
 
@@ -123,6 +141,10 @@ export class ChartOptions {
 
     if (o.offset) {
       this.offset = { ...this.offset, ...o.offset }
+    }
+
+    if (o.anomaly) {
+      this.anomaly = { ...this.anomaly, ...(o.anomaly as any) }
     }
   }
 }

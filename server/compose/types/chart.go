@@ -48,6 +48,7 @@ type (
 		Legend     map[string]interface{}   `json:"legend,omitempty"`
 		Tooltip    map[string]interface{}   `json:"tooltip,omitempty"`
 		Offset     map[string]interface{}   `json:"offset,omitempty"`
+		Anomaly    map[string]interface{}   `json:"anomaly,omitempty"`
 		Renderer   struct {
 			Version string `json:"version,omitempty" `
 		} `json:"renderer,omitempty"`
