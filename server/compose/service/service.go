@@ -77,7 +77,7 @@ var (
 	DefaultModule              ModuleService
 	DefaultChart               *chart
 	DefaultPage                *page
-	DefaultChat                *chat
+	DefaultChat                *chatService
 	DefaultPageLayout          *pageLayout
 	DefaultAttachment          AttachmentService
 	DefaultNotification        *notification
@@ -195,6 +195,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	DefaultPage = Page()
 	DefaultPageLayout = PageLayout()
 	DefaultChart = Chart()
+	DefaultChat = Chat()
 	DefaultNotification = Notification(c.UserFinder)
 	DefaultAttachment = Attachment(DefaultObjectStore, dal.Service())
 	DefaultDataPrivacy = DataPrivacy()

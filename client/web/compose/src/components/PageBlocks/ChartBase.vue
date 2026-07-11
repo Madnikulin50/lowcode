@@ -14,6 +14,17 @@
       @drill-down="drillDown"
     />
 
+    <b-button
+      variant="outline-light"
+      class="chart-brain-button position-absolute d-flex d-print-none border-0 px-1 text-secondary"
+      v-b-tooltip.noninteractive.hover="{ title: $t('ai.askAboutMetrics'), boundary: 'body' }"
+      @click="promptAiChat"
+    >
+      <font-awesome-icon
+        :icon="['fas', 'brain']"
+      />
+    </b-button>
+
     <template v-if="options.liveFilterEnabled">
       <b-button
         variant="outline-light"
@@ -144,6 +155,7 @@ export default {
   data () {
     return {
       chart: null,
+      chartData: null,
 
       originalFilter: undefined,
       filter: undefined,
@@ -312,7 +324,10 @@ export default {
 
       const { namespaceID } = this.namespace
 
-      return this.$ComposeAPI.recordReport({ namespaceID, ...r, filter })
+      return this.$ComposeAPI.recordReport({ namespaceID, ...r, filter }).then(data => {
+        this.chartData = data
+        return data
+      })
     },
 
     getFilter (liveFilter = this.liveFilterValue, option = this.liveFilterOption) {
@@ -433,8 +448,68 @@ export default {
       this.liveFilterModal.show = true
     },
 
+    toCSV (rows, headers) {
+      const esc = (v) => {
+        const s = v === null || v === undefined ? '' : String(v)
+        return '"' + s.replace(/"/g, '""') + '"'
+      }
+      const head = headers.map(h => esc(h.label)).join(',')
+      const body = rows
+        .map(r => headers.map(h => esc(r[h.key])).join(','))
+        .join('\r\n')
+      return head + '\r\n' + body + '\r\n'
+    },
+
+    promptAiChat () {
+      const page = this.page
+      const block = this.block
+      const namespace = this.namespace
+      const locale = this.browserLocale()
+      let prompt = block.prompt || page.config.prompt || namespace.prompt || ''
+      if (prompt.length === 0) {
+        switch (locale) {
+          case 'en-US':
+            prompt = 'What does this chart show? '
+            break
+          case 'ru-RU':
+            prompt = 'Что показывает этот график? О чём он говорит? '
+            break
+        }
+        prompt += '\r\n '
+      }
+
+      prompt += '\r\n*' + page.title + '*\r\n*' + block.title + '*\r\n'
+
+      if (this.chart) {
+        const report = this.chart.config.reports[0] || {}
+        if (report.filter) {
+          prompt += 'Фильтр: ' + report.filter + '\r\n'
+        }
+      }
+
+      const files = []
+
+      if (this.chartData && this.chartData.length > 0) {
+        const lastRows = this.chartData.slice(-25)
+        let headers = Object.keys(lastRows[0])
+        if (lastRows.length > 2) {
+          headers = headers.slice(1)
+        }
+        const csv = this.toCSV(lastRows, headers.map(h => ({ key: h, label: h })))
+        files.push({ name: 'chart_data.csv', content: csv, type: 'text/csv' })
+      }
+
+      this.$root.$emit('show-chat-modal', {
+        namespace: page.namespaceID,
+        module: page.moduleID,
+        prompt,
+        files,
+      })
+    },
+
     setDefaultValues () {
       this.chart = null
+      this.chartData = null
       this.filter = undefined
       this.drillDownFilter = undefined
     },
@@ -458,5 +533,11 @@ export default {
   &.save-chart-enabled {
     right: 2.2rem;
   }
+}
+
+.chart-brain-button {
+  right: 0.5rem;
+  top: 0.7rem;
+  z-index: 1;
 }
 </style>

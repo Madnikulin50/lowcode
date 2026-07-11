@@ -47,10 +47,11 @@ var (
 
 	DefaultActionlog actionlog.Recorder
 
-	DefaultUser     userService
-	DefaultWorkflow *workflow
-	DefaultTrigger  *trigger
-	DefaultSession  *session
+	DefaultUser         userService
+	DefaultWorkflow     *workflow
+	DefaultTrigger      *trigger
+	DefaultSession      *session
+	DefaultWorkflowChat *workflowChat
 
 	// wrapper around time.Now() that will aid service testing
 	now = func() *time.Time {
@@ -94,6 +95,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 	DefaultSession = Session(DefaultLogger.Named("session"), c.Workflow, ws)
 	DefaultWorkflow = Workflow(DefaultLogger.Named("workflow"), c.Corredor, c.Workflow)
 	DefaultTrigger = Trigger(DefaultLogger.Named("trigger"), c.Workflow)
+	DefaultWorkflowChat = WorkflowChat()
 
 	DefaultWorkflow.triggers = DefaultTrigger
 

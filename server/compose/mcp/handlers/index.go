@@ -1,13 +1,14 @@
 package handlers
 
 import (
-    "context"
+	"context"
 
-    "github.com/mark3labs/mcp-go/server"
+	"github.com/mark3labs/mcp-go/server"
 )
 
 func Init(ctx context.Context, s *server.MCPServer) {
 	initNamespace(ctx, s)
 	initModules(ctx, s)
 	initPages(ctx, s)
+	initCreate(ctx, s)
 }

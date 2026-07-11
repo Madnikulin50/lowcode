@@ -15,6 +15,7 @@
     <chat
       v-if="showModal"
       :start-prompt="startPrompt"
+      :files="attachedFiles"
       :page="page"
       magnified
       v-bind="$props"
@@ -60,6 +61,7 @@ export default {
     return {
       showModal: false,
       startPrompt: '',
+      attachedFiles: [],
       record: undefined,
       // Used if you want to display a specific block in the modal
       // Otherwise its retrieved based on the page and blockID
@@ -93,8 +95,9 @@ export default {
 
   methods: {
     startChatModal (data) {
-      const { prompt = '' } = data
+      const { prompt = '', files = [] } = data
       this.startPrompt = prompt
+      this.attachedFiles = files
       this.showModal = true
     },
 

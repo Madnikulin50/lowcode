@@ -67,10 +67,11 @@ func NewChat(h ChatAPI) *Chat {
 			w.Header().Set("Cache-Control", "no-cache")
 			w.Header().Set("Connection", "keep-alive")
 
-			err := h.AskStream(r.Context(), params, func(token string, done bool) error {
+			err := h.AskStream(r.Context(), params, func(token string, reason string, done bool) error {
 				data, _ := json.Marshal(map[string]any{
-					"token": token,
-					"done":  done,
+					"token":  token,
+					"reason": reason,
+					"done":   done,
 				})
 				_, err := fmt.Fprintf(w, "data: %s\n\n", data)
 				flusher.Flush()

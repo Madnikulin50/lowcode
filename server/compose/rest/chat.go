@@ -32,7 +32,15 @@ func (Chat) New() *Chat {
 
 func (ctrl *Chat) Ask(ctx context.Context, r *request.ChatAsk) (interface{}, error) {
 	res, err := ctrl.chat.Ask(ctx,
-		&service.ChatPromptArguments{Prompt: r.Prompt, Namespace: r.NamespaceID, Page: r.PageID, Facts: r.Facts})
+		&service.ChatPromptArguments{
+			Chat:      r.ChatID,
+			Prompt:    r.Prompt,
+			Messages:  toChatMessages(r.Messages),
+			Files:     toChatFiles(r.Files),
+			Namespace: r.NamespaceID,
+			Page:      r.PageID,
+			Facts:     r.Facts,
+		})
 
 	return ctrl.makePayload(ctx, res, err)
 }
@@ -40,10 +48,28 @@ func (ctrl *Chat) Ask(ctx context.Context, r *request.ChatAsk) (interface{}, err
 func (ctrl *Chat) AskStream(ctx context.Context, r *request.ChatAsk, stream service.ChatStreamFunc) error {
 	return ctrl.chat.AskStream(ctx, &service.ChatPromptArguments{
 		Prompt:    r.Prompt,
+		Messages:  toChatMessages(r.Messages),
+		Files:     toChatFiles(r.Files),
 		Namespace: r.NamespaceID,
 		Page:      r.PageID,
 		Facts:     r.Facts,
 	}, stream)
+}
+
+func toChatMessages(in []request.ChatMessage) []service.ChatMessage {
+	out := make([]service.ChatMessage, len(in))
+	for i, m := range in {
+		out[i] = service.ChatMessage{Role: m.Role, Content: m.Content}
+	}
+	return out
+}
+
+func toChatFiles(in []request.ChatFile) []service.ChatFile {
+	out := make([]service.ChatFile, len(in))
+	for i, f := range in {
+		out[i] = service.ChatFile{Name: f.Name, Content: f.Content}
+	}
+	return out
 }
 
 func (ctrl Chat) makePayload(ctx context.Context, itf interface{}, err error) (*chatPayload, error) {

@@ -207,11 +207,15 @@
                   class="mb-3"
                 >
                   <b-input-group>
-                    <b-form-textarea
+                    <c-rich-text-input
                       v-model="module.meta.prompt"
-                      data-test-id="input-prompt"
-                      rows="1"
                       :placeholder="$t('prompt.placeholder')"
+                      body-class="form-control"
+                      min-body-height="10rem"
+                      :labels="{
+                        urlPlaceholder: $t('content.urlPlaceholder'),
+                        ok: $t('content.ok'),
+                      }"
                     />
                     <b-input-group-append>
                       <module-translator
@@ -596,9 +600,11 @@ import ModuleTranslator from 'corteza-webapp-compose/src/components/Admin/Module
 import UniqueValues from 'corteza-webapp-compose/src/components/Admin/Module/UniqueValues'
 import RelatedPages from 'corteza-webapp-compose/src/components/Admin/Module/RelatedPages'
 import { compose, NoID } from 'corteza-lib/js/dist'
+import { handle, components } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import Export from 'corteza-webapp-compose/src/components/Admin/Export'
-import { handle } from 'corteza-lib/vue/dist'
+
+const { CRichTextInput } = components
 
 export default {
   name: 'ModulesEdit',
@@ -623,6 +629,7 @@ export default {
     EditorToolbar,
     Export,
     UniqueValues,
+    CRichTextInput,
   },
 
   beforeRouteUpdate (to, from, next) {

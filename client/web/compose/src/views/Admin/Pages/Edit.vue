@@ -182,11 +182,15 @@
               class="mb-3"
             >
               <b-input-group>
-                <b-form-textarea
+                <c-rich-text-input
                   v-model="page.config.prompt"
-                  data-test-id="input-prompt"
-                  rows="1"
                   :placeholder="$t('prompt.placeholder')"
+                  body-class="form-control"
+                  min-body-height="10rem"
+                  :labels="{
+                    urlPlaceholder: $t('content.urlPlaceholder'),
+                    ok: $t('content.ok'),
+                  }"
                 />
                 <b-input-group-append>
                   <page-translator
@@ -1109,7 +1113,7 @@ import { isEqual } from 'lodash'
 import Draggable from 'vuedraggable'
 import { mapActions, mapGetters } from 'vuex'
 import ModuleTranslator from 'corteza-webapp-compose/src/components/Admin/Module/ModuleTranslator.vue';
-const { CInputRole, CInputExpression, CUploader, CInputSelect } = components
+const { CInputRole, CInputExpression, CUploader, CInputSelect, CRichTextInput } = components
 
 export default {
   i18nOptions: {
@@ -1128,6 +1132,7 @@ export default {
     CInputRole,
     CInputExpression,
     CInputSelect,
+    CRichTextInput,
   },
 
   mixins: [

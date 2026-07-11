@@ -397,6 +397,13 @@
         class="d-flex position-relative h-100"
         :class="{ 'overflow-hidden': !items.length || isProcessing }"
       >
+        <button
+          class="brain-button position-absolute d-flex align-items-center justify-content-center d-print-none border-0 text-secondary"
+          @click="promptAiChat"
+          :title="$t('ai.askAboutRecord')"
+        >
+          <font-awesome-icon :icon="['fas', 'brain']" />
+        </button>
         <b-table-simple
           data-test-id="table-record-list"
           hover
@@ -3044,11 +3051,99 @@ export default {
         })
       }
     },
+
+    toCSV (rows, headers) {
+      const esc = (v) => {
+        const s = v === null || v === undefined ? '' : String(v)
+        return '"' + s.replace(/"/g, '""') + '"'
+      }
+      const head = headers.map(h => esc(h.label)).join(',')
+      const body = rows
+        .map(r => headers.map(h => esc(r[h.key])).join(','))
+        .join('\r\n')
+      return head + '\r\n' + body + '\r\n'
+    },
+
+    promptAiChat () {
+      const page = this.page
+      const block = this.block
+      const namespace = this.namespace
+      const locale = this.browserLocale()
+      let prompt = block.prompt || page.config.prompt || namespace.prompt || ''
+      if (prompt.length === 0) {
+        switch (locale) {
+          case 'en-US':
+            prompt = 'What does this record list show? '
+            break
+          case 'ru-RU':
+            prompt = 'Что показывает этот список записей? О чём он говорит? '
+            break
+        }
+        prompt += '\r\n '
+      }
+
+      prompt += '\r\n*' + page.title + '*\r\n*' + block.title + '*\r\n'
+
+      if (this.recordListModule) {
+        prompt += 'Module: ' + this.recordListModule.name + '\r\n'
+      }
+
+      if (this.query) {
+        prompt += 'Search: ' + this.query + '\r\n'
+      }
+      if (this.prefilter) {
+        prompt += 'Filter: ' + this.prefilter + '\r\n'
+      }
+
+      const files = []
+
+      if (this.items && this.items.length > 0) {
+        const headers = this.fields.map(f => ({ key: f.key, label: f.label }))
+        const firstRows = this.items.slice(0, 25)
+        const csv = this.toCSV(
+          firstRows.map(item => {
+            const row = {}
+            for (const h of headers) {
+              row[h.key] = item.r.values[h.key]
+            }
+            return row
+          }),
+          headers,
+        )
+        files.push({ name: 'record_list_data.csv', content: csv, type: 'text/csv' })
+      }
+
+      this.$root.$emit('show-chat-modal', {
+        namespace: page.namespaceID,
+        module: page.moduleID,
+        prompt,
+        files,
+      })
+    },
   },
 }
 </script>
 
 <style lang="scss" scoped>
+.brain-button {
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 30;
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s, box-shadow 0.2s;
+}
+
+.brain-button:hover {
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
 .handle {
   cursor: grab;
 }

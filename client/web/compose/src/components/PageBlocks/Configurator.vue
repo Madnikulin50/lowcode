@@ -346,12 +346,15 @@
             label-class="text-primary"
           >
             <b-input-group>
-              <c-input-expression
-                id="prompt"
+              <c-rich-text-input
                 v-model="block.prompt"
-                auto-complete
                 :placeholder="$t('ai.prompt.placehoder')"
-                :suggestion-params="recordAutoCompleteParams"
+                body-class="form-control"
+                min-body-height="10rem"
+                :labels="{
+                  urlPlaceholder: $t('content.urlPlaceholder'),
+                  ok: $t('content.ok'),
+                }"
                 class="flex-grow-1"
               />
 
@@ -400,7 +403,7 @@ import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/Pag
 import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
 import PageBlock from './index'
 
-const { CInputExpression } = components
+const { CInputExpression, CRichTextInput } = components
 
 export default {
   i18nOptions: {
@@ -411,6 +414,7 @@ export default {
     PageBlock,
     PageTranslator,
     CInputExpression,
+    CRichTextInput,
   },
 
   mixins: [autocomplete],

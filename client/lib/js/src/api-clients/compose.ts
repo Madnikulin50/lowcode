@@ -4454,6 +4454,8 @@ export default class Compose {
             pageID,
             prompt,
             meta,
+            messages,
+            files,
         } = (a as KV) || {}
 
         const cfg: AxiosRequestConfig = {
@@ -4470,19 +4472,24 @@ export default class Compose {
             namespaceID,
             meta,
             prompt,
-            pageID
+            pageID,
+            messages,
+            files,
         }
         return this.api().request(cfg).then(result => stdResolve(result))
     }
 
-    async pageAiPromptStream (a: KV, onToken: (token: string) => void): Promise<void> {
+    async pageAiPromptStream (a: KV, onToken: (token: { token: any; reason: any }) => void): Promise<void> {
         const {
             namespaceID,
             selfID,
             moduleID,
             pageID,
+            chatID,
             prompt,
             meta,
+            messages,
+            files,
         } = (a as KV) || {}
 
         const endpoint = this.pageAiPromptEndpoint({ namespaceID, pageID }) + '/stream'
@@ -4504,9 +4511,12 @@ export default class Compose {
                 selfID,
                 moduleID,
                 namespaceID,
+                chatID,
                 meta,
                 prompt,
                 pageID,
+                messages,
+                files,
             }),
         })
 
@@ -4531,9 +4541,10 @@ export default class Compose {
                 if (!line.startsWith('data: ')) continue
                 const data = JSON.parse(line.slice(6))
                 if (data.done) return
-                if (data.token) {
-                    onToken(data.token)
-                }
+                onToken( {
+                    token: data.token,
+                    reason: data.reason,
+                })
             }
         }
     }

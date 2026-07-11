@@ -262,11 +262,15 @@
               class="mb-3"
             >
               <b-input-group>
-                <b-form-textarea
+                <c-rich-text-input
                   v-model="namespace.meta.prompt"
-                  data-test-id="input-prompt"
-                  rows="1"
                   :placeholder="$t('prompt.placeholder')"
+                  body-class="form-control"
+                  min-body-height="10rem"
+                  :labels="{
+                    urlPlaceholder: $t('content.urlPlaceholder'),
+                    ok: $t('content.ok'),
+                  }"
                 />
                 <b-input-group-append>
                   <namespace-translator
@@ -354,10 +358,12 @@
 <script>
 import { isEqual } from 'lodash'
 import { compose, NoID } from 'corteza-lib/js/dist'
-import { url, handle } from 'corteza-lib/vue/dist'
+import { url, handle, components } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import NamespaceTranslator from 'corteza-webapp-compose/src/components/Namespaces/NamespaceTranslator'
 import { mapGetters, mapActions } from 'vuex'
+
+const { CRichTextInput } = components
 
 export default {
   i18nOptions: {
@@ -369,6 +375,7 @@ export default {
   components: {
     EditorToolbar,
     NamespaceTranslator,
+    CRichTextInput,
   },
 
   beforeRouteUpdate (to, from, next) {

@@ -74,6 +74,7 @@ import {
   faTools,
   faTrashRestore,
   faUnderline,
+  faUser,
   faUserCog,
   faWrench,
   faRobot,
@@ -101,7 +102,6 @@ import {
   faSave,
   faSquare,
   faTrashAlt,
-  faUser,
   faEnvelopeOpen,
   faFaceSmile,
 } from '@fortawesome/free-regular-svg-icons'
