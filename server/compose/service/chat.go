@@ -77,7 +77,7 @@ func (c *chatService) modelFromPrompt(prompt string) string {
 			return prompt[start : start+end]
 		}
 	}
-	return "deepseek-r1" // "deepseek-v2"
+	return "deepseek-v2"
 }
 
 func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message {
@@ -178,6 +178,16 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64) []chat.T
 					return moduleUpdateRecord(ctx, namespaceID, m.ID, parseUint64(params["recordID"]), params["values"])
 				},
 			})
+			tools = append(tools, chat.ToolDef{
+				Name:        fmt.Sprintf("module_%v_delete_record", id),
+				Description: fmt.Sprintf("Delete a record by ID from module '%s'", name),
+				Params: []chat.ParamDef{
+					{Name: "recordID", Type: "string", Required: true, Description: "Record ID to delete"},
+				},
+				Handler: func(ctx context.Context, params map[string]string) string {
+					return moduleDeleteRecord(ctx, namespaceID, m.ID, parseUint64(params["recordID"]))
+				},
+			})
 		}
 	}
 
@@ -239,6 +249,12 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 	}
 
 	content := out.Content
+	if content == "" && out.ReasoningContent != "" {
+		content = out.ReasoningContent
+	}
+	if content == "" {
+		content = "Модель не сгенерировала ответ."
+	}
 
 	// try native tool calls first, fall back to XML-based
 	toolCalls := out.ToolCalls
@@ -369,6 +385,9 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 		return stream("", "", true)
 	}
 
+	if fullContent == "" {
+		stream("Модель не сгенерировала ответ.", "", false)
+	}
 	return stream("", "", true)
 }
 
@@ -915,13 +934,21 @@ func moduleRecords(ctx context.Context, namespaceID, moduleID uint64) string {
 }
 
 func moduleCreateRecord(ctx context.Context, namespaceID, moduleID uint64, valuesJSON string) string {
-	if valuesJSON == "" {
-		return "Please provide field values as JSON, e.g. {\"title\":\"New Item\"}."
-	}
-
 	module, err := DefaultModule.FindByID(ctx, namespaceID, moduleID)
 	if err != nil || module == nil {
 		return fmt.Sprintf("Failed to find module %d: %v", moduleID, err)
+	}
+
+	if valuesJSON == "" {
+		var fieldList []string
+		for _, f := range module.Fields {
+			req := ""
+			if f.Required {
+				req = " (required)"
+			}
+			fieldList = append(fieldList, fmt.Sprintf("  - %s (%s)%s", f.Name, f.Kind, req))
+		}
+		return fmt.Sprintf("Module '%s' has these fields:\n%s\n\nPlease provide field values as JSON, e.g. {\"%s\":\"value\"}.", module.Name, strings.Join(fieldList, "\n"), module.Fields[0].Name)
 	}
 
 	var raw map[string]interface{}
@@ -1018,4 +1045,21 @@ func moduleUpdateRecord(ctx context.Context, namespaceID, moduleID, recordID uin
 	}
 
 	return fmt.Sprintf("Record %d updated in '%s'! Values: %s", recordID, module.Name, strings.Join(vals, ", "))
+}
+
+func moduleDeleteRecord(ctx context.Context, namespaceID, moduleID, recordID uint64) string {
+	if recordID == 0 {
+		return "Please provide a record ID to delete."
+	}
+
+	module, err := DefaultModule.FindByID(ctx, namespaceID, moduleID)
+	if err != nil || module == nil {
+		return fmt.Sprintf("Failed to find module %d: %v", moduleID, err)
+	}
+
+	if err := DefaultRecord.DeleteByID(ctx, namespaceID, moduleID, recordID); err != nil {
+		return fmt.Sprintf("Failed to delete record %d: %v", recordID, err)
+	}
+
+	return fmt.Sprintf("Record %d deleted from '%s'.", recordID, module.Name)
 }
