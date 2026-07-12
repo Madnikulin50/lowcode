@@ -55,53 +55,12 @@ func Chat() *chatService {
 	go ttl.Start()
 
 	tools := []chat.ToolDef{
-		{
-			Name:        "create_module",
-			Description: "Create a new module (entity to store records)",
-			Params: []chat.ParamDef{
-				{Name: "name", Type: "string", Required: true, Description: "Module display name"},
-				{Name: "handle", Type: "string", Required: false, Description: "URL-safe handle (auto-generated if empty)"},
-				{Name: "fields", Type: "json", Required: true, Description: `JSON array. Each field: {"name":"...","kind":"String|Number|DateTime|Select|Bool|User|Record|File|URL|Email","label":"...","required":true/false}`},
-			},
-			Handler: createModule,
-		},
-		{
-			Name:        "create_chart",
-			Description: "Create a new chart",
-			Params: []chat.ParamDef{
-				{Name: "name", Type: "string", Required: true, Description: "Chart display name"},
-				{Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"},
-				{Name: "config", Type: "json", Required: true, Description: `JSON chart config with reports, dimensions, metrics`},
-			},
-			Handler: createChart,
-		},
-		{
-			Name:        "create_page",
-			Description: "Create a new page",
-			Params: []chat.ParamDef{
-				{Name: "title", Type: "string", Required: true, Description: "Page title"},
-				{Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"},
-				{Name: "description", Type: "string", Required: false, Description: "Page description"},
-				{Name: "moduleID", Type: "string", Required: false, Description: "Module ID this page is for"},
-				{Name: "blocks", Type: "json", Required: false, Description: `JSON array of page blocks`},
-			},
-			Handler: createPage,
-		},
-		{
-			Name:        "list_modules",
-			Description: "List all modules in the current namespace with their fields",
-			Handler:     listModules,
-		},
-		{
-			Name:        "list_charts",
-			Description: "List all charts in the current namespace",
-			Handler:     listCharts,
-		},
-		{
-			Name:        "list_pages",
-			Description: "List all pages in the current namespace",
-			Handler:     listPages,
-		},
+		{Name: "create_module", Description: "Create a new module (entity to store records)", Params: []chat.ParamDef{{Name: "name", Type: "string", Required: true, Description: "Module display name"}, {Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"}, {Name: "fields", Type: "json", Required: true, Description: `JSON array. Each field: {"name":"...","kind":"String|Number|DateTime|Select|Bool|User|Record|File|URL|Email","label":"...","required":true/false}`}}, Handler: createModule},
+		{Name: "create_chart", Description: "Create a new chart", Params: []chat.ParamDef{{Name: "name", Type: "string", Required: true, Description: "Chart display name"}, {Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"}, {Name: "config", Type: "json", Required: true, Description: "JSON chart config with reports, dimensions, metrics"}}, Handler: createChart},
+		{Name: "create_page", Description: "Create a new page", Params: []chat.ParamDef{{Name: "title", Type: "string", Required: true, Description: "Page title"}, {Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"}, {Name: "description", Type: "string", Required: false, Description: "Page description"}, {Name: "moduleID", Type: "string", Required: false, Description: "Module ID this page is for"}, {Name: "blocks", Type: "json", Required: false, Description: "JSON array of page blocks"}}, Handler: createPage},
+		{Name: "list_modules", Description: "List all modules (entities/collections/tables) in the current namespace with their fields. Use this to show stores, products, tasks, or any data entities.", Handler: listModules},
+		{Name: "list_charts", Description: "List all charts in the current namespace", Handler: listCharts},
+		{Name: "list_pages", Description: "List all pages in the current namespace", Handler: listPages},
 	}
 
 	return &chatService{
@@ -118,7 +77,7 @@ func (c *chatService) modelFromPrompt(prompt string) string {
 			return prompt[start : start+end]
 		}
 	}
-	return "deepseek-r1" //"deepseek-v2"
+	return "deepseek-r1" // "deepseek-v2"
 }
 
 func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message {
@@ -137,7 +96,7 @@ func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message 
 	}
 	if !hasSystem {
 		msgs = append([]*schema.Message{
-			schema.SystemMessage("You are an AI assistant. You can call tools by outputting XML like this:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\nAlways ask the user to confirm before creating anything. For listing/viewing tools, call them immediately without asking for confirmation."),
+			schema.SystemMessage("You are an assistant for a database app. You MUST call a tool to get or manage data.\n\nCall a tool with XML:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\nIMPORTANT: When the user asks to show/list/view specific items (e.g. stores, products, tasks), look through all available tools for one whose description mentions that item name and call it directly. Do NOT call list_modules for this — it lists entity types, not records.\n\nRules:\n- show/list stores/products/tasks/etc → find module_{id}_records tool matching the name\n- show/list what entities exist → list_modules\n- show/list pages → list_pages\n- show/list charts → list_charts\n- create page/module/chart → create_* tool\n\nAsk before creating. For listing, call tool immediately."),
 		}, msgs...)
 	}
 	if ask.Prompt != "" {
@@ -165,23 +124,58 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64) []chat.T
 	modules, _, err := DefaultModule.Find(ctx, types.ModuleFilter{NamespaceID: namespaceID})
 	if err == nil {
 		for _, m := range modules {
-			id := m.ID
+
+			id := m.Handle
+			if len(id) == 0 {
+				id = fmt.Sprintf("%v", m.ID)
+			}
+			id = strings.ToLower(id)
 			name := m.Name
+			name = strings.ToLower(name)
+			name = strings.Replace(name, "_", " ", -1)
 			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("show_module_%d", id),
+				Name:        fmt.Sprintf("show_module_%v", id),
 				Description: fmt.Sprintf("Show properties and fields of module '%s'", name),
 				Handler: func(ctx context.Context, params map[string]string) string {
-					return showModuleByID(ctx, namespaceID, id)
+					return showModuleByID(ctx, namespaceID, m.ID)
 				},
 			})
 			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("module_search_%d", id),
+				Name:        fmt.Sprintf("module_search_%v", id),
 				Description: fmt.Sprintf("Search records in module '%s' by text query", name),
 				Params: []chat.ParamDef{
 					{Name: "query", Type: "string", Required: true, Description: "Search text to find in record fields"},
 				},
 				Handler: func(ctx context.Context, params map[string]string) string {
-					return moduleSearch(ctx, namespaceID, id, params["query"])
+					return moduleSearch(ctx, namespaceID, m.ID, params["query"])
+				},
+			})
+			tools = append(tools, chat.ToolDef{
+				Name:        fmt.Sprintf("module_%v_records", id),
+				Description: fmt.Sprintf("View all records in module '%s'", name),
+				Handler: func(ctx context.Context, params map[string]string) string {
+					return moduleRecords(ctx, namespaceID, m.ID)
+				},
+			})
+			tools = append(tools, chat.ToolDef{
+				Name:        fmt.Sprintf("module_%v_create_record", id),
+				Description: fmt.Sprintf("Create a new record in module '%s'. Pass field values as JSON: {\"fieldName\":\"value\"}", name),
+				Params: []chat.ParamDef{
+					{Name: "values", Type: "json", Required: true, Description: `JSON object with field values, e.g. {"title":"New Item","price":"100"}`},
+				},
+				Handler: func(ctx context.Context, params map[string]string) string {
+					return moduleCreateRecord(ctx, namespaceID, m.ID, params["values"])
+				},
+			})
+			tools = append(tools, chat.ToolDef{
+				Name:        fmt.Sprintf("module_%v_update_record", id),
+				Description: fmt.Sprintf("Update a record in module '%s' by record ID. Pass recordID and field values.", name),
+				Params: []chat.ParamDef{
+					{Name: "recordID", Type: "string", Required: true, Description: "Record ID to update"},
+					{Name: "values", Type: "json", Required: true, Description: `JSON object with field values to update, e.g. {"title":"New Title","price":"200"}`},
+				},
+				Handler: func(ctx context.Context, params map[string]string) string {
+					return moduleUpdateRecord(ctx, namespaceID, m.ID, parseUint64(params["recordID"]), params["values"])
 				},
 			})
 		}
@@ -370,7 +364,7 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 		}
 		result := execToolCalls(ctx, parsed, ask.Namespace, allTools)
 		if result != "" {
-			stream("\n\n"+result, "", false)
+			stream(result, "", false)
 		}
 		return stream("", "", true)
 	}
@@ -431,7 +425,7 @@ type CallParam struct {
 
 func needsConfirm(calls []CallParam) bool {
 	for _, call := range calls {
-		if strings.HasPrefix(call.Name, "create_") {
+		if strings.HasPrefix(call.Name, "create_") || strings.HasPrefix(call.Name, "delete_") {
 			return true
 		}
 	}
@@ -461,7 +455,7 @@ func execToolCalls(ctx context.Context, calls []CallParam, namespaceID uint64, t
 		}
 	}
 	if len(results) > 0 {
-		return "**Tool Results:**\n" + strings.Join(results, "\n")
+		return strings.Join(results, "\n")
 	}
 	return ""
 }
@@ -885,4 +879,143 @@ func moduleSearch(ctx context.Context, namespaceID, moduleID uint64, query strin
 		fmt.Fprintf(&b, "\n")
 	}
 	return b.String()
+}
+
+func moduleRecords(ctx context.Context, namespaceID, moduleID uint64) string {
+	module, err := DefaultModule.FindByID(ctx, namespaceID, moduleID)
+	if err != nil || module == nil {
+		return fmt.Sprintf("Failed to find module %d: %v", moduleID, err)
+	}
+
+	filter := types.RecordFilter{
+		ModuleID:    moduleID,
+		NamespaceID: namespaceID,
+	}
+	set, _, err := DefaultRecord.Find(ctx, filter)
+	if err != nil {
+		return fmt.Sprintf("Failed to list records: %v", err)
+	}
+
+	if len(set) == 0 {
+		return fmt.Sprintf("No records in module '%s'.", module.Name)
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "📋 **Records in '%s' (%d):**\n\n", module.Name, len(set))
+	for _, r := range set {
+		fmt.Fprintf(&b, "• **Record #%d** (ID: %d)\n", r.Revision, r.ID)
+		for _, v := range r.Values {
+			if v.Value != "" {
+				fmt.Fprintf(&b, "  - `%s`: %s\n", v.Name, v.Value)
+			}
+		}
+		fmt.Fprintf(&b, "\n")
+	}
+	return b.String()
+}
+
+func moduleCreateRecord(ctx context.Context, namespaceID, moduleID uint64, valuesJSON string) string {
+	if valuesJSON == "" {
+		return "Please provide field values as JSON, e.g. {\"title\":\"New Item\"}."
+	}
+
+	module, err := DefaultModule.FindByID(ctx, namespaceID, moduleID)
+	if err != nil || module == nil {
+		return fmt.Sprintf("Failed to find module %d: %v", moduleID, err)
+	}
+
+	var raw map[string]interface{}
+	if err := json.Unmarshal([]byte(valuesJSON), &raw); err != nil {
+		return fmt.Sprintf("Invalid values JSON: %v. Please use format like {\"fieldName\":\"value\"}.", err)
+	}
+
+	values := make(types.RecordValueSet, 0, len(raw))
+	for k, v := range raw {
+		values = append(values, &types.RecordValue{
+			Name:  k,
+			Value: fmt.Sprintf("%v", v),
+		})
+	}
+
+	rec := &types.Record{
+		NamespaceID: namespaceID,
+		ModuleID:    moduleID,
+		Values:      values,
+	}
+
+	created, errs, err := DefaultRecord.Create(ctx, rec)
+	if err != nil {
+		return fmt.Sprintf("Failed to create record in '%s': %v", module.Name, err)
+	}
+	if errs != nil && len(errs.Set) > 0 {
+		msg := fmt.Sprintf("Validation errors for '%s':", module.Name)
+		for _, e := range errs.Set {
+			msg += fmt.Sprintf("\n- %s: %s", e.Kind, e.Message)
+		}
+		return msg
+	}
+
+	id := created.ID
+	var vals []string
+	for _, v := range created.Values {
+		if v.Value != "" {
+			vals = append(vals, fmt.Sprintf("%s=%s", v.Name, v.Value))
+		}
+	}
+
+	return fmt.Sprintf("Record created in '%s'! ID: %d, Values: %s", module.Name, id, strings.Join(vals, ", "))
+}
+
+func moduleUpdateRecord(ctx context.Context, namespaceID, moduleID, recordID uint64, valuesJSON string) string {
+	if recordID == 0 {
+		return "Please provide a record ID to update."
+	}
+	if valuesJSON == "" {
+		return "Please provide field values to update as JSON."
+	}
+
+	module, err := DefaultModule.FindByID(ctx, namespaceID, moduleID)
+	if err != nil || module == nil {
+		return fmt.Sprintf("Failed to find module %d: %v", moduleID, err)
+	}
+
+	existing, _, err := DefaultRecord.FindByID(ctx, namespaceID, moduleID, recordID)
+	if err != nil {
+		return fmt.Sprintf("Record %d not found: %v", recordID, err)
+	}
+
+	var raw map[string]interface{}
+	if err := json.Unmarshal([]byte(valuesJSON), &raw); err != nil {
+		return fmt.Sprintf("Invalid values JSON: %v. Please use format like {\"fieldName\":\"newValue\"}.", err)
+	}
+
+	values := make(types.RecordValueSet, 0, len(raw))
+	for k, v := range raw {
+		values = append(values, &types.RecordValue{
+			Name:  k,
+			Value: fmt.Sprintf("%v", v),
+		})
+	}
+
+	existing.Values = values
+	updated, errs, err := DefaultRecord.Update(ctx, existing)
+	if err != nil {
+		return fmt.Sprintf("Failed to update record %d: %v", recordID, err)
+	}
+	if errs != nil && len(errs.Set) > 0 {
+		msg := fmt.Sprintf("Validation errors for record %d:", recordID)
+		for _, e := range errs.Set {
+			msg += fmt.Sprintf("\n- %s: %s", e.Kind, e.Message)
+		}
+		return msg
+	}
+
+	var vals []string
+	for _, v := range updated.Values {
+		if v.Value != "" {
+			vals = append(vals, fmt.Sprintf("%s=%s", v.Name, v.Value))
+		}
+	}
+
+	return fmt.Sprintf("Record %d updated in '%s'! Values: %s", recordID, module.Name, strings.Join(vals, ", "))
 }

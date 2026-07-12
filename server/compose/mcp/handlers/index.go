@@ -10,5 +10,5 @@ func Init(ctx context.Context, s *server.MCPServer) {
 	initNamespace(ctx, s)
 	initModules(ctx, s)
 	initPages(ctx, s)
-	initCreate(ctx, s)
+	initCharts(ctx, s)
 }

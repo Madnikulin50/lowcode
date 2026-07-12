@@ -217,10 +217,11 @@ export default {
           this.messages[msgIdxAnswer].content += token
           if (token !== '') {
             this.messages[msgIdxReasoning].active = false
+            this.messages[msgIdxReasoning].collapsed = true
           }
           if (reason !== '') {
             if (this.messages[msgIdxReasoning].content === '') {
-              this.messages[msgIdxReasoning].content = '<h2>Размышляю...</h2> '
+              this.messages[msgIdxReasoning].content = '<b>Размышляю...</b> '
             }
             this.messages[msgIdxReasoning].content += reason.replace(/\n/g, '<br>')
           }
