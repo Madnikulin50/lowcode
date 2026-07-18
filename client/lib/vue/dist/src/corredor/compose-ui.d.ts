@@ -1,4 +1,4 @@
-import { compose } from '../../../../../lib/js/dist';
+import { compose } from '@cortezaproject/corteza-js';
 interface ComposeUIContext {
     $namespace?: compose.Namespace;
     $module?: compose.Module;

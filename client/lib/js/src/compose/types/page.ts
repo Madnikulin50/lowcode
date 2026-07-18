@@ -30,7 +30,6 @@ interface PageConfig {
     };
     expanded: false;
   };
-  prompt: string
 }
 
 export class Page {
@@ -40,6 +39,7 @@ export class Page {
   public namespaceID = NoID;
 
   public title = '';
+  public prompt = '';
   public handle = '';
   public description = '';
   public weight = 0;
@@ -60,7 +60,6 @@ export class Page {
       },
       expanded: false,
     },
-    prompt: ''
   }
 
   public meta: PageMeta = {
