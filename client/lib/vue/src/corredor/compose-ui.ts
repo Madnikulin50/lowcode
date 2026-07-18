@@ -1,4 +1,4 @@
-import { compose } from '../../../../../lib/js/dist'
+import { compose } from '../../../../lib/js/dist'
 
 const success = { variant: 'success', countdown: 5 }
 const warning = { variant: 'warning', countdown: 120 }

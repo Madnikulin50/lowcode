@@ -1,3 +1,17 @@
-dist
+.DS_Store
 node_modules
-package-lock.json
+dist
+*.log
+.env
+coverage
+.nyc_output
+
+# Editor directories and files
+.idea
+.vscode
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw*
