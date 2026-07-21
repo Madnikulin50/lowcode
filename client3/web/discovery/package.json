@@ -1,0 +1,35 @@
+{
+  "name": "corteza-discovery",
+  "version": "2024.9.8",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev-env": "vite --mode development",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-regular-svg-icons": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@popperjs/core": "^2.11.8",
+    "autoprefixer": "^10.5.3",
+    "axios": "^1.8.3",
+    "bootstrap": "^5.3.3",
+    "lodash": "^4.17.21",
+    "pinia": "^3.0.2",
+    "rtlcss": "^4.3.0",
+    "vue": "^3.5.13",
+    "vue-i18n": "^10.0.5",
+    "vue-router": "^4.5.0",
+    "vue-simple-markdown": "^1.1.5",
+    "vue-split-panel": "^1.0.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "sass": "^1.85.1",
+    "vite": "^6.3.1"
+  }
+}
