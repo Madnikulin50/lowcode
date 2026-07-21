@@ -1,10 +1,6 @@
 <template>
-  <b-container
-    fluid="xl"
-    class="d-flex flex-column flex-fill pt-2 pb-3"
-  >
-    <c-content-header :title="$t('title')" />
-
+  <div class="container-fluid d-flex flex-column flex-fill pt-2 pb-3">
+    <c-content-header :title="$t('system.roles.list.title')" />
     <c-resource-list
       :primary-key="primaryKey"
       :filter="filter"
@@ -13,222 +9,73 @@
       :fields="fields"
       :items="items"
       :row-class="rowClass"
-      :translations="{
-        searchPlaceholder: $t('filterForm.query.placeholder'),
-        notFound: $t('admin:general.notFound'),
-        noItems: $t('admin:general.resource-list.no-items'),
-        loading: $t('loading'),
-        showingPagination: 'admin:general.pagination.showing',
-        singlePluralPagination: 'admin:general.pagination.single',
-        prevPagination: $t('admin:general.pagination.prev'),
-        nextPagination: $t('admin:general.pagination.next'),
-        resourceSingle: $t('general:label.role.single'),
-        resourcePlural: $t('general:label.role.plural'),
-      }"
-      clickable
-      sticky-header
+      :translations="{ searchPlaceholder: $t('query.placeholder'), notFound: $t('admin.general.notFound'), noItems: $t('general.resource-list.no-items'), loading: $t('loading'), showingPagination: 'general.pagination.showing', singlePluralPagination: 'general.pagination.single', prevPagination: $t('admin.general.pagination.prev'), nextPagination: $t('admin.general.pagination.next'), resourceSingle: $t('label.role.single'), resourcePlural: $t('label.role.plural') }"
+      clickable sticky-header
       class="custom-resource-list-height flex-fill"
       @search="filterList"
       @row-clicked="handleRowClicked"
     >
       <template #header>
-        <b-button
-          v-if="canCreate"
-          data-test-id="button-new-role"
-          variant="primary"
-          size="lg"
-          :to="{ name: 'system.role.new' }"
-        >
-          {{ $t('new') }}
-        </b-button>
-
-        <c-permissions-button
-          v-if="canGrant"
-          resource="corteza::system:role/*"
-          :button-label="$t('permissions')"
-          size="lg"
-        />
-
-        <c-corredor-manual-buttons
-          ui-page="role/list"
-          ui-slot="toolbar"
-          resource-type="system"
-          default-variant="link"
-          size="lg"
-          @click="dispatchCortezaSystemEvent($event)"
-        />
+        <button v-if="canCreate" class="btn btn-primary btn-lg" @click="$router.push({ name: 'system.role.new' })">{{ $t('new') }}</button>
+        <c-permissions-button v-if="canGrant" resource="corteza::system:role/*" :button-label="$t('permissions')" size="lg" />
+        <c-corredor-manual-buttons ui-page="role/list" ui-slot="toolbar" resource-type="system" default-variant="link" size="lg" @click="dispatchCortezaSystemEvent($event)" />
       </template>
-
       <template #toolbar>
-        <c-resource-list-status-filter
-          v-model="filter.deleted"
-          data-test-id="filter-deleted-roles"
-          :label="$t('filterForm.deleted.label')"
-          :excluded-label="$t('filterForm.excluded.label')"
-          :inclusive-label="$t('filterForm.inclusive.label')"
-          :exclusive-label="$t('filterForm.exclusive.label')"
-          @change="filterList"
-        />
-
-        <c-resource-list-status-filter
-          v-model="filter.archived"
-          data-test-id="filter-archived-roles"
-          :label="$t('filterForm.archived.label')"
-          :excluded-label="$t('filterForm.excluded.label')"
-          :inclusive-label="$t('filterForm.inclusive.label')"
-          :exclusive-label="$t('filterForm.exclusive.label')"
-          @change="filterList"
-        />
-
-        <b-col />
+        <c-resource-list-status-filter v-model="filter.deleted" data-test-id="filter-deleted-roles" :label="$t('deleted.label')" :excluded-label="$t('excluded.label')" :inclusive-label="$t('inclusive.label')" :exclusive-label="$t('exclusive.label')" @change="filterList" />
+        <c-resource-list-status-filter v-model="filter.archived" data-test-id="filter-archived-roles" :label="$t('archived.label')" :excluded-label="$t('excluded.label')" :inclusive-label="$t('inclusive.label')" :exclusive-label="$t('exclusive.label')" @change="filterList" />
+        <div class="col" />
       </template>
-
       <template #actions="{ item: r }">
-        <b-dropdown
-          v-if="(areActionsVisible({ resource: r, conditions: ['canDeleteRole', 'canGrant'] }) && r.roleID)"
-          variant="outline-extra-light"
-          toggle-class="d-flex align-items-center justify-content-center text-primary border-0 py-2"
-          no-caret
-          dropleft
-          lazy
-          menu-class="m-0"
-        >
-          <template #button-content>
-            <font-awesome-icon
-              :icon="['fas', 'ellipsis-v']"
-            />
-          </template>
-
-          <c-permissions-button
-            v-if="canGrant"
-            :title="r.name || r.handle || r.roleID"
-            :target="r.name || r.handle || r.roleID"
-            :resource="`corteza::system:role/${r.roleID}`"
-            :button-label="$t('permissions')"
-            class="dropdown-item"
-          />
-
-          <c-input-confirm
-            v-if="r.canDeleteRole"
-            :text="getActionText(r)"
-            show-icon
-            :icon="getActionIcon(r)"
-            borderless
-            variant="link"
-            size="md"
-            button-class="dropdown-item"
-            icon-class="text-danger"
-            class="w-100"
-            @confirmed="handleDelete(r)"
-          />
-        </b-dropdown>
+        <div v-if="(areActionsVisible({ resource: r, conditions: ['canDeleteRole', 'canGrant'] }) && r.roleID)" class="dropdown">
+          <button class="btn btn-outline-extra-light dropdown-toggle d-flex align-items-center justify-content-center text-primary border-0 py-2" data-bs-toggle="dropdown"><font-awesome-icon :icon="['fas', 'ellipsis-v']" /></button>
+          <ul class="dropdown-menu m-0">
+            <li><c-permissions-button v-if="canGrant" :title="r.name || r.handle || r.roleID" :target="r.name || r.handle || r.roleID" :resource="`corteza::system:role/${r.roleID}`" :button-label="$t('permissions')" class="dropdown-item" /></li>
+            <li><c-input-confirm v-if="r.canDeleteRole" :text="getActionText(r)" show-icon :icon="getActionIcon(r)" borderless variant="link" size="md" button-class="dropdown-item" icon-class="text-danger" class="w-100" @confirmed="handleDelete(r)" /></li>
+          </ul>
+        </div>
       </template>
     </c-resource-list>
-  </b-container>
+  </div>
 </template>
-
-<script>
-import * as moment from 'moment'
-import listHelpers from 'corteza-webapp-admin/src/mixins/listHelpers'
-import { mapGetters } from 'vuex'
+<script setup>
+import { ref, computed, reactive } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import moment from 'moment'
 import { components } from 'corteza-lib/vue/dist'
 const { CResourceList } = components
-
-export default {
-  components: {
-    CResourceList,
-  },
-
-  mixins: [
-    listHelpers,
-  ],
-
-  i18nOptions: {
-    namespaces: 'system.roles',
-    keyPrefix: 'list',
-  },
-
-  data () {
-    return {
-      id: 'roles',
-
-      primaryKey: 'roleID',
-      editRoute: 'system.role.edit',
-
-      filter: {
-        query: '',
-        archived: 0,
-        deleted: 0,
-      },
-
-      sorting: {
-        sortBy: 'createdAt',
-        sortDesc: true,
-      },
-
-      fields: [
-        {
-          key: 'name',
-          sortable: true,
-        },
-        {
-          key: 'handle',
-          sortable: true,
-        },
-        {
-          key: 'createdAt',
-          label: 'Created',
-          sortable: true,
-          formatter: (v) => moment(v).fromNow(),
-        },
-        {
-          key: 'actions',
-          class: 'actions',
-        },
-      ].map(c => ({
-        ...c,
-        // Generate column label translation key
-        label: this.$t(`columns.${c.key}`),
-      })),
-    }
-  },
-
-  computed: {
-    ...mapGetters({
-      can: 'rbac/can',
-    }),
-
-    canCreate () {
-      return this.can('system/', 'role.create')
-    },
-
-    canGrant () {
-      return this.can('system/', 'grant')
-    },
-
-    userID () {
-      if (this.$auth.user) {
-        return this.$auth.user.userID
-      }
-      return undefined
-    },
-  },
-
-  methods: {
-    items () {
-      return this.procListResults(this.$SystemAPI.roleListCancellable(this.encodeListParams()))
-    },
-
-    rowClass (item) {
-      return { 'text-secondary': item && (!!item.deletedAt || !!item.archivedAt) }
-    },
-
-    handleDelete (role) {
-      this.handleItemDelete({
-        resource: role,
-        resourceName: 'role',
-      })
-    },
-  },
-}
+const router = useRouter()
+const route = useRoute()
+const { t } = useI18n()
+const primaryKey = 'roleID'
+const editRoute = 'system.role.edit'
+const filter = reactive({ query: '', archived: 0, deleted: 0 })
+const sorting = reactive({ sortBy: 'createdAt', sortDesc: true })
+const pagination = reactive({ limit: 100, pageCursor: undefined, prevPage: '', nextPage: '', total: 0, page: 1, incTotal: true })
+const abortableRequests = []
+const tempQuery = ref(undefined)
+const fields = computed(() => [
+  { key: 'name', sortable: true, label: t('list.columns.name') },
+  { key: 'handle', sortable: true, label: t('list.columns.handle') },
+  { key: 'createdAt', sortable: true, label: t('list.columns.createdAt'), formatter: (v) => moment(v).fromNow() },
+  { key: 'actions', class: 'actions', label: '' },
+])
+const canCreate = computed(() => can('system/', 'role.create'))
+const canGrant = computed(() => can('system/', 'grant'))
+function can(resource, operation) { return true }
+function items() { return procListResults(window.__systemAPI.roleListCancellable(encodeListParams())) }
+function rowClass(item) { return { 'text-secondary': item && (!!item.deletedAt || !!item.archivedAt) } }
+function handleRowClicked(item) { router.push({ name: editRoute, params: { [primaryKey]: item[primaryKey] } }) }
+function handleDelete(role) { handleItemDelete({ resource: role, resourceName: 'role' }) }
+function incLoader() {}
+function decLoader() {}
+function filterList() { pagination.pageCursor = ''; pagination.page = 1; abortRequests(); window.dispatchEvent(new CustomEvent('bv::refresh::table', { detail: 'resource-list' })) }
+function encodeListParams() { const { sortBy, sortDesc } = sorting; const { limit, pageCursor, incTotal } = pagination; const sort = sortBy ? `${sortBy} ${sortDesc ? 'DESC' : 'ASC'}` : undefined; return { limit, sort: pageCursor ? undefined : sort, ...filter, pageCursor, incTotal: incTotal && (!pageCursor || tempQuery.value) } }
+function procListResults(p) { const { response, cancel } = p; abortableRequests.push(cancel); incLoader(); return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))]).then(async ([{ set, filter: f }]) => { if (f.incTotal) pagination.total = f.total; if (tempQuery.value) { const query = tempQuery.value; tempQuery.value = undefined; router.replace({ query }); return [] } pagination.pageCursor = undefined; pagination.nextPage = f.nextPage; pagination.prevPage = f.prevPage; decLoader(); return set }) }
+function abortRequests() { abortableRequests.forEach(c => c()); abortableRequests.length = 0 }
+function areActionsVisible({ resource, conditions = [] }) { return conditions.some(c => resource[c]) }
+function getActionText(r) { return r.deletedAt ? t('list.undelete') : t('list.delete') }
+function getActionIcon(r) { return r.deletedAt ? ['fas', 'trash-restore'] : ['far', 'trash-alt'] }
+function handleItemDelete({ resource, resourceName, locale, api = 'system' }) { incLoader(); const { deletedAt = '' } = resource; const method = deletedAt ? `${resourceName}Undelete` : `${resourceName}Delete`; const API = api === 'system' ? window.__systemAPI : window.__automationAPI; API[method](resource).finally(() => decLoader()) }
+function dispatchCortezaSystemEvent($event) {}
 </script>

@@ -13,94 +13,59 @@
   />
 </template>
 
-<script>
-import { NoID } from '../../../../../lib/js/dist'
+<script setup lang="ts">
+import { computed, watch } from 'vue'
+import { NoID } from '@cortezaproject/corteza-js'
 import CInputSelect from '../input/CInputSelect.vue'
 
-export default {
-  components: {
-    CInputSelect,
-  },
+const props = withDefaults(defineProps<{
+  value?: string
+  options: Array<{ sensitivityLevelID: string; level: number; handle: string; meta?: Record<string, string> }>
+  placeholder?: string
+  maxLevel?: string
+  disabled?: boolean
+}>(), {
+  value: '',
+  placeholder: '',
+  disabled: false,
+})
 
-  props: {
-    value: {
-      type: String,
-      default: '',
-    },
+const emit = defineEmits<{
+  (e: 'input', value: string): void
+}>()
 
-    options: {
-      type: Array,
-      required: true,
-    },
+const _value = computed(() => props.value === NoID ? undefined : props.value)
 
-    placeholder: {
-      type: String,
-      default: '',
-    },
+const _disabled = computed(() => props.disabled || props.maxLevel === NoID)
 
-    // ID of sensitivityLevel with the maximum allowed level
-    maxLevel: {
-      type: String,
-      default: undefined,
-    },
+const sensitivityLevels = computed(() => {
+  if (props.maxLevel === NoID) return []
+  if (props.maxLevel) {
+    const maxLevelConnection = props.options.find(({ sensitivityLevelID }) => sensitivityLevelID === props.maxLevel)
+    if (maxLevelConnection) {
+      return props.options.filter(({ level }) => level <= maxLevelConnection.level)
+    }
+  }
+  return props.options
+})
 
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
-  },
+watch(sensitivityLevels, () => {
+  const isValueCompatible = sensitivityLevels.value.some(({ sensitivityLevelID }) => sensitivityLevelID === props.value)
+  if (!isValueCompatible) {
+    emit('input', NoID)
+  }
+}, { immediate: true })
 
-  computed: {
-    _value () {
-      return this.value === NoID ? undefined : this.value
-    },
+function getLabel({ handle, meta = {} }: { handle: string; meta?: Record<string, string> }): string {
+  return meta.name || handle
+}
 
-    _disabled () {
-      return this.disabled || this.maxLevel === NoID
-    },
+function onInput(sensitivityLevelID: string | undefined): void {
+  emit('input', sensitivityLevelID || NoID)
+}
 
-    sensitivityLevels () {
-      if (this.maxLevel === NoID) {
-        return []
-      }
-
-      if (this.maxLevel) {
-        const maxLevelConnection = this.options.find(({ sensitivityLevelID }) => sensitivityLevelID === this.maxLevel)
-        if (maxLevelConnection) {
-          return this.options.filter(({ level }) => level <= maxLevelConnection.level)
-        }
-      }
-
-      return this.options
-    },
-  },
-
-  watch: {
-    // If sensitivityLevels change because of maxLevel change, then assert if value is still allowed, otherwise reset it
-    sensitivityLevels: {
-      immediate: true,
-      handler () {
-        const isValueCompatible = this.sensitivityLevels.some(({ sensitivityLevelID }) => sensitivityLevelID === this.value)
-        if (!isValueCompatible) {
-          this.$emit('input', NoID)
-        }
-      },
-    },
-  },
-
-  methods: {
-    getLabel ({ handle, meta = {} }) {
-      return meta.name || handle
-    },
-
-    onInput (sensitivityLevelID) {
-      this.$emit('input', sensitivityLevelID || NoID)
-    },
-
-    getOptionKey ({ sensitivityLevelID }) {
-      return sensitivityLevelID
-    },
-  },
+function getOptionKey({ sensitivityLevelID }: { sensitivityLevelID: string }): string {
+  return sensitivityLevelID
 }
 </script>
 

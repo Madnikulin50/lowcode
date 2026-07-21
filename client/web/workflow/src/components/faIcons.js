@@ -52,6 +52,7 @@ import {
   faBellSlash,
   faBell as faBellSolid,
   faFilter,
+  faProjectDiagram,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -124,4 +125,5 @@ library.add(
   faEnvelope,
   faEnvelopeOpen,
   faFilter,
+  faProjectDiagram,
 )

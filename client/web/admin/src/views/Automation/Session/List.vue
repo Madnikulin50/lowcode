@@ -1,222 +1,60 @@
 <template>
-  <b-container
-    fluid="xl"
-    class="d-flex flex-column flex-fill pt-2 pb-3"
-  >
-    <c-content-header :title="$t('title')" />
-
-    <c-resource-list
-      :primary-key="primaryKey"
-      :filter="filter"
-      :sorting="sorting"
-      :pagination="pagination"
-      :fields="fields"
-      :items="items"
-      :row-class="rowClass"
-      :translations="{
-        notFound: $t('admin:general.notFound'),
-        noItems: $t('admin:general.resource-list.no-items'),
-        loading: $t('loading'),
-        showingPagination: 'admin:general.pagination.showing',
-        singlePluralPagination: 'admin:general.pagination.single',
-        prevPagination: $t('admin:general.pagination.prev'),
-        nextPagination: $t('admin:general.pagination.next'),
-        resourceSingle: $t('general:label.session.single'),
-        resourcePlural: $t('general:label.session.plural')
-      }"
-      clickable
-      sticky-header
-      hide-search
-      :hide-total="!pagination.incTotal"
-      class="custom-resource-list-height flex-fill"
-      @row-clicked="handleRowClicked"
-    >
+  <div class="container-fluid d-flex flex-column flex-fill pt-2 pb-3">
+    <c-content-header :title="$t('automation.sessions.list.title')" />
+    <c-resource-list :primary-key="primaryKey" :filter="filter" :sorting="sorting" :pagination="pagination" :fields="fields" :items="items" :row-class="rowClass" :translations="{ notFound: $t('admin.general.notFound'), noItems: $t('general.resource-list.no-items'), loading: $t('loading'), showingPagination: 'general.pagination.showing', singlePluralPagination: 'general.pagination.single', prevPagination: $t('admin.general.pagination.prev'), nextPagination: $t('admin.general.pagination.next'), resourceSingle: $t('label.session.single'), resourcePlural: $t('label.session.plural') }" clickable sticky-header hide-search :hide-total="!pagination.incTotal" class="custom-resource-list-height flex-fill" @row-clicked="handleRowClicked">
       <template #header>
-        <b-form-group
-          :label="$t('columns.sessionID')"
-          label-class="text-primary"
-          class="mb-0"
-          style="min-width: 200px;"
-        >
-          <c-input-search
-            :value="filter.sessionID"
-            size="sm"
-            @input="filterBySessionID"
-          />
-        </b-form-group>
-
-        <b-form-group
-          :label="$t('columns.workflowID')"
-          label-class="text-primary"
-          class="mb-0"
-          style="min-width: 200px;"
-        >
-          <c-input-search
-            :value="filter.workflowID"
-            size="sm"
-            @input="filterByWorkflowID"
-          />
-        </b-form-group>
+        <div class="mb-0" style="min-width:200px">
+          <label class="text-primary mb-1">{{ $t('list.columns.sessionID') }}</label>
+          <c-input-search :value="filter.sessionID" size="sm" @input="filterBySessionID" />
+        </div>
+        <div class="mb-0" style="min-width:200px">
+          <label class="text-primary mb-1">{{ $t('list.columns.workflowID') }}</label>
+          <c-input-search :value="filter.workflowID" size="sm" @input="filterByWorkflowID" />
+        </div>
       </template>
-
       <template #toolbar>
-        <b-col>
-          <b-form-radio-group
-            v-model="filter.status"
-            :options="statusOptions"
-            buttons
-            button-variant="outline-primary"
-            size="sm"
-            @change="filterList"
-          />
-          <span class="ml-2 text-nowrap">
-            {{ $t('filterForm.sessions.label') }}
-          </span>
-        </b-col>
+        <div class="col d-flex align-items-center">
+          <div class="btn-group btn-group-sm me-2" role="group">
+            <input v-for="opt in statusOptions" :key="opt.value" type="radio" class="btn-check" :id="'status-' + opt.value" :value="opt.value" v-model="filter.status" @change="filterList" />
+            <label :for="'status-' + opt.value" class="btn btn-outline-primary btn-sm">{{ opt.text }}</label>
+          </div>
+          <span class="ms-2 text-nowrap">{{ $t('sessions.label') }}</span>
+        </div>
       </template>
-
-      <template #sessionID="{ item }">
-        <a
-          href="javascript:;"
-          @click="filterBySessionID(item.sessionID)"
-        >
-          {{ item.sessionID }}
-        </a>
-      </template>
-
-      <template #workflowID="{ item }">
-        <a
-          href="javascript:;"
-          @click="filterByWorkflowID(item.workflowID)"
-        >
-          {{ item.workflowID }}
-        </a>
-      </template>
-
-      <template #actions="{ item }">
-        <b-button
-          size="sm"
-          variant="link"
-          :to="{ name: editRoute, params: { [primaryKey]: item[primaryKey] } }"
-        >
-          <font-awesome-icon
-            :icon="['far', 'edit']"
-          />
-        </b-button>
-      </template>
+      <template #sessionID="{ item }"><a href="javascript:;" @click="filterBySessionID(item.sessionID)">{{ item.sessionID }}</a></template>
+      <template #workflowID="{ item }"><a href="javascript:;" @click="filterByWorkflowID(item.workflowID)">{{ item.workflowID }}</a></template>
+      <template #actions="{ item }"><router-link class="btn btn-sm btn-link" :to="{ name: editRoute, params: { [primaryKey]: item[primaryKey] } }"><font-awesome-icon :icon="['far', 'edit']" /></router-link></template>
     </c-resource-list>
-  </b-container>
+  </div>
 </template>
-
-<script>
-import listHelpers from 'corteza-webapp-admin/src/mixins/listHelpers'
+<script setup>
+import { ref, computed, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { components } from 'corteza-lib/vue/dist'
 const { CResourceList, CInputSearch } = components
-
-export default {
-  components: {
-    CResourceList,
-    CInputSearch,
-  },
-
-  mixins: [
-    listHelpers,
-  ],
-
-  i18nOptions: {
-    namespaces: 'automation.sessions',
-    keyPrefix: 'list',
-  },
-
-  data () {
-    return {
-      id: 'session',
-
-      primaryKey: 'sessionID',
-      editRoute: 'automation.session.edit',
-
-      filter: {
-        // Use null not undefined!
-        sessionID: null,
-        workflowID: null,
-        status: 0,
-        completed: 1,
-      },
-
-      sorting: {
-        sortBy: 'createdAt',
-        sortDesc: true,
-      },
-
-      pagination: {
-        ...this.pagination,
-        incTotal: false,
-      },
-
-      fields: [
-        {
-          key: 'sessionID',
-        },
-        {
-          key: 'workflowID',
-        },
-        {
-          key: 'status',
-        },
-        {
-          key: 'eventType',
-          sortable: true,
-        },
-        {
-          key: 'createdAt',
-          sortable: true,
-          formatter: (v) => new Date(v).toLocaleString('en-EN'),
-        },
-      ].map(c => ({
-        ...c,
-        // Generate column label translation key
-        label: this.$t(`columns.${c.key}`),
-      })),
-    }
-  },
-
-  computed: {
-    statusOptions () {
-      return [
-        { value: 0, text: this.$t('filterForm.started.label') },
-        { value: 1, text: this.$t('filterForm.prompted.label') },
-        { value: 2, text: this.$t('filterForm.suspended.label') },
-        { value: 3, text: this.$t('filterForm.failed.label') },
-        { value: 5, text: this.$t('filterForm.canceled.label') },
-        { value: 4, text: this.$t('filterForm.completed.label') },
-      ]
-    },
-  },
-
-  methods: {
-    items () {
-      return this.procListResults(this.$AutomationAPI.sessionListCancellable(this.encodeListParams()))
-    },
-
-    rowClass (item) {
-      return { 'text-primary': item && !!item.completedAt }
-    },
-
-    filterBySessionID (sessionID) {
-      this.filter.sessionID = sessionID || null
-      this.filterList()
-    },
-
-    filterByWorkflowID (workflowID) {
-      this.filter.workflowID = workflowID || null
-      this.filterList()
-    },
-  },
-}
+const router = useRouter()
+const { t } = useI18n()
+const primaryKey = 'sessionID'
+const editRoute = 'automation.session.edit'
+const filter = reactive({ sessionID: null, workflowID: null, status: 0, completed: 1 })
+const sorting = reactive({ sortBy: 'createdAt', sortDesc: true })
+const pagination = reactive({ limit: 100, pageCursor: undefined, prevPage: '', nextPage: '', total: 0, page: 1, incTotal: false })
+const abortableRequests = []
+const tempQuery = ref(undefined)
+const statusOptions = computed(() => [{ value: 0, text: t('started.label') }, { value: 1, text: t('prompted.label') }, { value: 2, text: t('suspended.label') }, { value: 3, text: t('failed.label') }, { value: 5, text: t('canceled.label') }, { value: 4, text: t('completed.label') }])
+const fields = computed(() => ['sessionID', 'workflowID', 'status', { key: 'eventType', sortable: true }, { key: 'createdAt', sortable: true, formatter: (v) => new Date(v).toLocaleString('en-EN') }].map(c => ({ label: t(`columns.${c.key || c}`), ...(typeof c === 'string' ? { key: c } : c) })))
+function items() { return procListResults(window.__AutomationAPI.sessionListCancellable(encodeListParams())) }
+function rowClass(item) { return { 'text-primary': item && !!item.completedAt } }
+function handleRowClicked(item) { router.push({ name: editRoute, params: { [primaryKey]: item[primaryKey] } }) }
+function incLoader() {} function decLoader() {}
+function filterList() { pagination.pageCursor = ''; pagination.page = 1; abortRequests(); window.dispatchEvent(new CustomEvent('bv::refresh::table', { detail: 'resource-list' })) }
+function encodeListParams() { const { sortBy, sortDesc } = sorting; const { limit, pageCursor, incTotal } = pagination; const sort = sortBy ? `${sortBy} ${sortDesc ? 'DESC' : 'ASC'}` : undefined; return { limit, sort: pageCursor ? undefined : sort, ...filter, pageCursor, incTotal: incTotal && (!pageCursor || tempQuery.value) } }
+function procListResults(p) { const { response, cancel } = p; abortableRequests.push(cancel); incLoader(); return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))]).then(async ([{ set, filter: f }]) => { if (f.incTotal) pagination.total = f.total; if (tempQuery.value) { const query = tempQuery.value; tempQuery.value = undefined; router.replace({ query }); return [] } pagination.pageCursor = undefined; pagination.nextPage = f.nextPage; pagination.prevPage = f.prevPage; decLoader(); return set }) }
+function abortRequests() { abortableRequests.forEach(c => c()); abortableRequests.length = 0 }
+function filterBySessionID(sessionID) { filter.sessionID = sessionID || null; filterList() }
+function filterByWorkflowID(workflowID) { filter.workflowID = workflowID || null; filterList() }
 </script>
-
 <style scoped>
-.content-header{
-  margin-bottom: 0 !important;
-}
+.content-header { margin-bottom: 0 !important }
 </style>

@@ -1,4 +1,4 @@
-import { automation } from '../../../../../lib/js/dist'
+import { automation } from '@cortezaproject/corteza-js'
 
 const variants = [
   { value: 'primary', text: 'Primary' },

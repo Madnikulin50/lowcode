@@ -2,7 +2,7 @@
   <div
     data-test-id="role-permissions-list"
   >
-    <rule
+    <Rule
       v-for="(p, i) in rules"
       :key="p.resource + p.operation"
       v-bind="p"
@@ -11,30 +11,24 @@
     />
   </div>
 </template>
-<script lang="js">
+
+<script setup lang="ts">
 import Rule from './Rule.vue'
 
-export default {
-  components: {
-    Rule,
-  },
+const props = defineProps<{
+  rules: any[]
+}>()
 
-  props: {
-    rules: {
-      type: Array,
-      required: true,
-    },
-  },
+const emit = defineEmits<{
+  (e: 'update:rules', value: any[]): void
+}>()
 
-  methods: {
-    onUpdate ({ resource, operation, access }) {
-      const rr = this.rules
-      const ri = rr.findIndex(r => r.resource === resource && r.operation === operation)
-      if (ri > -1) {
-        rr[ri].access = access
-        this.$emit('update:rules', rr)
-      }
-    },
-  },
+function onUpdate({ resource, operation, access }: { resource: string; operation: string; access: string }) {
+  const rr = props.rules
+  const ri = rr.findIndex((r: any) => r.resource === resource && r.operation === operation)
+  if (ri > -1) {
+    rr[ri].access = access
+    emit('update:rules', rr)
+  }
 }
 </script>

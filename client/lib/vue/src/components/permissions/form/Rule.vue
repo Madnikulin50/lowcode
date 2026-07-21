@@ -9,7 +9,7 @@
       {{ title || `${operation} on ${resource}` }}
     </p>
 
-    <access
+    <Access
       :access="access"
       :current="current"
       :enabled="enabled"
@@ -18,81 +18,33 @@
     />
   </div>
 </template>
-<script lang="js">
+
+<script setup lang="ts">
 import Access from './Access.vue'
 
-export default {
-  i18nOptions: {
-    namespaces: 'permissions',
-  },
+const props = defineProps<{
+  resource: string
+  operation: string
+  title?: string
+  description?: string
+  enabled?: boolean
+  access?: string
+  current?: string
+}>()
 
-  components: {
-    Access,
-  },
+const emit = defineEmits<{
+  (e: 'update', value: { resource: string; operation: string; access: string }): void
+}>()
 
-  props: {
-    resource: {
-      type: String,
-      required: true,
-    },
+function onUpdate(access: string) {
+  emitValue(access)
+}
 
-    operation: {
-      type: String,
-      required: true,
-    },
-
-    title: {
-      type: String,
-      required: false,
-      default: undefined,
-    },
-
-    description: {
-      type: String,
-      required: false,
-      default: undefined,
-    },
-
-    enabled: {
-      type: Boolean,
-      default: true,
-    },
-
-    access: {
-      type: String,
-      required: false,
-      default: 'inherit',
-    },
-
-    current: {
-      type: String,
-      required: false,
-      default: 'inherit',
-    },
-  },
-
-  computed: {
-    isChanged () {
-      return this.access !== this.current
-    },
-  },
-
-  methods: {
-    onUpdate (access) {
-      this.emit(access)
-    },
-
-    onReset () {
-      this.emit(this.current)
-    },
-
-    emit (access) {
-      this.$emit('update', {
-        resource: this.resource,
-        operation: this.operation,
-        access,
-      })
-    },
-  },
+function emitValue(access: string) {
+  emit('update', {
+    resource: props.resource,
+    operation: props.operation,
+    access,
+  })
 }
 </script>

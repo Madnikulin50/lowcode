@@ -1,0 +1,12 @@
+from: From
+to: To
+resource: Resource
+action: Action
+actor: Actor
+search: Search
+searchQuery: Search query
+incScriptsWithErrors: Include scripts with errors ({{count}})
+incScriptsWithTriggers: Include scripts with triggers ({{count}})
+incScriptsWithIterator: Include scripts with iterator ({{count}})
+incScriptsWithSecurity: Include scripts with security ({{count}})
+absoluteTime: Absolute time

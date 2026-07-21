@@ -1,48 +1,37 @@
 <template>
-  <b-button
-    v-b-tooltip.hover="{ title: $t('notifications:title'), delay: { show: 500, hide: 0 } }"
-    variant="outline-extra-light"
-    size="lg"
-    class="nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center position-relative"
+  <button
+    :title="$t('title')"
+    type="button"
+    class="btn btn-outline-extra-light btn-lg nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center position-relative"
     @click="toggleNotifications"
   >
     <font-awesome-icon
       :icon="['far', 'bell']"
       class="text-dark"
     />
-    <b-badge
+    <span
       v-if="unreadCount > 0 && !muted"
-      variant="primary"
-      pill
-      class="position-absolute notification-badge"
+      class="badge rounded-pill bg-primary position-absolute notification-badge"
     >
       {{ unreadCount > 9 ? '9+' : unreadCount }}
-    </b-badge>
-  </b-button>
+    </span>
+  </button>
 </template>
 
-<script>
-import { mapGetters, mapActions } from 'vuex'
+<script setup lang="ts">
+import { computed, getCurrentInstance } from 'vue'
+import { useNotificationsStore } from '../../store/notifications'
 
-export default {
-  name: 'CNotificationButton',
+const instance = getCurrentInstance()
+const $t = instance!.appContext.config.globalProperties.$t
 
-  computed: {
-    ...mapGetters({
-      unreadCount: 'notifications/unreadCount',
-      muted: 'notifications/muted',
-    }),
-  },
+const notificationsStore = useNotificationsStore()
 
-  methods: {
-    ...mapActions({
-      toggleVisibility: 'notifications/toggleVisibility',
-    }),
+const unreadCount = computed(() => notificationsStore.unreadCount)
+const muted = computed(() => notificationsStore.muted)
 
-    toggleNotifications () {
-      this.toggleVisibility()
-    },
-  },
+function toggleNotifications() {
+  notificationsStore.toggleVisibility()
 }
 </script>
 

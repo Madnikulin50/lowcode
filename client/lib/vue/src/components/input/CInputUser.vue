@@ -16,127 +16,120 @@
   />
 </template>
 
-<script>
-import { NoID } from '../../../../../lib/js/dist'
+<script setup lang="ts">
+import { ref, reactive, getCurrentInstance } from 'vue'
+import { NoID } from '@cortezaproject/corteza-js'
 import { debounce } from 'lodash'
 import axios from 'axios'
 
-export default {
-  name: 'CInputUser',
+defineOptions({ inheritAttrs: false })
 
-  props: {
-    value: {
-      type: String,
-      default: null,
-    },
+const vm = getCurrentInstance()!
+const $SystemAPI = (vm.appContext.config.globalProperties as any).$SystemAPI
 
-    placeholder: {
-      type: String,
-      default: '',
-    },
+const props = withDefaults(defineProps<{
+  modelValue?: string | null
+  placeholder?: string
+  clearable?: boolean
+  clearOnSelect?: boolean
+}>(), {
+  modelValue: null,
+  placeholder: '',
+  clearable: false,
+  clearOnSelect: false,
+})
 
-    clearable: {
-      type: Boolean,
-      default: false,
-    },
+const emit = defineEmits<{
+  'update:modelValue': [value: string | undefined]
+  'input-object': [user: any]
+}>()
 
-    clearOnSelect: {
-      type: Boolean,
-      default: false,
-    },
+const userSelect = ref<any>(null)
+const processing = ref(false)
+const cancelRequest = ref<(() => void) | null>(null)
+
+const user = reactive({
+  options: [] as any[],
+  value: undefined as any,
+  filter: {
+    query: null as string | null,
+    limit: 20,
   },
+})
 
-  data () {
-    return {
-      processing: false,
-      cancelRequest: null,
+// Created equivalent
+;(async () => {
+  await fetchUsers()
+  getUserByID(props.modelValue)
+})()
 
-      user: {
-        options: [],
-        value: undefined,
+const search = debounce(function (query: string) {
+  if (query !== user.filter.query) {
+    user.filter.query = query
+  }
+  fetchUsers()
+}, 300)
 
-        filter: {
-          query: null,
-          limit: 20,
-        },
-      },
-    }
-  },
+function fetchUsers() {
+  processing.value = true
 
-  created () {
-    this.fetchUsers().then(() => {
-      this.getUserByID(this.value)
+  if (cancelRequest.value) {
+    cancelRequest.value()
+    cancelRequest.value = null
+  }
+
+  const { response, cancel } = $SystemAPI.userListCancellable(user.filter)
+  cancelRequest.value = cancel
+
+  return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
+    .then(([{ set }]) => {
+      user.options = set.map((m: any) => Object.freeze(m))
+      processing.value = false
     })
-  },
+    .catch((e: any) => {
+      if (axios.isCancel(e)) return
+      processing.value = false
+      throw e
+    })
+}
 
-  methods: {
-    search: debounce(function (query) {
-      if (query !== this.user.filter.query) {
-        this.user.filter.query = query
-      }
+function getUserByID(userID: string | null | undefined) {
+  if (!userID || userID === NoID) {
+    user.value = undefined
+    return
+  }
 
-      this.fetchUsers()
-    }, 300),
+  const found = user.options.find((o: any) => o.userID === userID)
 
-    fetchUsers () {
-      this.processing = true
+  if (found) {
+    user.value = found
+  } else {
+    return $SystemAPI.userRead({ userID }).then((userData: any) => {
+      user.value = userData
+      user.options.push(Object.freeze(userData))
+    })
+  }
+}
 
-      if (this.cancelRequest) {
-        this.cancelRequest()
-        this.cancelRequest = null
-      }
+function onUserUpdate(userData: any) {
+  if (props.clearOnSelect && userSelect.value) {
+    userSelect.value._data._value = undefined
+  } else {
+    user.value = userData
+  }
 
-      const { response, cancel } = this.$SystemAPI.userListCancellable(this.user.filter)
-      this.cancelRequest = cancel
+  emit('update:modelValue', userData.userID)
+  emit('input-object', userData)
+}
 
-      return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
-        .then(([{ set }]) => {
-          this.user.options = set.map(m => Object.freeze(m))
-          this.processing = false
-        })
-        .catch((e) => {
-          if (axios.isCancel(e)) return
-          this.processing = false
-          throw e
-        })
-    },
+function getOptionKey({ userID }: any) {
+  return userID
+}
 
-    getUserByID (userID) {
-      if (!userID || userID === NoID) {
-        this.user.value = undefined
-        return
-      }
-
-      const user = this.user.options.find(o => o.userID === userID)
-
-      if (user) {
-        this.user.value = user
-      } else {
-        return this.$SystemAPI.userRead({ userID }).then(user => {
-          this.user.value = user
-          this.user.options.push(Object.freeze(user))
-        })
-      }
-    },
-
-    onUserUpdate (user) {
-      if (this.clearOnSelect && this.$refs.userSelect) {
-        this.$refs.userSelect._data._value = undefined
-      } else {
-        this.user.value = user
-      }
-
-      this.$emit('input', user.userID)
-      this.$emit('input-object', user)
-    },
-
-    getOptionKey ({ userID }) {
-      return userID
-    },
-
-    getOptionLabel ({ userID, email, name, username }) {
-      return name || username || email || `<@${userID}>`
-    },
-  },
+function getOptionLabel({ userID, email, name, username }: any) {
+  return name || username || email || `<@${userID}>`
 }
 </script>
+
+<style scoped>
+</style>

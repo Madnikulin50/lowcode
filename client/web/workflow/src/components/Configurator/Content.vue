@@ -2,36 +2,33 @@
   <c-rich-text-input
     v-model="label"
     :labels="{
-      urlPlaceholder: $t('steps:content.configurator.urlPlaceholder'),
-      ok: $t('steps:content.configurator.ok'),
+      urlPlaceholder: t('steps.content.configurator.urlPlaceholder'),
+      ok: t('steps.content.configurator.ok'),
     }"
     class="m-3"
-    @input="$emit('update-value', $event)"
+    @input="emit('update-value', $event)"
   />
 </template>
 
-<script>
-import base from './base'
+<script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { components } from 'corteza-lib/vue/dist'
 const { CRichTextInput } = components
 
-export default {
-  components: {
-    CRichTextInput,
-  },
+const { t } = useI18n()
 
-  extends: base,
+const props = defineProps({
+  item: { type: Object, default: () => ({}) },
+  edges: { type: Object, default: () => ({}) },
+  outEdges: { type: Number, default: 0 },
+  isSubworkflow: { type: Boolean, default: false },
+})
 
-  computed: {
-    label: {
-      get () {
-        return this.item.node.value
-      },
+const emit = defineEmits(['update-value', 'update-default-value'])
 
-      set (label) {
-        this.item.node.value = label
-      },
-    },
-  },
-}
+const label = computed({
+  get () { return props.item.node.value },
+  set (label) { props.item.node.value = label },
+})
 </script>

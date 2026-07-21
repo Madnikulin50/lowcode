@@ -1,21 +1,18 @@
 <template>
   <div class="d-inline-flex gap-1">
-    <b-button
+    <button
       v-if="!inConfirmation"
-      v-b-tooltip.noninteractive.hover="{ title: tooltip, boundary: 'body' }"
+      :title="tooltip"
       :data-test-id="dataTestId"
-      :variant="variant"
-      :size="size"
       :disabled="disabled || processing"
-      :class="`${buttonClass} ${borderless ? 'border-0' : ''} flex-fill`"
+      :class="[`btn btn-${variant}`, btnSize, buttonClass, borderless ? 'border-0' : '', 'flex-fill']"
       :style="buttonStyle"
       @click.stop.prevent="onPrompt"
     >
-      <b-spinner
+      <span
         v-if="processing"
         data-test-id="spinner"
-        class="align-middle"
-        small
+        class="spinner-border spinner-border-sm align-middle"
       />
 
       <template v-else>
@@ -32,15 +29,13 @@
           {{ text }}
         </span>
       </template>
-    </b-button>
+    </button>
 
     <template v-else>
-      <b-button
+      <button
         :data-test-id="`${dataTestId}-confirm`"
-        :variant="variantOk"
-        :size="sizeConfirm"
+        :class="[`btn btn-${variantOk}`, btnSizeConfirm, borderless ? 'border-0' : '', 'flex-fill']"
         :disabled="okDisabled"
-        :class="[ borderless && 'border-0', 'flex-fill' ]"
         @blur.prevent="onCancel()"
         @click.prevent.stop="onConfirmation()"
       >
@@ -50,14 +45,12 @@
             :icon="['fas', 'check']"
           />
         </slot>
-      </b-button>
+      </button>
 
-      <b-button
+      <button
         :data-test-id="`${dataTestId}-cancel`"
-        :variant="variantCancel"
-        :size="sizeConfirm"
+        :class="[`btn btn-${variantCancel}`, btnSizeConfirm, borderless ? 'border-0' : '', 'flex-fill']"
         :disabled="cancelDisabled"
-        :class="[ borderless && 'border-0', 'flex-fill' ]"
         @click.prevent.stop="onCancel()"
       >
         <slot name="no">
@@ -66,116 +59,85 @@
             :icon="['fas', 'times']"
           />
         </slot>
-      </b-button>
+      </button>
     </template>
   </div>
 </template>
 
-<script lang="js">
-export default {
-  props: {
-    disabled: Boolean,
-    okDisabled: Boolean,
-    cancelDisabled: Boolean,
-    noPrompt: Boolean,
-    processing: Boolean,
-    showIcon: Boolean,
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 
-    icon: {
-      type: Array,
-      default: () => ['far', 'trash-alt'],
-    },
+interface Props {
+  disabled?: boolean
+  okDisabled?: boolean
+  cancelDisabled?: boolean
+  noPrompt?: boolean
+  processing?: boolean
+  showIcon?: boolean
+  icon?: unknown[]
+  buttonClass?: string
+  buttonStyle?: Record<string, string>
+  iconClass?: string
+  textClass?: string
+  borderless?: boolean
+  variant?: string
+  size?: string
+  variantOk?: string
+  variantCancel?: string
+  sizeConfirm?: string
+  tooltip?: string
+  text?: string
+  dataTestId?: string
+}
 
-    buttonClass: {
-      type: String,
-      default: '',
-    },
+const props = withDefaults(defineProps<Props>(), {
+  disabled: false,
+  okDisabled: false,
+  cancelDisabled: false,
+  noPrompt: false,
+  processing: false,
+  showIcon: false,
+  icon: () => ['far', 'trash-alt'],
+  buttonClass: '',
+  buttonStyle: () => ({}),
+  iconClass: '',
+  textClass: '',
+  borderless: true,
+  variant: 'outline-danger',
+  size: 'sm',
+  variantOk: 'danger',
+  variantCancel: 'light',
+  sizeConfirm: 'sm',
+  tooltip: '',
+  text: '',
+  dataTestId: 'button-delete',
+})
 
-    buttonStyle: {
-      type: Object,
-      default: () => ({}),
-    },
+const emit = defineEmits<{
+  confirmed: []
+  canceled: []
+}>()
 
-    iconClass: {
-      type: String,
-      default: '',
-    },
+const btnSize = computed(() => props.size === 'sm' ? 'btn-sm' : props.size === 'lg' ? 'btn-lg' : '')
+const btnSizeConfirm = computed(() => props.sizeConfirm === 'sm' ? 'btn-sm' : props.sizeConfirm === 'lg' ? 'btn-lg' : '')
 
-    textClass: {
-      type: String,
-      default: '',
-    },
+const inConfirmation = ref(false)
 
-    borderless: {
-      type: Boolean,
-      default: true,
-    },
+function onPrompt () {
+  if (props.noPrompt) {
+    emit('confirmed')
+  } else {
+    inConfirmation.value = true
+  }
+}
 
-    variant: {
-      type: String,
-      default: 'outline-danger',
-    },
+function onConfirmation () {
+  inConfirmation.value = false
+  emit('confirmed')
+}
 
-    size: {
-      type: String,
-      default: 'sm',
-    },
-
-    variantOk: {
-      type: String,
-      default: 'danger',
-    },
-
-    variantCancel: {
-      type: String,
-      default: 'light',
-    },
-
-    sizeConfirm: {
-      type: String,
-      default: 'sm',
-    },
-
-    tooltip: {
-      type: String,
-      default: '',
-    },
-
-    text: {
-      type: String,
-      default: '',
-    },
-
-    dataTestId: {
-      type: String,
-      default: 'button-delete',
-    },
-  },
-
-  data () {
-    return {
-      inConfirmation: false,
-    }
-  },
-
-  methods: {
-    onPrompt () {
-      if (this.noPrompt) {
-        this.$emit('confirmed')
-      } else {
-        this.inConfirmation = true
-      }
-    },
-
-    onConfirmation () {
-      this.inConfirmation = false
-      this.$emit('confirmed')
-    },
-
-    onCancel () {
-      this.inConfirmation = false
-      this.$emit('canceled')
-    },
-  },
+function onCancel () {
+  inConfirmation.value = false
+  emit('canceled')
 }
 </script>

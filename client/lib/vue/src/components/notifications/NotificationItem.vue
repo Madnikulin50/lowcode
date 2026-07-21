@@ -1,64 +1,74 @@
 <template>
   <div class="notification-item-container px-3 pt-3 pb-2 border-bottom">
-    <b-list-group-item
-      class="notification-item border rounded bg-white p-3 position-relative"
+    <div
+      class="notification-item border rounded bg-white p-3 position-relative list-group-item"
       :class="{ 'read': notification.readAt }"
-      @click="$emit('click', notification)"
+      @click="emit('click', notification)"
     >
       <div
-        class="action-menu bg-white pb-2 pl-2"
+        class="action-menu bg-white pb-2 ps-2"
         style="margin-left: -1rem;"
       >
-        <b-dropdown
-          right
-          variant="outline-extra-light"
-          toggle-class="text-decoration-none border-0 dropdown-toggle-no-caret"
-          no-caret
-        >
-          <template #button-content>
+        <div class="dropdown">
+          <button
+            class="btn text-decoration-none border-0 d-flex align-items-center justify-content-center"
+            style="width: 2rem; height: 2rem;"
+            type="button"
+            data-bs-toggle="dropdown"
+          >
             <font-awesome-icon
               :icon="['fas', 'ellipsis-v']"
               class="text-secondary"
               style="margin-top: 0.3rem;"
             />
-          </template>
+          </button>
 
-          <b-dropdown-item
-            v-if="!notification.readAt"
-            @click.stop="$emit('mark-read', notification)"
-          >
-            <font-awesome-icon
-              :icon="['far', 'envelope-open']"
-              class="text-primary"
-            />
-            {{ $t('markAsRead') }}
-          </b-dropdown-item>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <button
+                v-if="!notification.readAt"
+                class="dropdown-item"
+                @click.stop="emit('mark-read', notification)"
+              >
+                <font-awesome-icon
+                  :icon="['far', 'envelope-open']"
+                  class="text-primary"
+                />
+                {{ $t('markAsRead') }}
+              </button>
 
-          <b-dropdown-item
-            v-else
-            @click.stop="$emit('mark-unread', notification)"
-          >
-            <font-awesome-icon
-              :icon="['far', 'envelope']"
-              class="text-primary"
-            />
-            {{ $t('markAsUnread') }}
-          </b-dropdown-item>
+              <button
+                v-else
+                class="dropdown-item"
+                @click.stop="emit('mark-unread', notification)"
+              >
+                <font-awesome-icon
+                  :icon="['far', 'envelope']"
+                  class="text-primary"
+                />
+                {{ $t('markAsUnread') }}
+              </button>
+            </li>
 
-          <b-dropdown-divider />
+            <li>
+              <hr class="dropdown-divider">
+            </li>
 
-          <c-input-confirm
-            :text="$t('delete')"
-            show-icon
-            borderless
-            variant="link"
-            size="md"
-            button-class="dropdown-item"
-            icon-class="text-danger"
-            class="w-100"
-            @confirmed="$emit('delete', notification)"
-          />
-        </b-dropdown>
+            <li>
+              <CInputConfirm
+                :text="$t('delete')"
+                show-icon
+                borderless
+                variant="link"
+                size="md"
+                button-class="dropdown-item"
+                icon-class="text-danger"
+                class="w-100"
+                @confirmed="emit('delete', notification)"
+              />
+            </li>
+          </ul>
+        </div>
       </div>
 
       <component
@@ -66,49 +76,44 @@
         :notification="notification"
         class="notification-item-content"
       />
-    </b-list-group-item>
+    </div>
 
     <div class="d-flex justify-content-end mt-2">
       <div
         :title="notification.createdAt"
         class="text-muted small cursor-pointer"
-        @click="$emit('click', notification)"
+        @click="emit('click', notification)"
       >
-        {{ notification.createdAt | locFullDateTime }}
+        {{ $locFullDateTime(notification.createdAt) }}
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import NotificationTypes from './types/index.js'
+<script setup lang="ts">
+import { computed, getCurrentInstance } from 'vue'
+import NotificationTypes from './types/index.ts'
 import CInputConfirm from '../input/CInputConfirm.vue'
 
-export default {
-  i18nOptions: {
-    namespaces: 'notifications',
-  },
+const { $t } = getCurrentInstance()!.appContext.config.globalProperties as any
 
-  components: {
-    CInputConfirm,
-  },
+const props = defineProps<{
+  notification: Record<string, any>
+}>()
 
-  props: {
-    notification: {
-      type: Object,
-      required: true,
-    },
-  },
+const emit = defineEmits<{
+  (e: 'click', notification: Record<string, any>): void
+  (e: 'mark-read', notification: Record<string, any>): void
+  (e: 'mark-unread', notification: Record<string, any>): void
+  (e: 'delete', notification: Record<string, any>): void
+}>()
 
-  computed: {
-    notificationComponent () {
-      let { kind } = this.notification
-      kind = kind.charAt(0).toUpperCase() + kind.slice(1)
+const notificationComponent = computed(() => {
+  let { kind } = props.notification
+  kind = kind.charAt(0).toUpperCase() + kind.slice(1)
 
-      return NotificationTypes[`Notification${kind}`]
-    },
-  },
-}
+  return NotificationTypes[`Notification${kind}` as keyof typeof NotificationTypes]
+})
 </script>
 
 <style lang="scss" scoped>

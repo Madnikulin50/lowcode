@@ -1,27 +1,72 @@
 <template>
-  <b-col class="d-flex align-items-center flex-wrap gap-1">
-    <b-form-radio-group
-      v-model="$attrs.value"
-      v-bind="$attrs"
-      :options="[
-        { value: 0, text: $attrs['excluded-label'] || 'excluded' },
-        { value: 1, text: $attrs['inclusive-label'] || 'inclusive' },
-        { value: 2, text: $attrs['exclusive-label'] || 'exclusive' }
-      ]"
-      buttons
-      button-variant="outline-primary"
-      size="sm"
-      name="radio-btn-outline"
-      v-on="$listeners"
-    />
-    <span class="text-nowrap">
-      {{ $attrs.label }}
-    </span>
-  </b-col>
+  <div class="d-flex align-items-center flex-wrap gap-1">
+    <div class="btn-group" role="group">
+      <input
+        :id="uid + '0'"
+        v-model="selectedValue"
+        type="radio"
+        class="btn-check"
+        :name="uid"
+        :value="0"
+        autocomplete="off"
+      >
+      <label
+        :for="uid + '0'"
+        class="btn btn-outline-primary btn-sm"
+      >{{ excludedLabel }}</label>
+
+      <input
+        :id="uid + '1'"
+        v-model="selectedValue"
+        type="radio"
+        class="btn-check"
+        :name="uid"
+        :value="1"
+        autocomplete="off"
+      >
+      <label
+        :for="uid + '1'"
+        class="btn btn-outline-primary btn-sm"
+      >{{ inclusiveLabel }}</label>
+
+      <input
+        :id="uid + '2'"
+        v-model="selectedValue"
+        type="radio"
+        class="btn-check"
+        :name="uid"
+        :value="2"
+        autocomplete="off"
+      >
+      <label
+        :for="uid + '2'"
+        class="btn btn-outline-primary btn-sm"
+      >{{ exclusiveLabel }}</label>
+    </div>
+    <span class="text-nowrap">{{ label }}</span>
+  </div>
 </template>
 
-<script>
-export default {
-  name: 'CResourceListStatusFilter',
-}
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  modelValue: { type: Number, default: 0 },
+  label: { type: String, default: '' },
+  excludedLabel: { type: String, default: 'excluded' },
+  inclusiveLabel: { type: String, default: 'inclusive' },
+  exclusiveLabel: { type: String, default: 'exclusive' },
+})
+
+const emit = defineEmits(['update:modelValue', 'change'])
+
+const uid = 'rbs-' + Math.random().toString(36).slice(2, 8)
+
+const selectedValue = computed({
+  get() { return props.modelValue },
+  set(v) {
+    emit('update:modelValue', Number(v))
+    emit('change')
+  },
+})
 </script>

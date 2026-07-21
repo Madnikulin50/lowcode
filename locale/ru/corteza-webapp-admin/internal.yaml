@@ -1,0 +1,37 @@
+title: Внутренняя аутентификация
+enabled: Internal authentication enabled
+password-constraints:
+  title: Ограничения пароля
+  ignored-security: The system is configured to ignore password security constraints
+    which is insecure on production deployments.
+  min-length: Минимальная длина
+  min-length-description: Must be at least 8 characters
+  min-num-count: Минимальное количество цифр
+  min-num-count-description: The password must include the specified number of digits
+    (disabled if set to 0)
+  min-special-count: Минимальное количество спецсимволов
+  min-special-count-description: The password must include the specified number of
+    special characters (disabled if set to 0)
+  min-upper-case-length: Минимальное количество заглавных букв
+  min-upper-case-description: The password must include the specified number of upper
+    case characters (disabled if set to 0)
+  min-lower-case-length: Минимальное количество строчных букв
+  min-lower-case-description: The password must include the specified number of lower
+    case characters (disabled if set to 0)
+signup:
+  enabled: Регистрация включена
+  email-confirmation-required: Требуется подтверждение email при регистрации
+  split-credentials-check:
+    label: Включить раздельную проверку учетных данных
+password-reset:
+  enabled: Сброс пароля включен
+profile-avatar:
+  enabled: Аватар профиля включен
+send-user-invite-email:
+  enabled: Отправлять приглашение при создании пользователя
+  title: Приглашение по email
+  description: When enabled, this configuration sends an invite email to a newly created
+    user via the CLI
+  expires:
+    label: Действителен в течение
+    description: How long will the invite token be valid before it expires

@@ -19,87 +19,72 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'MentionList',
+<script setup lang="ts">
+import { ref, watch } from 'vue'
 
-  props: {
-    items: {
-      type: Array,
-      required: true,
-    },
+const props = defineProps<{
+  items: any[]
+  command: Function
+}>()
 
-    command: {
-      type: Function,
-      required: true,
-    },
-  },
+const selectedIndex = ref(0)
 
-  data() {
-    return {
-      selectedIndex: 0,
-    }
-  },
+watch(() => props.items, () => {
+  selectedIndex.value = 0
+})
 
-  watch: {
-    items() {
-      this.selectedIndex = 0
-    },
-  },
+function onKeyDown({ event }: { event: KeyboardEvent }) {
+  if (event.key === 'ArrowUp') {
+    upHandler()
+    return true
+  }
 
-  methods: {
-    onKeyDown({ event }) {
-      if (event.key === 'ArrowUp') {
-        this.upHandler()
-        return true
-      }
+  if (event.key === 'ArrowDown') {
+    downHandler()
+    return true
+  }
 
-      if (event.key === 'ArrowDown') {
-        this.downHandler()
-        return true
-      }
+  if (event.key === 'Enter') {
+    enterHandler()
+    return true
+  }
 
-      if (event.key === 'Enter') {
-        this.enterHandler()
-        return true
-      }
-
-      return false
-    },
-
-    upHandler() {
-      this.selectedIndex = ((this.selectedIndex + this.items.length) - 1) % this.items.length
-    },
-
-    downHandler() {
-      this.selectedIndex = (this.selectedIndex + 1) % this.items.length
-    },
-
-    enterHandler() {
-      this.selectItem(this.selectedIndex)
-    },
-
-    handleClick(index, event) {
-      this.selectItem(index)
-    },
-
-    selectItem(index) {
-      const item = this.items[index]
-
-      if (item) {
-        this.command({
-          id: item.userID,
-          label: this.getDisplayName(item),
-        })
-      }
-    },
-
-    getDisplayName(user) {
-      const { name, username, email, userID } = user
-      return name || username || email || userID
-    },
-  },
+  return false
 }
+
+function upHandler() {
+  selectedIndex.value = ((selectedIndex.value + props.items.length) - 1) % props.items.length
+}
+
+function downHandler() {
+  selectedIndex.value = (selectedIndex.value + 1) % props.items.length
+}
+
+function enterHandler() {
+  selectItem(selectedIndex.value)
+}
+
+function handleClick(index: number, event: Event) {
+  selectItem(index)
+}
+
+function selectItem(index: number) {
+  const item = props.items[index]
+
+  if (item) {
+    props.command({
+      id: item.userID,
+      label: getDisplayName(item),
+    })
+  }
+}
+
+function getDisplayName(user: any) {
+  const { name, username, email, userID } = user
+  return name || username || email || userID
+}
+
+defineExpose({ onKeyDown })
 </script>
 
 <style lang="scss" scoped>

@@ -7,21 +7,24 @@
     </div>
 
     <div
-      class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto"
+      class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ms-sm-auto"
     >
       <slot
         name="center"
-        class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto"
+        class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ms-sm-auto"
       />
     </div>
 
     <div
-      class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ml-sm-auto"
+      class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ms-sm-auto"
     >
       <slot name="end" />
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+</script>
 
 <style scoped lang="scss">
 .c-toolbar {

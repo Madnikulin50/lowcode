@@ -1,30 +1,37 @@
 <template>
-  <b-form-group
-    :label="label"
-  >
-    <b-form-select
+  <div class="mb-3">
+    <label class="form-label">{{ label }}</label>
+    <select
+      class="form-select"
       :value="value"
-      :options="options"
-      @input="$emit('update', $event)"
-    />
-  </b-form-group>
+      @change="emit('update', ($event.target as HTMLSelectElement).value)"
+    >
+      <option
+        v-for="opt in options"
+        :key="opt.value"
+        :value="opt.value"
+        :disabled="opt.disabled"
+      >
+        {{ opt.text }}
+      </option>
+    </select>
+  </div>
 </template>
 
-<script>
-export default {
-  props: {
-    label: {
-      required: true,
-      type: String,
-    },
-    value: {
-      type: String,
-      default: () => undefined,
-    },
-    options: {
-      default: () => [],
-      type: Array,
-    },
-  },
+<script setup lang="ts">
+interface SelectOption {
+  value: string
+  text: string
+  disabled?: boolean
 }
+
+const props = defineProps<{
+  label: string
+  value?: string
+  options?: SelectOption[]
+}>()
+
+const emit = defineEmits<{
+  (e: 'update', value: string): void
+}>()
 </script>

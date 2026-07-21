@@ -17,70 +17,67 @@
   </div>
 </template>
 
-<script lang="js">
-import base from '../base.vue'
+<script setup lang="ts">
+import { ref, computed, useAttrs } from 'vue'
 
-export default {
-  extends: base,
+defineOptions({ inheritAttrs: false })
 
-  props: {
-    alt: {
-      type: String,
-      default: null,
-    },
+const attrs = useAttrs()
 
-    title: {
-      type: String,
-      default: null,
-    },
-  },
+const props = defineProps<{
+  inline?: boolean
+  alt?: string | null
+  title?: string | null
+}>()
 
-  data () {
-    return {
-      loaded: false,
-    }
-  },
+defineEmits<{
+  (e: 'openPreview', payload: Record<string, never>): void
+}>()
 
-  computed: {
-    isSvg () {
-      return this.mime === 'image/svg+xml' ||
-        (this.name && this.name.toLowerCase().endsWith('.svg'))
-    },
+const image = ref<HTMLImageElement | null>(null)
+const loaded = ref(false)
 
-    getClass () {
-      const rtr = [...this.previewClass]
-      if (this.$listeners.click) {
-        rtr.push('clickable')
-      }
-      if (this.loaded) {
-        rtr.push('loaded')
-      }
-      return rtr
-    },
+const src = computed(() => (attrs as any).src)
+const mime = computed(() => (attrs as any).mime)
+const name = computed(() => (attrs as any).name || '')
+const meta = computed(() => (attrs as any).meta || {})
+const previewStyle = computed(() => (attrs as any).previewStyle || {})
+const previewClass = computed(() => (attrs as any).previewClass || [])
 
-    getWidth () {
-      if (this.isSvg) return undefined
-      return this.meta.preview.image.width
-    },
-    getHeight () {
-      if (this.isSvg) return undefined
-      return this.meta.preview.image.height
-    },
-  },
+const isSvg = computed(() =>
+  mime.value === 'image/svg+xml' ||
+  (name.value && name.value.toLowerCase().endsWith('.svg'))
+)
 
-  methods: {
-    reloadBrokenImage (ev) {
-      if (ev.target && ev.target.src) {
-        window.setTimeout(() => {
-          if (!ev.target && !ev.target.src) return
+const getClass = computed(() => {
+  const rtr = [...previewClass.value]
+  if ((attrs as any).onClick) {
+    rtr.push('clickable')
+  }
+  if (loaded.value) {
+    rtr.push('loaded')
+  }
+  return rtr
+})
 
-          // This forces Vue to re-try image download
-          // eslint-disable-next-line
-          ev.target.src = ev.target.src
-        }, 500)
-      }
-    },
-  },
+const getWidth = computed(() => {
+  if (isSvg.value) return undefined
+  return meta.value.preview?.image?.width
+})
+
+const getHeight = computed(() => {
+  if (isSvg.value) return undefined
+  return meta.value.preview?.image?.height
+})
+
+function reloadBrokenImage(ev: Event) {
+  const target = ev.target as HTMLImageElement
+  if (target && target.src) {
+    window.setTimeout(() => {
+      if (!target || !target.src) return
+      target.src = target.src
+    }, 500)
+  }
 }
 </script>
 

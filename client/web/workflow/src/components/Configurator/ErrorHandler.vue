@@ -1,49 +1,19 @@
-<script>
-import Function from './Function'
+<template>
+  <div>
+    <div class="mb-3">
+      <label class="text-primary form-label">{{ $t('label.label') }}</label>
+      <input class="form-control" v-model="label" @input="emit('update-value', $event.target.value)" />
+    </div>
+  </div>
+</template>
 
-export default {
-  extends: Function,
+<script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-  data () {
-    return {
-      showFunctionList: false,
-      functionRef: 'error-handler',
-    }
-  },
+const { t } = useI18n()
+const emit = defineEmits(['update-value'])
+const props = defineProps({ item: { type: Object, required: true } })
 
-  methods: {
-    async getFunctionTypes () {
-      this.functions = [
-        {
-          ref: 'error-handler',
-          kind: 'function',
-          meta: {
-            short: 'Handle error',
-          },
-          parameters: [],
-          results: [
-            {
-              name: 'error',
-              types: [
-                'Any',
-              ],
-            },
-            {
-              name: 'errorMessage',
-              types: [
-                'String',
-              ],
-            },
-            {
-              name: 'errorStepID',
-              types: [
-                'Integer',
-              ],
-            },
-          ],
-        },
-      ]
-    },
-  },
-}
+const label = computed(() => props.item.label || '')
 </script>

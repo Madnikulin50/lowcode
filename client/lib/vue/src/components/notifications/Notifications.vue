@@ -1,78 +1,74 @@
 <template>
   <div class="h-100 d-flex flex-column">
-    <b-tabs
-      v-model="activeTab"
-      card
-      fill
-      nav-class="border-bottom"
-      content-class="h-100 overflow-hidden"
-      class="h-100 d-flex flex-column"
-    >
-      <template #tabs-end>
-        <div
-          class="d-flex align-items-center justify-content-end"
-          style="min-width: 6rem;"
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          :class="{ active: activeTab === 0 }"
+          @click="activeTab = 0"
         >
-          <!-- <b-button
-            v-if="activeTab === 1 && hasRead"
-            v-b-tooltip.hover
-            variant="outline-light"
-            class="p-2 border-0 d-flex align-items-center justify-content-center"
-            style="width: 2rem; height: 2rem;"
-            :title="$t('markAllAsUnread')"
-            @click="handleMarkAllAsUnread"
-          >
-            <font-awesome-icon
-              :icon="['far', 'envelope']"
-              class="h6 mb-0 text-primary"
-            />
-          </b-button> -->
+          {{ $t('unread') }}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          :class="{ active: activeTab === 1 }"
+          @click="activeTab = 1"
+        >
+          {{ $t('all') }}
+        </button>
+      </li>
+      <li
+        class="nav-item ms-auto d-flex align-items-center"
+        style="min-width: 6rem;"
+      >
+        <button
+          v-if="hasUnread"
+          :title="$t('markAllAsRead')"
+          class="btn btn-outline-light p-2 border-0 d-flex align-items-center justify-content-center"
+          style="width: 2rem; height: 2rem;"
+          @click="handleMarkAllAsRead"
+        >
+          <font-awesome-icon
+            :icon="['fas', 'check-double']"
+            class="h6 mb-0 text-primary"
+          />
+        </button>
 
-          <b-button
-            v-if="hasUnread"
-            v-b-tooltip.hover="{ title: $t('markAllAsRead'), delay: { show: 500, hide: 0 } }"
-            variant="outline-light"
-            class="p-2 border-0 d-flex align-items-center justify-content-center"
-            style="width: 2rem; height: 2rem;"
-            @click="handleMarkAllAsRead"
-          >
-            <font-awesome-icon
-              :icon="['fas', 'check-double']"
-              class="h6 mb-0 text-primary"
-            />
-          </b-button>
+        <button
+          :title="$t(muted ? 'unmute' : 'mute')"
+          class="btn btn-outline-light p-2 border-0 d-flex align-items-center justify-content-center"
+          style="width: 2rem; height: 2rem;"
+          @click="toggleMuted"
+        >
+          <font-awesome-icon
+            :icon="['fas', muted ? 'bell-slash' : 'bell']"
+            class="h6 mb-0"
+            :class="{ 'text-secondary': muted, 'text-primary': !muted }"
+          />
+        </button>
+      </li>
+    </ul>
 
-          <b-button
-            v-b-tooltip.hover="{ title: $t(muted ? 'unmute' : 'mute'), delay: { show: 500, hide: 0 } }"
-            variant="outline-light"
-            class="p-2 border-0 d-flex align-items-center justify-content-center"
-            style="width: 2rem; height: 2rem;"
-            @click="toggleMuted"
-          >
-            <font-awesome-icon
-              :icon="['fas', muted ? 'bell-slash' : 'bell']"
-              class="h6 mb-0"
-              :class="{ 'text-secondary': muted, 'text-primary': !muted }"
-            />
-          </b-button>
-        </div>
-      </template>
-
-      <b-tab
-        :title="$t('unread')"
-        active
-        class="d-flex flex-column h-100 p-0"
+    <div class="tab-content h-100 overflow-hidden d-flex flex-column">
+      <div
+        class="tab-pane d-flex flex-column h-100 p-0"
+        :class="{ show: activeTab === 0, active: activeTab === 0 }"
       >
         <div class="overflow-auto flex-grow-1 h-100">
           <div
             v-if="loading"
             class="d-flex justify-content-center p-5"
           >
-            <b-spinner variant="primary" />
+            <span class="spinner-border text-primary" />
           </div>
 
-          <b-list-group v-else-if="notifications.length > 0">
-            <notification-item
+          <div
+            v-else-if="notifications.length > 0"
+            class="list-group"
+          >
+            <NotificationItem
               v-for="notification in notifications"
               :key="notification.notificationID"
               :notification="notification"
@@ -86,20 +82,19 @@
               v-if="hasMorePages"
               class="text-center my-3"
             >
-              <b-button
-                variant="outline-primary"
-                size="sm"
+              <button
+                class="btn btn-outline-primary btn-sm"
                 :disabled="loadingMore"
                 @click="loadMore()"
               >
-                <b-spinner
+                <span
                   v-if="loadingMore"
-                  small
+                  class="spinner-border spinner-border-sm"
                 />
                 <span v-else>{{ $t('loadMore') }}</span>
-              </b-button>
+              </button>
             </div>
-          </b-list-group>
+          </div>
 
           <div
             v-else
@@ -118,27 +113,31 @@
             </p>
           </div>
         </div>
-      </b-tab>
+      </div>
 
-      <b-tab
-        :title="$t('all')"
-        class="d-flex flex-column h-100 p-0"
+      <div
+        class="tab-pane d-flex flex-column h-100 p-0"
+        :class="{ show: activeTab === 1, active: activeTab === 1 }"
       >
         <div class="overflow-auto flex-grow-1 h-100">
           <div
             v-if="loading"
             class="d-flex justify-content-center p-5"
           >
-            <b-spinner variant="primary" />
+            <span class="spinner-border text-primary" />
           </div>
 
-          <b-list-group v-else-if="notifications.length > 0">
-            <notification-item
+          <div
+            v-else-if="notifications.length > 0"
+            class="list-group"
+          >
+            <NotificationItem
               v-for="notification in notifications"
               :key="notification.notificationID"
               :notification="notification"
               @click="onNotificationClick(notification)"
               @mark-read="onMarkAsRead"
+              @mark-unread="onMarkAsUnread"
               @delete="onDeleteNotification"
             />
 
@@ -146,20 +145,19 @@
               v-if="hasMorePages"
               class="text-center my-3"
             >
-              <b-button
-                variant="outline-primary"
-                size="sm"
+              <button
+                class="btn btn-outline-primary btn-sm"
                 :disabled="loadingMore"
                 @click="loadMore()"
               >
-                <b-spinner
+                <span
                   v-if="loadingMore"
-                  small
+                  class="spinner-border spinner-border-sm"
                 />
                 <span v-else>{{ $t('loadMore') }}</span>
-              </b-button>
+              </button>
             </div>
-          </b-list-group>
+          </div>
 
           <div
             v-else
@@ -178,131 +176,115 @@
             </p>
           </div>
         </div>
-      </b-tab>
-    </b-tabs>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-import { mapGetters, mapActions } from 'vuex'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { getCurrentInstance } from 'vue'
+import { useNotificationsStore } from '../../store/notifications'
 import NotificationItem from './NotificationItem.vue'
+import { useToast } from '../../composables/useToast'
 
-export default {
-  i18nOptions: {
-    namespaces: 'notifications',
-  },
+const { $t } = getCurrentInstance()!.appContext.config.globalProperties as any
+const notificationsStore = useNotificationsStore()
+const { toastSuccess, toastError } = useToast()
 
-  components: {
-    NotificationItem,
-  },
+const activeTab = ref(0)
+const loading = ref(false)
+const loadingMore = ref(false)
 
-  data () {
-    return {
-      activeTab: 0,
+const notifications = computed(() => notificationsStore.notifications)
+const hasUnread = computed(() => notificationsStore.hasUnread)
+const hasMorePages = computed(() => notificationsStore.hasMorePages)
+const muted = computed(() => notificationsStore.muted)
 
-      loading: false,
+watch(activeTab, () => {
+  loading.value = true
+  notificationsStore.setPageCursor(null)
+  loadNotifications()
+    .finally(() => {
+      setTimeout(() => {
+        loading.value = false
+      }, 300)
+    })
+})
 
-      loadingMore: false,
-    }
-  },
+function fetchNotifications(payload?: any) {
+  return notificationsStore.fetchNotifications(payload)
+}
 
-  computed: {
-    ...mapGetters({
-      notifications: 'notifications/notifications',
-      hasUnread: 'notifications/hasUnread',
-      hasRead: 'notifications/hasRead',
-      hasMorePages: 'notifications/hasMorePages',
-      muted: 'notifications/muted',
-    }),
-  },
+function markAsRead(id: string) {
+  return notificationsStore.markAsRead(id)
+}
 
-  watch: {
-    activeTab: {
-      handler () {
-        this.loading = true
+function markAsUnread(id: string) {
+  return notificationsStore.markAsUnread(id)
+}
 
-        this.setPageCursor(null)
+function markAllAsRead() {
+  return notificationsStore.markAllAsRead()
+}
 
-        this.loadNotifications()
-          .finally(() => {
-            setTimeout(() => {
-              this.loading = false
-            }, 300)
-          })
-      },
-    },
-  },
+function deleteNotification(id: string) {
+  return notificationsStore.deleteNotification(id)
+}
 
-  methods: {
-    ...mapActions({
-      fetchNotifications: 'notifications/fetchNotifications',
-      markAsRead: 'notifications/markAsRead',
-      markAsUnread: 'notifications/markAsUnread',
-      markAllAsRead: 'notifications/markAllAsRead',
-      markAllAsUnread: 'notifications/markAllAsUnread',
-      deleteNotification: 'notifications/deleteNotification',
-      setPageCursor: 'notifications/setPageCursor',
-      toggleMuted: 'notifications/toggleMuted',
-    }),
+function setPageCursor(cursor: any) {
+  notificationsStore.setPageCursor(cursor)
+}
 
-    onNotificationClick ({ notificationID, readAt }) {
-      if (!readAt) {
-        this.markAsRead(notificationID)
-      }
-    },
+function toggleMuted() {
+  notificationsStore.toggleMuted()
+}
 
-    onMarkAsRead ({ notificationID }) {
-      this.markAsRead(notificationID)
-    },
+function onNotificationClick({ notificationID, readAt }: { notificationID: string; readAt?: string }) {
+  if (!readAt) {
+    markAsRead(notificationID)
+  }
+}
 
-    onMarkAsUnread ({ notificationID }) {
-      this.markAsUnread(notificationID)
-    },
+function onMarkAsRead({ notificationID }: { notificationID: string }) {
+  markAsRead(notificationID)
+}
 
-    onDeleteNotification ({ notificationID }) {
-      this.deleteNotification(notificationID)
-        .then(() => {
-          this.toastSuccess(this.$t('notificationDeleted'))
-        })
-        .catch(() => {
-          this.toastError(this.$t('notificationDeletedError'))
-        })
-    },
+function onMarkAsUnread({ notificationID }: { notificationID: string }) {
+  markAsUnread(notificationID)
+}
 
-    handleMarkAllAsRead () {
-      this.markAllAsRead()
-        .then(() => {
-          this.toastSuccess(this.$t('allMarkedAsRead'))
-        })
-        .catch(() => {
-          this.toastError(this.$t('markAllAsReadError'))
-        })
-    },
+function onDeleteNotification({ notificationID }: { notificationID: string }) {
+  deleteNotification(notificationID)
+    .then(() => {
+      toastSuccess($t('notificationDeleted'))
+    })
+    .catch(() => {
+      toastError($t('notificationDeletedError'))
+    })
+}
 
-    // handleMarkAllAsUnread () {
-    //   this.markAllAsUnread()
-    //     .then(() => {
-    //       this.toastSuccess(this.$t('allMarkedAsUnread'))
-    //     })
-    //     .catch(() => {
-    //       this.toastError(this.$t('markAllAsUnreadError'))
-    //     })
-    // },
+function handleMarkAllAsRead() {
+  markAllAsRead()
+    .then(() => {
+      toastSuccess($t('allMarkedAsRead'))
+    })
+    .catch(() => {
+      toastError($t('markAllAsReadError'))
+    })
+}
 
-    loadNotifications () {
-      return this.fetchNotifications({ unreadOnly: this.activeTab === 0 })
-    },
+function loadNotifications() {
+  return fetchNotifications({ unreadOnly: activeTab.value === 0 })
+}
 
-    loadMore () {
-      this.loadingMore = true
-
-      return this.loadNotifications()
-        .finally(() => {
-          setTimeout(() => {
-            this.loadingMore = false
-          }, 300)
-        })
-    },
-  },
+function loadMore() {
+  loadingMore.value = true
+  return loadNotifications()
+    .finally(() => {
+      setTimeout(() => {
+        loadingMore.value = false
+      }, 300)
+    })
 }
 </script>

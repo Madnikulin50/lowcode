@@ -1,25 +1,17 @@
 <template>
-  <b-container
-    fluid
-    class="d-flex justify-content-center vh-100 logo"
-  >
+  <div class="container-fluid d-flex justify-content-center vh-100 logo">
     <img
       v-if="logo"
       :src="logo"
       class="w-25 my-auto"
     >
-  </b-container>
+  </div>
 </template>
 
-<script>
-export default {
-  props: {
-    logo: {
-      type: String,
-      default: () => '',
-    },
-  },
-}
+<script setup lang="ts">
+defineProps<{
+  logo?: string
+}>()
 </script>
 
 <style lang="scss" scoped>

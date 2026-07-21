@@ -18,33 +18,32 @@
   </div>
 </template>
 
-<script lang="js">
+<script setup lang="ts">
+import { computed, useAttrs } from 'vue'
 import { getExtensionIconType } from '../index.js'
-import base from '../base.vue'
 
-export default {
-  extends: base,
+defineOptions({ inheritAttrs: false })
 
-  props: {
-    previewStyle: {
-      type: Object,
-      default: () => ({}),
-    },
+const attrs = useAttrs()
 
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
+defineProps<{
+  inline?: boolean
+  previewStyle?: Record<string, any>
+  labels?: Record<string, any>
+}>()
 
-  computed: {
-    icon () {
-      const { original = {} } = this.meta || {}
-      const { ext } = original || {}
-      return getExtensionIconType(ext)
-    },
-  },
-}
+defineEmits<{
+  (e: 'openPreview'): void
+}>()
+
+const meta = computed(() => (attrs as any).meta || {})
+const name = computed(() => (attrs as any).name || '')
+
+const icon = computed(() => {
+  const original = meta.value.original || {}
+  const ext = original.ext
+  return getExtensionIconType(ext)
+})
 </script>
 
 <style lang="scss" scoped>

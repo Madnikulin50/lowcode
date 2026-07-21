@@ -1,40 +1,32 @@
 <template>
-  <b-button
-    :variant="variant"
+  <button
+    :class="[`btn btn-${variant}`, btnSize, 'd-inline-flex align-items-center justify-content-center']"
     :disabled="disabled || processing"
-    :size="size"
-    class="d-inline-flex align-items-center justify-content-center"
-    v-on="$listeners"
   >
     <slot />
-    <b-spinner
+    <span
       v-if="processing"
-      :processing="processing"
-      small
-      class="ml-1"
+      class="spinner-border spinner-border-sm ms-1"
     />
-  </b-button>
+  </button>
 </template>
 
-<script>
-export default {
-  props: {
-    variant: {
-      type: String,
-      default: 'primary',
-    },
-    size: {
-      type: String,
-      default: 'md',
-    },
-    processing: {
-      type: Boolean,
-      default: false,
-    },
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
-  },
+<script setup lang="ts">
+import { computed } from 'vue'
+
+interface Props {
+  variant?: string
+  size?: string
+  processing?: boolean
+  disabled?: boolean
 }
+
+const props = withDefaults(defineProps<Props>(), {
+  variant: 'primary',
+  size: 'md',
+  processing: false,
+  disabled: false,
+})
+
+const btnSize = computed(() => props.size === 'sm' ? 'btn-sm' : props.size === 'lg' ? 'btn-lg' : '')
 </script>

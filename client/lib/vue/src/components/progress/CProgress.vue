@@ -1,13 +1,13 @@
 <template>
-  <b-progress
-    :max="maxValue"
-    class="bg-light position-relative"
-  >
-    <b-progress-bar
-      :value="progressValue < 0 ? 0 : progressValue"
-      :striped="striped"
-      :animated="animated"
-      :variant="progressVariant"
+  <div class="progress bg-light position-relative">
+    <div
+      class="progress-bar"
+      :class="[`bg-${progressVariant}`, { 'progress-bar-striped': striped, 'progress-bar-animated': animated }]"
+      role="progressbar"
+      :style="{ width: `${progressPercent}%` }"
+      :aria-valuenow="progressValue < 0 ? 0 : progressValue"
+      aria-valuemin="0"
+      :aria-valuemax="maxValue"
     >
       <strong
         :class="textVariant"
@@ -16,120 +16,79 @@
       >
         {{ progressLabel }}
       </strong>
-    </b-progress-bar>
-  </b-progress>
+    </div>
+  </div>
 </template>
 
-<script>
-export default {
-  props: {
-    value: {
-      type: Number,
-      required: true,
-    },
+<script setup lang="ts">
+import { computed } from 'vue'
 
-    min: {
-      type: Number,
-      default: 0,
-    },
+const props = withDefaults(defineProps<{
+  value: number
+  min?: number
+  max?: number
+  labeled?: boolean
+  relative?: boolean
+  progress?: boolean
+  striped?: boolean
+  animated?: boolean
+  variant?: string
+  thresholds?: Array<{ value: number; variant: string }>
+  textStyle?: string
+}>(), {
+  min: 0,
+  max: 100,
+  labeled: true,
+  relative: true,
+  variant: 'success',
+  thresholds: () => [],
+  textStyle: '',
+})
 
-    max: {
-      type: Number,
-      default: 100,
-    },
+const maxValue = computed(() => Math.abs(props.max - props.min))
 
-    labeled: {
-      type: Boolean,
-      default: true,
-    },
+const progressValue = computed(() => {
+  if (props.value < props.min && props.max > props.min) {
+    return props.value - props.min
+  } else if (props.value > props.min && props.max < props.min) {
+    return props.min - props.value
+  }
+  return Math.abs(props.value - props.min)
+})
 
-    relative: {
-      type: Boolean,
-      default: true,
-    },
+const progressPercent = computed(() => {
+  const pv = Math.max(0, progressValue.value)
+  if (maxValue.value === 0) return 0
+  return Math.round((pv / maxValue.value) * 10000) / 100
+})
 
-    progress: {
-      type: Boolean,
-    },
+const progressLabel = computed(() => {
+  if (!props.labeled) return undefined
+  let value: string | number = props.value
+  if (props.relative) {
+    value = `${progressPercent.value}%`
+  }
+  if (props.progress) {
+    value = `${value} / ${props.relative ? '100' : props.max}${props.relative ? '%' : ''}`
+  }
+  return value
+})
 
-    striped: {
-      type: Boolean,
-    },
+const sortedVariants = computed(() => {
+  return [...props.thresholds].filter(t => t.value >= 0).sort((a, b) => b.value - a.value)
+})
 
-    animated: {
-      type: Boolean,
-    },
+const progressVariant = computed(() => {
+  const value = progressPercent.value
+  let pv = props.variant
+  if (sortedVariants.value.length) {
+    const found = sortedVariants.value.find(t => value >= t.value)
+    if (found) pv = found.variant
+  }
+  return pv
+})
 
-    variant: {
-      type: String,
-      default: 'success',
-    },
-
-    thresholds: {
-      type: Array,
-      default: () => [],
-    },
-
-    textStyle: {
-      type: String,
-      default: '',
-    },
-  },
-
-  computed: {
-    maxValue () {
-      return Math.abs(this.max - this.min)
-    },
-
-    progressValue () {
-      if (this.value < this.min && this.max > this.min) {
-        return this.value - this.min
-      } else if (this.value > this.min && this.max < this.min) {
-        return this.min - this.value
-      }
-
-      return Math.abs(this.value - this.min)
-    },
-
-    progressLabel () {
-      let value = this.value
-
-      if (!this.labeled) {
-        return
-      }
-
-      if (this.relative) {
-        // https://stackoverflow.com/a/21907972/17926309
-        value = `${Math.round((((this.progressValue) / this.maxValue) * 100) * 100) / 100}%`
-      }
-
-      if (this.progress) {
-        value = `${value} / ${this.relative ? '100' : this.max}${this.relative ? '%' : ''}`
-      }
-
-      return value
-    },
-
-    progressVariant () {
-      const value = Math.round((((this.progressValue < 0 ? 0 : this.progressValue) / this.maxValue) * 100) * 100) / 100
-
-      let progressVariant = this.variant
-
-      if (this.thresholds.length) {
-        const { variant } = this.sortedVariants.find(t => value >= t.value) || {}
-        progressVariant = variant || progressVariant
-      }
-
-      return progressVariant
-    },
-
-    sortedVariants () {
-      return [...this.thresholds].filter(t => t.value >= 0).sort((a, b) => b.value - a.value)
-    },
-
-    textVariant () {
-      return ['light'].includes(this.progressVariant) ? 'text-dark' : 'text-light'
-    },
-  },
-}
+const textVariant = computed(() => {
+  return ['dark', 'primary'].includes(progressVariant.value) ? 'text-white' : 'text-dark'
+})
 </script>

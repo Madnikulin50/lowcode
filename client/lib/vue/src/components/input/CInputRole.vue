@@ -1,7 +1,7 @@
 <template>
   <c-input-select
     ref="roleSelect"
-    :value="value"
+    :value="modelValue"
     :options="roles"
     :placeholder="placeholder"
     :get-option-key="r => r.roleID"
@@ -16,115 +16,90 @@
   />
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, onMounted, getCurrentInstance } from 'vue'
 import { debounce } from 'lodash'
 import axios from 'axios'
 
-export default {
-  props: {
-    value: {
-      type: [Array, String, Object],
-      default: '',
-    },
+const vm = getCurrentInstance()!
+const $SystemAPI = (vm.appContext.config.globalProperties as any).$SystemAPI
 
-    visible: {
-      type: Function,
-      default: () => true,
-    },
+const props = withDefaults(defineProps<{
+  modelValue?: any
+  visible?: (role: any) => boolean
+  placeholder?: string
+  multiple?: boolean
+  clearOnSelect?: boolean
+  selectable?: (role: any) => boolean
+  clearable?: boolean
+  preselect?: boolean
+}>(), {
+  modelValue: '',
+  visible: () => true,
+  placeholder: 'Start typing to search for roles',
+  multiple: false,
+  clearOnSelect: false,
+  selectable: () => true,
+  clearable: true,
+  preselect: false,
+})
 
-    placeholder: {
-      type: String,
-      default: 'Start typing to search for roles',
-    },
+const emit = defineEmits<{
+  'update:modelValue': [value: any]
+}>()
 
-    multiple: {
-      type: Boolean,
-      default: false,
-    },
+const roleSelect = ref<any>(null)
+const loading = ref(false)
+const cancelRequest = ref<(() => void) | null>(null)
+const roles = ref<any[]>([])
+const filter = ref('')
 
-    clearOnSelect: {
-      type: Boolean,
-      default: false,
-    },
+onMounted(() => {
+  fetchRoles(props.preselect)
+})
 
-    selectable: {
-      type: Function,
-      default: () => true,
-    },
+function fetchRoles(preselect = false) {
+  loading.value = true
 
-    clearable: {
-      type: Boolean,
-      default: true,
-    },
+  if (cancelRequest.value) {
+    cancelRequest.value()
+    cancelRequest.value = null
+  }
 
-    preselect: {
-      type: Boolean,
-      default: false,
-    },
-  },
+  const { response, cancel } = $SystemAPI.roleListCancellable({ query: filter.value, limit: 20 })
+  cancelRequest.value = cancel
 
-  data () {
-    return {
-      loading: false,
-      cancelRequest: null,
+  return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
+    .then(([{ set }]) => {
+      roles.value = set.filter(props.visible)
 
-      roles: [],
-      filter: '',
-    }
-  },
-
-  mounted () {
-    this.fetchRoles(this.preselect)
-  },
-
-  methods: {
-    fetchRoles (preselect = false) {
-      this.loading = true
-
-      if (this.cancelRequest) {
-        this.cancelRequest()
-        this.cancelRequest = null
+      if (preselect && (!props.modelValue || !props.modelValue.length)) {
+        updateValue(roles.value[0])
       }
+      loading.value = false
+    })
+    .catch((e: any) => {
+      if (axios.isCancel(e)) return
+      loading.value = false
+      throw e
+    })
+}
 
-      const { response, cancel } = this.$SystemAPI.roleListCancellable({ query: this.filter, limit: 20 })
-      this.cancelRequest = cancel
+const search = debounce(function (query = '') {
+  if (query !== filter.value) {
+    filter.value = query
+  }
+  fetchRoles()
+}, 400)
 
-      return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
-        .then(([{ set }]) => {
-          this.roles = set.filter(this.visible)
+function updateValue(role: any) {
+  if (props.clearOnSelect && roleSelect.value) {
+    roleSelect.value._data._value = undefined
+  }
+  emit('update:modelValue', role)
+}
 
-          if (preselect && (!this.value || !this.value.length)) {
-            this.updateValue(this.roles[0])
-          }
-          this.loading = false
-        })
-        .catch((e) => {
-          if (axios.isCancel(e)) return
-          this.loading = false
-          throw e
-        })
-    },
-
-    search: debounce(function (query = '') {
-      if (query !== this.filter) {
-        this.filter = query
-      }
-
-      this.fetchRoles()
-    }, 400),
-
-    updateValue (role) {
-      // reset role-select value for better value presentation
-      if (this.clearOnSelect && this.$refs.roleSelect) {
-        this.$refs.roleSelect._data._value = undefined
-      }
-
-      this.$emit('input', role)
-    },
-
-    getRoleLabel ({ name, handle, roleID }) {
-      return name || handle || roleID
-    },
-  },
+function getRoleLabel({ name, handle, roleID }: any) {
+  return name || handle || roleID
 }
 </script>

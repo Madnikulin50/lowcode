@@ -1,27 +1,22 @@
 <template>
   <div>
-    <vue-dropzone
-      id="dropzone"
-      ref="dropzone"
-      :use-custom-slot="true"
-      :include-styling="false"
-      :options="dzOptions"
+    <div
       class="uploader"
-      @vdropzone-file-added="onFileAdded"
-      @vdropzone-file-added-manually="onFileAdded"
-      @vdropzone-success="onSuccess"
-      @vdropzone-error="onError"
-      @vdropzone-upload-progress="onUploadProgress"
+      @dragenter.prevent="onDragEnter"
+      @dragover.prevent="onDragOver"
+      @dragleave.prevent="onDragLeave"
+      @drop.prevent="onDrop"
     >
       <div
         class="drop-container w-100 h-100 position-relative bg-light rounded"
+        :class="{ 'bg-extra-light': isDragOver }"
+        @click="openFileDialog"
       >
         <template v-if="processing">
           <div
             class="bg-primary h-100 progress-bar position-absolute"
             :style="progressBarStyle"
           />
-
           <span class="d-flex align-items-center h-100 w-100 uploading justify-content-center position-relative py-2">
             {{ uploadingLabel }}
           </span>
@@ -38,13 +33,11 @@
           >
             {{ error }}
           </span>
-
           <span
             v-else-if="activeLabel"
           >
             {{ activeLabel }}
           </span>
-
           <span
             v-else
             class="text-muted"
@@ -53,193 +46,211 @@
           </span>
         </div>
       </div>
-    </vue-dropzone>
+      <input
+        ref="fileInput"
+        type="file"
+        :accept="acceptedFilesString"
+        :disabled="disabled"
+        class="d-none"
+        @change="onFileSelected"
+      />
+    </div>
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import numeral from 'numeral'
-import vueDropzone from 'vue2-dropzone'
-import { files } from '@/mixins'
 
-export default {
-  name: 'CUploader',
+const props = withDefaults(defineProps<{
+  endpoint: string
+  disabled?: boolean
+  acceptedFiles?: string[]
+  maxFilesize?: number
+  labels?: Record<string, string>
+  formData?: Record<string, any>
+  paramName?: string
+  maxFiles?: number
+  showUploadedFileName?: boolean
+}>(), {
+  disabled: false,
+  acceptedFiles: () => [],
+  maxFilesize: 100,
+  labels: () => ({}),
+  formData: () => ({}),
+  paramName: 'upload',
+  maxFiles: 1000,
+  showUploadedFileName: false,
+})
 
-  i18nOptions: {
-    namespaces: 'general',
-  },
+const emit = defineEmits<{
+  upload: [response: any, file: File]
+}>()
 
-  components: {
-    vueDropzone,
-  },
+const fileInput = ref<HTMLInputElement>()
+const isDragOver = ref(false)
+const active = ref<File | null>(null)
+const processing = ref<{ file: File; progress: number; bytesSent: number } | null>(null)
+const error = ref<string | null>(null)
 
-  mixins: [
-    files,
-  ],
+const acceptedFilesString = computed(() => props.acceptedFiles.join(','))
 
-  props: {
-    endpoint: {
-      type: String,
-      required: true,
-    },
+const progressBarStyle = computed(() => ({
+  width: (processing.value?.progress || 0) + '%',
+}))
 
-    disabled: {
-      type: Boolean,
-      default: () => false,
-    },
+const uploadingLabel = computed(() => {
+  const base = props.labels.uploading || 'Uploading files'
+  const file = processing.value?.file
+  return file ? `${base} ${file.name} (${size(file)})` : base
+})
 
-    acceptedFiles: {
-      type: Array,
-      default: () => [],
-    },
+const activeLabel = computed(() => {
+  if (!props.showUploadedFileName || !active.value) return null
+  return `${active.value.name} (${size(active.value)})`
+})
 
-    maxFilesize: {
-      type: Number,
-      default: 100,
-    },
+const placeholderLabel = computed(() => {
+  return props.labels.placeholder || 'Click or drop files here to upload'
+})
 
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
+function size(a: File) {
+  return numeral(a.size).format('0b')
+}
 
-    formData: {
-      type: Object,
-      required: false,
-      default: () => ({}),
-    },
+function openFileDialog() {
+  if (props.disabled) return
+  fileInput.value?.click()
+}
 
-    paramName: {
-      type: String,
-      default: 'upload',
-    },
+function onDragEnter() {
+  if (props.disabled) return
+  isDragOver.value = true
+}
 
-    maxFiles: {
-      type: Number,
-      default: 1000,
-    },
+function onDragOver() {
+  if (props.disabled) return
+  isDragOver.value = true
+}
 
-    showUploadedFileName: {
-      type: Boolean,
-      default: false,
-    },
-  },
+function onDragLeave() {
+  isDragOver.value = false
+}
 
-  data () {
-    return {
-      active: null,
-      processing: null,
-      error: null,
+function onDrop(e: DragEvent) {
+  isDragOver.value = false
+  if (props.disabled) return
+  const files = e.dataTransfer?.files
+  if (files?.length) {
+    handleFile(files[0])
+  }
+}
+
+function onFileSelected(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files?.length) {
+    handleFile(target.files[0])
+  }
+  target.value = ''
+}
+
+function handleFile(file: File) {
+  error.value = null
+
+  if (!validateFileType(file.name, props.acceptedFiles)) {
+    const errorMsg = props.labels.fileTypeNotAllowed || 'File type not allowed'
+    onError(null, errorMsg)
+    return
+  }
+
+  if (file.size > props.maxFilesize * 1024 * 1024) {
+    const errorMsg = props.labels.fileTooLarge || `File exceeds ${props.maxFilesize}MB limit`
+    onError(null, errorMsg)
+    return
+  }
+
+  uploadFile(file)
+}
+
+function validateFileType(_name: string, types: string[]) {
+  if (!types.length || types.includes('*/*')) return true
+  const ext = _name.split('.').pop()?.toLowerCase()
+  return types.some((t: string) => {
+    if (t.startsWith('.')) return ext === t.slice(1)
+    if (t.includes('/')) {
+      const [category] = t.split('/')
+      if (category === '*') return true
+      const mimeMap: Record<string, string> = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'pdf': 'application/pdf',
+        'csv': 'text/csv',
+        'xls': 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      }
+      return mimeMap[ext || '']?.startsWith(category) ?? false
     }
-  },
+    return ext === t.toLowerCase().replace('.', '')
+  })
+}
 
-  computed: {
-    dropzone () {
-      return (this.$refs.dropzone && this.$refs.dropzone.dropzone) ? this.$refs.dropzone.dropzone : false
-    },
+function uploadFile(file: File) {
+  const xhr = new XMLHttpRequest()
 
-    dzOptions () {
-      const vm = this
+  xhr.upload.addEventListener('progress', (e) => {
+    if (e.lengthComputable) {
+      processing.value = { file, progress: Math.round((e.loaded / e.total) * 100), bytesSent: e.loaded }
+    }
+  })
 
-      return {
-        paramName: this.paramName,
-        maxFilesize: this.maxFilesize, // mb
-        url: () => this.endpoint,
-        thumbnailMethod: 'contain',
-        thumbnailWidth: 320,
-        thumbnailHeight: 180,
-        maxFiles: this.maxFiles,
-        withCredentials: true,
-        autoProcessQueue: true,
-        disablePreviews: true,
-        uploadMultiple: false,
-        parallelUploads: 1,
-        acceptedFiles: null,
-        init: function () {
-          this.on('sending', function (file, xhr, formData) {
-            for (const k in vm.formData || {}) {
-              formData.append(k, vm.formData[k])
-            }
-          })
-        },
-        headers: {
-          // https://github.com/enyo/dropzone/issues/1154
-          'Cache-Control': '',
-          'X-Requested-With': '',
-          Authorization: 'Bearer ' + this.$auth.accessToken,
-        },
+  xhr.addEventListener('load', () => {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      let response
+      try {
+        response = JSON.parse(xhr.responseText)
+      } catch {
+        response = xhr.responseText
       }
-    },
-
-    progressBarStyle () {
-      return {
-        width: this.processing.progress + '%',
+      active.value = file
+      processing.value = null
+      error.value = null
+      emit('upload', response, file)
+    } else {
+      let message = 'Upload failed'
+      try {
+        const err = JSON.parse(xhr.responseText)
+        message = err.message || message
+      } catch {
+        message = xhr.statusText || message
       }
-    },
+      onError(null, message)
+    }
+  })
 
-    uploadingLabel () {
-      const uploadingLabel = this.labels.uploading || 'Uploading files'
+  xhr.addEventListener('error', () => {
+    onError(null, 'Network error')
+  })
 
-      const { file = {} } = this.processing || {}
+  xhr.open('POST', props.endpoint)
+  xhr.setRequestHeader('X-Requested-With', '')
+  xhr.setRequestHeader('Cache-Control', '')
 
-      return `${uploadingLabel} ${file.name} (${this.size(file)})`
-    },
+  const formData = new FormData()
+  formData.append(props.paramName, file)
+  for (const [k, v] of Object.entries(props.formData || {})) {
+    formData.append(k, v as string)
+  }
 
-    activeLabel () {
-      if (!this.showUploadedFileName || !this.active) {
-        return null
-      }
+  xhr.withCredentials = true
+  xhr.send(formData)
+}
 
-      return `${this.active.name} (${this.size(this.active)})`
-    },
-
-    placeholderLabel () {
-      return this.labels.placeholder || 'Click or drop files here to upload'
-    },
-  },
-
-  methods: {
-    size (a) {
-      return numeral(a.size).format('0b')
-    },
-
-    onSuccess (file, { response, error }) {
-      if (error) {
-        return this.onError(error, error.message)
-      }
-
-      this.active = file
-      this.processing = null
-      this.error = null
-      this.$emit('upload', response, file)
-      this.$refs.dropzone.removeFile(file)
-    },
-
-    onFileAdded (file) {
-      this.error = null
-
-      // Check if file type is allowed
-      let types = this.acceptedFiles
-      if (!types || !types.length) {
-        types = ['*/*']
-      }
-      if (!this.validateFileType(file.name, types)) {
-        this.$refs.dropzone.removeFile(file)
-        const errorMsg = this.labels.fileTypeNotAllowed || 'File type not allowed'
-        this.onError(null, errorMsg)
-      }
-    },
-
-    onError (e, message) {
-      this.active = null
-      this.error = message
-      this.processing = null
-    },
-
-    onUploadProgress (file, progress, bytesSent) {
-      this.processing = { file, progress, bytesSent }
-    },
-  },
+function onError(_e: any, message: string) {
+  active.value = null
+  error.value = message
+  processing.value = null
 }
 </script>
 
@@ -265,7 +276,6 @@ export default {
   cursor: wait;
 }
 </style>
-
 
 <style lang="scss">
 .uploader {

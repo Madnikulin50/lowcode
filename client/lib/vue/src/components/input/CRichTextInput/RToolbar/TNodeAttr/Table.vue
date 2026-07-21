@@ -1,12 +1,11 @@
 <template>
-  <b-dropdown
-    menu-class="text-center bg-white"
-    variant="link"
-    boundary="window"
-    no-caret
-  >
-    <template #button-content>
-      <span class="text-dark font-weight-bold">
+  <div class="dropdown">
+    <button
+      class="btn btn-link dropdown-toggle text-dark fw-bold"
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+    >
+      <span class="text-dark fw-bold">
         <font-awesome-icon
           v-if="format.icon"
           :icon="format.icon"
@@ -15,84 +14,100 @@
           {{ format.label }}
         </span>
       </span>
-    </template>
+    </button>
 
-    <b-dropdown-item-button
-      v-for="v of format.variants"
-      :key="v.variant"
-      @click="emitClick(v)"
-    >
-      {{ v.label }}
-    </b-dropdown-item-button>
-  </b-dropdown>
+    <ul class="dropdown-menu text-center bg-white">
+      <li
+        v-for="v of format.variants"
+        :key="v.variant"
+      >
+        <button
+          class="dropdown-item"
+          @click="emitClick(v)"
+        >
+          {{ v.label }}
+        </button>
+      </li>
+    </ul>
+  </div>
 </template>
 
-<script>
+<script setup lang="ts">
 import { nodeTypes } from '../../lib/formats'
-import base from '../TNode/base.vue'
 
-/**
- * Component is used to display node alignment formatting
- */
-export default {
-  name: 'TNattrTable',
-  extends: base,
+const props = defineProps<{
+  editor: any
+  format: any
+  isActive?: Record<string, any>
+}>()
 
-  props: {
-    isActive: {
-      type: Object,
-      required: false,
-      default: () => ({}),
-    },
-  },
+const emit = defineEmits<{
+  (e: 'click', payload: { type: string; attrs: Record<string, any> }): void
+}>()
 
-  methods: {
-    activeClasses (attrs) {
-      const an = this.activeNode(nodeTypes, attrs)
-      if (!an || !an.node) {
-        return undefined
-      }
-
-      const ac = (type, attrs) => {
-        return this.editor.isActive(type, attrs)
-      }
-
-      if (ac(an.node.type.name, { ...an.node.attrs, ...attrs })) {
-        return ['text-primary']
-      }
-
-      return undefined
-    },
-
-    /**
-     * dispatches node attr update for all affected nodes
-     * use a single transaction, so ctrl + z works as intended
-     */
-    dispatchTransaction (v) {
-      const ann = this.activeNodes(nodeTypes)
-      const tr = this.editor.state.tr
-      for (const an of ann) {
-        tr.setNodeMarkup(an.position, an.node.type, { ...an.node.attrs, ...v.attrs })
-      }
-      this.editor.dispatchTransaction(tr)
-    },
-
-    emitClick (v) {
-      this.$emit('click', { type: v.type, attrs: { ...v.attrs } })
-    },
-
-    /**
-     * Helper method to determine if the root formater should be shown as active
-     * @returns {Array|undefined}
-     */
-    rootActiveClasses (v) {
-      if (this.format.variants.find(({ type, attrs }) => this.activeClasses(attrs))) {
-        return ['text-primary']
+function activeNodes(types: string[], attrs?: Record<string, any>) {
+  const ed = props.editor
+  const rtr: any[] = []
+  ed.state.doc.nodesBetween(
+    ed.state.selection.from,
+    ed.state.selection.to,
+    (n: any, pos: number) => {
+      if (types.includes(n.type.name)) {
+        if (attrs) {
+          if (!Object.entries(attrs || {}).find(([k, v]) => n.attrs[k] !== v)) {
+            rtr.push({ node: n, position: pos })
+          }
+        } else {
+          rtr.push({ node: n, position: pos })
+        }
       }
     },
-  },
+  )
+
+  return rtr
+}
+
+function activeNode(types: string[], attrs?: Record<string, any>) {
+  const ann = activeNodes(types, attrs)
+  if (!ann) {
+    return undefined
+  }
+  return ann[0]
+}
+
+function activeClasses(attrs?: Record<string, any>) {
+  const an = activeNode(nodeTypes, attrs)
+  if (!an || !an.node) {
+    return undefined
+  }
+
+  const ac = (type: string, attrs: Record<string, any>) => {
+    return props.editor.isActive(type, attrs)
+  }
+
+  if (ac(an.node.type.name, { ...an.node.attrs, ...attrs })) {
+    return ['text-primary']
+  }
+
+  return undefined
+}
+
+function dispatchTransaction(v: any) {
+  const ann = activeNodes(nodeTypes)
+  const tr = props.editor.state.tr
+  for (const an of ann) {
+    tr.setNodeMarkup(an.position, an.node.type, { ...an.node.attrs, ...v.attrs })
+  }
+  props.editor.dispatchTransaction(tr)
+}
+
+function emitClick(v: any) {
+  emit('click', { type: v.type, attrs: { ...v.attrs } })
+}
+
+function rootActiveClasses(v: any) {
+  if (props.format.variants.find(({ type, attrs }: any) => activeClasses(attrs))) {
+    return ['text-primary']
+  }
 }
 </script>
-
-<style lang="scss">
-</style>

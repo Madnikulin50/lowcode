@@ -1,24 +1,22 @@
 <template>
-  <b-form-group>
-    <b-form-checkbox
+  <div class="form-check">
+    <input
+      type="checkbox"
+      class="form-check-input"
       :checked="value"
-      @change="$emit('update', $event)"
+      @change="emit('update', ($event.target as HTMLInputElement).checked)"
     >
-      {{ label }}
-    </b-form-checkbox>
-  </b-form-group>
+    <label class="form-check-label">{{ label }}</label>
+  </div>
 </template>
-<script>
-export default {
-  props: {
-    label: {
-      required: true,
-      type: String,
-    },
-    value: {
-      type: Boolean,
-      default: () => false,
-    },
-  },
-}
+
+<script setup lang="ts">
+const props = defineProps<{
+  label: string
+  value?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update', value: boolean): void
+}>()
 </script>

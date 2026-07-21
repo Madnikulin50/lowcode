@@ -4,19 +4,19 @@
     :hide-add-button="textInput"
     @add-item="items.push({ field: undefined, descending: false })"
   >
-    <b-form-group
+    <div
       v-if="!textInput"
-      :label="labels.title"
-      label-class="text-primary"
+      class="mb-3"
     >
-      <b-table-simple
-        borderless
-        small
+      <label class="form-label text-primary">
+        {{ labels.title }}
+      </label>
+      <table
+        class="table table-borderless table-sm mb-0"
         responsive
-        class="mb-0"
       >
         <draggable
-          :list.sync="items"
+          v-model="items"
           group="sort"
           handle=".grab"
           tag="tbody"
@@ -41,7 +41,7 @@
               <c-input-select
                 v-model="column.field"
                 :options="availableFields"
-                :reduce="o => o.name"
+                :reduce="(o: Record<string, unknown>) => o.name"
                 :placeholder="labels.none"
                 class="rounded"
               />
@@ -50,16 +50,34 @@
               class="text-center align-middle"
               style="min-width: 200px;"
             >
-              <b-form-radio-group
-                v-model="column.descending"
-                :options="sortDirections"
-                buttons
-                button-variant="outline-primary"
-                class="bg-white"
-              />
+              <div
+                class="btn-group btn-group-sm bg-white"
+                role="group"
+              >
+                <input
+                  v-for="dir in sortDirections"
+                  :key="String(dir.value)"
+                  type="radio"
+                  class="btn-check"
+                  :name="`sort-${index}`"
+                  :id="`sort-${index}-${String(dir.value)}`"
+                  :value="dir.value"
+                  :checked="column.descending === dir.value"
+                  @change="column.descending = dir.value"
+                />
+                <label
+                  v-for="dir in sortDirections"
+                  :key="`label-${String(dir.value)}`"
+                  class="btn btn-outline-primary"
+                  :class="{ active: column.descending === dir.value }"
+                  :for="`sort-${index}-${String(dir.value)}`"
+                >
+                  {{ dir.text }}
+                </label>
+              </div>
             </td>
             <td
-              class="align-middle text-right"
+              class="align-middle text-end"
               style="min-width: 80px; width: 80px;"
             >
               <c-input-confirm
@@ -69,152 +87,115 @@
             </td>
           </tr>
         </draggable>
-      </b-table-simple>
-    </b-form-group>
+      </table>
+    </div>
 
-    <div
-      v-else
-    >
-      <b-form-textarea
+    <div v-else>
+      <textarea
         v-model="presortValue"
+        class="form-control"
         :placeholder="labels.placeholder"
       />
-      <b-form-text>
+      <div class="form-text">
         {{ labels.footnote }}
-      </b-form-text>
+      </div>
     </div>
 
     <div
       v-if="allowTextInput"
       class="d-flex align-items-center mt-1"
     >
-      <b-button
-        variant="link"
-        size="sm"
-        class="text-decoration-none ml-auto"
+      <button
+        class="btn btn-link btn-sm text-decoration-none ms-auto"
         @click="textInput = !textInput"
       >
         {{ labels.toggleInput }}
-      </b-button>
+      </button>
     </div>
   </c-form-table-wrapper>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import CInputSelect from './CInputSelect.vue'
 import CFormTableWrapper from '../wrapper/CFormTableWrapper.vue'
 
-export default {
-  components: {
-    Draggable,
-    CInputSelect,
-    CFormTableWrapper,
-  },
-
-  props: {
-    value: {
-      type: String,
-      required: true,
-    },
-
-    fields: {
-      type: Array,
-      required: true,
-    },
-
-    labels: {
-      type: Object,
-      required: true,
-    },
-
-    allowTextInput: {
-      type: Boolean,
-      default: false,
-    },
-  },
-
-  data () {
-    return {
-      items: [],
-
-      textInput: false,
-    }
-  },
-
-  computed: {
-    presortValue: {
-      get () {
-        return this.value
-      },
-
-      set (value) {
-        this.$emit('input', value)
-      },
-    },
-
-    sortDirections () {
-      return [
-        { value: false, text: this.labels.ascending },
-        { value: true, text: this.labels.descending },
-      ]
-    },
-
-    availableFields () {
-      return this.fields.map(f => ({ ...f, label: `${f.label} (${f.name})` }))
-    },
-  },
-
-  watch: {
-    value: {
-      immediate: true,
-      handler (value) {
-        if (value) {
-          const sort = value.includes(',') ? value.split(',') : [value]
-
-          this.items = sort.map(field => {
-            let descending = false
-
-            if (field.includes(' ')) {
-              field = field.split(' ')[0]
-              descending = true
-            }
-
-            return {
-              field,
-              descending: !!descending,
-            }
-          })
-        } else {
-          this.items = [{
-            field: undefined,
-            descending: false,
-          }]
-        }
-      },
-    },
-
-    items: {
-      deep: true,
-      handler (items = [], oldItems = undefined) {
-        if (oldItems) {
-          this.$emit('input', items.filter(({ field }) => field).map(({ field, descending }) => {
-            return descending ? `${field} DESC` : field
-          }).join(','))
-        }
-      },
-    },
-  },
-
-  beforeUnmount () {
-    this.setDefaultValues()
-  },
-
-  methods: {
-    setDefaultValues () {
-      this.items = []
-      this.textInput = false
-    },
-  },
+interface SortField {
+  field: string | undefined
+  descending: boolean
 }
+
+interface FieldOption {
+  name: string
+  label: string
+}
+
+interface PresortLabels {
+  addButton?: string
+  title?: string
+  none?: string
+  ascending?: string
+  descending?: string
+  placeholder?: string
+  footnote?: string
+  toggleInput?: string
+}
+
+interface Props {
+  modelValue: string
+  fields: FieldOption[]
+  labels: PresortLabels
+  allowTextInput?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  allowTextInput: false,
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
+
+const items = ref<SortField[]>([])
+const textInput = ref(false)
+
+const sortDirections = computed(() => [
+  { value: false, text: props.labels.ascending },
+  { value: true, text: props.labels.descending },
+])
+
+const availableFields = computed(() =>
+  props.fields.map(f => ({ ...f, label: `${f.label} (${f.name})` }))
+)
+
+const presortValue = computed({
+  get: () => props.modelValue,
+  set: (value: string) => emit('update:modelValue', value),
+})
+
+watch(() => props.modelValue, (value) => {
+  if (value) {
+    const sort = value.includes(',') ? value.split(',') : [value]
+    items.value = sort.map((field: string) => {
+      let descending = false
+      if (field.includes(' ')) {
+        field = field.split(' ')[0]
+        descending = true
+      }
+      return { field, descending: !!descending }
+    })
+  } else {
+    items.value = [{ field: undefined, descending: false }]
+  }
+}, { immediate: true })
+
+watch(items, (newItems: SortField[] = [], oldItems: SortField[] | undefined) => {
+  if (oldItems) {
+    emit('update:modelValue', newItems
+      .filter(({ field }) => field)
+      .map(({ field, descending }) => descending ? `${field} DESC` : field)
+      .join(','))
+  }
+}, { deep: true })
 </script>

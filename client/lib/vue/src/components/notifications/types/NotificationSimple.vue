@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex flex-column">
-    <h5 class="font-weight-bold text-break">
+    <h5 class="fw-bold text-break">
       {{ title }}
     </h5>
 
@@ -10,31 +10,26 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    notification: {
-      type: Object,
-      required: true,
-    },
-  },
+<script setup lang="ts">
+import { computed } from 'vue'
 
-  computed: {
-    title () {
-      if (!this.notification || !this.notification.config) {
-        return ''
-      }
+const props = defineProps<{
+  notification: Record<string, any>
+}>()
 
-      return this.notification.config.title
-    },
+const title = computed(() => {
+  if (!props.notification || !props.notification.config) {
+    return ''
+  }
 
-    description () {
-      if (!this.notification || !this.notification.config) {
-        return ''
-      }
+  return props.notification.config.title
+})
 
-      return this.notification.config.description || ''
-    },
-  },
-}
+const description = computed(() => {
+  if (!props.notification || !props.notification.config) {
+    return ''
+  }
+
+  return props.notification.config.description || ''
+})
 </script>

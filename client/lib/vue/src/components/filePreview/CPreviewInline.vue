@@ -7,23 +7,19 @@
         :max-pages="1"
         :initial-scale="1.5"
         inline
-        v-on="$listeners"
       />
     </div>
   </div>
 </template>
 
-<script lang="js">
+<script setup lang="ts">
+import { computed, useAttrs } from 'vue'
 import { InlineIMG as IMG, PDF, NoPreview } from './common/types'
-import base from './common/base.vue'
+import { getComponent } from './common/index.js'
 
-export default {
-  components: {
-    IMG,
-    PDF,
-    NoPreview,
-  },
+const attrs = useAttrs()
 
-  extends: base,
-}
+const previewType = computed(() => {
+  return getComponent({ type: attrs.mime as string, src: attrs.src as string, name: attrs.name as string })
+})
 </script>

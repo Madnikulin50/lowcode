@@ -1,12 +1,8 @@
 <template>
-  <b-card
-    :header-class="!hideToolbar ? 'p-0 border-bottom' : 'd-none'"
-    body-class="p-0"
-    class="border border-light rounded"
-  >
-    <template
+  <div class="card border border-light rounded">
+    <div
       v-if="editor && !hideToolbar"
-      #header
+      class="p-0 border-bottom"
     >
       <r-toolbar
         :editor="editor"
@@ -14,158 +10,108 @@
         :labels="labels"
         :current-value="currentValue"
       />
-    </template>
+    </div>
 
     <editor-content
       :editor="editor"
       :class="bodyClass"
-      class="rt-editor-content rt-content p-2"
+      class="card-body p-2 rt-editor-content rt-content"
       :style="{ minHeight: minBodyHeight, maxHeight: maxBodyHeight }"
       @drop.native="onDrop"
       @paste.native="onPaste"
       @dragover.native.prevent
     />
-  </b-card>
+  </div>
 </template>
 
-<script>
-import { Editor, EditorContent } from '@tiptap/vue-2'
+<script setup lang="ts">
+import { ref, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
+import { Editor, EditorContent } from '@tiptap/vue-3'
 import RToolbar from './RToolbar/index.vue'
 import { getFormats, getToolbar } from './lib'
 
-export default {
-  name: 'CRichTextInput',
+const props = withDefaults(defineProps<{
+  modelValue?: string | null
+  labels?: Record<string, any>
+  minBodyHeight?: string
+  maxBodyHeight?: string
+  bodyClass?: string
+  placeholder?: string
+  hideToolbar?: boolean
+}>(), {
+  modelValue: null,
+  labels: () => ({}),
+  minBodyHeight: '10rem',
+  maxBodyHeight: '',
+  bodyClass: '',
+  placeholder: '',
+  hideToolbar: false,
+})
 
-  components: {
-    EditorContent,
-    RToolbar,
-  },
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+  'upload': [files: FileList]
+}>()
 
-  props: {
-    value: {
-      type: String,
-      required: false,
-      default: null,
+const formats = getFormats({ placeholder: props.placeholder })
+const toolbar = getToolbar()
+const editor = ref<Editor>()
+const currentValue = ref('')
+const emittedContent = ref(false)
+
+const vm = getCurrentInstance()!
+const $SystemAPI = (vm.appContext.config.globalProperties as any).$SystemAPI
+
+watch(() => props.modelValue, (val) => {
+  if (!emittedContent.value && editor.value) {
+    editor.value.commands.setContent(val || '', false)
+  }
+  emittedContent.value = false
+}, { deep: true })
+
+onMounted(() => {
+  editor.value = new Editor({
+    extensions: formats,
+    content: props.modelValue || '',
+    parseOptions: {
+      preserveWhitespace: 'full',
     },
+    onUpdate: onUpdate,
+  })
+})
 
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
+onBeforeUnmount(() => {
+  if (editor.value) editor.value.destroy()
+})
 
-    minBodyHeight: {
-      type: String,
-      default: '10rem',
-    },
-
-    maxBodyHeight: {
-      type: String,
-      default: '',
-    },
-
-    bodyClass: {
-      type: String,
-      default: '',
-    },
-
-    placeholder: {
-      type: String,
-      default: '',
-    },
-
-    hideToolbar: {
-      type: Boolean,
-      default: false,
-    },
-  },
-
-  data () {
-    return {
-      formats: getFormats({
-        placeholder: this.placeholder,
-      }),
-      toolbar: getToolbar(),
-      // Helper to determine if current content differs from prop's content
-      emittedContent: false,
-      editor: undefined,
-      currentValue: '',
-    }
-  },
-
-  watch: {
-    value: {
-      handler: function (val) {
-        // Update happened due to external content change, not model change
-        if (!this.emittedContent) {
-          this.editor.commands.setContent(val, false)
-        }
-
-        this.emittedContent = false
-      },
-      deep: true,
-    },
-  },
-
-  mounted () {
-    this.init()
-  },
-
-  beforeDestroy () {
-    if (this.editor) this.editor.destroy()
-  },
-
-  methods: {
-    /**
-     * Initialize the editor, state, ...
-     */
-    init () {
-      this.editor = new Editor({
-        extensions: this.formats,
-        content: this.value || '',
-        parseOptions: {
-          preserveWhitespace: 'full',
-        },
-        onUpdate: this.onUpdate,
-        systemAPI: this.$SystemAPI,
-      })
-    },
-
-    /**
-     * Handle on update events. Process current document & update data model
-     * @note Currently, build-in toHTML function removes empty lines.
-     * Because of this, we are using `view.dom.innerHTML`. This should be improved at a later point
-     */
-    onUpdate () {
-      // Add <br> tags to empty paragraphs
-      const editorValue = this.editor.getHTML().replace(/<p><\/p>/g, '<p><br></p>')
-
-      this.currentValue = editorValue === '<p><br></p>' ? '' : editorValue
-
-      this.emittedContent = true
-      this.$emit('input', this.currentValue)
-    },
-
-    focus () {
-      if (this.editor) {
-        this.editor.commands.focus()
-      }
-    },
-
-    onDrop (event) {
-      if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
-        event.preventDefault()
-        this.$emit('upload', event.dataTransfer.files)
-      }
-    },
-
-    onPaste (event) {
-      if (event.clipboardData && event.clipboardData.files && event.clipboardData.files.length > 0) {
-        event.preventDefault()
-        this.$emit('upload', event.clipboardData.files)
-      }
-    },
-  },
+function onUpdate() {
+  const editorValue = editor.value!.getHTML().replace(/<p><\/p>/g, '<p><br></p>')
+  currentValue.value = editorValue === '<p><br></p>' ? '' : editorValue
+  emittedContent.value = true
+  emit('update:modelValue', currentValue.value)
 }
+
+function focus() {
+  if (editor.value) {
+    editor.value.commands.focus()
+  }
+}
+
+function onDrop(event: DragEvent) {
+  if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+    event.preventDefault()
+    emit('upload', event.dataTransfer.files)
+  }
+}
+
+function onPaste(event: ClipboardEvent) {
+  if (event.clipboardData && event.clipboardData.files && event.clipboardData.files.length > 0) {
+    event.preventDefault()
+    emit('upload', event.clipboardData.files)
+  }
+}
+
+defineExpose({ focus })
 </script>
 
 <style lang="scss">
@@ -176,7 +122,6 @@ export default {
     height: 100%;
   }
 
-  /* Make checkboxes only editable inside the editor */
   input[type="checkbox"] {
     pointer-events: auto !important;
     cursor: pointer !important;

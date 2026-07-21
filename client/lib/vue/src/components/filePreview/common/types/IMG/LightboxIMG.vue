@@ -19,74 +19,73 @@
   </div>
 </template>
 
-<script lang="js">
+<script setup lang="ts">
+import { ref, computed, onBeforeUnmount, useAttrs } from 'vue'
 import { PhotoSwipe } from 'v-photoswipe'
-import base from '../base.vue'
 
-export default {
-  components: {
-    PhotoSwipe,
-  },
+defineOptions({ inheritAttrs: false })
 
-  extends: base,
+const attrs = useAttrs()
 
-  data () {
-    return {
-      options: {
-        index: 0,
-        bgOpacity: 0,
-        closeOnScroll: false,
-        escKey: false,
-        history: false,
-        arrowKeys: false,
-        modal: false,
+defineEmits<{
+  (e: 'close'): void
+}>()
 
-        closeEl: false,
-        captionEl: false,
-        fullscreenEl: false,
-        zoomEl: false,
-        shareEl: false,
-        counterEl: false,
-        arrowEl: false,
-        preloaderEl: false,
+const options = ref({
+  index: 0,
+  bgOpacity: 0,
+  closeOnScroll: false,
+  escKey: false,
+  history: false,
+  arrowKeys: false,
+  modal: false,
+  closeEl: false,
+  captionEl: false,
+  fullscreenEl: false,
+  zoomEl: false,
+  shareEl: false,
+  counterEl: false,
+  arrowEl: false,
+  preloaderEl: false,
+  clickToCloseNonZoomable: false,
+})
 
-        clickToCloseNonZoomable: false,
-      },
-    }
-  },
+const src = computed(() => (attrs as any).src)
+const mime = computed(() => (attrs as any).mime)
+const name = computed(() => (attrs as any).name || '')
+const meta = computed(() => (attrs as any).meta || {})
 
-  computed: {
-    isSvg () {
-      return this.mime === 'image/svg+xml' ||
-        (this.name && this.name.toLowerCase().endsWith('.svg'))
-    },
+const isSvg = computed(() =>
+  mime.value === 'image/svg+xml' ||
+  (name.value && name.value.toLowerCase().endsWith('.svg'))
+)
 
-    items () {
-      const { original, preview } = this.meta
-      const image = (original || preview || {}).image
-      if (!image) {
-        this.$emit('close')
-        return []
-      }
+const items = computed(() => {
+  const { original, preview } = meta.value
+  const image = (original || preview || {}).image
+  if (!image) {
+    emit('close')
+    return []
+  }
 
-      return [{
-        src: this.src,
-        w: image.width,
-        h: image.height,
-      }]
-    },
-  },
+  return [{
+    src: src.value,
+    w: image.width,
+    h: image.height,
+  }]
+})
 
-  beforeUnmount () {
-    this.setDefaultValues()
-  },
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
 
-  methods: {
-    setDefaultValues () {
-      this.options = {}
-    },
-  },
+function setDefaultValues() {
+  options.value = {} as any
 }
+
+onBeforeUnmount(() => {
+  setDefaultValues()
+})
 </script>
 
 <style lang="scss">

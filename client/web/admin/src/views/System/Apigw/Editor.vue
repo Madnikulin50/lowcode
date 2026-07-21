@@ -1,17 +1,17 @@
 <template>
-  <b-container class="pt-2 pb-3">
+  <div class="container pt-2 pb-3">
     <c-content-header
-      :title="$t('title')"
+      :title="$t('system.apigw.title')"
       class="mb-2"
     >
-      <b-button
+      <button
         v-if="routeID && canCreate"
         data-test-id="button-add"
-        variant="primary"
-        :to="{ name: 'system.apigw.new' }"
+        class="btn btn-primary"
+        @click="$router.push({ name: 'system.apigw.new' })"
       >
-        {{ $t("new") }}
-      </b-button>
+        {{ $t('new') }}
+      </button>
 
       <c-permissions-button
         v-if="routeID && canGrant"
@@ -20,7 +20,7 @@
         :resource="`corteza::system:apigw-route/${routeID}`"
       >
         <font-awesome-icon :icon="['fas', 'lock']" />
-        {{ $t("permissions") }}
+        {{ $t('permissions') }}
       </c-permissions-button>
     </c-content-header>
 
@@ -36,11 +36,11 @@
 
     <c-filters-stepper
       v-if="routeID"
-      ref="stepper"
+      ref="stepperRef"
       :fetching="stepper.fetching"
       :processing="stepper.processing"
       :success="stepper.success"
-      :filters.sync="filters"
+      v-model:filters="filters"
       :available-filters="availableFilters"
       :steps="steps"
       @submit="onFiltersSubmit"
@@ -51,317 +51,274 @@
       :route="routeEndpoint"
       class="mt-3"
     />
-  </b-container>
+  </div>
 </template>
-<script>
+
+<script setup>
+import { ref, reactive, computed, watch, inject } from 'vue'
+import { useRouter, useRoute, onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { isEqual, cloneDeep } from 'lodash'
-import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
+import { useStore } from 'corteza-webapp-admin/src/store'
+import { useEditorHelpers } from 'corteza-webapp-admin/src/mixins/editorHelpers'
+import { NoID } from 'corteza-lib/js/dist'
 import CRouteEditorInfo from 'corteza-webapp-admin/src/components/Apigw/CRouteEditorInfo'
 import CFiltersStepper from 'corteza-webapp-admin/src/components/Apigw/CFiltersStepper'
-import { mapGetters } from 'vuex'
-import { NoID } from 'corteza-lib/js/dist'
 import CProfilerRouteHits from 'corteza-webapp-admin/src/components/Apigw/Profiler/CProfilerRouteHits'
 
-export default {
-  components: {
-    CRouteEditorInfo,
-    CFiltersStepper,
-    CProfilerRouteHits,
-  },
+const { t } = useI18n()
+const router = useRouter()
+const $route = useRoute()
+const store = useStore()
+const $Settings = inject('$Settings', {})
+const { incLoader, decLoader, animateSuccess } = useEditorHelpers()
 
-  i18nOptions: {
-    namespaces: ['system.apigw'],
-    keyPrefix: 'editor',
-  },
+const props = defineProps({
+  routeID: { type: String, required: false, default: undefined },
+})
 
-  mixins: [editorHelpers],
+const route = ref({})
+const initialRouteState = ref({})
+const routeEndpoint = ref(undefined)
+const info = reactive({ processing: false, success: false })
+const stepper = reactive({ fetching: false, processing: false, success: false })
+const filters = ref([])
+const initialFiltersState = ref([])
+const availableFilters = ref([])
+const steps = ref([])
+const stepperRef = ref(null)
 
-  beforeRouteUpdate (to, from, next) {
-    this.checkUnsavedChanges(next, to)
-  },
+const canCreate = computed(() => store.rbac.can('system/', 'apigw-route.create'))
+const canGrant = computed(() => store.rbac.can('system/', 'grant'))
+const showProfiler = computed(() => $Settings.get('apigw.profiler.enabled', false) && ($Settings.get('apigw.profiler.global', false) || filters.value.some(({ ref, enabled = false }) => ref === 'profiler' && enabled)))
 
-  beforeRouteLeave (to, from, next) {
-    this.checkUnsavedChanges(next, to)
-  },
+watch(() => props.routeID, {
+  immediate: true,
+  handler() {
+    routeEndpoint.value = undefined
 
-  props: {
-    routeID: {
-      type: String,
-      required: false,
-      default: undefined,
-    },
-  },
-
-  data () {
-    return {
-      route: {},
-      initialRouteState: {},
-      routeEndpoint: undefined,
-
-      info: {
-        processing: false,
-        success: false,
-      },
-
-      stepper: {
-        fetching: false,
-        processing: false,
-        success: false,
-      },
-
-      filters: [],
-      initialFiltersState: [],
-      availableFilters: [],
-      steps: [],
+    if (props.routeID) {
+      fetchSteps()
+      fetchRoute()
+      fetchFilters()
+    } else {
+      route.value = {
+        endpoint: '',
+        method: 'GET',
+      }
+      initialRouteState.value = cloneDeep(route.value)
     }
   },
+})
 
-  computed: {
-    ...mapGetters({
-      can: 'rbac/can',
-    }),
+onBeforeRouteUpdate((to, from, next) => {
+  checkUnsavedChanges(next, to)
+})
 
-    canCreate () {
-      return this.can('system/', 'apigw-route.create')
-    },
+onBeforeRouteLeave((to, from, next) => {
+  checkUnsavedChanges(next, to)
+})
 
-    canGrant () {
-      return this.can('system/', 'grant')
-    },
+function fetchRoute() {
+  incLoader()
 
-    showProfiler () {
-      return this.$Settings.get('apigw.profiler.enabled', false) && (this.$Settings.get('apigw.profiler.global', false) || this.filters.some(({ ref, enabled = false }) => ref === 'profiler' && enabled))
-    },
-  },
+  window.__systemAPI.apigwRouteRead({ routeID: props.routeID, incFlags: 1 })
+    .then((api) => {
+      route.value = api
+      initialRouteState.value = cloneDeep(api)
+      routeEndpoint.value = btoa(api.endpoint)
+    })
+    .catch(window.__toastError(t('notification.gateway.fetch.error')))
+    .finally(() => {
+      decLoader()
+    })
+}
 
-  watch: {
-    routeID: {
-      immediate: true,
-      handler () {
-        this.routeEndpoint = undefined
+function onInfoSubmit(r) {
+  info.processing = true
 
-        if (this.routeID) {
-          this.fetchSteps()
-          this.fetchRoute()
-          this.fetchFilters()
+  if (props.routeID) {
+    window.__systemAPI
+      .apigwRouteUpdate(r)
+      .then(() => {
+        fetchRoute()
+        animateSuccess(info)
+        window.__toastSuccess(t('notification.gateway.update.success'))
+      })
+      .catch(window.__toastError(t('notification.gateway.update.error')))
+      .finally(() => {
+        info.processing = false
+      })
+  } else {
+    window.__systemAPI
+      .apigwRouteCreate(r)
+      .then(({ routeID }) => {
+        animateSuccess(info)
+        window.__toastSuccess(t('notification.gateway.create.success'))
+
+        router.push({
+          name: 'system.apigw.edit',
+          params: { routeID },
+        })
+      })
+      .catch(window.__toastError(t('notification.gateway.create.error')))
+      .finally(() => {
+        info.processing = false
+      })
+  }
+}
+
+function onInfoDelete() {
+  incLoader()
+
+  if (route.value.deletedAt) {
+    window.__systemAPI
+      .apigwRouteUndelete({ routeID: props.routeID })
+      .then(() => {
+        fetchRoute()
+        window.__toastSuccess(t('notification.gateway.undelete.success'))
+      })
+      .catch(window.__toastError(t('notification.gateway.undelete.error')))
+      .finally(() => {
+        decLoader()
+      })
+  } else {
+    window.__systemAPI
+      .apigwRouteDelete({ routeID: props.routeID })
+      .then(() => {
+        fetchRoute()
+        route.value.deletedAt = new Date()
+        window.__toastSuccess(t('notification.gateway.delete.success'))
+        router.push({ name: 'system.apigw' })
+      })
+      .catch(window.__toastError(t('notification.gateway.delete.error')))
+      .finally(() => {
+        decLoader()
+      })
+  }
+}
+
+function onFiltersSubmit() {
+  if (props.routeID) {
+    stepper.processing = true
+
+    Promise.all(filters.value.map(filter => {
+      if (filter.created || filter.updated || filter.deleted) {
+        filter.params = encodeParams(filter.params)
+        filter.weight = filter.weight.toString()
+
+        if (filter.filterID && filter.filterID !== NoID) {
+          return filter.deleted ? deleteFilter(filter) : updateFilter(filter)
         } else {
-          this.route = {
-            endpoint: '',
-            method: 'GET',
-          }
-
-          this.initialRouteState = cloneDeep(this.route)
+          return filter.deleted ? Promise.resolve() : createFilter(filter)
         }
-      },
-    },
-  },
-  methods: {
-    fetchRoute () {
-      this.incLoader()
-
-      this.$SystemAPI.apigwRouteRead({ routeID: this.routeID, incFlags: 1 })
-        .then((api) => {
-          this.route = api
-          this.initialRouteState = cloneDeep(api)
-          this.routeEndpoint = btoa(api.endpoint)
-        })
-        .catch(this.toastErrorHandler(this.$t('notification:gateway.fetch.error')))
-        .finally(() => {
-          this.decLoader()
-        })
-    },
-
-    onInfoSubmit (route) {
-      this.info.processing = true
-
-      if (this.routeID) {
-        this.$SystemAPI
-          .apigwRouteUpdate(route)
-          .then(() => {
-            this.fetchRoute()
-
-            this.animateSuccess('info')
-            this.toastSuccess(this.$t('notification:gateway.update.success'))
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:gateway.update.error')))
-          .finally(() => {
-            this.info.processing = false
-          })
-      } else {
-        this.$SystemAPI
-          .apigwRouteCreate(route)
-          .then(({ routeID }) => {
-            this.animateSuccess('info')
-            this.toastSuccess(this.$t('notification:gateway.create.success'))
-
-            this.$router.push({
-              name: 'system.apigw.edit',
-              params: { routeID },
-            })
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:gateway.create.error')))
-          .finally(() => {
-            this.info.processing = false
-          })
       }
-    },
 
-    onInfoDelete () {
-      this.incLoader()
+      return Promise.resolve()
+    })).then(async () => {
+      await fetchFilters()
 
-      if (this.route.deletedAt) {
-        this.$SystemAPI
-          .apigwRouteUndelete({ routeID: this.routeID })
-          .then(() => {
-            this.fetchRoute()
-
-            this.toastSuccess(this.$t('notification:gateway.undelete.success'))
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:gateway.undelete.error')))
-          .finally(() => {
-            this.decLoader()
-          })
-      } else {
-        this.$SystemAPI
-          .apigwRouteDelete({ routeID: this.routeID })
-          .then(() => {
-            this.fetchRoute()
-
-            this.route.deletedAt = new Date()
-
-            this.toastSuccess(this.$t('notification:gateway.delete.success'))
-            this.$router.push({ name: 'system.apigw' })
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:gateway.delete.error')))
-          .finally(() => {
-            this.decLoader()
-          })
-      }
-    },
-
-    onFiltersSubmit () {
-      if (this.routeID) {
-        this.stepper.processing = true
-
-        Promise.all(this.filters.map(filter => {
-          if (filter.created || filter.updated || filter.deleted) {
-            filter.params = this.encodeParams(filter.params)
-            filter.weight = filter.weight.toString()
-
-            if (filter.filterID && filter.filterID !== NoID) {
-              return filter.deleted ? this.deleteFilter(filter) : this.updateFilter(filter)
-            } else {
-              return filter.deleted ? Promise.resolve() : this.createFilter(filter)
-            }
-          }
-
-          return Promise.resolve()
-        })).then(async () => {
-          await this.fetchFilters()
-
-          this.animateSuccess('stepper')
-          this.toastSuccess(this.$t('notification:gateway.filter.update.success'))
-        })
-          .catch(this.toastErrorHandler(this.$t('notification:gateway.filter.update.error')))
-          .finally(() => {
-            this.stepper.processing = false
-          })
-      }
-    },
-
-    createFilter (filter) {
-      return this.$SystemAPI.apigwFilterCreate({ ...filter, routeID: this.routeID })
-    },
-
-    updateFilter (filter) {
-      return this.$SystemAPI.apigwFilterUpdate({ ...filter, routeID: this.routeID })
-    },
-
-    deleteFilter ({ filterID = '' }) {
-      if (filterID) {
-        return this.$SystemAPI.apigwFilterDelete({ filterID })
-      }
-    },
-
-    fetchFilters () {
-      this.incLoader()
-      this.stepper.fetching = true
-
-      this.$SystemAPI.apigwFilterList({ routeID: this.routeID })
-        .then(({ set = [] }) => {
-          return this.setRouteFilters(set)
-        })
-        .catch(this.toastErrorHandler(this.$t('notification:gateway.filter.fetch.error')))
-        .finally(() => {
-          this.decLoader()
-          this.stepper.fetching = false
-        })
-    },
-
-    setRouteFilters (routeFilters = []) {
-      return this.fetchAllAvailableFilters().then(() => {
-        this.filters = (routeFilters || []).map(filter => {
-          const f = { ...this.availableFilters.find((af) => af.ref === filter.ref) }
-          f.params = this.decodeParams(f, { ...filter.params })
-          f.weight = parseInt(filter.weight)
-          f.filterID = filter.filterID
-          f.enabled = !!filter.enabled
-          return { ...f }
-        })
-        this.initialFiltersState = cloneDeep(this.filters)
+      animateSuccess(stepper)
+      window.__toastSuccess(t('notification.gateway.filter.update.success'))
+    })
+      .catch(window.__toastError(t('notification.gateway.filter.update.error')))
+      .finally(() => {
+        stepper.processing = false
       })
-    },
+  }
+}
 
-    decodeParams (filter = {}, values = {}) {
-      const { params = [] } = filter
-      return params.map(({ label, type }) => {
-        return {
-          label,
-          type,
-          value: values[label],
-        }
+function createFilter(filter) {
+  return window.__systemAPI.apigwFilterCreate({ ...filter, routeID: props.routeID })
+}
+
+function updateFilter(filter) {
+  return window.__systemAPI.apigwFilterUpdate({ ...filter, routeID: props.routeID })
+}
+
+function deleteFilter({ filterID = '' }) {
+  if (filterID) {
+    return window.__systemAPI.apigwFilterDelete({ filterID })
+  }
+}
+
+function fetchFilters() {
+  incLoader()
+  stepper.fetching = true
+
+  window.__systemAPI.apigwFilterList({ routeID: props.routeID })
+    .then(({ set = [] }) => {
+      return setRouteFilters(set)
+    })
+    .catch(window.__toastError(t('notification.gateway.filter.fetch.error')))
+    .finally(() => {
+      decLoader()
+      stepper.fetching = false
+    })
+}
+
+function setRouteFilters(routeFilters = []) {
+  return fetchAllAvailableFilters().then(() => {
+    filters.value = (routeFilters || []).map(filter => {
+      const f = { ...availableFilters.value.find((af) => af.ref === filter.ref) }
+      f.params = decodeParams(f, { ...filter.params })
+      f.weight = parseInt(filter.weight)
+      f.filterID = filter.filterID
+      f.enabled = !!filter.enabled
+      return { ...f }
+    })
+    initialFiltersState.value = cloneDeep(filters.value)
+  })
+}
+
+function decodeParams(filter = {}, values = {}) {
+  const { params = [] } = filter
+  return params.map(({ label, type }) => {
+    return {
+      label,
+      type,
+      value: values[label],
+    }
+  })
+}
+
+function encodeParams(params = []) {
+  return params.reduce((result, p) => {
+    result[p.label] = p.value
+    return result
+  }, {})
+}
+
+function fetchAllAvailableFilters() {
+  incLoader()
+
+  return window.__systemAPI.apigwFilterDefFilter()
+    .then((api) => {
+      availableFilters.value = api.map((f) => {
+        return { ...f, ref: f.name, enabled: true, options: { checked: false } }
       })
-    },
+    })
+    .catch(window.__toastError(t('notification.gateway.filter.fetch.error')))
+    .finally(() => {
+      decLoader()
+    })
+}
 
-    encodeParams (params = []) {
-      return params.reduce((result, p) => {
-        result[p.label] = p.value
-        return result
-      }, {})
-    },
+function fetchSteps() {
+  steps.value = ['prefilter', 'processer', 'postfilter']
+}
 
-    fetchAllAvailableFilters () {
-      this.incLoader()
+function checkUnsavedChanges(next, to) {
+  const isNewPage = $route.path.includes('/new') && to.name.includes('edit')
+  const { deletedAt } = route.value || {}
 
-      return this.$SystemAPI.apigwFilterDefFilter()
-        .then((api) => {
-          this.availableFilters = api.map((f) => {
-            return { ...f, ref: f.name, enabled: true, options: { checked: false } }
-          })
-        })
-        .catch(this.toastErrorHandler(this.$t('notification:gateway.filter.fetch.error')))
-        .finally(() => {
-          this.decLoader()
-        })
-    },
+  if (isNewPage || deletedAt) {
+    next(true)
+  } else if (!to.name.includes('edit')) {
+    const routeState = !isEqual(route.value, initialRouteState.value)
+    const filtersState = !isEqual(filters.value, initialFiltersState.value)
 
-    fetchSteps () {
-      this.steps = ['prefilter', 'processer', 'postfilter']
-    },
-
-    checkUnsavedChanges (next, to) {
-      const isNewPage = this.$route.path.includes('/new') && to.name.includes('edit')
-      const { deletedAt } = this.route || {}
-
-      if (isNewPage || deletedAt) {
-        next(true)
-      } else if (!to.name.includes('edit')) {
-        const routeState = !isEqual(this.route, this.initialRouteState)
-        const filtersState = !isEqual(this.filters, this.initialFiltersState)
-
-        next((routeState || filtersState) ? window.confirm(this.$t('general:editor.unsavedChanges')) : true)
-      }
-    },
-  },
+    next((routeState || filtersState) ? window.confirm(t('editor.unsavedChanges')) : true)
+  }
 }
 </script>

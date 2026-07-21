@@ -3,52 +3,45 @@
     class="hit-container p-2"
     @click="$emit('click')"
   >
-    <b-list-group-item
+    <li
       :id="`search-hit-${hit.value.recordID}`"
-      class="search-card border rounded bg-white p-2 position-relative"
+      class="list-group-item search-card border rounded bg-white p-2 position-relative"
     >
-      <b-button
-        class="open-in-new-tab border-0 text-secondary px-2"
+      <button
+        class="btn btn-outline-light btn-sm open-in-new-tab border-0 text-secondary px-2"
         :title="labels.openInNewTab || 'Open in new tab'"
-        size="sm"
-        variant="outline-extra-light"
         @click.stop="$emit('open-new-tab')"
       >
         <font-awesome-icon
           :icon="['fas', 'external-link-alt']"
         />
-      </b-button>
+      </button>
 
-      <label class="text-primary font-weight-bold mb-0">
+      <label class="text-primary fw-bold mb-0">
         {{ hit.highlight.label }}
       </label>
       <p class="text-dark mb-0 text-truncate">
         {{ hit.highlight.value }}
       </p>
-    </b-list-group-item>
+    </li>
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 
 library.add(faExternalLinkAlt)
 
-export default {
-  name: 'RecordItem',
+defineProps<{
+  hit: any
+  labels?: Record<string, any>
+}>()
 
-  props: {
-    hit: {
-      type: Object,
-      required: true,
-    },
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
-}
+defineEmits<{
+  (e: 'click'): void
+  (e: 'open-new-tab'): void
+}>()
 </script>
 
 <style lang="scss" scoped>

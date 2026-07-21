@@ -1,20 +1,16 @@
 <template>
   <div class="layout">
     <aside class="sidebar p-2">
-      <h5
-        class="border-bottom"
-      >
+      <h5 class="border-bottom">
         C3: Component Catalogue
       </h5>
-      <component-list
+      <ComponentList
         :catalogue="catalogue"
         @select="setCurrent($event)"
       />
     </aside>
 
-    <main
-      class="p-5"
-    >
+    <main class="p-5">
       <component
         :is="current.component"
         v-if="current"
@@ -35,7 +31,7 @@
       <div
         v-for="(cg, g) in controlGroups"
         :key="`control-group-${g}`"
-        class="control-group mr-2"
+        class="control-group me-2"
       >
         <h3>
           Controls
@@ -44,22 +40,20 @@
           :is="c.component"
           v-for="(c, i) in cg"
           :key="i"
-          :value="c.value(current.props)"
+          :model-value="c.value(current.props)"
           v-bind="c.props"
-          @update="c.update(current.props, $event)"
+          @update:model-value="c.update(current.props, $event)"
         />
       </div>
 
       <div
         v-if="current.scenarios"
-        class="control-group float-right"
+        class="control-group float-end"
       >
         <h3>
           Pre-set controls
         </h3>
-        <ul
-          class="pl-0"
-        >
+        <ul class="ps-0">
           <li
             v-for="(s, i) in current.scenarios"
             :key="i"
@@ -73,67 +67,43 @@
     </div>
   </div>
 </template>
-<script>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import ComponentList from './ComponentList.vue'
 
-export default {
-  name: 'C3',
+defineProps<{
+  catalogue: Record<string, any>
+}>()
 
-  components: {
-    ComponentList,
-  },
+const current = ref<any>(undefined)
 
-  props: {
-    catalogue: {
-      required: true,
-      type: Object,
-    },
-  },
+const controlGroups = computed(() => {
+  if (!current.value?.controls?.length) return []
+  if (Array.isArray(current.value.controls[0])) {
+    return current.value.controls
+  }
+  return [current.value.controls]
+})
 
-  data () {
-    return {
-      current: undefined,
+function setCurrent(component: any) {
+  current.value = { props: {}, ...component }
+  setScenario(current.value)
+}
+
+function setScenario({ props = {}, controls = [] }: any) {
+  const apply = (c: any, p: any) => c.update(p, c.value(p) || null)
+  controls.forEach((c: any) => {
+    if (Array.isArray(c)) {
+      c.forEach((cc: any) => apply(cc, props))
+    } else {
+      apply(c, props)
     }
-  },
-
-  computed: {
-    controlGroups () {
-      if (this.current.controls.length === 0) {
-        return []
-      }
-
-      if (Array.isArray(this.current.controls[0])) {
-        // already grouped
-        return this.current.controls
-      }
-
-      // make one virtual group holding all controls
-      return [this.current.controls]
-    },
-  },
-
-  methods: {
-    setCurrent (component) {
-      this.current = { props: {}, ...component }
-      this.setScenario(this.current)
-    },
-
-    setScenario ({ props = {}, controls = [] }) {
-      // create missing props from controls
-      const apply = (c, props) => c.update(props, c.value(props) || null)
-      controls.forEach(c => {
-        if (Array.isArray(c)) {
-          c.forEach(c => apply(c, props))
-        } else {
-          apply(c, props)
-        }
-      })
-
-      this.current.props = props
-    },
-  },
+  })
+  current.value.props = props
 }
 </script>
+
 <style lang="scss">
 .layout {
   height: 100vh;

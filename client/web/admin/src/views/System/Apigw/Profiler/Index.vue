@@ -1,41 +1,28 @@
 <template>
-  <b-container
+  <div
     data-tets-id="profiler"
-    fluid="xl"
-    class="d-flex flex-column flex-fill pt-2 pb-3"
+    class="container-fluid d-flex flex-column flex-fill pt-2 pb-3"
   >
-    <c-content-header
-      :title="$t('title')"
-    />
+    <c-content-header :title="$t('system.apigw.title')" />
 
-    <b-card
-      no-body
-      data-test-id="card-profiler"
-      header-class="border-bottom"
-      body-class="p-0"
-      footer-class="border-top d-flex align-items-center justify-content-center"
-      class="flex-fill shadow-sm"
-    >
-      <template #header>
-        <h4>
-          {{ $t('general:label.routes') }}
-        </h4>
+    <div class="card shadow-sm flex-fill" data-test-id="card-profiler">
+      <div class="card-header border-bottom">
+        <h4>{{ $t('label.routes') }}</h4>
         <em>{{ description }}</em>
-      </template>
+      </div>
 
       <div class="d-flex align-items-center flex-wrap p-3 gap-1">
         <div class="flex-fill">
-          <b-button
+          <button
             data-test-id="button-refresh"
-            variant="primary"
+            class="btn btn-primary btn-lg"
             :disabled="loading"
-            size="lg"
             @click="loadItems()"
           >
-            {{ $t('general:label.refresh') }}
-          </b-button>
+            {{ $t('label.refresh') }}
+          </button>
           <span
-            class="ml-1"
+            class="ms-1"
             :class="{ 'loading': loading }"
           >
             {{ autoRefreshLabel }}
@@ -49,262 +36,185 @@
           variant="danger"
           size="lg"
           button-class="flex-fill"
-          class="d-flex justify-content-end ml-auto"
+          class="d-flex justify-content-end ms-auto"
           @confirmed="purgeRequests"
         />
       </div>
 
-      <b-table
-        id="route-list"
-        hover
-        responsive
-        head-variant="outline-secondary"
-        class="mb-0"
-        primary-key="routeID"
-        :sort-by.sync="sorting.sortBy"
-        :sort-desc.sync="sorting.sortDesc"
-        :items="items"
-        :fields="fields"
-        :busy="loading"
-        no-local-sorting
-        @sort-changed="resetItems"
-      >
-        <template #cell(actions)="row">
-          <b-button
-            variant="link"
-            class="p-0"
-            :to="{ name: 'system.apigw.profiler.route.list', params: { routeID: row.item.routeID } }"
-          >
-            <font-awesome-icon
-              :icon="['fas', 'info-circle']"
-              class="text-primary"
-            />
-          </b-button>
-        </template>
-      </b-table>
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th v-for="f in fields" :key="f.key" :class="f.class">
+              {{ f.label }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="loading">
+            <td :colspan="fields.length" class="text-center p-4">
+              <div class="spinner-border" />
+            </td>
+          </tr>
+          <tr v-for="item in items" :key="item.routeID">
+            <td>{{ item.path }}</td>
+            <td class="text-end">{{ item.count }}</td>
+            <td class="text-end">{{ item.size_min }}</td>
+            <td class="text-end">{{ (item.size_max / 1000).toFixed(3) }} kB</td>
+            <td class="text-end">{{ (item.size_avg / 1000).toFixed(3) }} kB</td>
+            <td class="text-end">{{ item.time_min.toFixed(2) }} ms</td>
+            <td class="text-end">{{ item.time_max.toFixed(2) }} ms</td>
+            <td class="text-end">{{ item.time_avg.toFixed(2) }} ms</td>
+            <td class="text-end">
+              <button
+                class="btn btn-link p-0"
+                @click="$router.push({ name: 'system.apigw.profiler.route.list', params: { routeID: item.routeID } })"
+              >
+                <font-awesome-icon
+                  :icon="['fas', 'info-circle']"
+                  class="text-primary"
+                />
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-      <template #footer>
-        <b-button
-          v-if="items.length"
-          variant="outline-secondary"
+      <div v-if="items.length" class="card-footer border-top d-flex align-items-center justify-content-center">
+        <button
+          class="btn btn-outline-secondary"
           :disabled="!hasNextPage || loading"
           @click="loadMore()"
         >
-          {{ $t('general:label.loadMore') }}
-        </b-button>
-      </template>
-    </b-card>
-  </b-container>
+          {{ $t('label.loadMore') }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
-<script>
-import listHelpers from 'corteza-webapp-admin/src/mixins/listHelpers'
+<script setup>
+import { ref, computed, watch, onBeforeUnmount, inject } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useListHelpers } from 'corteza-webapp-admin/src/mixins/listHelpers'
 
-export default {
-  mixins: [
-    listHelpers,
-  ],
+const { t } = useI18n()
+const $route = useRoute()
+const $router = useRouter()
+const $Settings = inject('$Settings', {})
+const { pagination, incLoader, decLoader, encodeListParams } = useListHelpers()
 
-  i18nOptions: {
-    namespaces: ['system.apigw'],
-    keyPrefix: 'profiler',
-  },
+const processingPurgeRequests = ref(false)
+const totalItems = ref(0)
+const items = ref([])
+const refresh = ref({ timer: undefined, countdown: 0 })
+const filter = ref({ next: '', before: '', query: '', deleted: 0 })
+const sorting = ref({ sortBy: 'path', sortDesc: false })
 
-  data () {
-    return {
-      id: 'routes',
+const fields = computed(() => [
+  { key: 'path', sortable: true },
+  { key: 'count', sortable: true, class: 'text-end' },
+  { key: 'size_min', sortable: true, class: 'text-end' },
+  { key: 'size_max', sortable: true, class: 'text-end', formatter: v => `${(v / 1000).toFixed(3)} kB` },
+  { key: 'size_avg', sortable: true, class: 'text-end', formatter: v => `${(v / 1000).toFixed(3)} kB` },
+  { key: 'time_min', sortable: true, class: 'text-end', formatter: v => `${v.toFixed(2)} ms` },
+  { key: 'time_max', sortable: true, class: 'text-end', formatter: v => `${v.toFixed(2)} ms` },
+  { key: 'time_avg', sortable: true, class: 'text-end', formatter: v => `${v.toFixed(2)} ms` },
+  { key: 'actions', label: '', class: 'text-end' },
+].map(c => ({
+  ...c,
+  label: t(`columns.${c.key}`),
+})))
 
-      processingPurgeRequests: false,
+const loading = computed(() => !refresh.value.countdown)
+const autoRefreshLabel = computed(() => !loading.value ? t('refreshingIn', { seconds: refresh.value.countdown }) : t('label.loading'))
+const description = computed(() => $Settings.get('apigw.profiler.global', false) ? t('description.globalEnabled') : t('description.globalDisabled'))
+const hasNextPage = computed(() => filter.value.next)
 
-      filter: {
-        next: '',
-        before: '',
-        query: '',
-        deleted: 0,
-      },
+watch(() => $route.params, () => {
+  resetItems()
+}, { immediate: true })
 
-      sorting: {
-        sortBy: 'path',
-        sortDesc: false,
-      },
+onBeforeUnmount(() => {
+  clearRefresh()
+})
 
-      totalItems: 0,
+function loadItems({ append = false } = {}) {
+  clearRefresh()
 
-      items: [],
+  const oldBeforeID = filter.value.before
+  filter.value.before = append ? filter.value.before : ''
+  filter.value.routeID = $route.params.routeID
+  pagination.limit = append ? 10 : totalItems.value
 
-      refresh: {
-        timer: undefined,
-        countdown: 0,
-      },
+  const { response } = window.__systemAPI.apigwProfilerAggregationCancellable({ ...filter.value, ...encodeListParams(filter.value, sorting.value, pagination) })
+  response().then(({ filter: f = {}, set = [] }) => {
+    const { next } = f
+    filter.value = { ...filter.value, next }
+    items.value = [
+      ...(append ? items.value : []),
+      ...set.map(i => ({ ...i, routeID: encodeRouteID(i.path) })),
+    ]
+    totalItems.value = append ? totalItems.value + set.length : totalItems.value
 
-      fields: [
-        {
-          key: 'path',
-          sortable: true,
-        },
-        {
-          key: 'count',
-          sortable: true,
-          class: 'text-right',
-        },
-        {
-          key: 'size_min',
-          sortable: true,
-          class: 'text-right',
-        },
-        {
-          key: 'size_max',
-          sortable: true,
-          class: 'text-right',
-          formatter: v => `${(v / 1000).toFixed(3)} kB`,
-        },
-        {
-          key: 'size_avg',
-          sortable: true,
-          class: 'text-right',
-          formatter: v => `${(v / 1000).toFixed(3)} kB`,
-        },
-        {
-          key: 'time_min',
-          sortable: true,
-          class: 'text-right',
-          formatter: v => `${v.toFixed(2)} ms`,
-        },
-        {
-          key: 'time_max',
-          sortable: true,
-          class: 'text-right',
-          formatter: v => `${v.toFixed(2)} ms`,
-        },
-        {
-          key: 'time_avg',
-          sortable: true,
-          class: 'text-right',
-          formatter: v => `${v.toFixed(2)} ms`,
-        },
-        {
-          key: 'actions',
-          label: '',
-          class: 'text-right',
-        },
-      ].map(c => ({
-        ...c,
-        // Generate column label translation key
-        label: this.$t(`columns.${c.key}`),
-      })),
+    return { filter: f, set }
+  }).finally(() => {
+    if (!append) {
+      filter.value.before = oldBeforeID
     }
-  },
-
-  computed: {
-    loading () {
-      return !this.refresh.countdown
-    },
-
-    autoRefreshLabel () {
-      return !this.loading ? this.$t('refreshingIn', { seconds: this.refresh.countdown }) : this.$t('general:label.loading')
-    },
-
-    description () {
-      return this.$Settings.get('apigw.profiler.global', false) ? this.$t('description.globalEnabled') : this.$t('description.globalDisabled')
-    },
-
-    hasNextPage () {
-      return this.filter.next
-    },
-  },
-
-  watch: {
-    route: {
-      immediate: true,
-      handler () {
-        this.resetItems()
-      },
-    },
-  },
-
-  beforeDestroy () {
-    this.clearRefresh()
-  },
-
-  methods: {
-    loadItems ({ append = false } = {}) {
-      this.clearRefresh()
-
-      const oldBeforeID = this.filter.before
-      this.filter.before = append ? this.filter.before : ''
-      this.filter.routeID = this.$route.params.routeID
-      this.pagination.limit = append ? 10 : this.totalItems
-
-      const { response } = this.$SystemAPI.apigwProfilerAggregationCancellable(this.encodeListParams())
-      response().then(({ filter = {}, set = [] }) => {
-        const { next } = filter
-        this.filter = { ...this.filter, next }
-        this.items = [
-          ...(append ? this.items : []),
-          ...set.map(i => ({ ...i, routeID: this.encodeRouteID(i.path) })),
-        ]
-        this.totalItems = append ? this.totalItems + set.length : this.totalItems
-
-        return { filter, set }
-      }).finally(() => {
-        if (!append) {
-          this.filter.before = oldBeforeID
-        }
-        this.startRefresh()
-      })
-    },
-
-    purgeRequests () {
-      this.processingPurgeRequests = true
-      this.$SystemAPI.apigwProfilerPurgeAll()
-        .then(() => {
-          this.loadItems()
-          this.toastSuccess(this.$t('notification:gateway.profiler.purge.success'))
-        })
-        .catch(this.toastErrorHandler(this.$t('notification:gateway.profiler.purge.error')))
-        .finally(() => {
-          this.processingPurgeRequests = false
-        })
-    },
-
-    resetItems (sorting = this.sorting) {
-      this.sorting = sorting
-      this.filter.before = ''
-      this.totalItems = 10
-      this.loadItems()
-    },
-
-    encodeRouteID (routeID) {
-      return btoa(routeID)
-    },
-
-    loadMore () {
-      this.filter.before = this.filter.next
-      this.loadItems({ append: true })
-    },
-
-    startRefresh () {
-      this.refresh.countdown = 10
-      this.resetRefresh()
-    },
-
-    // If you need to temporarily stop the refresh countdown
-    clearRefresh () {
-      this.refresh.timer = clearTimeout(this.refresh.timer)
-      this.refresh.countdown = 0
-    },
-
-    resetRefresh () {
-      clearTimeout(this.refresh.timer)
-      this.refresh.timer = setTimeout(() => {
-        this.refresh.countdown--
-        if (this.refresh.countdown) {
-          this.resetRefresh()
-        } else {
-          this.loadItems()
-        }
-      }, 1000)
-    },
-  },
+    startRefresh()
+  })
 }
+
+function purgeRequests() {
+  processingPurgeRequests.value = true
+  window.__systemAPI.apigwProfilerPurgeAll()
+    .then(() => {
+      loadItems()
+      window.__toastSuccess(t('notification.gateway.profiler.purge.success'))
+    })
+    .catch(window.__toastError(t('notification.gateway.profiler.purge.error')))
+    .finally(() => {
+      processingPurgeRequests.value = false
+    })
+}
+
+function resetItems(s = sorting.value) {
+  sorting.value = s
+  filter.value.before = ''
+  totalItems.value = 10
+  loadItems()
+}
+
+function encodeRouteID(routeID) {
+  return btoa(routeID)
+}
+
+function loadMore() {
+  filter.value.before = filter.value.next
+  loadItems({ append: true })
+}
+
+function startRefresh() {
+  refresh.value.countdown = 10
+  resetRefresh()
+}
+
+function clearRefresh() {
+  refresh.value.timer = clearTimeout(refresh.value.timer)
+  refresh.value.countdown = 0
+}
+
+function resetRefresh() {
+  clearTimeout(refresh.value.timer)
+  refresh.value.timer = setTimeout(() => {
+    refresh.value.countdown--
+    if (refresh.value.countdown) {
+      resetRefresh()
+    } else {
+      loadItems()
+    }
+  }, 1000)
+}
+
 </script>

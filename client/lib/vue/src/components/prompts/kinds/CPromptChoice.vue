@@ -5,34 +5,51 @@
       class="text-break"
       v-html="message"
     />
-
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <b-button
-        :variant="pVal('confirmButtonVariant', 'primary')"
+      <button
+        :class="['btn', `btn-${pVal('confirmButtonVariant', 'primary')}`]"
         :disabled="loading"
         class="flex-grow-1"
-        @click="$emit('submit', { value: pRaw('confirmButtonValue', true, 'Boolean') })"
+        @click="emit('submit', { value: pRaw('confirmButtonValue', true, 'Boolean') })"
       >
         {{ pVal('confirmButtonLabel', 'Yes') }}
-      </b-button>
-
-      <b-button
+      </button>
+      <button
         :disabled="loading"
-        :variant="pVal('rejectButtonVariant', 'light')"
+        :class="['btn', `btn-${pVal('rejectButtonVariant', 'light')}`]"
         class="flex-grow-1"
-        @click="$emit('submit', { value: pRaw('rejectButtonValue', false, 'Boolean') })"
+        @click="emit('submit', { value: pRaw('rejectButtonValue', false, 'Boolean') })"
       >
         {{ pVal('rejectButtonLabel', 'No') }}
-      </b-button>
+      </button>
     </div>
   </div>
 </template>
 
-<script lang="js">
-import base from './base.vue'
+<script setup lang="ts">
+import { computed } from 'vue'
+import { pVal as _pVal, pType as _pType } from '../utils'
 
-export default {
-  name: 'CPromptChoice',
-  extends: base,
+const props = withDefaults(defineProps<{
+  loading?: boolean
+  payload?: Record<string, any>
+}>(), {
+  loading: false,
+  payload: () => ({}),
+})
+
+const emit = defineEmits<{
+  (e: 'submit', value: Record<string, any>): void
+}>()
+
+const message = computed(() => _pVal(props.payload, 'message', ''))
+const label = computed(() => _pVal(props.payload, 'label', ''))
+
+function pVal(k: string, def?: any) {
+  return _pVal(props.payload, k, def)
+}
+
+function pType(k: string, def?: any) {
+  return _pType(props.payload, k, def)
 }
 </script>

@@ -1,7 +1,7 @@
 <template>
   <vue-select
     v-bind="$attrs"
-    ref="vueSelect"
+    ref="vueSelectRef"
     v-model="_value"
     data-test-id="select"
     :clearable="clearable"
@@ -18,7 +18,8 @@
     @search="onSearch"
   >
     <template
-      v-for="(_, name) in $scopedSlots"
+      v-for="(_, name) in $slots"
+      :key="name"
       #[name]="data"
     >
       <slot
@@ -32,7 +33,7 @@
       #option="option"
     >
       <span
-        class="badge badge-pill"
+        class="badge rounded-pill"
         :style="getOptionStyle(option)"
       >
         {{ option.text }}
@@ -44,7 +45,7 @@
       #selected-option="option"
     >
       <span
-        class="badge badge-pill"
+        class="badge rounded-pill"
         :style="getOptionStyle(option)"
       >
         {{ option.text }}
@@ -56,14 +57,14 @@
       #selected-option-container="{ option, deselect }"
     >
       <span
-        class="d-flex align-items-center badge badge-pill mx-1 mt-1 w-auto"
+        class="d-flex align-items-center badge rounded-pill mx-1 mt-1 w-auto"
         :style="getOptionStyle(option)"
       >
         {{ option.text }}
 
         <font-awesome-icon
           :icon="['fas', 'times']"
-          class="pointer ml-2"
+          class="pointer ms-2"
           @click="deselect(option)"
         />
       </span>
@@ -71,167 +72,125 @@
   </vue-select>
 </template>
 
-<script>
-import { VueSelect } from 'vue-select'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import VueSelect from 'vue-select'
 import { createPopper } from '@popperjs/core'
 import 'vue-select/dist/vue-select.css'
 
-export default {
-  name: 'CInputSelect',
+interface Option {
+  text?: string
+  disabled?: boolean
+  style?: Record<string, string>
+  [key: string]: unknown
+}
 
-  components: {
-    VueSelect,
+interface DropdownList extends HTMLElement {
+  style: CSSStyleDeclaration
+}
+
+interface VueSelectInstance {
+  $el: HTMLElement
+  $refs: {
+    toggle: HTMLElement
+  }
+}
+
+interface Props {
+  modelValue?: string | unknown[] | Record<string, unknown>
+  options?: Option[]
+  clearable?: boolean
+  searchable?: boolean
+  appendToBody?: boolean
+  defaultValue?: string | unknown[] | Record<string, unknown>
+  size?: string
+  disabled?: boolean
+  selectable?: (option: Option) => boolean
+  multiple?: boolean
+  loading?: boolean
+  badge?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: () => '',
+  options: () => [],
+  clearable: true,
+  searchable: true,
+  appendToBody: true,
+  defaultValue: () => '',
+  size: 'md',
+  disabled: false,
+  selectable: (o: Option) => !o.disabled,
+  multiple: false,
+  loading: false,
+  badge: false,
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: unknown]
+  search: [query: string, loading: (v: boolean) => void]
+}>()
+
+const vueSelectRef = ref<VueSelectInstance | null>(null)
+VueSelect
+const query = ref('')
+
+const _value = computed({
+  get () {
+    const fallbackValue = props.multiple ? [] : ''
+    return props.defaultValue && props.modelValue === props.defaultValue ? fallbackValue : props.modelValue
   },
+  set (v: unknown) {
+    emit('update:modelValue', !v ? props.defaultValue : v)
+  },
+})
 
-  props: {
-    value: {
-      type: [String, Array, Object],
-      default: () => '',
-    },
+const sizeClass = computed(() =>
+  props.size === 'sm' ? 'c-input-sm' : props.size === 'lg' ? 'c-input-lg' : ''
+)
 
-    options: {
-      type: Array,
-      default: () => {
-        return []
+function calculateDropdownPosition (
+  dropdownList: DropdownList,
+  component: VueSelectInstance,
+  { width }: { width: string }
+) {
+  dropdownList.style.width = width
+  const popper = createPopper(component.$refs.toggle, dropdownList, {
+    placement: 'bottom',
+    modifiers: [
+      {
+        name: 'offset',
+        options: {
+          offset: [0, -1],
+        },
       },
-    },
-
-    clearable: {
-      type: Boolean,
-      default: true,
-    },
-
-    searchable: {
-      type: Boolean,
-      default: true,
-    },
-
-    appendToBody: {
-      type: Boolean,
-      default: true,
-    },
-
-    defaultValue: {
-      type: [String, Array, Object],
-      default: () => '',
-    },
-
-    size: {
-      type: String,
-      default: 'md',
-    },
-
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
-
-    selectable: {
-      type: Function,
-      default: o => !o.disabled,
-    },
-
-    multiple: {
-      type: Boolean,
-      default: false,
-    },
-
-    loading: {
-      type: Boolean,
-      default: false,
-    },
-
-    badge: {
-      type: Boolean,
-      default: false,
-    },
-  },
-
-  data () {
-    return {
-      query: '',
-    }
-  },
-
-  computed: {
-    _value: {
-      get () {
-        const fallbackValue = this.multiple ? [] : ''
-        return !!this.defaultValue && (this.value === this.defaultValue) ? fallbackValue : this.value
+      {
+        name: 'toggleClass',
+        enabled: true,
+        phase: 'write',
+        fn ({ state }) {
+          component.$el.classList.toggle('drop-up', state.placement === 'top')
+        },
       },
+    ],
+  })
+  return () => popper.destroy()
+}
 
-      set (v) {
-        this.$emit('input', !v ? this.defaultValue : v)
-      },
-    },
+function onSearch (q: string, loading: (v: boolean) => void) {
+  if (q !== query.value) {
+    query.value = q
+  }
+  emit('search', q, loading)
+}
 
-    sizeClass () {
-      return this.size === 'sm' ? 'c-input-sm' : this.size === 'lg' ? 'c-input-lg' : ''
-    },
-  },
-
-  methods: {
-    calculateDropdownPosition (dropdownList, component, { width }) {
-      /**
-       * We need to explicitly define the dropdown width since
-       * it is usually inherited from the parent with CSS.
-       */
-      dropdownList.style.width = width
-
-      /**
-       * Here we position the dropdownList relative to the $refs.toggle Element.
-       *
-       * The 'offset' modifier aligns the dropdown so that the $refs.toggle and
-       * the dropdownList overlap by 1 pixel.
-       *
-       * The 'toggleClass' modifier adds a 'drop-up' class to the Vue Select
-       * wrapper so that we can set some styles for when the dropdown is placed
-       * above.
-       */
-      const popper = createPopper(component.$refs.toggle, dropdownList, {
-        placement: 'bottom',
-        modifiers: [
-          {
-            name: 'offset',
-            options: {
-              offset: [0, -1],
-            },
-          },
-          {
-            name: 'toggleClass',
-            enabled: true,
-            phase: 'write',
-            fn ({ state }) {
-              component.$el.classList.toggle('drop-up', state.placement === 'top')
-            },
-          }],
-      })
-
-      /**
-       * To prevent memory leaks Popper needs to be destroyed.
-       * If you return function, it will be called just before dropdown is removed from DOM.
-       */
-      return () => popper.destroy()
-    },
-
-    onSearch (query, loading) {
-      if (query !== this.query) {
-        this.query = query
-      }
-
-      this.$emit('search', query, loading)
-    },
-
-    getOptionStyle ({ style = {} } = {}) {
-      if (this.badge) {
-        style.fontSize = '0.9rem'
-        style.color = style.textColor || 'var(--dark)'
-        style.backgroundColor = style.backgroundColor || 'var(--extra-light)'
-      }
-
-      return style
-    },
-  },
+function getOptionStyle ({ style = {} }: Option = {}) {
+  if (props.badge) {
+    style.fontSize = '0.9rem'
+    style.color = style.textColor || 'var(--dark)'
+    style.backgroundColor = style.backgroundColor || 'var(--extra-light)'
+  }
+  return style
 }
 </script>
 
@@ -260,7 +219,6 @@ export default {
   font-family: var(--font-regular);
 
   .vs__selected-options {
-    // do not allow growing
     width: 0;
     padding: 0;
   }
@@ -284,8 +242,6 @@ export default {
   }
 
   &:not(.vs--open):not(.vs--loading) .vs__selected + .vs__search {
-    // force this to not use any space
-    // we still need it to be rendered for the focus
     width: 0;
     margin: 0;
     border: none;
@@ -298,7 +254,7 @@ export default {
     padding: 0.375rem calc(0.75rem - 2px);
     padding-top: 0 !important;
     border-width: 2px;
-    //border-color: var(--extra-light);
+    border-color: var(--extra-light);
 
     .vs__selected {
       margin-top: 0.375rem;
@@ -421,5 +377,4 @@ export default {
     }
   }
 }
-
 </style>

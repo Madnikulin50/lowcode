@@ -1,6 +1,6 @@
 <template>
   <c-input-select
-    v-model="userGroup.value"
+    :value="userGroup.value"
     data-test-id="select-user-group"
     :options="userGroup.options"
     :get-option-label="getOptionLabel"
@@ -14,108 +14,105 @@
   />
 </template>
 
-<script>
-import { NoID, system } from '../../../../../lib/js/dist'
+<script setup lang="ts">
+import { ref, reactive, getCurrentInstance } from 'vue'
+import { NoID, system } from '@cortezaproject/corteza-js'
 import { debounce } from 'lodash'
 import axios from 'axios'
 
-export default {
-  name: 'CInputUserGroup',
+defineOptions({ inheritAttrs: false })
 
-  props: {
-    value: {
-      type: String,
-      default: null,
-    },
+const vm = getCurrentInstance()!
+const $SystemAPI = (vm.appContext.config.globalProperties as any).$SystemAPI
 
-    placeholder: {
-      type: String,
-      default: '',
-    },
+const props = withDefaults(defineProps<{
+  modelValue?: string | null
+  placeholder?: string
+}>(), {
+  modelValue: null,
+  placeholder: '',
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string | undefined]
+}>()
+
+const processing = ref(false)
+const cancelRequest = ref<(() => void) | null>(null)
+
+const userGroup = reactive({
+  options: [] as any[],
+  value: undefined as any,
+  filter: {
+    query: null as string | null,
+    limit: 20,
   },
+})
 
-  data () {
-    return {
-      processing: false,
-      cancelRequest: null,
+// Created equivalent
+;(async () => {
+  await fetchUserGroups()
+  getUserGroupByID(props.modelValue)
+})()
 
-      userGroup: {
-        options: [],
-        value: undefined,
+const search = debounce(function (query: string) {
+  if (query !== userGroup.filter.query) {
+    userGroup.filter.query = query
+    userGroup.filter.page = 1
+  }
+  fetchUserGroups()
+}, 300)
 
-        filter: {
-          query: null,
-          limit: 20,
-        },
-      },
-    }
-  },
+function fetchUserGroups() {
+  processing.value = true
 
-  created () {
-    this.fetchUserGroups().then(() => {
-      this.getUserGroupByID(this.value)
+  if (cancelRequest.value) {
+    cancelRequest.value()
+    cancelRequest.value = null
+  }
+
+  const { response, cancel } = $SystemAPI.userGroupListCancellable(userGroup.filter)
+  cancelRequest.value = cancel
+
+  return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
+    .then(([{ set }]) => {
+      userGroup.options = set.map((m: any) => new system.UserGroup(m))
+      processing.value = false
     })
-  },
+    .catch((e: any) => {
+      if (axios.isCancel(e)) return
+      processing.value = false
+      throw e
+    })
+}
 
-  methods: {
-    search: debounce(function (query) {
-      if (query !== this.userGroup.filter.query) {
-        this.userGroup.filter.query = query
-        this.userGroup.filter.page = 1
-      }
+function getUserGroupByID(userGroupID: string | null | undefined) {
+  if (!userGroupID || userGroupID === NoID) {
+    userGroup.value = userGroup.options.find(({ isRoot }: any) => !!isRoot)
+    emit('update:modelValue', userGroup.value?.userGroupID)
+    return
+  }
 
-      this.fetchUserGroups()
-    }, 300),
+  const found = userGroup.options.find((o: any) => o.userGroupID === userGroupID)
 
-    fetchUserGroups() {
-      this.processing = true
+  if (found) {
+    userGroup.value = found
+  }
+}
 
-      if (this.cancelRequest) {
-        this.cancelRequest()
-        this.cancelRequest = null
-      }
+function onUserGroupUpdate(val: any) {
+  userGroup.value = val
+  emit('update:modelValue', val.userGroupID)
+}
 
-      const { response, cancel } = this.$SystemAPI.userGroupListCancellable(this.userGroup.filter)
-      this.cancelRequest = cancel
+function getOptionKey({ userGroupID }: any) {
+  return userGroupID
+}
 
-      return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
-        .then(([{ set }]) => {
-          this.userGroup.options = set.map((m) => new system.UserGroup(m))
-          this.processing = false
-        })
-        .catch((e) => {
-          if (axios.isCancel(e)) return
-          this.processing = false
-          throw e
-        })
-    },
-
-    getUserGroupByID (userGroupID) {
-      if (!userGroupID || userGroupID === NoID) {
-        this.userGroup.value = this.userGroup.options.find(({ isRoot }) => !!isRoot)
-
-        this.$emit('input', this.userGroup.value?.userGroupID)
-        return
-      }
-
-      const userGroup = this.userGroup.options.find(o => o.userGroupID === userGroupID)
-
-      if (userGroup) {
-        this.userGroup.value = userGroup
-      }
-    },
-
-    onUserGroupUpdate ({ userGroupID }) {
-      this.$emit('input', userGroupID)
-    },
-
-    getOptionKey ({ userGroupID }) {
-      return userGroupID
-    },
-
-    getOptionLabel ({ handle, meta = {}, userGroupID }) {
-      return meta.short || handle || userGroupID
-    },
-  },
+function getOptionLabel({ handle, meta = {}, userGroupID }: any) {
+  return meta.short || handle || userGroupID
 }
 </script>
+
+<style scoped>
+</style>

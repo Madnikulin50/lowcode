@@ -3,7 +3,7 @@
     class="d-flex flex-column"
     @click="handleRecordNavigation"
   >
-    <h5 class="font-weight-bold text-break">
+    <h5 class="fw-bold text-break">
       {{ title }}
     </h5>
 
@@ -13,116 +13,119 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    notification: {
-      type: Object,
-      required: true,
-    },
-  },
+<script setup lang="ts">
+import { computed, getCurrentInstance } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useToast } from '../../../composables/useToast'
 
-  computed: {
-    title () {
-      if (!this.notification || !this.notification.config) {
-        return ''
+const props = defineProps<{
+  notification: Record<string, any>
+}>()
+
+const { $t, $ComposeAPI } = getCurrentInstance()!.appContext.config.globalProperties as any
+const route = (() => { try { return useRoute() } catch(e) { return {} } })() || {}
+const router = (() => { try { return useRouter() } catch(e) { return {} } })() || {}
+const { toastDanger, toastErrorHandler } = useToast()
+
+const title = computed(() => {
+  if (!props.notification || !props.notification.config) {
+    return ''
+  }
+
+  return props.notification.config.title
+})
+
+const description = computed(() => {
+  if (!props.notification || !props.notification.config) {
+    return ''
+  }
+
+  return props.notification.config.description || ''
+})
+
+const isOnPagesRouteOrChild = computed(() => {
+  return route && (['pages', 'page', 'page.record', 'page.record.edit', 'page.record.create'].includes(route.name as string))
+})
+
+async function handleRecordNavigation() {
+  const { namespaceID, recordID, moduleID, openMode, edit } = props.notification.config
+
+  try {
+    const namespace = await $ComposeAPI.namespaceRead({ namespaceID })
+
+    if (!namespace) {
+      toastDanger($t('namespaceNotFound'))
+      return
+    }
+
+    const slug = namespace.slug || namespace.namespaceID
+
+    const recordPages = await $ComposeAPI.pageList({ moduleID, namespaceID }).then(({ set = [] }: { set: any[] }) => set)
+
+    if (!recordPages || recordPages.length === 0) {
+      toastDanger($t('pageNotFound'))
+      return
+    }
+
+    const record = await $ComposeAPI.recordRead({ recordID, moduleID, namespaceID })
+
+    if (!record) {
+      toastDanger($t('recordNotFound'))
+      return
+    }
+
+    const { pageID } = recordPages[0]
+
+    const instance = getCurrentInstance()
+    const appName = instance?.appContext.app?.options?.name
+    if (appName !== 'compose') {
+      const u = new URL(window.location)
+      const url = `${u.origin}/compose/ns/${slug}/pages/${pageID}/record/${recordID}/${edit ? 'edit' : ''}`
+
+      if (openMode === 'newTab') {
+        window.open(url, '_blank')
+      } else {
+        window.location.href = url
       }
 
-      return this.notification.config.title
-    },
+      return
+    }
 
-    description () {
-      if (!this.notification || !this.notification.config) {
-        return ''
-      }
+    let routeName = 'page.record'
 
-      return this.notification.config.description || ''
-    },
+    if (!recordID || recordID === '0') {
+      routeName += '.create'
+    } else if (edit) {
+      routeName += '.edit'
+    }
 
-    isOnPagesRouteOrChild () {
-      // Check if route exists and is 'pages' or starts with 'page.'
-      return this.$route && (['pages', 'page', 'page.record', 'page.record.edit', 'page.record.create'].includes(this.$route.name))
-    },
-  },
+    const routeParams = {
+      name: routeName,
+      params: {
+        recordID,
+        pageID,
+        slug,
+        edit,
+      },
+    }
 
-  methods: {
-    async handleRecordNavigation () {
-      const { namespaceID, recordID, moduleID, openMode, edit } = this.notification.config
+    if (openMode === 'newTab') {
+      window.open(router.resolve(routeParams).href, '_blank')
+    } else if (isOnPagesRouteOrChild.value && openMode === 'modal' && slug === route.params.slug) {
+      window.dispatchEvent(new CustomEvent('show-record-modal', {
+        detail: {
+          recordID: !recordID || recordID === '0' ? '0' : recordID,
+          recordPageID: pageID,
+          edit,
+        },
+      }))
 
-      try {
-        const namespace = await this.$ComposeAPI.namespaceRead({ namespaceID })
-
-        if (!namespace) {
-          this.toastDanger(this.$t('namespaceNotFound'))
-          return
-        }
-
-        const slug = namespace.slug || namespace.namespaceID
-
-        const recordPages = await this.$ComposeAPI.pageList({ moduleID, namespaceID }).then(({ set = [] }) => set)
-
-        if (!recordPages || recordPages.length === 0) {
-          this.toastDanger(this.$t('pageNotFound'))
-          return
-        }
-
-        const record = await this.$ComposeAPI.recordRead({ recordID, moduleID, namespaceID })
-
-        if (!record) {
-          this.toastDanger(this.$t('recordNotFound'))
-          return
-        }
-
-        const { pageID } = recordPages[0]
-
-        if (this.$router.app.$options.name !== 'compose') {
-          const u = new URL(window.location)
-          const url = `${u.origin}/compose/ns/${slug}/pages/${pageID}/record/${recordID}/${edit ? 'edit' : ''}`
-
-          if (openMode === 'newTab') {
-            window.open(url, '_blank')
-          } else {
-            window.location = url
-          }
-
-          return
-        }
-
-        let routeName = 'page.record'
-
-        if (!recordID || recordID === '0') {
-          routeName += '.create'
-        } else if (edit) {
-          routeName += '.edit'
-        }
-
-        const routeParams = {
-          name: routeName,
-          params: {
-            recordID,
-            pageID,
-            slug,
-            edit,
-          },
-        }
-
-        if (openMode === 'newTab') {
-          window.open(this.$router.resolve(routeParams).href, '_blank')
-        } else if (this.isOnPagesRouteOrChild && openMode === 'modal' && slug === this.$route.params.slug) {
-          this.$root.$emit('show-record-modal', {
-            recordID: !recordID || recordID === '0' ? '0' : recordID,
-            recordPageID: pageID,
-            edit,
-          })
-
-          return
-        } else {
-          this.$router.push(routeParams)
-        }
-      } catch (error) {
-        this.toastErrorHandler(this.$t('recordRedirectError'))(error)
-      }
-    },
-  },
+      return
+    } else {
+      router.push(routeParams)
+    }
+  } catch (error) {
+    toastErrorHandler($t('recordRedirectError'))(error as Error)
+  }
 }
 </script>

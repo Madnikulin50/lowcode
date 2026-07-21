@@ -1,105 +1,123 @@
 <template>
-  <b-card
-    id="resource-list-wrapper"
-    no-body
-    footer-bg-variant="outline-secondary"
-    footer-class="p-0"
-    :header-class="`border-0 ${cardHeaderClass}`"
-    class="shadow-sm"
-    style="min-height: 45rem;"
-  >
-    <template #header>
-      <b-container
-        fluid
-        class="d-flex flex-column p-0 gap-2 d-print-none"
-      >
-        <b-row
-          no-gutters
-          class="d-flex align-items-center justify-content-between gap-1"
-        >
+    <div
+      id="resource-list-wrapper"
+      class="card shadow-sm d-flex flex-column"
+      style="min-height: 45rem;"
+    >
+    <div
+      class="card-header border-0"
+      :class="cardHeaderClass"
+    >
+      <div class="container-fluid d-flex flex-column p-0 gap-2 d-print-none">
+        <div class="row g-0 d-flex align-items-center justify-content-between gap-1">
           <div :class="`d-flex align-items-center flex-grow-1 flex-wrap flex-fill-child gap-1 ${headerClass}`">
             <slot
               name="header"
               :selected="selected"
             />
           </div>
-
           <div
             v-if="!hideSearch"
             class="flex-fill"
           >
             <c-input-search
-              :value="filter[queryField]"
+              :model-value="(filter as Record<string, any>)[queryField]"
               :placeholder="translations.searchPlaceholder"
               :submittable="true"
               @search="handleSearch"
             />
           </div>
-        </b-row>
-
-        <b-row
+        </div>
+        <div
           v-if="$slots.toolbar"
-          class="gap-1"
+          class="row gap-1"
         >
-          <slot
-            name="toolbar"
-          />
-        </b-row>
-      </b-container>
-    </template>
+          <slot name="toolbar" />
+        </div>
+      </div>
+    </div>
 
-    <b-card-body
-      class="p-0"
-    >
-      <b-table
+    <div class="card-body p-0 d-flex flex-column">
+      <BTable
         id="resource-list"
-        ref="resourceList"
+        :items="tableItems"
         :fields="_fields"
-        :items="_items"
-        :sticky-header="stickyHeader"
-        :tbody-tr-class="tableRowClasses"
-        hover
-        responsive
-        show-empty
-        no-sort-reset
-        no-local-sorting
-        head-variant="outline-secondary"
-        foot-variant="outline-secondary"
         :primary-key="primaryKey"
-        class="mh-100 h-100 mb-0"
-        @row-clicked="$emit('row-clicked', $event)"
+        :busy="loading"
+        :hover="true"
+        :sticky-header="stickyHeader ? stickyHeaderHeight : false"
+        :no-local-sorting="true"
+        :no-provider-sorting="true"
+        :no-provider-paging="true"
+        :no-provider-filtering="true"
+        :show-empty="true"
+        :tbody-tr-class="getTbodyTrClass"
+        :empty-text="translations.noItems"
+        table-class="mb-0 resource-list-table"
+        thead-class="resource-list-thead"
+        v-model:sort-by="sortByModel"
+        @row-clicked="onRowClicked"
       >
-        <template #head()="field">
-          <div
-            class="d-flex align-items-center"
-            @click.prevent.stop
-          >
+        <template #head()="{ label, field }">
+          <div class="d-flex align-items-center">
             <div class="flex-fill text-nowrap">
-              {{ field.label }}
-
-              <b-button
-                v-if="field.field.sort"
-                variant="outline-extra-light"
-                class="d-inline-flex align-items-center text-secondary d-print-none border-0 px-1 ml-1"
+              {{ label }}
+              <span
+                v-if="field.sortable"
+                class="btn d-inline-flex align-items-center text-secondary d-print-none border-0 px-1 ms-1 btn-outline-extra-light"
                 style="margin-right: -0.25rem;"
-                @click="handleSort(field)"
               >
-                <font-awesome-layers
-                  class="d-print-none"
-                >
+                <div class="d-print-none fa-layers">
                   <font-awesome-icon
                     :icon="['fas', 'angle-up']"
                     class="mb-1"
-                    :class="{ 'text-primary': field.column === sorting.sortBy && !sorting.sortDesc }"
+                    :class="{ 'text-primary': sorting.sortBy === field.key && !sorting.sortDesc }"
                   />
                   <font-awesome-icon
                     :icon="['fas', 'angle-down']"
                     class="mt-1"
-                    :class="{ 'text-primary': field.column === sorting.sortBy && sorting.sortDesc }"
+                    :class="{ 'text-primary': sorting.sortBy === field.key && sorting.sortDesc }"
                   />
-                </font-awesome-layers>
-              </b-button>
+                </div>
+              </span>
             </div>
+          </div>
+        </template>
+
+        <template
+          v-if="selectable"
+          #head(select)="{}"
+        >
+          <div class="form-check">
+            <input
+              :disabled="disableSelectAll"
+              :checked="allRowsSelected && !disableSelectAll"
+              type="checkbox"
+              class="form-check-input"
+              @change="selectAllRows"
+            >
+          </div>
+        </template>
+
+        <template
+          v-if="selectable"
+          #cell(select)="{ item }"
+        >
+          <div class="form-check">
+            <input
+              v-if="isItemSelectable(item)"
+              type="checkbox"
+              class="form-check-input"
+              :checked="selected.includes(item[primaryKey])"
+              @change="onSelectRow(($event.target as HTMLInputElement).checked, item[primaryKey])"
+            >
+          </div>
+        </template>
+
+        <template #table-busy>
+          <div class="text-center m-5">
+            <span class="spinner-border spinner-border-sm align-middle m-2" />
+            {{ translations.loading }}
           </div>
         </template>
 
@@ -113,54 +131,22 @@
           </p>
         </template>
 
-        <template #table-busy>
-          <div class="text-center m-5">
-            <div>
-              <b-spinner
-                class="align-middle m-2"
-              />
-            </div>
-            {{ translations.loading }}
-          </div>
-        </template>
-
         <template
-          v-if="selectable"
-          #head(select)
-        >
-          <b-checkbox
-            :disabled="disableSelectAll"
-            :checked="allRowsSelected && !disableSelectAll"
-            class="ml-1"
-            @change="selectAllRows"
-          />
-        </template>
-
-        <template #cell(select)="{ item }">
-          <b-form-checkbox
-            v-if="isItemSelectable(item)"
-            class="ml-1"
-            :checked="selected.includes(item[primaryKey])"
-            @change="onSelectRow($event, item[primaryKey])"
-          />
-        </template>
-
-        <!-- Magic; Make slots if parent provides them -->
-        <template
-          v-for="field in customFieldSlots"
-          #[`cell(${field})`]="{ item }"
+          v-for="key in customFieldSlots"
+          :key="key"
+          #[cellSlotName(key)]="{ item }"
         >
           <slot
-            :name="field"
+            :name="key"
             :item="item"
           />
         </template>
-      </b-table>
-    </b-card-body>
+      </BTable>
+    </div>
 
-    <template
+    <div
       v-if="showFooter"
-      #footer
+      class="card-footer bg-light p-0"
     >
       <div class="resource-list-footer d-flex align-items-center flex-wrap px-3 py-2 gap-2">
         <div class="d-flex align-items-center flex-wrap gap-2">
@@ -170,372 +156,393 @@
           >
             {{ getPagination }}
           </div>
-
           <div
             v-if="!hidePerPageOption"
-            class="d-flex align-items-center gap-1 text-nowrap ml-auto"
+            class="d-flex align-items-center gap-1 text-nowrap"
           >
-            <span>
-              {{ $t('general:resourceList.pagination.recordsPerPage') }}
-            </span>
-
-            <b-form-select
+            <span>{{ translations.recordsPerPage || $t('resourceList.pagination.recordsPerPage') }}</span>
+            <select
               :value="pagination.limit"
-              :options="perPageOptions"
-              size="sm"
-              @change="handlePerPageChange"
-            />
+              class="form-select form-select-sm"
+              @change="handlePerPageChange(Number(($event.target as HTMLSelectElement).value))"
+            >
+              <option
+                v-for="opt in perPageOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.text }}
+              </option>
+            </select>
           </div>
         </div>
-
         <div
           v-if="!hidePagination"
-          class="d-flex align-items-center ml-auto"
+          class="d-flex align-items-center ms-auto"
         >
-          <b-button-group class="gap-1">
-            <b-button
+          <div class="btn-group gap-1">
+            <button
               :disabled="!hasPrevPage"
-              variant="outline-extra-light"
-              class="d-flex align-items-center text-dark border-0 p-1"
-              @click="goToPage()"
+              type="button"
+              class="btn btn-outline-extra-light d-flex align-items-center text-dark border-0 p-1"
+              @click="goToPage('firstPage')"
             >
               <font-awesome-icon :icon="['fas', 'angle-double-left']" />
-            </b-button>
-
-            <b-button
+            </button>
+            <button
               :disabled="!hasPrevPage"
-              variant="outline-extra-light"
-              class="d-flex align-items-center text-dark border-0 p-1"
+              type="button"
+              class="btn btn-outline-extra-light d-flex align-items-center text-dark border-0 p-1"
               @click="goToPage('prevPage')"
             >
               <font-awesome-icon
                 :icon="['fas', 'angle-left']"
-                class="mr-1"
+                class="me-1"
               />
-
               {{ translations.prevPagination }}
-            </b-button>
-
-            <b-button
+            </button>
+            <button
               :disabled="!hasNextPage"
-              variant="outline-extra-light"
-              class="d-flex align-items-center justify-content-center text-dark border-0 p-1"
+              type="button"
+              class="btn btn-outline-extra-light d-flex align-items-center justify-content-center text-dark border-0 p-1"
               @click="goToPage('nextPage')"
             >
               {{ translations.nextPagination }}
-
               <font-awesome-icon
                 :icon="['fas', 'angle-right']"
-                class="ml-1"
+                class="ms-1"
               />
-            </b-button>
-          </b-button-group>
+            </button>
+          </div>
         </div>
       </div>
-    </template>
-  </b-card>
+    </div>
+  </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, getCurrentInstance, useSlots, inject } from 'vue'
+import { routeLocationKey, routerKey } from 'vue-router'
+import { BTable } from 'bootstrap-vue-next'
 import CInputSearch from '../input/CInputSearch.vue'
 
-export default {
-  name: 'ResourceList',
-
-  components: {
-    CInputSearch,
-  },
-
-  props: {
-    primaryKey: {
-      type: String,
-      required: true,
-    },
-
-    filter: {
-      type: Object,
-      required: true,
-    },
-
-    sorting: {
-      type: Object,
-      required: true,
-    },
-
-    pagination: {
-      type: Object,
-      required: true,
-    },
-
-    fields: {
-      type: Array,
-      required: true,
-    },
-
-    // Promise that resolves with an array
-    items: {
-      type: Function,
-      required: true,
-    },
-
-    hideSearch: {
-      type: Boolean,
-    },
-
-    hideTotal: {
-      type: Boolean,
-    },
-
-    hidePagination: {
-      type: Boolean,
-    },
-
-    stickyHeader: {
-      type: Boolean,
-    },
-
-    // Are rows clickable
-    clickable: {
-      type: Boolean,
-      default: false,
-    },
-
-    selectable: {
-      type: Boolean,
-      default: false,
-    },
-
-    isItemSelectable: {
-      type: Function,
-      default: () => true,
-    },
-
-    cardHeaderClass: {
-      type: String,
-      default: '',
-    },
-
-    headerClass: {
-      type: String,
-      default: '',
-    },
-
-    rowClass: {
-      type: Function,
-      default: () => {},
-    },
-
-    translations: {
-      type: Object,
-      required: true,
-    },
-
-    queryField: {
-      type: String,
-      default: 'query',
-    },
-
-    hidePerPageOption: {
-      type: Boolean,
-      default: false,
-    },
-  },
-
-  data () {
-    return {
-      selected: [],
-      selectableItemIDs: [],
-    }
-  },
-
-  computed: {
-    _fields () {
-      const select = this.selectable
-        ? [
-          {
-            key: 'select',
-            label: '',
-            thStyle: 'width: 0; white-space: nowrap;',
-          },
-        ]
-        : []
-
-      return [
-        ...select,
-        ...this.fields,
-      ].map(f => {
-        return { ...f, thClass: `${f.thClass || 'border-0'} table-b-table-default b-table-sticky-column`, sortable: false, sort: f.sortable }
-      })
-    },
-
-    customFieldSlots () {
-      return [
-        ...Object.keys(this.$slots),
-        ...Object.keys(this.$scopedSlots),
-      ].filter(s => s !== 'header')
-    },
-
-    perPageOptions () {
-      const defaultText = this.pagination.limit === 0 ? this.$t('general:label.all') : this.pagination.limit.toString()
-
-      return [
-        { text: defaultText, value: this.pagination.limit },
-        { text: '25', value: 25 },
-        { text: '50', value: 50 },
-        { text: '100', value: 100 },
-      ].filter((v, i) => i === 0 || v.value !== this.pagination.limit).sort((a, b) => {
-        if (a.value === 0) return 1
-        if (b.value === 0) return -1
-        return a.value - b.value
-      })
-    },
-
-    disableSelectAll () {
-      return !this.selectableItemIDs.length
-    },
-
-    allRowsSelected () {
-      return this.selected.length === this.selectableItemIDs.length
-    },
-
-    getPagination () {
-      let { total = 0, limit = 10, page = 1 } = this.pagination
-      total = isNaN(total) ? 0 : total
-
-      const pagination = {
-        from: ((page - 1) * limit) + 1,
-        to: limit > 0 ? Math.min((page * limit), total) : total,
-        count: total,
-        data: total === 1 ? this.translations.resourceSingle : this.translations.resourcePlural,
-      }
-
-      return this.$t(this.translations[total > limit ? 'showingPagination' : 'singlePluralPagination'], pagination)
-    },
-
-    hasPrevPage () {
-      return !!this.pagination.prevPage
-    },
-
-    hasNextPage () {
-      return !!this.pagination.nextPage
-    },
-
-    showFooter () {
-      return !(this.hideTotal && this.hidePagination && this.hidePerPageOption)
-    },
-  },
-
-  beforeUnmount () {
-    this.setDefaultValues()
-  },
-
-  methods: {
-    tableRowClasses (item = {}) {
-      return {
-        pointer: this.clickable,
-        ...this.rowClass(item),
-      }
-    },
-
-    _items () {
-      this.selected = []
-      this.selectableItemIDs = []
-
-      return this.items().then((items = []) => {
-        this.selectableItemIDs = items.filter(this.isItemSelectable).map(i => i[this.primaryKey])
-        return items
-      })
-    },
-
-    onSelectRow (selected, itemID) {
-      if (selected) {
-        if (this.selected.includes(itemID)) {
-          return
-        }
-
-        this.selected.push(itemID)
-      } else {
-        const i = this.selected.indexOf(itemID)
-        if (i < 0) {
-          return
-        }
-
-        this.selected.splice(i, 1)
-      }
-    },
-
-    selectAllRows (allSelected = false) {
-      if (allSelected) {
-        this.selected = this.selectableItemIDs
-      } else {
-        this.selected = []
-      }
-    },
-
-    goToPage (destination) {
-      const pageCursor = this.pagination[destination] || ''
-
-      let { page = 1 } = this.pagination
-
-      if (destination === 'nextPage') {
-        page++
-      } else if (destination === 'prevPage') {
-        page--
-      } else {
-        page = 1
-      }
-
-      this.$router.replace({ query: { ...this.$route.query, page, pageCursor } })
-    },
-
-    handlePerPageChange (limit) {
-      this.$router.replace({ query: { ...this.$route.query, page: 1, limit } })
-      this.$refs.resourceList.refresh()
-    },
-
-    setDefaultValues () {
-      this.selected = []
-      this.selectableItemIDs = []
-    },
-
-    handleSort ({ field }) {
-      this.sorting.sortBy = field.key
-      this.sorting.sortDesc = !this.sorting.sortDesc
-      this.pagination.page = 1
-      this.$refs.resourceList.refresh()
-    },
-
-    handleSearch (searchQuery) {
-      this.filter[this.queryField] = searchQuery ? searchQuery.trim() : ''
-      this.$emit('search')
-    },
-  },
+interface Field {
+  key: string
+  label: string
+  sortable?: boolean
+  sort?: boolean
+  thClass?: string
+  thStyle?: string
+  column?: string
 }
+
+interface Pagination {
+  total?: number
+  limit?: number
+  page?: number
+  prevPage?: string
+  nextPage?: string
+}
+
+interface Sorting {
+  sortBy: string
+  sortDesc: boolean
+}
+
+const props = withDefaults(defineProps<{
+  primaryKey: string
+  filter: Record<string, any>
+  sorting: Sorting
+  pagination: Pagination
+  fields: Field[]
+  items: () => Promise<Array<Record<string, any>>>
+  hideSearch?: boolean
+  hideTotal?: boolean
+  hidePagination?: boolean
+  stickyHeader?: boolean
+  clickable?: boolean
+  selectable?: boolean
+  isItemSelectable?: (item: Record<string, any>) => boolean
+  cardHeaderClass?: string
+  headerClass?: string
+  rowClass?: (item: Record<string, any>) => Record<string, boolean>
+  translations: Record<string, string>
+  queryField?: string
+  hidePerPageOption?: boolean
+}>(), {
+  hideSearch: false,
+  hideTotal: false,
+  hidePagination: false,
+  stickyHeader: false,
+  clickable: false,
+  selectable: false,
+  isItemSelectable: () => true,
+  cardHeaderClass: '',
+  headerClass: '',
+  rowClass: () => ({}),
+  queryField: 'query',
+  hidePerPageOption: false,
+})
+
+let requestId = 0
+
+const emit = defineEmits<{
+  (e: 'row-clicked', item: Record<string, any>): void
+  (e: 'search'): void
+}>()
+
+const instance = getCurrentInstance()
+const $t = instance!.appContext.config.globalProperties.$t
+const route = inject(routeLocationKey, {} as any) || {}
+const router = inject(routerKey, {} as any) || {}
+const slots = useSlots()
+const ariaSortObserver = ref<MutationObserver | null>(null)
+
+const selected = ref<string[]>([])
+const selectableItemIDs = ref<string[]>([])
+const tableItems = ref<Array<Record<string, any>>>([])
+const loading = ref(false)
+
+const stickyHeaderHeight = computed(() => '60vh')
+
+const _fields = computed(() => {
+  const selectField = props.selectable
+    ? [{
+      key: 'select',
+      label: '',
+      sortable: false,
+      thClass: 'border-0 table-b-table-default b-table-sticky-column',
+      thStyle: 'width: 0; white-space: nowrap;',
+    }]
+    : []
+
+  return [
+    ...selectField,
+    ...props.fields.map(f => ({
+      ...f,
+      sortable: f.sortable || false,
+      thClass: (f.thClass || 'border-0') + ' table-b-table-default b-table-sticky-column',
+      thStyle: f.thStyle || '',
+    })),
+  ]
+})
+
+const sortByModel = computed({
+  get(): Array<{ key: string; order: 'asc' | 'desc' }> | undefined {
+    if (!props.sorting.sortBy) return undefined
+    return [{ key: props.sorting.sortBy, order: props.sorting.sortDesc ? 'desc' : 'asc' }]
+  },
+  set(val: Array<{ key: string; order: string }> | undefined) {
+    const item = val?.[0]
+    if (item) {
+      props.sorting.sortBy = item.key
+      props.sorting.sortDesc = item.order === 'desc'
+    } else {
+      props.sorting.sortBy = ''
+      props.sorting.sortDesc = false
+    }
+    props.pagination.page = 1
+    refresh()
+  },
+})
+
+const customFieldSlots = computed(() => {
+  return Object.keys(slots).filter(s => s !== 'header' && s !== 'toolbar')
+})
+
+function cellSlotName(key: string): string {
+  return `cell(${key})`
+}
+
+function getTbodyTrClass(item: Record<string, any> | null, _type: string) {
+  if (!item) return undefined
+  return {
+    pointer: props.clickable,
+    ...props.rowClass(item),
+  }
+}
+
+const perPageOptions = computed(() => {
+  const defaultText = props.pagination.limit === 0 ? $t('label.all') : props.pagination.limit!.toString()
+  return [
+    { text: defaultText, value: props.pagination.limit ?? 0 },
+    { text: '25', value: 25 },
+    { text: '50', value: 50 },
+    { text: '100', value: 100 },
+  ]
+    .filter((v, i) => i === 0 || v.value !== props.pagination.limit)
+    .sort((a, b) => {
+      if (a.value === 0) return 1
+      if (b.value === 0) return -1
+      return a.value - b.value
+    })
+})
+
+const disableSelectAll = computed(() => !selectableItemIDs.value.length)
+
+const allRowsSelected = computed(() => selected.value.length === selectableItemIDs.value.length)
+
+const getPagination = computed(() => {
+  let { total = 0, limit = 10, page = 1 } = props.pagination
+  total = isNaN(total) ? 0 : total
+  const pagination = {
+    from: ((page - 1) * limit) + 1,
+    to: limit > 0 ? Math.min((page * limit), total) : total,
+    count: total,
+    data: total === 1 ? props.translations.resourceSingle : props.translations.resourcePlural,
+  }
+  return $t(props.translations[total > limit ? 'showingPagination' : 'singlePluralPagination'], pagination)
+})
+
+const hasPrevPage = computed(() => !!props.pagination.prevPage)
+
+const hasNextPage = computed(() => !!props.pagination.nextPage)
+
+const showFooter = computed(() => !(props.hideTotal && props.hidePagination && props.hidePerPageOption))
+
+async function loadItems() {
+  const id = ++requestId
+  selected.value = []
+  selectableItemIDs.value = []
+  loading.value = true
+  try {
+    const items = await props.items()
+    if (id !== requestId) return
+    selectableItemIDs.value = items.filter(props.isItemSelectable).map(i => i[props.primaryKey])
+    tableItems.value = items
+  } finally {
+    if (id === requestId) loading.value = false
+  }
+}
+
+const onRefreshTable = () => { loadItems() }
+
+window.addEventListener('bv::refresh::table', onRefreshTable)
+
+function refresh() {
+  loadItems()
+}
+
+function onRowClicked(payload: { item: Record<string, any> }) {
+  emit('row-clicked', payload.item)
+}
+
+function onSelectRow(selectedFlag: boolean, itemID: string) {
+  if (selectedFlag) {
+    if (!selected.value.includes(itemID)) {
+      selected.value.push(itemID)
+    }
+  } else {
+    const i = selected.value.indexOf(itemID)
+    if (i >= 0) {
+      selected.value.splice(i, 1)
+    }
+  }
+}
+
+function selectAllRows(e: Event) {
+  const allSelected = (e.target as HTMLInputElement).checked
+  if (allSelected) {
+    selected.value = [...selectableItemIDs.value]
+  } else {
+    selected.value = []
+  }
+}
+
+function goToPage(destination: string) {
+  const pageCursor = (props.pagination as Record<string, any>)[destination] || ''
+  let { page = 1 } = props.pagination
+
+  if (destination === 'nextPage') {
+    page = (page as number) + 1
+  } else if (destination === 'prevPage') {
+    page = (page as number) - 1
+  } else {
+    page = 1
+  }
+
+  router.replace({ query: { ...route.query, page, pageCursor } })
+}
+
+function handlePerPageChange(limit: number) {
+  router.replace({ query: { ...route.query, page: 1, limit } })
+  refresh()
+}
+
+function handleSearch(searchQuery: string) {
+  (props.filter as Record<string, any>)[props.queryField] = searchQuery ? searchQuery.trim() : ''
+  emit('search')
+}
+
+defineExpose({ refresh })
+
+onMounted(() => {
+  loadItems()
+  nextTick(() => {
+    const table = document.getElementById('resource-list')
+    if (!table) return
+    const removeAriaSort = () => {
+      table.querySelectorAll('th[aria-sort]').forEach(th => th.removeAttribute('aria-sort'))
+    }
+    removeAriaSort()
+    ariaSortObserver.value = new MutationObserver(removeAriaSort)
+    ariaSortObserver.value.observe(table, { subtree: true, attributeFilter: ['aria-sort'] })
+  })
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('bv::refresh::table', onRefreshTable)
+  ariaSortObserver.value?.disconnect()
+  selected.value = []
+  selectableItemIDs.value = []
+})
 </script>
 
 <style lang="scss">
-#resource-list {
-  td.actions {
-    padding-top: 8px;
-    right: 0;
-    opacity: 0;
-    position: sticky;
-    transition: opacity 0.25s;
-    width: 1%;
-    font-family: var(--font-regular) !important;
-  }
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
 
-  tr:hover td.actions {
-    opacity: 1;
-    z-index: 1;
-    background-color: var(--light);
+#resource-list-wrapper {
+  .b-table-sticky-header {
+    margin-bottom: 0 !important;
+    flex-grow: 1 !important;
+    max-height: none !important;
   }
+}
 
-  & > thead > tr > [aria-sort=ascending],
-  & > thead > tr > [aria-sort=descending],
-  & > thead > tr > [aria-sort=none] {
-    background-image: none !important;
-  }
+.pointer {
+  cursor: pointer;
+}
+
+#resource-list.resource-list-table > :not(caption) > * > * {
+  padding: 0.75rem 0.5rem;
+}
+
+.resource-list-thead {
+}
+
+#resource-list td.actions {
+  padding-top: 8px;
+  right: 0;
+  opacity: 0;
+  position: sticky;
+  transition: opacity 0.25s;
+  width: 1%;
+  font-family: var(--font-regular) !important;
+}
+
+#resource-list tr:hover td.actions {
+  opacity: 1;
+  z-index: 1;
+  background-color: var(--light);
 }
 
 .resource-list-footer {

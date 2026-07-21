@@ -1,45 +1,28 @@
-<script lang="js">
-import { pVal, pType } from '../utils.ts'
+<script setup lang="ts">
+import { computed } from 'vue'
+import { pVal as _pVal, pType as _pType } from '../utils.ts'
 
-export default {
-  props: {
-    loading: {
-      type: Boolean,
-      default: () => false,
-    },
+const props = defineProps<{
+  loading?: boolean
+  payload?: Record<string, any>
+}>()
 
-    payload: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
+const message = computed(() => _pVal(props.payload, 'message', ''))
+const label = computed(() => _pVal(props.payload, 'label', ''))
 
-  computed: {
-    message () {
-      return this.pVal('message', '')
-    },
+function pVal(k: string, def?: any) {
+  return _pVal(props.payload, k, def)
+}
 
-    label () {
-      return this.pVal('label', '')
-    },
-  },
+function pType(k: string, def?: any) {
+  return _pType(props.payload, k, def)
+}
 
-  methods: {
-    pVal (k, def = undefined) {
-      return pVal(this.payload, k, def)
-    },
+function pRaw(k?: string, defValue?: any, defType?: string) {
+  if (k && props.payload && props.payload[k] && props.payload[k] !== undefined) {
+    return props.payload[k]
+  }
 
-    pType (k, def = undefined) {
-      return pType(this.payload, k, def)
-    },
-
-    pRaw (k, defValue = undefined, defType = undefined) {
-      if (k && this.payload && this.payload[k] && this.payload[k] !== undefined) {
-        return this.payload[k]
-      }
-
-      return { '@type': defType, '@value': defValue }
-    },
-  },
+  return { '@type': defType, '@value': defValue }
 }
 </script>

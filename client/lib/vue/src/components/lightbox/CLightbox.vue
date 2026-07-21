@@ -21,6 +21,12 @@
   </div>
 </template>
 
+<script setup lang="ts">
+defineEmits<{
+  (e: 'close'): void
+}>()
+</script>
+
 <style scoped>
 /* Temporary style; update when messaging is updated with bootstrap */
 
@@ -87,5 +93,4 @@
 .lightbox .header button:last-of-type {
   margin-right: 0;
 }
-
 </style>

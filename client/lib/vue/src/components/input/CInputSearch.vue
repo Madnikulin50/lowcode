@@ -1,21 +1,19 @@
 <template>
   <div
     style="min-width: 150px;"
-    :class="{ 'submittable': isSubmittable }"
+    :class="{ submittable: isSubmittable }"
     class="c-input-search d-flex position-relative"
   >
-    <b-input
+    <input
       ref="searchInput"
       data-test-id="input-search"
       :type="inputType"
       name="search"
       :value="localValue"
-      :debounce="debounce"
       :disabled="disabled"
       :placeholder="placeholder"
       :autocomplete="autocomplete"
-      :size="size"
-      class="text-truncate"
+      :class="['form-control', inputSize, 'text-truncate']"
       @input="onInput"
       @keyup.enter="submitQuery"
     />
@@ -24,147 +22,114 @@
       v-if="loading"
       class="spinner d-inline-flex align-items-center p-3"
     >
-      <b-spinner
-        small
-        variant="secondary"
-      />
+      <span class="spinner-border spinner-border-sm text-secondary" />
     </div>
 
-    <b-button
+    <button
       v-else-if="clearable && localValue && !disabled"
-      variant="outline-extra-light"
-      class="clear-button d-inline-flex align-items-center rounded-0 p-3"
+      class="clear-button d-inline-flex align-items-center rounded-0 p-3 btn btn-outline-extra-light"
       @click="onClear"
     >
       <font-awesome-icon
         :icon="['fas', 'times']"
         class="text-secondary"
       />
-    </b-button>
+    </button>
 
-    <b-button
+    <button
       v-if="showSubmittable"
-      :variant="isSubmittable ? 'outline-light' : 'link'"
+      :class="[isSubmittable ? 'btn-outline-light' : 'btn-link', isSubmittable ? '' : 'border-0 cursor-default', 'btn search-button d-inline-flex align-items-center rounded-0 border-light']"
       :disabled="disabled"
-      :class="{ 'border-0 cursor-default': !isSubmittable }"
-      class="search-button d-inline-flex align-items-center rounded-0 border-light"
       @[isSubmittable]="submitQuery"
     >
       <font-awesome-icon
-        :icon="['fas', this.ai ? 'brain' : 'search']"
+        :icon="['fas', 'search']"
         class="align-middle text-primary"
       />
-    </b-button>
+    </button>
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { debounce } from 'lodash'
 
-import { library } from '@fortawesome/fontawesome-svg-core'
-
-export default {
-  name: 'CInputSearch',
-
-  props: {
-    value: {
-      type: String,
-      default: '',
-    },
-
-    placeholder: {
-      type: String,
-      default: '',
-    },
-
-    size: {
-      type: String,
-      default: 'md',
-    },
-
-    disabled: {
-      type: Boolean,
-    },
-
-    ai: {
-      type: Boolean,
-    },
-
-    clearable: {
-      type: Boolean,
-      default: true,
-    },
-
-    submittable: {
-      type: Boolean,
-      default: false,
-    },
-
-    autocomplete: {
-      type: String,
-      default: 'on',
-    },
-
-    debounce: {
-      type: Number,
-      default: 0,
-    },
-    loading: {
-      type: Boolean,
-      default: false,
-    },
-  },
-
-  data () {
-    return {
-      localValue: this.value,
-    }
-  },
-
-  computed: {
-    inputType () {
-      return this.clearable ? 'search' : 'text'
-    },
-
-    showSubmittable () {
-      return !this.localValue || this.showSubmittableAndClearable
-    },
-
-    isSubmittable () {
-      return this.submittable && !this.disabled ? 'click' : null
-    },
-
-    showSubmittableAndClearable () {
-      return this.clearable && this.submittable
-    },
-  },
-
-  watch: {
-    value (value) {
-      this.localValue = value
-    },
-  },
-
-  methods: {
-    onInput (value) {
-      this.localValue = value
-      this.$emit('input', value)
-    },
-
-    submitQuery () {
-      if (this.submittable) {
-        this.$emit('search', this.localValue)
-      }
-    },
-
-    onClear () {
-      this.localValue = ''
-      this.$emit('input', '')
-      this.$nextTick(() => {
-        this.$refs.searchInput.focus()
-      })
-    },
-  },
+interface Props {
+  modelValue?: string
+  placeholder?: string
+  size?: string
+  disabled?: boolean
+  clearable?: boolean
+  submittable?: boolean
+  autocomplete?: string
+  debounceMs?: number
+  loading?: boolean
 }
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: '',
+  placeholder: '',
+  size: 'md',
+  disabled: false,
+  clearable: true,
+  submittable: false,
+  autocomplete: 'on',
+  debounceMs: 0,
+  loading: false,
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+  search: [value: string]
+}>()
+
+const searchInput = ref<HTMLInputElement | null>(null)
+const localValue = ref(props.modelValue)
+
+const inputSize = computed(() => props.size === 'sm' ? 'form-control-sm' : props.size === 'lg' ? 'form-control-lg' : '')
+const inputType = computed(() => props.clearable ? 'search' : 'text')
+const showSubmittable = computed(() => !localValue.value || (props.clearable && props.submittable))
+const isSubmittable = computed(() => props.submittable && !props.disabled ? 'click' : null)
+
+const debouncedEmit = computed(() => {
+  if (props.debounceMs > 0) {
+    return debounce((value: string) => {
+      emit('update:modelValue', value)
+    }, props.debounceMs)
+  }
+  return null
+})
+
+function onInput (e: Event) {
+  const value = (e.target as HTMLInputElement).value
+  localValue.value = value
+  if (props.debounceMs > 0 && debouncedEmit.value) {
+    debouncedEmit.value(value)
+  } else {
+    emit('update:modelValue', value)
+  }
+}
+
+function submitQuery () {
+  if (props.submittable) {
+    emit('search', localValue.value)
+  }
+}
+
+function onClear () {
+  localValue.value = ''
+  emit('update:modelValue', '')
+  if (debouncedEmit.value) {
+    debouncedEmit.value.cancel()
+  }
+  requestAnimationFrame(() => {
+    searchInput.value?.focus()
+  })
+}
+
+watch(() => props.modelValue, (value) => {
+  localValue.value = value
+})
 </script>
 
 <style lang="scss" scoped>

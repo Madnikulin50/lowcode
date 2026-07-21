@@ -4,17 +4,18 @@
       v-if="loading"
       class="d-flex justify-content-center align-items-center w-100"
     >
-      <b-spinner />
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
 
     <slot
       v-else
     />
 
-    <b-button
+    <button
       v-if="!hideAddButton && !loading"
-      variant="primary"
-      size="sm"
+      class="btn btn-primary btn-sm"
       :data-test-id="testID"
       :class="addButtonClass"
       :disabled="disableAddButton"
@@ -26,49 +27,34 @@
       />
 
       {{ labels.addButton || '' }}
-    </b-button>
+    </button>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'CFormTableWrapper',
+<script setup lang="ts">
+import { computed } from 'vue'
 
-  props: {
-    data: {
-      testID: "CFormTableWrapper"
-    },
-    labels: {
-      type: Object,
-      default: () => {},
-    },
+const props = withDefaults(defineProps<{
+  labels?: Record<string, string>
+  hideAddButton?: boolean
+  disableAddButton?: boolean
+  addButtonClass?: string
+  buttonTestId?: string
+  loading?: boolean
+}>(), {
+  labels: () => ({}),
+  hideAddButton: false,
+  disableAddButton: false,
+  addButtonClass: '',
+  buttonTestId: '',
+  loading: false,
+})
 
-    hideAddButton: {
-      type: Boolean,
-      default: false,
-    },
+defineEmits<{
+  (e: 'add-item'): void
+}>()
 
-    disableAddButton: {
-      type: Boolean,
-      default: false,
-    },
-
-    addButtonClass: {
-      type: String,
-      default: '',
-    },
-
-    buttonTestId: {
-      type: String,
-      default: '',
-    },
-
-    loading: {
-      type: Boolean,
-      default: false,
-    },
-  },
-}
+const testID = computed(() => props.buttonTestId)
 </script>
 
 <style scoped>

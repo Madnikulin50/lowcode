@@ -5,286 +5,269 @@
       class="text-break"
       v-html="message"
     />
-
-    <b-form-group
-      :label="label"
-      label-class="text-primary"
+    <label class="text-primary">{{ label }}</label>
+    <c-input-select
+      v-model="value"
+      :options="options"
+      :get-option-key="r => r.recordID"
+      :loading="processing"
+      append-to-body
+      option-value="recordID"
+      :placeholder="placeholder"
+      :filterable="false"
+      :reduce="r => r.recordID"
+      class="w-100"
+      @search="search"
     >
-      <c-input-select
-        v-model="value"
-        :options="options"
-        :get-option-key="r => r.recordID"
-        :loading="processing"
-        append-to-body
-        option-value="recordID"
-        :placeholder="placeholder"
-        :filterable="false"
-        :reduce="r => r.recordID"
-        class="w-100"
-        @search="search"
-      >
-        <template #list-footer>
-          <c-pagination
-            v-if="showPagination"
-            :has-prev-page="hasPrevPage"
-            :has-next-page="hasNextPage"
-            @prev="goToPage(false)"
-            @next="goToPage(true)"
-          />
-        </template>
-      </c-input-select>
-    </b-form-group>
-
-    <b-button
+      <template #list-footer>
+        <c-pagination
+          v-if="showPagination"
+          :has-prev-page="hasPrevPage"
+          :has-next-page="hasNextPage"
+          @prev="goToPage(false)"
+          @next="goToPage(true)"
+        />
+      </template>
+    </c-input-select>
+    <button
       :disabled="loading"
-      variant="primary"
-      class="ml-auto"
-      @click="$emit('submit', { value: encodeValue() })"
+      class="btn btn-primary ms-auto"
+      @click="emit('submit', { value: encodeValue() })"
     >
       {{ pVal('buttonLabel', 'Submit') }}
-    </b-button>
+    </button>
   </div>
 </template>
 
-<script lang="js">
-import base from './base.vue'
+<script setup lang="ts">
+import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
+import { getCurrentInstance } from 'vue'
+import { pVal as _pVal, pType as _pType } from '../utils'
 import CPagination from '../common/CPagination.vue'
 import CInputSelect from '../../input/CInputSelect.vue'
-import { compose, NoID } from '../../../../../../lib/js/dist'
+import { compose, NoID } from '@cortezaproject/corteza-js'
 import { debounce } from 'lodash'
 import axios from 'axios'
 
-export default {
-  name: 'CPromptComposeRecordPicker',
+const { $ComposeAPI } = getCurrentInstance()!.appContext.config.globalProperties as any
 
-  components: {
-    CInputSelect,
-    CPagination,
-  },
+const props = withDefaults(defineProps<{
+  loading?: boolean
+  payload?: Record<string, any>
+}>(), {
+  loading: false,
+  payload: () => ({}),
+})
 
-  extends: base,
+const emit = defineEmits<{
+  (e: 'submit', value: Record<string, any>): void
+}>()
 
-  data () {
-    return {
-      processing: false,
-      cancelRequest: null,
-      query: '',
-      filter: {
-        query: '',
-        sort: '',
-        limit: 10,
-        pageCursor: '',
-        prevPage: '',
-        nextPage: '',
-      },
+const processing = ref(false)
+let cancelRequest: (() => void) | null = null
+const query = ref('')
+const filter = reactive({
+  query: '',
+  sort: '',
+  limit: 10,
+  pageCursor: '',
+  prevPage: '',
+  nextPage: '',
+})
+const namespaceID = ref(NoID)
+const module = ref<any>(undefined)
+const options = ref<any[]>([])
+const value = ref<any>(undefined)
 
-      namespaceID: NoID,
-      module: undefined,
+const message = computed(() => _pVal(props.payload, 'message', ''))
+const label = computed(() => _pVal(props.payload, 'label', ''))
 
-      options: [],
-      value: undefined,
+const labelField = computed(() => {
+  return module.value?.fields.find((f: any) => f.name === pVal('labelField'))
+})
+
+const showPagination = computed(() => hasPrevPage.value || hasNextPage.value)
+
+const hasPrevPage = computed(() => !!filter.prevPage)
+
+const hasNextPage = computed(() => !!filter.nextPage)
+
+const placeholder = computed(() => pVal('placeholder', 'Select a record'))
+
+function pVal(k: string, def?: any) {
+  return _pVal(props.payload, k, def)
+}
+
+function pType(k: string, def?: any) {
+  return _pType(props.payload, k, def)
+}
+
+watch(() => filter.pageCursor, (pageCursor) => {
+  if (pageCursor) {
+    fetchPrefiltered(filter)
+  }
+})
+
+async function init() {
+  const mod = pVal('module')
+  const moduleType = pType('module')
+  const ns = pVal('namespace')
+  const namespaceType = pType('namespace')
+
+  if (namespaceType === 'ID') {
+    namespaceID.value = ns
+  } else if (namespaceType === 'ComposeNamespace') {
+    namespaceID.value = ns.namespaceID
+  } else {
+    const { set: nn } = await $ComposeAPI.namespaceList({ slug: ns })
+    if (!nn || nn.length !== 1) {
+      throw new Error('namespace not resolved')
     }
-  },
+    namespaceID.value = nn[0].namespaceID
+  }
 
-  computed: {
-    labelField () {
-      return this.module.fields.find(f => f.name === this.pVal('labelField'))
-    },
+  if (moduleType === 'ID') {
+    module.value = await $ComposeAPI.moduleRead({ namespaceID: namespaceID.value, moduleID: mod })
+    if (!module.value) {
+      throw new Error('module not resolved')
+    }
+  } else if (moduleType === 'ComposeModule') {
+    module.value = mod
+  } else {
+    const { set: nn } = await $ComposeAPI.moduleList({ handle: mod, namespaceID: namespaceID.value })
+    if (!nn || nn.length !== 1) {
+      throw new Error('module not resolved')
+    }
+    module.value = nn[0]
+  }
 
-    showPagination () {
-      return this.hasPrevPage || this.hasNextPage
-    },
+  loadLatest()
+}
 
-    hasPrevPage () {
-      return !!this.filter.prevPage
-    },
+init()
 
-    hasNextPage () {
-      return !!this.filter.nextPage
-    },
+onBeforeUnmount(() => {
+  setDefaultValues()
+})
 
-    placeholder () {
-      return this.pVal('placeholder', 'Select a record')
-    },
-  },
+function encodeValue() {
+  if (!value.value) {
+    return { '@type': 'Any', '@value': null }
+  }
+  const { record = {} } = options.value.find(({ recordID }: any) => recordID === value.value) || {}
+  return { '@type': 'ComposeRecord', '@value': record }
+}
 
-  watch: {
-    'filter.pageCursor': {
-      handler (pageCursor) {
-        if (pageCursor) {
-          this.fetchPrefiltered(this.filter)
-        }
-      },
-    },
-  },
+function loadLatest() {
+  const nsID = namespaceID.value
+  const modID = module.value?.moduleID
+  const { limit } = filter
+  if (modID && modID !== NoID) {
+    fetchPrefiltered({ namespaceID: nsID, moduleID: modID, limit })
+  }
+}
 
-  async created () {
-    // Prep the data
-    const module = this.pVal('module')
-    const moduleType = this.pType('module')
-    const namespace = this.pVal('namespace')
-    const namespaceType = this.pType('namespace')
+const search = debounce(function (queryInput = '') {
+  if (queryInput !== query.value) {
+    query.value = queryInput
+    filter.pageCursor = ''
+  }
 
-    // Resolve bits
-    // namespace
-    if (namespaceType === 'ID') {
-      this.namespaceID = namespace
-    } else if (namespaceType === 'ComposeNamespace') {
-      this.namespaceID = namespace.namespaceID
+  const { limit, pageCursor } = filter
+  const nsID = namespaceID.value
+  const modID = module.value?.moduleID
+  const queryFields = pVal('queryFields') || []
+
+  if (modID && modID !== NoID) {
+    let qf = queryFields.map((f: any) => f['@value']).filter((f: any) => !!f)
+    if ((!qf || qf.length === 0) && pVal('labelField')) {
+      qf = [pVal('labelField')]
+    }
+
+    let qStr = queryInput
+    if (qStr.length > 0) {
+      qStr = qf.map((qf: string) => `${qf} LIKE '%${qStr}%'`).join(' OR ')
+    }
+
+    const sort = qf.filter((f: any) => !!f).join(', ')
+    fetchPrefiltered({ namespaceID: nsID, moduleID: modID, query: qStr, sort, limit })
+  }
+}, 600)
+
+function fetchPrefiltered(q: Record<string, any>) {
+  processing.value = true
+
+  let qStr = q.query || ''
+  if (pVal('prefilter')) {
+    const pf = pVal('prefilter')
+    if (qStr) {
+      qStr = `(${pf}) AND (${qStr})`
     } else {
-      // @ts-ignore
-      const { set: nn } = await this.$ComposeAPI.namespaceList({ slug: namespace })
-      if (!nn || nn.length !== 1) {
-        throw new Error('namespace not resolved')
-      }
-
-      this.namespaceID = nn[0].namespaceID
+      qStr = pf
     }
+  }
 
-    // module; get the full thing as we need fields
-    if (moduleType === 'ID') {
-      this.module = await this.$ComposeAPI.moduleRead({ namespaceID: this.namespaceID, moduleID: module })
-      if (!this.module) {
-        throw new Error('module not resolved')
-      }
-    } else if (moduleType === 'ComposeModule') {
-      this.module = module
-    } else {
-      // @ts-ignore
-      const { set: nn } = await this.$ComposeAPI.moduleList({ handle: module, namespaceID: this.namespaceID })
-      if (!nn || nn.length !== 1) {
-        throw new Error('module not resolved')
-      }
+  if (cancelRequest) {
+    cancelRequest()
+    cancelRequest = null
+  }
 
-      this.module = nn[0]
-    }
+  const { response, cancel } = $ComposeAPI.recordListCancellable({ ...q, query: qStr })
+  cancelRequest = cancel
 
-    // Preload
-    this.loadLatest()
-  },
+  Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
+    .then(([{ filter: f, set }]: any) => {
+      Object.assign(filter, {
+        query: f.query || '',
+        sort: f.sort || '',
+        limit: f.limit || 10,
+        pageCursor: f.pageCursor || '',
+        prevPage: f.prevPage || '',
+        nextPage: f.nextPage || '',
+      })
 
-  beforeUnmount () {
-    this.setDefaultValues()
-  },
+      options.value = set.map((r: any) => {
+        const record = new compose.Record(module.value, r)
 
-  methods: {
-    encodeValue () {
-      if (!this.value) {
-        return { '@type': 'Any', '@value': null }
-      }
-
-      const { record = {} } = this.options.find(({ recordID }) => recordID === this.value) || {}
-
-      return { '@type': 'ComposeRecord', '@value': record }
-    },
-
-    loadLatest () {
-      const namespaceID = this.namespaceID
-      const moduleID = this.module.moduleID
-      const { limit } = this.filter
-      if (moduleID && moduleID !== NoID) {
-        this.fetchPrefiltered({ namespaceID, moduleID, limit })
-      }
-    },
-
-    search: debounce(function (query = '') {
-      if (query !== this.query) {
-        this.query = query
-        this.filter.pageCursor = undefined
-      }
-
-      const { limit, pageCursor } = this.filter
-      const namespaceID = this.namespaceID
-      const moduleID = this.module.moduleID
-      const queryFields = this.pVal('queryFields') || []
-
-      if (moduleID && moduleID !== NoID) {
-        // Determine what fields to use for searching
-        // Default to label field
-        let qf = queryFields.map(f => f['@value']).filter(f => !!f)
-
-        if ((!qf || qf.length === 0) && this.pVal('labelField')) {
-          qf = [this.pVal('labelField')]
+        let lbl
+        if (labelField.value) {
+          lbl = labelField.value.isMulti
+            ? record.values[pVal('labelField')].join(', ')
+            : record.values[pVal('labelField')]
         }
 
-        if (query.length > 0) {
-          // Construct query
-          query = qf.map(qf => {
-            return `${qf} LIKE '%${query}%'`
-          }).join(' OR ')
+        return {
+          recordID: record.recordID,
+          label: lbl || record.recordID,
+          record,
         }
+      })
+      processing.value = false
+      return { filter: f, set }
+    })
+    .catch((e: any) => {
+      if (axios.isCancel(e)) return
+      processing.value = false
+      throw e
+    })
+}
 
-        const sort = qf.filter(f => !!f).join(', ')
+function goToPage(next = true) {
+  filter.pageCursor = next ? filter.nextPage : filter.prevPage
+}
 
-        this.fetchPrefiltered({ namespaceID, moduleID, query, sort, limit })
-      }
-    }, 600),
-
-    fetchPrefiltered (q) {
-      this.processing = true
-
-      // Prefilter...
-      let { query = '' } = q
-      if (this.pVal('prefilter')) {
-        const pf = this.pVal('prefilter')
-        if (query) {
-          query = `(${pf}) AND (${query})`
-        } else {
-          query = pf
-        }
-      }
-
-      if (this.cancelRequest) {
-        this.cancelRequest()
-        this.cancelRequest = null
-      }
-
-      const { response, cancel } = this.$ComposeAPI.recordListCancellable({ ...q, query })
-      this.cancelRequest = cancel
-
-      Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
-        .then(([{ filter, set }]) => {
-          this.filter = { ...this.filter, ...filter }
-          this.filter.nextPage = filter.nextPage
-          this.filter.prevPage = filter.prevPage
-
-          this.options = set.map(r => {
-            const record = new compose.Record(this.module, r)
-
-            let label
-            if (this.labelField) {
-              label = this.labelField.isMulti ? record.values[this.pVal('labelField')].join(', ') : record.values[this.pVal('labelField')]
-            }
-
-            return {
-              recordID: record.recordID,
-              label: label || record.recordID,
-              record,
-            }
-          })
-          this.processing = false
-          return { filter, set }
-        })
-        .catch((e) => {
-          if (axios.isCancel(e)) return
-          this.processing = false
-          throw e
-        })
-    },
-
-    goToPage (next = true) {
-      this.filter.pageCursor = next ? this.filter.nextPage : this.filter.prevPage
-    },
-
-    setDefaultValues () {
-      this.processing = false
-      this.query = ''
-      this.filter = {}
-      this.namespaceID = NoID
-      this.module = undefined
-      this.options = []
-      this.value = undefined
-    },
-  },
+function setDefaultValues() {
+  processing.value = false
+  query.value = ''
+  filter.query = ''
+  filter.sort = ''
+  filter.limit = 10
+  filter.pageCursor = ''
+  filter.prevPage = ''
+  filter.nextPage = ''
+  namespaceID.value = NoID
+  module.value = undefined
+  options.value = []
+  value.value = undefined
 }
 </script>

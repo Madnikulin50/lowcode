@@ -1,7 +1,6 @@
 <template>
-  <b-button
-    variant="link"
-    class="text-dark font-weight-bold text-decoration-none"
+  <button
+    class="btn btn-link text-dark fw-bold text-decoration-none"
     @click="onClick(format.type, format.attrs)"
   >
     <span :class="activeClasses(format.attrs)">
@@ -14,17 +13,33 @@
         {{ format.label }}
       </span>
     </span>
-  </b-button>
+  </button>
 </template>
 
-<script>
-import base from './base.vue'
+<script setup lang="ts">
+defineOptions({ inheritAttrs: false })
 
-/**
- * Component is used to display simple formatter options such as bold, italic, ...
- */
-export default {
-  name: 'TMarkItem',
-  extends: base,
+const props = defineProps<{
+  editor: any
+  format: any
+  isActive?: any
+  getMarkAttrs?: (...args: any[]) => any
+  currentValue?: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'click', payload: { type: string; attrs: Record<string, any> }): void
+}>()
+
+function onClick(type: string, attrs: Record<string, any>) {
+  emit('click', { type, attrs })
+}
+
+function activeClasses(attrs?: Record<string, any>) {
+  const isActive = props.editor.isActive(props.format.type, attrs)
+  if (isActive) {
+    return ['text-primary']
+  }
+  return undefined
 }
 </script>

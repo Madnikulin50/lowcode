@@ -1,81 +1,72 @@
 <template>
-  <b-dropdown
-    menu-class="text-center bg-white"
-    variant="link"
-    boundary="window"
-    no-caret
-  >
-    <template #button-content>
-      <span class="text-dark font-weight-bold">
+  <div class="dropdown">
+    <button
+      class="btn btn-link dropdown-toggle text-dark fw-bold"
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+    >
+      <span class="text-dark fw-bold">
         <span :class="{ 'text-primary': !!activeType && activeType !== 'left' }">
           <font-awesome-icon
             v-if="activeIcon"
-            :icon="activeIcon"
+            :icon="['fas', activeIcon]"
           />
           <span v-else>
             {{ format.label }}
           </span>
         </span>
       </span>
-    </template>
+    </button>
 
-    <b-dropdown-item-button
-      v-for="v of format.variants"
-      :key="v.variant"
-      @click="$emit('click', { type: 'alignment', attrs: v.attrs })"
-    >
-      <font-awesome-icon
-        v-if="format.icon"
-        :icon="v.icon"
-      />
-      <span v-else>
-        {{ v.label }}
-      </span>
-    </b-dropdown-item-button>
-  </b-dropdown>
+    <ul class="dropdown-menu text-center bg-white">
+      <li
+        v-for="v of format.variants"
+        :key="v.variant"
+      >
+        <button
+          class="dropdown-item"
+          @click="$emit('click', { type: 'alignment', attrs: v.attrs })"
+        >
+          <font-awesome-icon
+            v-if="format.icon"
+            :icon="v.icon"
+          />
+          <span v-else>
+            {{ v.label }}
+          </span>
+        </button>
+      </li>
+    </ul>
+  </div>
 </template>
 
-<script>
-import base from '../TNode/base.vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 
-/**
- * Component is used to display node alignment formatting
- */
-export default {
-  name: 'TNattrAlignment',
+const props = defineProps<{
+  editor: any
+  format: any
+  isActive?: Record<string, any>
+}>()
 
-  extends: base,
+defineEmits<{
+  (e: 'click', payload: { type: string; attrs: Record<string, any> }): void
+}>()
 
-  props: {
-    isActive: {
-      type: Object,
-      required: false,
-      default: () => ({}),
-    },
-  },
+const activeType = computed(() => {
+  const alignments = ['left', 'center', 'right', 'justify']
+  return alignments.find(alignment =>
+    props.editor.isActive({ textAlign: alignment }),
+  )
+})
 
-  computed: {
-    activeType () {
-      const alignments = ['left', 'center', 'right', 'justify']
-
-      return alignments.find(alignment =>
-        this.editor.isActive({ textAlign: alignment }),
-      )
-    },
-
-    activeIcon () {
-      const alignmentMap = {
-        left: 'align-left',
-        center: 'align-center',
-        right: 'align-right',
-        justify: 'align-justify',
-      }
-
-      return alignmentMap[this.activeType] || 'align-left'
-    },
-  },
-}
+const activeIcon = computed(() => {
+  const alignmentMap: Record<string, string> = {
+    left: 'align-left',
+    center: 'align-center',
+    right: 'align-right',
+    justify: 'align-justify',
+  }
+  return alignmentMap[activeType.value] || 'align-left'
+})
 </script>
-
-<style lang="scss">
-</style>

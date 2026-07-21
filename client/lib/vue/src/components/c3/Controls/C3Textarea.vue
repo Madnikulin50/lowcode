@@ -1,25 +1,21 @@
 <template>
-  <b-form-group
-    :label="label"
-  >
-    <b-form-textarea
+  <div class="mb-3">
+    <label class="form-label">{{ label }}</label>
+    <textarea
+      class="form-control"
       :value="value"
-      @update="$emit('update', $event)"
+      @input="emit('update', ($event.target as HTMLTextAreaElement).value)"
     />
-  </b-form-group>
+  </div>
 </template>
 
-<script>
-export default {
-  props: {
-    label: {
-      required: true,
-      type: String,
-    },
-    value: {
-      type: String,
-      default: () => '',
-    },
-  },
-}
+<script setup lang="ts">
+const props = defineProps<{
+  label: string
+  value?: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'update', value: string): void
+}>()
 </script>

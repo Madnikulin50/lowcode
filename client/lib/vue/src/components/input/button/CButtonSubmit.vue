@@ -1,20 +1,16 @@
 <template>
-  <b-button
+  <button
     data-test-id="button-submit"
     type="submit"
-    :variant="variant"
+    :class="[`btn btn-${variant}`, btnSize, block ? 'w-100' : '', buttonClass]"
     :disabled="disabled || processing || success"
-    :size="size"
-    :block="block"
     :title="title"
-    :class="buttonClass"
     @click.prevent="$emit('submit')"
   >
-    <b-spinner
+    <span
       v-if="processing"
       data-test-id="spinner"
-      small
-      class="align-middle"
+      class="spinner-border spinner-border-sm align-middle"
     />
 
     <font-awesome-icon
@@ -29,59 +25,41 @@
     >
       {{ text }}
     </span>
-  </b-button>
+  </button>
 </template>
 
-<script>
-export default {
-  name: 'CButtonSubmit',
+<script setup lang="ts">
+import { computed } from 'vue'
 
-  props: {
-    processing: {
-      type: Boolean,
-    },
-
-    success: {
-      type: Boolean,
-    },
-
-    disabled: {
-      type: Boolean,
-    },
-
-    title: {
-      type: String,
-      default: '',
-    },
-
-    buttonClass: {
-      type: String,
-      default: '',
-    },
-
-    text: {
-      type: String,
-      default: '',
-    },
-
-    loadingText: {
-      type: String,
-      default: '',
-    },
-
-    size: {
-      type: String,
-      default: 'md',
-    },
-
-    block: {
-      type: Boolean,
-    },
-
-    variant: {
-      type: String,
-      default: 'primary',
-    },
-  },
+interface Props {
+  processing?: boolean
+  success?: boolean
+  disabled?: boolean
+  title?: string
+  buttonClass?: string
+  text?: string
+  loadingText?: string
+  size?: string
+  block?: boolean
+  variant?: string
 }
+
+const props = withDefaults(defineProps<Props>(), {
+  processing: false,
+  success: false,
+  disabled: false,
+  title: '',
+  buttonClass: '',
+  text: '',
+  loadingText: '',
+  size: 'md',
+  block: false,
+  variant: 'primary',
+})
+
+defineEmits<{
+  submit: []
+}>()
+
+const btnSize = computed(() => props.size === 'sm' ? 'btn-sm' : props.size === 'lg' ? 'btn-lg' : '')
 </script>

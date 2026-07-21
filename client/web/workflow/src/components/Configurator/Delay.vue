@@ -1,85 +1,55 @@
 <template>
-  <div>
-    <b-card
-      class="flex-grow-1 border-bottom border-light rounded-0"
-    >
-      <b-card-header
-        header-tag="header"
-        class="p-0 mb-3"
-      >
-        <h5
-          class="mb-0"
-        >
-          {{ $t('configurator:configuration') }}
-        </h5>
-      </b-card-header>
-      <b-card-body
-        class="p-0"
-      >
-        <b-form-group
-          :label="$t('configurator:delay.duration.label')"
-          :description="$t('configurator:delay.duration.description')"
-          label-class="text-primary"
-          class="mb-0"
-        >
-          <expression-editor
-            v-model="item.config.arguments[0].expr"
-            font-size="18px"
-            show-line-numbers
-            :show-popout="false"
-            @input="valueChanged"
-          />
-        </b-form-group>
-      </b-card-body>
-    </b-card>
+  <div class="card flex-grow-1 border-bottom border-light rounded-0">
+    <div class="card-header p-0 mb-3">
+      <h5 class="mb-0">{{ t('configurator.configuration') }}</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="mb-0">
+        <label class="text-primary form-label">{{ t('configurator.delay.duration.label') }}</label>
+        <div class="text-muted small mb-2">{{ t('configurator.delay.duration.description') }}</div>
+        <expression-editor
+          v-model="item.config.arguments[0].expr"
+          font-size="18px"
+          show-line-numbers
+          :show-popout="false"
+          @input="valueChanged"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-import base from './base'
-import ExpressionEditor from '../ExpressionEditor'
+<script setup>
+import { watch, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
+import ExpressionEditor from '../ExpressionEditor.vue'
 
-export default {
-  components: {
-    ExpressionEditor,
-  },
+const { t } = useI18n()
 
-  extends: base,
+const props = defineProps({
+  item: { type: Object, default: () => ({}) },
+  edges: { type: Object, default: () => ({}) },
+  outEdges: { type: Number, default: 0 },
+  isSubworkflow: { type: Boolean, default: false },
+})
 
-  watch: {
-    'item.config.stepID': {
-      immediate: true,
-      handler () {
-        let args = [{
-          target: 'offset',
-          type: 'Duration',
-          expr: '',
-        }]
+const emit = defineEmits(['update-value', 'update-default-value'])
 
-        if (this.item.config.arguments && this.item.config.arguments.length) {
-          args = this.item.config.arguments.map(({ target, type, value, expr }) => {
-            return {
-              target,
-              type,
-              expr: expr || (value ? `"${value}"` : ''),
-            }
-          })
-        }
+watch(() => props.item.config.stepID, () => {
+  let args = [{ target: 'offset', type: 'Duration', expr: '' }]
+  if (props.item.config.arguments && props.item.config.arguments.length) {
+    args = props.item.config.arguments.map(({ target, type, value, expr }) => ({
+      target, type, expr: expr || (value ? `"${value}"` : ''),
+    }))
+  }
+  props.item.config.arguments = args
+}, { immediate: true })
 
-        this.$set(this.item.config, 'arguments', args)
-      },
-    },
-  },
-
-  methods: {
-    valueChanged (value) {
-      this.$emit('update-default-value', {
-        value: `Delay workflow execution for ${value}`,
-        force: !this.item.node.value,
-      })
-
-      this.$root.$emit('change-detected')
-    },
-  },
+function valueChanged(value) {
+  emit('update-default-value', {
+    value: `Delay workflow execution for ${value}`,
+    force: !props.item.node.value,
+  })
+  window.dispatchEvent(new CustomEvent('change-detected'))
 }
 </script>

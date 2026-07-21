@@ -1,161 +1,157 @@
 <template>
-  <b-modal
-    v-model="showModal"
-    centered
-    hide-header
-    hide-footer
-    no-close-on-backdrop
-    no-close-on-esc
-    body-class="d-flex flex-column justify-content-center align-items-center gap-2 p-4"
-    @hide="stopCountdown"
+  <div
+    ref="modalRef"
+    class="modal fade"
+    tabindex="-1"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
   >
-    <h5>{{ labels.warning(countdownTime) }}</h5>
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body d-flex flex-column justify-content-center align-items-center gap-2 p-4">
+          <h5>{{ labels.warning(countdownTime) }}</h5>
 
-    <b-button
-      variant="primary"
-      size="lg"
-      @click="extendSession"
-    >
-      {{ labels.extend }}
-    </b-button>
-  </b-modal>
+          <button
+            class="btn btn-primary btn-lg"
+            @click="extendSession"
+          >
+            {{ labels.extend }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { throttle } from 'lodash'
+import { Modal } from 'bootstrap'
 
-export default {
-  name: 'CExtendSession',
-
-  props: {
-    timeout: {
-      type: Number,
-      default: 60,
-    },
-
-    labels: {
-      type: Object,
-      default: () => ({
-        extend: 'Extend Session',
-        warning: (countdownTime) => `You will be logged out in ${countdownTime} seconds`,
-      }),
-    },
-  },
-
-  data () {
-    return {
-      countdownTime: null,
-      countdownTimer: null,
-      lastActivityTime: 0,
-      heartbeatInterval: null,
-      debouncedUpdateActivity: null,
-      showModal: false,
-    }
-  },
-
-  mounted () {
-    this.debouncedUpdateActivity = throttle(this.updateActivity, 5000, { leading: true, trailing: true })
-    this.setupActivityListeners()
-    this.setupHeartbeatMonitoring()
-  },
-
-  beforeDestroy () {
-    clearInterval(this.heartbeatInterval)
-    clearInterval(this.countdownTimer)
-    this.removeActivityListeners()
-    this.debouncedUpdateActivity.cancel()
-  },
-
-  methods: {
-    extendSession () {
-      this.showModal = false
-
-      this.$auth.stopAutoLogout().then(() => {
-        this.setupHeartbeatMonitoring()
-      }).catch((err) => {
-        console.error('Failed to stop auto logout', err)
-        this.$auth.logout()
-      })
-    },
-
-    startCountdown (expiresIn) {
-      this.countdownTime = expiresIn
-
-      this.countdownTimer = setInterval(() => {
-        this.countdownTime--
-
-        if (this.countdownTime <= 0) {
-          clearInterval(this.countdownTimer)
-          this.$auth.logout()
-        }
-      }, 1000)
-    },
-
-    stopCountdown () {
-      if (!this.countdownTimer) {
-        return
-      }
-
-      clearInterval(this.countdownTimer)
-    },
-
-    promptExtendSession () {
-      clearInterval(this.heartbeatInterval)
-
-      this.$auth.startAutoLogout().then((expiresIn) => {
-        this.startCountdown(expiresIn)
-        this.showModal = true
-      }).catch((err) => {
-        console.error('Failed to start auto logout', err)
-        this.$auth.logout()
-      })
-    },
-
-    setupActivityListeners () {
-      // Desktop events
-      window.addEventListener('mousemove', this.debouncedUpdateActivity, { passive: true })
-      window.addEventListener('keypress', this.debouncedUpdateActivity, { passive: true })
-      window.addEventListener('click', this.debouncedUpdateActivity, { passive: true })
-      window.addEventListener('scroll', this.debouncedUpdateActivity, { passive: true })
-
-      // Mobile events
-      window.addEventListener('touchstart', this.debouncedUpdateActivity, { passive: true })
-      window.addEventListener('touchmove', this.debouncedUpdateActivity, { passive: true })
-      window.addEventListener('touchend', this.debouncedUpdateActivity, { passive: true })
-    },
-
-    removeActivityListeners () {
-      // Desktop events
-      window.removeEventListener('mousemove', this.debouncedUpdateActivity)
-      window.removeEventListener('keypress', this.debouncedUpdateActivity)
-      window.removeEventListener('click', this.debouncedUpdateActivity)
-      window.removeEventListener('scroll', this.debouncedUpdateActivity)
-
-      // Mobile events
-      window.removeEventListener('touchstart', this.debouncedUpdateActivity)
-      window.removeEventListener('touchmove', this.debouncedUpdateActivity)
-      window.removeEventListener('touchend', this.debouncedUpdateActivity)
-    },
-
-    updateActivity () {
-      this.lastActivityTime = Date.now()
-    },
-
-    setupHeartbeatMonitoring () {
-      if (this.timeout === 0) {
-        return
-      }
-
-      this.lastActivityTime = Date.now()
-
-      this.heartbeatInterval = setInterval(() => {
-        const secondsSinceLastActivity = Math.floor((Date.now() - this.lastActivityTime) / 1000)
-
-        if (secondsSinceLastActivity > this.timeout) {
-          this.promptExtendSession()
-        }
-      }, 5000)
-    },
-  },
+interface ExtendLabels {
+  extend: string
+  warning: (countdownTime: number) => string
 }
+
+const props = withDefaults(defineProps<{
+  timeout?: number
+  labels?: ExtendLabels
+}>(), {
+  timeout: 60,
+  labels: (): ExtendLabels => ({
+    extend: 'Extend Session',
+    warning: (countdownTime: number) => `You will be logged out in ${countdownTime} seconds`,
+  }),
+})
+
+const countdownTime = ref<number | null>(null)
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+let lastActivityTime = 0
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null
+
+const modalRef = ref<HTMLDivElement | null>(null)
+let modalInstance: Modal | null = null
+
+const { proxy } = getCurrentInstance()!
+const $auth = proxy!.$auth
+
+function updateActivity(): void {
+  lastActivityTime = Date.now()
+}
+
+const debouncedUpdateActivity = throttle(updateActivity, 5000, { leading: true, trailing: true })
+
+function setupActivityListeners(): void {
+  window.addEventListener('mousemove', debouncedUpdateActivity, { passive: true })
+  window.addEventListener('keypress', debouncedUpdateActivity, { passive: true })
+  window.addEventListener('click', debouncedUpdateActivity, { passive: true })
+  window.addEventListener('scroll', debouncedUpdateActivity, { passive: true })
+  window.addEventListener('touchstart', debouncedUpdateActivity, { passive: true })
+  window.addEventListener('touchmove', debouncedUpdateActivity, { passive: true })
+  window.addEventListener('touchend', debouncedUpdateActivity, { passive: true })
+}
+
+function removeActivityListeners(): void {
+  window.removeEventListener('mousemove', debouncedUpdateActivity)
+  window.removeEventListener('keypress', debouncedUpdateActivity)
+  window.removeEventListener('click', debouncedUpdateActivity)
+  window.removeEventListener('scroll', debouncedUpdateActivity)
+  window.removeEventListener('touchstart', debouncedUpdateActivity)
+  window.removeEventListener('touchmove', debouncedUpdateActivity)
+  window.removeEventListener('touchend', debouncedUpdateActivity)
+}
+
+function setupHeartbeatMonitoring(): void {
+  if (props.timeout === 0) return
+  lastActivityTime = Date.now()
+  heartbeatInterval = setInterval(() => {
+    const secondsSinceLastActivity = Math.floor((Date.now() - lastActivityTime) / 1000)
+    if (secondsSinceLastActivity > props.timeout) {
+      promptExtendSession()
+    }
+  }, 5000)
+}
+
+function startCountdown(expiresIn: number): void {
+  countdownTime.value = expiresIn
+  countdownTimer = setInterval(() => {
+    countdownTime.value!--
+    if (countdownTime.value! <= 0) {
+      clearInterval(countdownTimer!)
+      $auth.logout()
+    }
+  }, 1000)
+}
+
+function stopCountdown(): void {
+  if (!countdownTimer) return
+  clearInterval(countdownTimer)
+  countdownTimer = null
+}
+
+function extendSession(): void {
+  if (modalInstance) {
+    modalInstance.hide()
+  }
+  $auth.stopAutoLogout().then(() => {
+    setupHeartbeatMonitoring()
+  }).catch((err: Error) => {
+    console.error('Failed to stop auto logout', err)
+    $auth.logout()
+  })
+}
+
+function promptExtendSession(): void {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval)
+    heartbeatInterval = null
+  }
+  $auth.startAutoLogout().then((expiresIn: number) => {
+    startCountdown(expiresIn)
+    if (modalRef.value) {
+      modalInstance = new Modal(modalRef.value)
+      modalInstance.show()
+    }
+  }).catch((err: Error) => {
+    console.error('Failed to start auto logout', err)
+    $auth.logout()
+  })
+}
+
+onMounted(() => {
+  debouncedUpdateActivity()
+  setupActivityListeners()
+  setupHeartbeatMonitoring()
+})
+
+onBeforeUnmount(() => {
+  if (heartbeatInterval) clearInterval(heartbeatInterval)
+  stopCountdown()
+  removeActivityListeners()
+  debouncedUpdateActivity.cancel()
+  if (modalInstance) {
+    modalInstance.dispose()
+    modalInstance = null
+  }
+})
 </script>

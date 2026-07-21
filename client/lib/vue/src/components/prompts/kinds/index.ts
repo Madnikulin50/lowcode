@@ -6,8 +6,8 @@ import notification from './CPromptNotification.vue'
 import options from './CPromptOptions.vue'
 import { Component } from 'vue'
 import { pType, pVal } from '../utils'
-import { automation, NoID } from '../../../../../../lib/js/dist'
-import { KV } from '../../../../../../lib/js/dist/compose/types/chart/util'
+import { automation, NoID } from '@cortezaproject/corteza-js'
+import { KV } from '@cortezaproject/corteza-js/dist/compose/types/chart/util'
 
 interface Handler {
   (this: Component, input: automation.Vars): void|Promise<void>;

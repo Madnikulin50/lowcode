@@ -1,137 +1,120 @@
 <template>
-  <b-sidebar
-    v-model="isVisible"
-    :title="title"
-    header-class="d-flex align-items-center justify-content-between bg-white pr-2 pl-3 py-3 border-bottom"
-    body-class="d-flex flex-column overflow-hidden bg-white"
-    sidebar-class="reminder-sidebar"
-    bg-variant="white"
-    :backdrop="isMobile"
-    backdrop-variant="white"
-    no-footer
-    right
-    shadow
-    no-close-on-route-change
-    no-close-on-esc
-    width="400px"
+  <div
+    class="offcanvas offcanvas-end reminder-sidebar"
+    :class="{ show: isVisible }"
+    tabindex="-1"
+    data-bs-backdrop="static"
+    :data-bs-scroll="!isMobile"
+    style="width: 400px"
   >
-    <template #header>
-      <h5
-        class="text-primary mb-0"
-      >
+    <div class="offcanvas-header d-flex align-items-center justify-content-between bg-white pe-2 ps-3 py-3 border-bottom">
+      <h5 class="text-primary mb-0">
         <b>{{ title }}</b>
       </h5>
-
-      <b-button
-        variant="outline-light"
-        class="d-flex align-items-center justify-content-center p-2 border-0 text-secondary"
+      <button
+        class="btn btn-outline-light d-flex align-items-center justify-content-center p-2 border-0 text-secondary"
         @click="isVisible = false"
       >
         <font-awesome-icon
           :icon="['fas', 'times']"
           class="h6 mb-0"
         />
-      </b-button>
-    </template>
-
-    <slot />
-  </b-sidebar>
+      </button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column overflow-hidden bg-white">
+      <slot />
+    </div>
+  </div>
+  <div
+    v-if="isMobile && isVisible"
+    class="offcanvas-backdrop fade show"
+  />
 </template>
 
-<script lang="js">
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { throttle } from 'lodash'
 
-export default {
-  props: {
-    title: {
-      type: String,
-      default: '',
-    },
+const props = withDefaults(defineProps<{
+  title?: string
+  visible?: boolean
+}>(), {
+  title: '',
+  visible: false,
+})
 
-    visible: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
-  },
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+}>()
 
-  data () {
-    return {
-      isMobile: false,
-    }
-  },
+const isMobile = ref(false)
 
-  computed: {
-    isVisible: {
-      get () {
-        return this.visible
-      },
+const isVisible = computed({
+  get: () => props.visible,
+  set: (visible: boolean) => emit('update:visible', visible),
+})
 
-      set (visible) {
-        this.$emit('update:visible', visible)
-      },
-    },
-  },
+watch(isVisible, (visible) => {
+  if (visible) {
+    window.dispatchEvent(new CustomEvent('right-sidebar:opened', { detail: 'reminders' }))
+  }
+})
 
-  watch: {
-    isVisible (visible) {
-      if (visible) {
-        this.$root.$emit('right-sidebar:opened', 'reminders')
-      }
-    },
-  },
+onMounted(() => {
+  checkIfMobile()
+  window.addEventListener('resize', checkIfMobile)
+  window.addEventListener('right-sidebar:opened', handleSidebarOpened as EventListener)
+})
 
-  created () {
-    this.$root.$on('right-sidebar:opened', this.handleSidebarOpened)
-  },
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkIfMobile)
+  window.removeEventListener('right-sidebar:opened', handleSidebarOpened as EventListener)
+})
 
-  mounted () {
-    this.checkIfMobile()
-    window.addEventListener('resize', this.checkIfMobile)
-  },
+const checkIfMobile = throttle(() => {
+  isMobile.value = window.innerWidth < 1024
+}, 500)
 
-  beforeDestroy () {
-    this.$root.$off('right-sidebar:opened', this.handleSidebarOpened)
-    window.removeEventListener('resize', this.checkIfMobile)
-  },
-
-  methods: {
-    checkIfMobile: throttle(function () {
-      this.isMobile = window.innerWidth < 1024
-    }, 500),
-
-    handleSidebarOpened (name) {
-      if (name !== 'reminders') {
-        this.isVisible = false
-      }
-    },
-  },
+function handleSidebarOpened(e: CustomEvent) {
+  if (e.detail !== 'reminders') {
+    isVisible.value = false
+  }
 }
 </script>
 
 <style lang="scss">
-.b-sidebar-backdrop {
+.offcanvas-backdrop {
   opacity: 0.75 !important;
 }
 
+.offcanvas.reminder-sidebar {
+  display: none !important;
+}
+
+.offcanvas.reminder-sidebar.show {
+  display: flex !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+
 @media (min-width: 1024px) {
-  .b-sidebar.reminder-sidebar {
+  .offcanvas.reminder-sidebar {
     top: calc(var(--topbar-height) + 0.5rem) !important;
     right: 0.5rem !important;
     height: calc(100% - var(--topbar-height) - 1rem) !important;
     border-radius: 1rem !important;
     border: none !important;
     z-index: 1048 !important;
+  }
 
-    .b-sidebar-header {
-      border-top-left-radius: 1rem !important;
-      border-top-right-radius: 1rem !important;
-    }
+  .offcanvas.reminder-sidebar .offcanvas-header {
+    border-top-left-radius: 1rem !important;
+    border-top-right-radius: 1rem !important;
+  }
 
-    .b-sidebar-body {
-      border-bottom-left-radius: 1rem !important;
-      border-bottom-right-radius: 1rem !important;
-    }
+  .offcanvas.reminder-sidebar .offcanvas-body {
+    border-bottom-left-radius: 1rem !important;
+    border-bottom-right-radius: 1rem !important;
   }
 }
 </style>

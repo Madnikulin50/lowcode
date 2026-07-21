@@ -11,5 +11,5 @@ export default [
     ],
   },
 
-  { path: '*', redirect: { name: 'root' } },
+  { path: '/:pathMatch(.*)*', redirect: { name: 'root' } },
 ]

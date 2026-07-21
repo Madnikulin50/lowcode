@@ -13,69 +13,51 @@
       <div
         v-for="(cmp, i) in components"
         :key="i"
-        class="component ml-2"
-        @click="$emit('select', cmp)"
+        class="component ms-2"
+        @click="emit('select', cmp)"
       >
         {{ cmp.name || cmp.component.name || 'Untitled' }}
-        <b-badge
+        <span
           v-if="cmp.wip"
-          variant="warning"
-          class="float-right"
+          class="badge bg-warning float-end"
         >
           wip
-        </b-badge>
+        </span>
       </div>
-      <component-list
+      <ComponentList
         v-for="(g) in subgroups"
         :key="g"
         :catalogue="catalogue"
         :path="[...path, g]"
         class="my-3"
-        @select="$emit('select', $event)"
+        @select="emit('select', $event)"
       />
     </div>
   </div>
 </template>
-<script>
+
+<script setup lang="ts">
+import { computed } from 'vue'
 import { ExtractComponents, ExtractSubgroups } from './helpers.ts'
 
-export default {
-  name: 'ComponentList',
-  props: {
-    catalogue: {
-      required: true,
-      type: Object,
-    },
+const props = defineProps<{
+  catalogue: Record<string, any>
+  path?: string[]
+}>()
 
-    path: {
-      type: Array,
-      default: () => [],
-    },
-  },
+const emit = defineEmits<{
+  (e: 'select', value: any): void
+}>()
 
-  computed: {
-    // name of the current group
-    root () {
-      return this.path.length === 0
-    },
+const root = computed(() => props.path?.length === 0)
 
-    // name of the current group
-    group () {
-      return this.root ? undefined : this.path[this.path.length - 1]
-    },
+const group = computed(() => root.value ? undefined : props.path?.[props.path.length - 1])
 
-    // returns all groups at this level
-    subgroups () {
-      return ExtractSubgroups(this.catalogue, ...this.path)
-    },
+const subgroups = computed(() => ExtractSubgroups(props.catalogue, ...(props.path || [])))
 
-    components () {
-      // return ExtractComponents(this.catalogue, ...this.path)
-      return ExtractComponents(this.catalogue, ...this.path)
-    },
-  },
-}
+const components = computed(() => ExtractComponents(props.catalogue, ...(props.path || [])))
 </script>
+
 <style lang="scss" scoped>
 .component {
   cursor: pointer;

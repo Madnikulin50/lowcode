@@ -5,46 +5,51 @@
       class="text-break"
       v-html="message"
     />
-
-    <b-form-group
-      :label="label"
-      label-class="text-primary"
-    >
-      <c-input-date-time
-        v-if="type === 'date' || type === 'time' || type === 'datetime'"
-        v-model="value"
-        :no-date="type === 'time'"
-        :no-time="type === 'date'"
-        :disabled="loading"
-        :labels="{
-          clear: $t('general:label.clear'),
-          none: $t('general:label.none'),
-          now: $t('general:label.now'),
-          today: $t('general:label.today'),
-        }"
-      />
-      <b-input
-        v-else
-        v-model="value"
-        :type="type"
-        :disabled="loading"
-      />
-    </b-form-group>
-
-    <b-button
+    <label class="text-primary">{{ label }}</label>
+    <c-input-date-time
+      v-if="type === 'date' || type === 'time' || type === 'datetime'"
+      v-model="value"
+      :no-date="type === 'time'"
+      :no-time="type === 'date'"
       :disabled="loading"
-      variant="primary"
-      class="ml-auto"
-      @click="$emit('submit', { value: { '@value': value, '@type': 'String' }})"
+      :labels="labels"
+    />
+    <input
+      v-else
+      v-model="value"
+      class="form-control"
+      :type="type"
+      :disabled="loading"
+    >
+    <button
+      :disabled="loading"
+      class="btn btn-primary ms-auto"
+      @click="emit('submit', { value: { '@value': value, '@type': 'String' }})"
     >
       {{ pVal('buttonLabel', 'Submit') }}
-    </b-button>
+    </button>
   </div>
 </template>
 
-<script lang="js">
-import base from './base.vue'
+<script setup lang="ts">
+import { ref, computed, onBeforeMount } from 'vue'
+import { getCurrentInstance } from 'vue'
+import { pVal as _pVal, pType as _pType } from '../utils'
 import { CInputDateTime } from '../../input'
+
+const { $t } = getCurrentInstance()!.appContext.config.globalProperties as any
+
+const props = withDefaults(defineProps<{
+  loading?: boolean
+  payload?: Record<string, any>
+}>(), {
+  loading: false,
+  payload: () => ({}),
+})
+
+const emit = defineEmits<{
+  (e: 'submit', value: Record<string, any>): void
+}>()
 
 const validTypes = [
   'text',
@@ -57,35 +62,35 @@ const validTypes = [
   'datetime',
 ]
 
-export default {
-  name: 'CPromptInput',
+const value = ref<any>()
 
-  components: {
-    CInputDateTime,
-  },
+const message = computed(() => _pVal(props.payload, 'message', ''))
+const label = computed(() => _pVal(props.payload, 'label', ''))
 
-  extends: base,
+const type = computed(() => {
+  const t = pVal('type', 'text')
+  if (validTypes.indexOf(t) === -1) {
+    return 'text'
+  }
+  return t
+})
 
-  data () {
-    return {
-      value: undefined,
-    }
-  },
+const labels = computed(() => ({
+  clear: $t('label.clear'),
+  none: $t('label.none'),
+  now: $t('label.now'),
+  today: $t('label.today'),
+}))
 
-  computed: {
-    type () {
-      const t = this.pVal('type', 'text')
-      if (validTypes.indexOf(t) === -1) {
-        return 'text'
-      }
-
-      return t
-    },
-  },
-
-  beforeMount () {
-    this.value = this.pVal('inputValue')
-  },
-
+function pVal(k: string, def?: any) {
+  return _pVal(props.payload, k, def)
 }
+
+function pType(k: string, def?: any) {
+  return _pType(props.payload, k, def)
+}
+
+onBeforeMount(() => {
+  value.value = pVal('inputValue')
+})
 </script>

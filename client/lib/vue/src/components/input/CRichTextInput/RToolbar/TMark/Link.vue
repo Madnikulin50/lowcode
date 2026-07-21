@@ -1,114 +1,109 @@
 <template>
-  <div id="link-popover-container">
-    <b-button
+  <div id="link-popover-container" class="position-relative">
+    <button
       id="link-popover"
-      variant="link"
-      class="text-dark font-weight-bold text-decoration-none"
+      class="btn btn-link text-dark fw-bold text-decoration-none"
       @click="showPopover"
     >
       <span :class="activeClasses(format.attrs)">
         <font-awesome-icon icon="link" />
       </span>
-    </b-button>
+    </button>
 
-    <b-popover
-      v-if="currentValue"
+    <div
+      v-if="visible"
       ref="popover"
-      :show.sync="visible"
-      triggers="focus"
-      target="link-popover"
-      placement="auto"
-      container="link-popover-container"
-      custom-class="bg-white"
+      class="link-popover-dropdown"
     >
-      <b-input-group style="min-width: 250px;">
-        <b-form-input
+      <div class="input-group" style="min-width: 250px;">
+        <input
           v-model="attrs.href"
           type="url"
+          class="form-control"
           autofocus
           :placeholder="labels.urlPlaceholder"
           @keydown.enter.prevent.stop="link"
           @keydown.esc.prevent.stop="close"
         />
-        <b-input-group-append>
-          <b-button
-            variant="outline-success"
+        <div class="input-group-append">
+          <button
+            class="btn btn-outline-success"
             @click="link"
           >
             {{ labels.ok }}
-          </b-button>
-        </b-input-group-append>
-      </b-input-group>
-    </b-popover>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-import base from './base.vue'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 
-/**
- * Component is used to display link formatters. It provides an interface to
- * input the URL that should be applied.
- */
-export default {
-  name: 'TMarkLink',
-  extends: base,
+const props = defineProps<{
+  editor: any
+  format: any
+  isActive?: any
+  getMarkAttrs?: (...args: any[]) => any
+  currentValue?: string
+  labels: Record<string, any>
+}>()
 
-  props: {
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
+const emit = defineEmits<{
+  (e: 'click', payload: { type: string; attrs: Record<string, any> }): void
+}>()
 
-  data () {
-    return {
-      visible: false,
-      attrs: { href: null, target: '_self' },
-    }
-  },
+const visible = ref(false)
+const attrs = ref<{ href: string | null; target: string }>({ href: null, target: '_self' })
 
-  computed: {
-    /**
-     * Does a simple check if entered URL is valid.
-     * @todo Improve this
-     * @returns {Boolean}
-     */
-    urlValid () {
-      if (!this.attrs.href) {
-        return false
-      }
-      return !!this.attrs.href
-    },
-  },
+const urlValid = computed(() => {
+  if (!attrs.value.href) {
+    return false
+  }
+  return !!attrs.value.href
+})
 
-  methods: {
-    /**
-     * Helper to show the popup & determine if a link already exists
-     */
-    showPopover () {
-      if (this.currentValue) {
-        this.visible = true
-        this.attrs = { ...this.getMarkAttrs(this.format.type) }
-      }
-    },
-
-    /**
-     * Helper to submit the given link
-     */
-    link () {
-      this.onClick(this.format.type, this.attrs)
-      this.close()
-    },
-
-    /**
-     * Helper to close the popup & reset the state
-     */
-    close () {
-      this.attrs.href = null
-      this.visible = false
-    },
-  },
+function showPopover() {
+  if (props.currentValue) {
+    visible.value = true
+    attrs.value = { ...(props.getMarkAttrs ? props.getMarkAttrs(props.format.type) : {}), target: '_self' }
+  }
 }
 
+function link() {
+  onClick(props.format.type, attrs.value)
+  close()
+}
+
+function close() {
+  attrs.value.href = null
+  visible.value = false
+}
+
+function onClick(type: string, attrs: Record<string, any>) {
+  emit('click', { type, attrs })
+}
+
+function activeClasses(attrs?: Record<string, any>) {
+  const isActive = props.editor.isActive(props.format.type, attrs)
+  if (isActive) {
+    return ['text-primary']
+  }
+  return undefined
+}
 </script>
+
+<style lang="scss">
+.link-popover-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1060;
+  background: var(--white, #fff);
+  border: 1px solid var(--light, #f8f9fa);
+  border-radius: 0.25rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  padding: 0.5rem;
+}
+</style>

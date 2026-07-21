@@ -1,33 +1,35 @@
 <template>
-  <b-form-select
+  <select
+    class="form-select w-auto"
     v-bind="options"
     :value="null"
-    class="w-auto"
-    @change="$emit('action', $event)"
+    @change="emit('action', ($event.target as HTMLSelectElement).value)"
   >
-    <template #first>
-      <option
-        :value="null"
-        disabled
-        v-html="label"
-      />
-    </template>
-
     <option
-      v-for="(opt, i) in options.items || []"
+      :value="null"
+      disabled
+      v-html="label"
+    />
+    <option
+      v-for="(opt, i) in options?.items || []"
       :key="i"
       v-bind="opt"
       :value="opt.value"
       v-html="opt.label"
     />
-  </b-form-select>
+  </select>
 </template>
 
-<script lang="js">
-import base from './base.vue'
+<script setup lang="ts">
+withDefaults(defineProps<{
+  options?: Record<string, any>
+  label?: string
+}>(), {
+  options: () => ({}),
+  label: undefined,
+})
 
-export default {
-  extends: base,
-}
-
+const emit = defineEmits<{
+  (e: 'action', value?: any): void
+}>()
 </script>

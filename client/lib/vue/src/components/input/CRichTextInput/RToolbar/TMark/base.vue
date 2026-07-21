@@ -1,57 +1,25 @@
-<script>
-/**
- * Defines common props, methods between different toolbar item types
- */
-export default {
-  props: {
-    editor: {
-      type: Object,
-      required: true,
-      default: () => ({}),
-    },
-    format: {
-      type: Object,
-      required: true,
-      default: () => ({}),
-    },
-    isActive: {
-      type: Object,
-      required: false,
-      default: () => ({}),
-    },
-    getMarkAttrs: {
-      type: Function,
-      required: false,
-      default: () => {},
-    },
-    currentValue: {
-      type: String,
-      default: '',
-    },
-  },
-  methods: {
-    /**
-     * Helper method to emit format selection
-     * @param {String} type Format's type
-     * @param {Object} attrs Format's extra attributes
-     */
-    onClick (type, attrs) {
-      this.$emit('click', { type, attrs })
-    },
+<script setup lang="ts">
+const props = defineProps<{
+  editor: Record<string, any>
+  format: Record<string, any>
+  isActive?: Record<string, any>
+  getMarkAttrs?: Function
+  currentValue?: string
+}>()
 
-    /**
-     * Helper method to determine if given format is active or not.
-     * When attrs is provided, it will check for that exact match
-     * @param {Object|undefined} attrs Format's extra attributes
-     * @returns {Array|undefined}
-     */
-    activeClasses (attrs) {
-      const isActive = this.editor.isActive(this.format.type, attrs)
-      if (isActive) {
-        return ['text-primary']
-      }
-      return undefined
-    },
-  },
+const emit = defineEmits<{
+  (e: 'click', value: { type: string; attrs?: Record<string, any> }): void
+}>()
+
+function onClick(type: string, attrs?: Record<string, any>) {
+  emit('click', { type, attrs })
+}
+
+function activeClasses(attrs?: Record<string, any>) {
+  const isActive = props.editor.isActive(props.format.type, attrs)
+  if (isActive) {
+    return ['text-primary']
+  }
+  return undefined
 }
 </script>

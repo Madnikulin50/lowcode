@@ -1,36 +1,38 @@
 <template>
   <e-charts
-    ref="chart"
+    ref="chartRef"
     :option="chart"
     :theme="theme"
     autoresize
     class="position-absolute w-100 h-100 overflow-hidden"
-    v-on="$listeners"
+    v-bind="$attrs"
   />
 </template>
 
-<script>
-import { shared } from '../../../../../lib/js/dist'
+<script setup lang="ts">
+import { computed, ref, onBeforeUnmount, useAttrs } from 'vue'
+import { shared } from '@cortezaproject/corteza-js'
 
-export default {
-  props: {
-    chart: {
-      type: shared.Chart,
-      required: true,
-    },
-  },
+defineOptions({
+  inheritAttrs: false,
+})
 
-  computed: {
-    theme () {
-      const { darkMode } = this.chart || {}
-      return darkMode ? 'dark' : 'light'
-    },
-  },
+const props = defineProps<{
+  chart: shared.Chart
+}>()
 
-  beforeDestroy () {
-    if (this.$refs.chart) {
-      this.$refs.chart.dispose()
-    }
-  },
-}
+const attrs = useAttrs()
+
+const chartRef = ref<{ dispose: () => void } | null>(null)
+
+const theme = computed(() => {
+  const { darkMode } = props.chart || {}
+  return darkMode ? 'dark' : 'light'
+})
+
+onBeforeUnmount(() => {
+  if (chartRef.value) {
+    chartRef.value.dispose()
+  }
+})
 </script>

@@ -1,47 +1,12 @@
-<script lang="js">
-export default {
-  props: {
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
-
-    src: {
-      required: true,
-      type: [String, Object],
-      default: undefined,
-    },
-
-    mime: {
-      type: String,
-      default: undefined,
-    },
-
-    meta: {
-      type: Object,
-      default: () => ({}),
-    },
-
-    name: {
-      type: String,
-      default: null,
-    },
-
-    previewStyle: {
-      type: Object,
-      default: () => ({}),
-    },
-
-    previewClass: {
-      type: Array,
-      default: () => [],
-    },
-
-    inline: {
-      type: Boolean,
-      default: false,
-    },
-  },
-}
-
+<script setup lang="ts">
+defineProps<{
+  labels?: Record<string, any>
+  src?: string | Record<string, any>
+  mime?: string
+  meta?: Record<string, any>
+  name?: string | null
+  previewStyle?: Record<string, any>
+  previewClass?: any[]
+  inline?: boolean
+}>()
 </script>

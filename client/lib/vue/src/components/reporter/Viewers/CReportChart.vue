@@ -1,74 +1,52 @@
 <template>
   <div class="d-flex h-100 position-relative">
-    <c-chart
+    <CChart
       v-if="chart"
       :chart="chart"
       class="flex-fill p-1"
     />
   </div>
 </template>
-<script>
-import base from './base.vue'
+
+<script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue'
 import { CChart } from '../../chart/index.ts'
 
-export default {
+const props = defineProps<{
+  displayElement: any
+  labels?: Record<string, any>
+}>()
 
-  components: {
-    CChart,
-  },
-  extends: base,
+const dataframes = computed(() => props.displayElement?.dataframes || [])
+const options = computed(() => props.displayElement?.options || undefined)
 
-  title: 'CReportChart',
+const chart = ref<any>(undefined)
 
-  data () {
-    return {
-      chart: undefined,
-    }
-  },
+watch(dataframes, () => {
+  nextTick(() => renderChart())
+}, { deep: true, immediate: true })
 
-  watch: {
-    dataframes: {
-      deep: true,
-      immediate: true,
-      handler () {
-        this.$nextTick(() => {
-          this.renderChart()
-        })
-      },
-    },
+watch(options, () => {
+  chart.value = undefined
+  nextTick(() => renderChart())
+}, { deep: true })
 
-    options: {
-      deep: true,
-      handler () {
-        this.chart = undefined
+function renderChart() {
+  const meta = {
+    themeVariables: getThemeVariables(),
+  }
+  if (options.value?.getChartConfiguration) {
+    chart.value = options.value.getChartConfiguration(dataframes.value, meta)
+  }
+}
 
-        this.$nextTick(() => {
-          this.renderChart()
-        })
-      },
-    },
-  },
-
-  methods: {
-    renderChart () {
-      const meta = {
-        themeVariables: this.getThemeVariables(),
-      }
-
-      this.chart = this.options.getChartConfiguration(this.dataframes, meta)
-    },
-
-    getThemeVariables () {
-      const getCssVariable = (variableName) => {
-        return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
-      }
-
-      // Turn below into an object with key value pairs
-      return ['white', 'black', 'primary', 'secondary', 'success', 'warning', 'danger', 'light', 'extra-light', 'dark', 'font-regular'].reduce((acc, variable) => {
-        acc[variable] = getCssVariable(`--${variable}`)
-        return acc
-      }, {})
-    },
-  },
+function getThemeVariables() {
+  const getCssVariable = (variableName: string) => {
+    return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
+  }
+  return ['white', 'black', 'primary', 'secondary', 'success', 'warning', 'danger', 'light', 'extra-light', 'dark', 'font-regular'].reduce((acc: Record<string, string>, variable) => {
+    acc[variable] = getCssVariable(`--${variable}`)
+    return acc
+  }, {})
 }
 </script>

@@ -1,9 +1,9 @@
 <template>
   <div>
     <div class="d-flex align-items-center">
-      <b-button
-        :style="`color: ${viewColor}; fill: ${viewColor};`"
-        class="p-0 rounded-circle bg-white border-white shadow-none"
+      <button
+        class="btn p-0 rounded-circle bg-white border-white shadow-none"
+        :style="`color: ${modelValue}; fill: ${modelValue};`"
         @click="toggleMenu"
       >
         <svg
@@ -47,261 +47,189 @@
             r="16"
           />
         </svg>
-      </b-button>
+      </button>
       <span
         v-if="showText"
         class="ml-2"
       >
-        {{ value }}
+        {{ modelValue }}
       </span>
     </div>
 
-    <b-modal
-      :visible="showModal"
-      :title="translations.modalTitle"
-      centered
-      size="md"
-      :hide-header="!Boolean(translations.modalTitle)"
-      body-class="p-0"
-      no-fade
-      @hide="closeMenu"
-    >
-      <chrome
-        :value="currentColor"
-        class="w-100 shadow-none"
-        @input="updateColor"
-      />
-
+    <Teleport to="body">
       <div
-        v-if="themes.length > 0"
-        class="d-flex flex-column border-top p-3 gap-2"
+        v-if="showModal"
+        class="modal fade show d-block"
+        tabindex="-1"
       >
-        <b-form-group
-          v-for="theme in themes"
-          :key="theme.id"
-          :label="translations[theme.id]"
-          label-class="text-primary"
-          class="mb-0"
-        >
-          <div
-            class="d-flex flex-wrap border"
-          >
-            <b-button
-              v-for="variable in themeVariables"
-              :key="variable.key"
-              v-b-tooltip.noninteractive.hover="{ title: variable.label, boundary: 'body' }"
-              class="swatch flex-grow-1 rounded-0"
-              :style="{ backgroundColor: theme.values[variable.key], borderColor: theme.values[variable.key] }"
-              @click="setColor(theme.values[variable.key], variable.key)"
-            />
+        <div class="modal-dialog modal-dialog-centered modal-md">
+          <div class="modal-content">
+            <div
+              v-if="translations.modalTitle"
+              class="modal-header"
+            >
+              <h5 class="modal-title">{{ translations.modalTitle }}</h5>
+              <button
+                type="button"
+                class="btn-close"
+                @click="closeMenu"
+              />
+            </div>
+
+            <div class="modal-body p-0">
+              <chrome
+                :model-value="currentColor"
+                class="w-100 shadow-none"
+                @update:model-value="updateColor"
+              />
+
+              <div
+                v-if="themes.length > 0"
+                class="d-flex flex-column border-top p-3 gap-2"
+              >
+                <div
+                  v-for="theme in themes"
+                  :key="theme.id"
+                  class="mb-3"
+                >
+                  <label class="form-label text-primary">
+                    {{ translations[theme.id] }}
+                  </label>
+                  <div class="d-flex flex-wrap border">
+                    <button
+                      v-for="variable in themeVariables"
+                      :key="variable.key"
+                      :title="variable.label"
+                      class="swatch flex-grow-1 rounded-0 btn"
+                      :style="{ backgroundColor: theme.values[variable.key], borderColor: theme.values[variable.key] }"
+                      @click="setColor(theme.values[variable.key])"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button
+                v-if="defaultValue"
+                class="btn btn-light"
+                @click="setColor()"
+              >
+                {{ translations.defaultBtnLabel || 'Default' }}
+              </button>
+              <slot name="footer" />
+
+              <button
+                class="btn btn-outline-light ml-auto text-primary border-0"
+                @click="closeMenu"
+              >
+                {{ translations.cancelBtnLabel || 'Cancel' }}
+              </button>
+
+              <button
+                class="btn btn-primary"
+                @click="saveColor"
+              >
+                {{ translations.saveBtnLabel || 'Save' }}
+              </button>
+            </div>
           </div>
-        </b-form-group>
+        </div>
       </div>
-
-      <template #modal-footer>
-        <b-button
-          v-if="defaultValue"
-          variant="outline-secondary"
-          @click="setColor()"
-        >
-          {{ translations.defaultBtnLabel || 'Default' }}
-        </b-button>
-        <slot name="footer" />
-
-        <b-button
-          variant="outline-light"
-          class="ml-auto text-primary border-0"
-          @click="closeMenu"
-        >
-          {{ translations.cancelBtnLabel || 'Cancel' }}
-        </b-button>
-
-        <b-button
-          variant="primary"
-          @click="saveColor"
-        >
-          {{ translations.saveBtnLabel || 'Save' }}
-        </b-button>
-      </template>
-    </b-modal>
+      <div
+        v-if="showModal"
+        class="modal-backdrop fade show"
+        @click="closeMenu"
+      />
+    </Teleport>
   </div>
 </template>
 
-<script>
-import {Chrome} from 'vue-color'
-import {debounce} from 'lodash'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { ChromePicker as Chrome } from 'vue-color'
+import { debounce } from 'lodash'
 
-export default {
-  name: 'CInputColorPicker',
+const props = withDefaults(defineProps<{
+  modelValue?: string
+  defaultValue?: string
+  translations?: Record<string, string>
+  width?: string
+  height?: string
+  showText?: boolean
+  themeSettings?: any[]
+  themeVariables?: { key: string; label: string }[]
+}>(), {
+  modelValue: '#000000FF',
+  defaultValue: '',
+  translations: () => ({}),
+  width: '32px',
+  height: '32px',
+  showText: true,
+  themeSettings: () => [],
+  themeVariables: () => [
+    { key: 'white', label: 'White' },
+    { key: 'black', label: 'Black' },
+    { key: 'primary', label: 'Primary' },
+    { key: 'secondary', label: 'Secondary' },
+    { key: 'success', label: 'Success' },
+    { key: 'warning', label: 'Warning' },
+    { key: 'danger', label: 'Danger' },
+    { key: 'light', label: 'Light' },
+    { key: 'extra-light', label: 'Extra light' },
+  ],
+})
 
-  components: {
-    Chrome,
-  },
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
 
-  props: {
-    value: {
-      type: String,
-      default: 'black',
-    },
+const showModal = ref(false)
+const currentColor = ref(props.modelValue)
 
-    defaultValue: {
-      type: String,
-      default: '',
-    },
+const themes = computed(() =>
+  props.themeSettings
+    .filter((theme: any) => theme.id !== 'general')
+    .map((theme: any) => ({
+      id: theme.id,
+      values: JSON.parse(theme.values),
+    })),
+)
 
-    translations: {
-      type: Object,
-      default: () => ({}),
-    },
+watch(() => props.modelValue, (value) => {
+  currentColor.value = value
+  if (!value && props.defaultValue) {
+    emit('update:modelValue', props.defaultValue)
+  }
+}, { immediate: true })
 
-    width: {
-      type: String,
-      default: '32px',
-    },
+const updateColor = debounce(function ({ hex8 = '' }) {
+  currentColor.value = hex8
+}, 300)
 
-    height: {
-      type: String,
-      default: '32px',
-    },
+function setColor(defaultColor = props.defaultValue) {
+  currentColor.value = defaultColor
+}
 
-    showText: {
-      type: Boolean,
-      default: true,
-    },
+function saveColor() {
+  emit('update:modelValue', currentColor.value)
+  closeMenu()
+}
 
-    themeSettings: {
-      type: Array,
-      default: () => [],
-    },
+function toggleMenu() {
+  if (showModal.value) {
+    closeMenu()
+  } else {
+    openMenu()
+  }
+}
 
-    themeVariables: {
-      type: Array,
-      default: () => [
-        {
-          key: 'white',
-          label: 'White',
-        },
-        {
-          key: 'black',
-          label: 'Black',
-        },
-        {
-          key: 'primary',
-          label: 'Primary',
-        },
-        {
-          key: 'secondary',
-          label: 'Secondary',
-        },
-        {
-          key: 'success',
-          label: 'Success',
-        },
-        {
-          key: 'warning',
-          label: 'Warning',
-        },
-        {
-          key: 'danger',
-          label: 'Danger',
-        },
-        {
-          key: 'light',
-          label: 'Light',
-        },
-        {
-          key: 'extra-light',
-          label: 'Extra light',
-        },
-      ],
-    },
-  },
+function openMenu() {
+  showModal.value = true
+}
 
-  data () {
-    return {
-      showModal: false,
-      currentColor: '',
-      colorValue: ''
-    }
-  },
-
-  computed: {
-    viewColor () {
-      return this.colorFromValue(this.value)
-    },
-    themes () {
-      return this.themeSettings
-        .filter((theme) => theme.id !== 'general') // remove general theme
-        .map((theme) => {
-          return {
-            id: theme.id,
-            values: JSON.parse(theme.values),
-          }
-        })
-    },
-  },
-
-
-
-  watch: {
-    value: {
-      immediate: true,
-      handler: function (value) {
-        this.currentValue = value
-
-        this.currentColor = this.colorFromValue(value)
-
-        if (!value && this.defaultValue) {
-          this.$emit('input', this.defaultValue)
-        }
-      },
-    },
-  },
-
-  methods: {
-    colorFromValue (value) {
-      if (value[0] === "#") {
-        return value
-      }
-      return this.themes[0].values[value] || value
-    },
-
-    updateColor: debounce(function ({ hex8 = '' }) {
-      if (this.currentColor !== hex8) {
-        this.currentColor = hex8
-        this.currentValue = hex8
-      }
-    }, 300),
-
-    setColor (color = this.defaultValue, key) {
-      if (key === undefined) {
-        key = color
-      }
-      this.currentColor = color
-      this.currentValue = key
-    },
-
-    saveColor () {
-       this.$emit('input', this.currentValue)
-      this.closeMenu()
-    },
-
-    toggleMenu () {
-      if (this.showModal) {
-        this.closeMenu()
-      } else {
-        this.openMenu()
-      }
-    },
-
-    openMenu () {
-      this.showModal = true
-    },
-
-    closeMenu () {
-      this.showModal = false
-    },
-  },
+function closeMenu() {
+  showModal.value = false
 }
 </script>
 

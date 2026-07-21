@@ -1,123 +1,147 @@
 <template>
-  <b-modal
-    v-model="isOpened"
-    size="lg"
-    lazy
-    :hide-footer="!current"
-    :title="current ? current.title : 'Workflow prompts'"
-    :busy="isLoading"
-    footer-class="d-flex"
-    no-fade
-    @hide="deactivate()"
+  <div
+    ref="modalRef"
+    class="modal fade"
+    tabindex="-1"
+    aria-hidden="true"
   >
-    <component
-      :is="current.component"
-      v-if="current"
-      :payload="current.prompt.payload"
-      :loading="isLoading"
-      @submit="resume({ input: $event, prompt: current.prompt })"
-    />
-
-    <div
-      v-else
-    >
-      <div
-        v-for="({ key, title, age, prompt }) in list"
-        :key="key"
-        class="d-flex flex-grow-1 align-items-baseline mb-2"
-      >
-        <a
-          class="p-0 mr-auto"
-          @click="activate(prompt)"
-        >
-          {{ title }} -
-          <time
-            class="muted small"
-            :datetime="prompt.createdAt"
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            {{ current ? current.title : 'Workflow prompts' }}
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            @click="deactivate()"
+          />
+        </div>
+        <div class="modal-body">
+          <div
+            v-if="isLoading"
+            class="d-flex justify-content-center py-3"
           >
-            {{ age }}
-          </time>
-        </a>
+            <span class="spinner-border" />
+          </div>
+
+          <component
+            :is="current.component"
+            v-else-if="current"
+            :payload="current.prompt.payload"
+            :loading="isLoading"
+            @submit="resume({ input: $event, prompt: current.prompt })"
+          />
+
+          <div v-else>
+            <div
+              v-for="({ key, title, age, prompt }) in list"
+              :key="key"
+              class="d-flex flex-grow-1 align-items-baseline mb-2"
+            >
+              <a
+                class="p-0 ms-auto"
+                @click="activate(prompt)"
+              >
+                {{ title }} -
+                <time
+                  class="muted small"
+                  :datetime="prompt.createdAt"
+                >
+                  {{ age }}
+                </time>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="current"
+          class="modal-footer d-flex"
+        >
+          <button
+            class="btn btn-link ms-auto"
+            @click="activate(true)"
+          >
+            &laquo; Back to list
+          </button>
+        </div>
       </div>
     </div>
-
-    <template
-      v-if="current"
-      #modal-footer
-    >
-      <b-button
-        variant="link"
-        class="mr-auto"
-        @click="activate(true)"
-      >
-        &laquo; Back to list
-      </b-button>
-    </template>
-  </b-modal>
+  </div>
 </template>
-<script lang="js">
-import { mapGetters, mapActions } from 'vuex'
+
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useWfPromptsStore } from '../../store/wf-prompts'
 import definitions from './kinds/index.ts'
 import { pVal } from './utils.ts'
 import moment from 'moment'
+import * as bootstrap from 'bootstrap'
 
-export default {
-  name: 'CPromptModal',
-  computed: {
-    ...mapGetters({
-      isLoading: 'wfPrompts/isLoading',
-      isActive: 'wfPrompts/isActive',
-      prompts: 'wfPrompts/all',
-    }),
+const wfPrompts = useWfPromptsStore()
 
-    isOpened: {
-      get () {
-        return this.isActive
-      },
+const modalRef = ref<HTMLDivElement>()
+let bsModal: bootstrap.Modal | null = null
 
-      set (open) {
-        if (!open) {
-          this.deactivate()
-        } else {
-          this.activate()
-        }
-      },
-    },
+const isLoading = computed(() => wfPrompts.loading)
+const isActive = computed(() => wfPrompts.active !== false)
+const prompts = computed(() => wfPrompts.prompts)
 
-    list () {
-      return this.prompts
-        .filter(({ ref }) => !!definitions[ref] && !!definitions[ref].component)
-        .map(prompt => ({ ...definitions[prompt.ref], prompt }))
-        .filter(({ passive }) => !passive)
-        .map(p => ({
-          key: p.prompt.stateID,
-          title: pVal(p.prompt.payload, 'title', 'Workflow prompt'),
-          age: moment(p.prompt.createdAt).fromNow(),
-          ...p,
-        }))
-    },
+const list = computed(() => prompts.value
+  .filter(({ ref }: any) => !!definitions[ref] && !!definitions[ref].component)
+  .map((prompt: any) => ({ ...definitions[prompt.ref], prompt }))
+  .filter(({ passive }: any) => !passive)
+  .map((p: any) => ({
+    key: p.prompt.stateID,
+    title: pVal(p.prompt.payload, 'title', 'Workflow prompt'),
+    age: moment(p.prompt.createdAt).fromNow(),
+    ...p,
+  }))
+)
 
-    current () {
-      const c = this.$store.getters['wfPrompts/current']
-      if (!c) {
-        return undefined
-      }
+const current = computed(() => {
+  if (typeof wfPrompts.active === 'boolean') return undefined
+  const c = wfPrompts.active
+  if (!c) return undefined
+  return list.value.find(({ prompt }: any) => prompt.stateID === c.stateID)
+})
 
-      return this.list.find(({ prompt }) => prompt.stateID === c.stateID)
-    },
-  },
-
-  methods: {
-    ...mapActions({
-      remove: 'wfPrompts/remove',
-      resume: 'wfPrompts/resume',
-      activate: 'wfPrompts/activate',
-      deactivate: 'wfPrompts/deactivate',
-    }),
-
-    clear () {
-      this.deactivate()
-    },
-  },
+function remove(prompt: any) {
+  wfPrompts.remove(prompt)
 }
+
+function resume(values: any) {
+  wfPrompts.resume(values)
+}
+
+function activate(prompt?: any) {
+  wfPrompts.activate(prompt)
+}
+
+function deactivate() {
+  wfPrompts.deactivate()
+}
+
+function clear() {
+  deactivate()
+}
+
+watch(isActive, (active) => {
+  if (active) {
+    bsModal?.show()
+  } else {
+    bsModal?.hide()
+  }
+})
+
+onMounted(() => {
+  if (modalRef.value) {
+    bsModal = new bootstrap.Modal(modalRef.value, { backdrop: 'static' })
+    modalRef.value.addEventListener('hidden.bs.modal', () => deactivate())
+  }
+})
+
+onBeforeUnmount(() => {
+  bsModal?.dispose()
+})
 </script>

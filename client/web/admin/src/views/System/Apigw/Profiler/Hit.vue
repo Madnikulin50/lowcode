@@ -1,13 +1,7 @@
 <template>
-  <b-container
-    class="pt-2 pb-3"
-  >
-    <c-content-header
-      :title="$t('hit.title')"
-    >
-      <span
-        class="text-nowrap"
-      />
+  <div class="container pt-2 pb-3">
+    <c-content-header :title="$t('hit.title')">
+      <span class="text-nowrap" />
     </c-content-header>
 
     <c-profiler-hit-info
@@ -16,76 +10,50 @@
       :can-create="canCreate"
       :hit="hit"
     />
-  </b-container>
+  </div>
 </template>
 
-<script>
-import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useStore } from 'corteza-webapp-admin/src/store'
+import { useEditorHelpers } from 'corteza-webapp-admin/src/mixins/editorHelpers'
 import CProfilerHitInfo from 'corteza-webapp-admin/src/components/Apigw/Profiler/CProfilerHitInfo'
-import { mapGetters } from 'vuex'
 
-export default {
-  components: {
-    CProfilerHitInfo,
-  },
+const { t } = useI18n()
+const $route = useRoute()
+const store = useStore()
+const { incLoader, decLoader } = useEditorHelpers()
 
-  i18nOptions: {
-    namespaces: ['system.apigw'],
-    keyPrefix: 'profiler',
-  },
+const hit = ref({})
+const info = reactive({ processing: false, success: false })
 
-  mixins: [
-    editorHelpers,
-  ],
+const canCreate = computed(() => store.rbac.can('system/', 'apigw-route.create'))
 
-  data () {
-    return {
-      hit: {},
-      info: {
-        processing: false,
-        success: false,
-      },
+watch(() => $route.params.hitID, {
+  immediate: true,
+  handler() {
+    if ($route.params.hitID) {
+      fetchHit()
+    } else {
+      hit.value = {}
     }
   },
+})
 
-  computed: {
-    ...mapGetters({
-      can: 'rbac/can',
-    }),
+onMounted(() => {
+  fetchHit()
+})
 
-    canCreate () {
-      return this.can('system/', 'apigw-route.create')
-    },
-  },
+function fetchHit() {
+  incLoader()
 
-  watch: {
-    hitID: {
-      immediate: true,
-      handler () {
-        if (this.hitID) {
-          this.fetchHit()
-        } else {
-          this.hit = {}
-        }
-      },
-    },
-  },
-
-  mounted () {
-    this.fetchHit()
-  },
-
-  methods: {
-    fetchHit () {
-      this.incLoader()
-
-      this.$SystemAPI.apigwProfilerHit({ hitID: this.$route.params.hitID })
-        .then(h => { this.hit = h })
-        .catch(this.toastErrorHandler(this.$t('notification:queue.fetch.error')))
-        .finally(() => {
-          this.decLoader()
-        })
-    },
-  },
+  window.__systemAPI.apigwProfilerHit({ hitID: $route.params.hitID })
+    .then(h => { hit.value = h })
+    .catch(window.__toastError(t('notification.queue.fetch.error')))
+    .finally(() => {
+      decLoader()
+    })
 }
 </script>

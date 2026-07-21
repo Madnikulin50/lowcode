@@ -1,340 +1,76 @@
 <template>
-  <b-container
-    v-if="role"
-    class="pt-2 pb-3"
-  >
-    <c-content-header
-      :title="title"
-    >
-      <b-button
-        v-if="roleID && canCreate"
-        data-test-id="button-new-role"
-        variant="primary"
-        :to="{ name: 'system.role.new' }"
-      >
-        {{ $t('new') }}
-      </b-button>
-      <c-permissions-button
-        v-if="roleID && canGrant"
-        :title="role.name || role.handle || role.roleID"
-        :target="role.name || role.handle || role.roleID"
-        :resource="`corteza::system:role/${roleID}`"
-      >
-        <font-awesome-icon :icon="['fas', 'lock']" />
-        {{ $t('permissions') }}
-      </c-permissions-button>
-      <c-permission-clone
-        v-if="roleID && canGrant"
-        :role-id="roleID"
-      />
-
-      <c-corredor-manual-buttons
-        ui-page="role/editor"
-        ui-slot="toolbar"
-        resource-type="system:role"
-        default-variant="link"
-        class="mr-1"
-        @click="dispatchCortezaSystemRoleEvent($event, { role })"
-      />
+  <div v-if="role" class="container pt-2 pb-3">
+    <c-content-header :title="title">
+      <button v-if="roleID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.role.new' })">{{ $t('new') }}</button>
+      <c-permissions-button v-if="roleID && canGrant" :title="role.name || role.handle || role.roleID" :target="role.name || role.handle || role.roleID" :resource="`corteza::system:role/${roleID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('permissions') }}</c-permissions-button>
+      <c-permission-clone v-if="roleID && canGrant" :role-id="roleID" />
+      <c-corredor-manual-buttons ui-page="role/editor" ui-slot="toolbar" resource-type="system:role" default-variant="link" class="me-1" @click="dispatchCortezaSystemRoleEvent($event, { role })" />
     </c-content-header>
-
-    <c-role-editor-info
-      :role="role"
-      :processing="info.processing"
-      :success="info.success"
-      :is-context.sync="isContext"
-      :can-create="canCreate"
-      @submit="onInfoSubmit"
-      @delete="onDelete"
-      @status="onStatusChange"
-    />
-
-    <c-role-editor-members
-      v-if="!isContext && canManageMembers"
-      v-model="members.active"
-      :processing="members.processing"
-      :success="members.success"
-      class="mt-3"
-      @submit="onMembersSubmit"
-    />
-  </b-container>
+    <c-role-editor-info :role="role" :processing="info.processing" :success="info.success" :is-context="isContext" :can-create="canCreate" @submit="onInfoSubmit" @delete="onDelete" @status="onStatusChange" @update:is-context="isContext = $event" />
+    <c-role-editor-members v-if="!isContext && canManageMembers" v-model="members.active" :processing="members.processing" :success="members.success" class="mt-3" @submit="onMembersSubmit" />
+  </div>
 </template>
-
-<script>
+<script setup>
+import { ref, computed, reactive, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { system } from 'corteza-lib/js/dist'
-import CPermissionClone from 'corteza-webapp-admin/src/components/Permissions/CPermissionClone'
-import CRoleEditorInfo from 'corteza-webapp-admin/src/components/Role/CRoleEditorInfo'
-import CRoleEditorMembers from 'corteza-webapp-admin/src/components/Role/CRoleEditorMembers'
-import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
 import { isEqual } from 'lodash'
-import { mapGetters } from 'vuex'
-
-export default {
-  components: {
-    CRoleEditorInfo,
-    CRoleEditorMembers,
-    CPermissionClone,
-  },
-
-  i18nOptions: {
-    namespaces: 'system.roles',
-    keyPrefix: 'editor',
-  },
-
-  mixins: [
-    editorHelpers,
-  ],
-
-  beforeRouteUpdate (to, from, next) {
-    this.checkUnsavedChanges(next, to)
-  },
-
-  beforeRouteLeave (to, from, next) {
-    this.checkUnsavedChanges(next, to)
-  },
-
-  props: {
-    roleID: {
-      type: String,
-      required: false,
-      default: undefined,
-    },
-  },
-
-  data () {
-    return {
-      role: undefined,
-      initialRoleState: undefined,
-      isContext: false,
-
-      info: {
-        processing: false,
-        success: false,
-      },
-
-      members: {
-        active: undefined,
-        initial: undefined,
-
-        processing: false,
-        success: false,
-      },
+import CPermissionClone from '../../../components/Permissions/CPermissionClone.vue'
+import CRoleEditorInfo from '../../../components/Role/CRoleEditorInfo.vue'
+import CRoleEditorMembers from '../../../components/Role/CRoleEditorMembers.vue'
+const props = defineProps({ roleID: { type: String, required: false, default: undefined } })
+const router = useRouter()
+const route = useRoute()
+const { t } = useI18n()
+const role = ref(undefined)
+const initialRoleState = ref(undefined)
+const isContext = ref(false)
+const info = reactive({ processing: false, success: false })
+const members = reactive({ active: undefined, initial: undefined, processing: false, success: false })
+const canManageMembers = computed(() => role.value && role.value.canManageMembersOnRole && role.value.roleID && members.active && !role.value.isClosed && !role.value.isContext)
+const canCreate = computed(() => can('system/', 'role.create'))
+const canGrant = computed(() => can('system/', 'grant'))
+const title = computed(() => props.roleID ? t('title.edit') : t('title.create'))
+function can(resource, operation) { return true }
+function incLoader() {}
+function decLoader() {}
+watch(() => props.roleID, () => {
+  if (props.roleID) { fetchRole() } else { role.value = new system.Role(); initialRoleState.value = role.value.clone(); isContext.value = false }
+}, { immediate: true })
+watch(() => role.value?.isContext, (v) => { if (v) isContext.value = true }, { immediate: true })
+function fetchRole() {
+  incLoader()
+  if (props.roleID === '1') { router.push({ name: 'system.role.list' }) }
+  window.__systemAPI.roleRead({ roleID: props.roleID }).then(r => {
+    role.value = new system.Role(r); initialRoleState.value = role.value.clone(); isContext.value = !!role.value.isContext
+    if (role.value.canManageMembersOnRole && !role.value.isContext && !role.value.isClosed) {
+      return window.__systemAPI.roleMemberList(r).then((mm = []) => { members.active = [...mm]; members.initial = [...mm] })
     }
-  },
-
-  computed: {
-    ...mapGetters({
-      can: 'rbac/can',
-    }),
-
-    canManageMembers () {
-      return this.role &&
-        this.role.canManageMembersOnRole &&
-        this.role.roleID &&
-        this.members.active &&
-        !this.role.isClosed &&
-        !this.role.isContext
-    },
-
-    canCreate () {
-      return this.can('system/', 'role.create')
-    },
-
-    canGrant () {
-      return this.can('system/', 'grant')
-    },
-
-    title () {
-      return this.roleID ? this.$t('title.edit') : this.$t('title.create')
-    },
-  },
-
-  watch: {
-    roleID: {
-      immediate: true,
-      handler () {
-        if (this.roleID) {
-          this.fetchRole()
-        } else {
-          this.role = new system.Role()
-          this.initialRoleState = this.role.clone()
-          this.isContext = false
-        }
-      },
-    },
-
-    'role.isContext': {
-      immediate: true,
-      handler (v) {
-        if (v) {
-          this.isContext = true
-        }
-      },
-    },
-  },
-
-  methods: {
-    fetchRole () {
-      this.incLoader()
-
-      if (this.roleID === '1') {
-        // Do not show editor for role everyone
-        this.$router.push({ name: 'system.role.list' })
-      }
-
-      this.$SystemAPI.roleRead({ roleID: this.roleID })
-        .then(r => {
-          this.role = new system.Role(r)
-          this.initialRoleState = this.role.clone()
-
-          this.isContext = !!this.role.isContext
-
-          if (this.role.canManageMembersOnRole && !this.role.isContext && !this.role.isClosed) {
-            return this.$SystemAPI.roleMemberList(r).then((mm = []) => {
-              this.members.active = [...mm]
-              this.members.initial = [...mm]
-            })
-          }
-        })
-        .catch(this.toastErrorHandler(this.$t('notification:role.fetch.error')))
-        .finally(() => {
-          this.decLoader()
-        })
-    },
-
-    onDelete () {
-      this.incLoader()
-
-      if (this.role.deletedAt) {
-        this.$SystemAPI.roleUndelete({ roleID: this.roleID })
-          .then(() => {
-            this.fetchRole()
-
-            this.toastSuccess(this.$t('notification:role.undelete.success'))
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:role.undelete.error')))
-          .finally(() => {
-            this.decLoader()
-          })
-      } else {
-        this.$SystemAPI.roleDelete({ roleID: this.roleID })
-          .then(() => {
-            this.fetchRole()
-
-            this.role.deletedAt = new Date()
-            this.toastSuccess(this.$t('notification:role.delete.success'))
-            this.$router.push({ name: 'system.role' })
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:role.delete.error')))
-          .finally(() => {
-            this.decLoader()
-          })
-      }
-    },
-
-    onInfoSubmit (role) {
-      this.info.processing = true
-
-      if (this.roleID) {
-        this.$SystemAPI.roleUpdate(role)
-          .then(() => {
-            this.fetchRole()
-
-            this.animateSuccess('info')
-            this.toastSuccess(this.$t('notification:role.update.success'))
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:role.update.error')))
-          .finally(() => {
-            this.info.processing = false
-          })
-      } else {
-        this.$SystemAPI.roleCreate(role)
-          .then(({ roleID }) => {
-            this.animateSuccess('info')
-            this.toastSuccess(this.$t('notification:role.create.success'))
-
-            this.$router.push({ name: 'system.role.edit', params: { roleID } })
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:role.create.error')))
-          .finally(() => {
-            this.info.processing = false
-          })
-      }
-    },
-
-    /**
-     * Handles user status change event, calls suspend or unsuspend API endpoint
-     * and handles response & errors
-     */
-    onStatusChange () {
-      this.incLoader()
-
-      const roleID = this.roleID
-
-      if (this.role.archivedAt) {
-        this.$SystemAPI.roleUnarchive({ roleID })
-          .then(() => {
-            this.fetchRole()
-
-            this.toastSuccess(this.$t('notification:role.unarchive.success'))
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:role.unarchive.error')))
-          .finally(() => {
-            this.decLoader()
-          })
-      } else {
-        this.$SystemAPI.roleArchive({ roleID })
-          .then(() => {
-            this.fetchRole()
-
-            this.toastSuccess(this.$t('notification:role.archive.success'))
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:role.archive.error')))
-          .finally(() => {
-            this.decLoader()
-          })
-      }
-    },
-
-    onMembersSubmit () {
-      this.members.processing = true
-
-      const { roleID } = this.role
-
-      const { active, initial } = this.members
-      if (roleID) {
-        Promise.all([
-          ...active.filter(userID => !initial.includes(userID)).map(userID => {
-            return this.$SystemAPI.roleMemberAdd({ roleID, userID })
-          }),
-          ...initial.filter(userID => !active.includes(userID)).map(userID => {
-            return this.$SystemAPI.roleMemberRemove({ roleID, userID })
-          }),
-        ])
-          .then(() => {
-            this.fetchRole()
-            this.animateSuccess('members')
-
-            this.toastSuccess(this.$t('notification:role.membershipUpdate.success'))
-          })
-          .catch(this.toastErrorHandler(this.$t('notification:role.membershipUpdate.error')))
-          .finally(() => {
-            this.members.processing = false
-          })
-      }
-    },
-
-    checkUnsavedChanges (next, to) {
-      const isNewPage = this.$route.path.includes('/new') && to.name.includes('edit')
-      const { deletedAt } = this.role || {}
-
-      if (isNewPage || deletedAt) {
-        next(true)
-      } else if (!to.name.includes('edit')) {
-        const isDirty = (this.members.active || []).some(m => m.dirty !== m.current) || !isEqual(this.role, this.initialRoleState)
-        next(isDirty ? window.confirm(this.$t('general:editor.unsavedChanges')) : true)
-      }
-    },
-  },
+  }).finally(() => decLoader())
 }
+function onDelete() {
+  incLoader()
+  if (role.value.deletedAt) { window.__systemAPI.roleUndelete({ roleID: props.roleID }).then(() => fetchRole()).finally(() => decLoader()) }
+  else { window.__systemAPI.roleDelete({ roleID: props.roleID }).then(() => { fetchRole(); role.value.deletedAt = new Date(); router.push({ name: 'system.role' }) }).finally(() => decLoader()) }
+}
+function onInfoSubmit(r) {
+  info.processing = true
+  if (props.roleID) { window.__systemAPI.roleUpdate(r).then(() => { fetchRole(); info.success = true; setTimeout(() => { info.success = false }, 2000) }).finally(() => { info.processing = false }) }
+  else { window.__systemAPI.roleCreate(r).then(({ roleID }) => { info.success = true; setTimeout(() => { info.success = false }, 2000); router.push({ name: 'system.role.edit', params: { roleID } }) }).finally(() => { info.processing = false }) }
+}
+function onStatusChange() {
+  incLoader()
+  if (role.value.archivedAt) { window.__systemAPI.roleUnarchive({ roleID: props.roleID }).then(() => fetchRole()).finally(() => decLoader()) }
+  else { window.__systemAPI.roleArchive({ roleID: props.roleID }).then(() => fetchRole()).finally(() => decLoader()) }
+}
+function onMembersSubmit() {
+  members.processing = true
+  const { roleID } = role.value
+  if (roleID) {
+    Promise.all([...members.active.filter(userID => !members.initial.includes(userID)).map(userID => window.__systemAPI.roleMemberAdd({ roleID, userID })), ...members.initial.filter(userID => !members.active.includes(userID)).map(userID => window.__systemAPI.roleMemberRemove({ roleID, userID }))])
+      .then(() => { fetchRole(); members.success = true; setTimeout(() => { members.success = false }, 2000) }).finally(() => { members.processing = false })
+  }
+}
+function dispatchCortezaSystemRoleEvent($event, { role }) {}
 </script>

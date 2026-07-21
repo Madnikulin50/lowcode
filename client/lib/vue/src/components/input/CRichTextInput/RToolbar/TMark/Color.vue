@@ -1,9 +1,8 @@
 <template>
   <div>
-    <b-button
+    <button
       :id="`color-popover-${format.type}`"
-      variant="link"
-      class="text-dark font-weight-bold text-decoration-none mb-1"
+      class="btn btn-link text-dark fw-bold text-decoration-none mb-1"
       @click.stop.prevent="showPicker"
     >
       <span
@@ -14,7 +13,7 @@
       >
         A
       </span>
-    </b-button>
+    </button>
 
     <c-input-color-picker
       ref="picker"
@@ -29,58 +28,61 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref } from 'vue'
 import CInputColorPicker from '../../../CInputColorPicker.vue'
-import base from './base.vue'
 
-export default {
-  name: 'TMarkColor',
+const props = defineProps<{
+  editor: any
+  format: any
+  isActive?: any
+  getMarkAttrs?: (...args: any[]) => any
+  currentValue?: string
+  background?: boolean
+}>()
 
-  components: {
-    CInputColorPicker,
-  },
+const emit = defineEmits<{
+  (e: 'click', payload: { type: string; attrs: Record<string, any> }): void
+}>()
 
-  extends: base,
+const picker = ref<any>(null)
 
-  props: {
-    background: {
-      type: Boolean,
-      default: false,
-    },
-  },
+const selectedColor = ref(getDefaultColor())
 
-  data () {
-    return {
-      selectedColor: this.getDefaultColor(),
-    }
-  },
+function getComputedColor(cssVar: string) {
+  try {
+    const computedStyle = getComputedStyle(document.documentElement)
+    return computedStyle.getPropertyValue(cssVar).trim()
+  } catch (error) {
+    return null
+  }
+}
 
-  methods: {
-    getComputedColor (cssVar) {
-      try {
-        const computedStyle = getComputedStyle(document.documentElement)
-        return computedStyle.getPropertyValue(cssVar).trim()
-      } catch (error) {
-        return null
-      }
-    },
+function showPicker() {
+  if (picker.value && picker.value.openMenu) {
+    picker.value.openMenu()
+  }
+}
 
-    showPicker () {
-      if (this.$refs.picker && this.$refs.picker.openMenu) {
-        this.$refs.picker.openMenu()
-      }
-    },
+function applyFromPicker(val: string) {
+  if (!val) return
+  selectedColor.value = val
+  onClick(props.format.type, { color: val })
+}
 
-    applyFromPicker (val) {
-      if (!val) return
-      this.selectedColor = val
-      this.onClick(this.format.type, { color: val })
-    },
+function getDefaultColor() {
+  return props.background ? getComputedColor('--white') : getComputedColor('--dark')
+}
 
-    getDefaultColor () {
-      return this.background ? this.getComputedColor('--white') : this.getComputedColor('--dark')
-    },
-  },
+function onClick(type: string, attrs: Record<string, any>) {
+  emit('click', { type, attrs })
+}
+
+function activeClasses(attrs?: Record<string, any>) {
+  const isActive = props.editor.isActive(props.format.type, attrs)
+  if (isActive) {
+    return ['text-primary']
+  }
+  return undefined
 }
 </script>
-

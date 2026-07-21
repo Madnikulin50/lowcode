@@ -1,168 +1,117 @@
 <template>
-  <div
-    class="position-relative"
-  >
+  <div class="position-relative">
     <c-ace-editor
       v-model="editorValue"
       auto-complete
       init-expressions
       :auto-complete-suggestions="autoCompleteSuggestions"
-      v-bind="{ ...$attrs, ...$props }"
-      v-on="$listeners"
+      v-bind="attrs"
     />
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { computed, useAttrs } from 'vue'
 import CAceEditor from './CAceEditor.vue'
 
-export default {
-  components: {
-    CAceEditor,
-  },
+defineOptions({ inheritAttrs: false })
 
-  props: {
-    value: {
-      type: String,
-      default: '',
-    },
+const props = withDefaults(defineProps<{
+  modelValue?: string
+  lang?: string
+  minHeight?: string
+  showLineNumbers?: boolean
+  fontSize?: string
+  border?: boolean
+  showPopout?: boolean
+  readOnly?: boolean
+  highlightActiveLine?: boolean
+  showPrintMargin?: boolean
+  suggestionParams?: any[]
+  fontFamily?: string
+  placeholder?: string
+  resizable?: boolean
+}>(), {
+  modelValue: '',
+  lang: 'text',
+  minHeight: '2.35rem',
+  showLineNumbers: false,
+  fontSize: '14px',
+  border: true,
+  showPopout: false,
+  readOnly: false,
+  highlightActiveLine: false,
+  showPrintMargin: false,
+  suggestionParams: () => [],
+  fontFamily: '',
+  placeholder: '',
+  resizable: true,
+})
 
-    lang: {
-      type: String,
-      default: 'text',
-    },
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
 
-    minHeight: {
-      type: String,
-      default: '2.35rem',
-    },
+const attrs = useAttrs()
 
-    showLineNumbers: {
-      type: Boolean,
-      default: false,
-    },
+const editorValue = computed({
+  get: () => props.modelValue,
+  set: (value = '') => emit('update:modelValue', value),
+})
 
-    fontSize: {
-      type: String,
-      default: '14px',
-    },
+const autoCompleteSuggestions = computed(() => getRecordBasedSuggestions(props.suggestionParams))
 
-    border: {
-      type: Boolean,
-      default: true,
-    },
+function getRecordBasedSuggestions(params: any[] = []): Record<string, any[]> {
+  const result: Record<string, any[]> = {}
 
-    showPopout: {
-      type: Boolean,
-      default: false,
-    },
+  function addSuggestion(key: string, caption: string, value: string) {
+    if (!result[key]) result[key] = []
+    result[key].push({ caption, value })
+  }
 
-    readOnly: {
-      type: Boolean,
-      default: false,
-    },
+  function processProperties(prefix: string, properties: any[], interpolate: boolean) {
+    (properties || []).forEach((prop: any) => {
+      if (typeof prop === 'string') {
+        const value = prefix + '.' + prop + (interpolate ? '}' : '')
+        addSuggestion(prefix, prop, value)
+      } else {
+        const nestedPrefix = prefix + '.' + prop.value + '.'
+        addSuggestion(prefix, prop.value, nestedPrefix)
 
-    highlightActiveLine: {
-      type: Boolean,
-      default: false,
-    },
-
-    showPrintMargin: {
-      type: Boolean,
-      default: false,
-    },
-
-    suggestionParams: {
-      type: Array,
-      default: () => [],
-    },
-
-    fontFamily: {
-      type: String,
-      default: '',
-    },
-
-    placeholder: {
-      type: String,
-      default: '',
-    },
-
-    resizable: {
-      type: Boolean,
-      default: true,
-    },
-  },
-
-  computed: {
-    editorValue: {
-      get () {
-        return this.value
-      },
-
-      set (value = '') {
-        this.$emit('update:value', value)
-      },
-    },
-
-    autoCompleteSuggestions () {
-      return this.getRecordBasedSuggestions(this.suggestionParams)
-    },
-  },
-
-  methods: {
-    getRecordBasedSuggestions (params = []) {
-      const result = {}
-
-      function addSuggestion (key, caption, value) {
-        if (!result[key]) result[key] = []
-        result[key].push({ caption, value })
-      }
-
-      function processProperties (prefix, properties, interpolate) {
-        (properties || []).forEach((prop) => {
-          if (typeof prop === 'string') {
-            const value = prefix + '.' + prop + (interpolate ? '}' : '')
-            addSuggestion(prefix, prop, value)
-          } else {
-            const nestedPrefix = prefix + '.' + prop.value + '.'
-            addSuggestion(prefix, prop.value, nestedPrefix)
-
-            if (prop.properties) {
-              (prop.properties || []).forEach((nestedProp) => {
-                const nestedValue = nestedPrefix + nestedProp + (interpolate ? '}' : '')
-                addSuggestion(prefix + '.' + prop.value, nestedProp, nestedValue)
-              })
-            }
-          }
-        })
-      }
-
-      (params || []).forEach((p) => {
-        if (typeof p === 'string') {
-          addSuggestion('', '', p)
-        } else {
-          const { interpolate = false, properties = [], value, root = true } = p
-          const prefix = interpolate ? '${' : ''
-          const suffix = interpolate && !properties.length ? '}' : ''
-          const prefixAsValue = prefix + value + suffix + (properties.length > 0 ? '.' : '')
-
-          if (root) {
-            addSuggestion('', '', prefixAsValue)
-          }
-
-          if (interpolate) {
-            addSuggestion('$', prefixAsValue.slice(1), prefixAsValue)
-            addSuggestion('${', prefixAsValue.slice(2), prefixAsValue)
-          }
-
-          if (properties.length) {
-            processProperties(prefix + value, properties, interpolate)
-          }
+        if (prop.properties) {
+          (prop.properties || []).forEach((nestedProp: any) => {
+            const nestedValue = nestedPrefix + (typeof nestedProp === 'string' ? nestedProp : nestedProp) + (interpolate ? '}' : '')
+            addSuggestion(prefix + '.' + prop.value, typeof nestedProp === 'string' ? nestedProp : nestedProp, nestedValue)
+          })
         }
-      })
+      }
+    })
+  }
 
-      return result
-    },
-  },
+  (params || []).forEach((p: any) => {
+    if (typeof p === 'string') {
+      addSuggestion('', '', p)
+    } else {
+      const { interpolate = false, properties = [], value, root = true } = p
+      const prefix = interpolate ? '${' : ''
+      const suffix = interpolate && !properties.length ? '}' : ''
+      const prefixAsValue = prefix + value + suffix + (properties.length > 0 ? '.' : '')
+
+      if (root) {
+        addSuggestion('', '', prefixAsValue)
+      }
+
+      if (interpolate) {
+        addSuggestion('$', prefixAsValue.slice(1), prefixAsValue)
+        addSuggestion('${', prefixAsValue.slice(2), prefixAsValue)
+      }
+
+      if (properties.length) {
+        processProperties(prefix + value, properties, interpolate)
+      }
+    }
+  })
+
+  return result
 }
 </script>

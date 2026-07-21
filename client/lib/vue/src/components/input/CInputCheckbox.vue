@@ -1,26 +1,32 @@
 <template>
-  <div
-    class="d-flex align-items-center"
-  >
+  <div class="d-flex align-items-center">
     <span
-      class="mb-0 inline-block text-primary"
+      v-if="labels?.off"
+      class="mb-0 d-inline-block text-primary"
       :class="offClass"
     >
       {{ labels.off }}
     </span>
 
-    <b-form-checkbox
-      v-bind="$attrs"
-      :checked="value"
-      :value="!invert"
-      :unchecked-value="invert"
-      v-on="$listeners"
+    <div
+      :class="['form-check', switchable ? 'form-switch' : '', 'mb-0']"
     >
-      <slot />
-    </b-form-checkbox>
+      <input
+        class="form-check-input"
+        type="checkbox"
+        :checked="modelValue"
+        :role="switchable ? 'switch' : undefined"
+        v-bind="$attrs"
+        @change="onChange"
+      />
+      <label class="form-check-label">
+        <slot />
+      </label>
+    </div>
 
     <span
-      class="mb-0 inline-block strong text-primary"
+      v-if="labels?.on"
+      class="mb-0 d-inline-block text-primary"
       :class="onClass"
     >
       {{ labels.on }}
@@ -28,42 +34,49 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    value: {
-      type: Boolean,
-    },
+<script setup lang="ts">
+import { computed } from 'vue'
 
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
+interface Props {
+  modelValue?: boolean
+  labels?: Record<string, string>
+  invert?: boolean
+  switch?: boolean
+}
 
-    invert: {
-      type: Boolean,
-      default: false,
-    },
-  },
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
+  labels: () => ({}),
+  invert: false,
+  switch: false,
+})
 
-  computed: {
-    offClass () {
-      const value = this.invert ? !this.value : this.value
-      return {
-        'text-muted': value,
-        'font-weight-bold': !value,
-        'mr-2': !!this.labels.off,
-      }
-    },
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
+}>()
 
-    onClass () {
-      const value = this.invert ? !this.value : this.value
-      return {
-        'text-muted': !value,
-        'font-weight-bold': value,
-        'ml-1': !!this.labels.on,
-      }
-    },
-  },
+const switchable = computed(() => props.switch)
+
+const offClass = computed(() => {
+  const value = props.invert ? !props.modelValue : props.modelValue
+  return {
+    'text-muted': !!value,
+    'fw-bold': !value,
+    'me-2': !!props.labels?.off,
+  }
+})
+
+const onClass = computed(() => {
+  const value = props.invert ? !props.modelValue : props.modelValue
+  return {
+    'text-muted': !value,
+    'fw-bold': !!value,
+    'ms-1': !!props.labels?.on,
+  }
+})
+
+function onChange (e: Event) {
+  const checked = (e.target as HTMLInputElement).checked
+  emit('update:modelValue', checked ? !props.invert : props.invert)
 }
 </script>

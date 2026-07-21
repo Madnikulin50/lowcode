@@ -1,25 +1,11 @@
-<script>
-export default {
-  props: {
-    displayElement: {
-      type: Object,
-      required: true,
-    },
+<script setup lang="ts">
+import { computed } from 'vue'
 
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
+const props = defineProps<{
+  displayElement: Record<string, any>
+  labels?: Record<string, any>
+}>()
 
-  computed: {
-    dataframes () {
-      return this.displayElement.dataframes || []
-    },
-
-    options () {
-      return this.displayElement.options || undefined
-    },
-  },
-}
+const dataframes = computed(() => props.displayElement.dataframes || [])
+const options = computed(() => props.displayElement.options || undefined)
 </script>

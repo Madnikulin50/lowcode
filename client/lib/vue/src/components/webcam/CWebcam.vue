@@ -1,199 +1,215 @@
 <template>
   <div>
-    <b-button
+    <button
       v-b-tooltip.noninteractive.hover="{ title: labels.tooltip, boundary: 'body' }"
-      variant="outline-secondary"
+      class="btn btn-light"
       :class="buttonClass"
       @click.prevent="openWebcamModal"
     >
       <slot />
-    </b-button>
+    </button>
 
-    <b-modal
-      ref="webcamModal"
-      :title="labels.modalTitle"
-      size="lg"
-      centered
-      body-class="p-0"
-      @show="initializeWebcam"
-      @hidden="closeCamera"
+    <div
+      ref="webcamModalRef"
+      class="modal fade"
+      tabindex="-1"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
     >
-      <div
-        v-if="showErrorMessage"
-        class="p-3 text-danger"
-      >
-        {{ labels.cameraErrorMessage }}
-      </div>
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ labels.modalTitle }}</h5>
+          </div>
+          <div class="modal-body p-0">
+            <div
+              v-if="showErrorMessage"
+              class="p-3 text-danger"
+            >
+              {{ labels.cameraErrorMessage }}
+            </div>
+            <div
+              v-else
+              class="embed-responsive embed-responsive-4by3 d-flex justify-content-center align-items-center"
+            >
+              <div
+                v-if="processingWebcam"
+                class="spinner-border text-primary"
+                role="status"
+              >
+                <span class="visually-hidden">Loading...</span>
+              </div>
 
-      <div
-        v-else
-        class="embed-responsive embed-responsive-4by3 d-flex justify-content-center align-items-center"
-      >
-        <b-spinner
-          v-if="processingWebcam"
-          variant="primary"
-        />
+              <video
+                v-show="!processingWebcam && !hasCapturedImage"
+                ref="videoRef"
+                autoplay
+                playsinline
+              />
 
-        <video
-          v-show="!processingWebcam && !hasCapturedImage"
-          ref="video"
-          autoplay
-          playsinline
-        />
+              <img
+                v-if="hasCapturedImage"
+                :src="capturedImage"
+                alt="Captured image"
+                class="embed-responsive-item"
+              >
+            </div>
+          </div>
+          <div class="modal-footer">
+            <div class="d-flex align-items-center gap-2">
+              <button
+                class="btn btn-light"
+                @click="handleCloseClick"
+              >
+                {{ labels.cancelButtonLabel }}
+              </button>
 
-        <img
-          v-if="hasCapturedImage"
-          :src="capturedImage"
-          alt="Captured image"
-          class="embed-responsive-item"
-        >
-      </div>
-
-      <template #modal-footer>
-        <div class="d-flex align-items-center gap-2">
-          <b-button
-            variant="outline-secondary"
-            @click="handleCloseClick"
-          >
-            {{ labels.cancelButtonLabel }}
-          </b-button>
-
-          <b-button
-            :disabled="processingWebcam"
-            variant="primary"
-            @click="handleCaptureClick"
-          >
-            {{ hasCapturedImage ? labels.confirmButtonLabel : labels.captureButtonLabel }}
-          </b-button>
+              <button
+                :disabled="processingWebcam"
+                class="btn btn-primary"
+                @click="handleCaptureClick"
+              >
+                {{ hasCapturedImage ? labels.confirmButtonLabel : labels.captureButtonLabel }}
+              </button>
+            </div>
+          </div>
         </div>
-      </template>
-    </b-modal>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'CWebcamModal',
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { Modal } from 'bootstrap'
 
-  props: {
-    buttonClass: {
-      type: String,
-      default: 'd-flex align-items-center h-100',
-    },
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
+const props = withDefaults(defineProps<{
+  buttonClass?: string
+  labels?: Record<string, string>
+}>(), {
+  buttonClass: 'd-flex align-items-center h-100',
+  labels: () => ({}),
+})
 
-  data () {
-    return {
-      video: null,
-      stream: null,
-      capturedImage: null,
-      processingWebcam: true,
-      showErrorMessage: false,
-    }
-  },
+const emit = defineEmits<{
+  (e: 'upload', file: File): void
+}>()
 
-  computed: {
-    hasCapturedImage () {
-      return !!this.capturedImage
-    },
-  },
+const videoRef = ref<HTMLVideoElement | null>(null)
+const webcamModalRef = ref<HTMLDivElement | null>(null)
 
-  methods: {
-    openWebcamModal () {
-      this.$refs.webcamModal.show()
-    },
+let stream: MediaStream | null = null
+const capturedImage = ref<string | null>(null)
+const processingWebcam = ref(true)
+const showErrorMessage = ref(false)
 
-    async initializeWebcam () {
-      await this.$nextTick()
+let webcamModalInstance: Modal | null = null
 
-      this.startWebcam()
-    },
+const hasCapturedImage = computed(() => !!capturedImage.value)
 
-    startWebcam () {
-      this.showErrorMessage = false
-
-      // Get access to the camera
-      navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'user',
-        },
-      })
-        .then(stream => {
-          this.stream = stream
-          this.$refs.video.srcObject = stream
-        })
-        .catch(err => {
-          console.error('Error accessing the camera:', err)
-
-          this.showErrorMessage = true
-        }).finally(() => {
-          this.processingWebcam = false
-        })
-    },
-
-    capturePhoto () {
-      const video = this.$refs.video
-      const canvas = document.createElement('canvas')
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height)
-
-      this.capturedImage = canvas.toDataURL('image/jpeg')
-    },
-
-    uploadCapturedImage () {
-      if (!this.capturedImage) {
-        return
-      }
-
-      fetch(this.capturedImage).then(res => res.blob()).then(blob => {
-        const imageSuffix = new Date().toISOString().replace(/[:.]/g, '-')
-        const file = new File([blob], `webcam-image-${imageSuffix}.jpg`, { type: 'image/jpeg' })
-
-        this.$emit('upload', file)
-      })
-
-      this.$refs.webcamModal.hide()
-    },
-
-    stopWebcam () {
-      if (!this.stream) {
-        return
-      }
-
-      this.stream.getTracks().forEach(track => track.stop())
-    },
-
-    handleCaptureClick () {
-      if (this.hasCapturedImage) {
-        this.uploadCapturedImage()
-      } else {
-        this.capturePhoto()
-      }
-    },
-
-    handleCloseClick () {
-      if (this.hasCapturedImage) {
-        this.discardCapturedImage()
-      } else {
-        this.$refs.webcamModal.hide()
-      }
-    },
-
-    closeCamera () {
-      this.stopWebcam()
-      this.capturedImage = null
-      this.processingWebcam = true
-    },
-
-    discardCapturedImage () {
-      this.capturedImage = null
-      this.startWebcam()
-    },
-  },
+function openWebcamModal(): void {
+  if (webcamModalRef.value) {
+    webcamModalInstance = new Modal(webcamModalRef.value)
+    webcamModalInstance.show()
+  }
 }
+
+async function initializeWebcam(): Promise<void> {
+  await nextTick()
+  startWebcam()
+}
+
+function startWebcam(): void {
+  showErrorMessage.value = false
+
+  navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: 'user',
+    },
+  })
+    .then(s => {
+      stream = s
+      if (videoRef.value) {
+        videoRef.value.srcObject = s
+      }
+    })
+    .catch(err => {
+      console.error('Error accessing the camera:', err)
+      showErrorMessage.value = true
+    })
+    .finally(() => {
+      processingWebcam.value = false
+    })
+}
+
+function capturePhoto(): void {
+  const video = videoRef.value
+  if (!video) return
+  const canvas = document.createElement('canvas')
+  canvas.width = video.videoWidth
+  canvas.height = video.videoHeight
+  canvas.getContext('2d')!.drawImage(video, 0, 0, canvas.width, canvas.height)
+  capturedImage.value = canvas.toDataURL('image/jpeg')
+}
+
+function uploadCapturedImage(): void {
+  if (!capturedImage.value) return
+
+  fetch(capturedImage.value).then(res => res.blob()).then(blob => {
+    const imageSuffix = new Date().toISOString().replace(/[:.]/g, '-')
+    const file = new File([blob], `webcam-image-${imageSuffix}.jpg`, { type: 'image/jpeg' })
+    emit('upload', file)
+  })
+
+  webcamModalInstance?.hide()
+}
+
+function stopWebcam(): void {
+  if (!stream) return
+  stream.getTracks().forEach(track => track.stop())
+}
+
+function handleCaptureClick(): void {
+  if (hasCapturedImage.value) {
+    uploadCapturedImage()
+  } else {
+    capturePhoto()
+  }
+}
+
+function handleCloseClick(): void {
+  if (hasCapturedImage.value) {
+    discardCapturedImage()
+  } else {
+    webcamModalInstance?.hide()
+  }
+}
+
+function closeCamera(): void {
+  stopWebcam()
+  capturedImage.value = null
+  processingWebcam.value = true
+}
+
+function discardCapturedImage(): void {
+  capturedImage.value = null
+  startWebcam()
+}
+
+onMounted(() => {
+  const el = webcamModalRef.value
+  if (el) {
+    el.addEventListener('show.bs.modal', initializeWebcam)
+    el.addEventListener('hidden.bs.modal', closeCamera)
+  }
+})
+
+onBeforeUnmount(() => {
+  const el = webcamModalRef.value
+  if (el) {
+    el.removeEventListener('show.bs.modal', initializeWebcam)
+    el.removeEventListener('hidden.bs.modal', closeCamera)
+  }
+  webcamModalInstance?.dispose()
+})
 </script>

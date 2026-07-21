@@ -1,58 +1,48 @@
 <template>
-  <b-button-group
+  <div
     v-if="buttons.length"
-    :size="size"
+    class="btn-group"
+    :class="sizeClass"
   >
-    <b-button
+    <button
       v-for="(b, i) in buttons"
       :key="i"
-      :variant="b.variant || defaultVariant"
-      :class="buttonClass"
+      class="btn"
+      :class="[b.variant || defaultVariant, buttonClass]"
       @click="$emit('click', b)"
     >
       {{ b.label }}
-    </b-button>
-  </b-button-group>
+    </button>
+  </div>
 </template>
 
-<script lang="js">
-export default {
-  props: {
-    resourceType: {
-      type: String,
-      required: true,
-    },
+<script setup lang="ts">
+import { computed, getCurrentInstance } from 'vue'
 
-    uiSlot: {
-      type: String,
-      required: true,
-    },
+const { proxy }: any = getCurrentInstance()!
 
-    uiPage: {
-      type: String,
-      required: true,
-    },
+const props = withDefaults(defineProps<{
+  resourceType: string
+  uiSlot: string
+  uiPage: string
+  defaultVariant?: string
+  buttonClass?: string
+  size?: string
+}>(), {
+  defaultVariant: 'link',
+  buttonClass: 'me-1',
+  size: 'md',
+})
 
-    defaultVariant: {
-      type: String,
-      default: 'link',
-    },
+defineEmits<{
+  click: [value: any]
+}>()
 
-    buttonClass: {
-      type: String,
-      default: 'mr-1',
-    },
+const buttons = computed(() => proxy.$UIHooks.Find(props.resourceType, props.uiPage, props.uiSlot))
 
-    size: {
-      type: String,
-      default: 'md',
-    },
-  },
-
-  computed: {
-    buttons () {
-      return this.$UIHooks.Find(this.resourceType, this.uiPage, this.uiSlot)
-    },
-  },
-}
+const sizeClass = computed(() => {
+  if (props.size === 'sm') return 'btn-group-sm'
+  if (props.size === 'lg') return 'btn-group-lg'
+  return ''
+})
 </script>

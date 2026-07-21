@@ -1,10 +1,9 @@
 <template>
   <div
     :style="previewStyle"
-    :class="[...previewClass, 'pdf-preview', inline ? 'inline' : '', $listeners.click ? 'clickable' : '']"
+    :class="[...previewClass, 'pdf-preview', inline ? 'inline' : '', attrs.onClick ? 'clickable' : '']"
     @click.stop="onPreviewClick"
   >
-    <!-- Container for pdf's pages -->
     <div
       v-show="show"
       ref="pages"
@@ -25,10 +24,7 @@
       class="doc-msg"
     >
       <p class="d-flex align-items-center gap-1">
-        <b-spinner
-          variant="primary"
-          small
-        />
+        <span class="spinner-border spinner-border-sm" />
         {{ labels.loading }}
       </p>
     </div>
@@ -42,270 +38,212 @@
   </div>
 </template>
 
-<script lang="js">
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, useAttrs } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
-import base from '../base.vue'
 import { makePlaceholder, makeFailedPage, Page, Document } from './helpers'
+
+defineOptions({ inheritAttrs: false })
+
+const attrs = useAttrs()
+
+const props = defineProps<{
+  inline?: boolean
+  retryBackoff?: number
+  maxRetries?: number
+  maxPages?: number
+  initialScale?: number
+}>()
+
+const emit = defineEmits<{
+  (e: 'openPreview', payload: { document: any }): void
+  (e: 'error', err: Error): void
+}>()
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
 
-function sleep (t) {
+function sleep(t: number) {
   return new Promise(resolve => setTimeout(resolve, t))
 }
 
-export default {
-  extends: base,
+const pages = ref<HTMLElement | null>(null)
 
-  props: {
-    retryBackoff: {
-      type: Number,
-      required: false,
-      default: 300,
-    },
-    maxRetries: {
-      type: Number,
-      required: false,
-      default: 10,
-    },
+const document_ = ref<any>(null)
+const pagesArr = ref<any[]>([])
+const show = ref(false)
+const loadError = ref<Error | undefined>(undefined)
 
-    maxPages: {
-      required: false,
-      type: Number,
-      default: 25,
-    },
+const src = computed(() => (attrs as any).src)
+const labels = computed(() => (attrs as any).labels || {})
+const previewStyle = computed(() => (attrs as any).previewStyle || {})
+const previewClass = computed(() => (attrs as any).previewClass || [])
+const inline = computed(() => (attrs as any).inline ?? props.inline)
 
-    initialScale: {
-      required: false,
-      type: Number,
-      default: 1,
-    },
-  },
+const pageCount = computed(() => {
+  if (!document_.value || !document_.value.pdf) {
+    return 0
+  }
+  return document_.value.pdf.numPages
+})
 
-  data () {
-    return {
-      document: null,
-      pages: [],
-      show: false,
-      loadError: undefined,
-    }
-  },
+const hasMore = computed(() => (props.maxPages ?? 25) < pageCount.value)
 
-  computed: {
-    /**
-     * Helper to provide the number of pages for the given PDF
-     * @returns {Number}
-     */
-    pageCount () {
-      if (!this.document || !this.document.pdf) {
-        return 0
-      }
-      return this.document.pdf.numPages
-    },
-
-    /**
-     * Helper to determine if the given PDF has more pages then we are willing to show
-     * @returns {Boolean}
-     */
-    hasMore () {
-      return this.maxPages < this.pageCount
-    },
-  },
-
-  created () {
-    if (!this.src) {
-      this.stdErr(new Error('src.missing'))
-      return
-    }
-
-    this.$nextTick(() => this.init())
-  },
-
-  beforeUnmount () {
-    this.setDefaultValues()
-  },
-
-  methods: {
-    /**
-     * Helper to handle on preview click. It either requests a retry or
-     * emits an open event
-     */
-    onPreviewClick () {
-      if (this.loadError) {
-        this.init()
-      } else {
-        this.$emit('openPreview', { document: this.document })
-      }
-    },
-
-    /**
-     * Initializes the state, loads the document & renderes it's pages
-     */
-    async init () {
-      this.document = null
-      this.pages = []
-      this.show = false
-      this.loadError = undefined
-
-      return this.loadDocument(this.src)
-        .then(this.renderDocument)
-        .catch(this.stdErr)
-    },
-
-    /**
-     * Helper method to load the given document. Needed for test stubbing
-     * @param {String} src Document's src
-     * @returns {Promise<PDFDocumentProxy>}
-     */
-    async pdfjsLoad (src) {
-      return pdfjsLib.getDocument({
-        url: src,
-        useWorkerFetch: true,
-        isEvalSupported: true,
-        useSystemFonts: true,
-      }).promise
-    },
-
-    /**
-     * Loads the given PDF. It can load it from API or re-use existing document
-     * @param {Document|String} src PDF's source or a Document object
-     * @returns {Document}
-     */
-    async loadDocument (src) {
-      if (src instanceof Document) {
-        this.document = new Document({ ...src, scale: this.initialScale })
-      } else if (typeof src === 'string') {
-        let retries = 0
-        let err
-        const pdfl = async () => {
-          return sleep(retries * this.retryBackoff)
-            .then(() => this.pdfjsLoad(src))
-            .then(pdf => {
-              this.document = new Document({ pdf, src, scale: this.initialScale })
-            })
-        }
-
-        // Retry with backoff it it fails to load
-        while (!this.document && retries < this.maxRetries) {
-          await pdfl().catch(e => {
-            retries++
-            err = e
-          })
-        }
-
-        if (!this.document) {
-          throw err
-        }
-      } else {
-        throw new Error('src.notValid')
-      }
-      return this.document
-    },
-
-    /**
-     * Renders the given PDF
-     * @param {Document} doc The Document to render
-     * @return {Promise<undefined>}
-     */
-    async renderDocument (doc) {
-      const rf = this.$refs.pages
-
-      const pgCount = Math.min(this.pageCount, this.maxPages)
-      this.pages = [...new Array(pgCount)].map((_, i) => new Page({ index: i }))
-
-      if (pgCount <= 0) {
-        this.show = true
-        return
-      }
-
-      // Loadup pages
-      for (let i = 0; i < pgCount; i++) {
-        const node = makePlaceholder(this.labels)
-        rf.appendChild(node)
-        this.pages.splice(i, 1, new Page({ ...this.pages[i], node, loading: true }))
-
-        this.renderPage(this.pages[i], doc, rf)
-          .then(page => {
-            this.pages.splice(page.index, 1, page)
-
-            if (page.index === 0) {
-              this.show = true
-            }
-          })
-          .catch(this.stdErr)
-      }
-    },
-
-    /**
-     * Renders the given page
-     * @param {Page} page The page in question
-     * @param {Document} doc Page source
-     * @param {Node} rf PDF container
-     * @returns {Promise<undefined>}
-     */
-    async renderPage (page, doc, rf) {
-      // pdfjs starts with 1!
-      return doc.pdf.getPage(page.index + 1).then(p => {
-        const np = new Page(page)
-        np.loading = false
-        np.loaded = true
-        np.page = p
-
-        // Render page
-        const canvas = document.createElement('canvas')
-        const scale = doc.scale
-        const viewport = np.page.getViewport({ scale })
-        const canvasContext = canvas.getContext('2d')
-        const renderContext = { canvasContext, viewport }
-
-        canvas.height = viewport.height
-        canvas.width = viewport.width
-
-        return np.page.render(renderContext).promise.then(() => {
-          np.node = canvas
-          np.rendered = true
-          if (this.inline) {
-            canvas.classList.add('inline')
-          }
-          return np
-        })
-
-          .catch(() => {
-            const node = makeFailedPage(this.labels)
-            np.node = node
-            np.rendered = false
-            np.failed = true
-            return np
-          })
-
-          .then(np => {
-            rf.replaceChild(np.node, page.node)
-            return np
-          })
-      })
-    },
-
-    /**
-     * Standard error handler
-     * @param {Error} err The error
-     */
-    stdErr (err) {
-      console.error(err)
-      this.loadError = err
-      this.$emit('error', err)
-    },
-
-    setDefaultValues () {
-      this.document = null
-      this.pages = []
-      this.show = false
-      this.loadError = undefined
-    },
-  },
+function onPreviewClick() {
+  if (loadError.value) {
+    init()
+  } else {
+    emit('openPreview', { document: document_.value })
+  }
 }
+
+async function init() {
+  document_.value = null
+  pagesArr.value = []
+  show.value = false
+  loadError.value = undefined
+
+  return loadDocument(src.value)
+    .then(renderDocument)
+    .catch(stdErr)
+}
+
+async function pdfjsLoad(src: string) {
+  return pdfjsLib.getDocument({
+    url: src,
+    useWorkerFetch: true,
+    isEvalSupported: true,
+    useSystemFonts: true,
+  }).promise
+}
+
+async function loadDocument(src: any) {
+  if (src instanceof Document) {
+    document_.value = new Document({ ...src, scale: props.initialScale ?? 1 })
+  } else if (typeof src === 'string') {
+    let retries = 0
+    let err: any
+    const maxRetries = props.maxRetries ?? 10
+    const retryBackoff = props.retryBackoff ?? 300
+    const pdfl = async () => {
+      return sleep(retries * retryBackoff)
+        .then(() => pdfjsLoad(src))
+        .then(pdf => {
+          document_.value = new Document({ pdf, src, scale: props.initialScale ?? 1 })
+        })
+    }
+
+    while (!document_.value && retries < maxRetries) {
+      await pdfl().catch((e: any) => {
+        retries++
+        err = e
+      })
+    }
+
+    if (!document_.value) {
+      throw err
+    }
+  } else {
+    throw new Error('src.notValid')
+  }
+  return document_.value
+}
+
+async function renderDocument(doc: any) {
+  const rf = pages.value!
+  const maxPages = props.maxPages ?? 25
+  const pgCount = Math.min(pageCount.value, maxPages)
+  pagesArr.value = [...new Array(pgCount)].map((_, i) => new Page({ index: i }))
+
+  if (pgCount <= 0) {
+    show.value = true
+    return
+  }
+
+  for (let i = 0; i < pgCount; i++) {
+    const node = makePlaceholder(labels.value)
+    rf.appendChild(node)
+    pagesArr.value.splice(i, 1, new Page({ ...pagesArr.value[i], node, loading: true }))
+
+    renderPage(pagesArr.value[i], doc, rf)
+      .then(page => {
+        pagesArr.value.splice(page.index, 1, page)
+
+        if (page.index === 0) {
+          show.value = true
+        }
+      })
+      .catch(stdErr)
+  }
+}
+
+async function renderPage(page: any, doc: any, rf: Node) {
+  return doc.pdf.getPage(page.index + 1).then((p: any) => {
+    const np = new Page(page)
+    np.loading = false
+    np.loaded = true
+    np.page = p
+
+    const canvas = document.createElement('canvas')
+    const scale = doc.scale
+    const viewport = np.page.getViewport({ scale })
+    const canvasContext = canvas.getContext('2d')!
+    const renderContext = { canvasContext, viewport }
+
+    canvas.height = viewport.height
+    canvas.width = viewport.width
+
+    return np.page.render(renderContext).promise.then(() => {
+      np.node = canvas
+      np.rendered = true
+      if (inline.value) {
+        canvas.classList.add('inline')
+      }
+      return np
+    })
+
+      .catch(() => {
+        const node = makeFailedPage(labels.value)
+        np.node = node
+        np.rendered = false
+        np.failed = true
+        return np
+      })
+
+      .then((np: any) => {
+        rf.replaceChild(np.node, page.node)
+        return np
+      })
+  })
+}
+
+function stdErr(err: Error) {
+  console.error(err)
+  loadError.value = err
+  emit('error', err)
+}
+
+function setDefaultValues() {
+  document_.value = null
+  pagesArr.value = []
+  show.value = false
+  loadError.value = undefined
+}
+
+onMounted(() => {
+  if (!src.value) {
+    stdErr(new Error('src.missing'))
+    return
+  }
+
+  nextTick(() => init())
+})
+
+onBeforeUnmount(() => {
+  setDefaultValues()
+})
 </script>
 
 <style lang="scss" scoped>
-
 .doc-msg {
   display: flex;
   align-items: center;
@@ -321,12 +259,9 @@ export default {
     color: var(--danger);
   }
 }
-
 </style>
 
 <style lang="scss">
-// Style not scoped, since pages are manually rendered
-
 .pdf-preview {
   text-align: center;
   width: 100%;

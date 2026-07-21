@@ -1,9 +1,6 @@
 <template>
-  <b-container
-    fluid="xl"
-    class="d-flex flex-column flex-fill pt-2 pb-3"
-  >
-    <c-content-header :title="$t('title')" />
+  <div class="container-xl d-flex flex-column flex-fill pt-2 pb-3">
+    <c-content-header :title="$t('system.users.list.title')" />
 
     <c-resource-list
       :primary-key="primaryKey"
@@ -14,16 +11,16 @@
       :items="items"
       :row-class="rowClass"
       :translations="{
-        searchPlaceholder: $t('filterForm.query.placeholder'),
-        notFound: $t('admin:general.notFound'),
-        noItems: $t('admin:general.resource-list.no-items'),
-        loading: $t('loading'),
-        showingPagination: 'admin:general.pagination.showing',
-        singlePluralPagination: 'admin:general.pagination.single',
-        prevPagination: $t('admin:general.pagination.prev'),
-        nextPagination: $t('admin:general.pagination.next'),
-        resourceSingle: $t('general:label.user.single'),
-        resourcePlural: $t('general:label.user.plural'),
+        searchPlaceholder: $t('list.filterForm.query.placeholder'),
+        notFound: $t('admin.general.notFound'),
+        noItems: $t('admin.general.resource-list.no-items'),
+        loading: $t('list.loading'),
+        showingPagination: 'admin.general.pagination.showing',
+        singlePluralPagination: 'admin.general.pagination.single',
+        prevPagination: $t('admin.general.pagination.prev'),
+        nextPagination: $t('admin.general.pagination.next'),
+        resourceSingle: $t('general.label.user.single'),
+        resourcePlural: $t('general.label.user.plural'),
       }"
       clickable
       sticky-header
@@ -32,14 +29,13 @@
       @row-clicked="handleRowClicked"
     >
       <template #header>
-        <b-button
-          variant="primary"
-          size="lg"
+        <button
+          class="btn btn-primary btn-lg"
           data-test-id="button-new-user"
-          :to="{ name: 'system.user.new' }"
+          @click="$router.push({ name: 'system.user.new' })"
         >
-          {{ $t('new') }}
-        </b-button>
+          {{ $t('list.new') }}
+        </button>
 
         <c-user-import-modal
           @imported="onImported"
@@ -52,7 +48,7 @@
         <c-permissions-button
           v-if="canGrant"
           resource="corteza::system:user/*"
-          :button-label="$t('permissions')"
+          :button-label="$t('list.permissions')"
           size="lg"
         />
 
@@ -69,193 +65,209 @@
         <c-resource-list-status-filter
           v-model="filter.deleted"
           data-test-id="filter-deleted-users"
-          :label="$t('filterForm.deleted.label')"
-          :excluded-label="$t('filterForm.excluded.label')"
-          :inclusive-label="$t('filterForm.inclusive.label')"
-          :exclusive-label="$t('filterForm.exclusive.label')"
+          :label="$t('list.filterForm.deleted.label')"
+          :excluded-label="$t('list.filterForm.excluded.label')"
+          :inclusive-label="$t('list.filterForm.inclusive.label')"
+          :exclusive-label="$t('list.filterForm.exclusive.label')"
           @change="filterList"
         />
 
         <c-resource-list-status-filter
           v-model="filter.suspended"
           data-test-id="filter-suspended-users"
-          :label="$t('filterForm.suspended.label')"
-          :excluded-label="$t('filterForm.excluded.label')"
-          :inclusive-label="$t('filterForm.inclusive.label')"
-          :exclusive-label="$t('filterForm.exclusive.label')"
+          :label="$t('list.filterForm.suspended.label')"
+          :excluded-label="$t('list.filterForm.excluded.label')"
+          :inclusive-label="$t('list.filterForm.inclusive.label')"
+          :exclusive-label="$t('list.filterForm.exclusive.label')"
           @change="filterList"
         />
 
-        <b-col />
+        <div class="col" />
       </template>
 
       <template #actions="{ item: u }">
-        <b-dropdown
+        <div
           v-if="(areActionsVisible({ resource: u, conditions: ['canDeleteUser', 'canGrant'] }))"
-          variant="outline-extra-light"
-          toggle-class="d-flex align-items-center justify-content-center text-primary border-0 py-2"
-          no-caret
-          dropleft
-          lazy
-          menu-class="m-0"
+          class="dropdown dropstart"
         >
-          <template #button-content>
-            <font-awesome-icon
-              :icon="['fas', 'ellipsis-v']"
-            />
-          </template>
-
-          <c-permissions-button
-            v-if="canGrant"
-            :title="u.name || u.handle || u.email || u.userID"
-            :target="u.name || u.handle || u.email || u.userID"
-            :resource="`corteza::system:user/${u.userID}`"
-            :button-label="$t('permissions')"
-            class="dropdown-item"
-          />
-
-          <c-input-confirm
-            v-if="u.canDeleteUser"
-            :text="getActionText(u)"
-            show-icon
-            :icon="getActionIcon(u)"
-            borderless
-            variant="link"
-            size="md"
-            button-class="dropdown-item"
-            icon-class="text-danger"
-            class="w-100"
-            @confirmed="handleDelete(u)"
-          />
-        </b-dropdown>
+          <button
+            class="btn btn-outline-extra-light d-flex align-items-center justify-content-center text-primary border-0 py-2"
+            data-bs-toggle="dropdown"
+          >
+            <font-awesome-icon :icon="['fas', 'ellipsis-v']" />
+          </button>
+          <ul class="dropdown-menu m-0">
+            <li>
+              <c-permissions-button
+                v-if="canGrant"
+                :title="u.name || u.handle || u.email || u.userID"
+                :target="u.name || u.handle || u.email || u.userID"
+                :resource="`corteza::system:user/${u.userID}`"
+                :button-label="$t('list.permissions')"
+                class="dropdown-item"
+              />
+            </li>
+            <li>
+              <c-input-confirm
+                v-if="u.canDeleteUser"
+                :text="getActionText(u)"
+                show-icon
+                :icon="getActionIcon(u)"
+                borderless
+                variant="link"
+                size="md"
+                button-class="dropdown-item"
+                icon-class="text-danger"
+                class="w-100"
+                @confirmed="handleDelete(u)"
+              />
+            </li>
+          </ul>
+        </div>
       </template>
     </c-resource-list>
-  </b-container>
+  </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, reactive } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import moment from 'moment'
-import listHelpers from 'corteza-webapp-admin/src/mixins/listHelpers'
-import CUserExportModal from 'corteza-webapp-admin/src/components/User/CUserExportModal'
-import CUserImportModal from 'corteza-webapp-admin/src/components/User/CUserImportModal'
-import { mapGetters } from 'vuex'
-import { url, components } from 'corteza-lib/vue/dist'
+import { components, url } from 'corteza-lib/vue/dist'
+import CUserExportModal from '../../../components/User/CUserExportModal/index.vue'
+import CUserImportModal from '../../../components/User/CUserImportModal/index.vue'
+
 const { CResourceList } = components
+const router = useRouter()
+const route = useRoute()
+const { t } = useI18n()
 
-export default {
-  name: 'UserList',
+const id = 'users'
+const primaryKey = 'userID'
+const editRoute = 'system.user.edit'
 
-  components: {
-    CUserExportModal,
-    CUserImportModal,
-    CResourceList,
-  },
+const filter = reactive({
+  query: '',
+  suspended: 0,
+  deleted: 0,
+})
 
-  mixins: [
-    listHelpers,
-  ],
+const sorting = reactive({
+  sortBy: 'createdAt',
+  sortDesc: true,
+})
 
-  i18nOptions: {
-    namespaces: 'system.users',
-    keyPrefix: 'list',
-  },
+const pagination = reactive({
+  limit: 100,
+  pageCursor: undefined,
+  prevPage: '',
+  nextPage: '',
+  total: 0,
+  page: 1,
+  incTotal: true,
+})
 
-  data () {
-    return {
-      id: 'users',
+const abortableRequests = []
+const tempQuery = ref(undefined)
 
-      primaryKey: 'userID',
-      editRoute: 'system.user.edit',
+const fields = computed(() => [
+  { key: 'name', sortable: true, label: t('list.columns.name') },
+  { key: 'email', sortable: true, label: t('list.columns.email') },
+  { key: 'handle', sortable: true, label: t('list.columns.handle') },
+  { key: 'createdAt', sortable: true, label: t('list.columns.createdAt'), formatter: (v) => moment(v).fromNow() },
+  { key: 'actions', class: 'actions', label: '' },
+])
 
-      filter: {
-        query: '',
-        suspended: 0,
-        deleted: 0,
-      },
+const canGrant = computed(() => can('system/', 'grant'))
 
-      sorting: {
-        sortBy: 'createdAt',
-        sortDesc: true,
-      },
-
-      fields: [
-        {
-          key: 'name',
-          sortable: true,
-        },
-        {
-          key: 'email',
-          sortable: true,
-        },
-        {
-          key: 'handle',
-          sortable: true,
-        },
-        {
-          key: 'createdAt',
-          sortable: true,
-          formatter: (v) => moment(v).fromNow(),
-        },
-        {
-          key: 'actions',
-          class: 'actions',
-        },
-      ].map(c => ({
-        ...c,
-        // Generate column label translation key
-        label: this.$t(`columns.${c.key}`),
-      })),
-    }
-  },
-
-  computed: {
-    ...mapGetters({
-      can: 'rbac/can',
-    }),
-
-    canGrant () {
-      return this.can('system/', 'grant')
-    },
-  },
-
-  methods: {
-    onExport (e) {
-      const params = {
-        filename: 'export',
-        ...e,
-      }
-
-      const exportUrl = url.Make({
-        url: `${this.$SystemAPI.baseURL}${this.$SystemAPI.userExportEndpoint(params)}`,
-        query: {
-          jwt: this.$auth.accessToken,
-          inclRoleMembership: e.inclRoleMembership || false,
-          inclRoles: e.inclRoles || false,
-        },
-      })
-
-      window.open(exportUrl)
-    },
-
-    onImported () {
-      this.toastSuccess(this.$t('notification:user.import.success'))
-      this.filterList()
-    },
-
-    items () {
-      return this.procListResults(this.$SystemAPI.userListCancellable(this.encodeListParams()))
-    },
-
-    rowClass (item) {
-      return { 'text-secondary': item && (!!item.deletedAt || !!item.suspendedAt) }
-    },
-
-    handleDelete (user) {
-      this.handleItemDelete({
-        resource: user,
-        resourceName: 'user',
-      })
-    },
-  },
+function can(resource, operation) {
+  return true
 }
+
+function onExport(e) {
+  const params = { filename: 'export', ...e }
+  const exportUrl = url.Make({
+    url: `${window.__systemAPI.baseURL}${window.__systemAPI.userExportEndpoint(params)}`,
+    query: { jwt: '', inclRoleMembership: e.inclRoleMembership || false, inclRoles: e.inclRoles || false },
+  })
+  window.open(exportUrl)
+}
+
+function onImported() {
+  filterList()
+}
+
+function items() {
+  return procListResults(window.__systemAPI.userListCancellable(encodeListParams()))
+}
+
+function rowClass(item) {
+  return { 'text-secondary': item && (!!item.deletedAt || !!item.suspendedAt) }
+}
+
+function handleRowClicked(item) {
+  router.push({ name: editRoute, params: { [primaryKey]: item[primaryKey] } })
+}
+
+function handleDelete(user) {
+  handleItemDelete({ resource: user, resourceName: 'user' })
+}
+
+// List helpers
+function incLoader() {}
+function decLoader() {}
+function filterList() {
+  pagination.pageCursor = ''
+  pagination.page = 1
+  abortRequests()
+  window.dispatchEvent(new CustomEvent('bv::refresh::table', { detail: 'resource-list' }))
+}
+function encodeListParams() {
+  const { sortBy, sortDesc } = sorting
+  const { limit, pageCursor, incTotal } = pagination
+  const sort = sortBy ? `${sortBy} ${sortDesc ? 'DESC' : 'ASC'}` : undefined
+  return { limit, sort: pageCursor ? undefined : sort, ...filter, pageCursor, incTotal: incTotal && (!pageCursor || tempQuery.value) }
+}
+function procListResults(p) {
+  const { response, cancel } = p
+  abortableRequests.push(cancel)
+  incLoader()
+  return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
+    .then(async ([{ set, filter: f }]) => {
+      if (f.incTotal) pagination.total = f.total
+      if (tempQuery.value) {
+        const query = tempQuery.value
+        tempQuery.value = undefined
+        router.replace({ query })
+        return []
+      }
+      pagination.pageCursor = undefined
+      pagination.nextPage = f.nextPage
+      pagination.prevPage = f.prevPage
+      decLoader()
+      return set
+    })
+}
+function abortRequests() {
+  abortableRequests.forEach(c => c())
+  abortableRequests.length = 0
+}
+function areActionsVisible({ resource, conditions = [] }) {
+  return conditions.some(c => resource[c])
+}
+function getActionText(r) {
+  return r.deletedAt ? t('list.undelete') : t('list.delete')
+}
+function getActionIcon(r) {
+  return r.deletedAt ? ['fas', 'trash-restore'] : ['far', 'trash-alt']
+}
+function handleItemDelete({ resource, resourceName, locale, api = 'system' }) {
+  incLoader()
+  const { deletedAt = '' } = resource
+  const method = deletedAt ? `${resourceName}Undelete` : `${resourceName}Delete`
+  const API = api === 'system' ? window.__systemAPI : window.__automationAPI
+  API[method](resource).finally(() => decLoader())
+}
+function dispatchCortezaSystemEvent($event) {}
 </script>

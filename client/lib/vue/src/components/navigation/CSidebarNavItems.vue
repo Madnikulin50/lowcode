@@ -9,13 +9,12 @@
       :class="{ 'mb-1': root }"
     >
       <div class="d-flex align-items-start pointer pb-1">
-        <b-button
-          variant="link"
+        <router-link
           active-class="nav-active"
           exact-active-class="nav-exact-active"
           :title="page.title"
           :to="{ name: page.name || defaultRouteName, params }"
-          class="nav-item d-flex align-items-center text-decoration-none rounded flex-grow-1 text-left pl-1 py-1 gap-1"
+          class="nav-item d-flex align-items-center text-decoration-none rounded flex-grow-1 text-start ps-1 py-1 gap-1"
           @click="onItemClick()"
         >
           <template v-if="page.icon">
@@ -28,7 +27,7 @@
             <img
               v-else
               :src="page.icon"
-              class="mr-1"
+              class="me-1"
               style="height: 1rem; width: 1rem;"
             >
           </template>
@@ -39,12 +38,11 @@
           >
             {{ page.title }}
           </label>
-        </b-button>
+        </router-link>
 
-        <b-button
+        <button
           v-if="children.length"
-          variant="outline-light"
-          class="p-0 border-0 ml-auto"
+          class="btn btn-outline-light p-0 border-0 ms-auto"
           style="min-width: 2rem; min-height: 2rem;"
           @click="toggle(page)"
         >
@@ -58,104 +56,86 @@
             class="text-primary"
             :icon="['fas', 'chevron-up']"
           />
-        </b-button>
+        </button>
       </div>
 
-      <b-collapse
+      <div
         v-if="children.length"
-        :visible="collapses[pageKey(page)]"
+        v-show="collapses[pageKey(page)]"
       >
         <c-sidebar-nav-items
           :items="children"
           :start-expanded="startExpanded"
           :default-route-name="defaultRouteName"
           :root="false"
-          class="py-1 ml-2"
-          v-on="$listeners"
+          class="py-1 ms-2"
         />
-      </b-collapse>
+      </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'CSidebarNavItems',
+<script setup lang="ts">
+defineOptions({ name: 'CSidebarNavItems' })
 
-  props: {
-    /*
-    * {
-        page: { name, title }
-        params: {...}
-      }
-    */
-    items: {
-      type: Array,
-      required: true,
-      default: () => [],
-    },
-    root: {
-      type: Boolean,
-      default: true,
-    },
-    defaultRouteName: {
-      type: String,
-      required: true,
-    },
-    startExpanded: {
-      type: Boolean,
-      required: false,
-    },
+import { reactive, watch } from 'vue'
+import { useRoute } from 'vue-router'
+
+const props = defineProps({
+  items: {
+    type: Array,
+    required: true,
+    default: () => [],
   },
-
-  data () {
-    return {
-      collapses: {},
-    }
+  root: {
+    type: Boolean,
+    default: true,
   },
-
-  watch: {
-    items: {
-      immediate: true,
-      handler (items = []) {
-        items.forEach(({ page, params, children }) => {
-          const px = this.pageKey(page)
-          // Apply startExpanded only if page isn't currently expanded
-          this.$set(this.collapses, px, this.startExpanded || page.expanded || this.showChildren({ params, children }))
-        })
-      },
-    },
+  defaultRouteName: {
+    type: String,
+    required: true,
   },
-
-  methods: {
-    onItemClick () {
-      if (window.innerWidth < 1024) {
-        this.$root.$emit('close-sidebar')
-      }
-    },
-
-    pageKey (p) {
-      return p.pageID || p.name || p.title
-    },
-
-    toggle (p) {
-      const px = this.pageKey(p)
-      this.$set(this.collapses, px, !this.collapses[px])
-    },
-
-    // Recursively check for child pages that are open, so that parents can open as well
-    showChildren ({ params = {}, children = [] }) {
-      const partialParamsMatch = Object.entries(params).some(([key, value]) => {
-        return this.$route.params[key] === value
-      })
-
-      if (partialParamsMatch) {
-        return partialParamsMatch
-      }
-
-      return children.map(c => this.showChildren(c)).some(isOpen => isOpen)
-    },
+  startExpanded: {
+    type: Boolean,
+    default: false,
   },
+})
+
+const route = (() => { try { return useRoute() } catch(e) { return {} } })() || {}
+const collapses = reactive({})
+
+watch(() => props.items, (items: any[] = []) => {
+  items.forEach(({ page, params, children }: any) => {
+    const px = pageKey(page)
+    collapses[px] = props.startExpanded || page.expanded || showChildren({ params, children })
+  })
+}, { immediate: true })
+
+function onItemClick () {
+  if (window.innerWidth < 1024) {
+    window.dispatchEvent(new CustomEvent('close-sidebar'))
+  }
+}
+
+function pageKey (p: any): string {
+  return p.pageID || p.name || p.title
+}
+
+function toggle (p: any): void {
+  const px = pageKey(p)
+  collapses[px] = !collapses[px]
+}
+
+function showChildren ({ params = {}, children = [] }: any): boolean {
+  const partialParamsMatch = Object.entries(params).some(([key, value]) => {
+    return route?.params?.[key] === value
+  })
+
+  if (partialParamsMatch) {
+    return partialParamsMatch
+  }
+
+  return children.map((c: any) => showChildren(c)).some((isOpen: boolean) => isOpen)
 }
 </script>
 
@@ -194,4 +174,3 @@ export default {
 
 }
 </style>
-

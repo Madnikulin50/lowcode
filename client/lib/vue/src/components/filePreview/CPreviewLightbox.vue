@@ -1,14 +1,12 @@
 <template>
-  <c-lightbox v-on="$listeners">
-    <!-- Proxy slots -->
+  <c-lightbox>
     <template
-      v-for="(_, slot) of $scopedSlots"
+      v-for="(_, slot) of slots"
       #[slot]="scope"
     >
       <slot
         :name="slot"
         v-bind="scope"
-        v-on="$listeners"
       />
     </template>
 
@@ -16,24 +14,20 @@
       :is="previewType"
       v-if="previewType"
       v-bind="$attrs"
-      v-on="$listeners"
     />
   </c-lightbox>
 </template>
 
-<script lang="js">
+<script setup lang="ts">
+import { computed, useAttrs, useSlots } from 'vue'
 import { LightboxIMG as IMG, PDF, NoPreview } from './common/types'
 import { CLightbox } from '../lightbox/index.ts'
-import base from './common/base.vue'
+import { getComponent } from './common/index.js'
 
-export default {
-  components: {
-    CLightbox,
-    IMG,
-    PDF,
-    NoPreview,
-  },
+const attrs = useAttrs()
+const slots = useSlots()
 
-  extends: base,
-}
+const previewType = computed(() => {
+  return getComponent({ type: attrs.mime as string, src: attrs.src as string, name: attrs.name as string })
+})
 </script>

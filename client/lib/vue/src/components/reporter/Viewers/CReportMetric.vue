@@ -24,77 +24,64 @@
   </div>
 </template>
 
-<script>
-import base from './base.vue'
+<script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue'
 import numeral from 'numeral'
 
-export default {
-  extends: base,
+const props = defineProps<{
+  displayElement: any
+  labels?: Record<string, any>
+}>()
 
-  data () {
-    return {
-      vvb: ['0', '0', '0', '0'],
+const metricItem = ref<SVGTextElement>()
+
+const dataframes = computed(() => props.displayElement?.dataframes || [])
+const options = computed(() => props.displayElement?.options || undefined)
+
+const vvb = ref(['0', '0', '0', '0'])
+
+const viewbox = computed(() => vvb.value.join(' '))
+
+const style = computed(() => ({
+  fill: options.value?.color || '#0B344E',
+  backgroundColor: options.value?.backgroundColor || '#FFFFFF00',
+}))
+
+const value = computed(() => {
+  if (dataframes.value.length) {
+    const { rows = [], columns = [] } = dataframes.value[0]
+    if (columns.length) {
+      const columnIndex = columns.findIndex(({ name }: any) => name === options.value?.valueColumn)
+      if (rows.length) {
+        return rows[0] ? rows[0][columnIndex] || '' : ''
+      }
     }
-  },
+  }
+  return ''
+})
 
-  computed: {
-    viewbox () {
-      return this.vvb.join(' ')
-    },
+const displayedMetric = computed(() => {
+  const { prefix = '', suffix = '', format = '' } = options.value || {}
+  if (value.value) {
+    const v = format ? numeral(value.value).format(format) : value.value
+    return `${prefix}${v}${suffix}`
+  }
+  return ''
+})
 
-    style () {
-      return {
-        fill: this.options.color || '#0B344E',
-        backgroundColor: this.options.backgroundColor || '#FFFFFF00',
-      }
-    },
+watch(value, () => {
+  update()
+}, { immediate: true })
 
-    value () {
-      if (this.dataframes.length) {
-        const { rows = [], columns = [] } = this.dataframes[0]
-
-        if (columns.length) {
-          const columnIndex = columns.findIndex(({ name }) => name === this.options.valueColumn)
-
-          if (rows.length) {
-            return rows[0] ? rows[0][columnIndex] || '' : ''
-          }
-        }
-      }
-      return ''
-    },
-
-    displayedMetric () {
-      const { prefix = '', suffix = '', format = '' } = this.options
-
-      if (this.value) {
-        const value = format ? numeral(this.value).format(format) : this.value
-        return `${prefix}${value}${suffix}`
-      }
-
-      return ''
-    },
-  },
-
-  watch: {
-    value: {
-      immediate: true,
-      handler: function () {
-        this.update()
-      },
-    },
-  },
-
-  methods: {
-    update () {
-      this.$nextTick(function () {
-        const { width, height } = this.$refs.metricItem.getBBox()
-        const tmp = [...this.vvb]
-        tmp[2] = parseInt(Math.ceil(width))
-        tmp[3] = parseInt(Math.ceil(height))
-        this.vvb = tmp
-      })
-    },
-  },
+function update() {
+  nextTick(() => {
+    if (metricItem.value) {
+      const { width, height } = metricItem.value.getBBox()
+      const tmp = [...vvb.value]
+      tmp[2] = String(Math.ceil(width))
+      tmp[3] = String(Math.ceil(height))
+      vvb.value = tmp
+    }
+  })
 }
 </script>

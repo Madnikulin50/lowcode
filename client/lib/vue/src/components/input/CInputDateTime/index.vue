@@ -1,128 +1,75 @@
 <template>
   <div class="c-input-date-time d-flex flex-wrap w-100 gap-1">
-    <b-form-datepicker
+    <input
       v-if="!noDate"
-      v-model="date"
+      type="date"
+      :value="date"
       data-test-id="picker-date"
       :placeholder="labels.none"
-      :date-format-options="{ year: 'numeric', month: 'numeric', day: 'numeric' }"
       :min="minDate"
       :max="maxDate"
-      :label-reset-button="labels.clear"
-      :label-today-button="labels.today"
-      :locale="browserLocale"
-      :start-weekday="weekStartDay"
-      label-help=""
-      today-variant="info"
-      selected-variant="extra-light"
-      boundary="window"
-      hide-header
-      reset-button
-      today-button
-      show-decade-nav
-      class="h-100 overflow-hidden"
+      class="form-control h-100 overflow-hidden"
+      @input="onDateInput"
     />
 
-    <b-form-timepicker
+    <input
       v-if="!noTime"
-      v-model="time"
+      type="time"
+      :value="time"
       data-test-id="picker-time"
       :placeholder="labels.none"
-      :label-reset-button="labels.clear"
-      :label-now-button="labels.now"
-      :locale="browserLocale"
-      boundary="window"
-      hide-header
-      no-close-button
-      reset-button
-      now-button
-      class="h-100 overflow-hidden"
+      class="form-control h-100 overflow-hidden"
+      @input="onTimeInput"
     />
 
     <slot />
   </div>
 </template>
-<script lang="js">
-import { getDate, setDate, getTime, setTime } from './lib/index.ts'
-import { shared } from '../../../../../../lib/js/dist'
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { getDate, getTime, setDate, setTime } from './lib/index.ts'
+import { shared } from '@cortezaproject/corteza-js'
+
 const { getWeekStartDay } = shared
 
-export default {
-  props: {
-    value: {
-      type: [String, Date],
-      required: false,
-      default: '',
-    },
+const props = defineProps<{
+  modelValue?: string | Date
+  noTime?: boolean
+  noDate?: boolean
+  onlyFuture?: boolean
+  onlyPast?: boolean
+  size?: string
+  labels: { none: string; clear: string; today: string; now: string }
+}>()
 
-    noTime: {
-      type: Boolean,
-      default: false,
-    },
+const emit = defineEmits<{
+  'update:modelValue': [value: string | undefined]
+}>()
 
-    noDate: {
-      type: Boolean,
-      default: false,
-    },
-
-    onlyFuture: {
-      type: Boolean,
-      default: false,
-    },
-
-    onlyPast: {
-      type: Boolean,
-      default: false,
-    },
-
-    size: {
-      type: String,
-      default: 'md',
-    },
-
-    labels: {
-      type: Object,
-      required: true,
-    },
+const date = computed({
+  get: () => getDate(props.modelValue as string),
+  set: (date: string | undefined) => {
+    emit('update:modelValue', setDate(date, props.modelValue as string, props.noDate, props.noTime))
   },
+})
 
-  computed: {
-    date: {
-      get () {
-        return getDate(this.value)
-      },
-
-      set (date) {
-        this.$emit('input', setDate(date, this.value, this.noDate, this.noTime))
-      },
-    },
-
-    time: {
-      get () {
-        return getTime(this.value)
-      },
-
-      set (time) {
-        this.$emit('input', setTime(time, this.value, this.noDate, this.noTime))
-      },
-    },
-
-    minDate () {
-      return this.onlyFuture ? new Date() : undefined
-    },
-
-    maxDate () {
-      return this.onlyPast ? new Date() : undefined
-    },
-
-    browserLocale () {
-      return navigator.language || navigator.languages?.[0] || 'en-US'
-    },
-
-    weekStartDay () {
-      return getWeekStartDay(this.browserLocale)
-    },
+const time = computed({
+  get: () => getTime(props.modelValue as string),
+  set: (time: string | undefined) => {
+    emit('update:modelValue', setTime(time, props.modelValue as string, props.noDate, props.noTime))
   },
+})
+
+const minDate = computed(() => props.onlyFuture ? new Date().toISOString().split('T')[0] : undefined)
+const maxDate = computed(() => props.onlyPast ? new Date().toISOString().split('T')[0] : undefined)
+
+function onDateInput(e: Event) {
+  date.value = (e.target as HTMLInputElement).value || undefined
+}
+
+function onTimeInput(e: Event) {
+  time.value = (e.target as HTMLInputElement).value || undefined
 }
 </script>
 
@@ -139,19 +86,9 @@ export default {
     color: var(--black) !important;
   }
 
-  .b-form-datepicker, .b-form-timepicker {
+  input[type="date"],
+  input[type="time"] {
     flex: 1 0 130px;
-  }
-
-  .b-calendar-inner {
-    background-color: var(--white);
-
-    .b-calendar-grid-body {
-      height: 14rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
   }
 }
 </style>

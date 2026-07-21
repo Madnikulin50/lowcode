@@ -1,0 +1,32 @@
+suspended:
+  label: Отключенные
+excluded:
+  label: Без
+exclusive:
+  label: Только
+inclusive:
+  label: Включая
+deleted:
+  label: Удаленные
+archived:
+  label: В архиве
+query:
+  label: Фильтр списка
+  placeholder: Фильтр по имени
+handle:
+  label: Фильтр списка
+  placeholder: Фильтр по идентификатору
+started:
+  label: Запущенные
+prompted:
+  label: Ожидающие
+failed:
+  label: Ошибка
+canceled:
+  label: Отмененные
+completed:
+  label: Завершенные
+sessions:
+  label: сессии
+all:
+  label: Все

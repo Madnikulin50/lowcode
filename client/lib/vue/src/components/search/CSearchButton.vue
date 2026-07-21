@@ -1,34 +1,26 @@
 <template>
-  <b-button
-    v-b-tooltip.hover="{ title: labels.search || 'Search', delay: { show: 500, hide: 0 } }"
-    variant="outline-extra-light"
-    size="lg"
-    class="nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center"
+  <button
+    :title="(labels.search || 'Search')"
+    type="button"
+    class="btn btn-outline-extra-light btn-lg nav-icon rounded-circle text-center border-0 d-flex align-items-center justify-content-center"
     @click="openSearch"
   >
     <font-awesome-icon
       :icon="['fas', 'search']"
       class="text-dark"
     />
-  </b-button>
+  </button>
 </template>
 
-<script>
-export default {
-  name: 'CSearchButton',
+<script setup lang="ts">
+withDefaults(defineProps<{
+  labels?: Record<string, string>
+}>(), {
+  labels: () => ({}),
+})
 
-  props: {
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
-
-  methods: {
-    openSearch () {
-      this.$root.$emit('search:open')
-    },
-  },
+function openSearch() {
+  window.dispatchEvent(new CustomEvent('search:open'))
 }
 </script>
 

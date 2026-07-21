@@ -1,20 +1,18 @@
-<script lang="js">
+<script setup lang="ts">
+import { computed, useAttrs } from 'vue'
 import { getComponent } from './index.js'
 
-export default {
-  inheritAttrs: false,
+defineOptions({ inheritAttrs: false })
 
-  props: {
-    inline: {
-      type: Boolean,
-      default: false,
-    },
-  },
+defineProps<{
+  inline?: boolean
+}>()
 
-  computed: {
-    previewType () {
-      return getComponent({ type: this.$attrs.mime, src: this.$attrs.src, name: this.$attrs.name })
-    },
-  },
-}
+const attrs = useAttrs()
+
+const previewType = computed(() => getComponent({
+  type: (attrs as any).mime,
+  src: (attrs as any).src,
+  name: (attrs as any).name,
+}))
 </script>

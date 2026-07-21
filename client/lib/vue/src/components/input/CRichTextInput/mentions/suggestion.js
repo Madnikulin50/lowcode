@@ -1,5 +1,5 @@
 import { createPopper } from '@popperjs/core'
-import { VueRenderer } from '@tiptap/vue-2'
+import { VueRenderer } from '@tiptap/vue-3'
 import MentionList from './MentionList.vue'
 
 export default {

@@ -1,108 +1,89 @@
 <template>
   <div class="d-flex">
-    <b-button
-      variant="outline-secondary"
-      size="lg"
-      class="flex-fill"
-      @click="show = true"
+    <button
+      class="btn btn-outline-secondary btn-lg flex-fill"
+      data-bs-toggle="modal"
+      data-bs-target="#import"
     >
-      {{ $t('general:import.label') }}
-    </b-button>
+      {{ $t('import.label') }}
+    </button>
 
-    <b-modal
-      id="import"
-      v-model="show"
-      size="lg"
-      :title="$t('general:import.json')"
-      ok-only
-      no-fade
-      class="d-none"
-      @ok="$emit('import', workflows)"
-    >
-      <b-form-group
-        :description="$t('general:import.reassign-run-as')"
-        class="mb-0"
-      >
-        <b-form-file
-          :placeholder="$t('general:import.upload-files')"
-          @change="fileUpload"
-        />
-      </b-form-group>
-
-      <template #modal-footer>
-        <b-button
-          variant="primary"
-          size="lg"
-          :disabled="!workflows.length || processing"
-          class="d-flex justify-content-center align-items-center"
-          @click="$emit('import', workflows)"
-        >
-          <b-spinner
-            v-if="processing"
-            small
-            type="grow"
-          />
-
-          <span
-            v-else
-          >
-            {{ $t('general:import.label') }}
-          </span>
-        </b-button>
-      </template>
-    </b-modal>
+    <div class="modal fade" id="import" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ $t('import.json') }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">{{ $t('import.reassign-run-as') }}</label>
+              <input class="form-control" type="file" @change="fileUpload" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="btn btn-primary btn-lg d-flex justify-content-center align-items-center"
+              :disabled="!workflows.length || processing"
+              @click="handleImport"
+            >
+              <div v-if="processing" class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span v-else>{{ $t('import.label') }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
-  },
+<script setup>
+import { ref, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useToast } from 'corteza-lib/vue/dist'
 
-  data () {
-    return {
-      show: false,
-      workflows: [],
-      processing: false,
-    }
-  },
+const { t } = useI18n()
+const toast = useToast()
 
-  methods: {
-    fileUpload (e = {}) {
-      const { files = [] } = (e.type === 'drop' ? e.dataTransfer : e.target) || {}
+defineProps({
+  disabled: { type: Boolean, default: false },
+})
 
-      if (files[0]) {
-        this.processing = true
-        const reader = new FileReader()
+const emit = defineEmits(['import'])
 
-        reader.readAsText(files[0])
+const workflows = ref([])
+const processing = ref(false)
 
-        reader.onload = (evt) => {
-          try {
-            const { workflows = [] } = JSON.parse(evt.target.result)
-            this.workflows = workflows
-          } catch (err) {
-            err.message = this.$t('notification:failed-load-file')
-            this.toastErrorHandler(this.$t('notification:general.warning'))(err)
-          } finally {
-            this.processing = false
-          }
-        }
+function fileUpload(e = {}) {
+  const { files = [] } = (e.type === 'drop' ? e.dataTransfer : e.target) || {}
 
-        reader.onerror = () => {
-          this.toastErrorHandler(this.$t('notification:failed-load-file'))
-          this.processing = false
-        }
+  if (files[0]) {
+    processing.value = true
+    const reader = new FileReader()
+
+    reader.readAsText(files[0])
+
+    reader.onload = (evt) => {
+      try {
+        const { workflows: wf = [] } = JSON.parse(evt.target.result)
+        workflows.value = wf
+      } catch (err) {
+        toast.error(t('notification.general.warning'), err.message || t('notification.failed-load-file'))
+      } finally {
+        processing.value = false
       }
-    },
-  },
+    }
+
+    reader.onerror = () => {
+      toast.error(t('notification.failed-load-file'))
+      processing.value = false
+    }
+  }
+}
+
+function handleImport() {
+  emit('import', workflows.value)
 }
 </script>
-
-<style>
-
-</style>

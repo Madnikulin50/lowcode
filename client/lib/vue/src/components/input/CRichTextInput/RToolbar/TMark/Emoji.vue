@@ -1,20 +1,16 @@
 <template>
-  <span>
-    <b-button
+  <span class="position-relative">
+    <button
       :id="popoverId"
-      variant="link"
-      class="text-dark font-weight-bold text-decoration-none"
+      class="btn btn-link text-dark fw-bold text-decoration-none"
+      @click="togglePopover"
     >
       <font-awesome-icon :icon="['far', 'face-smile']" />
-    </b-button>
+    </button>
 
-    <b-popover
-      :target="popoverId"
-      triggers="click blur"
-      placement="bottom"
-      container="body"
-      custom-class="emoji-picker-popover border-light"
-      @shown="onShown"
+    <div
+      v-if="visible"
+      class="emoji-picker-dropdown"
     >
       <c-emoji-picker
         ref="picker"
@@ -23,85 +19,64 @@
         :show-quick-reactions="false"
         @select="onSelect"
       />
-    </b-popover>
+    </div>
   </span>
 </template>
 
-<script>
-// Use ~corteza-vue/ alias to avoid circular self-reference to dist
+<script setup lang="ts">
+import { ref, computed, nextTick } from 'vue'
 import CEmojiPicker from '~corteza-vue/components/CEmojiPicker.vue'
 
 let popoverCounter = 0
 
-export default {
-  name: 'TMarkEmoji',
+const props = defineProps<{
+  editor: any
+  format: any
+  labels: Record<string, any>
+}>()
 
-  components: {
-    CEmojiPicker,
-  },
+const popoverId = `emoji-picker-${++popoverCounter}`
+const visible = ref(false)
+const picker = ref<any>(null)
 
-  props: {
-    editor: {
-      type: Object,
-      required: true,
-    },
+const allEmojis = computed(() => {
+  return props.editor.storage?.emoji?.emojis || []
+})
 
-    format: {
-      type: Object,
-      default: () => ({}),
-    },
+function togglePopover() {
+  visible.value = !visible.value
+}
 
-    labels: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
-
-  data () {
-    return {
-      popoverId: `emoji-picker-${++popoverCounter}`,
+function onShown() {
+  nextTick(() => {
+    if (picker.value) {
+      picker.value.reset()
     }
-  },
+  })
+}
 
-  computed: {
-    allEmojis () {
-      return this.editor.storage?.emoji?.emojis || []
-    },
-  },
-
-  methods: {
-    onShown () {
-      this.$nextTick(() => {
-        if (this.$refs.picker) {
-          this.$refs.picker.reset()
-        }
-      })
-    },
-
-    onSelect (emoji) {
-      if (emoji && emoji.name) {
-        this.editor.chain().focus().insertContent({
-          type: 'emoji',
-          attrs: { name: emoji.name },
-        }).run()
-      }
-      this.$root.$emit('bv::hide::popover', this.popoverId)
-    },
-  },
+function onSelect(emoji: any) {
+  if (emoji && emoji.name) {
+    props.editor.chain().focus().insertContent({
+      type: 'emoji',
+      attrs: { name: emoji.name },
+    }).run()
+  }
+  visible.value = false
+  window.dispatchEvent(new CustomEvent('bv::hide::popover', { detail: { id: popoverId } }))
 }
 </script>
 
 <style lang="scss">
-.emoji-picker-popover {
+.emoji-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1060;
   background: var(--white, #fff);
   max-width: 300px;
-
-  .popover-body {
-    padding: 0;
-  }
-
-  .arrow::after {
-    border-bottom-color: var(--white, #fff);
-  }
+  border: 1px solid var(--light, #f8f9fa);
+  border-radius: 0.25rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 </style>

@@ -1,78 +1,55 @@
 <template>
-  <div
-    class="overflow-hidden d-flex flex-column w-100 vh-100"
-  >
-    <b-card
-      no-body
-      class="h-100"
-    >
-      <b-card-header
-        class="p-0"
-      >
-        <c-input-search
+  <div class="overflow-hidden d-flex flex-column w-100 vh-100">
+    <div class="card h-100">
+      <div class="card-header p-0">
+        <CInputSearch
           v-if="!hideFilter"
           v-model.trim="query"
           :disabled="_disabledFilter"
           :placeholder="labels.searchPlaceholder"
         />
-      </b-card-header>
+      </div>
 
-      <b-card-body
-        class="d-flex p-0"
-      >
-        <b-card
-          no-body
-          class="col-sm-6 col-12 h-100 p-0"
-        >
-          <b-card-header
-            class="py-2 pl-0 pr-2"
-          >
-            <div
-              class="d-flex align-items-center"
-            >
-              <label
-                class="text-primary mb-0 py-1"
-              >
+      <div class="card-body d-flex p-0">
+        <div class="card h-100 col-sm-6 col-12 p-0 border-0">
+          <div class="card-header py-2 ps-0 pe-2 bg-transparent">
+            <div class="d-flex align-items-center">
+              <label class="text-primary mb-0 py-1">
                 {{ labels.availableItems }}
               </label>
-              <b-button
+              <button
                 v-show="filteredAvailable.length && !disabled"
                 data-test-id="link-select-all"
-                variant="outline-light"
-                class="ml-auto border-0 text-muted"
+                class="btn btn-outline-light ms-auto border-0 text-muted"
                 @click="selectAll()"
               >
                 {{ labels.selectAllItems }}
-              </b-button>
+              </button>
             </div>
-          </b-card-header>
+          </div>
 
-          <b-card-body
-            class="overflow-auto py-0 pl-0 pr-2"
-          >
-            <b-list-group
-              vertical
-              class="h-100"
-            >
+          <div class="card-body overflow-auto py-0 ps-0 pe-2">
+            <ul class="list-group h-100">
               <draggable
                 v-model="filteredAvailable"
                 :sort="!_disabledSorting"
                 :move="_disableDragging"
-                :disabled="query"
+                :disabled="!!query"
                 draggable=".item"
                 group="items"
+                item-key="value"
                 class="overflow-auto h-100"
               >
-                <b-list-group-item
+                <li
                   v-for="item in filteredAvailable"
                   :key="item.value"
-                  class="item mb-3 border rounded"
+                  class="list-group-item item mb-3 border rounded"
                   :class="{
                     'handle': !isDraggable
                   }"
                   @dblclick="select(item)"
                 >
-                  <c-item-picker-item
+                  <CItemPickerItem
                     :item="item"
                     :disabled="disabled"
                     :disabled-dragging="isDraggable"
@@ -81,7 +58,7 @@
                     @select="select(item)"
                   >
                     <template
-                      v-for="(_, slot) of $scopedSlots"
+                      v-for="(_, slot) of $slots"
                       #[slot]="scope"
                     >
                       <slot
@@ -94,8 +71,8 @@
                         v-bind="scope"
                       />
                     </template>
-                  </c-item-picker-item>
-                </b-list-group-item>
+                  </CItemPickerItem>
+                </li>
 
                 <template #footer>
                   <h6
@@ -106,63 +83,49 @@
                   </h6>
                 </template>
               </draggable>
-            </b-list-group>
-          </b-card-body>
-        </b-card>
+            </ul>
+          </div>
+        </div>
 
-        <b-card
-          no-body
-          class="h-100 pl-sm-0 col-sm-6 col-12 p-0"
-        >
-          <b-card-header
-            class="py-2 pl-2 pr-0"
-          >
-            <div
-              class="d-flex align-items-center"
-            >
-              <label
-                class="text-primary mb-0 py-1"
-              >
+        <div class="card h-100 ps-sm-0 col-sm-6 col-12 p-0 border-0">
+          <div class="card-header py-2 ps-2 pe-0 bg-transparent">
+            <div class="d-flex align-items-center">
+              <label class="text-primary mb-0 py-1">
                 {{ labels.selectedItems }}
               </label>
-              <b-button
+              <button
                 v-show="filteredSelected.length && !disabled"
                 data-test-id="link-unselect-all"
-                variant="outline-light"
-                class="ml-auto border-0 text-muted"
+                class="btn btn-outline-light ms-auto border-0 text-muted"
                 @click="unselectAll()"
               >
                 {{ labels.unselectAllItems }}
-              </b-button>
+              </button>
             </div>
-          </b-card-header>
+          </div>
 
-          <b-card-body
-            class="overflow-auto py-0 pl-2 pr-0"
-          >
-            <b-list-group
-              vertical
-              class="h-100"
-            >
+          <div class="card-body overflow-auto py-0 ps-2 pe-0">
+            <ul class="list-group h-100">
               <draggable
                 v-model="filteredSelected"
                 :sort="!_disabledSorting"
                 :move="_disableDragging"
-                :disabled="query"
+                :disabled="!!query"
                 draggable=".item"
                 group="items"
+                item-key="value"
                 class="overflow-auto h-100"
               >
-                <b-list-group-item
+                <li
                   v-for="item in filteredSelected"
                   :key="item.value"
-                  class="item mb-3 border rounded"
+                  class="list-group-item item mb-3 border rounded"
                   :class="{
                     'handle': !isDraggable
                   }"
                   @dblclick="unselect(item)"
                 >
-                  <c-item-picker-item
+                  <CItemPickerItem
                     :item="item"
                     :disabled="disabled"
                     :disabled-dragging="isDraggable"
@@ -172,7 +135,7 @@
                     @unselect="unselect(item)"
                   >
                     <template
-                      v-for="(_, slot) of $scopedSlots"
+                      v-for="(_, slot) of $slots"
                       #[slot]="scope"
                     >
                       <slot
@@ -185,8 +148,8 @@
                         v-bind="scope"
                       />
                     </template>
-                  </c-item-picker-item>
-                </b-list-group-item>
+                  </CItemPickerItem>
+                </li>
 
                 <template #footer>
                   <h6
@@ -197,289 +160,165 @@
                   </h6>
                 </template>
               </draggable>
-            </b-list-group>
-          </b-card-body>
-        </b-card>
-      </b-card-body>
-    </b-card>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
-<script>
+
+<script setup lang="ts">
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import draggable from 'vuedraggable'
 import CItemPickerItem from './CItemPickerItem.vue'
 import CInputSearch from '../input/CInputSearch.vue'
 import { throttle } from 'lodash'
 
-export default {
-  name: 'CItemPicker',
+const props = withDefaults(defineProps<{
+  options: any[]
+  modelValue: any[]
+  valueField?: string
+  textField?: string
+  labels?: Record<string, string>
+  disabled?: boolean
+  disabledFilter?: boolean
+  disabledSorting?: boolean
+  disabledDragging?: boolean
+  hideIcons?: boolean
+  hideFilter?: boolean
+}>(), {
+  valueField: 'value',
+  textField: 'text',
+  labels: () => ({
+    searchPlaceholder: 'Filter items',
+    availableItems: 'Available',
+    selectAllItems: 'Select all',
+    selectedItems: 'Selected',
+    unselectAllItems: 'Unselect all',
+    noItemsFound: 'No items found',
+  }),
+  disabled: false,
+  disabledFilter: false,
+  disabledSorting: false,
+  disabledDragging: false,
+  hideIcons: false,
+  hideFilter: false,
+})
 
-  components: {
-    draggable,
-    CItemPickerItem,
-    CInputSearch,
+const emit = defineEmits<{
+  'update:modelValue': [value: any[]]
+}>()
+
+const query = ref('')
+const available = ref<any[]>([])
+const selected = ref<any[]>([])
+
+const _disabledFilter = computed(() => props.disabled || props.disabledFilter)
+const _disabledSorting = computed(() => props.disabled || props.disabledSorting)
+
+const filteredAvailable = computed({
+  get: () => {
+    const q = query.value.toLowerCase()
+    return available.value.filter((i: any) => i[props.textField].toLowerCase().indexOf(q) > -1)
   },
-
-  props: {
-    /**
-     * List of all items, available and selected/picked
-     *
-     * Internally, we'll build 2 arrays for each group (available + selected)
-     * and work with them.
-     * On the outside, we'll always deal input array of (full) items and
-     * array of selected/picked values of those items.
-     *
-     * This component mimics the behaviour of <b-form-select> component from
-     * Vue Bootstrap and could serve as a drop-in replacement!
-     */
-    options: {
-      type: Array,
-      required: true,
-    },
-
-    /**
-     * List of values that can be found in the items
-     */
-    value: {
-      type: Array,
-      required: true,
-    },
-
-    valueField: {
-      type: String,
-      default: 'value',
-    },
-
-    textField: {
-      type: String,
-      default: 'text',
-    },
-
-    labels: {
-      type: Object,
-      default: () => ({
-        searchPlaceholder: 'Filter items',
-        availableItems: 'Available',
-        selectAllItems: 'Select all',
-        selectedItems: 'Selected',
-        unselectAllItems: 'Unselect all',
-        noItemsFound: 'No items found',
-      }),
-    },
-
-    disabled: {
-      type: Boolean,
-    },
-
-    disabledFilter: {
-      type: Boolean,
-    },
-
-    disabledSorting: {
-      type: Boolean,
-    },
-
-    disabledDragging: {
-      type: Boolean,
-    },
-
-    hideIcons: {
-      type: Boolean,
-    },
-
-    hideFilter: {
-      type: Boolean,
-    },
+  set: (items: any[]) => {
+    available.value = items
   },
+})
 
-  data () {
-    return {
-      query: '',
-      available: [],
-      selected: [],
+const filteredSelected = computed({
+  get: () => {
+    const q = query.value.toLowerCase()
+    return selected.value.filter((i: any) => i[props.textField].toLowerCase().indexOf(q) > -1)
+  },
+  set: (items: any[]) => {
+    selected.value = items
+  },
+})
+
+const isDraggable = computed(() => props.disabledDragging || query.value.length > 0)
+
+watch(selected, (items) => {
+  const value = items.map((i: any) => i[props.valueField])
+  emit('update:modelValue', value)
+})
+
+watch(() => props.options, () => {
+  sync()
+}, { deep: true, immediate: true })
+
+watch(() => props.modelValue, (value = [], oldValue = []) => {
+  if (value.length === oldValue.length && value.filter((v: any) => !oldValue.includes(v)).length === 0) {
+    return
+  }
+  sync()
+})
+
+// Validate options in created
+props.options.forEach((o: any) => {
+  if (typeof o !== 'object') {
+    throw new Error('expecting array of objects for options prop')
+  }
+})
+
+onBeforeUnmount(() => {
+  setDefaultValues()
+})
+
+function _disableDragging(e: any) {
+  if (props.disabledDragging && e.to !== e.from) {
+    return false
+  }
+}
+
+function selectAll() {
+  selected.value.push(...filteredAvailable.value)
+  available.value = frozen().filter((i: any) => !selected.value.includes(i))
+}
+
+const select = throttle((item: any) => {
+  available.value = available.value.filter((i: any) => i !== item)
+  if (props.disabledSorting) {
+    selected.value = frozen().filter((i: any) => !available.value.includes(i))
+  } else {
+    if (!selected.value.some(({ value = '' }: any) => value === item.value)) {
+      selected.value.push(item)
     }
-  },
+  }
+}, 300)
 
-  computed: {
-    _disabledFilter () {
-      return this.disabled || this.disabledFilter
-    },
+function unselectAll() {
+  filteredSelected.value.forEach((item: any) => unselect(item))
+}
 
-    _disabledSorting () {
-      return this.disabled || this.disabledSorting
-    },
+function unselect(item: any) {
+  selected.value = selected.value.filter((i: any) => i !== item)
+  available.value = frozen().filter((i: any) => !selected.value.includes(i))
+}
 
-    /**
-     * Provides list of all available items, filtered by query
-     * and a setter for draggable component to update available items on drag
-     */
-    filteredAvailable: {
-      get () {
-        const q = this.query.toLowerCase()
-        return this.available.filter(i => i.text.toLowerCase().indexOf(q) > -1)
-      },
+function isPicked(item: any) {
+  return item[props.valueField] && props.modelValue.includes(item[props.valueField])
+}
 
-      set (items) {
-        this.available = items
-      },
-    },
+function sync() {
+  available.value = frozen().filter((opt: any) => !isPicked(opt))
+  selected.value = props.modelValue.map((v: any) => {
+    return frozen().find((item: any) => item[props.valueField] === v)
+  }).filter((f: any) => f)
+}
 
-    /**
-     * Provides list of all selected items, filtered by query
-     * and a setter for draggable component to update selected items on drag
-     */
-    filteredSelected: {
-      get () {
-        const q = this.query.toLowerCase()
-        return this.selected.filter(i => i.text.toLowerCase().indexOf(q) > -1)
-      },
+function frozen() {
+  return props.options.map(Object.freeze)
+}
 
-      set (items) {
-        this.selected = items
-      },
-    },
-
-    isDraggable () {
-      return this.disabledDragging || this.query.length > 0
-    },
-  },
-
-  watch: {
-    /**
-     * Update parent component (if needed)
-     * @param v
-     */
-    selected: {
-      immediate: false,
-      handler (items) {
-        const value = items.map(i => i[this.valueField])
-
-        // satisfy value.sync
-        this.$emit('update:value', value)
-
-        // satisfy v-model
-        this.$emit('input', value)
-      },
-    },
-
-    options: {
-      deep: true,
-      immediate: true,
-      handler () {
-        this.sync()
-      },
-    },
-
-    value: {
-      immediate: false,
-      handler (value = [], oldValue = []) {
-        /**
-        * Make sure we do not fall into an infinite loop
-        *
-        * If we update the value then sync will trigger recomputation of selected
-        * Which then emits the update event and the loop will begin
-        */
-        if (value.length === oldValue.length) {
-          if (value.filter(v => !oldValue.includes(v)).length === 0) {
-            return
-          }
-        }
-
-        this.sync()
-      },
-    },
-  },
-
-  created () {
-    this.options.forEach(o => {
-      if (typeof o !== 'object') {
-        throw new Error('expecting array of objects for options prop')
-      }
-    })
-  },
-
-  beforeUnmount () {
-    this.setDefaultValues()
-  },
-
-  methods: {
-    _disableDragging (e) {
-      if (this.disabledDragging && e.to !== e.from) {
-        return false
-      }
-    },
-
-    selectAll () {
-      this.selected.push(...this.filteredAvailable)
-      this.available = this.frozen().filter(i => !this.selected.includes(i))
-    },
-
-    select: throttle(function (item) {
-      // remove available
-      this.available = this.available.filter(i => i !== item)
-
-      // put the selected item in the place where it was (if sorting is disabled)
-      // or at the end
-      if (this.disabledSorting) {
-        this.selected = this.frozen().filter(i => !this.available.includes(i))
-      } else {
-        if (!this.selected.some(({ value = '' }) => value === item.value)) {
-          this.selected.push(item)
-        }
-      }
-    }, 300),
-
-    unselectAll () {
-      this.filteredSelected.forEach(this.unselect)
-    },
-
-    unselect (item) {
-      // filtering out the unselected item
-      this.selected = this.selected.filter(i => i !== item)
-
-      // sync available from the list of frozen items without selected
-      this.available = this.frozen().filter(i => !this.selected.includes(i))
-    },
-
-    /**
-     * Returns true given item is selected or not
-     *
-     * Item is considered selected if value of item's value-field is inside the selected array.
-     *
-     * @param item object
-     * @returns boolean
-     */
-    isPicked (item) {
-      return item[this.valueField] && this.value.includes(item[this.valueField])
-    },
-
-    sync () {
-      /**
-       * filter all unpicked options, freeze each item in the array and
-       * build list of available items
-       */
-      this.available = this.frozen().filter(opt => !this.isPicked(opt))
-
-      /**
-       * filter all unpicked options, freeze each item in the array and
-       * build list of selected items, traverse value to keep order
-       */
-      this.selected = this.value.map(v => {
-        return this.frozen().find(item => item[this.valueField] === v)
-      }).filter(f => f)
-    },
-
-    frozen () {
-      return this.options.map(Object.freeze)
-    },
-
-    setDefaultValues () {
-      this.query = ''
-      this.available = []
-      this.selected = []
-    },
-  },
+function setDefaultValues() {
+  query.value = ''
+  available.value = []
+  selected.value = []
 }
 </script>
+
 <style lang="scss" scoped>
 .handle {
   cursor: grab;

@@ -1,9 +1,9 @@
 <template>
-  <b-button
+  <button
     data-test-id="button-permissions"
     :title="tooltip"
-    :variant="buttonVariant"
-    :size="size"
+    type="button"
+    :class="`btn btn-${buttonVariant} btn-${size}`"
     @click="onClick"
   >
     <slot>
@@ -18,79 +18,47 @@
         {{ buttonLabel }}
       </span>
     </slot>
-  </b-button>
+  </button>
 </template>
-<script lang="js">
+
+<script setup lang="ts">
 import { modalOpenEventName } from './def.ts'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faLock } from '@fortawesome/free-solid-svg-icons'
 
 library.add(faLock)
 
-export default {
-  props: {
-    size: {
-      type: String,
-      default: 'md',
-    },
+const props = withDefaults(defineProps<{
+  size?: string
+  buttonVariant?: string
+  resource: string
+  title?: string
+  buttonLabel?: string
+  modalOpenEvent?: string
+  target?: string
+  showButtonIcon?: boolean
+  allSpecific?: boolean
+  tooltip?: string
+}>(), {
+  size: 'md',
+  buttonVariant: 'light',
+  modalOpenEvent: modalOpenEventName,
+  showButtonIcon: true,
+  allSpecific: false,
+  tooltip: '',
+  title: undefined,
+  buttonLabel: undefined,
+  target: undefined,
+})
 
-    buttonVariant: {
-      type: String,
-      default: 'light',
+function onClick() {
+  window.dispatchEvent(new CustomEvent(props.modalOpenEvent!, {
+    detail: {
+      target: props.target,
+      resource: props.resource,
+      title: props.title,
+      allSpecific: props.allSpecific,
     },
-
-    resource: {
-      type: String,
-      required: true,
-    },
-
-    title: {
-      type: String,
-      default: undefined,
-    },
-
-    buttonLabel: {
-      type: String,
-      default: undefined,
-    },
-
-    modalOpenEvent: {
-      type: String,
-      default: modalOpenEventName,
-    },
-
-    target: {
-      type: String,
-      required: false,
-      default: undefined,
-    },
-
-    showButtonIcon: {
-      type: Boolean,
-      default: true,
-    },
-
-    // Use this prop if you want the translations to look for all-specific key instead of all/specific
-    allSpecific: {
-      type: Boolean,
-      default: false,
-    },
-
-    tooltip: {
-      type: String,
-      default: '',
-    },
-  },
-
-  methods: {
-    onClick () {
-      this.$root.$emit(this.modalOpenEvent, {
-        target: this.target,
-        resource: this.resource,
-        title: this.title,
-        allSpecific: this.allSpecific,
-      })
-    },
-  },
+  }))
 }
 </script>
