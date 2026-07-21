@@ -1,33 +1,30 @@
-
-'auto-initialize-empty-variable': Variables that can't be loaded will be auto initialized as empty
-back: Назад
-'click-to-save': Click here to save
-deferred: Deferred
-delete: Delete
-deleted: Удаленные
-'detected-changes': "Changes detected "
-'detected-issues': Issues detected
-disabled: Отключено
-help: Справка
-handle: (Дескриптор)
-id: "ID:"
-'id-parenthesis': " (ID)"
-'initial-scope': Initial scope
-'input-ids-or-handles': The initial scope gets injected into the workflow at execution. To load available variables, input the related IDs/Handles below
-issues: Issues
-'load-and-configure': Load and Configure
-'modify-initial-scope-if-no-variables-are-loaded': If you do not wish to load any variables, click "Configure" to modify the initial scope before running workflow
-'open-webapp-on-prompt-use' : "WARNING: If prompts are used in the workflow, make sure that the related webapp is also opened. Otherwise workflow will timeout"
+run-as: Запуск от имени
+deleted: Удалён
+disabled: Отключён
+detected-issues: Обнаружены проблемы
+deferred: Отложен
+detected-changes: Обнаружены изменения
+click-to-save: Нажмите чтобы сохранить
+saving: Сохранение...
 reset: Сбросить
-'run-as': "Run as:"
-'run-workflow': Run Процесс
-'required-namespace': Пространство required
-'required-namespace-and-module': Пространство and Module required
+id: ID
+delete: Удалить
+help: Справка
+issues: Проблемы
+initial-scope: Начальная область
+input-ids-or-handles: Введите ID или дескрипторы
+modify-initial-scope-if-no-variables-are-loaded: Изменить начальную область при отсутствии загруженных переменных
+auto-initialize-empty-variable: Автоматически инициализировать пустую переменную
+open-webapp-on-prompt-use: Открыть веб-приложение при использовании запроса
+back: Назад
+load-and-configure: Загрузить и настроить
+run-workflow: Запустить процесс
+unsupported-browser: Неподдерживаемый браузер
+id-parenthesis: (ID)
+handle: Дескриптор
+required-namespace-and-module: Требуется пространство имён и модуль
+required-namespace: Требуется пространство имён
+workflow-configuration: Конфигурация процесса
+undelete: Восстановить
 save: Сохранить
-saving: Saving
-spinning: Spinning
-'test-in-progress': "Testing in progress. If your workflow includes Prompt or Delay steps, it may be waiting for them to complete"
-'unsupported-browser': Browser is not supported!
-undelete: Undelete
-'workflow-configuration': Процесс Конфигурация
-'editor': Editor
+title: Процессы
