@@ -36,8 +36,11 @@ const showModal = ref(false)
 const startPrompt = ref('')
 const attachedFiles = ref([])
 
+const dialogClass = computed(() => '')
+const contentClass = computed(() => '')
+
 function startChatModal(data) {
-  const { prompt = '', files = [] } = data
+  const { prompt = '', files = [] } = data.detail
   startPrompt.value = prompt
   attachedFiles.value = files
   showModal.value = true

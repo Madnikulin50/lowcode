@@ -53,7 +53,7 @@
                 <page-translator
                   v-if="page"
                   :page="page"
-                  v-model:block="block"
+                  :block="block"
                   :disabled="isNew"
                   :highlight-key="`pageBlock.${block.blockID}.title`"
                 />
@@ -86,7 +86,7 @@
                 <page-translator
                   v-if="page"
                   :page="page"
-                  v-model:block="block"
+                  :block="block"
                   :disabled="isNew"
                   :highlight-key="`pageBlock.${block.blockID}.description`"
                 />
@@ -351,7 +351,7 @@
                 <page-translator
                   v-if="page"
                   :page="page"
-                  v-model:block="block"
+                  :block="block"
                   :disabled="isNew"
                   :highlight-key="`pageBlock.${block.blockID}.prompt`"
                 />
@@ -375,7 +375,7 @@
     <page-translator
       v-if="page"
       :page="page"
-      v-model:block="block"
+      :block="block"
       :disabled="isNew"
       button-variant="link"
       class="mt-2"

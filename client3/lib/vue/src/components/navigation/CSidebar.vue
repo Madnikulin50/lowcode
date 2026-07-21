@@ -53,11 +53,6 @@
         class="d-flex align-items-center border-0 p-2"
       >
         <img
-          v-if="logo"
-          class="icon w-auto border-0 me-2"
-          :src="logo"
-        >
-        <img
           class="icon w-auto border-0"
           :src="icon"
         >

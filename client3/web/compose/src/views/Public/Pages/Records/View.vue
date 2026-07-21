@@ -899,12 +899,12 @@ function computeChanges() {
 
 function handleAiSearch(query) {
   const { moduleID, namespaceID, pageID } = props.page
-  bus.$emit('show-chat-modal', {
+  window.dispatchEvent(new CustomEvent('show-chat-modal', { detail: {
     namespace: namespaceID,
     module: moduleID,
     page: pageID,
     prompt: query,
-  })
+  } }))
 }
 
 function valueToArray(value) {

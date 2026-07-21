@@ -15,14 +15,14 @@
     </div>
 
     <div class="d-flex align-items-center ms-auto gap-1">
-      <button
+      <a
         v-if="!hideAppSelector && !settings.hideAppSelector"
         data-test-id="app-selector"
         class="btn btn-outline-light text-dark border-0 px-1"
         :href="appSelectorURL"
       >
         {{ labels.appMenu }}
-      </button>
+      </a>
 
       <slot name="right-tools" />
 

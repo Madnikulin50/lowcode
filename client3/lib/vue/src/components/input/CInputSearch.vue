@@ -43,7 +43,7 @@
       @[isSubmittable]="submitQuery"
     >
       <font-awesome-icon
-        :icon="['fas', 'search']"
+        :icon="['fas', ai ? 'search' : 'brain']"
         class="align-middle text-primary"
       />
     </button>
@@ -64,6 +64,7 @@ interface Props {
   autocomplete?: string
   debounceMs?: number
   loading?: boolean
+  ai?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -76,6 +77,7 @@ const props = withDefaults(defineProps<Props>(), {
   autocomplete: 'on',
   debounceMs: 0,
   loading: false,
+  ai: true,
 })
 
 const emit = defineEmits<{

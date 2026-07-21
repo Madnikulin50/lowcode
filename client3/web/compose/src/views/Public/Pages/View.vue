@@ -14,7 +14,6 @@
       v-if="!isRecordPage"
       to="#topbar-tools"
     >
-      <div>
         <c-input-search
           v-if="enableAI"
           v-model.trim="aiPrompt"
@@ -64,7 +63,6 @@
             button-variant="primary"
             style="margin-left:2px;"
           />
-        </div>
       </div>
 
     </Teleport>
@@ -436,11 +434,11 @@ function setDefaultValues() {
 
 function handleAiSearch(query) {
   const { moduleID, namespaceID, pageID } = props.page
-  bus.$emit('show-chat-modal', {
+  window.dispatchEvent(new CustomEvent('show-chat-modal', { detail: {
     namespace: namespaceID,
     module: moduleID,
     page: pageID,
     prompt: query,
-  })
+  } }))
 }
 </script>
