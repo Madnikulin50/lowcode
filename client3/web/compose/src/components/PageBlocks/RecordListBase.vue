@@ -101,7 +101,7 @@
 
     <template #default>
       <div v-if="recordListModule" class="d-flex position-relative h-100" :class="{ 'overflow-hidden': !items.length || isProcessing }">
-        <button class="brain-button position-absolute d-flex align-items-center justify-content-center d-print-none border-0 text-secondary" @click="promptAiChat" :title="$t('ai.askAboutRecord')">
+        <button class="brain-button position-absolute d-flex align-items-center justify-content-center d-print-none" @click="promptAiChat" :title="$t('ai.askAboutRecord')">
           <font-awesome-icon :icon="['fas', 'brain']" />
         </button>
         <div class="table-responsive">
@@ -1247,7 +1247,7 @@ function fetchRecords(namespaceID, fields, records) {
 }
 </script>
 <style lang="scss" scoped>
-.brain-button { top: 0.5rem; right: 0.5rem; z-index: 30; width: 32px; height: 32px; background: rgba(255,255,255,0.9); border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.15); font-size: 16px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s, box-shadow 0.2s; }
+.brain-button { top: 0.5rem; right: 0.5rem; z-index: 30; width: 32px; height: 32px; background: #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.15); border: 1px solid var(--bs-border-color, #dee2e6); color: var(--secondary); font-size: 16px; cursor: pointer; transition: box-shadow 0.2s, color 0.2s; }
 .brain-button:hover { opacity: 1; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 .handle { cursor: grab; }
 .pointer { cursor: pointer; }
@@ -1256,6 +1256,66 @@ tr:hover td.actions { opacity: 1; &:not(.actions-visible) { background-color: va
 .inline-actions { margin-top: -2px; opacity: 0; transition: opacity 0.25s; }
 tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !important; } }
 .custom-summary { cursor: pointer !important; border-radius: 0.25rem; > label { cursor: pointer !important; } &:hover { background-color: var(--extra-light); } }
+
+.table-responsive {
+  border-radius: 0.5rem;
+  border: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.record-list-table {
+  border-collapse: separate;
+  border-spacing: 0;
+
+  thead {
+    th {
+      background: #f8f9fa;
+      border-bottom: 2px solid var(--bs-border-color, #dee2e6);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--bs-secondary-color, #6c757d);
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      padding: 0.625rem 0.75rem;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    td {
+      padding: 0.625rem 0.75rem;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0,0,0,0.05));
+      font-size: 0.875rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background-color: rgba(var(--bs-primary-rgb, 13 110 253), 0.03);
+    }
+  }
+
+  td.actions {
+    padding-top: 8px;
+    right: 0;
+    opacity: 0;
+    position: sticky;
+    transition: opacity 0.2s;
+    width: 1%;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, var(--bs-white, #fff) 20%);
+
+    &.actions-visible {
+      opacity: 1;
+    }
+  }
+
+  tr:hover td.actions {
+    opacity: 1;
+    z-index: 1;
+  }
+}
 </style>
 <style lang="scss">
 .record-list-table { .actions { padding-top: 8px; position: sticky; right: -1px; opacity: 0; transition: opacity 0.25s; width: 1%; font-family: var(--font-regular) !important; z-index: 3; &.actions-visible { opacity: 1; } } tbody tr td:nth-last-child(2) { padding-right: 5rem; } }

@@ -32,7 +32,7 @@
       </li>
     </ul>
 
-    <div class="tab-content">
+    <div class="tab-content py-3">
       <div
         v-show="activeTab === 0"
         class="tab-pane active"
@@ -40,7 +40,7 @@
         <div class="row">
           <div class="col-12">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('titleLabel') }}</label>
+              <label class="form-label fw-semibold">{{ $t('titleLabel') }}</label>
               <div class="input-group">
                 <c-input-expression
                   id="title"
@@ -73,7 +73,7 @@
 
           <div class="col-12">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('descriptionLabel') }}</label>
+              <label class="form-label fw-semibold">{{ $t('descriptionLabel') }}</label>
               <div class="input-group">
                 <c-input-expression
                   id="description"
@@ -106,7 +106,7 @@
 
           <div class="col-12 col-lg-6">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('customID.label') }}</label>
+              <label class="form-label fw-semibold">{{ $t('customID.label') }}</label>
               <input
                 id="customID"
                 v-model="block.meta.customID"
@@ -131,7 +131,7 @@
 
           <div class="col-12 col-lg-6">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('customCSSClass.label') }}</label>
+              <label class="form-label fw-semibold">{{ $t('customCSSClass.label') }}</label>
               <input
                 id="customCSSClass"
                 v-model="block.meta.customCSSClass"
@@ -156,7 +156,7 @@
 
           <div class="col-12 col-lg-6">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('headerStyle') }}</label>
+              <label class="form-label fw-semibold">{{ $t('headerStyle') }}</label>
               <c-input-select
                 id="color"
                 v-model="block.style.variants.headerText"
@@ -193,7 +193,7 @@
             class="col-12 col-lg-6"
           >
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('magnifyLabel') }}</label>
+              <label class="form-label fw-semibold">{{ $t('magnifyLabel') }}</label>
               <select
                 v-model="block.options.magnifyOption"
                 class="form-select"
@@ -214,7 +214,7 @@
             class="col-12 col-lg-6"
           >
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('refresh.auto') }}</label>
+              <label class="form-label fw-semibold">{{ $t('refresh.auto') }}</label>
               <small class="form-text">{{ $t('refresh.description') }}</small>
               <div class="input-group mb-1">
                 <input
@@ -301,7 +301,7 @@
 
           <div class="col-12">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('visibility.roles.label') }}</label>
+              <label class="form-label fw-semibold">{{ $t('visibility.roles.label') }}</label>
               <c-input-select
                 v-model="currentRoles"
                 :options="roles.options"
@@ -335,7 +335,7 @@
         <div class="row">
           <div class="col-12">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('ai.prompt.label') }}</label>
+              <label class="form-label fw-semibold">{{ $t('ai.prompt.label') }}</label>
               <div class="input-group">
                 <c-rich-text-input
                   v-model="block.prompt"
@@ -484,5 +484,31 @@ function setDefaultValues () {
 <style scoped>
 .mh-tab {
   max-height: calc(100vh - 16rem);
+}
+
+.nav-tabs {
+  padding: 0 1rem;
+  border-bottom: 2px solid var(--bs-border-color, #dee2e6);
+}
+
+.nav-tabs .nav-link {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--bs-secondary-color, #6c757d);
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--bs-primary, #0d6efd);
+  background: transparent;
+  border-bottom: 2px solid var(--bs-primary, #0d6efd);
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+  border-bottom-color: var(--bs-border-color, #dee2e6);
 }
 </style>

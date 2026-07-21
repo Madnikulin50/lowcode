@@ -6,7 +6,7 @@
           v-for="(type) in types"
           :key="type.label"
           :disabled="isOptionDisabled(type)"
-          class="btn btn-outline-light me-2 mb-2 text-dark"
+          class="btn btn-outline-secondary me-2 mb-2 text-body"
           @click="$emit('select', type.block)"
           @mouseover="current = type.image"
           @mouseleave="current = undefined"
@@ -16,14 +16,15 @@
       </div>
 
       <div
-        class="col-12 d-flex align-items-center"
-        style="height: 50vh;"
+        class="col-12 d-flex align-items-center justify-content-center border rounded bg-light"
+        style="height: 30vh;"
       >
         <img
           v-if="current"
           :src="current"
           class="img-fluid mx-auto mh-100"
         >
+        <span v-else class="text-muted">Наведите на тип блока для предпросмотра</span>
       </div>
 
       <hr

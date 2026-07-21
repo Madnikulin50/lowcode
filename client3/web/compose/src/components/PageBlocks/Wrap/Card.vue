@@ -7,7 +7,7 @@
     >
       <div
         v-if="showHeader"
-        class="card-header border-bottom text-nowrap pe-2"
+        class="card-header border-bottom text-nowrap ps-3 pe-2"
         :class="[textClass, headerClass]"
       >
         <div

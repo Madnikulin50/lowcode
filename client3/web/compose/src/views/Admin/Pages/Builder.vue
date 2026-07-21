@@ -3,7 +3,7 @@
     v-if="page"
     id="page-builder"
     ref="pageBuilder"
-    class="flex-grow-1 overflow-auto d-flex p-2 w-100"
+    class="flex-grow-1 overflow-auto d-flex p-3 w-100 bg-light"
     tabindex="1"
   >
     <Teleport to="#topbar-title">
@@ -125,7 +125,7 @@
           class="h-100"
         >
           <div
-            class="toolbox border-0 p-2 m-0 text-light text-center"
+            class="toolbox border-0 p-2 m-0 text-white text-center"
             data-test-id="block-toolbox"
           >
             <div
@@ -265,7 +265,7 @@
               @click="editor = undefined"
             />
           </div>
-          <div class="modal-body p-0 border-top-0 position-static">
+           <div class="modal-body px-3 pb-3 pt-0 border-top-0 position-static">
             <page-blocks-configurator
               v-if="showCreator"
               :namespace="namespace"
@@ -322,7 +322,7 @@
               @click="editor = undefined"
             />
           </div>
-          <div class="modal-body p-0 border-top-0 position-static">
+           <div class="modal-body px-3 pb-3 pt-0 border-top-0 position-static">
             <page-blocks-configurator
               v-if="showEditor"
               :namespace="namespace"
@@ -1107,6 +1107,22 @@ function destroyEvents () {
 </script>
 
 <style lang="scss">
+#page-builder .vue-grid-layout {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px #e9ecef;
+  padding: 4px;
+}
+
+#page-builder .grid-item {
+  transition: box-shadow 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 0 0 2px var(--primary);
+    z-index: 10;
+  }
+}
+
 div.toolbox {
   position: absolute;
   background-color: var(--secondary);
@@ -1114,15 +1130,12 @@ div.toolbox {
   left: 0;
   z-index: 1001;
   border-top-right-radius: 10px;
-  opacity: 0.5;
-  pointer-events: none;
+  opacity: 0.85;
+  pointer-events: auto;
+  transition: opacity 0.15s ease;
 
   &:hover {
     opacity: 1;
-  }
-
-  & * {
-    pointer-events: auto;
   }
 }
 
