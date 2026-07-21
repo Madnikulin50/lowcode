@@ -1,5 +1,5 @@
 import { default as component } from './CWorkflowEditorInfo.vue'
-import { components } from '../../../../lib/vue/dist'
+import { components } from 'corteza-lib/vue/dist'
 const { checkbox } = components.C3.controls
 
 const props = {

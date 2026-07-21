@@ -2,7 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
 import VueNativeSock from 'vue-native-websocket'
-import { plugins, websocket } from '../../../../lib/vue/dist'
+import { plugins, websocket } from 'corteza-lib/vue/dist'
 
 Vue.use(BootstrapVue, {
   BToast: {

@@ -6,7 +6,7 @@ import Vuex from 'vuex'
 
 import VueNativeSock from 'vue-native-websocket'
 
-import { plugins, websocket } from '../../../../lib/vue/dist'
+import { plugins, websocket } from 'corteza-lib/vue/dist'
 
 import pairs from './eventbus-pairs'
 

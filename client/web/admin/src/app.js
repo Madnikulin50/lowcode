@@ -12,7 +12,7 @@ import router from './router'
 import store from './store'
 
 import { system } from 'corteza-lib/js/dist'
-import { corredor, i18n, mixins, websocket } from '../../../../lib/vue/dist'
+import { corredor, i18n, mixins, websocket } from 'corteza-lib/vue/dist'
 import { mapGetters } from 'vuex'
 
 const notProduction = (process.env.NODE_ENV !== 'production')

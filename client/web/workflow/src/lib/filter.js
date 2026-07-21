@@ -1,4 +1,4 @@
-import { filter } from '../../../../lib/vue/dist'
+import { filter } from 'corteza-lib/vue/dist'
 
 export function objectSearchMaker (field, ...fields) {
   return function (opts, search) {

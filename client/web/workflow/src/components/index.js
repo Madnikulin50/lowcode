@@ -2,7 +2,7 @@ import Vue from 'vue'
 import { FontAwesomeIcon, FontAwesomeLayers } from '@fortawesome/vue-fontawesome'
 import './faIcons'
 import PortalVue from 'portal-vue'
-import { components } from '../../../../lib/vue/dist'
+import { components } from 'corteza-lib/vue/dist'
 
 Vue.use(PortalVue)
 Vue.component('font-awesome-icon', FontAwesomeIcon)

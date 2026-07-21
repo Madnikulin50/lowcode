@@ -22,7 +22,7 @@
     "lint": "eslint src --ext .js,.ts,.vue",
     "test:unit": "mocha",
     "test": "yarn test:unit",
-    "cdeps": "yarn link @cortezaproject/corteza-js"
+    "cdeps": ""
   },
   "gitHooks": {
     "pre-commit": "yarn lint"
@@ -34,7 +34,6 @@
     "prosemirror-model": "^1.25.0"
   },
   "dependencies": {
-    "@cortezaproject/corteza-js": "link:../js",
     "@floating-ui/dom": "^1.7.4",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",

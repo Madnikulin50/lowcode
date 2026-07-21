@@ -11,8 +11,8 @@ import './components'
 import store from './store'
 import router from './router'
 
-import { compose } from '../../../lib/js/dist'
-import { mixins, corredor, websocket, i18n } from '../../../lib/vue/dist'
+import { compose } from 'corteza-lib/js/dist'
+import { mixins, corredor, websocket, i18n } from 'corteza-lib/vue/dist'
 
 const notProduction = (process.env.NODE_ENV !== 'production')
 const verboseEventbus = window.location.search.includes('verboseEventbus')

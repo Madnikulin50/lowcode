@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 
-import { store as cvStore } from '../../../../lib/vue/dist'
+import { store as cvStore } from 'corteza-lib/vue/dist'
 import labels from './labels'
 
 Vue.use(Vuex)

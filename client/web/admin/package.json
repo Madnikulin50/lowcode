@@ -33,8 +33,6 @@
     "postcss": "^8.5.3"
   },
   "dependencies": {
-    "corteza-lib/js/dist": "^2024.9.8",
-    "corteza-lib/vue/dist": "2024.9.8",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",

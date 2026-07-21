@@ -1,7 +1,7 @@
 /* global jest */
 
 jest.mock('corteza-lib/js/dist', () => ({}), { virtual: true })
-jest.mock('../../../../lib/vue/dist', () => ({
+jest.mock('corteza-lib/vue/dist', () => ({
   components: {
     CToaster: jest.fn(),
     CPrompts: {

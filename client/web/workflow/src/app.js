@@ -10,7 +10,7 @@ import './components'
 import store from './store'
 import router from './router'
 
-import { i18n, websocket } from '../../../../lib/vue/dist'
+import { i18n, websocket } from 'corteza-lib/vue/dist'
 
 export default (options = {}) => {
   options = {

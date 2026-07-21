@@ -9,7 +9,7 @@
     "dev-env": "vue-cli-service serve src/dev-env.js",
     "build": "vue-cli-service build --mode production",
     "lint": "vue-cli-service lint --fix",
-    "cdeps": "yarn link corteza-lib/js/dist corteza-lib/vue/dist",
+    "cdeps": "",
     "test:unit": "vue-cli-service test:unit",
     "test": "yarn test:unit"
   },
@@ -36,6 +36,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/vue-fontawesome": "^2.0.10",
     "@panter/vue-i18next": "^0.15.0",
+    "axios": "^1.8.3",
     "bootstrap-vue": "2.23.1",
     "echarts": "5.6.0",
     "i18next": "^23.16.8",

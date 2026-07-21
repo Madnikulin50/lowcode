@@ -1,4 +1,4 @@
-import { compose, apiClients, corredor } from '@cortezaproject/corteza-js'
+import { compose, apiClients, corredor } from '../../../../lib/js/dist'
 import ComposeUIHelper from './compose-ui'
 import pino from 'pino'
 

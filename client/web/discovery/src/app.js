@@ -9,7 +9,7 @@ import './components'
 import './filters'
 import store from './store'
 
-import { i18n, websocket } from '../../../../lib/vue/dist'
+import { i18n, websocket } from 'corteza-lib/vue/dist'
 
 import router from './router'
 
