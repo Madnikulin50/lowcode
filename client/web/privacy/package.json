@@ -30,6 +30,7 @@
     "i18next": "^23.16.8",
     "i18next-browser-languagedetector": "^3.0.2",
     "lodash": "^4.17.21",
+    "moment": "2.30.1",
     "portal-vue": "^2.1.7",
     "vue": "2.7.16",
     "vue-native-websocket": "^2.0.15",
