@@ -44,6 +44,7 @@ type (
 		WebappEnabled          bool   `env:"HTTP_WEBAPP_ENABLED"`
 		WebappBaseUrl          string `env:"HTTP_WEBAPP_BASE_URL"`
 		WebappBaseDir          string `env:"HTTP_WEBAPP_BASE_DIR"`
+		WebappBaseDir3         string `env:"HTTP_WEBAPP_BASE_DIR3"`
 		WebappList             string `env:"HTTP_WEBAPP_LIST"`
 		SslTerminated          bool   `env:"HTTP_SSL_TERMINATED"`
 		AssetsPath             string `env:"HTTP_SERVER_ASSETS_PATH"`

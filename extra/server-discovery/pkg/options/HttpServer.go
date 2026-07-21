@@ -40,4 +40,7 @@ func (o *HttpServerOpt) Defaults() {
 	if val, has := os.LookupEnv("PORT"); has {
 		o.Addr = ":" + val
 	}
+	if val, has := os.LookupEnv("PORT3"); has {
+		o.Addr3 = ":" + val
+	}
 }
