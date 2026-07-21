@@ -217,18 +217,6 @@ edit:
         bottom: Bottom
         left: Left
       valueRange: Values can be set as pixels 20 or as percentages 20%
-    anomaly:
-      label: Anomaly Detection
-      enable: Enable anomaly detection
-      method: Method
-      threshold: Threshold
-      min: Min value
-      max: Max value
-      color: Highlight color
-      methodZscore: Z-Score
-      methodIqr: IQR
-      methodFixed: Fixed range
-      methodPctChange: Percent change
   toolbox:
     label: Tools
     saveAsImage:

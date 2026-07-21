@@ -218,18 +218,6 @@ edit:
         bottom: Низ
         left: Лево
       valueRange: Значения могут быть установлены в пикселях 20 или в процентах 20%
-    anomaly:
-      label: Обнаружение аномалий
-      enable: Включить обнаружение аномалий
-      method: Метод
-      threshold: Порог
-      min: Мин. значение
-      max: Макс. значение
-      color: Цвет подсветки
-      methodZscore: Z-оценка
-      methodIqr: Межквартильный размах
-      methodFixed: Фиксированный диапазон
-      methodPctChange: Процентное изменение
   toolbox:
     label: Инструменты
     saveAsImage:
