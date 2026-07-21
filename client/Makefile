@@ -29,7 +29,7 @@ lint:
 fresh:
 	@for dir in $(WEB_SUBDIRS); do \
 		echo "---Fresh $$dir---"; \
-		(cd $$dir && rm -rf node_modules yarn.lock && yarn && yarn cdeps) || (echo "Failed to fresh $$dir"; exit 1); \
+		(cd $$dir && rm -rf node_modules yarn.lock && yarn) || (echo "Failed to fresh $$dir"; exit 1); \
 	done
 
 build:

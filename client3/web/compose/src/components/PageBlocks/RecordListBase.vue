@@ -104,7 +104,8 @@
         <button class="brain-button position-absolute d-flex align-items-center justify-content-center d-print-none border-0 text-secondary" @click="promptAiChat" :title="$t('ai.askAboutRecord')">
           <font-awesome-icon :icon="['fas', 'brain']" />
         </button>
-        <table data-test-id="table-record-list" class="table record-list-table mh-100 h-100 mb-0 table-hover" :class="{ 'table-responsive': true }">
+        <div class="table-responsive">
+        <table data-test-id="table-record-list" class="table record-list-table mh-100 h-100 mb-0 table-hover">
           <thead class="sticky-top">
             <tr :class="showingDeletedRecords ? 'table-warning' : ''">
               <th v-if="options.draggable && inlineEditing" style="width: 0%"></th>
@@ -112,7 +113,7 @@
                 <input type="checkbox" class="form-check-input ms-1" :disabled="disableSelectAll" :checked="areAllRowsSelected && !disableSelectAll" @change="handleSelectAllOnPage({ isChecked: $event.target.checked })" />
               </th>
               <th v-if="isFederated" style="width: 0%"></th>
-              <th v-for="(field, fieldIndex) in fields" :key="field.key" :style="{ 'padding-right': fieldIndex === (fields.length - 1) ? '15px' : '' }">
+              <th v-for="(field, fieldIndex) in fields" :key="field.key" :colspan="fieldIndex === (fields.length - 1) ? 2 : 1" :style="{ 'padding-right': fieldIndex === (fields.length - 1) ? '15px' : '' }">
                 <div class="d-flex align-items-center">
                   <div :class="{ required: field.required }" class="d-flex align-self-center text-nowrap">{{ field.label }}</div>
                   <button v-if="field.sortable" class="btn btn-outline-extra-light d-flex align-items-center text-secondary d-print-none border-0 px-1 ms-1" data-bs-toggle="tooltip" :title="$t('recordList.sort.tooltip')" @click="handleSort(field)">
@@ -164,7 +165,7 @@
                       <font-awesome-icon :icon="['fas', 'times']" class="text-secondary" />
                     </button>
                     <div v-if="inlineEditing && !editing && showSaveAction(element) && areActionsVisible(element.r)" class="border-start mx-1" style="height: 1.5rem;" />
-                    <div v-if="areActionsVisible(element.r)" class="dropdown dropleft">
+                    <div v-if="areActionsVisible(element.r)" class="dropdown dropstart">
                       <button class="btn btn-outline-extra-light d-flex align-items-center justify-content-center border-0 dropdown-toggle" style="width: 2rem; height: 2rem;" data-bs-toggle="dropdown" aria-expanded="false">
                         <font-awesome-icon :icon="['fas', 'ellipsis-v']" class="text-primary" />
                       </button>
@@ -227,6 +228,7 @@
             <p v-else-if="!items.length" class="mb-0 mx-2">{{ $t('recordList.noRecords') }}</p>
           </div>
         </table>
+        </div>
       </div>
       <label v-else class="text-primary p-3">{{ $t('recordList.noModule') }}</label>
     </template>

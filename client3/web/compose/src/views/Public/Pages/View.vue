@@ -18,7 +18,7 @@
           v-if="enableAI"
           v-model.trim="aiPrompt"
           class="me-2"
-          :ai="true"
+          ai
           :aria-label="$t('AI')"
           :placeholder="$t('aiChat.startPrompt')"
           :autocomplete="'off'"

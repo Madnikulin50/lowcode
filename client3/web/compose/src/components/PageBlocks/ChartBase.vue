@@ -14,6 +14,7 @@
     />
 
     <button
+      v-if="chart"
       class="btn btn-outline-light chart-brain-button position-absolute d-flex d-print-none border-0 px-1 text-secondary"
       title="Ask about metrics"
       @click="promptAiChat"
