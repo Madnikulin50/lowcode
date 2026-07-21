@@ -1,44 +1,56 @@
 <template>
-  <div class="container pt-2 pb-3">
-    <c-content-header :title="title">
-      <span class="text-nowrap">
-        <button
+  <b-container
+    class="pt-2 pb-3"
+  >
+    <c-content-header
+      :title="title"
+    >
+      <span
+        class="text-nowrap"
+      >
+        <b-button
           v-if="$Settings.get('apigw.profiler.enabled', false)"
-          class="btn btn-info ms-2"
-          @click="$router.push({ name: 'system.apigw.profiler' })"
+          class="ml-2"
+          variant="info"
+          :to="{ name: 'system.apigw.profiler' }"
         >
           {{ $t('label') }}
-        </button>
+        </b-button>
       </span>
     </c-content-header>
 
     <c-profiler-route-hits
       :route="$route.params.routeID"
     />
-  </div>
+  </b-container>
 </template>
 
-<script setup>
-import { ref, watch, inject } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+<script>
 import CProfilerRouteHits from 'corteza-webapp-admin/src/components/Apigw/Profiler/CProfilerRouteHits'
 
-const { t } = useI18n()
-const $route = useRoute()
-const $router = useRouter()
-const $Settings = inject('$Settings', {})
-
-const title = ref('')
-
-watch(() => $route.params.routeID, {
-  immediate: true,
-  handler() {
-    title.value = `${t('title')} - ${decodeRouteID($route.params.routeID)}`
+export default {
+  components: {
+    CProfilerRouteHits,
   },
-})
 
-function decodeRouteID(routeID) {
-  return atob(routeID)
+  i18nOptions: {
+    namespaces: ['system.apigw'],
+    keyPrefix: 'profiler',
+  },
+
+  watch: {
+    '$route.params.routeID': {
+      immediate: true,
+      handler () {
+        this.title = `${this.$t('title')} - ${this.decodeRouteID(this.$route.params.routeID)}`
+      },
+    },
+  },
+
+  methods: {
+    decodeRouteID (routeID) {
+      return atob(routeID)
+    },
+  },
 }
 </script>

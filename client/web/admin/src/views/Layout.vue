@@ -1,122 +1,250 @@
 <template>
-  <div class="h-viewport overflow-hidden" style="display: grid; grid-template-columns: auto 1fr; grid-template-rows: 1fr; width: 100%">
+  <div class="d-flex flex-column w-100 h-viewport overflow-hidden">
+    <header>
+      <c-topbar
+        :expanded="expanded"
+        :settings="$Settings.get('ui.topbar', {})"
+        :labels="{
+          appMenu: $t('navigation.appMenu'),
+          helpForum: $t('navigation.help.forum'),
+          helpDocumentation: $t('navigation.help.documentation'),
+          helpFeedback: $t('navigation.help.feedback'),
+          helpVersion: $t('navigation.help.version'),
+          userSettingsLoggedInAs: $t('navigation.userSettings.loggedInAs', { user }),
+          userSettingsProfile: $t('navigation.userSettings.profile'),
+          userSettingsChangePassword: $t('navigation.userSettings.changePassword'),
+          userSettingsLogout: $t('navigation.userSettings.logout'),
+          userSettingsTheme: $t('navigation.userSettings.theme'),
+          lightTheme: $t('general:themes.labels.light'),
+          darkTheme: $t('general:themes.labels.dark'),
+        }"
+      >
+        <template #title>
+          <portal-target name="topbar-title" />
+        </template>
+
+        <template #tools>
+          <portal-target name="topbar-tools" />
+        </template>
+      </c-topbar>
+    </header>
+
     <aside
       v-if="allowed"
-      class="sidebar-container"
-      :style="{ width: expanded ? '320px' : '66px', transition: 'width 0.2s' }"
     >
       <c-sidebar
-        :expanded="expanded"
+        :expanded.sync="expanded"
         :icon="icon"
         :logo="logo"
         expand-on-click
-        @update:expanded="expanded = $event"
+        :right="textDirectionality() === 'rtl'"
       >
+        <template #header-expanded>
+          <portal-target name="sidebar-header-expanded" />
+        </template>
+
         <template #body-expanded>
-          <c-the-main-nav />
+          <portal-target name="sidebar-body-expanded" />
+        </template>
+
+        <template #footer-expanded>
+          <portal-target name="sidebar-footer-expanded" />
         </template>
       </c-sidebar>
+
+      <portal to="sidebar-body-expanded">
+        <c-the-main-nav />
+      </portal>
     </aside>
 
-    <div class="d-flex flex-column overflow-hidden" style="min-width: 0">
-      <header>
-        <c-topbar
-          :expanded="expanded"
-          :settings="settings.get('ui.topbar', {})"
-          :labels="{
-            appMenu: $t('navigation.appMenu'),
-            helpForum: $t('navigation.help.forum'),
-            helpDocumentation: $t('navigation.help.documentation'),
-            helpFeedback: $t('navigation.help.feedback'),
-            helpVersion: $t('navigation.help.version'),
-            userSettingsLoggedInAs: $t('navigation.userSettings.loggedInAs', { user }),
-            userSettingsProfile: $t('navigation.userSettings.profile'),
-            userSettingsChangePassword: $t('navigation.userSettings.changePassword'),
-            userSettingsLogout: $t('navigation.userSettings.logout'),
-            userSettingsTheme: $t('navigation.userSettings.theme'),
-            lightTheme: $t('themes.labels.light'),
-            darkTheme: $t('themes.labels.dark'),
+    <main
+      v-if="allowed"
+      class="d-inline-flex h-100 overflow-auto"
+    >
+      <!--
+        Content spacer
+        Large and xl screens should push in content when the nav is expanded
+      -->
+      <template>
+        <div
+          class="sidebar-spacer d-print-none"
+          :class="{
+            'expanded': expanded,
           }"
         />
-      </header>
-
-      <main
-        v-if="allowed"
-        class="d-flex flex-column flex-grow-1 overflow-auto"
-        style="min-width: 0"
-      >
+      </template>
+      <div class="d-flex flex-column w-100 flex-fill">
         <router-view />
-      </main>
-    </div>
+      </div>
+    </main>
 
     <c-prompts />
+
     <c-permissions-modal
       :labels="{
-        save: $t('permissions.ui.save'),
-        cancel: $t('permissions.ui.cancel'),
-        loading: $t('permissions.ui.loading'),
+        save: $t('permissions:ui.save'),
+        cancel: $t('permissions:ui.cancel'),
+        loading: $t('permissions:ui.loading'),
         edit: {
-          label: $t('permissions.ui.edit.label'),
-          description: $t('permissions.ui.edit.description'),
+          label: $t('permissions:ui.edit.label'),
+          description: $t('permissions:ui.edit.description'),
         },
         evaluate: {
-          title: $t('permissions.ui.evaluate.title'),
-          description: $t('permissions.ui.evaluate.description'),
+          title: $t('permissions:ui.evaluate.title'),
+          description: $t('permissions:ui.evaluate.description'),
         },
         add: {
-          label: $t('permissions.ui.add.label'),
-          title: $t('permissions.ui.add.title'),
-          save: $t('permissions.ui.add.save'),
+          label: $t('permissions:ui.add.label'),
+          title: $t('permissions:ui.add.title'),
+          save: $t('permissions:ui.add.save'),
           role: {
-            label: $t('permissions.ui.add.role.label'),
-            placeholder: $t('permissions.ui.add.role.placeholder'),
+            label: $t('permissions:ui.add.role.label'),
+            placeholder: $t('permissions:ui.add.role.placeholder'),
           },
           user: {
-            label: $t('permissions.ui.add.user.label'),
-            placeholder: $t('permissions.ui.add.user.placeholder'),
+            label: $t('permissions:ui.add.user.label'),
+            placeholder: $t('permissions:ui.add.user.placeholder'),
           },
         },
       }"
     />
+
     <c-extend-session
       v-if="isAutoLogoutEnabled"
-      :timeout="settings.get('auth.autoLogout.timeout')"
+      :timeout="$Settings.get('auth.autoLogout.timeout')"
       :labels="{
-        extend: $t('extendSession.labels.extend'),
-        warning: (countdownTime) => $t('extendSession.labels.warning', { countdownTime }),
+        extend: $t('general:extendSession.labels.extend'),
+        warning: (countdownTime) => $t('general:extendSession.labels.warning', { countdownTime }),
       }"
     />
-    <c-notification-sidebar v-if="!settings.get('ui.topbar', {}).hideNotifications" />
+
+    <c-notification-sidebar v-if="!$Settings.get('ui.topbar', {}).hideNotifications" />
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { components } from 'corteza-lib/vue/dist'
+<script>
+import { components, mixins } from 'corteza-lib/vue/dist'
+import CTheMainNav from 'corteza-webapp-admin/src/components/CTheMainNav'
+import { mapGetters } from 'vuex'
 
 const { CExtendSession, CPermissionsModal, CPrompts, CTopbar, CSidebar, CNotificationSidebar } = components
-const { t } = useI18n()
-const $auth = window.__auth
-const settings = {
-  get: (key, def) => window.__settings?.get?.(key, def) ?? def,
-  attachment: (key) => window.__settings?.attachment?.(key) ?? '',
-}
 
-const expanded = ref(false)
-const allowed = ref(true)
+export default {
+  i18nOptions: {
+    namespaces: 'admin',
+  },
 
-const user = computed(() => {
-  const u = $auth.user
-  return u.name || u.handle || u.email || ''
-})
+  components: {
+    CPermissionsModal,
+    CPrompts,
+    CTopbar,
+    CSidebar,
+    CTheMainNav,
+    CExtendSession,
+    CNotificationSidebar,
+  },
 
-const icon = computed(() => settings.attachment('ui.iconLogo'))
-const logo = computed(() => settings.attachment('ui.mainLogo'))
-const isAutoLogoutEnabled = computed(() => settings.get('auth.autoLogout.enabled'))
+  mixins: [
+    mixins.corredor,
+  ],
 
-function can(resource, operation) {
-  return true
+  data () {
+    return {
+      expanded: false,
+
+      allowed: false,
+      error: null,
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      can: 'rbac/can',
+    }),
+
+    user () {
+      const { user } = this.$auth
+      return user.name || user.handle || user.email || ''
+    },
+
+    icon () {
+      return this.$Settings.attachment('ui.iconLogo')
+    },
+
+    logo () {
+      return this.$Settings.attachment('ui.mainLogo')
+    },
+
+    isAutoLogoutEnabled () {
+      return this.$Settings.get('auth.autoLogout.enabled')
+    },
+  },
+
+  created () {
+    this.$root.$on('alert', this.displayToast)
+
+    const rulesToCheck = [
+      // Grant
+      { resource: 'system/', operation: 'grant' },
+      { resource: 'compose/', operation: 'grant' },
+      { resource: 'federation/', operation: 'grant' },
+      { resource: 'automation/', operation: 'grant' },
+      // System - Search
+      { resource: 'system/', operation: 'users.search' },
+      { resource: 'system/', operation: 'roles.search' },
+      { resource: 'system/', operation: 'applications.search' },
+      { resource: 'system/', operation: 'templates.search' },
+      { resource: 'system/', operation: 'auth-clients.search' },
+      { resource: 'system/', operation: 'queues.search' },
+      { resource: 'system/', operation: 'apigw-routes.search' },
+      { resource: 'system/', operation: 'dal-connections.search' },
+      // System - Create
+      { resource: 'system/', operation: 'auth-client.create' },
+      { resource: 'system/', operation: 'role.create' },
+      { resource: 'system/', operation: 'user.create' },
+      { resource: 'system/', operation: 'application.create' },
+      { resource: 'system/', operation: 'queue.create' },
+      { resource: 'system/', operation: 'apigw-route.create' },
+      { resource: 'system/', operation: 'dal-connection.create' },
+      // System - Manage/Read
+      { resource: 'system/', operation: 'settings.read' },
+      { resource: 'system/', operation: 'settings.manage' },
+      { resource: 'system/', operation: 'action-log.read' },
+      { resource: 'system/', operation: 'dal-sensitivity-level.manage' },
+      // Compose
+      { resource: 'compose/', operation: 'settings.read' },
+      { resource: 'compose/', operation: 'settings.manage' },
+      // Automation
+      { resource: 'automation/', operation: 'workflows.search' },
+      { resource: 'automation/', operation: 'workflow.create' },
+      { resource: 'automation/', operation: 'sessions.search' },
+      // Federation
+      { resource: 'federation/', operation: 'pair' },
+    ]
+
+    this.allowed = rulesToCheck.some(({ resource, operation }) => this.can(resource, operation))
+
+    // If not allowed to access, show error prompt and redirect after a delay
+    if (!this.allowed) {
+      this.toastDanger(this.$t('notification:notAllowed'))
+
+      setTimeout(() => {
+        window.location = '/..'
+      }, 5000)
+    }
+  },
+
+  methods: {
+    displayToast ({ title, message, variant, countdown }) {
+      this.$bvToast.toast(message, {
+        title,
+        variant,
+        solid: true,
+        autoHideDelay: countdown,
+        toaster: 'b-toaster-bottom-right',
+      })
+    },
+  },
 }
 </script>
 
@@ -124,63 +252,5 @@ function can(resource, operation) {
 .h-viewport {
   height: 100vh;
   height: 100dvh;
-}
-
-/*!rtl:ignore*/
-.sidebar-container :deep(.sidebar) {
-  position: relative !important;
-  left: 0 !important;
-  right: auto !important;
-}
-/*!rtl:end:ignore*/
-
-.sidebar-container :deep(.b-sidebar-backdrop) {
-  display: none !important;
-}
-</style>
-
-<style>
-.sidebar-container {
-  height: 100%;
-}
-
-.sidebar-container > div {
-  height: 100%;
-}
-
-.sidebar-container .sidebar {
-  position: relative !important;
-  left: 0 !important;
-  right: auto !important;
-  width: 320px;
-  height: 100%;
-}
-
-.sidebar-container .sidebar-body {
-  position: absolute;
-  top: 64px;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  overflow-y: auto !important;
-}
-
-.sidebar-container .sidebar:not(.expanded) {
-  width: 66px;
-  overflow: hidden;
-  height: 0;
-}
-
-.sidebar-container .sidebar:not(.expanded) .sidebar-body {
-  display: none;
-}
-
-.sidebar-container .b-sidebar-backdrop {
-  display: none !important;
-}
-
-#resource-list td.actions {
-  padding: 0.5rem !important;
-  vertical-align: middle;
 }
 </style>

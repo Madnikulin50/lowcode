@@ -1,21 +1,105 @@
 <template>
-  <div class="container pt-2 pb-3">
-    <c-content-header :title="$t('ui.settings.editor.navigation.title')" />
-    <CUITopbarSettings v-if="settings" :settings="settings" :processing="topbar.processing" :success="topbar.success" :can-manage="canManage" @submit="onSubmit($event, 'topbar')" />
-  </div>
+  <b-container
+    class="pt-2 pb-3"
+  >
+    <c-content-header
+      :title="$t('title')"
+    />
+
+    <c-ui-topbar-settings
+      v-if="settings"
+      :settings="settings"
+      :processing="topbar.processing"
+      :success="topbar.success"
+      :can-manage="canManage"
+      @submit="onSubmit($event, 'topbar')"
+    />
+  </b-container>
 </template>
-<script setup>
-import { ref, reactive, computed, onMounted, inject } from 'vue'
-import { useI18n } from 'vue-i18n'
-import CUITopbarSettings from '../../../components/Settings/UI/CUITopbarSettings.vue'
-const { t } = useI18n()
-const $Settings = inject('$Settings', {})
-const settings = ref(undefined)
-const topbar = reactive({ processing: false, success: false })
-const canManage = computed(() => can('system/', 'settings.manage'))
-function can(resource, operation) { return true }
-function incLoader() {} function decLoader() {}
-function fetchSettings() { incLoader(); $Settings.fetch(); window.__SystemAPI.settingsList({ prefix: 'ui' }).then(s => { settings.value = {}; s.forEach(({ name, value }) => { settings.value[name] = value }) }).finally(() => decLoader()) }
-function onSubmit(s, type) { topbar.processing = true; const values = Object.entries(s).map(([name, value]) => ({ name, value })); window.__SystemAPI.settingsUpdate({ values }).then(() => fetchSettings()).then(() => { topbar.success = true; setTimeout(() => { topbar.success = false }, 2000) }).finally(() => { topbar.processing = false }) }
-onMounted(() => { fetchSettings() })
+
+<script>
+import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
+import CUITopbarSettings from 'corteza-webapp-admin/src/components/Settings/UI/CUITopbarSettings'
+import { mapGetters } from 'vuex'
+
+export default {
+  i18nOptions: {
+    namespaces: 'ui.settings',
+    keyPrefix: 'editor.navigation',
+  },
+
+  components: {
+    'c-ui-topbar-settings': CUITopbarSettings,
+  },
+
+  mixins: [
+    editorHelpers,
+  ],
+
+  data () {
+    return {
+      settings: undefined,
+
+      topbar: {
+        processing: false,
+        success: false,
+      },
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      can: 'rbac/can',
+    }),
+
+    canManage () {
+      return this.can('system/', 'settings.manage')
+    },
+  },
+
+  created () {
+    this.fetchSettings()
+  },
+
+  methods: {
+    fetchSettings () {
+      this.incLoader()
+
+      this.$Settings.fetch()
+      return this.$SystemAPI.settingsList({ prefix: 'ui' })
+        .then(settings => {
+          this.settings = {}
+
+          settings.forEach(({ name, value }) => {
+            this.$set(this.settings, name, value)
+          })
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:settings.navigation.fetch.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    onSubmit (settings, type) {
+      this[type].processing = true
+
+      const values = Object.entries(settings).map(([name, value]) => {
+        return { name, value }
+      })
+
+      this.$SystemAPI.settingsUpdate({ values })
+        .then(() => {
+          return this.fetchSettings()
+        })
+        .then(() => {
+          this.animateSuccess(type)
+          this.toastSuccess(this.$t('notification:settings.navigation.update.success'))
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:settings.navigation.update.error')))
+        .finally(() => {
+          this[type].processing = false
+        })
+    },
+  },
+}
 </script>

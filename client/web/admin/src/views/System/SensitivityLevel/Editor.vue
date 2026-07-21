@@ -1,41 +1,207 @@
 <template>
-  <div v-if="sensitivityLevel" class="container pt-2 pb-3">
-    <c-content-header :title="title">
-      <button v-if="sensitivityLevelID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.sensitivityLevel.new' })">{{ $t('new') }}</button>
+  <b-container
+    v-if="sensitivityLevel"
+    class="pt-2 pb-3"
+  >
+    <c-content-header
+      :title="title"
+    >
+      <b-button
+        v-if="sensitivityLevelID && canCreate"
+        variant="primary"
+        :to="{ name: 'system.sensitivityLevel.new' }"
+      >
+        {{ $t('new') }}
+      </b-button>
     </c-content-header>
-    <c-sensitivity-level-editor-info :sensitivity-level="sensitivityLevel" :processing="info.processing" :success="info.success" :can-delete="canDelete" :can-create="canCreate" @submit="onSubmit($event)" @delete="onDelete($event)" />
-  </div>
+
+    <c-sensitivity-level-editor-info
+      :sensitivity-level="sensitivityLevel"
+      :processing="info.processing"
+      :success="info.success"
+      :can-delete="canDelete"
+      :can-create="canCreate"
+      @submit="onSubmit($event)"
+      @delete="onDelete($event)"
+    />
+  </b-container>
 </template>
-<script setup>
-import { ref, computed, reactive, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+<script>
 import { isEqual, cloneDeep } from 'lodash'
-import CSensitivityLevelEditorInfo from '../../../components/SensitivityLevel/CSensitivityLevelEditorInfo.vue'
-const props = defineProps({ sensitivityLevelID: { type: String, required: false, default: undefined } })
-const router = useRouter()
-const { t } = useI18n()
-const sensitivityLevel = ref(undefined)
-const initialSensitivityLevelState = ref(undefined)
-const info = reactive({ processing: false, success: false })
-const canCreate = computed(() => can('system/', 'dal-sensitivity-level.manage'))
-const canDelete = computed(() => sensitivityLevel.value && sensitivityLevel.value.sensitivityLevelID && canCreate.value)
-const title = computed(() => props.sensitivityLevelID ? t('title.edit') : t('title.create'))
-function can(resource, operation) { return true }
-function incLoader() {}
-function decLoader() {}
-watch(() => props.sensitivityLevelID, () => {
-  if (props.sensitivityLevelID) { fetchSensitivityLevel() } else { sensitivityLevel.value = { handle: '', level: 1, meta: { name: '', description: '' } }; initialSensitivityLevelState.value = cloneDeep(sensitivityLevel.value) }
-}, { immediate: true })
-function fetchSensitivityLevel(sensitivityLevelID = props.sensitivityLevelID) { incLoader(); window.__systemAPI.dalSensitivityLevelRead({ sensitivityLevelID }).then(s => { sensitivityLevel.value = s; initialSensitivityLevelState.value = cloneDeep(s) }).finally(() => decLoader()) }
-function onSubmit(s) {
-  info.processing = true
-  if (props.sensitivityLevelID) { window.__systemAPI.dalSensitivityLevelUpdate(s).then(s => { sensitivityLevel.value = s; initialSensitivityLevelState.value = cloneDeep(s); info.success = true; setTimeout(() => { info.success = false }, 2000) }).finally(() => { info.processing = false }) }
-  else { window.__systemAPI.dalSensitivityLevelCreate(s).then(s => { sensitivityLevel.value = s; initialSensitivityLevelState.value = cloneDeep(s); const { sensitivityLevelID } = s; info.success = true; setTimeout(() => { info.success = false }, 2000); router.push({ name: 'system.sensitivityLevel.edit', params: { sensitivityLevelID } }) }).finally(() => { info.processing = false }) }
-}
-function onDelete(sensitivityLevelID = props.sensitivityLevelID) {
-  incLoader()
-  if (sensitivityLevel.value.deletedAt) { window.__systemAPI.dalSensitivityLevelUndelete({ sensitivityLevelID }).then(() => fetchSensitivityLevel()).finally(() => decLoader()) }
-  else { window.__systemAPI.dalSensitivityLevelDelete({ sensitivityLevelID }).then(() => { fetchSensitivityLevel(); sensitivityLevel.value.deletedAt = new Date(); router.push({ name: 'system.sensitivityLevel' }) }).finally(() => decLoader()) }
+import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
+import CSensitivityLevelEditorInfo from 'corteza-webapp-admin/src/components/SensitivityLevel/CSensitivityLevelEditorInfo'
+import { mapGetters } from 'vuex'
+
+export default {
+  components: {
+    CSensitivityLevelEditorInfo,
+  },
+
+  i18nOptions: {
+    namespaces: 'system.sensitivityLevel',
+    keyPrefix: 'editor',
+  },
+
+  mixins: [
+    editorHelpers,
+  ],
+
+  beforeRouteUpdate (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  beforeRouteLeave (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  props: {
+    sensitivityLevelID: {
+      type: String,
+      required: false,
+      default: undefined,
+    },
+  },
+
+  data () {
+    return {
+      sensitivityLevel: undefined,
+      initialSensitivityLevelState: undefined,
+
+      info: {
+        processing: false,
+        success: false,
+      },
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      can: 'rbac/can',
+    }),
+
+    canCreate () {
+      return this.can('system/', 'dal-sensitivity-level.manage')
+    },
+
+    canDelete () {
+      return this.sensitivityLevel && this.sensitivityLevel.sensitivityLevelID && this.canCreate
+    },
+
+    title () {
+      return this.sensitivityLevelID ? this.$t('title.edit') : this.$t('title.create')
+    },
+  },
+
+  watch: {
+    sensitivityLevelID: {
+      immediate: true,
+      handler () {
+        if (this.sensitivityLevelID) {
+          this.fetchSensitivityLevel()
+        } else {
+          this.sensitivityLevel = {
+            handle: '',
+            level: 1,
+            meta: {
+              name: '',
+              description: '',
+            },
+          }
+
+          this.initialSensitivityLevelState = cloneDeep(this.sensitivityLevel)
+        }
+      },
+    },
+  },
+
+  methods: {
+    fetchSensitivityLevel (sensitivityLevelID = this.sensitivityLevelID) {
+      this.incLoader()
+
+      this.$SystemAPI.dalSensitivityLevelRead({ sensitivityLevelID })
+        .then(sensitivityLevel => {
+          this.sensitivityLevel = sensitivityLevel
+          this.initialSensitivityLevelState = cloneDeep(sensitivityLevel)
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:sensitivityLevel.fetch.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    onSubmit (sensitivityLevel) {
+      this.info.processing = true
+
+      if (this.sensitivityLevelID) {
+        this.$SystemAPI.dalSensitivityLevelUpdate(sensitivityLevel)
+          .then(sensitivityLevel => {
+            this.sensitivityLevel = sensitivityLevel
+            this.initialSensitivityLevelState = cloneDeep(sensitivityLevel)
+
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:sensitivityLevel.update.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:sensitivityLevel.update.error')))
+          .finally(() => {
+            this.info.processing = false
+          })
+      } else {
+        this.$SystemAPI.dalSensitivityLevelCreate(sensitivityLevel)
+          .then(sensitivityLevel => {
+            this.sensitivityLevel = sensitivityLevel
+            this.initialSensitivityLevelState = cloneDeep(sensitivityLevel)
+
+            const { sensitivityLevelID } = sensitivityLevel
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:sensitivityLevel.create.success'))
+
+            this.$router.push({ name: 'system.sensitivityLevel.edit', params: { sensitivityLevelID } })
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:sensitivityLevel.create.error')))
+          .finally(() => {
+            this.info.processing = false
+          })
+      }
+    },
+
+    onDelete (sensitivityLevelID = this.sensitivityLevelID) {
+      this.incLoader()
+
+      if (this.sensitivityLevel.deletedAt) {
+        // Sensitivity level is currently deleted -- undelete
+        this.$SystemAPI.dalSensitivityLevelUndelete({ sensitivityLevelID })
+          .then(() => {
+            this.fetchSensitivityLevel()
+
+            this.toastSuccess(this.$t('notification:sensitivityLevel.undelete.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:sensitivityLevel.undelete.error')))
+          .finally(() => this.decLoader())
+      } else {
+        // Sensitivity level is currently not deleted -- delete
+        this.$SystemAPI.dalSensitivityLevelDelete({ sensitivityLevelID })
+          .then(() => {
+            this.fetchSensitivityLevel()
+
+            this.sensitivityLevel.deletedAt = new Date()
+            this.toastSuccess(this.$t('notification:sensitivityLevel.delete.success'))
+            this.$router.push({ name: 'system.sensitivityLevel' })
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:sensitivityLevel.delete.error')))
+          .finally(() => this.decLoader())
+      }
+    },
+
+    checkUnsavedChanges (next, to) {
+      const isNewPage = this.$route.path.includes('/new') && to.name.includes('edit')
+      const { deletedAt } = this.sensitivityLevel || {}
+
+      if (isNewPage || deletedAt) {
+        next(true)
+      } else if (!to.name.includes('edit')) {
+        next(!isEqual(this.sensitivityLevel, this.initialSensitivityLevelState) ? window.confirm(this.$t('general:editor.unsavedChanges')) : true)
+      }
+    },
+  },
 }
 </script>

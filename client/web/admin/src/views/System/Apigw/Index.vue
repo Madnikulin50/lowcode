@@ -1,8 +1,13 @@
 <template>
-  <div class="container-fluid d-flex flex-column flex-fill pt-2 pb-3">
-    <c-content-header :title="$t('system.apigw.title')" />
+  <b-container
+    fluid="xl"
+    class="d-flex flex-column flex-fill pt-2 pb-3"
+  >
+    <c-content-header :title="$t('title')" />
 
-    <div class="d-flex flex-column h-100">
+    <div
+      class="d-flex flex-column h-100"
+    >
       <c-settings-editor
         :settings="apigwSettings"
         :processing="settings.processing"
@@ -11,65 +16,97 @@
         @submit="onSettingsSubmit"
       />
 
-      <c-route-list class="flex-fill" />
+      <c-route-list
+        class="flex-fill"
+      />
     </div>
-  </div>
+  </b-container>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { inject } from 'vue'
-import { useToast } from 'corteza-lib/vue/dist'
-import CSettingsEditor from '../../../components/Apigw/CSettingsEditor.vue'
-import CRouteList from '../../../components/Apigw/CRouteList.vue'
+<script>
+import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
+import CSettingsEditor from 'corteza-webapp-admin/src/components/Apigw/CSettingsEditor'
+import CRouteList from 'corteza-webapp-admin/src/components/Apigw/CRouteList'
 
-const $SystemAPI = inject('$SystemAPI')
-const $Settings = inject('$Settings')
-const { toastSuccess, toastErrorHandler } = useToast()
+export default {
+  components: {
+    CRouteList,
+    CSettingsEditor,
+  },
 
-const settings = ref({
-  processing: false,
-  success: false,
-  items: [],
-})
+  mixins: [
+    editorHelpers,
+  ],
 
-const apigwSettings = computed(() => {
-  if (settings.value.items.length > 0) {
-    return settings.value.items.reduce((map, obj) => {
-      const { name, value } = obj
-      const split = name.split('.')
-      if (split[0] === 'apigw') {
-        map[name] = value
+  i18nOptions: {
+    namespaces: ['system.apigw'],
+  },
+
+  data () {
+    return {
+      settings: {
+        processing: false,
+        success: false,
+
+        items: [],
+      },
+    }
+  },
+
+  computed: {
+    apigwSettings () {
+      if (this.settings.items.length > 0) {
+        return this.settings.items.reduce((map, obj) => {
+          const { name, value } = obj
+          const split = name.split('.')
+
+          if (split[0] === 'apigw') {
+            map[name] = value
+          }
+
+          return map
+        }, {})
       }
-      return map
-    }, {})
-  }
-  return {}
-})
+      return {}
+    },
+  },
 
-function onSettingsSubmit(s) {
-  settings.value.processing = true
-  const values = Object.entries(s).map(([name, value]) => ({ name, value }))
+  created () {
+    this.fetchSettings()
+  },
 
-  $SystemAPI.settingsUpdate({ values })
-    .then(() => {
-      settings.value.success = true
-      toastSuccess('apigw.settings.success')
-      $Settings.fetch()
-    })
-    .catch(toastErrorHandler({ title: 'apigw.settings.error' }))
-    .finally(() => {
-      settings.value.processing = false
-    })
+  methods: {
+    onSettingsSubmit (settings) {
+      this.settings.processing = true
+
+      const values = Object.entries(settings).map(([name, value]) => {
+        return { name, value }
+      })
+
+      this.$SystemAPI.settingsUpdate({ values })
+        .then(() => {
+          this.animateSuccess('settings')
+          this.toastSuccess(this.$t('notification:settings.system.apigw.success'))
+          this.$Settings.fetch()
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:settings.system.apigw.error')))
+        .finally(() => {
+          this.settings.processing = false
+        })
+    },
+
+    fetchSettings () {
+      this.incLoader()
+
+      this.$SystemAPI.settingsList()
+        .then((settings = []) => {
+          this.settings.items = settings
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:settings.system.fetch.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+  },
 }
-
-function fetchSettings() {
-  $SystemAPI.settingsList()
-    .catch(toastErrorHandler({ title: 'apigw.settings.fetch.error' }))
-    .then((items = []) => {
-      settings.value.items = items
-    })
-}
-
-onMounted(fetchSettings)
 </script>

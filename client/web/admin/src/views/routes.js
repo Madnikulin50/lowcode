@@ -155,5 +155,5 @@ export default [
   },
 
   // When everything else fails, go to dashboard
-  { path: '/:pathMatch(.*)*', redirect: { name: 'dashboard' } },
+  { path: '*', redirect: { name: 'dashboard' } },
 ]

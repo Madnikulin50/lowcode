@@ -44,4 +44,9 @@ audit:
 		(cd $$dir && yarn audit) || true; \
 	done
 
+list:
+	@for dir in $(WEB_SUBDIRS); do \
+		echo "---echo $$dir---"; \
+    done
+
 .DEFAULT_GOAL := dev

@@ -1,28 +1,138 @@
 <template>
-  <div class="container pt-2 pb-3">
-    <c-content-header :title="$t('compose.settings.list.title')" />
-    <c-compose-editor-basic :basic="settings" :processing="basic.processing" :success="basic.success" :can-manage="canManage" @submit="onSubmit($event, 'basic')" />
-    <c-compose-editor-ui :settings="settings" :processing="ui.processing" :success="ui.success" :can-manage="canManage" class="mt-3" @submit="onSubmit($event, 'ui')" />
-  </div>
+  <b-container
+    class="pt-2 pb-3"
+  >
+    <c-content-header
+      :title="$t('title')"
+    />
+
+    <c-compose-editor-basic
+      :basic="settings"
+      :processing="basic.processing"
+      :success="basic.success"
+      :can-manage="canManage"
+      @submit="onSubmit($event, 'basic')"
+    />
+
+    <c-compose-editor-ui
+      :settings="settings"
+      :processing="ui.processing"
+      :success="ui.success"
+      :can-manage="canManage"
+      class="mt-3"
+      @submit="onSubmit($event, 'ui')"
+    />
+  </b-container>
 </template>
-<script setup>
-import { ref, reactive, computed, onMounted, inject } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+
+<script>
 import { isEqual, cloneDeep } from 'lodash'
-import CComposeEditorBasic from '../../../components/Settings/Compose/CComposeEditorBasic.vue'
-import CComposeEditorUI from '../../../components/Settings/Compose/CComposeEditorUI.vue'
-const router = useRouter()
-const { t } = useI18n()
+import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
+import CComposeEditorBasic from 'corteza-webapp-admin/src/components/Settings/Compose/CComposeEditorBasic'
+import CComposeEditorUI from 'corteza-webapp-admin/src/components/Settings/Compose/CComposeEditorUI'
+import { mapGetters } from 'vuex'
+
 const prefix = 'compose.'
-const settings = ref({})
-const initialSettingsState = ref({})
-const basic = reactive({ processing: false, success: false })
-const ui = reactive({ processing: false, success: false })
-const canManage = computed(() => can('system/', 'settings.manage'))
-function can(resource, operation) { return true }
-function incLoader() {} function decLoader() {}
-onMounted(() => { fetchSettings() })
-function fetchSettings() { incLoader(); window.__SystemAPI.settingsList({ prefix }).then(s => { settings.value = {}; initialSettingsState.value = {}; s.forEach(({ name, value }) => { settings.value[name] = value; initialSettingsState.value[name] = cloneDeep(value) }) }).catch(() => {}).finally(() => decLoader()) }
-function onSubmit(s, type) { const obj = type === 'basic' ? basic : ui; obj.processing = true; const values = Object.entries(s).map(([name, value]) => ({ name, value })); window.__SystemAPI.settingsUpdate({ values }).then(() => { obj.success = true; setTimeout(() => { obj.success = false }, 2000); initialSettingsState.value = cloneDeep(settings.value) }).catch(() => {}).finally(() => { obj.processing = false }) }
+
+export default {
+  i18nOptions: {
+    namespaces: 'compose.settings',
+    keyPrefix: 'editor',
+  },
+
+  components: {
+    CComposeEditorBasic,
+    'c-compose-editor-ui': CComposeEditorUI,
+  },
+
+  mixins: [
+    editorHelpers,
+  ],
+
+  beforeRouteUpdate (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  beforeRouteLeave (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  data () {
+    return {
+      settings: {},
+      initialSettingsState: {},
+
+      basic: {
+        processing: false,
+        success: false,
+      },
+
+      ui: {
+        processing: false,
+        success: false,
+      },
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      can: 'rbac/can',
+    }),
+
+    canManage () {
+      return this.can('system/', 'settings.manage')
+    },
+  },
+
+  created () {
+    this.fetchSettings()
+  },
+
+  methods: {
+    onSubmit (settings, type) {
+      this[type].processing = true
+
+      const values = Object.entries(settings).map(([name, value]) => {
+        return { name, value }
+      })
+
+      this.$SystemAPI.settingsUpdate({ values })
+        .then(() => {
+          this.animateSuccess(type)
+          this.toastSuccess(this.$t('notification:settings.compose.update.success'))
+          this.initialSettingsState = cloneDeep(this.settings)
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:settings.compose.update.error')))
+        .finally(() => {
+          this[type].processing = false
+        })
+    },
+
+    fetchSettings () {
+      this.incLoader()
+
+      this.$SystemAPI.settingsList({ prefix })
+        .then(settings => {
+          settings.forEach(({ name, value }) => {
+            this.$set(this.settings, name, value)
+            this.$set(this.initialSettingsState, name, cloneDeep(value))
+          })
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:settings.compose.fetch.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    checkUnsavedChanges (next, to) {
+      const isNewPage = this.$route.path.includes('/new') && to.name.includes('edit')
+
+      if (isNewPage) {
+        next(true)
+      } else if (!to.name.includes('edit')) {
+        next(!isEqual(this.settings, this.initialSettingsState) ? window.confirm(this.$t('general:editor.unsavedChanges')) : true)
+      }
+    },
+  },
+}
 </script>

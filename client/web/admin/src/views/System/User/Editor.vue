@@ -1,17 +1,19 @@
 <template>
-  <div
+  <b-container
     v-if="user"
-    class="container pt-2 pb-3"
+    class="pt-2 pb-3"
   >
-    <c-content-header :title="title">
-      <button
+    <c-content-header
+      :title="title"
+    >
+      <b-button
         v-if="userID && canCreate"
         data-test-id="button-new-user"
-        class="btn btn-primary"
-        @click="$router.push({ name: 'system.user.new' })"
+        variant="primary"
+        :to="{ name: 'system.user.new' }"
       >
         {{ $t('new') }}
-      </button>
+      </b-button>
 
       <c-permissions-button
         v-if="userID && canGrant"
@@ -28,7 +30,7 @@
         ui-slot="toolbar"
         resource-type="system:user"
         default-variant="link"
-        class="me-1"
+        class="mr-1"
         @click="dispatchCortezaSystemUserEvent($event, { user })"
       />
     </c-content-header>
@@ -42,7 +44,7 @@
       @delete="onDelete"
       @status="onStatusChange"
       @patch="onPatch"
-      @sessions-revoke="onSessionsRevoke"
+      @sessionsRevoke="onSessionsRevoke"
     />
 
     <c-user-editor-avatar
@@ -52,8 +54,8 @@
       :success="avatar.success"
       class="mt-3"
       @submit="onAvatarSubmit"
-      @on-upload="onAvatarUpload"
-      @reset-attachment="onResetAvatar"
+      @onUpload="onAvatarUpload"
+      @resetAttachment="onResetAvatar"
     />
 
     <c-user-editor-roles
@@ -89,192 +91,445 @@
       :value="externalAuthProviders"
       @delete="onExternalAuthProviderDelete"
     />
-  </div>
+  </b-container>
 </template>
 
-<script setup>
-import { ref, reactive, computed, watch, onMounted, inject } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+<script>
 import { NoID, system } from 'corteza-lib/js/dist'
+import CUserEditorExternalAuthProviders from 'corteza-webapp-admin/src/components/User/CUserEditorExternalAuthProviders'
+import CUserEditorInfo from 'corteza-webapp-admin/src/components/User/CUserEditorInfo'
+import CUserEditorMfa from 'corteza-webapp-admin/src/components/User/CUserEditorMFA'
+import CUserEditorPassword from 'corteza-webapp-admin/src/components/User/CUserEditorPassword'
+import CUserEditorRoles from 'corteza-webapp-admin/src/components/User/CUserEditorRoles'
+import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
 import { isEqual } from 'lodash'
-import { useUiStore } from '../../../store/ui'
-import CUserEditorExternalAuthProviders from '../../../components/User/CUserEditorExternalAuthProviders.vue'
-import CUserEditorInfo from '../../../components/User/CUserEditorInfo.vue'
-import CUserEditorMfa from '../../../components/User/CUserEditorMFA.vue'
-import CUserEditorPassword from '../../../components/User/CUserEditorPassword.vue'
-import CUserEditorRoles from '../../../components/User/CUserEditorRoles.vue'
-import CUserEditorAvatar from '../../../components/User/CUserEditorAvatar.vue'
+import { mapGetters } from 'vuex'
+import CUserEditorAvatar from '../../../components/User/CUserEditorAvatar'
 
-const props = defineProps({
-  userID: { type: String, required: false, default: undefined },
-})
+export default {
+  components: {
+    CUserEditorRoles,
+    CUserEditorPassword,
+    CUserEditorInfo,
+    CUserEditorAvatar,
+    CUserEditorMfa,
+    CUserEditorExternalAuthProviders,
+  },
 
-const router = useRouter()
-const route = useRoute()
-const { t } = useI18n()
-const ui = useUiStore()
-const $auth = inject('auth', {})
-const $Settings = inject('$Settings', {})
+  i18nOptions: {
+    namespaces: 'system.users',
+    keyPrefix: 'editor',
+  },
 
-const user = ref(undefined)
-const initialUserState = ref(undefined)
-const membership = reactive({ active: undefined, initial: undefined })
-const externalAuthProviders = ref([])
-const info = reactive({ processing: false, success: false })
-const avatar = reactive({ processing: false, success: false })
-const password = reactive({ processing: false, success: false })
-const mfa = reactive({ processing: false, success: false })
-const roles = reactive({ processing: false, success: false })
+  mixins: [
+    editorHelpers,
+  ],
 
-const canCreate = computed(() => can('system/', 'user.create'))
-const canGrant = computed(() => can('system/', 'grant'))
-const title = computed(() => props.userID ? t('title.edit') : t('title.create'))
+  beforeRouteUpdate (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
 
-function can(resource, operation) { return true }
+  beforeRouteLeave (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
 
-watch(() => props.userID, (userID) => {
-  if (userID) {
-    fetchUser()
-    fetchMembership()
-    fetchExternalAuthProviders()
-  } else {
-    user.value = new system.User()
-    initialUserState.value = user.value.clone()
-  }
-}, { immediate: true })
+  props: {
+    userID: {
+      type: String,
+      required: false,
+      default: undefined,
+    },
+  },
 
-function incLoader() { ui.incLoader() }
-function decLoader() { ui.decLoader() }
+  data () {
+    return {
+      user: undefined,
+      initialUserState: undefined,
 
-function fetchUser() {
-  incLoader()
-  return window.__systemAPI.userRead({ userID: props.userID })
-    .then(u => {
-      user.value = new system.User(u)
-      initialUserState.value = user.value.clone()
-    })
-    .finally(() => decLoader())
+      membership: {
+        active: undefined,
+        initial: undefined,
+      },
+
+      externalAuthProviders: [],
+
+      // Processing and success flags for each form
+      info: {
+        processing: false,
+        success: false,
+      },
+
+      avatar: {
+        processing: false,
+        success: false,
+      },
+
+      password: {
+        processing: false,
+        success: false,
+      },
+
+      mfa: {
+        processing: false,
+        success: false,
+      },
+
+      roles: {
+        processing: false,
+        success: false,
+      },
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      can: 'rbac/can',
+    }),
+
+    canCreate () {
+      return this.can('system/', 'user.create')
+    },
+
+    canGrant () {
+      return this.can('system/', 'grant')
+    },
+
+    title () {
+      return this.userID ? this.$t('title.edit') : this.$t('title.create')
+    },
+  },
+
+  watch: {
+    userID: {
+      immediate: true,
+      handler (userID) {
+        if (userID) {
+          this.fetchUser()
+          this.fetchMembership()
+          this.fetchExternalAuthProviders()
+        } else {
+          this.user = new system.User()
+          this.initialUserState = this.user.clone()
+        }
+      },
+    },
+  },
+
+  methods: {
+    async fetchUser () {
+      this.incLoader()
+
+      return this.$SystemAPI.userRead({ userID: this.userID })
+        .then(user => {
+          this.user = new system.User(user)
+          this.initialUserState = this.user.clone()
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:user.fetch.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    fetchMembership () {
+      this.incLoader()
+      return this.$SystemAPI.userMembershipList({ userID: this.userID })
+        .then((set = []) => {
+          this.membership = {
+            active: [...set],
+            initial: [...set],
+          }
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:user.roles.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    fetchExternalAuthProviders () {
+      this.incLoader()
+
+      return this.$SystemAPI.userListCredentials({ userID: this.userID })
+        .then((providers = []) => {
+          this.externalAuthProviders = providers.map(({ credentialsID = '', label = '', kind = '' }) => ({ credentialsID, label, type: kind }))
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:user.external-auth-providers.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    /**
+     * Handles user info submit event, calls user update or create API endpoint
+     * and handles response & errors
+     *
+     * @param user {Object}
+     */
+    onInfoSubmit (user) {
+      this.info.processing = true
+
+      const payload = { ...user }
+
+      if (payload.userID !== NoID) {
+        // On update, reset the user obj
+        this.$SystemAPI.userUpdate(payload)
+          .then(user => {
+            this.user = new system.User(user)
+            this.initialUserState = this.user.clone()
+
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:user.update.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:user.update.error')))
+          .finally(() => {
+            this.info.processing = false
+          })
+      } else {
+        // On creation, redirect to edit page
+        this.$SystemAPI.userCreate(payload)
+          .then(({ userID }) => {
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:user.create.success'))
+
+            this.$router.push({ name: 'system.user.edit', params: { userID } })
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:user.create.error')))
+          .finally(() => {
+            this.info.processing = false
+          })
+      }
+    },
+
+    onAvatarSubmit (user) {
+      this.avatar.processing = true
+
+      const payload = {
+        userID: user.userID,
+        avatarColor: user.meta.avatarColor,
+        avatarBgColor: user.meta.avatarBgColor,
+      }
+
+      this.$SystemAPI.userProfileAvatarInitial(payload)
+        .then(() => this.fetchUser())
+        .then(() => {
+          this.animateSuccess('avatar')
+          this.toastSuccess(this.$t('notification:user.avatarSettings.success'))
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:user.avatarSettings.error')))
+        .finally(() => {
+          this.avatar.processing = false
+        })
+    },
+
+    /**
+     * Handles user delete event, calls user delete API endpoint
+     * and handles response & errors
+     */
+    onDelete () {
+      this.incLoader()
+
+      if (this.user.deletedAt) {
+        this.$SystemAPI.userUndelete({ userID: this.userID })
+          .then(() => {
+            this.fetchUser()
+
+            this.toastSuccess(this.$t('notification:user.undelete.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:user.undelete.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      } else {
+        this.$SystemAPI.userDelete({ userID: this.userID })
+          .then(() => {
+            this.fetchUser()
+
+            this.user.deletedAt = new Date()
+            this.toastSuccess(this.$t('notification:user.delete.success'))
+            this.$router.push({ name: 'system.user' })
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:user.delete.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      }
+    },
+
+    onExternalAuthProviderDelete (credentialsID = '') {
+      this.incLoader()
+
+      this.$SystemAPI.userDeleteCredentials({ userID: this.userID, credentialsID })
+        .then(() => {
+          this.fetchExternalAuthProviders()
+
+          this.toastSuccess(this.$t('notification:user.external-auth-providers.success'))
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:user.external-auth-providers.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    /**
+     * Handles user password submit event, calls set password API endpoint
+     * and handles response & errors
+     *
+     * @param password {String}
+     */
+    onPasswordSubmit (password = '') {
+      this.password.processing = true
+
+      this.$SystemAPI.userSetPassword({ userID: this.userID, password })
+        .then(() => {
+          this.fetchExternalAuthProviders()
+          this.animateSuccess('password')
+
+          this.toastSuccess(this.$t('notification:user.passwordChange.success'))
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:user.passwordChange.error')))
+        .finally(() => {
+          this.password.processing = false
+        })
+    },
+
+    /**
+     * Handles user MFA submit event
+     *
+     */
+    onPatch (path, value) {
+      const cfg = {
+        method: 'patch',
+        url: this.$SystemAPI.userPartialUpdateEndpoint({ userID: this.userID }),
+        data: [{ path, value, op: 'replace' }],
+      }
+
+      return this.$SystemAPI.api().request(cfg).then(response => {
+        this.fetchUser()
+      })
+    },
+
+    /**
+     * Handles user role submit event, calls membership add or remove API endpoint
+     * and handles response & errors
+     */
+    onMembershipSubmit () {
+      this.roles.processing = true
+
+      const userID = this.userID
+
+      const { active, initial } = this.membership
+
+      Promise.all([
+        // all removed memberships
+        ...initial.filter(roleID => !active.includes(roleID)).map(roleID => {
+          return this.$SystemAPI.userMembershipRemove({ roleID, userID })
+        }),
+        // all new memberships
+        ...active.filter(roleID => !initial.includes(roleID)).map(roleID => {
+          return this.$SystemAPI.userMembershipAdd({ roleID, userID })
+        }),
+      ])
+        .then(() => {
+          this.animateSuccess('roles')
+          this.fetchMembership()
+
+          this.toastSuccess(this.$t('notification:user.membershipUpdate.success'))
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:user.membershipUpdate.error')))
+        .finally(() => {
+          this.roles.processing = false
+        })
+    },
+
+    /**
+     * Handles user status change event, calls suspend or unsuspend API endpoint
+     * and handles response & errors
+     */
+    onStatusChange () {
+      this.incLoader()
+
+      const userID = this.userID
+
+      if (this.user.suspendedAt) {
+        this.$SystemAPI.userUnsuspend({ userID })
+          .then(() => {
+            this.fetchUser()
+
+            this.toastSuccess(this.$t('notification:user.unsuspend.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:user.unsuspend.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      } else {
+        this.$SystemAPI.userSuspend({ userID })
+          .then(() => {
+            this.fetchUser()
+
+            this.toastSuccess(this.$t('notification:user.suspend.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:user.suspend.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      }
+    },
+
+    /**
+     * Handles user logout event, calls user logout API endpoint
+     * Removes all active auth session and token of user
+     */
+    onSessionsRevoke () {
+      this.incLoader()
+
+      const userID = this.userID
+
+      this.$SystemAPI.userSessionsRemove({ userID })
+        .then(() => {
+          this.fetchUser()
+
+          this.toastSuccess(this.$t('notification:user.sessionsRevoke.success'))
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:user.sessionsRevoke.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    onAvatarUpload () {
+      this.fetchUser().then(() => {
+        this.toastSuccess(this.$t('notification:user.avatarUpload.success'))
+      })
+    },
+
+    onResetAvatar () {
+      this.avatar.processing = true
+
+      const userID = this.userID
+
+      this.$SystemAPI.userDeleteAvatar({ userID })
+        .then(() => this.fetchUser())
+        .then(() => {
+          this.toastSuccess(this.$t('notification:user.avatarDelete.success'))
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:user.avatarDelete.error')))
+        .finally(() => {
+          this.avatar.processing = false
+        })
+    },
+
+    checkUnsavedChanges (next, to) {
+      const isNewPage = this.$route.path.includes('/new') && to.name.includes('edit')
+      const { deletedAt } = this.user || {}
+
+      if (isNewPage || deletedAt) {
+        next(true)
+      } else if (!to.name.includes('edit')) {
+        const userChangesStatus = !isEqual(this.user, this.initialUserState)
+        const membershipChangesStatus = !isEqual(this.membership.initial, this.membership.active)
+
+        next((userChangesStatus || membershipChangesStatus) ? window.confirm(this.$t('general:editor.unsavedChanges')) : true)
+      }
+    },
+  },
 }
-
-function fetchMembership() {
-  incLoader()
-  return window.__systemAPI.userMembershipList({ userID: props.userID })
-    .then((set = []) => {
-      membership.active = [...set]
-      membership.initial = [...set]
-    })
-    .finally(() => decLoader())
-}
-
-function fetchExternalAuthProviders() {
-  incLoader()
-  return window.__systemAPI.userListCredentials({ userID: props.userID })
-    .then((providers = []) => {
-      externalAuthProviders.value = providers.map(({ credentialsID = '', label = '', kind = '' }) => ({ credentialsID, label, type: kind }))
-    })
-    .finally(() => decLoader())
-}
-
-function onInfoSubmit(u) {
-  info.processing = true
-  const payload = { ...u }
-  if (payload.userID !== NoID) {
-    window.__systemAPI.userUpdate(payload).then(u => {
-      user.value = new system.User(u)
-      initialUserState.value = user.value.clone()
-      info.success = true
-      setTimeout(() => { info.success = false }, 2000)
-    }).finally(() => { info.processing = false })
-  } else {
-    window.__systemAPI.userCreate(payload).then(({ userID }) => {
-      info.success = true
-      setTimeout(() => { info.success = false }, 2000)
-      router.push({ name: 'system.user.edit', params: { userID } })
-    }).finally(() => { info.processing = false })
-  }
-}
-
-function onAvatarSubmit(u) {
-  avatar.processing = true
-  const payload = { userID: u.userID, avatarColor: u.meta.avatarColor, avatarBgColor: u.meta.avatarBgColor }
-  window.__systemAPI.userProfileAvatarInitial(payload).then(() => fetchUser()).then(() => {
-    avatar.success = true
-    setTimeout(() => { avatar.success = false }, 2000)
-  }).finally(() => { avatar.processing = false })
-}
-
-function onDelete() {
-  incLoader()
-  if (user.value.deletedAt) {
-    window.__systemAPI.userUndelete({ userID: props.userID }).then(() => fetchUser()).finally(() => decLoader())
-  } else {
-    window.__systemAPI.userDelete({ userID: props.userID }).then(() => {
-      fetchUser()
-      user.value.deletedAt = new Date()
-      router.push({ name: 'system.user' })
-    }).finally(() => decLoader())
-  }
-}
-
-function onExternalAuthProviderDelete(credentialsID = '') {
-  incLoader()
-  window.__systemAPI.userDeleteCredentials({ userID: props.userID, credentialsID })
-    .then(() => fetchExternalAuthProviders())
-    .finally(() => decLoader())
-}
-
-function onPasswordSubmit(pwd = '') {
-  password.processing = true
-  window.__systemAPI.userSetPassword({ userID: props.userID, password: pwd })
-    .then(() => {
-      password.success = true
-      setTimeout(() => { password.success = false }, 2000)
-      fetchExternalAuthProviders()
-    })
-    .finally(() => { password.processing = false })
-}
-
-function onPatch(path, value) {
-  const cfg = { method: 'patch', url: window.__systemAPI.userPartialUpdateEndpoint({ userID: props.userID }), data: [{ path, value, op: 'replace' }] }
-  return window.__systemAPI.api().request(cfg).then(() => fetchUser())
-}
-
-function onMembershipSubmit() {
-  roles.processing = true
-  const userID = props.userID
-  Promise.all([
-    ...membership.initial.filter(roleID => !membership.active.includes(roleID)).map(roleID => window.__systemAPI.userMembershipRemove({ roleID, userID })),
-    ...membership.active.filter(roleID => !membership.initial.includes(roleID)).map(roleID => window.__systemAPI.userMembershipAdd({ roleID, userID })),
-  ]).then(() => {
-    roles.success = true
-    setTimeout(() => { roles.success = false }, 2000)
-    fetchMembership()
-  }).finally(() => { roles.processing = false })
-}
-
-function onStatusChange() {
-  incLoader()
-  if (user.value.suspendedAt) {
-    window.__systemAPI.userUnsuspend({ userID: props.userID }).then(() => fetchUser()).finally(() => decLoader())
-  } else {
-    window.__systemAPI.userSuspend({ userID: props.userID }).then(() => fetchUser()).finally(() => decLoader())
-  }
-}
-
-function onSessionsRevoke() {
-  incLoader()
-  window.__systemAPI.userSessionsRemove({ userID: props.userID }).then(() => fetchUser()).finally(() => decLoader())
-}
-
-function onAvatarUpload() {
-  fetchUser()
-}
-
-function onResetAvatar() {
-  avatar.processing = true
-  window.__systemAPI.userDeleteAvatar({ userID: props.userID }).then(() => fetchUser()).finally(() => { avatar.processing = false })
-}
-
-function dispatchCortezaSystemUserEvent($event, { user }) {}
 </script>

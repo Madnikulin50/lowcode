@@ -1,42 +1,219 @@
 <template>
-  <div v-if="queue" class="container pt-2 pb-3">
-    <c-content-header :title="title" class="mb-2">
-      <button v-if="queueID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.queue.new' })">{{ $t('new') }}</button>
+  <b-container
+    v-if="queue"
+    class="pt-2 pb-3"
+  >
+    <c-content-header
+      :title="title"
+      class="mb-2"
+    >
+      <b-button
+        v-if="queueID && canCreate"
+        data-test-id="button-add"
+        variant="primary"
+        :to="{ name: 'system.queue.new' }"
+      >
+        {{ $t('new') }}
+      </b-button>
     </c-content-header>
-    <c-queue-editor-info :queue="queue" :processing="info.processing" :success="info.success" :can-create="canCreate" :consumers="consumers" @delete="onDelete" @submit="onSubmit" />
-  </div>
+
+    <c-queue-editor-info
+      :queue="queue"
+      :processing="info.processing"
+      :success="info.success"
+      :can-create="canCreate"
+      :consumers="consumers"
+      @delete="onDelete"
+      @submit="onSubmit"
+    />
+  </b-container>
 </template>
-<script setup>
-import { ref, computed, reactive, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+
+<script>
 import { isEqual, cloneDeep } from 'lodash'
-import CQueueEditorInfo from '../../../components/Queues/CQueueEditorInfo.vue'
-const props = defineProps({ queueID: { type: String, required: false, default: undefined } })
-const router = useRouter()
-const { t } = useI18n()
-const queue = ref(undefined)
-const initialQueueState = ref(undefined)
-const consumers = ref([])
-const info = reactive({ processing: false, success: false })
-const canCreate = computed(() => can('system/', 'queue.create'))
-const title = computed(() => queue.value?.queueID ? t('title.edit') : t('title.new'))
-function can(resource, operation) { return true }
-function incLoader() {}
-function decLoader() {}
-watch(() => props.queueID, () => {
-  fetchQueueConsumers()
-  if (props.queueID) { fetchQueue() } else { queue.value = { consumer: 'corteza', meta: { poll_delay: '', dispatch_events: false }, queue: '' }; initialQueueState.value = cloneDeep(queue.value) }
-}, { immediate: true })
-function fetchQueue() { incLoader(); window.__systemAPI.queuesRead({ queueID: props.queueID }).then(q => { queue.value = q; initialQueueState.value = cloneDeep(q) }).finally(() => decLoader()) }
-function fetchQueueConsumers() { consumers.value = [{ value: 'store', text: 'Store' }, { value: 'eventbus', text: 'Eventbus' }, { value: 'corteza', text: 'Lowcooode' }, { value: 'redis', text: 'Redis' }] }
-function onSubmit(q) {
-  incLoader()
-  if (props.queueID) { window.__systemAPI.queuesUpdate(q).then(q => { queue.value = q; initialQueueState.value = cloneDeep(q); info.success = true; setTimeout(() => { info.success = false }, 2000) }).finally(() => decLoader()) }
-  else { window.__systemAPI.queuesCreate(q).then(({ queueID }) => { info.success = true; setTimeout(() => { info.success = false }, 2000); router.push({ name: 'system.queue.edit', params: { queueID } }) }).finally(() => decLoader()) }
-}
-function onDelete() {
-  incLoader(); const { deletedAt = '' } = queue.value; const method = deletedAt ? 'queuesUndelete' : 'queuesDelete'
-  window.__systemAPI[method]({ queueID: props.queueID }).then(() => { fetchQueue(); if (!deletedAt) { queue.value.deletedAt = new Date(); router.push({ name: 'system.queue' }) } }).finally(() => decLoader())
+import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
+import CQueueEditorInfo from 'corteza-webapp-admin/src/components/Queues/CQueueEditorInfo'
+import { mapGetters } from 'vuex'
+
+export default {
+  components: {
+    CQueueEditorInfo,
+  },
+
+  i18nOptions: {
+    namespaces: 'system.queues',
+    keyPrefix: 'editor',
+  },
+
+  mixins: [
+    editorHelpers,
+  ],
+
+  beforeRouteUpdate (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  beforeRouteLeave (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  props: {
+    queueID: {
+      type: String,
+      required: false,
+      default: undefined,
+    },
+  },
+
+  data () {
+    return {
+      queue: undefined,
+      initialQueueState: undefined,
+
+      consumers: [],
+
+      info: {
+        processing: false,
+        success: false,
+      },
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      can: 'rbac/can',
+    }),
+
+    canCreate () {
+      return this.can('system/', 'queue.create')
+    },
+
+    title () {
+      return this.queue.queueID ? this.$t('title.edit') : this.$t('title.new')
+    },
+  },
+
+  watch: {
+    queueID: {
+      immediate: true,
+      handler () {
+        this.fetchQueueConsumers()
+
+        if (this.queueID) {
+          this.fetchQueue()
+        } else {
+          this.queue = {
+            consumer: 'corteza',
+            meta: {
+              poll_delay: '',
+              dispatch_events: false,
+            },
+            queue: '',
+          }
+
+          this.initialQueueState = {
+            consumer: 'corteza',
+            meta: {
+              poll_delay: '',
+              dispatch_events: false,
+            },
+            queue: '',
+          }
+        }
+      },
+    },
+  },
+
+  methods: {
+    fetchQueue () {
+      this.incLoader()
+
+      this.$SystemAPI.queuesRead({ queueID: this.queueID })
+        .then(q => {
+          this.queue = q
+          this.initialQueueState = cloneDeep(q)
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:queue.fetch.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    fetchQueueConsumers () {
+      this.incLoader()
+
+      this.consumers = [
+        { value: 'store', text: 'Store' },
+        { value: 'eventbus', text: 'Eventbus' },
+        { value: 'corteza', text: 'Lowcooode' },
+        { value: 'redis', text: 'Redis' },
+      ]
+
+      this.decLoader()
+    },
+
+    onSubmit (queue) {
+      this.incLoader()
+
+      if (this.queueID) {
+        this.$SystemAPI.queuesUpdate(queue)
+          .then(queue => {
+            this.queue = queue
+            this.initialQueueState = cloneDeep(queue)
+
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:queue.update.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:queue.update.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      } else {
+        this.$SystemAPI.queuesCreate(queue)
+          .then(({ queueID }) => {
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:queue.create.success'))
+
+            this.$router.push({ name: 'system.queue.edit', params: { queueID } })
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:queue.create.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      }
+    },
+
+    onDelete () {
+      this.incLoader()
+      const { deletedAt = '' } = this.queue
+      const method = deletedAt ? 'queuesUndelete' : 'queuesDelete'
+      const event = deletedAt ? 'undelete' : 'delete'
+
+      this.$SystemAPI[method]({ queueID: this.queueID })
+        .then(() => {
+          this.fetchQueue()
+          this.toastSuccess(this.$t(`notification:queue.${event}.success`))
+          if (!deletedAt) {
+            this.queue.deletedAt = new Date()
+            this.$router.push({ name: 'system.queue' })
+          }
+        })
+        .catch(this.toastErrorHandler(this.$t(`notification:queue.${event}.error`)))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    checkUnsavedChanges (next, to) {
+      const isNewPage = this.$route.path.includes('/new') && to.name.includes('edit')
+      const { deletedAt } = this.queue || {}
+
+      if (isNewPage || deletedAt) {
+        next(true)
+      } else if (!to.name.includes('edit')) {
+        next(!isEqual(this.queue, this.initialQueueState) ? window.confirm(this.$t('general:editor.unsavedChanges')) : true)
+      }
+    },
+  },
 }
 </script>

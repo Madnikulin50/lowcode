@@ -1,88 +1,354 @@
 <template>
-  <div v-if="application" class="container pt-2 pb-3">
-    <c-content-header :title="title">
-      <button v-if="applicationID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.application.new' })">{{ $t('new') }}</button>
-      <c-permissions-button v-if="applicationID && canGrant" :title="application.name || applicationID" :target="application.name || applicationID" :resource="`corteza::system:application/${applicationID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('permissions') }}</c-permissions-button>
+  <b-container
+    v-if="application"
+    class="pt-2 pb-3"
+  >
+    <c-content-header
+      :title="title"
+    >
+      <b-button
+        v-if="applicationID && canCreate"
+        data-test-id="button-new-application"
+        variant="primary"
+        :to="{ name: 'system.application.new' }"
+      >
+        {{ $t('new') }}
+      </b-button>
+
+      <c-permissions-button
+        v-if="applicationID && canGrant"
+        :title="application.name || applicationID"
+        :target="application.name || applicationID"
+        :resource="`corteza::system:application/${applicationID}`"
+      >
+        <font-awesome-icon :icon="['fas', 'lock']" />
+        {{ $t('permissions') }}
+      </c-permissions-button>
     </c-content-header>
-    <c-application-editor-info :application="application" :processing="info.processing" :success="info.success" :can-create="canCreate" @submit="onInfoSubmit" @delete="onDelete" />
-    <c-application-editor-unify v-if="applicationID && application.unify && application.applicationID" class="mt-3" :unify="application.unify" :application="application" :can-pin="canPin" :processing="unify.processing" :success="unify.success" @change-detected="unifyAssetStateChange = true" @submit="onUnifySubmit" />
-  </div>
+
+    <c-application-editor-info
+      :application="application"
+      :processing="info.processing"
+      :success="info.success"
+      :can-create="canCreate"
+      @submit="onInfoSubmit"
+      @delete="onDelete"
+    />
+
+    <c-application-editor-unify
+      v-if="applicationID && application.unify && application.applicationID"
+      class="mt-3"
+      :unify="application.unify"
+      :application="application"
+      :can-pin="canPin"
+      :processing="unify.processing"
+      :success="unify.success"
+      @change-detected="unifyAssetStateChange = true"
+      @submit="onUnifySubmit"
+    />
+  </b-container>
 </template>
-<script setup>
-import { ref, computed, reactive, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+<script>
 import { isEqual } from 'lodash'
+import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
+import CApplicationEditorInfo from 'corteza-webapp-admin/src/components/Application/CApplicationEditorInfo'
+import CApplicationEditorUnify from 'corteza-webapp-admin/src/components/Application/CApplicationEditorUnify'
 import { system } from 'corteza-lib/js/dist'
-import CApplicationEditorInfo from '../../../components/Application/CApplicationEditorInfo.vue'
-import CApplicationEditorUnify from '../../../components/Application/CApplicationEditorUnify.vue'
-const props = defineProps({ applicationID: { type: String, required: false, default: undefined } })
-const router = useRouter()
-const { t } = useI18n()
-const application = ref(undefined)
-const initialApplicationState = ref(undefined)
-const info = reactive({ processing: false, success: false })
-const unify = reactive({ processing: false, success: false })
-const unifyAssetStateChange = ref(false)
-const canCreate = computed(() => can('system/', 'application.create'))
-const canGrant = computed(() => can('system/', 'grant'))
-const canPin = computed(() => can('system/', 'pin'))
-const title = computed(() => props.applicationID ? t('title.edit') : t('title.create'))
-function can(resource, operation) { return true }
-function incLoader() {}
-function decLoader() {}
-watch(() => props.applicationID, () => {
-  if (props.applicationID) { fetchApplication() } else { application.value = new system.Application(); initialApplicationState.value = application.value.clone() }
-}, { immediate: true })
-function fetchApplication() {
-  incLoader()
-  window.__systemAPI.applicationRead({ applicationID: props.applicationID, incFlags: 1 }).then((a = {}) => {
-    if (!a.unify) a.unify = { listed: true, pinned: false, name: application.value.name, config: '', icon: '', logo: '', url: '' }
-    a.unify.pinned = (a.flags || []).includes('pinned')
-    a.unify.name = a.unify.name ? a.unify.name : a.name
-    application.value = new system.Application(a)
-    initialApplicationState.value = application.value.clone()
-  }).finally(() => decLoader())
-}
-function onInfoSubmit(a) {
-  info.processing = true
-  if (props.applicationID) {
-    a = { ...a, unify: initialApplicationState.value.unify }
-    window.__systemAPI.applicationUpdate(a).then(a => {
-      initialApplicationState.value = new system.Application({ ...a, unify: initialApplicationState.value.unify })
-      application.value = new system.Application({ ...a, unify: application.value.unify })
-      info.success = true; setTimeout(() => { info.success = false }, 2000)
-    }).finally(() => { info.processing = false })
-  } else {
-    window.__systemAPI.applicationCreate(a).then(({ applicationID }) => { info.success = true; setTimeout(() => { info.success = false }, 2000); router.push({ name: 'system.application.edit', params: { applicationID } }) }).finally(() => { info.processing = false })
-  }
-}
-async function onUnifySubmit({ unify: u, unifyAssets }) {
-  unify.processing = true
-  if (unifyAssets.logo || unifyAssets.icon) {
-    try { const assets = await uploadAssets(unifyAssets); u = { ...u, ...assets } } catch (e) { unify.processing = false; return }
-  }
-  if (props.applicationID) {
-    const flagPayload = { applicationID: props.applicationID, flag: 'pinned', ownedBy: '0' }
-    if (u.pinned) { await window.__systemAPI.applicationFlagCreate(flagPayload).catch(() => {}) } else { await window.__systemAPI.applicationFlagDelete(flagPayload).catch(() => {}) }
-    return window.__systemAPI.applicationUpdate({ ...initialApplicationState.value, unify: u }).then(() => {
-      application.value = new system.Application({ ...application.value, unify: u })
-      initialApplicationState.value = new system.Application({ ...initialApplicationState.value, unify: u })
-      unifyAssetStateChange.value = false; unify.success = true; setTimeout(() => { unify.success = false }, 2000)
-    }).finally(() => { unify.processing = false })
-  }
-}
-async function uploadAssets(assets) {
-  const rr = {}
-  const rq = async (file) => { const formData = new FormData(); formData.append('upload', file); const rsp = await window.__systemAPI.api().request({ method: 'post', url: window.__systemAPI.applicationUploadEndpoint(), data: formData, headers: { 'Content-Type': 'multipart/form-data' } }); if (rsp.data.error) throw new Error(rsp.data.error.message); return rsp.data.response }
-  const baseURL = window.__systemAPI.baseURL
-  if (assets.logo) { const rsp = await rq(assets.logo); rr.logo = baseURL + rsp.url; rr.logoID = rsp.attachmentID; assets.logo = undefined }
-  if (assets.icon) { const rsp = await rq(assets.icon); rr.icon = baseURL + rsp.url; rr.iconID = rsp.attachmentID; assets.icon = undefined }
-  return rr
-}
-function onDelete() {
-  incLoader()
-  if (application.value.deletedAt) { window.__systemAPI.applicationUndelete({ applicationID: props.applicationID }).then(() => fetchApplication()).finally(() => decLoader()) }
-  else { window.__systemAPI.applicationDelete({ applicationID: props.applicationID }).then(() => { fetchApplication(); application.value.deletedAt = new Date(); router.push({ name: 'system.application' }) }).finally(() => decLoader()) }
+import { mapGetters } from 'vuex'
+
+export default {
+  components: {
+    CApplicationEditorInfo,
+    CApplicationEditorUnify,
+  },
+
+  i18nOptions: {
+    namespaces: 'system.applications',
+    keyPrefix: 'editor',
+  },
+
+  mixins: [
+    editorHelpers,
+  ],
+
+  beforeRouteUpdate (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  beforeRouteLeave (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  props: {
+    applicationID: {
+      type: String,
+      required: false,
+      default: undefined,
+    },
+  },
+
+  data () {
+    return {
+      application: undefined,
+      initialApplicationState: undefined,
+
+      info: {
+        processing: false,
+        success: false,
+      },
+
+      unify: {
+        processing: false,
+        success: false,
+      },
+
+      unifyAssetStateChange: false,
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      can: 'rbac/can',
+    }),
+
+    canCreate () {
+      return this.can('system/', 'application.create')
+    },
+
+    canGrant () {
+      return this.can('system/', 'grant')
+    },
+
+    canPin () {
+      return this.can('system/', 'pin')
+    },
+
+    title () {
+      return this.applicationID ? this.$t('title.edit') : this.$t('title.create')
+    },
+  },
+
+  watch: {
+    applicationID: {
+      immediate: true,
+      handler () {
+        if (this.applicationID) {
+          this.fetchApplication()
+        } else {
+          this.application = new system.Application()
+
+          this.initialApplicationState = this.application.clone()
+        }
+      },
+    },
+  },
+
+  methods: {
+    fetchApplication () {
+      this.incLoader()
+
+      this.$SystemAPI.applicationRead({ applicationID: this.applicationID, incFlags: 1 })
+        .then((application = {}) => {
+          if (!application.unify) {
+            application.unify = {
+              listed: true,
+              pinned: false,
+              name: this.application.name,
+              config: '',
+              icon: '',
+              logo: '',
+              url: '',
+            }
+          }
+
+          application.unify.pinned = (application.flags || []).includes('pinned')
+          application.unify.name = application.unify.name ? application.unify.name : application.name
+
+          this.application = new system.Application(application)
+          this.initialApplicationState = this.application.clone()
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:application.fetch.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    onInfoSubmit (application) {
+      this.info.processing = true
+
+      if (this.applicationID) {
+        application = {
+          ...application,
+          unify: this.initialApplicationState.unify,
+        }
+
+        this.$SystemAPI.applicationUpdate(application)
+          .then(application => {
+            this.initialApplicationState = new system.Application({
+              ...application,
+              unify: this.initialApplicationState.unify,
+            })
+
+            this.application = new system.Application({
+              ...application,
+              unify: this.application.unify,
+            })
+
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:application.update.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:application.update.error')))
+          .finally(() => {
+            this.info.processing = false
+          })
+      } else {
+        this.$SystemAPI.applicationCreate(application)
+          .then(({ applicationID }) => {
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:application.create.success'))
+
+            this.$router.push({ name: 'system.application.edit', params: { applicationID } })
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:application.create.error')))
+          .finally(() => {
+            this.info.processing = false
+          })
+      }
+    },
+
+    async onUnifySubmit ({ unify, unifyAssets }) {
+      this.unify.processing = true
+
+      // Firstly handle any new application assets
+      if (unifyAssets.logo || unifyAssets.icon) {
+        try {
+          const assets = await this.uploadAssets(unifyAssets)
+          unify = { ...unify, ...assets }
+        } catch (e) {
+          this.toastErrorHandler(this.$t('notification:application.assetsUpload.error'))(e)
+          this.unify.processing = false
+          return
+        }
+      }
+
+      if (this.applicationID) {
+        const flagPayload = {
+          applicationID: this.applicationID,
+          flag: 'pinned',
+          ownedBy: '0',
+        }
+
+        if (unify.pinned) {
+          await this.$SystemAPI.applicationFlagCreate(flagPayload)
+            .catch(() => {})
+        } else {
+          await this.$SystemAPI.applicationFlagDelete(flagPayload)
+            .catch(() => {})
+        }
+
+        return this.$SystemAPI.applicationUpdate({ ...this.initialApplicationState, unify })
+          .then(() => {
+            this.application = new system.Application({ ...this.application, unify })
+            this.initialApplicationState = new system.Application({
+              ...this.initialApplicationState,
+              unify,
+            })
+
+            this.unifyAssetStateChange = false
+
+            this.animateSuccess('unify')
+            this.toastSuccess(this.$t('notification:application.update.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:application.update.error')))
+          .finally(() => {
+            this.unify.processing = false
+          })
+      }
+    },
+
+    async uploadAssets (assets) {
+      const rr = {}
+
+      const rq = async (file) => {
+        const formData = new FormData()
+        formData.append('upload', file)
+
+        const rsp = await this.$SystemAPI.api().request({
+          method: 'post',
+          url: this.$SystemAPI.applicationUploadEndpoint(),
+          data: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+        if (rsp.data.error) {
+          throw new Error(rsp.data.error.message)
+        }
+        return rsp.data.response
+      }
+
+      const baseURL = this.$SystemAPI.baseURL
+
+      if (assets.logo) {
+        const rsp = await rq(assets.logo)
+        rr.logo = baseURL + rsp.url
+        rr.logoID = rsp.attachmentID
+
+        assets.logo = undefined
+      }
+
+      if (assets.icon) {
+        const rsp = await rq(assets.icon)
+        rr.icon = baseURL + rsp.url
+        rr.iconID = rsp.attachmentID
+
+        assets.icon = undefined
+      }
+
+      return rr
+    },
+
+    onDelete () {
+      this.incLoader()
+
+      if (this.application.deletedAt) {
+        this.$SystemAPI.applicationUndelete({ applicationID: this.applicationID })
+          .then(() => {
+            this.fetchApplication()
+
+            this.toastSuccess(this.$t('notification:application.undelete.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:application.undelete.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      } else {
+        this.$SystemAPI.applicationDelete({ applicationID: this.applicationID })
+          .then(() => {
+            this.fetchApplication()
+
+            this.application.deletedAt = new Date()
+
+            this.toastSuccess(this.$t('notification:application.delete.success'))
+            this.$router.push({ name: 'system.application' })
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:application.delete.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      }
+    },
+
+    checkUnsavedChanges (next, to) {
+      const isNewPage = this.$route.path.includes('/new') && to.name.includes('edit')
+      const { deletedAt } = this.application || {}
+
+      if (isNewPage || deletedAt) {
+        next(true)
+      } else if (!to.name.includes('edit')) {
+        next(!isEqual(this.application, this.initialApplicationState) || this.unifyAssetStateChange ? window.confirm(this.$t('general:editor.unsavedChanges')) : true)
+      }
+    },
+  },
 }
 </script>

@@ -1,38 +1,243 @@
 <template>
-  <div v-if="workflow" class="container pt-2 pb-3">
-    <c-content-header :title="title">
-      <button v-if="workflowID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'automation.workflow.new' })">{{ $t('new') }}</button>
-      <c-permissions-button v-if="workflowID && canGrant" :title="workflow.meta.name || workflow.handle || workflowID" :target="workflow.meta.name || workflow.handle || workflowID" :resource="`corteza::automation:workflow/${workflowID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('permissions') }}</c-permissions-button>
+  <b-container
+    v-if="workflow"
+    class="pt-2 pb-3"
+  >
+    <c-content-header
+      :title="title"
+    >
+      <b-button
+        v-if="workflowID && canCreate"
+        variant="primary"
+        :to="{ name: 'automation.workflow.new' }"
+      >
+        {{ $t('new') }}
+      </b-button>
+
+      <c-permissions-button
+        v-if="workflowID && canGrant"
+        :title="workflow.meta.name || workflow.handle || workflowID"
+        :target="workflow.meta.name || workflow.handle || workflowID"
+        :resource="`corteza::automation:workflow/${workflowID}`"
+      >
+        <font-awesome-icon :icon="['fas', 'lock']" />
+        {{ $t('permissions') }}
+      </c-permissions-button>
     </c-content-header>
-    <c-workflow-editor-info :workflow="workflow" :processing="info.processing" :success="info.success" :can-create="canCreate" @submit="onInfoSubmit" @delete="onDelete" />
-    <c-workflow-editor-triggers v-if="workflowID" :triggers="triggers" :processing="info.processing" :success="info.success" />
-  </div>
+
+    <c-workflow-editor-info
+      :workflow="workflow"
+      :processing="info.processing"
+      :success="info.success"
+      :can-create="canCreate"
+      @submit="onInfoSubmit"
+      @delete="onDelete"
+    />
+
+    <c-workflow-editor-triggers
+      v-if="workflowID"
+      :triggers="triggers"
+      :processing="info.processing"
+      :success="info.success"
+    />
+  </b-container>
 </template>
-<script setup>
-import { ref, computed, reactive, watch, inject } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+<script>
 import { isEqual, cloneDeep } from 'lodash'
-import CWorkflowEditorInfo from '../../../components/Workflow/CWorkflowEditorInfo.vue'
-import CWorkflowEditorTriggers from '../../../components/Workflow/CWorkflowEditorTriggers.vue'
-const props = defineProps({ workflowID: { type: String, required: false, default: undefined } })
-const router = useRouter()
-const { t } = useI18n()
-const $auth = inject('auth', {})
-const workflow = ref(undefined)
-const initialWorkflowState = ref(undefined)
-const triggers = ref([])
-const info = reactive({ processing: false, success: false })
-const canCreate = computed(() => can('automation/', 'workflow.create'))
-const canGrant = computed(() => can('automation/', 'grant'))
-function can(resource, operation) { return true }
-const userID = computed(() => $auth.user?.userID)
-const title = computed(() => props.workflowID ? t('title.edit') : t('title.create'))
-function incLoader() {} function decLoader() {}
-watch(() => props.workflowID, () => { if (props.workflowID) { fetchWorkflow(); fetchTriggers() } else { workflow.value = { ownedBy: userID.value, runAs: userID.value, enabled: true, meta: { name: '' } }; initialWorkflowState.value = cloneDeep(workflow.value) } }, { immediate: true })
-function fetchWorkflow() { incLoader(); window.__AutomationAPI.workflowRead({ workflowID: props.workflowID }).then(prepare).finally(() => decLoader()) }
-function fetchTriggers() { incLoader(); window.__AutomationAPI.triggerList({ workflowID: props.workflowID, disabled: 1 }).then(({ set = [] }) => { triggers.value = set }).finally(() => decLoader()) }
-function onInfoSubmit(w) { info.processing = true; if (props.workflowID) { window.__AutomationAPI.workflowUpdate(w).then(() => { fetchWorkflow(); info.success = true; setTimeout(() => { info.success = false }, 2000) }).finally(() => { info.processing = false }) } else { window.__AutomationAPI.workflowCreate(w).then(({ workflowID }) => { info.success = true; setTimeout(() => { info.success = false }, 2000); router.push({ name: 'automation.workflow.edit', params: { workflowID } }) }).finally(() => { info.processing = false }) } }
-function onDelete() { incLoader(); if (workflow.value.deletedAt) { window.__AutomationAPI.workflowUndelete({ workflowID: props.workflowID }).then(() => fetchWorkflow()).finally(() => decLoader()) } else { window.__AutomationAPI.workflowDelete({ workflowID: props.workflowID }).then(() => { fetchWorkflow(); workflow.value.deletedAt = new Date(); router.push({ name: 'automation.workflow' }) }).finally(() => decLoader()) } }
-function prepare(w = {}) { workflow.value = w; initialWorkflowState.value = cloneDeep(w) }
+import editorHelpers from 'corteza-webapp-admin/src/mixins/editorHelpers'
+import CWorkflowEditorInfo from 'corteza-webapp-admin/src/components/Workflow/CWorkflowEditorInfo'
+import CWorkflowEditorTriggers from 'corteza-webapp-admin/src/components/Workflow/CWorkflowEditorTriggers'
+import { mapGetters } from 'vuex'
+
+export default {
+  components: {
+    CWorkflowEditorInfo,
+    CWorkflowEditorTriggers,
+  },
+
+  i18nOptions: {
+    namespaces: 'automation.workflows',
+    keyPrefix: 'editor',
+  },
+
+  mixins: [
+    editorHelpers,
+  ],
+
+  beforeRouteUpdate (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  beforeRouteLeave (to, from, next) {
+    this.checkUnsavedChanges(next, to)
+  },
+
+  props: {
+    workflowID: {
+      type: String,
+      required: false,
+      default: undefined,
+    },
+  },
+
+  data () {
+    return {
+      workflow: undefined,
+      initialWorkflowState: undefined,
+      triggers: [],
+
+      info: {
+        processing: false,
+        success: false,
+      },
+    }
+  },
+
+  computed: {
+    ...mapGetters({
+      can: 'rbac/can',
+    }),
+
+    canCreate () {
+      return this.can('automation/', 'workflow.create')
+    },
+
+    canGrant () {
+      return this.can('automation/', 'grant')
+    },
+
+    userID () {
+      if (this.$auth.user) {
+        return this.$auth.user.userID
+      }
+      return undefined
+    },
+
+    title () {
+      return this.workflowID ? this.$t('title.edit') : this.$t('title.create')
+    },
+  },
+
+  watch: {
+    workflowID: {
+      immediate: true,
+      handler () {
+        if (this.workflowID) {
+          this.fetchWorkflow()
+          this.fetchTriggers()
+        } else {
+          this.workflow = {
+            ownedBy: this.userID,
+            runAs: this.userID,
+            enabled: true,
+            meta: {
+              name: '',
+            },
+          }
+
+          this.initialWorkflowState = cloneDeep(this.workflow)
+        }
+      },
+    },
+  },
+
+  methods: {
+    fetchWorkflow () {
+      this.incLoader()
+
+      this.$AutomationAPI.workflowRead({ workflowID: this.workflowID })
+        .then(this.prepare)
+        .catch(this.toastErrorHandler(this.$t('notification:workflow.fetch.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    fetchTriggers () {
+      this.incLoader()
+
+      this.$AutomationAPI.triggerList({ workflowID: this.workflowID, disabled: 1 })
+        .then(({ set = [] }) => { this.triggers = set })
+        .catch(this.toastErrorHandler(this.$t('notification:workflow.trigger.error')))
+        .finally(() => {
+          this.decLoader()
+        })
+    },
+
+    onInfoSubmit (workflow) {
+      this.info.processing = true
+
+      if (this.workflowID) {
+        this.$AutomationAPI.workflowUpdate(workflow)
+          .then(() => {
+            this.fetchWorkflow()
+
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:workflow.update.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:workflow.update.error')))
+          .finally(() => {
+            this.info.processing = false
+          })
+      } else {
+        this.$AutomationAPI.workflowCreate(workflow)
+          .then(({ workflowID }) => {
+            this.animateSuccess('info')
+            this.toastSuccess(this.$t('notification:workflow.create.success'))
+
+            this.$router.push({ name: 'automation.workflow.edit', params: { workflowID } })
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:workflow.create.error')))
+          .finally(() => {
+            this.info.processing = false
+          })
+      }
+    },
+
+    onDelete () {
+      this.incLoader()
+
+      if (this.workflow.deletedAt) {
+        this.$AutomationAPI.workflowUndelete({ workflowID: this.workflowID })
+          .then(() => {
+            this.fetchWorkflow()
+            this.toastSuccess(this.$t('notification:workflow.undelete.success'))
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:workflow.undelete.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      } else {
+        this.$AutomationAPI.workflowDelete({ workflowID: this.workflowID })
+          .then(() => {
+            this.fetchWorkflow()
+            this.workflow.deletedAt = new Date()
+
+            this.toastSuccess(this.$t('notification:workflow.delete.success'))
+            this.$router.push({ name: 'automation.workflow' })
+          })
+          .catch(this.toastErrorHandler(this.$t('notification:workflow.delete.error')))
+          .finally(() => {
+            this.decLoader()
+          })
+      }
+    },
+
+    prepare (workflow = {}) {
+      this.workflow = workflow
+      this.initialWorkflowState = cloneDeep(this.workflow)
+    },
+
+    checkUnsavedChanges (next, to) {
+      const isNewPage = this.$route.path.includes('/new') && to.name.includes('edit')
+      const { deletedAt } = this.workflow || {}
+
+      if (isNewPage || deletedAt) {
+        next(true)
+      } else if (!to.name.includes('edit')) {
+        next(!isEqual(this.workflow, this.initialWorkflowState) ? window.confirm(this.$t('general:editor.unsavedChanges')) : true)
+      }
+    },
+  },
+}
 </script>
