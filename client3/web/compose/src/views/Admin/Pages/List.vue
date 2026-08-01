@@ -28,7 +28,7 @@
               <button
                 data-test-id="button-create-page"
                 type="submit"
-                class="btn btn-primary d-flex align-items-center gap-1"
+                class="btn btn-primary btn-sm d-flex align-items-center gap-1"
                 :disabled="creatingPage"
                 @click="createNewPage"
               >
@@ -42,13 +42,20 @@
           </div>
 
           <div class="d-flex justify-content-sm-end flex-fill flex-grow-1">
+            <router-link
+              :to="{ name: 'admin.pages.rag' }"
+              class="btn btn-outline-secondary btn-sm me-2 d-flex align-items-center gap-1"
+            >
+              <font-awesome-icon :icon="['fas', 'database']" />
+              <span>RAG</span>
+            </router-link>
             <div
               v-if="namespace.canGrant"
               class="dropdown d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill"
             >
               <button
                 data-test-id="dropdown-permissions"
-                class="btn btn-outline-secondary btn-lg dropdown-toggle"
+                class="btn btn-outline-secondary btn-sm dropdown-toggle"
                 type="button"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"

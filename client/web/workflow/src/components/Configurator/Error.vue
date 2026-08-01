@@ -1,11 +1,25 @@
 <template>
-  <div class="card flex-grow-1 border-bottom border-light rounded-0">
-    <div class="card-header p-0 mb-3">
-      <h5 class="mb-0">{{ t('configurator.configuration') }}</h5>
-    </div>
-    <div class="card-body p-0">
-      <div class="mb-0">
-        <label class="text-primary form-label">{{ t('error-expression') }}</label>
+  <b-card
+    class="flex-grow-1 border-bottom border-light rounded-0"
+  >
+    <b-card-header
+      header-tag="header"
+      class="p-0 mb-3"
+    >
+      <h5
+        class="mb-0"
+      >
+        {{ $t('configurator:configuration') }}
+      </h5>
+    </b-card-header>
+    <b-card-body
+      class="p-0"
+    >
+      <b-form-group
+        :label="$t('general:error-expression')"
+        label-class="text-primary"
+        class="mb-0"
+      >
         <expression-editor
           v-model="item.config.arguments[0].expr"
           font-size="18px"
@@ -13,84 +27,98 @@
           @open="openInEditor"
           @input="valueChanged"
         />
-      </div>
-    </div>
-  </div>
+      </b-form-group>
+    </b-card-body>
 
-  <div class="modal fade" id="expression-editor-error" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">{{ t('editor.editor') }}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-0">
-          <expression-editor
-            v-model="expressionEditor.currentExpression"
-            min-height="80vh"
-            font-size="18px"
-            show-line-numbers
-            :border="false"
-            :show-popout="false"
-          />
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
-          <button class="btn btn-primary" @click="saveExpression">{{ t('save') }}</button>
-        </div>
-      </div>
-    </div>
-  </div>
+    <b-modal
+      id="expression-editor"
+      :visible="!!expressionEditor.currentExpression"
+      :title="$t('editor:editor')"
+      size="xl"
+      scrollable
+      :ok-title="$t('general:save')"
+      :cancel-title="$t('general:cancel')"
+      cancel-variant="outline-secondary"
+      body-class="p-0"
+      no-fade
+      @ok="saveExpression"
+      @hidden="resetExpression"
+    >
+      <expression-editor
+        v-model="expressionEditor.currentExpression"
+        min-height="80vh"
+        font-size="18px"
+        show-line-numbers
+        :border="false"
+        :show-popout="false"
+      />
+    </b-modal>
+  </b-card>
 </template>
 
-<script setup>
-import { reactive, inject } from 'vue'
-import { useI18n } from 'vue-i18n'
+<script>
+import base from './base'
 import ExpressionEditor from '../ExpressionEditor.vue'
 
-const { t } = useI18n()
-const $AutomationAPI = inject('automationAPI', {})
+export default {
+  components: {
+    ExpressionEditor,
+  },
 
-const props = defineProps({
-  item: { type: Object, default: () => ({}) },
-  edges: { type: Object, default: () => ({}) },
-  outEdges: { type: Number, default: 0 },
-  isSubworkflow: { type: Boolean, default: false },
-})
+  extends: base,
 
-const emit = defineEmits(['update-value', 'update-default-value'])
+  data () {
+    return {
+      expressionEditor: {
+        currentExpression: undefined,
+      },
+    }
+  },
 
-const expressionEditor = reactive({ currentExpression: undefined })
+  created () {
+    let args = [{
+      target: 'message',
+      type: 'String',
+      expr: '',
+    }]
 
-{
-  let args = [{ target: 'message', type: 'String', expr: '' }]
-  if (props.item.config.arguments && props.item.config.arguments.length) {
-    args = props.item.config.arguments.map(({ target, type, value, expr }) => ({
-      target, type, expr: expr || (value ? `"${value}"` : ''),
-    }))
-  }
-  props.item.config.arguments = args
-}
+    if (this.item.config.arguments && this.item.config.arguments.length) {
+      args = this.item.config.arguments.map(({ target, type, value, expr }) => {
+        return {
+          target,
+          type,
+          expr: expr || (value ? `"${value}"` : ''),
+        }
+      })
+    }
 
-function valueChanged(value) {
-  emit('update-default-value', {
-    value: `Stop workflow with error: ${value}`,
-    force: !props.item.node.value,
-  })
-  window.dispatchEvent(new CustomEvent('change-detected'))
-}
+    this.$set(this.item.config, 'arguments', args)
+  },
 
-function openInEditor() {
-  expressionEditor.currentExpression = props.item.config.arguments[0].expr
-  const modal = new bootstrap.Modal(document.getElementById('expression-editor-error'))
-  modal.show()
-}
+  methods: {
+    valueChanged (value) {
+      this.$emit('update-default-value', {
+        value: `Stop workflow with error: ${value}`,
+        force: !this.item.node.value,
+      })
+      this.$root.$emit('change-detected')
+    },
 
-function saveExpression() {
-  props.item.config.arguments[0].expr = expressionEditor.currentExpression
-  window.dispatchEvent(new CustomEvent('change-detected'))
-  expressionEditor.currentExpression = undefined
-  const modal = bootstrap.Modal.getInstance(document.getElementById('expression-editor-error'))
-  if (modal) modal.hide()
+    openInEditor () {
+      this.expressionEditor.currentExpression = this.item.config.arguments[0].expr
+    },
+
+    saveExpression () {
+      const { currentExpression } = this.expressionEditor
+      this.$set(this.item.config.arguments[0], 'expr', currentExpression)
+      this.$root.$emit('change-detected')
+
+      this.resetExpression()
+    },
+
+    resetExpression () {
+      this.expressionEditor.currentExpression = undefined
+    },
+  },
 }
 </script>

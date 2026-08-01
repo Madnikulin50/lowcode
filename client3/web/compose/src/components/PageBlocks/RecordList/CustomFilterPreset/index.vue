@@ -4,7 +4,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">{{ $t('recordList.filterPresets.saveFilterAsPreset') }}</h5>
-          <button type="button" class="btn-close" @click="onModalHide"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" @click="onModalHide"></button>
         </div>
         <div class="modal-body p-0">
           <div class="card pt-0 border-0">

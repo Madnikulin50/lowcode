@@ -72,6 +72,7 @@ const props = withDefaults(defineProps<{
   paramName?: string
   maxFiles?: number
   showUploadedFileName?: boolean
+  authToken?: string
 }>(), {
   disabled: false,
   acceptedFiles: () => [],
@@ -81,6 +82,7 @@ const props = withDefaults(defineProps<{
   paramName: 'upload',
   maxFiles: 1000,
   showUploadedFileName: false,
+  authToken: '',
 })
 
 const emit = defineEmits<{
@@ -236,6 +238,9 @@ function uploadFile(file: File) {
   xhr.open('POST', props.endpoint)
   xhr.setRequestHeader('X-Requested-With', '')
   xhr.setRequestHeader('Cache-Control', '')
+  if (props.authToken) {
+    xhr.setRequestHeader('Authorization', 'Bearer ' + props.authToken)
+  }
 
   const formData = new FormData()
   formData.append(props.paramName, file)

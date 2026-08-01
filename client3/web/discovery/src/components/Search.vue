@@ -55,7 +55,7 @@
                     :value="'grid'"
                     :false-value="'list'"
                     type="checkbox"
-                    class="form-check-input"
+                    class="form-check-input-v3"
                     role="switch"
                   />
                 </div>

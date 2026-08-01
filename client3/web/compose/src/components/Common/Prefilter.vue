@@ -19,7 +19,7 @@
             <select
               v-if="argIndex === 1"
               v-model="group.args[0].ref"
-              class="form-select form-select-sm w-auto"
+              class="form-select form-control form-select-sm w-auto"
               @change="reRender()"
             >
               <option
@@ -86,7 +86,7 @@
 
                   <select
                     v-model="group.args[0].args[argIndex].args[0].ref"
-                    class="form-select form-select-sm"
+                    class="form-select form-control form-select-sm"
                     style="max-width: 120px; border-left: 0;"
                     @change="reRender"
                   >
@@ -115,7 +115,7 @@
 
                   <select
                     v-model="group.args[0].args[argIndex].args[0].ref"
-                    class="form-select form-select-sm"
+                    class="form-select form-control form-select-sm"
                     style="max-width: 120px; border-left: 0;"
                     @change="reRender"
                   >
@@ -180,7 +180,7 @@
             <select
               v-if="groupIndex < filter.args.length - 1"
               v-model="filter.ref"
-              class="form-select form-select-sm w-auto"
+              class="form-select form-control form-select-sm w-auto"
               @change="reRender()"
             >
               <option

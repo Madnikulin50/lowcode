@@ -11,7 +11,7 @@
             :id="'prop-' + prop"
             v-model="properties[prop].enabled"
             type="checkbox"
-            class="form-check-input"
+            class="form-check-input-v3"
           >
           <label :for="'prop-' + prop" class="form-check-label">
             {{ $t('form.' + kebabCase(prop) + '.checkbox.label') }}

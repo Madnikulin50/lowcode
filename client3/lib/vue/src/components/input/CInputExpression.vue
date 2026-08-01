@@ -1,11 +1,11 @@
 <template>
-  <div class="position-relative">
+  <div :class="['position-relative', attrs.class]">
     <c-ace-editor
       v-model="editorValue"
       auto-complete
       init-expressions
       :auto-complete-suggestions="autoCompleteSuggestions"
-      v-bind="attrs"
+      v-bind="omitClass(attrs)"
     />
   </div>
 </template>
@@ -53,6 +53,11 @@ const emit = defineEmits<{
 }>()
 
 const attrs = useAttrs()
+
+function omitClass (a: Record<string, unknown>) {
+  const { class: _, ...rest } = a
+  return rest
+}
 
 const editorValue = computed({
   get: () => props.modelValue,

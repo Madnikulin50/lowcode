@@ -79,7 +79,7 @@
                     <select
                       :key="upstream.active"
                       v-model="upstream[upstream.active].copy"
-                      class="form-select"
+                      class="form-select form-control"
                       @change="copyUpstreamFrom"
                     >
                       <option
@@ -174,7 +174,7 @@
                   <select
                     :key="downstream.active"
                     v-model="downstream[downstream.active].module"
-                    class="form-select w-50"
+                    class="form-select form-control w-50"
                   >
                     <option
                       v-for="opt in downstream[downstream.active].options"
@@ -230,7 +230,7 @@
                       v-show="sharedModuleFields.map"
                       :key="`${downstream.active}_${sharedModuleFields.name}`"
                       v-model="sharedModuleFields.mapped"
-                      class="form-select w-50"
+                      class="form-select form-control w-50"
                       @change="setUpdated('downstream')"
                     >
                       <option

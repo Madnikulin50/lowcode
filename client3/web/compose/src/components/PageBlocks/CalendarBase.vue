@@ -129,7 +129,7 @@ const $ComposeAPI = gp.$ComposeAPI || window.__composeAPI
 const $SystemAPI = gp.$SystemAPI || window.__systemAPI
 const $root = typeof window !== 'undefined' ? window : null
 
-const { key, options, isProcessing, inModal, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
+const { key, options, isProcessing, processing, inModal, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
 
 class CortezaTheme extends BootstrapTheme {}
 CortezaTheme.prototype.classes.widget = 'corteza-unthemed'

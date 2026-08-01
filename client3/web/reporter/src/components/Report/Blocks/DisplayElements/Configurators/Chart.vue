@@ -39,7 +39,7 @@
         </div>
         <div class="col-12 col-lg-6 d-flex flex-column justify-content-center">
           <div class="form-check form-switch mt-3 pt-2">
-            <input v-model="localOptions.noAnimation" :true-value="undefined" :false-value="true" class="form-check-input" type="checkbox" id="noAnim" />
+            <input v-model="localOptions.noAnimation" :true-value="undefined" :false-value="true" class="form-check-input-v3" type="checkbox" id="noAnim" />
             <label class="form-check-label" for="noAnim">{{ t('chart.configurator.animation.enabled') }}</label>
           </div>
         </div>
@@ -107,7 +107,7 @@
                 <input v-model="localOptions.xAxis.defaultValue" class="form-control" :disabled="localOptions.xAxis.skipMissing" :type="localOptions.xAxis.type === 'time' ? 'date' : 'text'" />
               </div>
               <div class="form-check mb-3">
-                <input v-model="localOptions.xAxis.skipMissing" class="form-check-input" type="checkbox" id="skipMissing" />
+                <input v-model="localOptions.xAxis.skipMissing" class="form-check-input-v3" type="checkbox" id="skipMissing" />
                 <label class="form-check-label" for="skipMissing">{{ t('chart.configurator.skip-missing-values') }}</label>
               </div>
             </div>
@@ -167,15 +167,15 @@
           <div class="row">
             <div class="col">
               <div class="form-check">
-                <input v-model="localOptions.yAxis.type" true-value="logarithmic" false-value="linear" class="form-check-input" type="checkbox" id="logScale" />
+                <input v-model="localOptions.yAxis.type" true-value="logarithmic" false-value="linear" class="form-check-input-v3" type="checkbox" id="logScale" />
                 <label class="form-check-label" for="logScale">{{ t('chart.configurator.logarithmic-scale') }}</label>
               </div>
               <div class="form-check">
-                <input v-model="localOptions.yAxis.beginAtZero" class="form-check-input" type="checkbox" id="beginAtZero" />
+                <input v-model="localOptions.yAxis.beginAtZero" class="form-check-input-v3" type="checkbox" id="beginAtZero" />
                 <label class="form-check-label" for="beginAtZero">{{ t('chart.configurator.begin-axis-at-zero') }}</label>
               </div>
               <div class="form-check">
-                <input v-model="localOptions.yAxis.position" true-value="right" false-value="left" class="form-check-input" type="checkbox" id="axisRight" />
+                <input v-model="localOptions.yAxis.position" true-value="right" false-value="left" class="form-check-input-v3" type="checkbox" id="axisRight" />
                 <label class="form-check-label" for="axisRight">{{ t('chart.configurator.place-axis-on-right-side') }}</label>
               </div>
             </div>
@@ -186,7 +186,7 @@
       <div>
         <h5 class="text-primary mb-2">{{ t('chart.configurator.legend.name') }}</h5>
         <div class="form-check mb-3">
-          <input v-model="localOptions.legend.hide" class="form-check-input" type="checkbox" id="hideLegend" />
+          <input v-model="localOptions.legend.hide" class="form-check-input-v3" type="checkbox" id="hideLegend" />
           <label class="form-check-label" for="hideLegend">{{ t('chart.configurator.legend.hide') }}</label>
         </div>
       </div>
@@ -194,7 +194,7 @@
       <div class="mb-2">
         <h5 class="text-primary mb-2">{{ t('chart.configurator.offset.name') }}</h5>
         <div class="form-check mb-3">
-          <input v-model="localOptions.offset.default" class="form-check-input" type="checkbox" id="defaultOffset" />
+          <input v-model="localOptions.offset.default" class="form-check-input-v3" type="checkbox" id="defaultOffset" />
           <label class="form-check-label" for="defaultOffset">{{ t('chart.configurator.offset.default') }}</label>
         </div>
       </div>

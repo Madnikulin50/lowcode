@@ -74,11 +74,14 @@ type (
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
 		Description string `json:"description,omitempty"`
+
+		Prompt string `json:"prompt,omitempty"`
 	}
 
 	PageMeta struct {
-		AllowPersonalLayouts bool           `json:"allowPersonalLayouts"`
-		Notifications        map[string]any `json:"notifications,omitempty"`
+		AllowPersonalLayouts bool             `json:"allowPersonalLayouts"`
+		Notifications        map[string]any   `json:"notifications,omitempty"`
+		Scenarios            []map[string]any `json:"scenarios,omitempty"`
 	}
 
 	PageBlockStyle struct {

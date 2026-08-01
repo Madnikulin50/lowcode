@@ -113,7 +113,7 @@
                 <input
                   id="tls-insecure"
                   v-model="server.tlsInsecure"
-                  class="form-check-input"
+                  class="form-check-input-v3"
                   data-test-id="checkbox-allow-invalid-certificates"
                   type="checkbox"
                   :disabled="disabled"

@@ -21,7 +21,7 @@
           @click="$router.push(reportBuilder)"
         >
           {{ t('report.builder') }}
-          <font-awesome-icon class="ms-2" :icon="['fas', 'tools']" />
+          <font-awesome-icon class="ms-2 ml-1" :icon="['fas', 'tools']" />
         </button>
         <button
           class="btn btn-primary d-flex align-items-center justify-content-center"

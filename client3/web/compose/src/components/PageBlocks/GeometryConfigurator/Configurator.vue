@@ -66,7 +66,7 @@
           <label class="form-label text-primary">{{ $t('geometry.onMarkerClick') }}</label>
           <select
             v-model="options.displayOption"
-            class="form-select"
+            class="form-select form-control"
           >
             <option
               v-for="opt in displayOptions"

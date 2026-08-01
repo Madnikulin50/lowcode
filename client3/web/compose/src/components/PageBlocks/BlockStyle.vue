@@ -86,7 +86,7 @@ const props = defineProps({
   valueColor: { type: Boolean, required: false, default: true },
   valueColorGrades: { type: Boolean, required: false, default: false },
   labelColor: { type: Boolean, required: false, default: () => true },
-  backgrundColor: { type: Boolean, required: false, default: () => true },
+  backgroundColor: { type: Boolean, required: false, default: () => true },
   fontSize: { type: Boolean, required: false, default: () => true },
   options: { type: Object, required: true, default: () => ({}) },
 })

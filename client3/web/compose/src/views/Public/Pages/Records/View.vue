@@ -375,7 +375,7 @@ const title = computed(() => {
   }
   const { name, handle } = props.module || {}
   const titlePrefix = isNew.value ? 'create' : inEditing.value ? 'edit' : 'view'
-  return proxy.$t(`page:public.record.${titlePrefix}.title`, { name: name || handle, interpolation: { escapeValue: false } })
+  return proxy.$t(`page.public.record.${titlePrefix}.title`, { name: name || handle, interpolation: { escapeValue: false } })
 })
 
 const currentRecordNavigation = computed(() => {
@@ -508,16 +508,17 @@ function evaluateLayoutConditions() {
   evaluateBlocks()
 }
 
-async function loadRecord(recordID = props.edit) {
+async function loadRecord() {
   if (!props.page) return
 
   const { namespaceID, moduleID } = props.page
 
   if (moduleID !== NoID) {
     const mod = Object.freeze(getModuleByID(moduleID).clone())
+    const rid = recordID.value
 
-    if (recordID && recordID !== NoID) {
-      const { response, cancel } = $ComposeAPI.recordReadCancellable({ namespaceID, moduleID, recordID })
+    if (rid && rid !== NoID) {
+      const { response, cancel } = $ComposeAPI.recordReadCancellable({ namespaceID, moduleID, recordID: rid })
       abortableRequests.value.push(cancel)
 
       return response()
@@ -1024,12 +1025,12 @@ const handleFormSubmit = throttle(async function (route = 'page.record') {
         }
 
         if (props.page.meta?.notifications?.enabled) {
-          toastSuccess(proxy.$t(`notification:record.${isNewRecord ? 'create' : 'update'}Success`))
+          toastSuccess(proxy.$t(`notification.record.${isNewRecord ? 'create' : 'update'}Success`))
         }
       }
     }).catch(e => {
       processing.value = false
-      toastErrorHandler(proxy.$t(`notification:record.${isNewRecord ? 'create' : 'update'}Failed`))(e)
+      toastErrorHandler(proxy.$t(`notification.record.${isNewRecord ? 'create' : 'update'}Failed`))(e)
     })
 }, 500)
 

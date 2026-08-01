@@ -303,7 +303,7 @@
             </label>
             <select
               v-model="report.legend.orientation"
-              class="form-select form-select-sm"
+              class="form-select form-control form-select-sm"
             >
               <option
                 v-for="opt in orientations"
@@ -340,7 +340,7 @@
             </label>
             <select
               v-model="report.legend.align"
-              class="form-select form-select-sm"
+              class="form-select form-control form-select-sm"
               :disabled="!report.legend.position.isDefault"
             >
               <option

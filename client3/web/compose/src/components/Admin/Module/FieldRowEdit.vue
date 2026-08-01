@@ -71,6 +71,7 @@
           :id="`isRequired-${value.fieldID}`"
           v-model="value.isRequired"
           class="form-check-input"
+          style="min-width: auto;"
           type="checkbox"
           :disabled="!value.cap.required"
         >
@@ -78,11 +79,12 @@
     </td>
 
     <td class="align-middle text-center">
-      <div class="form-check form-switch ms-2">
+      <div class="form-check form-switch ms-2" >
         <input
           :id="`isMulti-${value.fieldID}`"
           v-model="value.isMulti"
           class="form-check-input"
+          style="min-width: auto;"
           type="checkbox"
           :disabled="!value.cap.multi"
         >

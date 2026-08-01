@@ -67,10 +67,9 @@ const router = useRouter()
 const $auth = inject('$auth')
 const $ComposeAPI = inject('$ComposeAPI')
 
-const { options, isProcessing, inModal, refreshBlock, setBaseDefaultValues, getColor } = usePageBlockBase(props, emit)
+const { options, isProcessing, processing, inModal, refreshBlock, setBaseDefaultValues, getColor } = usePageBlockBase(props, emit)
 
 const map = ref(undefined)
-const processing = ref(false)
 const show = ref(false)
 const geometries = ref([])
 const colors = ref([])

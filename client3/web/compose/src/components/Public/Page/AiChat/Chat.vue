@@ -1,9 +1,9 @@
 <template>
   <div class="chat-container">
-    <div class="chat-header">
-      <span class="chat-header-title">LowCoooode AI-assistant</span>
+    <div class="card-header border-bottom text-nowrap ps-3 pe-2 d-flex align-items-center justify-content-between">
+      <h5 class="text-truncate mb-0">LowCoooode AI-assistant</h5>
       <div class="export-dropdown">
-        <button class="export-trigger" @click="exportOpen = !exportOpen" title="Export">
+        <button class="btn btn-outline-light d-print-none text-secondary px-2 py-1 border-0" @click="exportOpen = !exportOpen" title="Export">
           <font-awesome-icon :icon="['fas', 'download']" size="xs" /> Export
         </button>
         <div v-if="exportOpen" class="export-menu" @click="exportOpen = false">
@@ -127,7 +127,9 @@ function downloadFile(f) {
 }
 
 function preview(text) {
-  const plain = text.replace(/<[^>]*>/g, '')
+  const hidden = stripXmlContent(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const noCode = stripCodeBlocks(hidden)
+  const plain = noCode.replace(/<[^>]*>/g, '')
   return plain.length > 120 ? plain.slice(0, 120) + '\u2026' : plain
 }
 
@@ -140,13 +142,29 @@ function scrollToBottom() {
   })
 }
 
+function stripXmlContent(text) {
+  let normalized = text.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  let prev
+  do {
+    prev = normalized
+    normalized = normalized.replace(/<([a-zA-Z_][a-zA-Z0-9_]*)[^>]*>[\s\S]*?<\/\1>/g, '<$1>...</$1>')
+  } while (normalized !== prev)
+  return normalized
+}
+
+function stripCodeBlocks(text) {
+  return text.replace(/```[\s\S]*?(```|$)/g, '').replace(/\n{3,}/g, '\n\n')
+}
+
 function formatMessage(text) {
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  text = stripCodeBlocks(text)
   const needMarkdown = (text) => {
     const symbolRegex = /[`*#]/
     return symbolRegex.test(text)
   }
   if (needMarkdown(text)) {
-    const md = markdownIt({ html: true, linkify: true })
+    const md = markdownIt({ html: true, linkify: true, breaks: true })
     return md.render(text)
   }
   return text.replace(/\n/g, '<br>')
@@ -319,44 +337,8 @@ onBeforeUnmount(() => {
   background: #f9f9f9;
 }
 
-.chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.chat-header-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #555;
-}
-
 .export-dropdown {
   position: relative;
-}
-
-.export-trigger {
-  border: 1px solid #ddd;
-  background: #fff;
-  border-radius: 4px;
-  padding: 3px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  color: #666;
-  line-height: 1.6;
-  transition: background 0.15s, border-color 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.export-trigger:hover {
-  background: #f5f5f5;
-  border-color: #bbb;
-  color: #333;
 }
 
 .export-menu {

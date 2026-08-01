@@ -273,7 +273,7 @@
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('recordList.record.recordDisplayOptions') }}</label>
-              <select v-model="options.recordDisplayOption" class="form-select">
+              <select v-model="options.recordDisplayOption" class="form-select form-control">
                 <option v-for="opt in recordDisplayOptionsOnSelect" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
               </select>
             </div>
@@ -281,7 +281,7 @@
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('recordList.record.recordSelectorDisplayOptions') }}</label>
-              <select v-model="options.recordSelectorDisplayOption" class="form-select">
+              <select v-model="options.recordSelectorDisplayOption" class="form-select form-control">
                 <option v-for="opt in recordDisplayOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
               </select>
             </div>
@@ -319,7 +319,7 @@
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('recordList.record.addRecordOptions') }}</label>
-              <select v-model="options.addRecordDisplayOption" class="form-select" :disabled="options.hideAddButton">
+              <select v-model="options.addRecordDisplayOption" class="form-select form-control" :disabled="options.hideAddButton">
                 <option v-for="opt in recordCreateOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
               </select>
             </div>

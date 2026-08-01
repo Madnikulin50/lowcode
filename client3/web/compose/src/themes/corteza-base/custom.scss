@@ -1,3 +1,35 @@
+$btn-colors: (
+  primary: --primary,
+  secondary: --secondary,
+  success: --success,
+  info: --info,
+  warning: --warning,
+  danger: --danger,
+  light: --light,
+  dark: --dark,
+);
+
+@each $name, $var in $btn-colors {
+  .btn-#{$name} {
+    --bs-btn-bg: var(#{$var});
+    --bs-btn-border-color: var(#{$var});
+    --bs-btn-hover-bg: var(#{$var});
+    --bs-btn-hover-border-color: var(#{$var});
+    --bs-btn-active-bg: var(#{$var});
+    --bs-btn-active-border-color: var(#{$var});
+    --bs-btn-disabled-bg: var(#{$var});
+    --bs-btn-disabled-border-color: var(#{$var});
+  }
+
+  .text-#{$name} {
+    color: var(#{$var}) !important;
+  }
+}
+
+.text-black {
+  color: var(--black) !important;
+}
+
 // Styles for field viewers and editors, they're here since they're used in multiple places
 .field-container {
   .form-row {
@@ -28,8 +60,33 @@
   }
 }
 
+.card-header-tabs {
+  margin-left: 0;
+}
+
+.card-header-tabs ~ .tab-content {
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+}
+
 .value-only {
   .col-form-label {
     padding-bottom: 0 !important;
   }
+}
+
+#admin-toolbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1030;
+}
+
+.vs__dropdown-toggle {
+  cursor: default;
+}
+
+.form-control::placeholder,
+.c-input-search ::placeholder {
+  color: var(--secondary);
+  opacity: 1;
 }

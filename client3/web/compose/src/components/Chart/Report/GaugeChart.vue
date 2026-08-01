@@ -162,7 +162,7 @@
             </label>
             <select
               v-model="metric.formatting.presetFormat"
-              class="form-select form-select-sm"
+              class="form-select form-control form-select-sm"
             >
               <option
                 v-for="opt in formatOptions"

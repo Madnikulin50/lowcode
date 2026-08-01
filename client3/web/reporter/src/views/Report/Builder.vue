@@ -38,7 +38,7 @@
           @click="$router.push(reportViewer)"
         >
           {{ t('builder.report.view') }}
-          <font-awesome-icon class="ms-2" :icon="['far', 'eye']" />
+          <font-awesome-icon class="ms-2 ml-1" :icon="['far', 'eye']" />
         </button>
         <button
           class="btn btn-primary d-flex align-items-center justify-content-center"
@@ -137,7 +137,7 @@
                     </button>
                   </li>
                 </ul>
-                <div class="tab-content">
+                <div class="tab-content  card">
                   <div class="tab-pane active" id="general-tab">
                     <div class="mb-3">
                       <label class="text-primary form-label">{{ t('builder.title') }}</label>

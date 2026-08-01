@@ -47,7 +47,7 @@
             <td>
               <div class="form-check">
                 <input
-                  class="form-check-input"
+                  class="form-check-input-v3"
                   type="checkbox"
                   :checked="item.enabled"
                   @change="item.enable($event.target.checked)"

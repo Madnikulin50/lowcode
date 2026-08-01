@@ -51,7 +51,7 @@
           </div>
           <div class="modal-body">
             <div class="form-check mb-3">
-              <input id="snippet-enabled" v-model="modal.data.enabled" type="checkbox" class="form-check-input">
+              <input id="snippet-enabled" v-model="modal.data.enabled" type="checkbox" class="form-check-input-v3">
               <label class="form-check-label" for="snippet-enabled">{{ $t('editor.code-snippets.enabled') }}</label>
             </div>
 
@@ -131,7 +131,7 @@ function openEditor(index) {
     ? codeSnippets.value[index]
     : {
         name: '',
-        script: '<script> </script>',
+        script: '<' + 'script> <' + '/script>',
         enabled: true,
       }
 

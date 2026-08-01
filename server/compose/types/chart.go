@@ -35,6 +35,7 @@ type (
 		Reports     []*ChartConfigReport   `json:"reports,omitempty"`
 		ColorScheme string                 `json:"colorScheme,omitempty"`
 		NoAnimation bool                   `json:"noAnimation,omitempty"`
+		Gradient    string                 `json:"gradient,omitempty"`
 		Toolbox     map[string]interface{} `json:"toolbox,omitempty"`
 	}
 

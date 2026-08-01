@@ -15,7 +15,7 @@
 
       <div class="mb-3">
         <label class="form-label text-primary">{{ $t('recordList.import.onError') }}</label>
-        <select v-model="onError" class="form-select w-auto">
+        <select v-model="onError" class="form-select form-control w-auto">
           <option value="FAIL">{{ $t('recordList.import.onErrorFail') }}</option>
           <option value="SKIP">{{ $t('recordList.import.onErrorSkip') }}</option>
         </select>
@@ -23,7 +23,7 @@
 
       <div class="mb-3">
         <label class="form-label text-primary">{{ $t('recordList.import.multiValueDelimiter.label') }}</label>
-        <select v-model="multiValueDelimiter" class="form-select w-auto">
+        <select v-model="multiValueDelimiter" class="form-select form-control w-auto">
           <option
             v-for="d of multiValueDelimiterOptions"
             :key="d.value"

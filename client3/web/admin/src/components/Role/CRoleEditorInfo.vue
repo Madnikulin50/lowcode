@@ -84,7 +84,7 @@
                 :id="'resource-type-' + i"
                 v-model="role.meta.context.resourceTypes"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
                 :data-test-id="`checkbox-resource-type-${resourceType.text}`"
                 :value="resourceType.value"
                 :disabled="!editable"

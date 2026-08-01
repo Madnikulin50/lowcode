@@ -36,7 +36,7 @@
         <input
           :id="`del-${record.recordID}-${value.name}`"
           type="checkbox"
-          class="form-check-input"
+          class="form-check-input-v3"
           :checked="value.selected"
           @change="updateValue({ namespace, module, recordID: record.recordID, field: value.name, value: $event.target.checked, orgValue: value.value })"
         />

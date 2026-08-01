@@ -4,6 +4,7 @@ import { resolve } from 'path'
 import { execSync } from 'child_process'
 
 export default defineConfig({
+  base: './',
   plugins: [vue()],
   define: {
     WEBAPP: JSON.stringify('Workflow'),

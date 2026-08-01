@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, inject, onMounted, onBeforeUnmount } from 'vue'
 import { NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { usePageBlockBase } from './usePageBlockBase'

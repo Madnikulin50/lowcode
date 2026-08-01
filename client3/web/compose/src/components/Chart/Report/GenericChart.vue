@@ -80,7 +80,7 @@
               </label>
               <select
                 v-model="report.yAxis.labelPosition"
-                class="form-select form-select-sm"
+                class="form-select form-control form-select-sm"
               >
                 <option
                   v-for="opt in axisLabelPositions"
@@ -249,7 +249,7 @@
               </label>
               <select
                 v-model="report.yAxis.formatting.presetFormat"
-                class="form-select form-select-sm"
+                class="form-select form-control form-select-sm"
               >
                 <option
                   v-for="opt in formatOptions"
@@ -473,7 +473,7 @@
             </label>
             <select
               v-model="metric.symbol"
-              class="form-select form-select-sm"
+              class="form-select form-control form-select-sm"
             >
               <option
                 v-for="opt in scatterSymbolOptions"
@@ -523,7 +523,7 @@
             </label>
             <select
               v-model="metric.formatting.presetFormat"
-              class="form-select form-select-sm"
+              class="form-select form-control form-select-sm"
             >
               <option
                 v-for="opt in formatOptions"
@@ -721,7 +721,7 @@
                   </label>
                   <select
                     v-model="report.anomaly.method"
-                    class="form-select form-select-sm"
+                    class="form-select form-control form-select-sm"
                   >
                     <option
                       v-for="opt in anomalyMethods"

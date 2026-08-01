@@ -1,14 +1,12 @@
 <template>
   <div
     v-if="namespace?.canManageNamespace"
-    class="d-flex flex-column w-100 h-100"
+    class="d-flex flex-column w-100 flex-grow-1"
+    style="min-height: 0"
   >
     <router-view
-      class="flex-grow-1 overflow-auto"
       :namespace="namespace"
     />
-
-    <div id="admin-toolbar" />
   </div>
 </template>
 

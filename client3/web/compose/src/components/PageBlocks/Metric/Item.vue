@@ -8,23 +8,46 @@
       :style="fieldWidth"
       class="mb-0 field-container"
     >
-      <label class="d-flex align-items-center text-primary mb-0 form-label">
+      <div v-if="options.horizontalFieldLayoutEnabled" class="row">
+        <label class="col-md-6 col-xl-5 d-flex align-items-center text-primary mb-0 form-label">
+          <span
+            class="d-flex metric-label"
+            style="margin-top: 0.1rem;"
+            :style="genStyle(metric.valueStyle, true)"
+          >
+            {{ metric.label }}
+          </span>
+        </label>
+        <div class="col-md-6 col-xl-7 d-flex align-items-center">
+          <span
+            :style="genStyle(metric.valueStyle)"
+            :class="{ 'metric-hover-value': hover }"
+          >
+            <template v-if="metric.prefix">{{ metric.prefix }}</template>
+            {{ displayValue }}
+            <template v-if="metric.suffix">{{ metric.suffix }}</template>
+          </span>
+        </div>
+      </div>
+      <template v-else>
+        <label class="d-flex align-items-center text-primary mb-0 form-label">
+          <span
+            class="d-flex metric-label"
+            style="margin-top: 0.1rem;"
+            :style="genStyle(metric.valueStyle, true)"
+          >
+            {{ metric.label }}
+          </span>
+        </label>
         <span
-          class="d-flex metric-label"
-          style="margin-top: 0.1rem;"
-          :style="genStyle(metric.valueStyle, true)"
+          :style="genStyle(metric.valueStyle)"
+          :class="{ 'metric-hover-value': hover }"
         >
-          {{ metric.label }}
+          <template v-if="metric.prefix">{{ metric.prefix }}</template>
+          {{ displayValue }}
+          <template v-if="metric.suffix">{{ metric.suffix }}</template>
         </span>
-      </label>
-      <span
-        :style="genStyle(metric.valueStyle)"
-        :class="{ 'metric-hover-value': hover }"
-      >
-        <template v-if="metric.prefix">{{ metric.prefix }}</template>
-        {{ displayValue }}
-        <template v-if="metric.suffix">{{ metric.suffix }}</template>
-      </span>
+      </template>
     </div>
   </div>
   <div

@@ -18,7 +18,7 @@
             <input
               id="hide-namespace-list"
               v-model="sidebar.hideNamespaceList"
-              class="form-check-input"
+              class="form-check-input-v3"
               type="checkbox"
             >
             <label
@@ -30,7 +30,7 @@
             <input
               id="hide-namespace-list-link"
               v-model="sidebar.hideNamespaceListLink"
-              class="form-check-input"
+              class="form-check-input-v3"
               type="checkbox"
             >
             <label
@@ -48,7 +48,7 @@
             <input
               id="hide-submit"
               v-model="recordToolbar.hideSubmit"
-              class="form-check-input"
+              class="form-check-input-v3"
               type="checkbox"
             >
             <label
@@ -60,7 +60,7 @@
             <input
               id="hide-delete"
               v-model="recordToolbar.hideDelete"
-              class="form-check-input"
+              class="form-check-input-v3"
               type="checkbox"
             >
             <label
@@ -72,7 +72,7 @@
             <input
               id="hide-edit"
               v-model="recordToolbar.hideEdit"
-              class="form-check-input"
+              class="form-check-input-v3"
               type="checkbox"
             >
             <label
@@ -84,7 +84,7 @@
             <input
               id="hide-new"
               v-model="recordToolbar.hideNew"
-              class="form-check-input"
+              class="form-check-input-v3"
               type="checkbox"
             >
             <label
@@ -96,7 +96,7 @@
             <input
               id="hide-clone"
               v-model="recordToolbar.hideClone"
-              class="form-check-input"
+              class="form-check-input-v3"
               type="checkbox"
             >
             <label
@@ -108,7 +108,7 @@
             <input
               id="hide-back"
               v-model="recordToolbar.hideBack"
-              class="form-check-input"
+              class="form-check-input-v3"
               type="checkbox"
             >
             <label

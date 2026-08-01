@@ -1,15 +1,13 @@
 <template>
-  <div>{{ t('configurator.edge') }}</div>
+  <div>
+    {{ $t('configurator:edge') }}
+  </div>
 </template>
 
-<script setup>
-import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
+<script>
+import base from './base'
 
-defineProps({
-  item: { type: Object, default: () => ({}) },
-  edges: { type: Object, default: () => ({}) },
-  outEdges: { type: Number, default: 0 },
-  isSubworkflow: { type: Boolean, default: false },
-})
+export default {
+  extends: base,
+}
 </script>

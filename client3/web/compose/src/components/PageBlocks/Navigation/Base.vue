@@ -1,5 +1,6 @@
 <template>
   <Wrap
+    v-bind="$props"
     :scrollable-body="false"
   >
     <div class="h-100 w-100 card overflow-hidden bg-transparent">

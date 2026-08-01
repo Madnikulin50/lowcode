@@ -51,6 +51,18 @@ function mergeMessages(
       merged[k] = v
     }
   }
+
+  // Also add aliases without the top-level section prefix
+  // e.g. general.customCSSClass.label -> customCSSClass.label
+  for (const [k, v] of Object.entries(plain)) {
+    const dotIndex = k.indexOf('.')
+    if (dotIndex > 0) {
+      const shortKey = k.substring(dotIndex + 1)
+      if (shortKey && !(shortKey in merged)) {
+        merged[shortKey] = v
+      }
+    }
+  }
 }
 
 export default function (app: App, appName: string | Partial<Options>, ...namespaces: Array<string>): I18n {

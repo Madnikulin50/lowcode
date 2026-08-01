@@ -10,17 +10,17 @@
           <div class="d-flex align-items-center flex-grow-1 flex-wrap flex-fill-child gap-1">
             <template v-if="recordListModule.canCreateRecord">
               <template v-if="inlineEditing">
-                <button v-if="!options.hideAddButton" data-test-id="button-add-record" class="btn btn-primary btn-lg" @click="addInlineRecord()">+ {{ $t('recordList.addRecord') }}</button>
+                <button v-if="!options.hideAddButton" data-test-id="button-add-record" class="btn btn-primary" @click="addInlineRecord()">+ {{ $t('recordList.addRecord') }}</button>
               </template>
               <template v-else-if="!inlineEditing && (recordPageID || options.allRecords)">
-                <button v-if="!options.hideAddButton" data-test-id="button-add-record" class="btn btn-primary btn-lg" @click="handleAddRecord()">+ {{ $t('recordList.addRecord') }}</button>
+                <button v-if="!options.hideAddButton" data-test-id="button-add-record" class="btn btn-primary" @click="handleAddRecord()">+ {{ $t('recordList.addRecord') }}</button>
                 <ImporterModal v-if="!options.hideImportButton" :module="recordListModule" :namespace="namespace" @importSuccessful="onImportSuccessful" />
               </template>
             </template>
             <ExporterModal v-if="options.allowExport && !inlineEditing" :module="recordListModule" :filter="filter.query" :selection="selected" :selected-all-records="selectedAllRecords" :processing="processing" :preselected-fields="fields.map(({ moduleField }) => moduleField)" @export="onExport" />
 
             <div v-if="filterPresets.length" ref="filterPresets" class="dropdown">
-              <button class="btn btn-outline-secondary btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">{{ $t('recordList.filter.filters.label') }}</button>
+              <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">{{ $t('recordList.filter.filters.label') }}</button>
               <ul class="dropdown-menu shadow-sm">
                 <li v-for="(f, idx) in filterPresets" :key="idx" class="d-flex align-items-center justify-content-between">
                   <button class="dropdown-item" @click="updateFilter(f.filter, f.name)">{{ f.name }}</button>
@@ -32,7 +32,7 @@
             <ColumnPicker v-if="!options.hideConfigureFieldsButton" :module="recordListModule" :fields="fields.map(({ moduleField }) => moduleField)" @updateFields="onUpdateFields">{{ $t('module.allRecords.columns.title') }}</ColumnPicker>
           </div>
           <div v-if="!options.hideSearch" class="flex-fill">
-            <c-input-search :value="query" :placeholder="$t('label.search')" submittable @search="handleSearch" />
+            <c-input-search :value="query" :placeholder="$t('label.search', { default: 'Search' })" :ai="true" submittable @search="handleSearch" @ai-search="handleAiSearch" />
           </div>
         </div>
 
@@ -101,7 +101,7 @@
 
     <template #default>
       <div v-if="recordListModule" class="d-flex position-relative h-100" :class="{ 'overflow-hidden': !items.length || isProcessing }">
-        <button class="brain-button position-absolute d-flex align-items-center justify-content-center d-print-none" @click="promptAiChat" :title="$t('ai.askAboutRecord')">
+        <button v-if="!block.options?.hideBrainButton" class="brain-button position-absolute d-flex align-items-center justify-content-center d-print-none" @click="promptAiChat" :title="$t('ai.askAboutRecord')">
           <font-awesome-icon :icon="['fas', 'brain']" />
         </button>
         <div class="table-responsive">
@@ -110,7 +110,7 @@
             <tr :class="showingDeletedRecords ? 'table-warning' : ''">
               <th v-if="options.draggable && inlineEditing" style="width: 0%"></th>
               <th v-if="options.selectable" style="width: 0%;" class="d-print-none">
-                <input type="checkbox" class="form-check-input ms-1" :disabled="disableSelectAll" :checked="areAllRowsSelected && !disableSelectAll" @change="handleSelectAllOnPage({ isChecked: $event.target.checked })" />
+                <input type="checkbox" class="form-check-input-v3 ms-1" :disabled="disableSelectAll" :checked="areAllRowsSelected && !disableSelectAll" @change="handleSelectAllOnPage({ isChecked: $event.target.checked })" />
               </th>
               <th v-if="isFederated" style="width: 0%"></th>
               <th v-for="(field, fieldIndex) in fields" :key="field.key" :colspan="fieldIndex === (fields.length - 1) ? 2 : 1" :style="{ 'padding-right': fieldIndex === (fields.length - 1) ? '15px' : '' }">
@@ -134,7 +134,7 @@
                   <font-awesome-icon :icon="['fas', 'bars']" class="handle text-secondary mt-2" style="padding-top: 0.2rem;" />
                 </td>
                 <td v-if="options.selectable" class="pe-0 d-print-none" @click.stop>
-                  <input type="checkbox" class="form-check-input ms-1" :class="{ 'mt-2': inlineEditing }" :checked="selected.includes(element.id)" @change="onSelectRow($event.target.checked, element)" />
+                  <input type="checkbox" class="form-check-input-v3 ms-1" :class="{ 'mt-2': inlineEditing }" :checked="selected.includes(element.id)" @change="onSelectRow($event.target.checked, element)" />
                 </td>
                 <td v-if="isFederated" class="align-middle ps-0">
                   <span v-if="Object.keys(element.r.labels || {}).includes('federation')" class="badge bg-primary align-text-top">F</span>
@@ -257,7 +257,7 @@
           </div>
           <div v-if="options.showRecordPerPageOption" class="d-flex align-items-center gap-1 text-nowrap">
             <span>{{ $t('recordList.pagination.recordsPerPage') }}</span>
-            <select v-model="recordsPerPage" class="form-select form-select-sm" @change="handlePerPageChange">
+            <select v-model="recordsPerPage" class="form-select form-control form-select-sm" @change="handlePerPageChange">
               <option v-for="opt in perPageOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
             </select>
           </div>
@@ -328,7 +328,18 @@ import Wrap from './Wrap/index.js'
 import { usePageBlockBase } from './usePageBlockBase'
 
 const { CInputSearch } = components
-const { t: $t } = useI18n({ useScope: 'global' })
+const { t: _$t } = useI18n({ useScope: 'global' })
+const $t = (...args) => {
+  try {
+    const result = _$t(...args)
+    if (result === null || result === undefined) {
+      return typeof args[1] === 'object' && args[1]?.default ? args[1].default : args[0]
+    }
+    return result
+  } catch (e) {
+    return typeof args[1] === 'object' && args[1]?.default ? args[1].default : args[0]
+  }
+}
 const store = useStore()
 const $auth = inject('$auth')
 const $ComposeAPI = inject('$ComposeAPI')
@@ -354,14 +365,13 @@ const props = defineProps({
 
 const emit = defineEmits(['errors', 'save-fields'])
 
-const { isProcessing, options, refreshBlock } = usePageBlockBase(props, emit)
+const { processing, isProcessing, options, refreshBlock } = usePageBlockBase(props, emit)
 
 const inlineErrors = ref(new validator.Validated())
 const dirtyInlineRecords = ref({})
 const processingDirtyRecords = ref('')
 const processingInlineRecords = ref({})
 const uniqueID = ref(undefined)
-const processing = ref(false)
 const prefilter = ref(undefined)
 const recordListFilter = ref([])
 const query = ref(null)
@@ -563,6 +573,8 @@ function onFilter(filter = []) {
 function handlePerPageChange() { filter.limit = recordsPerPage.value; refresh(true) }
 
 function handleSearch(searchQuery) { query.value = searchQuery ? searchQuery.trim() : null; refresh(true) }
+
+function handleAiSearch(searchQuery) { query.value = searchQuery ? searchQuery.trim() : null; promptAiChat() }
 
 function onSaveFilterPreset(filter = []) {
   currentCustomPresetFilter.value = { filter }
@@ -1247,7 +1259,7 @@ function fetchRecords(namespaceID, fields, records) {
 }
 </script>
 <style lang="scss" scoped>
-.brain-button { top: 0.5rem; right: 0.5rem; z-index: 30; width: 32px; height: 32px; background: #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.15); border: 1px solid var(--bs-border-color, #dee2e6); color: var(--secondary); font-size: 16px; cursor: pointer; transition: box-shadow 0.2s, color 0.2s; }
+.brain-button {     z-index: 1041; top: 0.5rem; right: 0.5rem; width: 32px; height: 32px; background: #fff; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.15); border: 1px solid var(--bs-border-color, #dee2e6); color: var(--secondary); font-size: 16px; cursor: pointer; transition: box-shadow 0.2s, color 0.2s; }
 .brain-button:hover { opacity: 1; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 .handle { cursor: grab; }
 .pointer { cursor: pointer; }

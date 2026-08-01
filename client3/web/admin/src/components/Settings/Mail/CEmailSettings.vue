@@ -99,7 +99,7 @@
                 id="tls-insecure"
                 v-model="serverData.tlsInsecure"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
               >
               <label class="form-check-label" for="tls-insecure">
                 {{ $t('editor.server.tlsInsecure.label') }}

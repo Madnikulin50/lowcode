@@ -398,6 +398,7 @@ export class BaseChart {
       colorScheme: '',
       reports: [this.defReport()],
       noAnimation: false,
+      gradient: '' as '' | 'lightToDark' | 'darkToLight',
       toolbox: {
         saveAsImage: false,
         timeline: '',

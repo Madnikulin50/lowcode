@@ -102,8 +102,7 @@ func errorHandler(err error) error {
 		if implErr, ok := err.(*pq.Error); ok {
 			switch implErr.Code.Name() {
 			case "unique_violation":
-				return nil
-				//return store.ErrNotUnique.Wrap(implErr)
+				return store.ErrNotUnique.Wrap(implErr)
 			}
 		}
 	}

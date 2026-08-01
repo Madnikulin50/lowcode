@@ -5,6 +5,7 @@ import { usePageLayoutStore } from './page-layout'
 import { useChartStore } from './chart'
 import { useRecordStore } from './record'
 import { useUserStore } from './user'
+import { useEtlStore } from './etl'
 import { useLanguagesStore } from './languages'
 import { useUiStore } from './ui'
 import { useRBACStore } from 'corteza-lib/vue/dist'
@@ -44,6 +45,7 @@ export function useStore() {
     record: useRecordStore(),
     user: useUserStore(),
     languages: useLanguagesStore(),
+    etl: useEtlStore(),
     ui: useUiStore(),
     rbac: useRBACStore(),
     wfPrompts: useWfPromptsStore(),

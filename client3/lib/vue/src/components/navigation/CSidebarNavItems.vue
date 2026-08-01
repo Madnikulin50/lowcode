@@ -142,11 +142,29 @@ function showChildren ({ params = {}, children = [] }: any): boolean {
 <style scoped lang="scss">
 .nav-sidebar {
   .nav-item {
+    position: relative;
+    border-radius: 0.5rem;
+    margin-bottom: 1px;
     transition: background-color 0.2s ease-out;
 
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 4px;
+      bottom: 4px;
+      width: 3px;
+      border-radius: 0 2px 2px 0;
+      background: transparent;
+      transition: background 0.2s ease;
+    }
+
     .icon {
+      min-width: 1.25rem;
+      text-align: center;
       color: var(--black);
-      transition: color 0.3s ease-in-out;
+      opacity: 0.65;
+      transition: opacity 0.2s ease, transform 0.2s ease, color 0.3s ease-in-out;
     }
 
     .title {
@@ -154,15 +172,32 @@ function showChildren ({ params = {}, children = [] }: any): boolean {
       font-family: var(--font-regular) !important;
       transition: color 0.3s ease-in-out;
       text-align: left;
+      margin-left: 8px;
     }
 
     &:hover {
       background-color: var(--light);
+
+      .icon {
+        opacity: 0.9;
+        transform: translateX(2px);
+      }
+
+      &::before {
+        background: rgba(var(--bs-primary-rgb, 13 110 253), 0.3);
+      }
     }
   }
 
   .nav-active {
+    background-color: rgba(var(--bs-primary-rgb, 13 110 253), 0.08) !important;
+
+    &::before {
+      background: var(--primary) !important;
+    }
+
     .icon {
+      opacity: 1;
       color: var(--primary);
     }
 
@@ -172,5 +207,16 @@ function showChildren ({ params = {}, children = [] }: any): boolean {
     }
   }
 
+  .nav-exact-active {
+    background-color: rgba(var(--bs-primary-rgb, 13 110 253), 0.1) !important;
+
+    .title {
+      font-family: var(--font-medium) !important;
+    }
+  }
+
+  .nav-sidebar {
+    padding-left: 1rem;
+  }
 }
 </style>

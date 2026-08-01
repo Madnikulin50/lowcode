@@ -1,7 +1,8 @@
 <template>
   <div
     v-if="namespace"
-    class="py-3"
+    class="py-3 d-flex flex-column flex-grow-1"
+    style="min-height: 0"
   >
     <Teleport to="#topbar-title">
       {{ $t('edit.title') }}
@@ -16,12 +17,14 @@
 
     <div
       v-else
-      class="container-fluid"
+      class="d-flex flex-column flex-grow-1"
+      style="min-height: 0"
       @submit.prevent="handleSave"
     >
-      <div class="row">
-        <div class="col">
-          <div class="card shadow-sm">
+      <div class="container-fluid flex-grow-1 d-flex flex-column" style="min-height: 0">
+      <div class="row flex-grow-1" style="min-height: 0">
+        <div class="col d-flex flex-column" style="min-height: 0">
+          <div class="card shadow-sm d-flex flex-column flex-grow-1" style="min-height: 0">
             <div class="card-header d-flex py-3 align-items-center border-bottom gap-1">
               <export
                 v-if="namespace.canExportCharts"
@@ -39,7 +42,8 @@
               />
             </div>
 
-            <div class="row">
+            <div class="overflow-auto" style="flex: 1 1 0%; min-height: 0;">
+            <div class="row pb-5">
               <div
                 class="col-12 col-lg-7 border-end"
               >
@@ -225,10 +229,28 @@
                             />
                             {{ opt.text }}
                           </label>
-                        </div>
                       </div>
                     </div>
+
+
                   </div>
+                </div>
+                  <div class="col-12 col-lg-6 mt-2 mt-md-0">
+                      <div v-if="hasGradient" class="mb-3">
+                        <label class="form-label text-primary">
+                          {{ $t('edit.gradient.label', 'Gradient') }}
+                        </label>
+                        <c-input-select
+                          v-model="chart.config.gradient"
+                          :options="gradientOptions"
+                          :reduce="opt => opt.value"
+                          label="text"
+                          :clearable="false"
+                          :searchable="false"
+                          :placeholder="$t('edit.gradient.placeholder', 'None')"
+                        />
+                      </div>
+                    </div>
                 </div>
               </div>
 
@@ -257,8 +279,9 @@
                     @updated="onUpdated"
                   />
                 </div>
-              </div>
             </div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
@@ -361,6 +384,7 @@
         </div>
       </div>
     </div>
+    </div>
 
     <Teleport to="#admin-toolbar">
       <editor-toolbar
@@ -396,7 +420,7 @@ import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToo
 import { compose, NoID, shared } from 'corteza-lib/js/dist'
 import Export from 'corteza-webapp-compose/src/components/Admin/Export'
 import ChartComponent from 'corteza-webapp-compose/src/components/Chart'
-import { handle, components } from 'corteza-lib/vue/dist'
+import { handle, components, composables } from 'corteza-lib/vue/dist'
 import draggable from 'vuedraggable'
 import ReportItem from 'corteza-webapp-compose/src/components/Chart/ReportItem'
 import Reports from 'corteza-webapp-compose/src/components/Chart/Report'
@@ -440,6 +464,12 @@ const checkboxLabel = computed(() => ({
   on: t('label.yes'),
   off: t('label.no'),
 }))
+
+const gradientOptions = [
+  { value: '', text: t('edit.gradient.options.none', 'None') },
+  { value: 'lightToDark', text: t('edit.gradient.options.lightToDark', 'Light → Dark') },
+  { value: 'darkToLight', text: t('edit.gradient.options.darkToLight', 'Dark → Light') },
+]
 
 const modules = computed(() => store.getters['module/set'])
 const modByID = computed(() => store.getters['module/getByID'])
@@ -525,6 +555,14 @@ const isEdit = computed(() => chart.value && chart.value.chartID !== NoID)
 
 const hasAxis = computed(() => reports.value.some(({ metrics = [] }) => metrics.some(m => ['bar', 'line', 'scatter'].includes(m.type))))
 
+const hasPie = computed(() => {
+  const r = chart.value?.config?.reports
+  if (!r) return false
+  return r.some(({ metrics = [] }) => metrics.some(m => ['pie', 'doughnut'].includes(m.type)))
+})
+
+const hasGradient = computed(() => hasAxis.value || hasPie.value)
+
 const timelineOptions = computed(() => [
   { value: '', text: t('edit.toolbox.timeline.options.none') },
   { value: 'x', text: t('edit.toolbox.timeline.options.x') },
@@ -547,8 +585,7 @@ watch(() => chart.value ? chart.value.config : undefined, (value, oldValue) => {
   if (value && oldValue) onConfigUpdate()
 }, { deep: true })
 
-function toastErrorHandler (msg) { return (e) => {} }
-function toastSuccess (msg) {}
+const { toastErrorHandler, toastSuccess } = composables.useToast()
 
 function moduleName (moduleID) {
   const m = modByID.value(moduleID)

@@ -93,7 +93,7 @@
               :disabled="disableSelectAll"
               :checked="allRowsSelected && !disableSelectAll"
               type="checkbox"
-              class="form-check-input"
+              class="form-check-input-v3"
               @change="selectAllRows"
             >
           </div>
@@ -107,7 +107,7 @@
             <input
               v-if="isItemSelectable(item)"
               type="checkbox"
-              class="form-check-input"
+              class="form-check-input-v3"
               :checked="selected.includes(item[primaryKey])"
               @change="onSelectRow(($event.target as HTMLInputElement).checked, item[primaryKey])"
             >
@@ -163,7 +163,7 @@
             <span>{{ translations.recordsPerPage || $t('resourceList.pagination.recordsPerPage') }}</span>
             <select
               :value="pagination.limit"
-              class="form-select form-select-sm"
+              class="form-select form-control form-select-sm"
               @change="handlePerPageChange(Number(($event.target as HTMLSelectElement).value))"
             >
               <option

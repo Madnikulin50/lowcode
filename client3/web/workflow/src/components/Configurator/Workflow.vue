@@ -71,7 +71,7 @@
                 </li>
               </ul>
 
-              <div class="tab-content p-3">
+              <div class="tab-content  card p-3">
                 <div
                   v-show="activeTab === 'general'"
                   class="tab-pane active"
@@ -133,7 +133,7 @@
                       <input
                         id="wf-enabled"
                         v-model="localWorkflow.enabled"
-                        class="form-check-input"
+                        class="form-check-input-v3"
                         data-test-id="checkbox-enable-workflow"
                         type="checkbox"
                       >
@@ -150,7 +150,7 @@
                       <input
                         id="wf-sub"
                         v-model="localWorkflow.meta.subWorkflow"
-                        class="form-check-input"
+                        class="form-check-input-v3"
                         data-test-id="checkbox-sub-workflow"
                         type="checkbox"
                       >

@@ -205,12 +205,12 @@ export default {
             }
 
             if (this.page.meta.notifications.enabled) {
-              this.toastSuccess(this.$t(`notification:record.${isNew ? 'create' : 'update'}Success`))
+              this.toastSuccess(this.$t(`notification.record.${isNew ? 'create' : 'update'}Success`))
             }
           }
         }).catch(e => {
           this.processing = false
-          this.toastErrorHandler(this.$t(`notification:record.${isNew ? 'create' : 'update'}Failed`))(e)
+          this.toastErrorHandler(this.$t(`notification.record.${isNew ? 'create' : 'update'}Failed`))(e)
         })
     }, 500),
 
@@ -268,9 +268,9 @@ export default {
           } else {
             this.initialRecordState = this.record.clone()
             this.$router.push({ name: route, params: { ...this.$route.params, recordID: record.recordID, edit: false } })
-            this.toastSuccess(this.$t(`notification:record.${isNew ? 'create' : 'update'}Success`))
+            this.toastSuccess(this.$t(`notification.record.${isNew ? 'create' : 'update'}Success`))
           }
-        }).catch(this.toastErrorHandler(this.$t(`notification:record.${isNew ? 'create' : 'update'}Failed`)))
+        }).catch(this.toastErrorHandler(this.$t(`notification.record.${isNew ? 'create' : 'update'}Failed`)))
     }, 500),
 
     /**

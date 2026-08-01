@@ -27,6 +27,8 @@ import (
 	systemService "github.com/madnikulin50/lowcode/server/system/service"
 	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
+
+	"github.com/madnikulin50/lowcode/server/pkg/rag"
 )
 
 type (
@@ -84,6 +86,9 @@ var (
 	DefaultResourceTranslation ResourceTranslationsManagerService
 	DefaultDataPrivacy         DataPrivacyService
 	DefaultImageSearch         ImageSearchService
+	DefaultETL                 ETLService
+	DefaultRAG                 *RAGService
+	DefaultPagesRAG            *PagesRAGService
 
 	// wrapper around time.Now() that will aid service testing
 	now = func() *time.Time {
@@ -200,6 +205,16 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	DefaultAttachment = Attachment(DefaultObjectStore, dal.Service())
 	DefaultDataPrivacy = DataPrivacy()
 	DefaultImageSearch = ImageSearch(c.ImageSearch.Enabled)
+	DefaultETL = ETL()
+
+	ragStore, err := rag.NewStore("data/rag.db")
+	if err != nil {
+		panic(fmt.Errorf("rag store: %w", err))
+	}
+	DefaultRAG = NewRAGService(ragStore, rag.NewEmbedder("http://localhost:11434", "nomic-embed-text"))
+
+	DefaultPagesRAG = NewPagesRAGService(ragStore, rag.NewEmbedder("http://localhost:11434", "nomic-embed-text"), log, DefaultPage, DefaultNamespace, DefaultRecord)
+	DefaultPagesRAG.StartDailyCrawl(ctx)
 
 	RegisterIteratorProviders()
 

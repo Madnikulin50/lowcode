@@ -144,6 +144,7 @@ export interface ChartConfig {
   reports?: Array<Report>;
   colorScheme?: string;
   noAnimation?: boolean;
+  gradient?: 'lightToDark' | 'darkToLight' | '';
   toolbox?: ChartToolbox;
 }
 

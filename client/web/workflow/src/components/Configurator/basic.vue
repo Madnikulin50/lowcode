@@ -1,57 +1,72 @@
 <template>
   <div>
-    <div class="mb-3">
-      <label class="text-primary form-label">{{ $t('label.label') }}</label>
-      <input class="form-control" v-model="label" @input="emit('update-value', $event.target.value)" />
-    </div>
+    <b-form-group
+      :label="$t('general:label.label')"
+      label-class="text-primary"
+    >
+      <b-form-input
+        v-model="label"
+        @input="$emit('update-value', $event)"
+      />
+    </b-form-group>
+
+    <!-- <b-form-group
+      v-if="getSelectedItemConfigJSON"
+      label="Config"
+    >
+      <b-form-textarea
+        v-model="getSelectedItemConfigJSON"
+        rows="10"
+      />
+    </b-form-group> -->
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
+<script>
+import base from './base'
 
-const { t } = useI18n()
+export default {
+  extends: base,
 
-const props = defineProps({
-  item: { type: Object, default: () => ({}) },
-  edges: { type: Object, default: () => ({}) },
-  outEdges: { type: Number, default: 0 },
-  isSubworkflow: { type: Boolean, default: false },
-})
-
-const emit = defineEmits(['update-value', 'update-default-value'])
-
-const label = computed({
-  get () {
-    if (getSourceType.value) {
-      if (getSourceType.value === 'gatewayExclusive') {
-        const [edgeID, ...rest] = (props.item.node.value || '').split(' - ')
-        return rest.join(' - ')
-      }
-    }
-    return props.item.node.value
-  },
-  set (label) {
-    if (getSourceType.value) {
-      if (getSourceType.value === 'gatewayExclusive') {
-        const [edgeID, ...rest] = (props.item.node.value || '').split(' - ')
-        const newLabel = [edgeID]
-        if (label) {
-          newLabel.push(label)
+  computed: {
+    // Ignores exclusiveGateway indexes (#n)
+    label: {
+      get () {
+        if (this.getSourceType) {
+          if (this.getSourceType === 'gatewayExclusive') {
+            /* eslint-disable no-unused-vars */
+            const [edgeID, ...rest] = this.item.node.value.split(' - ')
+            return rest.join(' - ')
+          }
         }
-        label = newLabel.join(' - ')
-      }
-    }
-    props.item.node.value = label
-  },
-})
 
-const getSourceType = computed(() => {
-  const { source } = props.item.node
-  if (source && source.style) {
-    return source.style
-  }
-  return undefined
-})
+        return this.item.node.value
+      },
+
+      set (label) {
+        if (this.getSourceType) {
+          if (this.getSourceType === 'gatewayExclusive') {
+            /* eslint-disable no-unused-vars */
+            const [edgeID, ...rest] = this.item.node.value.split(' - ')
+            const newLabel = [edgeID]
+            if (label) {
+              newLabel.push(label)
+            }
+            label = newLabel.join(' - ')
+          }
+        }
+
+        this.item.node.value = label
+      },
+    },
+
+    getSourceType () {
+      const { source } = this.item.node
+      if (source && source.style) {
+        return source.style
+      }
+      return undefined
+    },
+  },
+}
 </script>

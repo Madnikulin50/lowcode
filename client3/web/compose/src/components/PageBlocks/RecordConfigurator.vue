@@ -61,7 +61,7 @@
         <div class="col-12 col-lg-6">
           <div class="mb-3">
             <label class="form-label text-primary">{{ $t('record.recordSelectorDisplayOptions') }}</label>
-            <select v-model="options.recordSelectorDisplayOption" class="form-select">
+            <select v-model="options.recordSelectorDisplayOption" class="form-select form-control">
               <option v-for="opt in recordDisplayOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
             </select>
           </div>
@@ -75,7 +75,7 @@
         <div class="col-12 col-lg-6">
           <div class="mb-3">
             <label class="form-label text-primary">{{ $t('record.recordSelectorAddRecordDisplayOption') }}</label>
-            <select v-model="options.recordSelectorAddRecordDisplayOption" class="form-select" :disabled="!options.recordSelectorShowAddRecordButton">
+            <select v-model="options.recordSelectorAddRecordDisplayOption" class="form-select form-control" :disabled="!options.recordSelectorShowAddRecordButton">
               <option v-for="opt in recordDisplayOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
             </select>
           </div>

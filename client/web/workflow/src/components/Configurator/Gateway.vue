@@ -1,67 +1,93 @@
 <template>
   <div>
-    <div v-if="['incl', 'excl'].includes(gatewayKind)" class="card flex-grow-1 border-bottom border-light rounded-0">
-      <div class="card-header p-0 mb-3">
-        <h5 class="mb-0">{{ t('configurator.configuration') }}</h5>
-      </div>
-      <div class="card-body p-0">
-        <var v-if="outEdges < 2">{{ t('steps.gateway.configurator.two-paths') }}</var>
-        <div v-else>
-          <div v-for="edge in gatewayEdges" :key="edge.id" class="mb-3">
-            <label class="text-primary form-label">{{ edge.value }}</label>
+    <b-card
+      v-if="['incl', 'excl'].includes(gatewayKind)"
+      class="flex-grow-1 border-bottom border-light rounded-0"
+    >
+      <b-card-header
+        header-tag="header"
+        class="p-0 mb-3"
+      >
+        <h5
+          class="mb-0"
+        >
+          {{ $t('configurator:configuration') }}
+        </h5>
+      </b-card-header>
+
+      <b-card-body
+        class="p-0"
+      >
+        <var
+          v-if="outEdges < 2"
+        >
+          {{ $t('steps:gateway.configurator.two-paths') }}
+        </var>
+
+        <div
+          v-else
+        >
+          <b-form-group
+            v-for="edge in gatewayEdges"
+            :key="edge.id"
+            :label="edge.value"
+            label-class="text-primary"
+          >
             <expression-editor
               v-model="edge.expr"
               show-line-numbers
               :show-popout="false"
               @input="updateEdge(edge.id, $event)"
             />
-          </div>
+          </b-form-group>
         </div>
-      </div>
-    </div>
+      </b-card-body>
+    </b-card>
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
+<script>
+import base from './base'
 import ExpressionEditor from '../ExpressionEditor.vue'
 
-const { t } = useI18n()
+export default {
+  components: {
+    ExpressionEditor,
+  },
 
-const props = defineProps({
-  item: { type: Object, default: () => ({}) },
-  edges: { type: Object, default: () => ({}) },
-  outEdges: { type: Number, default: 0 },
-  isSubworkflow: { type: Boolean, default: false },
-})
+  extends: base,
 
-const emit = defineEmits(['update-value', 'update-default-value'])
+  computed: {
+    gatewayKind () {
+      return this.item.config.ref
+    },
 
-const gatewayKind = computed(() => props.item.config.ref)
-
-const gatewayEdges = computed(() => {
-  const edges = []
-  if (['incl', 'excl'].includes(gatewayKind.value)) {
-    if (props.outEdges && props.item.node.edges) {
-      props.item.node.edges.forEach(({ id, source, target, value = '' }) => {
-        if (source.id === props.item.node.id) {
-          edges.push({
-            id,
-            source: source.id,
-            target: target.id,
-            value,
-            expr: props.edges[id]?.config?.expr || '',
+    gatewayEdges () {
+      const edges = []
+      if (['incl', 'excl'].includes(this.gatewayKind)) {
+        if (this.outEdges && this.item.node.edges) {
+          this.item.node.edges.forEach(({ id, source, target, value = '' }) => {
+            if (source.id === this.item.node.id) {
+              edges.push({
+                id,
+                source: source.id,
+                target: target.id,
+                value,
+                expr: this.edges[id].config.expr || '',
+              })
+            }
           })
         }
-      })
-    }
-  }
-  return edges
-})
+      }
+      return edges
+    },
+  },
 
-function updateEdge(id, expr) {
-  props.edges[id].config.expr = expr
-  window.dispatchEvent(new CustomEvent('change-detected'))
+  methods: {
+    updateEdge (id, expr) {
+      this.edges[id].config.expr = expr
+      this.$root.$emit('change-detected')
+    },
+  },
 }
 </script>

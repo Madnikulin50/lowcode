@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex">
     <button
-      class="btn btn-outline-secondary btn-lg flex-fill"
+      class="btn btn-outline-secondary flex-fill"
       @click="showModal = true"
     >
       {{ $t('label.import') }}

@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex flex-column w-100 py-2 overflow-hidden h-100">
     <Teleport to="#topbar-title">
-      {{ $t('title') }}
+      {{ $t('manage-view.label') }}
     </Teleport>
 
     <Teleport to="#topbar-tools">

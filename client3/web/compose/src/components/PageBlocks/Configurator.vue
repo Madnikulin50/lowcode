@@ -196,7 +196,7 @@
               <label class="form-label fw-semibold">{{ $t('magnifyLabel') }}</label>
               <select
                 v-model="block.options.magnifyOption"
-                class="form-select"
+                class="form-select form-control"
               >
                 <option
                   v-for="opt in magnifyOptions"
@@ -335,6 +335,16 @@
         <div class="row">
           <div class="col-12">
             <div class="mb-3">
+              <div class="form-check form-switch mb-2">
+                <label class="form-check-label fw-semibold" for="hideBrainButton">{{ $t('ai.hideBrainButton.label', 'Hide AI button on block') }}</label>
+                <input
+                  id="hideBrainButton"
+                  v-model="block.options.hideBrainButton"
+                  class="form-check-input"
+                  type="checkbox"
+                />
+              </div>
+
               <label class="form-label fw-semibold">{{ $t('ai.prompt.label') }}</label>
               <div class="input-group">
                 <c-rich-text-input
@@ -342,6 +352,9 @@
                   :placeholder="$t('ai.prompt.placehoder')"
                   body-class="form-control"
                   min-body-height="10rem"
+                  output-format="markdown"
+                  :to-markdown="htmlToMarkdown"
+                  :to-html="markdownToHtml"
                   :labels="{
                     urlPlaceholder: $t('content.urlPlaceholder'),
                     ok: $t('content.ok'),
@@ -386,12 +399,13 @@
 <script setup>
 import { ref, computed, onBeforeUnmount, onMounted, inject } from 'vue'
 import { compose, NoID } from 'corteza-lib/js/dist'
-import { handle, components } from 'corteza-lib/vue/dist'
+import { handle, components, composables } from 'corteza-lib/vue/dist'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
 import PageBlock from './index'
 import { useRoute } from 'vue-router'
 
 const { CInputExpression, CRichTextInput } = components
+import { htmlToMarkdown, markdownToHtml } from '../../lib/markdown'
 
 const props = defineProps({
   block: { type: compose.PageBlock, required: true },
@@ -402,8 +416,9 @@ const props = defineProps({
 })
 
 const route = useRoute()
+const $auth = inject('$auth')
 const $SystemAPI = inject('$SystemAPI')
-const { toastErrorHandler } = inject('$toast')
+const { toastErrorHandler } = composables.useToast()
 
 const roles = ref({ processing: false, options: [] })
 const abortableRequests = ref([])
@@ -437,6 +452,62 @@ const visibilityDocumentationURL = computed(() => {
   const [year, month] = VERSION.split('.')
   return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/integrator-guide/compose-configuration/page-layouts.html#visibility-condition`
 })
+
+const recordAutoCompleteParams = computed(() => processRecordAutoCompleteParams({ module: props.module, operators: true }))
+const visibilityAutoCompleteParams = computed(() => processVisibilityAutoCompleteParams({ module: props.module }))
+
+function processRecordAutoCompleteParams ({ module: mod, operators = false } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth.user?.properties?.()) || []
+
+  const recordSuggestions = isRecordPage.value && props.record
+    ? [
+        ...(['ownerID', 'recordID'].map(value => ({ interpolate: true, value }))),
+        {
+          interpolate: true,
+          value: 'record',
+          properties: [
+            { value: 'values', properties: Object.keys(props.record.values) || [] },
+            ...(props.record.properties || []),
+          ],
+        },
+      ]
+    : []
+
+  return [
+    ...recordSuggestions,
+    ...(operators ? ['AND', 'OR'] : []),
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
+
+function processVisibilityAutoCompleteParams ({ module: mod } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth.user?.properties?.()) || []
+
+  const recordSuggestions = isRecordPage.value && props.record
+    ? [
+        {
+          value: 'record',
+          properties: [
+            { value: 'values', properties: Object.keys(props.record.values) || [] },
+            ...(props.record.properties || []),
+          ],
+        },
+      ]
+    : []
+
+  return [
+    ...recordSuggestions,
+    { value: 'user', properties: userProperties },
+    { value: 'screen', properties: ['width', 'height', 'userAgent', 'breakpoint'] },
+    ...moduleFields,
+  ]
+}
 
 const currentRoles = computed({
   get: () => {

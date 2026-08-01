@@ -74,7 +74,7 @@
         <div class="col-12 col-lg-6">
           <div class="mb-3">
             <label class="form-label text-primary">{{ $t('recordOrganizer.onRecordClick') }}</label>
-            <select v-model="options.displayOption" class="form-select">
+            <select v-model="options.displayOption" class="form-select form-control">
               <option v-for="opt in displayOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
             </select>
           </div>

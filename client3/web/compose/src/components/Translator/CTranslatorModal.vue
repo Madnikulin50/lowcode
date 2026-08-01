@@ -11,7 +11,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ title }}</h5>
-            <button type="button" class="btn-close" @click="onHide"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="onHide"></button>
           </div>
           <div class="modal-body position-static p-0">
             <CTranslatorForm

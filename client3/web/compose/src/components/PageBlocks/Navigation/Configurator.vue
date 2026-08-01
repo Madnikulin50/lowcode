@@ -102,7 +102,7 @@
                       <tr>
                         <td />
                         <td class="align-middle">
-                          <select v-model="element.type" class="form-select form-select-sm">
+                          <select v-model="element.type" class="form-select form-control form-select-sm">
                             <option v-for="nt in navigationItemTypes" :key="nt.value" :value="nt.value">{{ nt.text }}</option>
                           </select>
                         </td>

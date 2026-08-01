@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
@@ -119,42 +119,45 @@ const customCSSClass = computed(() => props.block?.meta?.customCSSClass)
 const blockClass = computed(() => {
   return [
     'block',
-    { border: props.block.style.border?.enabled },
-    props.block.kind,
+    { border: props.block?.style?.border?.enabled },
+    props.block?.kind,
   ]
 })
 
 const isBlockMagnified = computed(() => {
   const { magnifiedBlockID } = route.query
-  return props.magnified && magnifiedBlockID === props.block.blockID
+  return props.magnified && magnifiedBlockID === props.block?.blockID
 })
 
 const isAnotherBlockMagnified = computed(() => {
   const { magnifiedBlockID } = route.query
-  return magnifiedBlockID && magnifiedBlockID !== props.block.blockID
+  return magnifiedBlockID && magnifiedBlockID !== props.block?.blockID
 })
 
 const showMagnifyButton = computed(() => {
-  return (props.block.options.magnifyOption || isBlockMagnified.value) && !isAnotherBlockMagnified.value
+  return (props.block?.options?.magnifyOption || isBlockMagnified.value) && !isAnotherBlockMagnified.value
 })
 
-const headerSet = computed(() => false)
-const toolbarSet = computed(() => false)
-const footerSet = computed(() => false)
+const slots = useSlots()
+
+const headerSet = computed(() => !!slots.header)
+const toolbarSet = computed(() => !!slots.toolbar)
+const footerSet = computed(() => !!slots.footer)
 
 const showHeader = computed(() => {
-  return [headerSet.value, props.block.title, props.block.description, props.block.options.showRefresh, showMagnifyButton.value].some(c => !!c)
+  return [headerSet.value, props.block?.title, props.block?.description, props.block?.options?.showRefresh, showMagnifyButton.value].some(c => !!c)
 })
 
 const showOptions = computed(() => {
-  return [props.block.options.magnifyOption, props.block.options.showRefresh, showMagnifyButton.value].some(c => !!c)
+  return [props.block?.options?.magnifyOption, props.block?.options?.showRefresh, showMagnifyButton.value].some(c => !!c)
 })
 
 const textClass = computed(() => {
-  return `text-${props.block.style?.variants?.headerText || ''}`
+  return `text-${props.block?.style?.variants?.headerText || ''}`
 })
 
 const magnifyParams = computed(() => {
+  if (!props.block) return
   const params = props.block.blockID === NoID ? { block: props.block } : { blockID: props.block.blockID }
   return isBlockMagnified.value ? undefined : params
 })

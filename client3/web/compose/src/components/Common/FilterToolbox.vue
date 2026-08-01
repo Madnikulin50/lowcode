@@ -32,7 +32,7 @@
             <select
               v-if="getPreparedField(filter.name)"
               v-model="filter.operator"
-              class="form-select form-select-sm d-flex field-operator w-100"
+              class="form-select form-control form-select-sm d-flex field-operator w-100"
               @change="onChange"
             >
               <option
@@ -153,7 +153,7 @@
               <select
                 v-else
                 v-model="internalFilter[groupIndex + 1].groupCondition"
-                class="form-select form-select-sm group-condition-select"
+                class="form-select form-control form-select-sm group-condition-select"
                 @change="onGroupConditionChange"
               >
                 <option

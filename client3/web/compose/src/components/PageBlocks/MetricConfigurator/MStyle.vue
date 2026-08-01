@@ -54,7 +54,7 @@
                 <div class="col d-flex align-items-center justify-content-center">
                   <select
                     v-model="t.variant"
-                    class="form-select"
+                    class="form-select form-control"
                   >
                     <option
                       v-for="v in variants"

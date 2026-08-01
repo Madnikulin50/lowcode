@@ -1,5 +1,5 @@
 <template>
-  <Wrap @refreshBlock="refresh">
+  <Wrap v-bind="$props" @refreshBlock="refresh">
     <div v-if="isProcessing" class="d-flex align-items-center justify-content-center h-100">
       <span class="spinner-border" />
     </div>
@@ -81,20 +81,24 @@ function refetchOnPrefilterValueChange({ detail: { fieldName } }) {
 async function refresh() {
   processing.value = true
   const { namespaceID } = props.namespace || {}
+  function guardFilter(f) {
+    if (!props.record && f && (f.includes('${record') || f.includes('${ownerID}'))) return ''
+    return f
+  }
   const additionalOptions = {
-    value: { filter: evaluatePrefilter(options.value.value.filter, {
+    value: { filter: evaluatePrefilter(guardFilter(options.value.value.filter), {
       record: props.record, user: $auth?.user || {},
       recordID: (props.record || {}).recordID || NoID,
       ownerID: (props.record || {}).ownedBy || NoID,
       userID: ($auth?.user || {}).userID || NoID,
     })},
-    minValue: { filter: evaluatePrefilter(options.value.minValue.filter, {
+    minValue: { filter: evaluatePrefilter(guardFilter(options.value.minValue.filter), {
       record: props.record, user: $auth?.user || {},
       recordID: (props.record || {}).recordID || NoID,
       ownerID: (props.record || {}).ownedBy || NoID,
       userID: ($auth?.user || {}).userID || NoID,
     })},
-    maxValue: { filter: evaluatePrefilter(options.value.maxValue.filter, {
+    maxValue: { filter: evaluatePrefilter(guardFilter(options.value.maxValue.filter), {
       record: props.record, user: $auth?.user || {},
       recordID: (props.record || {}).recordID || NoID,
       ownerID: (props.record || {}).ownedBy || NoID,

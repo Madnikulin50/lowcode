@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex">
     <button
-      class="btn btn-lg btn-outline-secondary flex-fill"
+      class="btn btn-outline-secondary flex-fill"
       @click="toggleModal"
     >
       {{ $t('label.export') }}
@@ -18,7 +18,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ $t('label.export') }}</h5>
-            <button type="button" class="btn-close" @click="toggleModal"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="toggleModal"></button>
           </div>
           <div class="modal-body">
             <template v-if="showExportModal">
@@ -61,7 +61,7 @@
                       <label class="form-label text-primary">{{ $t('recordList.export.rangeBy') }}</label>
                       <select
                         v-model="rangeBy"
-                        class="form-select"
+                        class="form-select form-control"
                         @change="getTotalCount()"
                       >
                         <option
@@ -79,7 +79,7 @@
                       <label class="form-label text-primary">{{ $t('recordList.export.dateRange') }}</label>
                       <select
                         v-model="range"
-                        class="form-select"
+                        class="form-select form-control"
                         @change="getTotalCount()"
                       >
                         <option
@@ -156,7 +156,7 @@
                 <label class="form-label text-primary">{{ $t('recordList.export.multiValueDelimiter.label') }}</label>
                 <select
                   v-model="multiValueDelimiter"
-                  class="form-select"
+                  class="form-select form-control"
                 >
                   <option
                     v-for="opt in multiValueDelimiterOptions"

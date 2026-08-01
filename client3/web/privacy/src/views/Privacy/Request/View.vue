@@ -51,7 +51,7 @@
           variant-ok="primary"
           size="lg"
           size-confirm="lg"
-          class="ms-2"
+          class="ms-2 ml-1"
           @confirmed="handleRequest('approved')"
         />
       </editor-toolbar>

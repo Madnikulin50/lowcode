@@ -115,10 +115,6 @@ HTTPServer: schema.#optionsGroup & {
 			defaultValue: "./webapp/public"
 			env:          "HTTP_WEBAPP_BASE_DIR"
 		}
-		webappBaseDir3: {
-			defaultValue: "./webapp3/public"
-			env:          "HTTP_WEBAPP_BASE_DIR3"
-		}
 		webappList: {
 			defaultValue: "admin,compose,workflow,reporter,privacy"
 			env:          "HTTP_WEBAPP_LIST"

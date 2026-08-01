@@ -8,7 +8,7 @@
       <small class="form-text">{{ $t('iframe.srcFieldDesc') }}</small>
       <select
         v-model="options.srcField"
-        class="form-select"
+        class="form-select form-control"
         :disabled="!fields.length"
       >
         <option value="">{{ $t('iframe.pickURLField') }}</option>

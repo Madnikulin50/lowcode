@@ -1,379 +1,691 @@
 <template>
-  <div v-if="!processing">
-    <div v-if="showFunctionList" class="card flex-grow-1 border-bottom border-light rounded-0">
-      <div class="card-header p-0 mb-3">
-        <h5 class="mb-0">{{ t('configurator.configuration') }}</h5>
-      </div>
-      <div v-if="functionTypes.length" class="card-body p-0">
-        <div class="mb-0">
-          <label class="text-primary form-label">{{ t('steps.function.configurator.type*') }}</label>
-          <c-input-select v-model="functionRef" :options="functionTypes" :get-option-key="getOptionTypeKey"
-            label="text" :selectable="f => !f.disabled" :reduce="f => f.value"
-            :filter="functionFilter" :placeholder="t('steps.function.configurator.select-function')"
-            @input="functionChanged" />
-        </div>
-        <p v-if="functionDescription" class="mt-3 mb-0">{{ functionDescription }}</p>
-      </div>
-    </div>
+  <div
+    v-if="!processing"
+  >
+    <b-card
+      v-if="showFunctionList"
+      class="flex-grow-1 border-bottom border-light rounded-0"
+    >
+      <b-card-header
+        header-tag="header"
+        class="p-0 mb-3"
+      >
+        <h5
+          class="mb-0"
+        >
+          {{ $t('configurator:configuration') }}
+        </h5>
+      </b-card-header>
+      <b-card-body
+        v-if="functionTypes.length"
+        class="p-0"
+      >
+        <b-form-group
+          :label="$t('steps:function.configurator.type*')"
+          label-class="text-primary"
+          class="mb-0"
+        >
+          <c-input-select
+            v-model="functionRef"
+            :options="functionTypes"
+            :get-option-key="getOptionTypeKey"
+            label="text"
+            :selectable="f => !f.disabled"
+            :reduce="f => f.value"
+            :filter="functionFilter"
+            :placeholder="$t('steps:function.configurator.select-function')"
+            @input="functionChanged"
+          />
+        </b-form-group>
 
-    <div v-if="args.length" class="card flex-grow-1 border-bottom border-light rounded-0">
-      <div class="card-header d-flex align-items-center">
-        <h5 class="mb-0">{{ t('steps.function.configurator.arguments') }}</h5>
-      </div>
-      <div class="card-body p-0">
-        <table class="table table-borderless table-hover mb-4">
-          <thead class="table-secondary">
-            <tr>
-              <th class="ps-3 py-2">{{ t('steps.function.configurator.name') }}</th>
-              <th class="pe-3 py-2">{{ t('steps.function.configurator.value') }}</th>
-              <th class="text-center" style="width: 3rem;"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(a, index) in args" :key="index"
-              :class="a._showDetails ? 'border-thick' : 'border-thick-transparent'"
-              @click="a._showDetails = !a._showDetails">
-              <td class="text-truncate pointer">
-                <var>{{ a.target }}{{ a.required ? '*' : '' }}</var>
-                <samp v-if="!isWhileIterator"> ({{ a.type }})</samp>
-              </td>
-              <td class="text-truncate pointer"><samp>{{ a[a.valueType] }}</samp></td>
-              <td class="text-center pointer">
-                <span v-if="a.valueType === 'expr'" class="circle-badge" :title="t('steps.function.configurator.expression')">e</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <p
+          v-if="functionDescription"
+          class="mt-3 mb-0"
+        >
+          {{ functionDescription }}
+        </p>
+      </b-card-body>
+    </b-card>
 
-    <div v-for="(a, index) in args" :key="'detail-' + index">
-      <div v-if="a._showDetails" class="mb-3 px-3">
-        <div class="arrow-up"></div>
-        <div class="card bg-light">
-          <div class="card-body px-4 pb-3">
-            <div v-if="(paramTypes[functionRef] && paramTypes[functionRef][a.target] || []).length > 1" class="mb-3">
-              <label class="text-primary form-label">{{ t('steps.function.configurator.type') }}</label>
-              <c-input-select v-model="a.type" :options="(paramTypes[functionRef] && paramTypes[functionRef][a.target] || [])"
-                :get-option-key="getOptionParamKey" :filter="argTypeFilter" :clearable="false"
-                @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
-            </div>
+    <b-card
+      v-if="args.length"
+      class="flex-grow-1 border-bottom border-light rounded-0"
+      body-class="p-0"
+    >
+      <b-card-header
+        header-tag="header"
+        class="d-flex align-items-center"
+      >
+        <h5
+          class="mb-0"
+        >
+          {{ $t('steps:function.configurator.arguments') }}
+        </h5>
+      </b-card-header>
 
-            <div class="mb-0">
-              <label class="d-flex align-items-center text-primary form-label">{{ t('steps.function.configurator.expression') }}
-                <a :href="documentationURL" target="_blank" class="d-flex align-items-center h6 mb-0 ms-1">
-                  <font-awesome-icon :icon="['far', 'question-circle']" />
-                </a>
-              </label>
-              <div v-if="a.valueType === 'value'">
-                <c-input-select v-if="a.target === 'workflow'" v-model="a.value" :options="workflowOptions"
-                  :get-option-label="getWorkflowLabel" :get-option-key="getWorkflowKey"
-                  :reduce="wf => a.type === 'ID' ? wf.workflowID : wf.handle"
-                  :placeholder="t('steps.function.configurator.search-workflow')" :filterable="false"
-                  @input="window.dispatchEvent(new CustomEvent('change-detected'))" @search="searchWorkflows" />
-                <c-input-select v-else-if="a.input && a.input.type === 'select'" v-model="a.value"
-                  :options="a.input.properties.options" :get-option-key="getOptionTypeKey" label="text"
-                  :filter="varFilter" :reduce="a => a.value"
-                  :placeholder="t('steps.function.configurator.option-select')" :clearable="false"
-                  @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
-                <div v-else-if="a.type === 'Boolean'" class="form-check">
-                  <input class="form-check-input" type="checkbox" v-model="a.value" true-value="true" false-value="false"
-                    :id="'arg-' + index" @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
-                  <label class="form-check-label" :for="'arg-' + index">{{ a.target }}</label>
+      <b-card-body
+        class="p-0"
+      >
+        <b-table
+          id="arguments"
+          fixed
+          borderless
+          hover
+          head-variant="outline-secondary"
+          details-td-class="bg-white"
+          :items="args"
+          :fields="argumentFields"
+          :tbody-tr-class="rowClass"
+          class="mb-4"
+          @row-clicked="item=>$set(item, '_showDetails', !item._showDetails)"
+        >
+          <template #cell(target)="{ item: a }">
+            <var>{{ `${a.target}${a.required ? '*' : ''}` }}</var>
+            <samp v-if="!isWhileIterator"> ({{ a.type }})</samp>
+          </template>
+
+          <template #cell(type)="{ item: a }">
+            <var>{{ a.type }}</var>
+          </template>
+
+          <template #cell(value)="{ item: a }">
+            <samp>{{ a[a.valueType] }}</samp>
+          </template>
+
+          <template #cell(expression)="{ item: a }">
+            <span
+              v-if="a.valueType === 'expr'"
+              v-b-tooltip
+              :title="$t('steps:function.configurator.expression')"
+              class="circle-badge"
+            >
+              e
+            </span>
+          </template>
+
+          <template #row-details="{ item: a, index }">
+            <div class="arrow-up" />
+
+            <b-card
+              class="bg-light"
+              body-class="px-4 pb-3"
+            >
+              <b-form-group
+                v-if="(paramTypes[functionRef][a.target] || []).length > 1"
+                label-class="text-primary"
+              >
+                <c-input-select
+                  v-model="a.type"
+                  :options="(paramTypes[functionRef][a.target] || [])"
+                  :get-option-key="getOptionParamKey"
+                  :filter="argTypeFilter"
+                  :clearable="false"
+                  @input="$root.$emit('change-detected')"
+                />
+              </b-form-group>
+
+              <b-form-group
+                label-class="d-flex align-items-center text-primary"
+                class="mb-0"
+              >
+                <div
+                  v-if="a.valueType === 'value'"
+                >
+                  <c-input-select
+                    v-if="a.target === 'workflow'"
+                    v-model="a.value"
+                    :options="workflowOptions"
+                    :get-option-label="getWorkflowLabel"
+                    :get-option-key="getWorkflowKey"
+                    :reduce="wf => a.type === 'ID' ? wf.workflowID : wf.handle"
+                    :placeholder="$t('steps:function.configurator.search-workflow')"
+                    :filterable="false"
+                    @input="$root.$emit('change-detected')"
+                    @search="searchWorkflows"
+                  />
+
+                  <c-input-select
+                    v-else-if="a.input.type === 'select'"
+                    v-model="a.value"
+                    :options="a.input.properties.options"
+                    :get-option-key="getOptionTypeKey"
+                    label="text"
+                    :filter="varFilter"
+                    :reduce="a => a.value"
+                    :placeholder="$t('steps:function.configurator.option-select')"
+                    :clearable="false"
+                    @input="$root.$emit('change-detected')"
+                  />
+
+                  <b-form-checkbox
+                    v-else-if="a.type === 'Boolean'"
+                    v-model="a.value"
+                    value="true"
+                    size="md"
+                    unchecked-value="false"
+                    @input="$root.$emit('change-detected')"
+                  >
+                    {{ a.target }}
+                  </b-form-checkbox>
+
+                  <expression-editor
+                    v-else
+                    v-model="a.value"
+                    :auto-complete="false"
+                    @open="openInEditor(index)"
+                    @input="$root.$emit('change-detected')"
+                  />
                 </div>
-                <expression-editor v-else v-model="a.value" :auto-complete="false" @open="openInEditor(index)"
-                  @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
-              </div>
-              <expression-editor v-else-if="a.valueType === 'expr'" v-model="a.expr" show-line-numbers
-                @open="openInEditor(index)" @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
-            </div>
 
-            <div v-if="!isWhileIterator" class="form-check form-switch float-end me-2 mt-2">
-              <input class="form-check-input" type="checkbox" v-model="a.valueType" true-value="expr" false-value="value"
-                :id="'switch-' + index" @change="valueTypeChanged($event.target.checked ? 'expr' : 'value', index)" />
-              <label class="form-check-label" :for="'switch-' + index">{{ t('steps.function.configurator.expression') }}</label>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                <expression-editor
+                  v-else-if="a.valueType === 'expr'"
+                  v-model="a.expr"
+                  show-line-numbers
+                  @open="openInEditor(index)"
+                  @input="$root.$emit('change-detected')"
+                />
+              </b-form-group>
 
-    <div v-if="expressionResults || results.length" class="card flex-grow-1 border-bottom border-light rounded-0">
-      <div class="card-header d-flex align-items-center">
-        <h5 class="mb-0">{{ t('steps.function.configurator.results') }}</h5>
-      </div>
-      <div v-if="results.length" class="card-body p-0">
-        <expression-table v-if="expressionResults" value-field="expr" :items="results" :fields="resultFields"
-          :types="fieldTypes" @remove="removeResult" @open-editor="openInEditor" />
-        <table v-else class="table table-borderless table-hover mb-4">
-          <thead class="table-secondary">
-            <tr>
-              <th class="ps-3">{{ t('steps.function.configurator.target') }}</th>
-              <th>{{ t('steps.function.configurator.type') }}</th>
-              <th class="pe-3">{{ t('steps.function.configurator.result') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(r, index) in results" :key="index"
-              :class="r._showDetails ? 'border-thick' : 'border-thick-transparent'"
-              @click="r._showDetails = !r._showDetails">
-              <td class="text-truncate pointer">{{ r.target }}</td>
-              <td class="text-truncate pointer"><var>{{ r.type }}</var></td>
-              <td class="position-relative pointer"><samp>{{ r.expr }}</samp></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+              <b-form-checkbox
+                v-if="!isWhileIterator"
+                v-model="a.valueType"
+                value="expr"
+                unchecked-value="value"
+                switch
+                size="sm"
+                class="float-right mr-2 mt-2"
+                @change="valueTypeChanged($event, index)"
+              >
+                <div
+                  class="d-flex"
+                >
+                  {{ $t('steps:function.configurator.expression') }}
+                  <a
+                    :href="documentationURL"
+                    target="_blank"
+                    class="d-flex align-items-center h6 mb-0 ml-1"
+                  >
+                    <font-awesome-icon
+                      :icon="['far', 'question-circle']"
+                      class="ml-1"
+                    />
+                  </a>
+                </div>
+              </b-form-checkbox>
+            </b-card>
+          </template>
+        </b-table>
+      </b-card-body>
+    </b-card>
 
-    <div v-for="(r, index) in results" :key="'result-detail-' + index">
-      <div v-if="!expressionResults && r._showDetails" class="mb-3 px-3">
-        <div class="arrow-up"></div>
-        <div class="card bg-light">
-          <div class="card-body px-4 pb-3">
-            <div class="mb-0">
-              <label class="text-primary form-label">{{ t('configurator.target') }}</label>
-              <input class="form-control" v-model="r.target"
-                @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <b-card
+      v-if="expressionResults || results.length"
+      class="flex-grow-1 border-bottom border-light rounded-0"
+      body-class="p-0"
+    >
+      <b-card-header
+        header-tag="header"
+        class="d-flex align-items-center"
+      >
+        <h5
+          class="mb-0"
+        >
+          {{ $t('steps:function.configurator.results') }}
+        </h5>
+      </b-card-header>
 
-    <Teleport to="#sidebar-footer">
-      <button v-if="expressionResults" class="btn btn-primary align-top border-0 ms-auto" @click="addResult()">
-        {{ t('steps.function.configurator.add-result') }}
-      </button>
-    </Teleport>
+      <b-card-body
+        v-if="results.length"
+        class="p-0"
+      >
+        <expression-table
+          v-if="expressionResults"
+          value-field="expr"
+          :items="results"
+          :fields="resultFields"
+          :types="fieldTypes"
+          @remove="removeResult"
+          @open-editor="openInEditor"
+        />
 
-    <div class="modal fade" id="expression-editor-function" tabindex="-1">
-      <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ t('editor.editor') }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body p-0">
-            <expression-editor v-model="currentExpressionValue" :lang="expressionEditor.lang" min-height="80vh"
-              font-size="18px" show-line-numbers :border="false" :show-popout="false" />
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ t('cancel') }}</button>
-            <button class="btn btn-primary" @click="saveExpression">{{ t('save') }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
+        <b-table
+          v-else
+          id="results"
+          fixed
+          borderless
+          hover
+          head-variant="outline-secondary"
+          details-td-class="bg-white"
+          class="mb-4"
+          :items="results"
+          :fields="resultFields"
+          :tbody-tr-class="rowClass"
+          @row-clicked="item=>$set(item, '_showDetails', !item._showDetails)"
+        >
+          <template #cell(type)="{ item: a }">
+            <var>{{ a.type }}</var>
+          </template>
+
+          <template #cell(value)="{ item: a }">
+            <samp>{{ a.expr }}</samp>
+          </template>
+
+          <template #row-details="{ item: a }">
+            <div class="arrow-up" />
+
+            <b-card
+              class="bg-light"
+              body-class="px-4 pb-3"
+            >
+              <b-form-group
+                class="mb-0"
+              >
+                <b-form-input
+                  v-model="a.target"
+                  :placeholder="$t('configurator:target')"
+                  @input="$root.$emit('change-detected')"
+                />
+              </b-form-group>
+            </b-card>
+          </template>
+        </b-table>
+      </b-card-body>
+    </b-card>
+
+    <portal to="sidebar-footer">
+      <b-button
+        v-if="expressionResults"
+        variant="primary"
+        class="align-top border-0 ml-auto"
+        @click="addResult()"
+      >
+        {{ $t('steps:function.configurator.add-result') }}
+      </b-button>
+    </portal>
+
+    <b-modal
+      id="expression-editor"
+      :visible="!!expressionEditor.currentExpression"
+      :title="$t('editor:editor')"
+      size="xl"
+      scrollable
+      :ok-title="$t('general:save')"
+      :cancel-title="$t('general:cancel')"
+      cancel-variant="outline-secondary"
+      body-class="p-0"
+      no-fade
+      @ok="saveExpression"
+      @hidden="resetExpression"
+    >
+      <expression-editor
+        v-model="currentExpressionValue"
+        :lang="expressionEditor.lang"
+        min-height="80vh"
+        font-size="18px"
+        show-line-numbers
+        :border="false"
+        :show-popout="false"
+      />
+    </b-modal>
   </div>
 </template>
 
-<script setup>
-import { ref, reactive, computed, watch, inject, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useToast } from 'corteza-lib/vue/dist'
+<script>
+import base from './base'
 import ExpressionTable from '../ExpressionTable.vue'
 import ExpressionEditor from '../ExpressionEditor.vue'
 import { objectSearchMaker, stringSearchMaker } from '../../lib/filter'
 import { getDocumentationURL } from '../../lib/version'
 
-const { t } = useI18n()
-const toast = useToast()
-const $AutomationAPI = inject('automationAPI', {})
+export default {
+  components: {
+    ExpressionEditor,
+    ExpressionTable,
+  },
 
-const props = defineProps({
-  item: { type: Object, default: () => ({}) },
-  edges: { type: Object, default: () => ({}) },
-  outEdges: { type: Number, default: 0 },
-  isSubworkflow: { type: Boolean, default: false },
-})
+  extends: base,
 
-const emit = defineEmits(['update-value', 'update-default-value'])
+  data () {
+    return {
+      processing: true,
 
-const processing = ref(true)
-const showFunctionList = ref(true)
-const expressionResults = ref(false)
-const functionRef = ref(undefined)
+      showFunctionList: true,
+      expressionResults: false,
+      functionRef: undefined,
 
-const functions = ref([])
-const args = ref([])
-const results = ref([])
-const fieldTypes = ref([])
-const paramTypes = ref({})
-const resultTypes = ref({})
-const expressionEditor = reactive({ currentIndex: undefined, currentExpression: undefined, lang: 'javascript' })
+      functions: [],
+      args: [],
+      results: [],
 
-const currentExpressionValue = computed({
-  get: () => expressionEditor.currentExpression ? expressionEditor.currentExpression[expressionEditor.currentExpression.valueType] : '',
-  set: (value) => { if (expressionEditor.currentExpression) expressionEditor.currentExpression[expressionEditor.currentExpression.valueType] = value },
-})
+      fieldTypes: [],
 
-const functionTypes = computed(() => functions.value.map(({ ref, meta, disabled = false }) => ({ value: ref, text: meta.short, disabled })))
+      paramTypes: {},
+      resultTypes: {},
 
-const functionDescription = computed(() => (functions.value.find(({ ref }) => ref === functionRef.value) || { meta: {} }).meta.description)
-
-const isWhileIterator = computed(() => props.item.config && props.item.config.kind === 'iterator' && functionRef.value === 'loopDo')
-
-const documentationURL = computed(() => getDocumentationURL('integrator-guide/expr/index.html'))
-
-const resultFields = [
-  { key: 'target', label: t('steps.function.configurator.target'), thClass: 'ps-3', tdClass: 'text-truncate pointer' },
-  { key: 'type', label: t('steps.function.configurator.type'), tdClass: 'text-truncate pointer' },
-  { key: 'expr', label: t('steps.function.configurator.result'), thClass: 'me-3', tdClass: 'position-relative pointer' },
-]
-
-const valueTypes = [
-  { text: t('steps.function.configurator.expression'), value: 'expr' },
-  { text: t('steps.function.configurator.constant'), value: 'value' },
-]
-
-const functionFilter = objectSearchMaker('text')
-const argTypeFilter = stringSearchMaker()
-const varFilter = objectSearchMaker('text')
-
-const workflowOptions = ref([])
-
-watch(() => props.item.config.stepID, async () => {
-  processing.value = true
-  props.item.config.arguments = props.item.config.arguments || []
-  props.item.config.results = props.item.config.results || []
-  await getFunctionTypes()
-  await getTypes()
-  functionRef.value = props.item.config.ref || functionRef.value
-  setParams(functionRef.value, true)
-  processing.value = false
-}, { immediate: true })
-
-watch(args, (newArgs) => {
-  props.item.config.arguments = newArgs.filter(({ value, source, expr }) => value || source || expr).map(arg => {
-    const argMapped = { target: arg.target, type: arg.type }
-    argMapped[arg.valueType] = arg[arg.valueType]
-    return argMapped
-  })
-}, { deep: true })
-
-watch(results, (newResults) => {
-  props.item.config.results = newResults.filter(({ target }) => target).map(({ target, expr, type }) => ({ target, type, expr }))
-}, { deep: true })
-
-async function getFunctionTypes() {
-  return $AutomationAPI.functionList()
-    .then(({ set }) => { functions.value = set.filter(({ kind = '' }) => kind !== 'iterator').sort((a, b) => a.meta.short.localeCompare(b.meta.short)) })
-}
-
-async function getTypes() {
-  return $AutomationAPI.typeList()
-    .then(({ set }) => { fieldTypes.value = set })
-}
-
-function setParams(fName, immediate = false) {
-  args.value = []
-  results.value = []
-
-  if (!immediate) window.dispatchEvent(new CustomEvent('change-detected'))
-
-  if (fName) {
-    const func = functions.value.find(({ ref }) => ref === fName)
-    if (!paramTypes.value[func.ref] && func.parameters) {
-      paramTypes.value[func.ref] = {}
-      func.parameters.forEach(({ name, types }) => { paramTypes.value[func.ref][name] = types || [] })
+      expressionEditor: {
+        currentIndex: undefined,
+        currentExpression: undefined,
+        lang: 'javascript',
+      },
     }
+  },
 
-    args.value = (func.parameters || []).map(param => {
-      const arg = (props.item.config.arguments || []).find(({ target }) => target === param.name) || {}
-      const { input = {} } = (param.meta || {}).visual || {}
-      return {
-        name: param.name,
-        target: param.name,
-        type: arg.type || (paramTypes.value[func.ref] ? paramTypes.value[func.ref][param.name]?.[0] : undefined),
-        valueType: arg.expr !== undefined ? 'expr' : 'value',
-        value: arg.value || input.default || null,
-        expr: arg.expr || arg.source || null,
-        required: param.required || false,
-        input,
-        _showDetails: false,
-      }
-    })
+  computed: {
+    // Used for expression editor modal
+    currentExpressionValue: {
+      get () {
+        const { currentExpression } = this.expressionEditor
+        return currentExpression ? currentExpression[currentExpression.valueType] : ''
+      },
 
-    if (!expressionResults.value) {
-      if (!resultTypes.value[func.ref] && func.results) {
-        resultTypes.value[func.ref] = {}
-        func.results.forEach(({ name, types }) => { resultTypes.value[func.ref][name] = types || [] })
-      }
-      results.value = (func.results || []).map(result => {
-        const res = (props.item.config.results || []).find(({ expr }) => expr === result.name) || {}
-        return {
-          name: result.name,
-          valueType: 'expr',
-          target: res.target || undefined,
-          type: resultTypes.value[func.ref] ? resultTypes.value[func.ref][result.name]?.[0] : undefined,
-          expr: res.expr || result.name,
-          _showDetails: false,
+      set (value) {
+        const { currentExpression } = this.expressionEditor
+
+        if (currentExpression) {
+          currentExpression[currentExpression.valueType] = value
         }
+      },
+    },
+
+    functionTypes () {
+      return this.functions.map(({ ref, meta, disabled = false }) => ({ value: ref, text: meta.short, disabled }))
+    },
+
+    argumentFields () {
+      return [
+        {
+          key: 'target',
+          label: this.$t('steps:function.configurator.name'),
+          thClass: 'pl-3 py-2',
+          tdClass: 'text-truncate pointer',
+        },
+        {
+          key: 'value',
+          thClass: 'pr-3 py-2',
+          tdClass: 'text-truncate pointer',
+        },
+        {
+          key: 'expression',
+          label: '',
+          thClass: 'text-center',
+          tdClass: 'text-center pointer',
+          thStyle: {
+            width: '3rem',
+          },
+        },
+      ]
+    },
+
+    resultFields () {
+      return [
+        {
+          key: 'target',
+          label: this.$t('steps:function.configurator.target'),
+          thClass: 'pl-3',
+          tdClass: 'text-truncate pointer',
+        },
+        {
+          key: 'type',
+          label: this.$t('steps:function.configurator.type'),
+          tdClass: 'text-truncate pointer',
+        },
+        {
+          key: 'expr',
+          label: this.$t('steps:function.configurator.result'),
+          thClass: 'mr-3',
+          tdClass: 'position-relative pointer',
+        },
+      ]
+    },
+
+    valueTypes () {
+      return [
+        { text: this.$t('steps:function.configurator.expression'), value: 'expr' },
+        { text: this.$t('steps:function.configurator.constant'), value: 'value' },
+      ]
+    },
+
+    defaultOptions () {
+      return [{ value: null, text: this.$t('steps:function.configurator.option-select'), disabled: true }]
+    },
+
+    functionDescription () {
+      return (this.functions.find(({ ref }) => ref === this.functionRef) || { meta: {} }).meta.description
+    },
+
+    isWhileIterator () {
+      if (this.item.config) {
+        return this.item.config.kind === 'iterator' && this.functionRef === 'loopDo'
+      }
+      return false
+    },
+
+    documentationURL () {
+      return getDocumentationURL('integrator-guide/expr/index.html')
+    },
+  },
+
+  watch: {
+    'item.config.stepID': {
+      immediate: true,
+      async handler () {
+        this.processing = true
+
+        this.$set(this.item.config, 'arguments', this.item.config.arguments || [])
+        this.$set(this.item.config, 'results', this.item.config.results || [])
+
+        await this.getFunctionTypes()
+        await this.getTypes()
+
+        this.functionRef = this.item.config.ref || this.functionRef
+
+        this.setParams(this.functionRef, true)
+
+        this.processing = false
+      },
+    },
+
+    args: {
+      deep: true,
+      handler (args) {
+        this.item.config.arguments = args.filter(({ value, source, expr }) => value || source || expr)
+          .map(arg => {
+            const argMapped = {
+              target: arg.target,
+              type: arg.type,
+            }
+
+            argMapped[arg.valueType] = arg[arg.valueType]
+
+            return argMapped
+          })
+      },
+    },
+
+    results: {
+      deep: true,
+      handler (res) {
+        this.item.config.results = res.filter(({ target }) => target).map(({ target, expr, type }) => ({ target, type, expr }))
+      },
+    },
+  },
+
+  methods: {
+    functionFilter: objectSearchMaker('text'),
+    argTypeFilter: stringSearchMaker(),
+    varFilter: objectSearchMaker('text'),
+
+    setParams (fName, immediate = false) {
+      this.args = []
+      this.results = []
+
+      if (!immediate) {
+        this.$root.$emit('change-detected')
+      }
+
+      if (fName) {
+        const func = this.functions.find(({ ref }) => ref === fName)
+
+        // Set parameters
+        if (!this.paramTypes[func.ref] && func.parameters) {
+          this.paramTypes[func.ref] = {}
+          func.parameters.forEach(({ name, types }) => {
+            this.paramTypes[func.ref][name] = types || []
+          })
+        }
+
+        this.args = func.parameters?.map(param => {
+          const arg = this.item.config.arguments.find(({ target }) => target === param.name) || {}
+          const { input = {} } = (param.meta || {}).visual || {}
+          return {
+            name: param.name,
+            target: param.name,
+            type: arg.type || this.paramTypes[func.ref][param.name][0],
+            valueType: arg.expr !== undefined ? 'expr' : 'value',
+            value: arg.value || input.default || null,
+            expr: arg.expr || arg.source || null,
+            required: param.required || false,
+            input,
+          }
+        }) || []
+
+        // Set results
+        if (!this.expressionResults) {
+          if (!this.resultTypes[func.ref] && func.results) {
+            this.resultTypes[func.ref] = {}
+            func.results.forEach(({ name, types }) => {
+              this.resultTypes[func.ref][name] = types || []
+            })
+          }
+
+          this.results = func.results?.map(result => {
+            const res = this.item.config.results.find(({ expr }) => expr === result.name) || {}
+            return {
+              name: result.name,
+              valueType: 'expr',
+              target: res.target || undefined,
+              type: this.resultTypes[func.ref][result.name][0],
+              expr: res.expr || result.name,
+            }
+          }) || []
+        } else {
+          this.results = this.item.config.results.map(({ target, type, expr }) => {
+            return {
+              valueType: 'expr',
+              target,
+              type,
+              expr,
+            }
+          }) || []
+        }
+      }
+    },
+
+    openInEditor (index = -1) {
+      this.expressionEditor = {
+        currentIndex: index >= -1 ? index : undefined,
+        currentExpression: index >= 0 ? { ...this.args[index] } : undefined,
+      }
+
+      this.expressionEditor.lang = this.expressionEditor.currentExpression.valueType === 'expr' ? 'javascript' : 'text'
+    },
+
+    saveExpression () {
+      const { currentIndex = -1, currentExpression } = this.expressionEditor
+      if (currentIndex >= 0) {
+        this.args[currentIndex] = currentExpression
+        this.$set(this.args, currentIndex, currentExpression)
+        this.$root.$emit('change-detected')
+      }
+
+      this.resetExpression()
+    },
+
+    resetExpression () {
+      this.expressionEditor = {
+        currentIndex: undefined,
+        currentExpression: undefined,
+        lang: 'javascript',
+      }
+    },
+
+    async getFunctionTypes () {
+      return this.$AutomationAPI.functionList()
+        .then(({ set }) => {
+          this.functions = set.filter(({ kind = '' }) => kind !== 'iterator').sort((a, b) => a.meta.short.localeCompare(b.meta.short))
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:failed-fetch-functions')))
+    },
+
+    async getTypes () {
+      return this.$AutomationAPI.typeList()
+        .then(({ set }) => {
+          this.fieldTypes = set
+        })
+        .catch(this.toastErrorHandler(this.$t('notification:fetch-types-failed')))
+    },
+
+    functionChanged (functionRef) {
+      this.item.config.ref = functionRef
+
+      this.setParams(functionRef)
+
+      this.$emit('update-default-value', {
+        value: (this.functionTypes.find(({ value }) => value === functionRef) || { meta: {} }).text,
+        force: !this.item.node.value,
       })
-    }
-  }
-}
+    },
 
-function openInEditor(index = -1) {
-  expressionEditor.currentIndex = index >= -1 ? index : undefined
-  expressionEditor.currentExpression = index >= 0 ? { ...args.value[index] } : undefined
-  expressionEditor.lang = expressionEditor.currentExpression?.valueType === 'expr' ? 'javascript' : 'text'
+    valueTypeChanged (valueType, index) {
+      const oldType = valueType === 'value' ? 'expr' : 'value'
+      this.args[index][valueType] = this.args[index][oldType]
 
-  const modal = new bootstrap.Modal(document.getElementById('expression-editor-function'))
-  modal.show()
-}
+      if (!this.args[index].value && this.args[index].type === 'Boolean' && valueType === 'value') {
+        this.args[index].value = 'false'
+      }
 
-function saveExpression() {
-  const { currentIndex = -1, currentExpression } = expressionEditor
-  if (currentIndex >= 0) {
-    args.value[currentIndex] = currentExpression
-    window.dispatchEvent(new CustomEvent('change-detected'))
-  }
-  expressionEditor.currentIndex = undefined
-  expressionEditor.currentExpression = undefined
-  expressionEditor.lang = 'javascript'
-  const modal = bootstrap.Modal.getInstance(document.getElementById('expression-editor-function'))
-  if (modal) modal.hide()
-}
+      this.$root.$emit('change-detected')
+    },
 
-function functionChanged(newRef) {
-  props.item.config.ref = newRef
-  setParams(newRef)
-  emit('update-default-value', {
-    value: (functionTypes.value.find(({ value }) => value === newRef) || {}).text,
-    force: !props.item.node.value,
-  })
-}
+    rowClass (item, type) {
+      return item._showDetails && type === 'row' ? 'border-thick' : 'border-thick-transparent'
+    },
 
-function valueTypeChanged(valueType, index) {
-  const oldType = valueType === 'value' ? 'expr' : 'value'
-  args.value[index][valueType] = args.value[index][oldType]
-  if (!args.value[index].value && args.value[index].type === 'Boolean' && valueType === 'value') {
-    args.value[index].value = 'false'
-  }
-  window.dispatchEvent(new CustomEvent('change-detected'))
-}
+    addResult () {
+      this.results.push({
+        target: '',
+        expr: '',
+        type: 'Any',
+        _showDetails: true,
+      })
+      this.$root.$emit('change-detected')
+    },
 
-function addResult() {
-  results.value.push({ target: '', expr: '', type: 'Any', _showDetails: true })
-  window.dispatchEvent(new CustomEvent('change-detected'))
-}
+    removeResult (index) {
+      this.results.splice(index, 1)
+      this.$root.$emit('change-detected')
+    },
 
-function removeResult(index) {
-  results.value.splice(index, 1)
-  window.dispatchEvent(new CustomEvent('change-detected'))
-}
+    getTypeDescription (type) {
+      // This will be moved to backend field type information
+      const typeDescriptions = {
+        ID: 'Make sure to provide the ID in double quotes if you\'re using a literal value. Example "123"',
+      }
 
-function getOptionTypeKey({ value }) { return value }
-function getOptionEWorkflowLabelKey({ workflowID }) { return workflowID }
-function getOptionParamKey(type) { return type }
-function getWorkflowLabel({ workflowID, handle, meta = {} }) { return meta.name || handle || workflowID }
-function getWorkflowKey({ workflowID, handle }) { return handle || workflowID }
+      return typeDescriptions[type]
+    },
 
-function searchWorkflows(query = '', loading) {
-  if (loading) loading(true)
-  $AutomationAPI.workflowList({ query, subWorkflow: 2 }).then(({ set }) => { workflowOptions.value = set.map(m => Object.freeze(m)) })
-    .finally(() => { if (loading) loading(false) })
+    getOptionTypeKey ({ value }) {
+      return value
+    },
+
+    getOptionEWorkflowLabelKey ({ workflowID }) {
+      return workflowID
+    },
+
+    getOptionParamKey (type) {
+      return type
+    },
+  },
 }
 </script>

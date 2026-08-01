@@ -1,22 +1,19 @@
 <template>
   <div class="c-toolbar d-flex flex-column flex-sm-row bg-white gap-1 flex-wrap">
     <div
-      class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap"
+      class="d-flex align-items-center gap-1 flex-wrap"
     >
       <slot name="start" />
     </div>
 
     <div
-      class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ms-sm-auto"
+      class="d-flex align-items-center gap-1 flex-wrap"
     >
-      <slot
-        name="center"
-        class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ms-sm-auto"
-      />
+      <slot name="center" />
     </div>
 
     <div
-      class="d-flex align-items-center flex-sm-grow-0 flex-sm-shrink-0 flex-fill fill-width gap-1 flex-wrap ms-sm-auto"
+      class="d-flex align-items-center gap-1 flex-wrap"
     >
       <slot name="end" />
     </div>
@@ -36,5 +33,11 @@
 
 .fill-width > * {
   flex: 1;
+}
+
+@media (min-width: 576px) {
+  .c-toolbar > div:last-child {
+    margin-left: auto !important;
+  }
 }
 </style>

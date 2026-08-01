@@ -1,4 +1,4 @@
-// Corteza API location
+// LowCoooode API location
 window.CortezaAPI = 'https://api.cortezaproject.your-domain.tld'
 window.CortezaDiscoveryAPI = 'https://api.searcher.your-domain.tld'
 

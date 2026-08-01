@@ -17,7 +17,7 @@
       <label class="form-label text-primary">{{ $t('datasources.source') }}</label>
       <select
         v-model="step.aggregate.source"
-        class="form-select"
+        class="form-select form-control"
         @change="reset"
       >
         <option :value="undefined">{{ $t('label.none') }}</option>

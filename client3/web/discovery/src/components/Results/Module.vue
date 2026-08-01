@@ -12,7 +12,7 @@
           <span>{{ hit.value?.name || hit.value?.handle }}</span>
         </h5>
         <span class="text-nowrap">
-          <span v-if="Object.keys(hit.value?.labels || {}).includes('federation')" class="badge border border-secondary me-1 h5 p-2 mb-0">
+          <span v-if="Object.keys(hit.value?.labels || {}).includes('federation')" class="badge border border-secondary text-white me-1 h5 p-2 mb-0">
             {{ t('federated') }}
           </span>
           <span class="rounded-circle bg-light text-dark d-inline-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">

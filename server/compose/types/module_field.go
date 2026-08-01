@@ -386,7 +386,7 @@ func (f *ModuleField) encodeTranslationsMetaPrefix() (out locale.ResourceTransla
 	out = locale.ResourceTranslationSet{}
 	t := &locale.ResourceTranslation{
 		Resource: f.ResourceTranslation(),
-		Key:      LocaleKeyModuleFieldMetaHintView.Path,
+		Key:      LocaleKeyModuleFieldMetaPrefix.Path,
 	}
 	if v := f.getOptionKey("prefix"); v != nil {
 		t.Msg = cast.ToString(v)
@@ -399,7 +399,7 @@ func (f *ModuleField) encodeTranslationsMetaSuffix() (out locale.ResourceTransla
 	out = locale.ResourceTranslationSet{}
 	t := &locale.ResourceTranslation{
 		Resource: f.ResourceTranslation(),
-		Key:      LocaleKeyModuleFieldMetaHintView.Path,
+		Key:      LocaleKeyModuleFieldMetaSuffix.Path,
 	}
 	if v := f.getOptionKey("suffix"); v != nil {
 		t.Msg = cast.ToString(v)

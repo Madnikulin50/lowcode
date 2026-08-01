@@ -205,6 +205,10 @@
         <div
           class="d-flex align-items-center"
         >
+          <font-awesome-icon
+            :icon="moduleIcon(m)"
+            class="me-2"
+          />
           {{ m.name }}
           <h5
             class="ms-2 mb-0"
@@ -346,5 +350,12 @@ function handleDelete (module) {
       toastSuccess(t('notification.module.deleted'))
       filterList()
     })
+}
+
+function moduleIcon (m) {
+  const type = m.config?.type || 'basic'
+  if (type === 'datasource') return ['fas', 'cube']
+  if (type === 'dbref') return ['fas', 'code-branch']
+  return ['fas', 'database']
 }
 </script>

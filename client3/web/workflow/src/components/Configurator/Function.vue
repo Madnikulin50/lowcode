@@ -77,7 +77,7 @@
                   :placeholder="t('steps.function.configurator.option-select')" :clearable="false"
                   @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
                 <div v-else-if="a.type === 'Boolean'" class="form-check">
-                  <input class="form-check-input" type="checkbox" v-model="a.value" true-value="true" false-value="false"
+                  <input class="form-check-input-v3" type="checkbox" v-model="a.value" true-value="true" false-value="false"
                     :id="'arg-' + index" @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
                   <label class="form-check-label" :for="'arg-' + index">{{ a.target }}</label>
                 </div>
@@ -89,7 +89,7 @@
             </div>
 
             <div v-if="!isWhileIterator" class="form-check form-switch float-end me-2 mt-2">
-              <input class="form-check-input" type="checkbox" v-model="a.valueType" true-value="expr" false-value="value"
+              <input class="form-check-input-v3" type="checkbox" v-model="a.valueType" true-value="expr" false-value="value"
                 :id="'switch-' + index" @change="valueTypeChanged($event.target.checked ? 'expr' : 'value', index)" />
               <label class="form-check-label" :for="'switch-' + index">{{ t('steps.function.configurator.expression') }}</label>
             </div>

@@ -37,7 +37,7 @@
 
         <div class="mb-0">
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" v-model="item.triggers.enabled"
+            <input class="form-check-input-v3" type="checkbox" v-model="item.triggers.enabled"
               :disabled="isSubworkflow && !item.triggers.enabled" id="trigger-enabled" @change="enabledChanged()" />
             <label class="form-check-label text-primary" for="trigger-enabled">{{ t('enabled') }}</label>
           </div>

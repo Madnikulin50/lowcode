@@ -10,6 +10,25 @@ import {
 } from './util'
 import { getColorschemeColors } from '../../../shared'
 
+function lightenColor (color: string, percent: number): string {
+  if (!color) return color
+  const hex = color.replace('#', '')
+  if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+    const r = Math.min(255, parseInt(hex.slice(0, 2), 16) + Math.round(2.55 * percent))
+    const g = Math.min(255, parseInt(hex.slice(2, 4), 16) + Math.round(2.55 * percent))
+    const b = Math.min(255, parseInt(hex.slice(4, 6), 16) + Math.round(2.55 * percent))
+    return `rgb(${r},${g},${b})`
+  }
+  const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+  if (m) {
+    const r = Math.min(255, parseInt(m[1]) + Math.round(2.55 * percent))
+    const g = Math.min(255, parseInt(m[2]) + Math.round(2.55 * percent))
+    const b = Math.min(255, parseInt(m[3]) + Math.round(2.55 * percent))
+    return `rgb(${r},${g},${b})`
+  }
+  return color
+}
+
 /**
  * Chart represents a generic chart, such as a bar chart, line chart, ...
  */
@@ -43,8 +62,39 @@ export default class Chart extends BaseChart {
   }
 
   makeOptions (data: any): any {
-    const { reports = [], colorScheme, noAnimation = false, toolbox } = this.config
+    const { reports = [], colorScheme, noAnimation = false, toolbox, gradient = '' } = this.config
     const { saveAsImage, timeline = '' } = toolbox || {}
+    const schemeColors = getColorschemeColors(colorScheme, data.customColorSchemes)
+
+    function gradientItemStyle (seriesColor: string, type: string): object | undefined {
+      if (!gradient) return undefined
+      if (['pie', 'doughnut'].includes(type)) {
+        const innerColor = gradient === 'darkToLight' ? seriesColor : lightenColor(seriesColor, 50)
+        const outerColor = gradient === 'darkToLight' ? lightenColor(seriesColor, 50) : seriesColor
+        return {
+          color: {
+            type: 'radial',
+            x: 0.5, y: 0.5, r: 0.5,
+            colorStops: [
+              { offset: 0, color: innerColor },
+              { offset: 1, color: outerColor },
+            ],
+          },
+        }
+      }
+      const topColor = gradient === 'darkToLight' ? seriesColor : lightenColor(seriesColor, 50)
+      const bottomColor = gradient === 'darkToLight' ? lightenColor(seriesColor, 50) : seriesColor
+      return {
+        color: {
+          type: 'linear',
+          x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: topColor },
+            { offset: 1, color: bottomColor },
+          ],
+        },
+      }
+    }
 
     const options: any = {
       animation: !noAnimation,
@@ -222,7 +272,11 @@ export default class Chart extends BaseChart {
             },
           },
           data: labels.map((name: string, i: number) => {
-            return { name, value: data[i] }
+            const item: any = { name, value: data[i] }
+            if (gradient) {
+              item.itemStyle = gradientItemStyle(schemeColors[i % schemeColors.length], type)
+            }
+            return item
           }),
           top: offset?.isDefault ? undefined : offset?.top,
           right: offset?.isDefault ? undefined : offset?.right,
@@ -284,6 +338,9 @@ export default class Chart extends BaseChart {
           areaStyle: {
             opacity: fill ? 0.7 : 0,
           },
+          ...(gradient && type === 'bar' ? {
+            itemStyle: gradientItemStyle(schemeColors[index % schemeColors.length], type),
+          } : {}),
           symbol,
           symbolSize: type === 'scatter' ? 16 : 10,
           tooltip: {

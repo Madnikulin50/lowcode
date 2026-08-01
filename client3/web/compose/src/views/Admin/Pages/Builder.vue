@@ -208,6 +208,7 @@
 
     <div
       id="createBlockSelector"
+      ref="modalCreateBlockSelectorEl"
       class="modal fade"
       tabindex="-1"
     >
@@ -239,17 +240,15 @@
     </div>
 
     <div
+      ref="modalCreatorEl"
       class="modal fade"
-      :class="{ show: showCreator }"
-      :style="{ display: showCreator ? 'block' : 'none' }"
       tabindex="-1"
-      style="background-color: rgba(0,0,0,0.5);"
     >
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header p-3 pb-0 border-bottom-0">
             <div class="d-flex gap-1 align-items-center">
-              <h5 class="modal-title mb-0">
+              <h5 class="modal-title mb-3">
                 {{ $t('block.general.title') }}
               </h5>
               <font-awesome-icon
@@ -262,7 +261,7 @@
             <button
               type="button"
               class="btn-close"
-              @click="editor = undefined"
+              data-bs-dismiss="modal"
             />
           </div>
            <div class="modal-body px-3 pb-3 pt-0 border-top-0 position-static">
@@ -279,7 +278,7 @@
           <div class="modal-footer">
             <button
               class="btn btn-outline-secondary"
-              @click="editor = undefined"
+              data-bs-dismiss="modal"
             >
               {{ $t('block.general.label.cancel') }}
             </button>
@@ -296,17 +295,15 @@
     </div>
 
     <div
+      ref="modalEditorEl"
       class="modal fade"
-      :class="{ show: showEditor }"
-      :style="{ display: showEditor ? 'block' : 'none' }"
       tabindex="-1"
-      style="background-color: rgba(0,0,0,0.5);"
     >
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header p-3 pb-0 border-bottom-0">
             <div class="d-flex gap-1 align-items-center">
-              <h5 class="modal-title mb-0">
+              <h5 class="modal-title mb-3">
                 {{ $t('changeBlock') }}
               </h5>
               <font-awesome-icon
@@ -319,7 +316,7 @@
             <button
               type="button"
               class="btn-close"
-              @click="editor = undefined"
+              data-bs-dismiss="modal"
             />
           </div>
            <div class="modal-body px-3 pb-3 pt-0 border-top-0 position-static">
@@ -347,7 +344,7 @@
             <div>
               <button
                 class="btn btn-outline-secondary me-2"
-                @click="editor = undefined"
+                data-bs-dismiss="modal"
               >
                 {{ $t('label.cancel') }}
               </button>
@@ -367,11 +364,9 @@
     </div>
 
     <div
+      ref="modalScenariosEl"
       class="modal fade"
-      :class="{ show: scenarios.showConfigurator }"
-      :style="{ display: scenarios.showConfigurator ? 'block' : 'none' }"
       tabindex="-1"
-      style="background-color: rgba(0,0,0,0.5);"
     >
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
@@ -382,7 +377,7 @@
             <button
               type="button"
               class="btn-close"
-              @click="scenarios.showConfigurator = false"
+              data-bs-dismiss="modal"
             />
           </div>
           <div class="modal-body py-3">
@@ -412,13 +407,13 @@
           <div class="modal-footer">
             <button
               class="btn btn-outline-secondary"
-              @click="scenarios.showConfigurator = false"
+              data-bs-dismiss="modal"
             >
               {{ $t('label.cancel') }}
             </button>
             <button
               class="btn btn-primary"
-              @click="scenarios.showConfigurator = false"
+              data-bs-dismiss="modal"
             >
               {{ $t('scenarios.scenarios.save') }}
             </button>
@@ -522,6 +517,7 @@ import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Pag
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import { handle } from 'corteza-lib/vue/dist'
 import ScenarioConfigurator from 'corteza-webapp-compose/src/components/Public/Page/Scenarios'
+import { Modal } from 'bootstrap'
 
 const { t } = useI18n()
 const store = useStore()
@@ -551,6 +547,15 @@ const scenarios = ref({
   currentIndex: undefined,
   selected: undefined,
 })
+
+const modalCreateBlockSelectorEl = ref(null)
+const modalCreatorEl = ref(null)
+const modalEditorEl = ref(null)
+const modalScenariosEl = ref(null)
+let blockSelectorModal = null
+let blockCreatorModal = null
+let blockEditorModal = null
+let scenariosModal = null
 
 const pagesStore = computed(() => store.getters['page/set'])
 const getModuleByID = computed(() => store.getters['module/getByID'])
@@ -640,8 +645,8 @@ const blockEditorOkDisabled = computed(() => {
 })
 
 const currentScenarios = computed({
-  get () { return page.value ? (page.value.scenarios || []) : [] },
-  set (val) { if (page.value) page.value.scenarios = val },
+  get () { return page.value ? (page.value.meta.scenarios || []) : [] },
+  set (val) { if (page.value) page.value.meta.scenarios = val },
 })
 
 const currentScenario = computed({
@@ -675,6 +680,21 @@ watch(() => props.pageID, (pageID) => {
   }).catch(() => { processingLayout.value = false })
 }, { immediate: true })
 
+watch(showCreator, (val) => {
+  if (!blockCreatorModal) return
+  val ? blockCreatorModal.show() : blockCreatorModal.hide()
+})
+
+watch(showEditor, (val) => {
+  if (!blockEditorModal) return
+  val ? blockEditorModal.show() : blockEditorModal.hide()
+})
+
+watch(() => scenarios.value.showConfigurator, (val) => {
+  if (!scenariosModal) return
+  val ? scenariosModal.show() : scenariosModal.hide()
+})
+
 watch(() => page.value ? page.value.handle : undefined, (handle, oldHandle) => {
   if (handle !== oldHandle) setPageHandle(handle)
 }, { immediate: true })
@@ -688,12 +708,32 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  blockSelectorModal?.hide()
+  blockCreatorModal?.hide()
+  blockEditorModal?.hide()
+  scenariosModal?.hide()
   if (!['page', 'page.record', 'page.record.create', 'page.record.edit'].includes(route.name)) {
     setPageHandle('')
     setLayoutHandle('')
   }
   destroyEvents()
   setDefaultValues()
+  blockSelectorModal?.dispose()
+  blockCreatorModal?.dispose()
+  blockEditorModal?.dispose()
+  scenariosModal?.dispose()
+})
+
+watch([modalCreateBlockSelectorEl, modalCreatorEl, modalEditorEl, modalScenariosEl], ([m1, m2, m3, m4]) => {
+  if (m1 && m2 && m3 && m4) {
+    blockSelectorModal = new Modal(m1)
+    blockCreatorModal = new Modal(m2)
+    blockEditorModal = new Modal(m3)
+    scenariosModal = new Modal(m4)
+    m2.addEventListener('hidden.bs.modal', () => { if (editor.value && editor.value.index === undefined) editor.value = undefined })
+    m3.addEventListener('hidden.bs.modal', () => { if (editor.value && editor.value.index !== undefined) editor.value = undefined })
+    m4.addEventListener('hidden.bs.modal', () => { scenarios.value.showConfigurator = false })
+  }
 })
 
 function toastSuccess (msg) {}
@@ -726,14 +766,11 @@ function getScenarioOptionKey (scenario) { return scenario }
 function refreshReport () {}
 
 function showBlockSelector () {
-  const modal = new bootstrap.Modal(document.getElementById('createBlockSelector'))
-  modal.show()
+  blockSelectorModal?.show()
 }
 
 function addBlock (block, index = undefined) {
-  const modalEl = document.getElementById('createBlockSelector')
-  const modal = bootstrap.Modal.getInstance(modalEl)
-  if (modal) modal.hide()
+  blockSelectorModal?.hide()
   calculateNewBlockPosition(block)
   editor.value = { index, block: compose.PageBlockMaker(block) }
 }
@@ -914,10 +951,16 @@ async function handleSaveLayout ({ closeOnSuccess = false, previewOnSuccess = fa
       }),
       ...blocks.value,
     ]
-    return store.dispatch('page/update', { namespaceID, ...p, blocks: blocksData })
-      .then(() => {
+    const savePayload = { ...p, namespaceID, blocks: blocksData }
+    if (page.value.config) savePayload.config = page.value.config
+    if (page.value.meta.scenarios) {
+      savePayload.meta = { ...(p.meta || {}), scenarios: page.value.meta.scenarios }
+    }
+    return store.dispatch('page/update', savePayload)
+      .then((freshPage) => {
+        page.value.blocks = freshPage.blocks
         const newBlocks = blocks.value.map(({ blockID, meta, xywh }) => {
-          if (blockID === NoID) blockID = (page.value.blocks.find(b => b.meta.tempID === meta.tempID) || {}).blockID
+          if (blockID === NoID) blockID = (freshPage.blocks.find(b => b.meta.tempID === meta.tempID) || {}).blockID
           return { blockID, xywh, meta }
         })
         return store.dispatch('pageLayout/update', { ...ly, blocks: newBlocks })
@@ -1073,8 +1116,7 @@ async function setLayout (layoutID, processingFlag = true) {
   setTimeout(() => {
     processingLayout.value = false
     if (!blocks.value.length) {
-      const modal = new bootstrap.Modal(document.getElementById('createBlockSelector'))
-      modal.show()
+      blockSelectorModal?.show()
     }
   }, 400)
 }

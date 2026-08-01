@@ -4,6 +4,7 @@ import { resolve } from 'path'
 import { execSync } from 'child_process'
 
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || './',
   plugins: [
     vue(),
     {
@@ -72,6 +73,14 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/auth': {
+        target: process.env.VITE_API_URL || 'http://localhost:3333',
+        changeOrigin: true,
+      },
+      '/system': {
+        target: process.env.VITE_API_URL || 'http://localhost:3333',
+        changeOrigin: true,
+      },
+      '/automation': {
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },

@@ -378,7 +378,7 @@ $nav-user-icon-size: calc(var(--topbar-height) - 16px);
 .header-navigation {
   width: 100%;
   min-height: var(--topbar-height);
-  background-color: var(--topbar-bg);
+  //background-color: var(--topbar-bg);
 
 }
 
@@ -400,7 +400,7 @@ $nav-user-icon-size: calc(var(--topbar-height) - 16px);
   display: flex;
   align-items: center;
   min-height: $nav-user-icon-size;
-  padding-left: 47px;
+  padding-left: 20px;
 
   > * {
     padding: 0.25rem 0;

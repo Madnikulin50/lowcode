@@ -62,10 +62,15 @@ export default [
                   r('admin.pages', 'pages', 'Admin/Pages/List'),
                   r('admin.pages.edit', 'pages/:pageID/edit', 'Admin/Pages/Edit'),
                   r('admin.pages.builder', 'pages/:pageID/builder', 'Admin/Pages/Builder'),
+                  r('admin.pages.rag', 'pages/rag', 'Admin/Pages/RAG'),
 
                   r('admin.charts', 'charts', 'Admin/Charts/List'),
                   r('admin.charts.create', 'charts/new/:category?', 'Admin/Charts/Edit'),
                   r('admin.charts.edit', 'charts/:chartID/edit', 'Admin/Charts/Edit'),
+
+                  r('admin.etl', 'etl', 'Admin/ETL/List'),
+                  r('admin.etl.create', 'etl/new', 'Admin/ETL/Edit'),
+                  r('admin.etl.edit', 'etl/:etlID/edit', 'Admin/ETL/Edit'),
 
                   r('admin.configuration', 'configuration', 'Admin/Configuration/Index'),
                 ],

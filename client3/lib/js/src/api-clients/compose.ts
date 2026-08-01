@@ -4572,6 +4572,356 @@ export default class Compose {
         return `/namespace/${namespaceID}/page/${pageID}/prompt`
     }
 
+    // List ETL jobs
+    async etlList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            moduleID,
+            query,
+            limit,
+            pageCursor,
+            sort,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'get',
+            url: this.etlListEndpoint({
+                namespaceID,
+            }),
+        }
+        cfg.params = {
+            moduleID,
+            query,
+            limit,
+            pageCursor,
+            sort,
+        }
 
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
 
+    etlListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlList(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlListEndpoint (a: KV): string {
+        const {
+            namespaceID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl`
+    }
+
+    // Create ETL job
+    async etlCreate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            moduleID,
+            name,
+            enabled,
+            schedule,
+            source,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!name) {
+            throw Error('field name is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.etlCreateEndpoint({
+                namespaceID,
+            }),
+        }
+        cfg.data = {
+            moduleID,
+            name,
+            enabled,
+            schedule,
+            source,
+        }
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlCreateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlCreate(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlCreateEndpoint (a: KV): string {
+        const {
+            namespaceID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl`
+    }
+
+    // Read ETL job
+    async etlRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            etlID,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!etlID) {
+            throw Error('field etlID is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'get',
+            url: this.etlReadEndpoint({
+                namespaceID, etlID,
+            }),
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlRead(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlReadEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            etlID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl/${etlID}`
+    }
+
+    // Update ETL job
+    async etlUpdate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            etlID,
+            name,
+            enabled,
+            schedule,
+            source,
+            updatedAt,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!etlID) {
+            throw Error('field etlID is empty')
+        }
+        if (!name) {
+            throw Error('field name is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'put',
+            url: this.etlUpdateEndpoint({
+                namespaceID, etlID,
+            }),
+        }
+        cfg.data = {
+            name,
+            enabled,
+            schedule,
+            source,
+            updatedAt,
+        }
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlUpdateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlUpdate(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlUpdateEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            etlID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl/${etlID}`
+    }
+
+    // Delete ETL job
+    async etlDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            etlID,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!etlID) {
+            throw Error('field etlID is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'delete',
+            url: this.etlDeleteEndpoint({
+                namespaceID, etlID,
+            }),
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlDelete(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlDeleteEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            etlID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl/${etlID}`
+    }
+
+    // Run ETL job
+    async etlRun (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            etlID,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!etlID) {
+            throw Error('field etlID is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.etlRunEndpoint({
+                namespaceID, etlID,
+            }),
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlRunCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlRun(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlRunEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            etlID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl/${etlID}/run`
+    }
+
+    async ragDocumentList (a: KV): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: this.ragDocumentsEndpoint(a),
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
+
+    async ragDocumentUpload (a: KV): Promise<KV> {
+        const { namespaceID, file } = a
+        const fd = new FormData()
+        fd.append('file', file as File)
+        return this.api().request({
+            method: 'post',
+            url: this.ragDocumentsEndpoint({ namespaceID }),
+            data: fd,
+            headers: { 'Content-Type': 'multipart/form-data' },
+        }).then(result => stdResolve(result))
+    }
+
+    async ragDocumentDelete (a: KV): Promise<KV> {
+        return this.api().request({
+            method: 'delete',
+            url: this.ragDocumentEndpoint(a),
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => ({ success: true }))
+    }
+
+    async ragSearch (a: KV): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: this.ragSearchEndpoint(a),
+            data: { query: a.query, topK: a.topK || 3 },
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
+
+    ragDocumentsEndpoint (a: KV): string {
+        return `/namespace/${a.namespaceID}/rag/documents`
+    }
+
+    ragDocumentEndpoint (a: KV): string {
+        return `/namespace/${a.namespaceID}/rag/documents/${a.docID}`
+    }
+
+    ragSearchEndpoint (a: KV): string {
+        return `/namespace/${a.namespaceID}/rag/search`
+    }
+
+    async ragPagesList (): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: '/pages-rag',
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
+
+    async ragPagesReindex (): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/pages-rag/reindex',
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
 }

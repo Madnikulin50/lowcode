@@ -20,6 +20,7 @@
 
     <template v-else>
       <button
+        v-if="!block.options?.hideBrainButton"
         title="Ask about metrics"
         :disabled="editable"
         class="btn btn-outline-light text-secondary border-0 fixed-corner-button btn-sm"
@@ -28,15 +29,19 @@
         <font-awesome-icon :icon="['fas', 'brain']" />
       </button>
       <div
-        v-for="(m, mi) in options.metrics"
-        :key="mi"
-        class="d-flex align-items-center justify-content-center overflow-hidden"
-        :class="{
-          'h-100': options.likeRecordList !== true && m.valueStyle.notFitVertical !== true,
-          'px-3': options.likeRecordList === true,
-          'pt-3': options.likeRecordList === true && mi === 0
-        }"
+        class="fixed-corner-container"
+        :class="fieldLayoutClass"
       >
+        <div
+          v-for="(m, mi) in options.metrics"
+          :key="mi"
+          class="d-flex align-items-center justify-content-center overflow-hidden"
+          :class="{
+            'h-100': options.likeRecordList !== true && m.valueStyle.notFitVertical !== true,
+            'px-3': options.likeRecordList === true,
+            'pt-3': options.likeRecordList === true && mi === 0
+          }"
+        >
         <div
           v-for="(v, i) in formatResponse(m, mi)"
           :key="i"
@@ -56,6 +61,7 @@
             :theme-settings="themeSettings"
             :value="v"
           />
+        </div>
         </div>
       </div>
     </template>
@@ -95,9 +101,13 @@ const emit = defineEmits(['errors'])
 const $auth = inject('$auth')
 const $ComposeAPI = inject('$ComposeAPI')
 
-const { options, isProcessing, browserLocale, themeSettings, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
+const { options, isProcessing, processing, browserLocale, themeSettings, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
 
-const processing = ref(false)
+const fieldLayoutClass = computed(() => {
+  const classes = { default: 'd-flex flex-column', noWrap: 'd-flex gap-2', wrap: 'row g-0' }
+  return classes[options.value.recordFieldLayoutOption]
+})
+
 const error = ref(undefined)
 const reports = ref([])
 const abortableRequests = ref([])
@@ -147,6 +157,9 @@ async function refresh () {
     for (const m of options.value.metrics) {
       if (m.moduleID) {
         const auxM = { ...m }
+        if (auxM.filter && !props.record && (auxM.filter.includes('${record') || auxM.filter.includes('${ownerID}'))) {
+          continue
+        }
         if (auxM.filter) {
           auxM.filter = evaluatePrefilter(auxM.filter, {
             record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
@@ -212,8 +225,9 @@ function promptAiChat () {
       case 'en-US': prompt = 'What is this? '; break
       case 'ru-RU': prompt = 'Что это за показатели? Зачем о чем они говорят? '; break
     }
-    prompt += '\r\n '
+
   }
+  prompt += '\r\n '
   prompt += page.title + '\r\n' + block.title + '\r\n'
   for (const mi in options.value.metrics) {
     const m = options.value.metrics[mi]

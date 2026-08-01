@@ -1,244 +1,194 @@
 <template>
-  <Teleport to="body">
+  <b-modal
+    id="workflow"
+    :title="$t('editor:workflow-configuration')"
+    size="lg"
+    :hide-header-close="workflow.workflowID === '0'"
+    :no-close-on-backdrop="workflow.workflowID === '0'"
+    :no-close-on-esc="workflow.workflowID === '0'"
+    no-fade
+    body-class="p-0"
+  >
+    <template #modal-title>
+      {{ $t('editor:workflow-configuration') }}
+    </template>
+
     <div
-      v-if="visible"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0,0,0,0.5);"
+      v-if="workflow.workflowID && workflow.workflowID !== '0'"
+      class="d-flex p-3"
     >
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ t('editor.workflow-configuration') }}</h5>
-            <button
-              v-if="workflow.workflowID !== '0'"
-              type="button"
-              class="btn-close"
-              @click="handleClose"
+      <import
+        data-test-id="button-import-workflow"
+        :disabled="importProcessing"
+        @import="$emit('import', $event)"
+      />
+
+      <export
+        data-test-id="button-export-workflow"
+        :workflows="[workflow.workflowID]"
+        :file-name="workflow.meta.name || workflow.handle"
+        size="lg"
+        class="ml-1"
+      />
+
+      <c-permissions-button
+        v-if="workflow.canGrant"
+        :title="workflow.meta.name || workflow.handle || workflow.workflowID"
+        :target="workflow.meta.name || workflow.handle || workflow.workflowID"
+        :resource="`corteza::automation:workflow/${workflow.workflowID}`"
+        :button-label="$t('general:permissions')"
+        class="btn-lg ml-1"
+      />
+    </div>
+
+    <div v-if="localWorkflow">
+      <b-tabs card>
+        <b-tab
+          :title="$t('general.label')"
+          active
+        >
+          <b-form-group
+            :label="$t('name.label')"
+            label-class="text-primary"
+          >
+            <b-form-input
+              v-model="localWorkflow.meta.name"
+              data-test-id="input-label"
+              :placeholder="$t('name.placeholder')"
+              :state="nameState"
             />
-          </div>
+          </b-form-group>
 
-          <div class="modal-body p-0">
-            <div
-              v-if="workflow.workflowID && workflow.workflowID !== '0'"
-              class="d-flex p-3"
+          <b-form-group
+            :label="$t('handle.label')"
+            label-class="text-primary"
+          >
+            <b-form-input
+              v-model="localWorkflow.handle"
+              data-test-id="input-handle"
+              :state="handleState"
+              :placeholder="$t('handle.placeholder')"
+            />
+            <b-form-invalid-feedback
+              data-test-id="input-handle-invalid-state"
+              :state="handleState"
             >
-              <import
-                data-test-id="button-import-workflow"
-                :disabled="importProcessing"
-                @import="emit('import', $event)"
-              />
+              {{ $t('handle.invalid-handle-characters') }}
+            </b-form-invalid-feedback>
+          </b-form-group>
 
-              <export
-                data-test-id="button-export-workflow"
-                :workflows="[workflow.workflowID]"
-                :file-name="workflow.meta.name || workflow.handle"
-                size="lg"
-                class="ms-1"
-              />
+          <b-form-group
+            :label="$t('description.label')"
+            label-class="text-primary"
+          >
+            <b-form-textarea
+              v-model="localWorkflow.meta.description"
+              data-test-id="input-description"
+              :placeholder="$t('description.placeholder')"
+            />
+          </b-form-group>
 
-              <c-permissions-button
-                v-if="workflow.canGrant"
-                :title="workflow.meta.name || workflow.handle || workflow.workflowID"
-                :target="workflow.meta.name || workflow.handle || workflow.workflowID"
-                :resource="`corteza::automation:workflow/${workflow.workflowID}`"
-                :button-label="t('permissions')"
-                class="btn-lg ms-1"
-              />
-            </div>
+          <b-form-group
+            :label="$t('run-as.label')"
+            :description="$t('run-as.description')"
+            label-class="text-primary"
+          >
+            <c-input-user
+              v-model="localWorkflow.runAs"
+              data-test-id="select-run-as"
+              :placeholder="$t('run-as.placeholder')"
+              clearable
+            />
+          </b-form-group>
 
-            <div v-if="localWorkflow">
-              <ul class="nav nav-tabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                  <button
-                    class="nav-link active"
-                    type="button"
-                    role="tab"
-                    @click="activeTab = 'general'"
-                  >
-                    {{ t('label') }}
-                  </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                  <button
-                    class="nav-link"
-                    type="button"
-                    role="tab"
-                    @click="activeTab = 'labels'"
-                  >
-                    {{ t('labels.label') }}
-                  </button>
-                </li>
-              </ul>
+          <b-form-group>
+            <b-form-checkbox
+              v-model="localWorkflow.enabled"
+              data-test-id="checkbox-enable-workflow"
+            >
+              {{ $t('general:enabled') }}
+            </b-form-checkbox>
+          </b-form-group>
 
-              <div class="tab-content p-3">
-                <div
-                  v-show="activeTab === 'general'"
-                  class="tab-pane active"
-                  role="tabpanel"
-                >
-                  <div class="mb-3">
-                    <label class="form-label text-primary">{{ t('name.label') }}</label>
-                    <input
-                      v-model="localWorkflow.meta.name"
-                      class="form-control"
-                      data-test-id="input-label"
-                      :placeholder="t('name.placeholder')"
-                      :class="{ 'is-invalid': nameState === false }"
-                    >
-                  </div>
+          <b-form-group
+            :description="$t('sub-workflow.description')"
+          >
+            <b-form-checkbox
+              v-model="localWorkflow.meta.subWorkflow"
+              data-test-id="checkbox-sub-workflow"
+            >
+              {{ $t('sub-workflow.label') }}
+            </b-form-checkbox>
+          </b-form-group>
+        </b-tab>
 
-                  <div class="mb-3">
-                    <label class="form-label text-primary">{{ t('handle.label') }}</label>
-                    <input
-                      v-model="localWorkflow.handle"
-                      class="form-control"
-                      data-test-id="input-handle"
-                      :class="{ 'is-invalid': handleState === false }"
-                      :placeholder="t('handle.placeholder')"
-                    >
-                    <div
-                      v-if="handleState === false"
-                      class="invalid-feedback"
-                      data-test-id="input-handle-invalid-state"
-                    >
-                      {{ t('handle.invalid-handle-characters') }}
-                    </div>
-                  </div>
+        <b-tab :title="$t('labels.label')">
+          <namespace-module-selector
+            :namespace-labels="localWorkflow?.labels?.ref_namespace || []"
+            :module-labels="localWorkflow?.labels?.ref_module || []"
+            @change="handleLabelsChange"
+          />
+        </b-tab>
+      </b-tabs>
+    </div>
 
-                  <div class="mb-3">
-                    <label class="form-label text-primary">{{ t('description.label') }}</label>
-                    <textarea
-                      v-model="localWorkflow.meta.description"
-                      class="form-control"
-                      data-test-id="input-description"
-                      :placeholder="t('description.placeholder')"
-                      rows="3"
-                    />
-                  </div>
+    <template #modal-footer>
+      <div class="d-flex w-100">
+        <c-input-confirm
+          v-if="workflow.canDeleteWorkflow && !isDeleted"
+          size="md"
+          size-confirm="md"
+          variant="danger"
+          :processing="processingDelete"
+          :text="$t('editor:delete')"
+          :borderless="false"
+          @confirmed="$emit('delete')"
+        />
 
-                  <div class="mb-3">
-                    <label class="form-label text-primary">{{ t('run-as.label') }}</label>
-                    <div class="form-text mb-2">{{ t('run-as.description') }}</div>
-                    <c-input-user
-                      v-model="localWorkflow.runAs"
-                      data-test-id="select-run-as"
-                      :placeholder="t('run-as.placeholder')"
-                      clearable
-                    />
-                  </div>
+        <c-input-confirm
+          v-else-if="isDeleted"
+          size="md"
+          size-confirm="md"
+          variant="outline-secondary"
+          :processing="processingDelete"
+          :text="$t('editor:undelete')"
+          :borderless="false"
+          @confirmed="$emit('undelete')"
+        />
 
-                  <div class="mb-3">
-                    <div class="form-check">
-                      <input
-                        id="wf-enabled"
-                        v-model="localWorkflow.enabled"
-                        class="form-check-input"
-                        data-test-id="checkbox-enable-workflow"
-                        type="checkbox"
-                      >
-                      <label
-                        class="form-check-label"
-                        for="wf-enabled"
-                      >{{ t('enabled') }}</label>
-                    </div>
-                  </div>
+        <b-button
+          v-if="workflow.workflowID === '0'"
+          variant="outline-secondary"
+          @click="$router.back()"
+        >
+          {{ $t('editor:back') }}
+        </b-button>
 
-                  <div class="mb-3">
-                    <div class="form-text mb-2">{{ t('sub-workflow.description') }}</div>
-                    <div class="form-check">
-                      <input
-                        id="wf-sub"
-                        v-model="localWorkflow.meta.subWorkflow"
-                        class="form-check-input"
-                        data-test-id="checkbox-sub-workflow"
-                        type="checkbox"
-                      >
-                      <label
-                        class="form-check-label"
-                        for="wf-sub"
-                      >{{ t('sub-workflow.label') }}</label>
-                    </div>
-                  </div>
-                </div>
+        <div class="d-flex ml-auto">
+          <b-button
+            v-if="workflow.workflowID !== '0'"
+            variant="outline-secondary"
+            class="ml-auto"
+            @click="handleCancel"
+          >
+            {{ $t('general:cancel') }}
+          </b-button>
 
-                <div
-                  v-show="activeTab === 'labels'"
-                  class="tab-pane"
-                  role="tabpanel"
-                >
-                  <namespace-module-selector
-                    :namespace-labels="localWorkflow?.labels?.ref_namespace || []"
-                    :module-labels="localWorkflow?.labels?.ref_module || []"
-                    @change="handleLabelsChange"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <div class="d-flex w-100">
-              <c-input-confirm
-                v-if="workflow.canDeleteWorkflow && !isDeleted"
-                size="md"
-                size-confirm="md"
-                variant="danger"
-                :processing="processingDelete"
-                :text="t('editor.delete')"
-                :borderless="false"
-                @confirmed="emit('delete')"
-              />
-
-              <c-input-confirm
-                v-else-if="isDeleted"
-                size="md"
-                size-confirm="md"
-                variant="outline-secondary"
-                :processing="processingDelete"
-                :text="t('editor.undelete')"
-                :borderless="false"
-                @confirmed="emit('undelete')"
-              />
-
-              <button
-                v-if="workflow.workflowID === '0'"
-                class="btn btn-outline-secondary"
-                @click="router.back()"
-              >
-                {{ t('editor.back') }}
-              </button>
-
-              <div class="d-flex ms-auto">
-                <button
-                  v-if="workflow.workflowID !== '0'"
-                  class="btn btn-outline-secondary ms-auto me-1"
-                  @click="handleCancel"
-                >
-                  {{ t('cancel') }}
-                </button>
-
-                <c-button-submit
-                  data-test-id="button-save-workflow"
-                  :disabled="isSaveDisabled"
-                  :processing="processingSave"
-                  :text="t('editor.save')"
-                  class="ms-1"
-                  @submit="handleSave"
-                />
-              </div>
-            </div>
-          </div>
+          <c-button-submit
+            data-test-id="button-save-workflow"
+            :disabled="isSaveDisabled"
+            :processing="processingSave"
+            :text="$t('editor:save')"
+            class="ml-1"
+            @submit="handleSave"
+          />
         </div>
       </div>
-    </div>
-  </Teleport>
+    </template>
+  </b-modal>
 </template>
 
-<script setup>
-import { ref, reactive, computed, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+<script>
 import { handle, components } from 'corteza-lib/vue/dist'
 import { automation } from 'corteza-lib/js/dist'
 import Import from '../Import'
@@ -247,96 +197,123 @@ import NamespaceModuleSelector from '../NamespaceModuleSelector'
 
 const { CInputUser } = components
 
-const { t } = useI18n()
-const router = useRouter()
-
-const props = defineProps({
-  workflow: {
-    type: Object,
-    default: () => {},
+export default {
+  i18nOptions: {
+    namespaces: 'configurator',
   },
-  canCreate: {
-    type: Boolean,
-    default: false,
+
+  components: {
+    CInputUser,
+    Import,
+    Export,
+    NamespaceModuleSelector,
   },
-  processingSave: {
-    type: Boolean,
-    default: false,
+
+  props: {
+    workflow: {
+      type: Object,
+      default: () => {},
+    },
+
+    canCreate: {
+      type: Boolean,
+      default: false,
+    },
+
+    processingSave: {
+      type: Boolean,
+      default: false,
+    },
+
+    processingDelete: {
+      type: Boolean,
+      default: false,
+    },
+
+    importProcessing: {
+      type: Boolean,
+      default: false,
+    },
   },
-  processingDelete: {
-    type: Boolean,
-    default: false,
+
+  data () {
+    return {
+      localWorkflow: null,
+    }
   },
-  importProcessing: {
-    type: Boolean,
-    default: false,
+
+  computed: {
+    nameState () {
+      return this.localWorkflow?.meta?.name ? null : false
+    },
+
+    handleState () {
+      return this.localWorkflow ? handle.handleState(this.localWorkflow.handle) : null
+    },
+
+    canUpdateWorkflow () {
+      return this.workflow.workflowID === '0' ? this.canCreate : this.workflow.canUpdateWorkflow
+    },
+
+    isSaveDisabled () {
+      return !this.canUpdateWorkflow || [this.nameState, this.handleState].includes(false)
+    },
+
+    isDeleted () {
+      return this.workflow.deletedAt
+    },
+
   },
-  show: { type: Boolean, default: false },
-})
 
-const emit = defineEmits(['save', 'delete', 'undelete', 'import', 'update:show'])
+  watch: {
+    workflow: {
+      handler (newWorkflow) {
+        if (!newWorkflow) {
+          this.localWorkflow = null
+          return
+        }
 
-const visible = computed(() => props.show)
-const activeTab = ref('general')
-const localWorkflow = ref(null)
+        // Create a new Workflow instance from the existing workflow
+        // This properly clones the workflow and avoids circular references
+        this.localWorkflow = new automation.Workflow(newWorkflow)
+      },
+      immediate: true,
+    },
+  },
 
-const nameState = computed(() => {
-  return localWorkflow.value?.meta?.name ? null : false
-})
+  methods: {
+    handleLabelsChange ({ namespaceLabels, moduleLabels }) {
+      if (!this.localWorkflow.labels) {
+        this.localWorkflow.labels = {}
+      }
 
-const handleState = computed(() => {
-  return localWorkflow.value ? handle.handleState(localWorkflow.value.handle) : null
-})
+      // Store labels directly - no transformation needed
+      if (namespaceLabels.length > 0) {
+        this.localWorkflow.labels.ref_namespace = namespaceLabels
+      } else {
+        delete this.localWorkflow.labels.ref_namespace
+      }
 
-const canUpdateWorkflow = computed(() => {
-  return props.workflow.workflowID === '0' ? props.canCreate : props.workflow.canUpdateWorkflow
-})
+      if (moduleLabels.length > 0) {
+        this.localWorkflow.labels.ref_module = moduleLabels
+      } else {
+        delete this.localWorkflow.labels.ref_module
+      }
+    },
 
-const isSaveDisabled = computed(() => {
-  return !canUpdateWorkflow.value || [nameState.value, handleState.value].includes(false)
-})
+    handleSave () {
+      // Emit save event with the local workflow copy
+      this.$emit('save', this.localWorkflow)
+      // Close the modal after save
+      this.$bvModal.hide('workflow')
+    },
 
-const isDeleted = computed(() => {
-  return props.workflow.deletedAt
-})
-
-watch(() => props.workflow, (newWorkflow) => {
-  if (!newWorkflow) {
-    localWorkflow.value = null
-    return
-  }
-  localWorkflow.value = new automation.Workflow(newWorkflow)
-}, { immediate: true })
-
-function handleLabelsChange ({ namespaceLabels, moduleLabels }) {
-  if (!localWorkflow.value.labels) {
-    localWorkflow.value.labels = {}
-  }
-
-  if (namespaceLabels.length > 0) {
-    localWorkflow.value.labels.ref_namespace = namespaceLabels
-  } else {
-    delete localWorkflow.value.labels.ref_namespace
-  }
-
-  if (moduleLabels.length > 0) {
-    localWorkflow.value.labels.ref_module = moduleLabels
-  } else {
-    delete localWorkflow.value.labels.ref_module
-  }
-}
-
-function handleSave () {
-  emit('save', localWorkflow.value)
-  emit('update:show', false)
-}
-
-function handleCancel () {
-  localWorkflow.value = new automation.Workflow(props.workflow)
-  emit('update:show', false)
-}
-
-function handleClose () {
-  emit('update:show', false)
+    handleCancel () {
+      // Reset local workflow to original workflow data
+      this.localWorkflow = new automation.Workflow(this.workflow)
+      // Close the modal
+      this.$bvModal.hide('workflow')
+    },
+  },
 }
 </script>

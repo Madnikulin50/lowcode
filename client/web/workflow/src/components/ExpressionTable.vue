@@ -1,32 +1,37 @@
 <template>
   <div class="table-responsive">
-    <div class="row header ps-4">
-      <div
+    <b-row class="header pl-4">
+      <b-col
         v-for="(field, index) in fields"
         :key="index"
         :class="`py-2 ${field.thClass}`"
       >
         <label>{{ field.label }}</label>
-      </div>
-    </div>
+      </b-col>
+    </b-row>
 
     <draggable
-            item-key="id"
       :list="items"
       handle=".grab"
-      @end="window.dispatchEvent(new CustomEvent('change-detected'))"
+      @end="$root.$emit('change-detected')"
     >
-      <template #item="{ element, index }">
-        <div>
-        <div
-          class="row d-flex justify-content-between align-items-center pointer expr-item"
-          @click="element._showDetails = !element._showDetails"
+      <div
+        v-for="(item, index) in items"
+        :key="index"
+      >
+        <b-row
+          class="d-flex justify-content-between align-items-center pointer expr-item"
+          no-gutters
+          @click="$set(item, '_showDetails', !item._showDetails)"
         >
           <div class="p-2 grab">
-            <font-awesome-icon :icon="['fas', 'bars']" class="text-secondary" />
+            <font-awesome-icon
+              :icon="['fas', 'bars']"
+              class="text-secondary"
+            />
           </div>
 
-          <div
+          <b-col
             v-for="(field, i) in fields"
             :key="i"
             class="text-truncate p-2"
@@ -35,97 +40,127 @@
               v-if="field.key === 'expr'"
               class="d-flex justify-content-between align-items-center"
             >
-              <samp class="text-truncate">{{ element[field.key] }}</samp>
+              <samp class="text-truncate">{{ item[field.key] }}</samp>
 
               <c-input-confirm
-                v-if="element._showDetails"
+                v-if="item._showDetails"
                 show-icon
                 @confirmed="$emit('remove', index)"
               />
             </div>
 
-            <var v-else class="">
-              {{ field.formatter ? field.formatter(element) : element[field.key] }}
+            <var
+              v-else
+              class=""
+            >
+              {{ field.formatter ? field.formatter(item) : item[field.key] }}
             </var>
-          </div>
-        </div>
+          </b-col>
+        </b-row>
 
         <transition name="fade">
           <div
-            v-if="element._showDetails"
+            v-if="item._showDetails"
             class="mb-3 px-3"
           >
             <div class="arrow-up" />
 
-            <div class="card bg-light">
-              <div class="card-body px-4 pb-3">
-                <div class="mb-3">
-                  <label class="text-primary form-label">Target</label>
-                  <input
-                    class="form-control"
-                    v-model="element.target"
-                    placeholder="Target"
-                    @input="window.dispatchEvent(new CustomEvent('change-detected'))"
-                  />
-                </div>
+            <b-card
+              class="bg-light"
+              body-class="px-4 pb-3"
+            >
+              <b-form-group
+                label-class="text-primary"
+              >
+                <b-form-input
+                  v-model="item.target"
+                  placeholder="Target"
+                  @input="$root.$emit('change-detected')"
+                />
+              </b-form-group>
 
-                <div class="mb-3">
-                  <label class="text-primary form-label">{{ getTypeDescription(element.type) }}</label>
-                  <c-input-select
-                    v-model="element.type"
-                    :options="types"
-                    :get-option-key="getOptionKey"
-                    :clearable="false"
-                    :filter="varFilter"
-                    append-to-body
-                    @input="window.dispatchEvent(new CustomEvent('change-detected'))"
-                  />
-                </div>
+              <b-form-group
+                label-class="text-primary"
+                :description="getTypeDescription(item.type)"
+              >
+                <c-input-select
+                  v-model="item.type"
+                  :options="types"
+                  :get-option-key="getOptionKey"
+                  :clearable="false"
+                  :filter="varFilter"
+                  append-to-body
+                  @input="$root.$emit('change-detected')"
+                />
+              </b-form-group>
 
-                <div class="mb-0">
-                  <expression-editor
-                    v-model="element[valueField]"
-                    show-line-numbers
-                    @open="$emit('open-editor', index)"
-                    @input="window.dispatchEvent(new CustomEvent('change-detected'))"
-                  />
-                </div>
-              </div>
-            </div>
+              <b-form-group
+                class="mb-0"
+              >
+                <expression-editor
+                  v-model="item[valueField]"
+                  show-line-numbers
+                  @open="$emit('open-editor', index)"
+                  @input="$root.$emit('change-detected')"
+                />
+              </b-form-group>
+            </b-card>
           </div>
         </transition>
-        </div>
-      </template>
+      </div>
     </draggable>
   </div>
 </template>
 
-<script setup>
-import { defineProps, defineEmits } from 'vue'
+<script>
 import ExpressionEditor from './ExpressionEditor.vue'
 import { objectSearchMaker } from '../lib/filter'
 import draggable from 'vuedraggable'
 
-const props = defineProps({
-  valueField: { type: String, required: true },
-  items: { type: Array, required: true },
-  fields: { type: Array, required: true },
-  types: { type: Array, required: true },
-})
+export default {
+  components: {
+    ExpressionEditor,
+    draggable,
+  },
 
-defineEmits(['remove', 'open-editor'])
+  props: {
+    valueField: {
+      type: String,
+      required: true,
+    },
 
-const varFilter = objectSearchMaker('text')
+    items: {
+      type: Array,
+      required: true,
+    },
 
-function getTypeDescription(type) {
-  const typeDescriptions = {
-    ID: 'Make sure to provide the ID in double quotes if you\'re using a literal value. Example "123"',
-  }
-  return typeDescriptions[type]
-}
+    fields: {
+      type: Array,
+      required: true,
+    },
 
-function getOptionKey(type) {
-  return type
+    types: {
+      type: Array,
+      required: true,
+    },
+  },
+
+  methods: {
+    varFilter: objectSearchMaker('text'),
+
+    getTypeDescription (type) {
+      // This will be moved to backend field type information
+      const typeDescriptions = {
+        ID: 'Make sure to provide the ID in double quotes if you\'re using a literal value. Example "123"',
+      }
+
+      return typeDescriptions[type]
+    },
+
+    getOptionKey (type) {
+      return type
+    },
+  },
 }
 </script>
 

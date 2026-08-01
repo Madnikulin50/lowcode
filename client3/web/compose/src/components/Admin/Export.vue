@@ -2,7 +2,7 @@
   <button
     v-if="list.length > 0"
     data-test-id="button-export"
-    class="btn btn-outline-secondary btn-lg"
+    class="btn btn-outline-secondary"
     @click="jsonExport(list, type)"
   >
     {{ $t('label.export') }}

@@ -3,6 +3,8 @@
     id="schema-alterations-modal"
     ref="modal"
     class="modal fade"
+    :class="{ show: showModal }"
+    :style="{ display: showModal ? 'block' : 'none', backgroundColor: showModal ? 'rgba(0,0,0,0.5)' : 'transparent' }"
     tabindex="-1"
   >
     <div class="modal-dialog modal-xl">
@@ -109,7 +111,7 @@
             class="btn btn-outline-secondary text-primary border-0"
             @click="showModal = false"
           >
-            {{ canResolveAlterations ? t('label.cancel') : t('label.close') }}
+            {{ canResolveAlterations ? $t('label.cancel') : $t('label.close') }}
           </button>
 
           <c-input-confirm

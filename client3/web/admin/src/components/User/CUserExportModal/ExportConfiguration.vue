@@ -5,7 +5,7 @@
         <input
           id="incl-role-membership"
           v-model="inclRoleMembership"
-          class="form-check-input"
+          class="form-check-input-v3"
           data-test-id="checkbox-include-role-membership"
           type="checkbox"
           :true-value="true"
@@ -27,7 +27,7 @@
         <input
           id="incl-roles"
           v-model="inclRoles"
-          class="form-check-input"
+          class="form-check-input-v3"
           data-test-id="checkbox-include-roles"
           type="checkbox"
           :true-value="true"

@@ -24,7 +24,7 @@
     <td>
       <div class="mb-3">
         <label class="form-label text-primary">{{ $t('navigation.openIn') }}</label>
-        <select v-model="options.item.target" class="form-select">
+        <select v-model="options.item.target" class="form-select form-control">
           <option value="sameTab">{{ $t('navigation.sameTab') }}</option>
           <option value="newTab">{{ $t('navigation.newTab') }}</option>
         </select>

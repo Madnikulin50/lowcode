@@ -14,7 +14,7 @@
     />
 
     <button
-      v-if="chart"
+      v-if="chart && !block.options?.hideBrainButton"
       class="btn btn-outline-light chart-brain-button position-absolute d-flex d-print-none border-0 px-1 text-secondary"
       title="Ask about metrics"
       @click="promptAiChat"
@@ -43,7 +43,7 @@
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title">{{ $t('chart.filter.modal.title') }}</h5>
-              <button type="button" class="btn-close" @click="liveFilterModal.show = false"></button>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" @click="liveFilterModal.show = false"></button>
             </div>
             <div class="modal-body">
               <div
@@ -367,7 +367,6 @@ function promptAiChat () {
   if (chartData.value && chartData.value.length > 0) {
     const lastRows = chartData.value.slice(-25)
     let headers = Object.keys(lastRows[0])
-    if (lastRows.length > 2) headers = headers.slice(1)
     const csv = toCSV(lastRows, headers.map(h => ({ key: h, label: h })))
     files.push({ name: 'chart_data.csv', content: csv, type: 'text/csv' })
   }

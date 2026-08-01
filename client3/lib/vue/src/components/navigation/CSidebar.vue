@@ -200,8 +200,10 @@ $header-height: 64px;
 }
 
 .sidebar-body {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 </style>
 
@@ -220,7 +222,7 @@ $nav-width-mobile: 400px;
 .sidebar {
   display: flex !important;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden !important;
   left: calc(-#{$nav-width}) !important;
   transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: fixed;

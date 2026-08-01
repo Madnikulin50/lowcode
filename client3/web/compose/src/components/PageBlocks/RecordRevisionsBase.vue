@@ -1,5 +1,5 @@
 <template>
-  <Wrap scrollable-body @refreshBlock="refresh">
+  <Wrap v-bind="$props" scrollable-body @refreshBlock="refresh">
     <div class="d-flex flex-column align-items-center h-100 overflow-hidden">
       <span v-if="revisionsDisabledOnModule" class="my-auto">{{ $t('errors.disabled-on-module') }}</span>
       <span v-else-if="isProcessing" class="spinner-border my-auto" />

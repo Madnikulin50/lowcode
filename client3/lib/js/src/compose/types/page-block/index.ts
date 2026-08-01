@@ -1,4 +1,5 @@
 import { PageBlock, Registry } from './base'
+export { PageBlockAiChat } from './ai-chat'
 export { PageBlockAutomation } from './automation'
 export { PageBlockChart } from './chart'
 export { PageBlockContent } from './content'

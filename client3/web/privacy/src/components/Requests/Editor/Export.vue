@@ -9,7 +9,7 @@
               id="checkbox-profile"
               v-model="payload.profile"
               type="checkbox"
-              class="form-check-input"
+              class="form-check-input-v3"
               data-test-id="checkbox-profile-information"
             />
             <label class="form-check-label" for="checkbox-profile">{{ t('request.edit.export.data-type.profile-information') }}</label>
@@ -19,7 +19,7 @@
               id="checkbox-application"
               v-model="payload.application"
               type="checkbox"
-              class="form-check-input"
+              class="form-check-input-v3"
               data-test-id="checkbox-application-data"
             />
             <label class="form-check-label" for="checkbox-application">{{ t('request.edit.export.data-type.application-data') }}</label>

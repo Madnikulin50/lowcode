@@ -51,7 +51,7 @@
         <label class="form-label text-primary">{{ $t('calendar.view.onEventClick') }}</label>
         <select
           v-model="options.eventDisplayOption"
-          class="form-select"
+          class="form-select form-control"
         >
           <option
             v-for="opt in eventDisplayOptions"

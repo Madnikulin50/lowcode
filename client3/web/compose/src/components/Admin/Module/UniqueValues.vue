@@ -91,7 +91,7 @@
               <td>
                 <select
                   v-model="constraint.modifier"
-                  class="form-select form-select-sm"
+                  class="form-select form-control form-select-sm"
                 >
                   <option
                     v-for="opt in modifierOptions"
@@ -104,7 +104,7 @@
               <td>
                 <select
                   v-model="constraint.multiValue"
-                  class="form-select form-select-sm"
+                  class="form-select form-control form-select-sm"
                   :disabled="!getField(constraint.attribute).isMulti"
                 >
                   <option

@@ -304,13 +304,12 @@ const store = useStore()
 const $auth = inject('$auth')
 const $ComposeAPI = inject('$ComposeAPI')
 
-const { options, isProcessing, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
+const { options, isProcessing, processing, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
 
 const chatContainer = ref(null)
 const richTextInput = ref(null)
 const uploader = ref(null)
 
-const processing = ref(false)
 const filter = reactive({
   sort: '',
   filter: '',

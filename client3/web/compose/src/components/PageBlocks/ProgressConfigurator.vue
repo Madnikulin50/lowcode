@@ -176,7 +176,7 @@
               </div>
             </div>
             <div class="col d-flex align-items-center justify-content-center">
-              <select v-model="t.variant" class="form-select">
+              <select v-model="t.variant" class="form-select form-control">
                 <option v-for="v in variants" :key="v.value" :value="v.value">{{ v.text }}</option>
               </select>
               <font-awesome-icon :icon="['fas', 'times']" class="pointer text-danger ms-3" @click="removeThreshold(i)" />

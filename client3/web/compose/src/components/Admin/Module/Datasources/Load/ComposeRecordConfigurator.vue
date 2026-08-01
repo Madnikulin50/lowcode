@@ -6,7 +6,7 @@
           <label class="form-label text-primary">{{ $t('datasources.namespace') }}</label>
           <select
             v-model="namespace"
-            class="form-select"
+            class="form-select form-control"
             @change="selectNamespace"
           >
             <option :value="undefined">{{ $t('label.none') }}</option>
@@ -26,7 +26,7 @@
           <label class="form-label text-primary">{{ $t('datasources.module') }}</label>
           <select
             v-model="module"
-            class="form-select"
+            class="form-select form-control"
           >
             <option :value="undefined">{{ $t('label.none') }}</option>
             <option
@@ -98,18 +98,15 @@ const sort = computed({
   },
 })
 
-watch(namespace, {
-  immediate: true,
-  handler (ns) {
-    if (ns) {
-      processing.value = true
-      fetchModules(ns)
-        .finally(() => {
-          processing.value = false
-        })
-    }
-  },
-})
+watch(namespace, (ns) => {
+  if (ns) {
+    processing.value = true
+    fetchModules(ns)
+      .finally(() => {
+        processing.value = false
+      })
+  }
+}, { immediate: true })
 
 onMounted(() => {
   processing.value = true

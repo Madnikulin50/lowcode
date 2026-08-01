@@ -1,55 +1,114 @@
-/**
- * Simple route generator
- *
- * @param name {String}
- * @param path {String}
- * @param component {String}
- * @returns {Object}
- */
+import Layout from './Layout.vue'
+import Dashboard from './Dashboard.vue'
+import SystemSettingsIndex from './System/Settings/Index.vue'
+import SystemEmailIndex from './System/Email/Index.vue'
+import SystemApigwIndex from './System/Apigw/Index.vue'
+import SystemApigwEditor from './System/Apigw/Editor.vue'
+import SystemApigwProfilerIndex from './System/Apigw/Profiler/Index.vue'
+import SystemApigwProfilerRoute from './System/Apigw/Profiler/Route.vue'
+import SystemApigwProfilerHit from './System/Apigw/Profiler/Hit.vue'
+import SystemPermissionsIndex from './System/Permissions/Index.vue'
+import SystemActionlogIndex from './System/Actionlog/Index.vue'
+import SystemConnectionIndex from './System/Connection/Index.vue'
+import SystemConnectionEditor from './System/Connection/Editor.vue'
+import SystemCodeSnippetsIndex from './System/CodeSnippets/Index.vue'
+import ComposeSettingsIndex from './Compose/Settings/Index.vue'
+import ComposePermissionsIndex from './Compose/Permissions/Index.vue'
+import AutomationScriptsIndex from './Automation/Scripts/Index.vue'
+import AutomationPermissionsIndex from './Automation/Permissions/Index.vue'
+import FederationPermissionsIndex from './Federation/Permissions/Index.vue'
+import UIThemingIndex from './UI/Theming/Index.vue'
+import UINavigationIndex from './UI/Navigation/Index.vue'
+import UILocationIndex from './UI/Location/Index.vue'
+
+// combo components
+import SystemUserList from './System/User/List.vue'
+import SystemUserEditor from './System/User/Editor.vue'
+import SystemRoleList from './System/Role/List.vue'
+import SystemRoleEditor from './System/Role/Editor.vue'
+import SystemApplicationList from './System/Application/List.vue'
+import SystemApplicationEditor from './System/Application/Editor.vue'
+import SystemTemplateList from './System/Template/List.vue'
+import SystemTemplateEditor from './System/Template/Editor.vue'
+import SystemAuthClientList from './System/AuthClient/List.vue'
+import SystemAuthClientEditor from './System/AuthClient/Editor.vue'
+import SystemUserGroupList from './System/UserGroup/List.vue'
+import SystemUserGroupEditor from './System/UserGroup/Editor.vue'
+import SystemSensitivityLevelList from './System/SensitivityLevel/List.vue'
+import SystemSensitivityLevelEditor from './System/SensitivityLevel/Editor.vue'
+import SystemQueueList from './System/Queue/List.vue'
+import SystemQueueEditor from './System/Queue/Editor.vue'
+import AutomationWorkflowList from './Automation/Workflow/List.vue'
+import AutomationWorkflowEditor from './Automation/Workflow/Editor.vue'
+import AutomationSessionList from './Automation/Session/List.vue'
+import AutomationSessionEditor from './Automation/Session/Editor.vue'
+import FederationNodesList from './Federation/Nodes/List.vue'
+import FederationNodesEditor from './Federation/Nodes/Editor.vue'
+
+const lookup = {
+  'Dashboard': Dashboard,
+  'System/Settings/Index': SystemSettingsIndex,
+  'System/Email/Index': SystemEmailIndex,
+  'System/Apigw/Index': SystemApigwIndex,
+  'System/Apigw/Editor': SystemApigwEditor,
+  'System/Apigw/Profiler/Index': SystemApigwProfilerIndex,
+  'System/Apigw/Profiler/Route': SystemApigwProfilerRoute,
+  'System/Apigw/Profiler/Hit': SystemApigwProfilerHit,
+  'System/Permissions/Index': SystemPermissionsIndex,
+  'System/Actionlog/Index': SystemActionlogIndex,
+  'System/Connection/Index': SystemConnectionIndex,
+  'System/Connection/Editor': SystemConnectionEditor,
+  'System/CodeSnippets/Index': SystemCodeSnippetsIndex,
+  'Compose/Settings/Index': ComposeSettingsIndex,
+  'Compose/Permissions/Index': ComposePermissionsIndex,
+  'Automation/Scripts/Index': AutomationScriptsIndex,
+  'Automation/Permissions/Index': AutomationPermissionsIndex,
+  'Federation/Permissions/Index': FederationPermissionsIndex,
+  'UI/Theming/Index': UIThemingIndex,
+  'UI/Navigation/Index': UINavigationIndex,
+  'UI/Location/Index': UILocationIndex,
+  'System/User/List': SystemUserList,
+  'System/User/Editor': SystemUserEditor,
+  'System/Role/List': SystemRoleList,
+  'System/Role/Editor': SystemRoleEditor,
+  'System/Application/List': SystemApplicationList,
+  'System/Application/Editor': SystemApplicationEditor,
+  'System/Template/List': SystemTemplateList,
+  'System/Template/Editor': SystemTemplateEditor,
+  'System/AuthClient/List': SystemAuthClientList,
+  'System/AuthClient/Editor': SystemAuthClientEditor,
+  'System/UserGroup/List': SystemUserGroupList,
+  'System/UserGroup/Editor': SystemUserGroupEditor,
+  'System/SensitivityLevel/List': SystemSensitivityLevelList,
+  'System/SensitivityLevel/Editor': SystemSensitivityLevelEditor,
+  'System/Queue/List': SystemQueueList,
+  'System/Queue/Editor': SystemQueueEditor,
+  'Automation/Workflow/List': AutomationWorkflowList,
+  'Automation/Workflow/Editor': AutomationWorkflowEditor,
+  'Automation/Session/List': AutomationSessionList,
+  'Automation/Session/Editor': AutomationSessionEditor,
+  'Federation/Nodes/List': FederationNodesList,
+  'Federation/Nodes/Editor': FederationNodesEditor,
+}
+
 function r (name, path, component) {
   return {
     path,
     name,
-    component: () => import('./' + component + '.vue'),
+    component: lookup[component] || Dashboard,
     props: true,
-    // canReuse: false,
   }
 }
 
-/**
- * Wrap route generator
- *
- * Creates a route with simple template that contains only router-view component
- *
- * @param name
- * @param path
- * @param name {String}
- * @param path {String}
- * @param component {String}
- * @returns {Object}
- */
 function wrap (name, path) {
   return {
     path,
     name,
     component: { name: name + 'Wrap', template: '<router-view />' },
     props: true,
-    // canReuse: false,
   }
 }
 
-// Generates 3 routes - list, new-form, edit-form
-
-/**
- * Combo routes generator
- *
- * Creates 4 routes - list, editor for new and existing / wrapper
- *
- * @param ns {String} namespace
- * @param name {String}
- * @param opt {Object}
- * @returns {Object}
- */
 function combo (ns, name, opt = {}) {
   const cptlz = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
 
@@ -75,7 +134,7 @@ export default [
   {
     name: 'root',
     path: '/',
-    component: () => import('./Layout.vue'),
+    component: Layout,
     redirect: 'dashboard',
     children: [
       r('dashboard', 'dashboard', 'Dashboard'),
@@ -86,7 +145,6 @@ export default [
           combo('system', 'user'),
           combo('system', 'role'),
           combo('system', 'application'),
-          combo('system', 'script'),
           combo('system', 'template'),
 
           r('system.settings', 'settings', 'System/Settings/Index'),
@@ -154,6 +212,5 @@ export default [
     ],
   },
 
-  // When everything else fails, go to dashboard
   { path: '/:pathMatch(.*)*', redirect: { name: 'dashboard' } },
 ]

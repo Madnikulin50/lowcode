@@ -1,23 +1,85 @@
 <template>
-  <div
+  <b-tooltip
     :id="kind"
-    class="d-none"
+    :target="kind"
+    triggers="hover"
+    placement="right"
+    variant="outline-secondary"
+    custom-class="ml-2"
+    boundary="window"
+    noninteractive
+    @hide="show = false"
+    @show="show = true"
   >
-    <div class="card text-left text-dark shadow-sm" style="width: 18rem;">
-      <img v-if="img" :src="img" :alt="kind" height="100" class="card-img-top" />
-      <div class="card-body py-2 px-3">
-        <h6 class="card-title mb-1">{{ title }}</h6>
-        <p class="card-text small text-muted mb-0">{{ text }}</p>
-      </div>
-    </div>
-  </div>
+    <transition name="fade">
+      <b-card
+        v-if="show"
+        :img-src="img"
+        :img-alt="kind"
+        img-height="100px"
+        img-top
+        :title="title"
+        class="text-left text-dark"
+      >
+        <b-card-text>
+          {{ text }}
+        </b-card-text>
+      </b-card>
+    </transition>
+  </b-tooltip>
 </template>
 
-<script setup>
-defineProps({
-  title: { type: String, required: true },
-  kind: { type: String, required: true },
-  img: { type: String, required: true },
-  text: { type: String, required: true },
-})
+<script>
+export default {
+  props: {
+    title: {
+      type: String,
+      required: true,
+    },
+    kind: {
+      type: String,
+      required: true,
+    },
+    img: {
+      type: String,
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+    },
+  },
+
+  data () {
+    return {
+      show: false,
+    }
+  },
+}
 </script>
+
+<style lang="scss">
+.tooltip.b-tooltip-light > .tooltip-inner {
+  padding: 0;
+  max-width: 20rem;
+  min-width: 20rem;
+  background-color: transparent !important;
+  opacity: 1;
+}
+
+.tooltip.b-tooltip-light.bs-tooltip-right .arrow::before {
+  border-right-color: var(--dark) !important;
+}
+
+.tooltip.b-tooltip {
+  opacity: 1;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
+}
+</style>

@@ -89,7 +89,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
@@ -138,9 +138,11 @@ const showMagnifyButton = computed(() => {
   return (props.block.options.magnifyOption || isBlockMagnified.value) && !isAnotherBlockMagnified.value
 })
 
-const headerSet = computed(() => false)
-const toolbarSet = computed(() => false)
-const footerSet = computed(() => false)
+const slots = useSlots()
+
+const headerSet = computed(() => !!slots.header)
+const toolbarSet = computed(() => !!slots.toolbar)
+const footerSet = computed(() => !!slots.footer)
 
 const showHeader = computed(() => {
   return [headerSet.value, props.block.title, props.block.description, props.block.options.showRefresh, showMagnifyButton.value].some(c => !!c)

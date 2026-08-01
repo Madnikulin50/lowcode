@@ -13,23 +13,23 @@
           <div class="row">
             <div class="col-12 col-lg-6">
               <label class="text-primary mb-1">{{ $t('filter.incScriptsWithErrors', { count: totalScriptsWithErrors }) }}</label>
-              <div class="form-check form-switch"><input v-model="filter.incScriptsWithErrors" type="checkbox" class="form-check-input" role="switch" /><label class="form-check-label">{{ filter.incScriptsWithErrors ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
+              <div class="form-check form-switch"><input v-model="filter.incScriptsWithErrors" type="checkbox" class="form-check-input-v3" role="switch" /><label class="form-check-label">{{ filter.incScriptsWithErrors ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
             </div>
             <div class="col-12 col-lg-6">
               <label class="text-primary mb-1">{{ $t('filter.incScriptsWithTriggers', { count: totalScriptsWithTriggers }) }}</label>
-              <div class="form-check form-switch"><input v-model="filter.incScriptsWithTriggers" type="checkbox" class="form-check-input" role="switch" /><label class="form-check-label">{{ filter.incScriptsWithTriggers ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
+              <div class="form-check form-switch"><input v-model="filter.incScriptsWithTriggers" type="checkbox" class="form-check-input-v3" role="switch" /><label class="form-check-label">{{ filter.incScriptsWithTriggers ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
             </div>
             <div class="col-12 col-lg-6">
               <label class="text-primary mb-1">{{ $t('filter.incScriptsWithIterator', { count: totalScriptsWithIterator }) }}</label>
-              <div class="form-check form-switch"><input v-model="filter.incScriptsWithIterator" type="checkbox" class="form-check-input" role="switch" /><label class="form-check-label">{{ filter.incScriptsWithIterator ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
+              <div class="form-check form-switch"><input v-model="filter.incScriptsWithIterator" type="checkbox" class="form-check-input-v3" role="switch" /><label class="form-check-label">{{ filter.incScriptsWithIterator ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
             </div>
             <div class="col-12 col-lg-6">
               <label class="text-primary mb-1">{{ $t('filter.incScriptsWithSecurity', { count: totalScriptsWithSecurity }) }}</label>
-              <div class="form-check form-switch"><input v-model="filter.incScriptsWithSecurity" type="checkbox" class="form-check-input" role="switch" /><label class="form-check-label">{{ filter.incScriptsWithSecurity ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
+              <div class="form-check form-switch"><input v-model="filter.incScriptsWithSecurity" type="checkbox" class="form-check-input-v3" role="switch" /><label class="form-check-label">{{ filter.incScriptsWithSecurity ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
             </div>
             <div class="col-12 col-lg-6">
               <label class="text-primary mb-1">{{ $t('filter.absoluteTime') }}</label>
-              <div class="form-check form-switch"><input v-model="filter.absoluteTime" type="checkbox" class="form-check-input" role="switch" /><label class="form-check-label">{{ filter.absoluteTime ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
+              <div class="form-check form-switch"><input v-model="filter.absoluteTime" type="checkbox" class="form-check-input-v3" role="switch" /><label class="form-check-label">{{ filter.absoluteTime ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
             </div>
           </div>
         </form>
@@ -44,7 +44,7 @@
           <tbody>
             <tr v-for="r in filtered" :key="r.name" @click="r._showDetails = !r._showDetails" class="cursor-pointer">
               <td>
-                <div><span v-if="r.label">{{ r.label }}<span v-else class="text-secondary">{{ $t('labelMissing') }}</span></span>
+                <div><span v-if="r.label">{{ r.label }}</span><span v-else class="text-secondary">{{ $t('labelMissing') }}</span>
                   <span v-if="r.security" class="badge rounded bg-primary m-1 py-1 px-2" @click.stop="r._showDetails = !r._showDetails">{{ $t('flags.security') }}</span>
                   <span v-if="r.triggers" class="badge rounded bg-primary m-1 py-1 px-2" @click.stop="r._showDetails = !r._showDetails">{{ $t('flags.triggers') }}</span>
                   <span v-if="r.iterator" class="badge rounded bg-primary m-1 py-1 px-2" @click.stop="r._showDetails = !r._showDetails">{{ $t('flags.iterator') }}</span>

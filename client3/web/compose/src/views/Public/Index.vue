@@ -34,7 +34,7 @@
               <router-link
                 v-if="!hasModules"
                 :to="{ name: 'admin.modules.create' }"
-                class="btn btn-outline-primary btn-lg"
+                class="btn btn-outline-primary"
                 :class="{ disabled: !namespace.canCreateModule }"
                 data-test-id="button-module-create"
               >
@@ -43,7 +43,7 @@
               <router-link
                 v-else
                 :to="{ name: 'admin.modules' }"
-                class="btn btn-primary btn-lg"
+                class="btn btn-primar"
                 :class="{ disabled: !namespace.canManageNamespace }"
                 data-test-id="button-module-view"
               >
@@ -110,14 +110,13 @@
       </div>
     </div>
 
-    <router-view
-      v-else
-      class="flex-grow-1 overflow-auto"
-      :namespace="namespace"
-      :page="page"
-    />
-
-    <div id="toolbar" />
+    <div v-else class="d-flex flex-column h-100 w-100">
+      <router-view
+        class="flex-grow-1 overflow-auto"
+        :namespace="namespace"
+        :page="page"
+      />
+    </div>
   </div>
 </template>
 

@@ -21,7 +21,7 @@
 
       <div class="mb-3">
         <label class="form-label text-primary">{{ $t('buttonVariant') }}</label>
-        <select v-model="button.variant" class="form-select w-100">
+        <select v-model="button.variant" class="form-select form-control w-100">
           <option v-for="({ variant, label }) in variants" :key="variant" :value="variant">{{ label }}</option>
         </select>
       </div>

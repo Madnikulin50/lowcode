@@ -1,4 +1,4 @@
-// Corteza API location
+// LowCoooode API location
 window.CortezaAPI = 'https://api.cortezaproject.your-domain.tld';
 
 // CortezaAuth can be autoconfigured by replacing /api with /auth in CortezaAPI

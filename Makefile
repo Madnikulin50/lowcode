@@ -9,9 +9,6 @@ dev:
 build-client:
 	@(cd $(CURDIR)/client && make build)
 
-build-client3:
-	@(cd $(CURDIR)/client3 && make build)
-
 test:
 	@echo "---Testing libs---"
 	@(cd $(CURDIR)/lib && make test) || (echo "Failed to test libs"; exit 1)
@@ -44,12 +41,10 @@ drelease:
 	@(cd $(CURDIR)/server  && make release-clean && make build) || true
 	@echo "---Build client---"
 	@(cd $(CURDIR)/client && make build) || true
-	@echo "---Build client3---"
-	@(cd $(CURDIR)/client3 && make build) || true
 	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build --no-cache -t  madnikulin50/pnp-lowcode:2026.7.21-2 .)
+	@(cd $(CURDIR) && docker build -t madnikulin50/pnp-lowcode:2026.7.6 .)
 	@echo "---Push docker---"
-	@(cd $(CURDIR) && docker push madnikulin50/pnp-lowcode:2026.7.21-2)
+	@(cd $(CURDIR) && docker push madnikulin50/pnp-lowcode:2026.7.6)
 
 ddebug:
 	@echo "---Build server---"
@@ -57,7 +52,7 @@ ddebug:
 	@echo "---Build client---"
 	##@(cd $(CURDIR)/client && make build) || true
 	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build -t pnp-lowcode:2026.7.21-2 .)
+	@(cd $(CURDIR) && docker build -t pnp-lowcode:2026.7.6 .)
 
 dpush:
 

@@ -57,7 +57,7 @@
             @click="$router.push({ name: 'report.builder', params: { reportID: r.reportID } })"
           >
             {{ t('report.builder') }}
-            <font-awesome-icon :icon="['fas', 'tools']" class="ms-2" />
+            <font-awesome-icon :icon="['fas', 'tools']" class="ms-2 ml-1" />
           </button>
 
           <button
@@ -71,7 +71,7 @@
           </button>
         </div>
 
-        <div class="dropdown d-inline-block ms-2">
+        <div class="dropdown d-inline-block ms-2 ml-1">
           <button
             v-if="r.canUpdateReport || r.canGrant || r.canDeleteReport"
             class="btn btn-outline-extra-light dropdown-toggle d-flex align-items-center justify-content-center text-primary border-0 py-2"

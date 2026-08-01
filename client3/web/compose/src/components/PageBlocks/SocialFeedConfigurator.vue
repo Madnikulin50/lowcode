@@ -3,7 +3,7 @@
     <h5>{{ $t('socialFeed.label') }}</h5>
     <div v-if="page.moduleID && page.moduleID !== '0'" class="mb-3">
       <label class="form-label text-primary">{{ $t('socialFeed.twitterProfileField') }}</label>
-      <select v-model="options.profileSourceField" class="form-select">
+      <select v-model="options.profileSourceField" class="form-select form-control">
         <option v-for="opt in selectOptions" :key="opt" :value="opt">{{ opt }}</option>
       </select>
     </div>

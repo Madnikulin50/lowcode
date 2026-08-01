@@ -16,15 +16,15 @@
             <label class="text-primary form-label">{{ t('table.configurator.head-variant') }}</label>
             <div class="mt-lg-2">
               <div class="form-check form-check-inline">
-                <input v-model="options.headVariant" :value="null" class="form-check-input" type="radio" name="headVariant" id="hvNone" />
+                <input v-model="options.headVariant" :value="null" class="form-check-input-v3" type="radio" name="headVariant" id="hvNone" />
                 <label class="form-check-label" for="hvNone">{{ t('table.configurator.none') }}</label>
               </div>
               <div class="form-check form-check-inline">
-                <input v-model="options.headVariant" value="light" class="form-check-input" type="radio" name="headVariant" id="hvLight" />
+                <input v-model="options.headVariant" value="light" class="form-check-input-v3" type="radio" name="headVariant" id="hvLight" />
                 <label class="form-check-label" for="hvLight">{{ t('table.configurator.light') }}</label>
               </div>
               <div class="form-check form-check-inline">
-                <input v-model="options.headVariant" value="dark" class="form-check-input" type="radio" name="headVariant" id="hvDark" />
+                <input v-model="options.headVariant" value="dark" class="form-check-input-v3" type="radio" name="headVariant" id="hvDark" />
                 <label class="form-check-label" for="hvDark">{{ t('table.configurator.dark') }}</label>
               </div>
             </div>
@@ -34,15 +34,15 @@
       <div class="mb-3">
         <label class="text-primary form-label">{{ t('table.configurator.table.options.label') }}</label>
         <div>
-          <div class="form-check form-check-inline"><input v-model="options.striped" class="form-check-input" type="checkbox" id="striped" /><label class="form-check-label" for="striped">{{ t('table.configurator.table.options.striped') }}</label></div>
-          <div class="form-check form-check-inline"><input v-model="options.bordered" class="form-check-input" type="checkbox" id="bordered" /><label class="form-check-label" for="bordered">{{ t('table.configurator.table.options.bordered') }}</label></div>
-          <div class="form-check form-check-inline"><input v-model="options.borderless" class="form-check-input" type="checkbox" id="borderless" /><label class="form-check-label" for="borderless">{{ t('table.configurator.table.options.borderless') }}</label></div>
-          <div class="form-check form-check-inline"><input v-model="options.small" class="form-check-input" type="checkbox" id="small" /><label class="form-check-label" for="small">{{ t('table.configurator.table.options.small') }}</label></div>
-          <div class="form-check form-check-inline"><input v-model="options.hover" class="form-check-input" type="checkbox" id="hover" /><label class="form-check-label" for="hover">{{ t('table.configurator.table.options.hover') }}</label></div>
-          <div class="form-check form-check-inline"><input v-model="options.dark" class="form-check-input" type="checkbox" id="dark" /><label class="form-check-label" for="dark">{{ t('table.configurator.table.options.dark') }}</label></div>
-          <div class="form-check form-check-inline"><input v-model="options.responsive" class="form-check-input" type="checkbox" id="responsive" /><label class="form-check-label" for="responsive">{{ t('table.configurator.table.options.responsive') }}</label></div>
-          <div class="form-check form-check-inline"><input v-model="options.fixed" class="form-check-input" type="checkbox" id="fixed" /><label class="form-check-label" for="fixed">{{ t('table.configurator.table.options.fixed') }}</label></div>
-          <div class="form-check form-check-inline"><input v-model="options.noCollapse" class="form-check-input" type="checkbox" id="noCollapse" /><label class="form-check-label" for="noCollapse">{{ t('table.configurator.table.options.no-collapse') }}</label></div>
+          <div class="form-check form-check-inline"><input v-model="options.striped" class="form-check-input-v3" type="checkbox" id="striped" /><label class="form-check-label" for="striped">{{ t('table.configurator.table.options.striped') }}</label></div>
+          <div class="form-check form-check-inline"><input v-model="options.bordered" class="form-check-input-v3" type="checkbox" id="bordered" /><label class="form-check-label" for="bordered">{{ t('table.configurator.table.options.bordered') }}</label></div>
+          <div class="form-check form-check-inline"><input v-model="options.borderless" class="form-check-input-v3" type="checkbox" id="borderless" /><label class="form-check-label" for="borderless">{{ t('table.configurator.table.options.borderless') }}</label></div>
+          <div class="form-check form-check-inline"><input v-model="options.small" class="form-check-input-v3" type="checkbox" id="small" /><label class="form-check-label" for="small">{{ t('table.configurator.table.options.small') }}</label></div>
+          <div class="form-check form-check-inline"><input v-model="options.hover" class="form-check-input-v3" type="checkbox" id="hover" /><label class="form-check-label" for="hover">{{ t('table.configurator.table.options.hover') }}</label></div>
+          <div class="form-check form-check-inline"><input v-model="options.dark" class="form-check-input-v3" type="checkbox" id="dark" /><label class="form-check-label" for="dark">{{ t('table.configurator.table.options.dark') }}</label></div>
+          <div class="form-check form-check-inline"><input v-model="options.responsive" class="form-check-input-v3" type="checkbox" id="responsive" /><label class="form-check-label" for="responsive">{{ t('table.configurator.table.options.responsive') }}</label></div>
+          <div class="form-check form-check-inline"><input v-model="options.fixed" class="form-check-input-v3" type="checkbox" id="fixed" /><label class="form-check-label" for="fixed">{{ t('table.configurator.table.options.fixed') }}</label></div>
+          <div class="form-check form-check-inline"><input v-model="options.noCollapse" class="form-check-input-v3" type="checkbox" id="noCollapse" /><label class="form-check-label" for="noCollapse">{{ t('table.configurator.table.options.no-collapse') }}</label></div>
         </div>
       </div>
     </div>

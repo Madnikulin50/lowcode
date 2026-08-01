@@ -1,5 +1,5 @@
 <template>
-  <Wrap>
+  <Wrap v-bind="$props">
     <slot />
   </Wrap>
 </template>

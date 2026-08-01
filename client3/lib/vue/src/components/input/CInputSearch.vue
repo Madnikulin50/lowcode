@@ -15,7 +15,7 @@
       :autocomplete="autocomplete"
       :class="['form-control', inputSize, 'text-truncate']"
       @input="onInput"
-      @keyup.enter="submitQuery"
+      @keyup.enter="onEnter"
     />
 
     <div
@@ -39,8 +39,8 @@
     <button
       v-if="showSubmittable"
       :class="[isSubmittable ? 'btn-outline-light' : 'btn-link', isSubmittable ? '' : 'border-0 cursor-default', 'btn search-button d-inline-flex align-items-center rounded-0 border-light']"
-      :disabled="disabled"
-      @[isSubmittable]="submitQuery"
+      :disabled="!isSubmittable"
+      @click="onButtonClick"
     >
       <font-awesome-icon
         :icon="['fas', ai ? 'brain' : 'search']"
@@ -83,6 +83,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   search: [value: string]
+  'ai-search': [value: string]
 }>()
 
 const searchInput = ref<HTMLInputElement | null>(null)
@@ -112,9 +113,19 @@ function onInput (e: Event) {
   }
 }
 
-function submitQuery () {
+function onEnter () {
   if (props.submittable) {
     emit('search', localValue.value)
+  }
+}
+
+function onButtonClick () {
+  if (props.submittable) {
+    if (props.ai) {
+      emit('ai-search', localValue.value)
+    } else {
+      emit('search', localValue.value)
+    }
   }
 }
 

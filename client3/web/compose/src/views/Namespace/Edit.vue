@@ -254,6 +254,55 @@
               <hr>
 
               <div class="mb-3">
+                <label class="form-label text-primary">{{ $t('rag.documents.label', 'AI Knowledge Base (RAG)') }}</label>
+                <div class="d-flex gap-2 mb-2">
+                  <input
+                    ref="ragFileInput"
+                    type="file"
+                    accept=".txt,.html,.htm,.docx,.pdf"
+                    class="form-control form-control-sm"
+                    style="max-width: 300px"
+                    @change="onRagFileSelected"
+                  />
+                  <button
+                    class="btn btn-outline-primary btn-sm"
+                    :disabled="!ragUploadFile || ragUploading"
+                    @click="uploadRagDocument"
+                  >
+                    <span v-if="ragUploading" class="spinner-border spinner-border-sm me-1" />
+                    {{ $t('rag.documents.upload', 'Upload') }}
+                  </button>
+                </div>
+                <p class="text-muted small mb-2">{{ $t('rag.documents.formats', 'Supported: TXT, HTML, DOCX, PDF') }}</p>
+
+                <div v-if="ragDocs.length" class="list-group list-group-flush border rounded" style="max-height: 200px; overflow-y: auto;">
+                  <div
+                    v-for="doc in ragDocs"
+                    :key="doc.id"
+                    class="list-group-item d-flex justify-content-between align-items-center py-2 px-3"
+                  >
+                    <div class="text-truncate me-2">
+                      <span class="fw-medium">{{ doc.name }}</span>
+                      <span class="text-muted ms-2 small">{{ formatRagSize(doc.size) }}</span>
+                    </div>
+                    <button
+                      class="btn btn-outline-danger btn-sm"
+                      :disabled="ragDeleting === doc.id"
+                      @click="deleteRagDocument(doc)"
+                    >
+                      <span v-if="ragDeleting === doc.id" class="spinner-border spinner-border-sm" />
+                      <font-awesome-icon v-else :icon="['far', 'trash-alt']" />
+                    </button>
+                  </div>
+                </div>
+                <div v-else-if="ragLoaded" class="text-muted small">
+                  {{ $t('rag.documents.empty', 'No documents uploaded.') }}
+                </div>
+              </div>
+
+              <hr>
+
+              <div class="mb-3">
                 <label class="form-label text-primary">{{ $t('sidebar.configure') }}</label>
                 <div class="form-check">
                   <input
@@ -468,6 +517,10 @@ onMounted(() => {
   if (iconModalEl.value) {
     iconModal = new Modal(iconModalEl.value)
   }
+})
+
+watch(() => namespace.value?.namespaceID, (id) => {
+  if (id) fetchRagDocuments()
 })
 
 function goToAdmin() {
@@ -809,5 +862,60 @@ function setDefaultValues() {
   application.value = undefined
   isApplication.value = false
   isApplicationInitialState.value = false
+}
+
+const ragDocs = ref([])
+const ragLoaded = ref(false)
+const ragUploadFile = ref(null)
+const ragUploading = ref(false)
+const ragDeleting = ref(null)
+const ragFileInput = ref(null)
+
+function onRagFileSelected(e) {
+  ragUploadFile.value = e.target.files?.[0] || null
+}
+
+async function fetchRagDocuments() {
+  try {
+    const { set } = await $ComposeAPI.ragDocumentList({ namespaceID: namespace.value.namespaceID })
+    ragDocs.value = set || []
+  } finally {
+    ragLoaded.value = true
+  }
+}
+
+async function uploadRagDocument() {
+  if (!ragUploadFile.value) return
+  ragUploading.value = true
+  try {
+    await $ComposeAPI.ragDocumentUpload({ namespaceID: namespace.value.namespaceID, file: ragUploadFile.value })
+    ragUploadFile.value = null
+    if (ragFileInput.value) ragFileInput.value.value = ''
+    await fetchRagDocuments()
+    toastSuccess(t('rag.documents.uploaded', 'Document uploaded and indexed'))
+  } catch (e) {
+    toastErrorHandler(t('rag.documents.uploadFailed', 'Upload failed'))(e)
+  } finally {
+    ragUploading.value = false
+  }
+}
+
+async function deleteRagDocument(doc) {
+  ragDeleting.value = doc.id
+  try {
+    await $ComposeAPI.ragDocumentDelete({ namespaceID: namespace.value.namespaceID, docID: doc.id })
+    await fetchRagDocuments()
+  } catch (e) {
+    toastErrorHandler(t('rag.documents.deleteFailed', 'Delete failed'))(e)
+  } finally {
+    ragDeleting.value = null
+  }
+}
+
+function formatRagSize(bytes) {
+  if (!bytes) return ''
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / 1048576).toFixed(1) + ' MB'
 }
 </script>

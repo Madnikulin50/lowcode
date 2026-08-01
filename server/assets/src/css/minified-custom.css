@@ -6976,6 +6976,16 @@ textarea.form-control {
   color: rgb(108.6, 133.2, 148.8)
 }
 
+.form-check-input-v3 {
+    margin-left: -1.25rem
+}
+
+.form-check-input-v3[disabled]~.form-check-label,
+.form-check-input-v3:disabled~.form-check-label {
+    color: rgb(108.6, 133.2, 148.8)
+}
+
+
 .form-check-label {
   margin-bottom: 0
 }
@@ -9628,6 +9638,7 @@ textarea.form-control.is-invalid {
 }
 
 .nav-link {
+    cursor: default;
   display: block;
   padding: .5rem 1rem
 }

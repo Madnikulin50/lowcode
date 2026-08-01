@@ -71,8 +71,9 @@
       </c-topbar>
     </header>
 
-    <main class="d-flex flex-column flex-grow-1 overflow-auto" style="min-width: 0">
-      <router-view class="h-100" />
+    <main class="d-flex flex-column" style="flex: 1; min-height: 0; min-width: 0">
+      <router-view class="flex-grow-1 overflow-auto" style="min-height: 0" />
+      <div id="admin-toolbar"></div>
     </main>
   </div>
   </div>
@@ -366,7 +367,7 @@ function destroyEvents() {
 
 .sidebar-container {
   bottom: 0;
-  z-index: 1037;
+  z-index: 1020;
   > div {
     height: 100%;
   }
@@ -403,6 +404,28 @@ function destroyEvents() {
 
 .sidebar-container .b-sidebar-backdrop {
   display: none !important;
+}
+
+.sidebar-body {
+  overflow: hidden !important;
+  min-height: 0 !important;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+}
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.sidebar-scroll:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
 }
 
 </style>

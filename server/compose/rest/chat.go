@@ -59,6 +59,7 @@ func (ctrl *Chat) AskStream(ctx context.Context, r *request.ChatAsk, stream serv
 func toChatMessages(in []request.ChatMessage) []service.ChatMessage {
 	out := make([]service.ChatMessage, len(in))
 	for i, m := range in {
+
 		out[i] = service.ChatMessage{Role: m.Role, Content: m.Content}
 	}
 	return out

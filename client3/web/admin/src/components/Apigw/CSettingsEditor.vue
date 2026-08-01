@@ -41,7 +41,7 @@
                 id="proxy-follow"
                 v-model="settings['apigw.proxy.follow-redirects']"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
               >
               <label
                 class="form-check-label"

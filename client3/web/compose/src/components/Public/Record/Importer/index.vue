@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex">
     <button
-      class="btn btn-lg btn-outline-secondary flex-fill"
+      class="btn btn-outline-secondary flex-fill"
       @click="showModal=true"
     >
       {{ $t('label.import') }}
@@ -18,7 +18,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ $t('recordList.import.to', { modulename: module.name }) }}</h5>
-            <button type="button" class="btn-close" @click="showModal=false"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="showModal=false"></button>
           </div>
           <div class="modal-body p-0">
             <component

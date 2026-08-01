@@ -27,7 +27,7 @@ export function endpoint (): string {
   let { CortezaAPI, CortezaWebsocket, location } = window
 
   if (!CortezaWebsocket) {
-    // Corteza websocket entrypoint not set, use API and append /websocket
+    // LowCoooode websocket entrypoint not set, use API and append /websocket
     //
     // When CortezaAPI is provided as a path (/api for example); make sure that
     // no fragments/query parameters are provided

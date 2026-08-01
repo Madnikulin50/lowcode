@@ -19,7 +19,7 @@
       <div class="col-12">
         <div class="mb-3">
           <label class="form-label text-primary">{{ $t('form.model-ident.label') }}</label>
-          <small class="form-text text-muted">{{ $t('form.model-ident.description', { interpolation: { prefix: '{{{', suffix: '}}}' } }) }}</small>
+          <small class="form-text text-muted">{{ modelIdentDescription }}</small>
           <input
             v-model="dal.modelIdent"
             type="text"
@@ -79,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed, inject } from 'vue'
 
 defineProps({
   disabled: { type: Boolean, default: false },
@@ -90,6 +90,9 @@ defineProps({
 })
 
 defineEmits(['submit'])
+
+const $t = inject('$t') || ((k) => k)
+const modelIdentDescription = computed(() => $t('form.model-ident.description', { interpolation: { prefix: '{{{' , suffix: '}}}' } }))
 
 const paramsJson = ref('')
 const paramsJsonEditorClass = ref('')

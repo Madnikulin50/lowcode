@@ -15,7 +15,7 @@
       <div class="mt-1 ms-2">
         <div v-for="(resource, i) in agg.items" :key="i" class="form-check mb-1">
           <input
-            class="form-check-input"
+            class="form-check-input-v3"
             type="checkbox"
             :value="resource.name"
             :id="`filter-${agg.name}-${i}`"

@@ -3,6 +3,8 @@ import { h } from 'vue'
 
 import AutomationBase from './AutomationBase.vue'
 import AutomationConfigurator from './AutomationConfigurator.vue'
+import AiChatBase from './AiChatBase.vue'
+import AiChatConfigurator from './AiChatConfigurator.vue'
 import CalendarBase from './CalendarBase.vue'
 import CalendarConfigurator from './CalendarConfigurator/index.vue'
 import ChartBase from './ChartBase.vue'
@@ -42,6 +44,8 @@ import TabsConfigurator from './TabsConfigurator.vue'
 const Registry = {
   AutomationBase,
   AutomationConfigurator,
+  AiChatBase,
+  AiChatConfigurator,
   CalendarBase,
   CalendarConfigurator,
   ChartBase,

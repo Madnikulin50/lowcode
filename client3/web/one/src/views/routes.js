@@ -1,31 +1,16 @@
-/**
- * Simple route generator
- *
- * @param name {String}
- * @param path {String}
- * @param component {String}
- * @returns {Object}
- */
-function r (name, path, component) {
-  return {
-    path,
-    name,
-    component: () => import('./' + component + '.vue'),
-    props: true,
-    // canReuse: false,
-  }
-}
+import Layout from './Layout.vue'
+import BridgeIndex from './Bridge/index.vue'
+import BridgeJitsi from './Bridge/Jitsi.vue'
 
 export default [
-  r('layout', '/', 'Layout'),
+  { name: 'layout', path: '/', component: Layout, props: true },
 
   {
-    ...r('bridge', '/bridge', 'Bridge/index'),
+    ...{ name: 'bridge', path: '/bridge', component: BridgeIndex, props: true },
     children: [
-      r('bridge-jitsi', 'jitsi', 'Bridge/Jitsi'),
+      { name: 'bridge-jitsi', path: 'jitsi', component: BridgeJitsi, props: true },
     ],
   },
 
-  // When everything else fails, go to root
   { path: '/:pathMatch(.*)*', redirect: { name: 'layout' } },
 ]

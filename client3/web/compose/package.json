@@ -58,6 +58,7 @@
     "pinia": "^2.3.1",
     "portal-vue": "^3.0.0",
     "temporal-polyfill": "^1.0.1",
+    "turndown": "^7.2.4",
     "vue": "^3.5.13",
     "vue-echarts": "^7.0.3",
     "vue-grid-layout": "^3.0.0-beta1",

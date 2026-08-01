@@ -148,7 +148,7 @@
               <input
                 id="scope-profile"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
                 data-test-id="checkbox-allow-access-to-user-profile"
                 :checked="(resource.scope || []).includes('profile')"
                 @change="setScope($event, 'profile')"
@@ -159,7 +159,7 @@
               <input
                 id="scope-api"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
                 data-test-id="checkbox-allow-access-to-corteza-api"
                 :checked="(resource.scope || []).includes('api')"
                 @change="setScope($event, 'api')"
@@ -170,7 +170,7 @@
               <input
                 id="scope-openid"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
                 data-test-id="checkbox-allow-client-to-use-oidc"
                 :checked="(resource.scope || []).includes('openid')"
                 @change="setScope($event, 'openid')"
@@ -181,7 +181,7 @@
               <input
                 id="scope-discovery"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
                 data-test-id="checkbox-allow-client-access-to-discovery"
                 :checked="(resource.scope || []).includes('discovery')"
                 @change="setScope($event, 'discovery')"
@@ -232,7 +232,7 @@
                 id="checkbox-enabled"
                 v-model="resource.enabled"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
                 data-test-id="checkbox-is-client-enabled"
                 :disabled="resource.isDefault"
               >
@@ -249,7 +249,7 @@
                 id="checkbox-trusted"
                 v-model="resource.trusted"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
                 data-test-id="checkbox-is-client-trusted"
               >
               <label class="form-check-label" for="checkbox-trusted">{{ $t('trusted.label') }}</label>

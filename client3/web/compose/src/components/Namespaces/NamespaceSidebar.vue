@@ -53,56 +53,57 @@
     <portal to="sidebar-body-expanded">
       <div
         v-if="namespace"
-        class="d-flex flex-column flex-grow-1"
+        style="flex: 1 1 0%; min-height: 0; position: relative;"
       >
-        <div class="sticky-top w-100 py-2">
-          <button
-            v-if="isAdminPage"
-            data-test-id="button-public"
-            class="btn btn-outline-secondary w-100 mb-2"
-            @click="$router.push({ name: 'pages', params: { slug: namespace.slug || namespace.namespaceID } })"
-          >
-            {{ $t('publicPages') }}
-          </button>
+        <div class="sidebar-scroll overflow-auto position-absolute top-0 start-0 w-100 h-100 pe-2">
+          <div class="sticky-top w-100 py-2 bg-white">
+            <button
+              v-if="isAdminPage"
+              data-test-id="button-public"
+              class="btn btn-outline-secondary w-100 mb-2"
+              @click="$router.push({ name: 'pages', params: { slug: namespace.slug || namespace.namespaceID } })"
+            >
+              {{ $t('publicPages') }}
+            </button>
 
-          <button
-            v-else-if="namespace.canManageNamespace"
-            data-test-id="button-admin"
-            class="btn btn-outline-secondary w-100 mb-2"
-            @click="$router.push({ name: 'admin.modules', params: { slug: namespace.slug || namespace.namespaceID } })"
-          >
-            {{ $t('adminPanel') }}
-          </button>
+            <button
+              v-else-if="namespace.canManageNamespace"
+              data-test-id="button-admin"
+              class="btn btn-outline-secondary w-100 mb-2"
+              @click="$router.push({ name: 'admin.modules', params: { slug: namespace.slug || namespace.namespaceID } })"
+            >
+              {{ $t('adminPanel') }}
+            </button>
 
-          <c-input-search
-            v-model.trim="query"
-            :disabled="loading"
-            :placeholder="$t(`searchPlaceholder.${isAdminPage ? 'admin' : 'public'}`)"
-            :autocomplete="'off'"
-          />
-        </div>
+            <c-input-search
+              v-model.trim="query"
+              :disabled="loading"
+              :placeholder="$t(`searchPlaceholder.${isAdminPage ? 'admin' : 'public'}`)"
+              :autocomplete="'off'"
+            />
+          </div>
 
-        <div v-if="!loading">
-          <c-sidebar-nav-items
-            :items="navItems"
-            :start-expanded="!!query"
-            default-route-name="page"
-            class="overflow-auto h-100"
-          />
+          <div v-if="!loading">
+            <c-sidebar-nav-items
+              :items="navItems"
+              :start-expanded="!!query"
+              default-route-name="page"
+            />
+
+            <div
+              v-if="!navItems.length"
+              class="d-flex justify-content-center mt-5"
+            >
+              {{ $t('sidebar.noResults', 'No results') }}
+            </div>
+          </div>
 
           <div
-            v-if="!navItems.length"
-            class="d-flex justify-content-center mt-5"
+            v-else
+            class="d-flex align-items-center justify-content-center mt-5"
           >
-            {{ $t('sidebar.noResults', 'No results') }}
+            <span class="spinner-border spinner-border-sm" />
           </div>
-        </div>
-
-        <div
-          v-else
-          class="d-flex align-items-center justify-content-center mt-5"
-        >
-          <span class="spinner-border spinner-border-sm" />
         </div>
       </div>
     </portal>
@@ -213,6 +214,7 @@ function namespaceSelected ({ namespaceID: nid, canManageNamespace, slug = '' })
   if (name.includes('admin.modules')) name = 'admin.modules'
   else if (name.includes('admin.pages')) name = 'admin.pages'
   else if (name.includes('admin.charts')) name = 'admin.charts'
+
   name = !params.pageID && canManageNamespace && !name.includes('namespace.') ? name : 'pages'
   router.push({ name, params: { slug: slug || nid } })
 }
@@ -223,17 +225,42 @@ function pageIndex (wraps) {
   return ix
 }
 
+function moduleIcon (module) {
+  const type = module.config?.type || 'basic'
+  if (type === 'datasource') return ['fas', 'cube']
+  if (type === 'dbref') return ['fas', 'code-branch']
+  return ['fas', 'database']
+}
+
 function moduleWrap (module, pageName) {
   return {
-    page: { name: pageName, pageID: `module-${module.moduleID}`, selfID: 'modules', rootSelfID: 'modules', title: module.name || module.handle, visible: true },
+    page: { name: pageName, pageID: `module-${module.moduleID}`, selfID: 'modules', rootSelfID: 'modules', title: module.name || module.handle, visible: true, icon: moduleIcon(module) },
     children: [],
     params: { moduleID: module.moduleID },
   }
 }
 
+const chartIconMap = {
+  pie: ['fas', 'chart-pie'],
+  bar: ['fas', 'chart-bar'],
+  line: ['fas', 'chart-line'],
+  doughnut: ['fas', 'chart-pie'],
+  funnel: ['fas', 'filter'],
+  gauge: ['fas', 'gauge'],
+  radar: ['fas', 'compass'],
+  scatter: ['fas', 'chart-line'],
+}
+
+function chartIcon (chart) {
+  const type = chart.config?.reports?.[0]?.metrics?.[0]?.type
+  if (type && chartIconMap[type]) return chartIconMap[type]
+  return chartIconMap.bar
+}
+
 function chartWrap (chart) {
+  const icon = chartIcon(chart)
   return {
-    page: { name: 'admin.charts.edit', pageID: `chart-${chart.chartID}`, selfID: 'charts', rootSelfID: 'charts', title: chart.name || chart.handle, visible: true },
+    page: { name: 'admin.charts.edit', pageID: `chart-${chart.chartID}`, selfID: 'charts', rootSelfID: 'charts', title: chart.name || chart.handle, visible: true, icon },
     children: [],
     params: { chartID: chart.chartID },
   }
@@ -249,32 +276,46 @@ function adminRoutes () {
     ...adminPageWrap(pages.value),
     { page: { pageID: 'charts', selfID: NoID, name: 'admin.charts', title: 'Charts', visible: true }, children: [] },
     ...charts.value.map(chartWrap),
+
   ]
 }
 
 function publicPageWrap (pages) {
-  return pages.map(({ pageID, selfID, title, visible, config }) => {
+  return pages.map(({ pageID, selfID, title, visible, config, blocks }) => {
     const { navItem = {} } = config
-    const { icon = {}, expanded = '' } = navItem
-    const { type = '', src = '' } = icon
-    const iconType = 'attachment'
-    let iconSrc = src
-    if (type === iconType) iconSrc = `${$ComposeAPI.baseURL}${src}`
-    return { page: { pageID, selfID, title, visible, expanded, icon: iconSrc }, children: [], params: { pageID } }
+    const { icon: navIcon = {}, expanded = '' } = navItem
+    return { page: { pageID, selfID, title, visible, expanded, icon: resolvePageIcon(navIcon, blocks) }, children: [], params: { pageID } }
   })
 }
 
 function adminPageWrap (pages) {
-  return pages.map(({ pageID, selfID, title, handle, config }) => {
+  return pages.map(({ pageID, selfID, title, handle, config, blocks }) => {
     const { navItem = {} } = config
-    const { icon = {} } = navItem
-    const { type = '', src = '' } = icon
-    const iconType = 'attachment'
-    let iconSrc = src
-    if (type === iconType) iconSrc = `${$ComposeAPI.baseURL}${src}`
+    const { icon: navIcon = {} } = navItem
     const pageName = route.name === 'admin.pages.edit' ? 'admin.pages.edit' : 'admin.pages.builder'
-    return { page: { name: pageName, pageID: `page-${pageID}`, selfID: selfID !== NoID ? `page-${selfID}` : 'pages', rootSelfID: 'pages', title: title || handle, visible: true, icon: iconSrc }, children: [], params: { pageID } }
+    return { page: { name: pageName, pageID: `page-${pageID}`, selfID: selfID !== NoID ? `page-${selfID}` : 'pages', rootSelfID: 'pages', title: title || handle, visible: true, icon: resolvePageIcon(navIcon, blocks) }, children: [], params: { pageID } }
   })
+}
+
+function resolvePageIcon (icon, blocks) {
+  if (icon && icon.type && icon.src) {
+    if (icon.type === 'fontawesome') {
+      const parts = icon.src.split(' ')
+      return parts.length >= 2 ? [parts[0], parts.slice(1).join(' ')] : ['fas', icon.src]
+    }
+    if (icon.type === 'attachment') return `${$ComposeAPI.baseURL}${icon.src}`
+    if (icon.type === 'link') return icon.src
+  }
+  if (blocks && blocks.length) {
+    const kinds = new Set(blocks.map(b => b.kind))
+    if (kinds.has('Chart') || kinds.has('Metric')) return ['fas', 'chart-bar']
+    if (kinds.has('RecordList') || kinds.has('Record')) return ['fas', 'database']
+    if (kinds.has('Calendar')) return ['fas', 'calendar-alt']
+    if (kinds.has('SocialFeed')) return ['fas', 'rss']
+    if (kinds.has('Comment')) return ['fas', 'comments']
+    if (kinds.has('Tabs') || kinds.has('Navigation')) return ['fas', 'sitemap']
+  }
+  return ['fas', 'file-alt']
 }
 
 function getNamespaceLabel (value) {

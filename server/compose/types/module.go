@@ -66,6 +66,28 @@ type (
 		RecordDeDup ModuleConfigRecordDeDup `json:"recordDeDup"`
 
 		Datasource ModuleConfigDataSource `json:"dataSource"`
+
+		Etl ModuleConfigETL `json:"etl"`
+	}
+
+	ModuleConfigETL struct {
+		Enabled        bool              `json:"enabled"`
+		SourceType     string            `json:"sourceType"`
+		Format         string            `json:"format"`
+		RestURL        string            `json:"restUrl"`
+		RestMethod     string            `json:"restMethod"`
+		RestHeaders    map[string]string `json:"restHeaders"`
+		RestBody       string            `json:"restBody"`
+		MCPServerID    string            `json:"mcpServerId"`
+		MCPTool        string            `json:"mcpTool"`
+		MCPParams      map[string]any    `json:"mcpParams"`
+		SMBHost        string            `json:"smbHost"`
+		SMBPort        int               `json:"smbPort"`
+		SMBShare       string            `json:"smbShare"`
+		SMBPath        string            `json:"smbPath"`
+		SMBUser        string            `json:"smbUser"`
+		SMBPass        string            `json:"smbPass"`
+		SMBFilePattern string            `json:"smbFilePattern"`
 	}
 
 	ModuleConfigDAL struct {

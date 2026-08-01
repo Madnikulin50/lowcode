@@ -1,10 +1,11 @@
 <template>
-  <Wrap body-class="pt-3 px-3">
+  <Wrap :block="block" :record="record" :loading-record="loadingRecord" :magnified="magnified" body-class="pt-3 px-3">
     <div v-if="isProcessing" class="d-flex align-items-center justify-content-center h-100">
       <span class="spinner-border" />
     </div>
     <div v-else-if="fieldModule" ref="fieldContainer" class="fixed-corner-container" :class="fieldLayoutClass">
       <button
+        v-if="!block.options?.hideBrainButton"
         class="btn btn-outline-extra-light text-secondary border-0 fixed-corner-button btn-sm"
         title="Ask AI about this record"
         :disabled="editable"
@@ -14,27 +15,56 @@
       </button>
       <template v-for="field in fields" :key="`${field.fieldID}-${field.name}`">
         <div v-if="canDisplay(field)" :data-test-id="getFieldCypressId(field.label || field.name)" class="field-container mb-3" :class="columnWrapClass" :style="genStyle(options.viewStyle, { addStyle: fieldWidth})">
-          <label class="form-label d-flex align-items-center text-primary mb-0">
-            <span class="d-flex" style="margin-top: 0.1rem;">{{ field.label || field.name }}</span>
-            <c-hint :tooltip="((field.options?.hint || {}).view || '')" />
-            <div v-if="!record.deletedAt && options.inlineRecordEditEnabled && isFieldEditable(field)" class="inline-actions ms-1">
-              <button
-                class="btn btn-outline-extra-light text-secondary border-0 btn-sm"
-                title="Edit inline"
-                :disabled="editable"
-                @click="editInlineField(fieldRecord, field)"
-              >
-                <font-awesome-icon :icon="['fas', 'pen']" />
-              </button>
+          <div v-if="horizontal" class="row">
+            <div class="col-md-6 col-xl-5">
+              <label class="d-flex align-items-center text-primary mb-0 form-label">
+                <span class="d-flex" style="margin-top: 0.1rem;">{{ field.label || field.name }}</span>
+                <c-hint :tooltip="((field.options?.hint || {}).view || '')" />
+                <div v-if="!record.deletedAt && options.inlineRecordEditEnabled && isFieldEditable(field)" class="inline-actions ms-1">
+                  <button
+                    class="btn btn-outline-extra-light text-secondary border-0 btn-sm"
+                    title="Edit inline"
+                    :disabled="editable"
+                    @click="editInlineField(fieldRecord, field)"
+                  >
+                    <font-awesome-icon :icon="['fas', 'pen']" />
+                  </button>
+                </div>
+              </label>
+              <div class="small text-muted" :class="{ 'mb-1': !!((field.options?.description || {}).view) }">
+                {{ (field.options?.description || {}).view }}
+              </div>
             </div>
-          </label>
-          <div class="small text-muted" :class="{ 'mb-1': !!((field.options?.description || {}).view) }">
-            {{ (field.options?.description || {}).view }}
+            <div class="col-md-6 col-xl-7 d-flex align-items-center">
+              <div v-if="field.canReadRecordValue" class="value">
+                <FieldViewer :field="field" :extra-options="options" :record="fieldRecord" :namespace="namespace" />
+              </div>
+              <i v-else class="text-muted">{{ $t('field.noPermission') }}</i>
+            </div>
           </div>
-          <div v-if="field.canReadRecordValue" class="value align-self-center">
-            <FieldViewer :field="field" :extra-options="options" :record="fieldRecord" />
-          </div>
-          <i v-else class="text-muted">{{ $t('field.noPermission') }}</i>
+          <template v-else>
+            <label class="form-label d-flex align-items-center text-primary mb-0">
+              <span class="d-flex" style="margin-top: 0.1rem;">{{ field.label || field.name }}</span>
+              <c-hint :tooltip="((field.options?.hint || {}).view || '')" />
+              <div v-if="!record.deletedAt && options.inlineRecordEditEnabled && isFieldEditable(field)" class="inline-actions ms-1">
+                <button
+                  class="btn btn-outline-extra-light text-secondary border-0 btn-sm"
+                  title="Edit inline"
+                  :disabled="editable"
+                  @click="editInlineField(fieldRecord, field)"
+                >
+                  <font-awesome-icon :icon="['fas', 'pen']" />
+                </button>
+              </div>
+            </label>
+            <div class="small text-muted" :class="{ 'mb-1': !!((field.options?.description || {}).view) }">
+              {{ (field.options?.description || {}).view }}
+            </div>
+            <div v-if="field.canReadRecordValue" class="value align-self-center">
+              <FieldViewer :field="field" :extra-options="options" :record="fieldRecord" :namespace="namespace" />
+            </div>
+            <i v-else class="text-muted">{{ $t('field.noPermission') }}</i>
+          </template>
         </div>
       </template>
     </div>
@@ -105,17 +135,28 @@ const fieldWidth = computed(() => {
   return { 'min-width': '13rem' }
 })
 
+const horizontal = computed(() => options.value.horizontalFieldLayoutEnabled && options.value.recordFieldLayoutOption !== 'noWrap')
+
 const fields = computed(() => {
   if (!fieldModule.value) return []
-  if (!options.value.fields || options.value.fields.length === 0) return fieldModule.value.fields
-  return fieldModule.value.filterFields(options.value.fields).map(f => ({
-    ...f, label: f.isSystem ? $t(`system.${f.name}`) : f.label || f.name,
-  }))
+  let ff = fieldModule.value.fields
+  if (options.value.fields && options.value.fields.length > 0) {
+    ff = fieldModule.value.filterFields(options.value.fields)
+  }
+  return ff.map(f => {
+    const label = f.isSystem ? $t(`system.${f.name}`) : f.label || f.name
+    return Object.assign(Object.create(Object.getPrototypeOf(f)), f, { label })
+  })
 })
 
 const fieldLayoutClass = computed(() => {
   const classes = { default: 'd-flex flex-column', noWrap: 'd-flex gap-2', wrap: 'row g-0' }
   return classes[options.value.recordFieldLayoutOption]
+})
+
+const columnWrapClass = computed(() => {
+  if (options.value.recordFieldLayoutOption === 'noWrap') return 'field-col'
+  return ''
 })
 
 const fieldModule = computed(() => options.value.referenceField ? referenceModule.value : props.module)

@@ -14,7 +14,7 @@ RUN ls ./
 
 RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
-ARG VERSION=2026.7.21-2
+ARG VERSION=2026.7.6
 
 ARG SERVER_VERSION=${VERSION}
 ARG WEBAPP_VERSION=${VERSION}
@@ -44,24 +44,6 @@ ADD ./client/web/privacy/dist /pnp/webapp/privacy
 ADD ./client/web/reporter/dist /pnp/webapp/reporter
 ADD ./client/web/workflow/dist /pnp/webapp/workflow
 
-RUN rm -rf /pnp/webapp3
-
-RUN mkdir /pnp/webapp3
-RUN mkdir /pnp/webapp3/admin
-RUN mkdir /pnp/webapp3/compose
-RUN mkdir /pnp/webapp3/discovery
-RUN mkdir /pnp/webapp3/privacy
-RUN mkdir /pnp/webapp3/reporter
-RUN mkdir /pnp/webapp3/workflow
-
-ADD ./client/web/one/dist /pnp/webapp3/
-ADD ./client/web/admin/dist /pnp/webapp3/admin
-ADD ./client/web/compose/dist /pnp/webapp3/compose
-ADD ./client/web/discovery/dist /pnp/webapp3/discovery
-ADD ./client/web/privacy/dist /pnp/webapp3/privacy
-ADD ./client/web/reporter/dist /pnp/webapp3/reporter
-ADD ./client/web/workflow/dist /pnp/webapp3/workflow
-
 
 # deploy-stage
 FROM ubuntu:22.04 as deploy-stage
@@ -75,10 +57,8 @@ RUN apt-get -y update \
 ENV STORAGE_PATH="/data"
 ENV CORREDOR_ADDR="corredor:80"
 ENV HTTP_ADDR="0.0.0.0:80"
-ENV HTTP_ADDR3="0.0.0.0:80"
 ENV HTTP_WEBAPP_ENABLED="true"
 ENV HTTP_WEBAPP_BASE_DIR="/pnp/webapp"
-ENV HTTP_WEBAPP_BASE_DIR3="/pnp/webapp"
 ENV PATH="/opt/dart-sass:/pnp/bin:${PATH}"
 
 WORKDIR /pnp

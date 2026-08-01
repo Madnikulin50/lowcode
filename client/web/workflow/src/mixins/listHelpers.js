@@ -1,10 +1,6 @@
 import axios from 'axios'
 import { mapActions } from 'vuex'
 
-function emitEvent (name, data) {
-  window.dispatchEvent(new CustomEvent(name, data ? { detail: data } : undefined))
-}
-
 export default {
   data () {
     return {
@@ -115,7 +111,7 @@ export default {
 
       // Only refresh if pageCursor actually changed,
       if (refresh) {
-        emitEvent('bv::refresh::table', 'resource-list')
+        this.$root.$emit('bv::refresh::table', 'resource-list')
       }
     },
 
@@ -131,7 +127,7 @@ export default {
       //
       // this effectively calls items()/procListResults()
       this.abortRequests()
-      emitEvent('bv::refresh::table', 'resource-list')
+      this.$root.$emit('bv::refresh::table', 'resource-list')
     },
 
     encodeListParams () {
@@ -208,7 +204,7 @@ export default {
           return set
         }).catch(error => {
           if (!axios.isCancel(error)) {
-            this.toastErrorHandler(this.$t('notification.list.load.error'))(error)
+            this.toastErrorHandler(this.$t('notification:list.load.error'))(error)
           } else {
             this.cancelled = true
           }

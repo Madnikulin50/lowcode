@@ -16,8 +16,8 @@
         :animated="field.options.animated"
         :variant="field.options.variant"
         :thresholds="field.options.thresholds"
+        size="sm"
         :class="{ 'mt-2': i }"
-        style="height: 1.5rem; min-width: 15rem;"
       />
     </template>
 

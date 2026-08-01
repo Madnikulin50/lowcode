@@ -3,7 +3,7 @@
     <div class="mb-3 p-2 mb-0">
       <h5 class="d-flex align-items-center p-2 mb-0">
         {{ $t('help.basic-controls-label') }}
-        <font-awesome-icon :icon="['fas', 'mouse']" class="ms-2" />
+        <font-awesome-icon :icon="['fas', 'mouse']" class="ms-2 ml-1" />
       </h5>
       <table class="table table-fixed">
         <thead class="d-none">
@@ -20,9 +20,9 @@
     <div class="mb-3 p-2 mb-0">
       <h5 class="d-flex align-items-center pt-2 px-2 mb-0">
         {{ $t('help.keyboard-shortcuts-label') }}
-        <font-awesome-icon :icon="['fas', 'keyboard']" class="ms-2" />
+        <font-awesome-icon :icon="['fas', 'keyboard']" class="ms-2 ml-1" />
       </h5>
-      <small class="ms-2">{{ $t('help.mac-users') }}</small>
+      <small class="ms-2 ml-1">{{ $t('help.mac-users') }}</small>
       <table class="table table-fixed">
         <thead class="d-none">
           <tr><th></th><th></th></tr>

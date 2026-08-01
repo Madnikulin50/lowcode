@@ -5,7 +5,7 @@
         <input
           id="saml-enabled"
           v-model="value.enabled"
-          class="form-check-input"
+          class="form-check-input-v3"
           type="checkbox"
           :true-value="true"
           :false-value="false"
@@ -70,7 +70,7 @@
         <input
           id="sign-requests"
           v-model="value['sign-requests']"
-          class="form-check-input"
+          class="form-check-input-v3"
           type="checkbox"
         >
         <label

@@ -4,7 +4,7 @@
     class="py-3"
   >
     <Teleport to="#topbar-title">
-      {{ $t('edit.edit') }}
+      {{ $t('page.edit.edit') }}
     </Teleport>
 
     <Teleport to="#topbar-tools">
@@ -182,6 +182,9 @@
                   :placeholder="$t('prompt.placeholder')"
                   body-class="form-control"
                   min-body-height="10rem"
+                  output-format="markdown"
+                  :to-markdown="htmlToMarkdown"
+                  :to-html="markdownToHtml"
                   :labels="{
                     urlPlaceholder: $t('content.urlPlaceholder'),
                     ok: $t('content.ok'),
@@ -212,8 +215,13 @@
                 </button>
               </label>
 
+              <font-awesome-icon
+                v-if="icon.type === 'fontawesome'"
+                :icon="pageIconFA"
+                class="fs-3"
+              />
               <img
-                v-if="icon.src"
+                v-else-if="icon.src"
                 :src="pageIcon"
                 width="auto"
                 height="50"
@@ -437,7 +445,7 @@
     >
       <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-          <div class="modal-header p-3 pb-0 border-bottom-0">
+          <div class="modal-header p-3 border-bottom-0">
             <h5 class="modal-title">
               {{ $t('page-layout.configure', { title: ((layoutEditor.layout || {}).meta || {}).title, interpolation: { escapeValue: false } }) }}
             </h5>
@@ -761,7 +769,7 @@
                               </label>
                               <select
                                 v-model="element.params.pageLayoutID"
-                                class="form-select"
+                                class="form-select form-control"
                               >
                                 <option
                                   v-for="opt in actionLayoutOptions"
@@ -794,7 +802,7 @@
                               </label>
                               <select
                                 v-model="element.kind"
-                                class="form-select mb-1"
+                                class="form-select form-control mb-1"
                                 @change="onActionKindChange(element)"
                               >
                                 <option
@@ -815,7 +823,7 @@
                               </label>
                               <select
                                 v-model="element.params.openIn"
-                                class="form-select"
+                                class="form-select form-control"
                               >
                                 <option
                                   v-for="opt in actionOpenInOptions"
@@ -834,7 +842,7 @@
                               </label>
                               <select
                                 v-model="element.meta.style.variant"
-                                class="form-select"
+                                class="form-select form-control"
                               >
                                 <option
                                   v-for="opt in actionVariantOptions"
@@ -853,7 +861,7 @@
                               </label>
                               <select
                                 v-model="element.placement"
-                                class="form-select"
+                                class="form-select form-control"
                               >
                                 <option
                                   v-for="opt in actionPlacementOptions"
@@ -1094,6 +1102,35 @@
               </div>
             </div>
 
+            <hr>
+
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                Font Awesome icon
+              </label>
+              <input
+                v-model="faIcon"
+                class="form-control mb-2"
+                placeholder="fas fa-file-alt"
+              />
+              <div class="d-flex flex-wrap gap-1">
+                <button
+                  v-for="fi in faIconList"
+                  :key="fi"
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm d-flex align-items-center"
+                  :class="{ 'btn-primary text-white': faIcon === fi }"
+                  @click="faIcon = fi"
+                >
+                  <font-awesome-icon
+                    :icon="fi.split(' ')"
+                    class="me-1"
+                  />
+                  {{ fi.split(' ').pop() }}
+                </button>
+              </div>
+            </div>
+
             <template v-if="attachments.length > 0">
               <hr>
 
@@ -1223,10 +1260,10 @@ import { useI18n } from 'vue-i18n'
 import { getCurrentInstance } from 'vue'
 import { NoID, compose } from 'corteza-lib/js/dist'
 import { components, handle } from 'corteza-lib/vue/dist'
+import { htmlToMarkdown, markdownToHtml } from '../../../lib/markdown'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
 import PageLayoutTranslator from 'corteza-webapp-compose/src/components/Admin/PageLayout/PageLayoutTranslator'
-import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
 import pages from 'corteza-webapp-compose/src/mixins/pages'
 import { isEqual } from 'lodash'
 import Draggable from 'vuedraggable'
@@ -1264,6 +1301,7 @@ const showIconModal = ref(false)
 const attachments = ref([])
 const selectedAttachmentID = ref('')
 const linkUrl = ref('')
+const faIcon = ref('')
 const layouts = ref([])
 const layoutEditor = ref({ index: undefined, layout: undefined })
 const resolvingLayoutRoles = ref(false)
@@ -1328,6 +1366,108 @@ const pageIcon = computed(() => {
   return icon.value.type === 'link' ? icon.value.src : makeAttachmentUrl(icon.value.src)
 })
 
+const pageIconFA = computed(() => {
+  if (icon.value.type !== 'fontawesome' || !icon.value.src) return ['fas', 'file-alt']
+  const parts = icon.value.src.split(' ')
+  return parts.length >= 2 ? [parts[0], parts.slice(1).join(' ')] : ['fas', icon.value.src]
+})
+
+const faIconList = [
+  'fas fa-file-alt',
+  'fas fa-chart-bar',
+  'fas fa-chart-pie',
+  'fas fa-chart-line',
+  'fas fa-database',
+  'fas fa-cube',
+  'fas fa-file',
+  'fas fa-folder',
+  'fas fa-home',
+  'fas fa-cog',
+  'fas fa-users',
+  'fas fa-user',
+  'fas fa-envelope',
+  'fas fa-calendar-alt',
+  'fas fa-comments',
+  'fas fa-rss',
+  'fas fa-map-marked-alt',
+  'fas fa-image',
+  'fas fa-tasks',
+  'fas fa-search',
+  'fas fa-star',
+  'fas fa-heart',
+  'fas fa-bell',
+  'fas fa-clock',
+  'fas fa-globe',
+  'fas fa-book',
+  'fas fa-code',
+  'fas fa-table',
+  'fas fa-filter',
+  'fas fa-sitemap',
+  'fas fa-wrench',
+  'fas fa-tools',
+  'fas fa-landmark',
+  'fas fa-vault',
+  'fas fa-wallet',
+  'fas fa-industry',
+  'fas fa-globe',
+  'fas fa-certificate'  ,
+  'fas fa-city',
+  'fas fa-compass',
+  'fas fa-copyright',
+  'fas fa-fax',
+  'fas fa-network-wired',
+  'fas fa-percent',
+  'fas fa-person-chalkboard',
+  'fas fa-scale-balanced',
+  'fas fa-scale-unbalanced',
+  'fas fa-sitemap',
+  'fas fa-table',
+  'fas fa-tag',
+  'fas fa-timeline',
+  'fas fa-arrows-spin',
+  'fas fa-arrows-to-dot',
+  'fas fa-bars-progress',
+  'fas fa-box-archive',
+  'fas fa-building',
+  'fas fa-briefcase',
+  'fas fa-bullhorn',
+  'fas fa-bullseye',
+  'fas fa-calendar-days',
+  'fas fa-certificate',
+  'fas fa-bell',
+  'fas fa-circle-exclamation',
+  'fas fa-circle-radiation',
+  'fas fa-skull-crossbones',
+  'fas fa-triangle-exclamation',
+  'fas fa-handshake',
+  'fas fa-credit-card',
+  'fas fa-file-invoice',
+  'fas fa-money-bill-1-wave',
+  'fas fa-award',
+  'fas fa-cubes-stacked',
+  'fas fa-award',
+  'fas fa-display',
+  'fas fa-house-chimney',
+  'fas fa-house-medical',
+  'fas fa-kitchen-set',
+  'fas fa-people-group',
+  'fas fa-bicycle',
+  'fas fa-dumbbell',
+  'fas fa-heart-pulse',
+  'fas fa-person-walking',
+  'fas fa-shirt',
+  'fas fa-tree',
+  'fas fa-fish',
+  'fas fa-fire',
+  'fas fa-water',
+  'fas fa-car',
+  'fas fa-cart-shopping',
+  'fas fa-shop',
+  'fas fa-dolly',
+  'fas fa-hands-praying',
+  'fas fa-boxes-stacked'
+]
+
 const visibilityDocumentationURL = computed(() => {
   const [year, month] = VERSION.split('.')
   return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/integrator-guide/compose-configuration/page-layouts.html#visibility-condition`
@@ -1367,7 +1507,60 @@ const actionPlacementOptions = computed(() => [
 ])
 
 // Mixins integration
-const { processVisibilityAutoCompleteParams, processRecordAutoCompleteParams } = autocomplete.setup({ store, router, route, props })
+const $auth = getCurrentInstance()?.appContext.config.globalProperties.$auth
+
+function processVisibilityAutoCompleteParams ({ module: mod = module.value } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = $auth?.user()?.properties() || []
+
+  const recordSuggestions = isRecordPage.value && record.value
+    ? [
+        {
+          value: 'record',
+          properties: [
+            { value: 'values', properties: Object.keys(record.value?.values || {}) },
+            ...(record.value?.properties || []),
+          ],
+        },
+      ]
+    : []
+
+  return [
+    ...recordSuggestions,
+    { value: 'user', properties: userProperties },
+    { value: 'screen', properties: ['width', 'height', 'userAgent', 'breakpoint'] },
+    ...moduleFields,
+  ]
+}
+
+function processRecordAutoCompleteParams ({ module: mod = module.value, operators = false } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = $auth?.user()?.properties() || []
+
+  const recordSuggestions = isRecordPage.value && record.value
+    ? [
+        ...(['ownerID', 'recordID'].map(value => ({ interpolate: true, value }))),
+        {
+          interpolate: true,
+          value: 'record',
+          properties: [
+            { value: 'values', properties: Object.keys(record.value?.values || {}) },
+            ...(record.value?.properties || []),
+          ],
+        },
+      ]
+    : []
+
+  return [
+    ...recordSuggestions,
+    ...(operators ? ['AND', 'OR'] : []),
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
 
 const visibilityAutoCompleteParams = computed(() => processVisibilityAutoCompleteParams({ module: module.value }))
 const recordAutoCompleteParams = computed(() => isRecordPage.value ? processRecordAutoCompleteParams({ module: module.value }) : [])
@@ -1489,7 +1682,7 @@ function configureLayout (index) {
 }
 
 async function handleSaveLayouts () {
-  return Promise.all([...removedLayouts.value].map(store.dispatch('pageLayout/delete'))).then(() => {
+  return Promise.all([...removedLayouts.value].map(item => store.dispatch('pageLayout/delete', item))).then(() => {
     return Promise.all(layouts.value.map(layout => {
       if (layout.pageLayoutID === NoID) return store.dispatch('pageLayout/create', layout)
       else if (layout.meta.updated) return store.dispatch('pageLayout/update', layout)
@@ -1604,6 +1797,7 @@ function onActionKindChange (action) {
 }
 
 async function saveIcon () {
+  if (icon.value.type === 'fontawesome') return icon.value
   return $ComposeAPI.pageUpdateIcon({
     namespaceID: props.namespace?.namespaceID,
     pageID: props.pageID,
@@ -1618,18 +1812,22 @@ function toggleSelectedIcon (attachmentID = '') {
 
 function openIconModal () {
   linkUrl.value = icon.value.type === 'link' ? icon.value.src : ''
+  faIcon.value = icon.value.type === 'fontawesome' ? icon.value.src : ''
   setCurrentIcon()
   showIconModal.value = true
 }
 
 function saveIconModal () {
-  const type = selectedAttachmentID.value ? 'attachment' : 'link'
-  let src = linkUrl.value
-  if (selectedAttachmentID.value) {
-    src = (attachments.value.find(({ attachmentID }) => attachmentID === selectedAttachmentID.value) || {}).url
+  if (faIcon.value) {
+    icon.value = { type: 'fontawesome', src: faIcon.value }
+  } else if (selectedAttachmentID.value) {
+    const src = (attachments.value.find(({ attachmentID }) => attachmentID === selectedAttachmentID.value) || {}).url
+    icon.value = { type: 'attachment', src }
+  } else if (linkUrl.value) {
+    icon.value = { type: 'link', src: linkUrl.value }
+  } else {
+    icon.value = {}
   }
-  icon.value = { type, src }
-  if (type === 'link' && !src) icon.value = {}
   showIconModal.value = false
 }
 
@@ -1646,11 +1844,13 @@ function deleteIcon () {
 
 function closeIconModal () {
   linkUrl.value = icon.value.type === 'link' ? icon.value.src : ''
+  faIcon.value = icon.value.type === 'fontawesome' ? icon.value.src : ''
   setCurrentIcon()
   showIconModal.value = false
 }
 
 function setCurrentIcon () {
+  if (icon.value.type === 'fontawesome') return
   selectedAttachmentID.value = (attachments.value.find(a => a.url === icon.value.src) || {}).attachmentID
   if (!selectedAttachmentID.value) icon.value = {}
 }

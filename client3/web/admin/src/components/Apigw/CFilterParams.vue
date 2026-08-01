@@ -29,7 +29,7 @@
           :id="'param-' + index"
           v-model="param.value"
           type="checkbox"
-          class="form-check-input"
+          class="form-check-input-v3"
         >
         <label
           :for="'param-' + index"

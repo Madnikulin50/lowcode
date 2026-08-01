@@ -58,7 +58,7 @@
                 id="checkbox-dispatch-events"
                 v-model="queue.meta.dispatch_events"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
               >
               <label class="form-check-label" for="checkbox-dispatch-events">{{ $t("dispatch_events") }}</label>
             </div>

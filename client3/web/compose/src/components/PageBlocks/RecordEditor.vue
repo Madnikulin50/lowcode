@@ -1,5 +1,5 @@
 <template>
-  <Wrap card-class="position-static">
+  <Wrap :block="block" :record="record" :loading-record="loadingRecord" :magnified="magnified" card-class="position-static">
     <div v-if="isProcessing" class="d-flex align-items-center justify-content-center h-100">
       <span class="spinner-border" />
     </div>
@@ -23,7 +23,7 @@
               {{ (field.options?.description || {}).view }}
             </div>
             <div v-if="field.canReadRecordValue" class="value align-self-center">
-              <FieldViewer :field="field" value-only />
+              <FieldViewer :field="field" :namespace="namespace" value-only />
             </div>
             <i v-else class="text-muted">{{ $t('field.noPermission') }}</i>
           </div>
@@ -67,10 +67,14 @@ const evaluating = ref(false)
 
 const fields = computed(() => {
   if (!props.module) return []
-  if (!options.value.fields || options.value.fields.length === 0) return props.module.fields
-  return props.module.filterFields(options.value.fields).map(f => ({
-    ...f, label: f.isSystem ? $t(`system.${f.name}`) : f.label || f.name,
-  }))
+  let ff = props.module.fields
+  if (options.value.fields && options.value.fields.length > 0) {
+    ff = props.module.filterFields(options.value.fields)
+  }
+  return ff.map(f => {
+    const label = f.isSystem ? $t(`system.${f.name}`) : f.label || f.name
+    return Object.assign(Object.create(Object.getPrototypeOf(f)), f, { label })
+  })
 })
 
 const fieldLayoutClass = computed(() => {
@@ -78,12 +82,17 @@ const fieldLayoutClass = computed(() => {
   return classes[options.value.recordFieldLayoutOption]
 })
 
+const columnWrapClass = computed(() => {
+  if (options.value.recordFieldLayoutOption === 'noWrap') return 'field-col'
+  return ''
+})
+
 const fieldWidth = computed(() => {
   if (options.value.recordFieldLayoutOption !== 'noWrap') return {}
   return { 'min-width': '20rem' }
 })
 
-const horizontal = computed(() => props.block.options.horizontalFieldLayoutEnabled)
+const horizontal = computed(() => props.block.options.horizontalFieldLayoutEnabled && props.block.options.recordFieldLayoutOption !== 'noWrap')
 
 const isNew = computed(() => props.record && props.record.recordID === NoID)
 

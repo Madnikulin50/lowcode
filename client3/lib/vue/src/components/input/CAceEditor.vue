@@ -161,17 +161,26 @@ const editorOptions = computed(() => {
     opts.fontSize = props.fontSize
   }
 
+  const minHeightPx = parseHeight(props.minHeight)
+  const computedMinLines = Math.max(1, Math.floor(minHeightPx / 16))
+  opts.minLines = computedMinLines
+
+  if (!props.resizable) {
+    opts.maxLines = computedMinLines
+  }
+
   return opts
 })
 
 const containerStyle = computed(() => {
-  if (props.resizable) {
-    return {
-      minHeight: props.minHeight,
-      height: effectiveHeight.value,
-    }
+  const style = {}
+  if (props.minHeight) {
+    style.minHeight = props.minHeight
   }
-  return {}
+  if (props.resizable) {
+    style.height = effectiveHeight.value
+  }
+  return style
 })
 
 const effectiveHeight = computed(() => {

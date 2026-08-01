@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import { createApp, h, defineComponent } from 'vue'
 import { createPinia } from 'pinia'
 import './themes'
 
@@ -16,6 +16,25 @@ app.use(createPinia())
 app.use(router)
 app.use(i18n)
 
+import { Translation } from 'vue-i18n'
+
+app.component('i18next', defineComponent({
+  props: {
+    path: { type: String, required: true },
+    tag: { type: String, default: 'span' },
+  },
+  setup(props, { slots }) {
+    return () => {
+      const children = slots.default?.() || []
+      const namedSlots = {}
+      children.forEach((child, i) => {
+        namedSlots[i] = () => child
+      })
+      return h(Translation, { keypath: props.path, tag: props.tag, scope: 'global' }, namedSlots)
+    }
+  },
+}))
+
 import { plugins } from 'corteza-lib/vue/dist'
 app.use(plugins.Auth({ app: 'compose' }))
 import { CortezaAPI } from 'corteza-lib/vue/dist'
@@ -32,6 +51,7 @@ app.use(localComponents)
 
 import { createBootstrap } from 'bootstrap-vue-next'
 import { BButton, BInputGroup } from 'bootstrap-vue-next/components'
+import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
 app.use(createBootstrap())
 app.component('BButton', BButton)

@@ -21,7 +21,7 @@
     </div>
     <div class="card-body d-flex flex-column flex-wrap gap-2">
       <div v-if="Object.keys(hit.value?.labels || {}).includes('federation')">
-        <span class="badge border border-secondary h6 mb-0">
+        <span class="badge text-white border border-secondary h6 mb-0">
           {{ t('federated') }}
         </span>
       </div>

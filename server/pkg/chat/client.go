@@ -43,6 +43,14 @@ func (c *Client) Stream(ctx context.Context, messages []*schema.Message, opts ..
 	return c.cm.Stream(ctx, messages, opts...)
 }
 
+func (c *Client) IsToolsSupported() bool {
+	switch c.model {
+	case "deepseek-v2":
+		return false
+	}
+	return true
+}
+
 func (c *Client) Ask(ctx context.Context, system, user string) (string, error) {
 	msgs := make([]*schema.Message, 0, 2)
 	if system != "" {

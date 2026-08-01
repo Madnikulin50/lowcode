@@ -93,7 +93,7 @@
         <div class="col-12 col-lg-6">
           <div class="mb-3">
             <label class="form-label text-primary">{{ t('constraints.valueModifiers') }}</label>
-            <select v-model="constraint.modifier" class="form-select form-select-sm">
+            <select v-model="constraint.modifier" class="form-select form-control form-select-sm">
               <option v-for="opt in modifierOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
             </select>
           </div>
@@ -101,7 +101,7 @@
         <div class="col-12 col-lg-6">
           <div class="mb-3">
             <label class="form-label text-primary">{{ t('constraints.multiValues') }}</label>
-            <select v-model="constraint.multiValue" class="form-select form-select-sm" :disabled="!field.isMulti">
+            <select v-model="constraint.multiValue" class="form-select form-control form-select-sm" :disabled="!field.isMulti">
               <option v-for="opt in multiValueOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
             </select>
           </div>

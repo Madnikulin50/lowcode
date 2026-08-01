@@ -1,4 +1,4 @@
-import { ref, computed, onBeforeUnmount } from 'vue'
+import { ref, computed, reactive, toRaw, onBeforeUnmount } from 'vue'
 import { compose, NoID, validator } from 'corteza-lib/js/dist'
 import { useRoute } from 'vue-router'
 import { useSettings } from 'corteza-lib/vue/dist'
@@ -12,8 +12,8 @@ export function usePageBlockBase (props, emit) {
   const key = ref(0)
 
   const options = computed({
-    get: () => props.block.options,
-    set: (opts) => { props.block.options = opts },
+    get: () => reactive(props.block.options || {}),
+    set: (opts) => { props.block.options = toRaw(opts) },
   })
 
   const isProcessing = computed(() => processing.value || props.loadingRecord)

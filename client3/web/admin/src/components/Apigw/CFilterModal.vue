@@ -34,7 +34,7 @@
                 :id="'filter-enabled-' + internalFilter.ref"
                 v-model="internalFilter.enabled"
                 type="checkbox"
-                class="form-check-input"
+                class="form-check-input-v3"
                 data-test-id="checkbox-filter-enable"
               >
               <label

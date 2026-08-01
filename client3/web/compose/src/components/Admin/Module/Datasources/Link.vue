@@ -23,7 +23,7 @@
           <label class="form-label text-primary">{{ $t('datasources.primary.source') }}</label>
           <select
             v-model="step.link.localSource"
-            class="form-select"
+            class="form-select form-control"
             @change="onSourceChange('local')"
           >
             <option value="">{{ $t('label.none') }}</option>
@@ -40,7 +40,7 @@
           <label class="form-label text-primary">{{ $t('datasources.secondary.source') }}</label>
           <select
             v-model="step.link.foreignSource"
-            class="form-select"
+            class="form-select form-control"
             @change="onSourceChange('foreign')"
           >
             <option value="">{{ $t('label.none') }}</option>

@@ -59,10 +59,6 @@ func MakeWebappServer(log *zap.Logger, httpSrvOpt options.HttpServerOpt, authOpt
 		if err != nil {
 			log.Error("could not preload application index HTML", zap.Error(err))
 		}
-		if len(httpSrvOpt.WebappBaseDir3) > 0 {
-			appIndexHTMLs[app], err = modifyIndexHTML(app, httpSrvOpt.WebappBaseDir3, httpSrvOpt.BaseUrl+"v3/")
-		}
-
 	}
 
 	// Serves static files directly from FS

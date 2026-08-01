@@ -17,7 +17,7 @@
       <label class="form-label text-primary">{{ $t('datasources.source') }}</label>
       <select
         v-model="step.load.source"
-        class="form-select"
+        class="form-select form-control"
         @change="reset"
       >
         <option
@@ -108,15 +108,11 @@ const stepDefinition = computed({
   },
 })
 
-watch(stepDefinition, {
-  immediate: true,
-  deep: true,
-  handler ({ moduleID, namespaceID }) {
-    if (moduleID && namespaceID) {
-      getSourceColumns()
-    }
-  },
-})
+watch(stepDefinition, ({ moduleID, namespaceID }) => {
+  if (moduleID && namespaceID) {
+    getSourceColumns()
+  }
+}, { immediate: true, deep: true })
 
 function sourceTypeComponent (k) {
   return loader(k)

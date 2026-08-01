@@ -127,12 +127,13 @@ onBeforeUnmount(() => {
   resizing.value = false
 })
 
-function onLayoutUpdated () {
+function onLayoutUpdated (newLayout) {
   if (!props.editable) return
 
   resizing.value = false
 
-  layout.value.forEach(({ i, x, y, w, h }) => {
+  layout.value = newLayout
+  newLayout.forEach(({ i, x, y, w, h }) => {
     const layoutXYWH = [x, y, w, h]
     const { xywh = [] } = props.blocks[i] || {}
     if (xywh.toString() === layoutXYWH.toString()) return

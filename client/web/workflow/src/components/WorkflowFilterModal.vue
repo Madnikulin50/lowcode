@@ -1,88 +1,114 @@
 <template>
-  <div class="modal fade" id="workflow-filter" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">{{ $t('filter.title') }}</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-3">
-          <namespace-module-selector
-            ref="selector"
-            :namespace-labels="localNamespaceLabels"
-            :module-labels="localModuleLabels"
-            @change="handleChange"
-          />
-        </div>
-        <div class="modal-footer">
-          <div class="d-flex gap-1 w-100">
-            <button class="btn btn-outline-secondary" @click="handleReset">
-              {{ $t('reset') }}
-            </button>
-            <div class="d-flex ms-auto gap-1">
-              <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                {{ $t('cancel') }}
-              </button>
-              <button class="btn btn-primary" @click="handleApply">
-                {{ $t('filter.apply') }}
-              </button>
-            </div>
-          </div>
+  <b-modal
+    id="workflow-filter"
+    :title="$t('general:filter.title')"
+    size="lg"
+    no-fade
+    body-class="p-3"
+    @show="onShow"
+  >
+    <namespace-module-selector
+      ref="selector"
+      :namespace-labels="localNamespaceLabels"
+      :module-labels="localModuleLabels"
+      @change="handleChange"
+    />
+
+    <template #modal-footer>
+      <div class="d-flex gap-1 w-100">
+        <b-button
+          variant="outline-secondary"
+          @click="handleReset"
+        >
+          {{ $t('general:reset') }}
+        </b-button>
+
+        <div class="d-flex ml-auto gap-1">
+          <b-button
+            variant="outline-secondary"
+            @click="handleCancel"
+          >
+            {{ $t('general:cancel') }}
+          </b-button>
+
+          <b-button
+            variant="primary"
+            @click="handleApply"
+          >
+            {{ $t('general:filter.apply') }}
+          </b-button>
         </div>
       </div>
-    </div>
-  </div>
+    </template>
+  </b-modal>
 </template>
 
-<script setup>
-import { ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import NamespaceModuleSelector from './NamespaceModuleSelector.vue'
+<script>
+import NamespaceModuleSelector from './NamespaceModuleSelector'
 
-const { t } = useI18n()
+export default {
+  name: 'WorkflowFilterModal',
 
-const props = defineProps({
-  namespaceLabels: { type: Array, default: () => [] },
-  moduleLabels: { type: Array, default: () => [] },
-})
+  components: {
+    NamespaceModuleSelector,
+  },
 
-const emit = defineEmits(['apply'])
+  props: {
+    /**
+     * Current namespace labels filter
+     */
+    namespaceLabels: {
+      type: Array,
+      default: () => [],
+    },
 
-const localNamespaceLabels = ref([])
-const localModuleLabels = ref([])
-const selector = ref(null)
+    /**
+     * Current module labels filter
+     */
+    moduleLabels: {
+      type: Array,
+      default: () => [],
+    },
+  },
 
-function handleChange({ namespaceLabels, moduleLabels }) {
-  localNamespaceLabels.value = namespaceLabels
-  localModuleLabels.value = moduleLabels
+  data () {
+    return {
+      localNamespaceLabels: [],
+      localModuleLabels: [],
+    }
+  },
+
+  methods: {
+    onShow () {
+      // Reset local state to current props when modal opens
+      this.localNamespaceLabels = [...this.namespaceLabels]
+      this.localModuleLabels = [...this.moduleLabels]
+    },
+
+    handleChange ({ namespaceLabels, moduleLabels }) {
+      this.localNamespaceLabels = namespaceLabels
+      this.localModuleLabels = moduleLabels
+    },
+
+    handleApply () {
+      this.$emit('apply', {
+        namespaceLabels: this.localNamespaceLabels,
+        moduleLabels: this.localModuleLabels,
+      })
+      this.$bvModal.hide('workflow-filter')
+    },
+
+    handleReset () {
+      this.localNamespaceLabels = []
+      this.localModuleLabels = []
+      if (this.$refs.selector) {
+        this.$refs.selector.reset()
+      }
+    },
+
+    handleCancel () {
+      this.$bvModal.hide('workflow-filter')
+    },
+  },
 }
-
-function handleApply() {
-  emit('apply', {
-    namespaceLabels: localNamespaceLabels.value,
-    moduleLabels: localModuleLabels.value,
-  })
-  const modal = document.getElementById('workflow-filter')
-  if (modal) {
-    const bsModal = bootstrap.Modal.getInstance(modal)
-    if (bsModal) bsModal.hide()
-  }
-}
-
-function handleReset() {
-  localNamespaceLabels.value = []
-  localModuleLabels.value = []
-  if (selector.value) {
-    selector.value.reset()
-  }
-}
-
-// Initialize local state from props when modal shows
-watch(() => props.namespaceLabels, (val) => {
-  localNamespaceLabels.value = [...val]
-}, { immediate: true })
-
-watch(() => props.moduleLabels, (val) => {
-  localModuleLabels.value = [...val]
-}, { immediate: true })
 </script>

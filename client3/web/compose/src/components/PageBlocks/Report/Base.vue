@@ -1,5 +1,6 @@
 <template>
   <Wrap
+    v-bind="$props"
     @refreshBlock="refresh"
   >
     <div

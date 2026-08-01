@@ -1,7 +1,8 @@
 <template>
   <div
     v-if="namespace"
-    class="py-3"
+    class="py-3 d-flex flex-column flex-grow-1"
+    style="min-height: 0"
   >
     <Teleport to="#topbar-title">
       {{ title }}
@@ -43,17 +44,19 @@
 
     <div
       v-else
-      class="container-fluid"
+      class="d-flex flex-column flex-grow-1"
+      style="min-height: 0"
       @submit.prevent="handleSave"
     >
-      <div class="row">
-        <div class="col">
-          <div class="card shadow-sm">
+      <div class="container-fluid flex-grow-1 d-flex flex-column" style="min-height: 0">
+      <div class="row flex-grow-1" style="min-height: 0">
+        <div class="col d-flex flex-column" style="min-height: 0">
+          <div class="card shadow-sm d-flex flex-column flex-grow-1" style="min-height: 0">
             <div
               v-if="isEdit"
               class="card-header py-3"
             >
-              <div class="row d-flex align-items-center flex-fill-child gap-1">
+              <div class="d-flex align-items-center flex-fill-child gap-1">
                 <button
                   v-if="federationEnabled"
                   data-test-id="button-federation-settings"
@@ -69,7 +72,7 @@
                 <button
                   v-if="discoveryEnabled"
                   data-test-id="button-discovery-settings"
-                  class="btn btn-outline-secondary btn-lg me-1"
+                  class="btn btn-outline-secondary me-1"
                   @click="discoverySettingsState.modal = true"
                 >
                   <font-awesome-icon
@@ -91,7 +94,7 @@
                 >
                   <button
                     data-test-id="dropdown-permissions"
-                    class="btn btn-outline-secondary btn-lg dropdown-toggle"
+                    class="btn btn-outline-secondary dropdown-toggle"
                     type="button"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
@@ -146,7 +149,7 @@
               </div>
             </div>
 
-            <div>
+            <div class="d-flex flex-column flex-grow-1" style="min-height: 0">
               <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
                   <a
@@ -215,20 +218,32 @@
                   </a>
                 </li>
                 <li
+                  v-if="isEdit"
+                  class="nav-item"
+                >
+                  <a
+                    class="nav-link"
+                    :class="{ active: activeTab === 6 }"
+                    @click.prevent="activeTab = 6"
+                  >
+                    ETL
+                  </a>
+                </li>
+                <li
                   v-if="module && module.issues.length > 0"
                   class="nav-item"
                 >
                   <a
                     class="nav-link text-danger"
-                    :class="{ active: activeTab === 6 }"
-                    @click.prevent="activeTab = 6; checkAlterations()"
+                    :class="{ active: activeTab === 7 }"
+                    @click.prevent="activeTab = 7; checkAlterations()"
                   >
                     {{ $t('edit.issues.label', { count: module.issues.length }) }}
                   </a>
                 </li>
               </ul>
 
-              <div class="tab-content p-3">
+              <div class="tab-content p-3 flex-grow-1 overflow-auto" style="min-height: 0">
                 <div
                   class="tab-pane"
                   :class="{ active: activeTab === 0 }"
@@ -276,36 +291,15 @@
                     </div>
                   </div>
 
-                  <div class="mb-3">
-                    <label class="form-label text-primary">
-                      {{ $t('prompt.label') }}
-                    </label>
-                    <div class="input-group">
-                      <c-rich-text-input
-                        v-model="module.meta.prompt"
-                        :placeholder="$t('prompt.placeholder')"
-                        body-class="form-control"
-                        min-body-height="10rem"
-                        :labels="{
-                          urlPlaceholder: $t('content.urlPlaceholder'),
-                          ok: $t('content.ok'),
-                        }"
-                      />
-                      <module-translator
-                        v-if="module"
-                        v-model:module="trModule"
-                        highlight-key="meta.prompt"
-                        :disabled="isNew"
-                      />
-                    </div>
-                  </div>
-
                   <div class="row">
                     <div class="col-12 col-lg-6">
                       <div class="mb-3">
+                        <label class="form-label text-primary">
+                          {{ $t('type.label') }}
+                        </label>
                         <select
                           v-model="moduleType"
-                          class="form-select form-select-sm"
+                          class="form-select form-control form-select-sm"
                         >
                           <option
                             v-for="opt in typeValueOptions"
@@ -318,6 +312,39 @@
                       </div>
                     </div>
                   </div>
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="mb-3">
+                        <label class="form-label text-primary">
+                          {{ $t('prompt.label') }}
+                        </label>
+                        <div class="input-group">
+                          <c-rich-text-input
+                            v-model="module.meta.prompt"
+                            :placeholder="$t('prompt.placeholder')"
+                            body-class="form-control"
+                            style="width: 100%"
+                            min-body-height="10rem"
+                            output-format="markdown"
+                            :to-markdown="htmlToMarkdown"
+                            :to-html="markdownToHtml"
+                            :labels="{
+                              urlPlaceholder: $t('content.urlPlaceholder'),
+                              ok: $t('content.ok'),
+                            }"
+                          />
+                          <module-translator
+                            v-if="module"
+                            v-model:module="trModule"
+                            highlight-key="meta.prompt"
+                            :disabled="isNew"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+
                   <hr>
 
                   <h5 class="mb-3">
@@ -372,19 +399,23 @@
                               class="text-primary text-center pe-3"
                               scope="col"
                             >
-                              {{ $t('edit.label.required') }}
-                              <c-hint
-                                :tooltip="$t('edit.tooltip.required')"
-                              />
+                              <div data-v-248edfd0-s="" class="d-flex align-items-center">
+                                {{ $t('edit.label.required') }}
+                                <c-hint
+                                  :tooltip="$t('edit.tooltip.required')"
+                                />
+                              </div>
                             </th>
                             <th
                               class="text-primary text-center ps-2"
                               scope="col"
                             >
-                              {{ $t('edit.label.multi') }}
-                              <c-hint
-                                :tooltip="$t('edit.tooltip.multi')"
-                              />
+                              <div data-v-248edfd0-s="" class="d-flex align-items-center">
+                                {{ $t('edit.label.multi') }}
+                                <c-hint
+                                  :tooltip="$t('edit.tooltip.multi')"
+                                />
+                              </div>
                             </th>
                             <th scope="col" />
                           </tr>
@@ -548,9 +579,20 @@
                   />
                 </div>
                 <div
-                  v-if="module && module.issues.length > 0"
+                  v-if="isEdit"
                   class="tab-pane"
                   :class="{ active: activeTab === 6 }"
+                >
+                  <etl-settings
+                    v-if="activeTab === 6"
+                    :namespace="namespace"
+                    :module="module"
+                  />
+                </div>
+                <div
+                  v-if="module && module.issues.length > 0"
+                  class="tab-pane"
+                  :class="{ active: activeTab === 7 }"
                 >
                   <div
                     v-for="(issue, index) in module.issues"
@@ -629,6 +671,7 @@
         @save="onDiscoverySettingsSave"
       />
     </div>
+    </div>
 
     <Teleport to="#admin-toolbar">
       <editor-toolbar
@@ -672,10 +715,12 @@ import DataPrivacySettings from 'corteza-webapp-compose/src/components/Admin/Mod
 import ModuleTranslator from 'corteza-webapp-compose/src/components/Admin/Module/ModuleTranslator'
 import UniqueValues from 'corteza-webapp-compose/src/components/Admin/Module/UniqueValues'
 import RelatedPages from 'corteza-webapp-compose/src/components/Admin/Module/RelatedPages'
+import EtlSettings from 'corteza-webapp-compose/src/components/Admin/Module/ETLSettings'
 import { compose, NoID } from 'corteza-lib/js/dist'
-import { handle, components } from 'corteza-lib/vue/dist'
+import { handle, components, composables } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import Export from 'corteza-webapp-compose/src/components/Admin/Export'
+import { htmlToMarkdown, markdownToHtml } from '../../../lib/markdown'
 
 const { CRichTextInput } = components
 const { t } = useI18n()
@@ -857,11 +902,7 @@ function onDiscoverySettingsSave (changes) {
   if (module.value) module.value.config = { ...module.value.config, ...changes }
 }
 
-function toastErrorHandler (msg) {
-  return (e) => {}
-}
-
-function toastSuccess (msg) {}
+const { toastErrorHandler, toastSuccess } = composables.useToast()
 
 function handleSave ({ mod = module.value, closeOnSuccess = false, isClone = false } = {}) {
   const resourceTranslationLanguage = currentLanguage()

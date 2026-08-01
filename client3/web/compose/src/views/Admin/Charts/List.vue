@@ -38,7 +38,7 @@
           class="dropdown"
         >
           <button
-            class="btn btn-primary btn-lg dropdown-toggle"
+            class="btn btn-primary dropdown-toggle"
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
@@ -145,6 +145,15 @@
             </li>
           </ul>
         </div>
+      </template>
+
+      <template #name="{ item }">
+        <font-awesome-icon
+          :icon="chartIcon(item)"
+          class="me-2"
+          style="height: 1rem; width: 1rem; opacity: 0.65;"
+        />
+        {{ item.name }}
       </template>
 
       <template #changedAt="{ item }">
@@ -256,6 +265,23 @@ function encodeRouteParams () {
   return {
     query: { limit, ...sorting.value, query, page, pageCursor },
   }
+}
+
+const chartIconMap = {
+  pie: ['fas', 'chart-pie'],
+  bar: ['fas', 'chart-bar'],
+  line: ['fas', 'chart-line'],
+  doughnut: ['fas', 'chart-pie'],
+  funnel: ['fas', 'filter'],
+  gauge: ['fas', 'gauge'],
+  radar: ['fas', 'compass'],
+  scatter: ['fas', 'chart-line'],
+}
+
+function chartIcon (chart) {
+  const type = chart.config?.reports?.[0]?.metrics?.[0]?.type
+  if (type && chartIconMap[type]) return chartIconMap[type]
+  return chartIconMap.bar
 }
 
 function handleRowClicked ({ chartID, canUpdateChart, canDeleteChart }) {

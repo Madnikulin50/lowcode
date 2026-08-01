@@ -1,19 +1,75 @@
-<template>
-  <div>
-    <div class="mb-3">
-      <label class="text-primary form-label">{{ $t('label.label') }}</label>
-      <input class="form-control" v-model="label" @input="emit('update-value', $event.target.value)" />
-    </div>
-  </div>
-</template>
+<script>
+import Function from './Function'
 
-<script setup>
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
+export default {
+  extends: Function,
 
-const { t } = useI18n()
-const emit = defineEmits(['update-value'])
-const props = defineProps({ item: { type: Object, required: true } })
+  data () {
+    return {
+      showFunctionList: false,
+      expressionResults: true,
+      functionRef: 'exec-workflow',
 
-const label = computed(() => props.item.label || '')
+      workflowOptions: [],
+    }
+  },
+
+  mounted () {
+    if (!this.workflowOptions.length) {
+      this.searchWorkflows('', () => {})
+    }
+  },
+
+  methods: {
+    async getFunctionTypes () {
+      this.functions = [
+        {
+          ref: 'exec-workflow',
+          kind: 'function',
+          meta: {
+            short: 'Execute a workflow',
+          },
+          parameters: [
+            {
+              name: 'workflow',
+              types: [
+                'ID',
+                'Handle',
+              ],
+              required: true,
+            },
+            {
+              name: 'scope',
+              types: [
+                'Vars',
+              ],
+              required: false,
+            },
+          ],
+          results: [],
+        },
+      ]
+    },
+
+    searchWorkflows (query = '', loading) {
+      loading(true)
+
+      this.$AutomationAPI.workflowList({ query, subWorkflow: 2 })
+        .then(({ set }) => {
+          this.workflowOptions = set.map(m => Object.freeze(m))
+        })
+        .finally(() => {
+          loading(false)
+        })
+    },
+
+    getWorkflowLabel ({ workflowID, handle, meta = {} }) {
+      return meta.name || handle || workflowID
+    },
+
+    getWorkflowKey ({ workflowID, handle }) {
+      return handle || workflowID
+    },
+  },
+}
 </script>

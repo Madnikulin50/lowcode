@@ -72,7 +72,7 @@
           <div class="mb-3" style="white-space: pre-line;">
             <label class="form-label text-primary">{{ t('kind.number.presetFormats.label') }}</label>
             <div class="form-text">{{ formattedOptionsDescription }}</div>
-            <select v-model="f.options.presetFormat" class="form-select form-select-sm">
+            <select v-model="f.options.presetFormat" class="form-select form-control form-select-sm">
               <option v-for="opt in formatOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
             </select>
           </div>
@@ -126,7 +126,7 @@
         <div class="col-12 col-lg-6">
           <div class="mb-3">
             <label class="form-label text-primary">{{ t('kind.number.progress.variants.default') }}</label>
-            <select v-model="f.options.variant" class="form-select form-select-sm">
+            <select v-model="f.options.variant" class="form-select form-control form-select-sm">
               <option v-for="opt in variants" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
             </select>
           </div>
@@ -172,7 +172,7 @@
                 </div>
               </div>
               <div class="col d-flex align-items-center justify-content-center">
-                <select v-model="t.variant" class="form-select form-select-sm">
+                <select v-model="t.variant" class="form-select form-control form-select-sm">
                   <option v-for="opt in variants" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
                 </select>
                 <font-awesome-icon :icon="['fas', 'times']" class="pointer text-danger ms-3" @click="removeThreshold(i)" />

@@ -2,7 +2,7 @@
   <Wrap v-bind="$props" @refreshBlock="refresh">
     <template v-if="canAddRecord" #toolbar>
       <div class="p-3 border-bottom">
-        <button class="btn btn-primary btn-lg" @click.prevent="createNewRecord">
+        <button class="btn btn-primary" @click.prevent="createNewRecord">
           {{ $t('recordOrganizer.addNewRecord') }}
         </button>
       </div>
@@ -78,9 +78,7 @@ const $auth = inject('$auth')
 const $ComposeAPI = inject('$ComposeAPI')
 const $router = useRouter()
 
-const { isProcessing, options, refreshBlock } = usePageBlockBase(props, emit)
-
-const processing = ref(false)
+const { processing, isProcessing, options, refreshBlock } = usePageBlockBase(props, emit)
 const records = ref([])
 const abortableRequests = ref([])
 

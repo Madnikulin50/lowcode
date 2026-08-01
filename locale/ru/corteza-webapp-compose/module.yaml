@@ -298,3 +298,21 @@ searchPlaceholder: Search modules in this namespace
 title: Список модулей
 tooltip:
   permissions: Права доступа к модулю
+type:
+  label: Тип
+etl:
+  enabled: Включено
+  disabled: Выключено
+  format: Формат
+  smb:
+    password: Пароль
+    username: Пользователь
+    filePath: Путь
+    share: Папка
+    host: Хост
+  mcp:
+    server: Сервер
+    tool: Инструмент
+  rest:
+    url: URL
+    method: Метод

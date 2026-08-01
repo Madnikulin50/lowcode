@@ -48,7 +48,7 @@
             <input v-model="item.url" class="form-control form-control-sm" type="text" />
           </td>
           <td class="align-middle text-center">
-            <select v-model="item.target" class="form-select form-select-sm">
+            <select v-model="item.target" class="form-select form-control form-select-sm">
               <option value="sameTab">{{ $t('navigation.sameTab') }}</option>
               <option value="newTab">{{ $t('navigation.newTab') }}</option>
             </select>

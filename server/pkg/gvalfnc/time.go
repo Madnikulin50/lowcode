@@ -143,13 +143,19 @@ func PrevMonthTruncated(in any) (bool, error) {
 }
 
 func PrevMonth(in any) (bool, error) {
-	prevMonth := time.Now().AddDate(0, -1, 0)
+	now := time.Now()
+	year := now.Year()
+	month := now.Month() - 1
+	if month == 0 {
+		month = 12
+		year--
+	}
 
 	t, _, err := PrepMod(in, 0)
 	if err != nil {
 		return false, err
 	}
-	return t.Month() == prevMonth.Month() && t.Year() == prevMonth.Year(), nil
+	return t.Month() == month && t.Year() == year, nil
 }
 
 func ThisMonth(in any) (bool, error) {

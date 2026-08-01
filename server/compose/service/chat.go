@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"strings"
@@ -69,6 +70,54 @@ func Chat() *chatService {
 	}
 }
 
+func (c *chatService) xmlToMap(xmlStr string) (map[string]string, error) {
+	result := make(map[string]string)
+	decoder := xml.NewDecoder(strings.NewReader(xmlStr))
+
+	var currentTag string
+
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			// io.EOF means we reached the end of the string
+			break
+		}
+
+		switch element := token.(type) {
+		case xml.StartElement:
+			currentTag = element.Name.Local
+			// Optional: Capture attributes if needed
+			for _, attr := range element.Attr {
+				result[currentTag+"_"+attr.Name.Local] = attr.Value
+			}
+		case xml.CharData:
+			value := strings.TrimSpace(string(element))
+			if value != "" {
+				result[currentTag] = value
+			}
+		case xml.EndElement:
+			currentTag = ""
+		}
+	}
+
+	return result, nil
+}
+
+func (c *chatService) splitPrompt(prompt string) []*schema.Message {
+	data, err := c.xmlToMap(prompt)
+	if err != nil {
+		return []*schema.Message{&schema.Message{Role: "user", Content: prompt}}
+	}
+	out := []*schema.Message{}
+	for k, v := range data {
+		out = append(out, &schema.Message{Role: "system", Content: "##" + k + "\r\n" + v})
+	}
+	noTag, ok := data[""]
+	if ok {
+		out = append(out, &schema.Message{Role: "user", Content: noTag})
+	}
+	return out
+}
 func (c *chatService) modelFromPrompt(prompt string) string {
 	if strings.Contains(prompt, "<model>") {
 		start := strings.Index(prompt, "<model>") + len("<model>")
@@ -89,18 +138,28 @@ func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message 
 		if m.Role == "assistant" || m.Role == "system" {
 			role = schema.RoleType(m.Role)
 		}
+
+		if m.Role == "user" {
+			m := c.splitPrompt(m.Content)
+			msgs = append(msgs, m...)
+		} else {
+			msgs = append(msgs, &schema.Message{Role: role, Content: m.Content})
+		}
+
+	}
+	for _, m := range msgs {
 		if m.Role == "system" {
 			hasSystem = true
+			break
 		}
-		msgs = append(msgs, &schema.Message{Role: role, Content: m.Content})
 	}
 	if !hasSystem {
 		msgs = append([]*schema.Message{
 			schema.SystemMessage("You are an assistant for a database app. You MUST call a tool to get or manage data.\n\nCall a tool with XML:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\nIMPORTANT: When the user asks to show/list/view specific items (e.g. stores, products, tasks), look through all available tools for one whose description mentions that item name and call it directly. Do NOT call list_modules for this — it lists entity types, not records.\n\nRules:\n- show/list stores/products/tasks/etc → find module_{id}_records tool matching the name\n- show/list what entities exist → list_modules\n- show/list pages → list_pages\n- show/list charts → list_charts\n- create page/module/chart → create_* tool\n\nAsk before creating. For listing, call tool immediately."),
 		}, msgs...)
 	}
-	if ask.Prompt != "" {
-		prompt := ask.Prompt
+	if len(msgs) != 0 {
+		prompt := msgs[len(msgs)-1].Content
 		if len(ask.Files) > 0 {
 			var fileBlock string
 			for _, f := range ask.Files {
@@ -108,7 +167,33 @@ func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message 
 			}
 			prompt = fileBlock + "\n\n" + prompt
 		}
-		msgs = append(msgs, schema.UserMessage(prompt))
+
+		if ask.Namespace > 0 && DefaultRAG != nil {
+			ctx := context.Background()
+			lastMsg := msgs[len(msgs)-1].Content
+			var allCtx string
+
+			ragCtx := DefaultRAG.BuildContext(ctx, fmt.Sprint(ask.Namespace), lastMsg, 3)
+			if ragCtx != "" {
+				allCtx += "\nDocuments:\n" + ragCtx
+			}
+
+			if DefaultPagesRAG != nil {
+				pagesCtx := DefaultPagesRAG.BuildContext(ctx, lastMsg, 3)
+				if pagesCtx != "" {
+					allCtx += "\nPublished pages:\n" + pagesCtx
+				}
+			}
+
+			if allCtx != "" {
+				if len(allCtx) > 4096 {
+					allCtx = allCtx[:4096]
+				}
+				prompt = "Relevant information:\n" + allCtx + "\n\n" + prompt
+			}
+		}
+
+		msgs[len(msgs)-1].Content = prompt
 	}
 	return msgs
 }
@@ -318,7 +403,11 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 	}
 
 	msgs := c.buildMessages(ask)
-	streamReader, err := client.Stream(ctx, msgs, model.WithTools(toolInfos))
+	opts := model.Option{}
+	if client.IsToolsSupported() {
+		opts = model.WithTools(toolInfos)
+	}
+	streamReader, err := client.Stream(ctx, msgs, opts)
 	if err != nil {
 		return err
 	}

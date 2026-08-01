@@ -211,6 +211,7 @@ general:
     refresh: Refresh block
     magnify: Magnify block
     and: And
+    configurator: Configurator
   module: Module
   style:
     danger: Danger variant

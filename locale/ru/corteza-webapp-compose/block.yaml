@@ -211,6 +211,7 @@ general:
     refresh: Обновить блок
     magnify: Увеличение блока
     and: And
+    configurator: Настройки
   module: Модуль
   style:
     danger: Опасность вариант

@@ -1,6 +1,6 @@
 <template>
   <select
-    class="form-select w-auto"
+    class="form-select form-control w-auto"
     v-bind="options"
     :value="null"
     @change="emit('action', ($event.target as HTMLSelectElement).value)"
