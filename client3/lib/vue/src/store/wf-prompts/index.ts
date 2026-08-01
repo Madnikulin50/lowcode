@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { apiClients, automation } from '@cortezaproject/corteza-js'
+import { apiClients, automation } from 'corteza-lib/js/dist'
 import { promptDefinitions } from '../../components/prompts'
 
 function loadPrompts (api: apiClients.Automation): Promise<Array<automation.Prompt>> {

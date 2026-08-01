@@ -58,7 +58,6 @@ export const useNamespaceStore = defineStore('namespace', {
       this.setLoading(true)
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
-      console.log('token before namespaceList:', ComposeAPI.accessTokenFn?.())
       return ComposeAPI.namespaceList({}).then(({ set }) => {
         if (set && set.length > 0) {
           this.updateSet(set.map(n => new compose.Namespace(n)))

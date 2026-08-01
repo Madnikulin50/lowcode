@@ -124,6 +124,7 @@ const types = ref([
   { label: t('geometry.label'), block: new compose.PageBlockGeometry(), image: images.Geometry },
   { label: t('tabs.label'), block: new compose.PageBlockTab(), image: images.Tabs },
   { label: t('navigation.label'), block: new compose.PageBlockNavigation(), image: images.Navigation },
+  { label: t('ruleChain.label'), block: new compose.PageBlockRuleChain(), image: images.RuleChain },
 ])
 
 function isOptionDisabled (type) {

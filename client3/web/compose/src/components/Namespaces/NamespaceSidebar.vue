@@ -113,6 +113,7 @@
 <script setup>
 import { ref, computed, watch, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { NoID } from 'corteza-lib/js/dist'
 import { components, filter } from 'corteza-lib/vue/dist'
 import { Portal } from 'portal-vue'
@@ -126,6 +127,7 @@ const props = defineProps({
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
+const { t } = useI18n()
 const $Settings = inject('$Settings')
 const $ComposeAPI = window.__composeAPI
 
@@ -140,8 +142,11 @@ const pages = computed(() => store.page.set)
 const charts = computed(() => store.chart.set)
 const can = computed(() => store.rbac.can)
 
+const ruleChains = ref([])
+const ruleChainsLoading = ref(false)
+
 const currentNamespaceID = computed(() => namespace.value ? namespace.value.namespaceID : NoID)
-const loading = computed(() => moduleLoading.value || chartLoading.value || pageLoading.value)
+const loading = computed(() => moduleLoading.value || chartLoading.value || pageLoading.value || ruleChainsLoading.value)
 const hideNamespaceList = computed(() => {
   const { hideNamespaceList: h } = $Settings.get('compose.ui.sidebar', {})
   return h
@@ -160,7 +165,7 @@ const filteredPages = computed(() => {
   if (namespace.value) {
     const p = [...(isAdminPage.value ? adminRoutes() : publicPageWrap(publicRoutes.value))]
     if (!query.value) return p
-    return p.filter(({ page: pg }) => !['pages', 'modules', 'charts'].includes(pg.pageID) && filter.Assert(pg, query.value, 'title'))
+    return p.filter(({ page: pg }) => !['pages', 'modules', 'charts', 'rulechains'].includes(pg.pageID) && filter.Assert(pg, query.value, 'title'))
   }
   return []
 })
@@ -209,11 +214,21 @@ watch(() => route.params.slug, (slug = '') => {
   namespace.value = store.namespace.getByUrlPart(slug)
 }, { immediate: true })
 
+watch(() => namespace.value?.namespaceID, (nsID) => {
+  if (!nsID) return
+  ruleChainsLoading.value = true
+  $ComposeAPI.ruleChainList({ limit: 500 })
+    .then(({ chains }) => { ruleChains.value = chains || [] })
+    .catch(() => { ruleChains.value = [] })
+    .finally(() => { ruleChainsLoading.value = false })
+}, { immediate: true })
+
 function namespaceSelected ({ namespaceID: nid, canManageNamespace, slug = '' }) {
   let { name, params } = route
   if (name.includes('admin.modules')) name = 'admin.modules'
   else if (name.includes('admin.pages')) name = 'admin.pages'
   else if (name.includes('admin.charts')) name = 'admin.charts'
+  else if (name.includes('admin.rulechains')) name = 'admin.rulechains'
 
   name = !params.pageID && canManageNamespace && !name.includes('namespace.') ? name : 'pages'
   router.push({ name, params: { slug: slug || nid } })
@@ -266,16 +281,35 @@ function chartWrap (chart) {
   }
 }
 
+function ruleChainWrap (chain) {
+  return {
+    page: {
+      name: 'admin.rulechains.edit',
+      pageID: `rulechain-${chain.id}`,
+      selfID: 'rulechains',
+      rootSelfID: 'rulechains',
+      title: chain.name || chain.id,
+      visible: true,
+      icon: ['fas', 'code-branch'],
+    },
+    children: [],
+    params: { chainID: chain.id },
+  }
+}
+
 function adminRoutes () {
   const routeName = route.name
   const pageName = routeName.startsWith('admin.modules.record') ? 'admin.modules.record.list' : 'admin.modules.edit'
   return [
-    { page: { pageID: 'modules', selfID: NoID, name: 'admin.modules', title: 'Modules', visible: true }, children: [] },
+    { page: { pageID: 'modules', selfID: NoID, name: 'admin.modules', title: t('navigation.module'), visible: true }, children: [] },
     ...modules.value.map((m) => moduleWrap(m, pageName)),
-    { page: { pageID: 'pages', selfID: NoID, name: 'admin.pages', title: 'Pages', visible: true }, children: [] },
+    { page: { pageID: 'pages', selfID: NoID, name: 'admin.pages', title: t('navigation.page'), visible: true }, children: [] },
     ...adminPageWrap(pages.value),
-    { page: { pageID: 'charts', selfID: NoID, name: 'admin.charts', title: 'Charts', visible: true }, children: [] },
+    { page: { pageID: 'charts', selfID: NoID, name: 'admin.charts', title: t('navigation.chart'), visible: true }, children: [] },
     ...charts.value.map(chartWrap),
+    { page: { pageID: 'rulechains', selfID: NoID, name: 'admin.rulechains', title: t('navigation.rulechains'), visible: true }, children: [] },
+    ...ruleChains.value.map(ruleChainWrap),
+
 
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@cortezaproject/corteza-vue",
+  "name": "corteza-lib-vue",
   "description": "LowCoooode Vue 3 JavaScript/TypeScript libs",
   "version": "2024.9.8",
   "license": "Apache-2.0",
@@ -30,7 +30,6 @@
     "prosemirror-model": "^1.25.0"
   },
   "dependencies": {
-    "@cortezaproject/corteza-js": "^2024.9.8",
     "@floating-ui/dom": "^1.7.4",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
@@ -88,6 +87,7 @@
     "@babel/plugin-transform-private-methods": "^7.25.9",
     "@babel/plugin-transform-private-property-in-object": "^7.25.9",
     "@babel/preset-env": "^7.26.7",
+    "@panter/vue-i18next": "^0.15.2",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-json": "^6.1.0",
@@ -96,7 +96,9 @@
     "@types/node": "^22.13.10",
     "@types/qs": "^6.9.0",
     "@vitejs/plugin-vue": "^5.2.3",
+    "@vue-leaflet/vue-leaflet": "^0.10.1",
     "@vue/test-utils": "^2.4.6",
+    "bootstrap-vue-next": "^0.45.9",
     "eslint": "^8.7.2",
     "eslint-plugin-vue": "^9.32.0",
     "rollup": "^4.32.1",

@@ -56,6 +56,7 @@ const nav = [
     header: { label: 'automation.group' },
     items: [
       { label: 'automation.items.workflows', route: 'automation.workflow', icon: 'project-diagram', can: [['automation/', 'workflows.search'], ['automation/', 'workflow.create']] },
+      { label: 'automation.items.ruleChains', route: 'automation.ruleChain', icon: 'link', can: [['automation/', 'workflows.search']] },
       { label: 'automation.items.sessions', route: 'automation.session', icon: 'business-time', can: ['automation/', 'sessions.search'] },
       { label: 'automation.items.scripts', route: 'automation.scripts', icon: 'scroll', can: ['automation/', 'workflows.search'] },
       { label: 'automation.items.permissions', route: 'automation.permissions', icon: 'lock', can: ['automation/', 'grant'] },

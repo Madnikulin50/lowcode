@@ -1,5 +1,5 @@
 import { type App, type Plugin } from 'vue'
-import { eventbus } from '@cortezaproject/corteza-js'
+import { eventbus } from 'corteza-lib/js/dist'
 
 interface KV { [_: string]: string }
 interface UIProp { name: string; value: string }

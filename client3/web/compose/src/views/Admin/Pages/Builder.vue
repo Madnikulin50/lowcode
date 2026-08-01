@@ -552,10 +552,12 @@ const modalCreateBlockSelectorEl = ref(null)
 const modalCreatorEl = ref(null)
 const modalEditorEl = ref(null)
 const modalScenariosEl = ref(null)
-let blockSelectorModal = null
-let blockCreatorModal = null
-let blockEditorModal = null
-let scenariosModal = null
+
+
+function getBlockSelectorModal() { return modalCreateBlockSelectorEl.value ? Modal.getOrCreateInstance(modalCreateBlockSelectorEl.value) : null }
+function getBlockCreatorModal() { return modalCreatorEl.value ? Modal.getOrCreateInstance(modalCreatorEl.value) : null }
+function getBlockEditorModal() { return modalEditorEl.value ? Modal.getOrCreateInstance(modalEditorEl.value) : null }
+function getScenariosModal() { return modalScenariosEl.value ? Modal.getOrCreateInstance(modalScenariosEl.value) : null }
 
 const pagesStore = computed(() => store.getters['page/set'])
 const getModuleByID = computed(() => store.getters['module/getByID'])
@@ -681,18 +683,21 @@ watch(() => props.pageID, (pageID) => {
 }, { immediate: true })
 
 watch(showCreator, (val) => {
-  if (!blockCreatorModal) return
-  val ? blockCreatorModal.show() : blockCreatorModal.hide()
+  const m = getBlockCreatorModal()
+  if (!m) return
+  val ? m.show() : m.hide()
 })
 
 watch(showEditor, (val) => {
-  if (!blockEditorModal) return
-  val ? blockEditorModal.show() : blockEditorModal.hide()
+  const m = getBlockEditorModal()
+  if (!m) return
+  val ? m.show() : m.hide()
 })
 
 watch(() => scenarios.value.showConfigurator, (val) => {
-  if (!scenariosModal) return
-  val ? scenariosModal.show() : scenariosModal.hide()
+  const m = getScenariosModal()
+  if (!m) return
+  val ? m.show() : m.hide()
 })
 
 watch(() => page.value ? page.value.handle : undefined, (handle, oldHandle) => {
@@ -708,28 +713,24 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  blockSelectorModal?.hide()
-  blockCreatorModal?.hide()
-  blockEditorModal?.hide()
-  scenariosModal?.hide()
+  getBlockSelectorModal()?.hide()
+  getBlockCreatorModal()?.hide()
+  getBlockEditorModal()?.hide()
+  getScenariosModal()?.hide()
   if (!['page', 'page.record', 'page.record.create', 'page.record.edit'].includes(route.name)) {
     setPageHandle('')
     setLayoutHandle('')
   }
   destroyEvents()
   setDefaultValues()
-  blockSelectorModal?.dispose()
-  blockCreatorModal?.dispose()
-  blockEditorModal?.dispose()
-  scenariosModal?.dispose()
+  getBlockSelectorModal()?.dispose()
+  getBlockCreatorModal()?.dispose()
+  getBlockEditorModal()?.dispose()
+  getScenariosModal()?.dispose()
 })
 
 watch([modalCreateBlockSelectorEl, modalCreatorEl, modalEditorEl, modalScenariosEl], ([m1, m2, m3, m4]) => {
   if (m1 && m2 && m3 && m4) {
-    blockSelectorModal = new Modal(m1)
-    blockCreatorModal = new Modal(m2)
-    blockEditorModal = new Modal(m3)
-    scenariosModal = new Modal(m4)
     m2.addEventListener('hidden.bs.modal', () => { if (editor.value && editor.value.index === undefined) editor.value = undefined })
     m3.addEventListener('hidden.bs.modal', () => { if (editor.value && editor.value.index !== undefined) editor.value = undefined })
     m4.addEventListener('hidden.bs.modal', () => { scenarios.value.showConfigurator = false })
@@ -766,11 +767,11 @@ function getScenarioOptionKey (scenario) { return scenario }
 function refreshReport () {}
 
 function showBlockSelector () {
-  blockSelectorModal?.show()
+  getBlockSelectorModal()?.show()
 }
 
 function addBlock (block, index = undefined) {
-  blockSelectorModal?.hide()
+  getBlockSelectorModal()?.hide()
   calculateNewBlockPosition(block)
   editor.value = { index, block: compose.PageBlockMaker(block) }
 }
@@ -1116,7 +1117,7 @@ async function setLayout (layoutID, processingFlag = true) {
   setTimeout(() => {
     processingLayout.value = false
     if (!blocks.value.length) {
-      blockSelectorModal?.show()
+  getBlockSelectorModal()?.show()
     }
   }, 400)
 }

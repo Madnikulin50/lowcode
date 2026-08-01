@@ -16,5 +16,6 @@ import Progress from './Progress.png'
 import Geometry from './Geometry.png'
 import Tabs from './Tabs.png'
 import Navigation from './Navigation.png'
+import RuleChain from './Automation.png'
 
-export { Content, Chart, SocialFeed, Record, RecordList, Automation, Calendar, File, RecordOrganizer, RecordRevisions, IFrame, Metric, Comment, Report, Progress, Geometry, Tabs, Navigation }
+export { Content, Chart, SocialFeed, Record, RecordList, Automation, Calendar, File, RecordOrganizer, RecordRevisions, IFrame, Metric, Comment, Report, Progress, Geometry, Tabs, Navigation, RuleChain }

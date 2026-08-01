@@ -1,4 +1,4 @@
-import { automation } from '@cortezaproject/corteza-js'
+import { automation } from 'corteza-lib/js/dist'
 
 export function pVal<T = unknown> (vars: automation.Vars, k: string, def?: T): T | undefined {
   if (vars && vars[k] && vars[k]['@value'] !== undefined) {

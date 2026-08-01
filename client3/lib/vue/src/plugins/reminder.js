@@ -1,5 +1,5 @@
 import moment from 'moment'
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 
 function intervalToMS (from, to) {
   if (!from || !to) {

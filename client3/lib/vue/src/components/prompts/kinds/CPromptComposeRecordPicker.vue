@@ -45,7 +45,7 @@ import { getCurrentInstance } from 'vue'
 import { pVal as _pVal, pType as _pType } from '../utils'
 import CPagination from '../common/CPagination.vue'
 import CInputSelect from '../../input/CInputSelect.vue'
-import { compose, NoID } from '@cortezaproject/corteza-js'
+import { compose, NoID } from 'corteza-lib/js/dist'
 import { debounce } from 'lodash'
 import axios from 'axios'
 

@@ -5,7 +5,7 @@ declare module '*.vue' {
 }
 
 declare module 'vue' {
-  import { apiClients, EventBus } from '@cortezaproject/corteza-js'
+  import { apiClients, EventBus } from 'corteza-lib/js/dist'
   import { Auth } from './plugins/auth'
   import { UIHooks } from './plugins/ui-hooks'
   import { Settings } from './plugins/settings'

@@ -1,4 +1,4 @@
-import { corredor } from '@cortezaproject/corteza-js'
+import { corredor } from 'corteza-lib/js/dist'
 
 /**
  * Corredor automation mixin

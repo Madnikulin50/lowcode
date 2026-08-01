@@ -72,6 +72,10 @@ export default [
                   r('admin.etl.create', 'etl/new', 'Admin/ETL/Edit'),
                   r('admin.etl.edit', 'etl/:etlID/edit', 'Admin/ETL/Edit'),
 
+                  r('admin.rulechains', 'rulechains', 'Admin/RuleChains/List'),
+                  r('admin.rulechains.create', 'rulechains/new', 'Admin/RuleChains/Edit'),
+                  r('admin.rulechains.edit', 'rulechains/:chainID/edit', 'Admin/RuleChains/Edit'),
+
                   r('admin.configuration', 'configuration', 'Admin/Configuration/Index'),
                 ],
               },

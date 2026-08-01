@@ -33,7 +33,7 @@ export default {
   ],
 
   external: [
-    /^@cortezaproject\/corteza-js/,
+    /^corteza-lib\/js\/dist/,
     /^@fortawesome\//,
     /^@tiptap\//,
     /^echarts/,

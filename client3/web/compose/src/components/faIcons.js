@@ -62,6 +62,7 @@ import {
   faParagraph,
   faPaperclip,
   faPen,
+  faPlay,
   faPlus,
   faQuestion,
   faQuoteRight,
@@ -86,6 +87,7 @@ import {
   faThumbtack,
   faTimes,
   faTools,
+  faTrash,
   faTrashRestore,
   faUnderline,
   faUser,
@@ -152,10 +154,12 @@ import {
   faCar,
   faVault,
   faCartShopping,
+  faCertificate,
   faShop,
   faDolly,
   faHandsPraying,
   faBoxesStacked,
+  faTimeline,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -267,6 +271,7 @@ library.add(
   faCogs,
   faCog,
   faPen,
+  faPlay,
   faThumbtack,
   faEye,
   faPlus,
@@ -363,4 +368,7 @@ library.add(
   faDolly,
   faHandsPraying,
   faBoxesStacked,
+  faTrash,
+  faCertificate,
+  faTimeline,
 )

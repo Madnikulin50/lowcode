@@ -4924,4 +4924,97 @@ export default class Compose {
             headers: { 'Content-Type': 'application/json' },
         }).then(result => stdResolve(result))
     }
+
+    async ragPagesReindexProgress (): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: '/pages-rag/reindex/progress',
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
+
+    // Rule chains (rules & workflow)
+    async ruleChainList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            limit = 500,
+            offset = 0,
+        } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/admin/rulechain/',
+            params: { limit, offset },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainRead (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/rulechain/${chainID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/rulechain/',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/rulechain/${chainID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/rulechain/${chainID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainTest (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/rulechain/${chainID}/test`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainNodeTypes (extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: '/admin/rulechain/nodes',
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainStats (extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: '/admin/rulechain/stats',
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
 }

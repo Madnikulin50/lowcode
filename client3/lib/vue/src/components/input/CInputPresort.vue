@@ -20,72 +20,72 @@
           group="sort"
           handle=".grab"
           tag="tbody"
+          :item-key="itemKey"
         >
-          <tr
-            v-for="(column, index) in items"
-            :key="index"
-          >
-            <td
-              class="grab text-center align-middle"
-              style="width: 40px;"
-            >
-              <font-awesome-icon
-                :icon="['fas', 'bars']"
-                class="text-secondary"
-              />
-            </td>
-            <td
-              class="align-middle"
-              style="min-width: 250px;"
-            >
-              <c-input-select
-                v-model="column.field"
-                :options="availableFields"
-                :reduce="(o: Record<string, unknown>) => o.name"
-                :placeholder="labels.none"
-                class="rounded"
-              />
-            </td>
-            <td
-              class="text-center align-middle"
-              style="min-width: 200px;"
-            >
-              <div
-                class="btn-group btn-group-sm bg-white"
-                role="group"
+          <template #item="{ element, index }">
+            <tr>
+              <td
+                class="grab text-center align-middle"
+                style="width: 40px;"
               >
-                <input
-                  v-for="dir in sortDirections"
-                  :key="String(dir.value)"
-                  type="radio"
-                  class="btn-check"
-                  :name="`sort-${index}`"
-                  :id="`sort-${index}-${String(dir.value)}`"
-                  :value="dir.value"
-                  :checked="column.descending === dir.value"
-                  @change="column.descending = dir.value"
+                <font-awesome-icon
+                  :icon="['fas', 'bars']"
+                  class="text-secondary"
                 />
-                <label
-                  v-for="dir in sortDirections"
-                  :key="`label-${String(dir.value)}`"
-                  class="btn btn-outline-primary"
-                  :class="{ active: column.descending === dir.value }"
-                  :for="`sort-${index}-${String(dir.value)}`"
+              </td>
+              <td
+                class="align-middle"
+                style="min-width: 250px;"
+              >
+                <c-input-select
+                  v-model="element.field"
+                  :options="availableFields"
+                  :reduce="(o: Record<string, unknown>) => o.name"
+                  :placeholder="labels.none"
+                  class="rounded"
+                />
+              </td>
+              <td
+                class="text-center align-middle"
+                style="min-width: 200px;"
+              >
+                <div
+                  class="btn-group btn-group-sm bg-white"
+                  role="group"
                 >
-                  {{ dir.text }}
-                </label>
-              </div>
-            </td>
-            <td
-              class="align-middle text-end"
-              style="min-width: 80px; width: 80px;"
-            >
-              <c-input-confirm
-                show-icon
-                @confirmed="items.splice(index, 1)"
-              />
-            </td>
-          </tr>
+                  <input
+                    v-for="dir in sortDirections"
+                    :key="String(dir.value)"
+                    type="radio"
+                    class="btn-check"
+                    :name="`sort-${index}`"
+                    :id="`sort-${index}-${String(dir.value)}`"
+                    :value="dir.value"
+                    :checked="element.descending === dir.value"
+                    @change="element.descending = dir.value"
+                  />
+                  <label
+                    v-for="dir in sortDirections"
+                    :key="`label-${String(dir.value)}`"
+                    class="btn btn-outline-primary"
+                    :class="{ active: element.descending === dir.value }"
+                    :for="`sort-${index}-${String(dir.value)}`"
+                  >
+                    {{ dir.text }}
+                  </label>
+                </div>
+              </td>
+              <td
+                class="align-middle text-end"
+                style="min-width: 80px; width: 80px;"
+              >
+                <c-input-confirm
+                  show-icon
+                  @confirmed="items.splice(index, 1)"
+                />
+              </td>
+            </tr>
+          </template>
         </draggable>
       </table>
     </div>
@@ -159,6 +159,8 @@ const emit = defineEmits<{
 
 const items = ref<SortField[]>([])
 const textInput = ref(false)
+
+const itemKey = (el: SortField) => items.value.indexOf(el)
 
 const sortDirections = computed(() => [
   { value: false, text: props.labels.ascending },

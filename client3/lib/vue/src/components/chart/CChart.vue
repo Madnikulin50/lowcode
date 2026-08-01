@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onBeforeUnmount, useAttrs } from 'vue'
-import { shared } from '@cortezaproject/corteza-js'
+import { shared } from 'corteza-lib/js/dist'
 
 defineOptions({
   inheritAttrs: false,

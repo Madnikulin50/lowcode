@@ -79,7 +79,7 @@
           >
             <button
               data-test-id="dropdown-permissions"
-              class="btn btn-outline-secondary btn-lg dropdown-toggle"
+              class="btn btn-outline-secondary btn-sm dropdown-toggle"
               type="button"
               data-bs-toggle="dropdown"
               aria-expanded="false"

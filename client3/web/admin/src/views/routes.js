@@ -42,6 +42,7 @@ import AutomationWorkflowList from './Automation/Workflow/List.vue'
 import AutomationWorkflowEditor from './Automation/Workflow/Editor.vue'
 import AutomationSessionList from './Automation/Session/List.vue'
 import AutomationSessionEditor from './Automation/Session/Editor.vue'
+import RuleChainIndex from './Automation/RuleChain/Index.vue'
 import FederationNodesList from './Federation/Nodes/List.vue'
 import FederationNodesEditor from './Federation/Nodes/Editor.vue'
 
@@ -87,6 +88,7 @@ const lookup = {
   'Automation/Workflow/Editor': AutomationWorkflowEditor,
   'Automation/Session/List': AutomationSessionList,
   'Automation/Session/Editor': AutomationSessionEditor,
+  'Automation/RuleChain/Index': RuleChainIndex,
   'Federation/Nodes/List': FederationNodesList,
   'Federation/Nodes/Editor': FederationNodesEditor,
 }
@@ -187,6 +189,7 @@ export default [
         ...wrap('automation', '/automation'),
         children: [
           combo('automation', 'workflow'),
+          r('automation.ruleChain', 'rulechain', 'Automation/RuleChain/Index'),
           r('automation.scripts', 'scripts', 'Automation/Scripts/Index'),
           combo('automation', 'session'),
           r('automation.permissions', 'permissions', 'Automation/Permissions/Index'),

@@ -35,7 +35,7 @@
           v-if="namespace?.canCreateModule"
           data-test-id="button-create"
           :to="{ name: 'admin.modules.create' }"
-          class="btn btn-primary btn-lg"
+          class="btn btn-primary"
         >
           {{ $t('createLabel') }}
         </router-link>
@@ -58,7 +58,7 @@
           class="dropdown"
         >
           <button
-            class="btn btn-outline-secondary btn-lg dropdown-toggle"
+            class="btn btn-outline-secondary dropdown-toggle"
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"

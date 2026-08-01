@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<{
   modelValue?: string | null
   labels?: Record<string, any>
   minBodyHeight?: string
-  maxHeight?: string
+  maxBodyHeight?: string
   bodyClass?: string
   placeholder?: string
   hideToolbar?: boolean
@@ -45,7 +45,7 @@ const props = withDefaults(defineProps<{
   modelValue: null,
   labels: () => ({}),
   minBodyHeight: '10rem',
-  maxHeight: '',
+  maxBodyHeight: '',
   bodyClass: '',
   placeholder: '',
   hideToolbar: false,

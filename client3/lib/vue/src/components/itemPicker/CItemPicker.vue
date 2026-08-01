@@ -40,39 +40,39 @@
                 item-key="value"
                 class="overflow-auto h-100"
               >
-                <li
-                  v-for="item in filteredAvailable"
-                  :key="item.value"
-                  class="list-group-item item mb-3 border rounded"
-                  :class="{
-                    'handle': !isDraggable
-                  }"
-                  @dblclick="select(item)"
-                >
-                  <CItemPickerItem
-                    :item="item"
-                    :disabled="disabled"
-                    :disabled-dragging="isDraggable"
-                    :disabled-sorting="disabledSorting"
-                    :hide-icons="hideIcons"
-                    @select="select(item)"
+                <template #item="{ element }">
+                  <li
+                    class="list-group-item item mb-3 border rounded"
+                    :class="{
+                      'handle': !isDraggable
+                    }"
+                    @dblclick="select(element)"
                   >
-                    <template
-                      v-for="(_, slot) of $slots"
-                      #[slot]="scope"
+                    <CItemPickerItem
+                      :item="element"
+                      :disabled="disabled"
+                      :disabled-dragging="isDraggable"
+                      :disabled-sorting="disabledSorting"
+                      :hide-icons="hideIcons"
+                      @select="select(element)"
                     >
-                      <slot
-                        :name="slot"
-                        :text-field="textField"
-                        :disabled="disabled"
-                        :disabled-dragging="isDraggable"
-                        :disabled-sorting="disabledSorting"
-                        :hide-icons="hideIcons"
-                        v-bind="scope"
-                      />
-                    </template>
-                  </CItemPickerItem>
-                </li>
+                      <template
+                        v-for="(_, slot) of $slots"
+                        #[slot]="scope"
+                      >
+                        <slot
+                          :name="slot"
+                          :text-field="textField"
+                          :disabled="disabled"
+                          :disabled-dragging="isDraggable"
+                          :disabled-sorting="disabledSorting"
+                          :hide-icons="hideIcons"
+                          v-bind="scope"
+                        />
+                      </template>
+                    </CItemPickerItem>
+                  </li>
+                </template>
 
                 <template #footer>
                   <h6
@@ -116,40 +116,40 @@
                 item-key="value"
                 class="overflow-auto h-100"
               >
-                <li
-                  v-for="item in filteredSelected"
-                  :key="item.value"
-                  class="list-group-item item mb-3 border rounded"
-                  :class="{
-                    'handle': !isDraggable
-                  }"
-                  @dblclick="unselect(item)"
-                >
-                  <CItemPickerItem
-                    :item="item"
-                    :disabled="disabled"
-                    :disabled-dragging="isDraggable"
-                    :disabled-sorting="disabledSorting"
-                    :hide-icons="hideIcons"
-                    selected
-                    @unselect="unselect(item)"
+                <template #item="{ element }">
+                  <li
+                    class="list-group-item item mb-3 border rounded"
+                    :class="{
+                      'handle': !isDraggable
+                    }"
+                    @dblclick="unselect(element)"
                   >
-                    <template
-                      v-for="(_, slot) of $slots"
-                      #[slot]="scope"
+                    <CItemPickerItem
+                      :item="element"
+                      :disabled="disabled"
+                      :disabled-dragging="isDraggable"
+                      :disabled-sorting="disabledSorting"
+                      :hide-icons="hideIcons"
+                      selected
+                      @unselect="unselect(element)"
                     >
-                      <slot
-                        :name="slot"
-                        :text-field="textField"
-                        :disabled="disabled"
-                        :disabled-dragging="isDraggable"
-                        :disabled-sorting="disabledSorting"
-                        :hide-icons="hideIcons"
-                        v-bind="scope"
-                      />
-                    </template>
-                  </CItemPickerItem>
-                </li>
+                      <template
+                        v-for="(_, slot) of $slots"
+                        #[slot]="scope"
+                      >
+                        <slot
+                          :name="slot"
+                          :text-field="textField"
+                          :disabled="disabled"
+                          :disabled-dragging="isDraggable"
+                          :disabled-sorting="disabledSorting"
+                          :hide-icons="hideIcons"
+                          v-bind="scope"
+                        />
+                      </template>
+                    </CItemPickerItem>
+                  </li>
+                </template>
 
                 <template #footer>
                   <h6

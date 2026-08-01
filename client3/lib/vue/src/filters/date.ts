@@ -1,4 +1,4 @@
-import { fmt } from '@cortezaproject/corteza-js'
+import { fmt } from 'corteza-lib/js/dist'
 
 export function locFullDateTime (d: unknown): string {
   // Thursday, September 4, 1986 8:30 PM

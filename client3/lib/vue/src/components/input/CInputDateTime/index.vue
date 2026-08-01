@@ -29,7 +29,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { getDate, getTime, setDate, setTime } from './lib/index.ts'
-import { shared } from '@cortezaproject/corteza-js'
+import { shared } from 'corteza-lib/js/dist'
 
 const { getWeekStartDay } = shared
 

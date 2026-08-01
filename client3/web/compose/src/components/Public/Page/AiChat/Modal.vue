@@ -6,17 +6,38 @@
     role="dialog"
     @click.self="onHidden"
   >
-    <div class="modal-dialog modal-xl" :class="dialogClass" role="document">
-      <div class="modal-content" :class="contentClass">
-        <Chat
-          v-if="showModal"
-          :start-prompt="startPrompt"
-          :files="attachedFiles"
-          :page="page"
-          :module="module"
-          :namespace="namespace"
-          magnified
-        />
+    <div class="modal-dialog" :class="dialogClass" role="document">
+      <div class="modal-content d-flex flex-column" :class="contentClass">
+        <div class="modal-header py-2 px-3 border-bottom">
+          <h5 class="modal-title">LowCoooode AI-assistant</h5>
+          <div class="d-flex gap-1">
+            <button
+              class="btn btn-outline-secondary border-0 btn-sm"
+              :title="fullscreen ? 'Collapse' : 'Expand'"
+              @click="fullscreen = !fullscreen"
+            >
+              <font-awesome-icon :icon="fullscreen ? ['fas', 'compress'] : ['fas', 'expand']" />
+            </button>
+            <button
+              class="btn btn-outline-secondary border-0 btn-sm"
+              title="Close"
+              @click="onHidden"
+            >
+              <font-awesome-icon :icon="['fas', 'times']" size="lg" />
+            </button>
+          </div>
+        </div>
+        <div class="modal-body p-0 d-flex flex-column" style="min-height: 0">
+          <Chat
+            v-if="showModal"
+            :start-prompt="startPrompt"
+            :files="attachedFiles"
+            :page="page"
+            :module="module"
+            :namespace="namespace"
+            :magnified="fullscreen"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -35,9 +56,10 @@ const props = defineProps({
 const showModal = ref(false)
 const startPrompt = ref('')
 const attachedFiles = ref([])
+const fullscreen = ref(false)
 
-const dialogClass = computed(() => '')
-const contentClass = computed(() => '')
+const dialogClass = computed(() => fullscreen.value ? 'modal-fullscreen' : '')
+const contentClass = computed(() => fullscreen.value ? 'h-100' : '')
 
 function startChatModal(data) {
   const { prompt = '', files = [] } = data.detail
@@ -67,11 +89,10 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
+.modal-dialog:not(.modal-fullscreen) {
+  max-width: 70vw;
+}
 .position-initial {
   position: initial;
-}
-
-.modal-max-width {
-  max-width: 80vw;
 }
 </style>

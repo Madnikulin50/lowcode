@@ -36,6 +36,8 @@ import RecordRevisionsBase from './RecordRevisionsBase.vue'
 import RecordRevisionsConfigurator from './RecordRevisionsConfigurator.vue'
 import ReportBase from './Report/Base.vue'
 import ReportConfigurator from './Report/Configurator.vue'
+import RuleChainBase from './RuleChainBase.vue'
+import RuleChainConfigurator from './RuleChainConfigurator.vue'
 import SocialFeedBase from './SocialFeedBase.vue'
 import SocialFeedConfigurator from './SocialFeedConfigurator.vue'
 import TabsBase from './TabsBase.vue'
@@ -67,6 +69,8 @@ const Registry = {
   RecordOrganizerConfigurator,
   ReportBase,
   ReportConfigurator,
+  RuleChainBase,
+  RuleChainConfigurator,
   SocialFeedBase,
   SocialFeedConfigurator,
   MetricBase,

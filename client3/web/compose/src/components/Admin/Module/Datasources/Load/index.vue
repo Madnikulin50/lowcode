@@ -123,7 +123,7 @@ async function getSourceColumns () {
   const describe = [props.step.load.name]
 
   if (steps.length && describe.length) {
-    window.__systemApi__reportDescribe({ steps, describe })
+    window.__systemAPI.reportDescribe({ steps, describe })
       .then((frames = []) => {
         const { columns: cols = [] } = frames.find(({ source }) => describe.includes(source)) || {}
         columns.value = cols

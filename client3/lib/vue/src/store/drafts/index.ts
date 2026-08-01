@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { system } from '@cortezaproject/corteza-js'
+import { system } from 'corteza-lib/js/dist'
 import {
   loadAllDraftsFromStorage,
   saveDraftToStorage,

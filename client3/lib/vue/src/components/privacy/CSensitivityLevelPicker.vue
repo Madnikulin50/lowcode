@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import CInputSelect from '../input/CInputSelect.vue'
 
 const props = withDefaults(defineProps<{

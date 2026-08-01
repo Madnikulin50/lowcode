@@ -180,7 +180,7 @@ module.exports = ({ appFlavour, appLabel, version = process.env.BUILD_VERSION, t
       watchFiles: {
         paths: [
           '**/*',
-          '!**/node_modules/!(@cortezaproject)/**',
+          '!**/node_modules/**',
         ],
         options: {
           usePolling: true,

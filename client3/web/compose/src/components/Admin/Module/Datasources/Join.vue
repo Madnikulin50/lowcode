@@ -167,7 +167,7 @@ async function getSourceColumns (sources = []) {
       const describe = [sourceType]
 
       if (steps.length && describe.length) {
-        window.__systemApi__reportDescribe({ steps, describe })
+        window.__systemAPI.reportDescribe({ steps, describe })
           .then((frames = []) => {
             const { columns = [] } = frames.find(({ source }) => describe.includes(source)) || {}
             if (source === 'local') {

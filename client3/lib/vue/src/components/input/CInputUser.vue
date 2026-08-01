@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, getCurrentInstance } from 'vue'
-import { NoID } from '@cortezaproject/corteza-js'
+import { NoID } from 'corteza-lib/js/dist'
 import { debounce } from 'lodash'
 import axios from 'axios'
 

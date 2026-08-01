@@ -1,10 +1,9 @@
 <template>
   <div class="chat-container">
-    <div class="card-header border-bottom text-nowrap ps-3 pe-2 d-flex align-items-center justify-content-between">
-      <h5 class="text-truncate mb-0">LowCoooode AI-assistant</h5>
-      <div class="export-dropdown">
+    <div ref="messagesContainer" class="messages">
+      <div class="export-dropdown position-absolute" style="top: 8px; right: 12px; z-index: 10;">
         <button class="btn btn-outline-light d-print-none text-secondary px-2 py-1 border-0" @click="exportOpen = !exportOpen" title="Export">
-          <font-awesome-icon :icon="['fas', 'download']" size="xs" /> Export
+          <font-awesome-icon :icon="['fas', 'download']" size="xs" />
         </button>
         <div v-if="exportOpen" class="export-menu" @click="exportOpen = false">
           <button class="export-menu-item" @click="exportMarkdown">Markdown (.md)</button>
@@ -12,8 +11,6 @@
           <button class="export-menu-item" @click="exportDocx">DOCX</button>
         </div>
       </div>
-    </div>
-    <div ref="messagesContainer" class="messages">
       <div v-for="(msg, idx) in messages" :key="idx" :class="['message', msg.role, { active: msg.active }]">
         <template v-if="msg.content">
           <div class="avatar">
@@ -335,6 +332,7 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   overflow: hidden;
   background: #f9f9f9;
+  flex: 1;
 }
 
 .export-dropdown {
@@ -374,11 +372,13 @@ onBeforeUnmount(() => {
 
 .messages {
   flex: 1;
+  min-height: 0;
   padding: 20px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
 }
 
 .message {
@@ -539,6 +539,7 @@ h1 {
 
 .input-area {
   display: flex;
+  flex-shrink: 0;
   gap: 12px;
   padding: 16px;
   background: white;

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { apiClients, system } from '@cortezaproject/corteza-js'
+import { apiClients, system } from 'corteza-lib/js/dist'
 
 export const useNotificationsStore = defineStore('notifications', {
   state: () => ({

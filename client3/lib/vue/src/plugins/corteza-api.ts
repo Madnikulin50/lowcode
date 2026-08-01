@@ -1,4 +1,4 @@
-import { apiClients } from '@cortezaproject/corteza-js'
+import { apiClients } from 'corteza-lib/js/dist'
 import { type App, type Plugin } from 'vue'
 
 interface Options {
