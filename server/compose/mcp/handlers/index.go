@@ -12,4 +12,11 @@ func Init(ctx context.Context, s *server.MCPServer) {
 	initModuleRecords(ctx, s)
 	initPages(ctx, s)
 	initCharts(ctx, s)
+	initPageBlocks(ctx, s)
+	initRecordResources(ctx, s)
+	initMail(ctx, s)
+	initRules(ctx, s)
+	initAIScripts(ctx, s)
+	initAgents(ctx, s)
+	initGonec(ctx, s)
 }

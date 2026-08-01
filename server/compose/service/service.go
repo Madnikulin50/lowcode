@@ -213,7 +213,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	}
 	DefaultRAG = NewRAGService(ragStore, rag.NewEmbedder("http://localhost:11434", "nomic-embed-text"))
 
-	DefaultPagesRAG = NewPagesRAGService(ragStore, rag.NewEmbedder("http://localhost:11434", "nomic-embed-text"), log, DefaultPage, DefaultNamespace, DefaultRecord)
+	DefaultPagesRAG = NewPagesRAGService(ragStore, rag.NewEmbedder("http://localhost:11434", "nomic-embed-text"), log, DefaultPage, DefaultNamespace, DefaultRecord, DefaultResourceTranslation)
 	DefaultPagesRAG.StartDailyCrawl(ctx)
 
 	RegisterIteratorProviders()

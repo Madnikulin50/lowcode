@@ -16,6 +16,9 @@ func InitMcp(ctx context.Context) {
 		"lowcode-server",
 		"1.0.0",
 	)
+
+	initBridge()
+
 	handlers.Init(ctx, s)
 	globalMcp = s
 
