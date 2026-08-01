@@ -1,0 +1,76 @@
+label:
+  single: Rule chain
+  plural: Rule chains
+searchPlaceholder: Search rule chains
+add: Add workflow
+noItems: No rule chains found
+columns:
+  name: Name
+  description: Description
+  nodes: Nodes
+  edges: Connections
+  actions: Actions
+edit:
+  title: Rule chain
+  createTitle: New rule chain
+  generalSettings: General settings
+  name:
+    label: Name
+    placeholder: Rule chain name (e.g. "Approval workflow")
+  description:
+    label: Description
+    placeholder: Short description of what this chain does
+  entryNode:
+    label: Entry node
+    placeholder: Select the node where execution starts
+  delete: Delete rule chain
+  nodes:
+    label: Nodes
+    placeholder: Node label
+    add: Add node
+    delete: Delete node
+    type:
+      label: Type
+      placeholder: Select node type
+    config:
+      label: Configuration
+      placeholder: '{}'
+      invalid: Configuration must be valid JSON
+  edges:
+    label: Connections
+    placeholder: Connection label
+    add: Add connection
+    delete: Delete connection
+    from:
+      label: From node
+      placeholder: Select node
+    to:
+      label: To node
+      placeholder: Select node
+    condition:
+      label: Condition
+      placeholder: Condition expression
+test:
+  title: Test rule chain
+  run: Run test
+  running: Running...
+  input:
+    label: Input
+    placeholder: '{}'
+    invalid: Input must be valid JSON
+  output:
+    label: Result
+  modal:
+    title: Test result
+    success: Success
+    failed: Failed
+notification:
+  created: Rule chain created
+  updated: Rule chain updated
+  deleted: Rule chain deleted
+  createFailed: Rule chain could not be created
+  updateFailed: Rule chain could not be updated
+  deleteFailed: Rule chain could not be deleted
+  loadFailed: Rule chain could not be loaded
+  listFailed: Rule chains could not be loaded
+  testFailed: Test could not be executed

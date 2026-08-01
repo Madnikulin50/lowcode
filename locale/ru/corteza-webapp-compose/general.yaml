@@ -18,6 +18,10 @@ label:
       list: "Диаграммы - {{label}}"
       edit: "Изменить Диаграмма - {{label}}"
       create: Создать диаграмму
+    rulechains:
+      list: "Цепочки правил - {{label}}"
+      edit: "Изменить цепочку правил - {{label}}"
+      create: Создать цепочку правил
   actions: Действия
   active: Включено
   add: Добавить

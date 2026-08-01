@@ -1,0 +1,76 @@
+label:
+  single: Цепочка правил
+  plural: Цепочки правил
+searchPlaceholder: Поиск цепочек правил
+add: Добавить workflow
+noItems: Цепочки правил не найдены
+columns:
+  name: Название
+  description: Описание
+  nodes: Узлы
+  edges: Связи
+  actions: Действия
+edit:
+  title: Цепочка правил
+  createTitle: Новая цепочка правил
+  generalSettings: Основные настройки
+  name:
+    label: Название
+    placeholder: Название цепочки правил (например «Согласование заявки»)
+  description:
+    label: Описание
+    placeholder: Краткое описание того, что делает эта цепочка
+  entryNode:
+    label: Точка входа
+    placeholder: Выберите узел, с которого начинается выполнение
+  delete: Удалить цепочку правил
+  nodes:
+    label: Узлы
+    placeholder: Название узла
+    add: Добавить узел
+    delete: Удалить узел
+    type:
+      label: Тип
+      placeholder: Выберите тип узла
+    config:
+      label: Конфигурация
+      placeholder: '{}'
+      invalid: Конфигурация должна быть корректным JSON
+  edges:
+    label: Связи
+    placeholder: Подпись связи
+    add: Добавить связь
+    delete: Удалить связь
+    from:
+      label: Из узла
+      placeholder: Выберите узел
+    to:
+      label: В узел
+      placeholder: Выберите узел
+    condition:
+      label: Условие
+      placeholder: Выражение условия
+test:
+  title: Тест цепочки правил
+  run: Запустить тест
+  running: Выполняется...
+  input:
+    label: Входные данные
+    placeholder: '{}'
+    invalid: Входные данные должны быть корректным JSON
+  output:
+    label: Результат
+  modal:
+    title: Результат теста
+    success: Успешно
+    failed: Ошибка
+notification:
+  created: Цепочка правил создана
+  updated: Цепочка правил обновлена
+  deleted: Цепочка правил удалена
+  createFailed: Не удалось создать цепочку правил
+  updateFailed: Не удалось обновить цепочку правил
+  deleteFailed: Не удалось удалить цепочку правил
+  loadFailed: Не удалось загрузить цепочку правил
+  listFailed: Не удалось загрузить цепочки правил
+  testFailed: Не удалось выполнить тест

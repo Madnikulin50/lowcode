@@ -18,6 +18,10 @@ label:
       list: "Charts - {{label}}"
       edit: "Edit Chart - {{label}}"
       create: Create Chart
+    rulechains:
+      list: "Rule chains - {{label}}"
+      edit: "Edit rule chain - {{label}}"
+      create: Create rule chain
   actions: Actions
   active: Active
   add: Add

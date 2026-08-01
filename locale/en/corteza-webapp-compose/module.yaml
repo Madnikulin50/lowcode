@@ -286,3 +286,38 @@ searchPlaceholder: Search modules in this namespace
 title: List of Modules
 tooltip:
   permissions: Module permissions
+etl:
+  title: ETL
+  settings: ETL settings
+  settingsDescription: Synchronize records from external sources into this module.
+  create: New job
+  edit: Edit job
+  name: Name
+  source: Source
+  sources:
+    rest: REST
+    mcp: MCP
+    smb: SMB
+  sourceConfig: Source config
+  schedule: Schedule (cron)
+  enabled: Enabled
+  disabled: Disabled
+  format: Format
+  lastRun: Last run
+  actions: Actions
+  noJobs: No ETL jobs yet.
+  confirmRun: Run this ETL job now?
+  confirmDelete: Delete this ETL job?
+  smb:
+    password: Password
+    username: Username
+    filePath: Path
+    share: Share
+    host: Host
+  mcp:
+    server: Server
+    tool: Tool
+  rest:
+    url: URL
+    method: Method
+    body: Body (JSON)
