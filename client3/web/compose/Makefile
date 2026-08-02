@@ -7,7 +7,7 @@ YARN                   = yarn $(YARN_FLAGS)
 REPO_NAME 						?= corteza-webapp-compose
 
 BUILD_FLAVOUR         ?= corteza
-BUILD_FLAGS           ?= --production
+BUILD_FLAGS           ?=
 BUILD_DEST_DIR         = dist
 BUILD_TIME            ?= $(shell date +%FT%T%z)
 BUILD_VERSION         ?= $(shell git describe --tags --abbrev=0)

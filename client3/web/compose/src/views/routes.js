@@ -1,15 +1,3 @@
-// public route builder/helper
-function r (name, path, component, defaultProps = {}) {
-  return {
-    path,
-    name,
-      component: () => import(/* @vite-ignore */ './' + component + '.vue'),
-    props: r => {
-      return { ...defaultProps, ...r.params }
-    },
-  }
-}
-
 export default [
   {
     name: 'root',
@@ -23,60 +11,72 @@ export default [
         component: () => import('./Namespace/Index.vue'),
         redirect: 'namespaces.list',
         children: [
-          r('namespace.list', '/namespaces', 'Namespace/List'),
-          r('namespace.manage', '/namespaces/manage', 'Namespace/Manage'),
-          r('namespace.create', '/admin/namespace/create', 'Namespace/Edit'),
-          r('namespace.edit', '/admin/namespace/edit/:namespaceID', 'Namespace/Edit'),
+          { name: 'namespace.list', path: '/namespaces', component: () => import('./Namespace/List.vue'), props: r => ({ ...r.params }) },
+          { name: 'namespace.manage', path: '/namespaces/manage', component: () => import('./Namespace/Manage.vue'), props: r => ({ ...r.params }) },
+          { name: 'namespace.create', path: '/admin/namespace/create', component: () => import('./Namespace/Edit.vue'), props: r => ({ ...r.params }) },
+          { name: 'namespace.edit', path: '/admin/namespace/edit/:namespaceID', component: () => import('./Namespace/Edit.vue'), props: r => ({ ...r.params }) },
           {
-            ...r('namespace', '/ns/:slug', 'Namespace/View'),
+            name: 'namespace',
+            path: '/ns/:slug',
+            component: () => import('./Namespace/View.vue'),
+            props: r => ({ ...r.params }),
             redirect: { name: 'pages' },
 
             children: [
               {
-                ...r('pages', 'pages', 'Public/Index'),
+                name: 'pages',
+                path: 'pages',
+                component: () => import('./Public/Index.vue'),
+                props: r => ({ ...r.params }),
                 children: [
                   {
-                    ...r('page', ':pageID?', 'Public/Pages/View'),
+                    name: 'page',
+                    path: ':pageID?',
+                    component: () => import('./Public/Pages/View.vue'),
+                    props: r => ({ ...r.params }),
 
                     children: [
-                      r('page.record', 'record/:recordID', 'Public/Pages/Records/View', { edit: false }),
-                      r('page.record.edit', 'record/:recordID/edit', 'Public/Pages/Records/View', { edit: true }),
-                      r('page.record.create', 'record', 'Public/Pages/Records/View', { edit: true }),
+                      { name: 'page.record', path: 'record/:recordID', component: () => import('./Public/Pages/Records/View.vue'), props: r => ({ edit: false, ...r.params }) },
+                      { name: 'page.record.edit', path: 'record/:recordID/edit', component: () => import('./Public/Pages/Records/View.vue'), props: r => ({ edit: true, ...r.params }) },
+                      { name: 'page.record.create', path: 'record', component: () => import('./Public/Pages/Records/View.vue'), props: r => ({ edit: true, ...r.params }) },
                     ],
                   },
                 ],
               },
               {
-                ...r('admin', 'admin', 'Admin/Index'),
+                name: 'admin',
+                path: 'admin',
+                component: () => import('./Admin/Index.vue'),
+                props: r => ({ ...r.params }),
                 redirect: { name: 'admin.modules' },
 
                 children: [
-                  r('admin.modules', 'modules', 'Admin/Modules/List'),
-                  r('admin.modules.create', 'modules/new', 'Admin/Modules/Edit'),
-                  r('admin.modules.edit', 'modules/:moduleID/edit', 'Admin/Modules/Edit'),
-                  r('admin.modules.record.list', 'modules/:moduleID/record/list', 'Admin/Modules/Records/List'),
-                  r('admin.modules.record.view', 'modules/:moduleID/record/:recordID', 'Admin/Modules/Records/View', { edit: false }),
-                  r('admin.modules.record.create', 'modules/:moduleID/record', 'Admin/Modules/Records/View', { edit: true }),
-                  r('admin.modules.record.edit', 'modules/:moduleID/record/:recordID/edit', 'Admin/Modules/Records/View', { edit: true }),
+                  { name: 'admin.modules', path: 'modules', component: () => import('./Admin/Modules/List.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.modules.create', path: 'modules/new', component: () => import('./Admin/Modules/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.modules.edit', path: 'modules/:moduleID/edit', component: () => import('./Admin/Modules/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.modules.record.list', path: 'modules/:moduleID/record/list', component: () => import('./Admin/Modules/Records/List.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.modules.record.view', path: 'modules/:moduleID/record/:recordID', component: () => import('./Admin/Modules/Records/View.vue'), props: r => ({ edit: false, ...r.params }) },
+                  { name: 'admin.modules.record.create', path: 'modules/:moduleID/record', component: () => import('./Admin/Modules/Records/View.vue'), props: r => ({ edit: true, ...r.params }) },
+                  { name: 'admin.modules.record.edit', path: 'modules/:moduleID/record/:recordID/edit', component: () => import('./Admin/Modules/Records/View.vue'), props: r => ({ edit: true, ...r.params }) },
 
-                  r('admin.pages', 'pages', 'Admin/Pages/List'),
-                  r('admin.pages.edit', 'pages/:pageID/edit', 'Admin/Pages/Edit'),
-                  r('admin.pages.builder', 'pages/:pageID/builder', 'Admin/Pages/Builder'),
-                  r('admin.pages.rag', 'pages/rag', 'Admin/Pages/RAG'),
+                  { name: 'admin.pages', path: 'pages', component: () => import('./Admin/Pages/List.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.pages.edit', path: 'pages/:pageID/edit', component: () => import('./Admin/Pages/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.pages.builder', path: 'pages/:pageID/builder', component: () => import('./Admin/Pages/Builder.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.pages.rag', path: 'pages/rag', component: () => import('./Admin/Pages/RAG.vue'), props: r => ({ ...r.params }) },
 
-                  r('admin.charts', 'charts', 'Admin/Charts/List'),
-                  r('admin.charts.create', 'charts/new/:category?', 'Admin/Charts/Edit'),
-                  r('admin.charts.edit', 'charts/:chartID/edit', 'Admin/Charts/Edit'),
+                  { name: 'admin.charts', path: 'charts', component: () => import('./Admin/Charts/List.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.charts.create', path: 'charts/new/:category?', component: () => import('./Admin/Charts/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.charts.edit', path: 'charts/:chartID/edit', component: () => import('./Admin/Charts/Edit.vue'), props: r => ({ ...r.params }) },
 
-                  r('admin.etl', 'etl', 'Admin/ETL/List'),
-                  r('admin.etl.create', 'etl/new', 'Admin/ETL/Edit'),
-                  r('admin.etl.edit', 'etl/:etlID/edit', 'Admin/ETL/Edit'),
+                  { name: 'admin.etl', path: 'etl', component: () => import('./Admin/ETL/List.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.etl.create', path: 'etl/new', component: () => import('./Admin/ETL/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.etl.edit', path: 'etl/:etlID/edit', component: () => import('./Admin/ETL/Edit.vue'), props: r => ({ ...r.params }) },
 
-                  r('admin.rulechains', 'rulechains', 'Admin/RuleChains/List'),
-                  r('admin.rulechains.create', 'rulechains/new', 'Admin/RuleChains/Edit'),
-                  r('admin.rulechains.edit', 'rulechains/:chainID/edit', 'Admin/RuleChains/Edit'),
+                  { name: 'admin.rulechains', path: 'rulechains', component: () => import('./Admin/RuleChains/List.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.rulechains.create', path: 'rulechains/new', component: () => import('./Admin/RuleChains/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.rulechains.edit', path: 'rulechains/:chainID/edit', component: () => import('./Admin/RuleChains/Edit.vue'), props: r => ({ ...r.params }) },
 
-                  r('admin.configuration', 'configuration', 'Admin/Configuration/Index'),
+                  { name: 'admin.configuration', path: 'configuration', component: () => import('./Admin/Configuration/Index.vue'), props: r => ({ ...r.params }) },
                 ],
               },
 
@@ -88,6 +88,5 @@ export default [
     ],
   },
 
-  // When everything else fails, go to namespaces
   { path: '/:pathMatch(.*)*', redirect: { name: 'root' } },
 ]

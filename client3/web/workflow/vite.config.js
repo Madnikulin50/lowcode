@@ -2,10 +2,33 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 import { execSync } from 'child_process'
+import { readFileSync, writeFileSync, existsSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   base: './',
-  plugins: [vue()],
+  plugins: [    {
+      name: 'html-base-inject',
+      apply: 'build',
+      transformIndexHtml (html) {
+        return html.replace('<base href="/" />', `<base href="${process.env.VITE_BASE_PATH || '/'}" />`)
+      },
+      closeBundle () {
+        if (!process.env.VITE_BASE_PATH) return
+        
+        const cfg = resolve(__dirname, 'dist/config.js')
+        if (!existsSync(cfg)) return
+        let content = readFileSync(cfg, 'utf-8')
+        content = content.replace("window.CortezaAPI = 'http://localhost:3333'", "window.CortezaAPI = '/api'")
+        content = content.replace("window.CortezaAuth = 'http://localhost:3333/auth'", "window.CortezaAuth = '/auth'")
+        writeFileSync(cfg, content)
+      },
+    },
+    vue(),
+  ],
   define: {
     WEBAPP: JSON.stringify('Workflow'),
     VERSION: JSON.stringify(process.env.BUILD_VERSION || ('' + execSync('git describe --always --tags')).trim()),

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/ollama"
@@ -21,9 +22,17 @@ type (
 	}
 )
 
+func ollamaURL() string {
+	u := os.Getenv("OLLAMA_URL")
+	if u == "" {
+		u = "http://localhost:11434"
+	}
+	return u
+}
+
 func NewClient(model string) (*Client, error) {
 	cm, err := ollama.NewChatModel(context.Background(), &ollama.ChatModelConfig{
-		BaseURL: "http://localhost:11434",
+		BaseURL: ollamaURL(),
 		Model:   model,
 		HTTPClient: &http.Client{
 			Timeout: 3 * time.Minute,

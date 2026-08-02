@@ -210,6 +210,15 @@ export default {
             },
 
             {
+              label: 'automation.items.ruleChains',
+              route: 'automation.ruleChain',
+              icon: 'link',
+              can: [
+                ['automation/', 'workflows.search'],
+              ],
+            },
+
+            {
               label: 'automation.items.sessions',
               route: 'automation.session',
               icon: 'business-time',

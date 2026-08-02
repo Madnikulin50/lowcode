@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -211,9 +212,13 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	if err != nil {
 		panic(fmt.Errorf("rag store: %w", err))
 	}
-	DefaultRAG = NewRAGService(ragStore, rag.NewEmbedder("http://localhost:11434", "nomic-embed-text"))
+	ollamaHost := os.Getenv("OLLAMA_URL")
+	if ollamaHost == "" {
+		ollamaHost = "http://localhost:11434"
+	}
+	DefaultRAG = NewRAGService(ragStore, rag.NewEmbedder(ollamaHost, "nomic-embed-text"))
 
-	DefaultPagesRAG = NewPagesRAGService(ragStore, rag.NewEmbedder("http://localhost:11434", "nomic-embed-text"), log, DefaultPage, DefaultNamespace, DefaultRecord, DefaultResourceTranslation)
+	DefaultPagesRAG = NewPagesRAGService(ragStore, rag.NewEmbedder(ollamaHost, "nomic-embed-text"), log, DefaultPage, DefaultNamespace, DefaultRecord, DefaultResourceTranslation)
 	DefaultPagesRAG.StartDailyCrawl(ctx)
 
 	RegisterIteratorProviders()

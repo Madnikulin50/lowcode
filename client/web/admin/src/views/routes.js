@@ -129,6 +129,7 @@ export default [
         ...wrap('automation', '/automation'),
         children: [
           combo('automation', 'workflow'),
+          r('automation.ruleChain', 'rulechain', 'Automation/RuleChain/Index'),
           r('automation.scripts', 'scripts', 'Automation/Scripts/Index'),
           combo('automation', 'session'),
           r('automation.permissions', 'permissions', 'Automation/Permissions/Index'),

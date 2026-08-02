@@ -99,6 +99,11 @@ All Vue 2 components converted to Vue 3 `<script setup>` + Composition API + Boo
 - `src/stores/` → `src/store/` (без 's') — старые Vuex модули стали Pinia stores
 - `@tiptap/*` версии должны совпадать между lib/vue и webapp (symlink или установка)
 - `brace` и `ace-builds` нужны для vue3-ace-editor (CAceEditor)
+- Bootstrap CSS импортирован в `main.js` — `.form-switch` стили теперь в бандле (bootstrap-vue-next.css их не содержит)
+- `<b-form-checkbox switch>` не работает (switch prop как атрибут без значения); все заменены на нативный `div.form-check.form-switch > input[type=checkbox]`
+- `BFormCheckbox` удалён из `main.js` — больше не регистрируется
+- `form-check-input-v3` → `form-check-input` в 4 компонентах lib/vue (иначе `.form-switch .form-check-input` селектор Bootstrap не срабатывает)
+- `#toolbar` Teleport warning — безвредная гонка при монтировании; фикс: `<div id="toolbar">` добавлен в `index.html` (всегда существует)
 
 ## Work State
 ### Completed
@@ -115,20 +120,51 @@ All Vue 2 components converted to Vue 3 `<script setup>` + Composition API + Boo
 - **lib/vue node_modules**: symlinks для axios, i18next-pseudo, @vue-leaflet/vue-leaflet, vue-color, @popperjs/core, ace-builds, @tiptap/*
 - **compose node_modules**: установлены brace, ace-builds, vue3-ace-editor, @tiptap/*, axios, i18next-pseudo, @vue-leaflet/vue-leaflet
 - **✅ compose сборка**: успешно (422 модуля, 7.03s)
+- **Switch fix**: Bootstrap CSS импортирован; все `<b-form-checkbox switch>` → нативный `.form-switch`; `BFormCheckbox` удалён; `form-check-input-v3` → `form-check-input`
+- **CProgress `size="sm"`**: новый prop; Number.vue передаёт `size="sm"` вместо инлайн-стилей; label без `/100%` суффикса
+- **Card.vue null-safety**: optional chaining на `block.style?.border?.enabled`
+- **Index.vue #toolbar z-order**: перемещён перед `<router-view>`
+- **Teleport warning устранён**: `<div id="toolbar">` добавлен в `index.html`
+- **IFrameBase.vue**: добавлен `inject` в импорт из `vue`
+- **Card.vue все computed**: `props.block` → `props.block?.` optional chaining везде (было `Cannot read properties of undefined (reading 'style')`)
+- **MetricBase.vue guard filter**: добавлена проверка `!props.record` перед `evaluatePrefilter` для `${record`/`${ownerID}` ссылок
+- **ProgressBase.vue guard filter**: то же самое
+- **✅ Module Create fix**: copy-paste bug in `module_field.go` — `encodeTranslationsMetaPrefix` и `encodeTranslationsMetaSuffix` использовали `LocaleKeyModuleFieldMetaHintView.Path` вместо `MetaPrefix`/`MetaSuffix`, создавая дубликаты ключей `meta.hint.view` → `unique_violation` на `resource_translations_uniqueTranslation` constraint; первая ошибка глоталась `errorHandler`(`return nil`), транзакция абортилась, последующие запросы падали с `current transaction is aborted`
+- **PostgreSQL errorHandler fix**: `unique_violation` теперь возвращает `store.ErrNotUnique.Wrap(implErr)` вместо `nil`, чтобы не оставлять транзакцию в абортированном состоянии незаметно
+- **Builder.vue modals**: переписаны 3 модала с CSS show/hide на Bootstrap Modal API (`import { Modal }`) — watch на refs, hidden.bs.modal listeners, dispose/unmount
+- **Edit.vue autocomplete fix**: `import autocomplete` удалён (Vue 2 миксин → мигрирован на inline-функции с `getCurrentInstance`)
+- **FontAwesome icon picker**: добавлен в Edit.vue для страниц; sidebar (`NamespaceSidebar.vue`) отображает fontawesome иконки; `faIcons.js` — добавлены solid иконки (faEnvelope, faClock и др.)
+- **✅ Все webapp собраны**:
+  - **compose** — ✅ (422 модуля, 7.03s)
+  - **admin** — ✅ (1341 модуль, 10.89s)
+  - **discovery** — ✅ (693 модуля, 12.70s)
+  - **one** — ✅ (606 модулей, 11.94s)
+  - **privacy** — ✅ (617 модулей, 11.75s)
+  - **reporter** — ✅ (1175 модулей, 15.73s)
+  - **workflow** — ✅ (657 модулей, 17.57s)
+- **AiChat Modal.vue**: `fullscreen = ref(false)` по умолчанию; `.modal-dialog:not(.modal-fullscreen){max-width:70vw}`; `modal-xl`/`.modal-max-width` удалены
+- **ETLSettings.vue создан**: списо-к/создание/редактирование/run/delete ETL-джобов модуля; API использует `etlID` (не `etlJobID`)
+- **lib/vue node_modules → symlink'и (абсолютные)** на `web/compose/node_modules` (vue, @tiptap/*, vue-select, prosemirror-стек и др.) — фикс краша «Adding different instances of a keyed plugin» (дубли prosemirror-state); `autoprefixer` symlink нужен для rollup-сборки dist
+- **vue-select@4.0.0-beta.6** в web/compose (`--legacy-peer-deps`, конфликт с vue-tweet-embed) — v3.20.4 был Vue 2 build (`this.$options.propsData` → undefined)
+- **CRichTextInput**: проп `maxHeight` → `maxBodyHeight`; dist lib/vue пересобран
+- **JWT-debug лог** удалён из `store/namespace.js`
+- **faIcons.js**: добавлены faPlay, faTrash, faCertificate, faTimeline
+- **ETL локализация**: полные блоки `etl:` в `locale/{en,ru}/corteza-webapp-compose/module.yaml`; синхронизировано в `server/pkg/locale/src/{en,ru}/` (module/block/chart/datasources); сервер пересобран (встраивание через `//go:embed src/*`)
+- **vuedraggable 4.1.0 fix**: CItemPicker.vue и CInputPresort.vue переведены на `#item`-слоты (без него render() кидает «draggable element must have an item slot» → componentStructure undefined → краш в `updated()`); guard `if (this.error || !this.componentStructure) return` добавлен в `updated()` (web/compose/node_modules/vuedraggable); dist lib/vue пересобран
+- **Pages RAG: исключение record-bound блоков**: `blockTiedToRecord()` в `server/compose/service/pages_rag.go` — блоки с `${recordID}` в options (prefilter/filter, рекурсивно по metrics[]) пропускаются краулом; сервер пересобран
+- **Pages RAG: переводы**: `translatedBlockText()` — в текст чанка добавляется секция `Translations:` со страницей/блоком (title/description/content body) на всех языках, кроме дефолтного (ключи `types.LocaleKeyPage*`); `PagesRAGService` получил `locale ResourceTranslationsManagerService` (DefaultResourceTranslation); работает при `LOCALE_RESOURCE_TRANSLATIONS_ENABLED`
+- **Admin Rules & Workflow (аналог Charts)**: раздел `admin.rulechains` в админке — список/создание/редактирование/удаление/тест цепочек правил (rulesgo):
+  - lib/js `compose.ts`: `ruleChainList/Read/Create/Update/Delete/Test/NodeTypes/Stats` (REST `/api/compose/admin/rulechain/`); dist пересобран
+  - сервер: `RuleChainAdmin.Update` теперь применяет `nodes`/`edges` (раньше игнорировались); `rulechain.yaml` (en/ru) встроен в сервер через `//go:embed`; `navigation.rulechains` ключ
+  - webapp: роуты `admin.rulechains(.create/.edit)` в `views/routes.js`; пункт «Rule chains» в `NamespaceSidebar.vue` (`adminRoutes()`, `namespaceSelected`, фильтр поиска); `i18n.js` + ns `rulechain`
+  - `views/Admin/RuleChains/List.vue` — c-resource-list (клиентские поиск/сортировка/пагинация по `route.query.page|limit`); `Edit.vue` — форма (name/description/entryNode), редактор узлов (label/type/config-JSON/description+configSchema из `/admin/rulechain/nodes`), редактор связей (from/to/label/condition), Toolbar (save/saveAndClose/delete), тест через Bootstrap Modal (`POST /admin/rulechain/{chainID}/test`, в create-режиме сначала сохраняет)
 
 ### Active
-- **compose editor (Edit.vue)**: Исправлены console warnings в форме редактирования модуля:
-  - `CSidebarNavItems.vue`: `v-on="$attrs"` → `v-bind="$attrs"` (Vue 3 трактует `v-on` как event handler, строковый `class` вызывал `onClass` warning)
-  - `ColumnSelector.vue`: тот же `v-on="$attrs"` → `v-bind="$attrs"`
-  - `FieldRowEdit.vue`: prop `value` → `modelValue` + computed alias (parent использует `v-model`)
-  - `DalSettings.vue`: `watch(fn, {handler, deep, immediate})` → `watch(fn, cb, {deep, immediate})`; `systemFieldEncoding: ref([])` → `ref({})`
-  - `Edit.vue`: `dalSchemaAlterations: ref({})` → `shallowRef({})` + property assignments переписаны на whole-object replacement
-  - `.sync` → `v-model:prop` — 41 occurrence across compose + admin + workflow (sed batch)
-
-### Blocked
 - (none)
 
+### Blocked
+- **Go (snap) сломан**: `/snap/bin/go` → snap-confine отказывается работать (`snapd.apparmor` не запущен, sudo недоступен «no new privileges»); рабочий тулчейн — standalone **Go 1.26.5** в `/tmp/opencode/go` (скачан с go.dev); сборка сервера: `/tmp/opencode/go/bin/go build -o /tmp/opencode/corteza-server cmd/corteza/main.go`
+- **Запущенный сервер (root, PID 8175, `./bin/corteza-server serve-api`) нельзя перезапустить без sudo** — новый бинарь `/tmp/opencode/corteza-server` требует перезапуска пользователем (для: rulechain Update nodes/edges, `rulechain.yaml`/`navigation.yaml` локалей, RAG-переводов)
+
 ## Next Move
-1. Собрать admin webapp (`client3/web/admin/`) — проверка сборки
-2. После admin — reporter, discovery, one, privacy
-3. Каждый webapp потребует установки зависимостей, алиасов, symlinks
+- Перезапустить сервер с `/tmp/opencode/corteza-server` (нужно для `etl.*` переводов, исключения record-bound блоков из Pages RAG, `rulechain.*` локалей и фикса Update nodes/edges), затем запустить реиндекс RAG (Admin → Pages → RAG) и проверить Admin → Rule chains (создание цепочки → тест → сохранение)

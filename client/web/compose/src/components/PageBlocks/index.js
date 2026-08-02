@@ -34,6 +34,8 @@ import RecordRevisionsBase from './RecordRevisionsBase'
 import RecordRevisionsConfigurator from './RecordRevisionsConfigurator'
 import ReportBase from './Report/Base'
 import ReportConfigurator from './Report/Configurator'
+import RuleChainBase from './RuleChainBase'
+import RuleChainConfigurator from './RuleChainConfigurator'
 import SocialFeedBase from './SocialFeedBase'
 import SocialFeedConfigurator from './SocialFeedConfigurator'
 import TabsBase from './TabsBase'
@@ -67,6 +69,8 @@ const Registry = {
   RecordOrganizerConfigurator,
   ReportBase,
   ReportConfigurator,
+  RuleChainBase,
+  RuleChainConfigurator,
   SocialFeedBase,
   SocialFeedConfigurator,
   MetricBase,

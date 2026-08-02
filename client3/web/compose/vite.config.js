@@ -1,11 +1,30 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
 import { execSync } from 'child_process'
+import { readFileSync, writeFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || './',
   plugins: [
+    {
+      name: 'html-base-inject',
+      apply: 'build',
+      transformIndexHtml (html) {
+        return html.replace('<base href="/" />', `<base href="${process.env.VITE_BASE_PATH || '/'}" />`)
+      },
+      closeBundle () {
+        if (!process.env.VITE_BASE_PATH) return
+        const cfg = resolve(__dirname, 'dist/config.js')
+        let content = readFileSync(cfg, 'utf-8')
+        content = content.replace("window.CortezaAPI = 'http://localhost:3333'", "window.CortezaAPI = '/api'")
+        content = content.replace("window.CortezaAuth = 'http://localhost:3333/auth'", "window.CortezaAuth = '/auth'")
+        writeFileSync(cfg, content)
+      },
+    },
     vue(),
     {
       name: 'fix-vue-default-import',
