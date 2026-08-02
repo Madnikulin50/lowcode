@@ -4,65 +4,67 @@
       <h4 class="m-0">{{ $t('title') }}</h4>
     </div>
 
-    <form @submit.prevent="$emit('submit', sensitivityLevel)">
-      <div class="row g-3 p-3">
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('name') }}</label>
-            <input
-              v-model="sensitivityLevel.meta.name"
-              type="text"
-              class="form-control"
-              :class="{ 'is-invalid': nameState === false }"
-              data-test-id="input-name"
-              required
-            >
+    <div class="card-body">
+  <form @submit.prevent="$emit('submit', sensitivityLevel)">
+        <div class="row g-3 p-3">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('name') }}</label>
+              <input
+                v-model="sensitivityLevel.meta.name"
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': nameState === false }"
+                data-test-id="input-name"
+                required
+              >
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('handle.label') }}</label>
+              <input
+                v-model="sensitivityLevel.handle"
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': handleState === false }"
+                :placeholder="$t('handle.placeholder')"
+              >
+              <div v-if="handleState === false" class="invalid-feedback">{{ $t('system.sensitivityLevel.editor.info.handle.invalid-characters') }}</div>
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('level', sensitivityLevel) }}</label>
+              <input
+                v-model="sensitivityLevel.level"
+                type="range"
+                class="form-range"
+                min="1"
+                max="10"
+              >
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('description') }}</label>
+              <textarea v-model="sensitivityLevel.meta.description" class="form-control" />
+            </div>
           </div>
         </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('handle.label') }}</label>
-            <input
-              v-model="sensitivityLevel.handle"
-              type="text"
-              class="form-control"
-              :class="{ 'is-invalid': handleState === false }"
-              :placeholder="$t('handle.placeholder')"
-            >
-            <div v-if="handleState === false" class="invalid-feedback">{{ $t('handle.invalid-characters') }}</div>
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('level', sensitivityLevel) }}</label>
-            <input
-              v-model="sensitivityLevel.level"
-              type="range"
-              class="form-range"
-              min="1"
-              max="10"
-            >
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('description') }}</label>
-            <textarea v-model="sensitivityLevel.meta.description" class="form-control" />
-          </div>
-        </div>
-      </div>
-
-      <c-system-fields :resource="sensitivityLevel" />
-
-      <input
-        type="submit"
-        class="d-none"
-        :disabled="saveDisabled"
-      >
-    </form>
+  
+        <c-system-fields :resource="sensitivityLevel" />
+  
+        <input
+          type="submit"
+          class="d-none"
+          :disabled="saveDisabled"
+        >
+      </form>
+  </div>
 
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-input-confirm

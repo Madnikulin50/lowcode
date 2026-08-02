@@ -16,7 +16,7 @@
         <thead class="table-light">
           <tr>
             <th style="width: 350px">{{ $t('label') }}</th>
-            <th style="width: 250px">{{ $t('type') }}</th>
+            <th style="width: 250px">{{ $t('system.users.editor.external-auth-providers.type') }}</th>
             <th class="text-end"></th>
           </tr>
         </thead>

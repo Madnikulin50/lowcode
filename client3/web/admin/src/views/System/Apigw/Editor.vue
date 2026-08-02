@@ -10,7 +10,7 @@
         class="btn btn-primary"
         @click="$router.push({ name: 'system.apigw.new' })"
       >
-        {{ $t('new') }}
+        {{ $t('system.apigw.editor.new') }}
       </button>
 
       <c-permissions-button
@@ -20,7 +20,7 @@
         :resource="`corteza::system:apigw-route/${routeID}`"
       >
         <font-awesome-icon :icon="['fas', 'lock']" />
-        {{ $t('permissions') }}
+        {{ $t('system.apigw.editor.permissions') }}
       </c-permissions-button>
     </c-content-header>
 

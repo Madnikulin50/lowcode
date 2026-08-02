@@ -1,8 +1,8 @@
 <template>
   <div v-if="authclient" class="container pt-2 pb-3">
     <c-content-header :title="title">
-      <button v-if="authClientID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.authClient.new' })">{{ $t('new') }}</button>
-      <c-permissions-button v-if="authClientID && canGrant" :title="authclient.meta.name || authclient.handle || authClientID" :target="authclient.meta.name || authclient.handle || authClientID" :resource="`corteza::system:auth-client/${authClientID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('permissions') }}</c-permissions-button>
+      <button v-if="authClientID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.authClient.new' })">{{ $t('system.authclients.editor.new') }}</button>
+      <c-permissions-button v-if="authClientID && canGrant" :title="authclient.meta.name || authclient.handle || authClientID" :target="authclient.meta.name || authclient.handle || authClientID" :resource="`corteza::system:auth-client/${authClientID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('system.authclients.editor.permissions') }}</c-permissions-button>
     </c-content-header>
     <c-authclient-editor-info :key="authClientID" :resource="authclient" :processing="info.processing" :success="info.success" :can-delete="authclient && authclient.authClientID && !authclient.isDefault && authclient.canDeleteAuthClient" :can-create="canCreate" @submit="onSubmit($event)" @delete="onDelete($event)" @undelete="onUndelete($event)" />
   </div>
@@ -22,7 +22,7 @@ const initialAuthclientState = ref(undefined)
 const info = reactive({ processing: false, success: false })
 const canCreate = computed(() => can('system/', 'auth-client.create'))
 const canGrant = computed(() => can('system/', 'grant'))
-const title = computed(() => props.authClientID ? t('title.edit') : t('title.create'))
+const title = computed(() => props.authClientID ? t('system.authclients.editor.title.edit') : t('system.authclients.editor.title.create'))
 function can(resource, operation) { return true }
 function incLoader() {}
 function decLoader() {}

@@ -1,6 +1,6 @@
 <template>
   <div class="container-fluid d-flex flex-column p-3">
-    <Teleport to="#topbar-title-target">{{ t('list.title') }}</Teleport>
+    <Teleport to="#topbar-title-target">{{ t('title') }}</Teleport>
 
     <c-resource-list
       primary-key="moduleID"
@@ -15,7 +15,7 @@
         loading: t('resourceList.loading'),
         searchPlaceholder: t('resourceList.search.placeholder'),
         showingPagination: t('resourceList.pagination.showing'),
-        singlePluralPagination: t('resourceList.pagination.single'),
+        singlePluralPagination: 'resourceList.pagination.single',
         prevPagination: t('resourceList.pagination.prev'),
         nextPagination: t('resourceList.pagination.next'),
         resourceSingle: t('label.sensitive_module.single'),

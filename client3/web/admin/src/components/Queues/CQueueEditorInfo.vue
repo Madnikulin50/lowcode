@@ -4,70 +4,72 @@
       <h4 class="m-0">{{ $t('title') }}</h4>
     </div>
 
-    <form @submit.prevent="$emit('submit', queue)">
-      <div class="row g-3 p-3">
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('name') }}</label>
-            <input
-              v-model="queue.queue"
-              type="text"
-              class="form-control"
-              :class="{ 'is-invalid': handleState === false }"
-              data-test-id="input-name"
-            >
-            <div v-if="handleState === false" class="invalid-feedback" data-test-id="feedback-invalid-name">
-              {{ $t('invalid-handle-characters') }}
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('consumer') }}</label>
-            <select
-              v-model="queue.consumer"
-              class="form-select"
-              data-test-id="input-consumer"
-            >
-              <option v-for="opt in consumers" :key="opt" :value="opt">{{ opt }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('poll_delay') }}</label>
-            <small class="form-text text-muted">{{ metaPollDelayDescription }}</small>
-            <input
-              v-model="(queue.meta || {}).poll_delay"
-              type="text"
-              class="form-control"
-              :class="{ 'is-invalid': durationState === false }"
-              data-test-id="input-polling"
-            >
-          </div>
-        </div>
-
-        <div v-if="isMetaDispatchEvents" class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('dispatch_events') }}</label>
-            <small class="form-text text-muted">{{ $t('dispatch_events_desc') }}</small>
-            <div class="form-check">
+    <div class="card-body">
+  <form @submit.prevent="$emit('submit', queue)">
+        <div class="row g-3 p-3">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('name') }}</label>
               <input
-                id="checkbox-dispatch-events"
-                v-model="queue.meta.dispatch_events"
-                type="checkbox"
-                class="form-check-input-v3"
+                v-model="queue.queue"
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': handleState === false }"
+                data-test-id="input-name"
               >
-              <label class="form-check-label" for="checkbox-dispatch-events">{{ $t("dispatch_events") }}</label>
+              <div v-if="handleState === false" class="invalid-feedback" data-test-id="feedback-invalid-name">
+                {{ $t('system.queues.editor.info.invalid-handle-characters') }}
+              </div>
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('consumer') }}</label>
+              <select
+                v-model="queue.consumer"
+                class="form-select"
+                data-test-id="input-consumer"
+              >
+                <option v-for="opt in consumers" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.queues.editor.info.poll_delay') }}</label>
+              <small class="form-text text-muted">{{ metaPollDelayDescription }}</small>
+              <input
+                v-model="(queue.meta || {}).poll_delay"
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': durationState === false }"
+                data-test-id="input-polling"
+              >
+            </div>
+          </div>
+  
+          <div v-if="isMetaDispatchEvents" class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.queues.editor.info.dispatch_events') }}</label>
+              <small class="form-text text-muted">{{ $t('system.queues.editor.info.dispatch_events_desc') }}</small>
+              <div class="form-check">
+                <input
+                  id="checkbox-dispatch-events"
+                  v-model="queue.meta.dispatch_events"
+                  type="checkbox"
+                  class="form-check-input-v3"
+                >
+                <label class="form-check-label" for="checkbox-dispatch-events">{{ $t("dispatch_events") }}</label>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <c-system-fields :resource="queue" />
-    </form>
+  
+        <c-system-fields :resource="queue" />
+      </form>
+  </div>
 
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-input-confirm

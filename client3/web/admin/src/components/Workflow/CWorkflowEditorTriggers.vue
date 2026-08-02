@@ -1,16 +1,16 @@
 <template>
   <div class="card shadow-sm mt-3 overflow-hidden">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('title') }}</h4>
+      <h4 class="m-0">{{ $t('automation.workflows.editor.triggers.title') }}</h4>
     </div>
 
     <div class="card-body p-0">
       <table class="table table-hover mb-0">
         <thead class="table-light">
           <tr>
-            <th>{{ $t('resourceType') }}</th>
-            <th>{{ $t('eventType') }}</th>
-            <th>{{ $t('constraints') }}</th>
+            <th>{{ $t('automation.workflows.editor.triggers.columns.resourceType') }}</th>
+            <th>{{ $t('automation.workflows.editor.triggers.columns.eventType') }}</th>
+            <th>{{ $t('automation.workflows.editor.triggers.columns.constraints') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -22,7 +22,7 @@
                 <template v-if="c.name">
                   {{ c.name[0].toUpperCase() + c.name.slice(1).toLowerCase() }} {{ c.op }} "{{ c.values.join(' or ') }}"
                 </template>
-                <code v-if="index < trigger.constraints.length - 1">{{ $t('and') }}</code>
+                <code v-if="index < trigger.constraints.length - 1">{{ $t('automation.workflows.editor.triggers.and') }}</code>
               </samp>
             </td>
           </tr>

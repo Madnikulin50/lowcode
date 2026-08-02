@@ -25,3 +25,78 @@
   75%  { content: '...'; }
   100% { content: ''; }
 }
+
+$btn-colors: (
+  primary: --primary,
+  secondary: --secondary,
+  success: --success,
+  info: --info,
+  warning: --warning,
+  danger: --danger,
+  light: --light,
+  dark: --dark,
+);
+
+@each $name, $var in $btn-colors {
+  .btn-#{$name} {
+    --bs-btn-bg: var(#{$var});
+    --bs-btn-border-color: var(#{$var});
+    --bs-btn-hover-bg: var(#{$var});
+    --bs-btn-hover-border-color: var(#{$var});
+    --bs-btn-active-bg: var(#{$var});
+    --bs-btn-active-border-color: var(#{$var});
+    --bs-btn-disabled-bg: var(#{$var});
+    --bs-btn-disabled-border-color: var(#{$var});
+  }
+
+  @if $name != light {
+    .btn-#{$name} {
+      --bs-btn-color: #fff;
+      --bs-btn-hover-color: #fff;
+      --bs-btn-active-color: #fff;
+      --bs-btn-disabled-color: #fff;
+    }
+  } @else {
+    .btn-#{$name} {
+      --bs-btn-color: #3a3b45;
+      --bs-btn-hover-color: #3a3b45;
+      --bs-btn-active-color: #3a3b45;
+      --bs-btn-disabled-color: #3a3b45;
+    }
+  }
+
+  .btn-outline-#{$name} {
+    --bs-btn-color: var(#{$var});
+    --bs-btn-border-color: var(#{$var});
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(#{$var});
+    --bs-btn-hover-border-color: var(#{$var});
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(#{$var});
+    --bs-btn-active-border-color: var(#{$var});
+  }
+
+  .text-#{$name} {
+    color: var(#{$var}) !important;
+  }
+}
+
+.text-black {
+  color: var(--black) !important;
+}
+
+.form-control::placeholder,
+.c-input-search ::placeholder {
+  color: var(--secondary);
+  opacity: 1;
+}
+
+#admin-toolbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1030;
+}
+
+label + .btn-group {
+  margin-right: 0.5rem;
+}

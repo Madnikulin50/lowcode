@@ -7,7 +7,7 @@
     <div v-if="issues.length" class="row">
       <div class="col-12">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('connectivity-issues') }}</label>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.dal.connectivity-issues') }}</label>
           <div v-for="issue in issues" :key="issue.issue" class="alert alert-danger" role="alert">
             {{ issue.issue }}
           </div>
@@ -18,14 +18,14 @@
     <div class="row">
       <div class="col-12">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('form.model-ident.label') }}</label>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.dal.form.model-ident.label') }}</label>
           <small class="form-text text-muted">{{ modelIdentDescription }}</small>
           <input
             v-model="dal.modelIdent"
             type="text"
             class="form-control"
             :disabled="disabled"
-            :placeholder="$t('form.model-ident.placeholder')"
+            :placeholder="$t('system.connections.editor.dal.form.model-ident.placeholder')"
           >
         </div>
       </div>
@@ -34,14 +34,14 @@
     <div class="row">
       <div class="col-12">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('form.type.label') }}</label>
-          <small class="form-text text-muted">{{ $t('form.type.description') }}</small>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.dal.form.type.label') }}</label>
+          <small class="form-text text-muted">{{ $t('system.connections.editor.dal.form.type.description') }}</small>
           <input
             v-model="dal.type"
             type="text"
             class="form-control"
             :disabled="disabled"
-            :placeholder="$t('form.type.placeholder')"
+            :placeholder="$t('system.connections.editor.dal.form.type.placeholder')"
           >
         </div>
       </div>
@@ -50,14 +50,14 @@
     <div class="row">
       <div class="col-12">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('form.params.label') }}</label>
-          <small class="form-text text-muted">{{ $t('form.params.description') }}</small>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.dal.form.params.label') }}</label>
+          <small class="form-text text-muted">{{ $t('system.connections.editor.dal.form.params.description') }}</small>
           <textarea
             v-model="paramsJson"
             class="form-control"
             :class="paramsJsonEditorClass"
             :disabled="disabled"
-            :placeholder="$t('form.params.placeholder')"
+            :placeholder="$t('system.connections.editor.dal.form.params.placeholder')"
             rows="5"
             @blur="processParamsJSON"
           />

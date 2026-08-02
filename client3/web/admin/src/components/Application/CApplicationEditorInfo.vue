@@ -6,46 +6,48 @@
       </h4>
     </div>
 
-    <form @submit.prevent="$emit('submit', application)">
-      <div class="row">
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('name') }}</label>
-            <input
-              v-model="application.name"
-              type="text"
-              class="form-control"
-              :class="{ 'is-invalid': nameState === false }"
-              data-test-id="input-name"
-              required
-            >
+    <div class="card-body">
+  <form @submit.prevent="$emit('submit', application)">
+        <div class="row">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('name') }}</label>
+              <input
+                v-model="application.name"
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': nameState === false }"
+                data-test-id="input-name"
+                required
+              >
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3" :class="{ 'mb-0': !application.applicationID }">
+              <label class="form-label text-primary">{{ $t('enabled') }}</label>
+              <c-input-checkbox
+                v-model="application.enabled"
+                data-test-id="checkbox-enabled"
+                :labels="checkboxLabel"
+                switch
+              />
+            </div>
           </div>
         </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3" :class="{ 'mb-0': !application.applicationID }">
-            <label class="form-label text-primary">{{ $t('enabled') }}</label>
-            <c-input-checkbox
-              v-model="application.enabled"
-              data-test-id="checkbox-enabled"
-              :labels="checkboxLabel"
-              switch
-            />
-          </div>
-        </div>
-      </div>
-
-      <c-system-fields
-        :id="application.applicationID"
-        :resource="application"
-      />
-
-      <input
-        type="submit"
-        class="d-none"
-        :disabled="saveDisabled"
-      >
-    </form>
+  
+        <c-system-fields
+          :id="application.applicationID"
+          :resource="application"
+        />
+  
+        <input
+          type="submit"
+          class="d-none"
+          :disabled="saveDisabled"
+        >
+      </form>
+  </div>
 
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-input-confirm

@@ -1,8 +1,8 @@
 <template>
   <div v-if="template" class="container pt-2 pb-3">
     <c-content-header :title="title">
-      <button v-if="templateID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.template.new' })">{{ $t('new') }}</button>
-      <c-permissions-button v-if="templateID && canGrant" :title="template.meta.short || template.handle || template.templateID" :target="template.meta.short || template.handle || template.templateID" :resource="`corteza::system:template/${templateID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('permissions') }}</c-permissions-button>
+      <button v-if="templateID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.template.new' })">{{ $t('system.templates.editor.new') }}</button>
+      <c-permissions-button v-if="templateID && canGrant" :title="template.meta.short || template.handle || template.templateID" :target="template.meta.short || template.handle || template.templateID" :resource="`corteza::system:template/${templateID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('system.templates.editor.permissions') }}</c-permissions-button>
       <c-corredor-manual-buttons ui-page="template/editor" ui-slot="toolbar" resource-type="system:template" default-variant="link" class="me-1" @click="dispatchCortezaSystemTemplateEvent($event, { template })" />
     </c-content-header>
     <c-template-editor-info :template="template" :processing="info.processing" :success="info.success" :can-create="canCreate" @delete="onDelete" @submit="onInfoSubmit" />
@@ -26,7 +26,7 @@ const info = reactive({ processing: false, success: false })
 const partials = ref([])
 const canCreate = computed(() => can('system/', 'template.create'))
 const canGrant = computed(() => can('system/', 'grant'))
-const title = computed(() => props.templateID ? t('title.edit') : t('title.create'))
+const title = computed(() => props.templateID ? t('system.templates.editor.title.edit') : t('system.templates.editor.title.create'))
 function can(resource, operation) { return true }
 function incLoader() {}
 function decLoader() {}

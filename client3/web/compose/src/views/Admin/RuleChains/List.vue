@@ -20,7 +20,7 @@
         noItems: $t('rulechain.noItems', 'No rule chains found'),
         loading: $t('label.loading', 'Loading'),
         showingPagination: $t('resourceList.pagination.showing', 'Showing'),
-        singlePluralPagination: $t('resourceList.pagination.single', 'rule chain'),
+        singlePluralPagination: 'resourceList.pagination.single',
         prevPagination: $t('resourceList.pagination.prev', 'Previous'),
         nextPagination: $t('resourceList.pagination.next', 'Next'),
         resourceSingle: $t('rulechain.label.single'),

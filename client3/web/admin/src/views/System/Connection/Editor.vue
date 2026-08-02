@@ -1,6 +1,6 @@
 <template>
   <div class="container pt-2 pb-3">
-    <c-content-header :title="connectionID ? $t('title.edit') : $t('title.create')" />
+    <c-content-header :title="connectionID ? $t('system.connections.editor.title.edit') : $t('system.connections.editor.title.create')" />
     <form v-if="connection && sensitivityLevels" @submit.prevent="onSubmit">
       <c-connection-editor-info :connection="connection" :sensitivity-levels="sensitivityLevels" :processing="info.processing" :success="info.success" :can-create="canCreate" :disabled="disabled" @submit="updateInfo" @delete="toggleDelete" />
       <c-connection-editor-properties v-if="connectionID && connection.meta.properties" :properties="connection.meta.properties" :processing="properties.processing" :success="properties.success" class="mt-4" @submit="updateProperties" />

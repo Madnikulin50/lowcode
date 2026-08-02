@@ -1,14 +1,14 @@
 <template>
   <div class="container-fluid d-flex flex-column flex-fill pt-2 pb-3">
     <c-content-header :title="$t('automation.sessions.list.title')" />
-    <c-resource-list :primary-key="primaryKey" :filter="filter" :sorting="sorting" :pagination="pagination" :fields="fields" :items="items" :row-class="rowClass" :translations="{ notFound: $t('admin.general.notFound'), noItems: $t('general.resource-list.no-items'), loading: $t('loading'), showingPagination: 'general.pagination.showing', singlePluralPagination: 'general.pagination.single', prevPagination: $t('admin.general.pagination.prev'), nextPagination: $t('admin.general.pagination.next'), resourceSingle: $t('label.session.single'), resourcePlural: $t('label.session.plural') }" clickable sticky-header hide-search :hide-total="!pagination.incTotal" class="custom-resource-list-height flex-fill" @row-clicked="handleRowClicked">
+    <c-resource-list :primary-key="primaryKey" :filter="filter" :sorting="sorting" :pagination="pagination" :fields="fields" :items="items" :row-class="rowClass" :translations="{ notFound: $t('admin.general.notFound'), noItems: $t('general.resource-list.no-items'), loading: $t('automation.sessions.list.loading'), showingPagination: 'general.pagination.showing', singlePluralPagination: 'general.pagination.single', prevPagination: $t('admin.general.pagination.prev'), nextPagination: $t('admin.general.pagination.next'), resourceSingle: $t('label.session.single'), resourcePlural: $t('label.session.plural') }" clickable sticky-header hide-search :hide-total="!pagination.incTotal" class="custom-resource-list-height flex-fill" @row-clicked="handleRowClicked">
       <template #header>
         <div class="mb-0" style="min-width:200px">
-          <label class="text-primary mb-1">{{ $t('list.columns.sessionID') }}</label>
+          <label class="text-primary mb-1">{{ $t('automation.sessions.list.columns.sessionID') }}</label>
           <c-input-search :value="filter.sessionID" size="sm" @input="filterBySessionID" />
         </div>
         <div class="mb-0" style="min-width:200px">
-          <label class="text-primary mb-1">{{ $t('list.columns.workflowID') }}</label>
+          <label class="text-primary mb-1">{{ $t('automation.sessions.list.columns.workflowID') }}</label>
           <c-input-search :value="filter.workflowID" size="sm" @input="filterByWorkflowID" />
         </div>
       </template>
@@ -18,7 +18,7 @@
             <input v-for="opt in statusOptions" :key="opt.value" type="radio" class="btn-check" :id="'status-' + opt.value" :value="opt.value" v-model="filter.status" @change="filterList" />
             <label :for="'status-' + opt.value" class="btn btn-outline-primary btn-sm">{{ opt.text }}</label>
           </div>
-          <span class="ms-2 text-nowrap">{{ $t('sessions.label') }}</span>
+          <span class="ms-2 text-nowrap">{{ $t('automation.sessions.list.filterForm.sessions.label') }}</span>
         </div>
       </template>
       <template #sessionID="{ item }"><a href="javascript:;" @click="filterBySessionID(item.sessionID)">{{ item.sessionID }}</a></template>
@@ -42,7 +42,7 @@ const sorting = reactive({ sortBy: 'createdAt', sortDesc: true })
 const pagination = reactive({ limit: 100, pageCursor: undefined, prevPage: '', nextPage: '', total: 0, page: 1, incTotal: false })
 const abortableRequests = []
 const tempQuery = ref(undefined)
-const statusOptions = computed(() => [{ value: 0, text: t('started.label') }, { value: 1, text: t('prompted.label') }, { value: 2, text: t('suspended.label') }, { value: 3, text: t('failed.label') }, { value: 5, text: t('canceled.label') }, { value: 4, text: t('completed.label') }])
+const statusOptions = computed(() => [{ value: 0, text: t('automation.sessions.list.filterForm.started.label') }, { value: 1, text: t('automation.sessions.list.filterForm.prompted.label') }, { value: 2, text: t('automation.sessions.list.filterForm.suspended.label') }, { value: 3, text: t('automation.sessions.list.filterForm.failed.label') }, { value: 5, text: t('automation.sessions.list.filterForm.canceled.label') }, { value: 4, text: t('automation.sessions.list.filterForm.completed.label') }])
 const fields = computed(() => ['sessionID', 'workflowID', 'status', { key: 'eventType', sortable: true }, { key: 'createdAt', sortable: true, formatter: (v) => new Date(v).toLocaleString('en-EN') }].map(c => ({ label: t(`columns.${c.key || c}`), ...(typeof c === 'string' ? { key: c } : c) })))
 function items() { return procListResults(window.__AutomationAPI.sessionListCancellable(encodeListParams())) }
 function rowClass(item) { return { 'text-primary': item && !!item.completedAt } }

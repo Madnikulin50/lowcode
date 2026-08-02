@@ -20,7 +20,7 @@
         noItems: $t('resourceList.noItems', 'No items'),
         loading: $t('label.loading', 'Loading'),
         showingPagination: $t('resourceList.pagination.showing', 'Showing'),
-        singlePluralPagination: $t('resourceList.pagination.single', 'resource'),
+        singlePluralPagination: 'resourceList.pagination.single',
         prevPagination: $t('resourceList.pagination.prev', 'Previous'),
         nextPagination: $t('resourceList.pagination.next', 'Next'),
         resourceSingle: $t('label.chart.single', 'Chart'),

@@ -10,7 +10,7 @@
         class="btn btn-primary"
         @click="$router.push({ name: 'system.user.new' })"
       >
-        {{ $t('new') }}
+        {{ $t('system.users.editor.new') }}
       </button>
 
       <c-permissions-button
@@ -20,7 +20,7 @@
         :resource="`corteza::system:user/${userID}`"
       >
         <font-awesome-icon :icon="['fas', 'lock']" />
-        {{ $t('permissions') }}
+        {{ $t('system.users.editor.permissions') }}
       </c-permissions-button>
 
       <c-corredor-manual-buttons
@@ -129,7 +129,7 @@ const roles = reactive({ processing: false, success: false })
 
 const canCreate = computed(() => can('system/', 'user.create'))
 const canGrant = computed(() => can('system/', 'grant'))
-const title = computed(() => props.userID ? t('title.edit') : t('title.create'))
+const title = computed(() => props.userID ? t('system.users.editor.title.edit') : t('system.users.editor.title.create'))
 
 function can(resource, operation) { return true }
 

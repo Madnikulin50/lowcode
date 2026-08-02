@@ -1,37 +1,39 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header">
-      <form class="d-flex flex-column w-100" @submit.prevent="search">
-        <div class="row">
-          <div class="col-12 col-lg-6 mb-2">
-            <label class="text-primary small">{{ $t('filter.from') }}</label>
-            <c-input-date-time v-model="filter.from" :labels="{ clear: $t('label.clear'), none: $t('label.none'), now: $t('label.now'), today: $t('label.today') }" />
+      <div class="card-body">
+  <form class="d-flex flex-column w-100" @submit.prevent="search">
+          <div class="row">
+            <div class="col-12 col-lg-6 mb-2">
+              <label class="text-primary small">{{ $t('filter.from') }}</label>
+              <c-input-date-time v-model="filter.from" :labels="{ clear: $t('label.clear'), none: $t('label.none'), now: $t('label.now'), today: $t('label.today') }" />
+            </div>
+            <div class="col-12 col-lg-6 mb-2">
+              <label class="text-primary small">{{ $t('filter.to') }}</label>
+              <c-input-date-time v-model="filter.to" only-past :labels="{ clear: $t('label.clear'), none: $t('label.none'), now: $t('label.now'), today: $t('label.today') }" />
+            </div>
           </div>
-          <div class="col-12 col-lg-6 mb-2">
-            <label class="text-primary small">{{ $t('filter.to') }}</label>
-            <c-input-date-time v-model="filter.to" only-past :labels="{ clear: $t('label.clear'), none: $t('label.none'), now: $t('label.now'), today: $t('label.today') }" />
+          <div class="row">
+            <div class="col-12 col-lg-4 mb-2">
+              <label class="text-primary small">{{ $t('filter.resource') }}</label>
+              <input v-model="filter.resource" class="form-control form-control-sm" data-test-id="input-resource">
+            </div>
+            <div class="col-12 col-lg-4 mb-2">
+              <label class="text-primary small">{{ $t('filter.action') }}</label>
+              <input v-model="filter.action" class="form-control form-control-sm" data-test-id="input-action">
+            </div>
+            <div class="col-12 col-lg-4 mb-2">
+              <label class="text-primary small">{{ $t('filter.actor') }}</label>
+              <input v-model="filter.actorID" class="form-control form-control-sm" data-test-id="input-user-id">
+            </div>
           </div>
-        </div>
-        <div class="row">
-          <div class="col-12 col-lg-4 mb-2">
-            <label class="text-primary small">{{ $t('filter.resource') }}</label>
-            <input v-model="filter.resource" class="form-control form-control-sm" data-test-id="input-resource">
+          <div class="d-flex">
+            <button type="submit" class="btn btn-primary ms-auto" :disabled="processing" data-test-id="button-submit">
+              {{ $t('filter.search') }}
+            </button>
           </div>
-          <div class="col-12 col-lg-4 mb-2">
-            <label class="text-primary small">{{ $t('filter.action') }}</label>
-            <input v-model="filter.action" class="form-control form-control-sm" data-test-id="input-action">
-          </div>
-          <div class="col-12 col-lg-4 mb-2">
-            <label class="text-primary small">{{ $t('filter.actor') }}</label>
-            <input v-model="filter.actorID" class="form-control form-control-sm" data-test-id="input-user-id">
-          </div>
-        </div>
-        <div class="d-flex">
-          <button type="submit" class="btn btn-primary ms-auto" :disabled="processing" data-test-id="button-submit">
-            {{ $t('filter.search') }}
-          </button>
-        </div>
-      </form>
+        </form>
+  </div>
     </div>
 
     <div class="table-responsive">
@@ -185,7 +187,7 @@ function load(reset = false) {
 
   window.__systemAPI.actionlogList(f)
     .then(rr => {
-      items.value.push(...(rr || []))
+      items.value.push(...(rr?.set || []))
     })
     .finally(() => {
       processing.value = false

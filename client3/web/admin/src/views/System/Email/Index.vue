@@ -1,6 +1,6 @@
 <template>
   <div class="container pt-2 pb-3">
-    <c-content-header :title="$t('editor.title')" />
+    <c-content-header :title="$t('system.email.editor.title')" />
     <form @submit.prevent="update">
       <c-email-settings v-model="form" :settings="settings" class="mb-3" />
       <c-email-test v-if="areTestSettingsSet" v-model="test" :settings="settings" :processing="testing" :errors="testResultErrors" class="mb-3" @test="testSettings" />

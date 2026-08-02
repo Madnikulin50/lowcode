@@ -7,7 +7,7 @@
           class="btn btn-info ms-2"
           @click="$router.push({ name: 'system.apigw.profiler' })"
         >
-          {{ $t('label') }}
+          {{ $t('system.apigw.profiler.label') }}
         </button>
       </span>
     </c-content-header>
@@ -34,7 +34,7 @@ const title = ref('')
 watch(() => $route.params.routeID, {
   immediate: true,
   handler() {
-    title.value = `${t('title')} - ${decodeRouteID($route.params.routeID)}`
+    title.value = `${t('system.apigw.profiler.title')} - ${decodeRouteID($route.params.routeID)}`
   },
 })
 

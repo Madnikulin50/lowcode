@@ -2,12 +2,12 @@
   <div>
     <div class="card shadow-sm" data-test-id="card-general-info">
       <div class="card-header border-bottom">
-        <h4 class="m-0">{{ $t('label') }}</h4>
+        <h4 class="m-0">{{ $t('system.apigw.profiler.hit.general.label') }}</h4>
       </div>
       <div class="row g-3 p-3">
         <div class="col-12 col-lg-6">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('id') }}</label>
+            <label class="form-label text-primary">{{ $t('system.apigw.profiler.hit.general.id') }}</label>
             <input
               :value="request.ID"
               type="text"
@@ -19,7 +19,7 @@
         </div>
         <div class="col-12 col-lg-6">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('route') }}</label>
+            <label class="form-label text-primary">{{ $t('system.apigw.profiler.hit.general.route') }}</label>
             <input
               :value="request.route"
               type="text"
@@ -32,7 +32,7 @@
         </div>
         <div class="col-12 col-lg-6">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('URL') }}</label>
+            <label class="form-label text-primary">{{ $t('system.apigw.profiler.hit.general.URL') }}</label>
             <input
               :value="request.url"
               type="text"
@@ -44,7 +44,7 @@
         </div>
         <div class="col-12 col-lg-6">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('method') }}</label>
+            <label class="form-label text-primary">{{ $t('system.apigw.profiler.hit.general.method') }}</label>
             <input
               :value="request.method"
               type="text"
@@ -56,7 +56,7 @@
         </div>
         <div class="col-12 col-lg-6">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('statusCode') }}</label>
+            <label class="form-label text-primary">{{ $t('system.apigw.profiler.hit.general.statusCode') }}</label>
             <div class="d-flex align-items-center h-100">
               <h5 class="mb-0">
                 <span :class="'badge bg-' + getStatusCodeVariant(request.statusCode)">{{ request.statusCode }}</span>
@@ -66,7 +66,7 @@
         </div>
         <div class="col-12 col-lg-6">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('remoteAddress') }}</label>
+            <label class="form-label text-primary">{{ $t('system.apigw.profiler.hit.general.remoteAddress') }}</label>
             <input
               :value="request.remoteAddress"
               type="text"
@@ -78,7 +78,7 @@
         </div>
         <div class="col-12 col-lg-6">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('duration') }}</label>
+            <label class="form-label text-primary">{{ $t('system.apigw.profiler.hit.general.duration') }}</label>
             <input
               :value="request.duration"
               type="text"
@@ -90,7 +90,7 @@
         </div>
         <div class="col-12 col-lg-6">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('start') }}</label>
+            <label class="form-label text-primary">{{ $t('system.apigw.profiler.hit.general.start') }}</label>
             <input
               :value="request.start"
               type="text"
@@ -102,7 +102,7 @@
         </div>
         <div class="col-12 col-lg-6">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('end') }}</label>
+            <label class="form-label text-primary">{{ $t('system.apigw.profiler.hit.general.end') }}</label>
             <input
               :value="request.end"
               type="text"
@@ -118,7 +118,7 @@
             class="btn btn-outline-secondary"
             @click="openRoute"
           >
-            {{ $t('openRoute') }}
+            {{ $t('system.apigw.profiler.hit.general.openRoute') }}
           </button>
         </div>
       </div>
@@ -126,7 +126,7 @@
 
     <div class="card shadow-sm mt-3">
       <div class="card-header border-bottom">
-        <h4 class="m-0">{{ $t('headers.label') }}</h4>
+        <h4 class="m-0">{{ $t('system.apigw.profiler.hit.headers.label') }}</h4>
       </div>
       <div class="row g-3 p-3">
         <div
@@ -150,7 +150,7 @@
 
     <div class="card shadow-sm mt-3 overflow-hidden">
       <div class="card-header border-bottom">
-        <h4 class="m-0">{{ $t('body.label') }}</h4>
+        <h4 class="m-0">{{ $t('system.apigw.profiler.hit.body.label') }}</h4>
       </div>
       <div class="card-body p-0">
         <c-ace-editor

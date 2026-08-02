@@ -4,63 +4,65 @@
       <h4 class="m-0">{{ $t('title') }}</h4>
     </div>
 
-    <form @submit.prevent="$emit('submit', route)">
-      <div class="row g-3 p-3">
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary d-flex align-items-center" for="endpoint">
-              {{ $t('endpoint') }}
-              <font-awesome-icon id="endpoint_info" class="ms-1" :icon="['far', 'question-circle']" />
-            </label>
-            <small v-if="routeEndpointDescription" class="text-danger d-block">{{ routeEndpointDescription }}</small>
-            <input
-              id="endpoint"
-              v-model="route.endpoint"
-              type="text"
-              class="form-control"
-              :class="{ 'is-invalid': isValidEndpoint === false }"
-              data-test-id="input-endpoint"
-              required
-            >
+    <div class="card-body">
+  <form @submit.prevent="$emit('submit', route)">
+        <div class="row g-3 p-3">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary d-flex align-items-center" for="endpoint">
+                {{ $t('system.apigw.editor.info.endpoint') }}
+                <font-awesome-icon id="endpoint_info" class="ms-1" :icon="['far', 'question-circle']" />
+              </label>
+              <small v-if="routeEndpointDescription" class="text-danger d-block">{{ routeEndpointDescription }}</small>
+              <input
+                id="endpoint"
+                v-model="route.endpoint"
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': isValidEndpoint === false }"
+                data-test-id="input-endpoint"
+                required
+              >
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.apigw.editor.info.method') }}</label>
+              <select
+                v-model="route.method"
+                class="form-select"
+                data-test-id="select-method"
+                required
+              >
+                <option v-for="m in methods" :key="m" :value="m">{{ m }}</option>
+              </select>
+            </div>
+          </div>
+  
+          <div v-if="route.meta" class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('description') }}</label>
+              <textarea v-model="route.meta.description" class="form-control" rows="3" />
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3" :class="{ 'mb-0': !route.routeID }">
+              <label class="form-label text-primary">{{ $t('enabled') }}</label>
+              <c-input-checkbox
+                v-model="route.enabled"
+                switch
+                :labels="checkboxLabel"
+                data-test-id="checkbox-enabled"
+              />
+            </div>
           </div>
         </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('method') }}</label>
-            <select
-              v-model="route.method"
-              class="form-select"
-              data-test-id="select-method"
-              required
-            >
-              <option v-for="m in methods" :key="m" :value="m">{{ m }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div v-if="route.meta" class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('description') }}</label>
-            <textarea v-model="route.meta.description" class="form-control" rows="3" />
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3" :class="{ 'mb-0': !route.routeID }">
-            <label class="form-label text-primary">{{ $t('enabled') }}</label>
-            <c-input-checkbox
-              v-model="route.enabled"
-              switch
-              :labels="checkboxLabel"
-              data-test-id="checkbox-enabled"
-            />
-          </div>
-        </div>
-      </div>
-
-      <c-system-fields :id="route.routeID" :resource="route" />
-    </form>
+  
+        <c-system-fields :id="route.routeID" :resource="route" />
+      </form>
+  </div>
 
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-input-confirm

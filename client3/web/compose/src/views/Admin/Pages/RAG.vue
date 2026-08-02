@@ -141,7 +141,7 @@ const translations = computed(() => ({
   noItems: t('pages.rag.noItems', 'No indexed pages found. Click "Re-index" to start indexing.'),
   loading: t('label.loading', 'Loading'),
   showingPagination: t('resourceList.pagination.showing', 'Showing'),
-  singlePluralPagination: t('resourceList.pagination.single', 'chunk'),
+  singlePluralPagination: 'resourceList.pagination.single',
   prevPagination: t('resourceList.pagination.prev', 'Previous'),
   nextPagination: t('resourceList.pagination.next', 'Next'),
   resourceSingle: t('pages.rag.chunk.single', 'chunk'),

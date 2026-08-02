@@ -10,7 +10,7 @@
     <div class="col-12 col-lg-9 mb-3">
       <div v-if="!template.partial" class="card shadow-sm">
         <div class="card-header border-bottom">
-          <h4 class="m-0">{{ $t('preview.title') }}</h4>
+          <h4 class="m-0">{{ $t('system.templates.editor.content.preview.title') }}</h4>
         </div>
         <div class="card-body p-0">
           <c-ace-editor
@@ -33,7 +33,7 @@
             data-test-id="button-preview-html-template"
             @click="openPreview('html')"
           >
-            {{ $t('preview.html') }}
+            {{ $t('system.templates.editor.content.preview.html') }}
           </button>
           <button
             v-if="canPreviewPDF"
@@ -42,7 +42,7 @@
             data-test-id="button-preview-pdf-template"
             @click="openPreview('pdf')"
           >
-            {{ $t('preview.pdf') }}
+            {{ $t('system.templates.editor.content.preview.pdf') }}
           </button>
         </div>
       </div>
@@ -51,13 +51,13 @@
     <div class="col-12">
       <div class="card shadow-sm">
         <div class="card-header border-bottom d-flex align-items-center">
-          <h4 class="m-0">{{ $t('title') }}</h4>
+          <h4 class="m-0">{{ $t('system.templates.editor.content.title') }}</h4>
           <span
             v-if="template.partial"
             class="badge bg-primary ms-2"
             data-test-id="badge-partial-template"
           >
-            {{ $t('partial') }}
+            {{ $t('system.templates.editor.content.partial') }}
           </span>
         </div>
         <div class="card-body p-0">
@@ -68,7 +68,7 @@
             :disabled="!canCreate"
             :processing="processing"
             :success="success"
-            :text="$t('label.submit')"
+            :text="$t('admin.general.label.submit')"
             class="ms-auto"
             @submit="$emit('submit', template)"
           />

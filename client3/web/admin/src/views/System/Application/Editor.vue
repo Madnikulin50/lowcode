@@ -1,8 +1,8 @@
 <template>
   <div v-if="application" class="container pt-2 pb-3">
     <c-content-header :title="title">
-      <button v-if="applicationID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.application.new' })">{{ $t('new') }}</button>
-      <c-permissions-button v-if="applicationID && canGrant" :title="application.name || applicationID" :target="application.name || applicationID" :resource="`corteza::system:application/${applicationID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('permissions') }}</c-permissions-button>
+      <button v-if="applicationID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.application.new' })">{{ $t('system.applications.editor.new') }}</button>
+      <c-permissions-button v-if="applicationID && canGrant" :title="application.name || applicationID" :target="application.name || applicationID" :resource="`corteza::system:application/${applicationID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('system.applications.editor.permissions') }}</c-permissions-button>
     </c-content-header>
     <c-application-editor-info :application="application" :processing="info.processing" :success="info.success" :can-create="canCreate" @submit="onInfoSubmit" @delete="onDelete" />
     <c-application-editor-unify v-if="applicationID && application.unify && application.applicationID" class="mt-3" :unify="application.unify" :application="application" :can-pin="canPin" :processing="unify.processing" :success="unify.success" @change-detected="unifyAssetStateChange = true" @submit="onUnifySubmit" />
@@ -27,7 +27,7 @@ const unifyAssetStateChange = ref(false)
 const canCreate = computed(() => can('system/', 'application.create'))
 const canGrant = computed(() => can('system/', 'grant'))
 const canPin = computed(() => can('system/', 'pin'))
-const title = computed(() => props.applicationID ? t('title.edit') : t('title.create'))
+const title = computed(() => props.applicationID ? t('system.applications.editor.title.edit') : t('system.applications.editor.title.create'))
 function can(resource, operation) { return true }
 function incLoader() {}
 function decLoader() {}

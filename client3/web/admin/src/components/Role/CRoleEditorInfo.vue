@@ -4,105 +4,107 @@
       <h4 class="m-0">{{ $t('title') }}</h4>
     </div>
 
-    <form @submit.prevent="submit()">
-      <div class="row g-3 p-3">
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('name') }}</label>
-            <input
-              v-model="role.name"
-              type="text"
-              class="form-control"
-              :class="{ 'is-invalid': nameState === false }"
-              data-test-id="input-name"
-              :disabled="!editable"
-            >
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('handle') }}</label>
-            <input
-              v-model="role.handle"
-              type="text"
-              class="form-control"
-              :class="{ 'is-invalid': handleState === false }"
-              data-test-id="input-handle"
-              :disabled="!editable"
-              :placeholder="$t('placeholder-handle')"
-            >
-            <div v-if="handleState === false" class="invalid-feedback">{{ $t('invalid-handle-characters') }}</div>
-          </div>
-        </div>
-
-        <div class="col-12">
-          <div v-if="role.meta" class="mb-3">
-            <label class="form-label text-primary">{{ $t('description') }}</label>
-            <textarea
-              v-model="role.meta.description"
-              class="form-control"
-              data-test-id="textarea-description"
-              :disabled="!editable"
-            />
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('context.label') }}</label>
-            <c-input-checkbox
-              v-model="isContextual"
-              data-test-id="checkbox-is-contextual"
-              switch
-              :labels="checkboxLabel"
-              :disabled="!editable"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div v-if="isContextual" class="row g-3 my-3 px-3">
-        <div class="col-12">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('context.expression-label') }}</label>
-            <input
-              v-model="role.meta.context.expr"
-              type="text"
-              class="form-control"
-              data-test-id="input-expression"
-              :disabled="!editable"
-            >
-          </div>
-        </div>
-
-        <div class="col-12">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('context.resource-types-label') }}</label>
-            <div v-for="(resourceType, i) in resourceTypeOptions" :key="i" class="form-check">
+    <div class="card-body">
+  <form @submit.prevent="submit()">
+        <div class="row g-3 p-3">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('name') }}</label>
               <input
-                :id="'resource-type-' + i"
-                v-model="role.meta.context.resourceTypes"
-                type="checkbox"
-                class="form-check-input-v3"
-                :data-test-id="`checkbox-resource-type-${resourceType.text}`"
-                :value="resourceType.value"
+                v-model="role.name"
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': nameState === false }"
+                data-test-id="input-name"
                 :disabled="!editable"
               >
-              <label :for="'resource-type-' + i" class="form-check-label">{{ resourceType.text }}</label>
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('handle') }}</label>
+              <input
+                v-model="role.handle"
+                type="text"
+                class="form-control"
+                :class="{ 'is-invalid': handleState === false }"
+                data-test-id="input-handle"
+                :disabled="!editable"
+                :placeholder="$t('system.roles.editor.info.placeholder-handle')"
+              >
+              <div v-if="handleState === false" class="invalid-feedback">{{ $t('system.roles.editor.info.invalid-handle-characters') }}</div>
+            </div>
+          </div>
+  
+          <div class="col-12">
+            <div v-if="role.meta" class="mb-3">
+              <label class="form-label text-primary">{{ $t('description') }}</label>
+              <textarea
+                v-model="role.meta.description"
+                class="form-control"
+                data-test-id="textarea-description"
+                :disabled="!editable"
+              />
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.roles.editor.info.context.label') }}</label>
+              <c-input-checkbox
+                v-model="isContextual"
+                data-test-id="checkbox-is-contextual"
+                switch
+                :labels="checkboxLabel"
+                :disabled="!editable"
+              />
             </div>
           </div>
         </div>
-      </div>
-
-      <c-system-fields :resource="role" />
-
-      <input
-        type="submit"
-        class="d-none"
-        :disabled="saveDisabled"
-      >
-    </form>
+  
+        <div v-if="isContextual" class="row g-3 my-3 px-3">
+          <div class="col-12">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.roles.editor.info.context.expression-label') }}</label>
+              <input
+                v-model="role.meta.context.expr"
+                type="text"
+                class="form-control"
+                data-test-id="input-expression"
+                :disabled="!editable"
+              >
+            </div>
+          </div>
+  
+          <div class="col-12">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.roles.editor.info.context.resource-types-label') }}</label>
+              <div v-for="(resourceType, i) in resourceTypeOptions" :key="i" class="form-check">
+                <input
+                  :id="'resource-type-' + i"
+                  v-model="role.meta.context.resourceTypes"
+                  type="checkbox"
+                  class="form-check-input-v3"
+                  :data-test-id="`checkbox-resource-type-${resourceType.text}`"
+                  :value="resourceType.value"
+                  :disabled="!editable"
+                >
+                <label :for="'resource-type-' + i" class="form-check-label">{{ resourceType.text }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <c-system-fields :resource="role" />
+  
+        <input
+          type="submit"
+          class="d-none"
+          :disabled="saveDisabled"
+        >
+      </form>
+  </div>
 
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-input-confirm

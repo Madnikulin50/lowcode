@@ -7,31 +7,31 @@
     <div class="row">
       <div class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('form.name.label') }}</label>
-          <small class="form-text text-muted">{{ $t('form.name.description') }}</small>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.basic.form.name.label') }}</label>
+          <small class="form-text text-muted">{{ $t('system.connections.editor.basic.form.name.description') }}</small>
           <input
             v-model="connection.meta.name"
             type="text"
             class="form-control"
             :class="{ 'is-invalid': nameState === false }"
             required
-            :placeholder="$t('form.name.placeholder')"
+            :placeholder="$t('system.connections.editor.basic.form.name.placeholder')"
           >
         </div>
       </div>
 
       <div class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('form.handle.label') }}</label>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.basic.form.handle.label') }}</label>
           <input
             v-model="connection.handle"
             type="text"
             class="form-control"
             :class="{ 'is-invalid': handleState === false }"
             :disabled="isPrimary || disabled"
-            :placeholder="$t('form.handle.placeholder')"
+            :placeholder="$t('system.connections.editor.basic.form.handle.placeholder')"
           >
-          <div v-if="handleState === false" class="invalid-feedback">{{ $t('form.handle.invalid-characters') }}</div>
+          <div v-if="handleState === false" class="invalid-feedback">{{ $t('system.connections.editor.basic.form.handle.invalid-characters') }}</div>
         </div>
       </div>
     </div>
@@ -39,21 +39,21 @@
     <div class="row">
       <div class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('form.location-name.label') }}</label>
-          <small class="form-text text-muted">{{ $t('form.location-name.description') }}</small>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.basic.form.location-name.label') }}</label>
+          <small class="form-text text-muted">{{ $t('system.connections.editor.basic.form.location-name.description') }}</small>
           <input
             v-model="connection.meta.location.properties.name"
             type="text"
             class="form-control"
-            :placeholder="$t('form.location-name.placeholder')"
+            :placeholder="$t('system.connections.editor.basic.form.location-name.placeholder')"
           >
         </div>
       </div>
 
       <div class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('form.location-geometry.label') }}</label>
-          <small class="form-text text-muted">{{ $t('form.location-geometry.description') }}</small>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.basic.form.location-geometry.label') }}</label>
+          <small class="form-text text-muted">{{ $t('system.connections.editor.basic.form.location-geometry.description') }}</small>
           <c-location
             v-if="!disabled"
             v-model="locationCoordinates"
@@ -67,25 +67,25 @@
     <div class="row">
       <div class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('form.ownership.label') }}</label>
-          <small class="form-text text-muted">{{ $t('form.ownership.description') }}</small>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.basic.form.ownership.label') }}</label>
+          <small class="form-text text-muted">{{ $t('system.connections.editor.basic.form.ownership.description') }}</small>
           <input
             v-model="connection.meta.ownership"
             type="text"
             class="form-control"
-            :placeholder="$t('form.ownership.placeholder')"
+            :placeholder="$t('system.connections.editor.basic.form.ownership.placeholder')"
           >
         </div>
       </div>
 
       <div class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('form.sensitivity-level.label') }}</label>
-          <small class="form-text text-muted">{{ $t('form.sensitivity-level.description') }}</small>
+          <label class="form-label text-primary">{{ $t('system.connections.editor.basic.form.sensitivity-level.label') }}</label>
+          <small class="form-text text-muted">{{ $t('system.connections.editor.basic.form.sensitivity-level.description') }}</small>
           <c-sensitivity-level-picker
             v-model="connection.config.privacy.sensitivityLevelID"
             :options="sensitivityLevels"
-            :placeholder="$t('form.sensitivity-level.placeholder')"
+            :placeholder="$t('system.connections.editor.basic.form.sensitivity-level.placeholder')"
           />
         </div>
       </div>

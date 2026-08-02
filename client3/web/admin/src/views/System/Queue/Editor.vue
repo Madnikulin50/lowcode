@@ -1,7 +1,7 @@
 <template>
   <div v-if="queue" class="container pt-2 pb-3">
     <c-content-header :title="title" class="mb-2">
-      <button v-if="queueID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.queue.new' })">{{ $t('new') }}</button>
+      <button v-if="queueID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.queue.new' })">{{ $t('system.queues.editor.new') }}</button>
     </c-content-header>
     <c-queue-editor-info :queue="queue" :processing="info.processing" :success="info.success" :can-create="canCreate" :consumers="consumers" @delete="onDelete" @submit="onSubmit" />
   </div>
@@ -20,7 +20,7 @@ const initialQueueState = ref(undefined)
 const consumers = ref([])
 const info = reactive({ processing: false, success: false })
 const canCreate = computed(() => can('system/', 'queue.create'))
-const title = computed(() => queue.value?.queueID ? t('title.edit') : t('title.new'))
+const title = computed(() => queue.value?.queueID ? t('system.queues.editor.title.edit') : t('system.queues.editor.title.new'))
 function can(resource, operation) { return true }
 function incLoader() {}
 function decLoader() {}

@@ -15,7 +15,7 @@
         noItems: t('resourceList.noItems'),
         loading: t('label.loading'),
         showingPagination: t('resourceList.pagination.showing'),
-        singlePluralPagination: t('resourceList.pagination.single'),
+        singlePluralPagination: 'resourceList.pagination.single',
         prevPagination: t('resourceList.pagination.prev'),
         nextPagination: t('resourceList.pagination.next'),
         resourceSingle: t('label.report.single'),

@@ -14,7 +14,7 @@
 
       <div class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('status') }}</label>
+          <label class="form-label text-primary">{{ $t('automation.sessions.editor.info.status') }}</label>
           <p class="form-control-plaintext mb-0">{{ session.status }}</p>
         </div>
       </div>
@@ -28,14 +28,14 @@
 
       <div v-if="session.resourceType" class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('resourceType') }}</label>
+          <label class="form-label text-primary">{{ $t('automation.sessions.editor.info.resourceType') }}</label>
           <p class="form-control-plaintext">{{ session.resourceType }}</p>
         </div>
       </div>
 
       <div v-if="session.eventType" class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('eventType') }}</label>
+          <label class="form-label text-primary">{{ $t('automation.sessions.editor.info.eventType') }}</label>
           <p class="form-control-plaintext">{{ session.eventType }}</p>
         </div>
       </div>
@@ -62,7 +62,7 @@
       <template #custom-field>
         <div v-if="createdByUserName" class="col-12 col-lg-4">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('createdByUserName') }}</label>
+            <label class="form-label text-primary">{{ $t('automation.sessions.editor.info.createdByUserName') }}</label>
             <p class="form-control-plaintext">{{ createdByUserName }}</p>
           </div>
         </div>
@@ -74,7 +74,7 @@
         class="btn btn-outline-secondary"
         :to="{ name: 'automation.workflow.edit', params: { workflowID: session.workflowID } }"
       >
-        {{ $t('openWorkflow') }}
+        {{ $t('automation.sessions.editor.info.openWorkflow') }}
       </router-link>
     </div>
   </div>

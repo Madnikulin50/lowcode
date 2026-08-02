@@ -6,54 +6,56 @@
       </h4>
     </div>
 
-    <form @submit.prevent="$emit('submit', settings)">
-      <div class="row g-3 p-3">
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('settings.profiler.label') }}</label>
-            <div class="btn-group" role="group">
-              <template v-for="opt in profilerOptions" :key="opt.value">
+    <div class="card-body">
+  <form @submit.prevent="$emit('submit', settings)">
+        <div class="row g-3 p-3">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('settings.profiler.label') }}</label>
+              <div class="btn-group" role="group">
+                <template v-for="opt in profilerOptions" :key="opt.value">
+                  <input
+                    :id="'profiler-' + opt.value"
+                    v-model="profilerSetting"
+                    type="radio"
+                    class="btn-check"
+                    name="profiler-options"
+                    :value="opt.value"
+                    autocomplete="off"
+                  >
+                  <label
+                    :for="'profiler-' + opt.value"
+                    class="btn btn-outline-primary btn-sm"
+                  >
+                    {{ opt.text }}
+                  </label>
+                </template>
+              </div>
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('settings.proxy.label') }}</label>
+              <div class="form-check">
                 <input
-                  :id="'profiler-' + opt.value"
-                  v-model="profilerSetting"
-                  type="radio"
-                  class="btn-check"
-                  name="profiler-options"
-                  :value="opt.value"
-                  autocomplete="off"
+                  id="proxy-follow"
+                  v-model="settings['apigw.proxy.follow-redirects']"
+                  type="checkbox"
+                  class="form-check-input-v3"
                 >
                 <label
-                  :for="'profiler-' + opt.value"
-                  class="btn btn-outline-primary btn-sm"
+                  class="form-check-label"
+                  for="proxy-follow"
                 >
-                  {{ opt.text }}
+                  {{ $t('settings.proxy.follow') }}
                 </label>
-              </template>
+              </div>
             </div>
           </div>
         </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('settings.proxy.label') }}</label>
-            <div class="form-check">
-              <input
-                id="proxy-follow"
-                v-model="settings['apigw.proxy.follow-redirects']"
-                type="checkbox"
-                class="form-check-input-v3"
-              >
-              <label
-                class="form-check-label"
-                for="proxy-follow"
-              >
-                {{ $t('settings.proxy.follow') }}
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
+      </form>
+  </div>
 
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-button-submit

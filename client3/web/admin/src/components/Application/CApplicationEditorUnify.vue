@@ -6,108 +6,110 @@
       </h4>
     </div>
 
-    <form @submit.prevent="$emit('submit', { unify, unifyAssets })">
-      <div class="row">
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('name.label') }}</label>
-            <small class="form-text text-muted">{{ $t('name.description') }}</small>
-            <input
-              v-model="unify.name"
-              type="text"
-              class="form-control"
-              data-test-id="input-name"
-            >
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary d-flex align-items-center gap-1">
-              {{ $t('logo.label') }}
-              <button
-                v-if="showLogoPreview"
-                type="button"
-                class="btn btn-link d-flex align-items-center border-0 p-0 ms-2"
-                data-test-id="button-logo-show"
-                data-bs-toggle="modal"
-                data-bs-target="#logo-preview-modal"
+    <div class="card-body">
+  <form @submit.prevent="$emit('submit', { unify, unifyAssets })">
+        <div class="row">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.applications.editor.unify.name.label') }}</label>
+              <small class="form-text text-muted">{{ $t('system.applications.editor.unify.name.description') }}</small>
+              <input
+                v-model="unify.name"
+                type="text"
+                class="form-control"
+                data-test-id="input-name"
               >
-                <font-awesome-icon :icon="['fas', 'eye']" />
-              </button>
-              <button
-                v-if="showLogoPreview"
-                type="button"
-                class="btn btn-outline-secondary btn-sm py-0 ms-2"
-                data-test-id="button-logo-reset"
-                @click="resetLogo()"
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary d-flex align-items-center gap-1">
+                {{ $t('system.applications.editor.unify.logo.label') }}
+                <button
+                  v-if="showLogoPreview"
+                  type="button"
+                  class="btn btn-link d-flex align-items-center border-0 p-0 ms-2"
+                  data-test-id="button-logo-show"
+                  data-bs-toggle="modal"
+                  data-bs-target="#logo-preview-modal"
+                >
+                  <font-awesome-icon :icon="['fas', 'eye']" />
+                </button>
+                <button
+                  v-if="showLogoPreview"
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm py-0 ms-2"
+                  data-test-id="button-logo-reset"
+                  @click="resetLogo()"
+                >
+                  {{ $t('system.applications.editor.unify.logo.reset') }}
+                </button>
+              </label>
+              <small class="form-text text-muted">{{ $t('system.applications.editor.unify.logo.description') }}</small>
+              <input
+                type="file"
+                class="form-control"
+                accept="image/*"
+                data-test-id="file-logo-upload"
+                @change="onLogoChange"
               >
-                {{ $t('logo.reset') }}
-              </button>
-            </label>
-            <small class="form-text text-muted">{{ $t('logo.description') }}</small>
-            <input
-              type="file"
-              class="form-control"
-              accept="image/*"
-              data-test-id="file-logo-upload"
-              @change="onLogoChange"
-            >
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.applications.editor.unify.url.label') }}</label>
+              <small class="form-text text-muted">{{ $t('system.applications.editor.unify.url.description') }}</small>
+              <input
+                v-model="unify.url"
+                type="text"
+                class="form-control"
+                data-test-id="input-url"
+              >
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.applications.editor.unify.listed') }}</label>
+              <c-input-checkbox
+                v-model="unify.listed"
+                data-test-id="checkbox-listed"
+                switch
+                :labels="checkboxLabel"
+              />
+            </div>
+          </div>
+  
+          <div v-if="canPin" class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.applications.editor.unify.pinned') }}</label>
+              <c-input-checkbox
+                v-model="unify.pinned"
+                data-test-id="checkbox-pinned"
+                switch
+                :labels="checkboxLabel"
+              />
+            </div>
+          </div>
+  
+          <div class="col-12">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.applications.editor.unify.config.label') }}</label>
+              <small class="form-text text-muted">{{ $t('system.applications.editor.unify.config.description') }}</small>
+              <textarea
+                v-model="unify.config"
+                class="form-control"
+                :class="{ 'is-invalid': configState === false }"
+                data-test-id="textarea-config"
+                rows="10"
+              />
+            </div>
           </div>
         </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('url.label') }}</label>
-            <small class="form-text text-muted">{{ $t('url.description') }}</small>
-            <input
-              v-model="unify.url"
-              type="text"
-              class="form-control"
-              data-test-id="input-url"
-            >
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('listed') }}</label>
-            <c-input-checkbox
-              v-model="unify.listed"
-              data-test-id="checkbox-listed"
-              switch
-              :labels="checkboxLabel"
-            />
-          </div>
-        </div>
-
-        <div v-if="canPin" class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('pinned') }}</label>
-            <c-input-checkbox
-              v-model="unify.pinned"
-              data-test-id="checkbox-pinned"
-              switch
-              :labels="checkboxLabel"
-            />
-          </div>
-        </div>
-
-        <div class="col-12">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('config.label') }}</label>
-            <small class="form-text text-muted">{{ $t('config.description') }}</small>
-            <textarea
-              v-model="unify.config"
-              class="form-control"
-              :class="{ 'is-invalid': configState === false }"
-              data-test-id="textarea-config"
-              rows="10"
-            />
-          </div>
-        </div>
-      </div>
-    </form>
+      </form>
+  </div>
 
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-button-submit

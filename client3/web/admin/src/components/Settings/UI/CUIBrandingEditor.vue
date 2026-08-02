@@ -2,7 +2,7 @@
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
       <h4 class="m-0">
-        {{ t('title') }}
+        {{ t('ui.settings.editor.title') }}
       </h4>
     </div>
 
@@ -11,13 +11,13 @@
         v-if="!sassInstalled"
         class="bg-warning rounded p-2 mb-3"
       >
-        {{ t('sassNotInstalled') }}
+        {{ t('ui.settings.editor.corteza-studio.sassNotInstalled') }}
         <a
           :href="installSassDocs"
           target="_blank"
           class="text-dark"
         >
-          {{ t('installSassDocs') }}
+          {{ t('ui.settings.editor.corteza-studio.installSassDocs') }}
         </a>
       </div>
 
@@ -66,12 +66,12 @@
                   :default-value="theme.defaultVariables[key]"
                   :data-test-id="`input-${key}-color`"
                   :translations="{
-                    modalTitle: t('colorPicker'),
-                    defaultBtnLabel: t('label.default'),
-                    light: t('tabs.light'),
-                    dark: t('tabs.dark'),
-                    cancelBtnLabel: t('label.cancel'),
-                    saveBtnLabel: t('label.saveAndClose')
+                    modalTitle: t('ui.settings.editor.corteza-studio.colorPicker'),
+                    defaultBtnLabel: t('ui.settings.editor.corteza-studio.label.default'),
+                    light: t('ui.settings.editor.corteza-studio.tabs.light'),
+                    dark: t('ui.settings.editor.corteza-studio.tabs.dark'),
+                    cancelBtnLabel: t('admin.general.label.cancel'),
+                    saveBtnLabel: t('admin.general.label.saveAndClose')
                   }"
                   :theme-settings="settings['ui.studio.themes']"
                 />
@@ -86,7 +86,7 @@
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="d-flex align-items-center form-label text-primary">
-                  {{ t('mainLogo.title') }}
+                  {{ t('ui.settings.editor.corteza-studio.mainLogo.title') }}
 
                   <c-input-confirm
                     v-if="uploadedFile('ui.main-logo')"
@@ -108,7 +108,7 @@
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="d-flex align-items-center form-label text-primary h-lg-100">
-                  {{ t('iconLogo.title') }}
+                  {{ t('ui.settings.editor.corteza-studio.iconLogo.title') }}
 
                   <c-input-confirm
                     v-if="uploadedFile('ui.icon-logo')"
@@ -131,7 +131,7 @@
           <div class="row">
             <div class="col">
               <div class="mb-0">
-                <label class="form-label text-primary">{{ t('custom-css') }}</label>
+                <label class="form-label text-primary">{{ t('ui.settings.editor.corteza-studio.custom-css') }}</label>
                 <c-ace-editor
                   v-model="theme.customCSS"
                   auto-complete
@@ -158,7 +158,7 @@
           <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title">{{ t('custom-css') }}</h5>
+                <h5 class="modal-title">{{ t('ui.settings.editor.corteza-studio.custom-css') }}</h5>
                 <button type="button" class="btn-close" @click="resetCustomCSSModal()"></button>
               </div>
               <div class="modal-body p-0">
@@ -174,8 +174,8 @@
                 />
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" @click="resetCustomCSSModal()">{{ t('label.cancel') }}</button>
-                <button type="button" class="btn btn-primary" @click="saveCustomCSSModal()">{{ t('label.saveAndClose') }}</button>
+                <button type="button" class="btn btn-outline-secondary" @click="resetCustomCSSModal()">{{ t('admin.general.label.cancel') }}</button>
+                <button type="button" class="btn btn-primary" @click="saveCustomCSSModal()">{{ t('admin.general.label.saveAndClose') }}</button>
               </div>
             </div>
           </div>

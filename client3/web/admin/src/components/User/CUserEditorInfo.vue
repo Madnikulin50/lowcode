@@ -3,8 +3,8 @@
     <div class="card-header border-bottom">
       <h4 class="m-0">{{ $t('title') }}</h4>
     </div>
-
-    <form @submit.prevent="$emit('submit', user)">
+    <div class="card-body">
+      <form @submit.prevent="$emit('submit', user)">
       <div class="row g-3 p-3">
         <div class="col-12 col-lg-6">
           <div class="mb-3">
@@ -37,21 +37,21 @@
             <input
               v-model="user.handle"
               data-test-id="input-handle"
-              :placeholder="$t('placeholder-handle')"
+              :placeholder="$t('system.users.editor.info.placeholder-handle')"
               :class="['form-control', { 'is-invalid': handleState === false }]"
             >
             <div v-if="handleState === false" class="invalid-feedback">
-              {{ $t('invalid-handle-characters') }}
+              {{ $t('system.users.editor.info.invalid-handle-characters') }}
             </div>
           </div>
         </div>
 
         <div class="col-12 col-lg-6">
           <div class="mb-3" :class="{ 'mb-0': !user.userID }">
-            <label class="form-label text-primary">{{ $t('userGroup.label') }}</label>
+            <label class="form-label text-primary">{{ $t('system.users.editor.info.userGroup.label') }}</label>
             <c-input-user-group
               v-model="user.userGroupID"
-              :placeholder="$t('userGroup.placeholder')"
+              :placeholder="$t('system.users.editor.info.userGroup.placeholder')"
             />
           </div>
         </div>
@@ -68,7 +68,7 @@
         :disabled="saveDisabled"
       >
     </form>
-
+    </div>
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-input-confirm
         v-if="!fresh && user.canDeleteUser"
@@ -91,7 +91,7 @@
       <c-input-confirm
         v-if="!fresh"
         data-test-id="button-sessions-revoke"
-        :text="$t('revokeAllSession')"
+        :text="$t('system.users.editor.info.revokeAllSession')"
         :disabled="user.userID === currentUserID"
         variant="outline-secondary"
         size="md"
@@ -103,7 +103,7 @@
         class="btn btn-outline-secondary"
         @click="$emit('patch', '/emailConfirmed', true)"
       >
-        {{ $t('confirmEmail') }}
+        {{ $t('system.users.editor.info.confirmEmail') }}
       </button>
 
       <c-corredor-manual-buttons

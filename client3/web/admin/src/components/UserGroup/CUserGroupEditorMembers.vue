@@ -1,15 +1,15 @@
 <template>
   <div class="card shadow-sm" data-test-id="card-user-group-edit-members">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('title') }}</h4>
+      <h4 class="m-0">{{ $t('system.user-groups.editor.members.title') }}</h4>
     </div>
 
     <div class="card-body">
       <form @submit.prevent="$emit('submit')">
         <c-member-picker
-          :value="value"
+          :value="modelValue"
           no-remove
-          @input="$emit('input', $event)"
+          @input="$emit('update:modelValue', $event)"
         />
       </form>
     </div>
@@ -18,7 +18,7 @@
       <c-button-submit
         :processing="processing"
         :success="success"
-        :text="$t('label.submit')"
+        :text="$t('admin.general.label.submit')"
         class="ms-auto"
         @submit="$emit('submit')"
       />
@@ -33,10 +33,10 @@ import CMemberPicker from 'corteza-webapp-admin/src/components/CMemberPicker'
 const { t } = useI18n()
 
 defineProps({
-  value: { type: Array, required: true, default: () => [] },
-  processing: { type: Boolean, value: false },
-  success: { type: Boolean, value: false },
+  modelValue: { type: Array, required: true, default: () => [] },
+  processing: { type: Boolean, default: false },
+  success: { type: Boolean, default: false },
 })
 
-defineEmits(['input', 'submit'])
+defineEmits(['update:modelValue', 'submit'])
 </script>

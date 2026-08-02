@@ -1,8 +1,8 @@
 <template>
   <div v-if="workflow" class="container pt-2 pb-3">
     <c-content-header :title="title">
-      <button v-if="workflowID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'automation.workflow.new' })">{{ $t('new') }}</button>
-      <c-permissions-button v-if="workflowID && canGrant" :title="workflow.meta.name || workflow.handle || workflowID" :target="workflow.meta.name || workflow.handle || workflowID" :resource="`corteza::automation:workflow/${workflowID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('permissions') }}</c-permissions-button>
+      <button v-if="workflowID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'automation.workflow.new' })">{{ $t('automation.workflows.editor.new') }}</button>
+      <c-permissions-button v-if="workflowID && canGrant" :title="workflow.meta.name || workflow.handle || workflowID" :target="workflow.meta.name || workflow.handle || workflowID" :resource="`corteza::automation:workflow/${workflowID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('automation.workflows.editor.permissions') }}</c-permissions-button>
     </c-content-header>
     <c-workflow-editor-info :workflow="workflow" :processing="info.processing" :success="info.success" :can-create="canCreate" @submit="onInfoSubmit" @delete="onDelete" />
     <c-workflow-editor-triggers v-if="workflowID" :triggers="triggers" :processing="info.processing" :success="info.success" />
@@ -27,7 +27,7 @@ const canCreate = computed(() => can('automation/', 'workflow.create'))
 const canGrant = computed(() => can('automation/', 'grant'))
 function can(resource, operation) { return true }
 const userID = computed(() => $auth.user?.userID)
-const title = computed(() => props.workflowID ? t('title.edit') : t('title.create'))
+const title = computed(() => props.workflowID ? t('automation.workflows.editor.title.edit') : t('automation.workflows.editor.title.create'))
 function incLoader() {} function decLoader() {}
 watch(() => props.workflowID, () => { if (props.workflowID) { fetchWorkflow(); fetchTriggers() } else { workflow.value = { ownedBy: userID.value, runAs: userID.value, enabled: true, meta: { name: '' } }; initialWorkflowState.value = cloneDeep(workflow.value) } }, { immediate: true })
 function fetchWorkflow() { incLoader(); window.__AutomationAPI.workflowRead({ workflowID: props.workflowID }).then(prepare).finally(() => decLoader()) }

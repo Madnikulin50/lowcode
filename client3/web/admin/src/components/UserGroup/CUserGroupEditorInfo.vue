@@ -4,112 +4,114 @@
       <h4 class="m-0">{{ $t('title') }}</h4>
     </div>
 
-    <form @submit.prevent="$emit('submit', userGroup)">
-      <div class="row g-3 p-3">
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('meta.short') }}</label>
-            <input
-              v-model="userGroup.meta.short"
-              data-test-id="input-name"
-              required
-              class="form-control"
-            >
+    <div class="card-body">
+  <form @submit.prevent="$emit('submit', userGroup)">
+        <div class="row g-3 p-3">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('meta.short') }}</label>
+              <input
+                v-model="userGroup.meta.short"
+                data-test-id="input-name"
+                required
+                class="form-control"
+              >
+            </div>
           </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3" :class="{ 'mb-0': !userGroup.userGroupID }">
-            <label class="form-label text-primary">{{ $t('handle') }}</label>
-            <input
-              v-model="userGroup.handle"
-              data-test-id="input-handle"
-              :placeholder="$t('placeholder-handle')"
-              :class="['form-control', { 'is-invalid': handleState === false }]"
-            >
-            <div v-if="handleState === false" class="invalid-feedback">
-              {{ $t('invalid-handle-characters') }}
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3" :class="{ 'mb-0': !userGroup.userGroupID }">
+              <label class="form-label text-primary">{{ $t('handle') }}</label>
+              <input
+                v-model="userGroup.handle"
+                data-test-id="input-handle"
+                :placeholder="$t('system.user-groups.editor.info.placeholder-handle')"
+                :class="['form-control', { 'is-invalid': handleState === false }]"
+              >
+              <div v-if="handleState === false" class="invalid-feedback">
+                {{ $t('system.user-groups.editor.info.invalid-handle-characters') }}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="row g-3 px-3 pb-3">
-        <div class="col-12">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('meta.description') }}</label>
-            <textarea
-              v-model="userGroup.meta.description"
-              data-test-id="textarea-description"
-              class="form-control"
-            ></textarea>
+  
+        <div class="row g-3 px-3 pb-3">
+          <div class="col-12">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('system.user-groups.editor.info.meta.description') }}</label>
+              <textarea
+                v-model="userGroup.meta.description"
+                data-test-id="textarea-description"
+                class="form-control"
+              ></textarea>
+            </div>
           </div>
         </div>
-      </div>
-
-      <c-system-fields
-        :id="userGroup.userGroupID"
-        :resource="userGroup"
-      />
-
-      <template v-if="!isRoot">
-        <hr class="mx-3">
-
-        <div v-if="!isRoot" class="px-3 pb-3">
-          <h5 class="mb-3">{{ $t('parents.title') }}</h5>
-
-          <c-form-table-wrapper
-            :labels="{
-              addButton: $t('label.add')
-            }"
-            class="my-3"
-            @add-item="addParent"
-          >
-            <table
-              v-if="userGroup.config.path"
-              class="table table-sm table-borderless"
+  
+        <c-system-fields
+          :id="userGroup.userGroupID"
+          :resource="userGroup"
+        />
+  
+        <template v-if="!isRoot">
+          <hr class="mx-3">
+  
+          <div v-if="!isRoot" class="px-3 pb-3">
+            <h5 class="mb-3">{{ $t('system.user-groups.editor.info.parents.title') }}</h5>
+  
+            <c-form-table-wrapper
+              :labels="{
+                addButton: $t('label.add')
+              }"
+              class="my-3"
+              @add-item="addParent"
             >
-              <thead>
-                <tr>
-                  <th class="text-primary">{{ $t('parents.parent.label') }}</th>
-                  <th class="text-primary">{{ $t('parents.name.label') }}</th>
-                  <th v-if="userGroup.config.path.length > 1"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(parent, i) in userGroup.config.path" :key="i">
-                  <td class="align-middle" style="min-width: 250px;">
-                    <c-input-user-group
-                      v-model="parent.selfID"
-                      :placeholder="$t('parents.parent.placeholder')"
-                    />
-                  </td>
-                  <td class="align-middle" style="min-width: 200px;">
-                    <input
-                      v-model="parent.name"
-                      :placeholder="$t('parents.name.placeholder')"
-                      class="form-control"
-                    >
-                  </td>
-                  <td v-if="userGroup.config.path.length > 1" class="text-end align-middle" style="width: 1%">
-                    <c-input-confirm
-                      show-icon
-                      @confirmed="deleteParent(i)"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </c-form-table-wrapper>
-        </div>
-      </template>
-
-      <input
-        type="submit"
-        class="d-none"
-        :disabled="saveDisabled"
-      >
-    </form>
+              <table
+                v-if="userGroup.config.path"
+                class="table table-sm table-borderless"
+              >
+                <thead>
+                  <tr>
+                    <th class="text-primary">{{ $t('system.user-groups.editor.info.parents.parent.label') }}</th>
+                    <th class="text-primary">{{ $t('system.user-groups.editor.info.parents.name.label') }}</th>
+                    <th v-if="userGroup.config.path.length > 1"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(parent, i) in userGroup.config.path" :key="i">
+                    <td class="align-middle" style="min-width: 250px;">
+                      <c-input-user-group
+                        v-model="parent.selfID"
+                        :placeholder="$t('system.user-groups.editor.info.parents.parent.placeholder')"
+                      />
+                    </td>
+                    <td class="align-middle" style="min-width: 200px;">
+                      <input
+                        v-model="parent.name"
+                        :placeholder="$t('system.user-groups.editor.info.parents.name.placeholder')"
+                        class="form-control"
+                      >
+                    </td>
+                    <td v-if="userGroup.config.path.length > 1" class="text-end align-middle" style="width: 1%">
+                      <c-input-confirm
+                        show-icon
+                        @confirmed="deleteParent(i)"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </c-form-table-wrapper>
+          </div>
+        </template>
+  
+        <input
+          type="submit"
+          class="d-none"
+          :disabled="saveDisabled"
+        >
+      </form>
+  </div>
 
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-input-confirm

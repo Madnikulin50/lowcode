@@ -1,7 +1,7 @@
 <template>
   <div v-if="sensitivityLevel" class="container pt-2 pb-3">
     <c-content-header :title="title">
-      <button v-if="sensitivityLevelID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.sensitivityLevel.new' })">{{ $t('new') }}</button>
+      <button v-if="sensitivityLevelID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.sensitivityLevel.new' })">{{ $t('system.sensitivityLevel.editor.new') }}</button>
     </c-content-header>
     <c-sensitivity-level-editor-info :sensitivity-level="sensitivityLevel" :processing="info.processing" :success="info.success" :can-delete="canDelete" :can-create="canCreate" @submit="onSubmit($event)" @delete="onDelete($event)" />
   </div>
@@ -20,7 +20,7 @@ const initialSensitivityLevelState = ref(undefined)
 const info = reactive({ processing: false, success: false })
 const canCreate = computed(() => can('system/', 'dal-sensitivity-level.manage'))
 const canDelete = computed(() => sensitivityLevel.value && sensitivityLevel.value.sensitivityLevelID && canCreate.value)
-const title = computed(() => props.sensitivityLevelID ? t('title.edit') : t('title.create'))
+const title = computed(() => props.sensitivityLevelID ? t('system.sensitivityLevel.editor.title.edit') : t('system.sensitivityLevel.editor.title.create'))
 function can(resource, operation) { return true }
 function incLoader() {}
 function decLoader() {}

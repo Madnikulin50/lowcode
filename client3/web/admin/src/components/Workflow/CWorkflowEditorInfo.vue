@@ -4,55 +4,57 @@
       <h4 class="m-0">{{ $t('title') }}</h4>
     </div>
 
-    <form @submit.prevent="$emit('submit', workflow)">
-      <div class="row g-3 p-3">
-        <div class="col-12 col-lg-6">
-          <div v-if="workflow.meta" class="mb-3">
-            <label class="form-label text-primary">{{ $t('name') }}</label>
-            <input
-              v-model="workflow.meta.name"
-              required
-              :class="['form-control', { 'is-invalid': nameState === false }]"
-            >
+    <div class="card-body">
+  <form @submit.prevent="$emit('submit', workflow)">
+        <div class="row g-3 p-3">
+          <div class="col-12 col-lg-6">
+            <div v-if="workflow.meta" class="mb-3">
+              <label class="form-label text-primary">{{ $t('name') }}</label>
+              <input
+                v-model="workflow.meta.name"
+                required
+                :class="['form-control', { 'is-invalid': nameState === false }]"
+              >
+            </div>
           </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('handle') }}</label>
-            <input
-              v-model="workflow.handle"
-              :class="['form-control', { 'is-invalid': handleState === false }]"
-            >
-            <div v-if="handleState === false" class="invalid-feedback">
-              {{ $t('invalid-handle-characters') }}
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('handle') }}</label>
+              <input
+                v-model="workflow.handle"
+                :class="['form-control', { 'is-invalid': handleState === false }]"
+              >
+              <div v-if="handleState === false" class="invalid-feedback">
+                {{ $t('automation.workflows.editor.info.invalid-handle-characters') }}
+              </div>
+            </div>
+          </div>
+  
+          <div class="col-12 col-lg-6">
+            <div class="mb-3" :class="{ 'mb-0': !workflow.workflowID }">
+              <label class="form-label text-primary">{{ $t('enabled') }}</label>
+              <c-input-checkbox
+                v-model="workflow.enabled"
+                switch
+                :labels="checkboxLabel"
+              />
             </div>
           </div>
         </div>
-
-        <div class="col-12 col-lg-6">
-          <div class="mb-3" :class="{ 'mb-0': !workflow.workflowID }">
-            <label class="form-label text-primary">{{ $t('enabled') }}</label>
-            <c-input-checkbox
-              v-model="workflow.enabled"
-              switch
-              :labels="checkboxLabel"
-            />
-          </div>
-        </div>
-      </div>
-
-      <c-system-fields
-        :id="workflow.workflowID"
-        :resource="workflow"
-      />
-
-      <input
-        type="submit"
-        class="d-none"
-        :disabled="saveDisabled"
-      >
-    </form>
+  
+        <c-system-fields
+          :id="workflow.workflowID"
+          :resource="workflow"
+        />
+  
+        <input
+          type="submit"
+          class="d-none"
+          :disabled="saveDisabled"
+        >
+      </form>
+  </div>
 
     <div class="card-footer border-top d-flex flex-wrap flex-fill-child gap-1">
       <c-input-confirm
@@ -69,7 +71,7 @@
         class="btn btn-outline-secondary"
         @click="openWorkflowBuilder()"
       >
-        {{ $t('openBuilder') }}
+        {{ $t('automation.workflows.editor.info.openBuilder') }}
       </button>
 
       <c-button-submit

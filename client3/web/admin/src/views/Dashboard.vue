@@ -1,6 +1,6 @@
 <template>
   <div class="container d-flex flex-column pt-2 pb-3 flex-fill">
-    <c-content-header :title="$t('title')">
+    <c-content-header :title="$t('dashboard.title')">
       <c-corredor-manual-buttons
         ui-page="dashboard"
         ui-slot="toolbar"
@@ -16,14 +16,14 @@
             <h4 class="card-title">
               <router-link
                 :to="{ name: 'system.user.list' }"
-                :area-label="`${users.valid} ${$t('users.title')}`"
+                :area-label="`${users.valid} ${$t('dashboard.users.title')}`"
                 class="display-3 text-decoration-none"
               >
                 {{ users.valid }}
               </router-link>
             </h4>
             <h4>
-              {{ $t('users.title') }}
+              {{ $t('dashboard.users.title') }}
             </h4>
           </div>
 
@@ -39,37 +39,37 @@
               <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                 <router-link
                   :to="{ name: 'system.user.list', query: { deleted: 1, suspended: 1 } }"
-                  :aria-label="users.total + ' ' + $t('users.users') + ' ' + $t('users.total')"
+                  :aria-label="users.total + ' ' + $t('dashboard.users.users') + ' ' + $t('dashboard.users.total')"
                   class="text-decoration-none"
                 >
                   {{ users.total }}
                 </router-link>
                 <span class="d-sm-block">
-                  {{ $t('users.total') }}
+                  {{ $t('dashboard.users.total') }}
                 </span>
               </div>
               <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                 <router-link
                   :to="{ name: 'system.user.list', query: { deleted: 1, suspended: 2 } }"
-                  :aria-label="users.suspended + ' ' + $t('users.users') + ' ' + $t('users.suspended')"
+                  :aria-label="users.suspended + ' ' + $t('dashboard.users.users') + ' ' + $t('dashboard.users.suspended')"
                   class="text-decoration-none"
                 >
                   {{ users.suspended }}
                 </router-link>
                 <span class="d-sm-block">
-                  {{ $t('users.suspended') }}
+                  {{ $t('dashboard.users.suspended') }}
                 </span>
               </div>
               <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                 <router-link
                   :to="{ name: 'system.user.list', query: { deleted: 2, suspended: 1 } }"
-                  :aria-label="users.deleted + ' ' + $t('users.users') + ' ' + $t('users.deleted')"
+                  :aria-label="users.deleted + ' ' + $t('dashboard.users.users') + ' ' + $t('dashboard.users.deleted')"
                   class="text-decoration-none"
                 >
                   {{ users.deleted }}
                 </router-link>
                 <span class="d-sm-block">
-                  {{ $t('users.deleted') }}
+                  {{ $t('dashboard.users.deleted') }}
                 </span>
               </div>
             </div>
@@ -88,14 +88,14 @@
             <h4 class="card-title">
               <router-link
                 :to="{ name: 'system.role.list' }"
-                :aria-label="roles.valid + ' ' + $t('roles.title')"
+                :aria-label="roles.valid + ' ' + $t('dashboard.roles.title')"
                 class="display-4 text-decoration-none"
               >
                 {{ roles.valid }}
               </router-link>
             </h4>
             <h4>
-              {{ $t('roles.title') }}
+              {{ $t('dashboard.roles.title') }}
             </h4>
           </div>
 
@@ -104,37 +104,37 @@
               <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                 <router-link
                   :to="{ name: 'system.role.list', query: { deleted: 1, archived: 1 } }"
-                  :aria-label="roles.total + ' ' + $t('roles.roles') + ' ' + $t('roles.total')"
+                  :aria-label="roles.total + ' ' + $t('dashboard.roles.roles') + ' ' + $t('dashboard.roles.total')"
                   class="text-decoration-none"
                 >
                   {{ roles.total }}
                 </router-link>
                 <span class="d-sm-block">
-                  {{ $t('roles.total') }}
+                  {{ $t('dashboard.roles.total') }}
                 </span>
               </div>
               <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                 <router-link
                   :to="{ name: 'system.role.list', query: { deleted: 1, archived: 2 } }"
-                  :aria-label="roles.archived + ' ' + $t('roles.roles') + ' ' + $t('roles.archived')"
+                  :aria-label="roles.archived + ' ' + $t('dashboard.roles.roles') + ' ' + $t('dashboard.roles.archived')"
                   class="text-decoration-none"
                 >
                   {{ roles.archived }}
                 </router-link>
                 <span class="d-sm-block">
-                  {{ $t('roles.archived') }}
+                  {{ $t('dashboard.roles.archived') }}
                 </span>
               </div>
               <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                 <router-link
                   :to="{ name: 'system.role.list', query: { deleted: 2, archived: 1 } }"
-                  :aria-label="roles.deleted + ' ' + $t('roles.roles') + ' ' + $t('roles.deleted')"
+                  :aria-label="roles.deleted + ' ' + $t('dashboard.roles.roles') + ' ' + $t('dashboard.roles.deleted')"
                   class="text-decoration-none"
                 >
                   {{ roles.deleted }}
                 </router-link>
                 <span class="d-sm-block">
-                  {{ $t('roles.deleted') }}
+                  {{ $t('dashboard.roles.deleted') }}
                 </span>
               </div>
             </div>
@@ -151,14 +151,14 @@
             <h4 class="card-title">
               <router-link
                 :to="{ name: 'system.application.list' }"
-                :aria-label="applications.valid + ' ' + $t('applications.title')"
+                :aria-label="applications.valid + ' ' + $t('dashboard.applications.title')"
                 class="display-4 text-decoration-none"
               >
                 {{ applications.valid }}
               </router-link>
             </h4>
             <h4>
-              {{ $t('applications.title') }}
+              {{ $t('dashboard.applications.title') }}
             </h4>
           </div>
 
@@ -167,25 +167,25 @@
               <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                 <router-link
                   :to="{ name: 'system.application.list', query: { deleted: 1 } }"
-                  :aria-label="applications.total + ' ' + $t('applications.applications') + ' ' + $t('applications.total')"
+                  :aria-label="applications.total + ' ' + $t('dashboard.applications.applications') + ' ' + $t('dashboard.applications.total')"
                   class="text-decoration-none"
                 >
                   {{ applications.total }}
                 </router-link>
                 <span class="d-sm-block">
-                  {{ $t('applications.total') }}
+                  {{ $t('dashboard.applications.total') }}
                 </span>
               </div>
               <div class="col-12 col-sm-4 mb-2 mb-sm-0">
                 <router-link
                   :to="{ name: 'system.application.list', query: { deleted: 2 } }"
-                  :aria-label="applications.deleted + ' ' + $t('applications.applications') + ' ' + $t('applications.deleted')"
+                  :aria-label="applications.deleted + ' ' + $t('dashboard.applications.applications') + ' ' + $t('dashboard.applications.deleted')"
                   class="text-decoration-none"
                 >
                   {{ applications.deleted }}
                 </router-link>
                 <span class="d-sm-block">
-                  {{ $t('applications.deleted') }}
+                  {{ $t('dashboard.applications.deleted') }}
                 </span>
               </div>
             </div>
@@ -231,7 +231,7 @@ function initUserChart() {
     xAxis: { type: 'category', data: dates, boundaryGap: false, axisTick: { show: false }, axisLine: { show: false } },
     yAxis: { type: 'value', axisLine: { show: false, onZero: false }, splitLine: { lineStyle: { color: [themeVariables['extra-light']] } } },
     grid: { top: 20, right: 50, bottom: 20, left: 40, containLabel: true },
-    series: [{ name: t('users.created'), type: 'line', data: values, smooth: 0.5, areaStyle: { opacity: 0.5 } }],
+    series: [{ name: t('dashboard.users.created'), type: 'line', data: values, smooth: 0.5, areaStyle: { opacity: 0.5 } }],
   }
 }
 

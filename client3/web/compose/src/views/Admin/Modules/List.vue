@@ -18,7 +18,7 @@
         noItems: $t('resourceList.noItems', 'No items'),
         loading: $t('label.loading', 'Loading'),
         showingPagination: $t('resourceList.pagination.showing', 'Showing'),
-        singlePluralPagination: $t('resourceList.pagination.single', 'resource'),
+        singlePluralPagination: 'resourceList.pagination.single',
         prevPagination: $t('resourceList.pagination.prev', 'Previous'),
         nextPagination: $t('resourceList.pagination.next', 'Next'),
         resourceSingle: $t('label.module.single', 'Module'),
@@ -186,7 +186,7 @@
             <li>
               <c-input-confirm
                 v-if="m.canDeleteModule"
-                :text="$t('list.delete')"
+                :text="$t('delete')"
                 show-icon
                 borderless
                 variant="link"
@@ -268,18 +268,18 @@ const pages = computed(() => store.page.set)
 const fields = computed(() => [
   {
     key: 'name',
-    label: t('list.columns.name'),
+    label: t('columns.name'),
     sortable: true,
     tdClass: 'text-nowrap',
   },
   {
     key: 'handle',
-    label: t('list.columns.handle'),
+    label: t('columns.handle'),
     sortable: true,
   },
   {
     key: 'changedAt',
-    label: t('list.columns.changedAt'),
+    label: t('columns.changedAt'),
     sortable: true,
     class: 'text-end text-nowrap',
   },

@@ -1,14 +1,14 @@
 <template>
   <div class="card shadow-sm" data-test-id="card-role-membership">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('title') }}</h4>
+      <h4 class="m-0">{{ $t('system.users.editor.roles.title') }}</h4>
     </div>
 
     <div class="card-body">
       <form @submit.prevent="$emit('submit')">
         <c-role-picker
-          :value="value"
-          @input="$emit('input', $event)"
+          :value="modelValue"
+          @input="$emit('update:modelValue', $event)"
         />
       </form>
     </div>
@@ -17,7 +17,7 @@
       <c-button-submit
         :processing="processing"
         :success="success"
-        :text="$t('label.submit')"
+        :text="$t('admin.general.label.submit')"
         class="ms-auto"
         @submit="$emit('submit')"
       />
@@ -32,10 +32,10 @@ import CRolePicker from 'corteza-webapp-admin/src/components/CRolePicker'
 const { t } = useI18n()
 
 defineProps({
-  value: { type: Array, required: true, default: () => [] },
-  processing: { type: Boolean, value: false },
-  success: { type: Boolean, value: false },
+  modelValue: { type: Array, required: true, default: () => [] },
+  processing: { type: Boolean, default: false },
+  success: { type: Boolean, default: false },
 })
 
-defineEmits(['input', 'submit'])
+defineEmits(['update:modelValue', 'submit'])
 </script>

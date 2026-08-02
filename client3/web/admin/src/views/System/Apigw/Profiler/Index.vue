@@ -128,7 +128,7 @@ const fields = computed(() => [
 
 const loading = computed(() => !refresh.value.countdown)
 const autoRefreshLabel = computed(() => !loading.value ? t('refreshingIn', { seconds: refresh.value.countdown }) : t('label.loading'))
-const description = computed(() => $Settings.get('apigw.profiler.global', false) ? t('description.globalEnabled') : t('description.globalDisabled'))
+const description = computed(() => $Settings.get('apigw.profiler.global', false) ? t('system.apigw.profiler.description.globalEnabled') : t('system.apigw.profiler.description.globalDisabled'))
 const hasNextPage = computed(() => filter.value.next)
 
 watch(() => $route.params, () => {

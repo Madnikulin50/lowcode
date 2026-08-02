@@ -1,5 +1,5 @@
 <template>
-  <p>{{ $t('editor.unsupported') }}</p>
+  <p>{{ $t('system.templates.editor.content.editor.unsupported') }}</p>
 </template>
 
 <script setup>

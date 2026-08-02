@@ -6,7 +6,7 @@
         <form @submit.prevent="search">
           <div class="row mb-2">
             <div class="col-12 col-lg-6">
-              <label class="text-primary mb-1">{{ $t('filter.searchQuery') }}</label>
+              <label class="text-primary mb-1">{{ $t('automation.scripts.list.filter.searchQuery') }}</label>
               <input v-model="filter.query" class="form-control form-control-sm" />
             </div>
           </div>
@@ -28,7 +28,7 @@
               <div class="form-check form-switch"><input v-model="filter.incScriptsWithSecurity" type="checkbox" class="form-check-input-v3" role="switch" /><label class="form-check-label">{{ filter.incScriptsWithSecurity ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
             </div>
             <div class="col-12 col-lg-6">
-              <label class="text-primary mb-1">{{ $t('filter.absoluteTime') }}</label>
+              <label class="text-primary mb-1">{{ $t('automation.scripts.list.filter.absoluteTime') }}</label>
               <div class="form-check form-switch"><input v-model="filter.absoluteTime" type="checkbox" class="form-check-input-v3" role="switch" /><label class="form-check-label">{{ filter.absoluteTime ? $t('label.general.yes') : $t('label.general.no') }}</label></div>
             </div>
           </div>
@@ -44,10 +44,10 @@
           <tbody>
             <tr v-for="r in filtered" :key="r.name" @click="r._showDetails = !r._showDetails" class="cursor-pointer">
               <td>
-                <div><span v-if="r.label">{{ r.label }}</span><span v-else class="text-secondary">{{ $t('labelMissing') }}</span>
-                  <span v-if="r.security" class="badge rounded bg-primary m-1 py-1 px-2" @click.stop="r._showDetails = !r._showDetails">{{ $t('flags.security') }}</span>
-                  <span v-if="r.triggers" class="badge rounded bg-primary m-1 py-1 px-2" @click.stop="r._showDetails = !r._showDetails">{{ $t('flags.triggers') }}</span>
-                  <span v-if="r.iterator" class="badge rounded bg-primary m-1 py-1 px-2" @click.stop="r._showDetails = !r._showDetails">{{ $t('flags.iterator') }}</span>
+                <div><span v-if="r.label">{{ r.label }}</span><span v-else class="text-secondary">{{ $t('automation.scripts.list.labelMissing') }}</span>
+                  <span v-if="r.security" class="badge rounded bg-primary m-1 py-1 px-2" @click.stop="r._showDetails = !r._showDetails">{{ $t('automation.scripts.list.flags.security') }}</span>
+                  <span v-if="r.triggers" class="badge rounded bg-primary m-1 py-1 px-2" @click.stop="r._showDetails = !r._showDetails">{{ $t('automation.scripts.list.flags.triggers') }}</span>
+                  <span v-if="r.iterator" class="badge rounded bg-primary m-1 py-1 px-2" @click.stop="r._showDetails = !r._showDetails">{{ $t('automation.scripts.list.flags.iterator') }}</span>
                 </div>
                 <p v-if="r.description" class="text-secondary mb-0">{{ r.description }}</p>
                 <div><small><code>{{ r.name }}</code></small></div>

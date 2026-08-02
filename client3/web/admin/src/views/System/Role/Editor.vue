@@ -1,8 +1,8 @@
 <template>
   <div v-if="role" class="container pt-2 pb-3">
     <c-content-header :title="title">
-      <button v-if="roleID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.role.new' })">{{ $t('new') }}</button>
-      <c-permissions-button v-if="roleID && canGrant" :title="role.name || role.handle || role.roleID" :target="role.name || role.handle || role.roleID" :resource="`corteza::system:role/${roleID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('permissions') }}</c-permissions-button>
+      <button v-if="roleID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.role.new' })">{{ $t('system.roles.editor.new') }}</button>
+      <c-permissions-button v-if="roleID && canGrant" :title="role.name || role.handle || role.roleID" :target="role.name || role.handle || role.roleID" :resource="`corteza::system:role/${roleID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('system.roles.editor.permissions') }}</c-permissions-button>
       <c-permission-clone v-if="roleID && canGrant" :role-id="roleID" />
       <c-corredor-manual-buttons ui-page="role/editor" ui-slot="toolbar" resource-type="system:role" default-variant="link" class="me-1" @click="dispatchCortezaSystemRoleEvent($event, { role })" />
     </c-content-header>
@@ -31,7 +31,7 @@ const members = reactive({ active: undefined, initial: undefined, processing: fa
 const canManageMembers = computed(() => role.value && role.value.canManageMembersOnRole && role.value.roleID && members.active && !role.value.isClosed && !role.value.isContext)
 const canCreate = computed(() => can('system/', 'role.create'))
 const canGrant = computed(() => can('system/', 'grant'))
-const title = computed(() => props.roleID ? t('title.edit') : t('title.create'))
+const title = computed(() => props.roleID ? t('system.roles.editor.title.edit') : t('system.roles.editor.title.create'))
 function can(resource, operation) { return true }
 function incLoader() {}
 function decLoader() {}

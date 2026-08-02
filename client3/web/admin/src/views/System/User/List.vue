@@ -11,10 +11,10 @@
       :items="items"
       :row-class="rowClass"
       :translations="{
-        searchPlaceholder: $t('list.filterForm.query.placeholder'),
+        searchPlaceholder: $t('system.users.list.filterForm.query.placeholder'),
         notFound: $t('admin.general.notFound'),
         noItems: $t('admin.general.resource-list.no-items'),
-        loading: $t('list.loading'),
+        loading: $t('system.users.list.loading'),
         showingPagination: 'admin.general.pagination.showing',
         singlePluralPagination: 'admin.general.pagination.single',
         prevPagination: $t('admin.general.pagination.prev'),
@@ -34,7 +34,7 @@
           data-test-id="button-new-user"
           @click="$router.push({ name: 'system.user.new' })"
         >
-          {{ $t('list.new') }}
+          {{ $t('system.users.list.new') }}
         </button>
 
         <c-user-import-modal
@@ -48,7 +48,7 @@
         <c-permissions-button
           v-if="canGrant"
           resource="corteza::system:user/*"
-          :button-label="$t('list.permissions')"
+                :button-label="$t('system.users.list.permissions')"
           size="lg"
         />
 
@@ -65,20 +65,20 @@
         <c-resource-list-status-filter
           v-model="filter.deleted"
           data-test-id="filter-deleted-users"
-          :label="$t('list.filterForm.deleted.label')"
-          :excluded-label="$t('list.filterForm.excluded.label')"
-          :inclusive-label="$t('list.filterForm.inclusive.label')"
-          :exclusive-label="$t('list.filterForm.exclusive.label')"
+          :label="$t('system.users.list.filterForm.deleted.label')"
+          :excluded-label="$t('system.users.list.filterForm.excluded.label')"
+          :inclusive-label="$t('system.users.list.filterForm.inclusive.label')"
+          :exclusive-label="$t('system.users.list.filterForm.exclusive.label')"
           @change="filterList"
         />
 
         <c-resource-list-status-filter
           v-model="filter.suspended"
           data-test-id="filter-suspended-users"
-          :label="$t('list.filterForm.suspended.label')"
-          :excluded-label="$t('list.filterForm.excluded.label')"
-          :inclusive-label="$t('list.filterForm.inclusive.label')"
-          :exclusive-label="$t('list.filterForm.exclusive.label')"
+          :label="$t('system.users.list.filterForm.suspended.label')"
+          :excluded-label="$t('system.users.list.filterForm.excluded.label')"
+          :inclusive-label="$t('system.users.list.filterForm.inclusive.label')"
+          :exclusive-label="$t('system.users.list.filterForm.exclusive.label')"
           @change="filterList"
         />
 
@@ -103,7 +103,7 @@
                 :title="u.name || u.handle || u.email || u.userID"
                 :target="u.name || u.handle || u.email || u.userID"
                 :resource="`corteza::system:user/${u.userID}`"
-                :button-label="$t('list.permissions')"
+          :button-label="$t('system.users.list.permissions')"
                 class="dropdown-item"
               />
             </li>
@@ -172,10 +172,10 @@ const abortableRequests = []
 const tempQuery = ref(undefined)
 
 const fields = computed(() => [
-  { key: 'name', sortable: true, label: t('list.columns.name') },
-  { key: 'email', sortable: true, label: t('list.columns.email') },
-  { key: 'handle', sortable: true, label: t('list.columns.handle') },
-  { key: 'createdAt', sortable: true, label: t('list.columns.createdAt'), formatter: (v) => moment(v).fromNow() },
+  { key: 'name', sortable: true, label: t('columns.name') },
+  { key: 'email', sortable: true, label: t('columns.email') },
+  { key: 'handle', sortable: true, label: t('columns.handle') },
+  { key: 'createdAt', sortable: true, label: t('columns.createdAt'), formatter: (v) => moment(v).fromNow() },
   { key: 'actions', class: 'actions', label: '' },
 ])
 
@@ -257,7 +257,7 @@ function areActionsVisible({ resource, conditions = [] }) {
   return conditions.some(c => resource[c])
 }
 function getActionText(r) {
-  return r.deletedAt ? t('list.undelete') : t('list.delete')
+  return r.deletedAt ? t('system.users.list.undelete') : t('system.users.list.delete')
 }
 function getActionIcon(r) {
   return r.deletedAt ? ['fas', 'trash-restore'] : ['far', 'trash-alt']

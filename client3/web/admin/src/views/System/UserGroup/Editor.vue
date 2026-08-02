@@ -1,8 +1,8 @@
 <template>
   <div v-if="userGroup" class="container pt-2 pb-3">
     <c-content-header :title="title">
-      <button v-if="userGroupID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.userGroup.new' })">{{ $t('new') }}</button>
-      <c-permissions-button v-if="userGroupID && canGrant" :title="userGroup.name || userGroup.handle || userGroup.userGroupID" :target="userGroup.name || userGroup.handle || userGroup.userGroupID" :resource="`corteza::system:user-group/${userGroupID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('permissions') }}</c-permissions-button>
+      <button v-if="userGroupID && canCreate" class="btn btn-primary" @click="$router.push({ name: 'system.userGroup.new' })">{{ $t('system.user-groups.editor.new') }}</button>
+      <c-permissions-button v-if="userGroupID && canGrant" :title="userGroup.name || userGroup.handle || userGroup.userGroupID" :target="userGroup.name || userGroup.handle || userGroup.userGroupID" :resource="`corteza::system:user-group/${userGroupID}`"><font-awesome-icon :icon="['fas', 'lock']" /> {{ $t('system.user-groups.editor.permissions') }}</c-permissions-button>
     </c-content-header>
     <c-user-group-editor-info :user-group="userGroup" :processing="info.processing" :success="info.success" :can-create="canCreate" @submit="onInfoSubmit" @delete="onDelete" />
     <c-user-group-editor-members v-if="canManageMembers" v-model="groupMembers.active" :processing="groupMembers.processing" :success="groupMembers.success" class="mt-3" @submit="onMembersSubmit" />
@@ -30,7 +30,7 @@ const canManageMembers = computed(() => userGroup.value && userGroup.value.canMa
 const canManageRoles = computed(() => userGroup.value && userGroup.value.userGroupID && groupRoles.active)
 const canCreate = computed(() => can('system/', 'user-group.create'))
 const canGrant = computed(() => can('system/', 'grant'))
-const title = computed(() => props.userGroupID ? t('title.edit') : t('title.create'))
+const title = computed(() => props.userGroupID ? t('system.user-groups.editor.title.edit') : t('system.user-groups.editor.title.create'))
 function can(resource, operation) { return true }
 function incLoader() {}
 function decLoader() {}
