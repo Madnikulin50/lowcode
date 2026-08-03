@@ -164,6 +164,7 @@ function showChildren ({ params = {}, children = [] }: any): boolean {
       text-align: center;
       color: var(--black);
       opacity: 0.65;
+      margin-left: 8px;
       transition: opacity 0.2s ease, transform 0.2s ease, color 0.3s ease-in-out;
     }
 
