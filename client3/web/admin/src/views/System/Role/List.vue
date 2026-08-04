@@ -21,8 +21,11 @@
         <c-corredor-manual-buttons ui-page="role/list" ui-slot="toolbar" resource-type="system" default-variant="link" size="lg" @click="dispatchCortezaSystemEvent($event)" />
       </template>
       <template #toolbar>
-        <c-resource-list-status-filter v-model="filter.deleted" data-test-id="filter-deleted-roles" :label="$t('system.roles.list.filterForm.deleted.label')" :excluded-label="$t('system.roles.list.filterForm.excluded.label')" :inclusive-label="$t('system.roles.list.filterForm.inclusive.label')" :exclusive-label="$t('system.roles.list.filterForm.exclusive.label')" @change="filterList" />
-        <c-resource-list-status-filter v-model="filter.archived" data-test-id="filter-archived-roles" :label="$t('system.roles.list.filterForm.archived.label')" :excluded-label="$t('system.roles.list.filterForm.excluded.label')" :inclusive-label="$t('system.roles.list.filterForm.inclusive.label')" :exclusive-label="$t('system.roles.list.filterForm.exclusive.label')" @change="filterList" />
+        <div class="d-flex align-items-center flex-wrap gap-1">
+          <c-resource-list-status-filter v-model="filter.deleted" data-test-id="filter-deleted-roles" :label="$t('system.roles.list.filterForm.deleted.label')" :excluded-label="$t('system.roles.list.filterForm.excluded.label')" :inclusive-label="$t('system.roles.list.filterForm.inclusive.label')" :exclusive-label="$t('system.roles.list.filterForm.exclusive.label')" @change="filterList" />
+          <div class="ml-4"></div>
+          <c-resource-list-status-filter v-model="filter.archived" data-test-id="filter-archived-roles" :label="$t('system.roles.list.filterForm.archived.label')" :excluded-label="$t('system.roles.list.filterForm.excluded.label')" :inclusive-label="$t('system.roles.list.filterForm.inclusive.label')" :exclusive-label="$t('system.roles.list.filterForm.exclusive.label')" @change="filterList" />
+        </div>
         <div class="col" />
       </template>
       <template #actions="{ item: r }">

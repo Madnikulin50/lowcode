@@ -1,24 +1,24 @@
-dashboard: Dashboard
+dashboard: Дашборд
 
 system:
-  group: System
+  group: Система
   items:
     users: Пользователи
-    usergroups: User Groups
-    actionlog: Action log
-    apigw: Integration Gateway
+    usergroups: Группы пользователей
+    actionlog: Журнал действий
+    apigw: Интеграционный шлюз
     applications: Приложения
-    authclients: Auth Clients
-    connections: Соединения
-    code-snippets: Code Snippets
-    sensitivityLevel: Sensitivity Levels
+    authclients: Клиенты авторизации
+    connections: Подключения
+    code-snippets: Сниппеты кода
+    sensitivityLevel: Уровни чувствительности
     permissions: Права доступа
-    queues: Messaging QueuesF
+    queues: Очереди сообщений
     roles: Роли
-    settings: Auth Настройки
-    email: Почтовый адрес settings
+    settings: Настройки авторизации
+    email: Настройки почты
     stats: Статистика
-    templates: Templates
+    templates: Шаблоны
 
 compose:
   group: Compose
@@ -31,19 +31,19 @@ automation:
   group: Автоматизация
   items:
     permissions: Права доступа
-    scripts: Corredor Scripts
-    sessions: Sessions
+    scripts: Скрипты Corredor
+    sessions: Сессии
     workflows: Процессы
 
 federation:
-  group: Federation
+  group: Федерация
   items:
-    nodes: Nodes
+    nodes: Узлы
     permissions: Права доступа
 
 ui:
-  group: User interface
+  group: Интерфейс
   items:
-    theming: Theming
-    navigation: Navigation
-    location: Location
+    theming: Темы
+    navigation: Навигация
+    location: Расположение

@@ -253,7 +253,7 @@
         <div class="d-flex align-items-center flex-wrap gap-3">
           <div v-if="options.showTotalCount" class="text-nowrap text-truncate">
             <span v-if="pagination.count > recordsPerPage" data-test-id="pagination-range">{{ $t('recordList.pagination.showing', getPagination) }}</span>
-            <span v-else data-test-id="pagination-single-number">{{ $t('recordList.pagination.single', getPagination) }}</span>
+            <span v-else data-test-id="pagination-single-number">{{ $t(`recordList.pagination.single_${pagination.count === 1 ? 'one' : 'other'}`, getPagination) }}</span>
           </div>
           <div v-if="options.showRecordPerPageOption" class="d-flex align-items-center gap-1 text-nowrap">
             <span>{{ $t('recordList.pagination.recordsPerPage') }}</span>

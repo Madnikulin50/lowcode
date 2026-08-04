@@ -1,5 +1,5 @@
 <template>
-  <div class="container-xl d-flex flex-column flex-fill pt-2 pb-3">
+  <div class="container-fluid d-flex flex-column flex-fill pt-2 pb-3">
     <c-content-header :title="$t('system.users.list.title')" />
 
     <c-resource-list
@@ -62,26 +62,27 @@
       </template>
 
       <template #toolbar>
-        <c-resource-list-status-filter
-          v-model="filter.deleted"
-          data-test-id="filter-deleted-users"
-          :label="$t('system.users.list.filterForm.deleted.label')"
-          :excluded-label="$t('system.users.list.filterForm.excluded.label')"
-          :inclusive-label="$t('system.users.list.filterForm.inclusive.label')"
-          :exclusive-label="$t('system.users.list.filterForm.exclusive.label')"
-          @change="filterList"
-        />
-
-        <c-resource-list-status-filter
-          v-model="filter.suspended"
-          data-test-id="filter-suspended-users"
-          :label="$t('system.users.list.filterForm.suspended.label')"
-          :excluded-label="$t('system.users.list.filterForm.excluded.label')"
-          :inclusive-label="$t('system.users.list.filterForm.inclusive.label')"
-          :exclusive-label="$t('system.users.list.filterForm.exclusive.label')"
-          @change="filterList"
-        />
-
+        <div class="d-flex align-items-center flex-wrap gap-1">
+          <c-resource-list-status-filter
+            v-model="filter.deleted"
+            data-test-id="filter-deleted-users"
+            :label="$t('system.users.list.filterForm.deleted.label')"
+            :excluded-label="$t('system.users.list.filterForm.excluded.label')"
+            :inclusive-label="$t('system.users.list.filterForm.inclusive.label')"
+            :exclusive-label="$t('system.users.list.filterForm.exclusive.label')"
+            @change="filterList"
+          />
+          <div class="ml-4"></div>
+          <c-resource-list-status-filter
+            v-model="filter.suspended"
+            data-test-id="filter-suspended-users"
+            :label="$t('system.users.list.filterForm.suspended.label')"
+            :excluded-label="$t('system.users.list.filterForm.excluded.label')"
+            :inclusive-label="$t('system.users.list.filterForm.inclusive.label')"
+            :exclusive-label="$t('system.users.list.filterForm.exclusive.label')"
+            @change="filterList"
+          />
+        </div>
         <div class="col" />
       </template>
 

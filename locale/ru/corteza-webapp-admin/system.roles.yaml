@@ -1,34 +1,31 @@
 editor:
   info:
-    archive: Archive
-    archivedAt: Archived at
+    archive: Архивировать
+    archivedAt: Архивирован
     createdAt: Время создания
     createdBy: Создал
-    delete: Delete
+    delete: Удалить
     deletedAt: Время удаления
     handle: Дескриптор
     placeholder-handle: дескриптор (a - z, 0 - 9, underscore, dash)
-    invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
-    name: Role name *
-    title: Basic information
-    unarchive: Unarchive
-    undelete: Undelete
+    invalid-handle-characters: Должен быть не менее 2 символов. Может содержать только буквы, цифры, подчёркивания и точки. Должен заканчиваться буквой или цифрой
+    name: Название роли *
+    title: Основная информация
+    unarchive: Разархивировать
+    undelete: Восстановить
     updatedAt: Время обновления
-
     description: Описание
-
     context:
-      label: Contextual role
+      label: Контекстная роль
       expression-label: Выражение
-      resource-types-label: Resource type
-
+      resource-types-label: Тип ресурса
   members:
-    title: Role members
-  new: New Role
+    title: Участники роли
+  new: Новая роль
   permissions: Права доступа
   title:
-    create: Create role
-    edit: Изменить role
+    create: Создать роль
+    edit: Изменить роль
 list:
   columns:
     actions: ""
@@ -36,31 +33,31 @@ list:
     enabled: Включено
     handle: Дескриптор
     name: Имя
-    state: State
-  delete: Delete
-  undelete: Undelete
-  archive: Archive
-  unarchive: Unarchive
+    state: Состояние
+  delete: Удалить
+  undelete: Восстановить
+  archive: Архивировать
+  unarchive: Разархивировать
   rows:
     filters:
-      archived: Archived
-      deleted: Удаленные
+      archived: Архивированные
+      deleted: Удалённые
   filterForm:
     archived:
-      label: archived roles
+      label: архивированные роли
     deleted:
-      label: deleted roles
+      label: удалённые роли
     excluded:
-      label: Without
+      label: Без
     exclusive:
-      label: Only
+      label: Только
     inclusive:
       label: Включая
     query:
-      label: Фильтр roles list
-      placeholder: Фильтр roles by name
-  loading: Loading roles
-  new: New Role
+      label: Фильтр списка ролей
+      placeholder: Фильтр ролей по названию
+  loading: Загрузка ролей
+  new: Новая роль
   permissions: Права доступа
   title: Роли
   yaml: YAML

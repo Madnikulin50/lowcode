@@ -15,8 +15,10 @@
       <template #toolbar>
         <div class="col d-flex align-items-center">
           <div class="btn-group btn-group-sm me-2" role="group">
-            <input v-for="opt in statusOptions" :key="opt.value" type="radio" class="btn-check" :id="'status-' + opt.value" :value="opt.value" v-model="filter.status" @change="filterList" />
-            <label :for="'status-' + opt.value" class="btn btn-outline-primary btn-sm">{{ opt.text }}</label>
+            <template v-for="opt in statusOptions" :key="opt.value">
+              <input type="radio" class="btn-check" :id="'status-' + opt.value" :value="opt.value" v-model="filter.status" @change="filterList" />
+              <label :for="'status-' + opt.value" class="btn btn-outline-primary btn-sm">{{ opt.text }}</label>
+            </template>
           </div>
           <span class="ms-2 text-nowrap">{{ $t('automation.sessions.list.filterForm.sessions.label') }}</span>
         </div>

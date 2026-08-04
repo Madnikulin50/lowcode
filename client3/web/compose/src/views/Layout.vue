@@ -152,7 +152,7 @@ import moment from 'moment'
 import { useUiStore } from '../store/ui'
 import { useNamespaceStore } from '../store/namespace'
 import { useResourceTranslations } from '../mixins/resource-translations'
-import { components } from 'corteza-lib/vue/dist'
+import { components, toasts as toastsBus } from 'corteza-lib/vue/dist'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faFile } from '@fortawesome/free-regular-svg-icons'
 import CTranslationModal from '../components/Translator/CTranslatorModal.vue'
@@ -177,7 +177,7 @@ const $SystemAPI = app?.config?.globalProperties?.$SystemAPI || window.__systemA
 const settings = $Settings
 
 const expanded = ref(false)
-const toasts = ref([])
+const toasts = toastsBus
 const disabledRoutes = ref([
   'namespaces',
   'namespace.list',
@@ -266,13 +266,13 @@ function checkNamespaceSidebar(showSidebar) {
 }
 
 function addToast(message, params = {}) {
-  toasts.value.push({ message, ...params })
+  toasts.push({ message, ...params })
 }
 
 function removeToast(reminderID) {
-  const i = toasts.value.findIndex(r => r.reminderID === reminderID)
+  const i = toasts.findIndex(r => r.reminderID === reminderID)
   if (i > -1) {
-    toasts.value.splice(i, 1)
+    toasts.splice(i, 1)
   }
 }
 
@@ -298,8 +298,8 @@ function showAlert({ message, ...params }) {
 }
 
 function showReminder(r) {
-  const i = toasts.value.findIndex(({ reminderID }) => reminderID === r.reminderID)
-  if (i > -1 && (!r.editedAt || r.editedAt === toasts.value[i].editedAt)) {
+  const i = toasts.findIndex(({ reminderID }) => reminderID === r.reminderID)
+  if (i > -1 && (!r.editedAt || r.editedAt === toasts[i].editedAt)) {
     return
   }
 
@@ -340,15 +340,15 @@ function showReminder(r) {
   }
 
   if (i > -1) {
-    toasts.value.splice(i, 1, r)
+    toasts.splice(i, 1, r)
   } else {
-    toasts.value.push(r)
+    toasts.push(r)
   }
 }
 
 function setDefaultValues() {
   expanded.value = false
-  toasts.value = []
+  toasts.splice(0)
   disabledRoutes.value = []
 }
 

@@ -60,6 +60,7 @@ import {
   faMapMarkerAlt,
   faPalette,
   faEnvelopeOpen as faEnvelopeOpenSolid,
+  faLink,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -145,4 +146,5 @@ library.add(
   faUserGroup,
   faMapMarkerAlt,
   faPalette,
+  faLink,
 )

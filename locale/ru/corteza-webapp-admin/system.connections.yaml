@@ -1,111 +1,111 @@
 primary:
-  title: Главная database
+  title: Основная база данных
   name: Имя
   handle: Дескриптор
-  location: Location
-  ownership: Ownership
+  location: Расположение
+  ownership: Владение
   sensitivity-level: Уровень чувствительности
 
 list:
-  title: List of database connections
-  add-button: New Connection
-  loading: Loading connections
+  title: Список подключений к БД
+  add-button: Новое подключение
+  loading: Загрузка подключений
   filterForm:
     deleted:
-      label: deleted connections
+      label: удалённые подключения
     excluded:
-      label: Without
+      label: Без
     exclusive:
-      label: Only
+      label: Только
     inclusive:
       label: Включая
   columns:
     name: Имя
-    location: Location
-    ownership: Ownership
+    location: Расположение
+    ownership: Владение
     createdAt: Создано
     actions: ''
-  delete: Delete
-  undelete: Undelete
+  delete: Удалить
+  undelete: Восстановить
 
 editor:
   title:
-    edit: Изменить connection
-    create: New connection
+    edit: Изменить подключение
+    create: Новое подключение
   basic:
-    title: Basic settings
+    title: Основные настройки
     form:
       name:
         label: Имя *
-        placeholder: Data lake
+        placeholder: Озеро данных
         description: ''
       handle:
         label: Дескриптор
-        placeholder: simplified_connection_name
-        invalid-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
+        placeholder: упрощённое_имя_подключения
+        invalid-characters: Должен быть не менее 2 символов. Может содержать только буквы, цифры, подчёркивания и точки. Должен заканчиваться буквой или цифрой
       location-name:
-        label: Location name
-        placeholder: Name of the location where the data is stored
-        description: Name of the city, country, continent, etc.
+        label: Название расположения
+        placeholder: Название места хранения данных
+        description: Название города, страны, континента и т.д.
       location-geometry:
-        label: Location coordinates
-        description: Coordinates of the location where the data is stored
+        label: Координаты расположения
+        description: Координаты места хранения данных
       ownership:
-        label: Ownership
-        placeholder: ACME ltd.
-        description: Name of the company or person who owns the data
+        label: Владение
+        placeholder: ООО Компания
+        description: Название компании или лица, владеющего данными
       sensitivity-level:
-        label: Highest allowed sensitivity level
-        placeholder: Select a sensitivity level
-        description: Highest allowed level of sensitivity for the data stored (as set on fields of the module that uses this connection)
+        label: Максимально допустимый уровень чувствительности
+        placeholder: Выберите уровень чувствительности
+        description: Максимально допустимый уровень чувствительности для хранимых данных (задаётся в полях модуля, использующего это подключение)
 
   properties:
-    title: Connection and database properties
+    title: Свойства подключения и базы данных
     form:
       data-at-rest-encryption:
         checkbox:
-          label: Encrypt data at rest enabled
+          label: Шифрование данных при хранении включено
         notes:
-          label: Notes on encryption
-          description: Internal notes on data-at-rest encryption (disk encryption)
+          label: Примечания о шифровании
+          description: Внутренние примечания о шифровании данных при хранении (дисковое шифрование)
       data-at-rest-protection:
         checkbox:
-          label: Data at rest protection provided
+          label: Обеспечена защита данных при хранении
         notes:
-          label: Notes on data at rest protection
-          description: Internal notes on data-at-rest protection (physical protection)
+          label: Примечания о защите данных при хранении
+          description: Внутренние примечания о защите данных при хранении (физическая защита)
       data-at-transit-encryption:
         checkbox:
-          label: Encrypt data at transit enabled
+          label: Шифрование данных при передаче включено
         notes:
-          label: Notes on data at transit encryption (network encryption)
-          description: Internal notes on data-at-transit encryption (network encryption)
+          label: Примечания о шифровании данных при передаче
+          description: Внутренние примечания о шифровании данных при передаче (сетевое шифрование)
       data-restoration:
         checkbox:
-          label: Data at rest backup and restoration implemented
+          label: Реализовано резервное копирование и восстановление данных
         notes:
-          label: Notes on data restoration
-          description: Internal notes on data-restoration
+          label: Примечания о восстановлении данных
+          description: Внутренние примечания о восстановлении данных
 
   dal:
-    title: Data access layer configuration and connection parameters
+    title: Конфигурация слоя доступа к данным и параметры подключения
     form:
       model-ident:
-        label: Default table or container name
+        label: Имя таблицы или контейнера по умолчанию
         placeholder: compose_record
         description: |
-          Identifier can contain placeholders like {{module}} (replaced with module handle) and/or {{namespace}} (replace with namespace handle).
-          When set it is used as a default for modules without configure ident.
+          Идентификатор может содержать плейсхолдеры, такие как {{module}} (заменяется на дескриптор модуля) и/или {{namespace}} (заменяется на дескриптор пространства).
+          Если задано, используется по умолчанию для модулей без настроенного идентификатора.
 
       type:
-        label: Connection and parameter type
+        label: Тип подключения и параметров
         placeholder: corteza::dal:connection:dsn
-        description: Type of the connection and parameter, e.g. corteza::dal:connection:dsn
+        description: Тип подключения и параметров, например corteza::dal:connection:dsn
 
       params:
-        label: Connection parameters
+        label: Параметры подключения
         placeholder: postgres://user:pass@host:port/dbname
-        description: 'Connection parameters, e.g.: {"dsn": "postgres://user:pass@host:port/dbname"}'
+        description: 'Параметры подключения, например: {"dsn": "postgres://user:pass@host:port/dbname"}'
 
-    connectivity-issues: Connection issues
-    no-access-warning: No permissions to manage data access layer configuration and connection parameters for this connection
+    connectivity-issues: Проблемы с подключением
+    no-access-warning: Нет прав на управление конфигурацией слоя доступа к данным и параметрами подключения для этого соединения

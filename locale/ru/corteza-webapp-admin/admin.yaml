@@ -1,87 +1,87 @@
 automation:
   add: Добавить скрипт
   edit:
-    asyncHelp: Do not wait for results and ignore errors. Incompatible with critical flag.
-    asyncLabel: Run this script asynchronously
-    codeTabLabel: Code
-    criticalHelp: Wait until this script is executed. In case of errors, abort execution of other scripts and before* trigger
-    criticalLabel: Critical script
-    delete: Delete script
-    enabledHelp: Disabled scripts will be ignored
+    asyncHelp: Не ждать завершения и игнорировать ошибки. Несовместимо с флагом critical.
+    asyncLabel: Запускать скрипт асинхронно
+    codeTabLabel: Код
+    criticalHelp: Ждать выполнения скрипта. При ошибках прервать выполнение остальных скриптов и триггеров before*
+    criticalLabel: Критический скрипт
+    delete: Удалить скрипт
+    enabledHelp: Отключенные скрипты будут игнорироваться
     enabledLabel: Включено
     mailAutomationTriggers:
-      addMatcher: Add condition
-      addTrigger: Add trigger
-      delete: Delete trigger
-      deleteTrigger: Delete
-      enable: Enable trigger
-      matchAll: Must match all conditions
+      addMatcher: Добавить условие
+      addTrigger: Добавить триггер
+      delete: Удалить триггер
+      deleteTrigger: Удалить
+      enable: Включить триггер
+      matchAll: Должны выполняться все условия
       matcher:
         fields:
           bcc: BCC
           cc: CC
           from: Отправитель
-          placeholder: Mail header field
+          placeholder: Поле заголовка письма
           replyTo: Reply To
-          subject: Subject
-          to: To
-        match: Значение to match
+          subject: Тема
+          to: Кому
+        match: Значение для сопоставления
         operators:
-          equal-ci: Match full
-          placeholder: Operator
-          prefix-ci: Match prefix
+          equal-ci: Полное совпадение
+          placeholder: Оператор
+          prefix-ci: Совпадение префикса
           regex: Регулярное выражение
-          suffix-ci: Match suffix
-          user: Existing user
-      tabLabel: Mail triggers
+          suffix-ci: Совпадение суффикса
+          user: Существующий пользователь
+      tabLabel: Почтовые триггеры
     nameLabel: Имя
-    namePlaceholder: Автоматизация script name
-    runAsCurrentUser: Run as "{{ user }}"
-    runAsHelp: Script runner
+    namePlaceholder: Имя скрипта автоматизации
+    runAsCurrentUser: Запускать как "{{ user }}"
+    runAsHelp: Исполнитель скрипта
     scheduledTriggers:
-      tabLabel: Scheduled
-    securityLabel: Security
+      tabLabel: По расписанию
+    securityLabel: Безопасность
     settingsTabLabel: Настройки
-    timeoutHelp: How much time do we wait before aborting the script? Значение in milliseconds (1000ms = 1s). It defaults (when 0) to 2s with 30s as maximum. Consult with your administrator for exact numbers and limitations.
-    timeoutLabel: Script execution timeout
+    timeoutHelp: Сколько времени ждать перед прерыванием скрипта? Значение в миллисекундах (1000мс = 1с). По умолчанию (0) — 2с, максимум 30с. Уточните у администратора точные значения и ограничения.
+    timeoutLabel: Таймаут выполнения скрипта
     timeoutPlaceholder: "1500"
-    title: Автоматизация script
-    userPickerPlaceholder: Select user
-  import: Импорт automation script(s)
+    title: Скрипт автоматизации
+    userPickerPlaceholder: Выберите пользователя
+  import: Импорт скриптов автоматизации
   list:
     column:
       label:
-        async: Async
-        critical: Critical
+        async: Асинхронно
+        critical: Критический
         enabled: Включено
-        runAs: Run As
-        runInUA: In browser
-    unnamed: (Unnamed script)
-  manage: Manage automation scripts ({{count}})
-  manage-id-permissions: Manage permissions for this script
-  manage-wc-permissions: Manage permissions for all scripts
-  newLabel: Create a new script
-  newPlaceholder: Script name
+        runAs: Исполнитель
+        runInUA: В браузере
+    unnamed: (Безымянный скрипт)
+  manage: Управление скриптами автоматизации ({{count}})
+  manage-id-permissions: Управление правами для этого скрипта
+  manage-wc-permissions: Управление правами для всех скриптов
+  newLabel: Создать новый скрипт
+  newPlaceholder: Имя скрипта
   testing:
-    load: Load
-    parametersHeadline: 'Parameters & payload:'
-    resultsHeadline: 'Results:'
-    testInBrowser: Test in Browser
-    testInCorredor: Test in Corredor
+    load: Загрузить
+    parametersHeadline: 'Параметры и данные:'
+    resultsHeadline: 'Результаты:'
+    testInBrowser: Тестировать в браузере
+    testInCorredor: Тестировать в Corredor
     warning: ""
-  title: List of automation script
+  title: Список скриптов автоматизации
 general:
   resource-list:
-    no-items: No matches for your search
+    no-items: Нет результатов поиска
   notFound: 'Не найдено'
   loading: Загрузка...
   label:
     "no": "Нет"
     submit: Подтвердить
     "yes": "Да"
-    selectOption: "Please select an option"
+    selectOption: "Выберите опцию"
   logout: Выйти
-  noAccess: You do not have permissions to access Административная панель
+  noAccess: У вас нет прав доступа к Административной панели
   pagination:
     next: Следующая
     prev: Предыдущая
@@ -96,11 +96,11 @@ navigation:
   configuration: Конфигурация
   help:
     documentation: Документация
-    feedback: Send feedback
+    feedback: Отправить отзыв
     forum: Справка
     version: 'Версия:'
   module: Модули
-  more: Еще
+  more: Ещё
   namespace: Пространства
   noPageTitle: Не указан заголовок страницы
   page: Страницы
@@ -112,8 +112,8 @@ navigation:
     profile: Профиль
     theme: Тема
 picker:
-  unnamed: Unnamed
+  unnamed: Безымянный
   role:
-    placeholder: Start typing to search for roles
+    placeholder: Начните ввод для поиска ролей
   member:
-    placeholder: Start typing to search for users
+    placeholder: Начните ввод для поиска пользователей

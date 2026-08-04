@@ -1,5 +1,6 @@
 <template>
   <router-view v-if="loaded && i18nLoaded && isRbacLoaded" />
+  <c-toaster :toasts="toasts" />
 </template>
 
 <script setup>
@@ -9,8 +10,9 @@ import { useStore } from './store'
 import { useI18n } from 'vue-i18n'
 import { system } from 'corteza-lib/js/dist'
 import { websocket } from 'corteza-lib/vue/dist'
-import { useAuth, useSettings, useToast } from 'corteza-lib/vue/dist'
+import { useAuth, useSettings, useToast, toasts, components } from 'corteza-lib/vue/dist'
 
+const { CToaster } = components
 const router = useRouter()
 const store = useStore()
 const { t } = useI18n()

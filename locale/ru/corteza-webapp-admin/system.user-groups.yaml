@@ -3,37 +3,37 @@ editor:
     id: ID
     createdAt: Время создания
     createdBy: Создал
-    delete: Delete
+    delete: Удалить
     deletedAt: Время удаления
     placeholder-handle: дескриптор (a - z, 0 - 9, underscore, dash)
     handle: Дескриптор
-    invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
+    invalid-handle-characters: Должен быть не менее 2 символов. Может содержать только буквы, цифры, подчёркивания и точки. Должен заканчиваться буквой или цифрой
     meta.short: Имя *
     meta.description: Описание
-    title: Basic information
-    undelete: Undelete
+    title: Основная информация
+    undelete: Восстановить
     updatedAt: Время обновления
     parents:
-      title: This user group reports to
+      title: Эта группа подчиняется
       parent:
-        label: Parent user group
-        placeholder: Select parent user group
+        label: Родительская группа пользователей
+        placeholder: Выберите родительскую группу
       name:
-        label: Relationship name
-        placeholder: Enter name for the relationship
-  new: New User Group
+        label: Название отношения
+        placeholder: Введите название отношения
+  new: Новая группа пользователей
   permissions: Права доступа
   members:
-    title: User Group Members
+    title: Участники группы
   roles:
-    add: Add
-    count: roles
-    remove: Remove
-    title: Role Membership
-    unnamed: Unnamed role
+    add: Добавить
+    count: ролей
+    remove: Удалить
+    title: Членство в ролях
+    unnamed: Безымянная роль
   title:
-    create: Create user group
-    edit: Изменить user group
+    create: Создать группу пользователей
+    edit: Изменить группу пользователей
 list:
   columns:
     actions: ""
@@ -41,33 +41,33 @@ list:
     handle: Дескриптор
     meta:
       short: Имя
-  delete: Delete
-  undelete: Undelete
+  delete: Удалить
+  undelete: Восстановить
   export: Экспорт
   rows:
     filters:
-      deleted: Удаленные
+      deleted: Удалённые
   filterForm:
     deleted:
-      label: deleted users
+      label: удалённые группы
     excluded:
-      label: Without
+      label: Без
     exclusive:
-      label: Only
+      label: Только
     inclusive:
       label: Включая
     query:
-      label: Фильтр user groups list
-      placeholder: Фильтр user groups by handle
-  loading: Loading user groups
-  new: New User Group
+      label: Фильтр списка групп
+      placeholder: Фильтр групп по дескриптору
+  loading: Загрузка групп пользователей
+  new: Новая группа пользователей
   permissions: Права доступа
-  title: User Groups
+  title: Группы пользователей
 export:
   buttonLabel: Экспорт
-  title: Экспорт user groups
+  title: Экспорт групп пользователей
   export: Экспорт
 import:
   buttonLabel: Импорт
-  title: Импорт user groups
-  uploadFilePlaceholder: Click or drop files here to import
+  title: Импорт групп пользователей
+  uploadFilePlaceholder: Кликните или перенесите файлы для импорта

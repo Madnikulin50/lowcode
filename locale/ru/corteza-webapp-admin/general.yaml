@@ -4,8 +4,8 @@ label:
     yes: Да
     no: Нет
   template:
-    single: Template
-    plural: Templates
+    single: Шаблон
+    plural: Шаблоны
   user:
     single: Пользователь
     plural: Пользователи
@@ -13,63 +13,63 @@ label:
     single: Роль
     plural: Роли
   user-group:
-    single: User Group
-    plural: User Groups
+    single: Группа пользователей
+    plural: Группы пользователей
   application:
     single: Приложение
     plural: Приложения
   auth-client:
-    single: Auth Client
-    plural: Auth Clients
+    single: Клиент авторизации
+    plural: Клиенты авторизации
   queue:
-    single: Messaging Queue
-    plural: Messaging Queues
+    single: Очередь сообщений
+    plural: Очереди сообщений
   route:
-    single: Route
-    plural: Routes
+    single: Маршрут
+    plural: Маршруты
   connection:
-    single: Database Connection
-    plural: Database Connections
+    single: Подключение к БД
+    plural: Подключения к БД
   sensitivity-level:
-    single: Sensitivity Level
-    plural: Sensitivity Levels
+    single: Уровень чувствительности
+    plural: Уровни чувствительности
   session:
-    single: Session
-    plural: Sessions
+    single: Сессия
+    plural: Сессии
   workflow:
     single: Процесс
     plural: Процессы
-  plus-add: + Add
-  clear: Clear
+  plus-add: + Добавить
+  clear: Очистить
   all: Все
   none: Отсутствует
-  experimental: Experimental
-  now: Now
-  openMap: Open Map
+  experimental: Экспериментально
+  now: Сейчас
+  openMap: Открыть карту
   today: Сегодня
-  routes: Routes
-  requests: Requests
-  refresh: Refresh
-  loadMore: Load more
+  routes: Маршруты
+  requests: Запросы
+  refresh: Обновить
+  loadMore: Загрузить ещё
   loading: Загрузка...
   saveAndClose: Сохранить и закрыть
   cancel: Отменить
   submit: Подтвердить
-  delete: Delete
-  undelete: Undelete
-  fileTypeNotAllowed: File type not allowed
-  uploading: Uploading
+  delete: Удалить
+  undelete: Восстановить
+  fileTypeNotAllowed: Тип файла не разрешён
+  uploading: Загрузка...
   dropFiles: Кликните или перенесите файл
 editor:
-  unsavedChanges:  Несохраненные изменения will be lost. Do you wish to leave the page?
+  unsavedChanges: Несохранённые изменения будут потеряны. Покинуть страницу?
 resourceList:
   pagination:
     recordsPerPage: На страницу
 themes:
   labels:
     light: Светлая
-    dark: Темная
+    dark: Тёмная
 extendSession:
   labels:
-    extend: Extend Session
-    warning: You will be logged out in {{ countdownTime }} секунд
+    extend: Продлить сессию
+    warning: Вы будете разлогинены через {{ countdownTime }} секунд

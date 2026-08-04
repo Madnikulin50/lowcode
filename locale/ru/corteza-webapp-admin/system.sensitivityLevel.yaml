@@ -1,45 +1,45 @@
 editor:
-  new: New Sensitivity Level
+  new: Новый уровень чувствительности
   title:
-    create: Create sensitivity level
-    edit: Изменить sensitivity level
+    create: Создать уровень чувствительности
+    edit: Изменить уровень чувствительности
   info:
-    title: Basic Information
+    title: Основная информация
     handle:
       label: Дескриптор
       placeholder: дескриптор (a - z, 0 - 9, underscore, dash)
-      invalid-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
+      invalid-characters: Должен быть не менее 2 символов. Может содержать только буквы, цифры, подчёркивания и точки. Должен заканчиваться буквой или цифрой
     name: Имя *
     description: Описание
-    level: Level {{level}}
+    level: Уровень {{level}}
     createdAt: Время создания
     createdBy: Создал
-    delete: Delete
+    delete: Удалить
     deletedAt: Время удаления
-    undelete: Undelete
+    undelete: Восстановить
     updatedAt: Время обновления
 
 list:
-  title: Sensitivity Levels
-  loading: Loading sensitivity levels
-  new: New Sensitivity Level
+  title: Уровни чувствительности
+  loading: Загрузка уровней чувствительности
+  new: Новый уровень чувствительности
   columns:
     actions: ''
     'meta.name': Имя
-    level: Level
+    level: Уровень
     createdAt: Создано
-    state: State
-  delete: Delete
-  undelete: Undelete
+    state: Состояние
+  delete: Удалить
+  undelete: Восстановить
   rows:
     filters:
-      deleted: Удаленные
+      deleted: Удалённые
   filterForm:
     deleted:
-      label: deleted sensitivity levels
+      label: удалённые уровни чувствительности
     excluded:
-      label: Without
+      label: Без
     exclusive:
-      label: Only
+      label: Только
     inclusive:
       label: Включая

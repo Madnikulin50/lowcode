@@ -1,6 +1,6 @@
 list:
   columns:
-    events: Triggered on events
+    events: Срабатывает на событиях
     label: Метка
     name: Имя
-  title: Compose Автоматизация
+  title: Автоматизация Compose

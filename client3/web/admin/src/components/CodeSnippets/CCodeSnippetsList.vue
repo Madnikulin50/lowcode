@@ -66,7 +66,7 @@
               <c-ace-editor
                 v-model="modal.data.script"
                 lang="javascript"
-                :min-height="500"
+                min-height="500"
                 :show-line-numbers="true"
                 :border="false"
                 :show-popout="false"

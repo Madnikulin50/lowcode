@@ -1,9 +1,10 @@
-<template><router-view v-if="loaded && i18nLoaded" /></template>
+<template><router-view v-if="loaded && i18nLoaded" /><c-toaster :toasts="toasts" /></template>
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuth, useSettings } from 'corteza-lib/vue/dist'
+import { useAuth, useSettings, toasts, components } from 'corteza-lib/vue/dist'
 import { websocket } from 'corteza-lib/vue/dist'
+const { CToaster } = components
 const { t } = useI18n()
 const { auth } = useAuth()
 const { $Settings } = useSettings()

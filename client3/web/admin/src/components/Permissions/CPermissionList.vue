@@ -43,7 +43,7 @@
         <div v-else-if="!canGrant" class="text-danger">{{ $t('ui.not-allowed') }}</div>
       </div>
 
-      <div v-else class="card-body overflow-auto p-0">
+      <div v-else class="overflow-auto p-0">
         <div v-for="(type, i) in sortedPermissions" :key="type">
           <div class="row g-0 bg-light border-bottom text-primary sticky-top align-items-stretch">
             <div class="col-4 align-self-center p-3 text-start">

@@ -1,27 +1,27 @@
 editor:
-  title: Compose settings
+  title: Настройки Compose
   basic:
     attachments:
-      max-size: Максимум size (MB)
-      page: Вложения на странице
-      record: Вложения в записи
-      icon: Вложения иконки
-      namespace: Вложение в пространстве
+      max-size: Максимальный размер (МБ)
+      page: Вложения страницы
+      record: Вложения записи
+      icon: Вложения иконок
+      namespace: Вложения пространства
       type:
-        description: 'MIME types, separated with ",". Example: "text/plain,text/csv"'
-        whitelist: File type whitelist
-    title: Basic
+        description: 'MIME типы, через ",". Пример: "text/plain,text/csv"'
+        whitelist: Белый список типов файлов
+    title: Основные
   ui:
-    title: User interface
+    title: Интерфейс
     sidebar:
-      title: Sidebar
+      title: Боковая панель
       hide-namespace-list: Скрыть список пространств
-      hide-namespace-list-link: Hide link to list of все пространства
+      hide-namespace-list-link: Скрыть ссылку на список всех пространств
     record-toolbar:
       title: Панель инструментов записи
-      hide-submit: Hide submit button
-      hide-delete: Hide delete button
-      hide-edit: Hide edit button
-      hide-new: Hide new button
-      hide-clone: Hide clone button
-      hide-back: Hide back link
+      hide-submit: Скрыть кнопку отправки
+      hide-delete: Скрыть кнопку удаления
+      hide-edit: Скрыть кнопку редактирования
+      hide-new: Скрыть кнопку создания
+      hide-clone: Скрыть кнопку клонирования
+      hide-back: Скрыть ссылку назад

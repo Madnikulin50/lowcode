@@ -69,7 +69,7 @@ const props = defineProps({
     default: 'chrome',
   },
   minHeight: {
-    type: String,
+    type: [String, Number],
     default: '2.35rem',
   },
   showLineNumbers: {

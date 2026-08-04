@@ -1,7 +1,7 @@
 <template>
   <div class="container pt-2 pb-3">
     <c-content-header :title="$t('ui.settings.editor.corteza-studio.title')" />
-    <c-ui-branding-editor v-if="settings" :settings="settings" :processing="branding.processing" :success="branding.success" :can-manage="canManage" @submit="onSubmit($event, 'branding')" />
+    <CUIBrandingEditor v-if="settings" :settings="settings" :processing="branding.processing" :success="branding.success" :can-manage="canManage" @submit="onSubmit($event, 'branding')" />
   </div>
 </template>
 <script setup>

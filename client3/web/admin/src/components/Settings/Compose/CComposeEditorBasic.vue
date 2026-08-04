@@ -142,7 +142,12 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+const { t: _t } = useI18n()
+
+function t (key, ...args) {
+  if (key.startsWith('label.') || key.startsWith('admin.')) return _t(key, ...args)
+  return _t('editor.basic.' + key, ...args)
+}
 
 const props = defineProps({
   basic: {

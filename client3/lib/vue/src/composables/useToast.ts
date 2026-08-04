@@ -1,4 +1,5 @@
 import { getCurrentInstance } from 'vue'
+import { pushToast } from '../libs/toasts'
 
 export function useToast() {
   const instance = getCurrentInstance()
@@ -27,6 +28,8 @@ export function useToast() {
     const toastFn = instance?.appContext.config.globalProperties.$toast
     if (toastFn) {
       toastFn(msg, opt)
+    } else {
+      pushToast(msg, opt)
     }
   }
 

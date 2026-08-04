@@ -1,78 +1,78 @@
 editor:
   content:
     editor:
-      unsupported: Unsupported editor
-    partial: Partial template
+      unsupported: Неподдерживаемый редактор
+    partial: Частичный шаблон
     preview:
       html: Предпросмотр HTML
       pdf: Предпросмотр PDF
-      title: Предпросмотр output
-    title: Template content
+      title: Предпросмотр вывода
+    title: Содержимое шаблона
     toolbox:
-      partials: Partials
+      partials: Частичные шаблоны
       samples:
-        defaultHTML: Default HTML
-        label: Samples
+        defaultHTML: Стандартный HTML
+        label: Примеры
       snippets:
-        funcCall: Call a function
-        interpolate: Interpolate value
-        iterator: Iterate over a set
-        label: Snippets
-      title: Toolbox
+        funcCall: Вызвать функцию
+        interpolate: Интерполировать значение
+        iterator: Итерировать набор
+        label: Сниппеты
+      title: Панель инструментов
   info:
     contentType:
       text_html: HTML
-      text_plain: Plain text
+      text_plain: Простой текст
     createdAt: Время создания
     createdBy: Создал
-    delete: Delete
+    delete: Удалить
     deletedAt: Время удаления
     handle: Дескриптор
     placeholder-handle: дескриптор (a - z, 0 - 9, underscore, dash)
-    invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
+    invalid-handle-characters: Должен быть не менее 2 символов. Может содержать только буквы, цифры, подчёркивания и точки. Должен заканчиваться буквой или цифрой
     meta:
       description: Описание
       short: Короткое имя *
-    partial: Partial template
-    partialDescription: Partial templates may be used inside other templates such as headers and footers. Partial templates may not be used on their own.
-    title: Basic information
-    type: Template type
-    undelete: Undelete
+    partial: Частичный шаблон
+    partialDescription: Частичные шаблоны могут использоваться внутри других шаблонов, например, как заголовки и подвалы. Частичные шаблоны не могут использоваться сами по себе.
+    title: Основная информация
+    type: Тип шаблона
+    undelete: Восстановить
     updatedAt: Время обновления
-  new: New Template
+  new: Новый шаблон
   permissions: Права доступа
   title:
-    create: Create template
-    edit: Изменить template
+    create: Создать шаблон
+    edit: Изменить шаблон
 list:
   columns:
     actions: ""
     createdAt: Создано
     handle: Дескриптор
-    language: Language
+    language: Язык
     meta:
       short: Короткое имя
-    state: State
-  delete: Delete
-  undelete: Undelete
+    state: Состояние
+  delete: Удалить
+  undelete: Восстановить
   export: Экспорт
   rows:
     filters:
-      deleted: Удаленные
+      deleted: Удалённые
   filterForm:
     deleted:
-      label: deleted templates
+      label: удалённые шаблоны
     excluded:
-      label: Without
+      label: Без
     exclusive:
-      label: Only
+      label: Только
     handle:
-      label: Фильтр templates list
-      placeholder: Фильтр templates by handle
+      label: Фильтр списка шаблонов
+      placeholder: Фильтр шаблонов по дескриптору
     inclusive:
       label: Включая
-  loading: Loading templates
-  new: New Template
+  loading: Загрузка шаблонов
+  new: Новый шаблон
   permissions: Права доступа
-  title: Templates
+  title: Шаблоны
   yaml: YAML

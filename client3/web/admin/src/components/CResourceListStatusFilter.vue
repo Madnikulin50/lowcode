@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex align-items-center flex-wrap gap-1">
+  <div class="d-flex align-items-center flex-wrap gap-1 ml-8">
     <div class="btn-group" role="group">
       <input
         :id="uid + '0'"
@@ -43,7 +43,7 @@
         class="btn btn-outline-primary btn-sm"
       >{{ exclusiveLabel }}</label>
     </div>
-    <span class="text-nowrap">{{ label }}</span>
+    <span class="text-nowrap ml-2">{{ label }}</span>
   </div>
 </template>
 

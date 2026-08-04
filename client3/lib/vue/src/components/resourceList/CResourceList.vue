@@ -9,23 +9,24 @@
       :class="cardHeaderClass"
     >
       <div class="container-fluid d-flex flex-column p-0 gap-2 d-print-none">
-        <div class="row g-0 d-flex align-items-center justify-content-between gap-1">
-          <div :class="`d-flex align-items-center flex-grow-1 flex-wrap flex-fill-child gap-1 ${headerClass}`">
+        <div class="row g-0 d-flex align-items-center gap-1 flex-nowrap">
+          <div :class="`d-flex align-items-center flex-grow-1 flex-wrap gap-1 ${headerClass}`">
             <slot
               name="header"
               :selected="selected"
             />
-          </div>
-          <div
-            v-if="!hideSearch"
-            class="flex-fill"
-          >
-            <c-input-search
-              :model-value="(filter as Record<string, any>)[queryField]"
-              :placeholder="translations.searchPlaceholder"
-              :submittable="true"
-              @search="handleSearch"
-            />
+            <div
+              v-if="!hideSearch"
+              class="ms-auto"
+              style="margin-left: auto; width: 250px; flex: none; flex-shrink: 0"
+            >
+              <c-input-search
+                :model-value="(filter as Record<string, any>)[queryField]"
+                :placeholder="translations.searchPlaceholder"
+                :submittable="true"
+                @search="handleSearch"
+              />
+            </div>
           </div>
         </div>
         <div
@@ -391,7 +392,21 @@ const getPagination = computed(() => {
     count: total,
     data: total === 1 ? props.translations.resourceSingle : props.translations.resourcePlural,
   }
-  return $t(props.translations[total > limit ? 'showingPagination' : 'singlePluralPagination'], pagination)
+
+  const key = props.translations[total > limit ? 'showingPagination' : 'singlePluralPagination']
+
+  if (total <= limit && key) {
+    const suffixes = total === 1 ? ['_one'] : ['_other', '_plural']
+    for (const suffix of suffixes) {
+      const pluralKey = `${key}${suffix}`
+      const resolved = $t(pluralKey, pagination)
+      if (resolved !== pluralKey) {
+        return resolved
+      }
+    }
+  }
+
+  return $t(key, pagination)
 })
 
 const hasPrevPage = computed(() => !!props.pagination.prevPage)
@@ -522,7 +537,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-#resource-list.resource-list-table > :not(caption) > * > * {
+.resource-list-table > :not(caption) > * > * {
   padding: 0.75rem 0.5rem;
 }
 

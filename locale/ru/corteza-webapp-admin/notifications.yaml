@@ -1,27 +1,27 @@
 title: Уведомления
 empty: Нет уведомлений
-emptyDescription: You will see notifications here when they arrive
-markAllAsRead: Mark all as read
-markAllAsUnread: Mark all as unread
-markAsRead: Mark as read
-markAsUnread: Mark as unread
-delete: Delete
+emptyDescription: Уведомления появятся здесь, когда придут
+markAllAsRead: Отметить все как прочитанные
+markAllAsUnread: Отметить все как непрочитанные
+markAsRead: Отметить как прочитанное
+markAsUnread: Отметить как непрочитанное
+delete: Удалить
 all: Все
-unread: Unread
-read: Read
+unread: Непрочитанные
+read: Прочитанные
 success: Успех
-allMarkedAsRead: All notifications have been marked as read
-allMarkedAsUnread: All notifications have been marked as unread
-notificationDeleted: Notification has been deleted
-loadMore: Загрузить еще
-recordRedirectError: Error navigating to record
+allMarkedAsRead: Все уведомления отмечены как прочитанные
+allMarkedAsUnread: Все уведомления отмечены как непрочитанные
+notificationDeleted: Уведомление удалено
+loadMore: Загрузить ещё
+recordRedirectError: Ошибка перехода к записи
 mute: Заглушить уведомления
 unmute: Подключить уведомления
 muted: Уведомления заглушены
-unmuted: Уведомления unmuted
-markAllAsReadError: Error marking all notifications as read
-markAllAsUnreadError: Error marking all notifications as unread
-notificationDeletedError: Error deleting notification
+unmuted: Уведомления подключены
+markAllAsReadError: Ошибка при отметке всех уведомлений как прочитанных
+markAllAsUnreadError: Ошибка при отметке всех уведомлений как непрочитанных
+notificationDeletedError: Ошибка при удалении уведомления
 namespaceNotFound: Пространство не найдено
-pageNotFound: Станицы не найдены
+pageNotFound: Страница не найдена
 recordNotFound: Запись не найдена
