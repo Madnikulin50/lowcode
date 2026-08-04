@@ -1,0 +1,51 @@
+/* Documentation layout — uses CSS vars from docs.css */
+body { font-size: 16px; line-height: 1.6; color: var(--black, #3a3b45); background: var(--body-bg, #F3F5F7); font-family: var(--font-family-sans-serif, Nunito, system-ui, sans-serif); }
+
+header { background: var(--primary, #4e73df); color: #fff; padding: 0 24px; position: sticky; top: 0; z-index: 100; }
+html { overflow: auto !important; height: auto !important; }
+body { overflow: auto !important; }
+.header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; height: 52px; justify-content: space-between; }
+.header-inner a { color: #fff; text-decoration: none; font-weight: 700; font-size: 17px; }
+.header-lang { font-size: 12px; opacity: .7; }
+
+.layout { display: flex; max-width: 1400px; margin: 0 auto; min-height: calc(100vh - 52px); }
+
+.sidebar { width: 300px; flex-shrink: 0; background: var(--sidebar-bg, #fff); border-right: 1px solid var(--extra-light, #E4E9EF); padding: 16px 0; overflow-y: auto; max-height: calc(100vh - 52px); position: sticky; top: 52px; }
+.sidebar ul { list-style: none; padding: 0; margin: 0; }
+.sidebar li { margin: 0; }
+.sidebar li.dir > ul { display: none; padding-left: 16px; }
+.sidebar .chevron { display: inline-block; width: 14px; margin-right: 4px; font-size: 10px; transition: transform .15s; color: var(--secondary, #858796); user-select: none; }
+.sidebar li.dir.expanded .chevron { transform: rotate(90deg); }
+.sidebar a, .sidebar .dir-label { display: block; padding: 4px 20px; font-size: 14px; color: var(--gray-dark, #5a5c69); text-decoration: none; cursor: pointer; border-left: 3px solid transparent; transition: .12s; }
+.sidebar .dir-label { font-weight: 700; color: var(--primary, #4e73df); }
+.sidebar a:hover { background: var(--light, #f8f9fc); border-left-color: var(--primary, #4e73df); color: var(--primary, #4e73df); }
+.sidebar li.active > a { background: var(--light, #f8f9fc); border-left-color: var(--primary, #4e73df); font-weight: 700; color: var(--primary, #4e73df); }
+
+.content { flex: 1; padding: 32px 48px; max-width: 960px; }
+.content h1 { font-size: 2rem; margin: 0 0 .5em; border-bottom: 2px solid var(--extra-light, #E4E9EF); padding-bottom: .3em; font-weight: 700; color: var(--black, #3a3b45); }
+.content h2 { font-size: 1.5rem; margin: 1.2em 0 .5em; font-weight: 700; color: var(--black, #3a3b45); }
+.content h3 { font-size: 1.2rem; margin: 1em 0 .4em; font-weight: 600; }
+.content h4 { font-size: 1rem; margin: .8em 0 .3em; font-weight: 600; }
+.content p { margin: .6em 0; }
+.content a { color: var(--primary, #4e73df); }
+.content a:hover { text-decoration: underline; }
+.content code { background: var(--light, #f8f9fc); padding: 2px 6px; border-radius: 3px; font-size: .9em; color: var(--danger, #e74a3b); }
+.content pre { background: #282a36; color: #f8f8f2; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 14px; margin: .8em 0; }
+.content pre code { background: none; padding: 0; color: #f8f8f2; }
+.content blockquote { border-left: 4px solid var(--primary, #4e73df); padding: .5em 1em; margin: .8em 0; background: var(--light, #f8f9fc); }
+.content table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+.content th, .content td { border: 1px solid var(--extra-light, #E4E9EF); padding: 8px 12px; text-align: left; }
+.content th { background: var(--light, #f8f9fc); font-weight: 600; }
+.content img { max-width: 100%; height: auto; margin: 1em 0; border-radius: 4px; }
+.content ul, .content ol { margin: .4em 0; padding-left: 1.5em; }
+.content li { margin: .2em 0; }
+.content hr { border: none; border-top: 1px solid var(--extra-light, #E4E9EF); margin: 1.5em 0; }
+
+.admonition { margin: 1em 0; padding: 12px 16px; border-radius: 6px; border-left: 4px solid; }
+.admonition.note { background: #e8f4fd; border-color: var(--info, #17a2b8); }
+.admonition.important { background: #fff3e0; border-color: var(--warning, #E27646); }
+.admonition.warning { background: #fff0f0; border-color: var(--danger, #e74a3b); }
+.admonition.caution { background: #fff0f0; border-color: var(--danger, #e74a3b); }
+.admonition.tip { background: #e8f5e9; border-color: var(--success, #1cc88a); }
+
+@media (max-width: 900px) { .sidebar { display: none; } .content { padding: 16px 20px; } }
