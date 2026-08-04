@@ -1,0 +1,38 @@
+# module
+
+[cols="1s,5a,5a"]
+|===
+| Operation| Description | Default
+
+
+| [#rbac-module-read]#[rbac-module-read,read](#rbac-module-read,read)#
+| read
+| Deny
+
+
+| [#rbac-module-update]#[rbac-module-update,update](#rbac-module-update,update)#
+| update
+| Deny
+
+
+| [#rbac-module-delete]#[rbac-module-delete,delete](#rbac-module-delete,delete)#
+| delete
+| Deny
+
+
+| [#rbac-module-record.create]#[rbac-module-record.create,record.create](#rbac-module-record.create,record.create)#
+| Create record
+| Deny
+
+
+| [#rbac-module-owned-record.create]#[rbac-module-owned-record.create,owned-record.create](#rbac-module-owned-record.create,owned-record.create)#
+| Create record with custom owner
+| Deny
+
+
+| [#rbac-module-records.search]#[rbac-module-records.search,records.search](#rbac-module-records.search,records.search)#
+| List, search or filter records
+| Deny
+
+
+|===

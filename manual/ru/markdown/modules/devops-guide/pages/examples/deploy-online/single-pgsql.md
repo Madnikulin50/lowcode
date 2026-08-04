@@ -1,0 +1,7 @@
+# Одиночный образ PostgreSQL
+
+```txt
+```
+- target file structure
+- raw config files
+- exclude any meta text such as run commands and such...

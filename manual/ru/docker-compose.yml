@@ -1,0 +1,9 @@
+name: ru-docs
+
+services:
+  docs:
+    build:
+      context: tools/docserver
+    ports:
+      - "5000:80"
+    restart: unless-stopped

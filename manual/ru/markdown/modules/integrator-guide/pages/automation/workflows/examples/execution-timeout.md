@@ -1,0 +1,64 @@
+# Execution timeout
+:page-noindex: true
+
+LowCoooode workflows' execution does not timeout by default (the workflow can run indefinitely).
+
+If your use-case requires you to define a timeout, you can implement this manually.
+
+.The below example does two things:
+- Schedule a timeout after 10sec of execution,
+- repeat the iterator indefinitely.
+
+[annotation,role="data-zoomable"]
+{
+  "image": {
+    "rel": "automation/workflows/examples/manual-timeout.png",
+    "alias": "automation-workflows-examples-manual-timeout.png",
+    "w": 1920,
+    "h": 1080
+  },
+  "view": {
+    "x": 92,
+    "y": 219,
+    "w": 1224,
+    "h": 647
+  },
+  "annotations": []
+}
+
+******
+.Workflow step details:
+[%collapsible.result]
+1. **(1) Test trigger**:
+*** *resource**: `System`
+*** *event**: `onManual`
+*** *enabled**: checked
+2. **(2) Fork**:
+*** *gateway**: `Inclusive`
+*** *conditions**:
+*** `true`
+*** `true`
+3. **(3) Wait 10sec**:
+*** *offset**: `10s`
+4. **(4) Log context timeout**:
+*** *type**: `Log debug message`
+*** *arguments**:
+**** *message**:
+****** **value type**:  constant
+****** **value**: `Context timeout`
+5. **(5) Context timeout**: /
+6. **(6) Repeat indefinitely**:
+*** *type**: `Condition`
+*** *arguments**:
+**** *while**:
+****** **value type**: expression
+****** **value**: `true`
+7. **(7) Log iteration**:
+*** *type**: `Log debug message`
+*** *arguments**:
+**** *message**:
+****** **value type**: constant
+****** **value**: `Iterator loop`
+8. **(8) Done**: /
+9. **(9) Completed**: /
+******
