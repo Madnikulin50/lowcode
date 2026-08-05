@@ -1237,6 +1237,10 @@ func ModulesToModelSet(dmm dalModelManager, ns *types.Namespace, mm ...*types.Mo
 
 		// Convert all modules to models
 		for _, mod := range modules {
+			if mod.Config.Type == "connector" {
+				continue
+			}
+
 			if conn == nil {
 				// construct a simplified model w/o attributes, connection
 				// this will allow us to manage model's issues within
@@ -1246,7 +1250,7 @@ func ModulesToModelSet(dmm dalModelManager, ns *types.Namespace, mm ...*types.Mo
 					Resource:   mod.RbacResource(),
 					ResourceID: mod.ID,
 				}
-				if mod.Config.Type == "dbref" {
+	if mod.Config.Type == "dbref" || mod.Config.Type == "connector" {
 					model.Static = true
 				}
 
@@ -1327,6 +1331,10 @@ func ModuleToModel(ns *types.Namespace, mod *types.Module, inhIdent string) (mod
 		ResourceID:         mod.ID,
 		ResourceType:       types.ModuleResourceType,
 		SensitivityLevelID: mod.Config.Privacy.SensitivityLevelID,
+	}
+
+	if mod.Config.Type == "connector" {
+		return nil, nil
 	}
 
 	if mod.Config.Type == "dbref" {

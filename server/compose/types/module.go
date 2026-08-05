@@ -68,6 +68,8 @@ type (
 		Datasource ModuleConfigDataSource `json:"dataSource"`
 
 		Etl ModuleConfigETL `json:"etl"`
+
+		Connector ModuleConfigConnector `json:"connector"`
 	}
 
 	ModuleConfigETL struct {

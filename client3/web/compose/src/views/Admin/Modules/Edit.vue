@@ -230,13 +230,25 @@
                   </a>
                 </li>
                 <li
+                  v-if="isConnector"
+                  class="nav-item"
+                >
+                  <a
+                    class="nav-link"
+                    :class="{ active: activeTab === 8 }"
+                    @click.prevent="activeTab = 8"
+                  >
+                    {{ $t('connector.title') }}
+                  </a>
+                </li>
+                <li
                   v-if="module && module.issues.length > 0"
                   class="nav-item"
                 >
                   <a
                     class="nav-link text-danger"
-                    :class="{ active: activeTab === 7 }"
-                    @click.prevent="activeTab = 7; checkAlterations()"
+                    :class="{ active: activeTab === 9 }"
+                    @click.prevent="activeTab = 9; checkAlterations()"
                   >
                     {{ $t('edit.issues.label', { count: module.issues.length }) }}
                   </a>
@@ -590,9 +602,19 @@
                   />
                 </div>
                 <div
+                  v-if="isConnector"
+                  class="tab-pane"
+                  :class="{ active: activeTab === 8 }"
+                >
+                  <connector-settings
+                    v-if="activeTab === 8"
+                    :module="module"
+                  />
+                </div>
+                <div
                   v-if="module && module.issues.length > 0"
                   class="tab-pane"
-                  :class="{ active: activeTab === 7 }"
+                  :class="{ active: activeTab === 9 }"
                 >
                   <div
                     v-for="(issue, index) in module.issues"
@@ -716,6 +738,7 @@ import ModuleTranslator from 'corteza-webapp-compose/src/components/Admin/Module
 import UniqueValues from 'corteza-webapp-compose/src/components/Admin/Module/UniqueValues'
 import RelatedPages from 'corteza-webapp-compose/src/components/Admin/Module/RelatedPages'
 import EtlSettings from 'corteza-webapp-compose/src/components/Admin/Module/ETLSettings'
+import ConnectorSettings from 'corteza-webapp-compose/src/components/Admin/Module/ConnectorSettings'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { handle, components, composables } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
@@ -771,6 +794,7 @@ const typeValueOptions = computed(() => [
   { value: 'basic', text: t('edit.type.basic') },
   { value: 'datasource', text: t('edit.type.datasource') },
   { value: 'dbref', text: t('edit.type.dbref') },
+  { value: 'connector', text: t('edit.type.connector') },
 ])
 
 const moduleType = computed({
@@ -786,6 +810,7 @@ const moduleType = computed({
 const isDatasource = computed(() => moduleType.value === 'datasource')
 const isBasic = computed(() => moduleType.value === 'basic')
 const isDbRef = computed(() => moduleType.value === 'dbref')
+const isConnector = computed(() => moduleType.value === 'connector')
 
 const trModule = computed({
   get () {

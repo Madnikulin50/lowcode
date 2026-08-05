@@ -103,6 +103,14 @@ export default defineConfig({
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },
+      '/connector': {
+        target: process.env.VITE_API_URL || 'http://localhost:3333',
+        changeOrigin: true,
+      },
+      '/datasource': {
+        target: process.env.VITE_API_URL || 'http://localhost:3333',
+        changeOrigin: true,
+      },
       '/custom.css': {
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,

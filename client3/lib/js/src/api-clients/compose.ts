@@ -4860,6 +4860,38 @@ export default class Compose {
         return `/namespace/${namespaceID}/etl/${etlID}/run`
     }
 
+    async connectorTest (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.connectorTestEndpoint(),
+            data: a,
+            headers: { 'Content-Type': 'application/json' },
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    connectorTestEndpoint (): string {
+        return `/connector/test`
+    }
+
+    async datasourcePreview (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.datasourcePreviewEndpoint(),
+            data: a,
+            headers: { 'Content-Type': 'application/json' },
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    datasourcePreviewEndpoint (): string {
+        return `/datasource/preview`
+    }
+
     async ragDocumentList (a: KV): Promise<KV> {
         return this.api().request({
             method: 'get',

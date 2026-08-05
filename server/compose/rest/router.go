@@ -50,6 +50,8 @@ func MountRoutes() func(r chi.Router) {
 			handlers.NewDataPrivacy(dataPrivacy).MountRoutes(r)
 			handlers.NewImageSearch(imageSearch).MountRoutes(r)
 			handlers.NewETL(ETL{}.New()).MountRoutes(r)
+			handlers.NewConnector(Connector{}.New()).MountRoutes(r)
+			handlers.NewDatasource(Datasource{}.New()).MountRoutes(r)
 			MountRuleChainRoutes(r)
 			MountRuleChainAdminRoutes(r)
 			MountPageBlockTriggerRoutes(r)

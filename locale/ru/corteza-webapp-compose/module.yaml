@@ -84,6 +84,7 @@ edit:
     basic: Базовый
     datasource: Агрегат
     dbref: Ссылка на БД
+    connector: Коннектор
   label:
     type: Тип модуля
     required: '*'
@@ -189,6 +190,12 @@ edit:
         aggregate:
           label: Агрегация
           load-datasource: Aggregates data from a load datasource based on a column value and aggregates it, such as counting the number of Accounts with the same status
+      preview:
+        button: Предпросмотр
+        title: Предпросмотр данных
+        empty: Нет данных
+        rows: 'Показано строк: {{count}}'
+        close: Закрыть
       add:
         datasource: Добавить источник данных
         display-element: Добавить отображаемый элемент
@@ -335,3 +342,110 @@ etl:
     url: URL
     method: Метод
     body: Тело запроса (JSON)
+
+connector:
+  title: Коннектор данных
+  description: Чтение записей напрямую из внешнего REST API, базы данных, GraphQL, Elasticsearch и других источников.
+  type: Тип коннектора
+  testConnection: Проверить соединение
+  testOk: Соединение установлено
+  testFail: Ошибка соединения
+  types:
+    rest: REST API
+    graphql: GraphQL
+    elasticsearch: Elasticsearch
+    mongodb: MongoDB
+    kafka: Kafka
+    redis: Redis
+    grpc: gRPC
+    db: База данных
+  rest:
+    url: URL
+    urlPlaceholder: 'https://api.example.com/data'
+    method: Метод
+    dataPath: Путь к данным
+    dataPathPlaceholder: 'results.items'
+    dataPathHint: 'Путь к массиву в JSON-ответе через точку, например "data.records". Оставьте пустым, если ответ — массив.'
+    body: Тело
+    bodyPlaceholder: '{"key": "value"}'
+    headers: Заголовки
+    headerName: Название
+    headerValue: Значение
+    addHeader: Добавить заголовок
+    limitParam: Параметр лимита
+    offsetParam: Параметр смещения
+    pageParam: Параметр страницы
+  graphql:
+    url: URL эндпоинта
+    urlPlaceholder: 'https://api.example.com/graphql'
+    query: Запрос
+    queryPlaceholder: >-
+      { items { id name } }
+    dataPath: Путь к данным
+    dataPathPlaceholder: 'data.items'
+    dataPathHint: 'Путь к массиву от корня "data" через точку, например "items".'
+  elasticsearch:
+    url: URL хоста
+    urlPlaceholder: 'https://es.example.com:9200'
+    urlHint: 'URL сервера Elasticsearch без слеша в конце'
+    index: Индекс
+    indexPlaceholder: 'my-index'
+    query: Query DSL
+    queryPlaceholder: '{"query":{"match_all":{}}}'
+    queryHint: 'Тело запроса Elasticsearch DSL (JSON)'
+    limitParam: 'Параметр размера (по умолчанию: 10)'
+  mongodb:
+    host: Хост
+    hostPlaceholder: 'localhost'
+    port: Порт
+    database: База данных
+    collection: Коллекция
+    collectionPlaceholder: 'my_collection'
+    query: Фильтр запроса (JSON)
+    queryPlaceholder: '{"status": "active"}'
+    queryHint: 'Фильтр запроса MongoDB в формате JSON'
+  kafka:
+    brokers: Брокеры
+    brokersPlaceholder: 'localhost:9092,host2:9092'
+    topic: Топик
+    topicPlaceholder: 'my-topic'
+    group: Группа потребителей
+    groupPlaceholder: 'my-group'
+    hint: 'Стриминговый коннектор Kafka (в разработке)'
+  redis:
+    host: Хост
+    hostPlaceholder: 'localhost'
+    port: Порт
+    password: Пароль
+    keyPattern: Шаблон ключа
+    keyPatternPlaceholder: 'prefix:*'
+    keyPatternHint: 'Шаблон ключей Redis, например "users:*" для сканирования хешей'
+    database: 'Номер БД'
+    hint: 'Коннектор ключ-значение Redis (в разработке)'
+  grpc:
+    address: Адрес сервера
+    addressPlaceholder: 'localhost:50051'
+    method: 'Метод сервиса'
+    methodPlaceholder: '/package.Service/Method'
+    payload: Полезная нагрузка (JSON)
+    payloadPlaceholder: '{}'
+    payloadHint: 'Protobuf-сообщение в формате JSON'
+    hint: 'Коннектор gRPC (в разработке)'
+  db:
+    driver: Драйвер
+    connectionString: Строка подключения
+    connectionStringPlaceholder: 'postgres://user:pass(at)host:5432/dbname?sslmode=disable'
+    connectionStringHint: 'Оставьте пустым для использования базы данных Corteza по умолчанию.'
+    query: SQL-запрос
+    queryPlaceholder: SELECT * FROM external_table
+    queryHint: SQL-запрос к базе данных по умолчанию. Колонки будут сопоставлены с полями модуля.
+  fieldMapping:
+    title: Сопоставление полей
+    add: Добавить сопоставление
+    hint: Как внешние поля сопоставляются с полями модуля. Если сопоставления нет, используется ключ источника с тем же именем.
+    moduleField: Поле модуля
+    sourceKey: Ключ источника / колонка
+    selectField: Выберите поле
+    sourceKeyPlaceholder: имя_колонки или json.ключ
+    empty: Сопоставления не заданы. Ключи источника, совпадающие с именами полей модуля, будут использованы автоматически.
+  notImplemented: 'Коннектор {{type}} — скоро'

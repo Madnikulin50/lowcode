@@ -1,5 +1,20 @@
 <template>
   <div v-if="module">
+    <div class="d-flex justify-content-end mb-2">
+      <button
+        class="btn btn-outline-primary btn-sm"
+        type="button"
+        :disabled="previewing"
+        @click="runPreview"
+      >
+        <span
+          v-if="previewing"
+          class="spinner-border spinner-border-sm me-1"
+        />
+        {{ t('preview.button') }}
+      </button>
+    </div>
+
     <configurator
       v-if="module"
       :items="items"
@@ -52,12 +67,98 @@
         </div>
       </div>
     </div>
+
+    <div
+      ref="previewModalEl"
+      class="modal fade"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ t('preview.title') }}</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            />
+          </div>
+          <div class="modal-body">
+            <p
+              v-if="previewError"
+              class="text-danger small mb-0"
+            >
+              {{ previewError }}
+            </p>
+            <div
+              v-else-if="previewColumns.length"
+              class="preview-table-wrap"
+            >
+              <table class="table record-list-table table-hover mb-0">
+                <thead>
+                  <tr class="text-muted small">
+                    <th
+                      v-for="c in previewColumns"
+                      :key="c.name"
+                    >
+                      <div class="d-flex align-items-center text-nowrap">
+                        {{ c.label || c.name }}
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(row, ri) in previewRows"
+                    :key="ri"
+                  >
+                    <td
+                      v-for="(cell, ci) in row"
+                      :key="ci"
+                      class="record-value"
+                    >
+                      {{ cell }}
+                    </td>
+                  </tr>
+                  <tr v-if="!previewRows.length">
+                    <td
+                      :colspan="previewColumns.length"
+                      class="text-muted small"
+                    >
+                      {{ t('preview.empty') }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p
+              v-else
+              class="text-muted small mb-0"
+            >
+              {{ t('preview.empty') }}
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              {{ t('preview.close') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="js">
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Modal } from 'bootstrap'
 import { compose, NoID, reporter } from 'corteza-lib/js/dist'
 import datasources from 'corteza-webapp-compose/src/components/Admin/Module/Datasources/loader'
 import Configurator from 'corteza-webapp-compose/src/components/Common/Configurator'
@@ -69,6 +170,15 @@ const prefixed$ = 'edit.config.datasource.'
 const { t: $t } = useI18n()
 const t = (key) => $t(prefixed$ + key)
 const tG = (key) => $t(key)
+
+const { $ComposeAPI } = getCurrentInstance().appContext.config.globalProperties
+
+const previewModalEl = ref(undefined)
+const previewModal = ref(undefined)
+const previewing = ref(false)
+const previewColumns = ref([])
+const previewRows = ref([])
+const previewError = ref('')
 
 const props = defineProps({
   module: {
@@ -137,10 +247,18 @@ onMounted(() => {
     return ds
   })
   dsState.currentIndex = items.value.length ? 0 : undefined
+
+  previewModal.value = new Modal(previewModalEl.value)
+  previewModalEl.value.addEventListener('hidden.bs.modal', () => {
+    previewColumns.value = []
+    previewRows.value = []
+    previewError.value = ''
+  })
 })
 
 onBeforeUnmount(() => {
   setDefaultValues()
+  previewModal.value?.dispose()
 })
 
 function setDefaultValues () {
@@ -214,4 +332,73 @@ function addDatasource (kind = '') {
   dsState.showSelector = false
   dsState.showConfigurator = true
 }
+
+function runPreview () {
+  previewing.value = true
+  previewError.value = ''
+  previewColumns.value = []
+  previewRows.value = []
+  $ComposeAPI.datasourcePreview({
+    namespaceID: props.module.namespaceID || NoID,
+    moduleID: props.module.moduleID || NoID,
+    datasource: props.module.config.dataSource ?? {},
+    limit: 20,
+  }).then((frame) => {
+    previewColumns.value = (frame?.columns || [])
+    previewRows.value = (frame?.rows || [])
+    previewModal.value?.show()
+  }).catch((e) => {
+    previewError.value = e.message || String(e)
+    previewModal.value?.show()
+  }).finally(() => {
+    previewing.value = false
+  })
+}
 </script>
+
+<style lang="scss">
+.preview-table-wrap {
+  border-radius: 0.5rem;
+  border: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.record-list-table {
+  border-collapse: separate;
+  border-spacing: 0;
+
+  thead {
+    th {
+      background: #f8f9fa;
+      border-bottom: 2px solid var(--bs-border-color, #dee2e6);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--bs-secondary-color, #6c757d);
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      padding: 0.625rem 0.75rem;
+      white-space: nowrap;
+
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+  }
+
+  tbody {
+    td {
+      padding: 0.625rem 0.75rem;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0,0,0,0.05));
+      font-size: 0.875rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background-color: rgba(var(--bs-primary-rgb, 13 110 253), 0.03);
+    }
+  }
+}
+</style>

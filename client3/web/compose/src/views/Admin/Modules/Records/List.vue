@@ -7,6 +7,18 @@
     </Teleport>
 
     <Teleport to="#topbar-tools">
+      <c-input-search
+        v-if="enableAI"
+        v-model.trim="aiPrompt"
+        class="me-2"
+        :ai="true"
+        :aria-label="$t('AI')"
+        :placeholder="$t('aiChat.startPrompt')"
+        :autocomplete="'off'"
+        submittable
+        @search="handleAiSearch"
+      />
+
       <div
         v-if="modulePage"
         class="btn-group"
@@ -37,6 +49,12 @@
       class="p-2"
       @save-fields="handleFieldsSave"
     />
+
+    <ai-chat-modal
+      :namespace="namespace?.namespaceID"
+      :page="page?.pageID"
+      :module="module?.moduleID"
+    />
   </div>
 </template>
 
@@ -46,8 +64,11 @@ import { useStore } from '../../../../store'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { compose, NoID } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import RecordListBase from 'corteza-webapp-compose/src/components/PageBlocks/RecordListBase'
+import AiChatModal from 'corteza-webapp-compose/src/components/Public/Page/AiChat/Modal.vue'
 
+const { CInputSearch } = components
 const { t } = useI18n()
 const store = useStore()
 const route = useRoute()
@@ -66,8 +87,11 @@ const props = defineProps({
 })
 
 const block = ref(undefined)
+const aiPrompt = ref('')
 const getModuleByID = computed(() => store.getters['module/getByID'])
 const recordPaginationUsable = computed(() => store.getters['ui/recordPaginationUsable'])
+
+const enableAI = computed(() => true)
 
 const title = computed(() => {
   const { name, handle } = module.value || {}
@@ -172,5 +196,14 @@ function handleFieldsSave (fields = []) {
     module.value.meta.ui.admin = { ...(module.value.meta.ui.admin || {}), fields }
   }
   store.dispatch('module/update', module.value)
+}
+
+function handleAiSearch (query) {
+  window.dispatchEvent(new CustomEvent('show-chat-modal', { detail: {
+    namespace: namespace?.namespaceID,
+    module: module.value?.moduleID,
+    page: module.value?.moduleID,
+    prompt: query,
+  } }))
 }
 </script>

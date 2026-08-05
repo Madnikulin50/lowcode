@@ -462,6 +462,10 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 		}
 
 		switch m.Config.Type {
+		case "connector":
+			reportItems, err = svc.connectorReportEntries(ctx, m)
+			return err
+
 		case "datasource":
 			var (
 				//aaProps = &reportActionProps{}
@@ -660,6 +664,126 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 	return reportItems, svc.recordAction(ctx, aProps, RecordActionReport, err)
 }
 
+func (svc record) connectorReportEntries(ctx context.Context, m *types.Module) ([]recordReportEntry, error) {
+	conn := connector(svc.store)
+	set, _, err := conn.Fetch(ctx, m, types.RecordFilter{
+		ModuleID:    m.ID,
+		NamespaceID: m.NamespaceID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	entries := make([]recordReportEntry, len(set))
+	for i, r := range set {
+		entry := make(recordReportEntry, len(r.Values)+1)
+		for _, v := range r.Values {
+			entry[v.Name] = v.Value
+		}
+		entries[i] = entry
+	}
+	return entries, nil
+}
+
+// DatasourcePreview runs the datasource steps from the given (unsaved) config
+// and returns the first `limit` rows as a frame
+func (svc record) DatasourcePreview(ctx context.Context, namespaceID, moduleID uint64, ds types.ModuleConfigDataSource, limit uint) (*datasources.Frame, error) {
+	if limit == 0 {
+		limit = 20
+	}
+
+	ss := ds.Items.ReportSteps()
+	if len(ss) == 0 {
+		return nil, fmt.Errorf("no report steps found")
+	}
+
+	var m *types.Module
+	if moduleID != 0 {
+		if m, _ = loadModule(ctx, svc.store, namespaceID, moduleID); m != nil {
+			ss = m.UpdateReportsSteps(ss)
+		}
+	}
+
+	// Resolve nested datasource load steps (recursion guard on current module)
+	stack := []uint64{moduleID}
+	for {
+		changed := false
+		for i, s := range ss {
+			cur, err := svc.prepareStep(ctx, s, stack)
+			if err != nil {
+				return nil, err
+			}
+			if cur == nil {
+				continue
+			}
+			changed = true
+			last := cur[len(cur)-1]
+			last.ResetName(s.Name())
+			n := make(systemTypes.ReportStepSet, 0)
+			n = append(n, ss[:i]...)
+			suffix := ss[i+1:]
+			n = append(n, cur...)
+			if len(suffix) != 0 {
+				n = append(n, suffix...)
+			}
+			ss = n
+			break
+		}
+		if !changed {
+			break
+		}
+	}
+	if len(ss) == 0 {
+		return nil, fmt.Errorf("no report steps found")
+	}
+
+	runner := dal.Service()
+	lastStep := ss[len(ss)-1]
+	def := datasources.FrameDefinition{Source: lastStep.Name()}
+	def.Columns = datasources.FrameColumnSet{}
+	if m != nil {
+		for _, f := range m.Fields {
+			col := datasources.FrameColumn{
+				Name:  f.Name,
+				Label: f.Name,
+				Kind:  f.Kind,
+			}
+			def.Columns = append(def.Columns, col)
+		}
+	}
+	paging, _ := filter.NewPaging(limit, "")
+	def.Paging = &paging
+	def.Paging.IncTotal = false
+	def.Paging.IncPageNavigation = false
+
+	dd := datasources.FrameDefinitionSet{&def}
+	runs, err := datasources.Runs(runner, ss, dd)
+	if err != nil {
+		return nil, err
+	}
+
+	var out []*datasources.Frame
+	for _, run := range runs {
+		iter, err := runner.Run(ctx, run.Pipeline)
+		if err != nil {
+			return nil, err
+		}
+		defer iter.Close()
+
+		ff, err := datasources.Frames(ctx, iter, run)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, ff...)
+		if len(out) > 1 {
+			break
+		}
+	}
+	if len(out) == 0 {
+		return nil, nil
+	}
+	return out[len(out)-1], nil
+}
+
 func (svc record) Find(ctx context.Context, filter types.RecordFilter) (set types.RecordSet, f types.RecordFilter, err error) {
 	var (
 		m      *types.Module
@@ -687,8 +811,15 @@ func (svc record) Find(ctx context.Context, filter types.RecordFilter) (set type
 
 		filter.Check = ComposeRecordFilterChecker(ctx, svc.ac, m)
 
-		if set, f, err = dalutils.ComposeRecordsList(ctx, svc.dal, m, filter); err != nil {
-			return err
+		if m.Config.Type == "connector" {
+			conn := connector(svc.store)
+			if set, f, err = conn.Fetch(ctx, m, filter); err != nil {
+				return err
+			}
+		} else {
+			if set, f, err = dalutils.ComposeRecordsList(ctx, svc.dal, m, filter); err != nil {
+				return err
+			}
 		}
 
 		_ = set.Walk(func(r *types.Record) error {
@@ -732,8 +863,16 @@ func (svc record) FindN(ctx context.Context, filter types.RecordFilter) (set typ
 
 		filter.Check = ComposeRecordFilterChecker(ctx, svc.ac, m)
 
-		if set, stats, f, err = dalutils.ComposeRecordsListN(ctx, svc.dal, m, filter); err != nil {
-			return err
+		if m.Config.Type == "connector" {
+			conn := connector(svc.store)
+			if set, f, err = conn.Fetch(ctx, m, filter); err != nil {
+				return err
+			}
+			stats = map[string]types.RecordSummary{}
+		} else {
+			if set, stats, f, err = dalutils.ComposeRecordsListN(ctx, svc.dal, m, filter); err != nil {
+				return err
+			}
 		}
 
 		_ = set.Walk(func(r *types.Record) error {
