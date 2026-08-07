@@ -1,19 +1,19 @@
 <template>
-  <div class="c-toolbar d-flex flex-column flex-sm-row bg-white gap-1 flex-wrap">
+  <div class="c-toolbar d-flex flex-column flex-sm-row bg-white gap-1 flex-nowrap overflow-auto">
     <div
-      class="d-flex align-items-center gap-1 flex-wrap"
+      class="d-flex align-items-center gap-1 flex-nowrap flex-shrink-0"
     >
       <slot name="start" />
     </div>
 
     <div
-      class="d-flex align-items-center gap-1 flex-wrap"
+      class="d-flex align-items-center gap-1 flex-nowrap flex-shrink-0"
     >
       <slot name="center" />
     </div>
 
     <div
-      class="d-flex align-items-center gap-1 flex-wrap"
+      class="d-flex align-items-center gap-1 flex-nowrap flex-shrink-0"
     >
       <slot name="end" />
     </div>
@@ -29,6 +29,7 @@
   position: relative;
   min-height: 42px;
   padding: 0.75rem;
+  flex-shrink: 0;
 }
 
 .fill-width > * {

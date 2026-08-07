@@ -67,10 +67,22 @@ for (const n in filters) {
 }
 
 const gp = app.config.globalProperties
-const provides = ['$ComposeAPI', '$SystemAPI', '$AutomationAPI', '$Settings', '$auth', '$EventBus', '$UIHooks', '$Reminder', '$DiscoveryAPI']
-provides.forEach(k => {
-  if (gp[k]) app.provide(k, gp[k])
+const provides = [
+  ['$ComposeAPI', 'composeAPI'],
+  ['$SystemAPI', 'systemAPI'],
+  ['$AutomationAPI', 'automationAPI'],
+  ['$Settings'],
+  ['$auth'],
+  ['$EventBus'],
+  ['$UIHooks'],
+  ['$Reminder'],
+  ['$DiscoveryAPI'],
+]
+provides.forEach(([dollar, plain]) => {
+  if (gp[dollar]) app.provide(dollar, gp[dollar])
+  if (plain && gp[dollar]) app.provide(plain, gp[dollar])
 })
+app.provide('can', () => true)
 window.__auth = gp.$auth
 window.__settings = gp.$Settings
 window.__systemAPI = gp.$SystemAPI

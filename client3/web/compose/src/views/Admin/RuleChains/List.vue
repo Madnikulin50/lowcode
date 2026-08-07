@@ -47,7 +47,7 @@
 
       <template #name="{ item }">
         <font-awesome-icon
-          :icon="['fas', 'code-branch']"
+          :icon="['fas', 'random']"
           class="me-2"
           style="height: 1rem; width: 1rem; opacity: 0.65;"
         />

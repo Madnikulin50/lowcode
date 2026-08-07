@@ -130,6 +130,7 @@ const store = useStore()
 const { t } = useI18n()
 const $Settings = inject('$Settings')
 const $ComposeAPI = window.__composeAPI
+const $AutomationAPI = window.__automationAPI
 
 const namespace = ref(undefined)
 const query = ref('')
@@ -145,8 +146,11 @@ const can = computed(() => store.rbac.can)
 const ruleChains = ref([])
 const ruleChainsLoading = ref(false)
 
+const workflows = ref([])
+const workflowsLoading = ref(false)
+
 const currentNamespaceID = computed(() => namespace.value ? namespace.value.namespaceID : NoID)
-const loading = computed(() => moduleLoading.value || chartLoading.value || pageLoading.value || ruleChainsLoading.value)
+const loading = computed(() => moduleLoading.value || chartLoading.value || pageLoading.value || ruleChainsLoading.value || workflowsLoading.value)
 const hideNamespaceList = computed(() => {
   const { hideNamespaceList: h } = $Settings.get('compose.ui.sidebar', {})
   return h
@@ -165,7 +169,7 @@ const filteredPages = computed(() => {
   if (namespace.value) {
     const p = [...(isAdminPage.value ? adminRoutes() : publicPageWrap(publicRoutes.value))]
     if (!query.value) return p
-    return p.filter(({ page: pg }) => !['pages', 'modules', 'charts', 'rulechains'].includes(pg.pageID) && filter.Assert(pg, query.value, 'title'))
+    return p.filter(({ page: pg }) => !['pages', 'modules', 'charts', 'rulechains', 'workflows'].includes(pg.pageID) && filter.Assert(pg, query.value, 'title'))
   }
   return []
 })
@@ -221,6 +225,12 @@ watch(() => namespace.value?.namespaceID, (nsID) => {
     .then(({ chains }) => { ruleChains.value = chains || [] })
     .catch(() => { ruleChains.value = [] })
     .finally(() => { ruleChainsLoading.value = false })
+
+  workflowsLoading.value = true
+  $AutomationAPI.workflowList({ limit: 500, deleted: 0 })
+    .then(({ set }) => { workflows.value = (set || []).map(i => i?.workflow || i) })
+    .catch(() => { workflows.value = [] })
+    .finally(() => { workflowsLoading.value = false })
 }, { immediate: true })
 
 function namespaceSelected ({ namespaceID: nid, canManageNamespace, slug = '' }) {
@@ -229,6 +239,7 @@ function namespaceSelected ({ namespaceID: nid, canManageNamespace, slug = '' })
   else if (name.includes('admin.pages')) name = 'admin.pages'
   else if (name.includes('admin.charts')) name = 'admin.charts'
   else if (name.includes('admin.rulechains')) name = 'admin.rulechains'
+  else if (name.includes('admin.workflows')) name = 'admin.workflows'
 
   name = !params.pageID && canManageNamespace && !name.includes('namespace.') ? name : 'pages'
   router.push({ name, params: { slug: slug || nid } })
@@ -290,10 +301,26 @@ function ruleChainWrap (chain) {
       rootSelfID: 'rulechains',
       title: chain.name || chain.id,
       visible: true,
-      icon: ['fas', 'code-branch'],
+      icon: ['fas', 'random'],
     },
     children: [],
     params: { chainID: chain.id },
+  }
+}
+
+function workflowWrap (workflow) {
+  return {
+    page: {
+      name: 'admin.workflows.edit',
+      pageID: `workflow-${workflow.workflowID}`,
+      selfID: 'workflows',
+      rootSelfID: 'workflows',
+      title: workflow.meta?.name || workflow.handle || workflow.workflowID,
+      visible: true,
+      icon: ['fas', 'project-diagram'],
+    },
+    children: [],
+    params: { workflowID: workflow.workflowID },
   }
 }
 
@@ -309,7 +336,8 @@ function adminRoutes () {
     ...charts.value.map(chartWrap),
     { page: { pageID: 'rulechains', selfID: NoID, name: 'admin.rulechains', title: t('navigation.rulechains'), visible: true }, children: [] },
     ...ruleChains.value.map(ruleChainWrap),
-
+    { page: { pageID: 'workflows', selfID: NoID, name: 'admin.workflows', title: t('navigation.workflows'), visible: true }, children: [] },
+    ...workflows.value.map(workflowWrap),
 
   ]
 }

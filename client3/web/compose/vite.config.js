@@ -56,7 +56,7 @@ export default defineConfig({
     include: [
       'portal-vue', 'echarts/core', 'echarts/renderers', 'echarts/charts', 'echarts/components', 'vue-echarts',
       '@fullcalendar/vue3', '@fullcalendar/core', '@fullcalendar/daygrid', '@fullcalendar/timegrid', '@fullcalendar/list', '@fullcalendar/bootstrap',
-      'markdown-it', 'html2pdf.js', 'docx', 'vue-tweet-embed',
+      'markdown-it', 'html2pdf.js', 'docx', 'vue-tweet-embed', 'mxgraph', 'v-jsoneditor',
     ],
     exclude: ['vue-demi', 'vue-grid-layout'],
   },
@@ -66,8 +66,12 @@ export default defineConfig({
       { find: 'corteza-webapp-compose/src/stores', replacement: resolve(__dirname, 'src/store') },
       { find: 'corteza-webapp-compose', replacement: resolve(__dirname, '.') },
 
+      { find: 'corteza-lib/vue/dist/WorkflowEditor', replacement: resolve(__dirname, '../../lib/vue/src/components/workflow/WorkflowEditor.vue') },
       { find: 'corteza-lib/vue/dist', replacement: resolve(__dirname, '../../lib/vue/dist') },
       { find: 'corteza-lib/js/dist', replacement: resolve(__dirname, '../../lib/js/dist') },
+      { find: 'mxgraph', replacement: resolve(__dirname, 'node_modules/mxgraph/javascript/dist/build.js') },
+      { find: 'v-jsoneditor', replacement: resolve(__dirname, 'node_modules/v-jsoneditor/dist/v-jsoneditor.min.js') },
+      { find: 'file-saver', replacement: resolve(__dirname, 'node_modules/file-saver/dist/FileSaver.min.js') },
     ],
     modules: [
       resolve(__dirname, 'node_modules'),

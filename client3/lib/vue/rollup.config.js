@@ -34,6 +34,7 @@ export default {
 
   external: [
     /^corteza-lib\/js\/dist/,
+    /^corteza-lib\/vue\/dist/,
     /^@fortawesome\//,
     /^@tiptap\//,
     /^echarts/,
@@ -45,6 +46,7 @@ export default {
     'vue3-dropzone', 'vue3-grid-layout', 'vue-grid-layout', 'vue3-resize', 'portal-vue', 'vue-color',
     'vuedraggable', 'sortablejs',
     'vue-select',
+    'mxgraph', 'v-jsoneditor',
     'axios', 'i18next', 'i18next-http-backend', 'i18next-browser-languagedetector', 'i18next-multiload-backend-adapter', 'i18next-pseudo',
     'lodash', 'moment', 'numeral', 'qs',
     'bootstrap',

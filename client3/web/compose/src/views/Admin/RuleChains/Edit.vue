@@ -34,9 +34,31 @@
                   <font-awesome-icon :icon="['fas', 'play']" class="me-1" />
                   {{ $t('rulechain.test.title') }}
                 </button>
+                <div class="d-flex ms-auto gap-2">
+                  <button
+                    v-if="!isGraphMode"
+                    class="btn btn-sm btn-outline-secondary"
+                    @click="switchToGraph"
+                  >
+                    <font-awesome-icon :icon="['fas', 'project-diagram']" class="me-1" />
+                    Visual
+                  </button>
+                  <button
+                    v-if="isGraphMode"
+                    class="btn btn-sm btn-outline-secondary"
+                    @click="switchToForm"
+                  >
+                    <font-awesome-icon :icon="['fas', 'list']" class="me-1" />
+                    Form
+                  </button>
+                </div>
               </div>
 
-              <div class="overflow-auto p-3" style="flex: 1 1 0%; min-height: 0;">
+              <div
+                v-if="!isGraphMode"
+                class="overflow-auto p-3"
+                style="flex: 1 1 0%; min-height: 0;"
+              >
                 <div class="row pb-3">
                   <div class="col-12 col-lg-6">
                     <h5>
@@ -270,6 +292,46 @@
                   </div>
                 </div>
               </div>
+
+              <div
+                v-if="isGraphMode"
+                class="d-flex flex-grow-1"
+                style="min-height: 0"
+              >
+                <div class="d-flex flex-column flex-grow-1 p-2" style="min-height: 0">
+                  <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                    <div>
+                      <span class="small text-muted">
+                        {{ $t('rulechain.edit.generalSettings') }}:
+                      </span>
+                      <input
+                        v-model="form.name"
+                        class="form-control form-control-sm d-inline-block ms-2"
+                        style="width: 200px"
+                        type="text"
+                        :placeholder="$t('rulechain.edit.name.placeholder')"
+                      >
+                    </div>
+                    <div class="d-flex gap-2">
+                      <button
+                        class="btn btn-sm btn-outline-primary"
+                        @click="addGraphNode"
+                      >
+                        + Node
+                      </button>
+                    </div>
+                  </div>
+                  <RuleChainGraph
+                    ref="graphRef"
+                    :nodes.sync="form.nodes"
+                    :edges.sync="form.edges"
+                    :entry-node.sync="form.entryNode"
+                    :available-node-types="nodeTypes"
+                    class="flex-grow-1"
+                    style="min-height: 0"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -364,13 +426,14 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, reactive, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Modal } from 'bootstrap'
 import { NoID } from 'corteza-lib/js/dist'
 import { composables } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
+import RuleChainGraph from 'corteza-webapp-compose/src/components/Admin/RuleChains/RuleChainGraph'
 
 const { useToast } = composables
 const { t } = useI18n()
@@ -406,6 +469,9 @@ const form = reactive({
   nodes: [],
   edges: [],
 })
+
+const isGraphMode = ref(false)
+const graphRef = ref(null)
 
 const nodeTypes = ref([])
 const nodeTypesByType = computed(() => {
@@ -603,6 +669,18 @@ function handleDelete () {
       processing.value = false
       processingDelete.value = false
     })
+}
+
+function switchToGraph () {
+  isGraphMode.value = true
+}
+
+function switchToForm () {
+  isGraphMode.value = false
+}
+
+function addGraphNode () {
+  graphRef.value?.addNode()
 }
 
 function openTestModal () {

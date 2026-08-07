@@ -34,7 +34,7 @@ edit:
       placeholder: Select node type
     config:
       label: Configuration
-      placeholder: '{}'
+      placeholder: '{ }'
       invalid: Configuration must be valid JSON
   edges:
     label: Connections
@@ -55,9 +55,9 @@ test:
   run: Run test
   running: Running...
   input:
-    label: Input
-    placeholder: '{}'
-    invalid: Input must be valid JSON
+      label: Input
+      placeholder: '{ }'
+      invalid: Input must be valid JSON
   output:
     label: Result
   modal:

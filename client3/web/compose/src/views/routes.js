@@ -75,6 +75,9 @@ export default [
                   { name: 'admin.rulechains', path: 'rulechains', component: () => import('./Admin/RuleChains/List.vue'), props: r => ({ ...r.params }) },
                   { name: 'admin.rulechains.create', path: 'rulechains/new', component: () => import('./Admin/RuleChains/Edit.vue'), props: r => ({ ...r.params }) },
                   { name: 'admin.rulechains.edit', path: 'rulechains/:chainID/edit', component: () => import('./Admin/RuleChains/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.workflows', path: 'workflows', component: () => import('./Admin/Workflows/List.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.workflows.create', path: 'workflows/new', component: () => import('./Admin/Workflows/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.workflows.edit', path: 'workflows/:workflowID/edit', component: () => import('./Admin/Workflows/Edit.vue'), props: r => ({ ...r.params }) },
 
                   { name: 'admin.configuration', path: 'configuration', component: () => import('./Admin/Configuration/Index.vue'), props: r => ({ ...r.params }) },
                 ],

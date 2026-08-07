@@ -34,7 +34,7 @@ edit:
       placeholder: Выберите тип узла
     config:
       label: Конфигурация
-      placeholder: '{}'
+      placeholder: '{ }'
       invalid: Конфигурация должна быть корректным JSON
   edges:
     label: Связи
@@ -55,9 +55,9 @@ test:
   run: Запустить тест
   running: Выполняется...
   input:
-    label: Входные данные
-    placeholder: '{}'
-    invalid: Входные данные должны быть корректным JSON
+      label: Входные данные
+      placeholder: '{ }'
+      invalid: Входные данные должны быть корректным JSON
   output:
     label: Результат
   modal:
