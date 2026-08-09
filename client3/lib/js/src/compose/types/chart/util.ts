@@ -16,6 +16,16 @@ export enum ChartType {
   gauge = 'gauge',
   radar = 'radar',
   scatter = 'scatter',
+  sankey = 'sankey',
+  heatmap = 'heatmap',
+  waterfall = 'waterfall',
+  boxplot = 'boxplot',
+  graph = 'graph',
+  candlestick = 'candlestick',
+  map = 'map',
+  sunburst = 'sunburst',
+  parallel = 'parallel',
+  calendar = 'calendar',
 }
 
 export interface TemporalDataPoint {

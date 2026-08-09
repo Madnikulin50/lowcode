@@ -207,7 +207,9 @@ export class BaseChart {
       metrics: metrics?.filter((m: Metric) => m.field !== 'count').map((m: Metric) => `${m.aggregate}(${m.field}) AS ${makeAlias(m)}`).join(','),
 
       // Construct dimensions \w modifiers...
-      dimensions: dimensions?.map(d => ({ field: 'createdAt', ...d })).map((d: Dimension) => dimensionFunctions.convert(d))[0],
+      // @note SQL expressions may contain commas (eg. DATE_FORMAT(field, '%Y-%m-01'))
+      //       so we use ';' to separate multiple dimensions
+      dimensions: dimensions?.slice(0, 2).map((d: Dimension) => dimensionFunctions.convert({ field: 'createdAt', ...d })).join(';'),
     }
   }
 
@@ -261,19 +263,23 @@ export class BaseChart {
     // Build data sets
     const datasets = report.metrics?.map(m => {
       const alias = makeAlias({ field: m.field, aggregate: m.aggregate })
+      // For the count metric the server returns a plain 'count' column
+      const lookup = m.field === 'count' ? m.field : alias
       const data = results.map((r: any) => {
-        return pickValue(r[m.field === 'count' ? m.field : alias], dimension)
+        return pickValue(r[lookup], dimension)
       })
 
       // Any sub class has the ability to define how the dataset looks like.
       // this comes in handy when we want to support charts with different definitions.
-      return this.makeDataset(m, dimension, data, alias)
+      return this.makeDataset(m, dimension, data, lookup)
     })
 
     return {
       labels: this.processLabels(labels, dimension),
       datasets,
       dimension,
+      // Raw rows; used by charts that need more than one dimension (sankey, graph, heatmap, ...)
+      rows: results,
     }
   }
 
