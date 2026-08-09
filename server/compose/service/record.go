@@ -2933,22 +2933,36 @@ func fieldNameFromDimension(dim string) string {
 
 func recordReportToAggPipelineStep(m *types.Module, metrics, dimensions, f string) (agg *dal.Aggregate, err error) {
 
-	auxDim := dal.AggregateAttr{
-		Identifier: "dimension_0",
-		RawExpr:    dimensions,
-		Key:        true,
-	}
 	dim := []dal.AggregateAttr{}
 	oo := filter.SortExprSet{}
-	ff := m.Fields.FindByName(fieldNameFromDimension(dimensions))
-	if ff != nil {
-		auxDim.MultiValue = ff.Multi
-		auxDim.Label = ff.Label
 
+	// Support up to 2 dimensions (separated with ';' by the client)
+	// @note dimensions expressions may contain commas (eg. DATE_FORMAT(field, '%Y-%m-01'))
+	//       so we can not split on ',' here
+	dims := strings.Split(dimensions, ";")
+	if len(dims) > 2 {
+		dims = dims[:2]
 	}
-	if ff != nil || m.Config.Type != "datasource" {
-		dim = append(dim, auxDim)
-		oo = append(oo, &filter.SortExpr{Column: dim[0].Identifier})
+	for i, d := range dims {
+		d = strings.TrimSpace(d)
+		if d == "" {
+			continue
+		}
+
+		auxDim := dal.AggregateAttr{
+			Identifier: fmt.Sprintf("dimension_%d", i),
+			RawExpr:    d,
+			Key:        true,
+		}
+		ff := m.Fields.FindByName(fieldNameFromDimension(d))
+		if ff != nil {
+			auxDim.MultiValue = ff.Multi
+			auxDim.Label = ff.Label
+		}
+		if ff != nil || m.Config.Type != "datasource" {
+			dim = append(dim, auxDim)
+			oo = append(oo, &filter.SortExpr{Column: auxDim.Identifier})
+		}
 	}
 
 	var colId string
@@ -3067,15 +3081,12 @@ func recordReportCorrectTypes(def *dal.Aggregate, entry recordReportEntry) {
 		switch a.Type.(type) {
 		case *dal.TypeNumber:
 			entry[a.Identifier] = cast.ToFloat64(entry[a.Identifier])
-			return
 
 		case *dal.TypeText:
 			entry[a.Identifier] = cast.ToString(entry[a.Identifier])
-			return
 
 		case *dal.TypeID, *dal.TypeRef:
 			entry[a.Identifier] = cast.ToString(entry[a.Identifier])
-			return
 		}
 	}
 }

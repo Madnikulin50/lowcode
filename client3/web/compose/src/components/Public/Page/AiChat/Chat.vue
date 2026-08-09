@@ -90,6 +90,7 @@ const props = defineProps({
   namespace: { type: String, required: false, default: '' },
   magnified: { type: Boolean, default: false },
   files: { type: Array, required: false, default: () => [] },
+  model: { type: String, required: false, default: 'deepseek-r1' },
 })
 
 const $ComposeAPI = window.__composeAPI
@@ -102,6 +103,7 @@ const loading = ref(false)
 const messagesContainer = ref(null)
 const chatID = `chat-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`
 const exportOpen = ref(false)
+const abortController = ref(null)
 
 function hasManyLines(text) {
   if (!text) return false
@@ -263,8 +265,10 @@ async function sendMessage() {
   loading.value = true
   scrollToBottom()
 
+  abortController.value = new AbortController()
+
   try {
-    const history = messages.value.slice(1, -2).map(m => ({
+    const history = messages.value.slice(1, -2).slice(-8).map(m => ({
       role: m.role,
       content: m.content,
     }))
@@ -277,6 +281,8 @@ async function sendMessage() {
       namespaceID: props.namespace,
       pageID: props.page,
       moduleID: props.module,
+      model: props.model,
+      signal: abortController.value.signal,
     }, ({ token, reason }) => {
       messages.value[msgIdxAnswer].content += token
       if (token !== '') {
@@ -292,12 +298,15 @@ async function sendMessage() {
       scrollToBottom()
     })
   } catch (e) {
-    messages.value[msgIdxAnswer].content = e.message || 'Error'
+    if (e?.name !== 'AbortError') {
+      messages.value[msgIdxAnswer].content = e.message || 'Error'
+    }
   } finally {
     loading.value = false
     messages.value[msgIdxAnswer].active = false
     messages.value[msgIdxAsk].active = false
     messages.value[msgIdxReasoning].active = false
+    abortController.value = null
     scrollToBottom()
   }
 }
@@ -316,6 +325,10 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (abortController.value) {
+    abortController.value.abort()
+    abortController.value = null
+  }
   document.removeEventListener('click', handleDocumentClick)
 })
 </script>

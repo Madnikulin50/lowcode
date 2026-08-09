@@ -18,6 +18,8 @@ type (
 		chat interface {
 			Ask(ctx context.Context, params *service.ChatPromptArguments) (interface{}, error)
 			AskStream(ctx context.Context, params *service.ChatPromptArguments, stream service.ChatStreamFunc) error
+			Models(ctx context.Context) ([]string, error)
+			WarmUp(ctx context.Context, model string) error
 		}
 		namespace service.NamespaceService
 	}
@@ -40,6 +42,7 @@ func (ctrl *Chat) Ask(ctx context.Context, r *request.ChatAsk) (interface{}, err
 			Namespace: r.NamespaceID,
 			Page:      r.PageID,
 			Facts:     r.Facts,
+			Model:     r.Model,
 		})
 
 	return ctrl.makePayload(ctx, res, err)
@@ -53,7 +56,16 @@ func (ctrl *Chat) AskStream(ctx context.Context, r *request.ChatAsk, stream serv
 		Namespace: r.NamespaceID,
 		Page:      r.PageID,
 		Facts:     r.Facts,
+		Model:     r.Model,
 	}, stream)
+}
+
+func (ctrl *Chat) Models(ctx context.Context) ([]string, error) {
+	return ctrl.chat.Models(ctx)
+}
+
+func (ctrl *Chat) WarmUp(ctx context.Context, r *request.ChatAsk) error {
+	return ctrl.chat.WarmUp(ctx, r.Model)
 }
 
 func toChatMessages(in []request.ChatMessage) []service.ChatMessage {

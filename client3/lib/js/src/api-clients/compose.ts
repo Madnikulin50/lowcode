@@ -4456,6 +4456,7 @@ export default class Compose {
             meta,
             messages,
             files,
+            model,
         } = (a as KV) || {}
 
         const cfg: AxiosRequestConfig = {
@@ -4475,6 +4476,7 @@ export default class Compose {
             pageID,
             messages,
             files,
+            model,
         }
         return this.api().request(cfg).then(result => stdResolve(result))
     }
@@ -4490,6 +4492,8 @@ export default class Compose {
             meta,
             messages,
             files,
+            model,
+            signal,
         } = (a as KV) || {}
 
         const endpoint = this.pageAiPromptEndpoint({ namespaceID, pageID }) + '/stream'
@@ -4507,6 +4511,7 @@ export default class Compose {
             method: 'POST',
             headers,
             credentials: 'include',
+            signal: signal as AbortSignal | null,
             body: JSON.stringify({
                 selfID,
                 moduleID,
@@ -4517,6 +4522,7 @@ export default class Compose {
                 pageID,
                 messages,
                 files,
+                model,
             }),
         })
 
@@ -4570,6 +4576,35 @@ export default class Compose {
             return `/namespace/${namespaceID}/prompt`
         }
         return `/namespace/${namespaceID}/page/${pageID}/prompt`
+    }
+
+    // List available AI models
+    async pageAiModels (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'get',
+            url: '/chat/models',
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    // Preload AI model into memory
+    async pageAiWarmUp (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            model,
+        } = (a as KV) || {}
+
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: '/chat/warmup',
+        }
+        cfg.data = {
+            model,
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
     }
 
     // List ETL jobs

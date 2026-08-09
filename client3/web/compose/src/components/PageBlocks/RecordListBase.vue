@@ -32,7 +32,7 @@
             <ColumnPicker v-if="!options.hideConfigureFieldsButton" :module="recordListModule" :fields="fields.map(({ moduleField }) => moduleField)" @updateFields="onUpdateFields">{{ $t('module.allRecords.columns.title') }}</ColumnPicker>
           </div>
           <div v-if="!options.hideSearch" class="flex-fill">
-            <c-input-search :value="query" :placeholder="$t('label.search', { default: 'Search' })" :ai="true" submittable @search="handleSearch" @ai-search="handleAiSearch" />
+            <c-input-search :value="query" :placeholder="$t('label.search', { default: 'Search' })" :ai="false" submittable @search="handleSearch" @ai-search="handleAiSearch" />
           </div>
         </div>
 

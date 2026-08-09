@@ -793,19 +793,34 @@ export default class Chart extends BaseChart {
           return prev
         }))
 
+
+
         return {
           ...common,
           tooltip: {
             trigger: 'axis',
             appendToBody: true,
-              formatter: function (params:any) {
-                  let value = params[0].value;
-                  if (params[1] && params[1].value !== '-') {
-                      value += params[1].value;
-                  } else {
-                      value += params[2].value;
+              // works when trigger is set to axis
+              valueFormatter: (value: string | number): string => formatChartValue(getVal(value), metric.formatting),
+              // works when trigger is set to item
+              formatter: (paramsList:TooltipParams[]): string => {
+                  let value = getVal(paramsList[0].value)
+                  let percent = 0
+                  let marker
+                  if (paramsList[1].value !== "-") {
+                      value += Number(paramsList[1].value)
+                      percent = Number(paramsList[1].value) * 100 / value
+                      marker = paramsList[1].marker
+                  } else if (paramsList[2].value !== "-") {
+                      //value -= Number(paramsList[2].value)
+                      percent = -Number(paramsList[2].value) * 100 / value
+                      marker = paramsList[2].marker
                   }
-                  return  fmt(value, metric.formatting)
+
+
+                  const formattedValue = formatChartValue(value, metric.formatting)
+
+                  return `${paramsList[0].seriesName}<br>${marker}${paramsList[0].name}<span style="float: right; margin-left: 20px">${formattedValue}${true ? ' (' + percent.toFixed(1) + '%)' : ''}</span>`
               }
           },
           grid,
@@ -829,7 +844,7 @@ export default class Chart extends BaseChart {
             {
               type: 'bar',
               stack: 'waterfall',
-              name: "value",
+              name: metric.label,
               silent: true,
               data: base,
               itemStyle: { color: 'transparent' },
@@ -1068,6 +1083,8 @@ export default class Chart extends BaseChart {
         const data = labels.map((l: string, i: number) => [l, num(metric.data[i])])
         const all = metric.data.map(num)
         const [start, end] = [labels[0], labels[labels.length - 1]]
+        const calendarType = metric.calendarType || 'heatmap'
+        const max = Math.max(1, ...all)
 
         return {
           ...common,
@@ -1103,9 +1120,19 @@ export default class Chart extends BaseChart {
             },
           },
           series: [{
-            type: 'heatmap',
+            type: calendarType,
             coordinateSystem: 'calendar',
             data,
+            ...(calendarType !== 'heatmap' ? {
+              symbolSize: (val: any): number => Math.max(4, Math.sqrt(num(val[1]) / max) * 24),
+              rippleEffect: {
+                period: 3,
+                scale: 2,
+              },
+              itemStyle: {
+                color: schemeColors[0],
+              },
+            } : {}),
           }],
         }
       }

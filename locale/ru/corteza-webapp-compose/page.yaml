@@ -167,3 +167,5 @@ aiChat:
   sendMessage:
     button: Отправить
     placeholder: Введите запрос к ИИ...
+  model:
+    label: Модель

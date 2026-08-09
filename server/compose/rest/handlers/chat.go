@@ -17,15 +17,44 @@ type (
 	ChatAPI interface {
 		Ask(context.Context, *request.ChatAsk) (interface{}, error)
 		AskStream(context.Context, *request.ChatAsk, service.ChatStreamFunc) error
+		Models(context.Context) ([]string, error)
+		WarmUp(context.Context, *request.ChatAsk) error
 	}
 	Chat struct {
 		Ask       func(http.ResponseWriter, *http.Request)
 		AskStream func(http.ResponseWriter, *http.Request)
+		Models    func(http.ResponseWriter, *http.Request)
+		WarmUp    func(http.ResponseWriter, *http.Request)
 	}
 )
 
 func NewChat(h ChatAPI) *Chat {
 	return &Chat{
+		WarmUp: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			params := request.NewChatAsk()
+			if err := params.Fill(r); err != nil {
+				api.Send(w, r, map[string]any{"error": err.Error()})
+				return
+			}
+			if err := h.WarmUp(r.Context(), params); err != nil {
+				api.Send(w, r, map[string]any{"error": err.Error()})
+				return
+			}
+			api.Send(w, r, map[string]any{"ok": true})
+		},
+
+		Models: func(w http.ResponseWriter, r *http.Request) {
+			models, err := h.Models(r.Context())
+			if err != nil {
+				api.Send(w, r, map[string]any{
+					"error": err.Error(),
+				})
+				return
+			}
+			api.Send(w, r, map[string]any{"models": models})
+		},
+
 		Ask: func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
 			params := request.NewChatAsk()
@@ -93,6 +122,8 @@ func NewChat(h ChatAPI) *Chat {
 func (h *Chat) MountRoutes(r chi.Router, middlewares ...func(http.Handler) http.Handler) {
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares...)
+		r.Get("/chat/models", h.Models)
+		r.Post("/chat/warmup", h.WarmUp)
 		r.Post("/namespace/{namespaceID}/prompt", h.Ask)
 		r.Post("/namespace/{namespaceID}/page/{pageID}/prompt", h.Ask)
 		r.Post("/namespace/{namespaceID}/prompt/stream", h.AskStream)

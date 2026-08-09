@@ -510,6 +510,29 @@
         </div>
 
         <div
+          v-if="metric.type === 'calendar'"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.calendarType.label') }}
+            </label>
+            <select
+              v-model="metric.calendarType"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="opt in calendarTypeOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
           v-if="metric.type === 'boxplot'"
           class="col-12"
         >
@@ -637,10 +660,9 @@
                 {{ $t('edit.additionalConfig.tooltip.labelNextToChart') }}
               </label>
               <c-input-checkbox
-                :value="!!report.tooltip.labelsNextToPartition"
+                v-model="report.tooltip.labelsNextToPartition"
                 switch
                 :labels="checkboxLabel"
-                @input="report.tooltip.labelsNextToPartition = $event"
               />
             </div>
           </div>
@@ -923,6 +945,12 @@ const scatterSymbolOptions = ref([
 const mapTypeOptions = ref([
   { value: 'world', text: t('edit.metric.mapType.options.world') },
   { value: 'china', text: t('edit.metric.mapType.options.china') },
+])
+
+const calendarTypeOptions = ref([
+  { value: 'heatmap', text: t('edit.metric.calendarType.options.heatmap') },
+  { value: 'scatter', text: t('edit.metric.calendarType.options.scatter') },
+  { value: 'effectScatter', text: t('edit.metric.calendarType.options.effectScatter') },
 ])
 
 const anomalyMethods = ref([

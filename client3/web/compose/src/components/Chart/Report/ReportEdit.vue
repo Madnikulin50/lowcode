@@ -336,11 +336,9 @@
               {{ $t('edit.additionalConfig.legend.show') }}
             </label>
             <c-input-checkbox
-              :value="!!report.legend.isHidden"
+              v-model="legendShown"
               switch
-              invert
               :labels="checkboxLabel"
-              @input="report.legend.isHidden = $event"
             />
           </div>
         </div>
@@ -533,6 +531,14 @@ const orientations = ref([
 const editReport = computed({
   get: () => props.report,
   set: (v) => emit('update.report', v),
+})
+
+const legendShown = computed({
+  get: () => !props.report?.legend?.isHidden,
+  set: (v) => {
+    props.report.legend.isHidden = !v
+    emit('update.report', { ...props.report, legend: props.report.legend })
+  },
 })
 
 const module = computed(() => props.modules.find(m => m.moduleID === moduleID.value))

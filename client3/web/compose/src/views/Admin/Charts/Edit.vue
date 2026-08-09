@@ -194,10 +194,9 @@
                           {{ $t('edit.toolbox.saveAsImage.label') }}
                         </label>
                         <c-input-checkbox
-                          :value="!!chart.config.toolbox.saveAsImage"
+                          v-model="chart.config.toolbox.saveAsImage"
                           switch
                           :labels="checkboxLabel"
-                          @input="chart.config.toolbox.saveAsImage = $event"
                         />
                       </div>
                     </div>

@@ -8,10 +8,13 @@ import (
 	"io"
 	"strings"
 	"time"
+	"unicode"
 
 	ttlcache "github.com/jellydator/ttlcache/v3"
+	"go.uber.org/zap"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/chat"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
 
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
@@ -45,6 +48,7 @@ type (
 		Module    uint64
 		Page      uint64
 		Record    uint64
+		Model     string
 	}
 )
 
@@ -68,6 +72,16 @@ func Chat() *chatService {
 		clients: ttl,
 		tools:   tools,
 	}
+}
+
+// Preload the default model into memory at startup so the first chat
+// message is not delayed by model loading.
+func init() {
+	go func() {
+		if err := chat.WarmUp("deepseek-r1"); err != nil {
+			logger.Default().Warn("failed to preload chat model", zap.Error(err))
+		}
+	}()
 }
 
 func (c *chatService) xmlToMap(xmlStr string) (map[string]string, error) {
@@ -126,10 +140,13 @@ func (c *chatService) modelFromPrompt(prompt string) string {
 			return prompt[start : start+end]
 		}
 	}
-	return "deepseek-v2"
+	return "deepseek-r1"
 }
 
 func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message {
+	if len(ask.Messages) > 10 {
+		ask.Messages = ask.Messages[len(ask.Messages)-10:]
+	}
 	msgs := make([]*schema.Message, 0, len(ask.Messages)+2)
 
 	hasSystem := false
@@ -198,7 +215,7 @@ func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message 
 	return msgs
 }
 
-func (c *chatService) getTools(ctx context.Context, namespaceID uint64) []chat.ToolDef {
+func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt string) []chat.ToolDef {
 	tools := make([]chat.ToolDef, len(c.tools))
 	copy(tools, c.tools)
 
@@ -206,9 +223,11 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64) []chat.T
 		return tools
 	}
 
+	keywords := promptKeywords(prompt)
+
 	modules, _, err := DefaultModule.Find(ctx, types.ModuleFilter{NamespaceID: namespaceID})
 	if err == nil {
-		for _, m := range modules {
+		for _, m := range selectNamed(modules, keywords, 15, 10, func(m *types.Module) string { return m.Name + " " + m.Handle }) {
 
 			id := m.Handle
 			if len(id) == 0 {
@@ -278,7 +297,7 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64) []chat.T
 
 	charts, _, err := DefaultChart.Find(ctx, types.ChartFilter{NamespaceID: namespaceID})
 	if err == nil {
-		for _, ch := range charts {
+		for _, ch := range selectNamed(charts, keywords, 15, 5, func(ch *types.Chart) string { return ch.Name }) {
 			id := ch.ID
 			name := ch.Name
 			tools = append(tools, chat.ToolDef{
@@ -293,7 +312,7 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64) []chat.T
 
 	pages, _, err := DefaultPage.Find(ctx, types.PageFilter{NamespaceID: namespaceID})
 	if err == nil {
-		for _, p := range pages {
+		for _, p := range selectNamed(pages, keywords, 15, 5, func(p *types.Page) string { return p.Title }) {
 			id := p.ID
 			title := p.Title
 			tools = append(tools, chat.ToolDef{
@@ -309,6 +328,61 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64) []chat.T
 	return tools
 }
 
+// promptKeywords extracts search keywords from the user's message.
+// Words shorter than 3 characters are ignored to avoid false matches.
+func promptKeywords(prompt string) []string {
+	seen := map[string]bool{}
+	out := make([]string, 0, 8)
+	for _, w := range strings.FieldsFunc(strings.ToLower(prompt), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	}) {
+		if len(w) < 3 || seen[w] {
+			continue
+		}
+		seen[w] = true
+		out = append(out, w)
+		if len(out) >= 20 {
+			break
+		}
+	}
+	return out
+}
+
+// selectNamed returns the entities whose name matches any prompt keyword.
+// When nothing matches, the first maxFallback entities are returned so the
+// model still has tools to work with. Keeping the tool list small makes
+// prompt evaluation dramatically faster.
+func selectNamed[T any](set []T, keywords []string, maxMatched, maxFallback int, name func(T) string) []T {
+	if len(keywords) == 0 {
+		if len(set) > maxFallback {
+			set = set[:maxFallback]
+		}
+		return set
+	}
+
+	var matched []T
+	for _, item := range set {
+		haystack := strings.ToLower(name(item))
+		for _, kw := range keywords {
+			if strings.Contains(haystack, kw) {
+				matched = append(matched, item)
+				break
+			}
+		}
+		if len(matched) >= maxMatched {
+			break
+		}
+	}
+
+	if len(matched) == 0 {
+		if len(set) > maxFallback {
+			set = set[:maxFallback]
+		}
+		return set
+	}
+	return matched
+}
+
 func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interface{}, error) {
 	client, err := c.getClient(ask)
 	if err != nil {
@@ -316,7 +390,7 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 	}
 
 	ctx = c.chatEnvToContext(ask, ctx)
-	allTools := c.getTools(ctx, ask.Namespace)
+	allTools := c.getTools(ctx, ask.Namespace, ask.Prompt)
 
 	if result := directListTool(c.tools, ctx, ask); result != "" {
 		return map[string]any{"response": result}, nil
@@ -385,7 +459,7 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 
 func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, stream chat.StreamFunc) error {
 	ctx = c.chatEnvToContext(ask, ctx)
-	allTools := c.getTools(ctx, ask.Namespace)
+	allTools := c.getTools(ctx, ask.Namespace, ask.Prompt)
 
 	if result := directListTool(c.tools, ctx, ask); result != "" {
 		stream(result, "", false)
@@ -416,6 +490,11 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 	var fullContent string
 	var toolCalls []schema.ToolCall
 	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
 		chunk, err := streamReader.Recv()
 		if err != nil {
 			if err == io.EOF {
@@ -579,17 +658,33 @@ func (c *chatService) chatEnvToContext(ask *ChatPromptArguments, ctx context.Con
 }
 
 func (c *chatService) getClient(ask *ChatPromptArguments) (*chat.Client, error) {
-	client := c.clients.Get(ask.Chat)
+	model := ask.Model
+	if model == "" {
+		model = c.modelFromPrompt(ask.Prompt)
+	}
+
+	key := ask.Chat + "|" + model
+	client := c.clients.Get(key)
 	if client == nil {
-		model := c.modelFromPrompt(ask.Prompt)
 		cl, err := chat.NewClient(model)
 		if err != nil {
 			return nil, err
 		}
-		c.clients.Set(ask.Chat, cl, 30*time.Minute)
+		c.clients.Set(key, cl, 30*time.Minute)
 		return cl, nil
 	}
 	return client.Value(), nil
+}
+
+func (c *chatService) Models(ctx context.Context) ([]string, error) {
+	return chat.AvailableModels()
+}
+
+func (c *chatService) WarmUp(ctx context.Context, model string) error {
+	if model == "" {
+		model = "deepseek-r1"
+	}
+	return chat.WarmUp(model)
 }
 
 func userConfirmed(prompt string) bool {

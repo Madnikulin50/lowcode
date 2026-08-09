@@ -43,7 +43,7 @@
       @click="onButtonClick"
     >
       <font-awesome-icon
-        :icon="['fas', ai ? 'brain' : 'search']"
+        :icon="['fas', ai === true ? 'brain' : 'search']"
         class="align-middle text-primary"
       />
     </button>

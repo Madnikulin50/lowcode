@@ -50,7 +50,13 @@
 *** [Import Export](modules/integrator-guide/compose-configuration/import-export.md)
 *** [Duplication Detection](modules/integrator-guide/compose-configuration/duplication-detection.md)
 *** [Field Types](modules/integrator-guide/compose-configuration/field-types.md)
+*** [Aggregate Modules](modules/integrator-guide/compose-configuration/aggregate-modules.md)
+*** [Connector Modules](modules/integrator-guide/compose-configuration/connector-modules.md)
 *** [Page Blocks](modules/integrator-guide/compose-configuration/page-blocks.md)
+*** [Rule Chains](modules/integrator-guide/compose-configuration/rule-chains.md)
+*** [Workflows](modules/integrator-guide/compose-configuration/workflows.md)
+*** [Pages RAG](modules/integrator-guide/compose-configuration/pages-rag.md)
+*** [ETL Jobs](modules/integrator-guide/compose-configuration/etl-jobs.md)
 *** [Examples](modules/integrator-guide/compose-configuration/examples/index.md)
 ****** [Record Filtering Nested](modules/integrator-guide/compose-configuration/examples/record-filtering-nested.md)
 <!-- TODO: o cleanup -->

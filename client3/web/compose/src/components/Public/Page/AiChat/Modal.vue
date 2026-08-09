@@ -10,7 +10,15 @@
       <div class="modal-content d-flex flex-column" :class="contentClass">
         <div class="modal-header py-2 px-3 border-bottom">
           <h5 class="modal-title">LowCoooode AI-assistant</h5>
-          <div class="d-flex gap-1">
+          <select
+            v-model="selectedModel"
+            class="form-select form-select-sm ms-3"
+            style="width: auto; max-width: 200px;"
+            :title="$t('aiChat.model.label')"
+          >
+            <option v-for="m in modelOptions" :key="m" :value="m">{{ m }}</option>
+          </select>
+          <div class="d-flex gap-1 ms-auto">
             <button
               class="btn btn-outline-secondary border-0 btn-sm"
               :title="fullscreen ? 'Collapse' : 'Expand'"
@@ -36,6 +44,7 @@
             :module="module"
             :namespace="namespace"
             :magnified="fullscreen"
+            :model="selectedModel"
           />
         </div>
       </div>
@@ -44,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import Chat from './Chat.vue'
 
 const props = defineProps({
@@ -57,6 +66,39 @@ const showModal = ref(false)
 const startPrompt = ref('')
 const attachedFiles = ref([])
 const fullscreen = ref(false)
+const modelOptions = ref([])
+const selectedModel = ref('deepseek-r1')
+
+const $ComposeAPI = window.__composeAPI
+
+function warmUp () {
+  $ComposeAPI.pageAiWarmUp({ model: selectedModel.value }).catch(() => {})
+}
+
+function loadModels () {
+  $ComposeAPI.pageAiModels().then(({ models = [] } = {}) => {
+    modelOptions.value = models
+    if (models.length) {
+      const preferred = ['deepseek-r1', 'deepseek-v2']
+      selectedModel.value = models.includes(selectedModel.value)
+        ? selectedModel.value
+        : (preferred.find(m => models.includes(m)) || models[0])
+      try {
+        localStorage.setItem('aiChat.model', selectedModel.value)
+      } catch (e) {}
+    }
+    warmUp()
+  }).catch(() => {})
+}
+
+watch(selectedModel, (model, prev) => {
+  if (model !== prev && model) {
+    warmUp()
+    try {
+      localStorage.setItem('aiChat.model', model)
+    } catch (e) {}
+  }
+})
 
 const dialogClass = computed(() => fullscreen.value ? 'modal-fullscreen' : '')
 const contentClass = computed(() => fullscreen.value ? 'h-100' : '')
@@ -66,6 +108,7 @@ function startChatModal(data) {
   startPrompt.value = prompt
   attachedFiles.value = files
   showModal.value = true
+  warmUp()
 }
 
 function onHidden() {
@@ -79,6 +122,11 @@ function setDefaultValues() {
 }
 
 onMounted(() => {
+  try {
+    const saved = localStorage.getItem('aiChat.model')
+    if (saved) selectedModel.value = saved
+  } catch (e) {}
+  loadModels()
   window.addEventListener('show-chat-modal', startChatModal)
 })
 

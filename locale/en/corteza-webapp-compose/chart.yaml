@@ -29,6 +29,7 @@ edit:
     label: Animation
     enabled: Animation enabled
   dimension:
+    add: Add dimension
     calculateLabelCount: Calculate how many labels can be shown
     defaultValueFootnote: Use this value for missing dimension values
     defaultValueLabel: Default value
@@ -145,7 +146,26 @@ edit:
       line: Line
       pie: Pie
       scatter: Scatter
+      sankey: Sankey
+      heatmap: Heatmap
+      waterfall: Waterfall
+      boxplot: Boxplot
+      graph: Graph
+      candlestick: Candlestick
+      map: Map
+      sunburst: Sunburst
+      parallel: Parallel
+      calendar: Calendar
       placeholder: Select metric output
+    boxplot:
+      hint: The boxplot uses up to 5 metrics as the box values (min, Q1, median, Q3, max).
+    candlestick:
+      hint: The candlestick chart uses up to 4 metrics as the candle values (open, close, low, high).
+    mapType:
+      label: Map
+      options:
+        world: World
+        china: China
     relative: Show relative value
     relativePrecision: 'Precision:'
     cumulative: Cumulative

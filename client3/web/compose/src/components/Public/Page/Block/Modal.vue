@@ -136,7 +136,7 @@ function destroyEvents() {
 }
 
 onMounted(() => {
-  window.addEventListener('magnify-page-block', magnifyPageBlock)
+  window.addEventListener('magnify-page-block', (event) => magnifyPageBlock(event.detail))
 })
 
 onBeforeUnmount(() => {

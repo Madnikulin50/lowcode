@@ -29,6 +29,7 @@ edit:
     label: Анимация
     enabled: Анимация включена
   dimension:
+    add: Добавить измерение
     calculateМеткаCount: Calculate how many labels can be shown
     defaultValueFootnote: Use this value for missing dimension values
     defaultValueLabel: Значение по-умолчанию
@@ -146,7 +147,26 @@ edit:
       line: Кривая
       pie: Пирог
       scatter: Рассеивание
+      sankey: Санкей
+      heatmap: Тепловая карта
+      waterfall: Водопад
+      boxplot: Ящик с усами
+      graph: Граф
+      candlestick: Свечи
+      map: Карта
+      sunburst: Санберст
+      parallel: Параллельные координаты
+      calendar: Календарь
       placeholder: Выберите вывод метрики
+    boxplot:
+      hint: Ящик с усами использует до 5 метрик как значения ящика (min, Q1, медиана, Q3, max).
+    candlestick:
+      hint: Свечной график использует до 4 метрик как значения свечи (open, close, low, high).
+    mapType:
+      label: Карта
+      options:
+        world: Мир
+        china: Китай
     relative: Показать связанное значение
     relativePrecision: 'Точность:'
     cumulative: Кумулятивный
