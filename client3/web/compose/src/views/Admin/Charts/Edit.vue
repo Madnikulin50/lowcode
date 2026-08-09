@@ -553,7 +553,7 @@ const hideSave = computed(() => isEdit.value && !chart.value.canUpdateChart)
 
 const isEdit = computed(() => chart.value && chart.value.chartID !== NoID)
 
-const hasAxis = computed(() => reports.value.some(({ metrics = [] }) => metrics.some(m => ['bar', 'line', 'scatter'].includes(m.type))))
+const hasAxis = computed(() => reports.value.some(({ metrics = [] }) => metrics.some(m => ['bar', 'line', 'scatter', 'waterfall', 'boxplot', 'candlestick', 'heatmap', 'parallel'].includes(m.type))))
 
 const hasPie = computed(() => {
   const r = chart.value?.config?.reports

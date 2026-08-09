@@ -485,6 +485,47 @@
             </select>
           </div>
         </div>
+
+        <div
+          v-if="metric.type === 'map'"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.mapType.label') }}
+            </label>
+            <select
+              v-model="metric.mapType"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="opt in mapTypeOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'boxplot'"
+          class="col-12"
+        >
+          <small class="text-muted">
+            {{ $t('edit.metric.boxplot.hint') }}
+          </small>
+        </div>
+
+        <div
+          v-if="metric.type === 'candlestick'"
+          class="col-12"
+        >
+          <small class="text-muted">
+            {{ $t('edit.metric.candlestick.hint') }}
+          </small>
+        </div>
       </div>
 
       <hr>
@@ -879,6 +920,11 @@ const scatterSymbolOptions = ref([
   { value: 'roundRect', text: t('edit.metric.symbol.roundRect') },
 ])
 
+const mapTypeOptions = ref([
+  { value: 'world', text: t('edit.metric.mapType.options.world') },
+  { value: 'china', text: t('edit.metric.mapType.options.china') },
+])
+
 const anomalyMethods = ref([
   { value: 'zscore', text: t('edit.additionalConfig.anomaly.methodZscore') },
   { value: 'iqr', text: t('edit.additionalConfig.anomaly.methodIqr') },
@@ -906,6 +952,7 @@ onBeforeUnmount(() => {
   tensionSteps.value = []
   lineStyleOptions.value = []
   scatterSymbolOptions.value = []
+  mapTypeOptions.value = []
 })
 
 function hasRelativeDisplay (metric) {

@@ -80,6 +80,20 @@
       >
         <h5 class="mb-3">
           {{ $t('edit.dimension.label') }}
+          <small
+            v-if="dimensions.length > 1"
+            class="text-muted"
+          >
+            {{ i + 1 }}
+          </small>
+          <button
+            v-if="i === dimensions.length - 1 && canAddDimension"
+            type="button"
+            class="btn btn-link text-decoration-none p-0 ms-2 align-baseline"
+            @click.prevent="addDimension"
+          >
+            + {{ $t('edit.dimension.add') }}
+          </button>
         </h5>
 
         <template v-if="usesDimensionsField">
@@ -548,7 +562,16 @@ const dimensions = computed({
 
 const hasLegend = computed(() => !metrics.value?.some(({ type }) => ['gauge'].includes(type)))
 
-const hasAxis = computed(() => metrics.value?.some(({ type }) => ['bar', 'line', 'scatter'].includes(type)))
+const hasAxis = computed(() => metrics.value?.some(({ type }) => ['bar', 'line', 'scatter', 'waterfall', 'boxplot', 'candlestick', 'heatmap', 'parallel'].includes(type)))
+
+// Charts that need more than one dimension (source/target style charts)
+const multiDimensionCharts = ['sankey', 'graph', 'heatmap', 'sunburst']
+
+const canAddDimension = computed(() => {
+  if (!moduleID.value) return false
+  const t = metrics.value?.[0]?.type
+  return multiDimensionCharts.includes(t) && (dimensions.value?.length || 0) < 2
+})
 
 const canAddMetric = computed(() => (props.supportedMetrics < 0 || (metrics.value?.length || 0) < props.supportedMetrics) && moduleID.value)
 
@@ -588,6 +611,10 @@ function getField ({ field }) {
 
 function addMetric () {
   metrics.value = [...(metrics.value || []), props.chart.defMetric()]
+}
+
+function addDimension () {
+  dimensions.value = [...(dimensions.value || []), props.chart.defDimension()]
 }
 
 function onDimFieldChange (f, d) {

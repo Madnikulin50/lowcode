@@ -16,6 +16,14 @@ import {
   RadarChart,
   FunnelChart,
   ScatterChart,
+  SankeyChart,
+  HeatmapChart,
+  BoxplotChart,
+  CandlestickChart,
+  GraphChart,
+  MapChart,
+  SunburstChart,
+  ParallelChart,
 } from 'echarts/charts'
 import {
   TitleComponent,
@@ -25,6 +33,8 @@ import {
   VisualMapComponent,
   ToolboxComponent,
   DataZoomComponent,
+  CalendarComponent,
+  ParallelComponent,
 } from 'echarts/components'
 
 use([
@@ -35,6 +45,14 @@ use([
   RadarChart,
   FunnelChart,
   ScatterChart,
+  SankeyChart,
+  HeatmapChart,
+  BoxplotChart,
+  CandlestickChart,
+  GraphChart,
+  MapChart,
+  SunburstChart,
+  ParallelChart,
   CanvasRenderer,
   TitleComponent,
   GridComponent,
@@ -43,6 +61,8 @@ use([
   VisualMapComponent,
   ToolboxComponent,
   DataZoomComponent,
+  CalendarComponent,
+  ParallelComponent,
 ])
 
 export default {

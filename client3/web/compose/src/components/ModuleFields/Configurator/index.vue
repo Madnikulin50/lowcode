@@ -5,7 +5,7 @@
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-general" type="button" role="tab">{{ t('label.general') }}</button>
       </li>
       <li v-if="fieldComponent" class="nav-item" role="presentation">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-field" type="button" role="tab">{{ t(`general:fieldKinds.${field.kind}.label`) }}</button>
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-field" type="button" role="tab">{{ t(`general.fieldKinds.${field.kind}.label`) }}</button>
       </li>
       <li v-if="field.cap.multi" class="nav-item" role="presentation">
         <button
@@ -25,7 +25,7 @@
       </li>
     </ul>
 
-    <div class="tab-content h-auto overflow-auto" style="max-height: 70vh;">
+    <div class="tab-content px-2 h-auto overflow-auto" style="max-height: 70vh;">
       <div id="tab-general" class="tab-pane active" role="tabpanel">
         <basic :namespace="namespace" :module="module" v-model:field="f" />
       </div>

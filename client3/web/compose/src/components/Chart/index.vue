@@ -27,6 +27,7 @@
 import { ref, watch, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chartConstructor } from 'corteza-webapp-compose/src/lib/charts'
+import { ensureMapRegistered } from 'corteza-webapp-compose/src/lib/chart-maps'
 import { compose } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
 import { useStore } from '../../store'
@@ -107,59 +108,25 @@ async function updateChart () {
 
       if (!field) throw new Error('Dimension field not found')
 
-      const isValidValue = (value) => value !== dimension.default && value !== 'undefined'
+      data.labels = await prettyDimensionValues(dimension, field, data.labels)
+    }
 
-      if (field.kind === 'Bool') {
-        const { trueLabel, falseLabel } = field.options
-        data.labels = data.labels.map(value => {
-          return value === '1' ? trueLabel || t('label.yes') : falseLabel || t('label.no')
+    // Multi-dimension charts (sankey, graph, heatmap, sunburst) rely on raw
+    // report rows; prettify both dimension columns the same way labels are.
+    const rowChartType = data.datasets?.[0]?.type
+    const usesRows = ['sankey', 'graph', 'heatmap', 'sunburst'].includes(rowChartType)
+    if (usesRows && Array.isArray(data.rows) && data.rows.length) {
+      const dims = report.dimensions || []
+      const dimFields = dims.map(d => fields.find(({ name }) => name === d?.field))
+
+      for (let i = 0; i < 2; i++) {
+        const dim = dims[i]
+        const field = dimFields[i]
+        const rawValues = data.rows.map(r => r[`dimension_${i}`])
+        const pretty = await prettyDimensionValues(dim, field, rawValues)
+        data.rows.forEach((r, j) => {
+          r[`dimension_${i}`] = pretty[j]
         })
-      } else if (field.kind === 'Select') {
-        data.labels = data.labels.map(value => {
-          const { text } = field.options.options.find(o => o.value === value) || {}
-          const label = text || value
-          valueMap.value[label] = value
-          return label
-        })
-      } else if (field.kind === 'User') {
-        await store.user.resolveUsers(data.labels.filter(userID => isValidValue(userID)))
-        data.labels = data.labels.map(userID => {
-          const label = field.formatter(store.user.findByID(userID)) || userID
-          valueMap.value[label] = userID
-          return label
-        })
-      } else if (field.kind === 'Record') {
-        const { namespaceID } = props.chart || {}
-        const recordModule = getModuleByID(field.options.moduleID)
-        if (recordModule && data.labels) {
-          await Promise.all(data.labels.map(recordID => {
-            if (isValidValue(recordID)) {
-              return $ComposeAPI.recordRead({ namespaceID, moduleID: recordModule.moduleID, recordID }).then(record => {
-                record = new compose.Record(recordModule, record)
-                if (field.options.recordLabelField) {
-                  const relatedField = recordModule.fields.find(({ name }) => name === field.options.labelField)
-                  return $ComposeAPI.recordRead({ namespaceID, moduleID: relatedField.options.moduleID, recordID: record.values[field.options.labelField] }).then(labelRecord => {
-                    record.values[field.options.labelField] = (labelRecord.values.find(({ name }) => name === field.options.recordLabelField) || {}).value
-                    return record
-                  })
-                } else {
-                  return record
-                }
-              })
-            } else {
-              const record = { values: {} }
-              record.values[field.options.labelField] = recordID
-              return record
-            }
-          })).then(records => {
-            data.labels = records.map(record => {
-              const value = field.options.labelField ? record.values[field.options.labelField] : record.recordID
-              const label = Array.isArray(value) ? value.join(', ') : value
-              valueMap.value[label] = record.recordID
-              return value
-            })
-          })
-        }
       }
     }
 
@@ -177,6 +144,12 @@ async function updateChart () {
     data.labels = data.labels.map(l => l === 'undefined' ? t('chart.undefined') : l)
     data.customColorSchemes = $Settings.get('ui.charts.colorSchemes', [])
     data.themeVariables = getThemeVariables()
+
+    // Map charts require the GeoJSON to be registered with ECharts first
+    const mapTypes = [...new Set(data.datasets
+      .filter(({ type }) => type === 'map')
+      .map(({ mapType }) => mapType || 'world'))]
+    await Promise.all(mapTypes.map(name => ensureMapRegistered(name)))
 
     renderer.value = chart.makeOptions(data)
   } catch (e) {
@@ -212,5 +185,71 @@ function getModuleByID (id) {
 
 function getUserByID (id) {
   return store.user.findByID(id)
+}
+
+/**
+ * Converts raw dimension values into pretty labels, following the same
+ * rules for every field kind (Bool, Select, User, Record). Also fills the
+ * valueMap used for drill-down.
+ */
+async function prettyDimensionValues (dimension, field, values) {
+  if (!dimension || !field || !Array.isArray(values)) return values || []
+
+  const isValidValue = (value) => value !== dimension.default && value !== 'undefined'
+
+  if (field.kind === 'Bool') {
+    const { trueLabel, falseLabel } = field.options
+    return values.map(value => {
+      return value === '1' ? trueLabel || t('label.yes') : falseLabel || t('label.no')
+    })
+  } else if (field.kind === 'Select') {
+    return values.map(value => {
+      const { text } = field.options.options.find(o => o.value === value) || {}
+      const label = text || value
+      valueMap.value[label] = value
+      return label
+    })
+  } else if (field.kind === 'User') {
+    await store.user.resolveUsers(values.filter(userID => isValidValue(userID)))
+    return values.map(userID => {
+      const label = field.formatter(store.user.findByID(userID)) || userID
+      valueMap.value[label] = userID
+      return label
+    })
+  } else if (field.kind === 'Record') {
+    const { namespaceID } = props.chart || {}
+    const recordModule = getModuleByID(field.options.moduleID)
+    if (!recordModule || !values) return values
+
+    return Promise.all(values.map(recordID => {
+      if (isValidValue(recordID)) {
+        return $ComposeAPI.recordRead({ namespaceID, moduleID: recordModule.moduleID, recordID }).then(record => {
+          record = new compose.Record(recordModule, record)
+          if (field.options.recordLabelField) {
+            const relatedField = recordModule.fields.find(({ name }) => name === field.options.labelField)
+            return $ComposeAPI.recordRead({ namespaceID, moduleID: relatedField.options.moduleID, recordID: record.values[field.options.labelField] }).then(labelRecord => {
+              record.values[field.options.labelField] = (labelRecord.values.find(({ name }) => name === field.options.recordLabelField) || {}).value
+              return record
+            })
+          } else {
+            return record
+          }
+        })
+      } else {
+        const record = { values: {} }
+        record.values[field.options.labelField] = recordID
+        return record
+      }
+    })).then(records => {
+      return records.map(record => {
+        const value = field.options.labelField ? record.values[field.options.labelField] : record.recordID
+        const label = Array.isArray(value) ? value.join(', ') : value
+        valueMap.value[label] = record.recordID
+        return value
+      })
+    })
+  }
+
+  return values
 }
 </script>
