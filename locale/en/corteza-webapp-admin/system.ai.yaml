@@ -1,0 +1,44 @@
+list:
+  title: AI models
+
+editor:
+  title: Ollama models
+  sync: Sync from Ollama
+  enabled: Enable AI features
+  enabledHelp: When disabled, model pickers return an empty list. Role defaults still apply on the server until you clear them.
+  ollamaURL: Ollama URL
+  ollamaURLPlaceholder: http://127.0.0.1:11434
+  ollamaURLHelp: Leave empty to use OLLAMA_URL, then OLLAMA_HOST, then localhost.
+  ollamaURLEffective: "Currently using {url} (from {source})"
+  save: Save changes
+  saved: Saved
+  roles:
+    title: Default model by purpose
+    help: Each purpose uses its own default. Empty = CHAT_MODEL env or built-in default (qwen3:8b).
+    fallback: (env / built-in default)
+    composeChat: Compose chat
+    composeChatHelp: AI chat on compose pages and warmup default.
+    mcpAgent: MCP agents
+    mcpAgentHelp: CRUD / assistant agents in the MCP bridge.
+    automationChat: Automation chat
+    automationChatHelp: Workflow assistant chat.
+    rulesgoAi: Rulesgo AI nodes
+    rulesgoAiHelp: AI nodes inside rule chains.
+  catalog:
+    title: Model catalog
+    help: Empty catalog means no filter — all Ollama chat models are available. Once you sync or add entries, only enabled models appear in pickers.
+    empty: Catalog is empty (no filter). Models load from Ollama automatically; or click “Sync from Ollama”.
+    loading: Loading models from Ollama…
+    discoverEmpty: Ollama returned no chat models. Check OLLAMA_HOST / URL and that models are pulled.
+    add: Add model
+    remove: Remove
+    warmup: Warmup
+    notePlaceholder: Optional note
+    pickerOnly: Available in picker
+    toolsYes: tools
+    toolsNo: no tools
+    columns:
+      name: Model
+      enabled: On
+      tools: Tools
+      usedAs: Used as

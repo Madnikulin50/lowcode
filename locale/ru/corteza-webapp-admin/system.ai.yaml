@@ -1,0 +1,44 @@
+list:
+  title: AI-модели
+
+editor:
+  title: Модели Ollama
+  sync: Синхронизировать с Ollama
+  enabled: Включить AI
+  enabledHelp: Если выключено, пикеры моделей будут пустыми. Назначения ролей на сервере продолжают действовать, пока их не очистить.
+  ollamaURL: URL Ollama
+  ollamaURLPlaceholder: http://127.0.0.1:11434
+  ollamaURLHelp: Пусто = OLLAMA_URL, затем OLLAMA_HOST, затем localhost.
+  ollamaURLEffective: "Сейчас используется {url} (из {source})"
+  save: Сохранить
+  saved: Сохранено
+  roles:
+    title: Модель по назначению
+    help: У каждого назначения свой default. Пусто = CHAT_MODEL или встроенный default (qwen3:8b).
+    fallback: (env / встроенный default)
+    composeChat: Compose chat
+    composeChatHelp: AI-чат на страницах compose и warmup по умолчанию.
+    mcpAgent: MCP-агенты
+    mcpAgentHelp: CRUD / assistant в MCP bridge.
+    automationChat: Automation chat
+    automationChatHelp: Чат ассистента workflow.
+    rulesgoAi: Rulesgo AI
+    rulesgoAiHelp: AI-ноды в цепочках правил.
+  catalog:
+    title: Каталог моделей
+    help: Пустой каталог = без фильтра (все chat-модели Ollama). После sync/добавления в пикерах только включённые.
+    empty: Каталог пуст (без фильтра). Модели подтягиваются из Ollama автоматически; или нажмите «Синхронизировать».
+    loading: Загрузка моделей из Ollama…
+    discoverEmpty: Ollama не вернула chat-модели. Проверьте OLLAMA_HOST / URL и что модели скачаны (ollama pull).
+    add: Добавить
+    remove: Удалить
+    warmup: Warmup
+    notePlaceholder: Заметка (необязательно)
+    pickerOnly: Доступна в пикере
+    toolsYes: tools
+    toolsNo: нет tools
+    columns:
+      name: Модель
+      enabled: Вкл
+      tools: Tools
+      usedAs: Используется как
