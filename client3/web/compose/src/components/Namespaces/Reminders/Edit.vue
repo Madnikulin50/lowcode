@@ -129,6 +129,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'general' } })
 import { ref, computed, watch } from 'vue'
 import { system } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'

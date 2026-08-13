@@ -39,6 +39,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.connections', keyPrefix: 'federation' } })
 import { reactive } from 'vue'
 import { useListHelpers } from 'corteza-webapp-admin/src/mixins/listHelpers'
 import { useI18n } from 'vue-i18n'

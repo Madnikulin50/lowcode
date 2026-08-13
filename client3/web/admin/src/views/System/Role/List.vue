@@ -41,6 +41,7 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.roles', keyPrefix: 'list' } })
 import { ref, computed, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'

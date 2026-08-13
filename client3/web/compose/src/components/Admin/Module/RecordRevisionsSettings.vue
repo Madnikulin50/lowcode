@@ -29,6 +29,7 @@
 </template>
 
 <script setup lang="js">
+defineOptions({ i18nOptions: { namespaces: 'module', keyPrefix: 'edit.config.record-revisions' } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 

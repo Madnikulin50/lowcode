@@ -49,6 +49,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'general' } })
 import { computed, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import errors from '../errors'

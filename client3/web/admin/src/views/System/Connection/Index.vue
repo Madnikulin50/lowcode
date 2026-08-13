@@ -8,6 +8,7 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.connections', keyPrefix: 'list' } })
 import CConnectionPrimary from '../../../components/Connection/CConnectionPrimary.vue'
 import CExternalConnectionList from '../../../components/Connection/CExternalConnectionList.vue'
 </script>

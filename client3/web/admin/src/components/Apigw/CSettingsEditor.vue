@@ -70,6 +70,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.apigw', keyPrefix: 'settings' } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 

@@ -53,6 +53,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'chat' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import Chat from './Chat.vue'
 
@@ -67,26 +68,36 @@ const startPrompt = ref('')
 const attachedFiles = ref([])
 const fullscreen = ref(false)
 const modelOptions = ref([])
-const selectedModel = ref('deepseek-r1')
+const selectedModel = ref('')
 
 const $ComposeAPI = window.__composeAPI
 
 function warmUp () {
+  if (!selectedModel.value) return
   $ComposeAPI.pageAiWarmUp({ model: selectedModel.value }).catch(() => {})
 }
 
 function loadModels () {
-  $ComposeAPI.pageAiModels().then(({ models = [] } = {}) => {
+  $ComposeAPI.pageAiModels().then((payload = {}) => {
+    const models = payload.models || []
+    const serverDefault = payload.default || ''
     modelOptions.value = models
-    if (models.length) {
-      const preferred = ['deepseek-r1', 'deepseek-v2']
-      selectedModel.value = models.includes(selectedModel.value)
-        ? selectedModel.value
-        : (preferred.find(m => models.includes(m)) || models[0])
-      try {
-        localStorage.setItem('aiChat.model', selectedModel.value)
-      } catch (e) {}
+    if (!models.length) {
+      selectedModel.value = ''
+      return
     }
+    let saved = ''
+    try { saved = localStorage.getItem('aiChat.model') || '' } catch (e) {}
+    if (saved && models.includes(saved)) {
+      selectedModel.value = saved
+    } else if (serverDefault && models.includes(serverDefault)) {
+      selectedModel.value = serverDefault
+    } else {
+      selectedModel.value = models[0]
+    }
+    try {
+      localStorage.setItem('aiChat.model', selectedModel.value)
+    } catch (e) {}
     warmUp()
   }).catch(() => {})
 }

@@ -66,6 +66,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block', keyPrefix: 'tabs' } })
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageBlockBase } from './usePageBlockBase'

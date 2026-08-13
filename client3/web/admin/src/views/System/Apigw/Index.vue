@@ -17,6 +17,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: ['system.apigw'] } })
 import { ref, computed, onMounted } from 'vue'
 import { inject } from 'vue'
 import { useToast } from 'corteza-lib/vue/dist'

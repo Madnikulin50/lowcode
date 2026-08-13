@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'request', keyPrefix: 'view' } })
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fmt, NoID } from 'corteza-lib/js/dist'

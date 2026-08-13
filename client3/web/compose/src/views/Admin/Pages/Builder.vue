@@ -496,10 +496,11 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'page' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useStore } from '../../../store'
 import { useRouter, useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+
 import { useUiStore } from '../../../store/ui'
 
 const uiStore = useUiStore()
@@ -515,11 +516,11 @@ import PageBlocksConfigurator from 'corteza-webapp-compose/src/components/PageBl
 import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Modal'
 import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Page/Block/Modal'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
-import { handle } from 'corteza-lib/vue/dist'
+import { handle, useNsI18n } from 'corteza-lib/vue/dist'
 import ScenarioConfigurator from 'corteza-webapp-compose/src/components/Public/Page/Scenarios'
 import { Modal } from 'bootstrap'
 
-const { t } = useI18n()
+const t = useNsI18n()
 const store = useStore()
 const router = useRouter()
 const route = useRoute()

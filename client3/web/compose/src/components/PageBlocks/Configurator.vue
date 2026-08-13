@@ -397,6 +397,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, onBeforeUnmount, onMounted, inject } from 'vue'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { handle, components, composables } from 'corteza-lib/vue/dist'

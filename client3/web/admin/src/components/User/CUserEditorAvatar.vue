@@ -89,6 +89,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.users', keyPrefix: 'editor.avatar' } })
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { components } from 'corteza-lib/vue/dist'

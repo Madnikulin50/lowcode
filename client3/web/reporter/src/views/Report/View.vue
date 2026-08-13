@@ -55,15 +55,16 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'view' } })
 import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useToast } from 'corteza-lib/vue/dist'
+
+import { useToast, useNsI18n } from 'corteza-lib/vue/dist'
 import { system } from 'corteza-lib/js/dist'
 import Grid from '../../components/Report/Grid.vue'
 import Block from '../../components/Report/Blocks/index.vue'
 
-const { t } = useI18n()
+const t = useNsI18n()
 const route = useRoute()
 const toast = useToast()
 const toastErrorHandler = toast.toastErrorHandler

@@ -38,7 +38,7 @@ type (
 )
 
 func WorkflowChat() *workflowChat {
-	c, err := chat.NewClient("deepseek-v2")
+	c, err := chat.NewClient(chat.ModelForRole(chat.RoleAutomationChat))
 	if err != nil {
 		return nil
 	}
@@ -97,7 +97,11 @@ func (c *workflowChat) Ask(ctx context.Context, ask *WorkflowChatPromptArguments
 	}
 
 	msgs := c.buildMessages(ask)
-	out, err := c.client.Generate(ctx, msgs, model.WithTools(toolInfos))
+	var opts []model.Option
+	if c.client.IsToolsSupported() {
+		opts = append(opts, model.WithTools(toolInfos))
+	}
+	out, err := c.client.Generate(ctx, msgs, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +154,11 @@ func (c *workflowChat) AskStream(ctx context.Context, ask *WorkflowChatPromptArg
 	}
 
 	msgs := c.buildMessages(ask)
-	streamReader, err := c.client.Stream(ctx, msgs, model.WithTools(toolInfos))
+	var opts []model.Option
+	if c.client.IsToolsSupported() {
+		opts = append(opts, model.WithTools(toolInfos))
+	}
+	streamReader, err := c.client.Stream(ctx, msgs, opts...)
 	if err != nil {
 		return err
 	}

@@ -145,6 +145,7 @@
 </template>
 
 <script setup lang="js">
+defineOptions({ i18nOptions: { namespaces: 'module', keyPrefix: 'edit.config.uniqueValues' } })
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose } from 'corteza-lib/js/dist'

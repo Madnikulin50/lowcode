@@ -407,6 +407,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.authclients', keyPrefix: 'editor.info' } })
 import { ref, computed, watch, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NoID } from 'corteza-lib/js/dist'

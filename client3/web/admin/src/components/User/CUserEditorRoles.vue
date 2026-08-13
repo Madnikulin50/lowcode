@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.users', keyPrefix: 'editor.roles' } })
 import { useI18n } from 'vue-i18n'
 import CRolePicker from 'corteza-webapp-admin/src/components/CRolePicker'
 

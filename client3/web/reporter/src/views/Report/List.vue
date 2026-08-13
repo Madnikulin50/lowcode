@@ -118,15 +118,16 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'list' } })
 import { ref, computed, onMounted, onBeforeUnmount, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useToast, components } from 'corteza-lib/vue/dist'
+
+import { useToast, components, useNsI18n } from 'corteza-lib/vue/dist'
 import { useListHelpers } from '../../mixins/listHelpers'
 import { useReportHelpers } from '../../mixins/report'
 
 const { CResourceList } = components
-const { t } = useI18n()
+const t = useNsI18n()
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()

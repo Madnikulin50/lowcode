@@ -39,6 +39,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.connections', keyPrefix: 'editor.properties' } })
 import { kebabCase } from 'lodash'
 
 defineProps({

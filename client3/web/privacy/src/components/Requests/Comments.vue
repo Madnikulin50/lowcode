@@ -90,6 +90,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'request', keyPrefix: 'comments' } })
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fmt, NoID } from 'corteza-lib/js/dist'

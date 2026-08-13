@@ -127,6 +127,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'namespace', keyPrefix: 'manage' } })
 import { ref, computed, reactive, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'

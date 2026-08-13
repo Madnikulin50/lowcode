@@ -34,6 +34,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { computed, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NoID } from 'corteza-lib/js/dist'

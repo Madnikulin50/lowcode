@@ -132,6 +132,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'general' } })
 import { computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { fmt } from 'corteza-lib/js/dist'

@@ -32,6 +32,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'field' } })
 const props = defineProps({
   value: {
     type: Array,

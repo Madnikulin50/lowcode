@@ -407,6 +407,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'chart' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 
 const chartComponentRef = ref(null)

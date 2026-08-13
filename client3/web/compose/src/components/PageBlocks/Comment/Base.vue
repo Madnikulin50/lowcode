@@ -266,6 +266,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick, inject } from 'vue'
 import { useStore } from '../../../store'
 import { usePageBlockBase } from '../usePageBlockBase'

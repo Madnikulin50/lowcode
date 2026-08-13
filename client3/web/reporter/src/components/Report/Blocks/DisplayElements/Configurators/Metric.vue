@@ -61,9 +61,10 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'display-element', keyPrefix: 'metric.configurator' } })
 import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useSettings } from 'corteza-lib/vue/dist'
+
+import { useSettings, useNsI18n } from 'corteza-lib/vue/dist'
 import ColumnSelector from '../../../../Common/ColumnSelector.vue'
 import { components } from 'corteza-lib/vue/dist'
 const { CInputColorPicker } = components
@@ -75,7 +76,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:displayElementOptions'])
 
-const { t } = useI18n()
+const t = useNsI18n()
 const { settings } = useSettings()
 
 const options = computed({

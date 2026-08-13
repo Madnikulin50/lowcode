@@ -1,7 +1,7 @@
 <template>
   <main>
     <div class="logo">
-      <img src="/applications/jitsi.png">
+      <img src="/applications/video-conference.png">
     </div>
     <div id="roomselection">
       <span>{{ t('jitsi.toStart') }}</span>
@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'app', keyPrefix: 'jitsi' } })
 import { ref, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from 'corteza-lib/vue/dist'

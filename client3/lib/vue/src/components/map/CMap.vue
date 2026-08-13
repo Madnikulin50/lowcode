@@ -42,8 +42,10 @@
       @update:bounds="onBoundsUpdate"
     >
       <l-tile-layer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        :attribution="mapOptions.attribution"
+        :url="tileLayerURL"
+        :attribution="tileAttribution"
+        :max-zoom="tileMaxZoom"
+        :min-zoom="tileMinZoom"
       />
 
       <l-polygon
@@ -169,10 +171,42 @@ const geoSearch = ref<{
   marker: null,
 })
 
+const DEFAULT_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+const DEFAULT_ATTRIBUTION = '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a>'
+
 const markerValues = computed(() => props.markers.map((m: any) => ({
   ...m,
   value: getLatLng(m.value),
 })).filter((c: any) => c.value) || [])
+
+const settingsTileURL = computed(() => String(proxy.$Settings?.get?.('ui.map.tileURL', '') || '').trim())
+const settingsAttribution = computed(() => String(proxy.$Settings?.get?.('ui.map.attribution', '') || '').trim())
+const settingsMaxZoom = computed(() => Number(proxy.$Settings?.get?.('ui.map.maxZoom', 0) || 0))
+const settingsMinZoom = computed(() => Number(proxy.$Settings?.get?.('ui.map.minZoom', 0) || 0))
+
+const tileLayerURL = computed(() => {
+  if (props.map?.tileURL) return props.map.tileURL
+  if (settingsTileURL.value) return settingsTileURL.value
+  return DEFAULT_TILE_URL
+})
+
+const tileAttribution = computed(() => {
+  if (props.map?.attribution) return props.map.attribution
+  if (settingsAttribution.value) return settingsAttribution.value
+  return DEFAULT_ATTRIBUTION
+})
+
+const tileMaxZoom = computed(() => {
+  if (isNumber(props.map?.maxZoom)) return props.map.maxZoom
+  if (settingsMaxZoom.value > 0) return settingsMaxZoom.value
+  return 18
+})
+
+const tileMinZoom = computed(() => {
+  if (isNumber(props.map?.minZoom)) return props.map.minZoom
+  if (settingsMinZoom.value > 0) return settingsMinZoom.value
+  return 0
+})
 
 const mapOptions = computed(() => {
   const mapOpts = { ...props.map }
@@ -180,9 +214,14 @@ const mapOptions = computed(() => {
     zoom: 3,
     center: [30, 30],
     rotation: 0,
-    attribution: '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a>',
+    attribution: tileAttribution.value,
+    maxZoom: tileMaxZoom.value,
+    minZoom: tileMinZoom.value,
   }
   mapOpts.bounds = mapOpts.bounds ? latLngBounds(mapOpts.bounds) : null
+  if (!isNumber(mapOpts.maxZoom)) mapOpts.maxZoom = defaultOptions.maxZoom
+  if (!isNumber(mapOpts.minZoom)) mapOpts.minZoom = defaultOptions.minZoom
+  if (!mapOpts.attribution) mapOpts.attribution = defaultOptions.attribution
   return { ...defaultOptions, ...mapOpts }
 })
 

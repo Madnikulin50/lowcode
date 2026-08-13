@@ -115,6 +115,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'page' } })
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useStore } from '../../../store'
 import { useRouter, useRoute } from 'vue-router'

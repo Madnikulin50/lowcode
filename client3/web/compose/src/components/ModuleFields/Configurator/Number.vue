@@ -200,6 +200,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'field' } })
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfiguratorBase } from './base'

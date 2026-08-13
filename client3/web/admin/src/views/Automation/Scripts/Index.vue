@@ -63,6 +63,7 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'automation.scripts', keyPrefix: 'list' } })
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useListHelpers } from '../../../mixins/listHelpers'

@@ -48,7 +48,9 @@ import { ref } from 'vue'
 import FeedSource from './FeedSource'
 import Configurator from './Configurator'
 
-defineOptions({ inheritAttrs: false })
+defineOptions({ inheritAttrs: false,
+  i18nOptions: { namespaces: 'block' },
+})
 
 const activeTab = ref(0)
 </script>

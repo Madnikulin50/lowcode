@@ -150,6 +150,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'search' } })
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'

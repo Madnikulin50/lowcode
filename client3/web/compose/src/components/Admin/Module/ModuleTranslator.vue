@@ -11,6 +11,7 @@
 </template>
 
 <script setup lang="js">
+defineOptions({ i18nOptions: { namespaces: 'resource-translator', keyPrefix: 'resources.module' } })
 import { computed } from 'vue'
 import { useStore } from '../../../store'
 import { useI18n } from 'vue-i18n'

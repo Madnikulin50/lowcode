@@ -33,6 +33,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'automation.workflows', keyPrefix: 'editor.triggers' } })
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()

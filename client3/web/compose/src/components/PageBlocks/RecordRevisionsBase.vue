@@ -71,6 +71,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block', keyPrefix: 'recordRevisions.viewer' } })
 import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose, NoID } from 'corteza-lib/js/dist'

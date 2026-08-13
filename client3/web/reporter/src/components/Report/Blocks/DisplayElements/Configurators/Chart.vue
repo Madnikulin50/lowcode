@@ -202,6 +202,7 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'display-element' } })
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSettings } from 'corteza-lib/vue/dist'

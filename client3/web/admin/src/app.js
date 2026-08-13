@@ -218,6 +218,7 @@ export default (options = {}) => {
       'system.roles',
       'system.sensitivityLevel',
       'system.settings',
+      'system.ai',
       'system.templates',
       'system.user-groups',
       'system.users',

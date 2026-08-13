@@ -24,6 +24,13 @@ export type PartialChart = Partial<BaseChart>
 const defaultFx = 'n'
 
 /**
+ * Chart types that support stacking (multiple series on shared axis).
+ */
+export function isStackableType (type?: string): boolean {
+  return ['line', 'bar'].includes(type as string)
+}
+
+/**
  * BaseChart represents a structure that stores any configuration data.
  * Any display and data rendering operations should be handled by any sub classes.
  */
@@ -204,7 +211,7 @@ export class BaseChart {
     // If any metric has stackBy, use it as the 2nd dimension so the server
     // groups records by the stack field and returns dimension_1 values.
     if (dims.length > 0) {
-      const stackBy = metrics?.find((m: Metric) => m.type === 'line' && m.stackBy)?.stackBy
+      const stackBy = metrics?.find((m: Metric) => isStackableType(m.type) && m.stackBy)?.stackBy
       if (stackBy) {
         if (dims.length >= 2) dims[1] = stackBy
         else dims.push(stackBy)
@@ -274,7 +281,7 @@ export class BaseChart {
 
     // Build data sets
     const { metrics } = report
-    const stackBy = metrics?.find((m: any) => m.type === 'line' && m.stackBy)?.stackBy
+    const stackBy = metrics?.find((m: any) => isStackableType(m.type) && m.stackBy)?.stackBy
     let datasets
 
     if (stackBy && results.length) {

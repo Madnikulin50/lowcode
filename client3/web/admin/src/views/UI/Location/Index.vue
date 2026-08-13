@@ -5,6 +5,7 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'ui.settings', keyPrefix: 'editor.location' } })
 import { ref, reactive, computed, onMounted, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CUILocationSettings from '../../../components/Settings/UI/CUILocationSettings.vue'

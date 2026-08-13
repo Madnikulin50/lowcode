@@ -93,6 +93,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: ['system.apigw'], keyPrefix: 'profiler' } })
 import { ref, computed, watch, onBeforeUnmount, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

@@ -52,6 +52,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'namespace' } })
 import { ref, computed, inject } from 'vue'
 import FileUpload from './FileUpload'
 import ImportConfiguration from './ImportConfiguration.vue'

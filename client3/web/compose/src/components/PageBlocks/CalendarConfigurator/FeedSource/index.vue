@@ -71,6 +71,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { computed, inject } from 'vue'
 import { usePageBlockBase } from '../../usePageBlockBase'
 import { useStore } from '../../../../store'

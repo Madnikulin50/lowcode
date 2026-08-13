@@ -43,10 +43,11 @@
 </template>
 
 <script setup>
-import { useI18n } from 'vue-i18n'
-import { useAuth } from 'corteza-lib/vue/dist'
+defineOptions({ i18nOptions: { namespaces: 'data-overview' } })
 
-const { t } = useI18n()
+import { useAuth, useNsI18n } from 'corteza-lib/vue/dist'
+
+const t = useNsI18n()
 const { auth } = useAuth()
 
 const dataTypes = [

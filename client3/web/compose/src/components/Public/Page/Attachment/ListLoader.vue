@@ -130,6 +130,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'preview' } })
 import { ref, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import numeral from 'numeral'

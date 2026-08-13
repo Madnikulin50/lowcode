@@ -48,7 +48,7 @@ func New(client *chat.Client, cfg AgentConfig) *Agent {
 		cfg.MaxSteps = 5
 	}
 	if cfg.Model == "" {
-		cfg.Model = "deepseek-v2"
+		cfg.Model = chat.ModelForRole(chat.RoleMCPAgent)
 	}
 	return &Agent{
 		cfg:    cfg,

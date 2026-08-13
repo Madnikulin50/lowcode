@@ -30,6 +30,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: ['general', 'drafts'] } })
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useNamespaceStore } from '../../store/namespace'

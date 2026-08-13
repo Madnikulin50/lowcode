@@ -108,12 +108,13 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.templates', keyPrefix: 'editor.info' } })
 import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { NoID } from 'corteza-lib/js/dist'
-import { handle } from 'corteza-lib/vue/dist'
 
-const { t } = useI18n()
+import { NoID } from 'corteza-lib/js/dist'
+import { handle, useNsI18n } from 'corteza-lib/vue/dist'
+
+const t = useNsI18n()
 
 const props = defineProps({
   template: { type: Object, required: true },

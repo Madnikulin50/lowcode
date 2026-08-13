@@ -60,6 +60,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'namespace' } })
 import { ref, computed } from 'vue'
 import { useSettings } from 'corteza-lib/vue/dist'
 

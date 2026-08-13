@@ -79,6 +79,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.templates', keyPrefix: 'editor.content' } })
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useListHelpers } from 'corteza-webapp-admin/src/mixins/listHelpers'

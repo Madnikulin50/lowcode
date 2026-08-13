@@ -65,6 +65,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'namespace' } })
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

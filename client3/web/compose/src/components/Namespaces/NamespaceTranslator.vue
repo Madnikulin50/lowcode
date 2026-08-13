@@ -11,6 +11,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'resource-translator', keyPrefix: 'resources.namespace' } })
 import { ref, computed, inject } from 'vue'
 import { compose } from 'corteza-lib/js/dist'
 import { useI18n } from 'vue-i18n'

@@ -67,6 +67,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FilterToolbox from 'corteza-webapp-compose/src/components/Common/FilterToolbox.vue'

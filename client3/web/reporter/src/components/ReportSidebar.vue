@@ -26,14 +26,15 @@
       </h5>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'sidebar' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useToast } from 'corteza-lib/vue/dist'
+
+import { useToast, useNsI18n } from 'corteza-lib/vue/dist'
 import { components } from 'corteza-lib/vue/dist'
 const { CSidebarNavItems } = components
 
-const { t } = useI18n()
+const t = useNsI18n()
 const route = useRoute()
 const toast = useToast()
 const toastErrorHandler = toast.toastErrorHandler

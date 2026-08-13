@@ -44,6 +44,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'dashboard' } })
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ConnectionMap from '../../components/ConnectionMap.vue'

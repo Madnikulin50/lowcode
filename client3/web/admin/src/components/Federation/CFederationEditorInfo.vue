@@ -84,11 +84,13 @@
 </template>
 
 <script setup>
+import { useNsI18n } from 'corteza-lib/vue/dist'
+defineOptions({ i18nOptions: { namespaces: 'federation.nodes', keyPrefix: 'editor.info' } })
 import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
+
 import { NoID } from 'corteza-lib/js/dist'
 
-const { t } = useI18n()
+const t = useNsI18n()
 
 const props = defineProps({
   node: { type: Object, required: true },

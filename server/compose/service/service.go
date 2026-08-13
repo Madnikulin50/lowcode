@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	discoveryService "github.com/madnikulin50/lowcode/server/discovery/service"
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/chat"
 	"github.com/madnikulin50/lowcode/server/pkg/corredor"
 	"github.com/madnikulin50/lowcode/server/pkg/dal"
 	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
@@ -212,10 +212,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	if err != nil {
 		panic(fmt.Errorf("rag store: %w", err))
 	}
-	ollamaHost := os.Getenv("OLLAMA_URL")
-	if ollamaHost == "" {
-		ollamaHost = "http://localhost:11434"
-	}
+	ollamaHost := chat.EffectiveOllamaURL()
 	DefaultRAG = NewRAGService(ragStore, rag.NewEmbedder(ollamaHost, "nomic-embed-text"))
 
 	DefaultPagesRAG = NewPagesRAGService(ragStore, rag.NewEmbedder(ollamaHost, "nomic-embed-text"), log, DefaultPage, DefaultNamespace, DefaultRecord, DefaultResourceTranslation)

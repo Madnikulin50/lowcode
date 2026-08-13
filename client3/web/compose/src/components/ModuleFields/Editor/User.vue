@@ -98,6 +98,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'field' } })
 import { ref, computed, inject, watch, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash'

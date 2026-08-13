@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.roles', keyPrefix: 'editor.members' } })
 import CMemberPicker from 'corteza-webapp-admin/src/components/CMemberPicker'
 
 defineProps({

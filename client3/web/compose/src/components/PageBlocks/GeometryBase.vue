@@ -31,6 +31,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'

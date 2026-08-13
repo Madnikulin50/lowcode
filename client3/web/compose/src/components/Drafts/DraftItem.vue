@@ -104,6 +104,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: ['drafts', 'general'] } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose } from 'corteza-lib/js/dist'

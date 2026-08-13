@@ -14,6 +14,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageBlockBase } from './usePageBlockBase'

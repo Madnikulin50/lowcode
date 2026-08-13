@@ -67,14 +67,15 @@
 </template>
 
 <script setup>
-import { useI18n } from 'vue-i18n'
-import { components } from 'corteza-lib/vue/dist'
+defineOptions({ i18nOptions: { namespaces: 'system.settings', keyPrefix: 'editor.bgScreen' } })
+
+import { components, useNsI18n } from 'corteza-lib/vue/dist'
 import { CUSTOM_CSS_AUTO_COMPLETE_VALUES } from 'corteza-webapp-admin/src/lib/cssAutoComplete'
 import CUploaderWithPreview from 'corteza-webapp-admin/src/components/CUploaderWithPreview'
 
 const { CAceEditor } = components
 
-const { t } = useI18n()
+const t = useNsI18n()
 
 const props = defineProps({
   settings: {

@@ -67,6 +67,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block', keyPrefix: 'automation' } })
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { inject } from 'vue'

@@ -113,6 +113,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.connections', keyPrefix: 'editor.basic' } })
 import { computed } from 'vue'
 import { NoID } from 'corteza-lib/js/dist'
 import { components, handle } from 'corteza-lib/vue/dist'

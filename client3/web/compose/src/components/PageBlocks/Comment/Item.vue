@@ -181,6 +181,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed } from 'vue'
 import { fmt } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'

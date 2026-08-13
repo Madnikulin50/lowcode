@@ -113,3 +113,20 @@ editor:
       apiKey:
         label: API-ключ
         placeholder: Введите ваш API-ключ
+    map:
+      title: Тайлы карты
+      help: Базовая подложка для Geometry-полей и блоков карты. Для offline укажите URL локального tileserver (схема OSM {z}/{x}/{y}).
+      tileSource:
+        label: Источник тайлов
+        description: Online — публичный OSM CDN или свой URL. Local — свой tileserver / прокси MBTiles.
+      tileURL:
+        label: URL-шаблон тайлов
+        description: Шаблон Leaflet с {z}/{x}/{y} и опционально {s}. Пусто при Online = стандартный OpenStreetMap CDN.
+      minZoom:
+        label: Мин. zoom
+      maxZoom:
+        label: Макс. zoom
+      attribution:
+        label: Attribution
+        description: Подпись на карте. Пусто = стандартный copyright OpenStreetMap.
+        placeholder: © OpenStreetMap contributors

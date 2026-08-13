@@ -65,6 +65,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'page' } })
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { GridLayout, GridItem } from '../../lib/vue-grid-layout'

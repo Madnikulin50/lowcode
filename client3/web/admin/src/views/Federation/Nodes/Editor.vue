@@ -30,6 +30,7 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'federation.nodes', keyPrefix: 'editor' } })
 import { ref, computed, reactive, watch, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

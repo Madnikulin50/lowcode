@@ -197,6 +197,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'ui.settings', keyPrefix: 'editor.corteza-studio' } })
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CUploaderWithPreview from 'corteza-webapp-admin/src/components/CUploaderWithPreview'

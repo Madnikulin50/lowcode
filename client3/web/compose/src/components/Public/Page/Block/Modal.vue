@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="showModal"
-    class="modal d-block"
+    class="modal d-block magnification-modal"
     tabindex="-1"
     role="dialog"
     @click.self="onHidden"
@@ -24,6 +24,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -73,7 +74,14 @@ watch(magnifiedBlockID, (newVal) => {
   }
 }, { immediate: true })
 
-function magnifyPageBlock({ blockID, block: b } = {}) {
+function magnifyPageBlock(detail) {
+  const { blockID, block: b } = detail || {}
+
+  if (!blockID && !b) {
+    onHidden()
+    return
+  }
+
   customBlock.value = b
   const magnifiedID = blockID || (b || {}).blockID
   loadModal(magnifiedID)
@@ -134,12 +142,18 @@ function setDefaultValues() {
   customBlock.value = undefined
 }
 
+let magnifyHandler
+
 function destroyEvents() {
-  window.removeEventListener('magnify-page-block', magnifyPageBlock)
+  if (magnifyHandler) {
+    window.removeEventListener('magnify-page-block', magnifyHandler)
+    magnifyHandler = undefined
+  }
 }
 
 onMounted(() => {
-  window.addEventListener('magnify-page-block', (event) => magnifyPageBlock(event.detail))
+  magnifyHandler = (event) => magnifyPageBlock(event.detail)
+  window.addEventListener('magnify-page-block', magnifyHandler)
 })
 
 onBeforeUnmount(() => {
@@ -149,6 +163,17 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
+.magnification-modal {
+  .modal-dialog {
+    display: flex;
+    flex-direction: column;
+
+    .modal-content {
+      flex: 1 1 auto;
+    }
+  }
+}
+
 .position-initial {
   position: initial;
 }

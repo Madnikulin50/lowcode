@@ -75,16 +75,17 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'layout' } })
 import { ref, computed, watch, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useAuth } from 'corteza-lib/vue/dist'
+
+import { useAuth, useNsI18n } from 'corteza-lib/vue/dist'
 import { url, components } from 'corteza-lib/vue/dist'
 import draggable from 'vuedraggable'
 import { useApplicationsStore } from '../store'
 
 const { CInputSearch } = components
 
-const { t } = useI18n()
+const t = useNsI18n()
 const { auth } = useAuth()
 const applicationsStore = useApplicationsStore()
 

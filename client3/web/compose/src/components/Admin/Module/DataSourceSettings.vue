@@ -156,6 +156,7 @@
 </template>
 
 <script setup lang="js">
+defineOptions({ i18nOptions: { namespaces: 'module', keyPrefix: 'edit.config.datasource' } })
 import { ref, reactive, computed, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Modal } from 'bootstrap'

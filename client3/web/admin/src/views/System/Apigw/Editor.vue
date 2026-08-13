@@ -55,6 +55,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: ['system.apigw'], keyPrefix: 'editor' } })
 import { ref, reactive, computed, watch, inject } from 'vue'
 import { useRouter, useRoute, onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
 import { useI18n } from 'vue-i18n'

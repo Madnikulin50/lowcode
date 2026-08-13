@@ -434,7 +434,7 @@
 
             <div class="form-check">
               <input
-                v-if="metric.type === 'line'"
+                v-if="isStackableType(metric.type)"
                 v-model="metric.stacked"
                 class="form-check-input"
                 type="checkbox"
@@ -442,7 +442,7 @@
                 @change="onStackedToggle(metric)"
               />
               <label
-                v-if="metric.type === 'line'"
+                v-if="isStackableType(metric.type)"
                 class="form-check-label"
                 :for="`stacked-${metric.metricID}`"
               >
@@ -481,7 +481,7 @@
         </div>
 
         <div
-          v-if="metric.type === 'line' && stackByFields.length"
+          v-if="isStackableType(metric.type) && stackByFields.length"
           class="col-12 col-lg-6"
         >
           <div class="mb-3">
@@ -1053,7 +1053,7 @@ watch(() => props.report, (r) => {
       if (m.type === 'line' && m.showSymbol === undefined) {
         m.showSymbol = true
       }
-      if (m.type === 'line' && m.stacked === true && !m.stack) {
+      if (isStackableType(m.type) && m.stacked === true && !m.stack) {
         m.stack = 'total'
       }
     })
@@ -1072,6 +1072,10 @@ onBeforeUnmount(() => {
 
 function hasRelativeDisplay (metric) {
   return compose.chartUtil.hasRelativeDisplay(metric)
+}
+
+function isStackableType (type) {
+  return ['line', 'bar'].includes(type)
 }
 
 function getLineStyle (metric) {
@@ -1107,7 +1111,7 @@ function chartTypeChanged (metric) {
   if (metric.type === 'line' && metric.showSymbol === undefined) {
     metric.showSymbol = true
   }
-  if (metric.type !== 'line') {
+  if (!isStackableType(metric.type)) {
     metric.stackBy = undefined
   }
 }

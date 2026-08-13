@@ -44,6 +44,7 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'federation.nodes', keyPrefix: 'list' } })
 import { ref, computed, reactive, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

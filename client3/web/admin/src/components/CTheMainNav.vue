@@ -11,6 +11,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'navigation' } })
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { components } from 'corteza-lib/vue/dist'
@@ -41,6 +42,7 @@ const nav = [
       { label: 'system.items.apigw', route: 'system.apigw', icon: 'archway', can: [['system/', 'apigw-routes.search'], ['system/', 'apigw-route.create']] },
       { label: 'system.items.connections', route: 'system.connection', icon: 'cloud', can: [['system/', 'dal-connections.search'], ['system/', 'dal-connection.create']] },
       { label: 'system.items.code-snippets', route: 'system.codesnippets', icon: 'file-code', can: [['system/', 'settings.read'], ['system/', 'settings.manage']] },
+      { label: 'system.items.ai', route: 'system.ai', icon: 'microchip', can: [['system/', 'settings.read'], ['system/', 'settings.manage']] },
       { label: 'system.items.sensitivityLevel', route: 'system.sensitivityLevel', icon: 'stamp', can: ['system/', 'dal-sensitivity-level.manage'] },
       { label: 'system.items.permissions', route: 'system.permissions', icon: 'lock', can: ['system/', 'grant'] },
     ],

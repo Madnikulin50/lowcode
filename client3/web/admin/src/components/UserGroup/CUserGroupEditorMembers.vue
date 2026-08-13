@@ -27,6 +27,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.user-groups', keyPrefix: 'editor.members' } })
 import { useI18n } from 'vue-i18n'
 import CMemberPicker from 'corteza-webapp-admin/src/components/CMemberPicker'
 

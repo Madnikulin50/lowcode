@@ -323,7 +323,7 @@ func nodeTypes() []map[string]interface{} {
 			"configSchema": map[string]interface{}{
 				"agent":  "string (required) — agent name: crud-agent | assistant",
 				"prompt": "string (required) — prompt with {{variable}} support",
-				"model":  "string — model name (default: deepseek-v2)",
+				"model":  "string — model name (default: qwen3:8b / CHAT_MODEL)",
 			},
 		},
 		{

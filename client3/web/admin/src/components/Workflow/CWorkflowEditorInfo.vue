@@ -87,12 +87,13 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'automation.workflows', keyPrefix: 'editor.info' } })
 import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { handle } from 'corteza-lib/vue/dist'
+
+import { handle, useNsI18n } from 'corteza-lib/vue/dist'
 import { NoID } from 'corteza-lib/js/dist'
 
-const { t } = useI18n()
+const t = useNsI18n()
 
 const props = defineProps({
   workflow: { type: Object, required: true },

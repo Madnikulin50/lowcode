@@ -99,6 +99,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'field' } })
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NoID } from 'corteza-lib/js/dist'

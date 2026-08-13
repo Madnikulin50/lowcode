@@ -132,17 +132,18 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'edit' } })
 import { ref, computed, watch, inject } from 'vue'
 import { useRouter, useRoute, onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useToast } from 'corteza-lib/vue/dist'
+
+import { useToast, useNsI18n } from 'corteza-lib/vue/dist'
 import { system } from 'corteza-lib/js/dist'
 import { handle } from 'corteza-lib/vue/dist'
 import { isEqual } from 'lodash'
 import { useReportHelpers } from '../../mixins/report'
 import EditorToolbar from '../../components/EditorToolbar.vue'
 
-const { t } = useI18n()
+const t = useNsI18n()
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()

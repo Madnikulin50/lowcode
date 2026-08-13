@@ -36,10 +36,12 @@
 </template>
 
 <script setup>
-import { useI18n } from 'vue-i18n'
+import { useNsI18n } from 'corteza-lib/vue/dist'
+defineOptions({ i18nOptions: { namespaces: 'system.settings', keyPrefix: 'editor.external.security' } })
+
 import CRolePicker from 'corteza-webapp-admin/src/components/CRolePicker'
 
-const { t } = useI18n()
+const t = useNsI18n()
 
 defineProps({
   value: {

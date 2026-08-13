@@ -18,6 +18,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'request', keyPrefix: 'view.export' } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 

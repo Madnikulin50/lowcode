@@ -15,6 +15,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'request', keyPrefix: 'view.correct' } })
 import { computed } from 'vue'
 import ModuleRecords from '../../Common/ModuleRecords.vue'
 

@@ -134,6 +134,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'compose.settings', keyPrefix: 'editor.ui' } })
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 

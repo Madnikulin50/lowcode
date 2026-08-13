@@ -42,6 +42,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'resource-translator', keyPrefix: 'translator' } })
 import { ref, computed, onMounted, onBeforeUnmount, unref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { composables } from 'corteza-lib/vue/dist'

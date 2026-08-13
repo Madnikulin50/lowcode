@@ -11,6 +11,7 @@ system:
     authclients: Клиенты авторизации
     connections: Соединения
     code-snippets: Фрагменты кода
+    ai: AI-модели
     sensitivityLevel: Уровни чувствительности
     permissions: Права доступа
     queues: Очереди сообщений

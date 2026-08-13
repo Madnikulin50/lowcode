@@ -43,6 +43,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.templates', keyPrefix: 'editor.content.toolbox' } })
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import copy from 'copy-to-clipboard'

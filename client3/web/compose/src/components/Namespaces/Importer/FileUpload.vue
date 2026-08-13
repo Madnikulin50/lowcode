@@ -16,6 +16,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'namespace' } })
 import { ref, computed, inject } from 'vue'
 import { components } from 'corteza-lib/vue/dist'
 const { CUploader } = components

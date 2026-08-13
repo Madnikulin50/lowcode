@@ -80,6 +80,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'request', keyPrefix: 'list' } })
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'

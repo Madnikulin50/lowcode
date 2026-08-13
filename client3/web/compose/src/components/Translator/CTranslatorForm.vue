@@ -81,6 +81,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'resource-translator', keyPrefix: 'translator' } })
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Editable from './Editable.vue'

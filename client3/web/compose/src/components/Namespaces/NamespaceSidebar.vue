@@ -111,6 +111,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'sidebar' } })
 import { ref, computed, watch, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

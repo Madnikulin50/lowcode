@@ -64,6 +64,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'navigation' } })
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth, useSettings } from 'corteza-lib/vue/dist'

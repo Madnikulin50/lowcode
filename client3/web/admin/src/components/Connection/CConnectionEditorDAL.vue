@@ -79,6 +79,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.connections', keyPrefix: 'editor.dal' } })
 import { ref, watch, computed, inject } from 'vue'
 
 defineProps({

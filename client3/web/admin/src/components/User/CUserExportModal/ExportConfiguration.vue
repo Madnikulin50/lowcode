@@ -54,6 +54,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.users' } })
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 

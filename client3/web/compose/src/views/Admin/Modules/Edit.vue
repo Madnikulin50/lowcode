@@ -717,6 +717,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'module' } })
 import { ref, shallowRef, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useStore } from '../../../store'
 import { useRouter, useRoute } from 'vue-router'

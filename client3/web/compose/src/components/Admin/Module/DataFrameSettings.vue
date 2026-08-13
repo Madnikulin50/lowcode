@@ -56,6 +56,7 @@
 </template>
 
 <script setup lang="js">
+defineOptions({ i18nOptions: { namespaces: 'module', keyPrefix: 'edit.config.datasource' } })
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose, NoID, reporter } from 'corteza-lib/js/dist'

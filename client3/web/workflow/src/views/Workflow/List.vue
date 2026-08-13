@@ -226,21 +226,22 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'list' } })
 import { ref, computed, inject, reactive, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
+
 import { useLabelsStore } from '../../store'
 import Import from '../../components/Import.vue'
 import Export from '../../components/Export.vue'
 import WorkflowFilterModal from '../../components/WorkflowFilterModal.vue'
-import { components } from 'corteza-lib/vue/dist'
+import { components, useNsI18n } from 'corteza-lib/vue/dist'
 import { useToast, useAuth, useRBACStore } from 'corteza-lib/vue/dist'
 
 const { CResourceList } = components
 
 const router = useRouter()
 const route = useRoute()
-const { t } = useI18n()
+const t = useNsI18n()
 const toast = useToast()
 const { auth } = useAuth()
 const labelsStore = useLabelsStore()

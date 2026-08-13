@@ -5,6 +5,7 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'ui.settings', keyPrefix: 'editor.theming' } })
 import { ref, reactive, computed, onMounted, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CUIBrandingEditor from '../../../components/Settings/UI/CUIBrandingEditor.vue'

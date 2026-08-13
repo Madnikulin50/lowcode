@@ -121,14 +121,16 @@
 </template>
 
 <script setup>
+import { useNsI18n } from 'corteza-lib/vue/dist'
+defineOptions({ i18nOptions: { namespaces: 'system.settings', keyPrefix: 'editor.external' } })
 import _ from 'lodash'
 import { ref, reactive, computed, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+
 import OidcExternal from 'corteza-webapp-admin/src/components/Settings/System/Auth/ExternalOIDC'
 import StandardExternal from 'corteza-webapp-admin/src/components/Settings/System/Auth/ExternalStd'
 import SamlExternal from 'corteza-webapp-admin/src/components/Settings/System/Auth/ExternalSAML'
 
-const { t } = useI18n()
+const t = useNsI18n()
 
 const idpStandard = [
   'google',

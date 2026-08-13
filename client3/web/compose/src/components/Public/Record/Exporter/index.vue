@@ -220,6 +220,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose } from 'corteza-lib/js/dist'

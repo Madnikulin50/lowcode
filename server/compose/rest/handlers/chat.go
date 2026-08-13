@@ -17,14 +17,16 @@ type (
 	ChatAPI interface {
 		Ask(context.Context, *request.ChatAsk) (interface{}, error)
 		AskStream(context.Context, *request.ChatAsk, service.ChatStreamFunc) error
-		Models(context.Context) ([]string, error)
+		Models(context.Context) (interface{}, error)
+		DiscoverModels(context.Context) (interface{}, error)
 		WarmUp(context.Context, *request.ChatAsk) error
 	}
 	Chat struct {
-		Ask       func(http.ResponseWriter, *http.Request)
-		AskStream func(http.ResponseWriter, *http.Request)
-		Models    func(http.ResponseWriter, *http.Request)
-		WarmUp    func(http.ResponseWriter, *http.Request)
+		Ask            func(http.ResponseWriter, *http.Request)
+		AskStream      func(http.ResponseWriter, *http.Request)
+		Models         func(http.ResponseWriter, *http.Request)
+		DiscoverModels func(http.ResponseWriter, *http.Request)
+		WarmUp         func(http.ResponseWriter, *http.Request)
 	}
 )
 
@@ -45,14 +47,25 @@ func NewChat(h ChatAPI) *Chat {
 		},
 
 		Models: func(w http.ResponseWriter, r *http.Request) {
-			models, err := h.Models(r.Context())
+			payload, err := h.Models(r.Context())
 			if err != nil {
 				api.Send(w, r, map[string]any{
 					"error": err.Error(),
 				})
 				return
 			}
-			api.Send(w, r, map[string]any{"models": models})
+			api.Send(w, r, payload)
+		},
+
+		DiscoverModels: func(w http.ResponseWriter, r *http.Request) {
+			payload, err := h.DiscoverModels(r.Context())
+			if err != nil {
+				api.Send(w, r, map[string]any{
+					"error": err.Error(),
+				})
+				return
+			}
+			api.Send(w, r, payload)
 		},
 
 		Ask: func(w http.ResponseWriter, r *http.Request) {
@@ -123,6 +136,7 @@ func (h *Chat) MountRoutes(r chi.Router, middlewares ...func(http.Handler) http.
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares...)
 		r.Get("/chat/models", h.Models)
+		r.Get("/chat/models/discover", h.DiscoverModels)
 		r.Post("/chat/warmup", h.WarmUp)
 		r.Post("/namespace/{namespaceID}/prompt", h.Ask)
 		r.Post("/namespace/{namespaceID}/page/{pageID}/prompt", h.Ask)

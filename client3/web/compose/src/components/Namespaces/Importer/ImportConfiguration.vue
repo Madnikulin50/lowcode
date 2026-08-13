@@ -75,6 +75,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'namespace' } })
 import { ref, computed, onMounted, inject } from 'vue'
 import { handle } from 'corteza-lib/vue/dist'
 

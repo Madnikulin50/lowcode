@@ -98,6 +98,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { computed, inject } from 'vue'
 import { components } from 'corteza-lib/vue/dist'
 import { compose, NoID } from 'corteza-lib/js/dist'

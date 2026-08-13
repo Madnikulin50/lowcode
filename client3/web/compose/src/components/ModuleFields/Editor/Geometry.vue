@@ -71,6 +71,7 @@
  </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'field', keyPrefix: 'kind.geometry' } })
 import { ref, computed, watch, onBeforeUnmount, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEditorBase } from './base'

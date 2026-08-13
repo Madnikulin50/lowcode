@@ -69,6 +69,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount, inject, nextTick } from 'vue'
 import { debounce } from 'lodash'
 import { usePageBlockBase } from './usePageBlockBase'

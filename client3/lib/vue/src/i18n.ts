@@ -1,5 +1,5 @@
-import { type App } from 'vue'
-import { createI18n, type I18n, type I18nOptions } from 'vue-i18n'
+import { type App, getCurrentInstance } from 'vue'
+import { createI18n, useI18n, type I18n, type I18nOptions } from 'vue-i18n'
 import i18next, { InitOptions } from 'i18next'
 import http from 'i18next-http-backend'
 import detector from 'i18next-browser-languagedetector'
@@ -63,6 +63,47 @@ function mergeMessages(
       }
     }
   }
+}
+
+interface ComponentI18nOptions {
+  namespaces?: string | Array<string>;
+  keyPrefix?: string;
+}
+
+function resolveScoped(
+  key: string,
+  params: object | undefined,
+  opts: ComponentI18nOptions | undefined | null,
+  t: I18n['global']['t'],
+): string {
+  if (opts?.namespaces) {
+    const nsList = Array.isArray(opts.namespaces) ? opts.namespaces : [opts.namespaces]
+    const scoped = (k: string): string => {
+      const v = t(k, params)
+      return v !== k ? v : ''
+    }
+
+    // e.g. system.users.editor.info.title
+    for (const ns of nsList) {
+      const k = opts.keyPrefix ? `${ns}.${opts.keyPrefix}.${key}` : `${ns}.${key}`
+      const v = scoped(k)
+      if (v) return v
+    }
+
+    // e.g. system.users.title
+    for (const ns of nsList) {
+      const v = scoped(`${ns}.${key}`)
+      if (v) return v
+    }
+  }
+
+  return t(key, params)
+}
+
+export function useNsI18n (): (key: string, params?: object) => string {
+  const { t } = useI18n()
+  const opts = (getCurrentInstance()?.type as Record<string, unknown> | undefined)?.i18nOptions as ComponentI18nOptions | undefined
+  return (key, params) => resolveScoped(key, params, opts, t)
 }
 
 export default function (app: App, appName: string | Partial<Options>, ...namespaces: Array<string>): I18n {
@@ -174,5 +215,12 @@ export default function (app: App, appName: string | Partial<Options>, ...namesp
   })
 
   app.use(i18n)
+
+  const globalT = i18n.global.t.bind(i18n.global)
+  app.config.globalProperties.$t = function (this: unknown, key: string, params?: object): string {
+    const opts = (this as { $options?: { i18nOptions?: ComponentI18nOptions } })?.$options?.i18nOptions
+    return resolveScoped(key, params, opts, globalT)
+  }
+
   return i18n
 }

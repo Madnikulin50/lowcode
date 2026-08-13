@@ -6,15 +6,16 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 	"unicode"
 
 	ttlcache "github.com/jellydator/ttlcache/v3"
-	"go.uber.org/zap"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/chat"
 	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"go.uber.org/zap"
 
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
@@ -78,7 +79,7 @@ func Chat() *chatService {
 // message is not delayed by model loading.
 func init() {
 	go func() {
-		if err := chat.WarmUp("deepseek-r1"); err != nil {
+		if err := chat.WarmUp(chat.DefaultModelName()); err != nil {
 			logger.Default().Warn("failed to preload chat model", zap.Error(err))
 		}
 	}()
@@ -140,7 +141,7 @@ func (c *chatService) modelFromPrompt(prompt string) string {
 			return prompt[start : start+end]
 		}
 	}
-	return "deepseek-r1"
+	return chat.DefaultModelName()
 }
 
 func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message {
@@ -402,7 +403,11 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 	}
 
 	msgs := c.buildMessages(ask)
-	out, err := client.Generate(ctx, msgs, model.WithTools(toolInfos))
+	var opts []model.Option
+	if client.IsToolsSupported() {
+		opts = append(opts, model.WithTools(toolInfos))
+	}
+	out, err := client.Generate(ctx, msgs, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -680,9 +685,48 @@ func (c *chatService) Models(ctx context.Context) ([]string, error) {
 	return chat.AvailableModels()
 }
 
+func (c *chatService) ModelsInfo(ctx context.Context) (map[string]any, error) {
+	models, err := chat.AvailableModels()
+	if err != nil {
+		return nil, err
+	}
+	cfg := chat.CurrentConfig()
+	return map[string]any{
+		"models":     models,
+		"default":    chat.DefaultModelName(),
+		"enabled":    cfg.Enabled,
+		"ollamaURL":  chat.EffectiveOllamaURL(),
+		"ollamaFrom": ollamaURLSource(),
+		"roles": map[string]string{
+			chat.RoleComposeChat:    cfg.Roles.ComposeChat,
+			chat.RoleMCPAgent:       cfg.Roles.MCPAgent,
+			chat.RoleAutomationChat: cfg.Roles.AutomationChat,
+			chat.RoleRulesgoAI:      cfg.Roles.RulesgoAI,
+		},
+	}, nil
+}
+
+func ollamaURLSource() string {
+	cfg := chat.CurrentConfig()
+	if strings.TrimSpace(cfg.OllamaURL) != "" {
+		return "settings"
+	}
+	if strings.TrimSpace(os.Getenv("OLLAMA_URL")) != "" {
+		return "OLLAMA_URL"
+	}
+	if strings.TrimSpace(os.Getenv("OLLAMA_HOST")) != "" {
+		return "OLLAMA_HOST"
+	}
+	return "default"
+}
+
+func (c *chatService) DiscoverModels(ctx context.Context) ([]string, error) {
+	return chat.DiscoverModels()
+}
+
 func (c *chatService) WarmUp(ctx context.Context, model string) error {
 	if model == "" {
-		model = "deepseek-r1"
+		model = chat.DefaultModelName()
 	}
 	return chat.WarmUp(model)
 }

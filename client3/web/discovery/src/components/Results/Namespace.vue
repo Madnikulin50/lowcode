@@ -28,6 +28,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'filters' } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { filters } from 'corteza-lib/vue/dist'

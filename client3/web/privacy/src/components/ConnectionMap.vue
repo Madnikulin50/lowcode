@@ -25,6 +25,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'map' } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { components } from 'corteza-lib/vue/dist'

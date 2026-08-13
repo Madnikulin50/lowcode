@@ -5,5 +5,6 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.actionlog', keyPrefix: 'list' } })
 import CActionlogList from '../../../components/Actionlog/CActionlogList.vue'
 </script>

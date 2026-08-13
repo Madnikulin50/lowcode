@@ -24,9 +24,10 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'builder' } })
 import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { components } from 'corteza-lib/vue/dist'
+
+import { components, useNsI18n } from 'corteza-lib/vue/dist'
 const { CItemPicker } = components
 
 const props = defineProps({
@@ -36,7 +37,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:selected-items'])
 
-const { t } = useI18n()
+const t = useNsI18n()
 
 const selected = computed({
   get: () => props.selectedItems.map(({ name }) => name),

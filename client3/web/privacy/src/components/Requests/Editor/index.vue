@@ -7,6 +7,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'request', keyPrefix: 'edit' } })
 import { useI18n } from 'vue-i18n'
 import Correct from './Correct.vue'
 import Delete from './Delete.vue'

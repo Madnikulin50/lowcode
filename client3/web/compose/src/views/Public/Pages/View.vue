@@ -107,6 +107,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'page' } })
 import { ref, computed, watch, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
 import { compose, NoID } from 'corteza-lib/js/dist'

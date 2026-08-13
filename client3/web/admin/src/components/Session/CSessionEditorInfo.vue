@@ -81,6 +81,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'automation.sessions', keyPrefix: 'editor.info' } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 

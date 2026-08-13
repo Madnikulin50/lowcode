@@ -121,6 +121,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.apigw', keyPrefix: 'list' } })
 import { computed, reactive, getCurrentInstance, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

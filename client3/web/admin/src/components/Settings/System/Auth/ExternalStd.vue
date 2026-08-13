@@ -44,10 +44,12 @@
 </template>
 
 <script setup>
-import { useI18n } from 'vue-i18n'
+import { useNsI18n } from 'corteza-lib/vue/dist'
+defineOptions({ i18nOptions: { namespaces: 'system.settings', keyPrefix: 'editor.external.standard' } })
+
 import Security from './ExternalSecurity'
 
-const { t } = useI18n()
+const t = useNsI18n()
 
 const props = defineProps({
   value: {

@@ -15,6 +15,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'field' } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { validator } from 'corteza-lib/js/dist'

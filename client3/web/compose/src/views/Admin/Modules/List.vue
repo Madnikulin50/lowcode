@@ -231,6 +231,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'module' } })
 import { ref, computed, onMounted, watch } from 'vue'
 import { useStore } from '../../../store'
 import { useRouter, useRoute } from 'vue-router'

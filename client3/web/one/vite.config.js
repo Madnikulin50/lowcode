@@ -28,6 +28,7 @@ export default defineConfig({
       },
     },
     vue(),
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),

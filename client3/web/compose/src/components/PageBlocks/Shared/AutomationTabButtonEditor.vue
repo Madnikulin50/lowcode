@@ -33,6 +33,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block', keyPrefix: 'automation' } })
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose, NoID } from 'corteza-lib/js/dist'

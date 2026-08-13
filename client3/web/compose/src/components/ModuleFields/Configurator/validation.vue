@@ -115,6 +115,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'field' } })
 import { ref, computed, onMounted, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose, NoID } from 'corteza-lib/js/dist'

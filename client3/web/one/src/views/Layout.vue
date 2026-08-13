@@ -43,16 +43,17 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'navigation' } })
 import { ref, computed, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useAuth, useSettings } from 'corteza-lib/vue/dist'
+
+import { useAuth, useSettings, useNsI18n } from 'corteza-lib/vue/dist'
 import { components } from 'corteza-lib/vue/dist'
 import CAppSelector from '../components/CAppSelector.vue'
 import { useApplicationsStore } from '../store'
 
 const { CTopbar, CLoaderLogo, CPrompts, CExtendSession, CNotificationSidebar } = components
 
-const { t } = useI18n()
+const t = useNsI18n()
 const { auth } = useAuth()
 const { $Settings: settings } = useSettings()
 const applicationsStore = useApplicationsStore()

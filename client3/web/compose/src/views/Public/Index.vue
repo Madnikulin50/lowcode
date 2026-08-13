@@ -121,6 +121,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'onboarding' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
 import { compose } from 'corteza-lib/js/dist'

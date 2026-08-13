@@ -5,6 +5,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
 

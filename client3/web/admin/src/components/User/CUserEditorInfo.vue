@@ -127,13 +127,14 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.users', keyPrefix: 'editor.info' } })
 import { computed, inject } from 'vue'
-import { useI18n } from 'vue-i18n'
+
 import { NoID } from 'corteza-lib/js/dist'
-import { handle, components } from 'corteza-lib/vue/dist'
+import { handle, components, useNsI18n } from 'corteza-lib/vue/dist'
 const { CInputUserGroup } = components
 
-const { t } = useI18n()
+const t = useNsI18n()
 const $auth = inject('auth', {})
 
 const props = defineProps({

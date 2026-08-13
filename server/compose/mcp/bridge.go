@@ -173,7 +173,7 @@ func initBridge() {
 	}
 
 	// Agent registry
-	chatClient, err := chat.NewClient("deepseek-v2")
+	chatClient, err := chat.NewClient(chat.ModelForRole(chat.RoleMCPAgent))
 	if err != nil {
 		log.Printf("[bridge] agent client: %v", err)
 	} else {

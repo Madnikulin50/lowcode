@@ -236,10 +236,11 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'configurator' } })
 import { ref, reactive, computed, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+
 import { useRouter } from 'vue-router'
-import { handle, components } from 'corteza-lib/vue/dist'
+import { handle, components, useNsI18n } from 'corteza-lib/vue/dist'
 import { automation } from 'corteza-lib/js/dist'
 import Import from '../Import'
 import Export from '../Export'
@@ -247,7 +248,7 @@ import NamespaceModuleSelector from '../NamespaceModuleSelector'
 
 const { CInputUser } = components
 
-const { t } = useI18n()
+const t = useNsI18n()
 const router = useRouter()
 
 const props = defineProps({

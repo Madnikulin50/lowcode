@@ -105,6 +105,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { components } from 'corteza-lib/vue/dist'
 import { usePageBlockBase } from '../usePageBlockBase'

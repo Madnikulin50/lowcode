@@ -31,13 +31,14 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'sensitive-data', keyPrefix: 'list' } })
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useI18n } from 'vue-i18n'
+
 import { useRoute, useRouter } from 'vue-router'
-import { components } from 'corteza-lib/vue/dist'
+import { components, useNsI18n } from 'corteza-lib/vue/dist'
 
 const { CResourceList } = components
-const { t } = useI18n()
+const t = useNsI18n()
 const route = useRoute()
 const router = useRouter()
 

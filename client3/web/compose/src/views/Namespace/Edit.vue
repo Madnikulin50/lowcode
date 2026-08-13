@@ -385,10 +385,11 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'namespace' } })
 import { ref, computed, reactive, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { composables } from 'corteza-lib/vue/dist'
+
+import { composables, useNsI18n } from 'corteza-lib/vue/dist'
 import { isEqual } from 'lodash'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { url, handle, components } from 'corteza-lib/vue/dist'
@@ -403,7 +404,7 @@ import {BButton} from "bootstrap-vue-next";
 
 const { CRichTextInput } = components
 
-const { t } = useI18n()
+const t = useNsI18n()
 const { toastSuccess, toastErrorHandler } = composables.useToast()
 const route = useRoute()
 const router = useRouter()

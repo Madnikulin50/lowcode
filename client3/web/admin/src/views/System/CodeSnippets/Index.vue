@@ -5,5 +5,6 @@
   </div>
 </template>
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.code-snippets', keyPrefix: 'editor' } })
 import CCodeSnippetsList from '../../../components/CodeSnippets/CCodeSnippetsList.vue'
 </script>

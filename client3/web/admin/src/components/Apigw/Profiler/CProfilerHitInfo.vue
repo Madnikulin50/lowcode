@@ -167,6 +167,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: ['system.apigw'], keyPrefix: 'profiler.hit' } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'

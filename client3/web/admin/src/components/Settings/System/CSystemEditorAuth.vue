@@ -428,10 +428,12 @@
 </template>
 
 <script setup>
+import { useNsI18n } from 'corteza-lib/vue/dist'
+defineOptions({ i18nOptions: { namespaces: 'system.settings', keyPrefix: 'editor.auth' } })
 import { ref, watch, inject } from 'vue'
-import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+
+const t = useNsI18n()
 const $Settings = inject('$Settings', {})
 
 const props = defineProps({

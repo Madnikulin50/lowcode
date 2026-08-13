@@ -29,6 +29,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'general' } })
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'

@@ -58,6 +58,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'system.connections', keyPrefix: 'primary' } })
 import { ref, computed, onMounted } from 'vue'
 import CLocation from 'corteza-webapp-admin/src/components/CLocation'
 import { NoID } from 'corteza-lib/js/dist'

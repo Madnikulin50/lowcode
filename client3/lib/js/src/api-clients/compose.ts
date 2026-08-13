@@ -4589,6 +4589,17 @@ export default class Compose {
         return this.api().request(cfg).then(result => stdResolve(result))
     }
 
+    // Discover all Ollama chat models (ignores admin catalog filter)
+    async pageAiDiscoverModels (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'get',
+            url: '/chat/models/discover',
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
     // Preload AI model into memory
     async pageAiWarmUp (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
         const {

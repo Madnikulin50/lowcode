@@ -25,6 +25,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block', keyPrefix: 'recordRevisions.configurator' } })
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FieldPicker from 'corteza-webapp-compose/src/components/Common/FieldPicker'

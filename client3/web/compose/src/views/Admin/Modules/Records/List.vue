@@ -59,6 +59,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'module' } })
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useStore } from '../../../../store'
 import { useRoute } from 'vue-router'

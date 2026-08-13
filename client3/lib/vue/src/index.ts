@@ -9,11 +9,11 @@ import * as url from './libs/url'
 import * as filter from './libs/filter'
 import * as handle from './libs/handle'
 import * as websocket from './libs/websocket'
-import i18n from './i18n'
+import i18n, { useNsI18n } from './i18n'
 
 export {
   plugins, composables, components, corredor, filters,
-  store, mixins, url, filter, handle, websocket, i18n,
+  store, mixins, url, filter, handle, websocket, i18n, useNsI18n,
 }
 
 export { useWfPromptsStore } from './store/wf-prompts'

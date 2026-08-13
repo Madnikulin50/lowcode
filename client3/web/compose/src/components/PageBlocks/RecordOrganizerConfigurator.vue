@@ -85,6 +85,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch, onBeforeUnmount, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useStore } from '../../store'

@@ -31,6 +31,7 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { usePageBlockBase } from './usePageBlockBase'
 import { components } from 'corteza-lib/vue/dist'
 const { CRichTextInput } = components
