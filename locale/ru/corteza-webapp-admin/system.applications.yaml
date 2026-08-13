@@ -2,36 +2,36 @@ editor:
   info:
     createdAt: Время создания
     createdBy: Создал
-    delete: Удалить
+    delete: Delete
     deletedAt: Время удаления
     enabled: Включено
     id: ID
     name: Имя *
-    title: Основная информация
-    undelete: Восстановить
+    title: Basic information
+    undelete: Undelete
     updatedAt: Время обновления
-  new: Новое приложение
+  new: New Приложение
   permissions: Права доступа
   title:
-    create: Создать приложение
-    edit: Изменить приложение
+    create: Create application
+    edit: Изменить application
   unify:
     config:
-      description: Конфигурация приложения (JSON)
+      description: Приложение configuration (JSON)
       label: Конфигурация
-    listed: В списке
+    listed: Listed
     logo:
-      label: Логотип
-      description: Логотип в селекторе приложений
-      placeholder: Выберите логотип или перетащите его сюда...
+      label: Logo
+      description: Logo used in the application selector
+      placeholder: Choose a logo or drop it here...
       reset: Сбросить
     name:
-      description: Имя в селекторе приложений
+      description: Name used in the application selector
       label: Имя
-    pinned: Закреплено
-    title: Селектор приложений
+    pinned: Pinned
+    title: App selector
     url:
-      description: URL приложения
+      description: Приложение URL
       label: URL
 list:
   columns:
@@ -39,28 +39,28 @@ list:
     createdAt: Создано
     enabled: Включено
     name: Имя
-    appListName: Имя в селекторе приложений
-    state: Состояние
+    appListName: App selector name
+    state: State
   export: Экспорт
   rows:
     filters:
-      deleted: Удалённые
+      deleted: Удаленные
   filterForm:
     deleted:
-      label: удалённые приложения
+      label: deleted applications
     excluded:
-      label: Без
+      label: Without
     exclusive:
-      label: Только
+      label: Only
     inclusive:
       label: Включая
     query:
-      label: Фильтр списка приложений
-      placeholder: Фильтр приложений по имени
-  loading: Загрузка приложений
-  new: Новое приложение
+      label: Фильтр applications list
+      placeholder: Фильтр applications by name
+  loading: Loading applications
+  new: New Приложение
   permissions: Права доступа
   title: Приложения
   yaml: YAML
-  delete: Удалить
-  undelete: Восстановить
+  delete: Delete
+  undelete: Undelete

@@ -98,13 +98,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { components } from 'corteza-lib/vue/dist'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const { CInputExpression } = components
+const $auth = inject('$auth')
 
 const props = defineProps({
   feed: { type: Object, required: true, default: () => ({}) },
@@ -138,6 +139,36 @@ const dateFields = computed(() => {
 })
 
 const isRecordPage = computed(() => props.page && props.page.moduleID !== NoID)
+
+const recordAutoCompleteParams = computed(() => processRecordAutoCompleteParams({ module: module.value, operators: true }))
+
+function processRecordAutoCompleteParams ({ module: mod, operators = false } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth?.user?.properties?.()) || []
+
+  const recordSuggestions = isRecordPage.value && props.record
+    ? [
+        ...(['ownerID', 'recordID'].map(value => ({ interpolate: true, value }))),
+        {
+          interpolate: true,
+          value: 'record',
+          properties: [
+            { value: 'values', properties: Object.keys(props.record.values) || [] },
+            ...(props.record.properties || []),
+          ],
+        },
+      ]
+    : []
+
+  return [
+    ...recordSuggestions,
+    ...(operators ? ['AND', 'OR'] : []),
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
 
 function onModuleChange () {
   props.feed.titleField = ''

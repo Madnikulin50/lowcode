@@ -917,10 +917,13 @@ function handleFieldKindUpdate (index) {
 }
 
 function handleFieldSave (field) {
-  const i = module.value.fields.findIndex(f => f.name === field.name)
+  const i = module.value.fields.findIndex(f => (field.fieldID && f.fieldID && f.fieldID === field.fieldID) || f.name === field.name)
   if (i > -1) {
     module.value.fields.splice(i, 1, field)
+  } else {
+    module.value.fields.push(field)
   }
+  updateField.value = null
 }
 
 function onDiscoverySettingsSave (changes) {

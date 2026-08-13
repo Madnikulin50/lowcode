@@ -1,19 +1,19 @@
 applications:
-  applications: Приложения
-  deleted: Удалённые
+  applications: Приложение(s)
+  deleted: Удаленные
   title: Активные приложения
   total: Всего
 roles:
-  archived: Архивированные
-  deleted: Удалённые
-  roles: Роли
-  title: Активные роли
+  archived: Archived
+  deleted: Удаленные
+  roles: Роль (-и)
+  title: Active role(s)
   total: Всего
-title: Дашборд
+title: Dashboard
 users:
-  created: Создано пользователей
-  deleted: Удалённые
-  suspended: Заблокированные
-  title: Активные пользователи
+  created: Создано users(s)
+  deleted: Удаленные
+  suspended: Отключенные
+  title: Active user(s)
   total: Всего
-  users: Пользователи
+  users: Пользователь(s)

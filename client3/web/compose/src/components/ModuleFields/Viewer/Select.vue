@@ -20,6 +20,7 @@
 import { computed } from 'vue'
 import { useViewerBase } from './useViewerBase'
 import { compose } from 'corteza-lib/js/dist'
+import { badgeGradient } from 'corteza-webapp-compose/src/lib/color.js'
 
 const props = defineProps({
   namespace: { type: compose.Namespace, required: true },
@@ -59,8 +60,15 @@ function getOptionStyle (opt) {
   if (props.field.options.displayType === 'badge') {
     const oStyle = opt.style || {}
     style.fontSize = '0.9rem'
-    style.color = getColor(oStyle.textColor) || 'var(--dark)'
-    style.backgroundColor = getColor(oStyle.backgroundColor) || 'var(--extra-light)'
+    const fg = getColor(oStyle.textColor) || 'var(--dark)'
+    const bg = getColor(oStyle.backgroundColor) || 'var(--extra-light)'
+    style.color = fg
+    const gradient = props.field.options.badgeGradient ? badgeGradient(bg) : undefined
+    if (gradient) {
+      style.background = gradient
+    } else {
+      style.backgroundColor = bg
+    }
   }
   return style
 }

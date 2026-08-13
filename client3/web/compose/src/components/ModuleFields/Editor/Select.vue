@@ -28,7 +28,7 @@
 
       <multi v-else v-model:value="value" :errors="errors" :single-input="field.options.selectType !== 'each'">
         <template #single>
-          <CInputSelect
+          <c-input-select
             v-if="field.options.selectType === 'default'"
             ref="singleSelect"
             :options="selectOptions"
@@ -39,7 +39,7 @@
             :badge="field.options.displayType === 'badge'"
             @input="selectChange"
           />
-          <CInputSelect
+          <c-input-select
             v-if="field.options.selectType === 'multiple'"
             v-model="value"
             :options="selectOptions"
@@ -52,7 +52,7 @@
           />
         </template>
         <template #default="ctx">
-          <CInputSelect
+          <c-input-select
             v-if="field.options.selectType === 'each'"
             :value="value[ctx.index]"
             :options="selectOptions"
@@ -87,7 +87,7 @@
           {{ opt.text }}
         </label>
       </div>
-      <CInputSelect
+      <c-input-select
         v-else
         v-model="value"
         :placeholder="t('kind.select.optionNotSelected')"
@@ -108,6 +108,7 @@ import { useI18n } from 'vue-i18n'
 import { useEditorBase } from './base'
 import errors from '../errors'
 import multi from './multi'
+import { badgeGradient } from 'corteza-webapp-compose/src/lib/color.js'
 
 const props = defineProps({
   namespace: { type: Object, required: true },
@@ -122,7 +123,7 @@ const props = defineProps({
 const emit = defineEmits(['change', 'update:preventPopoverClose'])
 
 const { t } = useI18n({ useScope: 'global', messages: {} })
-const { value, formGroupStyleClasses, label, hint, description, setMultiValue } = useEditorBase(props, emit)
+const { value, formGroupStyleClasses, label, hint, description, setMultiValue, getColor } = useEditorBase(props, emit)
 
 const singleSelect = ref(null)
 
@@ -156,8 +157,15 @@ function getOptionStyle (v) {
   if (props.field.options.displayType === 'badge') {
     const opt = selectOptions.value.find(({ value: val }) => val === v) || { style: {} }
     style.fontSize = '0.9rem'
-    style.color = opt.style.textColor || 'var(--dark)'
-    style.backgroundColor = opt.style.backgroundColor || 'var(--extra-light)'
+    const fg = getColor(opt.style.textColor) || 'var(--dark)'
+    const bg = getColor(opt.style.backgroundColor) || 'var(--extra-light)'
+    style.color = fg
+    const gradient = props.field.options.badgeGradient ? badgeGradient(bg) : undefined
+    if (gradient) {
+      style.background = gradient
+    } else {
+      style.backgroundColor = bg
+    }
   }
   return style
 }

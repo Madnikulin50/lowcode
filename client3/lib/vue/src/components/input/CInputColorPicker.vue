@@ -52,7 +52,7 @@
         v-if="showText"
         class="ml-2"
       >
-        {{ modelValue }}
+        {{ displayValue }}
       </span>
     </div>
 
@@ -102,7 +102,7 @@
                       :title="variable.label"
                       class="swatch flex-grow-1 rounded-0 btn"
                       :style="{ backgroundColor: theme.values[variable.key], borderColor: theme.values[variable.key] }"
-                      @click="setColor(theme.values[variable.key])"
+                      @click="setSystemColor(theme.values[variable.key], variable.key)"
                     />
                   </div>
                 </div>
@@ -186,6 +186,18 @@ const emit = defineEmits<{
 
 const showModal = ref(false)
 const currentColor = ref(props.modelValue)
+const systemColorKey = ref('')
+
+const displayValue = computed(() => {
+  if (systemColorKey.value) return systemColorKey.value
+  if (!currentColor.value || currentColor.value[0] !== '#') return currentColor.value
+  for (const theme of themes.value) {
+    for (const [k, v] of Object.entries(theme.values)) {
+      if (v === currentColor.value) return k
+    }
+  }
+  return currentColor.value
+})
 
 const themes = computed(() =>
   props.themeSettings
@@ -197,11 +209,14 @@ const themes = computed(() =>
 )
 
 watch(() => props.modelValue, (value) => {
-  currentColor.value = value
-  if (!value && props.defaultValue) {
-    emit('update:modelValue', props.defaultValue)
-  }
-}, { immediate: true })
+    if (currentColor.value !== value) {
+      systemColorKey.value = ''
+    }
+    currentColor.value = value
+    if (!value && props.defaultValue) {
+      emit('update:modelValue', props.defaultValue)
+    }
+  }, { immediate: true })
 
 const updateColor = debounce(function ({ hex8 = '' }) {
   currentColor.value = hex8
@@ -211,7 +226,15 @@ function setColor(defaultColor = props.defaultValue) {
   currentColor.value = defaultColor
 }
 
+function setSystemColor(hex: string, key?: string) {
+  currentColor.value = hex
+  systemColorKey.value = key || ''
+  emit('update:modelValue', hex)
+  closeMenu()
+}
+
 function saveColor() {
+  systemColorKey.value = ''
   emit('update:modelValue', currentColor.value)
   closeMenu()
 }
@@ -232,6 +255,10 @@ function closeMenu() {
   showModal.value = false
 }
 </script>
+
+<style lang="css">
+@import 'vue-color/dist/vue-color.css';
+</style>
 
 <style lang="scss" scoped>
 .swatch {

@@ -127,12 +127,28 @@ const props = defineProps({
 })
 
 const $Settings = inject('$Settings')
+const $auth = inject('$auth')
 const checkboxLabel = ref({ on: t('label.yes'), off: t('label.no') })
 
 const module = computed(() => {
   if (!(props.feed.options || {}).moduleID) return
   return props.modules.find(({ moduleID }) => moduleID === props.feed.options.moduleID)
 })
+
+const recordAutoCompleteParams = computed(() => processRecordAutoCompleteParams({ module: module.value, operators: true }))
+
+function processRecordAutoCompleteParams ({ module: mod, operators = false } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth?.user?.properties?.()) || []
+
+  return [
+    ...(operators ? ['AND', 'OR'] : []),
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
 
 const titleFields = computed(() => {
   if (!module.value) return []

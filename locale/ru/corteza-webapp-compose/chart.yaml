@@ -81,6 +81,7 @@ edit:
     fieldLabel: Поле *
     fieldPlaceholder: Выберите поле метрики
     fillArea: Залить под графиком
+    showSymbol: Отображать точки на графике
     fixTooltips: Всегда показывать метки
     options:
       label: Свойства
@@ -99,6 +100,11 @@ edit:
     stack:
       label: Стэк
       description: Метрики с одним значением будут слиты
+    stacked:
+      label: Накопленный (стек)
+    stackBy:
+      label: Группировать по полю (стек)
+      placeholder: Нет (простой график)
     lineStyle:
       label: Стиль линии
       default: По-умолчанию
@@ -167,6 +173,12 @@ edit:
       options:
         world: Мир
         china: Китай
+    calendarType:
+      label: Тип календаря
+      options:
+        scatter: Точечная диаграмма
+        heatmap: Тепловая карта
+        effectScatter: Точечная с эффектом
     relative: Показать связанное значение
     relativePrecision: 'Точность:'
     cumulative: Кумулятивный

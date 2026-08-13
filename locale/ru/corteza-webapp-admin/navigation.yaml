@@ -1,4 +1,4 @@
-dashboard: Дашборд
+dashboard: Панель управления
 
 system:
   group: Система
@@ -6,17 +6,17 @@ system:
     users: Пользователи
     usergroups: Группы пользователей
     actionlog: Журнал действий
-    apigw: Интеграционный шлюз
+    apigw: Шлюз интеграции
     applications: Приложения
     authclients: Клиенты авторизации
-    connections: Подключения
-    code-snippets: Сниппеты кода
+    connections: Соединения
+    code-snippets: Фрагменты кода
     sensitivityLevel: Уровни чувствительности
     permissions: Права доступа
     queues: Очереди сообщений
     roles: Роли
-    settings: Настройки авторизации
-    email: Настройки почты
+    settings: Настройки
+    email: Почтовые настройки
     stats: Статистика
     templates: Шаблоны
 
@@ -44,6 +44,6 @@ federation:
 ui:
   group: Интерфейс
   items:
-    theming: Темы
+    theming: Темы оформления
     navigation: Навигация
-    location: Расположение
+    location: Геолокация

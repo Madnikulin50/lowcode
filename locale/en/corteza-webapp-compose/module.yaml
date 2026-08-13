@@ -83,8 +83,6 @@ edit:
   type:
     basic: Basic
     datasource: Aggregate
-    dbref: DB Reference
-    connector: Connector
   label:
     required: '*'
     multi: 1..nn
@@ -189,13 +187,6 @@ edit:
         aggregate:
           label: Aggregate
           load-datasource: Aggregates data from a load datasource based on a column value and aggregates it, such as counting the number of Accounts with the same status
-
-      preview:
-        button: Preview
-        title: Data preview
-        empty: No data
-        rows: Showing {{count}} rows
-        close: Close
 
     privacy:
       title: Privacy
@@ -330,109 +321,3 @@ etl:
     url: URL
     method: Method
     body: Body (JSON)
-
-connector:
-  title: Data Connector
-  description: Read records live from an external REST API, database, GraphQL, Elasticsearch or other source.
-  type: Connector type
-  testConnection: Test Connection
-  testOk: Connection successful
-  testFail: Connection failed
-  types:
-    rest: REST API
-    graphql: GraphQL
-    elasticsearch: Elasticsearch
-    mongodb: MongoDB
-    kafka: Kafka
-    redis: Redis
-    grpc: gRPC
-    db: Database
-  rest:
-    url: URL
-    urlPlaceholder: 'https://api.example.com/data'
-    method: Method
-    dataPath: Data path
-    dataPathPlaceholder: 'results.items'
-    dataPathHint: 'Dot-separated path to the array in the JSON response, e.g. "data.records". Leave empty if response is an array.'
-    body: Body
-    bodyPlaceholder: '{"key": "value"}'
-    headers: Headers
-    headerName: Header name
-    headerValue: Header value
-    addHeader: Add header
-    limitParam: Limit query param
-    offsetParam: Offset query param
-    pageParam: Page query param
-  graphql:
-    url: Endpoint URL
-    urlPlaceholder: 'https://api.example.com/graphql'
-    query: Query
-    queryPlaceholder: '{ items { id name } }'
-    dataPath: Data path
-    dataPathPlaceholder: 'data.items'
-    dataPathHint: 'Dot-separated path to the array from the "data" root, e.g. "items".'
-  elasticsearch:
-    url: Host URL
-    urlPlaceholder: 'https://es.example.com:9200'
-    urlHint: 'Elasticsearch server URL without trailing slash'
-    index: Index name
-    indexPlaceholder: 'my-index'
-    query: Query DSL
-    queryPlaceholder: '{"query":{"match_all":{}}}'
-    queryHint: 'Elasticsearch query DSL body (JSON)'
-    limitParam: 'Size query param, e.g. "size" (default: 10)'
-  mongodb:
-    host: Host
-    hostPlaceholder: 'localhost'
-    port: Port
-    database: Database
-    collection: Collection
-    collectionPlaceholder: 'my_collection'
-    query: Query filter (JSON)
-    queryPlaceholder: '{"status": "active"}'
-    queryHint: 'MongoDB query filter as JSON object'
-  kafka:
-    brokers: Brokers
-    brokersPlaceholder: 'localhost:9092,host2:9092'
-    topic: Topic
-    topicPlaceholder: 'my-topic'
-    group: Consumer group
-    groupPlaceholder: 'my-group'
-    hint: 'Kafka streaming connector (work in progress)'
-  redis:
-    host: Host
-    hostPlaceholder: 'localhost'
-    port: Port
-    password: Password
-    keyPattern: Key pattern
-    keyPatternPlaceholder: 'prefix:*'
-    keyPatternHint: 'Redis keys pattern, e.g. "users:*" for hash scan'
-    database: 'DB number'
-    hint: 'Redis key-value connector (work in progress)'
-  grpc:
-    address: Server address
-    addressPlaceholder: 'localhost:50051'
-    method: 'Service method'
-    methodPlaceholder: '/package.Service/Method'
-    payload: Payload (JSON)
-    payloadPlaceholder: '{}'
-    payloadHint: 'Protobuf message serialized as JSON'
-    hint: 'gRPC connector (work in progress)'
-  db:
-    driver: Driver
-    connectionString: Connection string
-    connectionStringPlaceholder: 'postgres://user:pass(at)host:5432/dbname?sslmode=disable'
-    connectionStringHint: 'Leave empty to use the default Corteza database connection.'
-    query: SQL Query
-    queryPlaceholder: SELECT * FROM external_table
-    queryHint: Raw SQL query executed on the default database connection. Columns will be mapped to module fields.
-  fieldMapping:
-    title: Field mapping
-    add: Add mapping
-    hint: Define how external data fields map to module fields. If a module field has no mapping, the source key with the same name is used.
-    moduleField: Module field
-    sourceKey: Source key / column
-    selectField: Select field
-    sourceKeyPlaceholder: column_name or json.key
-    empty: No field mappings defined. Source keys matching module field names will be used automatically.
-  notImplemented: '{{type}} connector — coming soon'

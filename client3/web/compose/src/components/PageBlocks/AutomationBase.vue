@@ -25,6 +25,7 @@ import { ref, computed, onBeforeUnmount, inject } from 'vue'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
 import AutomationButtons from './Shared/AutomationButtons'
+import axios from 'axios'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -74,6 +75,10 @@ function fetchAutomationLists () {
   return response()
     .then(({ set = [] }) => {
       automationScripts.value = set
+    })
+    .catch(error => {
+      if (axios.isCancel(error)) return
+      console.error('Automation lists fetch failed:', error)
     })
     .finally(() => {
       setTimeout(() => { processing.value = false }, 300)

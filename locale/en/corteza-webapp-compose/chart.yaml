@@ -81,6 +81,7 @@ edit:
     fieldLabel: Field *
     fieldPlaceholder: Select metric field
     fillArea: Fill area below the line
+    showSymbol: Show data points
     fixTooltips: Always show labels
     options:
       label: Options
@@ -98,6 +99,11 @@ edit:
     stack:
       label: Stack
       description: Metrics with same value will be stacked
+    stacked:
+      label: Stacked
+    stackBy:
+      label: Group by field (stack)
+      placeholder: None (simple chart)
     lineStyle:
       label: Line style
       default: Default
@@ -166,6 +172,12 @@ edit:
       options:
         world: World
         china: China
+    calendarType:
+      label: Calendar type
+      options:
+        scatter: Scatter
+        heatmap: Heatmap
+        effectScatter: Effect scatter
     relative: Show relative value
     relativePrecision: 'Precision:'
     cumulative: Cumulative

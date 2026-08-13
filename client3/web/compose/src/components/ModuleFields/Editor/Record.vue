@@ -16,7 +16,7 @@
     >
       <template #single>
         <div class="input-group input-group-sm d-flex w-100">
-          <CInputSelect
+          <c-input-select
             v-if="field.options.selectType === 'multiple'"
             v-model="multipleSelected"
             :options="options"
@@ -43,9 +43,9 @@
             <template #list-footer>
               <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
             </template>
-          </CInputSelect>
+          </c-input-select>
 
-          <CInputSelect
+          <c-input-select
             v-else
             ref="singleSelect"
             :options="options"
@@ -68,7 +68,7 @@
             <template #list-footer>
               <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
             </template>
-          </CInputSelect>
+          </c-input-select>
 
           <button v-if="canAddRecordThroughSelectField" class="btn btn-outline-secondary d-flex align-items-center" :title="t('kind.record.tooltip.addRecord')" @click="addRecordThroughRecordSelectField()">
             <font-awesome-icon :icon="['fas', 'plus']" class="text-primary" />
@@ -78,7 +78,7 @@
 
       <template #default="ctx">
         <div v-if="field.options.selectType === 'each'" class="input-group input-group-sm d-flex w-100">
-          <CInputSelect
+          <c-input-select
             :options="options"
             :get-option-key="getOptionKey"
             :get-option-label="getOptionLabel"
@@ -104,7 +104,7 @@
             <template #list-footer>
               <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
             </template>
-          </CInputSelect>
+          </c-input-select>
 
           <button v-if="canAddRecordThroughSelectField" class="btn btn-outline-secondary d-flex align-items-center" :title="t('kind.record.tooltip.addRecord')" @click="addRecordThroughRecordSelectField()">
             <font-awesome-icon :icon="['fas', 'plus']" class="text-primary" />
@@ -117,7 +117,7 @@
 
     <template v-else>
       <div class="input-group input-group-sm">
-        <CInputSelect
+        <c-input-select
           v-model="selected"
           :options="options"
           :get-option-key="getOptionKey"
@@ -141,7 +141,7 @@
           <template #list-footer>
             <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
           </template>
-        </CInputSelect>
+        </c-input-select>
 
         <button v-if="canAddRecordThroughSelectField" class="btn btn-outline-secondary d-flex align-items-center" :title="t('kind.record.tooltip.addRecord')" @click="addRecordThroughRecordSelectField()">
           <font-awesome-icon :icon="['fas', 'plus']" class="text-primary" />

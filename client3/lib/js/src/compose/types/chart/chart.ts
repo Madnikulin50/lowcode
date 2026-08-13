@@ -54,6 +54,7 @@ export default class Chart extends BaseChart {
       step: m.step ? 'middle' : undefined,
       roseType: m.rose ? 'radius' : undefined,
       symbol: m.symbol,
+      showSymbol: m.showSymbol,
       stack: m.stack,
       tooltip: {
         fixed: m.fixTooltips,
@@ -67,6 +68,19 @@ export default class Chart extends BaseChart {
     const { reports = [], colorScheme, noAnimation = false, toolbox, gradient = '' } = this.config
     const { saveAsImage, timeline = '' } = toolbox || {}
     const schemeColors = getColorschemeColors(colorScheme, data.customColorSchemes)
+
+    function linearGradientColor (seriesColor: string): object {
+      const topColor = gradient === 'darkToLight' ? seriesColor : lightenColor(seriesColor, 50)
+      const bottomColor = gradient === 'darkToLight' ? lightenColor(seriesColor, 50) : seriesColor
+      return {
+        type: 'linear',
+        x: 0, y: 0, x2: 0, y2: 1,
+        colorStops: [
+          { offset: 0, color: topColor },
+          { offset: 1, color: bottomColor },
+        ],
+      }
+    }
 
     function gradientItemStyle (seriesColor: string, type: string): object | undefined {
       if (!gradient) return undefined
@@ -84,18 +98,7 @@ export default class Chart extends BaseChart {
           },
         }
       }
-      const topColor = gradient === 'darkToLight' ? seriesColor : lightenColor(seriesColor, 50)
-      const bottomColor = gradient === 'darkToLight' ? lightenColor(seriesColor, 50) : seriesColor
-      return {
-        color: {
-          type: 'linear',
-          x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [
-            { offset: 0, color: topColor },
-            { offset: 1, color: bottomColor },
-          ],
-        },
-      }
+      return { color: linearGradientColor(seriesColor) }
     }
 
     const options: any = {
@@ -228,7 +231,7 @@ export default class Chart extends BaseChart {
       }
     }
 
-    options.series = datasets.map(({ formatting, type, label, data, stack, tooltip, fill, smooth, step, roseType, symbol }: any, index: number) => {
+    options.series = datasets.map(({ formatting, type, label, data, stack, tooltip, fill, smooth, step, roseType, symbol, showSymbol }: any, index: number) => {
       const { fixed, relative } = tooltip
 
       // We should render the first metric in the dataset as the last
@@ -367,12 +370,16 @@ export default class Chart extends BaseChart {
           step,
           areaStyle: {
             opacity: fill ? 0.7 : 0,
+            ...(gradient && type === 'line' && fill ? {
+              color: linearGradientColor(schemeColors[index % schemeColors.length]),
+            } : {}),
           },
           ...(gradient && type === 'bar' ? {
             itemStyle: gradientItemStyle(schemeColors[index % schemeColors.length], type),
           } : {}),
           symbol,
           symbolSize: type === 'scatter' ? 16 : 10,
+          showSymbol: type === 'line' && showSymbol === false ? false : undefined,
           tooltip: {
             appendToBody: true,
             // pass trigger type to determine if valueFormatter or formatter will be used

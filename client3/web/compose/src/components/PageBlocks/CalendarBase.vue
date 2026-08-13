@@ -282,7 +282,10 @@ function loadEvents (start, end) {
       default:
         return Promise.resolve([])
     }
-  })).finally(() => {
+  })).catch(error => {
+    if (axios.isCancel(error)) return
+    console.error('Calendar events load failed:', error)
+  }).finally(() => {
     setTimeout(() => {
       processing.value = false
       refreshing.value = false

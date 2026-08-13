@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
@@ -35,6 +35,8 @@ import FilterToolbox from 'corteza-webapp-compose/src/components/Common/FilterTo
 
 const { CInputExpression } = components
 const { t: $t } = useI18n({ useScope: 'global' })
+
+const $auth = inject('$auth')
 
 const props = defineProps({
   options: { type: Object, required: true },
@@ -46,12 +48,37 @@ const props = defineProps({
 const textInput = ref(true)
 const filterGroup = ref([])
 
-const recordAutoCompleteParams = computed(() => {
-  if (typeof window.__composeAPI?.processRecordAutoCompleteParams === 'function') {
-    return window.__composeAPI.processRecordAutoCompleteParams({ operators: true })
-  }
-  return {}
-})
+const isRecordPage = computed(() => Boolean(props.record))
+
+const recordAutoCompleteParams = computed(() => processRecordAutoCompleteParams({ module: props.module, operators: true }))
+
+function processRecordAutoCompleteParams ({ module: mod, operators = false } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth?.user?.properties?.()) || []
+
+  const recordSuggestions = isRecordPage.value && props.record
+    ? [
+        ...(['ownerID', 'recordID'].map(value => ({ interpolate: true, value }))),
+        {
+          interpolate: true,
+          value: 'record',
+          properties: [
+            { value: 'values', properties: Object.keys(props.record.values) || [] },
+            ...(props.record.properties || []),
+          ],
+        },
+      ]
+    : []
+
+  return [
+    ...recordSuggestions,
+    ...(operators ? ['AND', 'OR'] : []),
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
 
 function saveFilter(filter) {
   if (filter && filter[0] && !filter[0].filter[0].name) return

@@ -37,7 +37,6 @@ import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
-import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
 
 const { CInputExpression } = components
 const { t: $t } = useI18n({ useScope: 'global', messages: {}, keyPrefix: 'block:automation' })
@@ -54,12 +53,37 @@ const props = defineProps({
 
 defineEmits(['delete'])
 
-const recordAutoCompleteParams = computed(() => {
-  if (typeof autocomplete === 'function') {
-    return inject('processRecordAutoCompleteParams', (() => ({})))({ module: props.module })
-  }
-  return {}
-})
+const $auth = inject('$auth', undefined)
+
+const recordAutoCompleteParams = computed(() => processRecordAutoCompleteParams({ module: props.module, operators: true }))
+
+function processRecordAutoCompleteParams ({ module: mod, operators = false } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth?.user?.properties?.()) || []
+
+  const recordSuggestions = props.record
+    ? [
+        ...(['ownerID', 'recordID'].map(value => ({ interpolate: true, value }))),
+        {
+          interpolate: true,
+          value: 'record',
+          properties: [
+            { value: 'values', properties: Object.keys(props.record.values) || [] },
+            ...(props.record.properties || []),
+          ],
+        },
+      ]
+    : []
+
+  return [
+    ...recordSuggestions,
+    ...(operators ? ['AND', 'OR'] : []),
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
 
 const variants = computed(() => ['primary', 'secondary', 'light', 'dark', 'success', 'danger', 'warning'].map(variant => ({ variant, label: $t(`variants.${variant}`) })))
 

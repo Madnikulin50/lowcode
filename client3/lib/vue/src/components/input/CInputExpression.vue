@@ -64,7 +64,10 @@ const editorValue = computed({
   set: (value = '') => emit('update:modelValue', value),
 })
 
-const autoCompleteSuggestions = computed(() => getRecordBasedSuggestions(props.suggestionParams))
+const autoCompleteSuggestions = computed(() => {
+  const params = Array.isArray(props.suggestionParams) ? props.suggestionParams : []
+  return getRecordBasedSuggestions(params)
+})
 
 function getRecordBasedSuggestions(params: any[] = []): Record<string, any[]> {
   const result: Record<string, any[]> = {}

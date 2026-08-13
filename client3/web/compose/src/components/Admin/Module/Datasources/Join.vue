@@ -130,26 +130,19 @@ const supportedSources = computed(() => {
   return options
 })
 
-watch(() => props.step.join.name, {
-  immediate: true,
-  handler (newStep, oldStep) {
+watch(() => props.step.join.name, (newStep, oldStep) => {
     if (!oldStep && newStep) {
       getSourceColumns(['local', 'foreign'])
     }
-  },
-})
+  }, { immediate: true })
 
-watch(() => props.step.join.localSource, {
-  handler () {
+watch(() => props.step.join.localSource, () => {
     getSourceColumns(['local'])
-  },
-})
+  })
 
-watch(() => props.step.join.foreignSource, {
-  handler () {
+watch(() => props.step.join.foreignSource, () => {
     getSourceColumns(['foreign'])
-  },
-})
+  })
 
 function onSourceChange (source) {
   props.step.join[`${source}Column`] = ''

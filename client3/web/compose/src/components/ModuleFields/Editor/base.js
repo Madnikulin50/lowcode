@@ -1,11 +1,23 @@
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose, validator } from 'corteza-lib/js/dist'
 import { useUiStore } from '../../../store/ui'
 
 export function useEditorBase(props, emit) {
   const route = useRoute()
-  const uiStore = useUIStore()
+  const uiStore = useUiStore()
+  const $Settings = inject('$Settings')
+
+  const themeSettings = computed(() => $Settings?.get ? $Settings.get('ui.studio.themes', []) : [])
+
+  function getColor (val) {
+    if (!val) return undefined
+    if (val[0] === '#') return val
+    const themes = themeSettings.value
+      .filter(theme => theme.id !== 'general')
+      .map(theme => ({ id: theme.id, values: JSON.parse(theme.values) }))
+    return themes[0]?.values[val] || val
+  }
 
   const formGroupStyleClasses = computed(() => ({
     required: isRequired.value,
@@ -76,5 +88,5 @@ export function useEditorBase(props, emit) {
     emit('change', value)
   }
 
-  return { formGroupStyleClasses, isRequired, state, value, showPopover, label, description, hint, inModal, getFieldCypressId, setMultiValue }
+  return { formGroupStyleClasses, isRequired, state, value, showPopover, label, description, hint, inModal, getFieldCypressId, setMultiValue, getColor }
 }

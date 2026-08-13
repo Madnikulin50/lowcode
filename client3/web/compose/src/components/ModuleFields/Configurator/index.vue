@@ -25,7 +25,7 @@
       </li>
     </ul>
 
-    <div class="tab-content px-2 h-auto overflow-auto" style="max-height: 70vh;">
+    <div class="tab-content p-4 h-auto overflow-auto" style="max-height: 70vh;">
       <div id="tab-general" class="tab-pane active" role="tabpanel">
         <basic :namespace="namespace" :module="module" v-model:field="f" />
       </div>

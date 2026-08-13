@@ -21,6 +21,7 @@ interface SelectOptions extends Options {
   displayType: 'text' | 'badge';
   multiDelimiter: string;
   isUniqueMultiValue: boolean;
+  badgeGradient: boolean;
 }
 
 const defaults = (): Readonly<SelectOptions> => Object.freeze({
@@ -29,6 +30,7 @@ const defaults = (): Readonly<SelectOptions> => Object.freeze({
   selectType: 'default',
   multiDelimiter: '\n',
   isUniqueMultiValue: false,
+  badgeGradient: false,
   displayType: 'text',
 })
 
@@ -47,7 +49,7 @@ export class ModuleFieldSelect extends ModuleField {
     super.applyOptions(o)
 
     Apply(this.options, o, String, 'selectType', 'multiDelimiter', 'displayType')
-    Apply(this.options, o, Boolean, 'isUniqueMultiValue')
+    Apply(this.options, o, Boolean, 'isUniqueMultiValue', 'badgeGradient')
 
     if (o.options) {
       let opt: Array<SelectOption> = []

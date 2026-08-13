@@ -172,6 +172,7 @@ const props = defineProps({
 })
 
 const store = useStore()
+const $auth = inject('$auth')
 
 const options = computed(() => props.block.options)
 const referenceModule = ref(undefined)
@@ -214,11 +215,19 @@ const isRecordFieldUsedConfigured = computed(() => {
   return options.value.fields.some(f => f.kind === 'Record')
 })
 
-const visibilityAutoCompleteParams = computed(() => {
-  return typeof window.__composeAPI?.processRecordAutoCompleteParams === 'function'
-    ? window.__composeAPI.processRecordAutoCompleteParams({ module: fieldModule.value, operators: true })
-    : {}
-})
+const visibilityAutoCompleteParams = computed(() => processVisibilityAutoCompleteParams({ module: fieldModule.value }))
+
+function processVisibilityAutoCompleteParams ({ module: mod } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth?.user?.properties?.()) || []
+
+  return [
+    { value: 'user', properties: userProperties },
+    { value: 'screen', properties: ['width', 'height', 'userAgent', 'breakpoint'] },
+    ...moduleFields,
+  ]
+}
 
 function addRule() {
   options.value.fieldConditions.push({ field: undefined, condition: '', clearOnHide: false })

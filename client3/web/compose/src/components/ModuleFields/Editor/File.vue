@@ -18,13 +18,13 @@
         class="flex-grow-1"
         @upload="appendAttachment"
       />
-      <CWebcam
+      <c-webcam
         v-if="field.options.enableWebcam"
         :labels="webcamLabels"
         @upload="uploadWebcamImage"
       >
         <font-awesome-icon class="text-primary" :icon="['fas', 'camera']" />
-      </CWebcam>
+      </c-webcam>
     </div>
 
     <ListLoader
@@ -74,7 +74,7 @@ const uploaderRef = ref(null)
 const fileUploadEndpoint = computed(() => {
   const { moduleID, recordID } = props.record
   const { namespaceID } = props.namespace
-  return ($ComposeAPI.value || {}).baseURL + ($ComposeAPI.value || {}).recordUploadEndpoint({
+  return ($ComposeAPI || {}).baseURL + ($ComposeAPI || {}).recordUploadEndpoint({
     namespaceID,
     moduleID,
     recordID,
@@ -93,13 +93,13 @@ const uploaderFormData = computed(() => {
 const mimetypes = computed(() => {
   const a = (props.field.options.mimetypes || '').trim()
   if (!a) {
-    return ($settings.value || {}).get ? $settings.value.get('compose.Record.Attachments.Mimetypes', ['*/*']) : ['*/*']
+    return $settings?.get ? $settings.get('compose.Record.Attachments.Mimetypes', ['*/*']) : ['*/*']
   }
   return a.split(',').map(p => p.trim())
 })
 
 const maxSize = computed(() => {
-  return props.field.options.maxSize || (($settings.value || {}).get ? $settings.value.get('compose.Record.Attachments.MaxSize', 100) : 100)
+  return props.field.options.maxSize || ($settings?.get ? $settings.get('compose.Record.Attachments.MaxSize', 100) : 100)
 })
 
 const attachmentSet = computed({

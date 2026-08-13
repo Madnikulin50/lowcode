@@ -146,6 +146,7 @@ kind:
     options:
       value: Значение
       label: Метка
+      badgeGradient: Градиентная плашка
       style:
         textColor: Цвет текста
         backgroundColor: Цвет фона

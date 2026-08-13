@@ -1,82 +1,82 @@
 editor:
   external-auth-providers:
     label: Метка
-    title: Управление внешними провайдерами авторизации
-    type: Тип
+    title: Manage external auth providers
+    type: Type
   info:
-    confirmEmail: Подтвердить адрес почты
+    confirmEmail: Confirm email address
     id: ID
     createdAt: Время создания
     createdBy: Создал
-    delete: Удалить
+    delete: Delete
     deletedAt: Время удаления
     email: Почтовый адрес *
     handle: Дескриптор
     placeholder-handle: дескриптор (a - z, 0 - 9, underscore, dash)
-    invalid-handle-characters: Должен быть не менее 2 символов. Может содержать только буквы, цифры, подчёркивания и точки. Должен заканчиваться буквой или цифрой
+    invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
     name: Полное имя
-    revokeAllSession: Отозвать все активные сессии
-    suspend: Заблокировать
-    suspendedAt: Заблокирован
-    title: Основная информация
-    undelete: Восстановить
-    unsuspend: Разблокировать
+    revokeAllSession: Revoke all active sessions
+    suspend: Suspend
+    suspendedAt: Отключенные at
+    title: Basic information
+    undelete: Undelete
+    unsuspend: Unsuspend
     updatedAt: Время обновления
     userGroup:
-      label: Группа пользователей
-      placeholder: Группа пользователей
+      label: User group
+      placeholder: User group
   avatar:
-    title: Аватар профиля
+    title: Профиль avatar
     preview:
-      label: Аватар
-      title: Аватар
+      label: Avatar
+      title: Avatar
     initial:
       color: Цвет текста
       backgroundColor: Цвет фона
     uploader:
-      instructions: Загрузить аватар
-      uploading: Загрузка аватара пользователя
+      instructions: Upload avatar
+      uploading: Uploading user avatar
     colorPicker: Выберите цвет
   mfa:
     TOTP:
       disabled:
-        text: Пользователь не настроил TOTP-защиту
+        text: User did not configure TOTP protection
       enabled:
-        text: Пользователь настроил TOTP-защиту через мобильное приложение
+        text: User configured TOTP protection auth mobile app
       remove:
-        label: Удалить
+        label: Remove
     emailOTP:
       disable:
-        label: Отключить
+        label: Disable
       disabled:
         text: |-
-          Защита Email OTP отключена для этого пользователя
-          Письмо с кодом безопасности при входе не будет отправлено
+          Почтовый адрес OTP protection is disabled for this user
+          Почтовый адрес with the security code on each login will not be sent
       enable:
-        label: Включить
+        label: Enable
       enabled:
         text: |-
-          Защита Email OTP включена для этого пользователя
-          Пользователь будет получать письмо с кодом безопасности при каждом входе
-    title: Многофакторная аутентификация
-  new: Новый пользователь
+          Почтовый адрес OTP protection is enabled for this user
+          User will receive email with the security code on each login
+    title: Multi-factor authentication
+  new: New User
   password:
-    confirm: Подтвердите пароль
-    length: Пароль должен быть не менее {{length}} символов!
-    missmatch: Пароли должны совпадать
-    new: Новый пароль
-    title: Пароль
-    removePassword: Удалить пароль
+    confirm: Confirm password
+    length: The passwords must be at least {{length}} characters long!
+    missmatch: The passwords must match
+    new: New password
+    title: Password
+    removePassword: Remove password
   permissions: Права доступа
   roles:
-    add: Добавить
-    count: ролей
-    remove: Удалить
-    title: Членство в ролях
-    unnamed: Безымянная роль
+    add: Add
+    count: roles
+    remove: Remove
+    title: Role membership
+    unnamed: Unnamed role
   title:
-    create: Создать пользователя
-    edit: Изменить пользователя
+    create: Create user
+    edit: Изменить user
 list:
   columns:
     actions: ""
@@ -85,44 +85,44 @@ list:
     enabled: Включено
     handle: Дескриптор
     name: Имя
-    state: Состояние
-  suspend: Заблокировать
-  unsuspend: Разблокировать
-  delete: Удалить
-  undelete: Восстановить
-  revokeActiveSession: Отозвать сессию
+    state: State
+  suspend: Suspend
+  unsuspend: Unsuspend
+  delete: Delete
+  undelete: Undelete
+  revokeActiveSession: Revoke Session
   export: Экспорт
   rows:
     filters:
-      deleted: Удалённые
-      suspended: Заблокированные
+      deleted: Удаленные
+      suspended: Отключенные
   filterForm:
     deleted:
-      label: удалённые пользователи
+      label: deleted users
     excluded:
-      label: Без
+      label: Without
     exclusive:
-      label: Только
+      label: Only
     inclusive:
       label: Включая
     query:
-      label: Фильтр списка пользователей
-      placeholder: Фильтр пользователей по имени, email
+      label: Фильтр users list
+      placeholder: Фильтр users by name, email
     suspended:
-      label: заблокированные пользователи
-  loading: Загрузка пользователей
-  new: Новый пользователь
+      label: suspended users
+  loading: Loading users
+  new: New User
   permissions: Права доступа
   title: Пользователи
   yaml: YAML
 export:
   buttonLabel: Экспорт
-  title: Экспорт пользователей
-  inclRoleMembership: Включить членство в ролях
-  inclRoles: Включить роли
-  membershipRequiredLabel: Роли можно экспортировать только при выборе членства в ролях
+  title: Экспорт users
+  inclRoleMembership: Include role membership
+  inclRoles: Include roles
+  membershipRequiredLabel: Roles can only be exported when role membership is selected
   export: Экспорт
 import:
   buttonLabel: Импорт
-  title: Импорт пользователей
-  uploadFilePlaceholder: Кликните или перенесите файлы для импорта
+  title: Импорт users
+  uploadFilePlaceholder: Click or drop files here to import

@@ -6,7 +6,7 @@
         <a :href="`${documentationURL}#value-sanitizers`" target="_blank" class="btn btn-link btn-sm p-0 ms-auto">{{ t('label.examples') }}</a>
       </label>
       <div class="form-text">{{ t('sanitizers.description') }}</div>
-      <CFormTableWrapper
+      <c-form-table-wrapper
         :labels="{ addButton: t('label.add') }"
         @add-item="field.expressions.sanitizers.push('')"
       >
@@ -15,7 +15,7 @@
           :placeholder="t('sanitizers.expression.placeholder')"
           @remove="onRemove('sanitizers', $event)"
         />
-      </CFormTableWrapper>
+      </c-form-table-wrapper>
     </div>
 
     <hr />
@@ -26,7 +26,7 @@
         <a :href="`${documentationURL}#value-validators`" target="_blank" class="btn btn-link btn-sm p-0 ms-auto">{{ t('label.examples') }}</a>
       </label>
       <div class="form-text">{{ t('validators.description') }}</div>
-      <CFormTableWrapper
+      <c-form-table-wrapper
         :labels="{ addButton: t('label.add') }"
         @add-item="field.expressions.validators.push({ test: '', error: '' })"
       >
@@ -60,7 +60,7 @@
             :disabled="isNew(value)"
           />
         </FieldExpressions>
-      </CFormTableWrapper>
+      </c-form-table-wrapper>
 
       <div class="form-check mt-3">
         <input
@@ -81,9 +81,9 @@
     <div class="mb-3 mt-3">
       <label class="d-flex align-items-center text-primary">
         {{ t('constraints.description') }}
-        <CHint :tooltip="t('constraints.tooltip.performance')" icon-class="text-warning" />
+        <c-hint :tooltip="t('constraints.tooltip.performance')" icon-class="text-warning" />
       </label>
-      <CInputCheckbox
+      <c-input-checkbox
         v-model="fieldConstraint.exists"
         switch
         :labels="{ on: t('label.yes'), off: t('label.no') }"

@@ -2,7 +2,7 @@
   <div class="row g-0">
     <div class="col">
       <div class="mb-3">
-        <label class="form-label text-primary">{{ t('kind.select.optionType.label') }}</label>
+        <label class="form-label text-primary mr-2">{{ t('kind.select.optionType.label') }}</label>
         <div class="btn-group" data-bs-toggle="buttons">
           <label
             v-for="opt in selectOptions"
@@ -36,7 +36,7 @@
       </div>
 
       <div class="mb-3">
-        <label class="form-label text-primary">{{ t('kind.select.displayType.label') }}</label>
+        <label class="form-label text-primary mr-2">{{ t('kind.select.displayType.label') }}</label>
         <div class="btn-group" data-bs-toggle="buttons">
           <label
             v-for="opt in displayOptions"
@@ -57,9 +57,19 @@
         </div>
       </div>
 
+      <div v-if="f.options.displayType === 'badge'" class="form-check mb-3">
+        <input
+          id="badgeGradient"
+          v-model="f.options.badgeGradient"
+          type="checkbox"
+          class="form-check-input"
+        />
+        <label class="form-check-label" for="badgeGradient">{{ t('kind.select.options.badgeGradient') }}</label>
+      </div>
+
       <div class="mb-3">
         <label class="form-label text-primary">{{ t('kind.select.optionsLabel') }}</label>
-        <CFormTableWrapper
+        <c-form-table-wrapper
           :labels="{ addButton: t('label.add') }"
           @add-item="handleAddOption"
         >
@@ -116,7 +126,7 @@
                   </td>
                   <td v-if="f.options.displayType === 'badge'" style="min-width: 120px;">
                     <CInputColorPicker
-                      v-model="f.options.options[index].style.textColor"
+                      :model-value="resolveColor(f.options.options[index].style.textColor)"
                       :default-value="defaultTextColor"
                       :theme-settings="themeSettings"
                       :translations="{
@@ -124,11 +134,12 @@
                         cancelBtnLabel: t('label.cancel'),
                         saveBtnLabel: t('label.saveAndClose')
                       }"
+                      @update:model-value="setOptionStyle(index, 'textColor', $event)"
                     />
                   </td>
                   <td v-if="f.options.displayType === 'badge'" style="min-width: 130px;">
                     <CInputColorPicker
-                      v-model="f.options.options[index].style.backgroundColor"
+                      :model-value="resolveColor(f.options.options[index].style.backgroundColor)"
                       :default-value="defaultBackgroundColor"
                       :theme-settings="themeSettings"
                       :translations="{
@@ -137,10 +148,11 @@
                         cancelBtnLabel: t('label.cancel'),
                         saveBtnLabel: t('label.saveAndClose')
                       }"
+                      @update:model-value="setOptionStyle(index, 'backgroundColor', $event)"
                     />
                   </td>
                   <td class="align-middle text-end">
-                    <CInputConfirm
+                    <c-input-confirm
                       show-icon
                       @confirmed="f.options.options.splice(index, 1)"
                     />
@@ -149,7 +161,7 @@
               </template>
             </draggable>
           </table>
-        </CFormTableWrapper>
+        </c-form-table-wrapper>
       </div>
     </div>
   </div>
@@ -220,7 +232,7 @@ const shouldAllowDuplicates = computed(() => {
 })
 
 const themeSettings = computed(() => {
-  return ($settings.value || {}).get ? $settings.value.get('ui.studio.themes', []) : []
+  return $settings?.get ? $settings.get('ui.studio.themes', []) : []
 })
 
 const defaultTextColor = computed(() => {
@@ -230,6 +242,22 @@ const defaultTextColor = computed(() => {
 const defaultBackgroundColor = computed(() => {
   return getComputedStyle(document.documentElement).getPropertyValue('--extra-light')
 })
+
+function resolveColor (val) {
+  if (!val) return val
+  if (val[0] === '#') return val
+  const themes = themeSettings.value
+    .filter(theme => theme.id !== 'general')
+    .map(theme => ({ id: theme.id, values: JSON.parse(theme.values) }))
+  return themes[0]?.values[val] || val
+}
+
+function setOptionStyle (index, key, value) {
+  const opt = f.value.options.options[index]
+  if (!opt) return
+  opt.style = opt.style || {}
+  opt.style[key] = value
+}
 
 if (!f.value) {
   f.value.options = { options: [] }

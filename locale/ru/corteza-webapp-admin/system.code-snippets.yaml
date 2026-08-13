@@ -1,18 +1,18 @@
 editor:
-  title: Сниппеты кода
+  title: Code Snippets
 
   code-snippets:
-    add: Добавить сниппет
-    empty: Нет сниппетов
+    add: Add Code Snippet
+    empty: No snippets yet
     enabled: Включено
     table-headers:
       name: Имя
       enabled: Включено
-      script: Код
+      script: Code
     form:
-      title: Добавить сниппет
+      title: Add Code Snippet
       name:
         label: Имя
       code:
-        label: Код
-        description: Добавьте внешний скрипт или сниппет кода. Скрипт должен содержать корректный тег <script> для работы.
+        label: Code
+        description: Add external script or code snippet. The script must include a valid <script> tag to function.

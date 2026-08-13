@@ -16,7 +16,7 @@
       :show-list="field.options.selectType !== 'multiple'"
     >
       <template #single>
-        <CInputSelect
+        <c-input-select
           v-if="field.options.selectType === 'default'"
           ref="singleSelect"
           :placeholder="t('kind.user.suggestionPlaceholder')"
@@ -32,8 +32,8 @@
           <template #list-footer>
             <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
           </template>
-        </CInputSelect>
-        <CInputSelect
+        </c-input-select>
+        <c-input-select
           v-else-if="field.options.selectType === 'multiple'"
           v-model="multipleSelected"
           :placeholder="t('kind.user.suggestionPlaceholder')"
@@ -49,10 +49,10 @@
           <template #list-footer>
             <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
           </template>
-        </CInputSelect>
+        </c-input-select>
       </template>
       <template #default="ctx">
-        <CInputSelect
+        <c-input-select
           v-if="field.options.selectType === 'each'"
           :placeholder="t('kind.user.suggestionPlaceholder')"
           :options="options"
@@ -69,13 +69,13 @@
           <template #list-footer>
             <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
           </template>
-        </CInputSelect>
+        </c-input-select>
         <span v-else>{{ getOptionLabel(getUserIDByIndex(ctx.index)) }}</span>
       </template>
     </multi>
 
     <template v-else>
-      <CInputSelect
+      <c-input-select
         :placeholder="t('kind.user.suggestionPlaceholder')"
         :options="options"
         :get-option-label="getOptionLabel"
@@ -91,7 +91,7 @@
         <template #list-footer>
           <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
         </template>
-      </CInputSelect>
+      </c-input-select>
       <errors :errors="errors" />
     </template>
   </div>
@@ -155,14 +155,12 @@ const showPagination = computed(() => hasPrevPage.value || hasNextPage.value)
 const hasPrevPage = computed(() => !!filter.value.prevPage)
 const hasNextPage = computed(() => !!filter.value.nextPage)
 
-watch(() => value.value, {
-  async handler (val) {
+watch(() => value.value, async (val) => {
     const ids = props.field.isMulti ? [...(val || [])] : [val]
     if (ids.length) {
       await userStore.resolveUsers(ids)
     }
-  },
-})
+  })
 
 watch(() => filter.value.pageCursor, (pageCursor) => {
   if (pageCursor) fetchUsers()

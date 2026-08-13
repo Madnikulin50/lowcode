@@ -52,6 +52,7 @@ const showModal = ref(false)
 const block = ref(undefined)
 const record = ref(undefined)
 const page = ref(undefined)
+const module = ref(undefined)
 const customBlock = ref(undefined)
 
 const dialogClass = computed(() => {
@@ -97,6 +98,7 @@ function loadModal(blockID) {
   const recordID = paramsRecordID || queryRecordID
   block.value = customBlock.value || page.value.blocks.find(b => fetchID(b) === blockID)
   const mod = moduleID !== NoID ? moduleStore.getByID(moduleID) : undefined
+  module.value = mod
 
   showModal.value = !!(block.value || {}).blockID
 
@@ -128,6 +130,7 @@ function setDefaultValues() {
   block.value = undefined
   record.value = undefined
   page.value = undefined
+  module.value = undefined
   customBlock.value = undefined
 }
 

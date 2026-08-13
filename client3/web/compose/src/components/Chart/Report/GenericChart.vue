@@ -414,6 +414,41 @@
                 {{ $t('edit.metric.fillArea') }}
               </label>
             </div>
+
+            <div class="form-check">
+              <input
+                v-if="metric.type === 'line'"
+                v-model="metric.showSymbol"
+                class="form-check-input"
+                type="checkbox"
+                :id="`showsymbol-${metric.metricID}`"
+              />
+              <label
+                v-if="metric.type === 'line'"
+                class="form-check-label"
+                :for="`showsymbol-${metric.metricID}`"
+              >
+                {{ $t('edit.metric.showSymbol') }}
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input
+                v-if="metric.type === 'line'"
+                v-model="metric.stacked"
+                class="form-check-input"
+                type="checkbox"
+                :id="`stacked-${metric.metricID}`"
+                @change="onStackedToggle(metric)"
+              />
+              <label
+                v-if="metric.type === 'line'"
+                class="form-check-label"
+                :for="`stacked-${metric.metricID}`"
+              >
+                {{ $t('edit.metric.stacked') }}
+              </label>
+            </div>
           </div>
 
           <div
@@ -442,6 +477,33 @@
                 {{ opt.text }}
               </label>
             </div>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'line' && stackByFields.length"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.stackBy.label') }}
+            </label>
+            <select
+              v-model="metric.stackBy"
+              class="form-select form-select-sm"
+              @change="onStackByChange(metric)"
+            >
+              <option value="">
+                {{ $t('edit.metric.stackBy.placeholder') }}
+              </option>
+              <option
+                v-for="f in stackByFields"
+                :key="f.value"
+                :value="f.value"
+              >
+                {{ f.text }}
+              </option>
+            </select>
           </div>
         </div>
 
@@ -960,16 +1022,41 @@ const anomalyMethods = ref([
   { value: 'pct_change', text: t('edit.additionalConfig.anomaly.methodPctChange') },
 ])
 
+const module = computed(() => {
+  const mid = editReport.value?.moduleID
+  if (!mid || !Array.isArray(props.modules)) return undefined
+  return props.modules.find(m => m.moduleID === mid)
+})
+
+const stackByFields = computed(() => {
+  if (!module.value) return []
+  return module.value.fields
+    .filter(f => f.name !== 'count')
+    .map(f => ({ value: f.name, text: f.label || f.name }))
+})
+
 watch(() => props.report, (r) => {
-  if (r && !r.anomaly) {
-    r.anomaly = {
-      enabled: false,
-      method: 'zscore',
-      threshold: 2,
-      min: undefined,
-      max: undefined,
-      color: '',
+  if (r) {
+    if (!r.anomaly) {
+      r.anomaly = {
+        enabled: false,
+        method: 'zscore',
+        threshold: 2,
+        min: undefined,
+        max: undefined,
+        color: '',
+      }
     }
+
+    // Line charts show data points by default
+    r.metrics?.forEach((m) => {
+      if (m.type === 'line' && m.showSymbol === undefined) {
+        m.showSymbol = true
+      }
+      if (m.type === 'line' && m.stacked === true && !m.stack) {
+        m.stack = 'total'
+      }
+    })
   }
 }, { immediate: true })
 
@@ -998,8 +1085,31 @@ function setLineStyle (style, metric) {
   metric.step = style === 'step'
 }
 
+function onStackedToggle (metric) {
+  if (metric.stacked) {
+    if (!metric.stack) {
+      metric.stack = 'total'
+    }
+  } else if (metric.stack === 'total') {
+    metric.stack = undefined
+  }
+}
+
+function onStackByChange (metric) {
+  if (metric.stackBy && !metric.stacked) {
+    metric.stacked = true
+    metric.stack = 'total'
+  }
+}
+
 function chartTypeChanged (metric) {
   metric.relativeValue = false
+  if (metric.type === 'line' && metric.showSymbol === undefined) {
+    metric.showSymbol = true
+  }
+  if (metric.type !== 'line') {
+    metric.stackBy = undefined
+  }
 }
 </script>
 

@@ -220,8 +220,7 @@ watch(defaultValueEnabled, (val) => {
   if (val) showValueExpr.value = false
 })
 
-watch(() => mock.value.record && mock.value.record.values, {
-  handler (vals) {
+watch(() => mock.value.record && mock.value.record.values, (vals) => {
     if (!vals) return
     const { defValField: dv } = vals
     let arr = dv
@@ -233,14 +232,13 @@ watch(() => mock.value.record && mock.value.record.values, {
       if (v) def.value = v
       return def
     })
-  },
+  }, {
   deep: true,
 })
 
-watch(() => props.field.options, {
-  handler (options) {
+watch(() => props.field.options, (options) => {
     if (mock.value.field) mock.value.field.options = options
-  },
+  }, {
   deep: true,
 })
 

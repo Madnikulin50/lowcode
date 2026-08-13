@@ -2,7 +2,7 @@
   <div>
     <div class="mb-3">
       <label class="form-label text-primary">{{ t('kind.record.moduleLabel') }}</label>
-      <CInputSelect
+      <c-input-select
         v-model="f.options.moduleID"
         :options="moduleOptions"
         label="name"
@@ -16,9 +16,9 @@
       <div class="mb-3">
         <label class="d-flex align-items-center text-primary p-0">
           {{ t('kind.record.moduleField') }}
-          <CHint :tooltip="t('kind.record.tooltip.moduleField')" icon-class="text-warning" />
+          <c-hint :tooltip="t('kind.record.tooltip.moduleField')" icon-class="text-warning" />
         </label>
-        <CInputSelect
+        <c-input-select
           v-model="f.options.labelField"
           :options="fieldOptions"
           label="text"
@@ -30,7 +30,7 @@
       <div v-if="labelField && labelField.kind === 'Record'">
         <div class="mb-3">
           <label class="form-label text-primary">{{ t('kind.record.fieldFromModuleField') }}</label>
-          <CInputSelect
+          <c-input-select
             v-model="f.options.recordLabelField"
             :options="labelFieldOptions"
             :disabled="!labelFieldModule"
@@ -43,7 +43,7 @@
 
       <div class="mb-3">
         <label class="form-label text-primary">{{ t('kind.record.queryFieldsLabel') }}</label>
-        <CInputSelect
+        <c-input-select
           v-model="f.options.queryFields"
           :options="queryFieldOptions"
           label="text"

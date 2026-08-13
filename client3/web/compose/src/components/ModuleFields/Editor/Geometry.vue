@@ -114,34 +114,25 @@ const markers = computed(() => {
   return m
 })
 
-watch(localValue, {
-  deep: true,
-  handler (val) {
+watch(localValue, (val) => {
     const newValue = props.field.isMulti ? val.filter(v => (v || {}).coordinates).map(v => JSON.stringify(v)) : JSON.stringify(val)
     if (JSON.stringify(newValue) === JSON.stringify(value.value)) return
     value.value = newValue
-  },
-})
+  }, { deep: true })
 
-watch(() => props.field.isMulti, {
-  immediate: true,
-  handler () {
+watch(() => props.field.isMulti, () => {
     if (props.field.isMulti) {
       localValue.value = (value.value || []).map(v => JSON.parse(v || '{"coordinates":[]}'))
     } else {
       localValue.value = JSON.parse(value.value || '{"coordinates":[]}')
     }
-  },
-})
+  }, { immediate: true })
 
-watch(() => props.field.options.prefillWithCurrentLocation, {
-  immediate: true,
-  handler (v) {
+watch(() => props.field.options.prefillWithCurrentLocation, (v) => {
     if (v && (!props.record || props.record.recordID === NoID)) {
       useCurrentLocation()
     }
-  },
-})
+  }, { immediate: true })
 
 onBeforeUnmount(() => {
   setDefaultValues()

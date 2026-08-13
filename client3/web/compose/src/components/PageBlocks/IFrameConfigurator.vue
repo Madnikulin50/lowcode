@@ -57,12 +57,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { usePageBlockBase } from './usePageBlockBase'
 import { components } from 'corteza-lib/vue/dist'
-import { NoID } from 'corteza-lib/js/dist'
 
 const { CInputExpression } = components
+const $auth = inject('$auth')
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -84,6 +84,36 @@ const props = defineProps({
 const emit = defineEmits(['errors'])
 
 const { options } = usePageBlockBase(props, emit)
+
+const recordAutoCompleteParams = computed(() => processRecordAutoCompleteParams({ module: props.module, operators: true }))
+
+function processRecordAutoCompleteParams ({ module: mod, operators = false } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth?.user?.properties?.()) || []
+
+  const recordSuggestions = props.record
+    ? [
+        ...(['ownerID', 'recordID'].map(value => ({ interpolate: true, value }))),
+        {
+          interpolate: true,
+          value: 'record',
+          properties: [
+            { value: 'values', properties: Object.keys(props.record.values) || [] },
+            ...(props.record.properties || []),
+          ],
+        },
+      ]
+    : []
+
+  return [
+    ...recordSuggestions,
+    ...(operators ? ['AND', 'OR'] : []),
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
 
 const fields = computed(() => {
   if (!props.module) return []

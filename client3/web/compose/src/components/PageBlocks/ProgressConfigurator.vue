@@ -227,6 +227,7 @@ const props = defineProps({
 })
 
 const store = useStore()
+const $auth = inject('$auth')
 
 const options = computed(() => props.block.options)
 const modules = computed(() => store.module.set)
@@ -279,10 +280,23 @@ const minValueModule = computed(() => moduleByID.value(options.value.minValue?.m
 const maxValueModule = computed(() => moduleByID.value(options.value.maxValue?.moduleID))
 
 const recordAutoCompleteParams = computed(() => ({
-  value: typeof window.__composeAPI?.processRecordAutoCompleteParams === 'function' ? window.__composeAPI.processRecordAutoCompleteParams({ module: valueModule.value, operators: true }) : {},
-  min: typeof window.__composeAPI?.processRecordAutoCompleteParams === 'function' ? window.__composeAPI.processRecordAutoCompleteParams({ module: minValueModule.value, operators: true }) : {},
-  max: typeof window.__composeAPI?.processRecordAutoCompleteParams === 'function' ? window.__composeAPI.processRecordAutoCompleteParams({ module: maxValueModule.value, operators: true }) : {},
+  value: processRecordAutoCompleteParams({ module: valueModule.value, operators: true }),
+  min: processRecordAutoCompleteParams({ module: minValueModule.value, operators: true }),
+  max: processRecordAutoCompleteParams({ module: maxValueModule.value, operators: true }),
 }))
+
+function processRecordAutoCompleteParams ({ module: mod, operators = false } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth?.user?.properties?.()) || []
+
+  return [
+    ...(operators ? ['AND', 'OR'] : []),
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
 
 watch(() => options.value, ({ display = {} }) => {
   if (mock.value.field) {

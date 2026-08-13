@@ -1,77 +1,77 @@
 editor:
   info:
-    add: Добавить
-    api: Разрешить клиенту доступ к Corteza API от имени пользователя
-    choose-date: Выберите дату
+    add: Add
+    api: Allow client access to Corteza API on behalf of user
+    choose-date: Choose a date
     createdAt: Время создания
     createdBy: Создал
-    delete: Удалить
+    delete: Delete
     deletedAt: Время удаления
     enabled:
-      disabledFootnote: Невозможно отключить клиент по умолчанию
+      disabledFootnote: Unable to disable the default client
       label: Включено
     expiresAt:
-      description: Если не указано, у клиента нет даты истечения
-      label: Истекает
+      description: If not defined the client has no expiration date
+      label: Expires at
     grant:
-      authorization_code: Будет использоваться для аутентификации пользователей (grant type = authorization_code)
-      client_credentials: Будет использоваться для аутентификации машин (grant type = client_credentials)
+      authorization_code: Will be used to authenticate users (grant type = authorization_code)
+      client_credentials: Will be used to authenticate machines (grant type = client_credentials)
     handle:
-      disabledFootnote: Невозможно изменить дескриптор клиента авторизации по умолчанию
+      disabledFootnote: Unable to change the handle of the default auth client
       label: Дескриптор
       placeholder-handle: дескриптор (a - z, 0 - 9, underscore, dash)
-      invalid-handle-characters: Должен быть не менее 2 символов. Может содержать только буквы, цифры, подчёркивания и точки. Должен заканчиваться буквой или цифрой
+      invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
     name: Имя *
-    no-time: Время не выбрано
-    profile: Разрешить клиенту доступ к профилю пользователя
-    redirectURI: Redirect URI
-    remove: Удалить
-    secret: Секрет
+    no-time: No time selected
+    profile: Allow client access to user's profile
+    redirectURI: Redirect URI's
+    remove: Remove
+    secret: Secret
     security:
       defaultUserGroup:
-        label: Группа пользователей по умолчанию для новых пользователей
-        placeholder: Группа пользователей по умолчанию для новых пользователей
+        label: Default user group for new users
+        placeholder: Default user group for new users
       prohibitedRoles:
-        description: Роли из этого списка будут удалены из контекста безопасности при авторизации пользователя через этого клиента
-        label: Запрещённые роли
+        description: Roles from this list will be removed from security context when user authorizes this client
+        label: Prohibited roles
       forcedRoles:
-        description: Роли из этого списка будут всегда добавлены в контекст безопасности при авторизации пользователя через этого клиента
-        label: Принудительные роли
+        description: Roles from this list will be always added to security context when user authorizes this client
+        label: Forced roles
       impersonateUser:
-        description: При аутентификации с client credentials действовать от имени указанного пользователя
-        placeholder: Выберите пользователя
-        label: Имперсонация
+        description: When authenticating with client credentials, act in the name of the impersonated user
+        placeholder: Select user
+        label: Impersonate user
       permittedRoles:
-        description: Только роли из этого списка будут добавлены в контекст безопасности при авторизации пользователя через этого клиента
-        label: Разрешённые роли
-    title: Основная информация
+        description: Only roles in this list will be added into security context when user authorizes this client
+        label: Permitted roles
+    title: Basic information
     tooltip:
-      regenerate-secret: Перегенерировать секрет
-      reset-value: Сбросить значение
-      show-client-secret: Показать секрет клиента
-      hide-client-secret: Скрыть секрет клиента
-      copy-access-token: Копировать токен доступа
-      copy-cURL: Копировать cURL
+      regenerate-secret: Regenerate secret
+      reset-value: Сбросить value
+      show-client-secret: Показывать client secret
+      hide-client-secret: Hide client secret
+      copy-access-token: Copy access token
+      copy-cURL: Copy cURL
     trusted:
-      description: Если клиент доверенный, пользователи не видят шаг авторизации
-      label: Доверенный
-    undelete: Восстановить
-    unnamed: Безымянная роль
+      description: When client is trusted users do not see authorization step
+      label: Trusted
+    undelete: Undelete
+    unnamed: Unnamed role
     updatedAt: Время обновления
     uri: URI
     validFrom:
-      description: Если не указано, клиент действителен до истечения
-      label: Действителен с
-    cUrl: Пример cURL
-    accessToken: Токен доступа
-    generateAccessToken: Сгенерировать токен доступа
-    discovery: Разрешить клиенту доступ к Corteza Discovery API от имени пользователя
-    openid: Разрешить клиенту использовать OIDC для проверки личности пользователя
-  new: Новый клиент авторизации
+      description: If not defined the client is valid until expiration
+      label: Valid from
+    cUrl: Example cURL
+    accessToken: Access token
+    generateAccessToken: Generate access token
+    discovery: Allow client access to Corteza Discovery API on behalf of user
+    openid: Allow client to use OIDC and verify the user's identity
+  new: New Auth Client
   permissions: Права доступа
   title:
-    create: Создать клиент
-    edit: Изменить клиент
+    create: Create client
+    edit: Изменить client
 list:
   columns:
     actions: ""
@@ -80,26 +80,26 @@ list:
     handle: Дескриптор
     meta:
       name: Имя
-    state: Состояние
+    state: State
   rows:
     filters:
-      deleted: Удалённые
+      deleted: Удаленные
   filterForm:
     deleted:
-      label: удалённые клиенты
+      label: deleted clients
     excluded:
-      label: Без
+      label: Without
     exclusive:
-      label: Только
+      label: Only
     inclusive:
       label: Включая
     query:
-      label: Фильтр списка клиентов
-      placeholder: Фильтр клиентов
-  loading: Загрузка клиентов
-  new: Новый клиент авторизации
+      label: Фильтр clients list
+      placeholder: Фильтр clients
+  loading: Loading clients
+  new: New Auth Client
   permissions: Права доступа
-  title: Клиенты авторизации
+  title: Auth Clients
   yaml: YAML
-  delete: Удалить
-  undelete: Восстановить
+  delete: Delete
+  undelete: Undelete

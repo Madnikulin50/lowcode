@@ -91,7 +91,6 @@ import { useStore } from '../../store'
 import FieldEditor from '../ModuleFields/Editor'
 import { compose, validator } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
-import autocomplete from 'corteza-webapp-compose/src/mixins/autocomplete.js'
 
 const { CInputExpression } = components
 const { t: $t } = useI18n({ useScope: 'global' })
@@ -102,6 +101,7 @@ const props = defineProps({
 })
 
 const store = useStore()
+const $auth = inject('$auth')
 
 const options = computed(() => props.block.options)
 
@@ -140,10 +140,19 @@ const displayOptions = computed(() => [
   { value: 'modal', text: $t('recordOrganizer.openInModal') },
 ])
 
-const recordAutoCompleteParams = computed(() => {
-  if (typeof autocomplete.processRecordAutoCompleteParams === 'function') return autocomplete.processRecordAutoCompleteParams({ module: selectedModule.value })
-  return {}
-})
+const recordAutoCompleteParams = computed(() => processRecordAutoCompleteParams({ module: selectedModule.value }))
+
+function processRecordAutoCompleteParams ({ module: mod } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth?.user?.properties?.()) || []
+
+  return [
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
 
 watch(() => options.value.moduleID, () => {
   options.value.labelField = ''

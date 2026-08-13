@@ -150,11 +150,7 @@ const recordViewer = computed(() => {
   return params ? { name: 'page.record', params } : undefined
 })
 
-watch(() => props.edit, {
-  immediate: true,
-  deep: true,
-  handler (val) {
+watch(() => props.edit, (val) => {
     reminder.value = new system.Reminder(val)
-  },
-})
+  }, { immediate: true, deep: true })
 </script>

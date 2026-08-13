@@ -348,33 +348,23 @@ const federationModalTitle = computed(() => {
   return handle ? t('edit.federationSettings.specificTitle', { handle }) : t('edit.federationSettings.title')
 })
 
-watch(() => props.modal, {
-  immediate: true,
-  handler (show = false) {
+watch(() => props.modal, (show = false) => {
     showModal.value = show
-  },
-})
+  }, { immediate: true })
 
-watch(() => props.module.fields, {
-  immediate: true,
-  handler (fields) {
+watch(() => props.module.fields, (fields) => {
     moduleFields.value = fields
       .map(f => ({ kind: f.kind, name: f.name, label: f.label, isMulti: f.isMulti, value: false, map: null }))
       .sort((a, b) => a.label.localeCompare(b.label))
-  },
-})
+  }, { immediate: true })
 
-watch(() => upstream.active, {
-  handler (nodeID) {
+watch(() => upstream.active, (nodeID) => {
     getNodeUpstream(nodeID)
-  },
-})
+  })
 
-watch(() => downstream.active, {
-  handler (nodeID) {
+watch(() => downstream.active, (nodeID) => {
     getNodeDownstream(nodeID)
-  },
-})
+  })
 
 onMounted(() => {
   preload()

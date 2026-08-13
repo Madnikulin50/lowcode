@@ -344,7 +344,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, inject } from 'vue'
 import { usePageBlockBase } from '../usePageBlockBase'
 import { useStore } from '../../../store'
 import MStyle from './MStyle'
@@ -375,6 +375,7 @@ const props = defineProps({
 
 const emit = defineEmits(['errors'])
 const store = useStore()
+const $auth = inject('$auth')
 
 const { options, setBaseDefaultValues } = usePageBlockBase(props, emit)
 const activeTab = ref(0)
@@ -434,6 +435,21 @@ const selectedMetricModule = computed(() => {
   if (!edit.value?.moduleID) return undefined
   return getModuleByID.value(edit.value.moduleID)
 })
+
+const recordAutoCompleteParams = computed(() => processRecordAutoCompleteParams({ module: selectedMetricModule.value, operators: true }))
+
+function processRecordAutoCompleteParams ({ module: mod, operators = false } = {}) {
+  const { fields = [] } = mod || {}
+  const moduleFields = fields.map(({ name }) => name)
+  const userProperties = ($auth?.user?.properties?.()) || []
+
+  return [
+    ...(operators ? ['AND', 'OR'] : []),
+    { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'user', properties: userProperties },
+    ...moduleFields,
+  ]
+}
 
 const recordFieldLayoutOptions = computed(() => [
   { value: 'default', label: t('record.fieldsLayoutMode.default') },

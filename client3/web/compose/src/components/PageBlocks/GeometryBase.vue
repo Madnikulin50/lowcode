@@ -154,7 +154,10 @@ function loadEvents () {
           }).filter(g => g && g.markers.length)
         })
     })
-  })).finally(() => { setTimeout(() => { processing.value = false }, 300) })
+  })).catch(error => {
+    if (axios.isCancel(error)) return
+    console.error('Geometry records load failed:', error)
+  }).finally(() => { setTimeout(() => { processing.value = false }, 300) })
 }
 
 function parseGeometryField (value) {

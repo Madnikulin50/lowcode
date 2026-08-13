@@ -9,7 +9,7 @@
       <div class="small text-muted" :class="{ 'mb-1': description }">{{ description }}</div>
     </template>
 
-    <CInputCheckbox
+    <c-input-checkbox
       v-model="value"
       :switch="field.options.switch"
       :labels="field.options.switch ? checkboxLabel : {}"
@@ -18,7 +18,7 @@
         {{ label }}
         <c-hint :tooltip="hint" />
       </div>
-    </CInputCheckbox>
+    </c-input-checkbox>
 
     <div v-if="!valueOnly && !field.options.switch" class="small text-muted">{{ description }}</div>
     <errors :errors="errors" />

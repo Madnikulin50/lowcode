@@ -55,7 +55,7 @@
             </li>
 
             <li>
-              <CInputConfirm
+              <c-input-confirm
                 :text="$t('delete')"
                 show-icon
                 borderless

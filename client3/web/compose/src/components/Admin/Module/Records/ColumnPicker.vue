@@ -113,14 +113,11 @@ const emit = defineEmits(['updateFields'])
 const showModal = ref(false)
 const filteredFields = ref([])
 
-watch(() => props.fields, {
-  immediate: true,
-  handler (fields) {
-    if (fields) {
-      filteredFields.value = props.module.filterFields(fields)
-    }
-  },
-})
+watch(() => props.fields, (fields) => {
+  if (fields) {
+    filteredFields.value = props.module.filterFields(fields)
+  }
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   setDefaultValues()

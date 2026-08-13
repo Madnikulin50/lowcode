@@ -27,7 +27,7 @@ export function useViewerBase(p) {
     const { recordPageID, magnifiedBlockID } = r.query
     return !!recordPageID || !!magnifiedBlockID
   })
-  const ts = computed(() => (s.value || {}).get ? s.value.get('ui.studio.themes', []) : [])
+  const ts = computed(() => s?.get ? s.get('ui.studio.themes', []) : [])
   function gc (val) {
     if (val[0] === '#') return val
     const themes = ts.value.filter(t => t.id !== 'general').map(t => ({ id: t.id, values: JSON.parse(t.values) }))

@@ -1,47 +1,47 @@
 list:
   columns:
-    action: Действие
+    action: Action
     actor: Пользователь
     description: Описание
-    requestOrigin: Источник
-    resource: Ресурс
-    severity: Важность
-    timestamp: Время
-  loading: Загрузка действий
+    requestOrigin: Origin
+    resource: Resource
+    severity: Severity
+    timestamp: Timestamp
+  loading: Loading actions
   details:
     id: ID
-    header: Подробности
-    timestamp: Время
-    requestOrigin: Источник запроса
-    requestID: ID запроса
-    actorIPAddr: Пользователь / IP
+    header: Details
+    timestamp: Timestamp
+    requestOrigin: Request Origin
+    requestID: Request ID
+    actorIPAddr: Actor/Пользователь
     actor: Пользователь
-    actorID: ID пользователя
-    severity: Важность
-    resource: Ресурс
-    action: Действие
-    headerAdditional: Дополнительная информация
+    actorID: Пользователь ID
+    severity: Severity
+    resource: Resource
+    action: Action
+    headerAdditional: Additional information
     description: Описание
     error: Ошибка
     meta: Meta
   severity:
-    emergency: Чрезвычайная
-    alert: Тревога
-    critical: Критическая
+    emergency: Emergency
+    alert: Alert
+    critical: Critical
     error: Ошибка
     warning: Предупреждение
-    notice: Замечание
+    notice: Notice
     info: Информация
-    debug: Отладка
+    debug: Debug
   filter:
-    action: Действие
-    actor: ID пользователя
-    choose-date: Выберите дату
-    from: Начиная с
-    no-time: Время не выбрано
-    resource: Ресурс
+    action: Action
+    actor: Пользователь ID
+    choose-date: Choose a date
+    from: Starting from
+    no-time: No time selected
+    resource: Resource
     search: Поиск
-    to: Заканчивая
+    to: Ending at
     today: Сегодня
-  loadOlder: Загрузить более старые действия
-  title: Журнал действий
+  loadOlder: Load older actions
+  title: Action log

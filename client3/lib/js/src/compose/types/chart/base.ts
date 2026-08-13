@@ -199,6 +199,18 @@ export class BaseChart {
    * Prepares params that the reporter can use for querying.
    */
   formatReporterParams ({ moduleID, metrics, dimensions, filter }: Report) {
+    let dims = dimensions?.slice(0, 2).map((d: Dimension) => dimensionFunctions.convert({ field: 'createdAt', ...d })) || []
+
+    // If any metric has stackBy, use it as the 2nd dimension so the server
+    // groups records by the stack field and returns dimension_1 values.
+    if (dims.length > 0) {
+      const stackBy = metrics?.find((m: Metric) => m.type === 'line' && m.stackBy)?.stackBy
+      if (stackBy) {
+        if (dims.length >= 2) dims[1] = stackBy
+        else dims.push(stackBy)
+      }
+    }
+
     return {
       moduleID,
       filter,
@@ -209,7 +221,7 @@ export class BaseChart {
       // Construct dimensions \w modifiers...
       // @note SQL expressions may contain commas (eg. DATE_FORMAT(field, '%Y-%m-01'))
       //       so we use ';' to separate multiple dimensions
-      dimensions: dimensions?.slice(0, 2).map((d: Dimension) => dimensionFunctions.convert({ field: 'createdAt', ...d })).join(';'),
+      dimensions: dims.join(';'),
     }
   }
 
@@ -261,18 +273,47 @@ export class BaseChart {
     labels = results.map((r: any) => pickValue(r[dLabel], dimension)) as Array<string>
 
     // Build data sets
-    const datasets = report.metrics?.map(m => {
-      const alias = makeAlias({ field: m.field, aggregate: m.aggregate })
-      // For the count metric the server returns a plain 'count' column
-      const lookup = m.field === 'count' ? m.field : alias
-      const data = results.map((r: any) => {
-        return pickValue(r[lookup], dimension)
-      })
+    const { metrics } = report
+    const stackBy = metrics?.find((m: any) => m.type === 'line' && m.stackBy)?.stackBy
+    let datasets
 
-      // Any sub class has the ability to define how the dataset looks like.
-      // this comes in handy when we want to support charts with different definitions.
-      return this.makeDataset(m, dimension, data, lookup)
-    })
+    if (stackBy && results.length) {
+      // Split rows into one series per group value (dimension_1)
+      labels = [...new Set(labels.map(String))]
+      if (dimension.timeLabels) {
+        labels.sort((a: string, b: string) => (new Date(a)).getTime() - (new Date(b)).getTime())
+      }
+      const groups = [...new Set(results.map((r: any) => String(r.dimension_1)))]
+
+      datasets = []
+      for (const m of (metrics || [])) {
+        const alias = makeAlias({ field: m.field, aggregate: m.aggregate })
+        const lookup = (m as any).field === 'count' ? (m as any).field : alias
+        for (const g of groups) {
+          const data = labels.map(l => {
+            const row = results.find((r: any) => String(pickValue(r[dLabel], dimension)) === l && String(r.dimension_1) === g)
+            return row ? pickValue((row as any)[lookup], dimension) : 0
+          })
+          const ds = this.makeDataset(m, dimension, data, lookup)
+          ds.label = g
+          if (!(m as any).stack) ds.stack = 'total'
+          datasets.push(ds)
+        }
+      }
+    } else {
+      datasets = metrics?.map(m => {
+        const alias = makeAlias({ field: m.field, aggregate: m.aggregate })
+        // For the count metric the server returns a plain 'count' column
+        const lookup = (m as any).field === 'count' ? (m as any).field : alias
+        const data = results.map((r: any) => {
+          return pickValue(r[lookup], dimension)
+        })
+
+        // Any sub class has the ability to define how the dataset looks like.
+        // this comes in handy when we want to support charts with different definitions.
+        return this.makeDataset(m, dimension, data, lookup)
+      })
+    }
 
     return {
       labels: this.processLabels(labels, dimension),
@@ -287,7 +328,7 @@ export class BaseChart {
     return ll
   }
 
-  makeDataset (m: Metric, d: Dimension, data: Array<number|any>, alias: string) {
+  makeDataset (m: Metric, d: Dimension, data: Array<number|any>, alias: string): any {
     throw new Error('method.makeDataset.notImplemented')
   }
 

@@ -50,7 +50,7 @@ const inModal = computed(() => {
 })
 
 const themeSettings = computed(() => {
-  return ($settings.value || {}).get ? $settings.value.get('ui.studio.themes', []) : []
+  return $settings?.get ? $settings.get('ui.studio.themes', []) : []
 })
 
 function getColor (value) {

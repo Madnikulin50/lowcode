@@ -1,153 +1,153 @@
 editor:
   title: Системные настройки
   auth:
-    title: Аутентификация
+    title: Authentication
     url: URL
     internal:
-      title: Внутренняя
-      enabled: Внутренняя аутентификация включена
+      title: Internal
+      enabled: Internal authentication enabled
       password-reset:
-        enabled: Сброс пароля включён
+        enabled: Password reset enabled
       password-constraints:
-        title: Ограничения пароля
-        ignored-security: Система настроена игнорировать ограничения безопасности паролей, что небезопасно для production. Если это production, обратитесь к администратору для обновления конфигурации (переменная AUTH_PASSWORD_SECURITY в .env).
-        min-length: Минимальная длина
-        min-length-description: Должен быть не менее 8 символов
-        min-num-count: Минимальное количество цифр
-        min-num-count-description: Пароль должен содержать указанное количество цифр (отключено при 0)
-        min-special-count: Минимальное количество спецсимволов
-        min-special-count-description: Пароль должен содержать указанное количество спецсимволов (отключено при 0)
-        min-upper-case-length: Минимальное количество заглавных букв
-        min-upper-case-description: Пароль должен содержать указанное количество заглавных букв (отключено при 0)
-        min-lower-case-length: Минимальное количество строчных букв
-        min-lower-case-description: Пароль должен содержать указанное количество строчных букв (отключено при 0)
+        title: Password constraints
+        ignored-security: The system is configured to ignore password security constraints which is insecure on production deployments. If this is a production deployment, please contact your administrator to update the system configuration (the AUTH_PASSWORD_SECURITY .env variable).
+        min-length: Minimum length
+        min-length-description: Must be at least 8 characters
+        min-num-count: Minimum number of digits
+        min-num-count-description: The password must include the specified number of digits (disabled if set to 0)
+        min-special-count: Minimum number of special characters
+        min-special-count-description: The password must include the specified number of special characters (disabled if set to 0)
+        min-upper-case-length: Minimum number of upper case characters
+        min-upper-case-description: The password must include the specified number of upper case characters (disabled if set to 0)
+        min-lower-case-length: Minimum number of lower case characters
+        min-lower-case-description: The password must include the specified number of lower case characters (disabled if set to 0)
       signup:
-        email-confirmation-required: Подтверждение email при регистрации обязательно
-        enabled: Регистрация включена
+        email-confirmation-required: Signup email confirmation required
+        enabled: Signup enabled
         split-credentials-check:
-          description: 'Разделить вход на два шага: сначала запросить email, затем показать поле пароля на втором экране. Автоматически перенаправить пользователя на внешнего провайдера, если у пользователя не задан пароль и доступен только один IdP'
-          label: Включить раздельную проверку учётных данных
+          description: 'Split login into two steps: collect the email input first and show the input for the password on the 2nd screen. Automatically forward user to external identity provider when user does not have his password set and there is only one IdP present'
+          label: Enable split-credentials check
       profile-avatar:
-        enabled: Аватар профиля включён
+        enabled: Профиль avatar enabled
       send-user-invite-email:
-        title: Пригласительное письмо
-        enabled: Отправлять приглашение при создании пользователя
-        description: При включении отправляет пригласительное письмо новому пользователю, созданному через CLI
+        title: Invite email
+        enabled: Send invite email on user creation
+        description: When enabled, this configuration sends an invite email to a newly created user via the CLI
         expires:
-          label: Действителен в течение
-          description: Как долго токен приглашения действителен до истечения
+          label: Valid for
+          description: How long will the invite token be valid before it expires
     mail:
-      title: Отправитель писем аутентификации
-      from-address: Адрес отправителя
-      from-name: Имя отправителя
-      validate-email: Введите корректный адрес почты
+      title: Authentication email sender mail
+      from-address: Sender's address
+      from-name: Sender's name
+      validate-email: Please enter valid email address
     mfa:
-      title: Многофакторная аутентификация
+      title: Multi-factor authentication
       TOTP:
-        enabled: Включить TOTP (одноразовый пароль через мобильное приложение)
-        enforced: Требовать TOTP для всех пользователей
+        enabled: Enable TOTP (time-based one-time password via mobile app)
+        enforced: Require all users to use TOTP
         issuer:
-          description: Имя издателя будет отправлено в приложение-аутентификатор при настройке пользователем
-          label: Издатель
+          description: Issuer name will be sent to authenticator app when user configures it
+          label: Issuer
       emailOTP:
-        enabled: Включить Email OTP (одноразовый пароль по почте)
-        enforced: Требовать Email OTP для всех пользователей
+        enabled: Enable email OTP (one-time password sent to email)
+        enforced: Require all users to use email OTP
         expires:
-          description: Как долго пароль действителен до истечения
-          label: Действителен в течение
+          description: How long will password be valid before it expires
+          label: Valid for
     auto-logout:
-      title: Автовыход
+      title: Auto logout
       enabled:
         label: Включено
-        description: Автоматически выходить из системы после периода бездействия
+        description: Automatically log out users after a certain period of inactivity
       timeout:
-        label: Таймаут
-        description: Период бездействия в секундах перед выходом пользователя
+        label: Timeout
+        description: The period of inactivity in seconds before a user is logged out
 
   external:
-    title: Внешние провайдеры аутентификации
-    enabled: Включить внешнюю аутентификацию
+    title: External Authentication Providers
+    enabled: Enable external authentication
 
     table:
       header:
         enabled: Включено
-        provider: Провайдер
-        info: Издатель, client ID
+        provider: Provider
+        info: Issuer, client ID
 
     standard:
       enabled: Включено
-      apiAccess: Доступ к API
+      apiAccess: Api access
       clientKey: Client key
-      clientSecret: Секрет
+      clientSecret: Secret
 
     oidc:
-      add: Добавить OIDC провайдера
+      add: Add an OIDC provider
       enabled: Включено
       handle: Дескриптор
       title: OpenID Connect
       issuer: OIDC Issuer URL
-      issuerHint: Где найти /.well-known/openid-configuration (без части /.well-known/openid-configuration)
+      issuerHint: Where to find the /.well-known/openid-configuration (without the /.well-known/openid-configuration part)
       clientKey: Client key
-      clientSecret: Секрет
+      clientSecret: Secret
       scope: Scope
-      scopePlaceholder: Перечислите поддерживаемые значения OAuth scope
-      scopeHint: Используйте строку с разделителем-пробелом
+      scopePlaceholder: List out supported OAuth scope values
+      scopeHint: Use space delimited string
 
     saml:
       enabled: Включено
       title: SAML
       requests:
-        title: Запросы
-        sign-requests: Подписывать запросы
-        sign-method: Метод подписи
-        binding: Привязка
+        title: Requests
+        sign-requests: Sign requests
+        sign-method: Signature method
+        binding: Binding
         binding-redirect: HTTP Redirect
         binding-post: HTTP POST
       cert:
-        public: Публичный ключ
-        private: Приватный ключ
+        public: Public key
+        private: Private key
       name: Имя
-      certificate: Сертификат
+      certificate: Сертификатор
       idp:
-        title: Провайдер идентификации
+        title: Identity provider
         ident-handle: Дескриптор поля
         ident-identifier: Идентификатор поля
         ident-name: Имя поля
         url: URL
       desc:
-        name: Имя IdP на экране входа (Войти через <name>)
+        name: IdP name used on the login screen (Login with <name>)
         cert:
-          public: Содержимое будет минифицировано
-          private: Содержимое будет минифицировано
+          public: Content will be minimized
+          private: Content will be minimized
         requests:
-          sign-requests: Подписывать AuthNRequest и утверждение
-          sign-method: Метод подписи запросов
-          binding: Тип HTTP-привязки для AuthNRequest, по умолчанию HTTP Redirect (GET)
+          sign-requests: Sign AuthNRequest and assertion
+          sign-method: Method to use on signed requests
+          binding: The type of HTTP binding to use on AuthNRequest, defaults to HTTP Redirect (GET)
         idp:
-          url: Расположение метаданных IdP
-          ident-handle: Имя поля IdP для заполнения дескриптора или псевдонима пользователя Corteza
-          ident-identifier: Имя поля IdP для заполнения и сопоставления email пользователя Corteza
-          ident-name: Имя поля IdP для заполнения полного имени пользователя Corteza
+          url: Location of IdP metadata
+          ident-handle: Name of the IdP field used for filling Corteza user handle or nickname
+          ident-identifier: Name of the IdP field used for filling and matching Corteza user email
+          ident-name: Name of the IdP field used for filling Corteza user full name
 
 
     security:
-      title: Безопасность
+      title: Security
       prohibited-roles:
-        description: Роли из этого списка будут удалены из контекста безопасности при аутентификации через этого провайдера
-        label: Запрещённые роли
+        description: Roles from this list will be removed from security context when authenticates with this provider
+        label: Prohibited roles
       forced-roles:
-        description: Роли из этого списка будут всегда добавлены в контекст безопасности при аутентификации через этого провайдера
-        label: Принудительные роли
+        description: Roles from this list will be always added to security context when authenticates with this provider
+        label: Forced roles
       permitted-roles:
-        description: Только роли из этого списка будут добавлены в контекст безопасности при аутентификации через этого провайдера
-        label: Разрешённые роли
+        description: Only roles in this list will be added into security context when authenticates with this provider
+        label: Permitted roles
 
   bgScreen:
-    title: Фон экрана авторизации
+    title: Auth background screen
 
     image:
       uploader:
-        label: Фоновое изображение
+        label: Фон image
 
       editor:
         label: Пользовательский CSS

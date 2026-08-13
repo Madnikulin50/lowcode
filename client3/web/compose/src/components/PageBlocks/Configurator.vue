@@ -403,6 +403,7 @@ import { handle, components, composables } from 'corteza-lib/vue/dist'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
 import PageBlock from './index'
 import { useRoute } from 'vue-router'
+import axios from 'axios'
 
 const { CInputExpression, CRichTextInput } = components
 import { htmlToMarkdown, markdownToHtml } from '../../lib/markdown'
@@ -537,6 +538,9 @@ function fetchRoles () {
   response()
     .then(({ set: r = [] }) => {
       roles.value.options = r.filter(({ meta }) => !(meta.context && meta.context.resourceTypes))
+    }).catch(error => {
+      if (axios.isCancel(error)) return
+      console.error('Roles fetch failed:', error)
     }).finally(() => {
       roles.value.processing = false
     })
