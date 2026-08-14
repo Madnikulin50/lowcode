@@ -49,6 +49,8 @@ export default class Chart extends BaseChart {
       data,
       alias,
       mapType: m.mapType,
+      startField: m.startField,
+      endField: m.endField,
       fill: m.fill,
       smooth: m.smooth,
       step: m.step ? 'middle' : undefined,
@@ -66,7 +68,7 @@ export default class Chart extends BaseChart {
 
   makeOptions (data: any): any {
     const { reports = [], colorScheme, noAnimation = false, toolbox, gradient = '' } = this.config
-    const { saveAsImage, timeline = '' } = toolbox || {}
+    const { saveAsImage, showDataTable, timeline = '' } = toolbox || {}
     const schemeColors = getColorschemeColors(colorScheme, data.customColorSchemes)
 
     function linearGradientColor (seriesColor: string): object {
@@ -130,13 +132,13 @@ export default class Chart extends BaseChart {
 
     // ------------------------------------------------------------------
     // Advanced chart types (sankey, graph, heatmap, waterfall, boxplot,
-    // candlestick, map, sunburst, parallel, calendar)
+    // candlestick, map, sunburst, parallel, calendar, gantt)
     // They need either multiple dimensions (sankey, graph, heatmap,
     // sunburst) or a fixed number of metrics (boxplot, candlestick) and
     // therefore bypass the generic dataset mapper below.
     // ------------------------------------------------------------------
     const chartType = datasets[0]?.type
-    if (['sankey', 'graph', 'heatmap', 'waterfall', 'boxplot', 'candlestick', 'map', 'sunburst', 'parallel', 'calendar'].includes(chartType)) {
+    if (['sankey', 'graph', 'heatmap', 'waterfall', 'boxplot', 'candlestick', 'map', 'sunburst', 'parallel', 'calendar', 'gantt'].includes(chartType)) {
       return this.makeAdvancedOptions(chartType, {
         labels,
         datasets,
@@ -451,7 +453,7 @@ export default class Chart extends BaseChart {
             name: this.name,
           } : undefined,
         },
-        top: 23,
+        top: showDataTable ? 62 : 23,
         right: 2,
       },
       dataZoom,
@@ -495,6 +497,7 @@ export default class Chart extends BaseChart {
       colorScheme,
       noAnimation = false,
       saveAsImage,
+      showDataTable,
       timeline = '',
       gradient,
       schemeColors,
@@ -536,7 +539,7 @@ export default class Chart extends BaseChart {
             name: this.name,
           } : undefined,
         },
-        top: 23,
+        top: showDataTable ? 62 : 23,
         right: 2,
       },
       dataZoom,
@@ -1140,6 +1143,133 @@ export default class Chart extends BaseChart {
                 color: schemeColors[0],
               },
             } : {}),
+          }],
+        }
+      }
+
+      case 'gantt': {
+        const metric = datasets[0] || {}
+        const toTime = (v: any): number => {
+          if (v == null || v === '') return NaN
+          if (typeof v === 'number') return v < 1e12 ? v * 1000 : v
+          const raw = String(v).trim()
+          if (/^\d+(\.\d+)?$/.test(raw)) {
+            const n = Number(raw)
+            return n < 1e12 ? n * 1000 : n
+          }
+          return Date.parse(raw)
+        }
+        const fmtDate = (ms: number): string => {
+          if (!isFinite(ms)) return ''
+          const d = new Date(ms)
+          const y = d.getFullYear()
+          const m = String(d.getMonth() + 1).padStart(2, '0')
+          const day = String(d.getDate()).padStart(2, '0')
+          return `${y}-${m}-${day}`
+        }
+
+        const tasks: Array<{ name: string; start: number; end: number }> = []
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i]
+          const start = toTime(r.gantt_start)
+          const end = toTime(r.gantt_end)
+          if (!isFinite(start) || !isFinite(end) || end < start) continue
+          const name = String(
+            (labels && labels[i] != null && labels[i] !== '')
+              ? labels[i]
+              : (r.dimension_0 == null ? `#${i + 1}` : r.dimension_0)
+          )
+          tasks.push({ name, start, end })
+        }
+
+        const categories = tasks.map(tk => tk.name)
+        const data = tasks.map((tk, i) => ({
+          value: [i, tk.start, tk.end, tk.name],
+          itemStyle: { color: schemeColors[i % Math.max(schemeColors.length, 1)] || themeVariables.primary },
+        }))
+
+        return {
+          ...common,
+          legend: { show: false },
+          tooltip: {
+            trigger: 'item',
+            appendToBody: true,
+            formatter: (params: any): string => {
+              const v = params?.value || []
+              const start = Number(v[1])
+              const end = Number(v[2])
+              const days = isFinite(start) && isFinite(end)
+                ? Math.max(1, Math.round((end - start) / 86400000))
+                : 0
+              const title = v[3] || params?.name || ''
+              if (t?.formatting) {
+                return formatChartTooltip(t.formatting, params)
+              }
+              return `${params.marker || ''}<b>${title}</b><br/>${fmtDate(start)} → ${fmtDate(end)}<span style="float: right; margin-left: 16px">${days}d</span>`
+            },
+          },
+          grid: {
+            ...grid,
+            left: offset?.isDefault ? 120 : offset?.left,
+            containLabel: true,
+          },
+          dataZoom: [
+            { type: 'slider', xAxisIndex: 0, height: 18, bottom: 8, filterMode: 'weakFilter' },
+            { type: 'inside', xAxisIndex: 0, filterMode: 'weakFilter' },
+          ],
+          xAxis: {
+            type: 'time',
+            axisLabel: { color: themeVariables.black, hideOverlap: true },
+            splitLine: { show: true, lineStyle: { color: themeVariables.light || '#eee' } },
+          },
+          yAxis: {
+            type: 'category',
+            data: categories,
+            inverse: true,
+            axisLabel: {
+              color: themeVariables.black,
+              width: 110,
+              overflow: 'truncate',
+            },
+            splitLine: { show: true, lineStyle: { color: themeVariables.light || '#eee' } },
+          },
+          series: [{
+            type: 'custom',
+            name: metric.label || metric.field || 'gantt',
+            renderItem: (params: any, api: any) => {
+              const categoryIndex = api.value(0)
+              const start = api.coord([api.value(1), categoryIndex])
+              const end = api.coord([api.value(2), categoryIndex])
+              const height = api.size([0, 1])[1] * 0.55
+              const coordSys = params.coordSys || {}
+              const shape = {
+                x: start[0],
+                y: start[1] - height / 2,
+                width: Math.max(end[0] - start[0], 3),
+                height,
+                r: 3,
+              }
+              if (coordSys.width) {
+                const minX = coordSys.x || 0
+                const maxX = minX + coordSys.width
+                if (shape.x < minX) {
+                  shape.width -= (minX - shape.x)
+                  shape.x = minX
+                }
+                if (shape.x + shape.width > maxX) {
+                  shape.width = Math.max(0, maxX - shape.x)
+                }
+              }
+              if (shape.width <= 0) return
+              return {
+                type: 'rect',
+                transition: ['shape'],
+                shape,
+                style: api.style(),
+              }
+            },
+            encode: { x: [1, 2], y: 0 },
+            data,
           }],
         }
       }

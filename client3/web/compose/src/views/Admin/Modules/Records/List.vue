@@ -17,6 +17,7 @@
         :autocomplete="'off'"
         submittable
         @search="handleAiSearch"
+        @ai-search="handleAiSearch"
       />
 
       <div
@@ -201,7 +202,7 @@ function handleFieldsSave (fields = []) {
 
 function handleAiSearch (query) {
   window.dispatchEvent(new CustomEvent('show-chat-modal', { detail: {
-    namespace: namespace?.namespaceID,
+    namespace: props.namespace?.namespaceID,
     module: module.value?.moduleID,
     page: module.value?.moduleID,
     prompt: query,

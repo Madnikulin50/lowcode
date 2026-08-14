@@ -361,7 +361,13 @@ func (postgresDialect) ColumnFits(target, assert *ddl.Column) bool {
 		return baseMatch && cast.ToInt(assertMeta[0]) <= cast.ToInt(targetMeta[0])
 
 	case assertName == "numeric" && targetName == "numeric":
-		// Check numeric size and precision
+		// Unconstrained NUMERIC (CREATE TABLE AS / aggregates) has no (p,s) in
+		// information_schema; Postgres can store any numeric(p,s) in it.
+		// Treat missing precision as unlimited — padding to 0,0 would reject
+		// NUMERIC(15,2) and leave pending attributeReType that skip model load.
+		if len(targetMeta) == 0 {
+			return true
+		}
 		for i := len(assertMeta); i < 2; i++ {
 			assertMeta = append(assertMeta, "0")
 		}

@@ -162,6 +162,7 @@ edit:
       sunburst: Sunburst
       parallel: Parallel
       calendar: Calendar
+      gantt: Gantt
       placeholder: Select metric output
     boxplot:
       hint: The boxplot uses up to 5 metrics as the box values (min, Q1, median, Q3, max).
@@ -178,6 +179,10 @@ edit:
         scatter: Scatter
         heatmap: Heatmap
         effectScatter: Effect scatter
+    gantt:
+      startField: Start date
+      endField: End date
+      hint: Dimension is the bar label (project name). Each record becomes one bar from start to end.
     relative: Show relative value
     relativePrecision: 'Precision:'
     cumulative: Cumulative
@@ -265,6 +270,8 @@ edit:
     label: Tools
     saveAsImage:
       label: Show "Save as Image" button
+    showDataTable:
+      label: Show "Table" button
     timeline:
       label: Timeline
       options:

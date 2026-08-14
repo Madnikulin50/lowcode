@@ -26,6 +26,7 @@ export enum ChartType {
   sunburst = 'sunburst',
   parallel = 'parallel',
   calendar = 'calendar',
+  gantt = 'gantt',
 }
 
 export interface TemporalDataPoint {
@@ -147,6 +148,7 @@ export interface AnomalyConfig {
 
 export interface ChartToolbox {
   saveAsImage: boolean;
+  showDataTable: boolean;
   timeline: string;
 }
 

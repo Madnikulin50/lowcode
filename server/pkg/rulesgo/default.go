@@ -45,5 +45,9 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 		r.Register("script", &scriptExecutor{})
 	}
 
+	r.Register("score.matrix", &scoreMatrixExecutor{})
+	r.Register("score.weighted", &scoreWeightedExecutor{})
+	r.Register("risk.band", &riskBandExecutor{})
+
 	return r
 }

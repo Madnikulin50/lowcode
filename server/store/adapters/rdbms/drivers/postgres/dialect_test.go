@@ -80,6 +80,17 @@ func TestColumnFits(t *testing.T) {
 		},
 
 		{
+			name: "unconstrained numeric fits any numeric(p,s)",
+			target: &ddl.Column{
+				Type: &ddl.ColumnType{Name: "numeric"},
+			},
+			assert: &ddl.Column{
+				Type: &ddl.ColumnType{Name: "numeric(15,2)"},
+			},
+			expected: true,
+		},
+
+		{
 			name: "varchar fits",
 			target: &ddl.Column{
 				Type: &ddl.ColumnType{Name: "varchar(42)"},

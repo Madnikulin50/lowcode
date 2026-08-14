@@ -360,6 +360,44 @@ func nodeTypes() []map[string]interface{} {
 				"branches": "int — number of branches (min: 2)",
 			},
 		},
+		{
+			"type":        "score.matrix",
+			"label":       "Risk Matrix",
+			"description": "5×5 (or NxN) likelihood × impact → score",
+			"configSchema": map[string]interface{}{
+				"likelihoodField": "string — input field (default: likelihood)",
+				"impactField":     "string — input field (default: impact)",
+				"scale":           "int — clamp 1..scale (default: 5)",
+				"formula":         "string — product | sum (ignored if matrix set)",
+				"matrix":          "number[][] — optional custom cell lookup [L-1][I-1]",
+				"outScore":        "string — output variable (default: score)",
+			},
+		},
+		{
+			"type":        "score.weighted",
+			"label":       "Weighted Score",
+			"description": "Σ weightᵢ · normalize(fieldᵢ / maxᵢ) → score 0..100",
+			"configSchema": map[string]interface{}{
+				"factors":   "array — [{field, weight, max, invert?}]",
+				"normalize": "bool — default true (scale to 0..scaleMax)",
+				"scaleMax":  "number — default 100",
+				"outScore":  "string — output variable (default: score)",
+			},
+		},
+		{
+			"type":        "risk.band",
+			"label":       "Risk Band",
+			"description": "Map score → level; optional residual = score × (1 − control)",
+			"configSchema": map[string]interface{}{
+				"scoreField":      "string — default score",
+				"controlField":    "string — 0..1 control effectiveness",
+				"bands":           "array — [{name, max}] ascending max",
+				"criticalLevels":  "string[] — levels that set is_critical (default: [critical])",
+				"outLevel":        "string — default level",
+				"outResidual":     "string — default residualScore",
+				"outCriticalFlag": "string — default is_critical (empty unless critical)",
+			},
+		},
 	}
 }
 

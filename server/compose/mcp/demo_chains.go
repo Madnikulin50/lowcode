@@ -11,6 +11,7 @@ func registerDemoChains(engine *rulesgo.EngineWithPersistence) {
 		demoEmailOnRecordCreate(),
 		demoLeadScoring(),
 		demoDataCleanup(),
+		rulesgo.DemoStoreRiskChain(),
 	}
 
 	for _, c := range chains {

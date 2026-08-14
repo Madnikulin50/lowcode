@@ -138,7 +138,10 @@ function formatResponse (m, i) {
   const vals = reports.value[i]
   if (!vals) return []
   return vals.map(({ label, value }) => {
-    if (m.numberFormat) value = numeral(value).format(m.numberFormat)
+    if (m.numberFormat) {
+      const n = typeof value === 'number' ? value : Number(value)
+      if (Number.isFinite(n)) value = numeral(n).format(m.numberFormat)
+    }
     if (m.dateFormat) label = moment(label).format(m.dateFormat)
     return { label, value }
   })

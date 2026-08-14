@@ -20,12 +20,94 @@
       class="flex-fill p-1"
       @click="drillDown"
     />
+
+    <button
+      v-if="renderer && hasDataTableEnabled"
+      class="btn btn-outline-light chart-table-button position-absolute d-flex d-print-none border-0 px-1 text-secondary"
+      :class="[tableVisible && 'text-primary']"
+      :title="t('chart.dataTable.title')"
+      @click="tableVisible = !tableVisible"
+    >
+      <font-awesome-icon :icon="['fas', 'table']" />
+    </button>
+
+    <div
+      v-if="tableVisible"
+      class="modal fade show d-block"
+      tabindex="-1"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ t('chart.dataTable.modal.title') }}</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              @click="tableVisible = false"
+            />
+          </div>
+          <div class="modal-body p-0">
+            <div
+              v-if="tableColumns.length"
+              class="table-responsive"
+              style="max-height: 60vh; overflow: auto"
+            >
+              <table class="table table-sm table-striped mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th
+                      v-for="column in tableColumns"
+                      :key="column.key"
+                    >
+                      {{ column.label }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(row, ri) in tableRows"
+                    :key="ri"
+                  >
+                    <td
+                      v-for="column in tableColumns"
+                      :key="column.key"
+                    >
+                      {{ row[column.key] }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div
+              v-else
+              class="p-3 text-secondary"
+            >
+              {{ t('chart.dataTable.empty') }}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="btn btn-outline-secondary"
+              @click="tableVisible = false"
+            >
+              {{ t('label.close') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      v-if="tableVisible"
+      class="modal-backdrop fade show"
+      @click="tableVisible = false"
+    />
   </div>
 </template>
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'notification' } })
-import { ref, watch, onBeforeUnmount, getCurrentInstance } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chartConstructor } from 'corteza-webapp-compose/src/lib/charts'
 import { ensureMapRegistered } from 'corteza-webapp-compose/src/lib/chart-maps'
@@ -63,6 +145,17 @@ const error = ref(undefined)
 const processing = ref(false)
 const valueMap = ref(new Map())
 const renderer = ref(undefined)
+const tableData = ref({ columns: [], rows: [] })
+const tableVisible = ref(false)
+
+const hasDataTableEnabled = computed(() => {
+  const { config = {} } = props.chart || {}
+  if (!config.toolbox) return false
+  return config.toolbox.showDataTable
+})
+
+const tableColumns = computed(() => tableData.value.columns || [])
+const tableRows = computed(() => tableData.value.rows || [])
 
 const instance = getCurrentInstance()
 
@@ -88,16 +181,27 @@ async function updateChart () {
 
   const chart = chartConstructor(props.chart)
 
+  // Hoisted so the deferred (setTimeout) chart-data emit can use them
+  let fields = []
+  let data = null
+
   try {
     chart.isValid()
 
-    const data = await chart.fetchReports({ reporter: props.reporter })
-
     const module = getModuleByID(report.moduleID)
-    const fields = [
+    if (!module) throw new Error('Module not found')
+    fields = [
       ...module.fields,
       ...module.systemFields(),
     ]
+
+    const isGantt = (report.metrics || []).some(m => m.type === 'gantt')
+
+    if (isGantt) {
+      data = await fetchGanttReport(report)
+    } else {
+      data = await chart.fetchReports({ reporter: props.reporter })
+    }
 
     if (!!data.labels && Array.isArray(data.labels)) {
       const [dimension = {}] = report.dimensions
@@ -107,16 +211,17 @@ async function updateChart () {
 
       field = fields.find(({ name }) => name === field)
 
-      if (!field) throw new Error('Dimension field not found')
-
-      data.labels = await prettyDimensionValues(dimension, field, data.labels)
+      if (field) {
+        data.labels = await prettyDimensionValues(dimension, field, data.labels)
+      } else if (!isGantt) {
+        throw new Error('Dimension field not found')
+      }
     }
 
-    // Multi-dimension charts (sankey, graph, heatmap, sunburst) rely on raw
-    // report rows; prettify both dimension columns the same way labels are.
-    const rowChartType = data.datasets?.[0]?.type
-    const usesRows = ['sankey', 'graph', 'heatmap', 'sunburst'].includes(rowChartType)
-    if (usesRows && Array.isArray(data.rows) && data.rows.length) {
+    // Prettify raw dimension values (Select/User/Record/Bool → labels) in
+    // rows so the data-table export shows readable values. Multi-dimension
+    // charts (sankey, graph, heatmap, sunburst) rely on these rows as well.
+    if (Array.isArray(data.rows) && data.rows.length) {
       const dims = report.dimensions || []
       const dimFields = dims.map(d => fields.find(({ name }) => name === d?.field))
 
@@ -161,7 +266,113 @@ async function updateChart () {
   setTimeout(() => {
     processing.value = false
     emit('updated')
+    onChartData(buildTableColumns(report, fields, data.rows || []), data.rows || [])
   }, 300)
+}
+
+function recordFieldValue (rec, name) {
+  if (!name || !rec) return undefined
+  const values = rec.values
+  if (Array.isArray(values)) {
+    const hit = values.find(v => v.name === name)
+    if (!hit) return undefined
+    const v = hit.value
+    return Array.isArray(v) ? v[0] : v
+  }
+  if (values && typeof values === 'object') {
+    const v = values[name]
+    return Array.isArray(v) ? v[0] : v
+  }
+  return undefined
+}
+
+async function fetchGanttReport (report) {
+  const metric = (report.metrics || [])[0] || {}
+  const dimension = (report.dimensions || [])[0] || {}
+  const startField = metric.startField || 'start_date_planned'
+  const endField = metric.endField || 'end_date_planned'
+  const labelField = dimension.field
+  const params = {
+    namespaceID: props.chart.namespaceID,
+    moduleID: report.moduleID,
+    query: report.filter || '',
+    limit: 200,
+    sort: `${startField} ASC`,
+  }
+
+  let set = []
+  try {
+    const res = await $ComposeAPI.recordList(params)
+    set = res.set || []
+  } catch (e) {
+    const res = await $ComposeAPI.recordList({ ...params, sort: undefined })
+    set = res.set || []
+  }
+
+  const rows = []
+  for (const raw of set) {
+    const start = recordFieldValue(raw, startField)
+    const end = recordFieldValue(raw, endField)
+    if (!start || !end) continue
+    const label = recordFieldValue(raw, labelField)
+    rows.push({
+      dimension_0: label == null || label === '' ? (raw.recordID || raw.ID) : label,
+      gantt_start: start,
+      gantt_end: end,
+    })
+  }
+
+  return {
+    labels: rows.map(r => r.dimension_0),
+    datasets: [{
+      type: 'gantt',
+      label: metric.label || 'gantt',
+      data: rows.map(() => 1),
+      alias: 'gantt',
+      startField,
+      endField,
+      formatting: metric.formatting || {},
+    }],
+    dimension,
+    rows,
+  }
+}
+
+function onChartData (columns, rows) {
+  tableData.value = { columns: columns || [], rows: rows || [] }
+}
+
+function buildTableColumns (report, fields, rows) {
+  const columns = []
+  const isGantt = (report.metrics || []).some(m => m.type === 'gantt')
+
+  if (isGantt) {
+    const metric = (report.metrics || [])[0] || {}
+    const dimension = (report.dimensions || [])[0] || {}
+    const dimField = fields.find(f => f.name === dimension.field)
+    const startField = fields.find(f => f.name === (metric.startField || 'start_date_planned'))
+    const endField = fields.find(f => f.name === (metric.endField || 'end_date_planned'))
+    columns.push({ key: 'dimension_0', label: dimField?.label || dimension.field || 'name' })
+    columns.push({ key: 'gantt_start', label: startField?.label || metric.startField || 'start' })
+    columns.push({ key: 'gantt_end', label: endField?.label || metric.endField || 'end' })
+    return columns
+  }
+
+  ;(report.dimensions || []).slice(0, 2).forEach((dimension, i) => {
+    if (i > 0 && !rows.some(r => r.dimension_1 !== undefined && r.dimension_1 !== null)) return
+    const field = fields.find(f => f.name === dimension?.field)
+    columns.push({ key: `dimension_${i}`, label: field?.label || dimension?.field || `dimension_${i}` })
+  })
+
+  ;(report.metrics || []).forEach(metric => {
+    const alias = metric.field === 'count' ? 'count' : (metric.alias || `${metric.aggregate || metric.modifier || 'none'}_${metric.field}`.toLowerCase())
+    const label = metric.field === 'count'
+      ? t('chart.general.label.count')
+      : (fields.find(f => f.name === metric.field)?.label || metric.label || metric.field)
+    columns.push({ key: alias, label })
+  })
+
+  return columns
 }
 
 function drillDown (e) {
@@ -254,3 +465,11 @@ async function prettyDimensionValues (dimension, field, values) {
   return values
 }
 </script>
+
+<style lang="scss" scoped>
+.chart-table-button {
+  right: 2.2rem;
+  top: 0.7rem;
+  z-index: 1;
+}
+</style>

@@ -164,7 +164,15 @@ export class BaseChart {
       }
 
       // Expecting all dimensions to have defined fields
-      dimensions?.forEach(this.dimCheck)
+      dimensions?.forEach((d) => {
+        if (metrics?.some((m: Metric) => m.type === 'gantt')) {
+          if (!d.field) {
+            throw new Error('notification.chart.invalidConfig.missingDimensionsField')
+          }
+          return
+        }
+        this.dimCheck(d)
+      })
 
       // Expecting all metrics to have defined fields
       metrics?.forEach(this.mtrCheck)
@@ -191,6 +199,9 @@ export class BaseChart {
    * If invalid it throws an error
    */
   mtrCheck ({ field, aggregate, type }: Metric) {
+    if (type === 'gantt') {
+      return
+    }
     if (!field) {
       throw new Error('notification.chart.invalidConfig.missingMetricsField')
     }
@@ -455,6 +466,7 @@ export class BaseChart {
       gradient: '' as '' | 'lightToDark' | 'darkToLight',
       toolbox: {
         saveAsImage: false,
+        showDataTable: false,
         timeline: '',
       },
     })

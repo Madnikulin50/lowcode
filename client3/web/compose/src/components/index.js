@@ -24,6 +24,7 @@ import {
   MapChart,
   SunburstChart,
   ParallelChart,
+  CustomChart,
 } from 'echarts/charts'
 import {
   TitleComponent,
@@ -53,6 +54,7 @@ use([
   MapChart,
   SunburstChart,
   ParallelChart,
+  CustomChart,
   CanvasRenderer,
   TitleComponent,
   GridComponent,

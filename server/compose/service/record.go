@@ -2967,13 +2967,14 @@ func recordReportToAggPipelineStep(m *types.Module, metrics, dimensions, f strin
 
 	var colId string
 	for _, f := range m.Fields {
-		if strings.ToLower(f.Name) == "id" {
-			colId = "ID"
+		if strings.EqualFold(f.Name, "id") {
+			colId = f.Name
 			break
 		}
 	}
 	if colId == "" && len(m.Fields) > 0 {
-		if m.Config.Type == "datasource" {
+		switch m.Config.Type {
+		case "datasource", "dbref":
 			colId = m.Fields[0].Name
 		}
 	}

@@ -199,6 +199,17 @@
                           :labels="checkboxLabel"
                         />
                       </div>
+
+                      <div class="mb-3">
+                        <label class="form-label text-primary">
+                          {{ $t('edit.toolbox.showDataTable.label') }}
+                        </label>
+                        <c-input-checkbox
+                          v-model="chart.config.toolbox.showDataTable"
+                          switch
+                          :labels="checkboxLabel"
+                        />
+                      </div>
                     </div>
 
                     <div

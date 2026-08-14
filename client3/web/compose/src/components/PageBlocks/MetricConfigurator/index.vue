@@ -459,6 +459,7 @@ const recordFieldLayoutOptions = computed(() => [
 ])
 
 watch(() => edit.value?.dimensionField, (df) => {
+  if (!edit.value) return
   if (!isTemporalField(df)) {
     edit.value.bucketSize = undefined
     edit.value.dateFormat = undefined
@@ -471,6 +472,10 @@ if (!metrics.value.length) { addMetric() }
 edit.value = metrics.value[0]
 
 onBeforeUnmount(() => { setDefaultValues() })
+
+function setDefaultValues () {
+  edit.value = undefined
+}
 
 function addMetric () {
   const m = props.block.makeMetric()

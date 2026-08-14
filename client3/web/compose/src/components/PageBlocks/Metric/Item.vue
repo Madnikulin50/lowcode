@@ -129,7 +129,16 @@ const metricItem = ref(null)
 
 const getVB = computed(() => vvb.value.join(' '))
 
-const displayValue = computed(() => fmt.number(props.value.value))
+const displayValue = computed(() => {
+  const v = props.value?.value
+  if (v === undefined || v === null || v === '') return ''
+  // MetricBase may already have run numeral(format). Only Intl-format plain
+  // numbers / numeric strings. Grouped strings like "194,527,119" from
+  // numeral "0,0" are NaN for Intl and render as "не число" in ru-RU.
+  const n = typeof v === 'number' ? v : Number(v)
+  if (Number.isFinite(n)) return fmt.number(n)
+  return String(v)
+})
 
 const fieldWidth = computed(() => {
   if (props.options.recordFieldLayoutOption !== 'noWrap') return {}

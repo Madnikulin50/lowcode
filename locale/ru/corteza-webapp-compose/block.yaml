@@ -121,6 +121,11 @@ chart:
   searchPlaceholder: Тип here to search all charts in this namespace
   openInBuilder: Open in chart builder
   openChartList: Open chart list
+  dataTable:
+    title: Показать данные таблицей
+    empty: Нет данных для отображения
+    modal:
+      title: Данные графика
   filter:
     modal:
       title: Диаграмма Фильтр

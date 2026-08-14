@@ -53,6 +53,18 @@ type (
 	}
 )
 
+const chatSystemPrompt = "You are an assistant for a database app. You MUST call a tool to get or manage data.\n\n" +
+	"Call a tool with XML:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\n" +
+	"IMPORTANT: When the user asks to show/list/view specific items (e.g. stores, products, tasks), look through all available tools for one whose description mentions that item name and call it directly. Do NOT call list_modules for this — it lists entity types, not records.\n\n" +
+	"Rules:\n- show/list stores/products/tasks/etc → find module_{id}_records tool matching the name\n- show/list what entities exist → list_modules\n- show/list pages → list_pages\n- show/list charts → list_charts\n- create page/module/chart → create_* tool\n\n" +
+	"Ask before creating. For listing, call tool immediately.\n\n" +
+	"When a visualization helps (comparisons, trends, shares), append a fenced block:\n" +
+	"```chart\n" +
+	"{\"type\":\"bar\",\"title\":\"...\",\"labels\":[...],\"series\":[{\"name\":\"...\",\"data\":[...]}]}\n" +
+	"```\n" +
+	"Use only real numbers from tools or the user/context. Never invent data. Types: bar, line, pie, doughnut. Keep JSON valid (one or few lines, no comments). Still write a short textual answer around the chart.\n" +
+	"Если помогает график (сравнение, динамика, доли) — добавь такой блок. Только реальные данные из инструментов или сообщения пользователя, не выдумывай."
+
 func Chat() *chatService {
 	ttl := ttlcache.New[string, *chat.Client](
 		ttlcache.WithTTL[string, *chat.Client](30 * time.Minute),
@@ -173,7 +185,7 @@ func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message 
 	}
 	if !hasSystem {
 		msgs = append([]*schema.Message{
-			schema.SystemMessage("You are an assistant for a database app. You MUST call a tool to get or manage data.\n\nCall a tool with XML:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\nIMPORTANT: When the user asks to show/list/view specific items (e.g. stores, products, tasks), look through all available tools for one whose description mentions that item name and call it directly. Do NOT call list_modules for this — it lists entity types, not records.\n\nRules:\n- show/list stores/products/tasks/etc → find module_{id}_records tool matching the name\n- show/list what entities exist → list_modules\n- show/list pages → list_pages\n- show/list charts → list_charts\n- create page/module/chart → create_* tool\n\nAsk before creating. For listing, call tool immediately."),
+			schema.SystemMessage(chatSystemPrompt),
 		}, msgs...)
 	}
 	if len(msgs) != 0 {
@@ -451,9 +463,11 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 		}
 		result := execToolCalls(ctx, parsed, ask.Namespace, allTools)
 		if result != "" {
-			return map[string]any{
-				"response": result,
-			}, nil
+			cont, err := c.generateToolContinuation(ctx, client, msgs, content, result)
+			if err == nil && strings.TrimSpace(cont) != "" {
+				return map[string]any{"response": cont}, nil
+			}
+			return map[string]any{"response": result}, nil
 		}
 	}
 
@@ -490,38 +504,10 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 	if err != nil {
 		return err
 	}
-	defer streamReader.Close()
 
-	var fullContent string
-	var toolCalls []schema.ToolCall
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-		chunk, err := streamReader.Recv()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			stream("⚠ Error: "+err.Error(), "", false)
-			return err
-		}
-		if chunk.Content != "" {
-			fullContent += chunk.Content
-			if err := stream(chunk.Content, "", false); err != nil {
-				return err
-			}
-		}
-		if chunk.ReasoningContent != "" {
-			if err := stream("", chunk.ReasoningContent, false); err != nil {
-				return err
-			}
-		}
-		if chunk.ToolCalls != nil && len(chunk.ToolCalls) > 0 {
-			toolCalls = append(toolCalls, chunk.ToolCalls...)
-		}
+	fullContent, toolCalls, err := pumpChatStream(ctx, streamReader, stream)
+	if err != nil {
+		return err
 	}
 
 	// if no native tool calls, check for XML-based tool calls in full content
@@ -553,7 +539,9 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 		}
 		result := execToolCalls(ctx, parsed, ask.Namespace, allTools)
 		if result != "" {
-			stream(result, "", false)
+			if err := c.streamToolContinuation(ctx, client, msgs, fullContent, result, stream); err != nil {
+				return err
+			}
 		}
 		return stream("", "", true)
 	}
@@ -650,6 +638,104 @@ func execToolCalls(ctx context.Context, calls []CallParam, namespaceID uint64, t
 		return strings.Join(results, "\n")
 	}
 	return ""
+}
+
+func pumpChatStream(ctx context.Context, streamReader *schema.StreamReader[*schema.Message], stream chat.StreamFunc) (fullContent string, toolCalls []schema.ToolCall, err error) {
+	defer streamReader.Close()
+	for {
+		select {
+		case <-ctx.Done():
+			return fullContent, toolCalls, ctx.Err()
+		default:
+		}
+		chunk, recvErr := streamReader.Recv()
+		if recvErr != nil {
+			if recvErr == io.EOF {
+				return fullContent, toolCalls, nil
+			}
+			stream("⚠ Error: "+recvErr.Error(), "", false)
+			return fullContent, toolCalls, recvErr
+		}
+		if chunk.Content != "" {
+			fullContent += chunk.Content
+			emit := chunk.Content
+			if idx := strings.Index(fullContent, "<tool "); idx >= 0 {
+				already := len(fullContent) - len(chunk.Content)
+				if already >= idx {
+					emit = ""
+				} else {
+					emit = fullContent[already:idx]
+				}
+			}
+			if emit != "" {
+				if err := stream(emit, "", false); err != nil {
+					return fullContent, toolCalls, err
+				}
+			}
+		}
+		if chunk.ReasoningContent != "" {
+			if err := stream("", chunk.ReasoningContent, false); err != nil {
+				return fullContent, toolCalls, err
+			}
+		}
+		if len(chunk.ToolCalls) > 0 {
+			toolCalls = append(toolCalls, chunk.ToolCalls...)
+		}
+	}
+}
+
+func continuationMessages(msgs []*schema.Message, assistantContent, toolResult string) []*schema.Message {
+	out := make([]*schema.Message, 0, len(msgs)+2)
+	out = append(out, msgs...)
+	if strings.TrimSpace(assistantContent) != "" {
+		out = append(out, schema.AssistantMessage(assistantContent, nil))
+	}
+	payload := truncateRunes(toolResult, 16000)
+	out = append(out, schema.UserMessage(
+		"Tool results (use only this data; never invent numbers):\n\n"+payload+
+			"\n\nWrite a short answer in the user's language. If a comparison, trend, or share visualization helps, append a ```chart fenced JSON block (type bar|line|pie|doughnut) with real labels and series from these results. Valid JSON, no comments. Do not call tools."))
+	return out
+}
+
+func truncateRunes(s string, n int) string {
+	if n <= 0 || s == "" {
+		return s
+	}
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}
+	return string(r[:n]) + "\n…"
+}
+
+func (c *chatService) generateToolContinuation(ctx context.Context, client *chat.Client, msgs []*schema.Message, assistantContent, toolResult string) (string, error) {
+	out, err := client.Generate(ctx, continuationMessages(msgs, assistantContent, toolResult))
+	if err != nil || out == nil {
+		return "", err
+	}
+	content := out.Content
+	if content == "" && out.ReasoningContent != "" {
+		content = out.ReasoningContent
+	}
+	return content, nil
+}
+
+func (c *chatService) streamToolContinuation(ctx context.Context, client *chat.Client, msgs []*schema.Message, assistantContent, toolResult string, stream chat.StreamFunc) error {
+	streamReader, err := client.Stream(ctx, continuationMessages(msgs, assistantContent, toolResult))
+	if err != nil {
+		if toolResult != "" {
+			stream(toolResult, "", false)
+		}
+		return nil
+	}
+	cont, _, err := pumpChatStream(ctx, streamReader, stream)
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(cont) == "" && toolResult != "" {
+		stream(toolResult, "", false)
+	}
+	return nil
 }
 
 func (c *chatService) chatEnvToContext(ask *ChatPromptArguments, ctx context.Context) context.Context {

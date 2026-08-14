@@ -172,5 +172,7 @@ aiChat:
     placeholder: Enter prompt...
   model:
     label: Model
+  chart:
+    error: Could not render this chart
 
 

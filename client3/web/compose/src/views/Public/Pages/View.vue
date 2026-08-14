@@ -24,6 +24,7 @@
           :autocomplete="'off'"
           submittable
           @search="handleAiSearch"
+          @ai-search="handleAiSearch"
         />
         <div
           v-if="page && page.canUpdatePage"
@@ -434,7 +435,7 @@ function setDefaultValues() {
 }
 
 function handleAiSearch(query) {
-  const { moduleID, namespaceID, pageID } = props.page
+  const { moduleID, namespaceID, pageID } = props.page || {}
   window.dispatchEvent(new CustomEvent('show-chat-modal', { detail: {
     namespace: namespaceID,
     module: moduleID,

@@ -29,7 +29,7 @@ export default class RadarChart extends BaseChart {
 
   makeOptions (data: any) {
     const { reports = [], colorScheme, noAnimation = false, toolbox } = this.config
-    const { saveAsImage } = toolbox || {}
+    const { saveAsImage, showDataTable } = toolbox || {}
     const { labels, datasets = [], dimension = {}, themeVariables = {} } = data
 
     const {
@@ -65,7 +65,7 @@ export default class RadarChart extends BaseChart {
             name: this.name,
           } : undefined,
         },
-        top: 23,
+        top: showDataTable ? 62 : 23,
         right: 2,
       },
       legend: {

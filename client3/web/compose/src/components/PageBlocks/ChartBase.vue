@@ -27,7 +27,8 @@
         class="btn btn-outline-light chart-filter-button position-absolute d-flex d-print-none border-0 px-1"
         :class="[
           hasLiveFilter ? 'text-primary' : 'text-secondary',
-          hasSaveChartEnabled && 'save-chart-enabled'
+          hasSaveChartEnabled && 'save-chart-enabled',
+          hasDataTableEnabled && 'table-enabled'
         ]"
         @click="showFilterModal"
       >
@@ -202,6 +203,12 @@ const hasSaveChartEnabled = computed(() => {
   const { config = {} } = chart.value || {}
   if (!config.toolbox) return false
   return config.toolbox.saveAsImage
+})
+
+const hasDataTableEnabled = computed(() => {
+  const { config = {} } = chart.value || {}
+  if (!config.toolbox) return false
+  return config.toolbox.showDataTable
 })
 
 const hasLiveFilter = computed(() => !!liveFilterValue.value)
@@ -401,6 +408,8 @@ function destroyEvents () {
   top: 2rem;
   z-index: 1;
   &.save-chart-enabled { right: 2.2rem; }
+  &.table-enabled { right: 3.9rem; }
+  &.save-chart-enabled.table-enabled { right: 3.9rem; }
 }
 
 .chart-brain-button {

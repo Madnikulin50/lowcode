@@ -77,7 +77,7 @@ export default class GaugeChart extends BaseChart {
 
   makeOptions (data: any) {
     const { reports = [], colorScheme, noAnimation = false, toolbox } = this.config
-    const { saveAsImage } = toolbox || {}
+    const { saveAsImage, showDataTable } = toolbox || {}
     const { datasets = [], themeVariables = {} } = data
     const {
       steps = [],
@@ -109,7 +109,7 @@ export default class GaugeChart extends BaseChart {
             name: this.name,
           } : undefined,
         },
-        top: 23,
+        top: showDataTable ? 62 : 23,
         right: 2,
       },
       grid: {

@@ -169,3 +169,5 @@ aiChat:
     placeholder: Введите запрос к ИИ...
   model:
     label: Модель
+  chart:
+    error: Не удалось отобразить график

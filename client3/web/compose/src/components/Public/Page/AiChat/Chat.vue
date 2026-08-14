@@ -18,7 +18,24 @@
           </div>
           <div class="message-body">
             <div v-show="!msg.collapsed" class="content expanded-content">
-              <div class="content-text" v-html="formatMessage(msg.content)" />
+              <div class="content-text">
+                <template v-for="(part, pi) in messageParts(msg.content)" :key="pi">
+                  <div v-if="part.kind === 'html'" class="chat-md" v-html="part.html" />
+                  <div
+                    v-else-if="part.kind === 'chart'"
+                    class="chat-chart"
+                  >
+                    <e-charts
+                      :option="part.option"
+                      autoresize
+                      class="position-absolute w-100 h-100 overflow-hidden"
+                    />
+                  </div>
+                  <div v-else-if="part.kind === 'chart-error'" class="chat-chart-error">
+                    {{ $t('aiChat.chart.error') }}
+                  </div>
+                </template>
+              </div>
               <button
                 v-if="hasManyLines(msg.content) && msg.active !== true"
                 class="collapse-btn"
@@ -81,6 +98,7 @@ import { useI18n } from 'vue-i18n'
 import markdownIt from 'markdown-it'
 import html2pdf from 'html2pdf.js'
 import { Document, Packer, Paragraph, TextRun, ExternalHyperlink, HeadingLevel, AlignmentType, NumberFormat, WidthType, BorderStyle, ShadingType, Table, TableRow, TableCell } from 'docx'
+import { splitChartParts, replaceChartFences } from './chatChart.js'
 
 const { t: $t } = useI18n({ useScope: 'global' })
 
@@ -128,7 +146,8 @@ function downloadFile(f) {
 
 function preview(text) {
   const hidden = stripXmlContent(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  const noCode = stripCodeBlocks(hidden)
+  const noCharts = replaceChartFences(hidden)
+  const noCode = stripCodeBlocks(noCharts)
   const plain = noCode.replace(/<[^>]*>/g, '')
   return plain.length > 120 ? plain.slice(0, 120) + '\u2026' : plain
 }
@@ -152,22 +171,43 @@ function stripXmlContent(text) {
   return normalized
 }
 
+function stripToolXml(text) {
+  return String(text || '').replace(/<tool\b[^>]*>[\s\S]*?<\/tool>/gi, '').replace(/\n{3,}/g, '\n\n')
+}
+
+// Skip ```chart / ```echarts fences so they can be rendered as figures.
 function stripCodeBlocks(text) {
-  return text.replace(/```[\s\S]*?(```|$)/g, '').replace(/\n{3,}/g, '\n\n')
+  return String(text || '')
+    .replace(/```(?!(?:chart|echarts)\b)[\s\S]*?(```|$)/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
+}
+
+function formatMarkdown(text) {
+  const src = String(text || '')
+  if (!src) return ''
+  if (/[`*#]/.test(src)) {
+    const md = markdownIt({ html: true, linkify: true, breaks: true })
+    return md.render(src)
+  }
+  return src.replace(/\n/g, '<br>')
 }
 
 function formatMessage(text) {
-  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  text = stripCodeBlocks(text)
-  const needMarkdown = (text) => {
-    const symbolRegex = /[`*#]/
-    return symbolRegex.test(text)
-  }
-  if (needMarkdown(text)) {
-    const md = markdownIt({ html: true, linkify: true, breaks: true })
-    return md.render(text)
-  }
-  return text.replace(/\n/g, '<br>')
+  text = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  return formatMarkdown(text)
+}
+
+function messageParts(text) {
+  const normalized = stripToolXml(String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n'))
+  return splitChartParts(normalized).map(part => {
+    if (part.kind === 'chart') {
+      return { kind: 'chart', option: part.option }
+    }
+    if (part.kind === 'chart-error') {
+      return { kind: 'chart-error' }
+    }
+    return { kind: 'html', html: formatMarkdown(part.text) }
+  })
 }
 
 function closeExport(e) {
@@ -203,7 +243,7 @@ function exportableMessages() {
 
 function formatMessageForExport(text) {
   let normalized = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  normalized = stripXmlContent(normalized)
+  normalized = replaceChartFences(stripXmlContent(normalized))
   const md = markdownIt({ html: false, linkify: true, breaks: true })
   return md.render(normalized)
 }
@@ -374,7 +414,7 @@ function exportMarkdown() {
     const role = m.role === 'user' ? '**User**' : '**Assistant**'
     lines.push(`${role}`)
     lines.push('')
-    lines.push(stripXmlContent(String(m.content)))
+    lines.push(replaceChartFences(stripXmlContent(String(m.content))))
     lines.push('')
     lines.push('---')
     lines.push('')
@@ -390,15 +430,13 @@ async function exportPdf() {
   style.textContent = exportPdfStyles
   wrap.prepend(style)
 
-  // Keep in viewport (offscreen left:-9999px yields empty html2canvas captures).
+  // Note: html2pdf clones the source into its own hidden overlay container and
+  // captures the clone. position:fixed / opacity / z-index on the source leak
+  // into the clone and make html2canvas produce an empty canvas → blank PDF.
+  // A plain static block in flow (width matching html2canvas windowWidth) works.
   wrap.style.cssText = [
-    'position:fixed',
-    'left:0',
-    'top:0',
     'width:794px',
-    'z-index:-1',
-    'opacity:0.01',
-    'pointer-events:none',
+    'box-sizing:border-box',
     'background:#fff',
   ].join(';')
 
@@ -532,7 +570,7 @@ function renderMessageToDocx(content) {
 }
 
 function markdownToHtml(content) {
-  content = String(content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  content = replaceChartFences(stripXmlContent(String(content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')))
   const md = markdownIt({ html: true, linkify: true, breaks: true })
   return md.render(content)
 }
@@ -938,7 +976,21 @@ onBeforeUnmount(() => {
 }
 
 .content-text {
-  display: inline;
+  display: block;
+}
+
+.chat-chart {
+  position: relative;
+  height: 280px;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.chat-chart-error {
+  font-size: 12px;
+  color: #8899aa;
+  font-style: italic;
+  margin: 6px 0;
 }
 
 .message.user .content .collapse-btn {

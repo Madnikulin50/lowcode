@@ -595,6 +595,61 @@
         </div>
 
         <div
+          v-if="metric.type === 'gantt'"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.gantt.startField') }}
+            </label>
+            <select
+              v-model="metric.startField"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="f in dateTimeFields"
+                :key="f.value"
+                :value="f.value"
+              >
+                {{ f.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'gantt'"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.gantt.endField') }}
+            </label>
+            <select
+              v-model="metric.endField"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="f in dateTimeFields"
+                :key="f.value"
+                :value="f.value"
+              >
+                {{ f.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'gantt'"
+          class="col-12"
+        >
+          <small class="text-muted">
+            {{ $t('edit.metric.gantt.hint') }}
+          </small>
+        </div>
+
+        <div
           v-if="metric.type === 'boxplot'"
           class="col-12"
         >
@@ -1028,6 +1083,17 @@ const module = computed(() => {
   return props.modules.find(m => m.moduleID === mid)
 })
 
+const dateTimeFields = computed(() => {
+  if (!module.value) return []
+  const fromModule = module.value.fields
+    .filter(f => f.kind === 'DateTime')
+    .map(f => ({ value: f.name, text: f.label || f.name }))
+  const system = (module.value.systemFields?.() || [])
+    .filter(f => f.kind === 'DateTime' || ['createdAt', 'updatedAt'].includes(f.name))
+    .map(f => ({ value: f.name, text: f.label || f.name }))
+  return [...fromModule, ...system]
+})
+
 const stackByFields = computed(() => {
   if (!module.value) return []
   return module.value.fields
@@ -1052,6 +1118,10 @@ watch(() => props.report, (r) => {
     r.metrics?.forEach((m) => {
       if (m.type === 'line' && m.showSymbol === undefined) {
         m.showSymbol = true
+      }
+      if (m.type === 'gantt') {
+        if (!m.startField) m.startField = 'start_date_planned'
+        if (!m.endField) m.endField = 'end_date_planned'
       }
       if (isStackableType(m.type) && m.stacked === true && !m.stack) {
         m.stack = 'total'
@@ -1113,6 +1183,16 @@ function chartTypeChanged (metric) {
   }
   if (!isStackableType(metric.type)) {
     metric.stackBy = undefined
+  }
+  if (metric.type === 'gantt') {
+    if (!metric.field) metric.field = 'count'
+    const fields = dateTimeFields.value.map(f => f.value)
+    if (!metric.startField) {
+      metric.startField = fields.find(n => n === 'start_date_planned') || fields[0]
+    }
+    if (!metric.endField) {
+      metric.endField = fields.find(n => n === 'end_date_planned') || fields.find(n => n !== metric.startField) || fields[0]
+    }
   }
 }
 </script>
