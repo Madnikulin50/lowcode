@@ -128,7 +128,7 @@
         class="dropdown nav-user-icon"
       >
         <button
-          class="btn dropdown-toggle d-flex align-items-center no-caret"
+          class="btn dropdown-toggle d-flex align-items-center no-caret nav-icon"
           :class="avatarExists ? 'btn-link p-0 rounded-circle border' : 'btn-outline-light'"
           data-bs-toggle="dropdown"
           data-test-id="dropdown-profile"
@@ -136,7 +136,7 @@
         >
           <div
             v-if="avatarExists"
-            class="avatar d-flex h-100"
+            class="avatar d-flex h-100 w-100"
             :style="{
               'background-image': `url(${profileAvatarUrl})`,
             }"

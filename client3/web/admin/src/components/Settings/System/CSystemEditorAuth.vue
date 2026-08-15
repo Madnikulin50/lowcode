@@ -196,7 +196,7 @@
           <div class="row">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
-                <label class="form-label text-primary">{{ t('mfa.emailOTP.enabled-label') }}</label>
+                <label class="form-label text-primary">{{ t('mfa.emailOTP.enabled') }}</label>
                 <c-input-checkbox
                   v-model="authSettings['auth.multi-factor.email-otp.enabled']"
                   data-test-id="checkbox-enable-emailOTP"
@@ -251,7 +251,7 @@
           <div class="row">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
-                <label class="form-label text-primary">{{ t('mfa.TOTP.enabled-label') }}</label>
+                <label class="form-label text-primary">{{ t('mfa.TOTP.enabled') }}</label>
                 <c-input-checkbox
                   v-model="authSettings['auth.multi-factor.totp.enabled']"
                   data-test-id="checkbox-enable-TOTP"

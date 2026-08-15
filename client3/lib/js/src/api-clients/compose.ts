@@ -4545,12 +4545,14 @@ export default class Compose {
 
             for (const line of lines) {
                 if (!line.startsWith('data: ')) continue
-                const data = JSON.parse(line.slice(6))
-                if (data.done) return
-                onToken( {
-                    token: data.token,
-                    reason: data.reason,
-                })
+                    const data = JSON.parse(line.slice(6))
+                    if (data.token || data.reason) {
+                        onToken( {
+                            token: data.token,
+                            reason: data.reason,
+                        })
+                    }
+                    if (data.done) return
             }
         }
     }

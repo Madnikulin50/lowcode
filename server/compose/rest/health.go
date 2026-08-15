@@ -123,6 +123,7 @@ func (h *HealthService) Info(w http.ResponseWriter, r *http.Request) {
 			"GET  /rulechain/{id}/export",
 			"POST /pageblock/trigger",
 			"POST /pageblock/trigger/batch",
+			"POST /namespace/{namespaceID}/stock-reorder/run",
 			"POST /ai/script/run",
 			"POST /mcp/call",
 		},

@@ -12,6 +12,8 @@ func registerDemoChains(engine *rulesgo.EngineWithPersistence) {
 		demoLeadScoring(),
 		demoDataCleanup(),
 		rulesgo.DemoStoreRiskChain(),
+		rulesgo.DemoStockHealthChain(),
+		rulesgo.DemoAutoReorderChain(),
 	}
 
 	for _, c := range chains {

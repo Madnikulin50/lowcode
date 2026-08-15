@@ -121,24 +121,24 @@
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <div class="btn-group" role="group">
-                <input
-                  v-for="opt in grantOptions"
-                  :key="opt.value"
-                  :id="'grant-' + opt.value"
-                  v-model="resource.validGrant"
-                  type="radio"
-                  class="btn-check"
-                  name="grant-options"
-                  :value="opt.value"
-                  autocomplete="off"
-                  @change="onGrantChange"
-                >
-                <label
-                  :for="'grant-' + opt.value"
-                  class="btn btn-outline-primary"
-                >
-                  {{ opt.text }}
-                </label>
+                <template v-for="opt in grantOptions" :key="opt.value">
+                  <input
+                    :id="'grant-' + opt.value"
+                    v-model="resource.validGrant"
+                    type="radio"
+                    class="btn-check"
+                    name="grant-options"
+                    :value="opt.value"
+                    autocomplete="off"
+                    @change="onGrantChange"
+                  >
+                  <label
+                    :for="'grant-' + opt.value"
+                    class="btn btn-outline-primary"
+                  >
+                    {{ opt.text }}
+                  </label>
+                </template>
               </div>
             </div>
           </div>

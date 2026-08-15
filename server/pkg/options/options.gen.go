@@ -1103,7 +1103,7 @@ func Discovery() (o *DiscoveryOpt) {
 func Attachment() (o *AttachmentOpt) {
 	o = &AttachmentOpt{
 		AvatarMaxFileSize:             1000000,
-		AvatarInitialsFontPath:        "fonts/Poppins-Regular.ttf",
+		AvatarInitialsFontPath:        "fonts/Montserrat-Regular.ttf",
 		AvatarInitialsBackgroundColor: "#F3F3F3",
 		AvatarInitialsColor:           "#0B344E",
 	}

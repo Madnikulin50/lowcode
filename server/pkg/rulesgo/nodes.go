@@ -232,13 +232,19 @@ func (n *conditionExecutor) Execute(ctx context.Context, node ChainNode, ec *Exe
 	compareVal := resolveTemplateValue(cfg.Value, ec)
 
 	passed := evaluateCondition(fieldVal, compareVal, cfg.Operator)
-	passStr := "false"
+	// Empty string when false so conditional edges (GetString != "") skip the branch,
+	// matching risk.band's is_critical flag semantics.
+	passStr := ""
 	if passed {
 		passStr = "true"
 	}
 	ec.Set(node.ID+"_result", passStr)
 
-	return map[string]interface{}{"field": field, "operator": cfg.Operator, "value": compareVal, "result": passed, "passed": passStr}, nil
+	passedOut := "false"
+	if passed {
+		passedOut = "true"
+	}
+	return map[string]interface{}{"field": field, "operator": cfg.Operator, "value": compareVal, "result": passed, "passed": passedOut}, nil
 }
 
 // --- AI Node ---

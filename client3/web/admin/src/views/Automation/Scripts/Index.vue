@@ -70,7 +70,7 @@ import { useListHelpers } from '../../../mixins/listHelpers'
 import moment from 'moment'
 const { t } = useI18n()
 const lh = useListHelpers()
-const { procListResults, encodeListParams } = lh
+const { procListResults, encodeListParams, pagination } = lh
 const id = 'automation'
 const items = ref([])
 const filter = reactive({ query: '', incScriptsWithErrors: false, incScriptsWithTriggers: false, incScriptsWithIterator: false, incScriptsWithSecurity: false, absoluteTime: false })
@@ -83,7 +83,7 @@ const totalScriptsWithSecurity = computed(() => items.value.filter(({ security }
 const totalScriptsWithTriggers = computed(() => items.value.filter(({ triggers }) => (triggers)).length)
 const totalScriptsWithIterator = computed(() => items.value.filter(({ iterator }) => (iterator)).length)
 function toggleSort(key) { if (sortKey.value === key) sortDesc.value = !sortDesc.value; else { sortKey.value = key; sortDesc.value = false } }
-onMounted(() => { procListResults(window.__SystemAPI.automationListCancellable(encodeListParams())).then(set => { items.value = set || [] }) })
+onMounted(() => { procListResults(window.__SystemAPI.automationListCancellable(encodeListParams(filter, { sortBy: sortKey.value, sortDesc: sortDesc.value }, pagination, { value: undefined })), true, pagination, { sortBy: sortKey.value, sortDesc: sortDesc.value }, filter, { value: undefined }).then(set => { items.value = set || [] }) })
 </script>
 <style>
 .pointer, .cursor-pointer { cursor: pointer }

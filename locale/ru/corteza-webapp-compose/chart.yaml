@@ -209,7 +209,7 @@ edit:
       center: Центр
       bottom: Конец
     horizontal:
-      label: Горизонтальное
+      label: Горизонтальная ось
     logarithmicScale: Логарифмическая шкала
     maxLabel: Максимум
     maxPlaceholder: Максимальное значение

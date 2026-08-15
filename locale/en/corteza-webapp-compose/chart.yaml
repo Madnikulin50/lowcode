@@ -208,7 +208,7 @@ edit:
       center: Center
       bottom: End
     horizontal:
-      label: Horizontal
+      label: Horizontal axis
     logarithmicScale: Logarithmic scale
     maxLabel: Max value
     maxPlaceholder: Maximum value

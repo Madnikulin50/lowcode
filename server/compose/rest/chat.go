@@ -45,6 +45,7 @@ func (ctrl *Chat) Ask(ctx context.Context, r *request.ChatAsk) (interface{}, err
 			Files:     toChatFiles(r.Files),
 			Namespace: r.NamespaceID,
 			Page:      r.PageID,
+			Module:    r.ModuleID,
 			Facts:     r.Facts,
 			Model:     r.Model,
 		})
@@ -59,6 +60,7 @@ func (ctrl *Chat) AskStream(ctx context.Context, r *request.ChatAsk, stream serv
 		Files:     toChatFiles(r.Files),
 		Namespace: r.NamespaceID,
 		Page:      r.PageID,
+		Module:    r.ModuleID,
 		Facts:     r.Facts,
 		Model:     r.Model,
 	}, stream)

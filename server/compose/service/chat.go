@@ -53,17 +53,24 @@ type (
 	}
 )
 
-const chatSystemPrompt = "You are an assistant for a database app. You MUST call a tool to get or manage data.\n\n" +
-	"Call a tool with XML:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\n" +
-	"IMPORTANT: When the user asks to show/list/view specific items (e.g. stores, products, tasks), look through all available tools for one whose description mentions that item name and call it directly. Do NOT call list_modules for this — it lists entity types, not records.\n\n" +
-	"Rules:\n- show/list stores/products/tasks/etc → find module_{id}_records tool matching the name\n- show/list what entities exist → list_modules\n- show/list pages → list_pages\n- show/list charts → list_charts\n- create page/module/chart → create_* tool\n\n" +
-	"Ask before creating. For listing, call tool immediately.\n\n" +
-	"When a visualization helps (comparisons, trends, shares), append a fenced block:\n" +
+const chatSystemPrompt = "Ты ассистент приложения с базой данных. Для данных всегда вызывай инструмент.\n\n" +
+	"Вызов инструмента XML:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\n" +
+	"Графики и динамика:\n" +
+	"- Если пользователь называет график с ТЕКУЩЕЙ страницы по заголовку блока (список Charts on this page) — вызови show_page_chart. НЕ вызывай sales_dynamics и НЕ visualize_report для этих заголовков.\n" +
+	"- «покажи динамику продаж», выручка по месяцам, sales trend → sales_dynamics (линейный график), если это не заголовок блока на странице. НЕ вызывай create_chart и НЕ читай сырые чеки.\n" +
+	"- новый график / диаграмма / динамика / сравни / chart / trend по данным модуля → visualize_report (агрегация, не больше 24 категорий).\n" +
+	"- Никогда не вызывай module_*_records для больших таблиц вроде receipt_positions.\n" +
+	"show_page_chart вернёт блок ```compose-chart — включи его в ответ как есть (UI покажет график страницы).\n" +
+	"sales_dynamics / visualize_report вернут блок ```chart — включи его как есть.\n" +
 	"```chart\n" +
-	"{\"type\":\"bar\",\"title\":\"...\",\"labels\":[...],\"series\":[{\"name\":\"...\",\"data\":[...]}]}\n" +
+	"{\"type\":\"line\",\"title\":\"...\",\"labels\":[...],\"series\":[{\"name\":\"...\",\"data\":[...]}]}\n" +
 	"```\n" +
-	"Use only real numbers from tools or the user/context. Never invent data. Types: bar, line, pie, doughnut. Keep JSON valid (one or few lines, no comments). Still write a short textual answer around the chart.\n" +
-	"Если помогает график (сравнение, динамика, доли) — добавь такой блок. Только реальные данные из инструментов или сообщения пользователя, не выдумывай."
+	"Типы: bar, line, pie, doughnut. Для динамики во времени — line. Только реальные числа из инструментов, не выдумывай.\n\n" +
+	"Другие правила:\n" +
+	"- показать магазины/товары/задачи → module_{handle}_records по имени сущности; не list_modules (это типы, не записи)\n" +
+	"- какие сущности есть → list_modules; страницы → list_pages; сохранённые чарты → list_charts\n" +
+	"- создать страницу/модуль/чарт → create_* (спроси подтверждение)\n" +
+	"Для списков вызывай инструмент сразу."
 
 func Chat() *chatService {
 	ttl := ttlcache.New[string, *chat.Client](
@@ -80,6 +87,7 @@ func Chat() *chatService {
 		{Name: "list_charts", Description: "List all charts in the current namespace", Handler: listCharts},
 		{Name: "list_pages", Description: "List all pages in the current namespace", Handler: listPages},
 	}
+	tools = append(tools, chatVisualizeTools()...)
 
 	return &chatService{
 		clients: ttl,
@@ -156,7 +164,7 @@ func (c *chatService) modelFromPrompt(prompt string) string {
 	return chat.DefaultModelName()
 }
 
-func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message {
+func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArguments) []*schema.Message {
 	if len(ask.Messages) > 10 {
 		ask.Messages = ask.Messages[len(ask.Messages)-10:]
 	}
@@ -184,8 +192,16 @@ func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message 
 		}
 	}
 	if !hasSystem {
+		sys := chatSystemPrompt
+		if extra := pageChartsSystemHint(ctx, ask); extra != "" {
+			sys += "\n\n" + extra
+		}
 		msgs = append([]*schema.Message{
-			schema.SystemMessage(chatSystemPrompt),
+			schema.SystemMessage(sys),
+		}, msgs...)
+	} else if extra := pageChartsSystemHint(ctx, ask); extra != "" {
+		msgs = append([]*schema.Message{
+			schema.SystemMessage(extra),
 		}, msgs...)
 	}
 	if len(msgs) != 0 {
@@ -199,7 +215,9 @@ func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message 
 		}
 
 		if ask.Namespace > 0 && DefaultRAG != nil {
-			ctx := context.Background()
+			if ctx == nil {
+				ctx = context.Background()
+			}
 			lastMsg := msgs[len(msgs)-1].Content
 			var allCtx string
 
@@ -358,6 +376,24 @@ func promptKeywords(prompt string) []string {
 			break
 		}
 	}
+	return expandChatKeywords(out, seen)
+}
+
+func expandChatKeywords(out []string, seen map[string]bool) []string {
+	add := func(w string) {
+		if w == "" || seen[w] {
+			return
+		}
+		seen[w] = true
+		out = append(out, w)
+	}
+	joined := strings.Join(out, " ")
+	if strings.Contains(joined, "продаж") || strings.Contains(joined, "выруч") || strings.Contains(joined, "sales") || strings.Contains(joined, "revenue") {
+		add("sales")
+		add("receipt")
+		add("margin")
+		add("revenue")
+	}
 	return out
 }
 
@@ -404,6 +440,23 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 
 	ctx = c.chatEnvToContext(ask, ctx)
 	allTools := c.getTools(ctx, ask.Namespace, ask.Prompt)
+	msgs := c.buildMessages(ctx, ask)
+
+	if result := showPageChartFastPath(ctx, ask); result != "" {
+		cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
+		if err == nil && strings.TrimSpace(cont) != "" {
+			return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
+		}
+		return map[string]any{"response": result}, nil
+	}
+
+	if result := salesDynamicsFastPath(ctx, ask); result != "" {
+		cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
+		if err == nil && strings.TrimSpace(cont) != "" {
+			return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
+		}
+		return map[string]any{"response": result}, nil
+	}
 
 	if result := directListTool(c.tools, ctx, ask); result != "" {
 		return map[string]any{"response": result}, nil
@@ -414,7 +467,6 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 		return nil, fmt.Errorf("failed to build tool infos: %w", err)
 	}
 
-	msgs := c.buildMessages(ask)
 	var opts []model.Option
 	if client.IsToolsSupported() {
 		opts = append(opts, model.WithTools(toolInfos))
@@ -465,7 +517,7 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 		if result != "" {
 			cont, err := c.generateToolContinuation(ctx, client, msgs, content, result)
 			if err == nil && strings.TrimSpace(cont) != "" {
-				return map[string]any{"response": cont}, nil
+				return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
 			}
 			return map[string]any{"response": result}, nil
 		}
@@ -480,22 +532,36 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 	ctx = c.chatEnvToContext(ask, ctx)
 	allTools := c.getTools(ctx, ask.Namespace, ask.Prompt)
 
-	if result := directListTool(c.tools, ctx, ask); result != "" {
-		stream(result, "", false)
-		return stream("", "", true)
-	}
-
 	client, err := c.getClient(ask)
 	if err != nil {
 		return err
+	}
+
+	msgs := c.buildMessages(ctx, ask)
+
+	if result := showPageChartFastPath(ctx, ask); result != "" {
+		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
+			return err
+		}
+		return stream("", "", true)
+	}
+
+	if result := salesDynamicsFastPath(ctx, ask); result != "" {
+		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
+			return err
+		}
+		return stream("", "", true)
+	}
+
+	if result := directListTool(c.tools, ctx, ask); result != "" {
+		stream(result, "", false)
+		return stream("", "", true)
 	}
 
 	toolInfos, err := chat.ToToolInfos(allTools)
 	if err != nil {
 		return fmt.Errorf("failed to build tool infos: %w", err)
 	}
-
-	msgs := c.buildMessages(ask)
 	opts := model.Option{}
 	if client.IsToolsSupported() {
 		opts = model.WithTools(toolInfos)
@@ -687,14 +753,58 @@ func pumpChatStream(ctx context.Context, streamReader *schema.StreamReader[*sche
 func continuationMessages(msgs []*schema.Message, assistantContent, toolResult string) []*schema.Message {
 	out := make([]*schema.Message, 0, len(msgs)+2)
 	out = append(out, msgs...)
-	if strings.TrimSpace(assistantContent) != "" {
-		out = append(out, schema.AssistantMessage(assistantContent, nil))
+	if stripped := stripToolXML(assistantContent); stripped != "" {
+		out = append(out, schema.AssistantMessage(stripped, nil))
 	}
+	fence := extractChartFence(toolResult)
 	payload := truncateRunes(toolResult, 16000)
-	out = append(out, schema.UserMessage(
-		"Tool results (use only this data; never invent numbers):\n\n"+payload+
-			"\n\nWrite a short answer in the user's language. If a comparison, trend, or share visualization helps, append a ```chart fenced JSON block (type bar|line|pie|doughnut) with real labels and series from these results. Valid JSON, no comments. Do not call tools."))
+	var instruction string
+	if fence != "" {
+		if strings.Contains(strings.ToLower(fence), "compose-chart") {
+			instruction = "A page chart was already shown to the user. Write a short comment in the user's language. Do NOT repeat the ```compose-chart fence or dump JSON. Do not call tools. Do not invent numbers."
+		} else {
+			instruction = "A ```chart block from the tool was already shown to the user. Write a short comment in the user's language. Do NOT repeat the ```chart fence or dump JSON. Do not call tools. Do not invent numbers."
+		}
+	} else {
+		instruction = "Tool results (use only this data; never invent numbers):\n\n" + payload +
+			"\n\nWrite a short answer in the user's language. If a comparison, trend, or share visualization helps, append a ```chart fenced JSON block (type bar|line|pie|doughnut) with real labels and series from these results. Valid JSON, no comments. Do not call tools."
+	}
+	out = append(out, schema.UserMessage(instruction))
 	return out
+}
+
+func stripToolXML(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" || chat.HasToolCallsStr(s) {
+		return ""
+	}
+	return s
+}
+
+func salesDynamicsFastPath(ctx context.Context, ask *ChatPromptArguments) string {
+	if ask == nil || !wantsSalesDynamics(ask.Prompt) {
+		return ""
+	}
+	result := salesDynamics(ctx, nil)
+	if extractChartFence(result) == "" {
+		return ""
+	}
+	return result
+}
+
+func mergeChartAndComment(toolResult, comment string) string {
+	fence := extractChartFence(toolResult)
+	comment = strings.TrimSpace(comment)
+	if fence == "" {
+		if comment != "" {
+			return comment
+		}
+		return toolResult
+	}
+	if comment == "" || extractChartFence(comment) != "" {
+		return fence
+	}
+	return fence + "\n\n" + comment
 }
 
 func truncateRunes(s string, n int) string {
@@ -721,18 +831,30 @@ func (c *chatService) generateToolContinuation(ctx context.Context, client *chat
 }
 
 func (c *chatService) streamToolContinuation(ctx context.Context, client *chat.Client, msgs []*schema.Message, assistantContent, toolResult string, stream chat.StreamFunc) error {
+	fence := extractChartFence(toolResult)
+	shownFence := false
+	if fence != "" {
+		// Stream the fence first so the UI can mount a chart even if the
+		// continuation model is told not to repeat it (commentary-only).
+		if err := stream("\n"+fence+"\n", "", false); err != nil {
+			return err
+		}
+		shownFence = true
+	}
+
 	streamReader, err := client.Stream(ctx, continuationMessages(msgs, assistantContent, toolResult))
 	if err != nil {
-		if toolResult != "" {
+		if !shownFence && toolResult != "" {
 			stream(toolResult, "", false)
 		}
 		return nil
 	}
+
 	cont, _, err := pumpChatStream(ctx, streamReader, stream)
 	if err != nil {
 		return err
 	}
-	if strings.TrimSpace(cont) == "" && toolResult != "" {
+	if strings.TrimSpace(cont) == "" && !shownFence && toolResult != "" {
 		stream(toolResult, "", false)
 	}
 	return nil
@@ -743,7 +865,10 @@ func (c *chatService) chatEnvToContext(ask *ChatPromptArguments, ctx context.Con
 		ctx = context.WithValue(ctx, "namespaceID", ask.Namespace)
 	}
 	if ask.Page > 0 {
-		ctx = context.WithValue(ctx, "pageID", ask.Namespace)
+		ctx = context.WithValue(ctx, "pageID", ask.Page)
+	}
+	if ask.Module > 0 {
+		ctx = context.WithValue(ctx, "moduleID", ask.Module)
 	}
 	return ctx
 }
@@ -1190,6 +1315,7 @@ func moduleSearch(ctx context.Context, namespaceID, moduleID uint64, query strin
 		NamespaceID: namespaceID,
 		Query:       strings.Join(conditions, " OR "),
 	}
+	filter.Limit = 50
 
 	set, _, err := DefaultRecord.Find(ctx, filter)
 	if err != nil {
@@ -1224,6 +1350,7 @@ func moduleRecords(ctx context.Context, namespaceID, moduleID uint64) string {
 		ModuleID:    moduleID,
 		NamespaceID: namespaceID,
 	}
+	filter.Limit = 50
 	set, _, err := DefaultRecord.Find(ctx, filter)
 	if err != nil {
 		return fmt.Sprintf("Failed to list records: %v", err)

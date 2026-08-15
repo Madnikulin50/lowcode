@@ -266,7 +266,8 @@ async function updateChart () {
   setTimeout(() => {
     processing.value = false
     emit('updated')
-    onChartData(buildTableColumns(report, fields, data.rows || []), data.rows || [])
+    const rows = data?.rows || []
+    onChartData(buildTableColumns(report, fields, rows), rows)
   }, 300)
 }
 
@@ -391,8 +392,10 @@ function getThemeVariables () {
 }
 
 function getModuleByID (id) {
-  const mod = store.module.getByID(id)
-  return mod
+  if (id == null || id === '') return undefined
+  return store.module.getByID(id) ||
+    store.module.getByID(String(id)) ||
+    (store.module.set || []).find(m => String(m.moduleID) === String(id))
 }
 
 function getUserByID (id) {

@@ -62,6 +62,11 @@ import {
   faPalette,
   faEnvelopeOpen as faEnvelopeOpenSolid,
   faLink,
+  faPlay,
+  faTrash,
+  faFileImport,
+  faFileExport,
+  faExclamationCircle,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -149,4 +154,9 @@ library.add(
   faMapMarkerAlt,
   faPalette,
   faLink,
+  faPlay,
+  faTrash,
+  faFileImport,
+  faFileExport,
+  faExclamationCircle,
 )

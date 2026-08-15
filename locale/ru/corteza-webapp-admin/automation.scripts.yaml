@@ -4,10 +4,10 @@ list:
     updatedAt: Обновлено
   filter:
     absoluteTime: Показывать absolute time
-    incScriptsWithErrors: Errors ({{ count }})
-    incScriptsWithIterator: Iterator ({{ count }})
-    incScriptsWithSecurity: Security ({{ count }})
-    incScriptsWithTriggers: Triggers ({{ count }})
+    incScriptsWithErrors: Errors ({ count })
+    incScriptsWithIterator: Iterator ({ count })
+    incScriptsWithSecurity: Security ({ count })
+    incScriptsWithTriggers: Triggers ({ count })
     searchQuery: Фильтр поиска
   flags:
     iterator: Iterator

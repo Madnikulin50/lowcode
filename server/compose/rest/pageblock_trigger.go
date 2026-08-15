@@ -8,8 +8,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/madnikulin50/lowcode/server/compose/mcp/handlers"
+	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
 )
+
+const stockReorderBatchChainID = "stock_reorder_batch"
 
 type PageBlockTrigger struct{}
 
@@ -41,6 +44,26 @@ func (t PageBlockTrigger) Run(w http.ResponseWriter, r *http.Request) {
 
 	if req.ChainID == "" {
 		api.Send(w, r, fmt.Errorf("chainID is required"))
+		return
+	}
+
+	if req.ChainID == stockReorderBatchChainID {
+		summary, err := service.RunStockReorder(r.Context(), req.NamespaceID)
+		if err != nil {
+			api.Send(w, r, map[string]interface{}{
+				"success": false,
+				"chainID": req.ChainID,
+				"blockID": req.BlockID,
+				"error":   err.Error(),
+			})
+			return
+		}
+		api.Send(w, r, map[string]interface{}{
+			"success": true,
+			"chainID": req.ChainID,
+			"blockID": req.BlockID,
+			"output":  summary,
+		})
 		return
 	}
 
@@ -116,12 +139,23 @@ func (t PageBlockTrigger) Batch(w http.ResponseWriter, r *http.Request) {
 
 	results := make([]map[string]interface{}, 0, len(triggers))
 	for _, req := range triggers {
-		context := buildContext(&req)
-		result, err := engine.Run(r.Context(), req.ChainID, context)
 		resultMap := map[string]interface{}{
 			"chainID": req.ChainID,
 			"blockID": req.BlockID,
 		}
+		if req.ChainID == stockReorderBatchChainID {
+			summary, err := service.RunStockReorder(r.Context(), req.NamespaceID)
+			if err != nil {
+				resultMap["error"] = err.Error()
+			} else {
+				resultMap["success"] = true
+				resultMap["output"] = summary
+			}
+			results = append(results, resultMap)
+			continue
+		}
+		context := buildContext(&req)
+		result, err := engine.Run(r.Context(), req.ChainID, context)
 		if err != nil {
 			resultMap["error"] = err.Error()
 		} else {

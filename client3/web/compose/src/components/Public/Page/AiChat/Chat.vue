@@ -31,6 +31,24 @@
                       class="position-absolute w-100 h-100 overflow-hidden"
                     />
                   </div>
+                  <div
+                    v-else-if="part.kind === 'compose-chart'"
+                    class="chat-chart"
+                  >
+                    <chart-component
+                      v-if="composeChartRecord(part.spec)"
+                      :key="part.spec.chartID"
+                      class="h-100 w-100"
+                      :chart="composeChartRecord(part.spec)"
+                      :reporter="composeChartReporter(part.spec)"
+                    />
+                    <div v-else-if="composeChartError(part.spec)" class="chat-chart-error">
+                      {{ composeChartError(part.spec) }}
+                    </div>
+                    <div v-else class="chat-chart-loading">
+                      <span class="spinner-border spinner-border-sm" />
+                    </div>
+                  </div>
                   <div v-else-if="part.kind === 'chart-error'" class="chat-chart-error">
                     {{ $t('aiChat.chart.error') }}
                   </div>
@@ -93,12 +111,15 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
-import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, watch, nextTick, onMounted, onBeforeUnmount, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import markdownIt from 'markdown-it'
 import html2pdf from 'html2pdf.js'
 import { Document, Packer, Paragraph, TextRun, ExternalHyperlink, HeadingLevel, AlignmentType, NumberFormat, WidthType, BorderStyle, ShadingType, Table, TableRow, TableCell } from 'docx'
+import ECharts from 'vue-echarts'
 import { splitChartParts, replaceChartFences } from './chatChart.js'
+import { useStore } from '../../../../store'
+import ChartComponent from '../../../Chart/index.vue'
 
 const { t: $t } = useI18n({ useScope: 'global' })
 
@@ -112,7 +133,8 @@ const props = defineProps({
   model: { type: String, required: false, default: '' },
 })
 
-const $ComposeAPI = window.__composeAPI
+const store = useStore()
+const $ComposeAPI = inject('$ComposeAPI', window.__composeAPI)
 
 const messages = ref([
   { role: 'assistant', content: $t('aiChat.greeting'), collapsed: true },
@@ -178,7 +200,7 @@ function stripToolXml(text) {
 // Skip ```chart / ```echarts fences so they can be rendered as figures.
 function stripCodeBlocks(text) {
   return String(text || '')
-    .replace(/```(?!(?:chart|echarts)\b)[\s\S]*?(```|$)/gi, '')
+    .replace(/```(?!(?:\s*(?:compose-chart|chart|echarts|json))\b)[\s\S]*?(```|$)/gi, '')
     .replace(/\n{3,}/g, '\n\n')
 }
 
@@ -197,11 +219,17 @@ function formatMessage(text) {
   return formatMarkdown(text)
 }
 
+function normalizeMessageText(text) {
+  return stripToolXml(String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n'))
+}
+
 function messageParts(text) {
-  const normalized = stripToolXml(String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n'))
-  return splitChartParts(normalized).map(part => {
+  return splitChartParts(normalizeMessageText(text)).map(part => {
     if (part.kind === 'chart') {
       return { kind: 'chart', option: part.option }
+    }
+    if (part.kind === 'compose-chart') {
+      return { kind: 'compose-chart', spec: part.spec }
     }
     if (part.kind === 'chart-error') {
       return { kind: 'chart-error' }
@@ -209,6 +237,103 @@ function messageParts(text) {
     return { kind: 'html', html: formatMarkdown(part.text) }
   })
 }
+
+const composeCharts = reactive({})
+const composeChartInflight = new Set()
+const composeChartReporters = new Map()
+
+function composeChartKey(spec) {
+  return String(spec?.chartID || '')
+}
+
+function composeChartRecord(spec) {
+  const st = composeCharts[composeChartKey(spec)]
+  return st && st.chart ? st.chart : null
+}
+
+function composeChartError(spec) {
+  const st = composeCharts[composeChartKey(spec)]
+  return st && st.error ? String(st.error) : ''
+}
+
+function namespaceIDOf(spec) {
+  if (spec?.namespaceID != null && String(spec.namespaceID).trim()) {
+    return String(spec.namespaceID).trim()
+  }
+  const ns = props.namespace
+  if (ns && typeof ns === 'object') return String(ns.namespaceID || ns.ID || '')
+  return String(ns || '')
+}
+
+function composeChartReporter(spec) {
+  const chartID = composeChartKey(spec)
+  const namespaceID = namespaceIDOf(spec)
+  const cacheKey = `${namespaceID}:${chartID}`
+  if (composeChartReporters.has(cacheKey)) return composeChartReporters.get(cacheKey)
+  const reporter = (r = {}) => {
+    const f = String(r.filter || '')
+    if (f.includes('${record') || f.includes('${ownerID}')) {
+      return Promise.resolve([])
+    }
+    return $ComposeAPI.recordReport({ namespaceID, ...r })
+  }
+  composeChartReporters.set(cacheKey, reporter)
+  return reporter
+}
+
+async function loadComposeChart(spec) {
+  const chartID = composeChartKey(spec)
+  if (!chartID) return
+  if (composeChartInflight.has(chartID) || composeCharts[chartID]?.chart || composeCharts[chartID]?.error) {
+    return
+  }
+  composeChartInflight.add(chartID)
+  composeCharts[chartID] = { loading: true, chart: null, error: null }
+  const namespaceID = namespaceIDOf(spec)
+  try {
+    if (!namespaceID) {
+      throw new Error('Missing namespaceID')
+    }
+    const chart = await store.chart.findByID({ namespaceID, chartID })
+    if (!chart) {
+      throw new Error(`Chart ${chartID} not found`)
+    }
+    const ns = store.namespace.getByID(namespaceID) || { namespaceID }
+    const reports = chart?.config?.reports || []
+    for (const report of reports) {
+      const moduleID = report?.moduleID != null ? String(report.moduleID) : ''
+      if (!moduleID) continue
+      const existing = store.module.getByID(moduleID) || store.module.getByID(report.moduleID)
+      if (!existing) {
+        await store.module.findByID({ namespace: ns, moduleID })
+      }
+    }
+    composeCharts[chartID] = { loading: false, chart, error: null }
+  } catch (e) {
+    composeCharts[chartID] = {
+      loading: false,
+      chart: null,
+      error: e?.message || $t('aiChat.chart.error') || 'Could not render this chart',
+    }
+  } finally {
+    composeChartInflight.delete(chartID)
+  }
+}
+
+watch(
+  () => messages.value.map(m => m.content).join('\n\x1e'),
+  () => {
+    for (const msg of messages.value) {
+      if (!msg?.content) continue
+      for (const part of splitChartParts(normalizeMessageText(msg.content))) {
+        if (part.kind === 'compose-chart' && part.spec) {
+          loadComposeChart(part.spec)
+        }
+      }
+    }
+  },
+  { flush: 'post', immediate: true },
+)
 
 function closeExport(e) {
   if (!e.target.closest('.export-dropdown')) {
@@ -981,7 +1106,8 @@ onBeforeUnmount(() => {
 
 .chat-chart {
   position: relative;
-  height: 280px;
+  height: 320px;
+  min-height: 280px;
   width: 100%;
   margin: 8px 0;
 }
@@ -991,6 +1117,14 @@ onBeforeUnmount(() => {
   color: #8899aa;
   font-style: italic;
   margin: 6px 0;
+}
+
+.chat-chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #8899aa;
 }
 
 .message.user .content .collapse-btn {

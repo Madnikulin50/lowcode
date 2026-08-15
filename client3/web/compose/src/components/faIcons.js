@@ -19,6 +19,7 @@ import {
   faCalendarAlt,
   faCamera,
   faCheck,
+  faCheckCircle,
   faCheckDouble,
   faChevronDown,
   faChevronLeft,
@@ -193,6 +194,7 @@ import {
   faTrashAlt,
   faEnvelopeOpen,
   faFaceSmile,
+  faUser as faUserRegular,
 } from '@fortawesome/free-regular-svg-icons'
 
 library.add(
@@ -229,6 +231,7 @@ library.add(
   faCloudDownloadAlt,
   faTimes,
   faCheck,
+  faCheckCircle,
   faCheckDouble,
   faBellRegular,
   faClockRegular,
@@ -281,6 +284,7 @@ library.add(
   faSave,
   faGripHorizontal,
   faUser,
+  faUserRegular,
   faCogs,
   faCog,
   faPen,
