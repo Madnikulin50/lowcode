@@ -61,6 +61,8 @@ export default class Chart extends BaseChart {
       tooltip: {
         fixed: m.fixTooltips,
         relative: m.relativeValue && !['bar', 'line'].includes(m.type as string),
+        // 'top' = above bar (or right for horizontal); 'inside' = inside the bar
+        valueLabelPosition: m.valueLabelPosition || 'top',
       },
       formatting: m.formatting,
     }
@@ -115,8 +117,6 @@ export default class Chart extends BaseChart {
       },
     }
 
-    const getVal = (v: any): any => Array.isArray(v) ? v[1] : v
-
     const { labels, datasets = [], themeVariables = {} } = data
     const report = reports[0] || {}
     const {
@@ -129,6 +129,23 @@ export default class Chart extends BaseChart {
 
     const hasAxis = datasets.some(({ type }: any) => ['bar', 'line', 'scatter'].includes(type))
     let horizontal = false
+
+    // vertical data is [category, value]; horizontal is [value, category]
+    const getVal = (v: any): any => {
+      if (!Array.isArray(v)) return v
+      return horizontal ? v[0] : v[1]
+    }
+
+    const gridNum = (v: any, fallback: number): number => {
+      const n = Number(v)
+      return Number.isFinite(n) ? n : fallback
+    }
+
+    const hasOutsideValueLabels = datasets.some(({ type, tooltip: tip }: any) => {
+      if (!['bar', 'line', 'scatter'].includes(type)) return false
+      const { fixed, valueLabelPosition = 'top' } = tip || {}
+      return !!fixed && valueLabelPosition !== 'inside'
+    })
 
     // ------------------------------------------------------------------
     // Advanced chart types (sankey, graph, heatmap, waterfall, boxplot,
@@ -172,19 +189,27 @@ export default class Chart extends BaseChart {
 
         horizontal = !!yAxis.horizontal
 
+        const axisMuted = themeVariables.secondary || themeVariables.light || '#6c757d'
+        const gridLine = themeVariables['extra-light'] || '#e9ecef'
+
         const xAxis = {
           nameLocation: 'center',
           type: dimension.timeLabels ? 'time' : 'category',
           axisLabel: {
             interval: 0,
-            overflow: 'break',
+            overflow: 'truncate',
             hideOverlap: true,
             rotate: dimension.rotateLabel,
+            color: axisMuted,
+            fontSize: 11,
           },
           axisTick: {
             show: false,
           },
           axisLine: {
+            show: false,
+          },
+          splitLine: {
             show: false,
           },
         }
@@ -198,9 +223,11 @@ export default class Chart extends BaseChart {
           max: Number(max) || undefined,
           axisLabel: {
             interval: 0,
-            overflow: 'break',
+            overflow: 'truncate',
             hideOverlap: true,
             rotate: yAxis.rotateLabel,
+            color: axisMuted,
+            fontSize: 11,
             formatter: (value: string | number): string => formatChartValue(value, yAxis.formatting),
           },
           axisLine: {
@@ -208,12 +235,16 @@ export default class Chart extends BaseChart {
             onZero: false,
           },
           splitLine: {
+            show: true,
             lineStyle: {
-              color: [themeVariables['extra-light']],
+              color: gridLine,
+              type: 'dashed',
+              width: 1,
             },
           },
           nameTextStyle: {
             align: labelPosition === 'center' ? 'center' : position,
+            color: axisMuted,
           },
         }
 
@@ -233,8 +264,20 @@ export default class Chart extends BaseChart {
       }
     }
 
+    const pieLike = datasets.some(({ type }: any) => ['pie', 'doughnut'].includes(type))
+    const legendShown = !l?.isHidden && (pieLike || datasets.length > 1)
+
+    // Last bar series in each stack gets the rounded "cap" end.
+    const stackCapIndex = new Map<string, number>()
+    datasets.forEach((d: any, i: number) => {
+      if (d?.type === 'bar') {
+        stackCapIndex.set(d.stack ? `s:${d.stack}` : `i:${i}`, i)
+      }
+    })
+
     options.series = datasets.map(({ formatting, type, label, data, stack, tooltip, fill, smooth, step, roseType, symbol, showSymbol }: any, index: number) => {
-      const { fixed, relative } = tooltip
+      const { fixed, relative, valueLabelPosition = 'top' } = tooltip || {}
+      const labelOutside = valueLabelPosition !== 'inside'
 
       // We should render the first metric in the dataset as the last
       const z = (datasets.length - 1) - index
@@ -322,17 +365,23 @@ export default class Chart extends BaseChart {
         options.tooltip.trigger = 'axis'
 
         const defaultOffset = {
-          top: 65,
+          // Single-series bars hide the legend — less top chrome needed.
+          top: legendShown ? 65 : 44,
           right: timeline.includes('x') ? 40 : 30,
           bottom: timeline.includes('x') ? 60 : 20,
           left: 30,
         }
 
+        // Outside value labels sit beyond the bar tip; pad grid so the plot
+        // does not look shifted/clipped inside the block.
+        const outsidePadTop = !horizontal && hasOutsideValueLabels ? 18 : 0
+        const outsidePadRight = horizontal && hasOutsideValueLabels ? 40 : 0
+
         options.grid = {
-          top: offset?.isDefault ? defaultOffset.top : offset?.top,
-          right: offset?.isDefault ? defaultOffset.right : offset?.right,
-          bottom: offset?.isDefault ? defaultOffset.bottom : offset?.bottom,
-          left: offset?.isDefault ? defaultOffset.left : offset?.left,
+          top: (offset?.isDefault ? defaultOffset.top : gridNum(offset?.top, defaultOffset.top)) + outsidePadTop,
+          right: (offset?.isDefault ? defaultOffset.right : gridNum(offset?.right, defaultOffset.right)) + outsidePadRight,
+          bottom: offset?.isDefault ? defaultOffset.bottom : gridNum(offset?.bottom, defaultOffset.bottom),
+          left: offset?.isDefault ? defaultOffset.left : gridNum(offset?.left, defaultOffset.left),
           containLabel: true,
         }
 
@@ -363,6 +412,24 @@ export default class Chart extends BaseChart {
           }
         }
 
+        const labelMuted = themeVariables.secondary || themeVariables.light || '#64748b'
+        const isBar = type === 'bar'
+        const barRadius = 5
+        const isStackCap = isBar && stackCapIndex.get(stack ? `s:${stack}` : `i:${index}`) === index
+        // ECharts borderRadius: [top-left, top-right, bottom-right, bottom-left]
+        const barBorderRadius = !isStackCap
+          ? 0
+          : (horizontal ? [0, barRadius, barRadius, 0] : [barRadius, barRadius, 0, 0])
+
+        const barItemStyle: any = {
+          ...(gradient && isBar ? gradientItemStyle(schemeColors[index % schemeColors.length], type) : {}),
+          borderRadius: barBorderRadius,
+          ...(stack && isBar ? {
+            borderColor: themeVariables.white || '#fff',
+            borderWidth: 1,
+          } : {}),
+        }
+
         return {
           z,
           stack,
@@ -376,8 +443,17 @@ export default class Chart extends BaseChart {
               color: linearGradientColor(schemeColors[index % schemeColors.length]),
             } : {}),
           },
-          ...(gradient && type === 'bar' ? {
-            itemStyle: gradientItemStyle(schemeColors[index % schemeColors.length], type),
+          ...(isBar ? {
+            barMaxWidth: 48,
+            barCategoryGap: '35%',
+            barGap: '25%',
+            itemStyle: barItemStyle,
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 0,
+                opacity: 0.88,
+              },
+            },
           } : {}),
           symbol,
           symbolSize: type === 'scatter' ? 16 : 10,
@@ -406,11 +482,26 @@ export default class Chart extends BaseChart {
               return `${params.seriesName}<br>${params.marker}${params.name}<span style="float: right; margin-left: 20px">${formattedValue}${relative ? ' (' + params.percent + '%)' : ''}</span>`
             },
           },
+          // Keep ECharts defaults for outside positions (right → align left,
+          // top → verticalAlign bottom). Forcing align:'center' on horizontal
+          // bars centers the label on the tip and looks like a sideways shift.
           label: {
             show: fixed,
-            position: 'inside',
-            align: 'center',
-            verticalAlign: 'middle',
+            color: labelOutside ? labelMuted : (themeVariables.white || '#fff'),
+            fontSize: 11,
+            fontWeight: 500,
+            ...(fixed
+              ? (labelOutside
+                ? {
+                    position: horizontal ? 'right' : 'top',
+                    distance: 4,
+                  }
+                : {
+                    position: 'inside',
+                    align: 'center',
+                    verticalAlign: 'middle',
+                  })
+              : {}),
             tooltip: {
               trigger: 'axis',
             },
@@ -421,6 +512,8 @@ export default class Chart extends BaseChart {
               return `${formatChartValue(value, formatting)}${relative ? ` (${percent}%)` : ''}`
             },
           },
+          // Allow outside labels to render past the bar/grid edge
+          clip: !(fixed && labelOutside),
           data,
         }
       }
@@ -458,7 +551,7 @@ export default class Chart extends BaseChart {
       },
       dataZoom,
       legend: {
-        show: !l?.isHidden,
+        show: legendShown,
         type: l?.isScrollable ? 'scroll' : 'plain',
         top: (l?.position?.isDefault ? undefined : l?.position?.top) || undefined,
         right: (l?.position?.isDefault ? undefined : l?.position?.right) || undefined,
@@ -792,62 +885,111 @@ export default class Chart extends BaseChart {
         // stack onto each other.
         const raw = metric.data.map(num)
         const values = raw.map((v: number, i: number) => (i === 0 ? v : v - raw[i - 1]))
+        // Invisible base: sit each delta bar on min(prev, current) so the
+        // visible segment spans the change (classic waterfall stacking).
+        const base = raw.map((v: number, i: number) => (i === 0 ? 0 : Math.min(raw[i - 1], v)))
 
-        let base = []
-        let prev = 0
-        base.push(...raw.map((v: number, i : number) => {
-            prev = v
-          if (i === 0) return 0
-          if (prev > v)
-              return v
-          return prev
+        const axisMuted = themeVariables.secondary || themeVariables.light || '#6c757d'
+        const gridLine = themeVariables['extra-light'] || '#e9ecef'
+        const labelMuted = axisMuted
+        const barRadius = 5
+        const successColor = themeVariables.success || '#28a745'
+        const dangerColor = themeVariables.danger || '#dc3545'
+        const softEmphasis = { itemStyle: { shadowBlur: 0, opacity: 0.88 } }
+
+        const increaseData = values.map((v: number) => ({
+          value: v >= 0 ? v : '-',
+          itemStyle: {
+            color: gradient
+              ? (barGradient(successColor)?.color || successColor)
+              : successColor,
+            borderRadius: [barRadius, barRadius, 0, 0],
+          },
+          label: {
+            show: true,
+            position: 'top' as const,
+            distance: 4,
+            color: labelMuted,
+            fontSize: 11,
+            fontWeight: 500,
+            formatter: (p: TooltipParams): string => fmt(p.value as number, metric.formatting),
+          },
         }))
 
-
+        const decreaseData = values.map((v: number) => ({
+          value: v >= 0 ? '-' : -v,
+          itemStyle: {
+            color: gradient
+              ? (barGradient(dangerColor)?.color || dangerColor)
+              : dangerColor,
+            borderRadius: [barRadius, barRadius, 0, 0],
+          },
+          label: {
+            show: true,
+            position: 'bottom' as const,
+            distance: 4,
+            color: labelMuted,
+            fontSize: 11,
+            fontWeight: 500,
+            formatter: (p: TooltipParams): string => fmt(p.value as number, metric.formatting),
+          },
+        }))
 
         return {
           ...common,
+          legend: { show: false },
           tooltip: {
             trigger: 'axis',
             appendToBody: true,
-              // works when trigger is set to axis
-              valueFormatter: (value: string | number): string => formatChartValue(getVal(value), metric.formatting),
-              // works when trigger is set to item
-              formatter: (paramsList:TooltipParams[]): string => {
-                  let value = getVal(paramsList[0].value)
-                  let percent = 0
-                  let marker
-                  if (paramsList[1].value !== "-") {
-                      value += Number(paramsList[1].value)
-                      percent = Number(paramsList[1].value) * 100 / value
-                      marker = paramsList[1].marker
-                  } else if (paramsList[2].value !== "-") {
-                      //value -= Number(paramsList[2].value)
-                      percent = -Number(paramsList[2].value) * 100 / value
-                      marker = paramsList[2].marker
-                  }
-
-
-                  const formattedValue = formatChartValue(value, metric.formatting)
-
-                  return `${paramsList[0].seriesName}<br>${marker}${paramsList[0].name}<span style="float: right; margin-left: 20px">${formattedValue}${true ? ' (' + percent.toFixed(1) + '%)' : ''}</span>`
+            valueFormatter: (value: string | number): string => formatChartValue(getVal(value), metric.formatting),
+            formatter: (paramsList: TooltipParams[]): string => {
+              let value = getVal(paramsList[0].value)
+              let percent = 0
+              let marker
+              if (paramsList[1].value !== '-') {
+                value += Number(paramsList[1].value)
+                percent = Number(paramsList[1].value) * 100 / value
+                marker = paramsList[1].marker
+              } else if (paramsList[2].value !== '-') {
+                percent = -Number(paramsList[2].value) * 100 / value
+                marker = paramsList[2].marker
               }
+
+              const formattedValue = formatChartValue(value, metric.formatting)
+              return `${paramsList[0].seriesName}<br>${marker}${paramsList[0].name}<span style="float: right; margin-left: 20px">${formattedValue}${true ? ' (' + percent.toFixed(1) + '%)' : ''}</span>`
+            },
           },
-          grid,
+          grid: {
+            ...grid,
+            top: (typeof grid.top === 'number' ? grid.top : Number(grid.top) || 65) + 12,
+          },
           xAxis: {
             type: 'category',
             data: labels,
             axisLabel: {
               interval: 0,
-              overflow: 'break',
+              overflow: 'truncate',
               hideOverlap: true,
               rotate: dimension.rotateLabel,
+              color: axisMuted,
+              fontSize: 11,
             },
+            axisTick: { show: false },
+            axisLine: { show: false },
+            splitLine: { show: false },
           },
           yAxis: {
             type: 'value',
             axisLabel: {
+              color: axisMuted,
+              fontSize: 11,
               formatter: (value: string | number): string => fmt(value, report.yAxis?.formatting),
+            },
+            axisTick: { show: false },
+            axisLine: { show: false },
+            splitLine: {
+              show: true,
+              lineStyle: { color: gridLine, type: 'dashed', width: 1 },
             },
           },
           series: [
@@ -857,43 +999,27 @@ export default class Chart extends BaseChart {
               name: metric.label,
               silent: true,
               data: base,
-              itemStyle: { color: 'transparent' },
+              itemStyle: { color: 'transparent', borderColor: 'transparent' },
+              emphasis: { disabled: true },
             },
             {
               type: 'bar',
               stack: 'waterfall',
-              name: "increase",
-              data: values.map((v: number, i: number) => ({
-                value: v >= 0 ? v : '-' ,
-                itemStyle: {
-                  color: themeVariables.success || '#28a745'
-                },
-                label: {
-                  show: true,
-                  position: 'top',
-                  formatter: (p: TooltipParams): string => fmt(p.value as number, metric.formatting),
-                },
-              })),
-              ...(gradient ? { itemStyle: { color: barGradient(schemeColors[0]) } } : {}),
+              name: 'increase',
+              barMaxWidth: 48,
+              barCategoryGap: '35%',
+              emphasis: softEmphasis,
+              data: increaseData,
             },
-              {
-                  type: 'bar',
-                  stack: 'waterfall',
-                  name: "decrease",
-                  data: values.map((v: number, i: number) => ({
-                      value: v >= 0 ? '-' : -v,
-                      itemStyle: {
-                          color: themeVariables.danger || '#dc3545',
-                      },
-                      label: {
-                          show: true,
-                          position: 'bottom',
-                          formatter: (p: TooltipParams): string => fmt(p.value as number, metric.formatting),
-                      },
-                  })),
-                  ...(gradient ? { itemStyle: { color: barGradient(schemeColors[0]) } } : {}),
-              },
-
+            {
+              type: 'bar',
+              stack: 'waterfall',
+              name: 'decrease',
+              barMaxWidth: 48,
+              barCategoryGap: '35%',
+              emphasis: softEmphasis,
+              data: decreaseData,
+            },
           ],
         }
       }
@@ -1168,6 +1294,11 @@ export default class Chart extends BaseChart {
           return `${y}-${m}-${day}`
         }
 
+        const axisMuted = themeVariables.secondary || themeVariables.light || '#6c757d'
+        const gridLine = themeVariables['extra-light'] || '#e9ecef'
+        const labelOnBar = themeVariables.white || '#fff'
+        const barRadius = 5
+
         const tasks: Array<{ name: string; start: number; end: number }> = []
         for (let i = 0; i < rows.length; i++) {
           const r = rows[i]
@@ -1183,9 +1314,13 @@ export default class Chart extends BaseChart {
         }
 
         const categories = tasks.map(tk => tk.name)
+        const colors = Array.isArray(schemeColors) && schemeColors.length ? schemeColors : [themeVariables.primary || '#3366cc']
         const data = tasks.map((tk, i) => ({
           value: [i, tk.start, tk.end, tk.name],
-          itemStyle: { color: schemeColors[i % Math.max(schemeColors.length, 1)] || themeVariables.primary },
+          itemStyle: {
+            color: colors[i % colors.length],
+            opacity: 0.92,
+          },
         }))
 
         return {
@@ -1211,43 +1346,72 @@ export default class Chart extends BaseChart {
           grid: {
             ...grid,
             left: offset?.isDefault ? 120 : offset?.left,
+            bottom: offset?.isDefault ? 36 : offset?.bottom,
             containLabel: true,
           },
           dataZoom: [
-            { type: 'slider', xAxisIndex: 0, height: 18, bottom: 8, filterMode: 'weakFilter' },
+            {
+              type: 'slider',
+              xAxisIndex: 0,
+              height: 16,
+              bottom: 6,
+              borderColor: 'transparent',
+              backgroundColor: gridLine,
+              fillerColor: 'rgba(100, 116, 139, 0.18)',
+              handleSize: 0,
+              showDetail: false,
+              filterMode: 'weakFilter',
+            },
             { type: 'inside', xAxisIndex: 0, filterMode: 'weakFilter' },
           ],
           xAxis: {
             type: 'time',
-            axisLabel: { color: themeVariables.black, hideOverlap: true },
-            splitLine: { show: true, lineStyle: { color: themeVariables.light || '#eee' } },
+            axisLabel: {
+              color: axisMuted,
+              fontSize: 11,
+              hideOverlap: true,
+            },
+            axisTick: { show: false },
+            axisLine: { show: false },
+            splitLine: {
+              show: true,
+              lineStyle: { color: gridLine, type: 'dashed', width: 1 },
+            },
           },
           yAxis: {
             type: 'category',
             data: categories,
             inverse: true,
             axisLabel: {
-              color: themeVariables.black,
+              color: axisMuted,
+              fontSize: 11,
               width: 110,
               overflow: 'truncate',
             },
-            splitLine: { show: true, lineStyle: { color: themeVariables.light || '#eee' } },
+            axisTick: { show: false },
+            axisLine: { show: false },
+            splitLine: {
+              show: true,
+              lineStyle: { color: gridLine, type: 'dashed', width: 1 },
+            },
           },
           series: [{
             type: 'custom',
             name: metric.label || metric.field || 'gantt',
             renderItem: (params: any, api: any) => {
               const categoryIndex = api.value(0)
-              const start = api.coord([api.value(1), categoryIndex])
-              const end = api.coord([api.value(2), categoryIndex])
-              const height = api.size([0, 1])[1] * 0.55
+              const startMs = api.value(1)
+              const endMs = api.value(2)
+              const start = api.coord([startMs, categoryIndex])
+              const end = api.coord([endMs, categoryIndex])
+              const height = api.size([0, 1])[1] * 0.5
               const coordSys = params.coordSys || {}
               const shape = {
                 x: start[0],
                 y: start[1] - height / 2,
                 width: Math.max(end[0] - start[0], 3),
                 height,
-                r: 3,
+                r: barRadius,
               }
               if (coordSys.width) {
                 const minX = coordSys.x || 0
@@ -1261,15 +1425,49 @@ export default class Chart extends BaseChart {
                 }
               }
               if (shape.width <= 0) return
-              return {
+
+              const rect = {
                 type: 'rect',
                 transition: ['shape'],
                 shape,
                 style: api.style(),
+                emphasisDisabled: false,
+              }
+
+              const days = Math.max(1, Math.round((Number(endMs) - Number(startMs)) / 86400000))
+              if (shape.width < 44) {
+                return rect
+              }
+
+              return {
+                type: 'group',
+                children: [
+                  rect,
+                  {
+                    type: 'text',
+                    style: {
+                      x: shape.x + shape.width / 2,
+                      y: shape.y + shape.height / 2,
+                      text: `${days}d`,
+                      fill: labelOnBar,
+                      fontSize: 11,
+                      fontWeight: 500,
+                      align: 'center',
+                      verticalAlign: 'middle',
+                    },
+                    silent: true,
+                  },
+                ],
               }
             },
             encode: { x: [1, 2], y: 0 },
             data,
+            emphasis: {
+              style: {
+                opacity: 0.88,
+                shadowBlur: 0,
+              },
+            },
           }],
         }
       }

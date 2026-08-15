@@ -104,6 +104,19 @@ export interface Options {
   textStyles: {
     wrappedFields: Array<string>
   }
+
+  // Appearance
+  compactRows: boolean;
+  alignNumbers: boolean;
+  stickyHeader: boolean;
+  showRowSignal: boolean;
+  signalField: string;
+  rowHighlightField: string;
+  displayMode: 'table' | 'cards' | 'responsive';
+  groupByField: string;
+  sparklineField: string;
+  sparklineMax: number;
+  rowValueTooltip: boolean;
 }
 
 const defaults: Readonly<Options> = Object.freeze({
@@ -174,6 +187,18 @@ const defaults: Readonly<Options> = Object.freeze({
   textStyles: {
     wrappedFields: [],
   },
+
+  compactRows: true,
+  alignNumbers: true,
+  stickyHeader: true,
+  showRowSignal: false,
+  signalField: '',
+  rowHighlightField: '',
+  displayMode: 'table',
+  groupByField: '',
+  sparklineField: '',
+  sparklineMax: 30,
+  rowValueTooltip: true,
 })
 
 export class PageBlockRecordList extends PageBlock {
@@ -203,9 +228,14 @@ export class PageBlockRecordList extends PageBlock {
       'magnifyOption',
       'recordSelectorDisplayOption',
       'addRecordDisplayOption',
+      'signalField',
+      'rowHighlightField',
+      'displayMode',
+      'groupByField',
+      'sparklineField',
     )
 
-    Apply(this.options, o, Number, 'perPage', 'refreshRate')
+    Apply(this.options, o, Number, 'perPage', 'refreshRate', 'sparklineMax')
 
     if (o.fields) {
       this.options.fields = o.fields
@@ -264,6 +294,11 @@ export class PageBlockRecordList extends PageBlock {
       'showRecordPerPageOption',
       'openRecordInEditMode',
       'customSummaries',
+      'compactRows',
+      'alignNumbers',
+      'stickyHeader',
+      'showRowSignal',
+      'rowValueTooltip',
     )
 
     if (o.selectionButtons) {

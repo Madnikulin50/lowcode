@@ -269,9 +269,115 @@
                   v-model="likeRecordList"
                   type="checkbox"
                   class="form-check-input"
+                  id="metric-like-record"
                 />
-                <label class="form-check-label">{{ $t('metric.likeRecordList') }}</label>
+                <label class="form-check-label" for="metric-like-record">{{ $t('metric.likeRecordList') }}</label>
               </div>
+            </div>
+
+            <hr />
+            <h5 class="mb-3">{{ $t('metric.appearance.label') }}</h5>
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">{{ $t('metric.appearance.density') }}</label>
+                  <select v-model="options.density" class="form-select form-control">
+                    <option value="comfortable">{{ $t('metric.appearance.densityOptions.comfortable') }}</option>
+                    <option value="compact">{{ $t('metric.appearance.densityOptions.compact') }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">{{ $t('metric.appearance.hideEmptyMetrics') }}</label>
+                  <c-input-checkbox v-model="options.hideEmptyMetrics" switch :labels="checkboxLabel" />
+                </div>
+              </div>
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">{{ $t('metric.appearance.showEmptyPlaceholder') }}</label>
+                  <small class="text-muted d-block mb-1">{{ $t('metric.appearance.showEmptyPlaceholderDescription') }}</small>
+                  <c-input-checkbox
+                    v-model="options.showEmptyPlaceholder"
+                    switch
+                    :labels="checkboxLabel"
+                    :disabled="options.hideEmptyMetrics"
+                  />
+                </div>
+              </div>
+              <div v-if="edit" class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">{{ $t('metric.appearance.role') }}</label>
+                  <small class="text-muted d-block mb-1">{{ $t('metric.appearance.roleDescription') }}</small>
+                  <select
+                    class="form-select form-control"
+                    :value="edit.role === 'topK' ? 'balloon' : (edit.role || 'default')"
+                    @change="setMetricRole($event.target.value)"
+                  >
+                    <option
+                      v-for="opt in metricRoleOptions"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div v-if="edit && isBalloonRole(edit)" class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">{{ $t('metric.appearance.balloonFullWidth') }}</label>
+                  <small class="text-muted d-block mb-1">{{ $t('metric.appearance.balloonFullWidthDescription') }}</small>
+                  <c-input-checkbox v-model="edit.balloonFullWidth" switch :labels="checkboxLabel" />
+                </div>
+              </div>
+            </div>
+
+            <div v-if="likeRecordList" class="mb-3">
+              <h5 class="mb-2">{{ $t('metric.appearance.sections') }}</h5>
+              <small class="text-muted d-block mb-2">{{ $t('metric.appearance.sectionsDescription') }}</small>
+              <c-form-table-wrapper
+                :labels="{ addButton: $t('metric.appearance.addSection') }"
+                class="my-2"
+                @add-item="addSection"
+              >
+                <table v-if="options.sections?.length" class="table table-sm table-borderless align-middle">
+                  <thead>
+                    <tr>
+                      <th class="text-primary">{{ $t('metric.appearance.sectionTitle') }}</th>
+                      <th class="text-primary">{{ $t('metric.appearance.sectionMetrics') }}</th>
+                      <th style="width: 4rem;" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(section, i) in options.sections" :key="i">
+                      <td style="min-width: 12rem;">
+                        <input
+                          v-model="section.title"
+                          type="text"
+                          class="form-control form-control-sm"
+                          :placeholder="$t('metric.appearance.sectionTitlePlaceholder')"
+                        >
+                      </td>
+                      <td style="min-width: 16rem;">
+                        <c-input-select
+                          v-model="section.metrics"
+                          :options="sectionMetricOptions"
+                          multiple
+                          :close-on-select="false"
+                          :get-option-label="o => o.label"
+                          :get-option-key="o => o.value"
+                          :reduce="o => o.value"
+                          :placeholder="$t('metric.appearance.sectionMetricsPlaceholder')"
+                        />
+                      </td>
+                      <td class="text-end">
+                        <c-input-confirm show-icon @confirmed="removeSection(i)" />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </c-form-table-wrapper>
             </div>
 
             <template v-if="likeRecordList">
@@ -306,6 +412,7 @@
             <m-style
               class="mt-2"
               :options="edit.valueStyle"
+              :balloon="isBalloonRole(edit)"
             >
               <template #title>
                 <h5>{{ $t('metric.editStyle.valueLabel') }}</h5>
@@ -382,6 +489,12 @@ const { options, setBaseDefaultValues } = usePageBlockBase(props, emit)
 const activeTab = ref(0)
 const edit = ref(undefined)
 
+// Normalize appearance defaults for older blocks
+if (!options.value.density) options.value.density = 'comfortable'
+if (options.value.hideEmptyMetrics === undefined) options.value.hideEmptyMetrics = false
+if (options.value.showEmptyPlaceholder === undefined) options.value.showEmptyPlaceholder = true
+if (!Array.isArray(options.value.sections)) options.value.sections = []
+
 const checkboxLabel = ref({ on: t('label.yes'), off: t('label.no') })
 
 const dimensionModifiers = computed(() =>
@@ -418,7 +531,7 @@ const metricFields = computed(() => {
 })
 
 const likeRecordList = computed({
-  get: () => options.value.likeRecordList || false,
+  get: () => options.value.likeRecordList !== false,
   set: (check) => { options.value.likeRecordList = check },
 })
 
@@ -426,6 +539,22 @@ const metrics = computed({
   get: () => options.value.metrics,
   set: (m) => { options.value.metrics = m },
 })
+
+const metricRoleOptions = computed(() => [
+  { value: 'default', text: t('metric.appearance.roleOptions.default') },
+  { value: 'title', text: t('metric.appearance.roleOptions.title') },
+  { value: 'badge', text: t('metric.appearance.roleOptions.badge') },
+  { value: 'meta', text: t('metric.appearance.roleOptions.meta') },
+  { value: 'hero', text: t('metric.appearance.roleOptions.hero') },
+  { value: 'balloon', text: t('metric.appearance.roleOptions.balloon') },
+])
+
+const sectionMetricOptions = computed(() =>
+  (metrics.value || []).map((m, i) => ({
+    value: i,
+    label: m.label || t('metric.defaultMetricLabel') + ` #${i + 1}`,
+  }))
+)
 
 const drillDownOptions = computed(() =>
   props.page.blocks.filter(({ blockID, kind, options: o = {} }) =>
@@ -484,7 +613,18 @@ function addMetric () {
 }
 
 function editMetric (m) { edit.value = m }
-function removeMetric (i) { metrics.value.splice(i, 1); edit.value = undefined }
+function removeMetric (i) {
+  metrics.value.splice(i, 1)
+  // Prune section indices after removal
+  if (Array.isArray(options.value.sections)) {
+    options.value.sections.forEach(s => {
+      s.metrics = (s.metrics || [])
+        .filter(idx => idx !== i)
+        .map(idx => (idx > i ? idx - 1 : idx))
+    })
+  }
+  edit.value = undefined
+}
 function isTemporalField (name) { return !!fields.value.find(f => f.name === name && f.kind === 'DateTime') }
 function getOptionMetricFieldKey ({ name }) { return name }
 function getOptionMetricFieldLabel ({ name, label }) { return label || name }
@@ -503,6 +643,36 @@ function onUpdateFields (fields) { edit.value.drillDown.recordListOptions.fields
 function handleRecordFieldLayout (v) {
   if (v !== 'noWrap') return
   options.value.horizontalFieldLayoutEnabled = false
+}
+
+function setMetricRole (role) {
+  if (!edit.value) return
+  if (role === 'title') {
+    metrics.value.forEach(m => {
+      if (m !== edit.value && m.role === 'title') m.role = 'default'
+    })
+  }
+  const next = role === 'topK' ? 'balloon' : (role || 'default')
+  edit.value.role = next
+  if (next === 'balloon') {
+    if (!edit.value.valueStyle) edit.value.valueStyle = {}
+    if (!Array.isArray(edit.value.valueStyle.colorThresholds)) {
+      edit.value.valueStyle.colorThresholds = []
+    }
+  }
+}
+
+function isBalloonRole (m) {
+  return m?.role === 'balloon' || m?.role === 'topK'
+}
+
+function addSection () {
+  if (!Array.isArray(options.value.sections)) options.value.sections = []
+  options.value.sections.push({ title: '', metrics: [] })
+}
+
+function removeSection (i) {
+  options.value.sections.splice(i, 1)
 }
 
 function refreshMetric () {

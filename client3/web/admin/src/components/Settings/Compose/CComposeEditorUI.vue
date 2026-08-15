@@ -18,7 +18,7 @@
             <input
               id="hide-namespace-list"
               v-model="sidebar.hideNamespaceList"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -30,13 +30,24 @@
             <input
               id="hide-namespace-list-link"
               v-model="sidebar.hideNamespaceListLink"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
               class="form-check-label"
               for="hide-namespace-list-link"
             >{{ t('sidebar.hide-namespace-list-link') }}</label>
+          </div>
+          <div class="mt-2">
+            <label class="form-label text-primary" for="sidebar-density">{{ t('sidebar.density') }}</label>
+            <select
+              id="sidebar-density"
+              v-model="sidebar.density"
+              class="form-select form-control"
+            >
+              <option value="comfortable">{{ t('sidebar.densityOptions.comfortable') }}</option>
+              <option value="compact">{{ t('sidebar.densityOptions.compact') }}</option>
+            </select>
           </div>
         </div>
 
@@ -170,7 +181,10 @@ const sidebar = ref({})
 const recordToolbar = ref({})
 
 watch(() => props.settings, (settings) => {
-  sidebar.value = settings['compose.ui.sidebar'] || {}
+  sidebar.value = {
+    density: 'comfortable',
+    ...(settings['compose.ui.sidebar'] || {}),
+  }
   recordToolbar.value = settings['compose.ui.record-toolbar'] || {}
 }, { immediate: true })
 

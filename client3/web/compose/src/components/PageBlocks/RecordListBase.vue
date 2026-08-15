@@ -100,20 +100,22 @@
     </template>
 
     <template #default>
-      <div v-if="recordListModule" class="d-flex position-relative h-100" :class="{ 'overflow-hidden': !items.length || isProcessing }">
+      <div v-if="recordListModule" class="d-flex position-relative h-100 rl-root" :class="[rlDisplayClass, { 'overflow-hidden': showListLoader || !items.length, 'rl-compact': options.compactRows, 'rl-align-numbers': options.alignNumbers }]">
         <button v-if="!block.options?.hideBrainButton" class="brain-button position-absolute d-flex align-items-center justify-content-center d-print-none" @click="promptAiChat" :title="$t('ai.askAboutRecord')">
           <font-awesome-icon :icon="['fas', 'brain']" />
         </button>
-        <div class="table-responsive">
-        <table data-test-id="table-record-list" class="table record-list-table mh-100 h-100 mb-0 table-hover">
-          <thead class="sticky-top">
+
+        <div class="rl-table-wrap table-responsive flex-grow-1">
+        <table data-test-id="table-record-list" class="table record-list-table mh-100 h-100 mb-0 table-hover" :class="{ 'table-sm': options.compactRows }">
+          <thead :class="{ 'sticky-top': options.stickyHeader !== false }">
             <tr :class="showingDeletedRecords ? 'table-warning' : ''">
               <th v-if="options.draggable && inlineEditing" style="width: 0%"></th>
-              <th v-if="options.selectable" style="width: 0%;" class="d-print-none">
-                <input type="checkbox" class="form-check-input-v3 ms-1" :disabled="disableSelectAll" :checked="areAllRowsSelected && !disableSelectAll" @change="handleSelectAllOnPage({ isChecked: $event.target.checked })" />
+              <th v-if="options.selectable" style="width: 0%;" class="d-print-none rl-check-col">
+                <input type="checkbox" class="form-check-input rl-row-check ms-1" :disabled="disableSelectAll" :checked="areAllRowsSelected && !disableSelectAll" @change="handleSelectAllOnPage({ isChecked: $event.target.checked })" />
               </th>
+              <th v-if="options.showRowSignal" class="rl-signal-col" style="width: 0%"></th>
               <th v-if="isFederated" style="width: 0%"></th>
-              <th v-for="(field, fieldIndex) in fields" :key="field.key" :colspan="fieldIndex === (fields.length - 1) ? 2 : 1" :style="{ 'padding-right': fieldIndex === (fields.length - 1) ? '15px' : '' }">
+              <th v-for="(field, fieldIndex) in fields" :key="field.key" :colspan="fieldIndex === (fields.length - 1) ? 2 : 1" :style="{ 'padding-right': fieldIndex === (fields.length - 1) ? '15px' : '' }" :class="fieldCellClass(field)">
                 <div class="d-flex align-items-center">
                   <div :class="{ required: field.required }" class="d-flex align-self-center text-nowrap">{{ field.label }}</div>
                   <button v-if="field.sortable" class="btn btn-outline-extra-light d-flex align-items-center text-secondary d-print-none border-0 px-1 ms-1" data-bs-toggle="tooltip" :title="$t('recordList.sort.tooltip')" @click="handleSort(field)">
@@ -127,29 +129,37 @@
               </th>
             </tr>
           </thead>
-          <draggable item-key="id" v-if="items.length && !isProcessing && !resizing" v-model="items" :disabled="!inlineEditing || !options.draggable" group="items" tag="tbody" handle=".handle">
+          <draggable v-if="items.length && !showListLoader && !resizing && !isGrouped" item-key="id" v-model="items" :disabled="!inlineEditing || !options.draggable" group="items" tag="tbody" handle=".handle">
             <template #item="{ element, index }">
-              <tr :key="`${index}${element.r.recordID}`" :class="{ 'pointer': isRowClickable, 'table-warning': inlineEditing && (dirtyInlineRecords[element.id] || element.r.deletedAt) }" @click="handleRowClick(element)">
+              <tr :key="`${index}${element.r.recordID}`" :class="rowClass(element)" @click="handleRowClick(element)" @mouseenter="showRowValueTooltip($event, element)" @mousemove="moveRowValueTooltip($event)" @mouseleave="hideRowValueTooltip()">
                 <td v-if="options.draggable && inlineEditing" class="pe-0" @click.stop>
                   <font-awesome-icon :icon="['fas', 'bars']" class="handle text-secondary mt-2" style="padding-top: 0.2rem;" />
                 </td>
-                <td v-if="options.selectable" class="pe-0 d-print-none" @click.stop>
-                  <input type="checkbox" class="form-check-input-v3 ms-1" :class="{ 'mt-2': inlineEditing }" :checked="selected.includes(element.id)" @change="onSelectRow($event.target.checked, element)" />
+                <td v-if="options.selectable" class="pe-0 d-print-none rl-check-col" @click.stop>
+                  <input type="checkbox" class="form-check-input rl-row-check ms-1" :class="{ 'mt-2': inlineEditing }" :checked="selected.includes(element.id)" @change="onSelectRow($event.target.checked, element)" />
+                </td>
+                <td v-if="options.showRowSignal" class="rl-signal-col pe-0">
+                  <span class="rl-signal" :class="signalClass(element)" :title="signalTitle(element)" />
                 </td>
                 <td v-if="isFederated" class="align-middle ps-0">
                   <span v-if="Object.keys(element.r.labels || {}).includes('federation')" class="badge bg-primary align-text-top">F</span>
                 </td>
-                <td v-for="field in fields" :key="field.key" class="record-value">
+                <td v-for="field in fields" :key="field.key" class="record-value" :class="fieldCellClass(field)">
                   <FieldEditor v-if="field.moduleField.canUpdateRecordValue && field.editable && isFieldEditable(field.moduleField)" :field="field.moduleField" value-only :record="element.r" :module="module" :namespace="namespace" :errors="recordErrors(element, field)" class="mb-0" style="min-width: 250px;" @click.stop @change="onInlineFieldChange(element)" />
-                  <div v-else-if="field.moduleField.canReadRecordValue && !field.edit" class="d-flex mb-0 gap-1" style="min-width: 10rem;">
-                    <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="module" :namespace="namespace" :extra-options="options" include-styles />
-                    <div v-if="showInlineActions(field)" class="d-flex flex-nowrap align-items-start gap-1 inline-actions">
-                      <button v-if="showInlineEdit(field)" class="btn btn-outline-extra-light btn-sm text-secondary border-0" data-bs-toggle="tooltip" :title="$t('recordList.inlineEdit.button.title')" @click.stop="editInlineField(element.r, field.key)">
-                        <font-awesome-icon :icon="['fas', 'pen']" />
-                      </button>
-                      <button v-if="showInlineFilter(field)" class="btn btn-outline-extra-light btn-sm text-secondary border-0" data-bs-toggle="tooltip" :title="$t('recordList.filterByValue')" @click.stop="filterByValue(element.r, field)">
-                        <font-awesome-icon :icon="['fas', 'filter']" />
-                      </button>
+                  <div v-else-if="field.moduleField.canReadRecordValue && !field.edit" class="d-flex flex-column mb-0 gap-1" style="min-width: 10rem;">
+                    <div class="d-flex mb-0 gap-1 align-items-center">
+                      <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="module" :namespace="namespace" :extra-options="options" include-styles />
+                      <div v-if="showInlineActions(field)" class="d-flex flex-nowrap align-items-start gap-1 inline-actions">
+                        <button v-if="showInlineEdit(field)" class="btn btn-outline-extra-light btn-sm text-secondary border-0" data-bs-toggle="tooltip" :title="$t('recordList.inlineEdit.button.title')" @click.stop="editInlineField(element.r, field.key)">
+                          <font-awesome-icon :icon="['fas', 'pen']" />
+                        </button>
+                        <button v-if="showInlineFilter(field)" class="btn btn-outline-extra-light btn-sm text-secondary border-0" data-bs-toggle="tooltip" :title="$t('recordList.filterByValue')" @click.stop="filterByValue(element.r, field)">
+                          <font-awesome-icon :icon="['fas', 'filter']" />
+                        </button>
+                      </div>
+                    </div>
+                    <div v-if="isSparklineField(field)" class="rl-sparkline" :title="String(recordFieldRaw(element.r, field.key) ?? '')">
+                      <span class="rl-sparkline-bar" :style="{ width: sparklinePct(element) + '%' }" :class="signalClass(element)" />
                     </div>
                   </div>
                   <i v-else class="text-primary">{{ $t('field.noPermission') }}</i>
@@ -223,11 +233,105 @@
               </tr>
             </template>
           </draggable>
-          <div v-else class="position-absolute text-center mt-5 d-print-none" style="left: 0; right: 0; bottom: calc(50% - 33px);">
-            <div v-if="isProcessing" class="spinner-border" />
-            <p v-else-if="!items.length" class="mb-0 mx-2">{{ $t('recordList.noRecords') }}</p>
-          </div>
+          <tbody v-else-if="items.length && !showListLoader && !resizing && isGrouped">
+            <template v-for="group in groupedItems" :key="group.key">
+              <tr class="rl-group-header">
+                <td :colspan="tableColSpan">
+                  <span class="rl-group-label">{{ group.label }}</span>
+                  <span class="rl-group-count text-muted ms-2">{{ group.items.length }}</span>
+                </td>
+              </tr>
+              <tr v-for="(element, index) in group.items" :key="`${group.key}-${index}${element.r.recordID}`" :class="rowClass(element)" @click="handleRowClick(element)" @mouseenter="showRowValueTooltip($event, element)" @mousemove="moveRowValueTooltip($event)" @mouseleave="hideRowValueTooltip()">
+                <td v-if="options.selectable" class="pe-0 d-print-none rl-check-col" @click.stop>
+                  <input type="checkbox" class="form-check-input rl-row-check ms-1" :checked="selected.includes(element.id)" @change="onSelectRow($event.target.checked, element)" />
+                </td>
+                <td v-if="options.showRowSignal" class="rl-signal-col pe-0">
+                  <span class="rl-signal" :class="signalClass(element)" :title="signalTitle(element)" />
+                </td>
+                <td v-if="isFederated" class="align-middle ps-0">
+                  <span v-if="Object.keys(element.r.labels || {}).includes('federation')" class="badge bg-primary align-text-top">F</span>
+                </td>
+                <td v-for="field in fields" :key="field.key" class="record-value" :class="fieldCellClass(field)">
+                  <div v-if="field.moduleField.canReadRecordValue" class="d-flex flex-column mb-0 gap-1" style="min-width: 10rem;">
+                    <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="module" :namespace="namespace" :extra-options="options" include-styles />
+                    <div v-if="isSparklineField(field)" class="rl-sparkline">
+                      <span class="rl-sparkline-bar" :style="{ width: sparklinePct(element) + '%' }" :class="signalClass(element)" />
+                    </div>
+                  </div>
+                </td>
+                <td class="actions px-2" @click.stop />
+              </tr>
+            </template>
+          </tbody>
+          <tbody v-else-if="showListLoader || showListEmpty">
+            <tr>
+              <td :colspan="tableColSpan" class="border-0">
+                <div class="rl-empty d-print-none">
+                  <div v-if="showListLoader" class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading…</span>
+                  </div>
+                  <template v-else>
+                    <div class="rl-empty-icon">
+                      <font-awesome-icon :icon="['fas', 'box-archive']" />
+                    </div>
+                    <p class="rl-empty-title mb-1">{{ $t('recordList.empty.title') }}</p>
+                    <p class="rl-empty-text mb-0 text-muted">{{ $t('recordList.noRecords') }}</p>
+                  </template>
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
+        </div>
+
+        <div class="rl-cards-wrap flex-grow-1">
+          <div v-if="showListLoader" class="rl-empty">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading…</span>
+            </div>
+          </div>
+          <div v-else-if="showListEmpty" class="rl-empty">
+            <div class="rl-empty-icon"><font-awesome-icon :icon="['fas', 'box-archive']" /></div>
+            <p class="rl-empty-title mb-1">{{ $t('recordList.empty.title') }}</p>
+            <p class="rl-empty-text mb-0 text-muted">{{ $t('recordList.noRecords') }}</p>
+          </div>
+          <template v-else>
+            <template v-for="group in groupedItems" :key="'card-'+group.key">
+              <div v-if="isGrouped" class="rl-card-group-title">{{ group.label }} <span class="text-muted">({{ group.items.length }})</span></div>
+              <div class="rl-cards">
+                <button
+                  v-for="(element, index) in group.items"
+                  :key="'c'+index+element.r.recordID"
+                  type="button"
+                  class="rl-card"
+                  :class="rowClass(element)"
+                  @click="handleRowClick(element)"
+                  @mouseenter="showRowValueTooltip($event, element)"
+                  @mousemove="moveRowValueTooltip($event)"
+                  @mouseleave="hideRowValueTooltip()"
+                >
+                  <div class="rl-card-head">
+                    <span v-if="options.showRowSignal" class="rl-signal" :class="signalClass(element)" />
+                    <span class="rl-card-title text-truncate">{{ cardTitle(element) }}</span>
+                  </div>
+                  <div class="rl-card-body">
+                    <div v-for="field in cardFields" :key="field.key" class="rl-card-row">
+                      <span class="rl-card-label">{{ field.label }}</span>
+                      <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="module" :namespace="namespace" :extra-options="options" include-styles class="rl-card-value" />
+                    </div>
+                    <div v-if="options.sparklineField" class="rl-sparkline mt-2">
+                      <span class="rl-sparkline-bar" :style="{ width: sparklinePct(element) + '%' }" :class="signalClass(element)" />
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </template>
+          </template>
+        </div>
+      </div>
+      <div v-else-if="options.moduleID && options.moduleID !== NoID" class="rl-empty w-100">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading…</span>
         </div>
       </div>
       <label v-else class="text-primary p-3">{{ $t('recordList.noModule') }}</label>
@@ -301,6 +405,40 @@
       <CustomSummary v-if="options.customSummaries" :visible="showCustomSummariesModal" :module="recordListModule" :summary="customSummary" :summary-index="customSummaryIndex" @save="onCustomSummarySave" @delete="onCustomSummaryDelete" @close="onCustomSummaryClose" />
     </template>
   </Wrap>
+  <Teleport to="body">
+    <div
+      v-if="rowTooltip.visible && rowTooltip.record"
+      class="rl-row-tooltip"
+      :style="rowTooltip.style"
+      role="tooltip"
+    >
+      <div v-if="rowTooltip.title" class="rl-row-tooltip-title">{{ rowTooltip.title }}</div>
+      <div
+        v-for="(line, idx) in rowTooltip.lines"
+        :key="idx"
+        class="rl-row-tooltip-row"
+      >
+        <span
+          class="rl-row-tooltip-marker"
+          :style="{ backgroundColor: line.color }"
+        />
+        <span class="rl-row-tooltip-name">{{ line.label }}</span>
+        <span class="rl-row-tooltip-value">
+          <FieldViewer
+            v-if="line.moduleField?.canReadRecordValue !== false"
+            :field="line.moduleField"
+            value-only
+            :record="rowTooltip.record"
+            :module="recordListModule"
+            :namespace="namespace"
+            :extra-options="options"
+            include-styles
+          />
+          <span v-else>—</span>
+        </span>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -389,6 +527,7 @@ const customSummaryIndex = ref(-1)
 const customSummary = ref({ metric: '', field: '', label: '' })
 let ctr = 0
 const items = ref([])
+const hasLoadedOnce = ref(false)
 const showingDeletedRecords = ref(false)
 const customPresetFilters = ref([])
 const currentCustomPresetFilter = ref(undefined)
@@ -463,6 +602,41 @@ const fields = computed(() => {
   }))
   return [...configured]
 })
+const cardFields = computed(() => fields.value.slice(0, 4))
+const isGrouped = computed(() => !!options.value.groupByField && !inlineEditing.value)
+const rlDisplayClass = computed(() => {
+  const mode = options.value.displayMode || 'table'
+  if (mode === 'cards') return 'rl-display-cards'
+  if (mode === 'responsive') return 'rl-display-responsive'
+  return 'rl-display-table'
+})
+const tableColSpan = computed(() => {
+  let n = fields.value.length + 1 // actions
+  if (options.value.selectable) n++
+  if (options.value.showRowSignal) n++
+  if (isFederated.value) n++
+  if (options.value.draggable && inlineEditing.value) n++
+  return n
+})
+const groupedItems = computed(() => {
+  const list = items.value || []
+  const gbf = options.value.groupByField
+  if (!gbf || inlineEditing.value) {
+    return [{ key: '', label: '', items: list }]
+  }
+  const map = new Map()
+  for (const el of list) {
+    const raw = recordFieldRaw(el.r, gbf)
+    const key = raw == null || raw === '' ? '__empty__' : String(raw)
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(el)
+  }
+  return [...map.entries()].map(([key, groupItems]) => ({
+    key,
+    label: key === '__empty__' ? '—' : key,
+    items: groupItems,
+  }))
+})
 const canDeleteSelectedRecords = computed(() => items.value.filter(({ id, r }) => selected.value.includes(id) && r.canDeleteRecord).length > 0)
 const canUpdateSelectedRecords = computed(() => items.value.filter(({ id, r }) => selected.value.includes(id) && r.canUpdateRecord).length > 0)
 const canRestoreSelectedRecords = computed(() => items.value.filter(({ id, r }) => selected.value.includes(id) && r.canUndeleteRecord).length > 0)
@@ -515,6 +689,22 @@ const listSummaries = computed(() => {
 })
 
 const dirtyRecordsCount = computed(() => items.value.filter(item => showSaveAction(item)).length)
+const showListLoader = computed(() => {
+  if (!options.value.moduleID || options.value.moduleID === NoID) return false
+  return isProcessing.value || !hasLoadedOnce.value
+})
+const showListEmpty = computed(() => hasLoadedOnce.value && !isProcessing.value && !items.value.length)
+
+watch(() => options.value.moduleID, () => {
+  hasLoadedOnce.value = false
+})
+
+watch(recordListModule, (mod, prev) => {
+  if (mod && (!prev || prev.moduleID !== mod.moduleID) && !hasLoadedOnce.value) {
+    prepRecordList()
+    refresh(true)
+  }
+})
 
 watch(() => options.value, () => {
   if (!props.loadingRecord) { prepRecordList(); refresh(true) }
@@ -535,6 +725,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  hideRowValueTooltip()
   abortRequests()
   destroyEvents()
   setDefaultValues()
@@ -868,6 +1059,170 @@ function onExport(e) {
   processing.value = false
 }
 
+function recordFieldRaw (record, name) {
+  if (!record || !name) return undefined
+  if (Object.prototype.hasOwnProperty.call(record, name) && record[name] !== undefined && !(record.values && Object.prototype.hasOwnProperty.call(record.values, name))) {
+    // system-ish fields occasionally live on the record root
+  }
+  if (record.values && Object.prototype.hasOwnProperty.call(record.values, name)) {
+    const v = record.values[name]
+    return Array.isArray(v) ? v[0] : v
+  }
+  const v = record[name]
+  return Array.isArray(v) ? v[0] : v
+}
+
+function severityTone (val) {
+  if (val != null && val !== '' && !Number.isNaN(Number(val)) && String(val).trim() !== '' && !/[a-z]/i.test(String(val))) {
+    const n = Number(val)
+    if (n >= 60) return 'danger'
+    if (n >= 30) return 'warning'
+    if (n > 0) return 'info'
+    return 'success'
+  }
+  const s = String(val ?? '').trim().toLowerCase().replace(/_/g, ' ')
+  if (['critical', 'open', 'escalated'].includes(s)) return 'danger'
+  if (['understock', 'high', 'in progress', 'warning'].includes(s)) return 'warning'
+  if (['ok', 'resolved', 'closed', 'low', 'success', 'norma', 'норма'].includes(s)) return 'success'
+  if (['overstock', 'info'].includes(s)) return 'info'
+  return ''
+}
+
+function rowHighlightValue (element) {
+  const field = options.value.rowHighlightField || options.value.signalField
+  if (!field) return undefined
+  return recordFieldRaw(element.r, field)
+}
+
+function rowClass (element) {
+  const cls = {}
+  if (isRowClickable.value) cls.pointer = true
+  if (inlineEditing.value && (dirtyInlineRecords.value[element.id] || element.r.deletedAt)) cls['table-warning'] = true
+  const tone = severityTone(rowHighlightValue(element))
+  if (tone) cls[`rl-row-${tone}`] = true
+  return cls
+}
+
+function signalClass (element) {
+  const field = options.value.signalField || options.value.rowHighlightField
+  const tone = severityTone(field ? recordFieldRaw(element.r, field) : rowHighlightValue(element))
+  return tone ? `rl-signal-${tone}` : 'rl-signal-muted'
+}
+
+function signalTitle (element) {
+  const field = options.value.signalField || options.value.rowHighlightField
+  if (!field) return ''
+  return String(recordFieldRaw(element.r, field) ?? '')
+}
+
+function fieldCellClass (field) {
+  if (!options.value.alignNumbers) return undefined
+  const kind = field.moduleField?.kind
+  if (kind === 'Number') return 'text-end rl-num'
+  return undefined
+}
+
+function isSparklineField (field) {
+  return !!options.value.sparklineField && field.key === options.value.sparklineField
+}
+
+function sparklinePct (element) {
+  const field = options.value.sparklineField
+  if (!field) return 0
+  const v = Number(recordFieldRaw(element.r, field))
+  const max = Number(options.value.sparklineMax) || 30
+  if (!Number.isFinite(v) || max <= 0) return 0
+  return Math.max(0, Math.min(100, (v / max) * 100))
+}
+
+function cardTitle (element) {
+  const preferred = ['slice_label', 'product_name', 'body', 'name', 'title']
+  for (const name of preferred) {
+    const hit = fields.value.find(f => f.key === name)
+    if (!hit) continue
+    const v = recordFieldRaw(element.r, name)
+    if (v != null && v !== '') return String(v)
+  }
+  const first = fields.value[0]
+  if (!first) return element.r.recordID
+  const v = recordFieldRaw(element.r, first.key)
+  return v != null && v !== '' ? String(v) : element.r.recordID
+}
+
+const rowTooltip = reactive({
+  visible: false,
+  title: '',
+  record: null,
+  lines: [],
+  style: {},
+})
+
+const TOOLTIP_MARKER_COLORS = [
+  '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
+  '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc',
+]
+
+function tooltipMarkerColor (value, index) {
+  const tone = severityTone(value)
+  if (tone === 'danger') return '#ee6666'
+  if (tone === 'warning') return '#fac858'
+  if (tone === 'success') return '#91cc75'
+  if (tone === 'info') return '#73c0de'
+  return TOOLTIP_MARKER_COLORS[index % TOOLTIP_MARKER_COLORS.length]
+}
+
+function buildRowTooltipLines (element) {
+  return fields.value.map((f, index) => ({
+    label: f.label,
+    moduleField: f.moduleField,
+    color: tooltipMarkerColor(recordFieldRaw(element.r, f.key), index),
+  }))
+}
+
+function positionRowTooltip (clientX, clientY) {
+  const pad = 12
+  const width = 300
+  const approxH = Math.min(360, 36 + rowTooltip.lines.length * 24)
+  let left = clientX + 16
+  let top = clientY + 16
+  if (left + width + pad > window.innerWidth) left = Math.max(pad, clientX - width - 16)
+  if (top + approxH + pad > window.innerHeight) top = Math.max(pad, clientY - approxH - 16)
+  rowTooltip.style = {
+    top: `${top}px`,
+    left: `${left}px`,
+    minWidth: `${Math.min(width, 240)}px`,
+    maxWidth: '420px',
+  }
+}
+
+function showRowValueTooltip (event, element) {
+  if (options.value.rowValueTooltip === false) return
+  if (inlineEditing.value) return
+  const tag = (event.target?.tagName || '').toLowerCase()
+  if (['input', 'button', 'a', 'select', 'textarea'].includes(tag)) return
+  if (event.target?.closest?.('.actions, .inline-actions, .dropdown, .rl-check-col')) return
+
+  const lines = buildRowTooltipLines(element)
+  if (!lines.length) return
+  rowTooltip.title = cardTitle(element)
+  rowTooltip.record = element.r
+  rowTooltip.lines = lines
+  rowTooltip.visible = true
+  positionRowTooltip(event.clientX, event.clientY)
+}
+
+function moveRowValueTooltip (event) {
+  if (!rowTooltip.visible) return
+  positionRowTooltip(event.clientX, event.clientY)
+}
+
+function hideRowValueTooltip () {
+  rowTooltip.visible = false
+  rowTooltip.title = ''
+  rowTooltip.record = null
+  rowTooltip.lines = []
+}
+
 function handleRowClick(item) {
   let { recordID } = item.r
   const { values = {} } = item.r
@@ -938,8 +1293,16 @@ function handleDeleteSelectedRecords(recordID) {
 
 async function refresh(resetPagination = false, checkSelected = false) {
   if (checkSelected && (selected.value.length || inlineEdit.recordIDs.length)) return
+  processing.value = true
   await nextTick()
-  return pullRecords(resetPagination)
+  try {
+    return await pullRecords(resetPagination)
+  } catch (e) {
+    if (recordListModule.value) {
+      hasLoadedOnce.value = true
+    }
+    processing.value = false
+  }
 }
 
 async function pullRecords(resetPagination = false) {
@@ -993,9 +1356,14 @@ async function pullRecords(resetPagination = false) {
         inlineErrors.value = new validator.Validated()
         processingInlineRecords.value = {}
         items.value = records.map(r => wrapRecord(r))
+        hasLoadedOnce.value = true
         processing.value = false
       })
-    }).catch(e => { if (!axios.isCancel(e)) {} processing.value = false }).finally(() => { cancelled.value = false })
+    }).catch(e => {
+      if (axios.isCancel(e)) return
+      hasLoadedOnce.value = true
+      processing.value = false
+    }).finally(() => { cancelled.value = false })
 }
 
 function getStorageRecordListFilter() {
@@ -1155,7 +1523,7 @@ function onCustomSummaryDelete() { customSummaries.value.splice(customSummaryInd
 function onCustomSummaryClose() { customSummaryIndex.value = -1; customSummary.value = {}; showCustomSummariesModal.value = false }
 
 function setDefaultValues() {
-  uniqueID.value = undefined; processing.value = false; prefilter.value = undefined; recordListFilter.value = []; query.value = null
+  uniqueID.value = undefined; processing.value = false; hasLoadedOnce.value = false; prefilter.value = undefined; recordListFilter.value = []; query.value = null
   Object.assign(filter, { query: '', sort: '', limit: 10, pageCursor: '', prevPage: '', nextPage: '' })
   Object.assign(pagination, { pages: [], page: 1, count: 0 })
   selected.value = []; inlineEdit.recordIDs = []; inlineEdit.fields = []; inlineEdit.initialRecord = {}
@@ -1270,9 +1638,28 @@ tr:hover td.actions { opacity: 1; &:not(.actions-visible) { background-color: va
 tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !important; } }
 .custom-summary { cursor: pointer !important; border-radius: 0.25rem; > label { cursor: pointer !important; } &:hover { background-color: var(--extra-light); } }
 
+.rl-root {
+  width: 100%;
+  min-height: 0;
+}
+
+.rl-display-table .rl-cards-wrap,
+.rl-display-cards .rl-table-wrap {
+  display: none !important;
+}
+
+.rl-display-responsive {
+  .rl-cards-wrap { display: none !important; }
+  @media (max-width: 767.98px) {
+    .rl-table-wrap { display: none !important; }
+    .rl-cards-wrap { display: block !important; }
+  }
+}
+
 .table-responsive {
   border-radius: 0.5rem;
   border: 1px solid var(--bs-border-color, #dee2e6);
+  width: 100%;
 }
 
 .record-list-table {
@@ -1290,6 +1677,7 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
       letter-spacing: 0.025em;
       padding: 0.625rem 0.75rem;
       white-space: nowrap;
+      z-index: 2;
     }
   }
 
@@ -1329,8 +1717,265 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
     z-index: 1;
   }
 }
+
+.rl-compact .record-list-table {
+  thead th, tbody td {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+    font-size: 0.8125rem;
+  }
+}
+
+.rl-align-numbers .rl-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.rl-check-col {
+  vertical-align: middle !important;
+}
+
+.rl-row-check.form-check-input {
+  margin-top: 0;
+  vertical-align: middle;
+  position: static;
+  float: none;
+
+  &.mt-2 {
+    margin-top: 0.5rem;
+  }
+}
+
+.rl-signal-col {
+  width: 0.75rem !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.25rem !important;
+}
+
+.rl-signal {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--bs-secondary, #6c757d);
+  box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.15);
+}
+
+.rl-signal-danger { background: #e74a3b; box-shadow: 0 0 0 3px rgba(231, 74, 59, 0.18); }
+.rl-signal-warning { background: #f6c23e; box-shadow: 0 0 0 3px rgba(246, 194, 62, 0.2); }
+.rl-signal-success { background: #1cc88a; box-shadow: 0 0 0 3px rgba(28, 200, 138, 0.18); }
+.rl-signal-info { background: #36b9cc; box-shadow: 0 0 0 3px rgba(54, 185, 204, 0.18); }
+.rl-signal-muted { background: #adb5bd; box-shadow: none; }
+
+.rl-row-danger { background-color: rgba(231, 74, 59, 0.06) !important; }
+.rl-row-warning { background-color: rgba(246, 194, 62, 0.08) !important; }
+.rl-row-success { background-color: rgba(28, 200, 138, 0.05) !important; }
+.rl-row-info { background-color: rgba(54, 185, 204, 0.06) !important; }
+
+.rl-group-header td {
+  background: #f1f3f5 !important;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--bs-secondary-color, #6c757d);
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.rl-sparkline {
+  height: 4px;
+  width: 100%;
+  max-width: 8rem;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rl-sparkline-bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--bs-primary, #4e73df);
+  &.rl-signal-danger { background: #e74a3b; }
+  &.rl-signal-warning { background: #f6c23e; }
+  &.rl-signal-success { background: #1cc88a; }
+  &.rl-signal-info { background: #36b9cc; }
+  &.rl-signal-muted { background: #adb5bd; }
+}
+
+.rl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  min-height: 12rem;
+}
+
+.rl-empty-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  color: #adb5bd;
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.rl-empty-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.rl-empty-text {
+  font-size: 0.875rem;
+  max-width: 22rem;
+}
+
+.rl-cards-wrap {
+  width: 100%;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.rl-card-group-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bs-secondary-color, #6c757d);
+  margin: 0.5rem 0.25rem;
+}
+
+.rl-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.75rem;
+}
+
+.rl-card {
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.15s, border-color 0.15s;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    border-color: rgba(var(--bs-primary-rgb, 13 110 253), 0.35);
+  }
+}
+
+.rl-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.rl-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.rl-card-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  padding: 0.2rem 0;
+}
+
+.rl-card-label {
+  color: var(--bs-secondary-color, #6c757d);
+  flex-shrink: 0;
+}
+
+.rl-card-value {
+  text-align: right;
+  min-width: 0;
+}
 </style>
 <style lang="scss">
+.rl-row-tooltip {
+  position: fixed;
+  z-index: 1090;
+  pointer-events: none;
+  background-color: #fff;
+  color: #666;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
+  line-height: 1.5;
+  max-height: 60vh;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+.rl-row-tooltip-title {
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: #333;
+}
+
+.rl-row-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.rl-row-tooltip-marker {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
+  margin-right: 4px;
+}
+
+.rl-row-tooltip-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #666;
+}
+
+.rl-row-tooltip-value {
+  margin-left: 20px;
+  flex-shrink: 0;
+  max-width: 60%;
+  text-align: right;
+  color: #666;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  // Match FieldViewer output to compact tooltip chrome
+  :deep(.value) {
+    margin: 0;
+  }
+
+  :deep(.badge) {
+    font-size: 12px;
+    vertical-align: middle;
+  }
+
+  :deep(a) {
+    color: #5470c6;
+  }
+}
+
 .record-list-table { .actions { padding-top: 8px; position: sticky; right: -1px; opacity: 0; transition: opacity 0.25s; width: 1%; font-family: var(--font-regular) !important; z-index: 3; &.actions-visible { opacity: 1; } } tbody tr td:nth-last-child(2) { padding-right: 5rem; } }
 .record-list-footer { font-family: var(--font-medium); }
 .active-filter { white-space: nowrap; font-family: var(--font-normal); .field-label { font-family: var(--font-medium); } &-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; margin: 0; } &-item { vertical-align: middle; margin: 0; } &-close-btn { vertical-align: middle; opacity: 0.5; svg { height: 0.8rem; } &:hover { opacity: 1; } } }

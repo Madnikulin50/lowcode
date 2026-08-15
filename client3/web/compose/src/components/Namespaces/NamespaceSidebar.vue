@@ -3,9 +3,26 @@
     <portal to="sidebar-header-expanded">
       <div
         v-if="!hideNamespaceList"
-        class="d-flex w-100 mt-2"
-        style="gap: 0.25rem;"
+        class="ns-sidebar-header mt-2"
       >
+        <div class="d-flex align-items-start gap-2">
+          <div class="flex-grow-1 min-w-0">
+            <div class="ns-name text-truncate" :title="namespace?.name">
+              {{ namespace?.name || $t('sidebar.pickNamespace') }}
+            </div>
+          </div>
+          <button
+            v-if="canManageNamespaces"
+            :title="$t('editNamespace')"
+            data-test-id="button-namespace-edit"
+            :disabled="!canUpdateNamespace"
+            class="btn btn-sm btn-outline-extra-light text-secondary border-0 ns-edit-btn flex-shrink-0"
+            @click="$router.push({ name: 'namespace.edit', params: { namespaceID: namespaceID } })"
+          >
+            <font-awesome-icon :icon="['far', 'edit']" />
+          </button>
+        </div>
+
         <c-input-select
           data-test-id="select-namespace"
           :value="currentNamespaceID"
@@ -16,8 +33,7 @@
           :clearable="false"
           :autoscroll="false"
           :append-to-body="false"
-          class="flex-grow-1"
-          style="min-width: 0"
+          class="ns-switcher mt-2"
           @input="namespaceSelected"
         >
           <template #list-header>
@@ -35,45 +51,44 @@
             </li>
           </template>
         </c-input-select>
-
-        <button
-          v-if="canManageNamespaces"
-          :title="$t('editNamespace')"
-          data-test-id="button-namespace-edit"
-          :disabled="!canUpdateNamespace"
-          class="btn btn-outline-primary d-flex align-items-center flex-shrink-0"
-          style="height: 38px;"
-          @click="$router.push({ name: 'namespace.edit', params: { namespaceID: namespaceID } })"
-        >
-          <font-awesome-icon :icon="['far', 'edit']" />
-        </button>
+      </div>
+      <div
+        v-else-if="namespace"
+        class="ns-sidebar-header mt-2"
+      >
+        <div class="ns-name text-truncate">{{ namespace.name }}</div>
       </div>
     </portal>
 
     <portal to="sidebar-body-expanded">
       <div
         v-if="namespace"
+        class="ns-sidebar-body"
+        :class="`sidebar-density-${sidebarDensity}`"
         style="flex: 1 1 0%; min-height: 0; position: relative;"
       >
         <div class="sidebar-scroll overflow-auto position-absolute top-0 start-0 w-100 h-100 pe-2">
-          <div class="sticky-top w-100 py-2 bg-white">
-            <button
-              v-if="isAdminPage"
-              data-test-id="button-public"
-              class="btn btn-outline-secondary w-100 mb-2"
-              @click="$router.push({ name: 'pages', params: { slug: namespace.slug || namespace.namespaceID } })"
-            >
-              {{ $t('publicPages') }}
-            </button>
-
-            <button
-              v-else-if="namespace.canManageNamespace"
-              data-test-id="button-admin"
-              class="btn btn-outline-secondary w-100 mb-2"
-              @click="$router.push({ name: 'admin.modules', params: { slug: namespace.slug || namespace.namespaceID } })"
-            >
-              {{ $t('adminPanel') }}
-            </button>
+          <div class="sticky-top w-100 py-2 bg-white ns-sticky">
+            <div class="ns-mode-switch btn-group w-100 mb-2" role="group">
+              <button
+                v-if="isAdminPage"
+                data-test-id="button-public"
+                type="button"
+                class="btn btn-sm btn-outline-secondary flex-fill"
+                @click="$router.push({ name: 'pages', params: { slug: namespace.slug || namespace.namespaceID } })"
+              >
+                {{ $t('publicPages') }}
+              </button>
+              <button
+                v-else-if="namespace.canManageNamespace"
+                data-test-id="button-admin"
+                type="button"
+                class="btn btn-sm btn-outline-secondary flex-fill"
+                @click="$router.push({ name: 'admin.modules', params: { slug: namespace.slug || namespace.namespaceID } })"
+              >
+                {{ $t('adminPanel') }}
+              </button>
+            </div>
 
             <c-input-search
               v-model.trim="query"
@@ -87,12 +102,13 @@
             <c-sidebar-nav-items
               :items="navItems"
               :start-expanded="!!query"
+              :density="sidebarDensity"
               default-route-name="page"
             />
 
             <div
               v-if="!navItems.length"
-              class="d-flex justify-content-center mt-5"
+              class="ns-empty text-muted text-center mt-4 px-2"
             >
               {{ $t('sidebar.noResults', 'No results') }}
             </div>
@@ -150,10 +166,13 @@ const ruleChainsLoading = ref(false)
 const workflows = ref([])
 const workflowsLoading = ref(false)
 
+const sidebarSettings = computed(() => $Settings.get('compose.ui.sidebar', {}) || {})
+const sidebarDensity = computed(() => sidebarSettings.value.density === 'compact' ? 'compact' : 'comfortable')
+
 const currentNamespaceID = computed(() => namespace.value ? namespace.value.namespaceID : NoID)
 const loading = computed(() => moduleLoading.value || chartLoading.value || pageLoading.value || ruleChainsLoading.value || workflowsLoading.value)
 const hideNamespaceList = computed(() => {
-  const { hideNamespaceList: h } = $Settings.get('compose.ui.sidebar', {})
+  const { hideNamespaceList: h } = sidebarSettings.value
   return h
 })
 const canManageNamespaces = computed(() => {
@@ -161,7 +180,7 @@ const canManageNamespaces = computed(() => {
   return props.namespaces.reduce((acc, ns) => acc || ns.canUpdateNamespace || ns.canDeleteNamespace, false)
 })
 const showNamespaceListLink = computed(() => {
-  const { hideNamespaceListLink: h } = $Settings.get('compose.ui.sidebar', {})
+  const { hideNamespaceListLink: h } = sidebarSettings.value
   return !h && canManageNamespaces.value
 })
 const isAdminPage = computed(() => route.name.includes('admin.'))
@@ -329,17 +348,16 @@ function adminRoutes () {
   const routeName = route.name
   const pageName = routeName.startsWith('admin.modules.record') ? 'admin.modules.record.list' : 'admin.modules.edit'
   return [
-    { page: { pageID: 'modules', selfID: NoID, name: 'admin.modules', title: t('navigation.module'), visible: true }, children: [] },
+    { page: { pageID: 'modules', selfID: NoID, name: 'admin.modules', title: t('navigation.module'), visible: true, section: true }, children: [] },
     ...modules.value.map((m) => moduleWrap(m, pageName)),
-    { page: { pageID: 'pages', selfID: NoID, name: 'admin.pages', title: t('navigation.page'), visible: true }, children: [] },
+    { page: { pageID: 'pages', selfID: NoID, name: 'admin.pages', title: t('navigation.page'), visible: true, section: true }, children: [] },
     ...adminPageWrap(pages.value),
-    { page: { pageID: 'charts', selfID: NoID, name: 'admin.charts', title: t('navigation.chart'), visible: true }, children: [] },
+    { page: { pageID: 'charts', selfID: NoID, name: 'admin.charts', title: t('navigation.chart'), visible: true, section: true }, children: [] },
     ...charts.value.map(chartWrap),
-    { page: { pageID: 'rulechains', selfID: NoID, name: 'admin.rulechains', title: t('navigation.rulechains'), visible: true }, children: [] },
+    { page: { pageID: 'rulechains', selfID: NoID, name: 'admin.rulechains', title: t('navigation.rulechains'), visible: true, section: true }, children: [] },
     ...ruleChains.value.map(ruleChainWrap),
-    { page: { pageID: 'workflows', selfID: NoID, name: 'admin.workflows', title: t('navigation.workflows'), visible: true }, children: [] },
+    { page: { pageID: 'workflows', selfID: NoID, name: 'admin.workflows', title: t('navigation.workflows'), visible: true, section: true }, children: [] },
     ...workflows.value.map(workflowWrap),
-
   ]
 }
 
@@ -386,3 +404,42 @@ function getNamespaceLabel (value) {
   return value.name
 }
 </script>
+
+<style scoped>
+.ns-sidebar-header {
+  padding: 0 0.15rem 0.25rem;
+}
+
+.ns-name {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--bs-body-color, inherit);
+}
+
+.ns-edit-btn {
+  margin-top: -0.15rem;
+}
+
+.ns-switcher {
+  min-width: 0;
+}
+
+.ns-sticky {
+  z-index: 2;
+}
+
+.ns-mode-switch .btn {
+  font-size: 0.8125rem;
+}
+
+.ns-empty {
+  font-size: 0.875rem;
+}
+
+.sidebar-density-compact :deep(.c-input-search),
+.sidebar-density-compact :deep(.form-control) {
+  min-height: 2rem;
+  font-size: 0.8125rem;
+}
+</style>

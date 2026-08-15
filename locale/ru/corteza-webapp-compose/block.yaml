@@ -242,6 +242,35 @@ metric:
   metricDrillDown: Проваливание при нажатии на метрику
   defaultMetricLabel: Безымянная метрика
   likeRecordList: Отображать как запись
+  emptyPlaceholder: "—"
+  appearance:
+    label: Оформление
+    density: Плотность
+    densityOptions:
+      comfortable: Обычная
+      compact: Компактная
+    hideEmptyMetrics: Скрывать пустые метрики
+    showEmptyPlaceholder: Показывать заглушку для пустых значений
+    showEmptyPlaceholderDescription: Показывает тире, если у метрики нет значения
+    role: Роль метрики
+    roleDescription: Визуальная роль — как у полей блока «Запись», для единого вида страницы
+    roleOptions:
+      default: Обычная
+      title: Заголовок
+      badge: Бейдж
+      meta: Мета
+      hero: Крупная
+      balloon: Отображать в виде баллона
+      topK: Отображать в виде баллона
+    balloonFullWidth: Растягивать баллон на всю ширину
+    balloonFullWidthDescription: Если выключено, ширина баллона зависит от значения относительно других баллонов
+    sections: Секции
+    sectionsDescription: Сгруппируйте обычные метрики под заголовками
+    addSection: Добавить секцию
+    sectionTitle: Заголовок
+    sectionTitlePlaceholder: Название секции
+    sectionMetrics: Метрики
+    sectionMetricsPlaceholder: Выберите метрики
   drillDown:
     label: Проваливание
     description: If a record list is selected, it will be used to display the drill down data. If no record list is selected, the drill down data will be shown in a modal.
@@ -289,7 +318,19 @@ metric:
     backgroundColor: Цвет фона
     thresholds:
       label: Пороги цветов текста
-      description: Укажите какой вариант показывать если значение равно или больше порога
+      description: Укажите цвет и иконку, если значение равно или больше порога
+      valuePlaceholder: Порог
+      icon: Иконка
+      icons:
+        none: Без иконки
+        arrowUp: Стрелка вверх
+        arrowDown: Стрелка вниз
+        arrowRight: Стрелка вправо
+        alert: Алерт
+        alertCircle: Алерт (круг)
+    balloonThresholds:
+      label: Цвет баллона по значению
+      description: Цвет заливки и иконка баллона, если значение ≥ порога (берётся наибольший подходящий порог)
     color: Цвет текста
     labelColor: Цвет метки
     colorPicker: Выберите цвет
@@ -325,6 +366,34 @@ record:
     default: Default
     noWrap: No wrap
     wrap: Wrap
+  emptyPlaceholder: "—"
+  appearance:
+    label: Оформление
+    density: Плотность
+    densityOptions:
+      comfortable: Обычная
+      compact: Компактная
+    hideEmptyFields: Скрывать пустые поля
+    showEmptyPlaceholder: Показывать заглушку для пустых значений
+    showEmptyPlaceholderDescription: Показывает тире, если у поля нет значения
+    fieldRoles: Роли полей
+    fieldRolesDescription: Назначьте визуальные роли. Заголовок и подзаголовок — в шапке; бейджи и мета — отдельно.
+    field: Поле
+    role: Роль
+    roleOptions:
+      default: Обычное
+      title: Заголовок
+      subtitle: Подзаголовок
+      badge: Бейдж
+      meta: Мета
+      body: На всю ширину
+    sections: Секции
+    sectionsDescription: Сгруппируйте поля под заголовками. Поля вне секций остаются ниже.
+    addSection: Добавить секцию
+    sectionTitle: Заголовок
+    sectionTitlePlaceholder: Название секции
+    sectionFields: Поля
+    sectionFieldsPlaceholder: Выберите поля
   preview:
     blockNoRecord: Cannot render this block without a record
     fieldsFromModule: Single record block, displaying fields ({{0}}) from module {{1}}
@@ -557,7 +626,9 @@ recordList:
   modulePlaceholder: Выберите модуль
   moduleFootnote: Модули without a {{0}} can only be used in a record list as an inline editor
   moduleFieldsFootnote: Если поля не выбраны-отображаются поля по-умолчанию
-  noRecords: There are no records matching your request
+  noRecords: Нет записей по вашему запросу
+  empty:
+    title: Пока пусто
   pagination:
     next: Следующая
     prev: Предыдущая
@@ -651,6 +722,23 @@ recordList:
     addRecordOptions: При клике на кнопку "Добавить"
     textStyles: Стили текста
     configureWrappedFields: Выберите поля которые могут быть свернуты
+  appearance:
+    label: Оформление
+    compactRows: Компактные строки
+    alignNumbers: Числа справа
+    stickyHeader: Закрепить заголовок
+    showRowSignal: Колонка сигнала важности
+    rowValueTooltip: Тултип строки со значениями полей
+    signalField: Поле сигнала
+    rowHighlightField: Подсветка строки по полю
+    groupByField: Группировать по полю
+    sparklineField: Поле мини-графика
+    sparklineMax: Максимум для мини-графика
+    displayMode: Режим отображения
+    displayModeOptions:
+      table: Таблица
+      cards: Карточки
+      responsive: Таблица на десктопе, карточки на мобильном
   recordPage: Страница записи
   refField:
     footnote: Поле that links records with the parent record

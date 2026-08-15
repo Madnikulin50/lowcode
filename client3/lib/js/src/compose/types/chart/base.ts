@@ -411,6 +411,7 @@ export class BaseChart {
   defMetric (): Metric {
     return Object.assign({}, {
       formatting: defFormatData(),
+      valueLabelPosition: 'top' as const,
     })
   }
 

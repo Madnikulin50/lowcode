@@ -83,6 +83,10 @@ edit:
     fillArea: Fill area below the line
     showSymbol: Show data points
     fixTooltips: Always show labels
+    valueLabelPosition:
+      label: Label position
+      top: Above the bar
+      inside: Inside the bar
     options:
       label: Options
     function:

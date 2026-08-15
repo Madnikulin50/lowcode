@@ -83,6 +83,10 @@ edit:
     fillArea: Залить под графиком
     showSymbol: Отображать точки на графике
     fixTooltips: Всегда показывать метки
+    valueLabelPosition:
+      label: Позиция метки
+      top: Над столбиком
+      inside: Внутри столбика
     options:
       label: Свойства
     function:

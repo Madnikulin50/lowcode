@@ -28,7 +28,126 @@
       >
         <font-awesome-icon :icon="['fas', 'brain']" />
       </button>
+
+      <!-- Record-style layout -->
       <div
+        v-if="options.likeRecordList !== false"
+        class="rb mb-metrics px-3 pt-3"
+        :class="densityClass"
+      >
+        <!-- Title metrics -->
+        <div v-if="headerTitles.length" class="rb-header mb-3 pe-4">
+          <div
+            v-for="item in headerTitles"
+            :key="`title-${item.index}`"
+            class="mb-2"
+            :class="{ pointer: item.metric.drillDown?.enabled }"
+            @click="drillDown(item.metric, item.index)"
+          >
+            <metric-item
+              v-for="(v, vi) in item.values"
+              :key="vi"
+              :metric="item.metric"
+              :options="options"
+              :hover="!!item.metric.drillDown?.enabled"
+              :value="v"
+            />
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div v-if="headerBadges.length" class="rb-badges d-flex flex-wrap gap-2 mb-3">
+          <div
+            v-for="item in headerBadges"
+            :key="`badge-${item.index}`"
+            :class="{ pointer: item.metric.drillDown?.enabled }"
+            @click="drillDown(item.metric, item.index)"
+          >
+            <metric-item
+              v-for="(v, vi) in item.values"
+              :key="vi"
+              :metric="item.metric"
+              :options="options"
+              :hover="!!item.metric.drillDown?.enabled"
+              :value="v"
+            />
+          </div>
+        </div>
+
+        <!-- Meta strip -->
+        <div v-if="metaItems.length" class="rb-meta mb-3">
+          <div
+            v-for="item in metaItems"
+            :key="`meta-${item.index}`"
+            :class="{ pointer: item.metric.drillDown?.enabled }"
+            @click="drillDown(item.metric, item.index)"
+          >
+            <metric-item
+              v-for="(v, vi) in item.values"
+              :key="vi"
+              :metric="item.metric"
+              :options="options"
+              :hover="!!item.metric.drillDown?.enabled"
+              :value="v"
+            />
+          </div>
+        </div>
+
+        <!-- Hero metrics -->
+        <div
+          v-for="item in heroItems"
+          :key="`hero-${item.index}`"
+          class="mb-3"
+          :class="{ pointer: item.metric.drillDown?.enabled }"
+          @click="drillDown(item.metric, item.index)"
+        >
+          <metric-item
+            v-for="(v, vi) in item.values"
+            :key="vi"
+            :metric="item.metric"
+            :options="options"
+            :hover="!!item.metric.drillDown?.enabled"
+            :value="v"
+          />
+        </div>
+
+        <!-- Sections / default body -->
+        <template v-for="(section, sIdx) in displaySections" :key="`section-${sIdx}`">
+          <div v-if="section.items.length" class="rb-section" :class="{ 'mb-3': sIdx < displaySections.length - 1 }">
+            <h6 v-if="section.title" class="rb-section-title text-muted text-uppercase">
+              {{ section.title }}
+            </h6>
+            <div :class="sectionLayoutClass">
+              <div
+                v-for="item in section.items"
+                :key="`body-${item.index}`"
+                class="field-container"
+                :class="[
+                  columnWrapClass,
+                  bodyColClass(item.metric),
+                  options.density === 'compact' ? 'mb-2' : 'mb-3',
+                  { pointer: item.metric.drillDown?.enabled },
+                ]"
+                @click="drillDown(item.metric, item.index)"
+              >
+                <metric-item
+                  v-for="(v, vi) in item.values"
+                  :key="vi"
+                  :metric="withTopKMeta(item)"
+                  :options="options"
+                  :hover="!!item.metric.drillDown?.enabled"
+                  :value="v"
+                  :bar-ratio="barRatioFor(item, section.items)"
+                />
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Legacy centered SVG layout -->
+      <div
+        v-else
         class="fixed-corner-container"
         :class="fieldLayoutClass"
       >
@@ -37,31 +156,29 @@
           :key="mi"
           class="d-flex align-items-center justify-content-center overflow-hidden"
           :class="{
-            'h-100': options.likeRecordList !== true && m.valueStyle.notFitVertical !== true,
-            'px-3': options.likeRecordList === true,
-            'pt-3': options.likeRecordList === true && mi === 0
+            'h-100': m.valueStyle?.notFitVertical !== true,
+            'px-3': false,
           }"
         >
-        <div
-          v-for="(v, i) in formatResponse(m, mi)"
-          :key="i"
-          class="py-1"
-          :class="{
-            'px-2': options.likeRecordList !== true,
-            'pointer': m.drillDown.enabled,
-            'w-100': options.likeRecordList === true || m.valueStyle.notFitHorizontal !== true,
-            'h-100': (options.likeRecordList !== true && m.valueStyle.notFitVertical !== true)
-          }"
-          @click="drillDown(m, mi)"
-        >
-          <metric-item
-            :metric="m"
-            :options="options"
-            :hover="m.drillDown.enabled"
-            :theme-settings="themeSettings"
-            :value="v"
-          />
-        </div>
+          <div
+            v-for="(v, i) in formatResponse(m, mi)"
+            :key="i"
+            class="py-1 px-2"
+            :class="{
+              pointer: m.drillDown?.enabled,
+              'w-100': m.valueStyle?.notFitHorizontal !== true,
+              'h-100': m.valueStyle?.notFitVertical !== true,
+            }"
+            @click="drillDown(m, mi)"
+          >
+            <metric-item
+              :metric="withTopKMeta({ metric: m, index: mi, values: formatResponse(m, mi), role: metricRole(m) })"
+              :options="options"
+              :hover="!!m.drillDown?.enabled"
+              :value="v"
+              :bar-ratio="barRatioFor({ metric: m, index: mi, values: formatResponse(m, mi), role: metricRole(m) })"
+            />
+          </div>
         </div>
       </div>
     </template>
@@ -70,7 +187,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'block' } })
-import { ref, computed, watch, onMounted, onBeforeUnmount, inject, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { debounce } from 'lodash'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
@@ -102,11 +219,110 @@ const emit = defineEmits(['errors'])
 const $auth = inject('$auth')
 const $ComposeAPI = inject('$ComposeAPI')
 
-const { options, isProcessing, processing, browserLocale, themeSettings, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
+const { options, isProcessing, processing, browserLocale, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
 
 const fieldLayoutClass = computed(() => {
   const classes = { default: 'd-flex flex-column', noWrap: 'd-flex gap-2', wrap: 'row g-0' }
   return classes[options.value.recordFieldLayoutOption]
+})
+
+const densityClass = computed(() =>
+  options.value.density === 'compact' ? 'rb-density-compact' : 'rb-density-comfortable',
+)
+
+const sectionLayoutClass = computed(() => {
+  const classes = { default: 'd-flex flex-column', noWrap: 'd-flex gap-2 flex-wrap', wrap: 'row g-2' }
+  return classes[options.value.recordFieldLayoutOption] || classes.default
+})
+
+const columnWrapClass = computed(() => {
+  if (options.value.recordFieldLayoutOption === 'noWrap') return 'field-col'
+  return ''
+})
+
+function bodyColClass (metric) {
+  if (isBalloonRole(metric)) return 'col-12'
+  if (options.value.recordFieldLayoutOption === 'wrap') return 'col-md-6'
+  return ''
+}
+
+function metricRole (m) {
+  const r = m?.role || 'default'
+  return r === 'topK' ? 'balloon' : r
+}
+
+function isBalloonRole (m) {
+  return metricRole(m) === 'balloon'
+}
+
+function numericAbs (item) {
+  const raw = item?.values?.[0]?.value
+  const n = typeof raw === 'number' ? raw : Number(String(raw).replace(/[^\d.-]/g, ''))
+  return Number.isFinite(n) ? Math.abs(n) : 0
+}
+
+function barRatioFor (item, peers) {
+  if (!isBalloonRole(item.metric)) return 1
+  const list = (peers || preparedMetrics.value).filter(i => isBalloonRole(i.metric))
+  const max = Math.max(0, ...list.map(numericAbs))
+  if (!max) return 1
+  return Math.min(1, numericAbs(item) / max)
+}
+
+function withTopKMeta (item) {
+  const m = item.metric || {}
+  if (!isBalloonRole(m)) return m
+  const list = preparedMetrics.value.filter(i => isBalloonRole(i.metric))
+  const balloonIndex = Math.max(0, list.findIndex(i => i.index === item.index))
+  return { ...m, role: 'balloon', _balloonIndex: balloonIndex, _topKIndex: balloonIndex }
+}
+
+function isMetricEmpty (values) {
+  if (!values?.length) return true
+  return values.every(({ value }) => value === undefined || value === null || value === '' || (typeof value === 'number' && Number.isNaN(value)))
+}
+
+const preparedMetrics = computed(() => {
+  return (options.value.metrics || []).map((metric, index) => {
+    const values = formatResponse(metric, index)
+    return { metric, index, values, role: metricRole(metric), empty: isMetricEmpty(values) }
+  }).filter(item => {
+    if (!item.metric.moduleID && !item.values.length) return false
+    if (options.value.hideEmptyMetrics && item.empty) return false
+    return true
+  })
+})
+
+const headerTitles = computed(() => preparedMetrics.value.filter(i => i.role === 'title'))
+const headerBadges = computed(() => preparedMetrics.value.filter(i => i.role === 'badge'))
+const metaItems = computed(() => preparedMetrics.value.filter(i => i.role === 'meta'))
+const heroItems = computed(() => preparedMetrics.value.filter(i => i.role === 'hero'))
+
+const bodyItems = computed(() => {
+  const special = new Set(['title', 'badge', 'meta', 'hero'])
+  return preparedMetrics.value.filter(i => !special.has(i.role))
+})
+
+const displaySections = computed(() => {
+  const body = bodyItems.value
+  const sections = (options.value.sections || []).filter(s => s && (s.title || (s.metrics && s.metrics.length)))
+  if (!sections.length) {
+    return [{ title: '', items: body }]
+  }
+
+  const used = new Set()
+  const result = []
+  for (const section of sections) {
+    const idxs = new Set((section.metrics || []).map(Number))
+    const items = body.filter(i => idxs.has(i.index))
+    items.forEach(i => used.add(i.index))
+    if (items.length || section.title) {
+      result.push({ title: section.title || '', items })
+    }
+  }
+  const rest = body.filter(i => !used.has(i.index))
+  if (rest.length) result.push({ title: '', items: rest })
+  return result.length ? result : [{ title: '', items: body }]
 })
 
 const error = ref(undefined)
@@ -162,6 +378,7 @@ async function refresh () {
       if (m.moduleID) {
         const auxM = { ...m }
         if (auxM.filter && !props.record && (auxM.filter.includes('${record') || auxM.filter.includes('${ownerID}'))) {
+          rtr.push([])
           continue
         }
         if (auxM.filter) {
@@ -178,6 +395,8 @@ async function refresh () {
         }
         const vals = await props.block.fetch({ m: auxM }, reporter)
         rtr.push(vals)
+      } else {
+        rtr.push([])
       }
     }
     reports.value = rtr
@@ -189,7 +408,7 @@ async function refresh () {
 }
 
 function drillDown ({ label: name = '', filter, moduleID, drillDown }, metricIndex) {
-  if (!drillDown.enabled) return
+  if (!drillDown?.enabled) return
   if (drillDown.blockID) {
     const { pageID = NoID } = props.page
     const { recordID = NoID } = props.record || {}
@@ -229,7 +448,6 @@ function promptAiChat () {
       case 'en-US': prompt = 'What is this? '; break
       case 'ru-RU': prompt = 'Что это за показатели? Зачем о чем они говорят? '; break
     }
-
   }
   prompt += '\r\n '
   prompt += page.title + '\r\n' + block.title + '\r\n'
@@ -263,4 +481,34 @@ function destroyEvents () {
   transform: translateY(-50%);
   z-index: 10;
 }
+
+.field-col > * { margin-left: 1rem; margin-right: 1rem; }
+
+.rb-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.08));
+  border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.08));
+}
+
+.rb-section-title {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.rb-density-compact .rb-section-title { margin-bottom: 0.5rem; }
+.rb-density-compact .rb-meta { gap: 0.5rem 1rem; padding: 0.4rem 0; }
+.rb-density-compact :deep(.rb-title) { font-size: 1.25rem; }
+.rb-density-compact :deep(.mb-metric-hero-value) { font-size: 1.5rem; }
+.rb-density-compact :deep(.mb-balloon) { padding: 0.35rem 0.9rem; }
+
+.field-container:has(.mb-balloon) {
+  margin-bottom: 0.5rem !important;
+}
+
+.pointer { cursor: pointer; }
 </style>

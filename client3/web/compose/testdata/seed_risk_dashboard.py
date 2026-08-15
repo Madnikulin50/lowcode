@@ -303,6 +303,35 @@ def load_module_fields(dsn, module_id, names):
     return out
 
 
+def rl_look(**extra):
+    base = {
+        "hideAddButton": True,
+        "hideImportButton": True,
+        "hideHeader": False,
+        "hidePaging": False,
+        "hideSearch": True,
+        "hideSorting": False,
+        "hideFiltering": True,
+        "editable": False,
+        "enableRecordPageNavigation": False,
+        "fullPageNavigation": False,
+        "inlineRecordEdit": False,
+        "recordSelectorDisplay": "",
+        "magnifyOption": "modal",
+        "liveFilterEnabled": False,
+        "selectable": False,
+        "allowExport": False,
+        "compactRows": True,
+        "alignNumbers": True,
+        "stickyHeader": True,
+        "showRowSignal": True,
+        "displayMode": "responsive",
+        "sparklineMax": 30,
+    }
+    base.update(extra)
+    return base
+
+
 def main():
     env = load_env(ENV_PATH)
     dsn = dsn_local(env["DB_DSN"])
@@ -401,6 +430,41 @@ DELETE FROM compose_module WHERE id = {MOD_SLICE} OR handle = 'Risk_slice';
         "product_name", "store_id", "health_level", "days_of_cover",
         "stock_quantity", "reorder_qty", "order_value",
     ])
+
+    # Polish field labels + health_level badges (Select)
+    health_opts = {
+        "hint": {"view": ""},
+        "prefix": "",
+        "suffix": "",
+        "options": [
+            {"text": "Критический", "style": {"textColor": "light", "backgroundColor": "danger"}, "value": "critical"},
+            {"text": "Недосток", "style": {"textColor": "dark", "backgroundColor": "warning"}, "value": "understock"},
+            {"text": "Норма", "style": {"textColor": "light", "backgroundColor": "success"}, "value": "ok"},
+            {"text": "Избыток", "style": {"textColor": "light", "backgroundColor": "info"}, "value": "overstock"},
+        ],
+        "selectType": "default",
+        "description": {"view": ""},
+        "displayType": "badge",
+        "badgeGradient": True,
+        "multiDelimiter": "\n",
+        "isUniqueMultiValue": False,
+    }
+    psql(dsn, f"""
+UPDATE compose_module_field SET kind = 'Select', label = 'Здоровье', options = {lit(health_opts)}
+WHERE rel_module = {MOD_FACT} AND name = 'health_level';
+UPDATE compose_module_field SET label = 'Магазин' WHERE rel_module = {MOD_INC} AND name = 'store_id';
+UPDATE compose_module_field SET label = 'Магазин' WHERE rel_module = {MOD_FACT} AND name = 'store_id';
+UPDATE compose_module_field SET label = 'Товар' WHERE rel_module = {MOD_FACT} AND name = 'product_name';
+UPDATE compose_module_field SET label = 'DOC, дн.' WHERE rel_module = {MOD_FACT} AND name = 'days_of_cover';
+""")
+    # reload after label/kind change
+    inc_rl = load_module_fields(dsn, MOD_INC, [
+        "dt", "store_id", "criticality", "incident_status", "incident_type",
+    ])
+    fact_rl = load_module_fields(dsn, MOD_FACT, [
+        "product_name", "store_id", "health_level", "days_of_cover",
+        "stock_quantity", "reorder_qty", "order_value",
+    ])
     store_rl = []
     for fid, name, kind, label, options in slice_fields:
         if name in (
@@ -479,20 +543,15 @@ DELETE FROM compose_module WHERE id = {MOD_SLICE} OR handle = 'Risk_slice';
             "prefilter": "slice_kind = 'store'",
             "presort": "risk_score DESC",
             "perPage": 20,
-            "hideAddButton": True,
-            "hideImportButton": True,
-            "hideHeader": False,
-            "hidePaging": False,
-            "hideSearch": False,
-            "hideSorting": False,
-            "hideFiltering": False,
-            "editable": False,
-            "enableRecordPageNavigation": False,
-            "fullPageNavigation": False,
-            "inlineRecordEdit": False,
-            "recordSelectorDisplay": "",
-            "magnifyOption": "modal",
-            "liveFilterEnabled": False,
+            **rl_look(
+                signalField="risk_score",
+                rowHighlightField="risk_score",
+                showRowSignal=True,
+                groupByField="",
+                sparklineField="risk_score",
+                sparklineMax=100,
+                displayMode="responsive",
+            ),
         }),
         wrap_block("RecordList", "Открытые и эскалированные инциденты", 9, [0, 142, 48, 32], {
             "moduleID": str(MOD_INC),
@@ -500,20 +559,13 @@ DELETE FROM compose_module WHERE id = {MOD_SLICE} OR handle = 'Risk_slice';
             "prefilter": "incident_status = 'Open' OR incident_status = 'In Progress' OR incident_status = 'Escalated'",
             "presort": "dt DESC",
             "perPage": 25,
-            "hideAddButton": True,
-            "hideImportButton": True,
-            "hideHeader": False,
-            "hidePaging": False,
-            "hideSearch": False,
-            "hideSorting": False,
-            "hideFiltering": False,
-            "editable": False,
-            "enableRecordPageNavigation": False,
-            "fullPageNavigation": False,
-            "inlineRecordEdit": False,
-            "recordSelectorDisplay": "",
-            "magnifyOption": "modal",
-            "liveFilterEnabled": False,
+            **rl_look(
+                signalField="criticality",
+                rowHighlightField="criticality",
+                groupByField="incident_status",
+                sparklineField="",
+                displayMode="responsive",
+            ),
         }),
         wrap_block("RecordList", "Товары / остатки в риске", 10, [0, 174, 48, 32], {
             "moduleID": str(MOD_FACT),
@@ -521,20 +573,14 @@ DELETE FROM compose_module WHERE id = {MOD_SLICE} OR handle = 'Risk_slice';
             "prefilter": "health_level = 'understock' OR health_level = 'critical'",
             "presort": "days_of_cover",
             "perPage": 25,
-            "hideAddButton": True,
-            "hideImportButton": True,
-            "hideHeader": False,
-            "hidePaging": False,
-            "hideSearch": False,
-            "hideSorting": False,
-            "hideFiltering": False,
-            "editable": False,
-            "enableRecordPageNavigation": False,
-            "fullPageNavigation": False,
-            "inlineRecordEdit": False,
-            "recordSelectorDisplay": "",
-            "magnifyOption": "modal",
-            "liveFilterEnabled": False,
+            **rl_look(
+                signalField="health_level",
+                rowHighlightField="health_level",
+                groupByField="health_level",
+                sparklineField="days_of_cover",
+                sparklineMax=21,
+                displayMode="responsive",
+            ),
         }),
     ]
 

@@ -17,6 +17,10 @@ editor:
       title: Sidebar
       hide-namespace-list: Скрыть список пространств
       hide-namespace-list-link: Hide link to list of все пространства
+      density: Плотность
+      densityOptions:
+        comfortable: Обычная
+        compact: Компактная
     record-toolbar:
       title: Панель инструментов записи
       hide-submit: Hide submit button

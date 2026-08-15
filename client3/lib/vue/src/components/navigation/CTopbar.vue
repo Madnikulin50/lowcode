@@ -129,7 +129,7 @@
       >
         <button
           class="btn dropdown-toggle d-flex align-items-center no-caret nav-icon"
-          :class="avatarExists ? 'btn-link p-0 rounded-circle border' : 'btn-outline-light'"
+          :class="avatarExists ? 'btn-link p-0 rounded-circle border' : 'btn-outline-light text-dark'"
           data-bs-toggle="dropdown"
           data-test-id="dropdown-profile"
           aria-expanded="false"

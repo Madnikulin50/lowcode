@@ -9,6 +9,13 @@ interface FieldCondition {
   clearOnHide?: boolean;
 }
 
+export type RecordFieldRole = 'default' | 'title' | 'subtitle' | 'badge' | 'meta' | 'body'
+
+export interface RecordSection {
+  title: string;
+  fields: string[];
+}
+
 interface Options {
   fields: unknown[];
   fieldConditions: FieldCondition[];
@@ -24,6 +31,16 @@ interface Options {
   recordFieldLayoutOption: string;
   inlineRecordEditAllowAddField: boolean;
   viewStyle: object;
+  /** Field display density */
+  density: 'comfortable' | 'compact';
+  /** Hide fields with empty values */
+  hideEmptyFields: boolean;
+  /** Show placeholder when value is empty (if not hidden) */
+  showEmptyPlaceholder: boolean;
+  /** Role per field name: title | subtitle | badge | meta | body | default */
+  fieldRoles: { [fieldName: string]: RecordFieldRole };
+  /** Named field groups for the record body */
+  sections: RecordSection[];
 }
 
 const defaults: Readonly<Options> = Object.freeze({
@@ -40,13 +57,23 @@ const defaults: Readonly<Options> = Object.freeze({
   inlineRecordEditAllowAddField: false,
   horizontalFieldLayoutEnabled: false,
   recordFieldLayoutOption: 'default',
-  viewStyle:{}
+  viewStyle: {},
+  density: 'comfortable',
+  hideEmptyFields: false,
+  showEmptyPlaceholder: true,
+  fieldRoles: {},
+  sections: [],
 })
 
 export class PageBlockRecord extends PageBlock {
   readonly kind = kind
 
-  options: Options = { ...defaults }
+  options: Options = {
+    ...defaults,
+    fieldRoles: {},
+    sections: [],
+    viewStyle: {},
+  }
 
   constructor (i?: PageBlockInput) {
     super(i)
@@ -56,8 +83,8 @@ export class PageBlockRecord extends PageBlock {
   applyOptions (o?: Partial<Options>): void {
     if (!o) return
 
-    Apply(this.options, o, String, 'magnifyOption', 'recordSelectorDisplayOption', 'recordSelectorAddRecordDisplayOption', 'referenceField', 'referenceModuleID', 'recordFieldLayoutOption')
-    Apply(this.options, o, Boolean, 'recordSelectorShowAddRecordButton', 'inlineRecordEditEnabled', 'horizontalFieldLayoutEnabled', 'inlineRecordEditAllowAddField', 'clearConditionalFieldsOnHide')
+    Apply(this.options, o, String, 'magnifyOption', 'recordSelectorDisplayOption', 'recordSelectorAddRecordDisplayOption', 'referenceField', 'referenceModuleID', 'recordFieldLayoutOption', 'density')
+    Apply(this.options, o, Boolean, 'recordSelectorShowAddRecordButton', 'inlineRecordEditEnabled', 'horizontalFieldLayoutEnabled', 'inlineRecordEditAllowAddField', 'clearConditionalFieldsOnHide', 'hideEmptyFields', 'showEmptyPlaceholder')
 
     if (o.fields) {
       this.options.fields = o.fields
@@ -66,9 +93,21 @@ export class PageBlockRecord extends PageBlock {
     if (o.fieldConditions) {
       this.options.fieldConditions = o.fieldConditions
     }
-      if (o.viewStyle) {
-          this.options.viewStyle = o.viewStyle
-      }
+
+    if (o.viewStyle) {
+      this.options.viewStyle = o.viewStyle
+    }
+
+    if (o.fieldRoles && typeof o.fieldRoles === 'object') {
+      this.options.fieldRoles = { ...o.fieldRoles }
+    }
+
+    if (Array.isArray(o.sections)) {
+      this.options.sections = o.sections.map(s => ({
+        title: s?.title || '',
+        fields: Array.isArray(s?.fields) ? [...s.fields] : [],
+      }))
+    }
   }
 }
 

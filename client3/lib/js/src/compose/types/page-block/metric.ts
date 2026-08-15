@@ -7,6 +7,14 @@ const kind = 'Metric'
 
 type Reporter = (p: ReporterParams) => Promise<any>
 
+export type MetricRole = 'default' | 'title' | 'badge' | 'meta' | 'hero' | 'balloon' | 'topK'
+
+export interface MetricSection {
+  title: string;
+  /** Indices into options.metrics */
+  metrics: number[];
+}
+
 interface DrillDown {
   enabled: boolean;
   blockID: string;
@@ -20,16 +28,16 @@ interface ReporterParams {
   dimensions: string;
 }
 
-
 interface Threshold {
-    value: number;
-    variant: string;
+  value: number;
+  variant: string;
+  /** Optional icon when value matches this threshold: arrow-up|arrow-down|arrow-right|alert|alert-circle|'' */
+  icon?: string;
 }
-
 
 interface Style {
   color: string;
-  colorThresholds:  Threshold[];
+  colorThresholds: Threshold[];
   backgroundColor: string;
   fontSize?: string;
 }
@@ -48,8 +56,12 @@ interface Metric {
   prefix?: string;
   suffix?: string;
   transformFx?: string;
+  showLabel?: boolean;
+  /** Visual role — aligns with Record field roles */
+  role?: MetricRole;
+  /** When role is balloon — stretch pill to full block width */
+  balloonFullWidth?: boolean;
 
-  // @todo allow conditional styles; eg. if value is < 10 render with bold red text
   valueStyle?: Style;
   drillDown: DrillDown;
 }
@@ -68,6 +80,9 @@ const defaultMetric: Readonly<Metric> = Object.freeze({
   prefix: '',
   suffix: '',
   transformFx: '',
+  showLabel: false,
+  role: 'default',
+  balloonFullWidth: false,
 
   valueStyle: {
     backgroundColor: '#FFFFFF00',
@@ -89,26 +104,39 @@ interface Options {
   metrics: Array<Metric>;
   refreshRate: number;
   showRefresh: boolean;
-    likeRecordList: boolean;
-    recordFieldLayoutOption: string;
-    horizontalFieldLayoutEnabled: boolean;
+  /** Render metrics like Record fields (shared visual language) */
+  likeRecordList: boolean;
+  recordFieldLayoutOption: string;
+  horizontalFieldLayoutEnabled: boolean;
   magnifyOption: string;
+  density: 'comfortable' | 'compact';
+  hideEmptyMetrics: boolean;
+  showEmptyPlaceholder: boolean;
+  sections: MetricSection[];
 }
 
 const defaults: Readonly<Options> = Object.freeze({
   metrics: [],
   refreshRate: 0,
   showRefresh: false,
-  likeRecordList: false,
-    recordFieldLayoutOption: 'default',
-    horizontalFieldLayoutEnabled: false,
+  likeRecordList: true,
+  recordFieldLayoutOption: 'default',
+  horizontalFieldLayoutEnabled: false,
   magnifyOption: '',
+  density: 'comfortable',
+  hideEmptyMetrics: false,
+  showEmptyPlaceholder: true,
+  sections: [],
 })
 
 export class PageBlockMetric extends PageBlock {
   readonly kind = kind
 
-  options: Options = { ...defaults }
+  options: Options = {
+    ...defaults,
+    metrics: [],
+    sections: [],
+  }
 
   constructor (i?: PageBlockInput) {
     super(i)
@@ -118,13 +146,18 @@ export class PageBlockMetric extends PageBlock {
   applyOptions (o?: Partial<Options>): void {
     if (!o) return
     Apply(this.options, o, Number, 'refreshRate')
-    Apply(this.options, o, Boolean, 'showRefresh')
-      Apply(this.options, o, String, 'recordFieldLayoutOption')
-      Apply(this.options, o, Boolean, 'horizontalFieldLayoutEnabled')
-    Apply(this.options, o, Boolean, 'likeRecordList')
-    Apply(this.options, o, String, 'magnifyOption')
+    Apply(this.options, o, Boolean, 'showRefresh', 'horizontalFieldLayoutEnabled', 'likeRecordList', 'hideEmptyMetrics', 'showEmptyPlaceholder')
+    Apply(this.options, o, String, 'recordFieldLayoutOption', 'magnifyOption', 'density')
+
     if (o.metrics) {
       this.options.metrics = o.metrics.map((m) => merge({}, defaultMetric, m))
+    }
+
+    if (Array.isArray(o.sections)) {
+      this.options.sections = o.sections.map(s => ({
+        title: s?.title || '',
+        metrics: Array.isArray(s?.metrics) ? s.metrics.map(Number).filter(n => Number.isFinite(n)) : [],
+      }))
     }
   }
 
@@ -161,12 +194,11 @@ export class PageBlockMetric extends PageBlock {
     let metrics = ''
 
     if (operation && metricField && metricField !== 'count') {
-        if (metricField !== 'number_expression') {
-            metrics = `${operation}(${metricField}) AS rp`
-        } else {
-            metrics = `(${expression}) AS rp`
-        }
-
+      if (metricField !== 'number_expression') {
+        metrics = `${operation}(${metricField}) AS rp`
+      } else {
+        metrics = `(${expression}) AS rp`
+      }
     }
 
     return {

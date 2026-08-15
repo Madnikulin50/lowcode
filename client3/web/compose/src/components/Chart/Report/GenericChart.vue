@@ -364,6 +364,22 @@
               </label>
             </div>
 
+            <div
+              v-if="metric.fixTooltips && ['bar', 'line', 'scatter'].includes(metric.type)"
+              class="mt-2 mb-2"
+            >
+              <label class="form-label text-primary">
+                {{ $t('edit.metric.valueLabelPosition.label') }}
+              </label>
+              <select
+                v-model="metric.valueLabelPosition"
+                class="form-select form-control"
+              >
+                <option value="top">{{ $t('edit.metric.valueLabelPosition.top') }}</option>
+                <option value="inside">{{ $t('edit.metric.valueLabelPosition.inside') }}</option>
+              </select>
+            </div>
+
             <div class="form-check">
               <input
                 v-if="hasRelativeDisplay(metric)"
@@ -1114,10 +1130,13 @@ watch(() => props.report, (r) => {
       }
     }
 
-    // Line charts show data points by default
+    // Line charts show data points by default; value labels default above the bar
     r.metrics?.forEach((m) => {
       if (m.type === 'line' && m.showSymbol === undefined) {
         m.showSymbol = true
+      }
+      if (m.valueLabelPosition === undefined) {
+        m.valueLabelPosition = 'top'
       }
       if (m.type === 'gantt') {
         if (!m.startField) m.startField = 'start_date_planned'

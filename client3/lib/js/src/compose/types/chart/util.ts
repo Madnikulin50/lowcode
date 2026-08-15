@@ -74,6 +74,8 @@ export interface Metric {
   axisType?: string;
   field?: string;
   fixTooltips?: boolean;
+  /** Where to place value labels when fixTooltips is on: 'top' (outside) or 'inside'. Default 'top'. */
+  valueLabelPosition?: 'top' | 'inside';
   relativeValue?: boolean;
   cumulative?: boolean;
   type?: ChartType;

@@ -62,6 +62,84 @@
 
       <hr>
 
+      <div>
+        <h5 class="mb-3">{{ $t('recordList.appearance.label') }}</h5>
+        <div class="row">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.compactRows') }}</label>
+              <c-input-checkbox v-model="options.compactRows" switch :labels="checkboxLabel" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.alignNumbers') }}</label>
+              <c-input-checkbox v-model="options.alignNumbers" switch :labels="checkboxLabel" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.stickyHeader') }}</label>
+              <c-input-checkbox v-model="options.stickyHeader" switch :labels="checkboxLabel" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.showRowSignal') }}</label>
+              <c-input-checkbox v-model="options.showRowSignal" switch :labels="checkboxLabel" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.rowValueTooltip') }}</label>
+              <c-input-checkbox v-model="options.rowValueTooltip" switch :labels="checkboxLabel" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.displayMode') }}</label>
+              <select v-model="options.displayMode" class="form-select form-control">
+                <option value="table">{{ $t('recordList.appearance.displayModeOptions.table') }}</option>
+                <option value="cards">{{ $t('recordList.appearance.displayModeOptions.cards') }}</option>
+                <option value="responsive">{{ $t('recordList.appearance.displayModeOptions.responsive') }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.signalField') }}</label>
+              <c-input-select v-model="options.signalField" :options="appearanceFields" label="label" :reduce="f => f.name" :placeholder="$t('label.none')" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.rowHighlightField') }}</label>
+              <c-input-select v-model="options.rowHighlightField" :options="appearanceFields" label="label" :reduce="f => f.name" :placeholder="$t('label.none')" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.groupByField') }}</label>
+              <c-input-select v-model="options.groupByField" :options="appearanceFields" label="label" :reduce="f => f.name" :placeholder="$t('label.none')" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.sparklineField') }}</label>
+              <c-input-select v-model="options.sparklineField" :options="numberFields" label="label" :reduce="f => f.name" :placeholder="$t('label.none')" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.sparklineMax') }}</label>
+              <input v-model.number="options.sparklineMax" type="number" min="1" class="form-control" :disabled="!options.sparklineField" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
       <div v-if="options.editable" class="">
         <h5 class="mb-3">{{ $t('recordList.record.inlineEditor') }}</h5>
         <div v-if="recordListModule && options.editable" class="mb-3">
@@ -515,6 +593,18 @@ const parentFields = computed(() => {
 const positionFields = computed(() => {
   if (!recordListModule.value) return []
   return recordListModule.value.fields.filter(({ kind, isMulti }) => kind === 'Number' && !isMulti)
+})
+
+const appearanceFields = computed(() => {
+  if (!recordListModule.value) return []
+  return recordListModule.value.fields.map(f => ({ name: f.name, label: f.label || f.name }))
+})
+
+const numberFields = computed(() => {
+  if (!recordListModule.value) return []
+  return recordListModule.value.fields
+    .filter(({ kind, isMulti }) => kind === 'Number' && !isMulti)
+    .map(f => ({ name: f.name, label: f.label || f.name }))
 })
 
 const isInlineEditorAllowed = computed(() => !!recordListModule.value)
