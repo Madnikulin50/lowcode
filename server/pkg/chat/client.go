@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -18,6 +19,7 @@ import (
 	"github.com/cloudwego/eino-ext/components/model/ollama"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -29,15 +31,31 @@ const (
 type (
 	StreamFunc func(token string, reason string, done bool) error
 
+	// StatusFunc reports model lifecycle events over the chat stream
+	// (e.g. "warming", "ready") so the UI can show a warmup indicator.
+	StatusFunc func(status string) error
+
 	Client struct {
 		cm    *ollama.ChatModel
 		model string
 	}
 )
 
+const (
+	StatusWarming = "warming"
+	StatusReady   = "ready"
+
+	// WarmUpTimeout covers cold model load + a 1-token ping. Generation
+	// timeout (NewClient HTTPClient) starts only after WarmUp returns.
+	WarmUpTimeout = 10 * time.Minute
+)
+
+type statusCtxKey struct{}
+
 var (
 	toolsCapMu    sync.RWMutex
 	toolsCapCache = map[string]bool{}
+	warmGroup     singleflight.Group
 )
 
 // Known families that support Ollama native tool calling when /api/show is
@@ -143,9 +161,7 @@ func NewClient(model string) (*Client, error) {
 			d := 30 * time.Minute
 			return &d
 		}(),
-		HTTPClient: &http.Client{
-			Timeout: 3 * time.Minute,
-		},
+		HTTPClient: ollamaHTTPClient(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ollama chat model: %w", err)
@@ -153,14 +169,129 @@ func NewClient(model string) (*Client, error) {
 	return &Client{cm: cm, model: model}, nil
 }
 
+// ollamaHTTPClient has no overall Timeout: thinking models (qwen3, deepseek-r1)
+// can spend several minutes on reasoning after warmup. The SSE request
+// context still cancels when the browser disconnects.
+// ResponseHeaderTimeout covers a hung Ollama before the first byte.
+func ollamaHTTPClient() *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.ResponseHeaderTimeout = 10 * time.Minute
+	return &http.Client{
+		Timeout:   0,
+		Transport: transport,
+	}
+}
+
+// IsTimeout reports whether err is an HTTP/context deadline.
+func IsTimeout(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, os.ErrDeadlineExceeded) {
+		return true
+	}
+	var ne net.Error
+	if errors.As(err, &ne) && ne.Timeout() {
+		return true
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "Client.Timeout exceeded") ||
+		strings.Contains(msg, "context deadline exceeded")
+}
+
+// ContextWithStatus attaches a StatusFunc used by EnsureWarm to push
+// warmup progress to SSE clients.
+func ContextWithStatus(ctx context.Context, fn StatusFunc) context.Context {
+	if fn == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, statusCtxKey{}, fn)
+}
+
+func EmitStatus(ctx context.Context, status string) {
+	if status == "" {
+		return
+	}
+	fn, _ := ctx.Value(statusCtxKey{}).(StatusFunc)
+	if fn == nil {
+		return
+	}
+	_ = fn(status)
+}
+
+func (c *Client) Model() string {
+	return c.model
+}
+
+// IsModelLoaded reports whether Ollama currently has the model in memory.
+func IsModelLoaded(model string) bool {
+	if model == "" {
+		model = DefaultModelName()
+	}
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(ollamaURL() + "/api/ps")
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return false
+	}
+	var ps struct {
+		Models []struct {
+			Name string `json:"name"`
+		} `json:"models"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&ps); err != nil {
+		return false
+	}
+	want := strings.ToLower(strings.TrimSpace(model))
+	wantBase := modelBase(model)
+	for _, m := range ps.Models {
+		got := strings.ToLower(strings.TrimSpace(m.Name))
+		if got == want || modelBase(m.Name) == wantBase {
+			return true
+		}
+	}
+	return false
+}
+
 // WarmUp forces Ollama to load the model into memory so that the first
 // real chat message is not delayed by model loading. num_predict is limited
-// to 1 token so the request completes in seconds and does not occupy
-// Ollama's serial inference queue.
+// to 1 token so the request completes quickly once the model is resident.
+// Concurrent calls for the same model coalesce (singleflight).
 func WarmUp(model string) error {
 	if model == "" {
 		model = DefaultModelName()
 	}
+	_, err, _ := warmGroup.Do(model, func() (any, error) {
+		if IsModelLoaded(model) {
+			return nil, nil
+		}
+		return nil, warmUpOnce(model)
+	})
+	return err
+}
+
+// EnsureWarm emits status events and warms the model when needed so the
+// generation HTTP timeout does not include cold-load time.
+func EnsureWarm(ctx context.Context, model string) error {
+	if model == "" {
+		model = DefaultModelName()
+	}
+	if IsModelLoaded(model) {
+		return nil
+	}
+	EmitStatus(ctx, StatusWarming)
+	err := WarmUp(model)
+	if err != nil {
+		return err
+	}
+	EmitStatus(ctx, StatusReady)
+	return nil
+}
+
+func warmUpOnce(model string) error {
 	payload, _ := json.Marshal(map[string]any{
 		"model":      model,
 		"messages":   []map[string]string{{"role": "user", "content": "hi"}},
@@ -170,13 +301,15 @@ func WarmUp(model string) error {
 			"num_predict": 1,
 		},
 	})
-	resp, err := http.Post(ollamaURL()+"/api/chat", "application/json", bytes.NewReader(payload))
+	client := &http.Client{Timeout: WarmUpTimeout}
+	resp, err := client.Post(ollamaURL()+"/api/chat", "application/json", bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("failed to warm up model %s: %w", model, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to warm up model %s: status %d", model, resp.StatusCode)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		return fmt.Errorf("failed to warm up model %s: status %d: %s", model, resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	return nil
 }
@@ -381,10 +514,6 @@ func ModelLikelySupportsTools(name string) bool {
 		return false
 	}
 	return toolsAllowlisted(name)
-}
-
-func (c *Client) Model() string {
-	return c.model
 }
 
 func (c *Client) Ask(ctx context.Context, system, user string) (string, error) {

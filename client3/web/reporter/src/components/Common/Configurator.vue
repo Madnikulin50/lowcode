@@ -4,22 +4,22 @@
       <div class="col-3">
         <div class="list-group">
           <draggable
-            item-key="id"
+            item-key="elementID"
             :list="localItems"
             :disabled="!draggable"
             group="items"
             handle=".grab"
             @change="emitUpdate"
           >
-            <button
-              v-for="(item, index) in localItems"
-              :key="index"
-              class="list-group-item list-group-item-action d-flex align-items-center justify-content-between"
-              :class="{ active: currentIndex !== undefined ? currentIndex === index : index === 0 }"
-              @click="$emit('select', index)"
-            >
-              <slot name="label" :item="item" />
-            </button>
+            <template #item="{ element: item, index }">
+              <button
+                class="list-group-item list-group-item-action d-flex align-items-center justify-content-between"
+                :class="{ active: currentIndex !== undefined ? currentIndex === index : index === 0 }"
+                @click="$emit('select', index)"
+              >
+                <slot name="label" :item="item" />
+              </button>
+            </template>
           </draggable>
           <button
             class="list-group-item list-group-item-action text-primary rounded-top"

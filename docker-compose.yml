@@ -11,7 +11,7 @@ services:
     volumes:
       - ./data/server:/data
   docs:
-    image: madnikulin50/pnp-lowcode-docs:2026.8.13
+    image: madnikulin50/pnp-lowcode-docs:2026.8.15
     ports:
       - "${HTTP_DOC_PORT}:80"
     restart: unless-stopped

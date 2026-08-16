@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/madnikulin50/lowcode/server/compose/rest/request"
 	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/chat"
 )
 
 type (
@@ -109,24 +111,40 @@ func NewChat(h ChatAPI) *Chat {
 			w.Header().Set("Cache-Control", "no-cache")
 			w.Header().Set("Connection", "keep-alive")
 
-			err := h.AskStream(r.Context(), params, func(token string, reason string, done bool) error {
-				data, _ := json.Marshal(map[string]any{
+			writeMu := sync.Mutex{}
+			writeEvent := func(payload map[string]any) error {
+				writeMu.Lock()
+				defer writeMu.Unlock()
+				data, _ := json.Marshal(payload)
+				_, err := fmt.Fprintf(w, "data: %s\n\n", data)
+				flusher.Flush()
+				return err
+			}
+
+			ctx := chat.ContextWithStatus(r.Context(), func(status string) error {
+				return writeEvent(map[string]any{
+					"status": status,
+					"done":   false,
+				})
+			})
+
+			buffered, flush := chat.BufferStream(func(token string, reason string, done bool) error {
+				return writeEvent(map[string]any{
 					"token":  token,
 					"reason": reason,
 					"done":   done,
 				})
-				_, err := fmt.Fprintf(w, "data: %s\n\n", data)
-				flusher.Flush()
-				return err
 			})
+			defer func() { _ = flush() }()
+
+			err := h.AskStream(ctx, params, buffered)
+			_ = flush()
 
 			if err != nil {
-				data, _ := json.Marshal(map[string]any{
+				_ = writeEvent(map[string]any{
 					"error": err.Error(),
 					"done":  true,
 				})
-				fmt.Fprintf(w, "data: %s\n\n", data)
-				flusher.Flush()
 			}
 		},
 	}

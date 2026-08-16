@@ -1,6 +1,7 @@
 <script setup>
 import Wrap from './Wrap/index.js'
 import { usePageBlockBase } from './usePageBlockBase'
+import Chat from '../Public/Page/AiChat/Chat.vue'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -30,13 +31,13 @@ const startPrompt = options.value.startPrompt || props.page?.prompt || props.nam
 <template>
   <Wrap v-bind="$props">
     <div class="ai-chat-block h-100 d-flex flex-column">
-      <slot
-        name="chat-component"
+      <Chat
         :start-prompt="startPrompt"
         :page="page?.pageID || ''"
         :module="module?.moduleID || ''"
         :namespace="namespace?.namespaceID || ''"
         :magnified="magnified"
+        :framed="false"
       />
     </div>
   </Wrap>

@@ -106,8 +106,14 @@ interface Options {
   showRefresh: boolean;
   /** Render metrics like Record fields (shared visual language) */
   likeRecordList: boolean;
+  /** @deprecated use itemsPerRow */
   recordFieldLayoutOption: string;
   horizontalFieldLayoutEnabled: boolean;
+  /**
+   * How many MetricItems per row in the default/body grid:
+   * '1' | '2' | '4' | 'auto'
+   */
+  itemsPerRow: '1' | '2' | '4' | 'auto';
   magnifyOption: string;
   density: 'comfortable' | 'compact';
   hideEmptyMetrics: boolean;
@@ -122,12 +128,23 @@ const defaults: Readonly<Options> = Object.freeze({
   likeRecordList: true,
   recordFieldLayoutOption: 'default',
   horizontalFieldLayoutEnabled: false,
+  itemsPerRow: '1',
   magnifyOption: '',
   density: 'comfortable',
   hideEmptyMetrics: false,
   showEmptyPlaceholder: true,
   sections: [],
 })
+
+function normalizeItemsPerRow (v: unknown, legacy?: string): Options['itemsPerRow'] {
+  // Select/JSON may yield numbers (2) as well as strings ('2')
+  const s = v == null ? '' : String(v)
+  if (s === '1' || s === '2' || s === '4' || s === 'auto') return s
+  // Migrate old Record-style layout keys
+  if (legacy === 'wrap') return '2'
+  if (legacy === 'noWrap') return 'auto'
+  return '1'
+}
 
 export class PageBlockMetric extends PageBlock {
   readonly kind = kind
@@ -148,6 +165,11 @@ export class PageBlockMetric extends PageBlock {
     Apply(this.options, o, Number, 'refreshRate')
     Apply(this.options, o, Boolean, 'showRefresh', 'horizontalFieldLayoutEnabled', 'likeRecordList', 'hideEmptyMetrics', 'showEmptyPlaceholder')
     Apply(this.options, o, String, 'recordFieldLayoutOption', 'magnifyOption', 'density')
+
+    this.options.itemsPerRow = normalizeItemsPerRow(
+      (o as any).itemsPerRow,
+      o.recordFieldLayoutOption || this.options.recordFieldLayoutOption,
+    )
 
     if (o.metrics) {
       this.options.metrics = o.metrics.map((m) => merge({}, defaultMetric, m))

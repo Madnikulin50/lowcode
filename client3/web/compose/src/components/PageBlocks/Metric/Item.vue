@@ -353,7 +353,7 @@ const balloonStyle = computed(() => {
     color: '#fff',
     fontSize: s.fontSize || '0.9em',
     width: `${widthPct}%`,
-    minWidth: fullWidth ? '100%' : '10rem',
+    minWidth: fullWidth ? '100%' : 0,
     maxWidth: '100%',
     '--balloon-ratio': String(ratio),
   }

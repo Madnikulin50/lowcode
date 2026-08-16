@@ -9,6 +9,8 @@ import { dirname } from 'path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+  base: './',
+  build: { assetsDir: 'webapp-assets' },
   plugins: [    {
       name: 'html-base-inject',
       apply: 'build',

@@ -1,6 +1,10 @@
 package chat
 
-import "testing"
+import (
+	"context"
+	"io"
+	"testing"
+)
 
 func TestModelBase(t *testing.T) {
 	cases := map[string]string{
@@ -125,5 +129,17 @@ func TestEffectiveOllamaURLFromHost(t *testing.T) {
 	t.Setenv("OLLAMA_URL", "http://from-url:11434")
 	if got := EffectiveOllamaURL(); got != "http://from-url:11434" {
 		t.Fatalf("OLLAMA_URL should win: %q", got)
+	}
+}
+
+func TestIsTimeout(t *testing.T) {
+	if IsTimeout(nil) {
+		t.Fatal("nil should not be timeout")
+	}
+	if !IsTimeout(context.DeadlineExceeded) {
+		t.Fatal("context.DeadlineExceeded should be timeout")
+	}
+	if IsTimeout(io.EOF) {
+		t.Fatal("EOF should not be timeout")
 	}
 }

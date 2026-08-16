@@ -9,6 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || './',
+  build: { assetsDir: 'webapp-assets' },
   plugins: [
     {
       name: 'html-base-inject',

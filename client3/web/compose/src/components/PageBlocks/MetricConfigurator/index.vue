@@ -384,25 +384,29 @@
               <div class="row g-0">
                 <div class="col-12 col-lg-6">
                   <div class="mb-3">
-                    <label class="form-label text-primary">{{ $t('record.horizontalFormLayout') }}</label>
-                    <c-input-checkbox
-                      v-model="options.horizontalFieldLayoutEnabled"
-                      switch
-                      :disabled="options.recordFieldLayoutOption === 'noWrap'"
-                      :labels="checkboxLabel"
-                    />
+                    <label class="form-label text-primary">{{ $t('metric.appearance.itemsPerRow.label') }}</label>
+                    <small class="text-muted d-block mb-1">{{ $t('metric.appearance.itemsPerRow.description') }}</small>
+                    <select
+                      class="form-select form-control"
+                      :value="itemsPerRowModel"
+                      @change="onItemsPerRowChange"
+                    >
+                      <option value="1">{{ $t('metric.appearance.itemsPerRow.one') }}</option>
+                      <option value="2">{{ $t('metric.appearance.itemsPerRow.two') }}</option>
+                      <option value="4">{{ $t('metric.appearance.itemsPerRow.four') }}</option>
+                      <option value="auto">{{ $t('metric.appearance.itemsPerRow.auto') }}</option>
+                    </select>
                   </div>
                 </div>
 
                 <div class="col-12 col-lg-6">
                   <div class="mb-3">
-                    <label class="form-label text-primary">{{ $t('record.fieldsLayoutMode.label') }}</label>
-                    <c-input-select
-                      v-model="options.recordFieldLayoutOption"
-                      :options="recordFieldLayoutOptions"
-                      :reduce="option => option.value"
-                      :get-option-key="option => option.label"
-                      @input="handleRecordFieldLayout"
+                    <label class="form-label text-primary">{{ $t('record.horizontalFormLayout') }}</label>
+                    <c-input-checkbox
+                      v-model="options.horizontalFieldLayoutEnabled"
+                      switch
+                      :disabled="itemsPerRowModel === 'auto'"
+                      :labels="checkboxLabel"
                     />
                   </div>
                 </div>
@@ -439,6 +443,7 @@
                 style="height: 400px;"
               >
                 <metric-base
+                  :key="'ipr-' + itemsPerRowModel"
                   v-bind="$props"
                 />
               </div>
@@ -491,6 +496,15 @@ const edit = ref(undefined)
 
 // Normalize appearance defaults for older blocks
 if (!options.value.density) options.value.density = 'comfortable'
+{
+  const per = options.value.itemsPerRow == null ? '' : String(options.value.itemsPerRow)
+  if (['1', '2', '4', 'auto'].includes(per)) {
+    options.value.itemsPerRow = per
+  } else {
+    const legacy = options.value.recordFieldLayoutOption
+    options.value.itemsPerRow = legacy === 'wrap' ? '2' : legacy === 'noWrap' ? 'auto' : '1'
+  }
+}
 if (options.value.hideEmptyMetrics === undefined) options.value.hideEmptyMetrics = false
 if (options.value.showEmptyPlaceholder === undefined) options.value.showEmptyPlaceholder = true
 if (!Array.isArray(options.value.sections)) options.value.sections = []
@@ -534,6 +548,22 @@ const likeRecordList = computed({
   get: () => options.value.likeRecordList !== false,
   set: (check) => { options.value.likeRecordList = check },
 })
+
+const itemsPerRowModel = computed(() => {
+  const v = props.block?.options?.itemsPerRow ?? options.value?.itemsPerRow
+  const s = v == null ? '' : String(v)
+  return ['1', '2', '4', 'auto'].includes(s) ? s : '1'
+})
+
+function onItemsPerRowChange (e) {
+  const v = e.target?.value || '1'
+  if (props.block?.options) props.block.options.itemsPerRow = v
+  options.value.itemsPerRow = v
+  if (v === '1') options.value.recordFieldLayoutOption = 'default'
+  else if (v === '2') options.value.recordFieldLayoutOption = 'wrap'
+  else options.value.recordFieldLayoutOption = 'noWrap'
+  if (v === 'auto') options.value.horizontalFieldLayoutEnabled = false
+}
 
 const metrics = computed({
   get: () => options.value.metrics,
@@ -580,12 +610,6 @@ function processRecordAutoCompleteParams ({ module: mod, operators = false } = {
     ...moduleFields,
   ]
 }
-
-const recordFieldLayoutOptions = computed(() => [
-  { value: 'default', label: t('record.fieldsLayoutMode.default') },
-  { value: 'noWrap', label: t('record.fieldsLayoutMode.noWrap') },
-  { value: 'wrap', label: t('record.fieldsLayoutMode.wrap') },
-])
 
 watch(() => edit.value?.dimensionField, (df) => {
   if (!edit.value) return
@@ -639,11 +663,6 @@ function onMetricFieldChange (field) {
 }
 
 function onUpdateFields (fields) { edit.value.drillDown.recordListOptions.fields = fields }
-
-function handleRecordFieldLayout (v) {
-  if (v !== 'noWrap') return
-  options.value.horizontalFieldLayoutEnabled = false
-}
 
 function setMetricRole (role) {
   if (!edit.value) return

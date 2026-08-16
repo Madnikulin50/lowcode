@@ -34,8 +34,14 @@ type (
 
 	ChatStreamFunc = chat.StreamFunc
 
+	pendingToolCalls struct {
+		Calls     []CallParam
+		Namespace uint64
+	}
+
 	chatService struct {
 		clients *ttlcache.Cache[string, *chat.Client]
+		pending *ttlcache.Cache[string, pendingToolCalls]
 		tools   []chat.ToolDef
 	}
 
@@ -89,8 +95,14 @@ func Chat() *chatService {
 	}
 	tools = append(tools, chatVisualizeTools()...)
 
+	pending := ttlcache.New[string, pendingToolCalls](
+		ttlcache.WithTTL[string, pendingToolCalls](30 * time.Minute),
+	)
+	go pending.Start()
+
 	return &chatService{
 		clients: ttl,
+		pending: pending,
 		tools:   tools,
 	}
 }
@@ -433,13 +445,53 @@ func selectNamed[T any](set []T, keywords []string, maxMatched, maxFallback int,
 }
 
 func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interface{}, error) {
+	ctx = c.chatEnvToContext(ask, ctx)
+	allTools := c.getTools(ctx, ask.Namespace, ask.Prompt)
+
+	if ask.Chat != "" && c.pending != nil {
+		if item := c.pending.Get(ask.Chat); item != nil {
+			if userCancelled(ask.Prompt) {
+				c.pending.Delete(ask.Chat)
+				return map[string]any{"response": "Действие отменено."}, nil
+			}
+			if userConfirmed(ask.Prompt) {
+				pending := item.Value()
+				c.pending.Delete(ask.Chat)
+				ns := ask.Namespace
+				if ns == 0 {
+					ns = pending.Namespace
+				}
+				execTools := c.getTools(ctx, ns, pendingPrompt(pending.Calls))
+				result := execToolCalls(ctx, pending.Calls, ns, execTools)
+				client, err := c.getClient(ask)
+				if err != nil {
+					return map[string]any{"response": result}, err
+				}
+				if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
+					return nil, err
+				}
+				msgs := c.buildMessages(ctx, ask)
+				if result != "" {
+					cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
+					if err == nil && strings.TrimSpace(cont) != "" {
+						return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
+					}
+					return map[string]any{"response": result}, nil
+				}
+				return map[string]any{"response": "Действие выполнено."}, nil
+			}
+		}
+	}
+
 	client, err := c.getClient(ask)
 	if err != nil {
 		return nil, err
 	}
+	// Warm before Generate so the 3m HTTP timeout covers inference only.
+	if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
+		return nil, err
+	}
 
-	ctx = c.chatEnvToContext(ask, ctx)
-	allTools := c.getTools(ctx, ask.Namespace, ask.Prompt)
 	msgs := c.buildMessages(ctx, ask)
 
 	if result := showPageChartFastPath(ctx, ask); result != "" {
@@ -509,8 +561,9 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 			})
 		}
 		if needsConfirm(parsed) && !userConfirmed(ask.Prompt) {
+			c.storePending(ask.Chat, parsed, ask.Namespace)
 			return map[string]any{
-				"response": content + "\n\n⚠️ **Обнаружено предлагаемое действие.** Напишите **«да»** чтобы подтвердить.",
+				"response": content + confirmFence(parsed),
 			}, nil
 		}
 		result := execToolCalls(ctx, parsed, ask.Namespace, allTools)
@@ -532,8 +585,17 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 	ctx = c.chatEnvToContext(ask, ctx)
 	allTools := c.getTools(ctx, ask.Namespace, ask.Prompt)
 
+	if handled, err := c.handlePendingStream(ctx, ask, allTools, stream); handled {
+		return err
+	}
+
 	client, err := c.getClient(ask)
 	if err != nil {
+		return err
+	}
+	// Warm before Stream so the 3m HTTP timeout covers inference only,
+	// not cold model load (which can take minutes on CPU).
+	if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
 		return err
 	}
 
@@ -571,14 +633,19 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 		return err
 	}
 
-	fullContent, toolCalls, err := pumpChatStream(ctx, streamReader, stream)
+	fullContent, fullReasoning, toolCalls, err := pumpChatStream(ctx, streamReader, stream)
 	if err != nil {
 		return err
 	}
 
+	effective := strings.TrimSpace(fullContent)
+	if effective == "" {
+		effective = strings.TrimSpace(fullReasoning)
+	}
+
 	// if no native tool calls, check for XML-based tool calls in full content
-	if len(toolCalls) == 0 && chat.HasToolCallsStr(fullContent) {
-		xmlCalls := chat.ParseToolCallsStr(fullContent)
+	if len(toolCalls) == 0 && chat.HasToolCallsStr(effective) {
+		xmlCalls := chat.ParseToolCallsStr(effective)
 		toolCalls = make([]schema.ToolCall, len(xmlCalls))
 		for i, xc := range xmlCalls {
 			paramJSON, _ := json.Marshal(xc.Params)
@@ -588,6 +655,9 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 					Arguments: string(paramJSON),
 				},
 			}
+		}
+		if strings.TrimSpace(fullContent) == "" {
+			fullContent = effective
 		}
 	}
 
@@ -600,7 +670,8 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 			})
 		}
 		if needsConfirm(parsed) && !userConfirmed(ask.Prompt) {
-			stream("\n\n⚠️ **Обнаружено предлагаемое действие.** Напишите **«да»** чтобы подтвердить.", "", false)
+			c.storePending(ask.Chat, parsed, ask.Namespace)
+			stream(confirmFence(parsed), "", false)
 			return stream("", "", true)
 		}
 		result := execToolCalls(ctx, parsed, ask.Namespace, allTools)
@@ -612,10 +683,20 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 		return stream("", "", true)
 	}
 
-	if fullContent == "" {
-		stream("Модель не сгенерировала ответ.", "", false)
+	if err := streamFallbackAnswer(stream, fullContent, fullReasoning); err != nil {
+		return err
 	}
 	return stream("", "", true)
+}
+
+func streamFallbackAnswer(stream chat.StreamFunc, content, reasoning string) error {
+	if strings.TrimSpace(content) != "" {
+		return nil
+	}
+	if strings.TrimSpace(reasoning) != "" {
+		return stream(reasoning, "", false)
+	}
+	return stream("Модель не сгенерировала ответ.", "", false)
 }
 
 func directListTool(staticTools []chat.ToolDef, ctx context.Context, ask *ChatPromptArguments) string {
@@ -706,21 +787,31 @@ func execToolCalls(ctx context.Context, calls []CallParam, namespaceID uint64, t
 	return ""
 }
 
-func pumpChatStream(ctx context.Context, streamReader *schema.StreamReader[*schema.Message], stream chat.StreamFunc) (fullContent string, toolCalls []schema.ToolCall, err error) {
+func pumpChatStream(ctx context.Context, streamReader *schema.StreamReader[*schema.Message], stream chat.StreamFunc) (fullContent, fullReasoning string, toolCalls []schema.ToolCall, err error) {
 	defer streamReader.Close()
 	for {
 		select {
 		case <-ctx.Done():
-			return fullContent, toolCalls, ctx.Err()
+			return fullContent, fullReasoning, toolCalls, ctx.Err()
 		default:
 		}
 		chunk, recvErr := streamReader.Recv()
 		if recvErr != nil {
 			if recvErr == io.EOF {
-				return fullContent, toolCalls, nil
+				return fullContent, fullReasoning, toolCalls, nil
+			}
+			if chat.IsTimeout(recvErr) {
+				note := "Превышено время ожидания ответа модели."
+				if strings.TrimSpace(fullContent) != "" || strings.TrimSpace(fullReasoning) != "" {
+					_ = stream("\n\n"+note, "", false)
+				} else {
+					_ = stream(note, "", false)
+					fullContent = note
+				}
+				return fullContent, fullReasoning, toolCalls, nil
 			}
 			stream("⚠ Error: "+recvErr.Error(), "", false)
-			return fullContent, toolCalls, recvErr
+			return fullContent, fullReasoning, toolCalls, recvErr
 		}
 		if chunk.Content != "" {
 			fullContent += chunk.Content
@@ -735,13 +826,14 @@ func pumpChatStream(ctx context.Context, streamReader *schema.StreamReader[*sche
 			}
 			if emit != "" {
 				if err := stream(emit, "", false); err != nil {
-					return fullContent, toolCalls, err
+					return fullContent, fullReasoning, toolCalls, err
 				}
 			}
 		}
 		if chunk.ReasoningContent != "" {
+			fullReasoning += chunk.ReasoningContent
 			if err := stream("", chunk.ReasoningContent, false); err != nil {
-				return fullContent, toolCalls, err
+				return fullContent, fullReasoning, toolCalls, err
 			}
 		}
 		if len(chunk.ToolCalls) > 0 {
@@ -850,11 +942,17 @@ func (c *chatService) streamToolContinuation(ctx context.Context, client *chat.C
 		return nil
 	}
 
-	cont, _, err := pumpChatStream(ctx, streamReader, stream)
+	cont, reasoning, _, err := pumpChatStream(ctx, streamReader, stream)
 	if err != nil {
 		return err
 	}
-	if strings.TrimSpace(cont) == "" && !shownFence && toolResult != "" {
+	if strings.TrimSpace(cont) != "" {
+		return nil
+	}
+	if strings.TrimSpace(reasoning) != "" {
+		return stream(reasoning, "", false)
+	}
+	if !shownFence && toolResult != "" {
 		stream(toolResult, "", false)
 	}
 	return nil
@@ -949,6 +1047,119 @@ func userConfirmed(prompt string) bool {
 		return true
 	}
 	return false
+}
+
+func userCancelled(prompt string) bool {
+	lower := strings.ToLower(strings.TrimSpace(prompt))
+	switch lower {
+	case "нет", "no", "n", "отмена", "cancel", "не надо", "стоп":
+		return true
+	}
+	return false
+}
+
+func (c *chatService) storePending(chatID string, calls []CallParam, namespaceID uint64) {
+	if chatID == "" || c.pending == nil || len(calls) == 0 {
+		return
+	}
+	c.pending.Set(chatID, pendingToolCalls{Calls: calls, Namespace: namespaceID}, ttlcache.DefaultTTL)
+}
+
+func callSummary(call CallParam) string {
+	raw := make(map[string]any)
+	if call.Params != "" {
+		_ = json.Unmarshal([]byte(call.Params), &raw)
+	}
+	label := strings.ReplaceAll(call.Name, "_", " ")
+	for _, key := range []string{"name", "title", "handle"} {
+		if v, ok := raw[key]; ok {
+			s := strings.TrimSpace(fmt.Sprintf("%v", v))
+			if s != "" && s != "<nil>" {
+				return label + ": " + s
+			}
+		}
+	}
+	return label
+}
+
+func confirmFence(calls []CallParam) string {
+	type tool struct {
+		Name    string `json:"name"`
+		Summary string `json:"summary"`
+	}
+	payload := struct {
+		Tools []tool `json:"tools"`
+	}{}
+	for _, call := range calls {
+		payload.Tools = append(payload.Tools, tool{Name: call.Name, Summary: callSummary(call)})
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		body = []byte(`{"tools":[]}`)
+	}
+	return "\n\nПредлагаемое действие требует подтверждения.\n```chat-confirm\n" + string(body) + "\n```\n"
+}
+
+func pendingPrompt(calls []CallParam) string {
+	var b strings.Builder
+	for _, call := range calls {
+		b.WriteString(call.Name)
+		b.WriteByte(' ')
+		b.WriteString(call.Params)
+		b.WriteByte(' ')
+	}
+	return b.String()
+}
+
+func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptArguments, allTools []chat.ToolDef, stream chat.StreamFunc) (bool, error) {
+	if ask.Chat == "" || c.pending == nil {
+		return false, nil
+	}
+	item := c.pending.Get(ask.Chat)
+	if item == nil {
+		return false, nil
+	}
+	if userCancelled(ask.Prompt) {
+		c.pending.Delete(ask.Chat)
+		if err := stream("Действие отменено.", "", false); err != nil {
+			return true, err
+		}
+		return true, stream("", "", true)
+	}
+	if !userConfirmed(ask.Prompt) {
+		return false, nil
+	}
+	pending := item.Value()
+	c.pending.Delete(ask.Chat)
+
+	ns := ask.Namespace
+	if ns == 0 {
+		ns = pending.Namespace
+	}
+	execTools := c.getTools(ctx, ns, pendingPrompt(pending.Calls))
+	result := execToolCalls(ctx, pending.Calls, ns, execTools)
+
+	client, err := c.getClient(ask)
+	if err != nil {
+		if result != "" {
+			_ = stream(result, "", false)
+		} else {
+			_ = stream("Действие выполнено.", "", false)
+		}
+		return true, stream("", "", true)
+	}
+	if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
+		return true, err
+	}
+	if result != "" {
+		msgs := c.buildMessages(ctx, ask)
+		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
+			return true, err
+		}
+	} else {
+		_ = stream("Действие выполнено.", "", false)
+	}
+	return true, stream("", "", true)
 }
 
 func createModule(ctx context.Context, params map[string]string) string {

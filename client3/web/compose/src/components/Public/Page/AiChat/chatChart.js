@@ -1,7 +1,7 @@
 const MAX_CATEGORIES = 24
 const MAX_SERIES = 8
 // Opening fence: 3+ backticks, optional spaces, language. JSON may start on the same line.
-const FENCE_OPEN = /```+\s*(compose-chart|chart|echarts|json)\b[^\n`]*/i
+const FENCE_OPEN = /```+\s*(compose-chart|chart|echarts|json|chat-confirm)\b[^\n`]*/i
 
 export function splitChartParts (text) {
   const src = String(text || '')
@@ -65,6 +65,15 @@ export function splitChartParts (text) {
 }
 
 function classifyFenceBody (lang, raw, closed) {
+  if (lang === 'chat-confirm') {
+    if (!closed) return null
+    try {
+      const spec = JSON.parse(String(raw || '').trim() || '{}')
+      return { kind: 'confirm', spec: spec && typeof spec === 'object' ? spec : { tools: [] } }
+    } catch (e) {
+      return { kind: 'confirm', spec: { tools: [] } }
+    }
+  }
   const composeSpec = parseComposeChartSpec(raw)
   if (composeSpec) return composeChartPart(composeSpec)
   const spec = tryParseSpec(raw)
@@ -167,8 +176,9 @@ export function replaceChartFences (text) {
     const spec = tryParseSpec(src)
     if (spec) return spec?.title ? `[chart: ${spec.title}]` : '[chart]'
   }
-  const closed = src.replace(/```\s*(?:compose-chart|chart|echarts|json)\b[^\n]*\r?\n([\s\S]*?)```/gi, (full, body, offset, hay) => {
+  const closed = src.replace(/```\s*(?:compose-chart|chart|echarts|json|chat-confirm)\b[^\n]*\r?\n([\s\S]*?)```/gi, (full, body, offset, hay) => {
     const open = hay.slice(offset, offset + 40).toLowerCase()
+    if (open.includes('chat-confirm')) return '[action]'
     if (open.includes('compose-chart')) {
       const spec = parseComposeChartSpec(body)
       if (!spec) return full

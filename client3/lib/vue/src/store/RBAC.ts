@@ -31,7 +31,10 @@ export const useRBACStore = defineStore('rbac', {
   },
 
   actions: {
-    load(...apis: Fetcher[]) {
+    load(...args: Array<Fetcher | Fetcher[]>) {
+      const apis = args.flat().filter((api): api is Fetcher =>
+        !!api && typeof (api as Fetcher).permissionsEffective === 'function'
+      )
       this.loaded = false
       Promise.all(apis.map(api =>
         api.permissionsEffective().catch(() => [])

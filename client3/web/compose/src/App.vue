@@ -68,7 +68,7 @@ onMounted(async () => {
     }
 
     store.wfPrompts.update()
-    store.rbac.load()
+    store.rbac.load($ComposeAPI, $SystemAPI, $AutomationAPI)
     store.notifications.fetchNotifications()
     store.drafts.init({
       composeAPI: $ComposeAPI,

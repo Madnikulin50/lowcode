@@ -1,117 +1,227 @@
 <template>
-  <div class="chat-container">
-    <div ref="messagesContainer" class="messages">
-      <div class="export-dropdown position-absolute" style="top: 8px; right: 12px; z-index: 10;">
-        <button class="btn btn-outline-light d-print-none text-secondary px-2 py-1 border-0" @click="exportOpen = !exportOpen" title="Export">
-          <font-awesome-icon :icon="['fas', 'download']" size="xs" />
-        </button>
-        <div v-if="exportOpen" class="export-menu" @click="exportOpen = false">
-          <button class="export-menu-item" @click="exportMarkdown">Markdown (.md)</button>
-          <button class="export-menu-item" @click="exportPdf">PDF</button>
-          <button class="export-menu-item" @click="exportDocx">DOCX</button>
-        </div>
+  <div class="chat-container" :class="{ frameless: !framed }">
+    <div
+      v-if="isEmpty"
+      class="empty-state"
+    >
+      <div class="empty-greeting">{{ $t('aiChat.greeting') }}</div>
+      <div class="suggestion-row">
+        <button
+          v-for="s in suggestions"
+          :key="s.key"
+          type="button"
+          class="suggestion-chip"
+          @click="useSuggestion(s.text)"
+        >{{ s.text }}</button>
       </div>
-      <div v-for="(msg, idx) in messages" :key="idx" :class="['message', msg.role, { active: msg.active }]">
-        <template v-if="msg.content">
-          <div class="avatar">
-            <font-awesome-icon :icon="['fas', msg.role === 'user' ? 'user' : 'brain']" />
-          </div>
-          <div class="message-body">
-            <div v-show="!msg.collapsed" class="content expanded-content">
-              <div class="content-text">
-                <template v-for="(part, pi) in messageParts(msg.content)" :key="pi">
-                  <div v-if="part.kind === 'html'" class="chat-md" v-html="part.html" />
-                  <div
-                    v-else-if="part.kind === 'chart'"
-                    class="chat-chart"
-                  >
-                    <e-charts
-                      :option="part.option"
-                      autoresize
-                      class="position-absolute w-100 h-100 overflow-hidden"
-                    />
-                  </div>
-                  <div
-                    v-else-if="part.kind === 'compose-chart'"
-                    class="chat-chart"
-                  >
-                    <chart-component
-                      v-if="composeChartRecord(part.spec)"
-                      :key="part.spec.chartID"
-                      class="h-100 w-100"
-                      :chart="composeChartRecord(part.spec)"
-                      :reporter="composeChartReporter(part.spec)"
-                    />
-                    <div v-else-if="composeChartError(part.spec)" class="chat-chart-error">
-                      {{ composeChartError(part.spec) }}
-                    </div>
-                    <div v-else class="chat-chart-loading">
-                      <span class="spinner-border spinner-border-sm" />
-                    </div>
-                  </div>
-                  <div v-else-if="part.kind === 'chart-error'" class="chat-chart-error">
-                    {{ $t('aiChat.chart.error') }}
-                  </div>
-                </template>
-              </div>
-              <button
-                v-if="hasManyLines(msg.content) && msg.active !== true"
-                class="collapse-btn"
-                @click="toggleCollapse(idx)"
-                title="Collapse"
-              >
-                <font-awesome-icon :icon="['fas', 'chevron-up']" size="xs" />
-              </button>
-            </div>
-            <div v-show="msg.collapsed" class="content collapsed-content" @click="toggleCollapse(idx)">
-              <div class="content-text" v-html="formatMessage(preview(msg.content))" />
-              <button
-                v-if="hasManyLines(msg.content) && msg.active !== true"
-                class="collapse-btn"
-                @click.stop="toggleCollapse(idx)"
-                title="Expand"
-              >
-                <font-awesome-icon :icon="['fas', 'chevron-down']" size="xs" />
-              </button>
-            </div>
-          </div>
-        </template>
-      </div>
-      <div v-if="loading" class="message assistant">
+    </div>
+    <div
+      v-else
+      ref="messagesContainer"
+      class="messages"
+      @scroll="onScroll"
+    >
+      <div
+        v-for="(msg, idx) in messages"
+        :key="idx"
+        :class="['message', msg.role, { active: msg.active }]"
+      >
         <div class="avatar">
-          <font-awesome-icon :icon="['fas', 'brain']" />
+          <font-awesome-icon :icon="['fas', msg.role === 'user' ? 'user' : 'brain']" />
         </div>
-        <div class="content typing-indicator">
-          <span /><span /><span />
+        <div class="message-body">
+          <div
+            v-if="msg.role === 'assistant' && (msg.reasoning || (msg.active && streamStatus === 'thinking'))"
+            class="reasoning"
+          >
+            <button
+              type="button"
+              class="reasoning-toggle"
+              @click="msg.reasoningOpen = !msg.reasoningOpen"
+            >
+              <font-awesome-icon :icon="['fas', msg.reasoningOpen ? 'chevron-up' : 'chevron-down']" size="xs" />
+              {{ $t('aiChat.reasoning.label') }}
+            </button>
+            <div
+              v-show="msg.reasoningOpen && msg.reasoning"
+              class="reasoning-body"
+            >{{ msg.reasoning }}</div>
+          </div>
+          <div v-show="!msg.collapsed" class="content expanded-content">
+            <div class="content-text">
+              <template v-if="!msg.content && msg.active">
+                <div v-if="warmingUp" class="warmup-indicator">
+                  <span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true" />
+                  <span>{{ statusLabel }}</span>
+                </div>
+                <div v-else class="typing-indicator">
+                  <span /><span /><span />
+                </div>
+              </template>
+              <template v-for="(part, pi) in messageParts(msg.content)" :key="pi">
+                <div v-if="part.kind === 'html'" class="chat-md" v-html="part.html" />
+                <div
+                  v-else-if="part.kind === 'chart'"
+                  class="chat-chart"
+                >
+                  <e-charts
+                    :option="part.option"
+                    autoresize
+                    class="position-absolute w-100 h-100 overflow-hidden"
+                  />
+                </div>
+                <div
+                  v-else-if="part.kind === 'compose-chart'"
+                  class="chat-chart"
+                >
+                  <chart-component
+                    v-if="composeChartRecord(part.spec)"
+                    :key="part.spec.chartID"
+                    class="h-100 w-100"
+                    :chart="composeChartRecord(part.spec)"
+                    :reporter="composeChartReporter(part.spec)"
+                  />
+                  <div v-else-if="composeChartError(part.spec)" class="chat-chart-error">
+                    {{ composeChartError(part.spec) }}
+                  </div>
+                  <div v-else class="chat-chart-loading">
+                    <span class="spinner-border spinner-border-sm" />
+                  </div>
+                </div>
+                <div v-else-if="part.kind === 'chart-error'" class="chat-chart-error">
+                  {{ $t('aiChat.chart.error') }}
+                </div>
+                <div v-else-if="part.kind === 'confirm'" class="confirm-card">
+                  <div class="confirm-title">{{ $t('aiChat.confirm.title') }}</div>
+                  <ul class="confirm-tools">
+                    <li v-for="(tool, ti) in (part.spec?.tools || [])" :key="ti">
+                      {{ tool.summary || tool.name }}
+                    </li>
+                  </ul>
+                  <div v-if="canConfirm(idx, msg)" class="confirm-actions">
+                    <button type="button" class="btn btn-sm btn-primary" @click="resolveConfirm(true)">
+                      {{ $t('aiChat.confirm.execute') }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @click="resolveConfirm(false)">
+                      {{ $t('aiChat.confirm.cancel') }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <button
+              v-if="hasManyLines(msg.content) && !msg.active"
+              class="collapse-btn"
+              @click="toggleCollapse(idx)"
+              :title="$t('aiChat.collapse')"
+            >
+              <font-awesome-icon :icon="['fas', 'chevron-up']" size="xs" />
+            </button>
+          </div>
+          <div v-show="msg.collapsed" class="content collapsed-content" @click="toggleCollapse(idx)">
+            <div class="content-text" v-html="formatMessage(preview(msg.content))" />
+            <button
+              class="collapse-btn"
+              @click.stop="toggleCollapse(idx)"
+              :title="$t('aiChat.expand')"
+            >
+              <font-awesome-icon :icon="['fas', 'chevron-down']" size="xs" />
+            </button>
+          </div>
+          <div v-if="!msg.active && (msg.content || msg.role === 'user')" class="msg-actions">
+            <button type="button" class="msg-action" :title="$t('aiChat.copy')" @click="copyMessage(msg)">
+              <font-awesome-icon :icon="copiedIdx === idx ? ['fas', 'check'] : ['fas', 'copy']" size="xs" />
+            </button>
+            <button
+              v-if="msg.role === 'user'"
+              type="button"
+              class="msg-action"
+              :title="$t('aiChat.edit')"
+              @click="editMessage(idx)"
+            >
+              <font-awesome-icon :icon="['fas', 'pen']" size="xs" />
+            </button>
+            <button
+              v-if="msg.role === 'assistant' && idx === lastAssistantIdx"
+              type="button"
+              class="msg-action"
+              :title="$t('aiChat.retry')"
+              @click="retryLast"
+            >
+              <font-awesome-icon :icon="['fas', 'sync']" size="xs" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="input-area">
-      <div v-if="files.length" class="file-chips">
-        <div v-for="(f, i) in files" :key="i" class="file-chip">
+      <div v-if="attachedFiles.length" class="file-chips">
+        <div v-for="(f, i) in attachedFiles" :key="i" class="file-chip">
           <span class="file-chip-name">{{ f.name }}</span>
-          <button class="file-chip-download" @click="downloadFile(f)" title="Download">
+          <button type="button" class="file-chip-download" @click="downloadFile(f)" :title="$t('aiChat.export.label')">
             <font-awesome-icon :icon="['fas', 'download']" size="xs" />
+          </button>
+          <button type="button" class="file-chip-download" @click="removeFile(i)" :title="$t('aiChat.attach.remove')">
+            <font-awesome-icon :icon="['fas', 'times']" size="xs" />
           </button>
         </div>
       </div>
-      <textarea
-        v-model="inputText"
-        :placeholder="$t('aiChat.sendMessage.placeholder')"
-        rows="2"
-        @keydown.enter.prevent="sendMessage"
-      />
-      <button :disabled="!inputText.trim() || loading" @click="sendMessage">
-        {{ $t('aiChat.sendMessage.button') }}
-      </button>
+      <div class="composer">
+        <input
+          ref="fileInput"
+          type="file"
+          class="d-none"
+          multiple
+          accept=".csv,.txt,.json,.md,.tsv,.xml"
+          @change="onAttach"
+        >
+        <button
+          type="button"
+          class="composer-icon"
+          :title="$t('aiChat.attach.label')"
+          @click="fileInput?.click()"
+        >
+          <font-awesome-icon :icon="['fas', 'paperclip']" />
+        </button>
+        <textarea
+          ref="inputEl"
+          v-model="inputText"
+          :placeholder="$t('aiChat.sendMessage.placeholder')"
+          rows="2"
+          @input="autoGrow"
+          @keydown="onComposerKeydown"
+        />
+        <button
+          v-if="loading"
+          type="button"
+          class="composer-send stop"
+          @click="stopGeneration"
+        >
+          <font-awesome-icon :icon="['fas', 'stop']" />
+          {{ $t('aiChat.sendMessage.stop') }}
+        </button>
+        <button
+          v-else
+          type="button"
+          class="composer-send"
+          :disabled="!inputText.trim()"
+          @click="sendMessage()"
+        >
+          {{ $t('aiChat.sendMessage.button') }}
+        </button>
+      </div>
+      <div class="composer-hint">
+        <span v-if="loading">{{ statusLabel }}</span>
+        <span v-else>{{ $t('aiChat.sendMessage.hint') }}</span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
-import { ref, reactive, watch, nextTick, onMounted, onBeforeUnmount, inject } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import markdownIt from 'markdown-it'
 import html2pdf from 'html2pdf.js'
@@ -124,27 +234,59 @@ import ChartComponent from '../../../Chart/index.vue'
 const { t: $t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
-  startPrompt: { type: String, required: true },
+  startPrompt: { type: String, required: false, default: '' },
   page: { type: String, required: false, default: '' },
   module: { type: String, required: false, default: '' },
   namespace: { type: String, required: false, default: '' },
   magnified: { type: Boolean, default: false },
   files: { type: Array, required: false, default: () => [] },
   model: { type: String, required: false, default: '' },
+  active: { type: Boolean, default: true },
+  framed: { type: Boolean, default: true },
 })
 
 const store = useStore()
 const $ComposeAPI = inject('$ComposeAPI', window.__composeAPI)
 
-const messages = ref([
-  { role: 'assistant', content: $t('aiChat.greeting'), collapsed: true },
-])
+function makeChatID () {
+  return `chat-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`
+}
+
+const messages = ref([])
 const inputText = ref('')
 const loading = ref(false)
+const warmingUp = ref(false)
+const streamStatus = ref('')
 const messagesContainer = ref(null)
-const chatID = `chat-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`
+const inputEl = ref(null)
+const fileInput = ref(null)
+const chatID = ref(makeChatID())
 const exportOpen = ref(false)
 const abortController = ref(null)
+const attachedFiles = ref([...(props.files || [])])
+const stickToBottom = ref(true)
+const copiedIdx = ref(-1)
+let persistTimer = null
+let copiedTimer = null
+
+const isEmpty = computed(() => !messages.value.some(m => m.role === 'user' || (m.role === 'assistant' && m.content)))
+const lastAssistantIdx = computed(() => {
+  for (let i = messages.value.length - 1; i >= 0; i--) {
+    if (messages.value[i].role === 'assistant') return i
+  }
+  return -1
+})
+const statusLabel = computed(() => {
+  if (warmingUp.value || streamStatus.value === 'warming') return $t('aiChat.status.warming')
+  if (streamStatus.value === 'writing') return $t('aiChat.status.writing')
+  if (loading.value) return $t('aiChat.status.thinking')
+  return ''
+})
+const suggestions = computed(() => [
+  { key: 'capabilities', text: $t('aiChat.empty.suggestions.capabilities') },
+  { key: 'modules', text: $t('aiChat.empty.suggestions.modules') },
+  { key: 'page', text: $t('aiChat.empty.suggestions.page') },
+])
 
 function hasManyLines(text) {
   if (!text) return false
@@ -166,6 +308,174 @@ function downloadFile(f) {
   URL.revokeObjectURL(url)
 }
 
+function removeFile(i) {
+  attachedFiles.value.splice(i, 1)
+}
+
+function sessionKey() {
+  return `aiChat.session.${props.namespace || '0'}.${props.page || '0'}`
+}
+
+function persistSession() {
+  try {
+    const usable = messages.value.filter(m => m.role && (m.content || m.reasoning))
+    if (!usable.length) {
+      localStorage.removeItem(sessionKey())
+      return
+    }
+    const payload = {
+      chatID: chatID.value,
+      messages: usable.slice(-40).map(m => ({
+        role: m.role,
+        content: String(m.content || '').slice(0, 50000),
+        reasoning: String(m.reasoning || '').slice(0, 20000),
+        collapsed: !!m.collapsed,
+      })),
+    }
+    localStorage.setItem(sessionKey(), JSON.stringify(payload))
+  } catch (e) {}
+}
+
+function restoreSession() {
+  try {
+    const raw = localStorage.getItem(sessionKey())
+    if (!raw) return false
+    const payload = JSON.parse(raw)
+    if (!payload || !Array.isArray(payload.messages) || !payload.messages.length) return false
+    chatID.value = payload.chatID || makeChatID()
+    messages.value = payload.messages.map(m => ({
+      role: m.role,
+      content: m.content || '',
+      reasoning: m.reasoning || '',
+      reasoningOpen: false,
+      collapsed: !!m.collapsed,
+      active: false,
+    }))
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+function schedulePersist() {
+  clearTimeout(persistTimer)
+  persistTimer = setTimeout(persistSession, 400)
+}
+
+function focusInput() {
+  nextTick(() => {
+    const el = inputEl.value
+    if (!el) return
+    el.focus()
+    autoGrow()
+  })
+}
+
+function autoGrow() {
+  const el = inputEl.value
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+}
+
+function onComposerKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    sendMessage()
+  }
+}
+
+function onScroll() {
+  const el = messagesContainer.value
+  if (!el) return
+  stickToBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 96
+}
+
+function useSuggestion(text) {
+  inputText.value = text
+  sendMessage()
+}
+
+function canConfirm(idx, msg) {
+  return !loading.value && !msg.confirmDone && idx === messages.value.length - 1
+}
+
+function resolveConfirm(ok) {
+  const last = messages.value[messages.value.length - 1]
+  if (last) last.confirmDone = true
+  sendMessage(ok ? $t('aiChat.confirm.execute') : $t('aiChat.confirm.cancel'), {
+    apiPrompt: ok ? 'да' : 'отмена',
+  })
+}
+
+function copyMessage(msg) {
+  const idx = messages.value.indexOf(msg)
+  const text = stripHtml(preview(msg.content || '')).replace(/\u2026$/, '')
+  const plain = stripXmlContent(replaceChartFences(String(msg.content || ''))).replace(/<[^>]*>/g, '')
+  navigator.clipboard?.writeText(plain || text).catch(() => {})
+  copiedIdx.value = idx
+  clearTimeout(copiedTimer)
+  copiedTimer = setTimeout(() => { copiedIdx.value = -1 }, 1500)
+}
+
+function editMessage(idx) {
+  const msg = messages.value[idx]
+  if (!msg || msg.role !== 'user') return
+  inputText.value = msg.content || ''
+  messages.value = messages.value.slice(0, idx)
+  schedulePersist()
+  focusInput()
+}
+
+function retryLast() {
+  const lastUser = [...messages.value].reverse().find(m => m.role === 'user')
+  if (!lastUser) return
+  const idx = messages.value.lastIndexOf(lastUser)
+  const text = lastUser.content
+  messages.value = messages.value.slice(0, idx)
+  sendMessage(text)
+}
+
+function newChat() {
+  if (abortController.value) {
+    abortController.value.abort()
+    abortController.value = null
+  }
+  loading.value = false
+  warmingUp.value = false
+  streamStatus.value = ''
+  messages.value = []
+  attachedFiles.value = []
+  inputText.value = ''
+  chatID.value = makeChatID()
+  persistSession()
+  focusInput()
+}
+
+function stopGeneration() {
+  if (abortController.value) {
+    abortController.value.abort()
+    abortController.value = null
+  }
+}
+
+function onAttach(e) {
+  const list = Array.from(e.target.files || [])
+  e.target.value = ''
+  for (const file of list) {
+    if (file.size > 1024 * 1024) continue
+    const reader = new FileReader()
+    reader.onload = () => {
+      attachedFiles.value.push({
+        name: file.name,
+        content: String(reader.result || ''),
+        type: file.type || 'text/plain',
+      })
+    }
+    reader.readAsText(file)
+  }
+}
+
 function preview(text) {
   const hidden = stripXmlContent(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n')
   const noCharts = replaceChartFences(hidden)
@@ -177,7 +487,7 @@ function preview(text) {
 function scrollToBottom() {
   const container = messagesContainer.value
   nextTick(() => {
-    if (container !== null) {
+    if (container !== null && stickToBottom.value) {
       container.scrollTop = container.scrollHeight
     }
   })
@@ -200,7 +510,7 @@ function stripToolXml(text) {
 // Skip ```chart / ```echarts fences so they can be rendered as figures.
 function stripCodeBlocks(text) {
   return String(text || '')
-    .replace(/```(?!(?:\s*(?:compose-chart|chart|echarts|json))\b)[\s\S]*?(```|$)/gi, '')
+    .replace(/```(?!(?:\s*(?:compose-chart|chart|echarts|json|chat-confirm))\b)[\s\S]*?(```|$)/gi, '')
     .replace(/\n{3,}/g, '\n\n')
 }
 
@@ -233,6 +543,9 @@ function messageParts(text) {
     }
     if (part.kind === 'chart-error') {
       return { kind: 'chart-error' }
+    }
+    if (part.kind === 'confirm') {
+      return { kind: 'confirm', spec: part.spec || { tools: [] } }
     }
     return { kind: 'html', html: formatMarkdown(part.text) }
   })
@@ -889,64 +1202,104 @@ function collectDocxRuns(node) {
   return runs
 }
 
-async function sendMessage() {
-  const text = inputText.value.trim()
-  if (!text || loading.value) return
+async function sendMessage(overrideText, opts = {}) {
+  const displayText = String(overrideText != null ? overrideText : inputText.value).trim()
+  if (!displayText || loading.value) return
+  const apiPrompt = String(opts.apiPrompt || displayText).trim()
 
   const msgIdxAsk = messages.value.length
-  messages.value.push({ role: 'user', content: text, active: false, collapsed: false })
-  inputText.value = ''
+  messages.value.push({ role: 'user', content: displayText, active: false, collapsed: false })
+  if (!opts.keepInput) inputText.value = ''
+  stickToBottom.value = true
   scrollToBottom()
+  autoGrow()
 
-  const msgIdxReasoning = messages.value.length
-  messages.value.push({ role: 'assistant', reason: true, active: true, collapsed: false, content: '' })
   const msgIdxAnswer = messages.value.length
-  messages.value.push({ role: 'assistant', reason: false, active: true, collapsed: false, content: '' })
+  messages.value.push({
+    role: 'assistant',
+    content: '',
+    reasoning: '',
+    reasoningOpen: true,
+    active: true,
+    collapsed: false,
+  })
   loading.value = true
+  warmingUp.value = false
+  streamStatus.value = 'thinking'
   scrollToBottom()
 
   abortController.value = new AbortController()
 
   try {
-    const history = messages.value.slice(1, -2).slice(-8).map(m => ({
+    const history = messages.value.slice(0, -2).filter(m => m.content).slice(-8).map(m => ({
       role: m.role,
       content: m.content,
     }))
 
     await $ComposeAPI.pageAiPromptStream({
-      prompt: text,
+      prompt: apiPrompt,
       messages: history,
-      files: props.files,
-      chatID,
+      files: attachedFiles.value,
+      chatID: chatID.value,
       namespaceID: props.namespace,
       pageID: props.page,
       moduleID: props.module,
       model: props.model,
       signal: abortController.value.signal,
-    }, ({ token, reason }) => {
-      messages.value[msgIdxAnswer].content += token
-      if (token !== '') {
-        messages.value[msgIdxReasoning].active = false
-        messages.value[msgIdxReasoning].collapsed = true
+    }, ({ token, reason, status }) => {
+      if (status === 'warming') {
+        warmingUp.value = true
+        streamStatus.value = 'warming'
+        scrollToBottom()
+        return
       }
-      if (reason !== '') {
-        if (messages.value[msgIdxReasoning].content === '') {
-          messages.value[msgIdxReasoning].content = '<b>\u0420\u0430\u0437\u043c\u044b\u0448\u043b\u044f\u044e...</b> '
+      if (status === 'ready') {
+        warmingUp.value = false
+        streamStatus.value = 'thinking'
+        scrollToBottom()
+        return
+      }
+      if (token) {
+        streamStatus.value = 'writing'
+        messages.value[msgIdxAnswer].content += token
+        const stub = 'Модель не сгенерировала ответ.'
+        const reasoningText = messages.value[msgIdxAnswer].reasoning
+        if (messages.value[msgIdxAnswer].content.trim() === stub && reasoningText) {
+          messages.value[msgIdxAnswer].content = reasoningText
         }
-        messages.value[msgIdxReasoning].content += reason.replace(/\n/g, '<br>')
+        if (reasoningText) {
+          messages.value[msgIdxAnswer].reasoningOpen = false
+        }
+      }
+      if (reason) {
+        messages.value[msgIdxAnswer].reasoning += reason
       }
       scrollToBottom()
     })
   } catch (e) {
-    if (e?.name !== 'AbortError') {
-      messages.value[msgIdxAnswer].content = e.message || 'Error'
+    const aborted = e?.name === 'AbortError' || /abort/i.test(String(e?.message || ''))
+    if (aborted) {
+      if (!messages.value[msgIdxAnswer].content && !messages.value[msgIdxAnswer].reasoning) {
+        messages.value[msgIdxAnswer].content = $t('aiChat.stopped')
+      }
+    } else {
+      const msg = e.message || 'Error'
+      if (messages.value[msgIdxAnswer].content) {
+        messages.value[msgIdxAnswer].content += '\n\n' + msg
+      } else if (messages.value[msgIdxAnswer].reasoning) {
+        messages.value[msgIdxAnswer].content = messages.value[msgIdxAnswer].reasoning
+      } else {
+        messages.value[msgIdxAnswer].content = msg
+      }
     }
   } finally {
     loading.value = false
+    warmingUp.value = false
+    streamStatus.value = ''
     messages.value[msgIdxAnswer].active = false
     messages.value[msgIdxAsk].active = false
-    messages.value[msgIdxReasoning].active = false
     abortController.value = null
+    schedulePersist()
     scrollToBottom()
   }
 }
@@ -955,12 +1308,36 @@ function handleDocumentClick(e) {
   closeExport(e)
 }
 
+watch(() => props.files, (files) => {
+  attachedFiles.value = [...(files || [])]
+})
+
+watch(() => props.startPrompt, (prompt) => {
+  if (!prompt || !String(prompt).trim()) return
+  inputText.value = String(prompt).trim()
+  focusInput()
+})
+
+watch(messages, schedulePersist, { deep: true })
+
+watch(() => props.active, (active) => {
+  if (active) focusInput()
+})
+
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
+  restoreSession()
   nextTick(() => {
-    if (!props.startPrompt) return
-    inputText.value = props.startPrompt.trim()
-    sendMessage()
+    const incoming = String(props.startPrompt || '').trim()
+    if (props.framed && incoming && !messages.value.some(m => m.role === 'user')) {
+      inputText.value = incoming
+      sendMessage()
+    } else if (incoming) {
+      inputText.value = incoming
+    }
+    focusInput()
+    stickToBottom.value = true
+    scrollToBottom()
   })
 })
 
@@ -969,7 +1346,26 @@ onBeforeUnmount(() => {
     abortController.value.abort()
     abortController.value = null
   }
+  clearTimeout(persistTimer)
+  clearTimeout(copiedTimer)
   document.removeEventListener('click', handleDocumentClick)
+})
+
+function applyIncomingPrompt(prompt, files) {
+  if (Array.isArray(files)) attachedFiles.value = [...files]
+  if (prompt && String(prompt).trim()) {
+    inputText.value = String(prompt).trim()
+  }
+  focusInput()
+}
+
+defineExpose({
+  exportMarkdown,
+  exportPdf,
+  exportDocx,
+  newChat,
+  focusInput,
+  applyIncomingPrompt,
 })
 </script>
 
@@ -986,6 +1382,11 @@ onBeforeUnmount(() => {
   overflow: hidden;
   background: #f9f9f9;
   flex: 1;
+}
+
+.chat-container.frameless {
+  border: none;
+  border-radius: 0;
 }
 
 .export-dropdown {
@@ -1062,6 +1463,8 @@ onBeforeUnmount(() => {
 }
 
 .message-body {
+  min-width: 0;
+  flex: 1;
 }
 
 .collapse-btn {
@@ -1136,9 +1539,8 @@ onBeforeUnmount(() => {
   background: rgba(255,255,255,0.12);
 }
 
-h1 {
-  color: red;
-  font-size: 1.5rem;
+.content h1 {
+  font-size: 1.35rem;
 }
 .content h2 {
   font-size: 1.25rem;
@@ -1153,6 +1555,15 @@ h1 {
   display: flex;
   gap: 4px;
   padding: 8px 0;
+}
+
+.warmup-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 8px 0;
+  color: #6c757d;
+  font-size: 0.9rem;
 }
 
 .typing-indicator span {
@@ -1215,14 +1626,21 @@ h1 {
 
 .input-area {
   display: flex;
+  flex-direction: column;
   flex-shrink: 0;
-  gap: 12px;
-  padding: 16px;
+  gap: 8px;
+  padding: 12px 16px 10px;
   background: white;
   border-top: 1px solid #e0e0e0;
 }
 
-.input-area textarea {
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.composer textarea {
   flex: 1;
   padding: 10px;
   border: 1px solid #ddd;
@@ -1230,29 +1648,175 @@ h1 {
   resize: none;
   font-family: inherit;
   font-size: 14px;
+  max-height: 160px;
+  line-height: 1.4;
 }
 
-.input-area button {
-  padding: 0 24px;
+.composer-icon {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: #8899aa;
+  cursor: pointer;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.composer-icon:hover {
+  background: #f0f0f0;
+  color: #445;
+}
+
+.composer-send {
+  padding: 0 16px;
+  min-height: 36px;
   background: var(--primary);
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.2s;
-}
-.typing-indicator {
-  min-width: 100px;
+  flex-shrink: 0;
 }
 
-.input-area button:hover:not(:disabled) {
-  background: var(--primary);
+.composer-send.stop {
+  background: #6c757d;
 }
 
-.input-area button:disabled {
+.composer-send:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.composer-send:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.composer-hint {
+  font-size: 11px;
+  color: #99a3ad;
+  min-height: 16px;
+}
+
+.empty-state {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  gap: 16px;
+}
+
+.empty-greeting {
+  font-size: 1.05rem;
+  color: #445;
+  text-align: center;
+}
+
+.suggestion-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.suggestion-chip {
+  border: 1px solid #d5dde6;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #334;
+  cursor: pointer;
+}
+
+.suggestion-chip:hover {
+  background: #f3f7fb;
+  border-color: #c5d0dc;
+}
+
+.reasoning {
+  margin-bottom: 6px;
+}
+
+.reasoning-toggle {
+  border: none;
+  background: transparent;
+  color: #8899aa;
+  font-size: 12px;
+  padding: 0 2px 4px;
+  cursor: pointer;
+}
+
+.reasoning-body {
+  font-size: 12px;
+  color: #667788;
+  white-space: pre-wrap;
+  background: #f3f5f8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.msg-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  margin-top: 2px;
+}
+
+.message:hover .msg-actions,
+.message:focus-within .msg-actions {
+  opacity: 1;
+}
+
+.msg-action {
+  border: none;
+  background: transparent;
+  color: #99a3ad;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.msg-action:hover {
+  background: rgba(0,0,0,0.06);
+  color: #445;
+}
+
+.confirm-card {
+  border: 1px solid #d6eaf8;
+  background: #f3f7fb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 8px 0 4px;
+}
+
+.confirm-title {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.confirm-tools {
+  margin: 0 0 8px 1.1em;
+  padding: 0;
+  font-size: 13px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.typing-indicator {
+  min-width: 100px;
 }
 
 @keyframes fadeIn {

@@ -16,24 +16,16 @@
     <div class="flex-fill overflow-auto">
       <div class="container-fluid h-100">
         <draggable
-            item-key="id"
           v-if="filteredApps.length"
-          v-model="appList"
+          v-model="sortableList"
+          item-key="applicationID"
           :disabled="!canCreateApplication || query || isMobileResolution"
           group="apps"
-          class="h-100 w-100"
+          class="h-100 w-100 d-flex flex-wrap align-items-stretch justify-content-center mx-2 row"
           @end="onDrop"
         >
-          <transition-group
-            name="apps"
-            tag="div"
-            class="d-flex flex-wrap align-items-stretch justify-content-center mx-2 row"
-          >
-            <div
-              v-for="app in filteredApps"
-              :key="app.applicationID"
-              class="col-12 col-md-6 col-lg-4 col-xl-3 p-2"
-            >
+          <template #item="{ element: app }">
+            <div class="col-12 col-md-6 col-lg-4 col-xl-3 p-2">
               <div
                 class="card app h-100 position-relative"
                 @mouseover="hovered = app.applicationID"
@@ -58,7 +50,7 @@
                 />
               </div>
             </div>
-          </transition-group>
+          </template>
         </draggable>
 
         <div
@@ -108,6 +100,15 @@ const filteredApps = computed(() => {
   return query.value
     ? appList.value.filter(({ name }) => (name.toUpperCase()).includes(q))
     : appList.value
+})
+
+const sortableList = computed({
+  get () {
+    return filteredApps.value
+  },
+  set (v) {
+    appList.value = v
+  },
 })
 
 watch(() => applicationsStore.unifyOnly, (apps) => {

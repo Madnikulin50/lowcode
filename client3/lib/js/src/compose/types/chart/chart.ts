@@ -367,9 +367,12 @@ export default class Chart extends BaseChart {
         const defaultOffset = {
           // Single-series bars hide the legend — less top chrome needed.
           top: legendShown ? 65 : 44,
-          right: timeline.includes('x') ? 40 : 30,
-          bottom: timeline.includes('x') ? 60 : 20,
-          left: 30,
+          right: timeline.includes('x') ? 40 : 16,
+          bottom: timeline.includes('x') ? 60 : 12,
+          // Small inset only: containLabel already reserves space for axis labels.
+          // Large left (legacy seeds used 40–140) + containLabel looked like a
+          // rightward shift inside the page block.
+          left: 8,
         }
 
         // Outside value labels sit beyond the bar tip; pad grid so the plot
@@ -377,11 +380,19 @@ export default class Chart extends BaseChart {
         const outsidePadTop = !horizontal && hasOutsideValueLabels ? 18 : 0
         const outsidePadRight = horizontal && hasOutsideValueLabels ? 40 : 0
 
+        let gridLeft = offset?.isDefault
+          ? defaultOffset.left
+          : gridNum(offset?.left, defaultOffset.left)
+        // Legacy chart configs paired large left with containLabel — clamp.
+        if (!offset?.isDefault && gridLeft > 24) {
+          gridLeft = 12
+        }
+
         options.grid = {
           top: (offset?.isDefault ? defaultOffset.top : gridNum(offset?.top, defaultOffset.top)) + outsidePadTop,
           right: (offset?.isDefault ? defaultOffset.right : gridNum(offset?.right, defaultOffset.right)) + outsidePadRight,
           bottom: offset?.isDefault ? defaultOffset.bottom : gridNum(offset?.bottom, defaultOffset.bottom),
-          left: offset?.isDefault ? defaultOffset.left : gridNum(offset?.left, defaultOffset.left),
+          left: gridLeft,
           containLabel: true,
         }
 
@@ -689,9 +700,9 @@ export default class Chart extends BaseChart {
 
     const defaultOffset = {
       top: 65,
-      right: 30,
-      bottom: 20,
-      left: 30,
+      right: 16,
+      bottom: 12,
+      left: 8,
     }
 
     // Build a set of unique nodes and a set of links out of the raw report
@@ -724,7 +735,12 @@ export default class Chart extends BaseChart {
       top: offset?.isDefault ? defaultOffset.top : offset?.top,
       right: offset?.isDefault ? defaultOffset.right : offset?.right,
       bottom: offset?.isDefault ? defaultOffset.bottom : offset?.bottom,
-      left: offset?.isDefault ? defaultOffset.left : offset?.left,
+      left: (() => {
+        const raw = offset?.isDefault ? defaultOffset.left : Number(offset?.left)
+        const n = Number.isFinite(raw) ? raw : defaultOffset.left
+        // Same clamp as cartesian bars: large legacy left + containLabel shifts the plot.
+        return !offset?.isDefault && n > 24 ? 12 : n
+      })(),
       containLabel: true,
     }
 

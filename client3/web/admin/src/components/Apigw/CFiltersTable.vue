@@ -11,15 +11,14 @@
       </thead>
 
       <draggable
-            item-key="id"
-        v-if="!fetching"
-        v-model="sortableFilters"
-        :options="{ handle: '.handle' }"
-        tag="tbody"
-      >
+      item-key="ref"
+      v-if="!fetching"
+      v-model="sortableFilters"
+      :options="{ handle: '.handle' }"
+      tag="tbody"
+    >
+      <template #item="{ element: filter, index }">
         <tr
-          v-for="(filter, index) in sortableFilters"
-          :key="index"
           class="pointer"
           @click="onRowClick(filter, index)"
         >
@@ -48,7 +47,8 @@
             />
           </td>
         </tr>
-      </draggable>
+      </template>
+    </draggable>
     </table>
 
     <div class="d-flex flex-column align-items-center justify-content-center h-100 overflow-hidden">

@@ -207,7 +207,7 @@ def chart_cfg(module_id, filter_ql, dim_field, metric_field, metric_type, label,
             "offset": {
                 "bottom": "20" if not horizontal else "20",
                 "isDefault": False,
-                "left": "140" if horizontal else "40",
+                "left": "12",
                 "right": "20",
                 "top": "40",
             },

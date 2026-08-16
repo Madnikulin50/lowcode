@@ -166,13 +166,54 @@ public:
 
 aiChat:
   greeting: I'm LowCooode AI assistant
+  title: AI assistant
   startPrompt: prompt for start AI magic...
   sendMessage:
     button: Send
-    placeholder: Enter prompt...
+    placeholder: Enter a message…
+    hint: Enter to send · Shift+Enter for a new line
+    stop: Stop
   model:
     label: Model
   chart:
     error: Could not render this chart
+  warmup:
+    inProgress: Loading model into memory…
+    short: Warming up
+  status:
+    warming: Loading model…
+    thinking: Thinking…
+    writing: Writing…
+  empty:
+    suggestions:
+      capabilities: What can you help with?
+      modules: What modules are in this namespace?
+      page: Summarize this page
+  newChat:
+    label: New chat
+  export:
+    label: Export
+    markdown: Markdown (.md)
+    pdf: PDF
+    docx: DOCX
+  expand: Expand
+  collapse: Collapse
+  close: Close
+  copy: Copy
+  copied: Copied
+  retry: Retry
+  edit: Edit
+  reasoning:
+    label: Thinking
+  confirm:
+    title: Confirm this action
+    execute: Execute
+    cancel: Cancel
+    done: Confirmed
+  stopped: Generation stopped.
+  attach:
+    label: Attach a file
+    remove: Remove
+
 
 

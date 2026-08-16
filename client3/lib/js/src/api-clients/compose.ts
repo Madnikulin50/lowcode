@@ -4481,7 +4481,7 @@ export default class Compose {
         return this.api().request(cfg).then(result => stdResolve(result))
     }
 
-    async pageAiPromptStream (a: KV, onToken: (token: { token: any; reason: any }) => void): Promise<void> {
+    async pageAiPromptStream (a: KV, onToken: (token: { token: any; reason: any; status?: string }) => void): Promise<void> {
         const {
             namespaceID,
             selfID,
@@ -4546,10 +4546,14 @@ export default class Compose {
             for (const line of lines) {
                 if (!line.startsWith('data: ')) continue
                     const data = JSON.parse(line.slice(6))
-                    if (data.token || data.reason) {
+                    if (data.error) {
+                        throw new Error(data.error)
+                    }
+                    if (data.status || data.token || data.reason) {
                         onToken( {
-                            token: data.token,
-                            reason: data.reason,
+                            token: data.token || '',
+                            reason: data.reason || '',
+                            status: data.status || '',
                         })
                     }
                     if (data.done) return
@@ -4609,6 +4613,7 @@ export default class Compose {
         } = (a as KV) || {}
 
         const cfg: AxiosRequestConfig = {
+            timeout: 10 * 60 * 1000, // cold model load can take several minutes
             ...extra,
             method: 'post',
             url: '/chat/warmup',

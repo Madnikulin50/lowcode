@@ -91,6 +91,9 @@ func (c *workflowChat) buildMessages(ask *WorkflowChatPromptArguments) []*schema
 }
 
 func (c *workflowChat) Ask(ctx context.Context, ask *WorkflowChatPromptArguments) (interface{}, error) {
+	if err := chat.EnsureWarm(ctx, c.client.Model()); err != nil {
+		return nil, err
+	}
 	toolInfos, err := chat.ToToolInfos(c.tools)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build tool infos: %w", err)
@@ -148,6 +151,9 @@ func (c *workflowChat) Ask(ctx context.Context, ask *WorkflowChatPromptArguments
 }
 
 func (c *workflowChat) AskStream(ctx context.Context, ask *WorkflowChatPromptArguments, stream chat.StreamFunc) error {
+	if err := chat.EnsureWarm(ctx, c.client.Model()); err != nil {
+		return err
+	}
 	toolInfos, err := chat.ToToolInfos(c.tools)
 	if err != nil {
 		return fmt.Errorf("failed to build tool infos: %w", err)
