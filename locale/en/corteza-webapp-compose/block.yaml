@@ -3,8 +3,67 @@ selector:
     placeholder: Blocks from other layouts
   tooltip:
     clone:
-      ref: Clone with references
-      noRef: Clone without references
+      ref: Add as a linked copy (stays in sync with the original)
+      noRef: Duplicate as an independent block
+  searchPlaceholder: Search by name or description
+  recordPageOnly: Record page
+  recordPageOnlyHint: Available only on record pages
+  disabledHere: This block cannot be added here
+  empty: No block types match your search
+  reuse:
+    title: Reuse a block from another layout
+    clone: Duplicate
+    reference: Link
+  categories:
+    all: All
+    data: Data
+    visualize: Charts & maps
+    content: Content
+    layout: Layout
+    automation: Automation
+  types:
+    recordList:
+      description: Searchable table of module records
+    record:
+      description: Fields of the current record
+    recordOrganizer:
+      description: Kanban-style grouping and ordering
+    recordRevisions:
+      description: History of changes to the record
+    comment:
+      description: Discussion thread on related records
+    chart:
+      description: Charts from module aggregations
+    metric:
+      description: KPI numbers from record reports
+    progress:
+      description: Progress bar against a target
+    calendar:
+      description: Events from records or reminders
+    geometry:
+      description: Map with record locations
+    report:
+      description: Embedded reporter scenario
+    content:
+      description: Formatted text and rich content
+    file:
+      description: File gallery or attachments
+    iFrame:
+      description: Embedded web page
+    tabs:
+      description: Several blocks behind tab headers
+    navigation:
+      description: Links to pages and external URLs
+    automation:
+      description: Buttons that run workflows and scripts
+    ruleChain:
+      description: Interactive rule-chain diagram
+    aiChat:
+      description: Ask the AI assistant about this page
+ruleChain:
+  label: Rule chain
+aiChat:
+  label: AI assistant
 automation:
   addPlaceholderLabel: Add placeholder (dummy button)
   availableScriptsAndWorkflow: Available scripts and workflows ({{count}})
@@ -872,7 +931,7 @@ socialFeed:
     socialFeed: Twitterblo feed
   twitterProfileField: Field that contains Twitter Profile URL for a record
   twitterProfileLabel: Twitter Profile URL for list pages i.e (https://twitter.com/bloomberg)
-selectBlockFootnote: Some types might be disabled for non-record pages
+selectBlockFootnote: Blocks marked “Record page” are available only when this page is bound to a module
 field:
   noPermission: No permission to read field value
   selector:

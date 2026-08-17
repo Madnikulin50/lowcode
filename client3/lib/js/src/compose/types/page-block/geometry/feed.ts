@@ -1,5 +1,6 @@
 import { Apply, NoID } from '../../../../cast'
 import { IsOf } from '../../../../guards'
+import { asFeedFieldName } from '../calendar/feed'
 
 interface FeedOptions {
   color: string;
@@ -34,8 +35,10 @@ export default class Feed {
     if (!i) return
 
     if (IsOf<Feed>(i, 'resource')) {
-      Apply(this, i, String, 'resource', 'titleField', 'geometryField')
+      Apply(this, i, String, 'resource')
       Apply(this, i, Boolean, 'displayMarker', 'displayPolygon')
+      this.titleField = asFeedFieldName(i.titleField)
+      this.geometryField = asFeedFieldName(i.geometryField)
 
       if (i.options) {
         this.options = { ...this.options, ...i.options }
@@ -44,6 +47,6 @@ export default class Feed {
   }
 
   isValid (): boolean {
-    return this.options.moduleID !== NoID && !!this.geometryField
+    return this.options.moduleID !== NoID && !!asFeedFieldName(this.geometryField)
   }
 }

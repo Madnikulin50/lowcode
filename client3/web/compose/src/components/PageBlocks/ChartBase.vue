@@ -149,7 +149,7 @@ import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
 import ChartComponent from '../Chart'
 import { NoID, compose } from 'corteza-lib/js/dist'
-import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -213,7 +213,8 @@ const hasDataTableEnabled = computed(() => {
 
 const hasLiveFilter = computed(() => !!liveFilterValue.value)
 
-watch(() => options.value, () => { refresh() }, { deep: true })
+watch(() => options.value, () => { if (!props.loadingRecord) refresh() }, { deep: true })
+watch(() => [props.record?.recordID, props.loadingRecord], () => { if (!props.loadingRecord) refresh() })
 
 onMounted(() => {
   fetchChart()
@@ -268,16 +269,16 @@ function reporter (r = {}) {
   }
   let f = getFilter()
   if (f) {
-    if (!props.record && (f.includes('${record') || f.includes('${ownerID}'))) {
-      return new Promise((resolve) => resolve([]))
-    }
-    f = evaluatePrefilter(f, {
+    const { skip, filter: evaluated } = evalPrefilterOrSkip(f, {
       record: props.record,
       user: $auth.user || {},
       recordID: (props.record || {}).recordID || NoID,
       ownerID: (props.record || {}).ownedBy || NoID,
       userID: ($auth.user || {}).userID || NoID,
+      loadingRecord: !!props.loadingRecord,
     })
+    if (skip) return Promise.resolve([])
+    f = evaluated
     filter.value = filter.value || {}
     filter.value.filter = f
   }
@@ -340,7 +341,7 @@ function drillDown ({ trueName, value }) {
     const block = new compose.PageBlockRecordList({
       title: t ? `${t} - "${drillDownValue}"` : drillDownValue,
       blockID: `drillDown-${chartID}`,
-      options: { moduleID, fields, prefilter, presort: 'createdAt DESC', hideRecordReminderButton: true, hideRecordViewButton: false, hideConfigureFieldsButton: false, hideImportButton: true, enableRecordPageNavigation: true, selectable: true, allowExport: true, perPage: 14, showTotalCount: true, recordDisplayOption: 'modal' },
+      options: { moduleID, fields, prefilter, presort: '', hideRecordReminderButton: true, hideRecordViewButton: false, hideConfigureFieldsButton: false, hideImportButton: true, enableRecordPageNavigation: true, selectable: true, allowExport: true, perPage: 14, showTotalCount: true, recordDisplayOption: 'modal' },
     })
     window.dispatchEvent(new CustomEvent('magnify-page-block', { detail: { block } }))
   }

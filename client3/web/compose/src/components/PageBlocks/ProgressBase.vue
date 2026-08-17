@@ -26,7 +26,7 @@ import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
 import { composables } from 'corteza-lib/vue/dist'
 import { NoID } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
-import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
 
@@ -58,8 +58,8 @@ const value = ref(undefined)
 const min = ref(undefined)
 const max = ref(undefined)
 
-watch(() => props.record?.recordID, () => { refresh() }, { immediate: true })
-watch(options, () => { refresh() }, { deep: true })
+watch(() => [props.record?.recordID, props.loadingRecord], () => { if (!props.loadingRecord) refresh() }, { immediate: true })
+watch(options, () => { if (!props.loadingRecord) refresh() }, { deep: true })
 
 onMounted(() => {
   refreshBlock(refresh)
@@ -81,29 +81,21 @@ function refetchOnPrefilterValueChange({ detail: { fieldName } }) {
 async function refresh() {
   processing.value = true
   const { namespaceID } = props.namespace || {}
-  function guardFilter(f) {
-    if (!props.record && f && (f.includes('${record') || f.includes('${ownerID}'))) return ''
-    return f
+  const pfCtx = {
+    record: props.record, user: $auth?.user || {},
+    recordID: (props.record || {}).recordID || NoID,
+    ownerID: (props.record || {}).ownedBy || NoID,
+    userID: ($auth?.user || {}).userID || NoID,
+    loadingRecord: !!props.loadingRecord,
+  }
+  function evalFilter (f) {
+    const { skip, filter } = evalPrefilterOrSkip(f, pfCtx)
+    return skip ? 'false' : filter
   }
   const additionalOptions = {
-    value: { filter: evaluatePrefilter(guardFilter(options.value.value.filter), {
-      record: props.record, user: $auth?.user || {},
-      recordID: (props.record || {}).recordID || NoID,
-      ownerID: (props.record || {}).ownedBy || NoID,
-      userID: ($auth?.user || {}).userID || NoID,
-    })},
-    minValue: { filter: evaluatePrefilter(guardFilter(options.value.minValue.filter), {
-      record: props.record, user: $auth?.user || {},
-      recordID: (props.record || {}).recordID || NoID,
-      ownerID: (props.record || {}).ownedBy || NoID,
-      userID: ($auth?.user || {}).userID || NoID,
-    })},
-    maxValue: { filter: evaluatePrefilter(guardFilter(options.value.maxValue.filter), {
-      record: props.record, user: $auth?.user || {},
-      recordID: (props.record || {}).recordID || NoID,
-      ownerID: (props.record || {}).ownedBy || NoID,
-      userID: ($auth?.user || {}).userID || NoID,
-    })},
+    value: { filter: evalFilter(options.value.value.filter) },
+    minValue: { filter: evalFilter(options.value.minValue.filter) },
+    maxValue: { filter: evalFilter(options.value.maxValue.filter) },
   }
   return props.block.fetch(additionalOptions, $ComposeAPI, namespaceID)
     .then(({ value: v, min: m = 0, max: mx = 100 }) => { min.value = m; max.value = mx; value.value = v })

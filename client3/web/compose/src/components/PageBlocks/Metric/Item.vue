@@ -446,9 +446,10 @@ function setDefaultValues () {
 }
 
 .rb-meta-item {
-  display: inline-flex;
+  display: flex;
   align-items: baseline;
   gap: 0.4rem;
+  width: 100%;
   min-width: 0;
 }
 

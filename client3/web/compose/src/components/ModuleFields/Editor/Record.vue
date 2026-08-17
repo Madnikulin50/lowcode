@@ -160,7 +160,7 @@ import { useRouter } from 'vue-router'
 import { debounce } from 'lodash'
 import axios from 'axios'
 import { compose, NoID } from 'corteza-lib/js/dist'
-import { queryToFilter, evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { queryToFilter, evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { useModuleStore } from 'corteza-webapp-compose/src/stores/module'
 import { useRecordStore } from 'corteza-webapp-compose/src/stores/record'
 import { useUserStore } from 'corteza-webapp-compose/src/stores/user'
@@ -347,13 +347,17 @@ function fetchPrefiltered (q = filter.value) {
   processing.value = true
   let { query: searchQuery = '' } = q
   if (props.field.options.prefilter) {
-    const pf = evaluatePrefilter(props.field.options.prefilter, {
+    const { skip, filter: pf } = evalPrefilterOrSkip(props.field.options.prefilter, {
       record: props.record,
       user: ($auth.value || {}).user || {},
       recordID: (props.record || {}).recordID || NoID,
       ownerID: (props.record || {}).ownedBy || NoID,
       userID: (($auth.value || {}).user || {}).userID || NoID,
     })
+    if (skip) {
+      processing.value = false
+      return
+    }
     searchQuery = searchQuery ? `(${pf}) AND (${searchQuery})` : pf
   }
 

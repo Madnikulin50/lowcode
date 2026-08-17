@@ -3,6 +3,7 @@ import { Namespace } from '../../namespace'
 import { Module } from '../../module'
 import { Compose as ComposeAPI } from '../../../../api-clients'
 import { makeColors, Event } from './shared'
+import { asFeedFieldName } from './feed'
 
 interface FeedOptions {
   color: string;
@@ -63,7 +64,7 @@ function expandRecord (record: Readonly<Record>, feed: Feed): Event[] {
   ends.push(...(new Array(Math.max(starts.length - ends.length, 0)).fill(undefined)))
 
   const classNames = ['event', 'event-record']
-  const { backgroundColor, borderColor, textColor } = makeColors(feed.options.color)
+  const { backgroundColor, borderColor, textColor } = makeColors(feed.options?.color || '#4e73df')
 
   starts.forEach((start, i) => {
     events.push({
@@ -114,18 +115,30 @@ function recordFeedFilter (r: Readonly<Record>, field: string): boolean {
  * @returns {Promise<Array>} Resolves to a set of FC events to display
  */
 export async function RecordFeed ($ComposeAPI: ComposeAPI, module: Module, namespace: Namespace, feed: Feed, range: Range, options = {}): Promise<Event[]> {
+  const nested = (feed.options || {}) as FeedOptions & { startField?: unknown; endField?: unknown; titleField?: unknown }
+  const startField = asFeedFieldName(feed.startField) || asFeedFieldName(nested.startField)
+  const endField = asFeedFieldName(feed.endField) || asFeedFieldName(nested.endField) || startField
+  const titleField = asFeedFieldName(feed.titleField) || asFeedFieldName(nested.titleField)
+
+  // Never interpolate an empty/undefined field into QL (`date(undefined)`).
+  if (!startField) {
+    return []
+  }
+
+  const resolved: Feed = { ...feed, startField, endField, titleField, options: feed.options, allDay: feed.allDay }
+
   // Params for record fetching
   const params = {
     namespaceID: namespace.namespaceID,
     moduleID: module.moduleID,
     query: `(date(${
-      feed.startField
+      startField
     }) <= '${range.end.toISOString()}' AND '${range.start.toISOString()}' <= date(${
-      feed.endField || feed.startField
+      endField
     }))`,
   }
 
-  if (feed.options.prefilter) {
+  if (feed.options?.prefilter) {
     params.query += ` AND (${feed.options.prefilter})`
   }
 
@@ -140,9 +153,9 @@ export async function RecordFeed ($ComposeAPI: ComposeAPI, module: Module, names
       .map(r => Object.freeze(new Record(module, r)))
 
       // drop record w/o proper values
-      .filter(r => recordFeedFilter(r, feed.startField))
+      .filter(r => recordFeedFilter(r, startField))
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      .forEach(r => events.push(...expandRecord(r, feed)))
+      .forEach(r => events.push(...expandRecord(r, resolved)))
     return events
   })
 }

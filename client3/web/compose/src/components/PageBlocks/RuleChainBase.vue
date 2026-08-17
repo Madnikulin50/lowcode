@@ -10,7 +10,7 @@
           <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="me-1" />
           {{ result.error || 'Ошибка выполнения' }}
         </div>
-        <pre v-if="result.output && !reorderSummary" class="mt-2 mb-0 small">{{ formatOutput(result.output) }}</pre>
+        <pre v-if="result.output && !reorderSummary && !riskSummary" class="mt-2 mb-0 small">{{ formatOutput(result.output) }}</pre>
       </div>
 
       <button
@@ -30,6 +30,7 @@
 <script setup>
 import { ref, computed, inject } from 'vue'
 import { NoID } from 'corteza-lib/js/dist'
+import Wrap from './Wrap/index.js'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -63,12 +64,33 @@ const reorderSummary = computed(() => {
   }
 })
 
+const riskSummary = computed(() => {
+  const out = result.value?.output
+  if (!out || typeof out !== 'object') return null
+  if (out.level == null && out.residualScore == null && out.score == null) return null
+  return {
+    level: out.level || '',
+    residual: out.residualScore ?? out.residual,
+    score: out.score,
+    name: out.name || '',
+  }
+})
+
 const successText = computed(() => {
   const s = reorderSummary.value
-  if (!s) return 'Цепочка выполнена успешно'
-  const qty = Number.isFinite(s.totalQty) ? s.totalQty.toLocaleString('ru-RU') : s.totalQty
-  const sum = Number.isFinite(s.totalSum) ? s.totalSum.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : s.totalSum
-  return `Создано заказов: ${s.orderCount}, строк: ${s.lineCount}, кол-во: ${qty}, сумма: ${sum}`
+  if (s) {
+    const qty = Number.isFinite(s.totalQty) ? s.totalQty.toLocaleString('ru-RU') : s.totalQty
+    const sum = Number.isFinite(s.totalSum) ? s.totalSum.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : s.totalSum
+    return `Создано заказов: ${s.orderCount}, строк: ${s.lineCount}, кол-во: ${qty}, сумма: ${sum}`
+  }
+  const r = riskSummary.value
+  if (r) {
+    const who = r.name ? `${r.name}: ` : ''
+    const res = r.residual != null ? Number(r.residual).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) : '—'
+    const inn = r.score != null ? Number(r.score).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) : '—'
+    return `${who}риск ${r.level || 'n/a'} (residual ${res}, inherent ${inn})`
+  }
+  return 'Цепочка выполнена успешно'
 })
 
 function formatOutput (output) {
@@ -78,6 +100,28 @@ function formatOutput (output) {
     return JSON.stringify(output, null, 2)
   } catch {
     return String(output)
+  }
+}
+
+function recordPayload (record) {
+  if (!record) return undefined
+  const values = {}
+  const src = record.values
+  if (src && typeof src === 'object' && !Array.isArray(src)) {
+    for (const [k, v] of Object.entries(src)) {
+      if (typeof v === 'function') continue
+      values[k] = v
+    }
+  } else if (Array.isArray(src)) {
+    for (const row of src) {
+      if (row?.name) values[row.name] = row.value
+    }
+  }
+  return {
+    recordID: record.recordID,
+    moduleID: record.moduleID,
+    namespaceID: record.namespaceID,
+    values,
   }
 }
 
@@ -95,7 +139,7 @@ async function runChain () {
         moduleID: props.module?.moduleID,
         namespaceID: props.namespace?.namespaceID,
         recordID: props.record?.recordID && props.record.recordID !== NoID ? props.record.recordID : undefined,
-        record: props.record,
+        record: recordPayload(props.record),
         context: props.block.options?.context || {},
       },
     })

@@ -2355,9 +2355,6 @@ export default class Compose {
     if (!moduleID) {
       throw Error('field moduleID is empty')
     }
-    if (!dimensions) {
-      throw Error('field dimensions is empty')
-    }
     const cfg: AxiosRequestConfig = {
       ...extra,
       method: 'get',

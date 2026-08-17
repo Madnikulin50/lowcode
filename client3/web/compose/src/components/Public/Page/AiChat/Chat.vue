@@ -48,6 +48,23 @@
             >{{ msg.reasoning }}</div>
           </div>
           <div v-show="!msg.collapsed" class="content expanded-content">
+            <div
+              v-if="promptXml(msg.content)"
+              class="prompt-xml"
+            >
+              <button
+                type="button"
+                class="prompt-xml-toggle"
+                @click="msg.xmlOpen = !msg.xmlOpen"
+              >
+                <font-awesome-icon :icon="['fas', msg.xmlOpen ? 'chevron-up' : 'chevron-down']" size="xs" />
+                {{ $t('aiChat.promptXml.label') }}
+              </button>
+              <pre
+                v-show="msg.xmlOpen"
+                class="prompt-xml-body"
+              >{{ promptXml(msg.content) }}</pre>
+            </div>
             <div class="content-text">
               <template v-if="!msg.content && msg.active">
                 <div v-if="warmingUp" class="warmup-indicator">
@@ -263,6 +280,7 @@ const fileInput = ref(null)
 const chatID = ref(makeChatID())
 const exportOpen = ref(false)
 const abortController = ref(null)
+let pendingAutoSend = null
 const attachedFiles = ref([...(props.files || [])])
 const stickToBottom = ref(true)
 const copiedIdx = ref(-1)
@@ -288,9 +306,10 @@ const suggestions = computed(() => [
   { key: 'page', text: $t('aiChat.empty.suggestions.page') },
 ])
 
-function hasManyLines(text) {
-  if (!text) return false
-  const breaks = (text.match(/\n/g) || []).length + (text.match(/<br\s*\/?>/gi) || []).length
+function hasManyLines (text) {
+  const body = splitPromptXml(text).body
+  if (!body) return false
+  const breaks = (body.match(/\n/g) || []).length
   return breaks >= 4
 }
 
@@ -493,14 +512,36 @@ function scrollToBottom() {
   })
 }
 
-function stripXmlContent(text) {
-  let normalized = text.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-  let prev
-  do {
-    prev = normalized
-    normalized = normalized.replace(/<([a-zA-Z_][a-zA-Z0-9_]*)[^>]*>[\s\S]*?<\/\1>/g, '<$1>...</$1>')
-  } while (normalized !== prev)
-  return normalized
+const HTML_TAGS = new Set([
+  'a', 'abbr', 'b', 'blockquote', 'br', 'code', 'del', 'div', 'em',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'li', 'ol',
+  'p', 'pre', 's', 'span', 'strong', 'sub', 'sup', 'table', 'tbody',
+  'td', 'th', 'thead', 'tr', 'ul', 'u', 'mark', 'kbd', 'figure', 'figcaption',
+])
+
+function splitPromptXml (text) {
+  let rest = String(text || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  const blocks = []
+  const re = /<([A-Za-z_][\w:.-]*)(?:\s[^>]*)?>[\s\S]*?<\/\1>/g
+  rest = rest.replace(re, (full, tag) => {
+    if (HTML_TAGS.has(String(tag).toLowerCase()) || String(tag).toLowerCase() === 'tool') {
+      return full
+    }
+    blocks.push(full.trim())
+    return '\n'
+  })
+  return {
+    body: rest.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim(),
+    xml: blocks.join('\n\n'),
+  }
+}
+
+function promptXml (text) {
+  return splitPromptXml(text).xml
+}
+
+function stripXmlContent (text) {
+  return splitPromptXml(text).body
 }
 
 function stripToolXml(text) {
@@ -514,27 +555,25 @@ function stripCodeBlocks(text) {
     .replace(/\n{3,}/g, '\n\n')
 }
 
-function formatMarkdown(text) {
-  const src = String(text || '')
+const mdRenderer = markdownIt({ html: false, linkify: true, breaks: true })
+
+function formatMarkdown (text) {
+  const src = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim()
   if (!src) return ''
-  if (/[`*#]/.test(src)) {
-    const md = markdownIt({ html: true, linkify: true, breaks: true })
-    return md.render(src)
-  }
-  return src.replace(/\n/g, '<br>')
+  return mdRenderer.render(src)
 }
 
-function formatMessage(text) {
-  text = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  return formatMarkdown(text)
+function formatMessage (text) {
+  return formatMarkdown(splitPromptXml(text).body)
 }
 
-function normalizeMessageText(text) {
+function normalizeMessageText (text) {
   return stripToolXml(String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n'))
 }
 
-function messageParts(text) {
-  return splitChartParts(normalizeMessageText(text)).map(part => {
+function messageParts (text) {
+  const { body } = splitPromptXml(normalizeMessageText(text))
+  return splitChartParts(body).map(part => {
     if (part.kind === 'chart') {
       return { kind: 'chart', option: part.option }
     }
@@ -1301,6 +1340,11 @@ async function sendMessage(overrideText, opts = {}) {
     abortController.value = null
     schedulePersist()
     scrollToBottom()
+    const queued = pendingAutoSend
+    pendingAutoSend = null
+    if (queued) {
+      sendMessage(queued)
+    }
   }
 }
 
@@ -1351,12 +1395,19 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick)
 })
 
-function applyIncomingPrompt(prompt, files) {
+function applyIncomingPrompt (prompt, files) {
   if (Array.isArray(files)) attachedFiles.value = [...files]
-  if (prompt && String(prompt).trim()) {
-    inputText.value = String(prompt).trim()
+  const text = String(prompt || '').trim()
+  if (!text) {
+    focusInput()
+    return
   }
-  focusInput()
+  if (loading.value) {
+    pendingAutoSend = text
+    stopGeneration()
+    return
+  }
+  sendMessage(text)
 }
 
 defineExpose({
@@ -1505,6 +1556,134 @@ defineExpose({
 
 .content-text {
   display: block;
+}
+
+.chat-md :deep(p) {
+  margin: 0 0 0.55em;
+}
+
+.chat-md :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.chat-md :deep(ul),
+.chat-md :deep(ol) {
+  margin: 0.4em 0;
+  padding-left: 1.3rem;
+}
+
+.chat-md :deep(li) {
+  margin: 0.15em 0;
+}
+
+.chat-md :deep(pre) {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  font-size: 0.85em;
+  margin: 0.5em 0;
+}
+
+.chat-md :deep(code) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.chat-md :deep(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.chat-md :deep(:not(pre) > code) {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+.chat-md :deep(blockquote) {
+  margin: 0.4em 0;
+  padding-left: 0.8em;
+  border-left: 3px solid rgba(0, 0, 0, 0.15);
+  opacity: 0.92;
+}
+
+.chat-md :deep(h1),
+.chat-md :deep(h2),
+.chat-md :deep(h3),
+.chat-md :deep(h4) {
+  font-size: 1.05em;
+  font-weight: 650;
+  margin: 0.6em 0 0.35em;
+}
+
+.chat-md :deep(h1:first-child),
+.chat-md :deep(h2:first-child),
+.chat-md :deep(h3:first-child) {
+  margin-top: 0;
+}
+
+.chat-md :deep(table) {
+  border-collapse: collapse;
+  font-size: 0.9em;
+  margin: 0.5em 0;
+}
+
+.chat-md :deep(th),
+.chat-md :deep(td) {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  padding: 4px 8px;
+}
+
+.chat-md :deep(a) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.prompt-xml {
+  margin-bottom: 8px;
+}
+
+.prompt-xml-toggle {
+  border: none;
+  background: transparent;
+  color: #8899aa;
+  font-size: 12px;
+  padding: 0 2px 4px;
+  cursor: pointer;
+}
+
+.prompt-xml-body {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #5a6570;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f3f5f8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 0 0 6px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.message.user .prompt-xml-toggle {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.message.user .prompt-xml-body {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.message.user .chat-md :deep(pre),
+.message.user .chat-md :deep(:not(pre) > code) {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.message.user .chat-md :deep(th),
+.message.user .chat-md :deep(td) {
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 .chat-chart {

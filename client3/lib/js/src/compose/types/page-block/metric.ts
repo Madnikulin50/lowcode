@@ -227,8 +227,10 @@ export class PageBlockMetric extends PageBlock {
       moduleID,
       filter,
       metrics,
-      // Since metric produces one value we want one dataset, deletedAt is the same for all existing records
-      dimensions: 'deletedAt',
+      // Scalar aggregate: empty group. deletedAt/createdAt are omitted on
+      // external DAL tables (receipt_positions, traffic, stores, …) and the
+      // server skip only matches the bare ident — not YEAR()/DATE_FORMAT().
+      dimensions: '',
     }
   }
 

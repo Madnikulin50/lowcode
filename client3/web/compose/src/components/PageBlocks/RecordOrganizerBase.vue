@@ -50,7 +50,7 @@ import { compose, NoID } from 'corteza-lib/js/dist'
 import { useStore } from '../../store'
 import draggable from 'vuedraggable'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'
-import { evaluatePrefilter, getFieldFilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { evalPrefilterOrSkip, getFieldFilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import Wrap from './Wrap/index.js'
 
 const { t: $t } = useI18n({ useScope: 'global' })
@@ -212,13 +212,15 @@ function expandFilter() {
     if ((options.value.filter || '').includes('${ownerID}')) throw new Error($t('notification.record.invalidOwnerVar'))
   }
   if (options.value.filter) {
-    filter.push(`(${evaluatePrefilter(options.value.filter, {
+    const { skip, filter: evaluated } = evalPrefilterOrSkip(options.value.filter, {
       record: props.record,
       user: $auth?.user || {},
       recordID: (props.record || {}).recordID || NoID,
       ownerID: (props.record || {}).ownedBy || NoID,
       userID: ($auth?.user || {}).userID || NoID,
-    })})`)
+      loadingRecord: !!props.loadingRecord,
+    })
+    filter.push(`(${skip ? 'false' : evaluated})`)
   }
   if (groupField.value && options.value.group !== undefined) {
     filter.push(`(${getFieldFilter(groupField.value.name, groupField.value.kind, options.value.group, '=')})`)

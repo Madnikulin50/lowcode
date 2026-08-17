@@ -101,7 +101,9 @@
 
     <grid
       v-else
-      v-bind="$props"
+      :page="page"
+      :namespace="namespace"
+      :module="module"
       :errors="errors"
       :record="record"
       :loading-record="loadingRecord"

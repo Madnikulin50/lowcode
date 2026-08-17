@@ -74,11 +74,18 @@
           </div>
         </div>
 
-        <!-- Meta strip -->
-        <div v-if="metaItems.length" class="rb-meta mb-3">
+        <!-- Meta strip — same itemsPerRow grid as body metrics -->
+        <div
+          v-if="metaItems.length"
+          class="rb-meta mb-3 metric-grid"
+          :class="gridModifierClass"
+          :style="gridStyle"
+          :data-items-per-row="resolvedItemsPerRow"
+        >
           <div
             v-for="item in metaItems"
             :key="`meta-${item.index}`"
+            class="field-container"
             :class="{ pointer: item.metric.drillDown?.enabled }"
             @click="drillDown(item.metric, item.index)"
           >
@@ -196,7 +203,7 @@ import MetricItem from './Metric/Item'
 import numeral from 'numeral'
 import moment from 'moment'
 import { NoID, compose } from 'corteza-lib/js/dist'
-import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { evalPrefilterOrSkip, evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -355,8 +362,8 @@ const error = ref(undefined)
 const reports = ref([])
 const abortableRequests = ref([])
 
-watch(() => props.record?.recordID, () => { refresh() }, { immediate: true })
-watch(() => options.value, debounce(() => { refresh() }, 300), { deep: true })
+watch(() => [props.record?.recordID, props.loadingRecord], () => { if (!props.loadingRecord) refresh() }, { immediate: true })
+watch(() => options.value, debounce(() => { if (!props.loadingRecord) refresh() }, 300), { deep: true })
 
 onMounted(() => { createEvents() })
 onBeforeUnmount(() => { abortRequests(); destroyEvents(); setBaseDefaultValues() })
@@ -403,15 +410,17 @@ async function refresh () {
     for (const m of options.value.metrics) {
       if (m.moduleID) {
         const auxM = { ...m }
-        if (auxM.filter && !props.record && (auxM.filter.includes('${record') || auxM.filter.includes('${ownerID}'))) {
-          rtr.push([])
-          continue
-        }
         if (auxM.filter) {
-          auxM.filter = evaluatePrefilter(auxM.filter, {
+          const { skip, filter } = evalPrefilterOrSkip(auxM.filter, {
             record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
             ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth.user || {}).userID || NoID,
+            loadingRecord: !!props.loadingRecord,
           })
+          if (skip) {
+            rtr.push([])
+            continue
+          }
+          auxM.filter = filter
         }
         if (auxM.transformFx) {
           auxM.transformFx = evaluatePrefilter(auxM.transformFx, {
@@ -447,7 +456,7 @@ function drillDown ({ label: name = '', filter, moduleID, drillDown }, metricInd
     const block = new compose.PageBlockRecordList({
       title: name || title || 'Metric drill-down',
       blockID: `drillDown-${metricID}`,
-      options: { moduleID, fields, prefilter: filter, presort: 'createdAt DESC', hideRecordReminderButton: true, hideRecordViewButton: false, hideConfigureFieldsButton: false, hideImportButton: true, enableRecordPageNavigation: true, selectable: true, allowExport: true, perPage: 14, showTotalCount: true, recordDisplayOption: 'modal' },
+      options: { moduleID, fields, prefilter: filter, presort: '', hideRecordReminderButton: true, hideRecordViewButton: false, hideConfigureFieldsButton: false, hideImportButton: true, enableRecordPageNavigation: true, selectable: true, allowExport: true, perPage: 14, showTotalCount: true, recordDisplayOption: 'modal' },
     })
     window.dispatchEvent(new CustomEvent('magnify-page-block', { detail: { block } }))
   }
@@ -537,9 +546,6 @@ function destroyEvents () {
 }
 
 .rb-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.5rem;
   padding: 0.65rem 0;
   border-top: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.08));
   border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.08));
@@ -553,7 +559,7 @@ function destroyEvents () {
 }
 
 .rb-density-compact .rb-section-title { margin-bottom: 0.5rem; }
-.rb-density-compact .rb-meta { gap: 0.5rem 1rem; padding: 0.4rem 0; }
+.rb-density-compact .rb-meta { padding: 0.4rem 0; }
 .rb-density-compact :deep(.rb-title) { font-size: 1.25rem; }
 .rb-density-compact :deep(.mb-metric-hero-value) { font-size: 1.5rem; }
 .rb-density-compact :deep(.mb-balloon) { padding: 0.35rem 0.9rem; }

@@ -272,7 +272,7 @@ import { useStore } from '../../../store'
 import { usePageBlockBase } from '../usePageBlockBase'
 import { NoID, compose, fmt } from 'corteza-lib/js/dist'
 import { components, composables } from 'corteza-lib/vue/dist'
-import { evaluatePrefilter, getFieldFilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { evalPrefilterOrSkip, getFieldFilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import axios from 'axios'
 import CommentItem from './Item.vue'
 import CommentReply from './Reply.vue'
@@ -778,13 +778,15 @@ function expandFilter () {
   }
   if (options.value.filter) {
     try {
-      return evaluatePrefilter(options.value.filter, {
+      const { skip, filter } = evalPrefilterOrSkip(options.value.filter, {
         record: props.record,
         user: $auth.user || {},
         recordID: (props.record || {}).recordID || NoID,
         ownerID: (props.record || {}).ownedBy || NoID,
         userID: ($auth.user || {}).userID || NoID,
+        loadingRecord: !!props.loadingRecord,
       })
+      return skip ? 'false' : filter
     } catch (e) { return e }
   }
   return ''

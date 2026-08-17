@@ -212,7 +212,7 @@
       class="modal fade"
       tabindex="-1"
     >
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">
@@ -228,11 +228,13 @@
             <new-block-selector
               :record-page="!!module"
               :existing-blocks="selectableExistingBlocks"
-              style="max-height: 75vh;"
               @select="addBlock"
             />
           </div>
-          <div class="modal-footer">
+          <div
+            v-if="!module"
+            class="modal-footer text-muted small"
+          >
             {{ $t('block.selectBlockFootnote') }}
           </div>
         </div>

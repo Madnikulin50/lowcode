@@ -14,6 +14,7 @@
       id="columns-modal"
       ref="modal"
       class="modal fade"
+      :class="{ show: showModal, 'd-block': showModal }"
       tabindex="-1"
     >
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -30,6 +31,7 @@
               type="button"
               class="btn-close"
               data-bs-dismiss="modal"
+              @click="showModal = false"
             />
           </div>
           <div class="modal-body">
@@ -44,6 +46,7 @@
             <button
               class="btn btn-outline-secondary"
               data-bs-dismiss="modal"
+              @click="showModal = false"
             >
               {{ $t('label.cancel') }}
             </button>
@@ -57,6 +60,12 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="showModal"
+      class="modal-backdrop fade show"
+      @click="showModal = false"
+    />
   </div>
 </template>
 

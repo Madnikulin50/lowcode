@@ -269,13 +269,76 @@ export function queryToFilter (searchQuery = '', prefilter = '', fields = [], re
   return [prefilter, recordListFilterSql, searchQuery].filter(f => f).join(' AND ')
 }
 
+// Missing ${record.values.x} must stringify to '' (not the JS word "undefined"),
+// otherwise Corteza QL sees an identifier named undefined.
+function interpolableEmpty () {
+  const empty = new Proxy(function () {}, {
+    get (_target, prop) {
+      if (prop === Symbol.toPrimitive || prop === 'toString' || prop === 'valueOf') {
+        return () => ''
+      }
+      return empty
+    },
+    apply () { return '' },
+  })
+  return empty
+}
+
+function interpolable (value) {
+  if (value === undefined || value === null) return interpolableEmpty()
+  if (typeof value !== 'object' || Array.isArray(value) || value instanceof Date) return value
+  return new Proxy(value, {
+    get (target, prop) {
+      if (typeof prop !== 'string') return Reflect.get(target, prop)
+      // Use property access, not `in`: Vue proxies / Record.values often
+      // expose fields via getters that `in` does not see.
+      const v = target[prop]
+      if (v === undefined || v === null) return interpolableEmpty()
+      if (v && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)) {
+        return interpolable(v)
+      }
+      return v
+    },
+  })
+}
+
 // Evaluates the given prefilter. Allows JS template literal expressions
 // such as id = ${recordID}
-export function evaluatePrefilter (prefilter, { record, user, recordID, ownerID, userID }) {
-  return (function (prefilter) {
-    /* eslint-disable no-eval */
-    return eval('`' + prefilter + '`')
-  })(prefilter)
+export function evaluatePrefilter (prefilter, { record, user, recordID, ownerID, userID } = {}) {
+  record = interpolable(record)
+  user = interpolable(user)
+  if (recordID === undefined || recordID === null) recordID = ''
+  if (ownerID === undefined || ownerID === null) ownerID = ''
+  if (userID === undefined || userID === null) userID = ''
+  /* eslint-disable no-eval */
+  return eval('`' + (prefilter || '') + '`')
+}
+
+// Corteza QL rejects `field =` (operator with no RHS). That happens when a
+// record-page template interpolates before values exist (Builder dummy Record,
+// or load still in flight).
+export function isIncompleteQl (filter) {
+  const s = String(filter || '').trim()
+  if (!s) return false
+  if (/(?:=|!=|<>|>=|<=|>|<)\s*$/.test(s)) return true
+  if (/(?:=|!=|<>|>=|<=|>|<)\s+(AND|OR|\))/i.test(s)) return true
+  if (/(?:=|!=|<>)\s*''(\s|$|AND|OR|\))/i.test(s)) return true
+  return false
+}
+
+// Evaluate a record-list / feed prefilter. skip=true means do not query
+// (or constrain with `false`) — never send malformed QL and never drop the
+// filter (that would return unfiltered rows).
+export function evalPrefilterOrSkip (prefilter, ctx = {}) {
+  const src = prefilter == null ? '' : String(prefilter)
+  if (!src.trim()) return { skip: false, filter: '' }
+  const needsRecord = /\$\{(record|recordID|ownerID)/.test(src)
+  if (needsRecord && (ctx.loadingRecord || !ctx.record)) {
+    return { skip: true, filter: '' }
+  }
+  const filter = evaluatePrefilter(src, ctx)
+  if (isIncompleteQl(filter)) return { skip: true, filter: '' }
+  return { skip: false, filter }
 }
 
 // Removes char from end of string

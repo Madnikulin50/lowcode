@@ -5,25 +5,25 @@ translator:
 
 resources:
   chart:
-    title: Диаграмма "{{ handle }}"
+    title: Диаграмма "{handle}"
     tooltip: Диаграмма translations
   namespace:
-    title: Пространство "{{ handle }}"
+    title: Пространство "{handle}"
     tooltip: Пространство translations
   module:
-    title: Module "{{ handle }}"
+    title: Module "{handle}"
     tooltip: Module translations
     field:
-      title: Module field "{{ name }}"
+      title: Module field "{name}"
       tooltip: Поле translations
   page:
-    title: Page "{{ handle }}"
+    title: Page "{handle}"
     tooltip: Page translations
     block:
-      title: "Page block #{{ blockID }}"
+      title: "Page block #{blockID}"
       tooltip: Блок translations
     layout:
-      title: Page layout "{{ handle }}"
+      title: Page layout "{handle}"
   page-layout:
-    title: Page layout "{{ handle }}"
+    title: Page layout "{handle}"
     tooltip: Page layout translations

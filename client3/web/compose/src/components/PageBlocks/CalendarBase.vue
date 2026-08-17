@@ -12,7 +12,7 @@
             <button
               v-if="!header.hidePrevNext"
               class="btn btn-link text-dark"
-              @click="api().prev()"
+              @click="api()?.prev()"
             >
               <font-awesome-icon :icon="['fas', 'angle-left']" />
             </button>
@@ -25,7 +25,7 @@
             <button
               v-if="!header.hidePrevNext"
               class="btn btn-link text-dark"
-              @click="api().next()"
+              @click="api()?.next()"
             >
               <font-awesome-icon :icon="['fas', 'angle-right']" />
             </button>
@@ -38,7 +38,7 @@
                 v-for="view in views"
                 :key="view"
                 class="btn btn-outline-secondary me-1 mb-1"
-                @click="api().changeView(view)"
+                @click="api()?.changeView(view)"
               >
                 {{ $t(`calendar.view.${view}`) }}
               </button>
@@ -49,7 +49,7 @@
             >
               <button
                 class="btn btn-outline-secondary mb-1 w-100"
-                @click="api().today()"
+                @click="api()?.today()"
               >
                 {{ $t('calendar.today') }}
               </button>
@@ -58,7 +58,7 @@
         </div>
 
         <div
-          :ref="`cc-${blockIndex}`"
+          ref="ccEl"
           class="d-flex flex-column flex-fill"
         >
           <div
@@ -68,15 +68,10 @@
             <span class="spinner-border spinner-border-sm" />
           </div>
 
-          <full-calendar
+          <div
             v-show="!isProcessing"
-            :ref="`fc-${blockIndex}`"
-            :key="key"
-            :height="getHeight()"
-            :events="events"
-            v-bind="config"
+            ref="fcEl"
             class="flex-fill"
-            @eventClick="handleEventClick"
           />
         </div>
       </div>
@@ -91,16 +86,18 @@ import axios from 'axios'
 import { useStore } from '../../store'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
-import FullCalendar from '@fullcalendar/vue3'
+import { Calendar, createPlugin } from '@fullcalendar/core'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import listPlugin from '@fullcalendar/list'
 import '@fullcalendar/core/main.css'
 import '@fullcalendar/daygrid/main.css'
+import '@fullcalendar/timegrid/main.css'
+import '@fullcalendar/list/main.css'
 import { BootstrapTheme } from '@fullcalendar/bootstrap'
-import { createPlugin } from '@fullcalendar/core'
-import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { useRouter } from 'vue-router'
+import { compose, NoID, shared } from 'corteza-lib/js/dist'
 
 const { getWeekStartDay } = shared
 
@@ -128,7 +125,6 @@ const gp = getCurrentInstance()?.appContext?.app?.config?.globalProperties || {}
 const $auth = gp.$auth || window.__auth
 const $ComposeAPI = gp.$ComposeAPI || window.__composeAPI
 const $SystemAPI = gp.$SystemAPI || window.__systemAPI
-const $root = typeof window !== 'undefined' ? window : null
 
 const { key, options, isProcessing, processing, inModal, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
 
@@ -147,6 +143,10 @@ CortezaTheme.prototype.iconOverrideOption = 'buttonIcons'
 CortezaTheme.prototype.iconOverrideCustomButtonOption = 'icon'
 CortezaTheme.prototype.iconOverridePrefix = 'fc-icon-'
 
+const fcEl = ref(null)
+const ccEl = ref(null)
+let calendar = null
+
 const show = ref(false)
 const events = ref([])
 const locale = ref(undefined)
@@ -159,7 +159,7 @@ const pages = computed(() => store.page.set)
 const config = computed(() => ({
   header: false,
   themeSystem: 'corteza',
-  defaultView: options.value.defaultView,
+  defaultView: options.value.defaultView || 'dayGridMonth',
   editable: false,
   eventLimit: true,
   locale: locale.value,
@@ -188,18 +188,23 @@ const views = computed(() => {
 
 const weekStartDay = computed(() => getWeekStartDay(browserLocale()))
 
-watch(() => options.value, () => { updateSize(); refresh() }, { deep: true })
+watch(() => options.value, () => { updateSize(); if (!props.loadingRecord) refresh() }, { deep: true })
 watch(() => props.block.xywh, () => { updateSize() }, { deep: true })
-watch(() => props.record?.recordID, () => { refresh() })
+watch(() => [props.record?.recordID, props.loadingRecord], () => { if (!props.loadingRecord) refresh() })
+watch(events, (evts) => { api()?.setOption('events', evts) }, { deep: true })
+watch(locale, (lng) => { if (lng) api()?.setOption('locale', lng) })
+watch(key, () => { nextTick(() => createCalendar()) })
 
 onMounted(() => {
   changeLocale(browserLocale()).then(() => {
+    createCalendar()
     refreshBlock(refresh)
     createEvents()
   })
 })
 
 onBeforeUnmount(() => {
+  destroyCalendar()
   setBaseDefaultValues()
   abortRequests()
   destroyEvents()
@@ -221,7 +226,7 @@ function refetchOnPrefilterValueChange ({ fieldName }) {
 }
 
 function updateSize () {
-  nextTick(() => { api() && api().updateSize() })
+  nextTick(() => { api()?.updateSize() })
 }
 
 function refreshOnRelatedRecordsUpdate ({ moduleID } = {}) {
@@ -247,8 +252,26 @@ async function changeLocale (lng = 'en-gb') {
 }
 
 function api () {
-  const refKey = `fc-${props.blockIndex}`
-  return null
+  return calendar
+}
+
+function destroyCalendar () {
+  if (!calendar) return
+  calendar.destroy()
+  calendar = null
+}
+
+function createCalendar () {
+  destroyCalendar()
+  const el = fcEl.value
+  if (!el) return
+  calendar = new Calendar(el, {
+    ...config.value,
+    events: events.value,
+    height: getHeight(),
+    eventClick: handleEventClick,
+  })
+  calendar.render()
 }
 
 function loadEvents (start, end) {
@@ -261,22 +284,29 @@ function loadEvents (start, end) {
 
   Promise.all(options.value.feeds.map(feed => {
     switch (feed.resource) {
-      case compose.PageBlockCalendar.feedResources.record:
-        return store.module.findByID({ namespace: props.namespace, moduleID: feed.options.moduleID })
+      case compose.PageBlockCalendar.feedResources.record: {
+        const ff = compose.PageBlockCalendar.makeFeed(feed)
+        if (typeof ff.isValid === 'function' && !ff.isValid()) {
+          return Promise.resolve([])
+        }
+        return store.module.findByID({ namespace: props.namespace, moduleID: ff.options.moduleID })
           .then(module => {
-            const ff = compose.PageBlockCalendar.makeFeed(feed)
             if (ff.options.prefilter) {
-              ff.options.prefilter = evaluatePrefilter(ff.options.prefilter, {
+              const { skip, filter } = evalPrefilterOrSkip(ff.options.prefilter, {
                 record: props.record,
                 user: $auth.user || {},
                 recordID: (props.record || {}).recordID || NoID,
                 ownerID: (props.record || {}).ownedBy || NoID,
                 userID: ($auth.user || {}).userID || NoID,
+                loadingRecord: !!props.loadingRecord,
               })
+              if (skip) return []
+              ff.options.prefilter = filter
             }
             return compose.PageBlockCalendar.RecordFeed($ComposeAPI, module, props.namespace, ff, loaded.value, { cancelToken: cancelTokenSource.token })
               .then(evts => { events.value.push(...evts) })
           })
+      }
       case compose.PageBlockCalendar.feedResources.reminder:
         return compose.PageBlockCalendar.ReminderFeed($SystemAPI, $auth.user, feed, loaded.value)
           .then(evts => { events.value.push(...evts) })
@@ -315,13 +345,19 @@ function handleEventClick ({ event: { extendedProps: { recordID, moduleID } } })
 }
 
 function getHeight () {
-  return 'auto'
+  return ccEl.value?.clientHeight || 'auto'
 }
 
 function refresh () {
   refreshing.value = true
-  new Promise(resolve => resolve(api().refetchEvents()))
-    .then(() => key.value++)
+  const cal = api()
+  if (!cal) {
+    nextTick(() => createCalendar())
+    return
+  }
+  Promise.resolve(cal.refetchEvents())
+    .then(() => { key.value++ })
+    .catch(() => { refreshing.value = false })
 }
 
 function abortRequests () {

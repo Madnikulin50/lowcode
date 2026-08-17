@@ -217,7 +217,22 @@ export class BaseChart {
    * Prepares params that the reporter can use for querying.
    */
   formatReporterParams ({ moduleID, metrics, dimensions, filter }: Report) {
-    let dims = dimensions?.slice(0, 2).map((d: Dimension) => dimensionFunctions.convert({ field: 'createdAt', ...d })) || []
+    let dims = (dimensions || []).slice(0, 2).map((d: Dimension) => {
+      const field = typeof d.field === 'string' ? d.field.trim() : ''
+      // Vue 3 / empty dimension used to default to createdAt and 500 on
+      // external DAL tables that omit system timestamps.
+      if (!field || field === 'undefined' || field === 'null') {
+        return ''
+      }
+      const modifier = d.modifier || '(no grouping / buckets)'
+      // Ungrouped createdAt/deletedAt is Corteza's dummy scalar dimension
+      // (same class as Metric's old deletedAt group). Skip it.
+      if ((field === 'createdAt' || field === 'deletedAt') &&
+          (modifier === '(no grouping / buckets)' || modifier === 'none' || modifier === 'auto')) {
+        return ''
+      }
+      return dimensionFunctions.convert({ ...d, field })
+    }).filter((expr: string) => !!expr)
 
     // If any metric has stackBy, use it as the 2nd dimension so the server
     // groups records by the stack field and returns dimension_1 values.

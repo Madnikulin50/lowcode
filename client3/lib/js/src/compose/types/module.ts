@@ -214,6 +214,16 @@ export class Module {
     return new Module(JSON.parse(JSON.stringify(this)), this.namespace)
   }
 
+  /**
+   * True when a system timestamp/userstamp is omitted from the DAL table.
+   * External fact tables (stores, incidents, receipt_positions, …) set
+   * `config.dal.systemFieldEncoding.<field>.omit`.
+   */
+  systemFieldOmitted (name: string): boolean {
+    const enc = (this.config?.dal?.systemFieldEncoding as Record<string, unknown> | undefined)?.[name]
+    return !!(enc && typeof enc === 'object' && (enc as { omit?: boolean }).omit)
+  }
+
   apply (m?: PartialModule): void {
     if (!m) return
 

@@ -222,7 +222,12 @@ const mapOptions = computed(() => {
   if (!isNumber(mapOpts.maxZoom)) mapOpts.maxZoom = defaultOptions.maxZoom
   if (!isNumber(mapOpts.minZoom)) mapOpts.minZoom = defaultOptions.minZoom
   if (!mapOpts.attribution) mapOpts.attribution = defaultOptions.attribution
-  return { ...defaultOptions, ...mapOpts }
+  const merged = { ...defaultOptions, ...mapOpts }
+  const c = merged.center
+  if (!Array.isArray(c) || c.length < 2 || c[0] == null || c[1] == null || !Number.isFinite(Number(c[0])) || !Number.isFinite(Number(c[1]))) {
+    merged.center = defaultOptions.center
+  }
+  return merged
 })
 
 const geoSearchApiKey = computed(() => proxy.$Settings.get('ui.location.geoSearchApiKey', ''))

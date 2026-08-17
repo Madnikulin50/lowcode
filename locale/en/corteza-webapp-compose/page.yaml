@@ -205,6 +205,8 @@ aiChat:
   edit: Edit
   reasoning:
     label: Thinking
+  promptXml:
+    label: System context
   confirm:
     title: Confirm this action
     execute: Execute

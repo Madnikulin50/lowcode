@@ -108,7 +108,7 @@
             <h5 class="modal-title">{{ $t('tabs.newBlockModal') }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" @click="showBlockSelectorModal = false"></button>
           </div>
-          <div class="modal-body p-2">
+          <div class="modal-body">
             <NewBlockSelector :record-page="!!module" :disabled-kinds="['Tabs']" @select="addBlock" />
           </div>
         </div>

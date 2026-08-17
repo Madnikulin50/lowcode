@@ -202,6 +202,8 @@ aiChat:
   edit: Изменить
   reasoning:
     label: Размышление
+  promptXml:
+    label: Системная часть
   confirm:
     title: Подтвердите действие
     execute: Выполнить

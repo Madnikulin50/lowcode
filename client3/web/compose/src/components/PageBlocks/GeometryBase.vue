@@ -36,7 +36,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
 import axios from 'axios'
-import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { isNumber } from 'lodash'
 import { useStore } from '../../store'
 import { usePageBlockBase } from './usePageBlockBase'
@@ -91,8 +91,10 @@ const localValue = computed(() => {
   return values
 })
 
-watch(() => props.record?.recordID, () => { loadEvents() }, { immediate: true })
-watch(() => options.value, () => { loadEvents() }, { deep: true })
+watch(() => [props.record?.recordID, props.loadingRecord], () => {
+  if (!props.loadingRecord) loadEvents()
+}, { immediate: true })
+watch(() => options.value, () => { if (!props.loadingRecord) loadEvents() }, { deep: true })
 
 onMounted(() => {
   const bounds = options.value.bounds
@@ -127,15 +129,22 @@ function loadEvents () {
   processing.value = true
   colors.value = options.value.feeds.map(feed => feed.options.color)
   const { bounds, center, zoomStarting, zoomMin, zoomMax } = options.value
-  map.value = { bounds, center, zoom: zoomStarting, zoomMin, zoomMax }
-  Promise.all(options.value.feeds.filter(f => f.isValid()).map((feed, idx) => {
+  const safeCenter = Array.isArray(center) && center.length >= 2 && center[0] != null && center[1] != null
+    ? center
+    : [30, 30]
+  map.value = { bounds: bounds || null, center: safeCenter, zoom: zoomStarting || 3, zoomMin, zoomMax }
+  const pfCtx = {
+    record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
+    ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth.user || {}).userID || NoID,
+    loadingRecord: !!props.loadingRecord,
+  }
+  Promise.all(options.value.feeds.filter(f => typeof f.isValid !== 'function' || f.isValid()).map((feed, idx) => {
     return store.module.findByID({ namespace: props.namespace, moduleID: feed.options.moduleID }).then(module => {
       const f = compose.PageBlockGeometry.makeFeed(feed)
       if (f.options.prefilter) {
-        f.options.prefilter = evaluatePrefilter(f.options.prefilter, {
-          record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
-          ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth.user || {}).userID || NoID,
-        })
+        const { skip, filter } = evalPrefilterOrSkip(f.options.prefilter, pfCtx)
+        if (skip) return []
+        f.options.prefilter = filter
       }
       return compose.PageBlockGeometry.RecordFeed($ComposeAPI, module, props.namespace, f, { cancelToken: cancelTokenSource.token })
         .then(records => {

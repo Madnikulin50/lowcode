@@ -1,5 +1,5 @@
 <template>
-  <Wrap v-bind="$props" :scrollable-body="false" @refreshBlock="refresh(true, false)">
+  <Wrap v-bind="{ ...$props, ...$attrs }" :scrollable-body="false" @refreshBlock="refresh(true, false)">
     <template v-if="recordListModule && isFederated" #title-badge>
       <span class="badge bg-primary d-inline-block mb-0 ms-2">{{ $t('recordList.federated') }}</span>
     </template>
@@ -442,7 +442,7 @@
 </template>
 
 <script setup>
-defineOptions({ i18nOptions: { namespaces: 'block' } })
+defineOptions({ inheritAttrs: false, i18nOptions: { namespaces: 'block' } })
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -461,7 +461,7 @@ import BulkEditModal from 'corteza-webapp-compose/src/components/Public/Record/B
 import ExporterModal from 'corteza-webapp-compose/src/components/Public/Record/Exporter'
 import ImporterModal from 'corteza-webapp-compose/src/components/Public/Record/Importer'
 import { getItem, removeItem, setItem } from 'corteza-webapp-compose/src/lib/local-storage'
-import { evaluatePrefilter, formatActiveFilterOperator, isBetweenOperator, isFieldInFilter, queryToFilter, convertRecordListFilter, getFieldFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { evalPrefilterOrSkip, formatActiveFilterOperator, isBetweenOperator, isFieldInFilter, queryToFilter, convertRecordListFilter, getFieldFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import draggable from 'vuedraggable'
 import Wrap from './Wrap/index.js'
 import { usePageBlockBase } from './usePageBlockBase'
@@ -710,7 +710,8 @@ watch(() => options.value, () => {
   if (!props.loadingRecord) { prepRecordList(); refresh(true) }
 }, { deep: true, immediate: true })
 
-watch(() => props.record?.recordID, () => {
+watch(() => [props.record?.recordID, props.loadingRecord], () => {
+  if (props.loadingRecord) return
   createEvents()
   getCustomSummaries()
   getStorageRecordListFilter()
@@ -1006,6 +1007,25 @@ async function handleDenyDirtyRecords() {
   if (!hasError) selected.value = []
 }
 
+function moduleOmitsSystemField (mod, name) {
+  if (typeof mod?.systemFieldOmitted === 'function') return mod.systemFieldOmitted(name)
+  const enc = mod?.config?.dal?.systemFieldEncoding?.[name]
+  return !!(enc && typeof enc === 'object' && enc.omit)
+}
+
+function sanitizeRecordListSort (presort, mod) {
+  let sort = (presort || '').trim()
+  if (!sort) {
+    sort = moduleOmitsSystemField(mod, 'createdAt') ? '' : 'createdAt DESC'
+  }
+  const omitted = ['createdAt', 'updatedAt', 'deletedAt'].filter(f => moduleOmitsSystemField(mod, f))
+  if (!omitted.length || !sort) return sort
+  return sort.split(',').map(s => s.trim()).filter(part => {
+    const col = part.split(/\s+/)[0]
+    return col && !omitted.includes(col)
+  }).join(', ')
+}
+
 function prepRecordList() {
   const { moduleID, presort, prefilter: pf, editable, refField, positionField, perPage } = options.value
   if (!moduleID || !recordListModule.value) throw new Error($t('record.moduleOrPageNotSet'))
@@ -1018,10 +1038,19 @@ function prepRecordList() {
     if ((pf || '').includes('${record')) throw new Error($t('record.invalidRecordVar'))
     if ((pf || '').includes('${ownerID}')) throw new Error($t('record.invalidOwnerVar'))
   }
-  let sort = presort || 'createdAt DESC'
+  let sort = sanitizeRecordListSort(presort, recordListModule.value)
   if (editable && positionField) sort = positionField
   const filterArr = []
-  if (pf) filterArr.push(`(${evaluatePrefilter(pf, { record: props.record, user: $auth?.user || {}, recordID: (props.record || {}).recordID || NoID, ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth?.user || {}).userID || NoID })})`)
+  if (pf) {
+    const { skip, filter } = evalPrefilterOrSkip(pf, {
+      record: props.record, user: $auth?.user || {},
+      recordID: (props.record || {}).recordID || NoID,
+      ownerID: (props.record || {}).ownedBy || NoID,
+      userID: ($auth?.user || {}).userID || NoID,
+      loadingRecord: !!props.loadingRecord,
+    })
+    filterArr.push(`(${skip ? 'false' : filter})`)
+  }
   if (refField) {
     if (!props.record) throw new Error($t('record.invalidRecordVar'))
     const refFieldObj = recordListModule.value.fields.find(f => f.name === refField)

@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import { PageBlock, PageBlockInput, Registry } from './base'
-import { dimensionFunctions } from '../chart/util'
 import { Compose as ComposeAPI } from '../../../api-clients'
 import { Apply } from '../../../cast'
 
@@ -115,7 +114,8 @@ export class PageBlockProgress extends PageBlock {
    */
   fetch (additionalOptions: Options, api: ComposeAPI, namespaceID: string): Promise<object> {
     const reports = []
-    const dimensions = dimensionFunctions.convert({ modifier: 'YEAR', field: 'createdAt' })
+    // Scalar aggregate: empty group. createdAt is omitted on external DAL tables.
+    const dimensions = ''
 
     let metrics = ''
 
@@ -127,7 +127,7 @@ export class PageBlockProgress extends PageBlock {
         metrics = `${valueOperation}(${valueField}) AS rp`
       }
 
-      reports.push(api.recordReport({ namespaceID, metrics, dimensions, ...this.options.value, ...additionalOptions.value }))
+      reports.push(api.recordReport({ namespaceID, metrics, ...this.options.value, ...additionalOptions.value, dimensions }))
     } else {
       reports.push(new Promise(resolve => resolve(this.options.value.default)))
     }
@@ -141,12 +141,12 @@ export class PageBlockProgress extends PageBlock {
         metrics = `${minValueOperation}(${minValueField}) AS rp`
       }
 
-      reports.push(api.recordReport({ namespaceID, metrics, dimensions, ...this.options.minValue, ...additionalOptions.minValue }))
+      reports.push(api.recordReport({ namespaceID, metrics, ...this.options.minValue, ...additionalOptions.minValue, dimensions }))
     } else {
       reports.push(new Promise(resolve => resolve(this.options.minValue.default)))
     }
 
-    // Construct minValue report
+    // Construct maxValue report
     const { field: maxValueField, operation: maxValueOperation = '' } = this.options.maxValue
 
     if (this.options.maxValue.moduleID && maxValueField) {
@@ -155,7 +155,7 @@ export class PageBlockProgress extends PageBlock {
         metrics = `${maxValueOperation}(${maxValueField}) AS rp`
       }
 
-      reports.push(api.recordReport({ namespaceID, metrics, dimensions, ...this.options.maxValue, ...additionalOptions.maxValue }))
+      reports.push(api.recordReport({ namespaceID, metrics, ...this.options.maxValue, ...additionalOptions.maxValue, dimensions }))
     } else {
       reports.push(new Promise(resolve => resolve(this.options.maxValue.default)))
     }

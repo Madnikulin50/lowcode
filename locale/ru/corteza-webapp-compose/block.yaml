@@ -1,10 +1,69 @@
 selector:
   selectableBlocks:
-    placeholder: Blocks from other layouts
+    placeholder: Блоки из других раскладок
   tooltip:
     clone:
-      ref: Клонировать with references
-      noRef: Клонировать without references
+      ref: Добавить связанную копию (останется синхронизированной с оригиналом)
+      noRef: Дублировать как независимый блок
+  searchPlaceholder: Поиск по названию или описанию
+  recordPageOnly: Страница записи
+  recordPageOnlyHint: Этот блок доступен только на странице записи
+  disabledHere: Этот блок нельзя добавить здесь
+  empty: Нет типов блоков по этому запросу
+  reuse:
+    title: Взять блок из другой раскладки
+    clone: Копия
+    reference: Связь
+  categories:
+    all: Все
+    data: Данные
+    visualize: Графики и карты
+    content: Контент
+    layout: Макет
+    automation: Автоматизация
+  types:
+    recordList:
+      description: Таблица записей модуля с поиском
+    record:
+      description: Поля текущей записи
+    recordOrganizer:
+      description: Канбан — группировка и порядок записей
+    recordRevisions:
+      description: История изменений записи
+    comment:
+      description: Обсуждение связанных записей
+    chart:
+      description: Диаграммы по агрегациям модуля
+    metric:
+      description: KPI-числа по отчётам записей
+    progress:
+      description: Индикатор прогресса к цели
+    calendar:
+      description: События из записей или напоминаний
+    geometry:
+      description: Карта с координатами записей
+    report:
+      description: Встроенный сценарий репортера
+    content:
+      description: Форматированный текст
+    file:
+      description: Галерея файлов и вложения
+    iFrame:
+      description: Встроенная веб-страница
+    tabs:
+      description: Несколько блоков во вкладках
+    navigation:
+      description: Ссылки на страницы и внешние URL
+    automation:
+      description: Кнопки запуска workflows и скриптов
+    ruleChain:
+      description: Интерактивная цепочка правил
+    aiChat:
+      description: Спросить ИИ-ассистента об этой странице
+ruleChain:
+  label: Цепочка правил
+aiChat:
+  label: ИИ-ассистент
 automation:
   addPlaceholderLabel: Добавить placeholder (dummy button)
   availableScriptsAndWorkflow: Available scripts and workflows ({{count}})
@@ -883,7 +942,7 @@ socialFeed:
     socialFeed: Twitter feed
   twitterProfileField: Поле that contains Twitter Профиль URL for a record
   twitterProfileLabel: Twitter Профиль URL for list pages i.e (https://twitter.com/bloomberg)
-selectBlockFootnote: Some types might be disabled for non-record pages
+selectBlockFootnote: Блоки с меткой «Страница записи» доступны только если страница привязана к модулю
 field:
   noPermission: No permission to read field value
   selector:
