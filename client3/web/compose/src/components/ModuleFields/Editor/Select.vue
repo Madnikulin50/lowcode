@@ -1,13 +1,14 @@
 <template>
   <div class="mb-3" :class="formGroupStyleClasses">
-
-      <div v-if="!valueOnly" class="d-flex align-items-center text-primary p-0">
+    <div v-if="!valueOnly" :class="labelColClass">
+      <div class="d-flex align-items-center text-primary p-0">
         <span :title="label" class="d-inline-block mw-100">{{ label }}</span>
         <c-hint :tooltip="hint" />
         <slot name="tools" />
       </div>
       <div class="small text-muted" :class="{ 'mb-1': description }">{{ description }}</div>
-
+    </div>
+    <div :class="contentColClass">
     <template v-if="field.isMulti">
       <div v-if="field.options.selectType === 'list'">
         <div v-for="option in selectOptions" :key="option.value" class="form-check d-block mb-1">
@@ -23,7 +24,7 @@
             <span :class="{ 'badge rounded-pill': field.options.displayType === 'badge' }" :style="getOptionStyle(option.value)">{{ option.text }}</span>
           </label>
         </div>
-        <errors :errors="errors" />
+        <FieldErrors :errors="errors" />
       </div>
 
       <multi v-else v-model:value="value" :errors="errors" :single-input="field.options.selectType !== 'each'">
@@ -97,8 +98,9 @@
         label="text"
         :badge="field.options.displayType === 'badge'"
       />
-      <errors :errors="errors" />
+      <FieldErrors :errors="errors" />
     </template>
+    </div>
   </div>
 </template>
 
@@ -107,7 +109,7 @@ defineOptions({ i18nOptions: { namespaces: 'field' } })
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEditorBase } from './base'
-import errors from '../errors'
+import FieldErrors from '../errors'
 import multi from './multi'
 import { badgeGradient } from 'corteza-webapp-compose/src/lib/color.js'
 
@@ -124,7 +126,7 @@ const props = defineProps({
 const emit = defineEmits(['change', 'update:preventPopoverClose'])
 
 const { t } = useI18n({ useScope: 'global', messages: {} })
-const { value, formGroupStyleClasses, label, hint, description, setMultiValue, getColor } = useEditorBase(props, emit)
+const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hint, description, setMultiValue, getColor } = useEditorBase(props, emit)
 
 const singleSelect = ref(null)
 

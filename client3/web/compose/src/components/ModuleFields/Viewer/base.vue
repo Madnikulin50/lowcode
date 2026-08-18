@@ -54,11 +54,12 @@ const themeSettings = computed(() => {
 })
 
 function getColor (value) {
+  if (!value) return undefined
   if (value[0] === '#') return value
   const themes = themeSettings.value
     .filter(theme => theme.id !== 'general')
-    .map(theme => ({ id: theme.id, values: JSON.parse(theme.values) }))
-  return themes[0]?.values[value] || value
+    .map(theme => ({ id: theme.id, values: typeof theme.values === 'string' ? JSON.parse(theme.values) : theme.values }))
+  return themes[0]?.values?.[value] || value
 }
 </script>
 

@@ -143,10 +143,11 @@ onMounted(() => {
 
     languages.value.forEach(({ tag: lang }) => {
       let existingFields = new Set()
-      if (props.module.config.discovery && props.module.config.discovery[value]) {
-        const indexOfLanguage = props.module.config.discovery[value].result.findIndex(r => r.lang === lang)
+      const discoveryConfig = props.module.config.discovery?.[value]?.result
+      if (discoveryConfig) {
+        const indexOfLanguage = discoveryConfig.findIndex(r => r.lang === lang)
         if (indexOfLanguage >= 0) {
-          existingFields = new Set(props.module.config.discovery[value].result[indexOfLanguage].fields.filter(name => moduleFieldsSet.value.has(name)))
+          existingFields = new Set(discoveryConfig[indexOfLanguage].fields.filter(name => moduleFieldsSet.value.has(name)))
         }
       }
       const fields = [...existingFields].map(name => props.module.fields.find(field => field.name === name))

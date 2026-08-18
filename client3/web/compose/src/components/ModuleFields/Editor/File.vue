@@ -1,12 +1,14 @@
 <template>
   <div class="mb-3" :class="formGroupStyleClasses">
-      <div v-if="!valueOnly" class="d-flex align-items-center text-primary p-0">
+    <div v-if="!valueOnly" :class="labelColClass">
+      <div class="d-flex align-items-center text-primary p-0">
         <span :title="label" class="d-inline-block mw-100">{{ label }}</span>
         <c-hint :tooltip="hint" />
         <slot name="tools" />
       </div>
       <div class="small text-muted" :class="{ 'mb-1': description }">{{ description }}</div>
-
+    </div>
+    <div :class="contentColClass">
     <div class="d-flex gap-1">
       <CUploader
         ref="uploaderRef"
@@ -37,7 +39,8 @@
       mode="list"
       class="mt-3"
     />
-    <errors :errors="errors" />
+    <FieldErrors :errors="errors" />
+    </div>
   </div>
 </template>
 
@@ -49,7 +52,7 @@ import { useEditorBase } from './base'
 import { components } from 'corteza-lib/vue/dist'
 import ListLoader from 'corteza-webapp-compose/src/components/Public/Page/Attachment/ListLoader'
 import { NoID } from 'corteza-lib/js/dist'
-import errors from '../errors'
+import FieldErrors from '../errors'
 const { CUploader } = components
 
 const props = defineProps({
@@ -65,7 +68,7 @@ const props = defineProps({
 const emit = defineEmits(['change', 'update:preventPopoverClose'])
 
 const { t } = useI18n({ useScope: 'global', messages: {} })
-const { value, formGroupStyleClasses, label, hint, description } = useEditorBase(props, emit)
+const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hint, description } = useEditorBase(props, emit)
 
 const $ComposeAPI = inject('$ComposeAPI')
 const $settings = inject('$Settings')

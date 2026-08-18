@@ -1,14 +1,14 @@
 <template>
   <div class="mb-3" :class="formGroupStyleClasses">
-    <template v-if="field.options.switch">
-      <div v-if="!valueOnly" class="d-flex align-items-center text-primary p-0">
+    <div v-if="!valueOnly && field.options.switch" :class="labelColClass">
+      <div class="d-flex align-items-center text-primary p-0">
         <span :title="label" class="d-inline-block mw-100 pt-0" :class="{ 'py-1': !horizontal }">{{ label }}</span>
         <c-hint :tooltip="hint" />
         <slot name="tools" />
       </div>
       <div class="small text-muted" :class="{ 'mb-1': description }">{{ description }}</div>
-    </template>
-
+    </div>
+    <div :class="contentColClass">
     <c-input-checkbox
       v-model="value"
       :switch="field.options.switch"
@@ -21,7 +21,8 @@
     </c-input-checkbox>
 
     <div v-if="!valueOnly && !field.options.switch" class="small text-muted">{{ description }}</div>
-    <errors :errors="errors" />
+    <FieldErrors :errors="errors" />
+    </div>
   </div>
 </template>
 
@@ -29,7 +30,7 @@
 defineOptions({ i18nOptions: { namespaces: 'field' } })
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import errors from '../errors'
+import FieldErrors from '../errors'
 import { useEditorBase } from './base'
 
 const props = defineProps({
@@ -45,7 +46,7 @@ const props = defineProps({
 const emit = defineEmits(['change', 'update:preventPopoverClose'])
 
 const { t } = useI18n({ useScope: 'global', messages: {} })
-const { formGroupStyleClasses, label, hint, description } = useEditorBase(props, emit)
+const { formGroupStyleClasses, labelColClass, contentColClass, label, hint, description } = useEditorBase(props, emit)
 
 const value = computed({
   get () { return props.record.values[props.field.name] === '1' },

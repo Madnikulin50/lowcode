@@ -119,6 +119,7 @@ import { usePageLayoutStore } from '../../../store/page-layout'
 import { useUiStore } from '../../../store/ui'
 import { useRecordStore } from '../../../store/record'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
+import { normalizeXYWH } from 'corteza-webapp-compose/src/lib/block-layout'
 import bus from '../../../lib/bus'
 import Grid from 'corteza-webapp-compose/src/components/Public/Page/Grid'
 import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Modal'
@@ -351,7 +352,7 @@ async function prepareBlocks() {
   layoutBlocks.forEach(({ blockID, xywh }) => {
     const block = props.page.blocks.find(b => b.blockID === blockID)
     if (block) {
-      block.xywh = xywh
+      block.xywh = normalizeXYWH(xywh)
       tempBlocks.push(block)
       if (block.kind === 'Tabs') {
         const { tabs = [] } = block.options

@@ -604,7 +604,9 @@ function buildPayload () {
     return { id: n.id, type: n.type, label: n.label, config }
   })
   const edges = form.edges.map((e) => ({ from: e.from, to: e.to, label: e.label, condition: e.condition }))
-  return {
+	return {
+    id: isEdit.value ? props.chainID : undefined,
+    namespaceID: props.namespace?.namespaceID,
     name: form.name,
     description: form.description,
     entryNode: form.entryNode,

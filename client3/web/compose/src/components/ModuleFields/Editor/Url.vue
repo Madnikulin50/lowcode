@@ -1,13 +1,14 @@
 <template>
   <div class="mb-3" :class="formGroupStyleClasses">
-
-      <div v-if="!valueOnly" class="d-flex align-items-center text-primary px-0">
+    <div v-if="!valueOnly" :class="labelColClass">
+      <div class="d-flex align-items-center text-primary px-0">
         <span :title="label" class="d-inline-block mw-100">{{ label }}</span>
         <c-hint :tooltip="hint" />
         <slot name="tools" />
       </div>
       <div class="small text-muted" :class="{ 'mb-1': description }">{{ description }}</div>
-
+    </div>
+    <div :class="contentColClass">
     <multi v-if="field.isMulti" v-slot="ctx" v-model:value="value" :errors="errors">
       <input
         :value="value[ctx.index]"
@@ -25,8 +26,9 @@
         class="form-control form-control-sm"
         :placeholder="t('kind.url.example')"
       />
-      <errors :errors="errors" />
+      <FieldErrors :errors="errors" />
     </template>
+    </div>
   </div>
 </template>
 
@@ -35,7 +37,7 @@ defineOptions({ i18nOptions: { namespaces: 'field' } })
 import { useI18n } from 'vue-i18n'
 import { useEditorBase } from './base'
 import { trimUrlFragment, trimUrlQuery, trimUrlPath, onlySecureUrl } from '../url'
-import errors from '../errors'
+import FieldErrors from '../errors'
 import multi from './multi'
 
 const props = defineProps({
@@ -51,7 +53,7 @@ const props = defineProps({
 const emit = defineEmits(['change', 'update:preventPopoverClose'])
 
 const { t } = useI18n({ useScope: 'global', messages: {} })
-const { value, formGroupStyleClasses, label, hint, description, setMultiValue } = useEditorBase(props, emit)
+const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hint, description, setMultiValue } = useEditorBase(props, emit)
 
 function fixUrl (value) {
   if (props.field.options.trimFragment) value = trimUrlFragment(value)

@@ -35,7 +35,7 @@
       </template>
     </draggable>
 
-    <errors :errors="errors" />
+    <FieldErrors :errors="errors" />
 
     <button
       v-if="!singleInput"
@@ -52,7 +52,7 @@
 defineOptions({ i18nOptions: { namespaces: 'general' } })
 import { computed, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
-import errors from '../errors'
+import FieldErrors from '../errors'
 import draggable from 'vuedraggable'
 import { validator } from 'corteza-lib/js/dist'
 

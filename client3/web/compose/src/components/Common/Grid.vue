@@ -12,22 +12,23 @@
       :layout="layout"
       :col-num="48"
       :row-height="10"
-      vertical-compact
+      :vertical-compact="true"
       :is-resizable="editable"
       :is-draggable="editable"
       :cols="columnNumber"
       :margin="[0, 0]"
-      :responsive="!editable"
+      :responsive="false"
       :use-css-transforms="false"
       class="flex-grow-1 d-flex w-100 h-100"
       @layout-updated="onLayoutUpdated"
+      @update:layout="onLayoutUpdated"
     >
       <template
         v-for="(item, index) in layout"
+        :key="item.i"
       >
         <grid-item
           v-if="blocks[item.i] && !blocks[item.i].meta.hidden && (!blocks[item.i].meta.invisible || editable)"
-          :key="item.i"
           :i="item.i"
           :h="item.h"
           :w="item.w"
@@ -40,6 +41,8 @@
           class="grid-item"
           @move="onGridAction"
           @resize="onGridAction"
+          @moved="onGridSettled"
+          @resized="onGridSettled"
         >
           <slot
             v-if="!blocks[item.i].meta.invisible"
@@ -67,10 +70,8 @@
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { GridLayout, GridItem } from '../../lib/vue-grid-layout'
-
-const { t } = useI18n()
+import { normalizeXYWH, xywhSignature } from '../../lib/block-layout'
 
 const props = defineProps({
   blocks: {
@@ -90,6 +91,7 @@ const emit = defineEmits(['item-updated'])
 
 const layout = ref([])
 const resizing = ref(false)
+const pendingPersist = ref(false)
 
 const oneBlockLayout = computed(() => {
   return props.blocks.filter(({ meta }) => !meta.hidden && (!meta.invisible || props.editable)).length === 1
@@ -110,52 +112,74 @@ const gridKey = computed(() => {
   return layout.value.map(b => b.i).join(',')
 })
 
-watch(() => props.blocks, (blocks) => {
-  const l = blocks.map(({ meta = {}, xywh = [] }, i) => {
-    const [x = 0, y = 0, w = 48, h = 15] = (xywh || []).map(v => Number(v) || 0)
-    if (meta.hidden || (meta.invisible && !props.editable)) return null
-    return { i, x, y, w, h }
-  }).filter(b => b)
+const geometryKey = computed(() => xywhSignature(props.blocks))
 
-  layout.value = l
-  nextTick(() => {
-    forceRerender()
-  })
-}, { immediate: true, deep: true })
+function rebuildLayout () {
+  layout.value = (props.blocks || []).map((block, i) => {
+    const meta = block.meta || {}
+    if (meta.hidden || (meta.invisible && !props.editable)) return null
+    const [x, y, w, h] = normalizeXYWH(block.xywh)
+    return { i, x, y, w, h }
+  }).filter(Boolean)
+}
+
+watch(geometryKey, () => {
+  if (resizing.value || pendingPersist.value) return
+  rebuildLayout()
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   layout.value = []
   resizing.value = false
+  pendingPersist.value = false
 })
 
-function onLayoutUpdated (newLayout) {
-  if (!props.editable) return
-
-  resizing.value = false
+function persistLayout (newLayout) {
+  if (!props.editable || !Array.isArray(newLayout)) return
 
   layout.value = newLayout
   newLayout.forEach(({ i, x, y, w, h }) => {
-    const layoutXYWH = [x, y, w, h]
-    const { xywh = [] } = props.blocks[i] || {}
-    if (xywh.toString() === layoutXYWH.toString()) return
+    const next = normalizeXYWH([x, y, w, h])
+    const block = props.blocks[i]
+    if (!block) return
+    if (normalizeXYWH(block.xywh).toString() === next.toString()) return
     emit('item-updated', i)
-    props.blocks[i].xywh = layoutXYWH
+    block.xywh = next
   })
 }
 
-function onGridAction () {
-  if (!resizing.value) {
-    resizing.value = true
-  }
+function onLayoutUpdated (newLayout) {
+  if (!props.editable || !Array.isArray(newLayout)) return
+  // Keep GridItem :w/:h in sync while the user drags, otherwise the library
+  // snaps back to the stale props after resizeend.
+  if (!resizing.value && !pendingPersist.value) return
+  persistLayout(newLayout)
 }
 
-function forceRerender () {
-  window.dispatchEvent(new Event('resize'))
+function onGridAction () {
+  resizing.value = true
+}
+
+function onGridSettled () {
+  pendingPersist.value = true
+  resizing.value = false
+  persistLayout(layout.value)
+  nextTick(() => {
+    pendingPersist.value = false
+  })
 }
 </script>
 
 <style lang="scss">
 .vue-grid-item.vue-grid-placeholder {
   background: var(--primary) !important;
+}
+
+.vue-grid-item.grid-item {
+  box-sizing: border-box;
+
+  > * {
+    height: 100%;
+  }
 }
 </style>

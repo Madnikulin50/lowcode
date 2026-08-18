@@ -40,17 +40,18 @@ export function usePageBlockBase (props, emit) {
     return navigator.language || navigator.languages?.[0] || 'en-US'
   }
 
+  function emitErrors (payload) {
+    if (typeof emit === 'function') emit('errors', payload)
+  }
+
   function fieldErrors (name) {
-    if (!props.errors) {
-      emit('errors', { errors: undefined, id: `${errorID.value}:${name}` })
+    const id = `${errorID.value}:${name}`
+    if (!props.errors || typeof props.errors.filterByMeta !== 'function') {
+      emitErrors({ errors: undefined, id })
       return new validator.Validated()
     }
     const errors = props.errors.filterByMeta('field', name).filterByMeta('id', errorID.value)
-    if (errors.set.length > 0) {
-      emit('errors', { errors, id: `${errorID.value}:${name}` })
-    } else {
-      emit('errors', { errors: undefined, id: `${errorID.value}:${name}` })
-    }
+    emitErrors({ errors: errors.set.length > 0 ? errors : undefined, id })
     return errors
   }
 
@@ -75,11 +76,12 @@ export function usePageBlockBase (props, emit) {
   }
 
   function getColor (value) {
+    if (!value) return undefined
     if (value[0] === '#') return value
     const themes = themeSettings.value
       .filter((theme) => theme.id !== 'general')
-      .map((theme) => ({ id: theme.id, values: JSON.parse(theme.values) }))
-    return themes[0].values[value] || value
+      .map((theme) => ({ id: theme.id, values: typeof theme.values === 'string' ? JSON.parse(theme.values) : theme.values }))
+    return themes[0]?.values?.[value] || value
   }
 
   function refreshBlock (refreshFunction, ...params) {

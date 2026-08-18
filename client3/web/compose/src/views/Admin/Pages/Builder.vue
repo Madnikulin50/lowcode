@@ -518,6 +518,7 @@ import PageBlocksConfigurator from 'corteza-webapp-compose/src/components/PageBl
 import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Modal'
 import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Page/Block/Modal'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
+import { normalizeXYWH } from 'corteza-webapp-compose/src/lib/block-layout'
 import { handle, useNsI18n } from 'corteza-lib/vue/dist'
 import ScenarioConfigurator from 'corteza-webapp-compose/src/components/Public/Page/Scenarios'
 import { Modal } from 'bootstrap'
@@ -965,7 +966,7 @@ async function handleSaveLayout ({ closeOnSuccess = false, previewOnSuccess = fa
         page.value.blocks = freshPage.blocks
         const newBlocks = blocks.value.map(({ blockID, meta, xywh }) => {
           if (blockID === NoID) blockID = (freshPage.blocks.find(b => b.meta.tempID === meta.tempID) || {}).blockID
-          return { blockID, xywh, meta }
+          return { blockID, xywh: normalizeXYWH(xywh), meta }
         })
         return store.dispatch('pageLayout/update', { ...ly, blocks: newBlocks })
       })
@@ -1102,7 +1103,7 @@ async function setLayout (layoutID, processingFlag = true) {
   lyBlocks.forEach(({ blockID, xywh, meta = {} }) => {
     let block = page.value.blocks.find(b => b.blockID === blockID)
     if (block) {
-      block.xywh = xywh
+      block.xywh = normalizeXYWH(xywh)
       block.meta.hidden = !!meta.hidden
       tempBlocks.push(block)
       if (block.kind === 'Tabs') {

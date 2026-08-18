@@ -152,6 +152,9 @@ reminder:
     count: Snooze count
 tooltip:
   dragAndDrop: Переместите для изменения порядка
+  recordEditDenied: Недостаточно прав для изменения этой записи
+  recordSaveDenied: Недостаточно прав для сохранения этой записи
+  recordCloneDenied: Недостаточно прав для копирования этой записи
 fieldKinds:
   Bool:
     label: Флажок (Да-Нет)

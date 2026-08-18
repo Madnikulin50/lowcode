@@ -3,10 +3,21 @@ import { Apply } from '../../../cast'
 
 const kind = 'String'
 
+interface JSONVariant {
+  value: string;
+  variant: string;
+}
+
 interface StringOptions extends Options {
   multiLine: boolean;
   useRichTextEditor: boolean;
   multiDelimiter: string;
+  displayType: 'text' | 'json' | 'ports' | '';
+  jsonLayout: 'chips' | 'table' | 'kv' | 'pretty' | '';
+  jsonTemplate: string;
+  jsonFields: string;
+  jsonVariantField: string;
+  jsonVariants: JSONVariant[];
 }
 
 const defaults = (): Readonly<StringOptions> => Object.freeze({
@@ -14,6 +25,12 @@ const defaults = (): Readonly<StringOptions> => Object.freeze({
   multiLine: false,
   useRichTextEditor: false,
   multiDelimiter: '\n',
+  displayType: '',
+  jsonLayout: '',
+  jsonTemplate: '',
+  jsonFields: '',
+  jsonVariantField: '',
+  jsonVariants: [],
 })
 
 export class ModuleFieldString extends ModuleField {
@@ -31,8 +48,12 @@ export class ModuleFieldString extends ModuleField {
     if (!o) return
     super.applyOptions(o)
 
-    Apply(this.options, o, String, 'multiDelimiter')
+    Apply(this.options, o, String, 'multiDelimiter', 'displayType', 'jsonLayout', 'jsonTemplate', 'jsonFields', 'jsonVariantField')
     Apply(this.options, o, Boolean, 'multiLine', 'useRichTextEditor')
+
+    if (o.jsonVariants) {
+      this.options.jsonVariants = Array.isArray(o.jsonVariants) ? o.jsonVariants : []
+    }
   }
 }
 

@@ -51,7 +51,8 @@ const resolvedValue = computed(() => {
 })
 
 function resolveValue (v) {
-  const opt = props.field.options.options.find(({ value }) => value === v) || { text: v }
+  const opts = props.field.options?.options || []
+  const opt = opts.find(({ value }) => value === v) || { text: v, style: {} }
   return { text: opt.text, style: getOptionStyle(opt) }
 }
 

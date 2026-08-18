@@ -86,30 +86,46 @@
         @confirmed="$emit('undelete')"
       />
 
-      <button
-        v-if="(isCreated || isDraft) && module.canCreateRecord && !(hideClone || settings.hideClone)"
-        type="button"
-        data-test-id="button-clone"
-        class="btn btn-outline-secondary btn-lg text-nowrap"
-        :disabled="!record || isProcessing"
-        @click.prevent="$emit('clone')"
+      <span
+        v-if="showClone"
+        class="d-inline-flex"
+        :title="forceShowClone && record && !canCreateRecord ? $t('tooltip.recordCloneDenied') : undefined"
       >
-        {{ labels.clone || (isDraft ? $t('label.saveAsNewDraft') : $t('label.saveAsCopy')) }}
-      </button>
+        <button
+          type="button"
+          data-test-id="button-clone"
+          class="btn btn-outline-secondary btn-lg text-nowrap"
+          :disabled="!record || isProcessing || !canCreateRecord"
+          @click.prevent="$emit('clone')"
+        >
+          {{ labels.clone || (isDraft ? $t('label.saveAsNewDraft') : $t('label.saveAsCopy')) }}
+        </button>
+      </span>
+
+      <span
+        v-if="showEditOnView"
+        class="d-inline-flex"
+        :title="forceShowEdit && record && !canManageRecord ? $t('tooltip.recordEditDenied') : undefined"
+      >
+        <button
+          type="button"
+          data-test-id="button-edit"
+          :disabled="!record || isProcessing || !canManageRecord"
+          class="btn btn-lg text-nowrap"
+          :class="editButtonClass"
+          @click.prevent="$emit('edit')"
+        >
+          {{ labels.edit || $t('label.edit') }}
+          <font-awesome-icon
+            v-if="forceShowEdit"
+            :icon="['far', 'edit']"
+            class="ms-2"
+          />
+        </button>
+      </span>
 
       <button
-        v-if="!inEditing && (isCreated || isDraft) && !(hideEdit || settings.hideEdit) && canManageRecord"
-        type="button"
-        data-test-id="button-edit"
-        :disabled="!record || isProcessing"
-        class="btn btn-outline-secondary btn-lg text-nowrap"
-        @click.prevent="$emit('edit')"
-      >
-        {{ labels.edit || $t('label.edit') }}
-      </button>
-
-      <button
-        v-else-if="inEditing && (isCreated || (isDraft && !isNew)) && !(hideEdit || settings.hideEdit)"
+        v-if="showView"
         type="button"
         data-test-id="button-view"
         :disabled="!record || isProcessing"
@@ -130,16 +146,21 @@
         {{ labels.new || $t('label.addNew') }}
       </button>
 
-      <c-button-submit
-        v-if="inEditing && !(hideSubmit || settings.hideSubmit) && canManageRecord"
-        data-test-id="button-save"
-        :disabled="!record || isProcessing"
-        :processing="processingAction === 'submit'"
-        :text="labels.submit || $t('label.save')"
-        size="lg"
-        class="text-nowrap"
-        @submit="$emit('submit')"
-      />
+      <span
+        v-if="showSubmit"
+        class="d-inline-flex"
+        :title="forceShowSubmit && record && !canManageRecord ? $t('tooltip.recordSaveDenied') : undefined"
+      >
+        <c-button-submit
+          data-test-id="button-save"
+          :disabled="!record || isProcessing || !canManageRecord"
+          :processing="processingAction === 'submit'"
+          :text="labels.submit || $t('label.save')"
+          size="lg"
+          class="text-nowrap"
+          @submit="$emit('submit')"
+        />
+      </span>
     </template>
   </c-toolbar>
 </template>
@@ -208,9 +229,21 @@ const props = defineProps({
     type: Boolean,
     default: () => true,
   },
+  forceShowEdit: {
+    type: Boolean,
+    default: false,
+  },
   hideSubmit: {
     type: Boolean,
     default: () => true,
+  },
+  forceShowSubmit: {
+    type: Boolean,
+    default: false,
+  },
+  forceShowClone: {
+    type: Boolean,
+    default: false,
   },
   inModal: {
     type: Boolean,
@@ -244,6 +277,37 @@ const settings = computed(() => $Settings.get('compose.ui.record-toolbar', {}))
 const canManageRecord = computed(() => {
   if (!props.module || !props.record) return false
   return props.record.recordID === NoID ? props.module.canCreateRecord : props.record.canUpdateRecord
+})
+
+const canCreateRecord = computed(() => !!props.module?.canCreateRecord)
+
+const showEditOnView = computed(() => {
+  if (props.inEditing || !(props.isCreated || props.isDraft)) return false
+  if (props.forceShowEdit) return true
+  return !(props.hideEdit || settings.value.hideEdit) && canManageRecord.value
+})
+
+const showView = computed(() => {
+  if (!props.inEditing || !(props.isCreated || (props.isDraft && !props.isNew))) return false
+  if (props.forceShowEdit) return true
+  return !(props.hideEdit || settings.value.hideEdit)
+})
+
+const showClone = computed(() => {
+  if (!(props.isCreated || props.isDraft)) return false
+  if (props.forceShowClone) return true
+  return canCreateRecord.value && !(props.hideClone || settings.value.hideClone)
+})
+
+const showSubmit = computed(() => {
+  if (!props.inEditing) return false
+  if (props.forceShowSubmit) return true
+  return !(props.hideSubmit || settings.value.hideSubmit) && canManageRecord.value
+})
+
+const editButtonClass = computed(() => {
+  if (props.forceShowEdit) return 'btn-primary d-flex align-items-center'
+  return 'btn-outline-secondary'
 })
 
 const canDeleteRecord = computed(() => {

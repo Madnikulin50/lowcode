@@ -25,13 +25,53 @@ type MailService interface {
 // --- CRUD Node ---
 
 type crudConfig struct {
-	Operation   string                 `json:"operation"`
-	ModuleID    uint64                 `json:"moduleID"`
-	NamespaceID uint64                 `json:"namespaceID"`
-	RecordID    string                 `json:"recordID,omitempty"`
-	Fields      map[string]interface{} `json:"fields,omitempty"`
-	Query       string                 `json:"query,omitempty"`
-	Limit       int                    `json:"limit,omitempty"`
+	Operation    string                 `json:"operation"`
+	ModuleID     flexibleID             `json:"moduleID"`
+	ModuleHandle string                 `json:"moduleHandle,omitempty"`
+	NamespaceID  flexibleID             `json:"namespaceID"`
+	RecordID     string                 `json:"recordID,omitempty"`
+	Fields       map[string]interface{} `json:"fields,omitempty"`
+	Query        string                 `json:"query,omitempty"`
+	Limit        int                    `json:"limit,omitempty"`
+}
+
+// flexibleID accepts Corteza snowflake IDs as JSON strings or numbers.
+// JS Number() cannot hold them; apply.mjs and the page trigger send strings.
+type flexibleID uint64
+
+func (id *flexibleID) UnmarshalJSON(b []byte) error {
+	s := strings.TrimSpace(string(b))
+	if s == "" || s == "null" || s == `""` {
+		*id = 0
+		return nil
+	}
+	if len(s) > 0 && s[0] == '"' {
+		var str string
+		if err := json.Unmarshal(b, &str); err != nil {
+			return err
+		}
+		str = strings.TrimSpace(str)
+		if str == "" {
+			*id = 0
+			return nil
+		}
+		n, err := strconv.ParseUint(str, 10, 64)
+		if err != nil {
+			return err
+		}
+		*id = flexibleID(n)
+		return nil
+	}
+	var n uint64
+	if err := json.Unmarshal(b, &n); err != nil {
+		return err
+	}
+	*id = flexibleID(n)
+	return nil
+}
+
+type moduleResolver interface {
+	LookupModule(ctx context.Context, namespaceID uint64, handle string) (uint64, error)
 }
 
 type crudExecutor struct {
@@ -51,21 +91,38 @@ func (n *crudExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		cfg.Query = resolveTemplateValue(cfg.Query, ec)
 	}
 
+	nsID := uint64(cfg.NamespaceID)
+	if v := uint64FromAny(ec.Get("namespaceID")); v > 0 {
+		nsID = v
+	}
+	modID := uint64(cfg.ModuleID)
+	if cfg.ModuleHandle != "" {
+		handle := resolveTemplateValue(cfg.ModuleHandle, ec)
+		if resolver, ok := n.svc.(moduleResolver); ok {
+			id, err := resolver.LookupModule(ctx, nsID, handle)
+			if err != nil {
+				return nil, fmt.Errorf("module %q: %w", handle, err)
+			}
+			modID = id
+		}
+	}
+
 	switch cfg.Operation {
 	case "create":
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
 		}
-		id, createdAt, err := n.svc.Create(ctx, cfg.NamespaceID, cfg.ModuleID, resolveFieldTemplates(cfg.Fields, ec))
+		id, createdAt, err := n.svc.Create(ctx, nsID, modID, resolveFieldTemplates(cfg.Fields, ec))
 		if err != nil {
 			return nil, fmt.Errorf("create failed: %w", err)
 		}
+		ec.Set("createdRecordID", id)
 		return map[string]interface{}{"recordID": id, "createdAt": createdAt}, nil
 	case "update":
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
 		}
-		updatedAt, err := n.svc.Update(ctx, cfg.NamespaceID, cfg.ModuleID, cfg.RecordID, resolveFieldTemplates(cfg.Fields, ec))
+		updatedAt, err := n.svc.Update(ctx, nsID, modID, cfg.RecordID, resolveFieldTemplates(cfg.Fields, ec))
 		if err != nil {
 			return nil, fmt.Errorf("update failed: %w", err)
 		}
@@ -74,7 +131,7 @@ func (n *crudExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
 		}
-		if err := n.svc.Delete(ctx, cfg.NamespaceID, cfg.ModuleID, cfg.RecordID); err != nil {
+		if err := n.svc.Delete(ctx, nsID, modID, cfg.RecordID); err != nil {
 			return nil, fmt.Errorf("delete failed: %w", err)
 		}
 		return map[string]interface{}{"recordID": cfg.RecordID, "deleted": true}, nil
@@ -82,7 +139,7 @@ func (n *crudExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
 		}
-		records, err := n.svc.Search(ctx, cfg.NamespaceID, cfg.ModuleID, cfg.Query, cfg.Limit)
+		records, err := n.svc.Search(ctx, nsID, modID, cfg.Query, cfg.Limit)
 		if err != nil {
 			return nil, fmt.Errorf("search failed: %w", err)
 		}
@@ -200,6 +257,11 @@ func (n *httpExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 	var jsonBody interface{}
 	if err := json.Unmarshal(respBody, &jsonBody); err == nil {
 		result["body"] = jsonBody
+		if m, ok := jsonBody.(map[string]interface{}); ok {
+			if id, ok := m["id"]; ok {
+				ec.Set("scanID", fmt.Sprintf("%v", id))
+			}
+		}
 	} else {
 		bodyStr := string(respBody)
 		if len(bodyStr) > 10000 {
@@ -208,7 +270,18 @@ func (n *httpExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		}
 		result["body"] = bodyStr
 	}
+	if resp.StatusCode >= 400 {
+		return result, fmt.Errorf("HTTP %d: %s", resp.StatusCode, truncateHTTPBody(respBody))
+	}
 	return result, nil
+}
+
+func truncateHTTPBody(b []byte) string {
+	s := string(b)
+	if len(s) > 500 {
+		return s[:500] + "..."
+	}
+	return s
 }
 
 // --- Condition Node ---
@@ -434,6 +507,39 @@ func resolveFieldTemplates(fields map[string]interface{}, ec *ExecutionContext) 
 		}
 	}
 	return result
+}
+
+func uint64FromAny(v interface{}) uint64 {
+	switch t := v.(type) {
+	case nil:
+		return 0
+	case uint64:
+		return t
+	case int:
+		if t > 0 {
+			return uint64(t)
+		}
+	case int64:
+		if t > 0 {
+			return uint64(t)
+		}
+	case float64:
+		if t > 0 {
+			return uint64(t)
+		}
+	case json.Number:
+		n, _ := t.Int64()
+		if n > 0 {
+			return uint64(n)
+		}
+	case string:
+		n, _ := strconv.ParseUint(strings.TrimSpace(t), 10, 64)
+		return n
+	default:
+		n, _ := strconv.ParseUint(strings.TrimSpace(fmt.Sprintf("%v", t)), 10, 64)
+		return n
+	}
+	return 0
 }
 
 func splitTrimStr(s string) []string {

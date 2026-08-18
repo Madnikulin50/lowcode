@@ -10,7 +10,7 @@
           <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="me-1" />
           {{ result.error || 'Ошибка выполнения' }}
         </div>
-        <pre v-if="result.output && !reorderSummary && !riskSummary" class="mt-2 mb-0 small">{{ formatOutput(result.output) }}</pre>
+        <pre v-if="result.output && typeof result.output === 'object' && !reorderSummary && !riskSummary" class="mt-2 mb-0 small">{{ formatOutput(result.output) }}</pre>
       </div>
 
       <button
@@ -28,9 +28,10 @@
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue'
+import { ref, computed, inject, onBeforeUnmount } from 'vue'
 import { NoID } from 'corteza-lib/js/dist'
 import Wrap from './Wrap/index.js'
+import { scanIDsFromTrigger, pullScanResultsIntoCompose } from './cmdbAgentSync.js'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -46,6 +47,9 @@ const $ComposeAPI = inject('$ComposeAPI')
 
 const running = ref(false)
 const result = ref(null)
+let pollAbort = false
+
+onBeforeUnmount(() => { pollAbort = true })
 
 const chainID = computed(() => props.block.options?.chainID || '')
 const label = computed(() => props.block.options?.label || 'Run Rule Chain')
@@ -90,6 +94,9 @@ const successText = computed(() => {
     const inn = r.score != null ? Number(r.score).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) : '—'
     return `${who}риск ${r.level || 'n/a'} (residual ${res}, inherent ${inn})`
   }
+  if (typeof result.value?.output === 'string' && result.value.output) {
+    return result.value.output
+  }
   return 'Цепочка выполнена успешно'
 })
 
@@ -125,10 +132,34 @@ function recordPayload (record) {
   }
 }
 
+function unwrapScalar (v) {
+  if (Array.isArray(v)) {
+    return v.length ? unwrapScalar(v[0]) : ''
+  }
+  if (v && typeof v === 'object' && 'value' in v) {
+    return unwrapScalar(v.value)
+  }
+  return v
+}
+
+function triggerContext () {
+  const ctx = { ...(props.block.options?.context || {}) }
+  const rec = recordPayload(props.record)
+  const values = rec?.values || {}
+  if (!ctx.cidr || ctx.cidr === 'auto') {
+    if (values.cidr) ctx.cidr = unwrapScalar(values.cidr)
+    else if (values.target) ctx.cidr = unwrapScalar(values.target)
+  } else {
+    ctx.cidr = unwrapScalar(ctx.cidr)
+  }
+  return ctx
+}
+
 async function runChain () {
   if (!chainID.value) return
   running.value = true
   result.value = null
+  pollAbort = false
   try {
     const { data } = await $ComposeAPI.api().request({
       method: 'post',
@@ -140,12 +171,42 @@ async function runChain () {
         namespaceID: props.namespace?.namespaceID,
         recordID: props.record?.recordID && props.record.recordID !== NoID ? props.record.recordID : undefined,
         record: recordPayload(props.record),
-        context: props.block.options?.context || {},
+        context: triggerContext(),
       },
     })
     result.value = data?.response || data || { success: true }
     if (result.value.success) {
       window.dispatchEvent(new CustomEvent('refetch-records', { detail: { stayOnPage: true } }))
+    }
+    const ids = scanIDsFromTrigger(result.value)
+    const isScan = chainID.value === 'cmdb-trigger-scan' || ids.scanID
+    if (result.value.success && isScan && ids.scanID && !pollAbort) {
+      const agentUrl = props.block.options?.context?.agentUrl || 'http://localhost:8085/api'
+      result.value = { success: true, output: 'Сканирование запущено, загрузка из CMDB API…' }
+      const pulled = await pullScanResultsIntoCompose({
+        $ComposeAPI,
+        namespaceID: props.namespace?.namespaceID,
+        agentUrl,
+        scanID: ids.scanID,
+        composeScanRecordID: ids.composeScanRecordID,
+        onProgress (s) {
+          const pct = s.progress != null ? Math.round(s.progress) : 0
+          const found = s.found != null ? s.found : 0
+          const tgt = s.target ? ` · ${s.target}` : ''
+          result.value = { success: true, output: `Сканирование ${pct}% · найдено ${found}${tgt}` }
+        },
+      })
+      const st = pulled.status?.status || pulled.status?.Status
+      const why = pulled.status?.error || pulled.status?.message || pulled.status?.Error
+      if (st === 'error' || st === 'failed') {
+        result.value = { success: false, error: why || 'Скан завершился с ошибкой' }
+      } else if (!pulled.found) {
+        result.value = { success: true, output: why ? `Найдено 0 устройств. ${why}` : 'Найдено 0 устройств' }
+      } else {
+        result.value = { success: true, output: `Загружено устройств: ${pulled.found}` }
+      }
+    } else if (result.value.success && isScan && !ids.scanID) {
+      result.value = { success: false, error: 'Агент не вернул scanID. Проверьте CMDB agent на :8085 и что цепочка POST /api/scan проходит.' }
     }
   } catch (err) {
     result.value = { success: false, error: err.message || 'Ошибка запроса' }

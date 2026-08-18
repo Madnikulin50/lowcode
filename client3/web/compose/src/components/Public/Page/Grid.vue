@@ -34,7 +34,7 @@ import Grid from '../../Common/Grid.vue'
 import { GetComponent } from '../../PageBlocks/index.js'
 import { compose } from 'corteza-lib/js/dist'
 
-defineProps({
+const props = defineProps({
   page: { type: compose.Page, required: true },
   blocks: { type: Array, required: true },
   loadingRecord: { type: Boolean, default: false },
@@ -49,6 +49,6 @@ defineProps({
 })
 
 function componentFor(block) {
-  return GetComponent({ block })
+  return GetComponent({ block, mode: props.mode })
 }
 </script>

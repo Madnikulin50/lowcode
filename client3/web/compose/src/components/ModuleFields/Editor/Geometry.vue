@@ -1,12 +1,14 @@
  <template>
    <div class="mb-3" :class="formGroupStyleClasses">
-     <div v-if="!valueOnly" class="d-flex align-items-center text-primary p-0">
-       <span :title="label" class="d-inline-block mw-100">{{ label }}</span>
-       <c-hint :tooltip="hint" />
-       <slot name="tools" />
-     </div>
-     <div class="small text-muted" :class="{ 'mb-1': description }">{{ description }}</div>
-
+    <div v-if="!valueOnly" :class="labelColClass">
+      <div class="d-flex align-items-center text-primary p-0">
+        <span :title="label" class="d-inline-block mw-100">{{ label }}</span>
+        <c-hint :tooltip="hint" />
+        <slot name="tools" />
+      </div>
+      <div class="small text-muted" :class="{ 'mb-1': description }">{{ description }}</div>
+    </div>
+    <div :class="contentColClass">
      <button v-if="field.isMulti" class="btn btn-outline-secondary btn-sm w-100 mb-3" :title="t('tooltip.openMap')" @click="openMap()">
        <font-awesome-icon :icon="['fas', 'map-marked-alt']" class="text-primary" />
      </button>
@@ -35,8 +37,9 @@
            <font-awesome-icon :icon="['fas', 'location-arrow']" class="text-primary" />
          </button>
        </div>
-       <errors :errors="errors" />
+       <FieldErrors :errors="errors" />
      </template>
+    </div>
 
      <div v-if="map.show" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);" @click.self="closeMap">
        <div class="modal-dialog modal-xl">
@@ -72,13 +75,13 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'field', keyPrefix: 'kind.geometry' } })
-import { ref, computed, watch, onBeforeUnmount, inject } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEditorBase } from './base'
 import { NoID } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
 import { isNumber } from 'lodash'
-import errors from '../errors'
+import FieldErrors from '../errors'
 import multi from './multi'
 const { CMap } = components
 
@@ -95,9 +98,7 @@ const props = defineProps({
 const emit = defineEmits(['change', 'update:preventPopoverClose'])
 
 const { t } = useI18n({ useScope: 'global', messages: {} })
-const { value, formGroupStyleClasses, label, hint, description } = useEditorBase(props, emit)
-
-const $root = inject('$root')
+const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hint, description } = useEditorBase(props, emit)
 
 const localValue = ref(undefined)
 const localValueIndex = ref(undefined)

@@ -241,7 +241,7 @@ watch(() => route.params.slug, (slug = '') => {
 watch(() => namespace.value?.namespaceID, (nsID) => {
   if (!nsID) return
   ruleChainsLoading.value = true
-  $ComposeAPI.ruleChainList({ limit: 500 })
+  $ComposeAPI.ruleChainList({ limit: 500, namespaceID: nsID })
     .then(({ chains }) => { ruleChains.value = chains || [] })
     .catch(() => { ruleChains.value = [] })
     .finally(() => { ruleChainsLoading.value = false })
@@ -382,7 +382,7 @@ function resolvePageIcon (icon, blocks) {
   if (icon && icon.type && icon.src) {
     if (icon.type === 'fontawesome') {
       const parts = icon.src.split(' ')
-      return parts.length >= 2 ? [parts[0], parts.slice(1).join(' ')] : ['fas', icon.src]
+      return parts.length >= 2 ? [parts[0], parts.slice(1).join(' ').replace(/^fa-/, '')] : ['fas', icon.src.replace(/^fa-/, '')]
     }
     if (icon.type === 'attachment') return `${$ComposeAPI.baseURL}${icon.src}`
     if (icon.type === 'link') return icon.src

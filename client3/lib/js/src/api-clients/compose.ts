@@ -5020,12 +5020,13 @@ export default class Compose {
         const {
             limit = 500,
             offset = 0,
+            namespaceID,
         } = (a as KV) || {}
 
         return this.api().request({
             method: 'get',
             url: '/admin/rulechain/',
-            params: { limit, offset },
+            params: { limit, offset, namespaceID },
             ...extra,
         }).then(result => stdResolve(result))
     }

@@ -185,7 +185,7 @@ watch(() => route.query.limit, (limit) => {
 function items () {
   if (!fetchedOnce) {
     fetchedOnce = true
-    return $ComposeAPI.ruleChainList({ limit: 500 })
+    return $ComposeAPI.ruleChainList({ limit: 500, namespaceID: props.namespace?.namespaceID })
       .then(({ chains: set }) => {
         chains.value = set || []
         return sliceChains()

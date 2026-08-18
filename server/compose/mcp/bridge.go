@@ -193,9 +193,10 @@ func initBridge() {
 		_ = aiCall
 	}
 
-	// Rulesgo engine with wired services and persistence
-	persist := rulesgo.NewMemoryPersistence()
+	// Rulesgo engine: chains persist in compose_rule_chain (PostgreSQL)
+	persist := service.NewRuleChainPersistence()
 	rulesCfg := &rulesgo.DefaultConfig{
+		CRUD: composeCRUD{},
 		AICall: func(ctx context.Context, agent, prompt, model string) (string, error) {
 			if handlers.AgentRegistry != nil {
 				res, err := handlers.AgentRegistry.RunAgent(ctx, agent, prompt, nil)
@@ -223,10 +224,18 @@ func initBridge() {
 		},
 	}
 	engine := rulesgo.NewEngineWithPersistence(rulesgo.DefaultRegistry(rulesCfg), persist)
-	engine.LoadFromStore(context.Background())
+	if err := engine.LoadFromStore(context.Background()); err != nil {
+		log.Printf("[bridge] load rule chains from DB: %v", err)
+	} else {
+		log.Printf("[bridge] loaded %d rule chains from PostgreSQL", len(engine.Chains()))
+	}
 	handlers.SetRuleEngine(engine.Engine)
+	handlers.SetOnChainMissing(func(ctx context.Context, chainID string) {
+		ensureChainAvailable(ctx, engine, chainID)
+	})
 
 	registerDemoChains(engine)
+	registerCMDBChains(engine)
 
 	log.Println("[bridge] all services wired")
 }

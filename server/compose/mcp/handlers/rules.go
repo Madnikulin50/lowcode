@@ -11,11 +11,16 @@ import (
 )
 
 var (
-	RuleEngine *rulesgo.Engine
+	RuleEngine     *rulesgo.Engine
+	OnChainMissing func(ctx context.Context, chainID string)
 )
 
 func SetRuleEngine(engine *rulesgo.Engine) {
 	RuleEngine = engine
+}
+
+func SetOnChainMissing(fn func(ctx context.Context, chainID string)) {
+	OnChainMissing = fn
 }
 
 func initRules(ctx context.Context, s *server.MCPServer) {

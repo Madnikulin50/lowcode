@@ -23,7 +23,13 @@ export function useEditorBase(props, emit) {
     required: isRequired.value,
     small: false,
     'value-only': props.valueOnly,
+    row: !!props.horizontal,
+    'g-2': !!props.horizontal,
+    'align-items-start': !!props.horizontal,
   }))
+
+  const labelColClass = computed(() => props.horizontal ? 'col-md-6 col-xl-5' : '')
+  const contentColClass = computed(() => props.horizontal ? 'col-md-6 col-xl-7' : '')
 
   const isRequired = computed(() => {
     return props.field.isRequired || uiStore.isFieldRequiredByLayout(props.field.name || props.field.fieldID)
@@ -88,5 +94,5 @@ export function useEditorBase(props, emit) {
     emit('change', value)
   }
 
-  return { formGroupStyleClasses, isRequired, state, value, showPopover, label, description, hint, inModal, getFieldCypressId, setMultiValue, getColor }
+  return { formGroupStyleClasses, labelColClass, contentColClass, isRequired, state, value, showPopover, label, description, hint, inModal, getFieldCypressId, setMultiValue, getColor }
 }

@@ -35,13 +35,15 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { useViewerBase } from './useViewerBase'
 import { useModuleStore } from 'corteza-webapp-compose/src/stores/module'
 import { useRecordStore } from 'corteza-webapp-compose/src/stores/record'
 import { usePageStore } from 'corteza-webapp-compose/src/stores/page'
+
+const FieldViewer = defineAsyncComponent(() => import('./index.vue'))
 
 const router = useRouter()
 const props = defineProps({
@@ -55,8 +57,6 @@ const props = defineProps({
 })
 
 const { value, inModal } = useViewerBase(props)
-
-const $root = inject('$root')
 
 const moduleStore = useModuleStore()
 const recordStore = useRecordStore()
@@ -129,7 +129,7 @@ function onRecordSelectorClick (e, route) {
 
   if (props.extraOptions.recordSelectorDisplayOption === 'modal' || inModal.value) {
     if (route.params?.recordID && route.params?.pageID) {
-      $root.value.$emit('show-record-modal', { recordID: route.params.recordID, recordPageID: route.params.pageID })
+      window.dispatchEvent(new CustomEvent('show-record-modal', { detail: { recordID: route.params.recordID, recordPageID: route.params.pageID } }))
     }
   } else if (props.extraOptions.recordSelectorDisplayOption === 'newTab') {
     const resolved = router.resolve(route)

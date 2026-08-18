@@ -128,9 +128,12 @@
         :hide-back="!layoutButtons.has('back')"
         :hide-delete="!layoutButtons.has('delete')"
         :hide-new="!layoutButtons.has('new')"
-        :hide-clone="!layoutButtons.has('clone')"
-        :hide-edit="!layoutButtons.has('edit')"
-        :hide-submit="!layoutButtons.has('submit')"
+        :hide-clone="isBasicModule && inEditing ? false : !layoutButtons.has('clone')"
+        :hide-edit="isBasicModule ? false : !layoutButtons.has('edit')"
+        :force-show-edit="isBasicModule"
+        :hide-submit="isBasicModule ? false : !layoutButtons.has('submit')"
+        :force-show-submit="isBasicModule"
+        :force-show-clone="isBasicModule && inEditing"
         :has-back="viewHasBack"
         @add="handleAdd()"
         @clone="handleClone()"
@@ -251,6 +254,7 @@ import { usePageLayoutStore } from '../../../../store/page-layout'
 import { useRecordStore } from '../../../../store/record'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
+import { normalizeXYWH } from 'corteza-webapp-compose/src/lib/block-layout'
 import bus from '../../../../lib/bus'
 import Grid from 'corteza-webapp-compose/src/components/Public/Page/Grid'
 import RecordToolbar from 'corteza-webapp-compose/src/components/Common/RecordToolbar'
@@ -310,6 +314,11 @@ const loadingRecord = ref(false)
 const activeDraftKey = ref(null)
 
 const isRecordPage = computed(() => record.value?.recordID || route.name === 'page.record.create')
+
+const isBasicModule = computed(() => {
+  const type = props.module?.config?.type
+  return !type || type === 'basic'
+})
 
 const validatorComp = computed(() => {
   if (!props.module?.moduleID) {
@@ -1246,7 +1255,7 @@ async function prepareBlocks() {
   layoutBlocks.forEach(({ blockID, xywh }) => {
     const block = props.page.blocks.find(b => b.blockID === blockID)
     if (block) {
-      block.xywh = xywh
+      block.xywh = normalizeXYWH(xywh)
       tempBlocks.push(block)
       if (block.kind === 'Tabs') {
         const { tabs = [] } = block.options

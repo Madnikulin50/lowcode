@@ -1,14 +1,17 @@
 <template>
-  <Wrap :block="block" :record="record" :loading-record="loadingRecord" :magnified="magnified" card-class="position-static">
-    <div v-if="isProcessing" class="d-flex align-items-center justify-content-center h-100">
+  <Wrap :block="block" :record="record" :loading-record="loadingRecord" :magnified="magnified" card-class="position-static" body-class="pt-3 px-3">
+    <div v-if="busy" class="d-flex align-items-center justify-content-center h-100">
       <span class="spinner-border" />
     </div>
-    <div v-else-if="module" ref="fieldContainer" class="mt-3" :class="fieldLayoutClass">
+    <div v-else-if="module" ref="fieldContainer" :class="fieldLayoutClass">
       <template v-for="field in fields" :key="`${field.fieldID}-${field.name}`">
         <div v-if="canDisplay(field)" :class="`field-container ${columnWrapClass}`" :style="fieldWidth">
           <FieldEditor
             v-if="isFieldEditable(field)"
             :field="field"
+            :record="record"
+            :namespace="namespace"
+            :module="module"
             :errors="fieldErrors(field.name)"
             :extra-options="options"
             :horizontal="horizontal"
@@ -23,7 +26,7 @@
               {{ (field.options?.description || {}).view }}
             </div>
             <div v-if="field.canReadRecordValue" class="value align-self-center">
-              <FieldViewer :field="field" :namespace="namespace" value-only />
+              <FieldViewer :field="field" :record="record" :namespace="namespace" value-only />
             </div>
             <i v-else class="text-muted">{{ $t('field.noPermission') }}</i>
           </div>
@@ -35,9 +38,8 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'block' } })
-import { computed, watch, onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NoID } from 'corteza-lib/js/dist'
 import { debounce } from 'lodash'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
@@ -60,11 +62,12 @@ const props = defineProps({
   magnified: { type: Boolean, required: false, default: false },
   unsavedBlocks: { type: Set, default: () => new Set() },
   loadingRecord: { type: Boolean, required: false, default: false },
-  errors: { type: Object, required: false, default: () => ({}) },
+  errors: { type: Object, required: false, default: undefined },
 })
 
-const { isProcessing, options, fieldErrors } = usePageBlockBase(props, {})
-const evaluating = ref(false)
+const emit = defineEmits(['errors'])
+const { isProcessing, options, fieldErrors } = usePageBlockBase(props, emit)
+const busy = computed(() => isProcessing.value || !props.record)
 
 const fields = computed(() => {
   if (!props.module) return []
@@ -79,12 +82,13 @@ const fields = computed(() => {
 })
 
 const fieldLayoutClass = computed(() => {
-  const classes = { default: 'd-flex flex-column px-3', noWrap: 'd-flex gap-2 ps-3', wrap: 'row g-0' }
-  return classes[options.value.recordFieldLayoutOption]
+  const classes = { default: 'd-flex flex-column', noWrap: 'd-flex gap-2', wrap: 'row g-2' }
+  return classes[options.value.recordFieldLayoutOption] || classes.default
 })
 
 const columnWrapClass = computed(() => {
   if (options.value.recordFieldLayoutOption === 'noWrap') return 'field-col'
+  if (options.value.recordFieldLayoutOption === 'wrap') return 'col-md-6'
   return ''
 })
 
@@ -94,8 +98,6 @@ const fieldWidth = computed(() => {
 })
 
 const horizontal = computed(() => props.block.options.horizontalFieldLayoutEnabled && props.block.options.recordFieldLayoutOption !== 'noWrap')
-
-const isNew = computed(() => props.record && props.record.recordID === NoID)
 
 function canDisplay(field) { return field?.canReadRecordValue !== false }
 function isFieldEditable(field) { return field?.canUpdateRecordValue !== false }

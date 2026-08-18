@@ -36,6 +36,9 @@ const props = defineProps({
 const { t } = useI18n({ useScope: 'global', messages: {} })
 
 const set = computed(() => {
-  return (props.index >= 0 ? props.errors.filterByMeta('index', props.index).get() : props.errors.get()).slice(0, 1)
+  const bag = props.errors
+  if (!bag || typeof bag.get !== 'function') return []
+  const list = props.index >= 0 ? bag.filterByMeta('index', props.index).get() : bag.get()
+  return (list || []).slice(0, 1)
 })
 </script>

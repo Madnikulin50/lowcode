@@ -1,12 +1,14 @@
 <template>
   <div class="mb-3" :class="formGroupStyleClasses">
-    <div v-if="!valueOnly" class="d-flex align-items-center text-primary p-0">
+    <div v-if="!valueOnly" :class="labelColClass">
+      <div class="d-flex align-items-center text-primary p-0">
         <span :title="label" class="d-inline-block mw-100">{{ label }}</span>
         <c-hint :tooltip="hint" />
         <slot name="tools" />
       </div>
       <div class="small text-muted" :class="{ 'mb-1': description }">{{ description }}</div>
-
+    </div>
+    <div :class="contentColClass">
     <multi
       v-if="field.isMulti"
       v-model:value="value"
@@ -147,8 +149,9 @@
           <font-awesome-icon :icon="['fas', 'plus']" class="text-primary" />
         </button>
       </div>
-      <errors :errors="errors" />
+      <FieldErrors :errors="errors" />
     </template>
+    </div>
   </div>
 </template>
 
@@ -163,11 +166,11 @@ import { compose, NoID } from 'corteza-lib/js/dist'
 import { queryToFilter, evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { useModuleStore } from 'corteza-webapp-compose/src/stores/module'
 import { useRecordStore } from 'corteza-webapp-compose/src/stores/record'
-import { useUserStore } from 'corteza-webapp-compose/src/stores/user'
 import { usePageStore } from 'corteza-webapp-compose/src/stores/page'
 import { useEditorBase } from './base'
 import Pagination from '../Common/Pagination.vue'
-import errors from '../errors'
+import FieldViewer from '../Viewer'
+import FieldErrors from '../errors'
 import multi from './multi'
 
 const props = defineProps({
@@ -184,11 +187,10 @@ const emit = defineEmits(['change', 'update:preventPopoverClose'])
 
 const router = useRouter()
 const { t } = useI18n({ useScope: 'global', messages: {} })
-const { value, formGroupStyleClasses, label, hint, description } = useEditorBase(props, emit)
+const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hint, description } = useEditorBase(props, emit)
 
 const $ComposeAPI = inject('$ComposeAPI')
 const $auth = inject('$auth')
-const $root = inject('$root')
 
 const moduleStore = useModuleStore()
 const recordStore = useRecordStore()
@@ -252,22 +254,22 @@ onMounted(() => {
 })
 
 function createEvents () {
-  $root.value.$on('record-field-change', refetchOnPrefilterValueChange)
-  $root.value.$on('module-records-updated', refreshOnRelatedRecordsUpdate)
-  $root.value.$on('refetch-records', loadLatest)
+  window.addEventListener('record-field-change', refetchOnPrefilterValueChange)
+  window.addEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
+  window.addEventListener('refetch-records', loadLatest)
 }
 
 function destroyEvents () {
-  $root.value.$off('record-field-change', refetchOnPrefilterValueChange)
-  $root.value.$off('module-records-updated', refreshOnRelatedRecordsUpdate)
-  $root.value.$off('refetch-records', loadLatest)
+  window.removeEventListener('record-field-change', refetchOnPrefilterValueChange)
+  window.removeEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
+  window.removeEventListener('refetch-records', loadLatest)
 }
 
-function refreshOnRelatedRecordsUpdate ({ moduleID } = {}) {
+function refreshOnRelatedRecordsUpdate ({ detail: { moduleID } = {} } = {}) {
   if (props.field.options.moduleID === moduleID) loadLatest()
 }
 
-function refetchOnPrefilterValueChange ({ fieldName }) {
+function refetchOnPrefilterValueChange ({ detail: { fieldName } = {} } = {}) {
   const { prefilter } = props.field.options
   if (isFieldInFilter(fieldName, prefilter)) {
     fetchPrefiltered({ namespaceID: props.namespace.namespaceID, moduleID: props.field.options.moduleID })
@@ -275,7 +277,11 @@ function refetchOnPrefilterValueChange ({ fieldName }) {
 }
 
 function getRecordByID (recordID) {
-  return new compose.Record(module.value, recordStore.findByID(recordID))
+  const id = typeof recordID === 'object' && recordID ? recordID.recordID : recordID
+  if (!id || !module.value) return { values: {} }
+  const found = recordStore.findByID(id)
+  if (!found) return { values: {} }
+  return new compose.Record(module.value, found)
 }
 
 function getRecord (index = undefined) {
@@ -349,10 +355,10 @@ function fetchPrefiltered (q = filter.value) {
   if (props.field.options.prefilter) {
     const { skip, filter: pf } = evalPrefilterOrSkip(props.field.options.prefilter, {
       record: props.record,
-      user: ($auth.value || {}).user || {},
+      user: ($auth || {}).user || {},
       recordID: (props.record || {}).recordID || NoID,
       ownerID: (props.record || {}).ownedBy || NoID,
-      userID: (($auth.value || {}).user || {}).userID || NoID,
+      userID: (($auth || {}).user || {}).userID || NoID,
     })
     if (skip) {
       processing.value = false
@@ -368,7 +374,7 @@ function fetchPrefiltered (q = filter.value) {
     cancelRequest.value = null
   }
 
-  const api = ($ComposeAPI.value || {})
+  const api = $ComposeAPI || {}
   if (!api.recordListCancellable) {
     processing.value = false
     return
@@ -424,7 +430,7 @@ function addRecordThroughRecordSelectField () {
   const { recordSelectorAddRecordDisplayOption } = props.extraOptions
 
   if (recordSelectorAddRecordDisplayOption === 'modal') {
-    $root.value.$emit('show-record-modal', { recordID: NoID, recordPageID: pageID, edit: true })
+    window.dispatchEvent(new CustomEvent('show-record-modal', { detail: { recordID: NoID, recordPageID: pageID, edit: true } }))
   } else if (recordSelectorAddRecordDisplayOption === 'newTab') {
     window.open(router.resolve(route).href)
   } else {

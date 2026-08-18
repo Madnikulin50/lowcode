@@ -105,6 +105,9 @@ import {
   faWrench,
   faRobot,
   faBrain,
+  faServer,
+  faBug,
+  faPlug,
   faLock,
   faDatabase,
   faCube,
@@ -399,4 +402,7 @@ library.add(
   faTrash,
   faCertificate,
   faTimeline,
+  faServer,
+  faBug,
+  faPlug,
 )

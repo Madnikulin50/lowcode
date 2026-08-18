@@ -112,6 +112,9 @@ func (t PageBlockTrigger) Run(w http.ResponseWriter, r *http.Request) {
 		api.Send(w, r, fmt.Errorf("rule engine not initialized"))
 		return
 	}
+	if engine.Chain(req.ChainID) == nil && handlers.OnChainMissing != nil {
+		handlers.OnChainMissing(r.Context(), req.ChainID)
+	}
 
 	bag := make(map[string]interface{})
 	if req.Context != nil {
@@ -121,6 +124,10 @@ func (t PageBlockTrigger) Run(w http.ResponseWriter, r *http.Request) {
 	}
 
 	flattenTriggerContext(bag, &req)
+
+	if tok := bearerToken(r); tok != "" {
+		bag["authToken"] = tok
+	}
 
 	var riskIn *service.StoreRiskInput
 	if req.ChainID == storeRiskChainID {
@@ -200,7 +207,13 @@ func (t PageBlockTrigger) Batch(w http.ResponseWriter, r *http.Request) {
 			results = append(results, resultMap)
 			continue
 		}
+		if engine.Chain(req.ChainID) == nil && handlers.OnChainMissing != nil {
+			handlers.OnChainMissing(r.Context(), req.ChainID)
+		}
 		bag := buildContext(&req)
+		if tok := bearerToken(r); tok != "" {
+			bag["authToken"] = tok
+		}
 		var riskIn *service.StoreRiskInput
 		if req.ChainID == storeRiskChainID {
 			riskIn, err = enrichStoreRiskContext(r.Context(), bag)
@@ -238,6 +251,14 @@ func buildContext(req *triggerRequest) map[string]interface{} {
 	}
 	flattenTriggerContext(ctx, req)
 	return ctx
+}
+
+func bearerToken(r *http.Request) string {
+	auth := r.Header.Get("Authorization")
+	if len(auth) > 7 && strings.EqualFold(auth[:7], "bearer ") {
+		return strings.TrimSpace(auth[7:])
+	}
+	return ""
 }
 
 func flattenTriggerContext(ctx map[string]interface{}, req *triggerRequest) {

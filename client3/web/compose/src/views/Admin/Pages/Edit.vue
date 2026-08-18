@@ -1113,21 +1113,41 @@
                 class="form-control mb-2"
                 placeholder="fas fa-file-alt"
               />
-              <div class="d-flex flex-wrap gap-1">
+              <div class="input-group mb-2">
+                <span class="input-group-text">
+                  <font-awesome-icon :icon="['fas', 'search']" />
+                </span>
+                <input
+                  v-model="faIconQuery"
+                  class="form-control"
+                  :placeholder="$t('icon.search')"
+                />
+              </div>
+              <div
+                v-if="filteredIconList.length"
+                class="fa-icon-picker mb-1"
+              >
                 <button
-                  v-for="fi in faIconList"
+                  v-for="fi in filteredIconList"
                   :key="fi"
                   type="button"
-                  class="btn btn-outline-secondary btn-sm d-flex align-items-center"
+                  class="btn btn-outline-secondary btn-sm d-flex flex-column align-items-center justify-content-center"
                   :class="{ 'btn-primary text-white': faIcon === fi }"
+                  :title="fi"
                   @click="faIcon = fi"
                 >
-                  <font-awesome-icon
-                    :icon="fi.split(' ')"
-                    class="me-1"
-                  />
-                  {{ fi.split(' ').pop() }}
+                  <font-awesome-icon :icon="fi.split(' ')"/>
+                  <span class="fa-icon-picker__name">{{ fi.split(' ').pop() }}</span>
                 </button>
+              </div>
+              <div
+                v-else
+                class="text-muted small mb-1"
+              >
+                {{ $t('icon.noMatch') }}
+              </div>
+              <div class="small text-muted">
+                {{ filteredIconList.length }} / {{ faIconList.length }}
               </div>
             </div>
 
@@ -1303,6 +1323,13 @@ const attachments = ref([])
 const selectedAttachmentID = ref('')
 const linkUrl = ref('')
 const faIcon = ref('')
+const faIconQuery = ref('')
+
+const filteredIconList = computed(() => {
+  const q = faIconQuery.value.trim().toLowerCase()
+  if (!q) return faIconList
+  return faIconList.filter(fi => fi.toLowerCase().includes(q))
+})
 const layouts = ref([])
 const layoutEditor = ref({ index: undefined, layout: undefined })
 const resolvingLayoutRoles = ref(false)
@@ -1370,104 +1397,104 @@ const pageIcon = computed(() => {
 const pageIconFA = computed(() => {
   if (icon.value.type !== 'fontawesome' || !icon.value.src) return ['fas', 'file-alt']
   const parts = icon.value.src.split(' ')
-  return parts.length >= 2 ? [parts[0], parts.slice(1).join(' ')] : ['fas', icon.value.src]
+  return parts.length >= 2 ? [parts[0], parts.slice(1).join(' ').replace(/^fa-/, '')] : ['fas', icon.value.src.replace(/^fa-/, '')]
 })
 
 const faIconList = [
-  'fas fa-file-alt',
-  'fas fa-chart-bar',
-  'fas fa-chart-pie',
-  'fas fa-chart-line',
-  'fas fa-database',
-  'fas fa-cube',
-  'fas fa-file',
-  'fas fa-folder',
-  'fas fa-home',
-  'fas fa-cog',
-  'fas fa-users',
-  'fas fa-user',
-  'fas fa-envelope',
-  'fas fa-calendar-alt',
-  'fas fa-comments',
-  'fas fa-rss',
-  'fas fa-map-marked-alt',
-  'fas fa-image',
-  'fas fa-tasks',
-  'fas fa-search',
-  'fas fa-star',
-  'fas fa-heart',
-  'fas fa-bell',
-  'fas fa-clock',
-  'fas fa-globe',
-  'fas fa-book',
-  'fas fa-code',
-  'fas fa-table',
-  'fas fa-filter',
-  'fas fa-sitemap',
-  'fas fa-wrench',
-  'fas fa-tools',
-  'fas fa-landmark',
-  'fas fa-vault',
-  'fas fa-wallet',
-  'fas fa-industry',
-  'fas fa-globe',
-  'fas fa-certificate'  ,
-  'fas fa-city',
-  'fas fa-compass',
-  'fas fa-copyright',
-  'fas fa-fax',
-  'fas fa-network-wired',
-  'fas fa-percent',
-  'fas fa-person-chalkboard',
-  'fas fa-scale-balanced',
-  'fas fa-scale-unbalanced',
-  'fas fa-sitemap',
-  'fas fa-table',
-  'fas fa-tag',
-  'fas fa-timeline',
-  'fas fa-arrows-spin',
-  'fas fa-arrows-to-dot',
-  'fas fa-bars-progress',
-  'fas fa-box-archive',
-  'fas fa-building',
-  'fas fa-briefcase',
-  'fas fa-bullhorn',
-  'fas fa-bullseye',
-  'fas fa-calendar-days',
-  'fas fa-certificate',
-  'fas fa-bell',
-  'fas fa-circle-exclamation',
-  'fas fa-circle-radiation',
-  'fas fa-skull-crossbones',
-  'fas fa-triangle-exclamation',
-  'fas fa-handshake',
-  'fas fa-credit-card',
-  'fas fa-file-invoice',
-  'fas fa-money-bill-1-wave',
-  'fas fa-award',
-  'fas fa-cubes-stacked',
-  'fas fa-award',
-  'fas fa-display',
-  'fas fa-house-chimney',
-  'fas fa-house-medical',
-  'fas fa-kitchen-set',
-  'fas fa-people-group',
-  'fas fa-bicycle',
-  'fas fa-dumbbell',
-  'fas fa-heart-pulse',
-  'fas fa-person-walking',
-  'fas fa-shirt',
-  'fas fa-tree',
-  'fas fa-fish',
-  'fas fa-fire',
-  'fas fa-water',
-  'fas fa-car',
-  'fas fa-cart-shopping',
-  'fas fa-shop',
-  'fas fa-dolly',
-  'fas fa-hands-praying',
-  'fas fa-boxes-stacked'
+  'fas file-alt',
+  'fas chart-bar',
+  'fas chart-pie',
+  'fas chart-line',
+  'fas database',
+  'fas cube',
+  'fas file',
+  'fas folder',
+  'fas home',
+  'fas cog',
+  'fas users',
+  'fas user',
+  'fas envelope',
+  'fas calendar-alt',
+  'fas comments',
+  'fas rss',
+  'fas map-marked-alt',
+  'fas image',
+  'fas tasks',
+  'fas search',
+  'fas star',
+  'fas heart',
+  'fas bell',
+  'fas clock',
+  'fas globe',
+  'fas book',
+  'fas code',
+  'fas table',
+  'fas filter',
+  'fas sitemap',
+  'fas wrench',
+  'fas tools',
+  'fas landmark',
+  'fas vault',
+  'fas wallet',
+  'fas industry',
+  'fas certificate',
+  'fas city',
+  'fas compass',
+  'fas copyright',
+  'fas fax',
+  'fas network-wired',
+  'fas percent',
+  'fas person-chalkboard',
+  'fas scale-balanced',
+  'fas scale-unbalanced',
+  'fas tag',
+  'fas timeline',
+  'fas arrows-spin',
+  'fas arrows-to-dot',
+  'fas bars-progress',
+  'fas box-archive',
+  'fas building',
+  'fas briefcase',
+  'fas bullhorn',
+  'fas bullseye',
+  'fas calendar-days',
+  'fas circle-exclamation',
+  'fas circle-radiation',
+  'fas skull-crossbones',
+  'fas triangle-exclamation',
+  'fas handshake',
+  'fas credit-card',
+  'fas file-invoice',
+  'fas money-bill-1-wave',
+  'fas award',
+  'fas cubes-stacked',
+  'fas display',
+  'fas house-chimney',
+  'fas house-medical',
+  'fas kitchen-set',
+  'fas people-group',
+  'fas bicycle',
+  'fas dumbbell',
+  'fas heart-pulse',
+  'fas person-walking',
+  'fas shirt',
+  'fas tree',
+  'fas fish',
+  'fas fire',
+  'fas water',
+  'fas car',
+  'fas cart-shopping',
+  'fas shop',
+  'fas dolly',
+  'fas hands-praying',
+  'fas boxes-stacked',
+  'fas server',
+  'fas bug',
+  'fas plug',
+  'fas diagram-project',
+  'fas shuffle',
 ]
+
 
 const visibilityDocumentationURL = computed(() => {
   const [year, month] = VERSION.split('.')
@@ -1513,7 +1540,7 @@ const $auth = getCurrentInstance()?.appContext.config.globalProperties.$auth
 function processVisibilityAutoCompleteParams ({ module: mod = module.value } = {}) {
   const { fields = [] } = mod || {}
   const moduleFields = fields.map(({ name }) => name)
-  const userProperties = $auth?.user()?.properties() || []
+  const userProperties = $auth?.user?.properties?.() || []
 
   const recordSuggestions = isRecordPage.value && record.value
     ? [
@@ -1538,7 +1565,7 @@ function processVisibilityAutoCompleteParams ({ module: mod = module.value } = {
 function processRecordAutoCompleteParams ({ module: mod = module.value, operators = false } = {}) {
   const { fields = [] } = mod || {}
   const moduleFields = fields.map(({ name }) => name)
-  const userProperties = $auth?.user()?.properties() || []
+  const userProperties = $auth?.user?.properties?.() || []
 
   const recordSuggestions = isRecordPage.value && record.value
     ? [
@@ -1914,6 +1941,27 @@ function setDefaultValues () {
 </script>
 
 <style lang="scss" scoped>
+.fa-icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 0.35rem;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+
+  .btn {
+    font-size: 1.15rem;
+  }
+
+  &__name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.7rem;
+  }
+}
+
 .selected-icon {
   outline: 2px solid var(--success);
 }

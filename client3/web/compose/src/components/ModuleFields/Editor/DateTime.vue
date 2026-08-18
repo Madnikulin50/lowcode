@@ -1,12 +1,14 @@
 <template>
   <div class="mb-3 date-time-field-editor" :class="formGroupStyleClasses">
-     <div v-if="!valueOnly" class="d-flex align-items-center text-primary p-0">
+    <div v-if="!valueOnly" :class="labelColClass">
+      <div class="d-flex align-items-center text-primary p-0">
         <span :title="label" class="d-inline-block mw-100">{{ label }}</span>
         <c-hint :tooltip="hint" />
         <slot name="tools" />
       </div>
       <div class="small text-muted" :class="{ 'mb-1': description }">{{ description }}</div>
-
+    </div>
+    <div :class="contentColClass">
     <multi v-if="field.isMulti" v-slot="ctx" v-model:value="value" :errors="errors">
       <CInputDateTime
         :value="value[ctx.index]"
@@ -28,8 +30,9 @@
         :only-past="field.options.onlyPastValues"
         :labels="dtLabels"
       />
-      <errors :errors="errors" />
+      <FieldErrors :errors="errors" />
     </template>
+    </div>
   </div>
 </template>
 
@@ -39,7 +42,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEditorBase } from './base'
 import { components } from 'corteza-lib/vue/dist'
-import errors from '../errors'
+import FieldErrors from '../errors'
 import multi from './multi'
 const { CInputDateTime } = components
 
@@ -56,7 +59,7 @@ const props = defineProps({
 const emit = defineEmits(['change', 'update:preventPopoverClose'])
 
 const { t } = useI18n({ useScope: 'global', messages: {} })
-const { value, formGroupStyleClasses, label, hint, description, setMultiValue } = useEditorBase(props, emit)
+const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hint, description, setMultiValue } = useEditorBase(props, emit)
 
 const dtLabels = computed(() => ({
   clear: t('label.clear'),
