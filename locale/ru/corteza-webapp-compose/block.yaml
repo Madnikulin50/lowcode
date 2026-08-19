@@ -185,6 +185,8 @@ chart:
     empty: Нет данных для отображения
     modal:
       title: Данные графика
+  countUnavailable: Количество недоступно
+  countUnavailableHint: Не удалось посчитать записи за отведённое время
   filter:
     modal:
       title: Диаграмма Фильтр
@@ -302,6 +304,8 @@ metric:
   defaultMetricLabel: Безымянная метрика
   likeRecordList: Отображать как запись
   emptyPlaceholder: "—"
+  countUnavailable: Количество недоступно
+  countUnavailableHint: Не удалось посчитать записи за отведённое время
   appearance:
     label: Оформление
     density: Плотность
@@ -699,6 +703,7 @@ recordList:
     next: Следующая
     prev: Предыдущая
     showing: "{{from}} - {{to}} из {{count}} строк"
+    unknownTotal: "{{from}} - {{to}} из ∞"
     single_one: Одна запись
     single: Единственная страница
     single_other: "{{count}} строк"
@@ -1073,6 +1078,8 @@ progress:
     label: Поле
     select: Выберите поле
   label: Столбик прогресса
+  countUnavailable: Количество недоступно
+  countUnavailableHint: Не удалось посчитать записи за отведённое время
   module:
     select: Выбор модуля
     label: Модуль

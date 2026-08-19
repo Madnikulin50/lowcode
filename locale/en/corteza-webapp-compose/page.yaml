@@ -102,6 +102,8 @@ icon:
   page: Page icon
   upload: Upload icon
   list: Uploaded icons
+  search: Search icons
+  noMatch: No icons found
   delete: Delete selected icon
 url:
   label: Or add URL to icon

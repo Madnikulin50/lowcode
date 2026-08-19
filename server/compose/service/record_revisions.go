@@ -26,6 +26,9 @@ type (
 //
 // Since we're using revisions model resource type needs to be altered.
 func (svc *recordRevisions) modelRef(mod *types.Module) (mf dal.ModelRef) {
+	if mod == nil {
+		return
+	}
 	mf = mod.ModelRef()
 
 	// removing resource ID from model filter

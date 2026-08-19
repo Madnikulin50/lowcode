@@ -1,50 +1,43 @@
 <template>
   <div
-    class="card shadow-sm pt-3 h-100"
-    :class="{ 'shadow': hovered && isEnabled, 'namespace-item': isEnabled, 'disabled': !isEnabled }"
+    class="card shadow-sm h-100 ns-card"
+    :class="{ 'ns-card-enabled': isEnabled, 'disabled': !isEnabled }"
     @mouseover="hovered = true"
     @mouseleave="hovered = false"
   >
-    <div
-      class="circled-avatar d-flex align-items-center justify-content-center m-auto"
-      :class="[namespace.meta.logoEnabled ? 'p-2' : 'bg-light p-3']"
-    >
-      <img
-        v-if="namespace.meta.logoEnabled"
-        :src="logo"
-        :alt="namespace.name"
-        class="mw-100 mh-100 img-fluid"
-      />
-      <h1
-        v-else
-        class="ns-initial m-auto text-uppercase text-secondary"
-      >
-        {{ namespace.initials }}
-      </h1>
-    </div>
-    <div class="card-body mw-100 text-center pb-3">
+    <div class="card-body d-flex flex-column align-items-center text-center pt-4 pb-3">
       <div
-        class="d-flex align-items-baseline"
-        :class="{ 'h-100': !namespace.meta.description }"
+        class="ns-icon mb-3"
+        :style="iconStyle"
       >
-        <div class="d-flex flex-column justify-content-center w-100">
-          <h5
-            :data-test-id="namespace.name"
-            class="mt-2"
-          >
-            {{ namespace.name }}
-          </h5>
-          <p
-            v-if="namespace.meta.subtitle"
-            class="d-inline-block my-1 text-secondary"
-          >
-            {{ namespace.meta.subtitle }}
-          </p>
-        </div>
+        <img
+          v-if="imageSrc && !imageFailed"
+          :src="imageSrc"
+          :alt="namespace.name"
+          class="ns-icon-img"
+          @error="imageFailed = true"
+        >
+        <font-awesome-icon
+          v-else
+          :icon="['fas', faIcon]"
+          class="ns-icon-fa"
+        />
       </div>
+      <h5
+        :data-test-id="namespace.name"
+        class="ns-title mb-1"
+      >
+        {{ namespace.name }}
+      </h5>
       <p
-        v-if="namespace.meta.description"
-        class="overflow-auto"
+        v-if="namespace.meta?.subtitle"
+        class="d-inline-block my-0 text-secondary small"
+      >
+        {{ namespace.meta.subtitle }}
+      </p>
+      <p
+        v-if="namespace.meta?.description"
+        class="overflow-auto mt-2 mb-0 px-1"
       >
         <small>{{ namespace.meta.description }}</small>
       </p>
@@ -61,45 +54,77 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'namespace' } })
-import { ref, computed } from 'vue'
-import { useSettings } from 'corteza-lib/vue/dist'
+import { ref, computed, watch } from 'vue'
+import { namespaceIconName, namespaceImageSrc, namespacePalette } from './namespaceIcon'
 
 const props = defineProps({
   namespace: { type: Object, required: true },
 })
 
-const { $Settings } = useSettings()
-
-const processing = ref(false)
-const hovered = ref(undefined)
-const logoAttachment = ref(undefined)
+const hovered = ref(false)
+const imageFailed = ref(false)
 
 const isEnabled = computed(() => !!props.namespace.enabled)
-const canEdit = computed(() => !!props.namespace.canUpdateNamespace)
-const showFooter = computed(() => isEnabled.value || canEdit.value)
-const logo = computed(() => props.namespace.meta.logo || $Settings.attachment('ui.mainLogo'))
+const imageSrc = computed(() => namespaceImageSrc(props.namespace))
+const faIcon = computed(() => namespaceIconName(props.namespace))
+const palette = computed(() => namespacePalette(props.namespace))
+
+const iconStyle = computed(() => {
+  if (imageSrc.value && !imageFailed.value) {
+    return {
+      background: '#f8fafc',
+      boxShadow: 'inset 0 0 0 1px rgba(15, 23, 42, 0.06)',
+    }
+  }
+  const [from, to] = palette.value
+  return {
+    background: `linear-gradient(145deg, ${from} 0%, ${to} 100%)`,
+  }
+})
+
+watch(imageSrc, () => { imageFailed.value = false })
 </script>
 
 <style lang="scss" scoped>
-$avatar-size: 120px;
-$disabled-opacity: 0.6;
-
-.namespace-item {
+.ns-card {
   min-height: 13rem;
-
-  &:hover {
-    transition: all 0.2s ease;
-    top: -1px;
-  }
+  border: 0;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.circled-avatar {
-  width: $avatar-size;
-  height: $avatar-size;
-  border-radius: 50%;
+.ns-card-enabled:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.75rem 1.5rem rgba(15, 23, 42, 0.12) !important;
+}
+
+.ns-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
+}
+
+.ns-icon-fa {
+  font-size: 2.15rem;
+  color: #fff;
+  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.25));
+}
+
+.ns-icon-img {
+  max-width: 72%;
+  max-height: 72%;
+  object-fit: contain;
+}
+
+.ns-title {
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .disabled {
-  opacity: $disabled-opacity;
+  opacity: 0.6;
 }
 </style>

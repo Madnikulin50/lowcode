@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -45,8 +46,8 @@ const (
 	StatusWarming = "warming"
 	StatusReady   = "ready"
 
-	// WarmUpTimeout covers cold model load + a 1-token ping. Generation
-	// timeout (NewClient HTTPClient) starts only after WarmUp returns.
+	// WarmUpTimeout covers cold model load into RAM (no generation).
+	// Generation timeout (NewClient HTTPClient) starts only after WarmUp returns.
 	WarmUpTimeout = 10 * time.Minute
 )
 
@@ -246,10 +247,8 @@ func IsModelLoaded(model string) bool {
 		return false
 	}
 	want := strings.ToLower(strings.TrimSpace(model))
-	wantBase := modelBase(model)
 	for _, m := range ps.Models {
-		got := strings.ToLower(strings.TrimSpace(m.Name))
-		if got == want || modelBase(m.Name) == wantBase {
+		if modelNamesMatch(want, m.Name) {
 			return true
 		}
 	}
@@ -257,12 +256,22 @@ func IsModelLoaded(model string) bool {
 }
 
 // WarmUp forces Ollama to load the model into memory so that the first
-// real chat message is not delayed by model loading. num_predict is limited
-// to 1 token so the request completes quickly once the model is resident.
+// real chat message is not delayed by model loading. It only loads weights
+// (empty /api/generate) and does not run a thinking/chat completion —
+// num_predict does not cap reasoning tokens on qwen3 / deepseek-r1.
 // Concurrent calls for the same model coalesce (singleflight).
 func WarmUp(model string) error {
 	if model == "" {
 		model = DefaultModelName()
+	}
+	if IsModelLoaded(model) {
+		return nil
+	}
+	model = ResolveInstalledModel(model)
+	// Skip even if another warmup is still in flight: once /api/ps shows
+	// the model, generation is no longer needed for "warm".
+	if IsModelLoaded(model) {
+		return nil
 	}
 	_, err, _ := warmGroup.Do(model, func() (any, error) {
 		if IsModelLoaded(model) {
@@ -282,6 +291,10 @@ func EnsureWarm(ctx context.Context, model string) error {
 	if IsModelLoaded(model) {
 		return nil
 	}
+	model = ResolveInstalledModel(model)
+	if IsModelLoaded(model) {
+		return nil
+	}
 	EmitStatus(ctx, StatusWarming)
 	err := WarmUp(model)
 	if err != nil {
@@ -292,17 +305,17 @@ func EnsureWarm(ctx context.Context, model string) error {
 }
 
 func warmUpOnce(model string) error {
+	// Empty prompt = load weights only (Ollama skips generation). think:false
+	// is a safety net if a given Ollama build still evaluates the template.
 	payload, _ := json.Marshal(map[string]any{
 		"model":      model,
-		"messages":   []map[string]string{{"role": "user", "content": "hi"}},
+		"prompt":     "",
 		"stream":     false,
 		"keep_alive": "30m",
-		"options": map[string]any{
-			"num_predict": 1,
-		},
+		"think":      false,
 	})
 	client := &http.Client{Timeout: WarmUpTimeout}
-	resp, err := client.Post(ollamaURL()+"/api/chat", "application/json", bytes.NewReader(payload))
+	resp, err := client.Post(ollamaURL()+"/api/generate", "application/json", bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("failed to warm up model %s: %w", model, err)
 	}
@@ -379,13 +392,13 @@ func DiscoverModels() ([]string, error) {
 		}
 		names = append(names, m.Name)
 	}
-	return names, nil
+	return preferDefaultModel(names), nil
 }
 
 func isLikelyChatModel(name, family string) bool {
 	n := strings.ToLower(strings.TrimSpace(name))
 	f := strings.ToLower(strings.TrimSpace(family))
-	for _, bad := range []string{"embed", "whisper", "clip", "coder-vision"} {
+	for _, bad := range []string{"embed", "whisper", "clip", "coder-vision", "image"} {
 		if strings.Contains(n, bad) {
 			return false
 		}
@@ -395,6 +408,118 @@ func isLikelyChatModel(name, family string) bool {
 		return false
 	}
 	return n != ""
+}
+
+// ResolveInstalledModel maps a configured name (e.g. qwen3:8b) to a tag
+// that actually exists in Ollama. Returns want unchanged if none match.
+func ResolveInstalledModel(want string) string {
+	want = strings.TrimSpace(want)
+	if want == "" {
+		return want
+	}
+	names, err := DiscoverModels()
+	if err != nil || len(names) == 0 {
+		return want
+	}
+	if picked := pickInstalledModel(want, names); picked != "" {
+		return picked
+	}
+	return want
+}
+
+func preferDefaultModel(names []string) []string {
+	if len(names) < 2 {
+		return names
+	}
+	out := append([]string(nil), names...)
+	def := pickInstalledModel(DefaultModelName(), out)
+	sort.SliceStable(out, func(i, j int) bool {
+		if def != "" {
+			if out[i] == def {
+				return true
+			}
+			if out[j] == def {
+				return false
+			}
+		}
+		return out[i] < out[j]
+	})
+	return out
+}
+
+// pickInstalledModel chooses an installed tag for want.
+// Exact match wins; otherwise same base with :latest (so qwen3:8b → qwen3:latest).
+func pickInstalledModel(want string, installed []string) string {
+	want = strings.ToLower(strings.TrimSpace(want))
+	if want == "" {
+		return ""
+	}
+	for _, n := range installed {
+		if strings.ToLower(strings.TrimSpace(n)) == want {
+			return n
+		}
+	}
+	wantBase := modelBase(want)
+	var same []string
+	for _, n := range installed {
+		if modelBase(n) == wantBase {
+			same = append(same, n)
+		}
+	}
+	if len(same) == 0 {
+		return ""
+	}
+	wantTag := modelTag(want)
+	if wantTag == "" || wantTag == "latest" || isParamSizeTag(wantTag) {
+		for _, n := range same {
+			if modelTag(n) == "latest" || modelTag(n) == "" {
+				return n
+			}
+		}
+	}
+	for _, n := range same {
+		if modelTag(n) == wantTag {
+			return n
+		}
+	}
+	return same[0]
+}
+
+func modelTag(name string) string {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if i := strings.LastIndex(name, "/"); i >= 0 {
+		name = name[i+1:]
+	}
+	if i := strings.Index(name, ":"); i >= 0 {
+		return name[i+1:]
+	}
+	return ""
+}
+
+func isParamSizeTag(tag string) bool {
+	if tag == "" || strings.ContainsAny(tag, "/-") {
+		return false
+	}
+	return strings.HasSuffix(tag, "b") && len(tag) <= 6
+}
+
+// modelNamesMatch is true for the same installed tag, or name vs name:latest.
+// Same base with different size tags (qwen3:8b vs qwen3:32b) do not match.
+func modelNamesMatch(want, got string) bool {
+	want = strings.ToLower(strings.TrimSpace(want))
+	got = strings.ToLower(strings.TrimSpace(got))
+	if want == "" || got == "" {
+		return false
+	}
+	if want == got {
+		return true
+	}
+	if modelBase(want) != modelBase(got) {
+		return false
+	}
+	wt, gt := modelTag(want), modelTag(got)
+	latest := func(t string) bool { return t == "" || t == "latest" }
+	return latest(wt) && latest(gt)
 }
 
 func supportsChat(name string) (bool, error) {

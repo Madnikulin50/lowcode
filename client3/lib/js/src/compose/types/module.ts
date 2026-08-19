@@ -234,12 +234,11 @@ export class Module {
     Apply(this, m, CortezaID, 'moduleID', 'namespaceID')
     Apply(this, m, String, 'name', 'handle')
 
-    if (IsOf(m, 'fields')) {
+    const srcFields = (m as PartialModule).fields
+    if (Array.isArray(srcFields)) {
       this.fields = []
-      if (AreObjects(m.fields)) {
-        // We're very permissive here -- array of (empty) objects is all we need
-        // to create fields.
-        this.fields = m.fields.map((b: { kind?: string }) => ModuleFieldMaker(b))
+      if (AreObjects(srcFields)) {
+        this.fields = srcFields.map((b: { kind?: string }) => ModuleFieldMaker(b))
       }
     }
 

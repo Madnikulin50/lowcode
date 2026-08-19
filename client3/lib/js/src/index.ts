@@ -12,6 +12,7 @@ import * as automation from './automation'
 import * as shared from './shared'
 import * as apiClients from './api-clients'
 import * as fmt from './formatting'
+import { isUnknownTotal, isUnknownReportCount, TotalUnknown } from './compose/unknown-total'
 
 export {
   eventbus,
@@ -25,4 +26,7 @@ export {
   apiClients,
   NoID,
   fmt,
+  isUnknownTotal,
+  isUnknownReportCount,
+  TotalUnknown,
 }

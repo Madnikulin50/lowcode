@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/madnikulin50/lowcode/server/compose/mcp/handlers"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/rulesgo"
 )
 
 type RuleChain struct {
@@ -58,6 +59,11 @@ func (rc *RuleChain) Run(w http.ResponseWriter, r *http.Request) {
 		api.Send(w, r, fmt.Errorf("rule engine not initialized"))
 		return
 	}
+	if engine.Chain(chainID) == nil && handlers.OnChainMissing != nil {
+		handlers.OnChainMissing(r.Context(), chainID)
+	}
+
+	rulesgo.CancelPollIfTerminal(input)
 
 	result, err := engine.Run(r.Context(), chainID, input)
 	if err != nil {

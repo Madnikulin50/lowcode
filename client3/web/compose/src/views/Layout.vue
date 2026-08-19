@@ -73,6 +73,7 @@
 
     <main class="d-flex flex-column" style="flex: 1; min-height: 0; min-width: 0">
       <router-view class="flex-grow-1 overflow-auto" style="min-height: 0" />
+      <div id="toolbar"></div>
       <div id="admin-toolbar"></div>
     </main>
   </div>

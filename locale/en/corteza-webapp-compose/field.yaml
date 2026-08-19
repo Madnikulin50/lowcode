@@ -168,6 +168,41 @@ kind:
     label: String
     multiLine: Multi line
     richText: Use Rich Text Editor
+    displayType:
+      label: Display as
+      description: Choose how stored text is shown on pages and in record lists
+      text: Text
+      json: JSON
+    json:
+      empty: Empty
+      invalid: Invalid JSON
+      add: Add item
+      remove: Remove
+      key: Key
+      value: Value
+      layout:
+        label: JSON layout
+        chips: Chips
+        table: Table
+        kv: Key / value
+        pretty: Formatted JSON
+      template:
+        label: Item template
+        placeholder: '{{port}}/{{proto}} {{service}}'
+        description: Use {{key}} placeholders from JSON object keys. Leave empty to join values.
+      fields:
+        label: Columns
+        placeholder: port, proto, service
+        description: Comma-separated JSON keys. Leave empty to detect automatically.
+      variantField:
+        label: Color by field
+        placeholder: port
+        description: JSON key whose value is matched against the color map
+      variants:
+        label: Color map
+        match: Value
+        color: Color
+        add: Add rule
   url:
     example: 'Example URL: https://example.com'
     label: URL

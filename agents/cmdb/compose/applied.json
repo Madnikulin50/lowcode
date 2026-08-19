@@ -1,0 +1,25 @@
+{
+  "namespaceID": "509463708777775105",
+  "slug": "cmdb",
+  "api": "http://localhost:3333/compose",
+  "modules": {
+    "networks": "509463708783411201",
+    "devices": "509463708787081217",
+    "services": "509463708796387329",
+    "vulnerabilities": "509463708800057345",
+    "scans": "509463708805234689"
+  },
+  "charts": {
+    "byType": "509463708810608641",
+    "byStatus": "509463708811198465",
+    "bySeverity": "509463708811788289"
+  },
+  "urls": {
+    "namespace": "/ns/cmdb",
+    "dashboard": "/ns/cmdb/pages"
+  },
+  "agent": {
+    "flags": "--db=corteza --api=http://localhost:3333 --namespace=509463708777775105",
+    "scan": "POST http://localhost:8085/api/scan {\"cidr\":\"192.168.1.0/24\"}"
+  }
+}

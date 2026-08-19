@@ -220,7 +220,7 @@ func (n *httpExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 	if method == "" {
 		method = "GET"
 	}
-	body := resolveTemplateValue(cfg.Body, ec)
+	body := resolveTemplateJSON(cfg.Body, ec)
 
 	timeout := cfg.Timeout
 	if timeout <= 0 {
@@ -259,7 +259,9 @@ func (n *httpExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		result["body"] = jsonBody
 		if m, ok := jsonBody.(map[string]interface{}); ok {
 			if id, ok := m["id"]; ok {
-				ec.Set("scanID", fmt.Sprintf("%v", id))
+				s := fmt.Sprintf("%v", id)
+				ec.Set("scanID", s)
+				ec.Set("jobID", s)
 			}
 		}
 	} else {
@@ -461,12 +463,43 @@ func (n *gonecExecutor) Execute(ctx context.Context, node ChainNode, ec *Executi
 // --- Helpers ---
 
 func resolveTemplateValue(val string, ec *ExecutionContext) string {
+	return interpolateTemplates(val, ec, func(v interface{}) string {
+		return fmt.Sprintf("%v", v)
+	})
+}
+
+// resolveTemplateJSON interpolates placeholders and JSON-escapes replacements
+// so a JWT or quoted CIDR cannot break the request body.
+func resolveTemplateJSON(val string, ec *ExecutionContext) string {
+	return interpolateTemplates(val, ec, jsonEscapeTemplate)
+}
+
+func jsonEscapeTemplate(v interface{}) string {
+	b, err := json.Marshal(fmt.Sprintf("%v", v))
+	if err != nil {
+		return ""
+	}
+	if len(b) >= 2 && b[0] == '"' && b[len(b)-1] == '"' {
+		return string(b[1 : len(b)-1])
+	}
+	return string(b)
+}
+
+func interpolateTemplates(val string, ec *ExecutionContext, format func(interface{}) string) string {
+	if format == nil {
+		format = func(v interface{}) string { return fmt.Sprintf("%v", v) }
+	}
 	if len(val) > 4 && val[:2] == "{{" && val[len(val)-2:] == "}}" {
 		key := val[2 : len(val)-2]
-		if v := ec.Get(key); v != nil {
-			return fmt.Sprintf("%v", v)
+		// Mixed templates like "{{agentUrl}}/scans/{{scanID}}" also start with "{{"
+		// and end with "}}"; only treat as a single placeholder when the inner key
+		// has no nested "{{" / "}}".
+		if !strings.Contains(key, "{{") && !strings.Contains(key, "}}") {
+			if v := ec.Get(key); v != nil {
+				return format(v)
+			}
+			return ""
 		}
-		return ""
 	}
 
 	result := val
@@ -483,7 +516,7 @@ func resolveTemplateValue(val string, ec *ExecutionContext) string {
 		end += start + 2
 		key := result[start+2 : end]
 		if v := ec.Get(key); v != nil {
-			replacement := fmt.Sprintf("%v", v)
+			replacement := format(v)
 			result = result[:start] + replacement + result[end+2:]
 			i = start + len(replacement)
 		} else {

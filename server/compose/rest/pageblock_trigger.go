@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/madnikulin50/lowcode/server/compose/mcp/handlers"
 	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
 )
 
 const (
@@ -125,9 +128,10 @@ func (t PageBlockTrigger) Run(w http.ResponseWriter, r *http.Request) {
 
 	flattenTriggerContext(bag, &req)
 
-	if tok := bearerToken(r); tok != "" {
+	if tok := persistedAuthToken(r); tok != "" {
 		bag["authToken"] = tok
 	}
+	injectAgentCallback(r, bag)
 
 	var riskIn *service.StoreRiskInput
 	if req.ChainID == storeRiskChainID {
@@ -211,9 +215,10 @@ func (t PageBlockTrigger) Batch(w http.ResponseWriter, r *http.Request) {
 			handlers.OnChainMissing(r.Context(), req.ChainID)
 		}
 		bag := buildContext(&req)
-		if tok := bearerToken(r); tok != "" {
+		if tok := persistedAuthToken(r); tok != "" {
 			bag["authToken"] = tok
 		}
+		injectAgentCallback(r, bag)
 		var riskIn *service.StoreRiskInput
 		if req.ChainID == storeRiskChainID {
 			riskIn, err = enrichStoreRiskContext(r.Context(), bag)
@@ -254,11 +259,61 @@ func buildContext(req *triggerRequest) map[string]interface{} {
 }
 
 func bearerToken(r *http.Request) string {
-	auth := r.Header.Get("Authorization")
-	if len(auth) > 7 && strings.EqualFold(auth[:7], "bearer ") {
-		return strings.TrimSpace(auth[7:])
+	h := r.Header.Get("Authorization")
+	if len(h) > 7 && strings.EqualFold(h[:7], "bearer ") {
+		return strings.TrimSpace(h[7:])
 	}
 	return ""
+}
+
+// persistedAuthToken mints a stored access token for background HTTP nodes.
+// The browser JWT is rotated on refresh and then fails TokenIssuer.Validate
+// (jti missing from auth_oa2tokens) when the CMDB agent calls the API back.
+func persistedAuthToken(r *http.Request) string {
+	fallback := bearerToken(r)
+	ident := auth.GetIdentityFromContext(r.Context())
+	if ident == nil || !ident.Valid() || auth.TokenIssuer == nil {
+		return fallback
+	}
+	tok, err := auth.TokenIssuer.Issue(r.Context(),
+		auth.WithIdentity(ident),
+		auth.WithScope("api", "profile"),
+		auth.WithAudience("rule-chain"),
+		auth.WithExpiration(4*time.Hour),
+	)
+	if err != nil || len(tok) == 0 {
+		return fallback
+	}
+	return string(tok)
+}
+
+func injectAgentCallback(_ *http.Request, bag map[string]interface{}) {
+	if bag == nil {
+		return
+	}
+	agentURL := strings.TrimSpace(fmt.Sprintf("%v", bag["agentUrl"]))
+	if agentURL == "" || agentURL == "<nil>" {
+		agentURL = strings.TrimRight(os.Getenv("CMDB_AGENT_URL"), "/")
+	}
+	if agentURL == "" {
+		agentURL = "http://localhost:8085/api"
+	}
+	bag["agentUrl"] = strings.TrimRight(agentURL, "/")
+
+	ingestID := strings.TrimSpace(fmt.Sprintf("%v", bag["ingestChainID"]))
+	if ingestID == "" || ingestID == "<nil>" {
+		ingestID = "cmdb-ingest-scan"
+	}
+	bag["ingestChainID"] = ingestID
+
+	if cb := strings.TrimSpace(fmt.Sprintf("%v", bag["callbackUrl"])); cb != "" && cb != "<nil>" {
+		return
+	}
+	apiBase := strings.TrimRight(os.Getenv("CORTEZA_API"), "/")
+	if apiBase == "" {
+		apiBase = "http://localhost:3333/api"
+	}
+	bag["callbackUrl"] = apiBase + "/compose/rulechain/" + ingestID + "/run"
 }
 
 func flattenTriggerContext(ctx map[string]interface{}, req *triggerRequest) {

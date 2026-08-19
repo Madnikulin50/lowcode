@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -259,8 +260,9 @@ func defaultValidator(svc RecordService) recordValuesValidator {
 			return 0, nil
 		}
 
-		// @todo re-implement record-value ref lookup through DAL
-		panic("implement me")
+		// Unique record-ref lookup is not wired through DAL yet.
+		// Returning an error (not panic) so bulk delete/update can surface it.
+		return 0, fmt.Errorf("unique record-value ref lookup is not implemented")
 	})
 
 	validator.RecordRefChecker(func(ctx context.Context, s store.Storer, v *types.RecordValue, f *types.ModuleField, m *types.Module) (bool, error) {
@@ -461,6 +463,10 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 			return RecordErrNotAllowedToSearch()
 		}
 
+		dalCtx, stopDAL := dalutils.BoundRecordSearchContext(ctx)
+		defer stopDAL()
+		ctx = dalCtx
+
 		switch m.Config.Type {
 		case "connector":
 			reportItems, err = svc.connectorReportEntries(ctx, m)
@@ -629,6 +635,24 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 			}()
 			return err
 		default:
+			// Metric/Progress widgets send empty dimensions (and empty metrics for count).
+			// The DAL aggregate pipeline may pull every matching row into Go; COUNT(*)
+			// with the same filter is equivalent and uses the TypeRef text compare.
+			if strings.TrimSpace(dimensions) == "" && strings.TrimSpace(metrics) == "" {
+				var cnt int
+				cnt, err = dalutils.ComposeRecordsCountWithTimeout(ctx, svc.dal, m, types.RecordFilter{
+					NamespaceID: namespaceID,
+					ModuleID:    moduleID,
+					Query:       f,
+					Deleted:     filter.StateExcluded,
+				})
+				if err != nil {
+					return err
+				}
+				reportItems = []recordReportEntry{{"count": float64(cnt)}}
+				return nil
+			}
+
 			pp, agg, err := recordReportToDalPipeline(m, metrics, dimensions, f)
 			if err != nil {
 				return err
@@ -657,11 +681,31 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 
 	}()
 
-	if err == nil {
+	if err == nil && !reportCountUnknown(reportItems) {
 		svc.reportCache.Set(reportCacheKey{namespaceID, moduleID, metrics, dimensions, f}, reportItems)
 	}
 
 	return reportItems, svc.recordAction(ctx, aProps, RecordActionReport, err)
+}
+
+// reportCountUnknown is true when COUNT timed out (count == -1). Do not cache
+// that: a later request should retry Postgres instead of serving stale -1.
+func reportCountUnknown(items []recordReportEntry) bool {
+	if len(items) != 1 {
+		return false
+	}
+	v, ok := items[0]["count"]
+	if !ok {
+		return false
+	}
+	switch n := v.(type) {
+	case float64:
+		return n == float64(filter.TotalUnknown)
+	case int:
+		return n == filter.TotalUnknown
+	default:
+		return false
+	}
 }
 
 func (svc record) connectorReportEntries(ctx context.Context, m *types.Module) ([]recordReportEntry, error) {
@@ -863,15 +907,31 @@ func (svc record) FindN(ctx context.Context, filter types.RecordFilter) (set typ
 
 		filter.Check = ComposeRecordFilterChecker(ctx, svc.ac, m)
 
+		dalCtx, stopDAL := dalutils.BoundRecordSearchContext(ctx)
+		defer stopDAL()
+
 		if m.Config.Type == "connector" {
 			conn := connector(svc.store)
-			if set, f, err = conn.Fetch(ctx, m, filter); err != nil {
-				return err
+			if set, f, err = conn.Fetch(dalCtx, m, filter); err != nil {
+				if dalutils.IsSearchTimeout(err) {
+					f = filter
+					f.Total = -1 // TotalUnknown; param name shadows pkg/filter
+					set, stats, err = nil, map[string]types.RecordSummary{}, nil
+				} else {
+					return err
+				}
+			} else {
+				stats = map[string]types.RecordSummary{}
 			}
-			stats = map[string]types.RecordSummary{}
 		} else {
-			if set, stats, f, err = dalutils.ComposeRecordsListN(ctx, svc.dal, m, filter); err != nil {
-				return err
+			if set, stats, f, err = dalutils.ComposeRecordsListN(dalCtx, svc.dal, m, filter); err != nil {
+				if dalutils.IsSearchTimeout(err) {
+					f = filter
+					f.Total = -1 // TotalUnknown; param name shadows pkg/filter
+					err = nil
+				} else {
+					return err
+				}
 			}
 		}
 
@@ -1217,9 +1277,56 @@ func (svc record) Bulk(ctx context.Context, skipFailed bool, oo ...*types.Record
 	}
 }
 
+var (
+	bulkQueryOrSplit  = regexp.MustCompile(`(?i)\s+OR\s+`)
+	bulkQueryRecordID = regexp.MustCompile(`(?i)^\s*recordID\s*=\s*['"]?(\d+)['"]?\s*$`)
+)
+
+// parseRecordIDsFromQuery extracts IDs from a query that is only
+// `recordID='…' OR recordID='…'` (the RecordList selected-rows payload).
+// Returns nil when the query has any other shape so callers fall back to Find.
+func parseRecordIDsFromQuery(q string) []uint64 {
+	q = strings.TrimSpace(q)
+	if q == "" {
+		return nil
+	}
+
+	parts := bulkQueryOrSplit.Split(q, -1)
+	if len(parts) == 0 {
+		return nil
+	}
+
+	ids := make([]uint64, 0, len(parts))
+	seen := make(map[uint64]struct{}, len(parts))
+	for _, p := range parts {
+		m := bulkQueryRecordID.FindStringSubmatch(p)
+		if m == nil {
+			return nil
+		}
+		id, err := strconv.ParseUint(m[1], 10, 64)
+		if err != nil || id == 0 {
+			return nil
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	return ids
+}
+
 // BulkModifyByFilter performs bulk record operations based on the provided filter query.
-// It's able to update, delete or undelete records in a single transaction.
 func (svc record) BulkModifyByFilter(ctx context.Context, f types.RecordFilter, values types.RecordValueSet, operation types.OperationType) (err error) {
+	if ids := parseRecordIDsFromQuery(f.Query); len(ids) > 0 {
+		switch operation {
+		case types.OperationTypeDelete:
+			return svc.DeleteByID(ctx, f.NamespaceID, f.ModuleID, ids...)
+		case types.OperationTypeUndelete:
+			return svc.UndeleteByID(ctx, f.NamespaceID, f.ModuleID, ids...)
+		}
+	}
+
 	var (
 		ns           *types.Namespace
 		m            *types.Module
@@ -1236,25 +1343,34 @@ func (svc record) BulkModifyByFilter(ctx context.Context, f types.RecordFilter, 
 		valueError *types.RecordValueErrorSet
 	)
 
-	return store.Tx(ctx, svc.store, func(ctx context.Context, s store.Storer) error {
-		// load both the namespace and module
-		if ns, m, err = loadModuleCombo(ctx, s, f.NamespaceID, f.ModuleID); err != nil {
+	if ns, m, err = loadModuleCombo(ctx, svc.store, f.NamespaceID, f.ModuleID); err != nil {
+		return err
+	}
+
+	aProps.setNamespace(ns)
+	aProps.setModule(m)
+
+	f.Limit = 500
+	f.IncPageNavigation = false
+	f.IncTotal = false
+	f.Summaries = nil
+
+	// Find + DAL updates do not participate in store.Tx. Wrapping them made
+	// SQL/iterator errors look like "failed to complete transaction" and
+	// aborted a tx that never held the record rows.
+	for {
+		records, recordFilter, err = svc.Find(ctx, f)
+		if err != nil {
 			return err
 		}
 
-		aProps.setNamespace(ns)
-		aProps.setModule(m)
-
-		f.Limit = 500
-
-		// performing a batched search for IDs, processing them in batches of 500 for update.
-		for {
-			records, recordFilter, err = svc.Find(ctx, f)
-			if err != nil {
-				return err
-			}
-
-			for _, r = range records {
+		for _, r = range records {
+			err = func() (err error) {
+				defer func() {
+					if p := recover(); p != nil {
+						err = fmt.Errorf("record %s panic: %v", operation, p)
+					}
+				}()
 				aProps.setRecord(r)
 
 				switch operation {
@@ -1276,27 +1392,23 @@ func (svc record) BulkModifyByFilter(ctx context.Context, f types.RecordFilter, 
 				}
 
 				_ = svc.recordAction(ctx, aProps, action, err)
-
-				if err != nil {
-					return err
-				}
+				return err
+			}()
+			if err != nil {
+				return err
 			}
-
-			if recordFilter.NextPage == nil {
-				break
-			}
-
-			f.NextPage = recordFilter.NextPage
 		}
 
-		return nil
-	})
+		if recordFilter.NextPage == nil {
+			break
+		}
 
-	if err == nil {
-		svc.invalidateModuleReportCache(f.ModuleID)
+		f.PageCursor = recordFilter.NextPage
+		f.NextPage = nil
 	}
 
-	return
+	svc.invalidateModuleReportCache(f.ModuleID)
+	return nil
 }
 
 // Raw create function that is responsible for value validation, event dispatching
@@ -1982,7 +2094,7 @@ func (svc record) processDelete(ctx context.Context, del *types.Record, namespac
 
 	{
 		// Calling before-record-delete scripts
-		if err = svc.eventbus.WaitFor(ctx, event.RecordBeforeDelete(nil, del, module, namespace, nil, nil)); err != nil {
+		if err = svc.eventbus.WaitFor(ctx, event.RecordBeforeDelete(del, del, module, namespace, nil, nil)); err != nil {
 			return nil, err
 		}
 	}
@@ -2008,7 +2120,7 @@ func (svc record) processDelete(ctx context.Context, del *types.Record, namespac
 	del.SetModule(module)
 
 	{
-		_ = svc.eventbus.WaitFor(ctx, event.RecordAfterDeleteImmutable(nil, del, module, namespace, nil, nil))
+		_ = svc.eventbus.WaitFor(ctx, event.RecordAfterDeleteImmutable(del, del, module, namespace, nil, nil))
 	}
 
 	return del, nil
@@ -2116,8 +2228,14 @@ func (svc record) DeleteByID(ctx context.Context, namespaceID, moduleID uint64, 
 		return svc.recordAction(ctx, aProps, RecordActionDelete, err)
 	}
 
+	var lastErr error
 	for _, recordID := range recordIDs {
 		err := func() (err error) {
+			defer func() {
+				if p := recover(); p != nil {
+					err = fmt.Errorf("record delete panic (id=%d): %v\n%s", recordID, p, debug.Stack())
+				}
+			}()
 			r, err = svc.delete(ctx, namespaceID, moduleID, recordID)
 			aProps.setRecord(r)
 
@@ -2125,19 +2243,16 @@ func (svc record) DeleteByID(ctx context.Context, namespaceID, moduleID uint64, 
 			return svc.recordAction(ctx, aProps, RecordActionDelete, err)
 		}()
 
-		// We'll not break for failed delete,
-		// if we are deleting records in bulk.
-		if err != nil && !isBulkDelete {
-			return err
+		if err != nil {
+			lastErr = err
+			if !isBulkDelete {
+				return err
+			}
 		}
-
 	}
 
-	// all errors (if any) were recorded
-	// and in case of error for a non-bulk record deletion
-	// error is already returned
 	svc.invalidateModuleReportCache(moduleID)
-	return nil
+	return lastErr
 }
 
 func (svc record) UndeleteByID(ctx context.Context, namespaceID, moduleID uint64, recordIDs ...uint64) (err error) {

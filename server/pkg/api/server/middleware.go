@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -52,14 +53,18 @@ func panicRecovery(ctx context.Context, w http.ResponseWriter) {
 			log.Debug("crashed on http request", zap.ByteString("stack", debug.Stack()))
 		}
 
-		w.WriteHeader(500)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
 
 		if _, has := os.LookupEnv("DEBUG_DUMP_STACK_IN_RESPONSE"); has {
-			// Provide nice call stack on endpoint when
-			// we crash
 			_, _ = w.Write(debug.Stack())
+			return
 		}
 
+		msg := fmt.Sprint(err)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"error": map[string]string{"message": msg},
+		})
 		return
 	}
 }

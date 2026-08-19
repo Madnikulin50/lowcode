@@ -145,10 +145,10 @@
                   <span v-if="Object.keys(element.r.labels || {}).includes('federation')" class="badge bg-primary align-text-top">F</span>
                 </td>
                 <td v-for="field in fields" :key="field.key" class="record-value" :class="fieldCellClass(field)">
-                  <FieldEditor v-if="field.moduleField.canUpdateRecordValue && field.editable && isFieldEditable(field.moduleField)" :field="field.moduleField" value-only :record="element.r" :module="module" :namespace="namespace" :errors="recordErrors(element, field)" class="mb-0" style="min-width: 250px;" @click.stop @change="onInlineFieldChange(element)" />
+                  <FieldEditor v-if="field.moduleField.canUpdateRecordValue && field.editable && isFieldEditable(field.moduleField)" :field="field.moduleField" value-only :record="element.r" :module="recordListModule" :namespace="namespace" :errors="recordErrors(element, field)" class="mb-0" style="min-width: 250px;" @click.stop @change="onInlineFieldChange(element)" />
                   <div v-else-if="field.moduleField.canReadRecordValue && !field.edit" class="d-flex flex-column mb-0 gap-1" style="min-width: 10rem;">
                     <div class="d-flex mb-0 gap-1 align-items-center">
-                      <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="module" :namespace="namespace" :extra-options="options" include-styles />
+                      <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="recordListModule" :namespace="namespace" :extra-options="options" include-styles />
                       <div v-if="showInlineActions(field)" class="d-flex flex-nowrap align-items-start gap-1 inline-actions">
                         <button v-if="showInlineEdit(field)" class="btn btn-outline-extra-light btn-sm text-secondary border-0" data-bs-toggle="tooltip" :title="$t('recordList.inlineEdit.button.title')" @click.stop="editInlineField(element.r, field.key)">
                           <font-awesome-icon :icon="['fas', 'pen']" />
@@ -253,7 +253,7 @@
                 </td>
                 <td v-for="field in fields" :key="field.key" class="record-value" :class="fieldCellClass(field)">
                   <div v-if="field.moduleField.canReadRecordValue" class="d-flex flex-column mb-0 gap-1" style="min-width: 10rem;">
-                    <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="module" :namespace="namespace" :extra-options="options" include-styles />
+                    <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="recordListModule" :namespace="namespace" :extra-options="options" include-styles />
                     <div v-if="isSparklineField(field)" class="rl-sparkline">
                       <span class="rl-sparkline-bar" :style="{ width: sparklinePct(element) + '%' }" :class="signalClass(element)" />
                     </div>
@@ -317,7 +317,7 @@
                   <div class="rl-card-body">
                     <div v-for="field in cardFields" :key="field.key" class="rl-card-row">
                       <span class="rl-card-label">{{ field.label }}</span>
-                      <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="module" :namespace="namespace" :extra-options="options" include-styles class="rl-card-value" />
+                      <FieldViewer :field="field.moduleField" value-only :record="element.r" :module="recordListModule" :namespace="namespace" :extra-options="options" include-styles class="rl-card-value" />
                     </div>
                     <div v-if="options.sparklineField" class="rl-sparkline mt-2">
                       <span class="rl-sparkline-bar" :style="{ width: sparklinePct(element) + '%' }" :class="signalClass(element)" />
@@ -356,7 +356,8 @@
       <div v-if="showPagination" class="record-list-footer d-flex align-items-center flex-wrap justify-content-between px-3 py-2 gap-1">
         <div class="d-flex align-items-center flex-wrap gap-3">
           <div v-if="options.showTotalCount" class="text-nowrap text-truncate">
-            <span v-if="pagination.count > recordsPerPage" data-test-id="pagination-range">{{ $t('recordList.pagination.showing', getPagination) }}</span>
+            <span v-if="totalUnknown" data-test-id="pagination-unknown-total">{{ $t('recordList.pagination.unknownTotal', getPagination) }}</span>
+            <span v-else-if="pagination.count > recordsPerPage" data-test-id="pagination-range">{{ $t('recordList.pagination.showing', getPagination) }}</span>
             <span v-else data-test-id="pagination-single-number">{{ $t(`recordList.pagination.single_${pagination.count === 1 ? 'one' : 'other'}`, getPagination) }}</span>
           </div>
           <div v-if="options.showRecordPerPageOption" class="d-flex align-items-center gap-1 text-nowrap">
@@ -381,7 +382,7 @@
               <li class="page-item" :class="{ disabled: !hasNextPage || isProcessing }">
                 <button class="page-link" @click="goToPage(getPagination.page + 1)" :disabled="!hasNextPage || isProcessing"><font-awesome-icon :icon="['fas', 'angle-right']" /></button>
               </li>
-              <li class="page-item" :class="{ disabled: getPagination.page >= getPagination.count / getPagination.perPage }">
+              <li v-if="!totalUnknown" class="page-item" :class="{ disabled: getPagination.page >= getPagination.count / getPagination.perPage }">
                 <button class="page-link" @click="goToPage(Math.ceil(getPagination.count / getPagination.perPage))"><font-awesome-icon :icon="['fas', 'angle-double-right']" /></button>
               </li>
             </ul>
@@ -443,12 +444,12 @@
 
 <script setup>
 defineOptions({ inheritAttrs: false, i18nOptions: { namespaces: 'block' } })
-import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick, inject } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick, inject, toRaw } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useStore } from '../../store'
 import { NoID, compose, validator } from 'corteza-lib/js/dist'
-import { components, url } from 'corteza-lib/vue/dist'
+import { components, url, composables } from 'corteza-lib/vue/dist'
 import axios from 'axios'
 import ColumnPicker from 'corteza-webapp-compose/src/components/Admin/Module/Records/ColumnPicker'
 import RecordListFilter from 'corteza-webapp-compose/src/components/Common/RecordListFilter'
@@ -484,6 +485,7 @@ const $auth = inject('$auth')
 const $ComposeAPI = inject('$ComposeAPI')
 const $router = useRouter()
 const $route = useRoute()
+const { toastSuccess, toastErrorHandler } = composables.useToast()
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -516,6 +518,7 @@ const recordListFilter = ref([])
 const query = ref(null)
 const filter = reactive({ query: '', sort: '', limit: 10, pageCursor: '', prevPage: '', nextPage: '' })
 const pagination = reactive({ pages: [], page: 1, count: 0 })
+const unknownTotalMaxPages = 20
 const selected = ref([])
 const inlineEdit = reactive({ fields: [], recordIDs: [], initialRecord: {} })
 const sortBy = ref(undefined)
@@ -555,11 +558,19 @@ const perPageOptions = computed(() => {
 const getPagination = computed(() => {
   const { page = 1, count = 0 } = pagination
   const pp = recordsPerPage.value
+  if (count < 0) {
+    return { from: ((page - 1) * pp) + 1, to: page * pp, page, perPage: pp, count: '∞' }
+  }
   return { from: ((page - 1) * pp) + 1, to: pp > 0 ? Math.min(page * pp, count) : count, page, perPage: pp, count }
 })
+const totalUnknown = computed(() => pagination.count === -1 || pagination.count === '-1')
 const needHeaderBlock = computed(() => recordListModule.value?.canCreateRecord || (options.value.allowExport && !inlineEditing.value) || filterPresets.value.length || !options.value.hideConfigureFieldsButton || !options.value.hideSearch)
 const hasPrevPage = computed(() => !!filter.prevPage)
-const hasNextPage = computed(() => !!filter.nextPage)
+const hasNextPage = computed(() => {
+  if (!filter.nextPage) return false
+  if (totalUnknown.value && pagination.page >= unknownTotalMaxPages) return false
+  return true
+})
 const editing = computed(() => props.mode === 'editor')
 const showPageNavigation = computed(() => !options.value.hidePaging)
 const isRowClickable = computed(() => !inlineEditing.value && options.value.recordDisplayOption !== 'doNothing')
@@ -645,14 +656,31 @@ const isReminderActionVisible = computed(() => !options.value.hideRecordReminder
 const filterPresets = computed(() => [...options.value.filterPresets.filter(({ name, roles }) => name && isUserRoleMember(roles)), ...customPresetFilters.value])
 const authUserRoles = computed(() => $auth?.user?.roles || [])
 const selectedRecordsDisplayText = computed(() => {
-  const count = selectedAllRecords.value ? (options.value.showTotalCount ? pagination.count : undefined) : selected.value.length
+  const count = selectedAllRecords.value ? (options.value.showTotalCount && pagination.count >= 0 ? pagination.count : undefined) : selected.value.length
   const total = items.value.length
   const key = selectedAllRecords.value ? 'selectedFromAllPages' : 'selected'
   return $t(`recordList.${key}`, { count, total })
 })
+function persistedRecordID (row) {
+  if (!row || typeof row !== 'object') return ''
+  const raw = row.recordID ?? row.ID
+  if (raw == null || raw === '' || raw === 0 || raw === NoID) return ''
+  const s = String(raw)
+  if (!/^\d+$/.test(s) || s === '0') return ''
+  return s
+}
+
+const selectedPersistedRecordIDs = computed(() => {
+  const sel = new Set(selected.value)
+  return items.value
+    .filter(item => sel.has(item.id))
+    .map(item => persistedRecordID(item.r))
+    .filter(Boolean)
+})
+
 const bulkQuery = computed(() => {
   if (selectedAllRecords.value) return filter.query
-  return selected.value.map(r => `recordID='${r}'`).join(' OR ')
+  return selectedPersistedRecordIDs.value.map(id => `recordID='${id}'`).join(' OR ')
 })
 const isOnRecordPage = computed(() => props.page?.moduleID !== NoID)
 
@@ -824,12 +852,79 @@ function recordErrors(item, field) {
 }
 
 function wrapRecord(r, id) {
-  if (r.id) { id = r.id; r = r.r }
-  return { r, id: id || (r.recordID !== NoID ? r.recordID : `${uniqueID.value}:${ctr++}`) }
+  if (r && r.r && (r.id != null && r.id !== '')) {
+    id = id || persistedRecordID(r.r) || r.id
+    r = r.r
+  }
+  const persisted = persistedRecordID(r)
+  return { r, id: id || persisted || `${uniqueID.value}:${ctr++}` }
+}
+
+function makeListRecord (raw) {
+  const listModule = recordListModule.value ? toRaw(recordListModule.value) : recordListModule.value
+  if (!listModule) {
+    throw new Error($t('record.moduleOrPageNotSet'))
+  }
+  const row = (raw && typeof raw === 'object') ? toRaw(raw) : raw
+  if (row instanceof compose.Record) {
+    try {
+      if (String(row.moduleID) === String(listModule.moduleID)) {
+        const id = persistedRecordID(row)
+        if (id) row.recordID = id
+        return row
+      }
+    } catch (_) { /* module not set on the existing Record */ }
+  }
+  const src = (row && typeof row === 'object' && !Array.isArray(row)) ? row : {}
+  // Pick known record fields only. Spreading a Vue proxy / Record copies `module`
+  // and `fields`, which makes Record treat the payload as a Module and then
+  // throw "can not change module on a record" (page module vs list module).
+  //
+  // Do NOT copy moduleID/namespaceID from the row. Record.apply compares those
+  // to this.moduleID, and a Vue-proxy Module copy often keeps moduleID at NoID
+  // (`Apply` used hasOwnProperty). The list module is the source of truth.
+  const recordID = persistedRecordID(src)
+  const payload = {
+    recordID,
+    values: src.values,
+    valueErrors: src.valueErrors,
+    meta: src.meta,
+    createdAt: src.createdAt,
+    updatedAt: src.updatedAt,
+    deletedAt: src.deletedAt,
+    ownedBy: src.ownedBy,
+    createdBy: src.createdBy,
+    updatedBy: src.updatedBy,
+    deletedBy: src.deletedBy,
+    canUpdateRecord: src.canUpdateRecord,
+    canReadRecord: src.canReadRecord,
+    canDeleteRecord: src.canDeleteRecord,
+    canUndeleteRecord: src.canUndeleteRecord,
+    canManageOwnerOnRecord: src.canManageOwnerOnRecord,
+    canSearchRevision: src.canSearchRevision,
+    canGrant: src.canGrant,
+    revision: src.revision,
+  }
+  try {
+    const rec = new compose.Record(listModule, payload)
+    if (recordID) rec.recordID = recordID
+    return rec
+  } catch (e) {
+    console.error('RecordListBase.makeListRecord', e, {
+      listModuleID: listModule?.moduleID,
+      listModuleIDType: typeof listModule?.moduleID,
+      listModuleFrozen: Object.isFrozen(listModule),
+      rowModuleID: src?.moduleID,
+      rowModuleIDType: typeof src?.moduleID,
+      rowRecordID: src?.recordID,
+      isRecord: row instanceof compose.Record,
+    })
+    throw e
+  }
 }
 
 function addInlineRecord() {
-  const r = new compose.Record(recordListModule.value, {})
+  const r = makeListRecord({})
   if (options.value.refField) {
     const refField = recordListModule.value.fields.find(f => f.name === options.value.refField)
     if (refField?.isMulti) r.values[options.value.refField] = [(props.record || {}).recordID]
@@ -854,13 +949,15 @@ function validatePageBlock(resolve) {
 
 function handleDeleteInline(item, i) {
   if (item.r.recordID !== NoID) {
-    const r = new compose.Record(recordListModule.value, { ...item.r, deletedAt: new Date() })
+    const r = makeListRecord(item.r)
+    r.deletedAt = new Date()
     items.value.splice(i, 1, wrapRecord(r, item.id))
   } else items.value.splice(i, 1)
 }
 
 function handleRestoreInline(item, i) {
-  const r = new compose.Record(recordListModule.value, { ...item.r, deletedAt: undefined })
+  const r = makeListRecord(item.r)
+  r.deletedAt = undefined
   items.value.splice(i, 1, wrapRecord(r, item.id))
 }
 
@@ -912,7 +1009,7 @@ async function handleSaveInline(item, index) {
     if (isNew) saved = await $ComposeAPI.recordCreate(item.r)
     else saved = await $ComposeAPI.recordUpdate(item.r)
     delete dirtyInlineRecords.value[item.id]
-    const newRecord = new compose.Record(recordListModule.value, saved)
+    const newRecord = makeListRecord(saved)
     items.value.splice(index, 1, wrapRecord(newRecord))
     const eUID = Object.keys(dirtyInlineRecords.value).length > 0 ? uniqueID.value : undefined
     window.dispatchEvent(new CustomEvent('module-records-updated', { detail: { moduleID: recordListModule.value.moduleID, excludeUniqueID: eUID } }))
@@ -929,7 +1026,7 @@ async function handleDenyInline(item, index) {
   inlineErrors.value = inlineErrors.value.filter(e => e.meta.id !== item.id)
   const isNew = item.r.recordID === NoID
   if (isNew) { items.value.splice(index, 1); delete processingInlineRecords.value[item.id] } else {
-    try { const freshRecord = await $ComposeAPI.recordRead(item.r); items.value.splice(index, 1, wrapRecord(new compose.Record(recordListModule.value, freshRecord))) }
+    try { const freshRecord = await $ComposeAPI.recordRead(item.r); items.value.splice(index, 1, wrapRecord(makeListRecord(freshRecord))) }
     finally { delete processingInlineRecords.value[item.id] }
   }
 }
@@ -971,7 +1068,7 @@ async function handleSaveDirtyRecords() {
       if (isNew) saved = await $ComposeAPI.recordCreate(item.r)
       else saved = await $ComposeAPI.recordUpdate(item.r)
       delete dirtyInlineRecords.value[item.id]
-      items.value.splice(index, 1, wrapRecord(new compose.Record(recordListModule.value, saved)))
+      items.value.splice(index, 1, wrapRecord(makeListRecord(saved)))
     } catch (e) {
       hasError = true
       const { details } = e
@@ -1000,7 +1097,7 @@ async function handleDenyDirtyRecords() {
       delete dirtyInlineRecords.value[item.id]
       inlineErrors.value = inlineErrors.value.filter(e => e.meta.id !== item.id)
       if (isNew) items.value.splice(index, 1)
-      else { const freshRecord = await $ComposeAPI.recordRead(item.r); items.value.splice(index, 1, wrapRecord(new compose.Record(recordListModule.value, freshRecord))) }
+      else { const freshRecord = await $ComposeAPI.recordRead(item.r); items.value.splice(index, 1, wrapRecord(makeListRecord(freshRecord))) }
     } catch (e) { hasError = true }
   }
   processingDirtyRecords.value = ''
@@ -1053,8 +1150,11 @@ function prepRecordList() {
   }
   if (refField) {
     if (!props.record) throw new Error($t('record.invalidRecordVar'))
-    const refFieldObj = recordListModule.value.fields.find(f => f.name === refField)
-    filterArr.push(getFieldFilter(refField, 'Record', props.record.recordID, refFieldObj?.isMulti ? 'IN' : '='))
+    // Skip when prefilter already constrains the same parent field (`device = ${recordID}` + refField).
+    if (!isFieldInFilter(refField, filterArr.join(' AND '))) {
+      const refFieldObj = recordListModule.value.fields.find(f => f.name === refField)
+      filterArr.push(getFieldFilter(refField, 'Record', props.record.recordID, refFieldObj?.isMulti ? 'IN' : '='))
+    }
   }
   prefilter.value = filterArr.join(' AND ')
   filter.limit = recordsPerPage.value
@@ -1279,11 +1379,21 @@ function handleSort({ key, sortable }) {
 }
 
 async function goToPage(page) {
-  if (page >= 1) {
-    const idx = page - 1
-    filter.pageCursor = (pagination.pages[idx] || {}).cursor || ''
-    pagination.page = page
+  if (page < 1) return
+  if (totalUnknown.value && page > unknownTotalMaxPages) return
+  const delta = page - pagination.page
+  if (page === 1) {
+    filter.pageCursor = undefined
+  } else if (pagination.pages[page - 1]?.cursor) {
+    filter.pageCursor = pagination.pages[page - 1].cursor
+  } else if (delta === 1 && filter.nextPage) {
+    filter.pageCursor = filter.nextPage
+  } else if (delta === -1 && filter.prevPage) {
+    filter.pageCursor = filter.prevPage
+  } else {
+    filter.pageCursor = (pagination.pages[page - 1] || {}).cursor || ''
   }
+  pagination.page = page
   return refresh()
 }
 
@@ -1294,16 +1404,64 @@ function handleSelectAllOnPage({ isChecked }) {
 
 function selectAllRecords() { selectedAllRecords.value = !selectedAllRecords.value; handleSelectAllOnPage({ isChecked: selectedAllRecords.value }) }
 
+function bulkRecordModuleIDs () {
+  const listModule = recordListModule.value
+  return {
+    moduleID: listModule?.moduleID,
+    namespaceID: listModule?.namespaceID,
+  }
+}
+
+function apiErrorMessage (err) {
+  if (err == null) return ''
+  if (typeof err === 'string') return err
+  const nested = err.response?.data?.error ?? err.error ?? err
+  if (nested && typeof nested === 'object' && typeof nested.message === 'string' && nested.message.trim()) {
+    return nested.message
+  }
+  if (typeof nested === 'string' && nested.trim()) return nested
+  if (typeof err.message === 'string' && err.message.trim()) return err.message
+  try { return JSON.stringify(err) } catch { return String(err) }
+}
+
+function runBulkRecordOp (apiFn, { recordID, successKey, failKey }) {
+  const persisted = recordID ? persistedRecordID({ recordID }) : ''
+  const query = persisted ? `recordID = ${persisted}` : bulkQuery.value
+  if (!String(query || '').trim()) {
+    if (!selectedAllRecords.value && selected.value.length) {
+      toastErrorHandler($t(failKey))(new Error($t('notification.record.deleteBulkFailed')))
+    }
+    return
+  }
+  const { moduleID, namespaceID } = bulkRecordModuleIDs()
+  if (!moduleID || !namespaceID) {
+    toastErrorHandler($t(failKey))(new Error($t('notification.record.moduleOrPageNotSet')))
+    return
+  }
+  processing.value = true
+  apiFn({ moduleID, namespaceID, query })
+    .then(() => {
+      toastSuccess($t(successKey))
+      return refresh(true)
+    })
+    .catch(err => {
+      if (axios.isCancel(err)) return
+      toastErrorHandler($t(failKey))(new Error(apiErrorMessage(err) || $t(failKey)))
+    })
+    .finally(() => { setTimeout(() => { processing.value = false; selectedAllRecords.value = false }, 300) })
+}
+
 function handleRestoreSelectedRecords(recordID) {
   if (inlineEditing.value && editing.value) {
     const sel = new Set(selected.value)
     items.value.forEach((item, index) => { if (sel.has(item.id)) handleRestoreInline(item, index) })
     sel.clear()
   } else {
-    processing.value = true
-    const query = recordID ? `recordID = ${recordID}` : bulkQuery.value
-    const { moduleID, namespaceID } = filter
-    $ComposeAPI.recordBulkUndelete({ moduleID, namespaceID, query }).then(() => { refresh(true) }).finally(() => { setTimeout(() => { processing.value = false; selectedAllRecords.value = false }, 300) })
+    runBulkRecordOp($ComposeAPI.recordBulkUndelete.bind($ComposeAPI), {
+      recordID,
+      successKey: 'notification.record.restoreBulkSuccess',
+      failKey: 'notification.record.restoreBulkFailed',
+    })
   }
 }
 
@@ -1313,10 +1471,11 @@ function handleDeleteSelectedRecords(recordID) {
     for (let i = 0; i < items.value.length; i++) { if (sel.has(items.value[i].id)) handleDeleteInline(items.value[i], i) }
     sel.clear()
   } else {
-    processing.value = true
-    const query = recordID ? `recordID = ${recordID}` : bulkQuery.value
-    const { moduleID, namespaceID } = filter
-    $ComposeAPI.recordBulkDelete({ moduleID, namespaceID, query }).then(() => refresh(true)).finally(() => { setTimeout(() => { processing.value = false; selectedAllRecords.value = false }, 300) })
+    runBulkRecordOp($ComposeAPI.recordBulkDelete.bind($ComposeAPI), {
+      recordID,
+      successKey: 'notification.record.deleteBulkSuccess',
+      failKey: 'notification.record.deleteBulkFailed',
+    })
   }
 }
 
@@ -1356,18 +1515,22 @@ async function pullRecords(resetPagination = false) {
   const { response, cancel } = $ComposeAPI.recordListCancellable({ ...filter, moduleID, namespaceID, query: queryStr, ...paginationOptions, summaries: summariesStr })
   abortableRequests.value.push(cancel)
   return Promise.all([response(), new Promise(resolve => setTimeout(resolve, 300))])
-    .then(([{ set, filter: respFilter, summaries: summs = {} }]) => {
-      const records = set.map(r => new compose.Record(r, recordListModule.value))
+    .then(([{ set, filter: respFilter, summaries: summs = {} } = {}]) => {
+      const records = (Array.isArray(set) ? set : []).map(r => makeListRecord(r))
       store.record.updateRecords(records)
-      Object.assign(filter, respFilter)
-      filter.nextPage = respFilter.nextPage
-      filter.prevPage = respFilter.prevPage
+      Object.assign(filter, respFilter || {})
+      filter.nextPage = respFilter?.nextPage
+      filter.prevPage = respFilter?.prevPage
       if (resetPagination) {
         summaries.value = summs
         let count = pagination.count || 0
-        if (paginationOptions.incTotal) { count = respFilter.total || 0; filter.incTotal = false }
+        if (paginationOptions.incTotal) {
+          const total = respFilter?.total
+          count = total == null ? records.length : total
+          filter.incTotal = false
+        }
         if (paginationOptions.incPageNavigation) {
-          const pages = respFilter.pageNavigation || []
+          const pages = respFilter?.pageNavigation || []
           pagination.pages = pages
           if (!paginationOptions.incTotal) count = pages.length > 1 ? ((pages.length - 1) * recordsPerPage.value) + (pages[pages.length - 1]?.items || 0) : records.length
           filter.incPageNavigation = false
@@ -1375,6 +1538,8 @@ async function pullRecords(resetPagination = false) {
         pagination.count = count
         pagination.page = 1
       }
+      items.value = records.map(r => wrapRecord(r))
+      hasLoadedOnce.value = true
       if (stayOnPage.value) { const goToPageNumber = stayOnPage.value; stayOnPage.value = undefined; return goToPage(goToPageNumber) }
       const flds = fields.value.filter(f => f.moduleField).map(f => f.moduleField)
       return Promise.all([
@@ -1384,12 +1549,14 @@ async function pullRecords(resetPagination = false) {
         dirtyInlineRecords.value = {}
         inlineErrors.value = new validator.Validated()
         processingInlineRecords.value = {}
-        items.value = records.map(r => wrapRecord(r))
-        hasLoadedOnce.value = true
+      }).catch(e => {
+        if (!axios.isCancel(e)) console.error(e)
+      }).finally(() => {
         processing.value = false
       })
     }).catch(e => {
       if (axios.isCancel(e)) return
+      console.error(e)
       hasLoadedOnce.value = true
       processing.value = false
     }).finally(() => { cancelled.value = false })
@@ -1433,9 +1600,9 @@ function onImportSuccessful() { window.dispatchEvent(new CustomEvent('module-rec
 function createDefaultFilter(field = {}, value = undefined, operator = undefined) {
   if (!field.resourceID) field = allFields.value.find(({ name }) => name === field.name) || field
   if (field) { field = new compose.ModuleFieldMaker(field); field.isMulti = false }
-  let record = new compose.Record(recordListModule.value)
+  let record = makeListRecord({})
   if (isBetweenOperator(operator)) {
-    record = [new compose.Record(recordListModule.value), new compose.Record(recordListModule.value)]
+    record = [makeListRecord({}), makeListRecord({})]
     if (field.isSystem) { record[0][field.name] = value.start; record[1][field.name] = value.end }
     else { record[0].values[field.name] = value.start; record[1].values[field.name] = value.end }
   } else {

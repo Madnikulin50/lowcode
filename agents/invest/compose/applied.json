@@ -1,0 +1,40 @@
+{
+  "namespaceID": "509728716465438721",
+  "slug": "invest",
+  "api": "http://localhost:3333/compose",
+  "modules": {
+    "document_types": "509728716465963009",
+    "counterparties": "509728716467929089",
+    "materials": "509728716471336961",
+    "labor_norms": "509728716473827329",
+    "projects": "509728716476317697",
+    "project_members": "509728716484444161",
+    "wbs_items": "509728716486803457",
+    "contracts": "509728716499255297",
+    "documents": "509728716505350145",
+    "document_versions": "509728716513345537",
+    "approvals": "509728716516884481",
+    "document_comments": "509728716520685569",
+    "risks": "509728716523175937",
+    "change_requests": "509728716529074177",
+    "change_log": "509728716535889921",
+    "budget_lines": "509728716541001729",
+    "cashflow_items": "509728716545261569",
+    "progress_facts": "509728716548931585",
+    "ai_advisors": "509728716555747329"
+  },
+  "charts": {
+    "docsByStatus": "509728716559024129",
+    "rfcByStatus": "509728716559613953",
+    "risksByImpact": "509728716560203777",
+    "wbsGantt": "509728716560793601"
+  },
+  "urls": {
+    "namespace": "/ns/invest",
+    "dashboard": "/ns/invest/pages"
+  },
+  "engine": {
+    "flags": "--api=http://localhost:3333 --namespace=509728716465438721",
+    "recalculate": "POST http://localhost:8086/api/recalculate-evm"
+  }
+}

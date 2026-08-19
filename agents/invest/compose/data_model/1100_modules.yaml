@@ -1,0 +1,228 @@
+namespace: invest
+modules:
+  document_types:
+    name: Типы документов
+    fields:
+      name: { label: Название, kind: String, required: true }
+      code: { label: Код, kind: String, required: true }
+      description: { label: Описание, kind: String }
+
+  counterparties:
+    name: Контрагенты
+    fields:
+      name: { label: Название, kind: String, required: true }
+      inn: { label: ИНН, kind: String }
+      kpp: { label: КПП, kind: String }
+      role: { label: Роль, kind: Select, options: { options: [investor, bank, contractor, designer, government, pmo] } }
+      notes: { label: Заметки, kind: String }
+
+  materials:
+    name: Материалы
+    fields:
+      name: { label: Название, kind: String, required: true }
+      unit: { label: Ед. изм., kind: String }
+      unit_price: { label: Цена за ед., kind: Number }
+      gost: { label: ГОСТ / ТУ, kind: String }
+
+  labor_norms:
+    name: Нормы времени
+    fields:
+      name: { label: Название, kind: String, required: true }
+      unit: { label: Ед. изм., kind: String }
+      hours: { label: Норма ч, kind: Number }
+      notes: { label: Заметки, kind: String }
+
+  projects:
+    name: Проекты
+    fields:
+      name: { label: Название, kind: String, required: true }
+      code: { label: Код, kind: String }
+      phase: { label: Фаза, kind: Select, options: { options: [concept, survey, design, construction, commissioning, operations] } }
+      status: { label: Статус, kind: Select, options: { options: [draft, active, on_hold, completed, cancelled] } }
+      investor: { label: Инвестор, kind: String }
+      start_planned: { label: Старт план, kind: DateTime }
+      end_planned: { label: Финиш план, kind: DateTime }
+      budget_planned: { label: Бюджет план, kind: Number }
+      budget_actual: { label: Бюджет факт, kind: Number }
+      eac: { label: EAC, kind: Number }
+      spi: { label: SPI, kind: Number }
+      cpi: { label: CPI, kind: Number }
+      description: { label: Описание, kind: String }
+
+  project_members:
+    name: Участники проекта
+    fields:
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      user: { label: Пользователь, kind: User }
+      role: { label: Роль, kind: Select, options: { options: [investor, bank, contractor, designer, government, pmo] } }
+
+  wbs_items:
+    name: WBS
+    fields:
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      parent: { label: Родитель, kind: Record, options: { module: wbs_items, labelField: name } }
+      predecessor: { label: Предшественник, kind: Record, options: { module: wbs_items, labelField: name } }
+      code: { label: Код WBS, kind: String, required: true }
+      name: { label: Название, kind: String, required: true }
+      level: { label: Уровень, kind: Select, options: { options: [stage, substage, work] } }
+      start_planned: { label: Старт план, kind: DateTime }
+      end_planned: { label: Финиш план, kind: DateTime }
+      start_actual: { label: Старт факт, kind: DateTime }
+      end_actual: { label: Финиш факт, kind: DateTime }
+      budget_planned: { label: BAC, kind: Number }
+      actual_cost: { label: AC, kind: Number }
+      percent_complete: { label: "% выполнения", kind: Number }
+      pv: { label: PV, kind: Number }
+      ev: { label: EV, kind: Number }
+      spi: { label: SPI, kind: Number }
+      cpi: { label: CPI, kind: Number }
+      eac: { label: EAC, kind: Number }
+      is_critical: { label: Критический путь, kind: Bool }
+      total_float: { label: Полный резерв, kind: Number }
+      notes: { label: Заметки, kind: String }
+
+  contracts:
+    name: Договоры
+    fields:
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      number: { label: Номер, kind: String, required: true }
+      title: { label: Название, kind: String, required: true }
+      counterparty: { label: Контрагент, kind: Record, options: { module: counterparties, labelField: name } }
+      amount: { label: Сумма, kind: Number }
+      start_date: { label: Начало, kind: DateTime }
+      end_date: { label: Окончание, kind: DateTime }
+      status: { label: Статус, kind: Select, options: { options: [draft, active, completed, terminated] } }
+      file: { label: Файл, kind: File }
+      terms: { label: Условия, kind: String }
+
+  documents:
+    name: Документы
+    fields:
+      title: { label: Название, kind: String, required: true }
+      number: { label: Номер, kind: String }
+      doc_type: { label: Тип, kind: Record, options: { module: document_types, labelField: name } }
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      wbs: { label: WBS, kind: Record, options: { module: wbs_items, labelField: name } }
+      contract: { label: Договор, kind: Record, options: { module: contracts, labelField: title } }
+      status: { label: Статус, kind: Select, options: { options: [draft, in_review, approved, rejected, archived] } }
+      sign_status: { label: УКЭП, kind: Select, options: { options: [unsigned, pending, signed, failed] } }
+      author: { label: Автор, kind: User }
+      assignee: { label: Согласующий, kind: User }
+      due_date: { label: Срок, kind: DateTime }
+      file: { label: Файл, kind: File }
+      notes: { label: Заметки, kind: String }
+
+  document_versions:
+    name: Версии документов
+    fields:
+      document: { label: Документ, kind: Record, options: { module: documents, labelField: title } }
+      version: { label: Версия, kind: Number }
+      file: { label: Файл, kind: File }
+      author: { label: Автор, kind: User }
+      comment: { label: Комментарий, kind: String }
+      created_on: { label: Дата, kind: DateTime }
+
+  approvals:
+    name: Согласования
+    fields:
+      document: { label: Документ, kind: Record, options: { module: documents, labelField: title } }
+      approver: { label: Согласующий, kind: User }
+      decision: { label: Решение, kind: Select, options: { options: [pending, approved, rejected, escalated] } }
+      due_date: { label: Срок, kind: DateTime }
+      decided_at: { label: Дата решения, kind: DateTime }
+      comment: { label: Комментарий, kind: String }
+
+  document_comments:
+    name: Комментарии к документам
+    fields:
+      document: { label: Документ, kind: Record, options: { module: documents, labelField: title } }
+      title: { label: Заголовок, kind: String }
+      content: { label: Текст, kind: String, required: true }
+      author: { label: Автор, kind: User }
+
+  risks:
+    name: Риски
+    fields:
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      wbs: { label: WBS, kind: Record, options: { module: wbs_items, labelField: name } }
+      title: { label: Название, kind: String, required: true }
+      probability: { label: Вероятность, kind: Select, options: { options: [low, medium, high, critical] } }
+      impact: { label: Влияние, kind: Select, options: { options: [low, medium, high, critical] } }
+      status: { label: Статус, kind: Select, options: { options: [open, mitigating, closed, accepted] } }
+      owner: { label: Владелец, kind: User }
+      mitigation: { label: Митигация, kind: String }
+      description: { label: Описание, kind: String }
+
+  change_requests:
+    name: RFC
+    fields:
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      wbs: { label: WBS, kind: Record, options: { module: wbs_items, labelField: name } }
+      title: { label: Название, kind: String, required: true }
+      rfc_type: { label: Тип, kind: Select, options: { options: [budget, schedule, scope] } }
+      status: { label: Статус, kind: Select, options: { options: [draft, in_review, approved, rejected] } }
+      delta_budget: { label: Влияние на бюджет, kind: Number }
+      delta_days: { label: Влияние на срок, kind: Number }
+      eac_before: { label: EAC до, kind: Number }
+      eac_after: { label: EAC после, kind: Number }
+      author: { label: Автор, kind: User }
+      justification: { label: Обоснование, kind: String }
+
+  change_log:
+    name: Журнал изменений
+    fields:
+      rfc: { label: RFC, kind: Record, options: { module: change_requests, labelField: title } }
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      summary: { label: Сводка, kind: String, required: true }
+      old_budget: { label: Бюджет было, kind: Number }
+      new_budget: { label: Бюджет стало, kind: Number }
+      old_end: { label: Финиш было, kind: DateTime }
+      new_end: { label: Финиш стало, kind: DateTime }
+      actor: { label: Кто изменил, kind: User }
+      changed_at: { label: Когда, kind: DateTime }
+
+  budget_lines:
+    name: Статьи бюджета
+    fields:
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      wbs: { label: WBS, kind: Record, options: { module: wbs_items, labelField: name } }
+      article: { label: Статья, kind: String, required: true }
+      planned: { label: План, kind: Number }
+      actual: { label: Факт, kind: Number }
+      reserve: { label: Резерв, kind: Number }
+      notes: { label: Заметки, kind: String }
+
+  cashflow_items:
+    name: Денежный поток
+    fields:
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      budget_line: { label: Статья, kind: Record, options: { module: budget_lines, labelField: article } }
+      date: { label: Дата, kind: DateTime }
+      amount: { label: Сумма, kind: Number }
+      direction: { label: Направление, kind: Select, options: { options: [inflow, outflow] } }
+      description: { label: Описание, kind: String }
+
+  progress_facts:
+    name: Факты прогресса
+    fields:
+      project: { label: Проект, kind: Record, options: { module: projects, labelField: name } }
+      wbs: { label: Работа, kind: Record, options: { module: wbs_items, labelField: name } }
+      quantity: { label: Объём, kind: Number }
+      unit: { label: Ед. изм., kind: String }
+      percent: { label: "% к работе", kind: Number }
+      cost: { label: Стоимость, kind: Number }
+      photo: { label: Фото, kind: File }
+      geo: { label: Геолокация, kind: Geometry }
+      author: { label: Автор, kind: User }
+      recorded_at: { label: Дата фиксации, kind: DateTime }
+      offline: { label: Офлайн, kind: Bool }
+      notes: { label: Заметки, kind: String }
+
+  ai_advisors:
+    name: ИИ-советчики
+    fields:
+      name: { label: Имя, kind: String, required: true }
+      role: { label: Роль, kind: Select, options: { options: [lawyer, fincontroller] } }
+      prompt: { label: Системный промпт, kind: String }
+      modules: { label: Модули, kind: String }
+      enabled: { label: Включён, kind: Bool }

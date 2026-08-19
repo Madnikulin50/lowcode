@@ -4,6 +4,7 @@
     v-if="isBalloon"
     class="mb-metric mb-metric--balloon"
     :class="{ 'mb-metric--drill': hover, 'mb-metric--empty': isEmpty }"
+    :title="unknownTitle"
   >
     <div
       class="mb-balloon fw-bolder rounded-pill d-flex align-items-center"
@@ -22,7 +23,7 @@
           <span v-if="showEmptyPlaceholder">{{ emptyText }}</span>
         </template>
         <template v-else>
-          <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+          <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
         </template>
       </div>
     </div>
@@ -36,6 +37,7 @@
       `mb-metric--${role}`,
       { 'mb-metric--drill': hover, 'mb-metric--empty': isEmpty },
     ]"
+    :title="unknownTitle"
   >
     <!-- Title role: large value as header -->
     <template v-if="role === 'title'">
@@ -50,7 +52,7 @@
             <span v-if="showEmptyPlaceholder" class="rb-empty">{{ emptyText }}</span>
           </template>
           <template v-else>
-            <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
           </template>
         </span>
       </div>
@@ -71,7 +73,7 @@
             <span v-if="showEmptyPlaceholder" class="rb-empty">{{ emptyText }}</span>
           </template>
           <template v-else>
-            <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
           </template>
         </span>
       </div>
@@ -91,7 +93,7 @@
             <span v-if="showEmptyPlaceholder" class="rb-empty">{{ emptyText }}</span>
           </template>
           <template v-else>
-            <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
           </template>
         </span>
       </div>
@@ -111,7 +113,7 @@
               <span v-if="showEmptyPlaceholder" class="rb-empty">{{ emptyText }}</span>
             </template>
             <template v-else>
-              <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+              <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
             </template>
           </span>
         </div>
@@ -138,7 +140,7 @@
               <span v-if="showEmptyPlaceholder" class="rb-empty">{{ emptyText }}</span>
             </template>
             <template v-else>
-              <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+              <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
             </template>
           </span>
         </div>
@@ -157,7 +159,7 @@
             <span v-if="showEmptyPlaceholder" class="rb-empty">{{ emptyText }}</span>
           </template>
           <template v-else>
-            <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
           </template>
         </span>
       </template>
@@ -170,6 +172,7 @@
     :style="genStyle(metric.valueStyle)"
     class="text-center"
     :class="{ 'h-100': metric.valueStyle?.notFitVertical !== true, 'mb-metric--drill': hover }"
+    :title="unknownTitle"
   >
     <div
       class="d-none d-print-flex w-100 align-items-center justify-content-center overflow-hidden metric-value"
@@ -179,9 +182,9 @@
         <span v-if="showEmptyPlaceholder" class="rb-empty">{{ emptyText }}</span>
       </template>
       <template v-else>
-        <template v-if="metric.prefix">{{ metric.prefix }}</template>
+        <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>
         {{ displayValue }}
-        <template v-if="metric.suffix">{{ metric.suffix }}</template>
+        <template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
       </template>
     </div>
 
@@ -201,9 +204,9 @@
             <span v-if="showEmptyPlaceholder" class="rb-empty">{{ emptyText }}</span>
           </template>
           <template v-else>
-            <template v-if="metric.prefix">{{ metric.prefix }}</template>
+            <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>
             {{ displayValue }}
-            <template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
           </template>
         </span>
       </div>
@@ -226,9 +229,9 @@
           <template v-if="metric.showLabel">{{ metric.label }}:&nbsp;</template>
           <template v-if="isEmpty">{{ showEmptyPlaceholder ? emptyText : '' }}</template>
           <template v-else>
-            <template v-if="metric.prefix">{{ metric.prefix }}</template>
+            <template v-if="metric.prefix && !isUnknown">{{ metric.prefix }}</template>
             {{ displayValue }}
-            <template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <template v-if="metric.suffix && !isUnknown">{{ metric.suffix }}</template>
           </template>
         </text>
       </svg>
@@ -239,7 +242,7 @@
 <script setup>
 import { ref, computed, watch, onBeforeUnmount, nextTick, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fmt } from 'corteza-lib/js/dist'
+import { fmt, isUnknownTotal } from 'corteza-lib/js/dist'
 
 const { t } = useI18n({ useScope: 'global' })
 
@@ -272,12 +275,21 @@ const showEmptyPlaceholder = computed(() => props.options.showEmptyPlaceholder !
 
 const emptyText = computed(() => t('metric.emptyPlaceholder') || t('record.emptyPlaceholder') || '—')
 
+const isUnknown = computed(() => {
+  if (props.value?.unknown) return true
+  return isUnknownTotal(props.value?.value)
+})
+
+const unknownTitle = computed(() => isUnknown.value ? t('metric.countUnavailableHint') : undefined)
+
 const isEmpty = computed(() => {
+  if (isUnknown.value) return false
   const v = props.value?.value
   return v === undefined || v === null || v === '' || (typeof v === 'number' && Number.isNaN(v))
 })
 
 const displayValue = computed(() => {
+  if (isUnknown.value) return t('metric.countUnavailable')
   const v = props.value?.value
   if (v === undefined || v === null || v === '') return ''
   const n = typeof v === 'number' ? v : Number(v)
@@ -310,6 +322,7 @@ const THRESHOLD_ICONS = {
 
 /** Highest matching threshold for current value (value ≥ threshold). */
 function matchThreshold (rawValue, thresholds = []) {
+  if (isUnknown.value || rawValue === undefined || rawValue === null || rawValue === '') return undefined
   if (!thresholds?.length) return undefined
   const n = typeof rawValue === 'number' ? rawValue : Number(rawValue)
   if (!Number.isFinite(n)) return undefined
@@ -396,10 +409,12 @@ function genStyle (s = {}, forLabel = false) {
     fontSize: s.fontSize ? s.fontSize + 'px' : undefined,
     color: forLabel ? (s.labelColor || s.color) : s.color,
   }
-  if (s.colorThresholds && forLabel === false) {
+  if (s.colorThresholds && forLabel === false && !isUnknown.value) {
     const val = props.value?.value
-    const { variant } = [...s.colorThresholds].sort((a, b) => b.value - a.value).find(t => val >= t.value) || {}
-    if (variant !== undefined) { d.color = variant; d.fill = variant }
+    if (val !== undefined && val !== null && val !== '') {
+      const { variant } = [...s.colorThresholds].sort((a, b) => b.value - a.value).find(t => val >= t.value) || {}
+      if (variant !== undefined) { d.color = variant; d.fill = variant }
+    }
   }
   for (const v of Object.keys(d)) { if (d[v] === undefined) delete d[v] }
   if (d.color) d.color = getColor(d.color)

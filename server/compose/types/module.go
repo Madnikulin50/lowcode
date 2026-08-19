@@ -177,7 +177,9 @@ func (m Module) HasIssues() bool {
 }
 
 func (m Module) CanSoftDelete() bool {
-	if m.Config.DAL.SystemFieldEncoding.DeletedAt.Omit {
+	// Encoding strategy may be unset (nil) — that means the default strategy
+	// is used (system field/column present), so soft delete is supported.
+	if m.Config.DAL.SystemFieldEncoding.DeletedAt != nil && m.Config.DAL.SystemFieldEncoding.DeletedAt.Omit {
 		return false
 	}
 	return true

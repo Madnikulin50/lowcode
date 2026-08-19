@@ -6,6 +6,7 @@ import (
 
 type Chain struct {
 	ID          string          `json:"id"`
+	NamespaceID uint64          `json:"namespaceID,omitempty"`
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	Nodes       []ChainNode     `json:"nodes"`

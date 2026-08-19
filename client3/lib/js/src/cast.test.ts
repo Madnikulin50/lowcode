@@ -66,5 +66,15 @@ describe('cast', () => {
       Apply(foo, { baz: null }, String, 'baz')
       expect(foo.baz).to.equal('')
     })
+
+    it('should copy from a proxy that hides hasOwnProperty (Vue 3)', () => {
+      const src = new Proxy({ baz: 'from-proxy' }, {
+        get (t, p) { return (t as any)[p] },
+        getOwnPropertyDescriptor () { return undefined },
+        ownKeys () { return [] },
+      })
+      Apply(foo, src, String, 'baz')
+      expect(foo.baz).to.equal('from-proxy')
+    })
   })
 })

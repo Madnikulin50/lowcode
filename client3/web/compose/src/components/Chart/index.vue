@@ -14,6 +14,15 @@
       {{ error }}
     </label>
 
+    <div
+      v-else-if="unknownTotal"
+      class="d-flex flex-column align-items-center justify-content-center flex-fill text-secondary p-3 text-center"
+      :title="t('chart.countUnavailableHint')"
+    >
+      <span class="fs-4">—</span>
+      <small>{{ t('chart.countUnavailable') }}</small>
+    </div>
+
     <c-chart
       v-else-if="renderer"
       :chart="renderer"
@@ -111,7 +120,7 @@ import { ref, computed, watch, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chartConstructor } from 'corteza-webapp-compose/src/lib/charts'
 import { ensureMapRegistered } from 'corteza-webapp-compose/src/lib/chart-maps'
-import { compose } from 'corteza-lib/js/dist'
+import { compose, isUnknownReportCount } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
 import { useStore } from '../../store'
 const { CChart } = components
@@ -145,6 +154,7 @@ const error = ref(undefined)
 const processing = ref(false)
 const valueMap = ref(new Map())
 const renderer = ref(undefined)
+const unknownTotal = ref(false)
 const tableData = ref({ columns: [], rows: [] })
 const tableVisible = ref(false)
 
@@ -166,12 +176,14 @@ watch(() => props.record?.recordID, () => {
 onBeforeUnmount(() => {
   processing.value = false
   renderer.value = undefined
+  unknownTotal.value = false
   valueMap.value = new Map()
 })
 
 async function updateChart () {
   error.value = undefined
   renderer.value = undefined
+  unknownTotal.value = false
 
   const [report = {}] = props.chart.config?.reports || []
 
@@ -203,6 +215,10 @@ async function updateChart () {
       data = await chart.fetchReports({ reporter: props.reporter })
     }
 
+    if (data?.unknownTotal || (Array.isArray(data?.rows) && data.rows.some(isUnknownReportCount))) {
+      unknownTotal.value = true
+      renderer.value = undefined
+    } else {
     if (!!data.labels && Array.isArray(data.labels)) {
       const [dimension = {}] = report.dimensions
       let { field } = dimension
@@ -258,6 +274,7 @@ async function updateChart () {
     await Promise.all(mapTypes.map(name => ensureMapRegistered(name)))
 
     renderer.value = chart.makeOptions(data)
+    }
   } catch (e) {
     error.value = e
     processing.value = false

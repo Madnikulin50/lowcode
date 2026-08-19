@@ -171,7 +171,7 @@ func (svc *connectorSvc) fetchREST(ctx context.Context, mod *types.Module, filte
 	}
 
 	outFilter = filter
-	outFilter.Total = uint(len(set))
+	outFilter.Total = len(set)
 
 	return set, outFilter, nil
 }
@@ -223,7 +223,7 @@ func (svc *connectorSvc) fetchGraphQL(ctx context.Context, mod *types.Module, fi
 	}
 
 	outFilter = filter
-	outFilter.Total = uint(len(set))
+	outFilter.Total = len(set)
 
 	return set, outFilter, nil
 }
@@ -286,7 +286,7 @@ func (svc *connectorSvc) fetchElasticSearch(ctx context.Context, mod *types.Modu
 	}
 
 	outFilter = filter
-	outFilter.Total = uint(len(set))
+	outFilter.Total = len(set)
 
 	return set, outFilter, nil
 }
@@ -483,7 +483,7 @@ func (svc *connectorSvc) fetchDB(ctx context.Context, mod *types.Module, filter 
 	}
 
 	outFilter = filter
-	outFilter.Total = uint(len(set))
+	outFilter.Total = len(set)
 
 	return set, outFilter, nil
 }

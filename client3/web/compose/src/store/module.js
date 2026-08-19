@@ -12,7 +12,11 @@ export const useModuleStore = defineStore('module', {
 
   getters: {
     getByID: (state) => {
-      return (ID) => state.set.find(({ moduleID }) => ID === moduleID)
+      return (ID) => {
+        if (ID == null || ID === '') return undefined
+        const sid = String(ID)
+        return state.set.find(({ moduleID }) => String(moduleID) === sid)
+      }
     },
   },
 

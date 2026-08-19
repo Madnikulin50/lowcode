@@ -381,10 +381,66 @@ func (postgresDialect) ColumnFits(target, assert *ddl.Column) bool {
 	return baseMatch
 }
 
+// jsonStoredRefContains rewrites Record/User ID equality on JSON-encoded
+// attributes to jsonb containment:
+//
+//	values @> jsonb_build_object(?::text, jsonb_build_array(to_jsonb(?::text)))
+//
+// which is `values @> '{"device":["ID"]}'`. A seq-scan of `values->'f'->>0`
+// plus ORDER BY cannot use a GIN index and can run unbounded; containment can.
+// Both binds must be explicitly typed: jsonb_build_object/jsonb_build_array
+// take VARIADIC "any", and PostgreSQL cannot infer parameter types otherwise
+// (`pq: could not determine data type of parameter $N`).
+//
+// Only TypeRef (Record/User/File). TypeID is recordID/moduleID/namespaceID;
+// those live in columns and must not be rewritten to @>.
+func jsonStoredRefContains(n *ql.ASTNode, args ...exp.Expression) (exp.Expression, bool, error) {
+	if n == nil || len(n.Args) == 0 || n.Args[0] == nil || len(args) < 2 {
+		return nil, false, nil
+	}
+
+	attr, _ := n.Args[0].Meta["dal.Attribute"].(*dal.Attribute)
+	model, _ := n.Args[0].Meta["dal.Model"].(*dal.Model)
+	if attr == nil || model == nil {
+		return nil, false, nil
+	}
+
+	// Only Record/User/File refs stored in values JSON. TypeID is used for
+	// recordID/moduleID/namespaceID columns; rewriting those to @> empties
+	// every unfiltered list (or errors with "operator does not exist").
+	switch attr.Type.(type) {
+	case *dal.TypeRef:
+	default:
+		return nil, false, nil
+	}
+
+	if _, isJSON := attr.Store.(*dal.CodecRecordValueSetJSON); !isJSON {
+		return nil, false, nil
+	}
+
+	ident := exp.NewIdentifierExpression("", model.Ident, attr.StoreIdent())
+	expr := exp.NewLiteralExpression(
+		"? @> jsonb_build_object(?::text, jsonb_build_array(to_jsonb(?::text)))",
+		ident,
+		attr.Ident,
+		args[1],
+	)
+	return expr, true, nil
+}
+
 func (d postgresDialect) ExprHandler(n *ql.ASTNode, args ...exp.Expression) (expr exp.Expression, err error) {
 	switch ref := strings.ToLower(n.Ref); ref {
 	case "concat":
 		return castColumnDataToText("CONCAT", args...)
+
+	case "eq":
+		if expr, ok, err := jsonStoredRefContains(n, args...); ok || err != nil {
+			return expr, err
+		}
+		return drivers.OpHandlerEq(d, n, args...)
+
+	case "ne":
+		return drivers.OpHandlerNe(d, n, args...)
 
 	case "in":
 		return drivers.OpHandlerIn(d, n, args...)

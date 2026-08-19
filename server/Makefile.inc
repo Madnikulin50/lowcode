@@ -21,9 +21,7 @@ PROTOGEN_GRPC = $(GOPATH)/bin/protoc-gen-go-grpc
 GIN           = $(GOPATH)/bin/gin
 STATIK        = $(GOPATH)/bin/statik
 MODOUTDATED   = $(GOPATH)/bin/go-mod-outdated
-CUE           = $(GOPATH)/bin/cue
 CODEGEN       = $(GOPATH)/bin/corteza-codegen
-JSONTPLEXEC   = $(GOPATH)/bin/corteza-json-tpl-exec
 
 PROTOC      = /usr/local/bin/protoc
 FSWATCH     = /usr/local/bin/fswatch
@@ -32,7 +30,7 @@ FSWATCH     = /usr/local/bin/fswatch
 BINS         = $(GOCRITIC) $(MOCKGEN) $(GOTEST) $(STATICCHECK) $(PROTOGEN) $(GIN) $(STATIK)
 
 # Corteza's tools
-CORTEZA_BINS = $(CODEGEN) $(JSONTPLEXEC)
+CORTEZA_BINS = $(CODEGEN)
 
 
 ########################################################################################################################
@@ -64,27 +62,13 @@ $(STATIK):
 $(MODOUTDATED):
 	$(GOINSTALL) github.com/psampaz/go-mod-outdated@latest
 
-$(CUE):
-	$(GOINSTALL) cuelang.org/go/cmd/cue@v0.4.2
-
 $(CODEGEN):
 	$(GO) build -o $@ $(ROOT_DIR)/cmd/codegen/main.go
-
-$(JSONTPLEXEC):
-	$(GO) build -o $@ $(ROOT_DIR)/codegen/tool
 
 clean-tools:
 	rm -f $(BINS)
 
 clean-corteza-tools:
 	rm -f $(CORTEZA_BINS)
-
-########################################################################################################################
-
-COLOUR_GREEN=\033[0;32m
-COLOUR_YELLOW=\033[0;33m
-COLOUR_RED=\033[0;31m
-COLOUR_BLUE=\033[0;34m
-COLOUR_END=\033[0m
 
 #

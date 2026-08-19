@@ -317,6 +317,13 @@ func (def *Aggregate) determineAttrType(base AggregateAttr, ss []AttributeMappin
 	return
 }
 
+// IsDummyGroup is true for the placeholder group injected when there are no
+// dimensions (scalar COUNT/SUM). RDBMS SQL omits it from SELECT; scan buffers
+// must omit it too or Scan fails with a column-count mismatch.
+func (a AggregateAttr) IsDummyGroup() bool {
+	return a.Identifier == "" && strings.TrimSpace(a.RawExpr) == "" && a.Expression == nil && !a.MultiValue
+}
+
 func (a AggregateAttr) toSimpleAttr() SimpleAttr {
 	if a.Type == nil {
 		fmt.Printf("null attribute type for %v\n", a.Label)

@@ -67,6 +67,64 @@ func TestModelSupportsToolsDeniedOverridesCache(t *testing.T) {
 	}
 }
 
+func TestPickInstalledModel(t *testing.T) {
+	installed := []string{
+		"qwen3:latest",
+		"qwen3:32b",
+		"deepseek-r1:latest",
+		"llama3.2:latest",
+	}
+	cases := map[string]string{
+		"qwen3:latest":    "qwen3:latest",
+		"qwen3:8b":        "qwen3:latest",
+		"qwen3":           "qwen3:latest",
+		"qwen3:32b":       "qwen3:32b",
+		"deepseek-r1:7b":  "deepseek-r1:latest",
+		"missing:latest":  "",
+		"llama3.2:latest": "llama3.2:latest",
+	}
+	for in, want := range cases {
+		if got := pickInstalledModel(in, installed); got != want {
+			t.Errorf("pickInstalledModel(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestModelNamesMatch(t *testing.T) {
+	if !modelNamesMatch("deepseek-r1:latest", "deepseek-r1:latest") {
+		t.Fatal("exact should match")
+	}
+	if !modelNamesMatch("qwen3", "qwen3:latest") {
+		t.Fatal("tagless vs :latest should match")
+	}
+	if modelNamesMatch("qwen3:8b", "qwen3:latest") {
+		t.Fatal("size tag vs :latest must not match without resolve")
+	}
+	if modelNamesMatch("qwen3:8b", "qwen3:32b") {
+		t.Fatal("different sizes must not match")
+	}
+}
+
+func TestIsLikelyChatModel(t *testing.T) {
+	if isLikelyChatModel("nomic-embed-text:latest", "nomic-bert") {
+		t.Fatal("embed models must be excluded")
+	}
+	if isLikelyChatModel("x/z-image-turbo:latest", "") {
+		t.Fatal("image models must be excluded")
+	}
+	if !isLikelyChatModel("deepseek-r1:latest", "qwen3") {
+		t.Fatal("chat models must be included")
+	}
+}
+
+func TestPreferDefaultModel(t *testing.T) {
+	t.Setenv("CHAT_MODEL", "deepseek-r1:latest")
+	got := preferDefaultModel([]string{"qwen3.6:latest", "deepseek-r1:latest", "llama3.2:latest"})
+	if got[0] != "deepseek-r1:latest" {
+		t.Fatalf("default should be first, got %v", got)
+	}
+}
+
 func TestDefaultModelName(t *testing.T) {
 	t.Setenv("CHAT_MODEL", "")
 	if DefaultModelName() != DefaultModel {

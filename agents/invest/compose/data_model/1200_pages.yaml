@@ -1,0 +1,153 @@
+namespace: invest
+pages:
+  dashboard:
+    title: Дашборд
+    handle: dashboard
+    blocks:
+    - title: Сводка
+      kind: Metric
+      xywh: [0, 0, 48, 14]
+    - title: EVM
+      kind: RuleChain
+      xywh: [0, 14, 16, 10]
+      options:
+        chain: invest-recalculate-evm
+    - title: CPM
+      kind: RuleChain
+      xywh: [16, 14, 16, 10]
+      options:
+        chain: invest-critical-path
+    - title: Алерты
+      kind: RuleChain
+      xywh: [32, 14, 16, 10]
+      options:
+        chain: invest-threshold-alert
+    - title: Документы по статусу
+      kind: Chart
+      xywh: [0, 24, 16, 18]
+      options:
+        chart: docs-by-status
+    - title: RFC по статусу
+      kind: Chart
+      xywh: [16, 24, 16, 18]
+      options:
+        chart: rfc-by-status
+    - title: Риски по влиянию
+      kind: Chart
+      xywh: [32, 24, 16, 18]
+      options:
+        chart: risks-by-impact
+    - title: График WBS
+      kind: Chart
+      xywh: [0, 42, 48, 22]
+      options:
+        chart: wbs-gantt
+
+  projects:
+    title: Проекты
+    handle: projects
+    pages:
+      project:
+        title: Проект
+        handle: project
+        module: projects
+
+  wbs:
+    title: WBS
+    handle: wbs
+    pages:
+      wbs-item:
+        title: Элемент WBS
+        handle: wbs-item
+        module: wbs_items
+
+  documents:
+    title: Документы
+    handle: documents
+    blocks:
+    - title: Черновик
+      kind: RecordOrganizer
+    - title: На согласовании
+      kind: RecordOrganizer
+    - title: Утверждён
+      kind: RecordOrganizer
+    - title: Отклонён
+      kind: RecordOrganizer
+    pages:
+      document:
+        title: Документ
+        handle: document
+        module: documents
+        blocks:
+        - title: На согласование
+          kind: RuleChain
+          options:
+            chain: invest-submit-approval
+        - title: Утвердить
+          kind: RuleChain
+          options:
+            chain: invest-approve-document
+        - title: Отклонить
+          kind: RuleChain
+          options:
+            chain: invest-reject-document
+        - title: Комментарии
+          kind: Comment
+
+  contracts:
+    title: Договоры
+    handle: contracts
+    pages:
+      contract:
+        title: Договор
+        handle: contract
+        module: contracts
+
+  risks:
+    title: Риски
+    handle: risks
+    pages:
+      risk:
+        title: Риск
+        handle: risk
+        module: risks
+
+  changes:
+    title: Изменения
+    handle: changes
+    pages:
+      change-request:
+        title: RFC
+        handle: change-request
+        module: change_requests
+
+  budget:
+    title: Бюджет
+    handle: budget
+    pages:
+      budget-line:
+        title: Статья бюджета
+        handle: budget-line
+        module: budget_lines
+
+  progress:
+    title: Прогресс
+    handle: progress
+    pages:
+      progress-fact:
+        title: Факт прогресса
+        handle: progress-fact
+        module: progress_facts
+
+  nsi:
+    title: НСИ
+    handle: nsi
+
+  advisors:
+    title: ИИ-советчики
+    handle: advisors
+    blocks:
+    - title: Юрист
+      kind: AiChat
+    - title: Финконтролёр
+      kind: AiChat

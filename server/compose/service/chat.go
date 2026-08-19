@@ -1002,7 +1002,7 @@ func (c *chatService) ModelsInfo(ctx context.Context) (map[string]any, error) {
 	cfg := chat.CurrentConfig()
 	return map[string]any{
 		"models":     models,
-		"default":    chat.DefaultModelName(),
+		"default":    chat.ResolveInstalledModel(chat.DefaultModelName()),
 		"enabled":    cfg.Enabled,
 		"ollamaURL":  chat.EffectiveOllamaURL(),
 		"ollamaFrom": ollamaURLSource(),

@@ -154,6 +154,24 @@ function modelLabel (id) {
   return tag ? `${pretty} (${tag})` : pretty
 }
 
+function modelBase (id) {
+  const leaf = String(id || '').split('/').pop()
+  return leaf.split(':')[0]
+}
+
+function pickChatModel (models, saved, serverDefault) {
+  if (saved && models.includes(saved)) return saved
+  if (serverDefault && models.includes(serverDefault)) return serverDefault
+  const defBase = modelBase(serverDefault)
+  if (defBase) {
+    const latest = models.find(m => modelBase(m) === defBase && (m === defBase || m.endsWith(':latest')))
+    if (latest) return latest
+    const same = models.find(m => modelBase(m) === defBase)
+    if (same) return same
+  }
+  return models[0]
+}
+
 function warmUp () {
   if (!selectedModel.value) return
   const seq = ++warmUpSeq
@@ -176,13 +194,7 @@ function loadModels () {
     }
     let saved = ''
     try { saved = localStorage.getItem('aiChat.model') || '' } catch (e) {}
-    if (saved && models.includes(saved)) {
-      selectedModel.value = saved
-    } else if (serverDefault && models.includes(serverDefault)) {
-      selectedModel.value = serverDefault
-    } else {
-      selectedModel.value = models[0]
-    }
+    selectedModel.value = pickChatModel(models, saved, serverDefault)
     try {
       localStorage.setItem('aiChat.model', selectedModel.value)
     } catch (e) {}

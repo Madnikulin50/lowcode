@@ -3,10 +3,11 @@ package rulesgo
 import "context"
 
 type DefaultConfig struct {
-	CRUD       CRUDService
-	Mail       MailService
-	AICall     func(ctx context.Context, agent, prompt, model string) (string, error)
-	ScriptExec func(ctx context.Context, code string, ec *ExecutionContext) (map[string]interface{}, error)
+	CRUD        CRUDService
+	Mail        MailService
+	AICall      func(ctx context.Context, agent, prompt, model string) (string, error)
+	ScriptExec  func(ctx context.Context, code string, ec *ExecutionContext) (map[string]interface{}, error)
+	DetachStart DetachStartFunc
 }
 
 func DefaultRegistry(cfg *DefaultConfig) *Registry {
@@ -24,6 +25,8 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 	}
 
 	r.Register("crud", crud)
+	r.Register("crud.upsert", &upsertExecutor{svc: crud.svc})
+	r.Register("foreach", &foreachExecutor{})
 	r.Register("mail", mail)
 	r.Register("http", &httpExecutor{})
 	r.Register("condition", &conditionExecutor{})
@@ -36,6 +39,11 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 
 	r.Register("workflow", &wfExecutor{})
 	r.Register("fork", &forkExecutor{})
+	var detachStart DetachStartFunc
+	if cfg != nil {
+		detachStart = cfg.DetachStart
+	}
+	r.Register("detach", &detachExecutor{start: detachStart})
 
 	r.Register("gonec", &gonecExecutor{})
 

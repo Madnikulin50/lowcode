@@ -1,0 +1,59 @@
+namespace: invest
+charts:
+  docs-by-status:
+    name: Документы по статусу
+    config:
+      reports:
+      - dimensions:
+        - field: status
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: documents
+      colorScheme: tableau.Tableau10
+
+  rfc-by-status:
+    name: RFC по статусу
+    config:
+      reports:
+      - dimensions:
+        - field: status
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: change_requests
+      colorScheme: tableau.Tableau10
+
+  risks-by-impact:
+    name: Риски по влиянию
+    config:
+      reports:
+      - dimensions:
+        - field: impact
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: risks
+      colorScheme: tableau.Tableau10
+
+  wbs-gantt:
+    name: График WBS
+    config:
+      reports:
+      - dimensions:
+        - field: name
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: gantt
+          startField: start_planned
+          endField: end_planned
+        module: wbs_items
+      colorScheme: tableau.Tableau10

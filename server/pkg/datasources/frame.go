@@ -373,7 +373,7 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 				counter++
 			}
 			builder.frame.Paging.PageNavigation = append(builder.frame.Paging.PageNavigation, pg)
-			builder.frame.Paging.Total = counter
+			builder.frame.Paging.Total = int(counter)
 		}
 	}
 

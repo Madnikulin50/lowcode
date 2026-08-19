@@ -628,7 +628,6 @@ func (f ModuleField) IsSensitive() bool {
 
 func (f *ModuleField) setValue(name string, pos uint, value any) (err error) {
 	switch name {
-	// @todo consider moving this to the .cue definition; figure out why it wasn't yet
 	case "NamespaceID", "namespaceID":
 		f.NamespaceID = cast.ToUint64(value)
 	case "Options.ModuleID":

@@ -185,6 +185,8 @@ chart:
     empty: No data to display
     modal:
       title: Chart data
+  countUnavailable: Count unavailable
+  countUnavailableHint: Could not count records in time
   filter:
     modal:
       title: Chart Filter
@@ -302,6 +304,8 @@ metric:
   defaultMetricLabel: Unnamed metric
   likeRecordList: Display like a record
   emptyPlaceholder: "—"
+  countUnavailable: Count unavailable
+  countUnavailableHint: Could not count records in time
   appearance:
     label: Appearance
     density: Density
@@ -693,6 +697,7 @@ recordList:
     next: Next
     prev: Previous
     showing: "{{from}} - {{to}} of {{count}} records"
+    unknownTotal: "{{from}} - {{to}} of ∞"
     single_one: One record
     single_other: "{{count}} records"
     recordsPerPage: Per page
@@ -1063,6 +1068,8 @@ progress:
     label: Field
     select: Select field
   label: Progress bar
+  countUnavailable: Count unavailable
+  countUnavailableHint: Could not count records in time
   module:
     select: Select module
     label: Module
