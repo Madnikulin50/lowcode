@@ -35,6 +35,7 @@ func registerCMDBChains(engine *rulesgo.EngineWithPersistence) {
 		return m.ID
 	}
 	devices := mod("devices")
+	services := mod("services")
 	vulns := mod("vulnerabilities")
 	scans := mod("scans")
 	agentURL := strings.TrimRight(os.Getenv("CMDB_AGENT_URL"), "/")
@@ -42,7 +43,7 @@ func registerCMDBChains(engine *rulesgo.EngineWithPersistence) {
 		agentURL = "http://localhost:8085/api"
 	}
 
-	for _, c := range cmdbRuleChains(ns.ID, devices, vulns, scans, agentURL) {
+	for _, c := range cmdbRuleChains(ns.ID, devices, services, vulns, scans, agentURL) {
 		engine.RegisterChain(c)
 		log.Printf("[bridge] registered CMDB chain: %s", c.ID)
 	}
@@ -64,7 +65,7 @@ func ensureChainAvailable(ctx context.Context, engine *rulesgo.EngineWithPersist
 	registerCMDBChains(engine)
 }
 
-func cmdbRuleChains(nsID, devices, vulns, scans uint64, agentURL string) []*rulesgo.Chain {
+func cmdbRuleChains(nsID, devices, services, vulns, scans uint64, agentURL string) []*rulesgo.Chain {
 	return []*rulesgo.Chain{
 		{
 			ID:          "cmdb-trigger-scan",
@@ -98,7 +99,7 @@ func cmdbRuleChains(nsID, devices, vulns, scans uint64, agentURL string) []*rule
 					Config: jsonRaw(fmt.Sprintf(`{
 						"url":%q,
 						"method":"POST",
-						"body":"{\"cidr\":\"{{cidr}}\",\"namespaceID\":{{namespaceID}},\"token\":\"{{authToken}}\",\"scanRecordID\":\"{{createdRecordID}}\",\"callbackUrl\":\"{{callbackUrl}}\"}",
+						"body":"{\"cidr\":\"{{cidr}}\",\"namespaceID\":\"{{namespaceID}}\",\"token\":\"{{authToken}}\",\"scanRecordID\":\"{{createdRecordID}}\",\"callbackUrl\":\"{{callbackUrl}}\"}",
 						"timeout":30
 					}`, agentURL+"/scan")),
 				},
@@ -122,7 +123,7 @@ func cmdbRuleChains(nsID, devices, vulns, scans uint64, agentURL string) []*rule
 				{From: "http_scan", To: "detach_poll"},
 			},
 		},
-		cmdbIngestChain(nsID, devices, scans),
+		cmdbIngestChain(nsID, devices, services, vulns, scans),
 		{
 			ID:          "cmdb-high-vuln-alert",
 			NamespaceID: nsID,
@@ -250,12 +251,12 @@ func cmdbRuleChains(nsID, devices, vulns, scans uint64, agentURL string) []*rule
 	}
 }
 
-func cmdbIngestChain(nsID, devices, scans uint64) *rulesgo.Chain {
+func cmdbIngestChain(nsID, devices, services, vulns, scans uint64) *rulesgo.Chain {
 	return &rulesgo.Chain{
 		ID:          "cmdb-ingest-scan",
 		NamespaceID: nsID,
 		Name:        "CMDB: ingest agent job",
-		Description: "Webhook/poll envelope → update scans row and upsert devices.",
+		Description: "Webhook/poll envelope → update scans row, upsert devices, services and vulnerabilities.",
 		EntryNode:   "update_scan",
 		Nodes: []rulesgo.ChainNode{
 			{
@@ -268,6 +269,8 @@ func cmdbIngestChain(nsID, devices, scans uint64) *rulesgo.Chain {
 					"moduleID":"%d",
 					"moduleHandle":"scans",
 					"recordID":"{{scanRecordID}}",
+					"omitEmpty":true,
+					"continueOnError":true,
 					"fields":{
 						"status":"{{status}}",
 						"progress":"{{progress}}",
@@ -295,6 +298,8 @@ func cmdbIngestChain(nsID, devices, scans uint64) *rulesgo.Chain {
 					"moduleID":"%d",
 					"moduleHandle":"devices",
 					"matchBy":["mac_address","ip_address","hostname"],
+					"omitEmpty":true,
+					"resultVar":"deviceRecordID",
 					"fields":{
 						"ip_address":"{{item.ip}}",
 						"mac_address":"{{item.mac}}",
@@ -312,10 +317,72 @@ func cmdbIngestChain(nsID, devices, scans uint64) *rulesgo.Chain {
 					}
 				}`, nsID, devices)),
 			},
+			{
+				ID:     "foreach_ports",
+				Type:   "foreach",
+				Label:  "Each open port",
+				Config: jsonRaw(`{"items":"item.openPorts","itemVar":"port"}`),
+			},
+			{
+				ID:    "upsert_service",
+				Type:  "crud.upsert",
+				Label: "Upsert service",
+				Config: jsonRaw(fmt.Sprintf(`{
+					"namespaceID":"%d",
+					"moduleID":"%d",
+					"moduleHandle":"services",
+					"matchBy":["device","port","proto"],
+					"matchAll":true,
+					"omitEmpty":true,
+					"continueOnError":true,
+					"fields":{
+						"device":"{{deviceRecordID}}",
+						"port":"{{port.port}}",
+						"proto":"{{port.proto}}",
+						"service":"{{port.service}}",
+						"version":"{{port.version}}",
+						"banner":"{{port.banner}}"
+					}
+				}`, nsID, services)),
+			},
+			{
+				ID:     "foreach_vulns",
+				Type:   "foreach",
+				Label:  "Each vulnerability",
+				Config: jsonRaw(`{"items":"item.vulnerabilities","itemVar":"vuln"}`),
+			},
+			{
+				ID:    "upsert_vuln",
+				Type:  "crud.upsert",
+				Label: "Upsert vulnerability",
+				Config: jsonRaw(fmt.Sprintf(`{
+					"namespaceID":"%d",
+					"moduleID":"%d",
+					"moduleHandle":"vulnerabilities",
+					"matchBy":["device","name"],
+					"matchAll":true,
+					"omitEmpty":true,
+					"continueOnError":true,
+					"fields":{
+						"device":"{{deviceRecordID}}",
+						"name":"{{vuln.name}}",
+						"severity":"{{vuln.severity}}",
+						"cve":"{{vuln.cve}}",
+						"description":"{{vuln.description}}",
+						"remediation":"{{vuln.remediation}}",
+						"status":"open",
+						"detected_at":"{{item.lastSeen}}"
+					}
+				}`, nsID, vulns)),
+			},
 		},
 		Edges: []rulesgo.ChainEdge{
 			{From: "update_scan", To: "foreach_items"},
 			{From: "foreach_items", To: "upsert_device"},
+			{From: "foreach_items", To: "foreach_ports"},
+			{From: "foreach_ports", To: "upsert_service"},
+			{From: "foreach_items", To: "foreach_vulns"},
+			{From: "foreach_vulns", To: "upsert_vuln"},
 		},
 	}
 }

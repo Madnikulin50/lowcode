@@ -113,7 +113,7 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 				bodyIDs = nextNodeIDs(edgeMap[currentID], ec)
 			}
 			start := time.Now()
-			nr, err := e.runForeach(ctx, node, nodeMap, bodyIDs, ec)
+			nr, err := e.runForeach(ctx, node, nodeMap, edgeMap, bodyIDs, ec)
 			elapsed := time.Since(start)
 			result.Nodes = append(result.Nodes, nr)
 			if err != nil {
@@ -123,9 +123,7 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 				break
 			}
 			log.Printf("[rulesgo] node %s (foreach) OK in %v items=%v", node.ID, elapsed, nr.Output["count"])
-			for _, bid := range bodyIDs {
-				visited[bid] = true
-			}
+			markDescendants(currentID, edgeMap, visited)
 			continue
 		}
 
@@ -193,6 +191,16 @@ func edgesTo(edges []ChainEdge) []string {
 		}
 	}
 	return result
+}
+
+func markDescendants(from string, edgeMap map[string][]ChainEdge, visited map[string]bool) {
+	for _, to := range edgesTo(edgeMap[from]) {
+		if visited[to] {
+			continue
+		}
+		visited[to] = true
+		markDescendants(to, edgeMap, visited)
+	}
 }
 
 func (e *Engine) ExportChain(chainID string) ([]byte, error) {

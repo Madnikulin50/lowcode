@@ -43,4 +43,10 @@ func TestResolveTemplateJSONEscapesJWT(t *testing.T) {
 	if got != want {
 		t.Fatalf("got %s\nwant %s", got, want)
 	}
+
+	got = resolveTemplateJSON(`{"namespaceID":"{{namespaceID}}"}`, ec)
+	want = `{"namespaceID":"509463708777775105"}`
+	if got != want {
+		t.Fatalf("quoted namespaceID: got %s want %s", got, want)
+	}
 }

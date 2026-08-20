@@ -318,7 +318,7 @@ function handleView () {
 
 function handleRedirectToPrevOrNext (recordID) {
   if (!recordID) return
-  router.push({ params: { ...route.params, recordID } })
+  router.push({ name: route.name, params: { ...route.params, recordID } })
 }
 
 function handleFormSubmitSimple (name) {}

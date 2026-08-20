@@ -22,6 +22,9 @@ func (e *Enricher) Enrich(ctx context.Context, devices []Device) []Device {
 		}
 		if d.MAC != "" && d.Vendor == "" {
 			d.Vendor = lookupOUI(d.MAC)
+			if d.Vendor == "" {
+				d.Vendor = mobileVendor(d.MAC)
+			}
 		}
 	}
 	return devices

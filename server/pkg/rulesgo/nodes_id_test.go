@@ -29,3 +29,21 @@ func TestUint64FromAny_String(t *testing.T) {
 		t.Fatalf("got %d", got)
 	}
 }
+
+func TestUint64FromAny_JSONNumber(t *testing.T) {
+	got := uint64FromAny(json.Number("509463708777775105"))
+	if got != 509463708777775105 {
+		t.Fatalf("json.Number got %d", got)
+	}
+}
+
+func TestUint64FromAny_ImpreciseFloat(t *testing.T) {
+	var v interface{}
+	if err := json.Unmarshal([]byte(`509463708777775105`), &v); err != nil {
+		t.Fatal(err)
+	}
+	got := uint64FromAny(v)
+	if got != 0 {
+		t.Fatalf("imprecise float64 must not override chain IDs, got %d", got)
+	}
+}

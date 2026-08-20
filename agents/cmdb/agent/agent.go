@@ -51,11 +51,11 @@ func (a *Agent) StartScan(ctx context.Context, target ScanTarget) (*ScanStatus, 
 		ID: id, Target: target.CIDR, Status: "running",
 		StartedAt: time.Now(),
 	}
-	nsID := target.NamespaceID
+	nsID := uint64(target.NamespaceID)
 	if nsID == 0 {
 		nsID = a.cfg.NamespaceID
 	}
-	target.NamespaceID = nsID
+	target.NamespaceID = FlexUint64(nsID)
 
 	a.mu.Lock()
 	a.scans[id] = status
@@ -68,8 +68,8 @@ func (a *Agent) StartScan(ctx context.Context, target ScanTarget) (*ScanStatus, 
 
 func (a *Agent) runScan(ctx context.Context, id string, target ScanTarget) {
 	cidr := target.CIDR
-	nsID := target.NamespaceID
-	modID := target.ModuleID
+	nsID := uint64(target.NamespaceID)
+	modID := uint64(target.ModuleID)
 	stores := a.storesForScan(target)
 	scanRecID := parseUint64(target.ScanRecordID)
 
@@ -87,6 +87,7 @@ func (a *Agent) runScan(ctx context.Context, id string, target ScanTarget) {
 		s.Progress = 100
 		now := time.Now()
 		s.FinishedAt = &now
+		a.setScanItems(id, items)
 		a.syncScanRecord(ctx, stores, scanRecID, s)
 		kind := "complete"
 		if status == "error" {
@@ -181,6 +182,7 @@ func (a *Agent) runScan(ctx context.Context, id string, target ScanTarget) {
 	s.Found = len(devices)
 	now := time.Now()
 	s.FinishedAt = &now
+	a.setScanItems(id, devices)
 	a.syncScanRecord(ctx, stores, scanRecID, s)
 	a.AddCIDR(cidr)
 	a.notifyCallback(target, id, "complete", devices)
@@ -206,7 +208,7 @@ func (a *Agent) storesForScan(target ScanTarget) []Storage {
 	if api == "" {
 		api = "http://localhost:3333/api"
 	}
-	cs := NewCortezaStore(api, token, target.NamespaceID)
+	cs := NewCortezaStore(api, token, uint64(target.NamespaceID))
 	stores = append(stores, cs)
 	return stores
 }
@@ -225,7 +227,7 @@ func (a *Agent) persistAll(ctx context.Context, stores []Storage, nsID, modID ui
 			}
 		}
 		authFailed := false
-		for _, d := range devices {
+		for i, d := range devices {
 			if authFailed {
 				break
 			}
@@ -236,6 +238,8 @@ func (a *Agent) persistAll(ctx context.Context, stores []Storage, nsID, modID ui
 					if isUnauthorizedAPI(uErr) {
 						authFailed = true
 					}
+				} else {
+					devices[i].RecordID = existingID
 				}
 				continue
 			}
@@ -247,11 +251,13 @@ func (a *Agent) persistAll(ctx context.Context, stores []Storage, nsID, modID ui
 				}
 				continue
 			}
-			if _, cErr := st.CreateDevice(ctx, mid, d); cErr != nil {
+			if id, cErr := st.CreateDevice(ctx, mid, d); cErr != nil {
 				log.Printf("create device %s: %v", d.IP, cErr)
 				if isUnauthorizedAPI(cErr) {
 					authFailed = true
 				}
+			} else {
+				devices[i].RecordID = id
 			}
 		}
 		if cs, ok := st.(*CortezaStore); ok && !authFailed {
@@ -331,7 +337,7 @@ func (a *Agent) StartPeriodicScan(ctx context.Context) {
 				a.mu.Lock()
 				a.scans[id] = s
 				a.mu.Unlock()
-				go a.runScan(context.Background(), id, ScanTarget{CIDR: cidr, NamespaceID: a.cfg.NamespaceID})
+				go a.runScan(context.Background(), id, ScanTarget{CIDR: cidr, NamespaceID: FlexUint64(a.cfg.NamespaceID)})
 			}
 		}
 	}
@@ -416,6 +422,16 @@ func (a *Agent) getStatus(id string) *ScanStatus {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return a.scans[id]
+}
+
+func (a *Agent) setScanItems(id string, items []Device) {
+	s := a.getStatus(id)
+	if s == nil {
+		return
+	}
+	cp := make([]Device, len(items))
+	copy(cp, items)
+	s.Items = cp
 }
 
 func (a *Agent) ListDevices(ctx context.Context, modID uint64) ([]Device, error) {

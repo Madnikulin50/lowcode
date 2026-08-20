@@ -130,16 +130,15 @@ func (p *AgentPoller) loop(ctx context.Context, cancel context.CancelFunc, spec 
 			}
 			envelope["kind"] = kind
 			envelope["status"] = composeJobStatus(status)
-			if spec.itemsURL != "" && kind == "complete" {
-				items, err := p.getJSON(ctx, spec.itemsURL)
-				if err != nil {
-					log.Printf("[poller] %s items: %v", spec.jobID[:min(8, len(spec.jobID))], err)
-				} else {
-					envelope["items"] = jsonToItems(items)
-					envelope["found"] = len(CollectItems(envelope["items"]))
-				}
+			if kind == "complete" {
+				p.attachCompleteItems(ctx, spec, envelope, st)
 			}
-			p.runIngest(ctx, spec, envelope)
+			res, err := p.runIngest(ctx, spec, envelope)
+			if !ingestShouldStop(kind, envelope, res, err) {
+				log.Printf("[poller] %s complete ingest incomplete (items=%d found=%v err=%v); keep polling",
+					spec.jobID[:min(8, len(spec.jobID))], len(CollectItems(envelope["items"])), envelope["found"], err)
+				return false
+			}
 			return true
 		}
 		envelope["kind"] = "progress"
@@ -171,20 +170,66 @@ func (p *AgentPoller) loop(ctx context.Context, cancel context.CancelFunc, spec 
 	}
 }
 
-func (p *AgentPoller) runIngest(ctx context.Context, spec pollSpec, envelope map[string]interface{}) {
+func (p *AgentPoller) attachCompleteItems(ctx context.Context, spec pollSpec, envelope map[string]interface{}, statusJSON interface{}) {
+	if items := jsonToItems(statusJSON); len(items) > 0 {
+		envelope["items"] = items
+	}
+	if spec.itemsURL != "" && len(CollectItems(envelope["items"])) == 0 {
+		itemCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+		items, err := p.getJSON(itemCtx, spec.itemsURL)
+		cancel()
+		if err != nil {
+			log.Printf("[poller] %s items: %v", spec.jobID[:min(8, len(spec.jobID))], err)
+		} else {
+			envelope["items"] = jsonToItems(items)
+		}
+	}
+	n := len(CollectItems(envelope["items"]))
+	if n > 0 {
+		envelope["found"] = n
+	}
+	log.Printf("[poller] %s complete items=%d", spec.jobID[:min(8, len(spec.jobID))], n)
+}
+
+func ingestShouldStop(kind string, envelope map[string]interface{}, res *ChainResult, err error) bool {
+	if kind != "complete" {
+		return true
+	}
+	if err != nil || res == nil || !res.Success {
+		return false
+	}
+	found := uint64FromAny(envelope["found"])
+	n := len(CollectItems(envelope["items"]))
+	if found > 0 && n == 0 {
+		return false
+	}
+	return true
+}
+
+func (p *AgentPoller) runIngest(ctx context.Context, spec pollSpec, envelope map[string]interface{}) (*ChainResult, error) {
+	envelope = NormalizeIngestEnvelope(envelope)
 	if p.engine == nil {
-		return
+		return nil, fmt.Errorf("poller engine not configured")
+	}
+	if p.engine.Chain(spec.ingestChainID) == nil && EnsureChain != nil {
+		EnsureChain(ctx, spec.ingestChainID)
 	}
 	if RestorePollIdentity != nil {
 		ctx = RestorePollIdentity(ctx, spec.ident.UserID, spec.ident.Roles)
 	}
 	kind, _ := envelope["kind"].(string)
+	ingestCtx := ctx
 	if kind == "complete" || kind == "failed" {
-		// ingest will also cancel; avoid re-entrancy by cancelling after Run
+		ingestCtx = context.WithoutCancel(ctx)
+		var cancel context.CancelFunc
+		ingestCtx, cancel = context.WithTimeout(ingestCtx, 2*time.Minute)
+		defer cancel()
 	}
-	if _, err := p.engine.Run(ctx, spec.ingestChainID, envelope); err != nil {
+	res, err := p.engine.Run(ingestCtx, spec.ingestChainID, envelope)
+	if err != nil {
 		log.Printf("[poller] ingest %s: %v", spec.ingestChainID, err)
 	}
+	return res, err
 }
 
 func (p *AgentPoller) getJSON(ctx context.Context, rawURL string) (interface{}, error) {
@@ -205,8 +250,10 @@ func (p *AgentPoller) getJSON(ctx context.Context, rawURL string) (interface{}, 
 	if resp.StatusCode >= 400 {
 		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
+	dec := json.NewDecoder(strings.NewReader(string(body)))
+	dec.UseNumber()
 	var v interface{}
-	if err := json.Unmarshal(body, &v); err != nil {
+	if err := dec.Decode(&v); err != nil {
 		return nil, err
 	}
 	return v, nil
@@ -218,9 +265,6 @@ func baseEnvelope(spec pollSpec, statusJSON interface{}) map[string]interface{} 
 		out[k] = v
 	}
 	out["jobID"] = spec.jobID
-	if emptyAny(out["scanRecordID"]) && !emptyAny(out["createdRecordID"]) {
-		out["scanRecordID"] = out["createdRecordID"]
-	}
 	m, _ := statusJSON.(map[string]interface{})
 	if m != nil {
 		out["progress"] = firstMap(m, "progress", "Progress")
@@ -230,8 +274,11 @@ func baseEnvelope(spec pollSpec, statusJSON interface{}) map[string]interface{} 
 		out["target"] = firstMap(m, "target", "Target")
 		out["startedAt"] = firstMap(m, "startedAt", "StartedAt")
 		out["finishedAt"] = firstMap(m, "finishedAt", "FinishedAt")
+		if items := jsonToItems(m); len(items) > 0 {
+			out["items"] = items
+		}
 	}
-	return out
+	return NormalizeIngestEnvelope(out)
 }
 
 func jsonToItems(v interface{}) []interface{} {
@@ -239,7 +286,7 @@ func jsonToItems(v interface{}) []interface{} {
 		return items
 	}
 	if m, ok := v.(map[string]interface{}); ok {
-		for _, k := range []string{"items", "devices", "set"} {
+		for _, k := range []string{"items", "devices", "set", "data", "response"} {
 			if items := CollectItems(m[k]); len(items) > 0 {
 				return items
 			}
@@ -300,6 +347,7 @@ func firstNonEmptyStr(vals ...interface{}) string {
 var (
 	CapturePollIdentity func(ctx context.Context) (userID uint64, roles []uint64)
 	RestorePollIdentity func(ctx context.Context, userID uint64, roles []uint64) context.Context
+	EnsureChain         func(ctx context.Context, chainID string)
 )
 
 var defaultPoller *AgentPoller

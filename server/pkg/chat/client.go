@@ -45,6 +45,12 @@ type (
 const (
 	StatusWarming = "warming"
 	StatusReady   = "ready"
+	// StatusToolsEnabled / StatusToolsDisabled report whether native tools
+	// were bound for the current model (SSE status events).
+	StatusToolsEnabled  = "tools-enabled"
+	StatusToolsDisabled = "tools-disabled"
+	// StatusUsingTools is emitted when a tool call is actually invoked.
+	StatusUsingTools = "using-tools"
 
 	// WarmUpTimeout covers cold model load into RAM (no generation).
 	// Generation timeout (NewClient HTTPClient) starts only after WarmUp returns.
@@ -71,14 +77,15 @@ var toolModelPrefixes = []string{
 	"llama3.1",
 	"llama3.2",
 	"llama3.3",
-	"deepseek-r1",
 	"mistral",
 	"mixtral",
 }
 
-// Models that must not receive native tools (broken / XML-only path).
+// Models that must not receive native tools (no Ollama tools capability,
+// broken calling, or reasoning-only families that hallucinate tool init).
 var toolModelDenied = []string{
 	"deepseek-v2",
+	"deepseek-r1",
 }
 
 func ollamaURL() string {
@@ -586,7 +593,7 @@ func toolsAllowlisted(name string) bool {
 
 // ModelSupportsTools reports whether native Ollama tool calling should be
 // enabled for the model. Prefer /api/show "tools" capability; fall back to a
-// known-family allowlist when Ollama is unreachable or silent.
+// known-family allowlist when Ollama is unreachable or silent (empty caps).
 func ModelSupportsTools(name string) bool {
 	if name == "" {
 		name = DefaultModelName()
@@ -602,23 +609,31 @@ func ModelSupportsTools(name string) bool {
 	}
 	toolsCapMu.RUnlock()
 
-	supported := false
-	if caps, err := modelCapabilities(name); err == nil {
-		for _, c := range caps {
-			if c == "tools" {
-				supported = true
-				break
-			}
-		}
-	}
-	if !supported {
-		supported = toolsAllowlisted(name)
-	}
+	caps, err := modelCapabilities(name)
+	supported := toolsSupportedFromCaps(name, caps, err == nil)
 
 	toolsCapMu.Lock()
 	toolsCapCache[name] = supported
 	toolsCapMu.Unlock()
 	return supported
+}
+
+// toolsSupportedFromCaps decides native tool calling from /api/show output.
+// When capabilities are present, they are authoritative: missing "tools"
+// means do not bind tools (do not fall back to the family allowlist).
+func toolsSupportedFromCaps(name string, caps []string, capsOK bool) bool {
+	if toolsDenied(name) {
+		return false
+	}
+	if capsOK && len(caps) > 0 {
+		for _, c := range caps {
+			if strings.EqualFold(c, "tools") {
+				return true
+			}
+		}
+		return false
+	}
+	return toolsAllowlisted(name)
 }
 
 func (c *Client) Generate(ctx context.Context, messages []*schema.Message, opts ...model.Option) (*schema.Message, error) {
@@ -639,6 +654,24 @@ func ModelLikelySupportsTools(name string) bool {
 		return false
 	}
 	return toolsAllowlisted(name)
+}
+
+// ModelsToolsMap reports native tool support for each installed model name.
+func ModelsToolsMap(names []string) map[string]bool {
+	out := make(map[string]bool, len(names))
+	for _, name := range names {
+		out[name] = ModelSupportsTools(name)
+	}
+	return out
+}
+
+// EmitToolsCapability pushes tools-enabled / tools-disabled over the SSE status channel.
+func EmitToolsCapability(ctx context.Context, enabled bool) {
+	if enabled {
+		EmitStatus(ctx, StatusToolsEnabled)
+		return
+	}
+	EmitStatus(ctx, StatusToolsDisabled)
 }
 
 func (c *Client) Ask(ctx context.Context, system, user string) (string, error) {

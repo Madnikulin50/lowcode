@@ -29,7 +29,6 @@ func TestToolsAllowlisted(t *testing.T) {
 		"qwen2.5-coder:7b",
 		"llama3.1:8b",
 		"llama3-groq-tool-use:8b",
-		"deepseek-r1:latest",
 		"mistral:7b",
 	}
 	for _, name := range yes {
@@ -37,7 +36,7 @@ func TestToolsAllowlisted(t *testing.T) {
 			t.Errorf("toolsAllowlisted(%q) = false, want true", name)
 		}
 	}
-	no := []string{"phi3:mini", "nomic-embed-text", "llava:7b"}
+	no := []string{"phi3:mini", "nomic-embed-text", "llava:7b", "deepseek-r1:latest"}
 	for _, name := range no {
 		if toolsAllowlisted(name) {
 			t.Errorf("toolsAllowlisted(%q) = true, want false", name)
@@ -52,8 +51,14 @@ func TestToolsDenied(t *testing.T) {
 	if !toolsDenied("deepseek-v2:latest") {
 		t.Fatal("deepseek-v2:latest should be denied")
 	}
-	if toolsDenied("deepseek-r1") {
-		t.Fatal("deepseek-r1 should not be denied")
+	if !toolsDenied("deepseek-r1") {
+		t.Fatal("deepseek-r1 should be denied")
+	}
+	if !toolsDenied("deepseek-r1:latest") {
+		t.Fatal("deepseek-r1:latest should be denied")
+	}
+	if !toolsDenied("deepseek-r1-distill-qwen:7b") {
+		t.Fatal("deepseek-r1 distill variants should be denied")
 	}
 	if toolsDenied("qwen3:8b") {
 		t.Fatal("qwen3:8b should not be denied")
@@ -64,6 +69,42 @@ func TestModelSupportsToolsDeniedOverridesCache(t *testing.T) {
 	// denylist must win even without talking to Ollama
 	if ModelSupportsTools("deepseek-v2") {
 		t.Fatal("deepseek-v2 must not support tools")
+	}
+	if ModelSupportsTools("deepseek-r1") {
+		t.Fatal("deepseek-r1 must not support tools")
+	}
+	if ModelLikelySupportsTools("deepseek-r1:latest") {
+		t.Fatal("deepseek-r1 must not be reported as tool-capable")
+	}
+}
+
+func TestToolsSupportedFromCaps(t *testing.T) {
+	if toolsSupportedFromCaps("deepseek-r1", []string{"completion", "tools", "thinking"}, true) {
+		t.Fatal("denylist must win even if /api/show reports tools")
+	}
+	if !toolsSupportedFromCaps("qwen3:8b", []string{"completion", "tools", "thinking"}, true) {
+		t.Fatal("qwen3 with tools capability must be enabled")
+	}
+	if toolsSupportedFromCaps("qwen3:8b", []string{"completion", "thinking"}, true) {
+		t.Fatal("must not allowlist-override a successful /api/show without tools")
+	}
+	if !toolsSupportedFromCaps("qwen3:8b", nil, false) {
+		t.Fatal("allowlist fallback when Ollama is unreachable")
+	}
+	if toolsSupportedFromCaps("deepseek-r1", nil, false) {
+		t.Fatal("denied model must stay disabled when Ollama is unreachable")
+	}
+	if toolsSupportedFromCaps("phi3:mini", nil, false) {
+		t.Fatal("unknown family must not get tools via allowlist fallback")
+	}
+}
+
+func TestModelsToolsMapDenied(t *testing.T) {
+	m := ModelsToolsMap([]string{"deepseek-r1", "deepseek-r1:latest", "deepseek-v2"})
+	for name, on := range m {
+		if on {
+			t.Fatalf("ModelsToolsMap(%q) = true, want false", name)
+		}
 	}
 }
 

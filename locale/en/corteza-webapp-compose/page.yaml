@@ -186,6 +186,11 @@ aiChat:
     warming: Loading model…
     thinking: Thinking…
     writing: Writing…
+    usingTools: Using tools…
+  tools:
+    enabled: Tools are enabled
+    disabled: Tools are unavailable
+    invoked: Using tools…
   empty:
     suggestions:
       capabilities: What can you help with?
@@ -218,6 +223,5 @@ aiChat:
   attach:
     label: Attach a file
     remove: Remove
-
 
 

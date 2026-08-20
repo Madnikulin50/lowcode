@@ -10,6 +10,23 @@ import (
 	"time"
 )
 
+func TestFlexUint64Unmarshal(t *testing.T) {
+	var tgt ScanTarget
+	if err := json.Unmarshal([]byte(`{"cidr":"10.0.0.0/24","namespaceID":"509463708777775105"}`), &tgt); err != nil {
+		t.Fatal(err)
+	}
+	if uint64(tgt.NamespaceID) != 509463708777775105 {
+		t.Fatalf("string id %d", tgt.NamespaceID)
+	}
+	tgt = ScanTarget{}
+	if err := json.Unmarshal([]byte(`{"cidr":"10.0.0.0/24","namespaceID":42}`), &tgt); err != nil {
+		t.Fatal(err)
+	}
+	if uint64(tgt.NamespaceID) != 42 {
+		t.Fatalf("number id %d", tgt.NamespaceID)
+	}
+}
+
 func TestComposeJobStatus(t *testing.T) {
 	if composeJobStatus("done") != "completed" {
 		t.Fatalf("done")
@@ -29,6 +46,13 @@ func TestPostCallbackEnvelope(t *testing.T) {
 			t.Errorf("auth header %q", r.Header.Get("Authorization"))
 		}
 		body, _ := io.ReadAll(r.Body)
+		var raw map[string]json.RawMessage
+		if err := json.Unmarshal(body, &raw); err != nil {
+			t.Errorf("raw json: %v", err)
+		}
+		if string(raw["namespaceID"]) != `"42"` {
+			t.Errorf("namespaceID must be a JSON string, got %s", raw["namespaceID"])
+		}
 		if err := json.Unmarshal(body, &got); err != nil {
 			t.Errorf("json: %v", err)
 		}
@@ -51,14 +75,14 @@ func TestPostCallbackEnvelope(t *testing.T) {
 	a.postCallback(ScanTarget{
 		CallbackURL:  srv.URL,
 		Token:        "tok",
-		NamespaceID:  42,
+		NamespaceID:  FlexUint64(42),
 		ScanRecordID: "99",
 	}, id, "complete", []Device{{IP: "10.0.0.1", MAC: "aa:bb:cc:dd:ee:ff"}})
 
 	if got.JobID != id || got.Kind != "complete" || got.Status != "completed" {
 		t.Fatalf("envelope %+v", got)
 	}
-	if got.ScanRecordID != "99" || got.NamespaceID != 42 {
+	if got.ScanRecordID != "99" || got.CreatedRecordID != "99" || got.NamespaceID != "42" {
 		t.Fatalf("ids %+v", got)
 	}
 	if len(got.Items) != 1 || got.Items[0].IP != "10.0.0.1" {

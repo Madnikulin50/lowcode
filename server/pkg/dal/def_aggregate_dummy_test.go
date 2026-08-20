@@ -1,6 +1,9 @@
 package dal
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestAggregateAttr_IsDummyGroup(t *testing.T) {
 	dummy := AggregateAttr{
@@ -14,5 +17,15 @@ func TestAggregateAttr_IsDummyGroup(t *testing.T) {
 	}
 	if (AggregateAttr{Identifier: "dimension_0", RawExpr: "status"}).IsDummyGroup() {
 		t.Fatal("dimension is not dummy")
+	}
+}
+
+func TestMakeGroupKeyNilRunnerIsDummyGroup(t *testing.T) {
+	gk, err := makeGroupKey(context.Background(), []*runnerGval{nil}, map[string]any{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(gk) != 1 || gk[0] != nil {
+		t.Fatalf("dummy group key = %#v", gk)
 	}
 }

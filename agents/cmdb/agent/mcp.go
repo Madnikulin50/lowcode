@@ -56,7 +56,7 @@ func (a *Agent) MCPHandlers() map[string]server.ToolHandlerFunc {
 				fmt.Sscanf(v, "%d", &nsID)
 			}
 
-			status, err := a.StartScan(ctx, ScanTarget{CIDR: cidr, NamespaceID: nsID})
+			status, err := a.StartScan(ctx, ScanTarget{CIDR: cidr, NamespaceID: FlexUint64(nsID)})
 			if err != nil {
 				return mcp.NewToolResultText(fmt.Sprintf("Error: %v", err)), nil
 			}

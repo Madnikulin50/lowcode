@@ -24,6 +24,9 @@ func (n *foreachExecutor) Execute(ctx context.Context, node ChainNode, ec *Execu
 		itemsKey = "items"
 	}
 	items := CollectItems(ec.Get(itemsKey))
+	if len(items) == 0 && itemsKey == "items" {
+		items = CollectItems(ec.Get("devices"))
+	}
 	itemVar := cfg.ItemVar
 	if itemVar == "" {
 		itemVar = "item"
@@ -37,7 +40,7 @@ func (n *foreachExecutor) Execute(ctx context.Context, node ChainNode, ec *Execu
 	}, nil
 }
 
-func (e *Engine) runForeach(ctx context.Context, node *ChainNode, nodeMap map[string]*ChainNode, bodyIDs []string, ec *ExecutionContext) (NodeResult, error) {
+func (e *Engine) runForeach(ctx context.Context, node *ChainNode, nodeMap map[string]*ChainNode, edgeMap map[string][]ChainEdge, bodyIDs []string, ec *ExecutionContext) (NodeResult, error) {
 	cfg, err := ParseNodeConfig[foreachConfig](node.Config)
 	if err != nil {
 		return NodeResult{NodeID: node.ID, Type: node.Type}, err
@@ -49,6 +52,9 @@ func (e *Engine) runForeach(ctx context.Context, node *ChainNode, nodeMap map[st
 		cfg.ItemVar = "item"
 	}
 	items := CollectItems(ec.Get(cfg.Items))
+	if len(items) == 0 && cfg.Items == "items" {
+		items = CollectItems(ec.Get("devices"))
+	}
 	ok, fail := 0, 0
 	nr := NodeResult{NodeID: node.ID, Type: node.Type, Next: bodyIDs}
 
@@ -63,10 +69,22 @@ func (e *Engine) runForeach(ctx context.Context, node *ChainNode, nodeMap map[st
 			if body == nil {
 				return nr, fmt.Errorf("foreach body node not found: %s", bid)
 			}
+			if body.Type == "foreach" {
+				inner := edgesTo(edgeMap[bid])
+				if len(inner) == 0 {
+					inner = nextNodeIDs(edgeMap[bid], ec)
+				}
+				_, err := e.runForeach(ctx, body, nodeMap, edgeMap, inner, ec)
+				if err != nil {
+					if cfg.FailFast {
+						return nr, fmt.Errorf("foreach item %d node %s: %w", i, bid, err)
+					}
+					itemFail = true
+				}
+				continue
+			}
 			out, err := e.registry.Execute(ctx, body.Type, *body, ec)
-			bodyRes := NodeResult{NodeID: fmt.Sprintf("%s#%d", bid, i), Type: body.Type, Output: out}
 			if err != nil {
-				bodyRes.Error = err.Error()
 				nr.Output = map[string]interface{}{"ok": ok, "failed": fail + 1, "count": len(items)}
 				if cfg.FailFast {
 					return nr, fmt.Errorf("foreach item %d node %s: %w", i, bid, err)
@@ -77,7 +95,6 @@ func (e *Engine) runForeach(ctx context.Context, node *ChainNode, nodeMap map[st
 			if out != nil {
 				ec.SetResult(body.ID, out)
 			}
-			_ = bodyRes
 		}
 		if itemFail {
 			fail++

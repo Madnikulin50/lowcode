@@ -27,7 +27,7 @@ func NewScanner(cfg Config) *Scanner {
 		cfg.Concurrency = 10
 	}
 	if len(cfg.ScanPorts) == 0 {
-		cfg.ScanPorts = []int{22, 80, 443, 8080, 8443, 3333, 3389, 445, 139, 135, 21, 23, 25, 53, 88, 110, 143, 389, 464, 636, 993, 995, 3268, 3269, 3306, 5432, 6379, 27017, 515, 554, 548, 631, 8554, 9100, 1723, 5001}
+		cfg.ScanPorts = []int{22, 80, 443, 8080, 8443, 3333, 3389, 445, 139, 135, 21, 23, 25, 53, 88, 110, 143, 389, 464, 636, 993, 995, 3268, 3269, 3306, 5432, 6379, 27017, 515, 554, 548, 631, 8554, 9100, 1723, 5001, 5555, 5223, 7000}
 	}
 	dt := cfg.PingTimeout
 	if dt <= 0 {
@@ -176,7 +176,65 @@ func (s *Scanner) scanCIDR(ctx context.Context, cidr string, onProgress func(cur
 		}
 		devices = append(devices, d)
 	}
+	s.mdnsEnrich(ctx, devices)
 	return devices, nil
+}
+
+// mdnsEnrich merges mDNS/DNS-SD signals into the discovered devices:
+// announced phone-relevant services (AirPlay, HiSuite, Miracast, ...),
+// the AirPlay model string, the mDNS hostname and the AirPlay deviceid (MAC).
+// Devices that did not answer the multicast browse are probed unicast.
+func (s *Scanner) mdnsEnrich(ctx context.Context, devices []Device) {
+	browse := browseMDNS(ctx, 2*time.Second)
+	for i := range devices {
+		d := &devices[i]
+		info, ok := browse[d.IP]
+		if !ok {
+			info = probeMDNSHost(ctx, d.IP, 800*time.Millisecond)
+			if info.empty() {
+				continue
+			}
+		}
+		if d.Hostname == "" && info.Hostname != "" {
+			d.Hostname = info.Hostname
+		}
+		if d.MAC == "" && info.DeviceID != "" {
+			if mac := normalizeMAC(info.DeviceID); mac != "" {
+				d.MAC = mac
+			}
+		}
+		if d.Model == "" && info.Model != "" {
+			d.Model = info.Model
+		}
+		if svcs := info.serviceList(); len(svcs) > 0 {
+			d.Services = appendUnique(d.Services, svcs...)
+			d.OpenPorts = appendPortOnce(d.OpenPorts, Port{Port: 5353, Proto: "udp", Service: "mdns"})
+		}
+	}
+}
+
+func appendUnique(in []string, add ...string) []string {
+	seen := make(map[string]bool, len(in)+len(add))
+	for _, s := range in {
+		seen[s] = true
+	}
+	for _, s := range add {
+		if s == "" || s == "unknown" || seen[s] {
+			continue
+		}
+		seen[s] = true
+		in = append(in, s)
+	}
+	return in
+}
+
+func appendPortOnce(in []Port, p Port) []Port {
+	for _, q := range in {
+		if q.Port == p.Port && q.Proto == p.Proto {
+			return in
+		}
+	}
+	return append(in, p)
 }
 
 type portResult struct {
@@ -286,6 +344,7 @@ func portService(port int) string {
 		8080: "http-proxy", 8443: "https-alt", 27017: "mongod",
 		515: "printer-lpd", 554: "rtsp", 548: "afp", 631: "ipp", 8554: "rtsp-alt", 9100: "printer-jetdirect",
 		1723: "pptp", 5001: "synology-webapi",
+		5555: "adb", 5223: "apns", 7000: "airplay",
 	}
 	if s, ok := m[port]; ok {
 		return s

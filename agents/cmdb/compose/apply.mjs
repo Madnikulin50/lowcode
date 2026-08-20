@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Provision the CMDB Corteza namespace (modules, charts, pages, layouts, rule chains).
+ * Provision the CMDB Lowcode namespace (modules, charts, pages, layouts, rule chains).
  *
  *   COMPOSE_API=http://localhost:3333/api/compose \
  *   TOKEN=$(node /tmp/opencode/mint-token.mjs | head -1) \
@@ -454,7 +454,7 @@ async function detectBase (token) {
       if (res.ok || res.status === 401 || res.status === 403) return base
     } catch {}
   }
-  throw new Error('Cannot reach Corteza compose API on :3333 (if GoLand debugger is paused, Resume the process first)')
+  throw new Error('Cannot reach Lowcode compose API on :3333 (if GoLand debugger is paused, Resume the process first)')
 }
 
 function snowflakeJSON (obj) {
@@ -1161,6 +1161,7 @@ function buildPages ({ nsID, modules, charts }) {
 function buildRuleChains ({ nsID, modules, agentUrl }) {
   const ns = String(nsID)
   const devices = String(modules.devices)
+  const services = String(modules.services)
   const vulns = String(modules.vulnerabilities)
   const scans = String(modules.scans)
 
@@ -1196,7 +1197,7 @@ function buildRuleChains ({ nsID, modules, agentUrl }) {
           config: {
             url: agentUrl + '/scan',
             method: 'POST',
-            body: '{"cidr":"{{cidr}}","namespaceID":{{namespaceID}},"token":"{{authToken}}","scanRecordID":"{{createdRecordID}}","callbackUrl":"{{callbackUrl}}"}',
+            body: '{"cidr":"{{cidr}}","namespaceID":"{{namespaceID}}","token":"{{authToken}}","scanRecordID":"{{createdRecordID}}","callbackUrl":"{{callbackUrl}}"}',
             timeout: 30,
           },
         },
@@ -1223,7 +1224,7 @@ function buildRuleChains ({ nsID, modules, agentUrl }) {
     {
       id: 'cmdb-ingest-scan',
       name: 'CMDB: ingest agent job',
-      description: 'Webhook/poll envelope → update scans row and upsert devices.',
+      description: 'Webhook/poll envelope → update scans row, upsert devices, services and vulnerabilities.',
       entryNode: 'update_scan',
       nodes: [
         {
@@ -1236,6 +1237,8 @@ function buildRuleChains ({ nsID, modules, agentUrl }) {
             moduleID: scans,
             moduleHandle: 'scans',
             recordID: '{{scanRecordID}}',
+            omitEmpty: true,
+            continueOnError: true,
             fields: {
               status: '{{status}}',
               progress: '{{progress}}',
@@ -1263,6 +1266,8 @@ function buildRuleChains ({ nsID, modules, agentUrl }) {
             moduleID: devices,
             moduleHandle: 'devices',
             matchBy: ['mac_address', 'ip_address', 'hostname'],
+            omitEmpty: true,
+            resultVar: 'deviceRecordID',
             fields: {
               ip_address: '{{item.ip}}',
               mac_address: '{{item.mac}}',
@@ -1280,10 +1285,72 @@ function buildRuleChains ({ nsID, modules, agentUrl }) {
             },
           },
         },
+        {
+          id: 'foreach_ports',
+          type: 'foreach',
+          label: 'Each open port',
+          config: { items: 'item.openPorts', itemVar: 'port' },
+        },
+        {
+          id: 'upsert_service',
+          type: 'crud.upsert',
+          label: 'Upsert service',
+          config: {
+            namespaceID: ns,
+            moduleID: services,
+            moduleHandle: 'services',
+            matchBy: ['device', 'port', 'proto'],
+            matchAll: true,
+            omitEmpty: true,
+            continueOnError: true,
+            fields: {
+              device: '{{deviceRecordID}}',
+              port: '{{port.port}}',
+              proto: '{{port.proto}}',
+              service: '{{port.service}}',
+              version: '{{port.version}}',
+              banner: '{{port.banner}}',
+            },
+          },
+        },
+        {
+          id: 'foreach_vulns',
+          type: 'foreach',
+          label: 'Each vulnerability',
+          config: { items: 'item.vulnerabilities', itemVar: 'vuln' },
+        },
+        {
+          id: 'upsert_vuln',
+          type: 'crud.upsert',
+          label: 'Upsert vulnerability',
+          config: {
+            namespaceID: ns,
+            moduleID: vulns,
+            moduleHandle: 'vulnerabilities',
+            matchBy: ['device', 'name'],
+            matchAll: true,
+            omitEmpty: true,
+            continueOnError: true,
+            fields: {
+              device: '{{deviceRecordID}}',
+              name: '{{vuln.name}}',
+              severity: '{{vuln.severity}}',
+              cve: '{{vuln.cve}}',
+              description: '{{vuln.description}}',
+              remediation: '{{vuln.remediation}}',
+              status: 'open',
+              detected_at: '{{item.lastSeen}}',
+            },
+          },
+        },
       ],
       edges: [
         { from: 'update_scan', to: 'foreach_items' },
         { from: 'foreach_items', to: 'upsert_device' },
+        { from: 'foreach_items', to: 'foreach_ports' },
+        { from: 'foreach_ports', to: 'upsert_service' },
+        { from: 'foreach_items', to: 'foreach_vulns' },
+        { from: 'foreach_vulns', to: 'upsert_vuln' },
       ],
     },
     {
@@ -1395,7 +1462,7 @@ function buildRuleChains ({ nsID, modules, agentUrl }) {
     {
       id: 'cmdb-stale-devices',
       name: 'CMDB: list stale online devices',
-      description: 'Search devices. Pass query (Corteza QL) in block context, e.g. status = \'online\'.',
+      description: 'Search devices. Pass query (Compose QL) in block context, e.g. status = \'online\'.',
       entryNode: 'search',
       nodes: [
         {
@@ -1536,7 +1603,7 @@ async function main () {
       dashboard: `/ns/cmdb/pages`,
     },
     agent: {
-      flags: `--db=corteza --api=${base.replace(/\/compose$/, '')} --namespace=${nsID}`,
+      flags: `--db=lowcode --api=${base.replace(/\/compose$/, '')} --namespace=${nsID}`,
       scan: `POST ${agentUrl}/scan {"cidr":"192.168.1.0/24"}`,
     },
   }

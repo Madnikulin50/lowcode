@@ -280,6 +280,7 @@ const props = defineProps({
   values: { type: Object, required: false, default: () => ({}) },
   inModal: { type: Boolean, default: false },
   edit: { type: Boolean, default: false },
+  recordID: { type: String, default: '' },
 })
 
 const emit = defineEmits(['on-modal-back', 'handle-record-redirect'])
@@ -334,8 +335,10 @@ const isDeleted = computed(() => record.value && record.value.deletedAt)
 const isNew = computed(() => !recordID.value || recordID.value === NoID)
 
 const recordID = computed(() => {
+  if (props.recordID) return props.recordID
+  if (route.params.recordID) return route.params.recordID
   if (record.value?.recordID && record.value.recordID !== NoID) return record.value.recordID
-  return route.params.recordID || ''
+  return ''
 })
 
 const isLoading = computed(() => loading.value || !layout.value || !blocks.value)
@@ -694,7 +697,7 @@ function handleRedirectToPrevOrNext(recID) {
       emit('handle-record-redirect', { recordID: recID, recordPageID: props.page.pageID })
     }
   } else {
-    router.push({ params: { ...route.params, recordID: recID } })
+    router.push({ name: route.name, params: { ...route.params, recordID: recID } })
     uiStore.popPreviousPages()
   }
 }

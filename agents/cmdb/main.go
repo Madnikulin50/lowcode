@@ -23,14 +23,14 @@ var webFS embed.FS
 
 func main() {
 	listen := flag.String("listen", ":8085", "HTTP listen address")
-	cortezaAPI := flag.String("api", "http://localhost:3333/api", "Corteza API base URL")
-	token := flag.String("token", "", "Corteza API token")
+	cortezaAPI := flag.String("api", "http://localhost:3333/api", "Lowcode API base URL")
+	token := flag.String("token", "", "Lowcode API token")
 	namespaceID := flag.Uint64("namespace", 0, "Default namespace ID")
 	llmURL := flag.String("llm-url", "http://localhost:11434", "Ollama base URL")
 	llmModel := flag.String("llm-model", "deepseek-v2", "Ollama model for classification")
 	mcpAddr := flag.String("mcp", "", "MCP server address (e.g. :9091, or 'stdio')")
 	staticDir := flag.String("static", "", "Static files directory (overrides embedded)")
-	dbType := flag.String("db", "embedded", "Storage backend: 'embedded' (SQLite) or 'corteza'")
+	dbType := flag.String("db", "embedded", "Storage backend: 'embedded' (SQLite) or 'lowcode'")
 	dbPath := flag.String("db-path", "cmdb.db", "Path to embedded database file")
 	scanInterval := flag.Duration("scan-interval", 20*time.Minute, "Periodic scan interval (e.g. 20m, 1h). 0 = disabled")
 	statusInterval := flag.Duration("status-interval", 5*time.Minute, "Device status check interval (e.g. 5m). 0 = disabled")
@@ -62,12 +62,12 @@ func main() {
 
 	var store agent.Storage
 	switch *dbType {
-	case "corteza":
+	case "lowcode", "corteza":
 		if *token == "" {
-			log.Fatal("--token is required with --db=corteza")
+			log.Fatal("--token is required with --db=lowcode")
 		}
 		store = agent.NewCortezaStore(*cortezaAPI, *token, *namespaceID)
-		log.Printf("Storage: Corteza API at %s", *cortezaAPI)
+		log.Printf("Storage: Lowcode API at %s", *cortezaAPI)
 	default:
 		s, err := agent.NewEmbeddedStore(*dbPath)
 		if err != nil {

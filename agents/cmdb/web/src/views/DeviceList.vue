@@ -23,6 +23,7 @@
                 <th>Hostname</th>
                 <th>Type</th>
                 <th>Vendor</th>
+                <th>Model</th>
                 <th>OS</th>
                 <th>Ports</th>
                 <th>Vulns</th>
@@ -38,6 +39,7 @@
                 <td>{{ d.hostname || '—' }}</td>
                 <td><span class="badge bg-info">{{ d.deviceType || 'unknown' }}</span></td>
                 <td>{{ d.vendor || '—' }}</td>
+                <td class="small">{{ d.model || '—' }}</td>
                 <td class="small">{{ d.os || '—' }}</td>
                 <td>
                   <span v-if="d.openPorts && d.openPorts.length" class="small">

@@ -25,14 +25,16 @@ type MailService interface {
 // --- CRUD Node ---
 
 type crudConfig struct {
-	Operation    string                 `json:"operation"`
-	ModuleID     flexibleID             `json:"moduleID"`
-	ModuleHandle string                 `json:"moduleHandle,omitempty"`
-	NamespaceID  flexibleID             `json:"namespaceID"`
-	RecordID     string                 `json:"recordID,omitempty"`
-	Fields       map[string]interface{} `json:"fields,omitempty"`
-	Query        string                 `json:"query,omitempty"`
-	Limit        int                    `json:"limit,omitempty"`
+	Operation       string                 `json:"operation"`
+	ModuleID        flexibleID             `json:"moduleID"`
+	ModuleHandle    string                 `json:"moduleHandle,omitempty"`
+	NamespaceID     flexibleID             `json:"namespaceID"`
+	RecordID        string                 `json:"recordID,omitempty"`
+	Fields          map[string]interface{} `json:"fields,omitempty"`
+	Query           string                 `json:"query,omitempty"`
+	Limit           int                    `json:"limit,omitempty"`
+	OmitEmpty       bool                   `json:"omitEmpty,omitempty"`
+	ContinueOnError bool                   `json:"continueOnError,omitempty"`
 }
 
 // flexibleID accepts Corteza snowflake IDs as JSON strings or numbers.
@@ -122,11 +124,22 @@ func (n *crudExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
 		}
-		updatedAt, err := n.svc.Update(ctx, nsID, modID, cfg.RecordID, resolveFieldTemplates(cfg.Fields, ec))
+		recID := strings.TrimSpace(cfg.RecordID)
+		if recID == "" || recID == "<nil>" || recID == "0" {
+			return map[string]interface{}{"skipped": true, "reason": "empty recordID"}, nil
+		}
+		fields := resolveFieldTemplates(cfg.Fields, ec)
+		if cfg.OmitEmpty {
+			fields = dropEmptyFields(fields)
+		}
+		updatedAt, err := n.svc.Update(ctx, nsID, modID, recID, fields)
 		if err != nil {
+			if cfg.ContinueOnError {
+				return map[string]interface{}{"skipped": true, "error": err.Error()}, nil
+			}
 			return nil, fmt.Errorf("update failed: %w", err)
 		}
-		return map[string]interface{}{"recordID": cfg.RecordID, "updatedAt": updatedAt}, nil
+		return map[string]interface{}{"recordID": recID, "updatedAt": updatedAt}, nil
 	case "delete":
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
@@ -542,6 +555,17 @@ func resolveFieldTemplates(fields map[string]interface{}, ec *ExecutionContext) 
 	return result
 }
 
+func dropEmptyFields(fields map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{}, len(fields))
+	for k, v := range fields {
+		if emptyAny(v) {
+			continue
+		}
+		out[k] = v
+	}
+	return out
+}
+
 func uint64FromAny(v interface{}) uint64 {
 	switch t := v.(type) {
 	case nil:
@@ -557,13 +581,17 @@ func uint64FromAny(v interface{}) uint64 {
 			return uint64(t)
 		}
 	case float64:
-		if t > 0 {
+		// JSON numbers into map[string]interface{} are float64 and cannot
+		// hold Corteza snowflakes (53-bit mantissa). Refuse them so chain
+		// config namespaceID/moduleID stays authoritative.
+		if t > 0 && t < float64(uint64(1)<<53) {
 			return uint64(t)
 		}
+		return 0
 	case json.Number:
-		n, _ := t.Int64()
-		if n > 0 {
-			return uint64(n)
+		n, err := strconv.ParseUint(strings.TrimSpace(string(t)), 10, 64)
+		if err == nil {
+			return n
 		}
 	case string:
 		n, _ := strconv.ParseUint(strings.TrimSpace(t), 10, 64)

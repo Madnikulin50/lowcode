@@ -330,9 +330,10 @@
         </div>
       </div>
       <div v-else-if="options.moduleID && options.moduleID !== NoID" class="rl-empty w-100">
-        <div class="spinner-border text-primary" role="status">
+        <div v-if="!modulesSettled" class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading…</span>
         </div>
+        <p v-else class="text-danger p-3 mb-0">{{ $t('record.moduleMismatch') }}</p>
       </div>
       <label v-else class="text-primary p-3">{{ $t('recordList.noModule') }}</label>
     </template>
@@ -546,6 +547,7 @@ const stayOnPage = ref(undefined)
 const getModuleByID = computed(() => store.module.getByID)
 const pages = computed(() => store.page.set)
 const recordListModule = computed(() => options.value.moduleID ? getModuleByID.value(options.value.moduleID) : undefined)
+const modulesSettled = computed(() => !store.module.loading && Array.isArray(store.module.set) && store.module.set.length > 0)
 const isFederated = computed(() => Object.keys(recordListModule.value?.labels || {}).includes('federation'))
 const showPagination = computed(() => showPageNavigation.value || options.value.showTotalCount || options.value.showRecordPerPageOption)
 const showFooter = computed(() => showPagination.value || options.value.customSummaries)
@@ -653,7 +655,11 @@ const canUpdateSelectedRecords = computed(() => items.value.filter(({ id, r }) =
 const canRestoreSelectedRecords = computed(() => items.value.filter(({ id, r }) => selected.value.includes(id) && r.canUndeleteRecord).length > 0)
 const isCloneRecordActionVisible = computed(() => !options.value.hideRecordCloneButton && recordListModule.value?.canCreateRecord && (options.value.rowCreateUrl || recordPageID.value || inlineEditing.value))
 const isReminderActionVisible = computed(() => !options.value.hideRecordReminderButton)
-const filterPresets = computed(() => [...options.value.filterPresets.filter(({ name, roles }) => name && isUserRoleMember(roles)), ...customPresetFilters.value])
+const filterPresets = computed(() => {
+  const presets = Array.isArray(options.value.filterPresets) ? options.value.filterPresets : []
+  const custom = Array.isArray(customPresetFilters.value) ? customPresetFilters.value : []
+  return [...presets.filter(({ name, roles }) => name && isUserRoleMember(roles)), ...custom]
+})
 const authUserRoles = computed(() => $auth?.user?.roles || [])
 const selectedRecordsDisplayText = computed(() => {
   const count = selectedAllRecords.value ? (options.value.showTotalCount && pagination.count >= 0 ? pagination.count : undefined) : selected.value.length
@@ -708,7 +714,9 @@ const groupedByConnector = computed(() => {
 })
 
 const listSummaries = computed(() => {
-  return [...options.value.summaries.filter(s => s.metric && s.field && isUserRoleMember(s.roles)), ...customSummaries.value.filter(s => s.metric && s.field).map(s => ({ ...s, custom: true }))]
+  const configured = Array.isArray(options.value.summaries) ? options.value.summaries : []
+  const custom = Array.isArray(customSummaries.value) ? customSummaries.value : []
+  return [...configured.filter(s => s.metric && s.field && isUserRoleMember(s.roles)), ...custom.filter(s => s.metric && s.field).map(s => ({ ...s, custom: true }))]
     .map(s => {
       const name = `${s.metric} ${s.field}`
       const { value } = summaries.value[name] || {}
@@ -728,14 +736,17 @@ watch(() => options.value.moduleID, () => {
 })
 
 watch(recordListModule, (mod, prev) => {
-  if (mod && (!prev || prev.moduleID !== mod.moduleID) && !hasLoadedOnce.value) {
-    prepRecordList()
+  if (mod && (!prev || String(prev.moduleID) !== String(mod.moduleID)) && !hasLoadedOnce.value) {
+    try { prepRecordList() } catch (e) { console.warn(e); return }
     refresh(true)
   }
 })
 
 watch(() => options.value, () => {
-  if (!props.loadingRecord) { prepRecordList(); refresh(true) }
+  if (!props.loadingRecord) {
+    try { prepRecordList() } catch (e) { console.warn(e); return }
+    refresh(true)
+  }
 }, { deep: true, immediate: true })
 
 watch(() => [props.record?.recordID, props.loadingRecord], () => {
@@ -745,7 +756,7 @@ watch(() => [props.record?.recordID, props.loadingRecord], () => {
   getStorageRecordListFilter()
   getStorageRecordListFilterPreset()
   getStorageRecordListConfiguredFields()
-  prepRecordList()
+  try { prepRecordList() } catch (e) { console.warn(e); return }
   refresh(true)
 }, { immediate: true })
 
@@ -1125,7 +1136,7 @@ function sanitizeRecordListSort (presort, mod) {
 
 function prepRecordList() {
   const { moduleID, presort, prefilter: pf, editable, refField, positionField, perPage } = options.value
-  if (!moduleID || !recordListModule.value) throw new Error($t('record.moduleOrPageNotSet'))
+  if (!moduleID || !recordListModule.value) return false
   recordsPerPage.value = perPage
   if (isOnRecordPage.value && options.value.linkToParent) {
     options.value.linkToParent = false
@@ -1159,6 +1170,7 @@ function prepRecordList() {
   prefilter.value = filterArr.join(' AND ')
   filter.limit = recordsPerPage.value
   filter.sort = sort
+  return true
 }
 
 function createReminder(record) {
@@ -1494,12 +1506,14 @@ async function refresh(resetPagination = false, checkSelected = false) {
 }
 
 async function pullRecords(resetPagination = false) {
-  if (!recordListModule.value || recordListModule.value.moduleID !== options.value.moduleID) throw new Error($t('record.moduleMismatch'))
+  if (!recordListModule.value) throw new Error($t('record.moduleOrPageNotSet'))
+  if (String(recordListModule.value.moduleID) !== String(options.value.moduleID)) throw new Error($t('record.moduleMismatch'))
   abortRequests()
   processing.value = true
   selected.value = []
   let searchFields = []
-  if (options.value.searchableFields.length > 0) searchFields = recordListModule.value.filterFields(options.value.searchableFields)
+  const searchable = Array.isArray(options.value.searchableFields) ? options.value.searchableFields : []
+  if (searchable.length > 0) searchFields = recordListModule.value.filterFields(searchable)
   else searchFields = fields.value.map(({ moduleField }) => moduleField)
   const queryStr = queryToFilter(query.value, prefilter.value, searchFields, groupRecordListFilter.value)
   const { moduleID, namespaceID } = recordListModule.value
@@ -1697,7 +1711,10 @@ function removeFilter(groupIndex, filterIndex) {
   refresh(true)
 }
 
-function isUserRoleMember(roles) { return !roles.length || roles.some(roleID => authUserRoles.value.includes(roleID)) }
+function isUserRoleMember(roles) {
+  if (!Array.isArray(roles) || !roles.length) return true
+  return roles.some(roleID => authUserRoles.value.includes(roleID))
+}
 
 function openCustomSummaryModal(summary) {
   const { custom, metric, field } = summary || {}

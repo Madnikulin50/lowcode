@@ -21,6 +21,7 @@ func (h *Handler) Mount(r chi.Router) {
 	r.Post("/scan", h.startScan)
 	r.Get("/scans", h.listScans)
 	r.Get("/scans/{scanID}", h.getScan)
+	r.Get("/scans/{scanID}/devices", h.getScanDevices)
 	r.Get("/devices", h.listDevices)
 	r.Get("/devices/{recordID}", h.getDevice)
 	r.Delete("/devices/{recordID}", h.deleteDevice)
@@ -60,6 +61,20 @@ func (h *Handler) getScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonResp(w, s)
+}
+
+func (h *Handler) getScanDevices(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "scanID")
+	s := h.ag.GetStatus(id)
+	if s == nil {
+		jsonError(w, "scan not found", http.StatusNotFound)
+		return
+	}
+	items := s.Items
+	if items == nil {
+		items = []agent.Device{}
+	}
+	jsonResp(w, items)
 }
 
 func (h *Handler) listDevices(w http.ResponseWriter, r *http.Request) {

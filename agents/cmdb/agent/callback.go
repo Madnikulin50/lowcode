@@ -5,24 +5,26 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type ingestEnvelope struct {
-	JobID        string     `json:"jobID"`
-	Kind         string     `json:"kind"`
-	Status       string     `json:"status"`
-	Progress     float64    `json:"progress"`
-	Found        int        `json:"found"`
-	Error        string     `json:"error,omitempty"`
-	ScanningIP   string     `json:"scanningIP,omitempty"`
-	Target       string     `json:"target,omitempty"`
-	StartedAt    time.Time  `json:"startedAt,omitempty"`
-	FinishedAt   *time.Time `json:"finishedAt,omitempty"`
-	NamespaceID  uint64     `json:"namespaceID,omitempty"`
-	ScanRecordID string     `json:"scanRecordID,omitempty"`
-	Items        []Device   `json:"items,omitempty"`
+	JobID           string     `json:"jobID"`
+	Kind            string     `json:"kind"`
+	Status          string     `json:"status"`
+	Progress        float64    `json:"progress"`
+	Found           int        `json:"found"`
+	Error           string     `json:"error,omitempty"`
+	ScanningIP      string     `json:"scanningIP,omitempty"`
+	Target          string     `json:"target,omitempty"`
+	StartedAt       time.Time  `json:"startedAt,omitempty"`
+	FinishedAt      *time.Time `json:"finishedAt,omitempty"`
+	NamespaceID     string     `json:"namespaceID,omitempty"`
+	ScanRecordID    string     `json:"scanRecordID,omitempty"`
+	CreatedRecordID string     `json:"createdRecordID,omitempty"`
+	Items           []Device   `json:"items,omitempty"`
 }
 
 func composeJobStatus(agentStatus string) string {
@@ -68,11 +70,14 @@ func (a *Agent) postCallback(target ScanTarget, id, kind string, items []Device)
 	}
 	st := a.GetStatus(id)
 	env := ingestEnvelope{
-		JobID:        id,
-		Kind:         kind,
-		NamespaceID:  target.NamespaceID,
-		ScanRecordID: strings.TrimSpace(target.ScanRecordID),
-		Items:        items,
+		JobID:           id,
+		Kind:            kind,
+		ScanRecordID:    strings.TrimSpace(target.ScanRecordID),
+		CreatedRecordID: strings.TrimSpace(target.ScanRecordID),
+		Items:           items,
+	}
+	if ns := uint64(target.NamespaceID); ns > 0 {
+		env.NamespaceID = strconv.FormatUint(ns, 10)
 	}
 	if st != nil {
 		env.Status = composeJobStatus(st.Status)
@@ -115,13 +120,22 @@ func (a *Agent) postCallback(target ScanTarget, id, kind string, items []Device)
 	if client == nil {
 		client = &http.Client{Timeout: 8 * time.Second}
 	}
+	if kind == "complete" || kind == "failed" {
+		c := *client
+		c.Timeout = 120 * time.Second
+		client = &c
+	}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("callback %s %s: %v", kind, id[:min(8, len(id))], err)
+		log.Printf("callback %s %s: %v url=%s items=%d", kind, id[:min(8, len(id))], err, url, len(items))
 		return
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
-		log.Printf("callback %s %s: HTTP %d", kind, id[:min(8, len(id))], resp.StatusCode)
+		log.Printf("callback %s %s: HTTP %d url=%s items=%d", kind, id[:min(8, len(id))], resp.StatusCode, url, len(items))
+		return
+	}
+	if kind == "complete" || kind == "failed" {
+		log.Printf("callback %s %s: HTTP %d items=%d url=%s", kind, id[:min(8, len(id))], resp.StatusCode, len(items), url)
 	}
 }

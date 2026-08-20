@@ -77,8 +77,9 @@ func (a *Agent) Run(ctx context.Context, input string, contextData map[string]in
 
 func (a *Agent) buildSystemPrompt(contextData map[string]interface{}) string {
 	prompt := a.cfg.SystemPrompt
+	useTools := a.client != nil && a.client.IsToolsSupported() && len(a.cfg.Tools) > 0
 
-	if len(a.cfg.Tools) > 0 {
+	if useTools {
 		prompt += "\n\n" + chat.ToolSystemPrompt(a.cfg.Tools)
 	}
 
@@ -87,7 +88,8 @@ func (a *Agent) buildSystemPrompt(contextData map[string]interface{}) string {
 		prompt += fmt.Sprintf("\n\n## Context Data\n```json\n%s\n```\n", string(dataStr))
 	}
 
-	prompt += fmt.Sprintf(`
+	if useTools {
+		prompt += fmt.Sprintf(`
 ## Instructions
 You are an AI agent named "%s".
 %s
@@ -96,6 +98,15 @@ Think step by step. If you need to use tools, call them using XML format.
 
 When you have a final answer, start your response with "FINAL:".
 `, a.cfg.Name, a.cfg.Description)
+	} else {
+		prompt += fmt.Sprintf(`
+## Instructions
+You are an AI agent named "%s".
+%s
+
+When you have a final answer, start your response with "FINAL:".
+`, a.cfg.Name, a.cfg.Description)
+	}
 
 	return prompt
 }
@@ -105,6 +116,7 @@ func (a *Agent) runLoop(ctx context.Context, systemPrompt, input string, ctxData
 		schema.SystemMessage(systemPrompt),
 		schema.UserMessage(input),
 	}
+	useTools := a.client != nil && a.client.IsToolsSupported() && len(a.cfg.Tools) > 0
 
 	for step := 0; step < a.cfg.MaxSteps; step++ {
 		stepStart := time.Now()
@@ -123,11 +135,11 @@ func (a *Agent) runLoop(ctx context.Context, systemPrompt, input string, ctxData
 		// Check for tool calls (native or XML)
 		var toolCalls []chat.ToolCall
 
-		if chat.HasToolCalls(resp) {
+		if useTools && chat.HasToolCalls(resp) {
 			for _, tc := range chat.ParseToolCalls(resp) {
 				toolCalls = append(toolCalls, chat.ToolCall{Name: tc.Function.Name, Params: mapFromJSON(tc.Function.Arguments)})
 			}
-		} else if chat.HasToolCallsStr(resp.Content) {
+		} else if useTools && chat.HasToolCallsStr(resp.Content) {
 			toolCalls = chat.ParseToolCallsStr(resp.Content)
 		}
 

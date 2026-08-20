@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -309,11 +310,39 @@ func injectAgentCallback(_ *http.Request, bag map[string]interface{}) {
 	if cb := strings.TrimSpace(fmt.Sprintf("%v", bag["callbackUrl"])); cb != "" && cb != "<nil>" {
 		return
 	}
-	apiBase := strings.TrimRight(os.Getenv("CORTEZA_API"), "/")
+	bag["callbackUrl"] = composeAPIRoot() + "/compose/rulechain/" + ingestID + "/run"
+}
+
+// composeAPIRoot is the origin (+ HTTP_API_BASE_URL) the Go server actually mounts on.
+// Vite uses window.CortezaAPI='/api' and proxies it; the server default is HTTP_API_BASE_URL=/
+// so http://localhost:3333/api/compose/... is chi's HTML 404, not the rule-chain runner.
+func composeAPIRoot() string {
+	apiBase := strings.TrimSpace(os.Getenv("HTTP_API_BASE_URL"))
 	if apiBase == "" {
-		apiBase = "http://localhost:3333/api"
+		apiBase = "/"
 	}
-	bag["callbackUrl"] = apiBase + "/compose/rulechain/" + ingestID + "/run"
+	if explicit := strings.TrimRight(strings.TrimSpace(os.Getenv("CORTEZA_API")), "/"); explicit != "" && explicit != "<nil>" {
+		if apiBase == "/" && strings.HasSuffix(explicit, "/api") {
+			explicit = strings.TrimSuffix(explicit, "/api")
+		}
+		return explicit
+	}
+	addr := strings.TrimSpace(os.Getenv("HTTP_ADDR"))
+	if addr == "" || addr == ":80" {
+		addr = ":3333"
+	}
+	origin := addr
+	if strings.HasPrefix(addr, ":") {
+		origin = "http://localhost" + addr
+	} else if !strings.HasPrefix(addr, "http://") && !strings.HasPrefix(addr, "https://") {
+		origin = "http://" + addr
+	}
+	origin = strings.TrimRight(origin, "/")
+	prefix := "/" + strings.Trim(path.Join(strings.TrimSpace(os.Getenv("HTTP_BASE_URL")), apiBase), "/")
+	if prefix == "/" {
+		return origin
+	}
+	return origin + prefix
 }
 
 func flattenTriggerContext(ctx map[string]interface{}, req *triggerRequest) {

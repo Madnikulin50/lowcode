@@ -254,6 +254,9 @@ func initBridge() {
 
 	registerDemoChains(engine)
 	registerCMDBChains(engine)
+	rulesgo.EnsureChain = func(ctx context.Context, chainID string) {
+		ensureChainAvailable(ctx, engine, chainID)
+	}
 
 	log.Println("[bridge] all services wired")
 }

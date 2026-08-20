@@ -147,6 +147,8 @@ func stringifyCRUDValue(v interface{}) string {
 			return "1"
 		}
 		return "0"
+	case json.Number:
+		return string(t)
 	case string:
 		return t
 	case []interface{}, []string, map[string]interface{}:

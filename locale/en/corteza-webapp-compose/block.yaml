@@ -1207,4 +1207,13 @@ ai:
   prompt:
     label: Default Prompt
     placeholder: Enter default prompt
+  chat:
+    startPrompt:
+      label: Opening prompt
+      placeholder: Ask the assistant about this page…
+      description: Shown in the composer when the chat is empty. Visitors can still type their own message.
+    model:
+      label: Default model
+      placeholder: Server default
+      description: Initial model for this chat block. Visitors can still switch models while chatting.
 

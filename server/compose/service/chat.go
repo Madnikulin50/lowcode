@@ -78,6 +78,8 @@ const chatSystemPrompt = "Ты ассистент приложения с баз
 	"- создать страницу/модуль/чарт → create_* (спроси подтверждение)\n" +
 	"Для списков вызывай инструмент сразу."
 
+const chatSystemPromptNoTools = "Ты ассистент приложения с базой данных. Отвечай по существу и на языке пользователя."
+
 func Chat() *chatService {
 	ttl := ttlcache.New[string, *chat.Client](
 		ttlcache.WithTTL[string, *chat.Client](30 * time.Minute),
@@ -157,6 +159,9 @@ func (c *chatService) splitPrompt(prompt string) []*schema.Message {
 	}
 	out := []*schema.Message{}
 	for k, v := range data {
+		if k == "" {
+			continue
+		}
 		out = append(out, &schema.Message{Role: "system", Content: "##" + k + "\r\n" + v})
 	}
 	noTag, ok := data[""]
@@ -176,7 +181,7 @@ func (c *chatService) modelFromPrompt(prompt string) string {
 	return chat.DefaultModelName()
 }
 
-func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArguments) []*schema.Message {
+func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArguments, useTools bool) []*schema.Message {
 	if len(ask.Messages) > 10 {
 		ask.Messages = ask.Messages[len(ask.Messages)-10:]
 	}
@@ -204,20 +209,29 @@ func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArgument
 		}
 	}
 	if !hasSystem {
-		sys := chatSystemPrompt
-		if extra := pageChartsSystemHint(ctx, ask); extra != "" {
-			sys += "\n\n" + extra
+		sys := chatSystemPromptNoTools
+		if useTools {
+			sys = chatSystemPrompt
+			if extra := pageChartsSystemHint(ctx, ask); extra != "" {
+				sys += "\n\n" + extra
+			}
 		}
 		msgs = append([]*schema.Message{
 			schema.SystemMessage(sys),
 		}, msgs...)
-	} else if extra := pageChartsSystemHint(ctx, ask); extra != "" {
-		msgs = append([]*schema.Message{
-			schema.SystemMessage(extra),
-		}, msgs...)
+	} else if useTools {
+		if extra := pageChartsSystemHint(ctx, ask); extra != "" {
+			msgs = append([]*schema.Message{
+				schema.SystemMessage(extra),
+			}, msgs...)
+		}
 	}
-	if len(msgs) != 0 {
-		prompt := msgs[len(msgs)-1].Content
+
+	// Current turn is sent as ask.Prompt (history is ask.Messages without it).
+	// Dropping this made the model see only the system prompt and return empty
+	// content → "Модель не сгенерировала ответ."
+	prompt := strings.TrimSpace(ask.Prompt)
+	if prompt != "" {
 		if len(ask.Files) > 0 {
 			var fileBlock string
 			for _, f := range ask.Files {
@@ -230,21 +244,17 @@ func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArgument
 			if ctx == nil {
 				ctx = context.Background()
 			}
-			lastMsg := msgs[len(msgs)-1].Content
 			var allCtx string
-
-			ragCtx := DefaultRAG.BuildContext(ctx, fmt.Sprint(ask.Namespace), lastMsg, 3)
+			ragCtx := DefaultRAG.BuildContext(ctx, fmt.Sprint(ask.Namespace), prompt, 3)
 			if ragCtx != "" {
 				allCtx += "\nDocuments:\n" + ragCtx
 			}
-
 			if DefaultPagesRAG != nil {
-				pagesCtx := DefaultPagesRAG.BuildContext(ctx, lastMsg, 3)
+				pagesCtx := DefaultPagesRAG.BuildContext(ctx, prompt, 3)
 				if pagesCtx != "" {
 					allCtx += "\nPublished pages:\n" + pagesCtx
 				}
 			}
-
 			if allCtx != "" {
 				if len(allCtx) > 4096 {
 					allCtx = allCtx[:4096]
@@ -253,7 +263,7 @@ func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArgument
 			}
 		}
 
-		msgs[len(msgs)-1].Content = prompt
+		msgs = append(msgs, schema.UserMessage(prompt))
 	}
 	return msgs
 }
@@ -446,7 +456,6 @@ func selectNamed[T any](set []T, keywords []string, maxMatched, maxFallback int,
 
 func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interface{}, error) {
 	ctx = c.chatEnvToContext(ask, ctx)
-	allTools := c.getTools(ctx, ask.Namespace, ask.Prompt)
 
 	if ask.Chat != "" && c.pending != nil {
 		if item := c.pending.Get(ask.Chat); item != nil {
@@ -470,7 +479,7 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 				if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
 					return nil, err
 				}
-				msgs := c.buildMessages(ctx, ask)
+				msgs := c.buildMessages(ctx, ask, client.IsToolsSupported())
 				if result != "" {
 					cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
 					if err == nil && strings.TrimSpace(cont) != "" {
@@ -492,7 +501,12 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 		return nil, err
 	}
 
-	msgs := c.buildMessages(ctx, ask)
+	useTools := client.IsToolsSupported()
+	var allTools []chat.ToolDef
+	if useTools {
+		allTools = c.getTools(ctx, ask.Namespace, ask.Prompt)
+	}
+	msgs := c.buildMessages(ctx, ask, useTools)
 
 	if result := showPageChartFastPath(ctx, ask); result != "" {
 		cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
@@ -514,13 +528,12 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 		return map[string]any{"response": result}, nil
 	}
 
-	toolInfos, err := chat.ToToolInfos(allTools)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build tool infos: %w", err)
-	}
-
 	var opts []model.Option
-	if client.IsToolsSupported() {
+	if useTools {
+		toolInfos, err := chat.ToToolInfos(allTools)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build tool infos: %w", err)
+		}
 		opts = append(opts, model.WithTools(toolInfos))
 	}
 	out, err := client.Generate(ctx, msgs, opts...)
@@ -534,6 +547,10 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 	}
 	if content == "" {
 		content = "Модель не сгенерировала ответ."
+	}
+
+	if !useTools {
+		return map[string]any{"response": content}, nil
 	}
 
 	// try native tool calls first, fall back to XML-based
@@ -583,9 +600,8 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 
 func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, stream chat.StreamFunc) error {
 	ctx = c.chatEnvToContext(ask, ctx)
-	allTools := c.getTools(ctx, ask.Namespace, ask.Prompt)
 
-	if handled, err := c.handlePendingStream(ctx, ask, allTools, stream); handled {
+	if handled, err := c.handlePendingStream(ctx, ask, stream); handled {
 		return err
 	}
 
@@ -599,7 +615,13 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 		return err
 	}
 
-	msgs := c.buildMessages(ctx, ask)
+	useTools := client.IsToolsSupported()
+	chat.EmitToolsCapability(ctx, useTools)
+	var allTools []chat.ToolDef
+	if useTools {
+		allTools = c.getTools(ctx, ask.Namespace, ask.Prompt)
+	}
+	msgs := c.buildMessages(ctx, ask, useTools)
 
 	if result := showPageChartFastPath(ctx, ask); result != "" {
 		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
@@ -620,15 +642,15 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 		return stream("", "", true)
 	}
 
-	toolInfos, err := chat.ToToolInfos(allTools)
-	if err != nil {
-		return fmt.Errorf("failed to build tool infos: %w", err)
+	var opts []model.Option
+	if useTools {
+		toolInfos, err := chat.ToToolInfos(allTools)
+		if err != nil {
+			return fmt.Errorf("failed to build tool infos: %w", err)
+		}
+		opts = append(opts, model.WithTools(toolInfos))
 	}
-	opts := model.Option{}
-	if client.IsToolsSupported() {
-		opts = model.WithTools(toolInfos)
-	}
-	streamReader, err := client.Stream(ctx, msgs, opts)
+	streamReader, err := client.Stream(ctx, msgs, opts...)
 	if err != nil {
 		return err
 	}
@@ -641,6 +663,13 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 	effective := strings.TrimSpace(fullContent)
 	if effective == "" {
 		effective = strings.TrimSpace(fullReasoning)
+	}
+
+	if !useTools {
+		if err := streamFallbackAnswer(stream, fullContent, fullReasoning); err != nil {
+			return err
+		}
+		return stream("", "", true)
 	}
 
 	// if no native tool calls, check for XML-based tool calls in full content
@@ -760,6 +789,9 @@ func needsConfirm(calls []CallParam) bool {
 }
 
 func execToolCalls(ctx context.Context, calls []CallParam, namespaceID uint64, tools []chat.ToolDef) string {
+	if len(calls) > 0 {
+		chat.EmitStatus(ctx, chat.StatusUsingTools)
+	}
 	var results []string
 	for _, call := range calls {
 		params := make(map[string]string)
@@ -837,6 +869,9 @@ func pumpChatStream(ctx context.Context, streamReader *schema.StreamReader[*sche
 			}
 		}
 		if len(chunk.ToolCalls) > 0 {
+			if len(toolCalls) == 0 {
+				chat.EmitStatus(ctx, chat.StatusUsingTools)
+			}
 			toolCalls = append(toolCalls, chunk.ToolCalls...)
 		}
 	}
@@ -1003,6 +1038,7 @@ func (c *chatService) ModelsInfo(ctx context.Context) (map[string]any, error) {
 	return map[string]any{
 		"models":     models,
 		"default":    chat.ResolveInstalledModel(chat.DefaultModelName()),
+		"tools":      chat.ModelsToolsMap(models),
 		"enabled":    cfg.Enabled,
 		"ollamaURL":  chat.EffectiveOllamaURL(),
 		"ollamaFrom": ollamaURLSource(),
@@ -1111,7 +1147,7 @@ func pendingPrompt(calls []CallParam) string {
 	return b.String()
 }
 
-func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptArguments, allTools []chat.ToolDef, stream chat.StreamFunc) (bool, error) {
+func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptArguments, stream chat.StreamFunc) (bool, error) {
 	if ask.Chat == "" || c.pending == nil {
 		return false, nil
 	}
@@ -1152,7 +1188,7 @@ func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptAr
 		return true, err
 	}
 	if result != "" {
-		msgs := c.buildMessages(ctx, ask)
+		msgs := c.buildMessages(ctx, ask, client.IsToolsSupported())
 		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
 			return true, err
 		}

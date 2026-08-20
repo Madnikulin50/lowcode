@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 )
 
@@ -53,5 +54,56 @@ func TestFlattenValuesRawArray(t *testing.T) {
 	flattenValues(ctx, map[string]interface{}{"store_id": "7", "store_name": "X"})
 	if ctx["store_id"] != "7" {
 		t.Fatalf("map store_id=%v", ctx["store_id"])
+	}
+}
+
+func TestInjectAgentCallbackURL(t *testing.T) {
+	t.Setenv("CORTEZA_API", "")
+	t.Setenv("HTTP_API_BASE_URL", "")
+	t.Setenv("HTTP_BASE_URL", "")
+	t.Setenv("HTTP_ADDR", "")
+
+	bag := map[string]interface{}{}
+	injectAgentCallback(nil, bag)
+	got := fmt.Sprintf("%v", bag["callbackUrl"])
+	want := "http://localhost:3333/compose/rulechain/cmdb-ingest-scan/run"
+	if got != want {
+		t.Fatalf("default callback %q want %q", got, want)
+	}
+
+	t.Setenv("CORTEZA_API", "http://localhost:3333/api")
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, bag)
+	got = fmt.Sprintf("%v", bag["callbackUrl"])
+	if got != want {
+		t.Fatalf("stripped /api callback %q want %q", got, want)
+	}
+
+	t.Setenv("CORTEZA_API", "")
+	t.Setenv("HTTP_API_BASE_URL", "/api")
+	t.Setenv("HTTP_ADDR", ":3333")
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, bag)
+	got = fmt.Sprintf("%v", bag["callbackUrl"])
+	wantAPI := "http://localhost:3333/api/compose/rulechain/cmdb-ingest-scan/run"
+	if got != wantAPI {
+		t.Fatalf("HTTP_API_BASE_URL=/api callback %q want %q", got, wantAPI)
+	}
+
+	bag = map[string]interface{}{"callbackUrl": "http://example/custom"}
+	injectAgentCallback(nil, bag)
+	if bag["callbackUrl"] != "http://example/custom" {
+		t.Fatalf("explicit callback overwritten: %v", bag["callbackUrl"])
+	}
+
+	t.Setenv("CORTEZA_API", "")
+	t.Setenv("HTTP_API_BASE_URL", "/")
+	t.Setenv("HTTP_BASE_URL", "")
+	t.Setenv("HTTP_ADDR", ":3333")
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, bag)
+	got = fmt.Sprintf("%v", bag["callbackUrl"])
+	if got != want {
+		t.Fatalf("HTTP_API_BASE_URL=/ callback %q want %q", got, want)
 	}
 }

@@ -28,6 +28,7 @@ func NewEmbeddedStore(dbPath string) (*EmbeddedStore, error) {
 			mac TEXT DEFAULT '',
 			hostname TEXT DEFAULT '',
 			vendor TEXT DEFAULT '',
+			model TEXT DEFAULT '',
 			device_type TEXT DEFAULT 'unknown',
 			os TEXT DEFAULT '',
 			open_ports TEXT DEFAULT '[]',
@@ -50,6 +51,7 @@ func NewEmbeddedStore(dbPath string) (*EmbeddedStore, error) {
 		"domain TEXT DEFAULT ''",
 		"shares TEXT DEFAULT '[]'",
 		"vulnerabilities TEXT DEFAULT '[]'",
+		"model TEXT DEFAULT ''",
 	} {
 		db.Exec("ALTER TABLE devices ADD COLUMN " + col) // ignore "duplicate column" errors
 	}
@@ -118,9 +120,9 @@ func (s *EmbeddedStore) CreateDevice(ctx context.Context, _ uint64, d Device) (u
 	now := time.Now().Format(time.RFC3339)
 
 	res, err := s.db.ExecContext(ctx, `
-		INSERT INTO devices (ip, mac, hostname, vendor, device_type, os, domain, open_ports, services, shares, vulnerabilities, last_seen, status, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		d.IP, d.MAC, d.Hostname, d.Vendor, d.DeviceType, d.OS, d.Domain,
+		INSERT INTO devices (ip, mac, hostname, vendor, model, device_type, os, domain, open_ports, services, shares, vulnerabilities, last_seen, status, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		d.IP, d.MAC, d.Hostname, d.Vendor, d.Model, d.DeviceType, d.OS, d.Domain,
 		string(portsJSON), string(svcJSON), string(sharesJSON), string(vulnsJSON), d.LastSeen, d.Status, now, now,
 	)
 	if err != nil {
@@ -138,10 +140,10 @@ func (s *EmbeddedStore) UpdateDevice(ctx context.Context, _, recordID uint64, d 
 	now := time.Now().Format(time.RFC3339)
 
 	_, err := s.db.ExecContext(ctx, `
-		UPDATE devices SET ip=?, mac=?, hostname=?, vendor=?, device_type=?, os=?, domain=?,
+		UPDATE devices SET ip=?, mac=?, hostname=?, vendor=?, model=?, device_type=?, os=?, domain=?,
 			open_ports=?, services=?, shares=?, vulnerabilities=?, last_seen=?, status=?, updated_at=?
 		WHERE id=?`,
-		d.IP, d.MAC, d.Hostname, d.Vendor, d.DeviceType, d.OS, d.Domain,
+		d.IP, d.MAC, d.Hostname, d.Vendor, d.Model, d.DeviceType, d.OS, d.Domain,
 		string(portsJSON), string(svcJSON), string(sharesJSON), string(vulnsJSON), d.LastSeen, d.Status, now, recordID,
 	)
 	return err
@@ -149,7 +151,7 @@ func (s *EmbeddedStore) UpdateDevice(ctx context.Context, _, recordID uint64, d 
 
 func (s *EmbeddedStore) ListDevices(ctx context.Context, _ uint64) ([]Device, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, ip, mac, hostname, vendor, device_type, os, domain, open_ports, services, shares, vulnerabilities, last_seen, status
+		SELECT id, ip, mac, hostname, vendor, model, device_type, os, domain, open_ports, services, shares, vulnerabilities, last_seen, status
 		FROM devices ORDER BY ip`)
 	if err != nil {
 		return nil, err
@@ -159,14 +161,15 @@ func (s *EmbeddedStore) ListDevices(ctx context.Context, _ uint64) ([]Device, er
 	var devices []Device
 	for rows.Next() {
 		var d Device
-		var mac, hostname, vendor, deviceType, os, domain, portsStr, svcStr, sharesStr, vulnsStr, lastSeen, status sql.NullString
-		err := rows.Scan(&d.RecordID, &d.IP, &mac, &hostname, &vendor, &deviceType, &os, &domain, &portsStr, &svcStr, &sharesStr, &vulnsStr, &lastSeen, &status)
+		var mac, hostname, vendor, model, deviceType, os, domain, portsStr, svcStr, sharesStr, vulnsStr, lastSeen, status sql.NullString
+		err := rows.Scan(&d.RecordID, &d.IP, &mac, &hostname, &vendor, &model, &deviceType, &os, &domain, &portsStr, &svcStr, &sharesStr, &vulnsStr, &lastSeen, &status)
 		if err != nil {
 			return nil, err
 		}
 		d.MAC = mac.String
 		d.Hostname = hostname.String
 		d.Vendor = vendor.String
+		d.Model = model.String
 		d.DeviceType = deviceType.String
 		d.OS = os.String
 		d.Domain = domain.String
@@ -197,12 +200,12 @@ func (s *EmbeddedStore) ListDevices(ctx context.Context, _ uint64) ([]Device, er
 
 func (s *EmbeddedStore) GetDevice(ctx context.Context, _, recordID uint64) (*Device, error) {
 	var d Device
-	var mac, hostname, vendor, deviceType, os, domain, portsStr, svcStr, sharesStr, vulnsStr, lastSeen, status sql.NullString
+	var mac, hostname, vendor, model, deviceType, os, domain, portsStr, svcStr, sharesStr, vulnsStr, lastSeen, status sql.NullString
 
 	err := s.db.QueryRowContext(ctx, `
-		SELECT id, ip, mac, hostname, vendor, device_type, os, domain, open_ports, services, shares, vulnerabilities, last_seen, status
+		SELECT id, ip, mac, hostname, vendor, model, device_type, os, domain, open_ports, services, shares, vulnerabilities, last_seen, status
 		FROM devices WHERE id=?`, recordID).Scan(
-		&d.RecordID, &d.IP, &mac, &hostname, &vendor, &deviceType, &os, &domain, &portsStr, &svcStr, &sharesStr, &vulnsStr, &lastSeen, &status,
+		&d.RecordID, &d.IP, &mac, &hostname, &vendor, &model, &deviceType, &os, &domain, &portsStr, &svcStr, &sharesStr, &vulnsStr, &lastSeen, &status,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("device not found")
@@ -210,6 +213,7 @@ func (s *EmbeddedStore) GetDevice(ctx context.Context, _, recordID uint64) (*Dev
 	d.MAC = mac.String
 	d.Hostname = hostname.String
 	d.Vendor = vendor.String
+	d.Model = model.String
 	d.DeviceType = deviceType.String
 	d.OS = os.String
 	d.Domain = domain.String

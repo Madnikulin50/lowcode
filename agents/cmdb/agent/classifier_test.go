@@ -78,6 +78,71 @@ func TestClassifyHeuristics(t *testing.T) {
 			dev:  Device{OpenPorts: []Port{{Port: 8080}}},
 			want: "unknown",
 		},
+		{
+			name: "iphone by airplay model",
+			dev:  Device{Model: "iPhone14,2", Services: []string{"airplay"}, Hostname: "iPhone-ABCDEF"},
+			want: "phone",
+		},
+		{
+			name: "ipad by airplay model",
+			dev:  Device{Model: "iPad13,4", Services: []string{"airplay", "raop"}},
+			want: "tablet",
+		},
+		{
+			name: "iphone by hostname",
+			dev:  Device{Hostname: "iPhone-Максима"},
+			want: "phone",
+		},
+		{
+			name: "ipad by hostname",
+			dev:  Device{Hostname: "iPad-Marya"},
+			want: "tablet",
+		},
+		{
+			name: "android by adb port",
+			dev:  Device{OpenPorts: []Port{{Port: 5555, Service: "adb"}}},
+			want: "phone",
+		},
+		{
+			name: "huawei phone by hisuite",
+			dev:  Device{Services: []string{"hisuite"}, Vendor: "Huawei Technologies Co.,Ltd"},
+			want: "phone",
+		},
+		{
+			name: "xiaomi phone by mipcs",
+			dev:  Device{Services: []string{"mipcs"}},
+			want: "phone",
+		},
+		{
+			name: "samsung phone by hostname",
+			dev:  Device{Hostname: "SM-G991B"},
+			want: "phone",
+		},
+		{
+			name: "samsung tablet by hostname",
+			dev:  Device{Hostname: "SM-T870"},
+			want: "tablet",
+		},
+		{
+			name: "android default hostname",
+			dev:  Device{Hostname: "android-3f2a1b"},
+			want: "phone",
+		},
+		{
+			name: "closed samsung host",
+			dev:  Device{MAC: "00:12:47:12:34:56"},
+			want: "phone",
+		},
+		{
+			name: "huawei phone not switch without ports",
+			dev:  Device{OpenPorts: nil, Vendor: "Huawei Technologies Co.,Ltd", Hostname: "HUAWEI-P30"},
+			want: "phone",
+		},
+		{
+			name: "huawei switch with telnet",
+			dev:  Device{OpenPorts: []Port{{Port: 23}, {Port: 161}}, Vendor: "Huawei Technologies Co.,Ltd"},
+			want: "switch",
+		},
 	}
 
 	for _, tc := range cases {

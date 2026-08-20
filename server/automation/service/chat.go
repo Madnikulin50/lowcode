@@ -65,7 +65,7 @@ func WorkflowChat() *workflowChat {
 	}
 }
 
-func (c *workflowChat) buildMessages(ask *WorkflowChatPromptArguments) []*schema.Message {
+func (c *workflowChat) buildMessages(ask *WorkflowChatPromptArguments, useTools bool) []*schema.Message {
 	msgs := make([]*schema.Message, 0, len(ask.Messages)+2)
 
 	hasSystem := false
@@ -80,8 +80,12 @@ func (c *workflowChat) buildMessages(ask *WorkflowChatPromptArguments) []*schema
 		msgs = append(msgs, &schema.Message{Role: role, Content: m.Content})
 	}
 	if !hasSystem {
+		sys := "You are an AI assistant."
+		if useTools {
+			sys = "You are an AI assistant. You can call tools by outputting XML like this:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\nAlways ask the user to confirm before creating anything. For listing/viewing tools, call them immediately without asking for confirmation."
+		}
 		msgs = append([]*schema.Message{
-			schema.SystemMessage("You are an AI assistant. You can call tools by outputting XML like this:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\nAlways ask the user to confirm before creating anything. For listing/viewing tools, call them immediately without asking for confirmation."),
+			schema.SystemMessage(sys),
 		}, msgs...)
 	}
 	if ask.Prompt != "" {
@@ -94,14 +98,14 @@ func (c *workflowChat) Ask(ctx context.Context, ask *WorkflowChatPromptArguments
 	if err := chat.EnsureWarm(ctx, c.client.Model()); err != nil {
 		return nil, err
 	}
-	toolInfos, err := chat.ToToolInfos(c.tools)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build tool infos: %w", err)
-	}
-
-	msgs := c.buildMessages(ask)
+	useTools := c.client.IsToolsSupported()
+	msgs := c.buildMessages(ask, useTools)
 	var opts []model.Option
-	if c.client.IsToolsSupported() {
+	if useTools {
+		toolInfos, err := chat.ToToolInfos(c.tools)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build tool infos: %w", err)
+		}
 		opts = append(opts, model.WithTools(toolInfos))
 	}
 	out, err := c.client.Generate(ctx, msgs, opts...)
@@ -110,6 +114,10 @@ func (c *workflowChat) Ask(ctx context.Context, ask *WorkflowChatPromptArguments
 	}
 
 	content := out.Content
+
+	if !useTools {
+		return map[string]any{"response": content}, nil
+	}
 
 	toolCalls := out.ToolCalls
 	if len(toolCalls) == 0 && chat.HasToolCallsStr(content) {
@@ -154,14 +162,14 @@ func (c *workflowChat) AskStream(ctx context.Context, ask *WorkflowChatPromptArg
 	if err := chat.EnsureWarm(ctx, c.client.Model()); err != nil {
 		return err
 	}
-	toolInfos, err := chat.ToToolInfos(c.tools)
-	if err != nil {
-		return fmt.Errorf("failed to build tool infos: %w", err)
-	}
-
-	msgs := c.buildMessages(ask)
+	useTools := c.client.IsToolsSupported()
+	msgs := c.buildMessages(ask, useTools)
 	var opts []model.Option
-	if c.client.IsToolsSupported() {
+	if useTools {
+		toolInfos, err := chat.ToToolInfos(c.tools)
+		if err != nil {
+			return fmt.Errorf("failed to build tool infos: %w", err)
+		}
 		opts = append(opts, model.WithTools(toolInfos))
 	}
 	streamReader, err := c.client.Stream(ctx, msgs, opts...)
@@ -196,7 +204,7 @@ func (c *workflowChat) AskStream(ctx context.Context, ask *WorkflowChatPromptArg
 		}
 	}
 
-	if len(toolCalls) == 0 && chat.HasToolCallsStr(fullContent) {
+	if len(toolCalls) == 0 && useTools && chat.HasToolCallsStr(fullContent) {
 		xmlCalls := chat.ParseToolCallsStr(fullContent)
 		toolCalls = make([]schema.ToolCall, len(xmlCalls))
 		for i, xc := range xmlCalls {
@@ -210,7 +218,7 @@ func (c *workflowChat) AskStream(ctx context.Context, ask *WorkflowChatPromptArg
 		}
 	}
 
-	if len(toolCalls) > 0 {
+	if useTools && len(toolCalls) > 0 {
 		if !userConfirmedWorkflow(ask.Prompt) {
 			stream("\n\n⚠️ **Обнаружено предлагаемое действие.** Напишите **«да»** чтобы подтвердить.", "", false)
 

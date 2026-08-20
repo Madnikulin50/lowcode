@@ -64,9 +64,17 @@ func strongDeviceType(d Device) string {
 			svcSet[strings.ToLower(p.Service)] = true
 		}
 	}
+	// mDNS services (airplay, hisuite, ...) are announced via DNS-SD and
+	// stored in Device.Services, not as port banners.
+	for _, s := range d.Services {
+		if s != "" {
+			svcSet[strings.ToLower(s)] = true
+		}
+	}
 	vendor := strings.ToLower(d.Vendor)
 	host := strings.ToLower(d.Hostname)
 	os := strings.ToLower(d.OS)
+	model := strings.ToLower(d.Model)
 
 	// Domain controllers are unambiguous
 	if portSet[88] && (portSet[389] || portSet[636] || portSet[3268]) {
@@ -94,21 +102,51 @@ func strongDeviceType(d Device) string {
 		return "camera"
 	}
 
+	// Mobile devices (phones / tablets)
+	// Exact model from AirPlay mDNS TXT is the strongest signal.
+	if strings.Contains(model, "iphone") || strings.Contains(model, "ipod") {
+		return "phone"
+	}
+	if strings.Contains(model, "ipad") {
+		return "tablet"
+	}
+	// Android Debug Bridge (Wi-Fi debugging) — an Android device.
+	if portSet[5555] {
+		if containsAny(host, "sm-t", "tab", "ipad") {
+			return "tablet"
+		}
+		return "phone"
+	}
+	// Huawei / Xiaomi PC-suite announcements.
+	if svcSet["hisuite"] || svcSet["mipcs"] {
+		return "phone"
+	}
+	// Apple devices announcing AirPlay/RAOP/Companion/Sleep-proxy.
+	if svcSet["airplay"] || svcSet["raop"] || svcSet["companion-link"] || svcSet["sleep-proxy"] {
+		if containsAny(model, "ipad") || containsAny(host, "ipad") {
+			return "tablet"
+		}
+		if containsAny(model, "iphone", "ipod") || containsAny(host, "iphone", "ipod") {
+			return "phone"
+		}
+		if containsAny(model, "appletv") || containsAny(host, "appletv") {
+			return "iot"
+		}
+		// Apple device without model detail (could be a Mac) — fall through
+	}
+
 	// Network devices (switch/router/firewall) by vendor
 	if strings.Contains(vendor, "mikrotik") {
-		if portSet[8728] || portSet[8291] { // API / winbox
-			return "router"
-		}
 		return "router"
 	}
 	if strings.Contains(vendor, "ubiquiti") || strings.Contains(vendor, "ubiquiti networks") {
 		return "router"
 	}
 	if strings.Contains(vendor, "cisco") || strings.Contains(vendor, "juniper") || strings.Contains(vendor, "huawei") {
-		if portSet[23] && portSet[161] {
+		// Vendor alone is not enough — Huawei/Cisco also make phones, APs, cameras.
+		if portSet[23] || portSet[22] || portSet[161] {
 			return "switch"
 		}
-		return "switch"
 	}
 
 	// Virtualization hosts
@@ -119,6 +157,16 @@ func strongDeviceType(d Device) string {
 	// Hostname hints
 	if host != "" {
 		switch {
+		case strings.HasPrefix(host, "ipad") || strings.HasPrefix(host, "sm-t"):
+			return "tablet"
+		case strings.HasPrefix(host, "iphone") || strings.HasPrefix(host, "ipod") || strings.HasPrefix(host, "android-") || strings.HasPrefix(host, "android_"):
+			return "phone"
+		case strings.HasPrefix(host, "sm-g") || strings.HasPrefix(host, "sm-a") || strings.HasPrefix(host, "sm-n") || strings.HasPrefix(host, "sm-s"):
+			return "phone"
+		case containsAny(host, "redmi", "poco", "pixel", "galaxy", "huawei", "honor", "moto", "lm-g", "lm-v", "nokia"):
+			return "phone"
+		case strings.HasPrefix(host, "rm-"):
+			return "phone"
 		case strings.Contains(host, "printer") || strings.Contains(host, "print-") || strings.Contains(host, "hp-"):
 			return "printer"
 		case strings.Contains(host, "camera") || strings.Contains(host, "cam-") || strings.Contains(host, "ipcam"):
@@ -193,9 +241,28 @@ func guessDeviceType(d Device) string {
 
 	// Vendor based
 	if containsAny(vendor, "cisco", "juniper", "huawei", "mikrotik", "ubiquiti", "zyxel", "tp-link", "netgear", "asus") {
-		return "router"
+		if portSet[80] || portSet[443] || portSet[23] || portSet[22] || portSet[161] {
+			return "router"
+		}
 	}
-	if containsAny(vendor, "apple") {
+	// Mobile vendor with a completely closed host (typical for phones: no
+	// services exposed). Apple is excluded here — a closed Apple device is
+	// ambiguous (Mac/iPad/iPhone); only a clear phone hostname decides.
+	if len(d.OpenPorts) == 0 {
+		if m := mobileVendor(d.MAC); m != "" {
+			ml := strings.ToLower(m)
+			if !strings.Contains(ml, "apple") {
+				return "phone"
+			}
+			if containsAny(host, "iphone", "ipod") {
+				return "phone"
+			}
+			if containsAny(host, "ipad") {
+				return "tablet"
+			}
+		}
+	}
+	if containsAny(vendor, "apple") && len(d.OpenPorts) > 0 {
 		return "workstation"
 	}
 	if containsAny(vendor, "vmware", "virtualbox", "hyper-v", "qemu", "xen") {
@@ -237,6 +304,8 @@ Rules:
 - A switch usually has telnet(23) or SSH(22) plus SNMP(161) and is a vendor like Cisco, Juniper, Huawei.
 - A router usually has port 80/443 admin and vendor like MikroTik, Ubiquiti, TP-Link, Zyxel, but NOT web-servers like nginx/Apache.
 - Do NOT call something a router just because it has port 80. Web servers (nginx, Apache) mean "server".
+- A phone or tablet: ADB (5555), mDNS services _airplay/_raop/_companion-link/_hisuite/_mipcs, AirPlay model like "iPhone14,2"/"iPad13,4", hostnames like iphone/ipad/android-/SM-G9xxx/Redmi/Pixel/Galaxy, or a mobile vendor (Apple, Samsung, Xiaomi, Huawei, Google, OnePlus, Oppo, Vivo) with no open ports.
+- Apple vendors alone are ambiguous: a Mac is "workstation", an iPhone/iPad is phone/tablet.
 - "unknown" is a valid answer.
 
 IP: %s
@@ -244,12 +313,13 @@ MAC: %s
 Vendor: %s
 Hostname: %s
 OS: %s
+Model: %s
 Open ports: %s
 Services: %s
 
 Respond with raw JSON only:
-{"deviceType":"server|workstation|router|switch|firewall|printer|camera|nas|ap|iot|domain-controller|unknown","reason":"short reason"}`,
-		d.IP, d.MAC, d.Vendor, d.Hostname, d.OS, formatPorts(d.OpenPorts), formatServices(d.OpenPorts))
+{"deviceType":"server|workstation|router|switch|firewall|printer|camera|nas|ap|iot|phone|tablet|domain-controller|unknown","reason":"short reason"}`,
+		d.IP, d.MAC, d.Vendor, d.Hostname, d.OS, d.Model, formatPorts(d.OpenPorts), formatServices(d.OpenPorts))
 
 	body := map[string]interface{}{
 		"model":  cl.model,
@@ -287,7 +357,7 @@ Respond with raw JSON only:
 	}
 	t := strings.ToLower(strings.TrimSpace(classification.DeviceType))
 	switch t {
-	case "server", "workstation", "router", "switch", "firewall", "printer", "camera", "nas", "ap", "iot", "domain-controller", "unknown":
+	case "server", "workstation", "router", "switch", "firewall", "printer", "camera", "nas", "ap", "iot", "phone", "tablet", "domain-controller", "unknown":
 		return t
 	}
 	return ""

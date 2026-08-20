@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -140,6 +142,7 @@ func (c *CortezaStore) EnsureModule(ctx context.Context) (uint64, error) {
 		{"name": "mac_address", "kind": "String", "label": "MAC Address"},
 		{"name": "hostname", "kind": "String", "label": "Hostname"},
 		{"name": "vendor", "kind": "String", "label": "Vendor"},
+		{"name": "model", "kind": "String", "label": "Model"},
 		{"name": "device_type", "kind": "Select", "label": "Device Type",
 			"options": map[string]interface{}{
 				"options": []map[string]string{
@@ -150,6 +153,8 @@ func (c *CortezaStore) EnsureModule(ctx context.Context) (uint64, error) {
 					{"value": "printer", "text": "Printer"},
 					{"value": "camera", "text": "Camera"},
 					{"value": "firewall", "text": "Firewall"},
+					{"value": "phone", "text": "Phone"},
+					{"value": "tablet", "text": "Tablet"},
 					{"value": "iot", "text": "IoT"},
 					{"value": "unknown", "text": "Unknown"},
 				},
@@ -459,7 +464,150 @@ func (c *CortezaStore) UpdateScan(ctx context.Context, recordID uint64, s *ScanS
 	return err
 }
 
-func (c *CortezaStore) syncRelated(ctx context.Context, _ uint64, _ []Device) {
+func (c *CortezaStore) syncRelated(ctx context.Context, _ uint64, devices []Device) {
+	svcMod, svcErr := c.moduleByHandle(ctx, "services")
+	if svcErr != nil {
+		log.Printf("syncRelated services: %v", svcErr)
+		svcMod = 0
+	}
+	vulnMod, vulnErr := c.moduleByHandle(ctx, "vulnerabilities")
+	if vulnErr != nil {
+		log.Printf("syncRelated vulnerabilities: %v", vulnErr)
+		vulnMod = 0
+	}
+	if svcMod == 0 && vulnMod == 0 {
+		return
+	}
+	for _, d := range devices {
+		devID := d.RecordID
+		if devID == 0 {
+			id, err := c.FindDevice(ctx, 0, d)
+			if err != nil || id == 0 {
+				continue
+			}
+			devID = id
+		}
+		if svcMod != 0 {
+			for _, p := range d.OpenPorts {
+				if err := c.upsertService(ctx, svcMod, devID, p); err != nil {
+					log.Printf("sync service %s:%d: %v", d.IP, p.Port, err)
+				}
+			}
+		}
+		if vulnMod != 0 {
+			for _, v := range d.Vulnerabilities {
+				if strings.TrimSpace(v.Name) == "" {
+					continue
+				}
+				if err := c.upsertVuln(ctx, vulnMod, devID, v, d.LastSeen); err != nil {
+					log.Printf("sync vuln %s %s: %v", d.IP, v.Name, err)
+				}
+			}
+		}
+	}
+}
+
+func (c *CortezaStore) upsertService(ctx context.Context, modID, deviceID uint64, p Port) error {
+	if p.Port <= 0 {
+		return nil
+	}
+	proto := strings.TrimSpace(p.Proto)
+	if proto == "" {
+		proto = "tcp"
+	}
+	vals := []composeRecordValue{
+		{Name: "device", Value: strconv.FormatUint(deviceID, 10)},
+		{Name: "port", Value: strconv.Itoa(p.Port)},
+		{Name: "proto", Value: proto},
+		{Name: "service", Value: p.Service},
+		{Name: "version", Value: p.Version},
+		{Name: "banner", Value: p.Banner},
+	}
+	existing, err := c.findRelated(ctx, modID, deviceID, map[string]string{
+		"port":  strconv.Itoa(p.Port),
+		"proto": proto,
+	})
+	if err != nil {
+		return err
+	}
+	return c.writeRecord(ctx, modID, existing, vals)
+}
+
+func (c *CortezaStore) upsertVuln(ctx context.Context, modID, deviceID uint64, v Vulnerability, detectedAt string) error {
+	vals := []composeRecordValue{
+		{Name: "device", Value: strconv.FormatUint(deviceID, 10)},
+		{Name: "name", Value: v.Name},
+		{Name: "severity", Value: v.Severity},
+		{Name: "cve", Value: v.CVE},
+		{Name: "description", Value: v.Description},
+		{Name: "remediation", Value: v.Remediation},
+		{Name: "status", Value: "open"},
+	}
+	if strings.TrimSpace(detectedAt) != "" {
+		vals = append(vals, composeRecordValue{Name: "detected_at", Value: detectedAt})
+	}
+	existing, err := c.findRelated(ctx, modID, deviceID, map[string]string{"name": v.Name})
+	if err != nil {
+		return err
+	}
+	return c.writeRecord(ctx, modID, existing, vals)
+}
+
+func (c *CortezaStore) writeRecord(ctx context.Context, modID, recordID uint64, vals []composeRecordValue) error {
+	nsID, err := c.resolveNamespace(ctx)
+	if err != nil {
+		return err
+	}
+	body := map[string]interface{}{"values": vals}
+	if recordID == 0 {
+		path := fmt.Sprintf("/compose/namespace/%d/module/%d/record/", nsID, modID)
+		_, err = c.request(ctx, "POST", path, body)
+		return err
+	}
+	path := fmt.Sprintf("/compose/namespace/%d/module/%d/record/%d", nsID, modID, recordID)
+	_, err = c.request(ctx, "POST", path, body)
+	return err
+}
+
+func (c *CortezaStore) findRelated(ctx context.Context, modID, deviceID uint64, extra map[string]string) (uint64, error) {
+	nsID, err := c.resolveNamespace(ctx)
+	if err != nil {
+		return 0, err
+	}
+	q := url.QueryEscape("device = " + qlLiteral(strconv.FormatUint(deviceID, 10)))
+	path := fmt.Sprintf("/compose/namespace/%d/module/%d/record/?query=%s&limit=200", nsID, modID, q)
+	raw, err := c.request(ctx, "GET", path, nil)
+	if err != nil {
+		return 0, err
+	}
+	set, err := unwrapSet[composeRecord](raw)
+	if err != nil {
+		return 0, err
+	}
+	for _, rec := range set {
+		match := true
+		for k, want := range extra {
+			if !relatedFieldEqual(recordField(rec, k), want) {
+				match = false
+				break
+			}
+		}
+		if match {
+			return rec.ID, nil
+		}
+	}
+	return 0, nil
+}
+
+func relatedFieldEqual(got, want string) bool {
+	got = strings.TrimSpace(got)
+	want = strings.TrimSpace(want)
+	if strings.EqualFold(got, want) {
+		return true
+	}
+	gf, gErr := strconv.ParseFloat(got, 64)
+	wf, wErr := strconv.ParseFloat(want, 64)
+	return gErr == nil && wErr == nil && gf == wf
 }
 
 func recordToDevice(rec composeRecord) Device {
@@ -510,6 +658,7 @@ func deviceToValues(d Device) []composeRecordValue {
 		{"mac_address", d.MAC},
 		{"hostname", d.Hostname},
 		{"vendor", d.Vendor},
+		{"model", d.Model},
 		{"device_type", d.DeviceType},
 		{"os", d.OS},
 		{"domain", d.Domain},

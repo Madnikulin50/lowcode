@@ -148,6 +148,9 @@ func mergeDevice(a, b Device) Device {
 	if strings.TrimSpace(out.Vendor) == "" {
 		out.Vendor = b.Vendor
 	}
+	if strings.TrimSpace(out.Model) == "" {
+		out.Model = b.Model
+	}
 	if strings.TrimSpace(out.OS) == "" {
 		out.OS = b.OS
 	}
