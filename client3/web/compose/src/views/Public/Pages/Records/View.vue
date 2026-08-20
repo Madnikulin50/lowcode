@@ -256,6 +256,7 @@ import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import { normalizeXYWH } from 'corteza-webapp-compose/src/lib/block-layout'
 import { recordCreateLocation, takeRecordCreate } from 'corteza-webapp-compose/src/lib/record-create-nav'
+import { isFieldReadonly } from 'corteza-webapp-compose/src/lib/field-editable'
 import bus from '../../../../lib/bus'
 import Grid from 'corteza-webapp-compose/src/components/Public/Page/Grid'
 import RecordToolbar from 'corteza-webapp-compose/src/components/Common/RecordToolbar'
@@ -1108,7 +1109,7 @@ async function validateRecord(pairs) {
       p.items.forEach(({ r, id }) => {
         if (r.deletedAt) return
         const fields = p.module.fields
-          .filter(({ canReadRecordValue, canUpdateRecordValue }) => canReadRecordValue && canUpdateRecordValue)
+          .filter(f => f.canReadRecordValue && f.canUpdateRecordValue && !isFieldReadonly(f))
           .map(({ name }) => name)
         if (fields.length) {
           const err = v.run(r, ...fields)

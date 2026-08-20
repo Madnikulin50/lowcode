@@ -73,6 +73,7 @@ const props = withDefaults(defineProps<{
   maxFiles?: number
   showUploadedFileName?: boolean
   authToken?: string
+  onUploaded?: (response: any, file: File) => void
 }>(), {
   disabled: false,
   acceptedFiles: () => [],
@@ -83,6 +84,7 @@ const props = withDefaults(defineProps<{
   maxFiles: 1000,
   showUploadedFileName: false,
   authToken: '',
+  onUploaded: undefined,
 })
 
 const emit = defineEmits<{
@@ -97,7 +99,31 @@ const active = ref<File | null>(null)
 const processing = ref<{ file: File; progress: number; bytesSent: number } | null>(null)
 const error = ref<string | null>(null)
 
-const resolvedToken = computed(() => props.authToken || $auth?.accessToken || '')
+const resolvedToken = computed(() => {
+  return props.authToken
+    || $auth?.accessToken
+    || (typeof $auth?.accessTokenFn === 'function' ? $auth.accessTokenFn() : '')
+    || (typeof window !== 'undefined' ? (window as any).__auth?.accessToken : '')
+    || ''
+})
+
+function sameOriginEndpoint (endpoint: string): string {
+  if (!endpoint || endpoint.startsWith('/')) return endpoint
+  if (typeof window === 'undefined') return endpoint
+  try {
+    const abs = new URL(endpoint, window.location.href)
+    if (abs.origin === window.location.origin) return endpoint
+    const api = (window as any).CortezaAPI
+    if (!api) return endpoint
+    const apiOrigin = new URL(String(api), window.location.href).origin
+    if (abs.origin === apiOrigin) {
+      return abs.pathname + abs.search
+    }
+  } catch {
+    return endpoint
+  }
+  return endpoint
+}
 
 function asAcceptList (types: unknown): string[] {
   if (!types) return []
@@ -228,6 +254,8 @@ function validateFileType(name: string, types: string[], mime = '') {
 }
 
 function uploadFile(file: File) {
+  processing.value = { file, progress: 0, bytesSent: 0 }
+
   const xhr = new XMLHttpRequest()
 
   xhr.upload.addEventListener('progress', (e) => {
@@ -242,16 +270,26 @@ function uploadFile(file: File) {
       try {
         response = JSON.parse(xhr.responseText)
       } catch {
-        response = xhr.responseText
+        onError(null, 'Upload failed: invalid server response')
+        return
+      }
+      if (response?.error) {
+        onError(null, response.error?.message || response.error || 'Upload failed')
+        return
       }
       // Corteza wraps payloads as { response: { attachmentID, ... } }
       if (response && typeof response === 'object' && response.response) {
         response = response.response
       }
+      if (!response || typeof response !== 'object' || !(response as any).attachmentID) {
+        onError(null, 'Upload failed: missing attachment id')
+        return
+      }
       active.value = file
       processing.value = null
       error.value = null
       emit('upload', response, file)
+      props.onUploaded?.(response, file)
     } else {
       let message = 'Upload failed'
       try {
@@ -268,9 +306,7 @@ function uploadFile(file: File) {
     onError(null, 'Network error')
   })
 
-  xhr.open('POST', props.endpoint)
-  xhr.setRequestHeader('X-Requested-With', '')
-  xhr.setRequestHeader('Cache-Control', '')
+  xhr.open('POST', sameOriginEndpoint(props.endpoint))
   if (resolvedToken.value) {
     xhr.setRequestHeader('Authorization', 'Bearer ' + resolvedToken.value)
   }
@@ -278,7 +314,8 @@ function uploadFile(file: File) {
   const formData = new FormData()
   formData.append(props.paramName, file)
   for (const [k, v] of Object.entries(props.formData || {})) {
-    formData.append(k, v as string)
+    if (v == null || v === '') continue
+    formData.append(k, String(v))
   }
 
   xhr.withCredentials = true
@@ -289,6 +326,7 @@ function onError(_e: any, message: string) {
   active.value = null
   error.value = message
   processing.value = null
+  console.error('[CUploader]', message)
 }
 
 defineExpose({ handleFile, openFileDialog })

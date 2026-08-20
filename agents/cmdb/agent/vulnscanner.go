@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -172,6 +174,7 @@ func checkSSL(ctx context.Context, addr string, port int, add func(Vulnerability
 			Name:        "TLS 1.1 Enabled",
 			Severity:    "MEDIUM",
 			Description: "Server accepts TLS 1.1 connections. This protocol version is deprecated.",
+			CVE:         "CVE-2016-2183",
 			Remediation: "Disable TLS 1.1. Enable TLS 1.2 or higher.",
 		})
 	}
@@ -290,10 +293,44 @@ func versionMatch(version, target, op string) bool {
 	case "prefix":
 		return strings.HasPrefix(strings.ToLower(version), strings.ToLower(target))
 	case "lt":
-		// minimal numeric compare
-		return version < target
+		return versionLessThan(version, target)
 	}
 	return false
+}
+
+// versionLessThan compares two version strings numerically (e.g. "OpenSSH_7.2p2"
+// < "OpenSSH_7.9"), extracting the first numeric component from each. Falls back
+// to plain string comparison when no numeric part is found.
+func versionLessThan(a, b string) bool {
+	na := extractVersionNum(a)
+	nb := extractVersionNum(b)
+	if na == "" || nb == "" {
+		return a < b
+	}
+	return numericLess(na, nb)
+}
+
+var versionNumRE = regexp.MustCompile(`\d+(?:\.\d+)+`)
+
+// extractVersionNum returns the first dotted-numeric sequence, e.g.
+// "OpenSSH_7.2p2" -> "7.2", "nginx/1.20.0" -> "1.20.0".
+func extractVersionNum(s string) string {
+	m := versionNumRE.FindString(s)
+	return m
+}
+
+// numericLess compares dotted numeric versions component by component.
+func numericLess(a, b string) bool {
+	as := strings.Split(a, ".")
+	bs := strings.Split(b, ".")
+	for i := 0; i < len(as) && i < len(bs); i++ {
+		av, aerr := strconv.Atoi(as[i])
+		bv, berr := strconv.Atoi(bs[i])
+		if aerr == nil && berr == nil && av != bv {
+			return av < bv
+		}
+	}
+	return len(as) < len(bs)
 }
 
 var knownVulns = []vulnMatch{
@@ -303,15 +340,15 @@ var knownVulns = []vulnMatch{
 	{80, "Apache/2.4.50", "contains", "Apache HTTP Server 2.4.50", "CRITICAL", "Path traversal vulnerability.", "CVE-2021-42013", "Upgrade Apache to 2.4.51+"},
 	{443, "Apache/2.4.49", "contains", "Apache HTTP Server 2.4.49", "CRITICAL", "Path traversal and RCE vulnerability.", "CVE-2021-41773", "Upgrade Apache to 2.4.51+"},
 	{443, "Apache/2.4.50", "contains", "Apache HTTP Server 2.4.50", "CRITICAL", "Path traversal vulnerability.", "CVE-2021-42013", "Upgrade Apache to 2.4.51+"},
-	{80, "nginx/1.20.0", "contains", "Nginx 1.20.0", "MEDIUM", "Known vulnerabilities in this nginx version.", "", "Upgrade nginx to latest stable."},
-	{80, "nginx/1.18.0", "contains", "Nginx 1.18.0", "MEDIUM", "Known vulnerabilities in this nginx version.", "", "Upgrade nginx to latest stable."},
-	{3306, "mysql 5.5", "contains", "MySQL 5.5", "HIGH", "MySQL 5.5 has reached end of life and has known vulnerabilities.", "", "Upgrade MySQL to 8.0+"},
-	{3306, "mysql 5.6", "contains", "MySQL 5.6", "HIGH", "MySQL 5.6 has reached end of life and has known vulnerabilities.", "", "Upgrade MySQL to 8.0+"},
-	{3306, "mysql 5.7", "contains", "MySQL 5.7", "MEDIUM", "MySQL 5.7 is approaching end of life.", "", "Upgrade MySQL to 8.0+"},
-	{5432, "postgresql 9.", "contains", "PostgreSQL 9.x", "HIGH", "PostgreSQL 9.x has reached end of life.", "", "Upgrade PostgreSQL to 15+"},
-	{5432, "postgresql 10.", "contains", "PostgreSQL 10.x", "HIGH", "PostgreSQL 10.x has reached end of life.", "", "Upgrade PostgreSQL to 15+"},
-	{5432, "postgresql 11.", "contains", "PostgreSQL 11.x", "MEDIUM", "PostgreSQL 11.x is approaching end of life.", "", "Upgrade PostgreSQL to 15+"},
-	{6379, "redis 2.", "contains", "Redis 2.x", "HIGH", "Redis 2.x has reached end of life.", "", "Upgrade Redis to 7+"},
-	{6379, "redis 3.", "contains", "Redis 3.x", "HIGH", "Redis 3.x has reached end of life.", "", "Upgrade Redis to 7+"},
-	{6379, "redis 4.", "contains", "Redis 4.x", "MEDIUM", "Redis 4.x has reached end of life.", "", "Upgrade Redis to 7+"},
+	{80, "nginx/1.20.0", "contains", "Nginx 1.20.0", "MEDIUM", "Known vulnerabilities in this nginx version.", "CVE-2021-23017", "Upgrade nginx to latest stable."},
+	{80, "nginx/1.18.0", "contains", "Nginx 1.18.0", "MEDIUM", "Known vulnerabilities in this nginx version.", "CVE-2021-23017", "Upgrade nginx to latest stable."},
+	{3306, "mysql 5.5", "contains", "MySQL 5.5", "HIGH", "MySQL 5.5 has reached end of life and has known vulnerabilities.", "CVE-2012-3153", "Upgrade MySQL to 8.0+"},
+	{3306, "mysql 5.6", "contains", "MySQL 5.6", "HIGH", "MySQL 5.6 has reached end of life and has known vulnerabilities.", "CVE-2016-6662", "Upgrade MySQL to 8.0+"},
+	{3306, "mysql 5.7", "contains", "MySQL 5.7", "MEDIUM", "MySQL 5.7 is approaching end of life.", "CVE-2018-3081", "Upgrade MySQL to 8.0+"},
+	{5432, "postgresql 9.", "contains", "PostgreSQL 9.x", "HIGH", "PostgreSQL 9.x has reached end of life.", "CVE-2017-7484", "Upgrade PostgreSQL to 15+"},
+	{5432, "postgresql 10.", "contains", "PostgreSQL 10.x", "HIGH", "PostgreSQL 10.x has reached end of life.", "CVE-2018-1058", "Upgrade PostgreSQL to 15+"},
+	{5432, "postgresql 11.", "contains", "PostgreSQL 11.x", "MEDIUM", "PostgreSQL 11.x is approaching end of life.", "CVE-2019-10164", "Upgrade PostgreSQL to 15+"},
+	{6379, "redis 2.", "contains", "Redis 2.x", "HIGH", "Redis 2.x has reached end of life.", "CVE-2015-8080", "Upgrade Redis to 7+"},
+	{6379, "redis 3.", "contains", "Redis 3.x", "HIGH", "Redis 3.x has reached end of life.", "CVE-2016-8339", "Upgrade Redis to 7+"},
+	{6379, "redis 4.", "contains", "Redis 4.x", "MEDIUM", "Redis 4.x has reached end of life.", "CVE-2020-17520", "Upgrade Redis to 7+"},
 }

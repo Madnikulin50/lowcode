@@ -19,7 +19,7 @@ import ListLoader from 'corteza-webapp-compose/src/components/Public/Page/Attach
 const props = defineProps({
   namespace: { type: compose.Namespace, required: true },
   field: { type: compose.ModuleField, required: true },
-  record: { type: compose.Record, required: true },
+  record: { type: Object, required: true },
   valueOnly: { type: Boolean, required: false },
   extraOptions: { type: Object, default: () => ({}) },
   includeStyles: { type: Boolean, default: false },
@@ -29,6 +29,8 @@ const props = defineProps({
 const { value, options } = useViewerBase(props)
 
 const attachmentSet = computed(() => {
-  return props.field.isMulti ? value.value : [value.value]
+  const raw = value.value
+  const list = Array.isArray(raw) ? raw : (raw != null && raw !== '' ? [raw] : [])
+  return list.filter(id => typeof id === 'string' || typeof id === 'number')
 })
 </script>

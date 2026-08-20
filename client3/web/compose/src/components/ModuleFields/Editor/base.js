@@ -32,8 +32,8 @@ export function useEditorBase(props, emit) {
   })
 
   const state = computed(() => {
-    if (!props.errors.valid()) return null
-    return props.errors.valid() === true ? null : false
+    if (typeof props.errors?.valid !== 'function') return null
+    return props.errors.valid() ? null : false
   })
 
   const value = computed({

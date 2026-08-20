@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -118,6 +119,67 @@ func (c *CortezaStore) resolveNamespace(ctx context.Context) (uint64, error) {
 		}
 	}
 	return 0, fmt.Errorf("namespace slug cmdb not found; create it with agents/cmdb/compose/apply.mjs")
+}
+
+// resolveNetworkID finds the Networks record whose cidr overlaps the scan
+// target CIDR. The scan record's "network" field is set from the trigger's
+// record context, which is only present when the scan is started from the
+// Network detail page; scans started from the Scans list page have no record
+// context, so the network is resolved here from the resolved target CIDR.
+func (c *CortezaStore) resolveNetworkID(ctx context.Context, target string) (uint64, error) {
+	target = strings.TrimSpace(target)
+	if target == "" || target == "auto" {
+		return 0, nil
+	}
+	nsID, err := c.resolveNamespace(ctx)
+	if err != nil {
+		return 0, err
+	}
+	modID, err := c.moduleByHandle(ctx, "networks")
+	if err != nil {
+		return 0, err
+	}
+	path := fmt.Sprintf("/compose/namespace/%d/module/%d/record/?limit=200", nsID, modID)
+	raw, err := c.request(ctx, "GET", path, nil)
+	if err != nil {
+		return 0, err
+	}
+	set, err := unwrapSet[composeRecord](raw)
+	if err != nil {
+		return 0, err
+	}
+	for _, rec := range set {
+		cidr := strings.TrimSpace(recordField(rec, "cidr"))
+		if cidr != "" && cidrOverlaps(target, cidr) {
+			return rec.ID, nil
+		}
+	}
+	return 0, nil
+}
+
+// cidrOverlaps reports whether two CIDR ranges (or an IP and a CIDR) overlap.
+func cidrOverlaps(a, b string) bool {
+	an, aerr := parseCIDROrIP(a)
+	bn, berr := parseCIDROrIP(b)
+	if aerr != nil || berr != nil {
+		return false
+	}
+	return an.Contains(bn.IP) || bn.Contains(an.IP)
+}
+
+func parseCIDROrIP(s string) (*net.IPNet, error) {
+	_, n, err := net.ParseCIDR(s)
+	if err != nil {
+		ip := net.ParseIP(s)
+		if ip == nil {
+			return nil, err
+		}
+		n = &net.IPNet{IP: ip, Mask: net.CIDRMask(32, 32)}
+		if ip.To4() == nil {
+			n = &net.IPNet{IP: ip, Mask: net.CIDRMask(128, 128)}
+		}
+	}
+	return n, nil
 }
 
 func (c *CortezaStore) EnsureModule(ctx context.Context) (uint64, error) {
@@ -458,6 +520,12 @@ func (c *CortezaStore) UpdateScan(ctx context.Context, recordID uint64, s *ScanS
 	}
 	if s.Target != "" {
 		vals = append(vals, composeRecordValue{Name: "target", Value: s.Target})
+	}
+	netID, err := c.resolveNetworkID(ctx, s.Target)
+	if err != nil {
+		log.Printf("update scan record %d: resolve network: %v", recordID, err)
+	} else if netID != 0 {
+		vals = append(vals, composeRecordValue{Name: "network", Value: strconv.FormatUint(netID, 10)})
 	}
 	path := fmt.Sprintf("/compose/namespace/%d/module/%d/record/%d", nsID, modID, recordID)
 	_, err = c.request(ctx, "POST", path, map[string]interface{}{"values": vals})

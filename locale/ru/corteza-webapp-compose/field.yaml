@@ -314,6 +314,8 @@ valueExpr:
   placeholder: ((floor(numField1) + numField2) / 10) + 0.5
 label:
   required: Обязательное
+  readonly: Только для чтения
+  readonlyHelp: Пользователь не сможет изменить значение в форме. Его по-прежнему можно задавать через автоматизацию, API или внешние системы.
   multi: Множественное
 constraints:
   label: Значение должно быть уникальным

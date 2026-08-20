@@ -11,7 +11,7 @@
       v-else-if="mode === 'list'"
     >
       <draggable
-            item-key="id"
+        item-key="attachmentID"
         v-model="attachments"
         :disabled="!enableOrder"
         handle=".handle"
@@ -135,7 +135,7 @@ import { ref, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import numeral from 'numeral'
 import moment from 'moment'
-import { compose, shared } from 'corteza-lib/js/dist'
+import { compose, shared, NoID } from 'corteza-lib/js/dist'
 import AttachmentLink from './Link.vue'
 import draggable from 'vuedraggable'
 import { url, components } from 'corteza-lib/vue/dist'
@@ -178,48 +178,56 @@ const canPreviewCheck = (a) => {
 
 const baseURL = url.Make({ url: window.CortezaAPI + '/compose' })
 
+function isAttachmentObject (a) {
+  return !!a && typeof a === 'object' && !Array.isArray(a)
+}
+
 watch(() => props.set, (set) => {
-  const att = set.map(a => {
-    if (typeof a === 'object') {
+  const list = Array.isArray(set) ? set : []
+  const att = list.map(a => {
+    if (isAttachmentObject(a)) {
       return new shared.Attachment(a, baseURL)
-    } else {
-      return null
     }
+    return null
   })
 
   const namespaceID = props.namespace.namespaceID
   processing.value = true
 
-  Promise.all(Object.entries(set).map(([index, attachmentID]) => {
-    if (typeof attachmentID === 'string') {
-      return $ComposeAPI.attachmentRead({ kind: props.kind, attachmentID, namespaceID }).then(a => {
+  Promise.all(list.map((attachmentID, index) => {
+    if (typeof attachmentID === 'string' || typeof attachmentID === 'number') {
+      return $ComposeAPI.attachmentRead({ kind: props.kind, attachmentID: String(attachmentID), namespaceID }).then(a => {
         att.splice(index, 1, new shared.Attachment(a, baseURL))
       })
     }
-    return Promise.resolve([])
+    return Promise.resolve()
   }))
     .then(() => {
       const { clickToView = true, enableDownload = true } = props.previewOptions
       attachments.value = att
-        .filter(a => !!a)
-        .filter(a => typeof a === 'object')
+        .filter(a => isAttachmentObject(a) && a.attachmentID && a.attachmentID !== NoID)
         .map(a => ({
           ...a,
           download: enableDownload ? a.download : undefined,
           clickToView,
         }))
     })
+    .catch(err => {
+      console.error('Failed to load attachments', err)
+    })
     .finally(() => {
       processing.value = false
     })
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
 function size(a) {
-  return numeral(a.meta.original.size).format('0b')
+  const bytes = a?.meta?.original?.size
+  return bytes == null ? '' : numeral(bytes).format('0b')
 }
 
 function uploadedAt(a) {
-  return moment(a.updatedAt || a.createdAt).fromNow()
+  const ts = a?.updatedAt || a?.createdAt
+  return ts ? moment(ts).fromNow() : ''
 }
 
 function openLightbox(e) {
@@ -234,7 +242,7 @@ function openLightbox(e) {
 
 function deleteAttachment(index) {
   attachments.value.splice(index, 1)
-  emit('update.set', attachments.value.map(a => a.attachmentID))
+  emit('update:set', attachments.value.map(a => a.attachmentID))
 }
 
 function ext(a) {

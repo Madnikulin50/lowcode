@@ -18,6 +18,7 @@
         :form-data="uploaderFormData"
         :auth-token="authToken"
         :labels="uploadLabels"
+        :on-uploaded="appendAttachment"
         class="flex-grow-1"
         @upload="appendAttachment"
       />
@@ -32,6 +33,7 @@
 
     <ListLoader
       v-if="attachmentSet.length > 0"
+      :key="attachmentSetKey"
       kind="record"
       v-model:set="attachmentSet"
       :namespace="namespace"
@@ -47,7 +49,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'general' } })
-import { computed, ref, inject } from 'vue'
+import { computed, ref, inject, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEditorBase } from './base'
 import { components } from 'corteza-lib/vue/dist'
@@ -71,12 +73,12 @@ const emit = defineEmits(['change', 'update:preventPopoverClose'])
 const { t } = useI18n({ useScope: 'global', messages: {} })
 const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hint, description } = useEditorBase(props, emit)
 
-const $ComposeAPI = inject('$ComposeAPI')
+const $ComposeAPI = inject('$ComposeAPI', typeof window !== 'undefined' ? window.__composeAPI : undefined)
 const $settings = inject('$Settings')
 const $auth = inject('$auth', typeof window !== 'undefined' ? window.__auth : undefined)
 
 const uploaderRef = ref(null)
-const authToken = computed(() => $auth?.accessToken || '')
+const authToken = computed(() => $auth?.accessToken || $auth?.accessTokenFn?.() || '')
 
 const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp']
 const DOC_MIMES = [
@@ -143,18 +145,55 @@ const maxSize = computed(() => {
   return Number(fromSettings) || 100
 })
 
+function asAttachmentIDs (raw) {
+  const list = Array.isArray(raw) ? raw : (raw != null && raw !== '' ? [raw] : [])
+  return list
+    .map(item => (item && typeof item === 'object' ? item.attachmentID : item))
+    .filter(id => (typeof id === 'string' || typeof id === 'number') && String(id) !== '' && String(id) !== '0')
+    .map(id => String(id))
+}
+
+function unwrapAttachment (payload) {
+  if (payload == null || typeof payload !== 'object') return null
+  if (payload.attachmentID) return payload
+  if (payload.response?.attachmentID) return payload.response
+  return null
+}
+
+function writeFieldValue (ids) {
+  const rec = props.record
+  const next = props.field.isMulti ? ids : (ids[0] || undefined)
+  if (typeof rec.setValue === 'function') {
+    rec.setValue(props.field.name, next)
+  } else if (rec.values) {
+    rec.values[props.field.name] = next
+  }
+  emit('change', next)
+}
+
+// Full objects from the upload response so the list can render without a second fetch.
+const uploadedAttachments = ref([])
+
+watch(() => props.record?.recordID, () => {
+  uploadedAttachments.value = []
+})
+
 const attachmentSet = computed({
   get () {
-    return props.field.isMulti ? (value.value || []) : [(value.value || [])].filter(id => !!id)
+    const ids = asAttachmentIDs(value.value)
+    const extras = uploadedAttachments.value
+    const extraIDs = new Set(extras.map(a => String(a.attachmentID)))
+    return [...extras, ...ids.filter(id => !extraIDs.has(id))]
   },
   set (v) {
-    if (props.field.isMulti) {
-      value.value = v
-    } else {
-      value.value = (Array.isArray(v) && v.length > 0) ? v[0] : undefined
-    }
+    const list = Array.isArray(v) ? v : []
+    const ids = asAttachmentIDs(list)
+    uploadedAttachments.value = uploadedAttachments.value.filter(a => ids.includes(String(a.attachmentID)))
+    writeFieldValue(ids)
   },
 })
+
+const attachmentSetKey = computed(() => asAttachmentIDs(attachmentSet.value).join(','))
 
 const uploadLabels = computed(() => ({
   uploading: t('label.uploading'),
@@ -172,13 +211,15 @@ const webcamLabels = computed(() => ({
 }))
 
 function appendAttachment (payload = {}) {
-  const attachmentID = payload.attachmentID || payload.response?.attachmentID
-  if (!attachmentID) return
-  if (props.field.isMulti) {
-    value.value = [attachmentID, ...(value.value || [])]
-  } else {
-    value.value = attachmentID
+  const att = unwrapAttachment(payload)
+  if (!att?.attachmentID) {
+    console.error('Upload succeeded but response has no attachmentID', payload)
+    return
   }
+  const id = String(att.attachmentID)
+  uploadedAttachments.value = [att, ...uploadedAttachments.value.filter(a => String(a.attachmentID) !== id)]
+  const prev = asAttachmentIDs(value.value).filter(existing => existing !== id)
+  writeFieldValue(props.field.isMulti ? [id, ...prev] : [id])
 }
 
 function uploadWebcamImage (file) {

@@ -312,6 +312,8 @@ valueExpr:
   placeholder: ((floor(numField1) + numField2) / 10) + 0.5
 label:
   required: Required
+  readonly: Read only
+  readonlyHelp: Users cannot change this value in forms. It can still be set by automation, API, or external systems.
   multi: Multi value
 constraints:
   label: Unique value constraints

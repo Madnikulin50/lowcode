@@ -45,6 +45,7 @@ import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
 import FieldEditor from 'corteza-webapp-compose/src/components/ModuleFields/Editor'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'
+import { isUserWritableField } from 'corteza-webapp-compose/src/lib/field-editable'
 
 const { t: $t } = useI18n({ useScope: 'global' })
 
@@ -100,7 +101,7 @@ const fieldWidth = computed(() => {
 const horizontal = computed(() => props.block.options.horizontalFieldLayoutEnabled && props.block.options.recordFieldLayoutOption !== 'noWrap')
 
 function canDisplay(field) { return field?.canReadRecordValue !== false }
-function isFieldEditable(field) { return field?.canUpdateRecordValue !== false }
+function isFieldEditable(field) { return isUserWritableField(field) }
 
 const onFieldChange = debounce(function(field) {
   window.dispatchEvent(new CustomEvent('record-field-change', { detail: { fieldName: field.name } }))

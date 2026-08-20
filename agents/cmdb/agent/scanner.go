@@ -317,6 +317,15 @@ func tryConnect(ctx context.Context, addr string, port int, timeout time.Duratio
 		return true, bannerLine, server
 	}
 
+	if port == 3306 {
+		// MySQL handshake is binary (starts with 0x0a); read it specially
+		banner, version := readMySQLGreeting(rd)
+		if banner == "" {
+			return true, "", ""
+		}
+		return true, banner, version
+	}
+
 	raw, err := rd.ReadString('\n')
 	if err != nil && raw == "" {
 		return true, "", ""
@@ -325,7 +334,85 @@ func tryConnect(ctx context.Context, addr string, port int, timeout time.Duratio
 	if banner == "" {
 		return true, "", ""
 	}
-	return true, banner, ""
+	return true, banner, parseBannerVersion(port, banner)
+}
+
+// readMySQLGreeting reads the MySQL server handshake banner. The greeting is
+// binary: the protocol version byte (0x0a) followed by a NUL-terminated server
+// version string (e.g. "5.5.62-log"). The generic newline-based read would stop
+// at the 0x0a byte and lose the version, so MySQL is handled separately.
+func readMySQLGreeting(rd *bufio.Reader) (string, string) {
+	proto := make([]byte, 1)
+	if _, err := rd.Read(proto); err != nil {
+		return "", ""
+	}
+	rest, err := rd.ReadString(0)
+	if err != nil && rest == "" {
+		return "", ""
+	}
+	rest = strings.TrimRight(rest, "\x00")
+	ver := ""
+	for _, r := range rest {
+		if (r >= '0' && r <= '9') || r == '.' {
+			ver += string(r)
+		} else {
+			break
+		}
+	}
+	if ver == "" {
+		return rest, ""
+	}
+	return rest, "mysql " + ver
+}
+
+// parseBannerVersion extracts a version string from service banners so the
+// version-based vulnerability database can match. Returns "" when the banner
+// does not carry a recognizable version.
+func parseBannerVersion(port int, banner string) string {
+	b := strings.ToLower(strings.TrimSpace(banner))
+	switch port {
+	case 22:
+		// SSH-2.0-OpenSSH_7.2p2 Ubuntu-4ubuntu2.10
+		if i := strings.Index(b, "openssh_"); i >= 0 {
+			rest := b[i+len("openssh_"):]
+			ver := ""
+			for _, r := range rest {
+				if (r >= '0' && r <= '9') || r == '.' || r == 'p' {
+					ver += string(r)
+				} else {
+					break
+				}
+			}
+			if ver != "" {
+				return "OpenSSH_" + ver
+			}
+		}
+	case 5432:
+		// PostgreSQL 14.5 (Ubuntu ...) on x86_64...
+		if strings.HasPrefix(b, "postgresql ") {
+			rest := strings.TrimSpace(b[len("postgresql "):])
+			for i, r := range rest {
+				if r == ' ' || r == '(' {
+					return "postgresql " + rest[:i]
+				}
+			}
+			return "postgresql " + rest
+		}
+	case 6379:
+		// Redis: "5.0.7"
+		ver := ""
+		for _, r := range b {
+			if (r >= '0' && r <= '9') || r == '.' {
+				ver += string(r)
+			} else {
+				break
+			}
+		}
+		if ver != "" {
+			return "redis " + ver
+		}
+	}
+	return ""
 }
 
 func groupPortResults(results []portResult) map[string][]Port {

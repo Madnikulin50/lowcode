@@ -49,7 +49,7 @@ const router = useRouter()
 const props = defineProps({
   namespace: { type: compose.Namespace, required: true },
   field: { type: compose.ModuleField, required: true },
-  record: { type: compose.Record, required: true },
+  record: { type: Object, required: true },
   valueOnly: { type: Boolean, required: false },
   extraOptions: { type: Object, default: () => ({}) },
   includeStyles: { type: Boolean, default: false },

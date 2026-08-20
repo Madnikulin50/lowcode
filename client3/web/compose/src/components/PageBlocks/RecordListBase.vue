@@ -106,7 +106,7 @@
         </button>
 
         <div class="rl-table-wrap table-responsive flex-grow-1">
-        <table data-test-id="table-record-list" class="table record-list-table mh-100 h-100 mb-0 table-hover" :class="{ 'table-sm': options.compactRows }">
+        <table data-test-id="table-record-list" class="table record-list-table mb-0 table-hover" :class="{ 'table-sm': options.compactRows }">
           <thead :class="{ 'sticky-top': options.stickyHeader !== false }">
             <tr :class="showingDeletedRecords ? 'table-warning' : ''">
               <th v-if="options.draggable && inlineEditing" style="width: 0%"></th>
@@ -465,6 +465,7 @@ import ImporterModal from 'corteza-webapp-compose/src/components/Public/Record/I
 import { getItem, removeItem, setItem } from 'corteza-webapp-compose/src/lib/local-storage'
 import { recordCreateLocation } from 'corteza-webapp-compose/src/lib/record-create-nav'
 import { evalPrefilterOrSkip, formatActiveFilterOperator, isBetweenOperator, isFieldInFilter, queryToFilter, convertRecordListFilter, getFieldFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { isFieldReadonly, isUserWritableField } from 'corteza-webapp-compose/src/lib/field-editable'
 import draggable from 'vuedraggable'
 import Wrap from './Wrap/index.js'
 import { usePageBlockBase } from './usePageBlockBase'
@@ -693,8 +694,9 @@ const isOnRecordPage = computed(() => props.page?.moduleID !== NoID)
 
 const groupRecordListFilter = computed(() => {
   return recordListFilter.value.map(group => {
-    group.filter = convertRecordListFilter(group.filter.map(f => createDefaultFilter(f, f.value, f.operator)))
-    return group
+    const raw = (group.filter || []).filter(f => f && f.name)
+    const filter = convertRecordListFilter(raw.map(f => createDefaultFilter(f, f.value, f.operator)))
+    return { ...group, filter }
   }).filter(({ filter }) => filter.length)
 })
 
@@ -1009,7 +1011,7 @@ async function handleSaveInline(item, index) {
       return
     }
     const v = new compose.RecordValidator(recordListModule.value)
-    const fields = recordListModule.value.fields.filter(({ canReadRecordValue, canUpdateRecordValue }) => canReadRecordValue && canUpdateRecordValue).map(({ name }) => name)
+    const fields = recordListModule.value.fields.filter(f => f.canReadRecordValue && f.canUpdateRecordValue && !isFieldReadonly(f)).map(({ name }) => name)
     const err = v.run(item.r, ...fields)
     if (!err.valid()) {
       const fieldNames = new Set(err.set.map(e => recordListModule.value.fields.find(f => f.name === e.meta.field)?.label || e.meta.field))
@@ -1053,7 +1055,7 @@ async function handleSaveDirtyRecords() {
   if (!itemsToSave.length) return
   processingDirtyRecords.value = 'save'
   let hasError = false
-  const updatableFields = recordListModule.value.fields.filter(({ canReadRecordValue, canUpdateRecordValue }) => canReadRecordValue && canUpdateRecordValue).map(({ name }) => name)
+  const updatableFields = recordListModule.value.fields.filter(f => f.canReadRecordValue && f.canUpdateRecordValue && !isFieldReadonly(f)).map(({ name }) => name)
   for (const item of itemsToSave) {
     const isNew = item.r.recordID === NoID
     let action = 'update'
@@ -1683,13 +1685,12 @@ function onInlineEditClose() { inlineEdit.fields = []; inlineEdit.record = {}; i
 function onInlineEdit() { onInlineEditClose() }
 
 function isFieldEditable(field) {
-  if (!field) return false
+  if (!isUserWritableField(field)) return false
   const { canCreateOwnedRecord } = recordListModule.value || {}
   const { createdAt, canManageOwnerOnRecord } = props.record || {}
-  const { name, canUpdateRecordValue, isSystem, expressions = {} } = field
-  if (!canUpdateRecordValue) return false
+  const { name, isSystem } = field
   if (isSystem) return name === 'ownedBy' ? (createdAt ? canManageOwnerOnRecord : canCreateOwnedRecord) : false
-  return !expressions.value
+  return true
 }
 
 function updateFilter(filterArr = [], name) {
@@ -1857,6 +1858,11 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
   min-height: 0;
 }
 
+.rl-table-wrap {
+  min-height: 0;
+  overflow: auto;
+}
+
 .rl-display-table .rl-cards-wrap,
 .rl-display-cards .rl-table-wrap {
   display: none !important;
@@ -1879,6 +1885,7 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
 .record-list-table {
   border-collapse: separate;
   border-spacing: 0;
+  height: auto;
 
   thead {
     th {
@@ -1901,6 +1908,10 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
       vertical-align: middle;
       border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0,0,0,0.05));
       font-size: 0.875rem;
+    }
+
+    tr {
+      height: auto;
     }
 
     tr:last-child td {

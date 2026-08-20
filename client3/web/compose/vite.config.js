@@ -96,6 +96,10 @@ export default defineConfig({
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },
+      '/compose': {
+        target: process.env.VITE_API_URL || 'http://localhost:3333',
+        changeOrigin: true,
+      },
       '/auth': {
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
