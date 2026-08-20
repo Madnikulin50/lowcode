@@ -71,6 +71,8 @@ export function fileField (name, label, extra = {}) {
       enableDownload: true,
       enableWebcam: extra.webcam ?? false,
       multiDelimiter: '\n',
+      description: { view: '', edit: undefined },
+      hint: { view: '', edit: undefined },
     },
   })
 }

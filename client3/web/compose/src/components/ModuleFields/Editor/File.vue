@@ -10,18 +10,19 @@
     </div>
     <div :class="contentColClass">
     <div class="d-flex gap-1">
-      <CUploader
+      <c-uploader
         ref="uploaderRef"
         :endpoint="fileUploadEndpoint"
         :accepted-files="mimetypes"
         :max-filesize="maxSize"
         :form-data="uploaderFormData"
+        :auth-token="authToken"
         :labels="uploadLabels"
         class="flex-grow-1"
         @upload="appendAttachment"
       />
       <c-webcam
-        v-if="field.options.enableWebcam"
+        v-if="field.options?.enableWebcam"
         :labels="webcamLabels"
         @upload="uploadWebcamImage"
       >
@@ -72,8 +73,25 @@ const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hin
 
 const $ComposeAPI = inject('$ComposeAPI')
 const $settings = inject('$Settings')
+const $auth = inject('$auth', typeof window !== 'undefined' ? window.__auth : undefined)
 
 const uploaderRef = ref(null)
+const authToken = computed(() => $auth?.accessToken || '')
+
+const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp']
+const DOC_MIMES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.oasis.opendocument.text',
+  'application/rtf',
+  'text/plain',
+  '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.odt', '.rtf', '.txt', '.zip',
+]
 
 const fileUploadEndpoint = computed(() => {
   const { moduleID, recordID } = props.record
@@ -94,16 +112,35 @@ const uploaderFormData = computed(() => {
   return fd
 })
 
-const mimetypes = computed(() => {
-  const a = (props.field.options.mimetypes || '').trim()
-  if (!a) {
-    return $settings?.get ? $settings.get('compose.Record.Attachments.Mimetypes', ['*/*']) : ['*/*']
+function normalizeMimes (raw) {
+  if (!raw) return ['*/*']
+  if (Array.isArray(raw)) {
+    const list = raw.map(v => String(v).trim()).filter(Boolean)
+    return list.length ? list : ['*/*']
   }
-  return a.split(',').map(p => p.trim())
+  if (typeof raw === 'string') {
+    const list = raw.split(',').map(p => p.trim()).filter(Boolean)
+    return list.length ? list : ['*/*']
+  }
+  return ['*/*']
+}
+
+const mimetypes = computed(() => {
+  const a = (props.field.options?.mimetypes || '').trim()
+  if (a) return a.split(',').map(p => p.trim()).filter(Boolean)
+  const allowImg = props.field.options?.allowImages !== false
+  const allowDoc = props.field.options?.allowDocuments !== false
+  if (allowImg && allowDoc) return ['*/*']
+  if (allowImg) return IMAGE_MIMES
+  if (allowDoc) return [...DOC_MIMES]
+  return normalizeMimes($settings?.get ? $settings.get('compose.Record.Attachments.Mimetypes', ['*/*']) : ['*/*'])
 })
 
 const maxSize = computed(() => {
-  return props.field.options.maxSize || ($settings?.get ? $settings.get('compose.Record.Attachments.MaxSize', 100) : 100)
+  const fieldSize = Number(props.field.options?.maxSize || 0)
+  if (fieldSize > 0) return fieldSize
+  const fromSettings = $settings?.get ? $settings.get('compose.Record.Attachments.MaxSize', 100) : 100
+  return Number(fromSettings) || 100
 })
 
 const attachmentSet = computed({
@@ -134,7 +171,9 @@ const webcamLabels = computed(() => ({
   cameraErrorMessage: t('webcam.errors.camera'),
 }))
 
-function appendAttachment ({ attachmentID } = {}) {
+function appendAttachment (payload = {}) {
+  const attachmentID = payload.attachmentID || payload.response?.attachmentID
+  if (!attachmentID) return
   if (props.field.isMulti) {
     value.value = [attachmentID, ...(value.value || [])]
   } else {
@@ -143,8 +182,6 @@ function appendAttachment ({ attachmentID } = {}) {
 }
 
 function uploadWebcamImage (file) {
-  if (uploaderRef.value) {
-    uploaderRef.value.$refs.dropzone.addFile(file)
-  }
+  uploaderRef.value?.handleFile?.(file)
 }
 </script>

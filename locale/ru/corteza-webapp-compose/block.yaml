@@ -430,7 +430,7 @@ record:
     button:
       title: Изменить значение
     modal:
-      title: Обновить занчения полей
+      title: Обновить значения полей
   fieldsLayoutMode:
     label: Поля layout mode
     default: Default

@@ -60,14 +60,14 @@ export function useEditorBase(props, emit) {
 
   const description = computed(() => {
     if (props.valueOnly) return ''
-    const { view, edit } = props.field.options.description
-    return edit || view
+    const d = props.field.options?.description || {}
+    return d.edit || d.view || ''
   })
 
   const hint = computed(() => {
     if (props.valueOnly) return ''
-    const { view, edit } = props.field.options.hint
-    return edit || view
+    const h = props.field.options?.hint || {}
+    return h.edit || h.view || ''
   })
 
   const inModal = computed(() => {

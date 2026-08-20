@@ -431,9 +431,7 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 			if aux := f.Options.Int64("maxSize"); aux > 0 {
 				maxSize = aux * megabyte
 			}
-			if aux := f.Options.String("mimetypes"); len(aux) > 0 {
-				allowedTypes = strings.Split(aux, ",")
-			}
+			allowedTypes = fieldAllowedAttachmentTypes(f, allowedTypes)
 
 			if maxSize > 0 && maxSize < size {
 				return AttachmentErrTooLarge().Apply(
@@ -706,12 +704,74 @@ func (attachment) checkMimeType(test *mimetype.MIME, vv ...string) bool {
 	}
 
 	for _, v := range vv {
+		v = strings.TrimSpace(v)
+		if v == "" || v == "*/*" || v == "*" {
+			return true
+		}
+		if strings.HasPrefix(v, ".") {
+			if strings.EqualFold(test.Extension(), v) || strings.EqualFold("."+test.Extension(), v) {
+				return true
+			}
+			continue
+		}
+		if strings.HasSuffix(v, "/*") {
+			if strings.HasPrefix(test.String(), strings.TrimSuffix(v, "*")) {
+				return true
+			}
+			continue
+		}
 		if test.Is(v) {
 			return true
 		}
 	}
 
 	return false
+}
+
+// fieldAllowedAttachmentTypes prefers the field's mimetypes list, then
+// allowImages/allowDocuments flags. Both flags true (or a mix that covers
+// everything) clears the constraint so PDFs/Office files are not blocked by
+// a global image-only compose.Record.Attachments.Mimetypes setting.
+func fieldAllowedAttachmentTypes(f *types.ModuleField, fallback []string) []string {
+	if f == nil {
+		return fallback
+	}
+	if aux := f.Options.String("mimetypes"); len(strings.TrimSpace(aux)) > 0 {
+		parts := strings.Split(aux, ",")
+		out := make([]string, 0, len(parts))
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				out = append(out, p)
+			}
+		}
+		return out
+	}
+
+	allowImg := f.Options.Bool("allowImages")
+	allowDoc := f.Options.Bool("allowDocuments")
+	if !allowImg && !allowDoc {
+		return fallback
+	}
+	if allowImg && allowDoc {
+		return nil
+	}
+	if allowImg {
+		return []string{"image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/bmp"}
+	}
+	return []string{
+		"application/pdf",
+		"application/msword",
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		"application/vnd.ms-excel",
+		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		"application/vnd.ms-powerpoint",
+		"application/vnd.openxmlformats-officedocument.presentationml.presentation",
+		"application/vnd.oasis.opendocument.text",
+		"application/rtf",
+		"text/plain",
+		"application/zip",
+	}
 }
 
 var _ AttachmentService = &attachment{}

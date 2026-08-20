@@ -176,8 +176,43 @@ func (s *Scanner) scanCIDR(ctx context.Context, cidr string, onProgress func(cur
 		}
 		devices = append(devices, d)
 	}
+	s.udpEnrich(ctx, devices)
 	s.mdnsEnrich(ctx, devices)
 	return devices, nil
+}
+
+// udpEnrich probes the well-known UDP services (53/123/161/1900) on hosts that
+// are already known to be live (found via TCP, ping or ARP). Blindly probing
+// UDP on every IP of a CIDR is not feasible (silent UDP has no reliable ICMP
+// close signal), so this is deliberately limited to confirmed-live targets.
+func (s *Scanner) udpEnrich(ctx context.Context, devices []Device) {
+	if len(devices) == 0 {
+		return
+	}
+	timeout := s.dialTimeout
+	if timeout <= 0 {
+		timeout = 400 * time.Millisecond
+	}
+	if timeout > 1500*time.Millisecond {
+		timeout = 1500 * time.Millisecond
+	}
+	sem := make(chan struct{}, s.conc)
+	var wg sync.WaitGroup
+	for i := range devices {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(i int) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			ports := probeUDPPorts(ctx, devices[i].IP, timeout)
+			if len(ports) == 0 {
+				return
+			}
+			devices[i].OpenPorts = append(devices[i].OpenPorts, ports...)
+			devices[i].Services = appendUnique(devices[i].Services, collectServices(ports)...)
+		}(i)
+	}
+	wg.Wait()
 }
 
 // mdnsEnrich merges mDNS/DNS-SD signals into the discovered devices:
@@ -338,9 +373,9 @@ func readARPTable() map[string]string {
 func portService(port int) string {
 	m := map[int]string{
 		21: "ftp", 22: "ssh", 23: "telnet", 25: "smtp", 53: "dns",
-		80: "http", 110: "pop3", 135: "msrpc", 139: "netbios-ssn", 143: "imap",
-		443: "https", 445: "microsoft-ds", 993: "imaps", 995: "pop3s",
-		3306: "mysql", 3333: "http-service", 3389: "ms-wbt-server", 5432: "postgresql", 6379: "redis",
+		80: "http", 110: "pop3", 123: "ntp", 135: "msrpc", 139: "netbios-ssn", 143: "imap",
+		161: "snmp", 443: "https", 445: "microsoft-ds", 993: "imaps", 995: "pop3s",
+		1900: "ssdp", 3306: "mysql", 3333: "http-service", 3389: "ms-wbt-server", 5432: "postgresql", 6379: "redis",
 		8080: "http-proxy", 8443: "https-alt", 27017: "mongod",
 		515: "printer-lpd", 554: "rtsp", 548: "afp", 631: "ipp", 8554: "rtsp-alt", 9100: "printer-jetdirect",
 		1723: "pptp", 5001: "synology-webapi",

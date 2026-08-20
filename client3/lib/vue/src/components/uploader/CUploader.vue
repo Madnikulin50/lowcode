@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import numeral from 'numeral'
 
 const props = withDefaults(defineProps<{
@@ -89,13 +89,25 @@ const emit = defineEmits<{
   upload: [response: any, file: File]
 }>()
 
+const $auth = inject<any>('$auth', typeof window !== 'undefined' ? (window as any).__auth : undefined)
+
 const fileInput = ref<HTMLInputElement>()
 const isDragOver = ref(false)
 const active = ref<File | null>(null)
 const processing = ref<{ file: File; progress: number; bytesSent: number } | null>(null)
 const error = ref<string | null>(null)
 
-const acceptedFilesString = computed(() => props.acceptedFiles.join(','))
+const resolvedToken = computed(() => props.authToken || $auth?.accessToken || '')
+
+function asAcceptList (types: unknown): string[] {
+  if (!types) return []
+  if (Array.isArray(types)) return types.map(String).map(s => s.trim()).filter(Boolean)
+  if (typeof types === 'string') return types.split(',').map(s => s.trim()).filter(Boolean)
+  return []
+}
+
+const acceptList = computed(() => asAcceptList(props.acceptedFiles))
+const acceptedFilesString = computed(() => acceptList.value.join(','))
 
 const progressBarStyle = computed(() => ({
   width: (processing.value?.progress || 0) + '%',
@@ -159,13 +171,13 @@ function onFileSelected(e: Event) {
 function handleFile(file: File) {
   error.value = null
 
-  if (!validateFileType(file.name, props.acceptedFiles)) {
+  if (!validateFileType(file.name, acceptList.value, file.type)) {
     const errorMsg = props.labels.fileTypeNotAllowed || 'File type not allowed'
     onError(null, errorMsg)
     return
   }
 
-  if (file.size > props.maxFilesize * 1024 * 1024) {
+  if (props.maxFilesize > 0 && file.size > props.maxFilesize * 1024 * 1024) {
     const errorMsg = props.labels.fileTooLarge || `File exceeds ${props.maxFilesize}MB limit`
     onError(null, errorMsg)
     return
@@ -174,27 +186,44 @@ function handleFile(file: File) {
   uploadFile(file)
 }
 
-function validateFileType(_name: string, types: string[]) {
-  if (!types.length || types.includes('*/*')) return true
-  const ext = _name.split('.').pop()?.toLowerCase()
-  return types.some((t: string) => {
+const EXT_MIME: Record<string, string> = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+  webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp', ico: 'image/x-icon',
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  odt: 'application/vnd.oasis.opendocument.text',
+  ods: 'application/vnd.oasis.opendocument.spreadsheet',
+  rtf: 'application/rtf',
+  txt: 'text/plain',
+  csv: 'text/csv',
+  json: 'application/json',
+  zip: 'application/zip',
+  xml: 'application/xml',
+}
+
+function validateFileType(name: string, types: string[], mime = '') {
+  if (!types?.length) return true
+  if (types.some(t => t === '*/*' || t === '*')) return true
+  const ext = name.includes('.') ? name.split('.').pop()?.toLowerCase() || '' : ''
+  const fileMime = (mime || EXT_MIME[ext] || '').toLowerCase()
+  return types.some((raw: string) => {
+    const t = String(raw || '').trim().toLowerCase()
+    if (!t) return false
     if (t.startsWith('.')) return ext === t.slice(1)
+    if (t.startsWith('*.')) return ext === t.slice(2)
     if (t.includes('/')) {
-      const [category] = t.split('/')
-      if (category === '*') return true
-      const mimeMap: Record<string, string> = {
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'png': 'image/png',
-        'gif': 'image/gif',
-        'pdf': 'application/pdf',
-        'csv': 'text/csv',
-        'xls': 'application/vnd.ms-excel',
-        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      const [cat, sub] = t.split('/')
+      if (cat === '*' || sub === '*') {
+        return cat === '*' || fileMime.startsWith(cat + '/')
       }
-      return mimeMap[ext || '']?.startsWith(category) ?? false
+      return fileMime === t || EXT_MIME[ext] === t
     }
-    return ext === t.toLowerCase().replace('.', '')
+    return ext === t.replace(/^\./, '')
   })
 }
 
@@ -215,6 +244,10 @@ function uploadFile(file: File) {
       } catch {
         response = xhr.responseText
       }
+      // Corteza wraps payloads as { response: { attachmentID, ... } }
+      if (response && typeof response === 'object' && response.response) {
+        response = response.response
+      }
       active.value = file
       processing.value = null
       error.value = null
@@ -223,7 +256,7 @@ function uploadFile(file: File) {
       let message = 'Upload failed'
       try {
         const err = JSON.parse(xhr.responseText)
-        message = err.message || message
+        message = err.error?.message || err.message || message
       } catch {
         message = xhr.statusText || message
       }
@@ -238,8 +271,8 @@ function uploadFile(file: File) {
   xhr.open('POST', props.endpoint)
   xhr.setRequestHeader('X-Requested-With', '')
   xhr.setRequestHeader('Cache-Control', '')
-  if (props.authToken) {
-    xhr.setRequestHeader('Authorization', 'Bearer ' + props.authToken)
+  if (resolvedToken.value) {
+    xhr.setRequestHeader('Authorization', 'Bearer ' + resolvedToken.value)
   }
 
   const formData = new FormData()
@@ -257,6 +290,8 @@ function onError(_e: any, message: string) {
   error.value = message
   processing.value = null
 }
+
+defineExpose({ handleFile, openFileDialog })
 </script>
 
 <style lang="scss" scoped>
