@@ -65,7 +65,7 @@ export const usePageLayoutStore = defineStore('pageLayout', {
       this.setLoading(true)
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
-      return ComposeAPI.pageLayoutListNamespace({ namespaceID, sort: 'weight ASC' }).then(({ set }) => {
+      return ComposeAPI.pageLayoutListNamespace({ namespaceID, sort: 'weight ASC' }, { timeout: 30000 }).then(({ set }) => {
         if (set && set.length > 0) {
           this.updateSet(set.map(pl => new compose.PageLayout(pl)))
         }

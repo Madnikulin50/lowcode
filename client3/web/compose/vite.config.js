@@ -67,6 +67,7 @@ export default defineConfig({
       { find: 'corteza-webapp-compose/src/stores', replacement: resolve(__dirname, 'src/store') },
       { find: 'corteza-webapp-compose', replacement: resolve(__dirname, '.') },
 
+      { find: 'corteza-lib/vue/src', replacement: resolve(__dirname, '../../lib/vue/src') },
       { find: 'corteza-lib/vue/dist/WorkflowEditor', replacement: resolve(__dirname, '../../lib/vue/src/components/workflow/WorkflowEditor.vue') },
       { find: 'corteza-lib/vue/dist', replacement: resolve(__dirname, '../../lib/vue/dist') },
       { find: 'corteza-lib/js/dist', replacement: resolve(__dirname, '../../lib/js/dist') },
@@ -99,8 +100,17 @@ export default defineConfig({
       '/compose': {
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
+        bypass (req) {
+          // Serve Vite's SPA entry, not /index.html (public/index.html is a
+          // Vue CLI leftover and would leak <%= BASE_URL %> into the page).
+          if (req.url?.startsWith('/compose/auth/callback')) return '/'
+          const accept = req.headers.accept || ''
+          if (accept.includes('text/html')) return '/'
+        },
       },
-      '/auth': {
+      // Negative lookahead: /auth/callback is the SPA OAuth return URL.
+      // Vite 6 bypass:false is a hard 404, not a skip.
+      '^/auth(?!/callback)': {
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },

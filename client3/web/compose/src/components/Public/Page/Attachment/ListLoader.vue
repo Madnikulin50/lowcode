@@ -10,74 +10,118 @@
     <div
       v-else-if="mode === 'list'"
     >
-      <draggable
-        item-key="attachmentID"
-        v-model="attachments"
-        :disabled="!enableOrder"
-        handle=".handle"
-      >
-        <template #item="{ element, index }">
-          <div
-            :key="element.attachmentID"
-            class="row g-0 list-item flex-nowrap mb-1 rounded"
-          >
-            <div class="col-auto">
-              <font-awesome-icon
-                v-if="enableOrder"
-                :icon="['fas', 'bars']"
-                class="handle text-secondary my-1 me-3"
-                style="padding-top: 0.05rem;"
-              />
-            </div>
-
-            <div class="col">
-              <div class="d-flex flex-column flex-wrap align-items-start">
-                <div
-                  class="d-flex align-items-start gap-1"
-                  style="word-break: break-all;"
-                >
-                  <div style="margin-top: 0.1rem;">
-                    <AttachmentLink :attachment="element">
-                      {{ element.name }}
-                    </AttachmentLink>
-                  </div>
-
-                  <div class="d-flex align-items-center gap">
-                    <a
-                      v-if="element.download"
-                      :href="element.download"
-                      class="btn btn-outline-extra-light btn-sm download-button border-0"
-                      @click.stop
-                    >
-                      <font-awesome-icon
-                        :icon="['fas', 'download']"
-                        class="text-secondary"
+      <template v-if="enableOrder">
+        <draggable
+          item-key="attachmentID"
+          v-model="attachments"
+          handle=".handle"
+        >
+          <template #item="{ element, index }">
+            <div
+              :key="element.attachmentID"
+              class="row g-0 list-item flex-nowrap mb-1 rounded"
+            >
+              <div class="col-auto">
+                <font-awesome-icon
+                  :icon="['fas', 'bars']"
+                  class="handle text-secondary my-1 me-3"
+                  style="padding-top: 0.05rem;"
+                />
+              </div>
+              <div class="col">
+                <div class="d-flex flex-column flex-wrap align-items-start">
+                  <div
+                    class="d-flex align-items-start gap-1"
+                    style="word-break: break-all;"
+                  >
+                    <div style="margin-top: 0.1rem;">
+                      <AttachmentLink :attachment="element">
+                        {{ element.name }}
+                      </AttachmentLink>
+                    </div>
+                    <div class="d-flex align-items-center gap">
+                      <a
+                        v-if="element.download"
+                        :href="element.download"
+                        class="btn btn-outline-extra-light btn-sm download-button border-0"
+                        @click.stop
+                      >
+                        <font-awesome-icon
+                          :icon="['fas', 'download']"
+                          class="text-secondary"
+                        />
+                      </a>
+                      <c-input-confirm
+                        v-if="enableDelete"
+                        show-icon
+                        class="delete-button"
+                        @confirmed="deleteAttachment(index)"
                       />
-                    </a>
-
-                    <c-input-confirm
-                      v-if="enableDelete"
-                      show-icon
-                      class="delete-button"
-                      @confirmed="deleteAttachment(index)"
-                    />
+                    </div>
                   </div>
+                  <i18next
+                    path="general.label.attachmentFileInfo"
+                    tag="small"
+                    class="d-block text-muted"
+                  >
+                    <span>{{ size(element) }}</span>
+                    <span>{{ uploadedAt(element) }}</span>
+                  </i18next>
                 </div>
-
-                <i18next
-                  path="general.label.attachmentFileInfo"
-                  tag="small"
-                  class="d-block text-muted"
-                >
-                  <span>{{ size(element) }}</span>
-
-                  <span>{{ uploadedAt(element) }}</span>
-                </i18next>
               </div>
             </div>
+          </template>
+        </draggable>
+      </template>
+      <template v-else>
+        <div
+          v-for="(element, index) in attachments"
+          :key="element.attachmentID"
+          class="row g-0 list-item flex-nowrap mb-1 rounded"
+        >
+          <div class="col">
+            <div class="d-flex flex-column flex-wrap align-items-start">
+              <div
+                class="d-flex align-items-start gap-1"
+                style="word-break: break-all;"
+              >
+                <div style="margin-top: 0.1rem;">
+                  <AttachmentLink :attachment="element">
+                    {{ element.name }}
+                  </AttachmentLink>
+                </div>
+                <div class="d-flex align-items-center gap">
+                  <a
+                    v-if="element.download"
+                    :href="element.download"
+                    class="btn btn-outline-extra-light btn-sm download-button border-0"
+                    @click.stop
+                  >
+                    <font-awesome-icon
+                      :icon="['fas', 'download']"
+                      class="text-secondary"
+                    />
+                  </a>
+                  <c-input-confirm
+                    v-if="enableDelete"
+                    show-icon
+                    class="delete-button"
+                    @confirmed="deleteAttachment(index)"
+                  />
+                </div>
+              </div>
+              <i18next
+                path="general.label.attachmentFileInfo"
+                tag="small"
+                class="d-block text-muted"
+              >
+                <span>{{ size(element) }}</span>
+                <span>{{ uploadedAt(element) }}</span>
+              </i18next>
+            </div>
           </div>
-        </template>
-      </draggable>
+        </div>
+      </template>
     </div>
 
     <div

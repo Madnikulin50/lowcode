@@ -63,6 +63,7 @@ func ensureChainAvailable(ctx context.Context, engine *rulesgo.EngineWithPersist
 		return
 	}
 	registerCMDBChains(engine)
+	registerBackupChains(engine)
 }
 
 func cmdbRuleChains(nsID, devices, services, vulns, scans uint64, agentURL string) []*rulesgo.Chain {

@@ -1,0 +1,27 @@
+{
+  "namespaceID": "510285310869045249",
+  "slug": "backup",
+  "api": "http://127.0.0.1:3333/compose",
+  "modules": {
+    "agents": "510285310869569537",
+    "credentials": "510285310873239553",
+    "sources": "510285310876581889",
+    "policies": "510285310886543361",
+    "jobs": "510285310892572673",
+    "snapshots": "510285310900305921",
+    "restores": "510285310908563457"
+  },
+  "charts": {
+    "jobsByStatus": "510285310913609729",
+    "sourcesByType": "510285310914199553",
+    "snapshotsByEngine": "510285310914789377"
+  },
+  "urls": {
+    "namespace": "/ns/backup",
+    "dashboard": "/ns/backup/pages"
+  },
+  "agent": {
+    "flags": "--api=http://127.0.0.1:3333 --namespace=510285310869045249",
+    "listen": ":8087"
+  }
+}

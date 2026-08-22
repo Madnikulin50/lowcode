@@ -86,15 +86,10 @@ func ComposeRecordsFind(ctx context.Context, l lookuper, mod *types.Module, reco
 }
 
 func ComposeRecordsCount(ctx context.Context, c counter, mod *types.Module, filter types.RecordFilter) (cnt uint, err error) {
-	constraints := map[string][]interface{}{
-		"namespaceID": {mod.NamespaceID},
-	}
-
-	if filter.ModuleID != 0 {
-		constraints["moduleID"] = []interface{}{filter.ModuleID}
-	}
-
-	dalFilter := filter.ToConstraintedFilter(constraints)
+	// Same constraints as list: module DAL config + model.Constraints
+	// (namespaceID/moduleID on compose_record). Do not force namespaceID here —
+	// omitted system fields have no matching attribute.
+	dalFilter := prepFilter(filter, mod)
 
 	return c.Count(ctx, mod.ModelRef(), recLookupOperations(mod), dalFilter)
 }

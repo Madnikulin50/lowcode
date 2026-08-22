@@ -1250,7 +1250,7 @@ func ModulesToModelSet(dmm dalModelManager, ns *types.Namespace, mm ...*types.Mo
 					Resource:   mod.RbacResource(),
 					ResourceID: mod.ID,
 				}
-	if mod.Config.Type == "dbref" || mod.Config.Type == "connector" {
+				if mod.Config.Type == "dbref" || mod.Config.Type == "connector" {
 					model.Static = true
 				}
 
@@ -1304,13 +1304,15 @@ func ModulesToModelSet(dmm dalModelManager, ns *types.Namespace, mm ...*types.Mo
 
 func modelBaseConstraints(model *dal.Model, mod *types.Module) (out map[string][]any) {
 
-	// If we're writting to the default table apply additional constraints
-	// @todo there should be more logic here, but for now this is what we had
-	//       elsewhere.
+	// Shared compose_record table needs module/namespace isolation.
+	// Skip attributes omitted via SystemFieldEncoding (empty {} is not omit).
 	if model.Ident == recordTable {
-		out = map[string][]any{
-			recordFieldModuleID:    {mod.ID},
-			recordFieldNamespaceID: {mod.NamespaceID},
+		out = map[string][]any{}
+		if model.HasAttribute(recordFieldModuleID) {
+			out[recordFieldModuleID] = []any{mod.ID}
+		}
+		if model.HasAttribute(recordFieldNamespaceID) {
+			out[recordFieldNamespaceID] = []any{mod.NamespaceID}
 		}
 	}
 
@@ -1430,6 +1432,8 @@ func moduleSystemFieldsToAttributes(mod *types.Module) (out dal.AttributeSet, er
 		// with failsafe on CodecAlias
 		mfc = func(defStoreIdent string, es *types.EncodingStrategy) dal.Codec {
 			switch {
+			case es != nil && es.Omit:
+				return nil
 			case es != nil && es.EncodingStrategyAlias != nil:
 				return &dal.CodecAlias{
 					Ident: es.EncodingStrategyAlias.Ident,
@@ -1438,10 +1442,8 @@ func moduleSystemFieldsToAttributes(mod *types.Module) (out dal.AttributeSet, er
 				return &dal.CodecRecordValueSetJSON{
 					Ident: es.EncodingStrategyJSON.Ident,
 				}
-			case es != nil:
-				// assuming omit!
-				return nil
 			default:
+				// nil strategy, empty {}, or omit:false → default column
 				return &dal.CodecAlias{
 					Ident: defStoreIdent,
 				}

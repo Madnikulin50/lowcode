@@ -86,9 +86,9 @@ docker compose up -d
 Build a local image (after compiling server + `client3`):
 
 ```bash
-make ddebug          # tag pnp-lowcode:2026.8.15
+make ddebug          # tag pnp-lowcode:2026.08.20
 # or
-make drelease        # build, tag madnikulin50/pnp-lowcode:2026.8.15, push
+make drelease        # build, tag madnikulin50/pnp-lowcode:2026.08.20, push
 ```
 
 ### Local development

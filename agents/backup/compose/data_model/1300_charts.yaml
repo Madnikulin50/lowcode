@@ -1,0 +1,38 @@
+namespace: backup
+charts:
+  jobs-by-status:
+    name: Джобы по статусу
+    config:
+      reports:
+      - dimensions:
+        - field: status
+          modifier: (no grouping / buckets)
+        metrics:
+        - field: count
+          type: doughnut
+        module: jobs
+      colorScheme: tableau.Tableau10
+  sources-by-type:
+    name: Источники по типу
+    config:
+      reports:
+      - dimensions:
+        - field: type
+          modifier: (no grouping / buckets)
+        metrics:
+        - field: count
+          type: doughnut
+        module: sources
+      colorScheme: tableau.Tableau10
+  snapshots-by-engine:
+    name: Снапшоты по движку
+    config:
+      reports:
+      - dimensions:
+        - field: engine
+          modifier: (no grouping / buckets)
+        metrics:
+        - field: count
+          type: doughnut
+        module: snapshots
+      colorScheme: tableau.Tableau10

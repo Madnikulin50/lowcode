@@ -107,3 +107,23 @@ func TestInjectAgentCallbackURL(t *testing.T) {
 		t.Fatalf("HTTP_API_BASE_URL=/ callback %q want %q", got, want)
 	}
 }
+
+func TestAliasTriggerRecordIDs(t *testing.T) {
+	bag := map[string]interface{}{"sourceID": "${recordID}"}
+	flattenTriggerContext(bag, &triggerRequest{RecordID: "510291663494250497"})
+	if bag["recordID"] != "510291663494250497" {
+		t.Fatalf("recordID=%v", bag["recordID"])
+	}
+	if bag["sourceID"] != "510291663494250497" {
+		t.Fatalf("sourceID=%v (placeholder should yield to recordID)", bag["sourceID"])
+	}
+
+	bag = map[string]interface{}{"policyID": "99"}
+	flattenTriggerContext(bag, &triggerRequest{})
+	if bag["recordID"] != "99" {
+		t.Fatalf("policy alias recordID=%v", bag["recordID"])
+	}
+	if bag["sourceID"] != nil && bag["sourceID"] != "" {
+		t.Fatalf("must not copy policy id into sourceID: %v", bag["sourceID"])
+	}
+}

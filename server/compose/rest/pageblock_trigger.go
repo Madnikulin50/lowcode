@@ -372,6 +372,63 @@ func flattenTriggerContext(ctx map[string]interface{}, req *triggerRequest) {
 	if req.UserID != "" {
 		ctx["userID"] = req.UserID
 	}
+	aliasTriggerRecordIDs(ctx)
+}
+
+// aliasTriggerRecordIDs fills recordID from page-block context (sourceID/policyID/…)
+// and the other way around, so chain templates {{recordID}} and {{sourceID}} both work.
+// Uninterpolated "${recordID}" / "{{recordID}}" leftovers are treated as empty.
+func aliasTriggerRecordIDs(ctx map[string]interface{}) {
+	if ctx == nil {
+		return
+	}
+	recID := bagNonPlaceholder(ctx, "recordID")
+	if recID == "" {
+		for _, k := range []string{"sourceID", "policyID", "snapshotID"} {
+			if v := bagNonPlaceholder(ctx, k); v != "" {
+				recID = v
+				break
+			}
+		}
+	}
+	if recID == "" {
+		return
+	}
+	ctx["recordID"] = recID
+	if bagNonPlaceholder(ctx, "sourceID") == "" && bagNonPlaceholder(ctx, "policyID") == "" && bagNonPlaceholder(ctx, "snapshotID") == "" {
+		ctx["sourceID"] = recID
+	}
+	if bagNonPlaceholder(ctx, "policyID") == "" {
+		if p := bagNonPlaceholder(ctx, "policy"); p != "" {
+			ctx["policyID"] = p
+		}
+	}
+	if bagNonPlaceholder(ctx, "snapshotID") == "" {
+		if s := bagNonPlaceholder(ctx, "snapshot"); s != "" {
+			ctx["snapshotID"] = s
+		}
+	}
+}
+
+func bagNonPlaceholder(ctx map[string]interface{}, key string) string {
+	if ctx == nil {
+		return ""
+	}
+	v, ok := ctx[key]
+	if !ok || v == nil {
+		return ""
+	}
+	s := strings.TrimSpace(fmt.Sprintf("%v", v))
+	if s == "" || s == "<nil>" {
+		return ""
+	}
+	if strings.Contains(s, "${") || strings.Contains(s, "{{") {
+		return ""
+	}
+	if s == "0" {
+		return ""
+	}
+	return s
 }
 
 func flattenValues(ctx map[string]interface{}, raw interface{}) {

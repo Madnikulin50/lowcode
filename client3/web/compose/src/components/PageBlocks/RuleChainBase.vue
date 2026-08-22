@@ -29,6 +29,7 @@
 
 <script setup>
 import { ref, computed, inject } from 'vue'
+import { useRoute } from 'vue-router'
 import { NoID } from 'corteza-lib/js/dist'
 import Wrap from './Wrap/index.js'
 import { scanIDsFromTrigger } from './cmdbAgentSync.js'
@@ -44,6 +45,7 @@ const props = defineProps({
 })
 
 const $ComposeAPI = inject('$ComposeAPI')
+const route = useRoute()
 
 const running = ref(false)
 const result = ref(null)
@@ -140,8 +142,18 @@ function unwrapScalar (v) {
 }
 
 function triggerContext () {
-  const ctx = { ...(props.block.options?.context || {}) }
   const rec = recordPayload(props.record)
+  const rid = currentRecordID(rec)
+  const ctx = { ...(props.block.options?.context || {}) }
+  for (const [k, v] of Object.entries(ctx)) {
+    ctx[k] = interpolateCtxValue(v, rec, rid)
+  }
+  if (rid) {
+    ctx.recordID = rid
+    if (!ctx.sourceID && !ctx.policyID && !ctx.snapshotID) {
+      ctx.sourceID = rid
+    }
+  }
   const values = rec?.values || {}
   if (!ctx.cidr || ctx.cidr === 'auto') {
     if (values.cidr) ctx.cidr = unwrapScalar(values.cidr)
@@ -150,6 +162,24 @@ function triggerContext () {
     ctx.cidr = unwrapScalar(ctx.cidr)
   }
   return ctx
+}
+
+function currentRecordID (rec) {
+  const fromRec = rec?.recordID
+  if (fromRec && fromRec !== NoID) return String(fromRec)
+  const fromRoute = route.params?.recordID
+  if (fromRoute && fromRoute !== NoID) return String(fromRoute)
+  return ''
+}
+
+function interpolateCtxValue (v, rec, rid) {
+  if (typeof v !== 'string') return v
+  let out = v.replace(/\$\{recordID\}/g, rid || '')
+  out = out.replace(/\$\{record\.values\.(\w+)\}/g, (_, name) => {
+    const val = unwrapScalar(rec?.values?.[name])
+    return val == null ? '' : String(val)
+  })
+  return out
 }
 
 async function runChain () {
@@ -165,7 +195,7 @@ async function runChain () {
         pageID: props.page?.pageID,
         moduleID: props.module?.moduleID,
         namespaceID: props.namespace?.namespaceID,
-        recordID: props.record?.recordID && props.record.recordID !== NoID ? props.record.recordID : undefined,
+        recordID: currentRecordID(recordPayload(props.record)) || undefined,
         record: recordPayload(props.record),
         context: triggerContext(),
       },

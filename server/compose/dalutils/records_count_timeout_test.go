@@ -131,6 +131,36 @@ func TestQueryFiltersJSONRecordField(t *testing.T) {
 	require.False(t, queryFiltersJSONRecordField(nil, "(device = 1)"))
 }
 
+type capturingDalCounter struct {
+	got filter.Filter
+}
+
+func (c *capturingDalCounter) Count(_ context.Context, _ dal.ModelRef, _ dal.OperationSet, f filter.Filter) (uint, error) {
+	c.got = f
+	return 1, nil
+}
+
+func TestComposeRecordsCountDoesNotForceNamespaceConstraint(t *testing.T) {
+	mod := &types.Module{
+		ID:          1,
+		NamespaceID: 2,
+		Config: types.ModuleConfig{DAL: types.ModuleConfigDAL{
+			SystemFieldEncoding: types.SystemFieldEncoding{
+				NamespaceID: &types.EncodingStrategy{Omit: true},
+			},
+		}},
+	}
+	cap := &capturingDalCounter{}
+	n, err := ComposeRecordsCount(context.Background(), cap, mod, types.RecordFilter{
+		ModuleID: 1,
+		Deleted:  filter.StateExcluded,
+	})
+	require.NoError(t, err)
+	require.Equal(t, uint(1), n)
+	_, has := cap.got.Constraints()["namespaceID"]
+	require.False(t, has, "COUNT must not inject namespaceID when the attribute can be omitted")
+}
+
 func TestComposeRecordsCountWithTimeoutSkipsJSONRecordFilter(t *testing.T) {
 	mod := &types.Module{
 		ID: 1,

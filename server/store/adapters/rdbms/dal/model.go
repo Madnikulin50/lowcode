@@ -440,7 +440,9 @@ func (d *model) applyFiltersToQuery(base *goqu.SelectDataset, f filter.Filter) *
 	for ident, vv := range cc {
 		attr := d.model.Attributes.FindByIdent(ident)
 		if attr == nil {
-			return base.SetError(fmt.Errorf("unknown attribute %q used for constrant", ident))
+			// Dedicated tables and omitted system fields (namespaceID/moduleID/…)
+			// still receive these constraints from COUNT/list helpers.
+			continue
 		}
 
 		// @note why?

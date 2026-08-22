@@ -1,6 +1,6 @@
 MD_DIR    := $(CURDIR)/markdown
 HTML_DIR  := $(CURDIR)/tools/docserver/html
-DOCKER_TAG ?= madnikulin50/pnp-lowcode-docs:2026.8.15
+DOCKER_TAG ?= madnikulin50/pnp-lowcode-docs:2026.08.20
 
 .PHONY: all html docker compose run clean
 

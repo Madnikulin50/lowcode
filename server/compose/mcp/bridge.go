@@ -254,6 +254,7 @@ func initBridge() {
 
 	registerDemoChains(engine)
 	registerCMDBChains(engine)
+	registerBackupChains(engine)
 	rulesgo.EnsureChain = func(ctx context.Context, chainID string) {
 		ensureChainAvailable(ctx, engine, chainID)
 	}
