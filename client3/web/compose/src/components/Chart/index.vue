@@ -62,8 +62,8 @@
               class="table-responsive"
               style="max-height: 60vh; overflow: auto"
             >
-              <table class="table table-sm table-striped mb-0">
-                <thead class="table-light">
+              <table class="table record-list-table table-hover table-sm mb-0">
+                <thead>
                   <tr>
                     <th
                       v-for="column in tableColumns"
@@ -491,5 +491,46 @@ async function prettyDimensionValues (dimension, field, values) {
   right: 2.2rem;
   top: 0.7rem;
   z-index: 1;
+}
+
+// Match the RecordList page block's table styling (see
+// PageBlocks/RecordListBase.vue's .record-list-table) so the chart's data
+// table dialog looks consistent with the rest of the app instead of falling
+// back to plain, theme-unaware Bootstrap table classes.
+.record-list-table {
+  border-collapse: separate;
+  border-spacing: 0;
+
+  thead th {
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    border-bottom: 2px solid var(--bs-border-color, #dee2e6);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--bs-secondary-color, #6c757d);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    padding: 0.625rem 0.75rem;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  tbody {
+    td {
+      padding: 0.625rem 0.75rem;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.05));
+      font-size: 0.875rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background-color: rgba(var(--bs-primary-rgb, 13 110 253), 0.03);
+    }
+  }
 }
 </style>

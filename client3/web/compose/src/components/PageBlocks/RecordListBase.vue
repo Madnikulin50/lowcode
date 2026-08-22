@@ -1889,7 +1889,7 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
 
   thead {
     th {
-      background: #f8f9fa;
+      background: var(--bs-tertiary-bg, #f8f9fa);
       border-bottom: 2px solid var(--bs-border-color, #dee2e6);
       font-size: 0.8125rem;
       font-weight: 600;
@@ -1997,7 +1997,7 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
 .rl-row-info { background-color: rgba(54, 185, 204, 0.06) !important; }
 
 .rl-group-header td {
-  background: #f1f3f5 !important;
+  background: var(--bs-tertiary-bg, #f1f3f5) !important;
   font-weight: 600;
   font-size: 0.8125rem;
   text-transform: uppercase;
@@ -2045,7 +2045,7 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8f9fa;
+  background: var(--bs-tertiary-bg, #f8f9fa);
   color: #adb5bd;
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
@@ -2084,7 +2084,7 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
 
 .rl-card {
   text-align: left;
-  background: #fff;
+  background: var(--white, #fff);
   border: 1px solid var(--bs-border-color, #dee2e6);
   border-radius: 0.75rem;
   padding: 0.85rem 1rem;
@@ -2133,9 +2133,9 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
   position: fixed;
   z-index: 1090;
   pointer-events: none;
-  background-color: #fff;
-  color: #666;
-  border: 1px solid #eee;
+  background-color: var(--white, #fff);
+  color: var(--bs-body-color, #666);
+  border: 1px solid var(--bs-border-color, #eee);
   border-radius: 4px;
   padding: 10px;
   box-shadow: 1px 2px 10px rgba(0, 0, 0, 0.2);
