@@ -2,6 +2,7 @@ import { useNamespaceStore } from './namespace'
 import { useModuleStore } from './module'
 import { usePageStore } from './page'
 import { usePageLayoutStore } from './page-layout'
+import { usePageVariablesStore } from './page-variables'
 import { useChartStore } from './chart'
 import { useRecordStore } from './record'
 import { useUserStore } from './user'
@@ -41,6 +42,7 @@ export function useStore() {
     module: useModuleStore(),
     page: usePageStore(),
     pageLayout: usePageLayoutStore(),
+    pageVariables: usePageVariablesStore(),
     chart: useChartStore(),
     record: useRecordStore(),
     user: useUserStore(),

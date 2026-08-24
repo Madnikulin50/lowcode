@@ -57,11 +57,11 @@ const module = ref(undefined)
 const customBlock = ref(undefined)
 
 const dialogClass = computed(() => {
-  return block.value && block.value.options?.magnifyOption === 'fullscreen' ? 'h-100 mw-100 m-0 mh-100' : 'h-100 modal-max-width'
+  return block.value && block.value.options?.magnifyOption === 'fullscreen' ? 'h-100 mw-100 m-0 mh-100' : 'modal-max-width'
 })
 
 const contentClass = computed(() => {
-  return `${block.value && block.value.options?.magnifyOption === 'fullscreen' ? 'mh-100 rounded-0' : ''} position-initial`
+  return `${block.value && block.value.options?.magnifyOption === 'fullscreen' ? 'mh-100 rounded-0' : 'modal-max-height'} position-initial`
 })
 
 const magnifiedBlockID = computed(() => route.query.magnifiedBlockID)
@@ -180,5 +180,10 @@ onBeforeUnmount(() => {
 
 .modal-max-width {
   max-width: 97vw;
+}
+
+.modal-max-height {
+  max-height: 80vh;
+  overflow-y: auto;
 }
 </style>

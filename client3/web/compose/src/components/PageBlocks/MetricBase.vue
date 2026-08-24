@@ -198,6 +198,7 @@ defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { debounce } from 'lodash'
 import { usePageBlockBase } from './usePageBlockBase'
+import { useStore } from '../../store'
 import Wrap from './Wrap/index.js'
 import MetricItem from './Metric/Item'
 import numeral from 'numeral'
@@ -224,6 +225,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['errors'])
+const store = useStore()
 const $auth = inject('$auth')
 const $ComposeAPI = inject('$ComposeAPI')
 
@@ -377,12 +379,19 @@ function createEvents () {
   window.addEventListener('drill-down-chart', drillDown)
   window.addEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
   window.addEventListener('record-field-change', refetchOnPrefilterValueChange)
+  window.addEventListener('page-variable-change', refetchOnPageVariableChange)
   window.addEventListener('refetch-records', refresh)
 }
 
 function refetchOnPrefilterValueChange ({ fieldName }) {
   const { metrics } = options.value
   if (metrics.some(({ filter }) => isFieldInFilter(fieldName, filter))) refresh()
+}
+
+function refetchOnPageVariableChange ({ detail: { pageID, fieldName } } = {}) {
+  if (pageID !== props.page.pageID) return
+  const { metrics } = options.value
+  if (metrics.some(({ filter }) => isFieldInFilter(`variables.${fieldName}`, filter))) refresh()
 }
 
 function formatResponse (m, i) {
@@ -411,6 +420,7 @@ async function refresh () {
       abortableRequests.value.push(cancel)
       return response()
     }
+    const pageVariables = store.pageVariables.getValuesForPage(props.page.pageID)
     const jobs = options.value.metrics.map(async (m) => {
       if (!m.moduleID) return []
       const auxM = { ...m }
@@ -419,6 +429,7 @@ async function refresh () {
           record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
           ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth.user || {}).userID || NoID,
           loadingRecord: !!props.loadingRecord,
+          variables: pageVariables,
         })
         if (skip) return []
         auxM.filter = filter
@@ -427,6 +438,7 @@ async function refresh () {
         auxM.transformFx = evaluatePrefilter(auxM.transformFx, {
           record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
           ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth.user || {}).userID || NoID,
+          variables: pageVariables,
         })
       }
       return props.block.fetch({ m: auxM }, reporter)
@@ -504,6 +516,7 @@ function destroyEvents () {
   window.removeEventListener('drill-down-chart', drillDown)
   window.removeEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
   window.removeEventListener('record-field-change', refetchOnPrefilterValueChange)
+  window.removeEventListener('page-variable-change', refetchOnPageVariableChange)
   window.removeEventListener('refetch-records', refresh)
 }
 </script>

@@ -1,18 +1,6 @@
 <template>
   <Wrap v-bind="$props">
-    <div class="p-3">
-      <div v-if="result" class="mb-3 p-2 border rounded" :class="result.success ? 'border-success bg-success-subtle' : 'border-danger bg-danger-subtle'">
-        <div v-if="result.success" class="text-success">
-          <font-awesome-icon :icon="['fas', 'check-circle']" class="me-1" />
-          {{ successText }}
-        </div>
-        <div v-else class="text-danger">
-          <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="me-1" />
-          {{ result.error || 'Ошибка выполнения' }}
-        </div>
-        <pre v-if="result.output && typeof result.output === 'object' && !reorderSummary && !riskSummary" class="mt-2 mb-0 small">{{ formatOutput(result.output) }}</pre>
-      </div>
-
+    <div class="p-3 d-flex flex-wrap align-items-start gap-2">
       <button
         class="btn"
         :class="btnClass"
@@ -23,6 +11,18 @@
         <font-awesome-icon :icon="icon" class="me-1" />
         {{ label }}
       </button>
+
+      <div v-if="result" class="p-2 border rounded flex-grow-1" :class="result.success ? 'border-success bg-success-subtle' : 'border-danger bg-danger-subtle'">
+        <div v-if="result.success" class="text-success">
+          <font-awesome-icon :icon="['fas', 'check-circle']" class="me-1" />
+          {{ successText }}
+        </div>
+        <div v-else class="text-danger">
+          <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="me-1" />
+          {{ result.error || 'Ошибка выполнения' }}
+        </div>
+        <pre v-if="result.output && typeof result.output === 'object' && !reorderSummary && !riskSummary" class="mt-2 mb-0 small">{{ formatOutput(result.output) }}</pre>
+      </div>
     </div>
   </Wrap>
 </template>

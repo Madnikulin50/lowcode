@@ -107,6 +107,7 @@
         :active="showModal"
         :framed="false"
         :show-tools-badge="false"
+        :show-reset-button="false"
         :model-tools="modelTools"
         @tools-state="onToolsState"
         @export-menu="exportOpen = false"
@@ -297,8 +298,8 @@ onBeforeUnmount(() => {
   z-index: 1045;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border-left: 1px solid #e0e0e0;
+  background: var(--white, #fff);
+  border-left: 1px solid var(--extra-light, #e0e0e0);
 }
 
 .chat-dock.fullscreen {
@@ -311,8 +312,8 @@ onBeforeUnmount(() => {
 .chat-dock-header {
   flex-shrink: 0;
   padding: 10px 12px 8px;
-  border-bottom: 1px solid #e0e0e0;
-  background: #fff;
+  border-bottom: 1px solid var(--extra-light, #e0e0e0);
+  background: var(--white, #fff);
 }
 
 .chat-dock-title-row {
@@ -342,8 +343,8 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
-  color: #667788;
-  background: #f3f5f8;
+  color: var(--secondary, #667788);
+  background: var(--extra-light, #f3f5f8);
   border-radius: 999px;
   padding: 2px 10px;
 }
@@ -362,8 +363,8 @@ onBeforeUnmount(() => {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  color: #8a93a0;
-  background: #f3f5f8;
+  color: var(--secondary, #8a93a0);
+  background: var(--extra-light, #f3f5f8);
   flex-shrink: 0;
 }
 
@@ -406,8 +407,8 @@ onBeforeUnmount(() => {
   top: 100%;
   margin-top: 4px;
   min-width: 160px;
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--white, #fff);
+  border: 1px solid var(--extra-light, #ddd);
   border-radius: 6px;
   z-index: 20;
   overflow: hidden;
@@ -422,10 +423,10 @@ onBeforeUnmount(() => {
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  color: #333;
+  color: var(--black, #333);
 }
 
 .chat-dock .export-menu-item:hover {
-  background: #f0f0f0;
+  background: var(--extra-light, #f0f0f0);
 }
 </style>

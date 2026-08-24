@@ -42,6 +42,8 @@ import SocialFeedBase from './SocialFeedBase.vue'
 import SocialFeedConfigurator from './SocialFeedConfigurator.vue'
 import TabsBase from './TabsBase.vue'
 import TabsConfigurator from './TabsConfigurator.vue'
+import VariablesBase from './Variables/Base.vue'
+import VariablesConfigurator from './Variables/Configurator.vue'
 
 const Registry = {
   AutomationBase,
@@ -85,6 +87,8 @@ const Registry = {
   TabsConfigurator,
   NavigationConfigurator,
   NavigationBase,
+  VariablesBase,
+  VariablesConfigurator,
 }
 
 const defaultMode = 'Base'

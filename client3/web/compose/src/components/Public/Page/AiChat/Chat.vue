@@ -1,9 +1,19 @@
 <template>
   <div class="chat-container" :class="{ frameless: !framed }">
     <div
-      v-if="showModelSwitcher || showToolsBadge"
+      v-if="showModelSwitcher || showToolsBadge || showResetButton"
       class="chat-meta-bar"
     >
+      <button
+        v-if="showResetButton"
+        type="button"
+        class="btn btn-outline-secondary border-0 btn-sm chat-reset-btn"
+        :title="$t('aiChat.newChat.label')"
+        :disabled="!messages.length && !inputText"
+        @click="newChat"
+      >
+        <font-awesome-icon :icon="['fas', 'sync']" />
+      </button>
       <select
         v-if="showModelSwitcher"
         v-model="selectedModel"
@@ -109,12 +119,11 @@
             </div>
             <div class="content-text">
               <template v-if="!msg.content && msg.active">
-                <div v-if="warmingUp" class="warmup-indicator">
-                  <span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true" />
-                  <span>{{ statusLabel }}</span>
-                </div>
-                <div v-else class="typing-indicator">
-                  <span /><span /><span />
+                <div class="brand-thinking">
+                  <span class="brand-thinking-icon">
+                    <img :src="faviconSrc" alt="" />
+                  </span>
+                  <span class="brand-thinking-label">{{ statusLabel || $t('aiChat.status.thinking') }}</span>
                 </div>
               </template>
               <template v-for="(part, pi) in messageParts(msg.content)" :key="pi">
@@ -307,6 +316,7 @@ const props = defineProps({
   framed: { type: Boolean, default: true },
   showModelSwitcher: { type: Boolean, default: false },
   showToolsBadge: { type: Boolean, default: true },
+  showResetButton: { type: Boolean, default: true },
   modelTools: { type: Object, default: null },
 })
 
@@ -419,6 +429,10 @@ const statusLabel = computed(() => {
   if (loading.value) return $t('aiChat.status.thinking')
   return ''
 })
+// The site's own (possibly rebranded) favicon, reused as the animated
+// "processing" glyph instead of a generic spinner — falls back to the
+// bundled default icon before branding/favicon has finished loading.
+const faviconSrc = computed(() => document.getElementById('favicon')?.href || '/icon.svg')
 const suggestions = computed(() => [
   { key: 'capabilities', text: $t('aiChat.empty.suggestions.capabilities') },
   { key: 'modules', text: $t('aiChat.empty.suggestions.modules') },
@@ -1587,10 +1601,10 @@ defineExpose({
   height: 100%;
   width: 100%;
   margin: 0 auto;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--extra-light, #e0e0e0);
   border-radius: 12px;
   overflow: hidden;
-  background: #f9f9f9;
+  background: var(--white, #f9f9f9);
   flex: 1;
 }
 
@@ -1624,8 +1638,8 @@ defineExpose({
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  color: #8a93a0;
-  background: #f3f5f8;
+  color: var(--secondary, #8a93a0);
+  background: var(--extra-light, #f3f5f8);
   flex-shrink: 0;
 }
 
@@ -1679,8 +1693,8 @@ defineExpose({
   top: 100%;
   margin-top: 4px;
   min-width: 160px;
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--white, #fff);
+  border: 1px solid var(--extra-light, #ddd);
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   z-index: 100;
@@ -1696,12 +1710,12 @@ defineExpose({
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  color: #333;
+  color: var(--black, #333);
   line-height: 1.4;
 }
 
 .export-menu-item:hover {
-  background: #f0f0f0;
+  background: var(--extra-light, #f0f0f0);
 }
 
 .messages {
@@ -1751,7 +1765,7 @@ defineExpose({
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #999;
+  color: var(--secondary, #999);
   padding: 2px 6px;
   border-radius: 4px;
   line-height: 1;
@@ -1761,8 +1775,8 @@ defineExpose({
 }
 
 .collapse-btn:hover {
-  background: rgba(0,0,0,0.06);
-  color: #666;
+  background: var(--extra-light, rgba(0,0,0,0.06));
+  color: var(--black, #666);
 }
 
 .collapsed-content {
@@ -1876,7 +1890,7 @@ defineExpose({
 .prompt-xml-toggle {
   border: none;
   background: transparent;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
   font-size: 12px;
   padding: 0 2px 4px;
   cursor: pointer;
@@ -1885,10 +1899,10 @@ defineExpose({
 .prompt-xml-body {
   font-size: 11px;
   line-height: 1.45;
-  color: #5a6570;
+  color: var(--secondary, #5a6570);
   white-space: pre-wrap;
   word-break: break-word;
-  background: #f3f5f8;
+  background: var(--extra-light, #f3f5f8);
   border-radius: 8px;
   padding: 8px 10px;
   margin: 0 0 6px;
@@ -1925,7 +1939,7 @@ defineExpose({
 
 .chat-chart-error {
   font-size: 12px;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
   font-style: italic;
   margin: 6px 0;
 }
@@ -1935,7 +1949,7 @@ defineExpose({
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
 }
 
 .message.user .content .collapse-btn {
@@ -1959,35 +1973,61 @@ defineExpose({
   color: white;
 }
 
-.typing-indicator {
-  display: flex;
-  gap: 4px;
-  padding: 8px 0;
-}
-
-.warmup-indicator {
+.brand-thinking {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
   padding: 8px 0;
-  color: #6c757d;
-  font-size: 0.9rem;
+  min-width: 100px;
 }
 
-.typing-indicator span {
-  width: 8px;
-  height: 8px;
-  background: #999;
+.brand-thinking-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.brand-thinking-icon::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
   border-radius: 50%;
-  animation: bounce 1.4s infinite;
+  background: radial-gradient(circle, var(--primary, #ff9661) 0%, transparent 72%);
+  animation: brand-thinking-glow 1.6s ease-in-out infinite;
 }
 
-.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+.brand-thinking-icon img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+  animation: brand-thinking-pulse 1.6s ease-in-out infinite;
+}
 
-@keyframes bounce {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-10px); }
+.brand-thinking-label {
+  font-size: 0.85rem;
+  color: var(--secondary, #6c757d);
+  animation: brand-thinking-fade 1.6s ease-in-out infinite;
+}
+
+@keyframes brand-thinking-pulse {
+  0%, 100% { transform: scale(0.82) rotate(0deg); opacity: 0.55; }
+  50% { transform: scale(1.08) rotate(8deg); opacity: 1; }
+}
+
+@keyframes brand-thinking-glow {
+  0%, 100% { transform: scale(0.6); opacity: 0.12; }
+  50% { transform: scale(1.2); opacity: 0.4; }
+}
+
+@keyframes brand-thinking-fade {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 .file-chips {
@@ -2002,7 +2042,7 @@ defineExpose({
   align-items: center;
   gap: 6px;
   background: var(--extra-light);
-  border: 1px solid #ddd;
+  border: 1px solid var(--extra-light, #ddd);
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 13px;
@@ -2019,7 +2059,7 @@ defineExpose({
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #999;
+  color: var(--secondary, #999);
   padding: 0;
   width: 24px;
   height: 24px;
@@ -2029,7 +2069,7 @@ defineExpose({
 }
 
 .file-chip-download:hover {
-  color: #666;
+  color: var(--black, #666);
 }
 
 .input-area {
@@ -2038,8 +2078,8 @@ defineExpose({
   flex-shrink: 0;
   gap: 8px;
   padding: 12px 16px 10px;
-  background: white;
-  border-top: 1px solid #e0e0e0;
+  background: var(--white, #fff);
+  border-top: 1px solid var(--extra-light, #e0e0e0);
 }
 
 .composer {
@@ -2051,13 +2091,15 @@ defineExpose({
 .composer textarea {
   flex: 1;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--extra-light, #ddd);
   border-radius: 8px;
   resize: none;
   font-family: inherit;
   font-size: 14px;
   max-height: 160px;
   line-height: 1.4;
+  background: var(--white, #fff);
+  color: var(--black, inherit);
 }
 
 .composer-icon {
@@ -2065,15 +2107,15 @@ defineExpose({
   height: 36px;
   border: none;
   background: transparent;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
   cursor: pointer;
   border-radius: 8px;
   flex-shrink: 0;
 }
 
 .composer-icon:hover {
-  background: #f0f0f0;
-  color: #445;
+  background: var(--extra-light, #f0f0f0);
+  color: var(--black, #445);
 }
 
 .composer-send {
@@ -2103,7 +2145,7 @@ defineExpose({
 
 .composer-hint {
   font-size: 11px;
-  color: #99a3ad;
+  color: var(--secondary, #99a3ad);
   min-height: 16px;
 }
 
@@ -2120,7 +2162,7 @@ defineExpose({
 
 .empty-greeting {
   font-size: 1.05rem;
-  color: #445;
+  color: var(--black, #445);
   text-align: center;
 }
 
@@ -2132,18 +2174,18 @@ defineExpose({
 }
 
 .suggestion-chip {
-  border: 1px solid #d5dde6;
-  background: #fff;
+  border: 1px solid var(--extra-light, #d5dde6);
+  background: var(--white, #fff);
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 13px;
-  color: #334;
+  color: var(--black, #334);
   cursor: pointer;
 }
 
 .suggestion-chip:hover {
-  background: #f3f7fb;
-  border-color: #c5d0dc;
+  background: var(--extra-light, #f3f7fb);
+  border-color: var(--secondary, #c5d0dc);
 }
 
 .reasoning {
@@ -2153,7 +2195,7 @@ defineExpose({
 .reasoning-toggle {
   border: none;
   background: transparent;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
   font-size: 12px;
   padding: 0 2px 4px;
   cursor: pointer;
@@ -2161,9 +2203,9 @@ defineExpose({
 
 .reasoning-body {
   font-size: 12px;
-  color: #667788;
+  color: var(--secondary, #667788);
   white-space: pre-wrap;
-  background: #f3f5f8;
+  background: var(--extra-light, #f3f5f8);
   border-radius: 8px;
   padding: 8px 10px;
   margin-bottom: 6px;
@@ -2186,7 +2228,7 @@ defineExpose({
 .msg-action {
   border: none;
   background: transparent;
-  color: #99a3ad;
+  color: var(--secondary, #99a3ad);
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -2194,13 +2236,13 @@ defineExpose({
 }
 
 .msg-action:hover {
-  background: rgba(0,0,0,0.06);
-  color: #445;
+  background: var(--extra-light, rgba(0,0,0,0.06));
+  color: var(--black, #445);
 }
 
 .confirm-card {
-  border: 1px solid #d6eaf8;
-  background: #f3f7fb;
+  border: 1px solid var(--extra-light, #d6eaf8);
+  background: var(--extra-light, #f3f7fb);
   border-radius: 8px;
   padding: 10px 12px;
   margin: 8px 0 4px;
@@ -2221,10 +2263,6 @@ defineExpose({
 .confirm-actions {
   display: flex;
   gap: 8px;
-}
-
-.typing-indicator {
-  min-width: 100px;
 }
 
 @keyframes fadeIn {

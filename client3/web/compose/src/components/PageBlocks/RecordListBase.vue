@@ -784,11 +784,17 @@ function createEvents() {
   window.addEventListener(`drill-down-recordList:${uniqueID.value}`, setDrillDownFilter)
   window.addEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
   window.addEventListener('record-field-change', refetchOnPrefilterValueChange)
+  window.addEventListener('page-variable-change', refetchOnPageVariableChange)
   window.addEventListener('refetch-records', refreshAndResetPagination)
 }
 
 function refetchOnPrefilterValueChange({ detail: { fieldName } } = {}) {
   if (isFieldInFilter(fieldName, options.value.prefilter)) { prepRecordList(); refresh() }
+}
+
+function refetchOnPageVariableChange({ detail: { pageID, fieldName } } = {}) {
+  if (pageID !== props.page.pageID) return
+  if (isFieldInFilter(`variables.${fieldName}`, options.value.prefilter)) { prepRecordList(); refresh() }
 }
 
 function refreshOnRelatedRecordsUpdate({ detail: { moduleID, excludeUniqueID } = {} } = {}) {
@@ -1159,6 +1165,7 @@ function prepRecordList() {
       ownerID: (props.record || {}).ownedBy || NoID,
       userID: ($auth?.user || {}).userID || NoID,
       loadingRecord: !!props.loadingRecord,
+      variables: store.pageVariables.getValuesForPage(props.page.pageID),
     })
     filterArr.push(`(${skip ? 'false' : filter})`)
   }
@@ -1766,6 +1773,7 @@ function destroyEvents() {
   window.removeEventListener(`drill-down-recordList:${uniqueID.value}`, setDrillDownFilter)
   window.removeEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
   window.removeEventListener('record-field-change', refetchOnPrefilterValueChange)
+  window.removeEventListener('page-variable-change', refetchOnPageVariableChange)
   window.removeEventListener('refetch-records', refreshAndResetPagination)
   if (processingTimeout) clearTimeout(processingTimeout)
 }
