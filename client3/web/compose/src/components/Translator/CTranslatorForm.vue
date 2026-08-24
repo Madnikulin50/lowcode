@@ -1,11 +1,12 @@
 <template>
-  <form @submit.prevent="onSubmit">
-    <table class="table table-outline-secondary">
+  <form @submit.prevent>
+    <table class="table mb-0">
       <thead class="bg-light">
         <tr>
           <th class="key py-2 px-1">
             <div class="dropdown">
               <button
+                type="button"
                 class="btn btn-outline-secondary btn-sm dropdown-toggle"
                 data-bs-toggle="dropdown"
               >
@@ -14,6 +15,7 @@
               <ul class="dropdown-menu">
                 <li v-for="lang in intLanguages" :key="lang.tag">
                   <button
+                    type="button"
                     class="dropdown-item"
                     :disabled="lang.default || lang.visible"
                     @click="lang.visible = true"
@@ -27,55 +29,62 @@
           <th
             v-for="lang in visibleLanguages"
             :key="lang.tag"
-            class="text-truncate position-relative"
+            class="text-truncate"
             :style="{ width: `${100 / visibleLanguages.length}%` }"
           >
             {{ lang.localizedName }}
             <button
               v-if="!lang.default"
+              type="button"
               class="btn btn-link float-end p-0 m-0"
-              @click="lang.visible=false"
+              @click="lang.visible = false"
             >
               <font-awesome-icon :icon="['fas', 'times']" />
             </button>
           </th>
         </tr>
       </thead>
-      <template v-for="(r, i) in resources()" :key="i">
-        <tbody v-if="!r.isPrimary" class="border-top">
-          <tr class="bg-light">
-            <th :colspan="visibleLanguages.length + 1">
-              {{ r.title }}
-            </th>
-          </tr>
-        </tbody>
-        <tbody v-for="(key, k) in keys(r.resource)" :key="k" class="border-top">
-          <tr :class="{ 'bg-light': key === highlightKey }">
-            <td colspan="2" class="text-break small">
-              <samp>{{ keyPrettifier(key) }}</samp>
-            </td>
-            <td
-              v-for="(lang, langIndex) in visibleLanguages"
-              :key="lang.tag"
-              :class="{ 'm-0 p-0': true, 'bg-warning': isDirty(r.resource, key, lang.tag) }"
+      <tbody
+        v-for="(r, i) in resources()"
+        :key="i"
+        class="border-top"
+      >
+        <tr v-if="!r.isPrimary" class="bg-light">
+          <th :colspan="visibleLanguages.length + 1">
+            {{ r.title }}
+          </th>
+        </tr>
+        <tr
+          v-for="(key, k) in keys(r.resource)"
+          :key="k"
+          :class="{ 'bg-light': key === highlightKey }"
+        >
+          <td class="text-break small">
+            <samp>{{ keyPrettifier(key) }}</samp>
+          </td>
+          <td
+            v-for="(lang, langIndex) in visibleLanguages"
+            :key="lang.tag"
+            class="m-0 p-0"
+            :class="{ 'bg-warning': isDirty(r.resource, key, lang.tag) }"
+          >
+            <button
+              v-if="isDirty(r.resource, key, lang.tag)"
+              type="button"
+              class="btn btn-link float-end p-1 mt-2 me-2"
+              @click="reset(r.resource, key, lang.tag)"
             >
-              <button
-                v-if="isDirty(r.resource, key, lang.tag)"
-                class="btn btn-link float-end p-1 mt-2 me-2"
-                @click="reset(r.resource, key, lang.tag)"
-              >
-                <font-awesome-icon :icon="['fas', 'times']" />
-              </button>
-              <Editable
-                :value="msg(r.resource, key, lang.tag)"
-                :placeholder="$t('missing-translation')"
-                :tabindex="langIndex + 1"
-                @input="onUpdate(r.resource, key, lang.tag, $event)"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </template>
+              <font-awesome-icon :icon="['fas', 'times']" />
+            </button>
+            <Editable
+              :value="msg(r.resource, key, lang.tag)"
+              :placeholder="$t('missing-translation')"
+              :tabindex="langIndex + 1"
+              @input="onUpdate(r.resource, key, lang.tag, $event)"
+            />
+          </td>
+        </tr>
+      </tbody>
     </table>
   </form>
 </template>
@@ -83,10 +92,10 @@
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'resource-translator', keyPrefix: 'translator' } })
 import { ref, computed, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { useNsI18n } from 'corteza-lib/vue/dist'
 import Editable from './Editable.vue'
 
-const { t: $t } = useI18n({ useScope: 'global' })
+const $t = useNsI18n()
 const emit = defineEmits(['change'])
 
 const lsKey = 'resource-translator.languages'
@@ -193,5 +202,6 @@ function onUpdate(resource, key, lang, message) {
 <style lang="scss" scoped>
 .key {
   min-width: 200px;
+  width: 12rem;
 }
 </style>

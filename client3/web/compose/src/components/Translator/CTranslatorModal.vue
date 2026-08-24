@@ -2,7 +2,7 @@
   <div>
     <div
       v-if="showModal"
-      class="modal d-block"
+      class="modal fade show d-block"
       tabindex="-1"
       role="dialog"
       @click.self="onHide"
@@ -11,7 +11,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ title }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="onHide"></button>
+            <button type="button" class="btn-close" @click="onHide"></button>
           </div>
           <div class="modal-body position-static p-0">
             <CTranslatorForm
@@ -27,6 +27,7 @@
           </div>
           <div class="modal-footer">
             <button
+              type="button"
               class="btn btn-primary"
               :tabindex="languages.length + 1"
               :disabled="disabled || changes.length === 0"
@@ -38,18 +39,22 @@
         </div>
       </div>
     </div>
+    <div
+      v-if="showModal"
+      class="modal-backdrop fade show"
+      @click="onHide"
+    />
   </div>
 </template>
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'resource-translator', keyPrefix: 'translator' } })
-import { ref, computed, onMounted, onBeforeUnmount, unref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { composables } from 'corteza-lib/vue/dist'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { composables, useNsI18n } from 'corteza-lib/vue/dist'
 import { useLanguagesStore } from 'corteza-webapp-compose/src/store/languages'
 import CTranslatorForm from './CTranslatorForm.vue'
 
-const { t: $t } = useI18n({ useScope: 'global' })
+const $t = useNsI18n()
 const { toastSuccess, toastErrorHandler } = composables.useToast()
 const languagesStore = useLanguagesStore()
 
@@ -124,12 +129,16 @@ function clear() {
   loaded.value = false
 }
 
+function onTranslatorEvent (e) {
+  loadModal(e.detail)
+}
+
 onMounted(() => {
   languagesStore.load()
-  window.addEventListener('c-translator', (e) => loadModal(e.detail))
+  window.addEventListener('c-translator', onTranslatorEvent)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('c-translator', loadModal)
+  window.removeEventListener('c-translator', onTranslatorEvent)
 })
 </script>

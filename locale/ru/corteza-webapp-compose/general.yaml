@@ -18,6 +18,10 @@ label:
       list: "Диаграммы - {{label}}"
       edit: "Изменить Диаграмма - {{label}}"
       create: Создать диаграмму
+    rulechains:
+      list: "Цепочки правил - {{label}}"
+      edit: "Изменить цепочку правил - {{label}}"
+      create: Создать цепочку правил
   actions: Действия
   active: Включено
   add: Добавить
@@ -148,6 +152,9 @@ reminder:
     count: Snooze count
 tooltip:
   dragAndDrop: Переместите для изменения порядка
+  recordEditDenied: Недостаточно прав для изменения этой записи
+  recordSaveDenied: Недостаточно прав для сохранения этой записи
+  recordCloneDenied: Недостаточно прав для копирования этой записи
 fieldKinds:
   Bool:
     label: Флажок (Да-Нет)

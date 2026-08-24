@@ -1,10 +1,12 @@
 package drivers
 
 import (
+	"bytes"
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -103,7 +105,44 @@ func (t *TypeID) Decode(raw any) (any, bool, error) {
 }
 
 func (t *TypeID) Encode(val any) (driver.Value, error) {
-	return val, nil
+	if reflect2.IsNil(val) || val == "" {
+		return nil, nil
+	}
+
+	switch v := val.(type) {
+	case uint64:
+		return v, nil
+	case int64:
+		if v < 0 {
+			return nil, fmt.Errorf("invalid ID value %d", v)
+		}
+		return uint64(v), nil
+	case int:
+		if v < 0 {
+			return nil, fmt.Errorf("invalid ID value %d", v)
+		}
+		return uint64(v), nil
+	case string:
+		s := strings.TrimSpace(v)
+		if s == "" {
+			return nil, nil
+		}
+		n, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ID value %q", v)
+		}
+		return n, nil
+	default:
+		s := strings.TrimSpace(cast.ToString(val))
+		if s == "" {
+			return val, nil
+		}
+		n, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ID value %q", s)
+		}
+		return n, nil
+	}
 }
 
 func (t *TypeRef) Decode(raw any) (any, bool, error) {
@@ -125,11 +164,11 @@ func (t *TypeTimestamp) Decode(raw any) (any, bool, error) {
 		return nil, false, fmt.Errorf("unexpected raw type %T for Timestamp", raw)
 	}
 
-	if dec.Valid {
-		return dec.Time.UTC().Format(TimestampLayout(t.Timezone, t.Precision)), dec.Valid, nil
+	if dec == nil || !dec.Valid {
+		return nil, false, nil
 	}
 
-	return nil, false, nil
+	return dec.Time.UTC().Format(TimestampLayout(t.Timezone, t.Precision)), true, nil
 }
 
 func (t *TypeTimestamp) Encode(val any) (driver.Value, error) {
@@ -173,6 +212,10 @@ func (t *TypeDate) Decode(raw any) (any, bool, error) {
 	dec, is := raw.(*sql.NullTime)
 	if !is {
 		return nil, false, fmt.Errorf("unexpected raw type %T for Date", raw)
+	}
+
+	if dec == nil {
+		return nil, false, nil
 	}
 
 	return dec.Time.Format(DateLayout), dec.Valid, nil
@@ -260,7 +303,14 @@ func (t *TypeJSON) Decode(raw any) (any, bool, error) {
 		return nil, false, fmt.Errorf("unexpected raw type %T for JSON", raw)
 	}
 
-	return []byte(*bb), bb != nil, nil
+	if bb == nil || len(bytes.TrimSpace(*bb)) == 0 {
+		return nil, false, nil
+	}
+
+	// sql.RawBytes aliases driver-owned memory; copy before the next Scan/Next.
+	out := make([]byte, len(*bb))
+	copy(out, *bb)
+	return out, true, nil
 }
 
 func (t *TypeJSON) Encode(val any) (driver.Value, error) {
@@ -269,8 +319,20 @@ func (t *TypeJSON) Encode(val any) (driver.Value, error) {
 		// does the value type know how to encode itself for the DB?
 		return c.Value()
 
+	case []byte:
+		if len(bytes.TrimSpace(c)) == 0 {
+			return []byte("{}"), nil
+		}
+		return c, nil
+
+	case string:
+		if strings.TrimSpace(c) == "" {
+			return []byte("{}"), nil
+		}
+		return c, nil
+
 	// These types are native to driver.Value
-	case int64, float64, bool, []byte, string, time.Time:
+	case int64, float64, bool, time.Time:
 		return c, nil
 
 	case json.Marshaler:

@@ -106,7 +106,8 @@ function GetComponent({ block, mode = defaultMode }) {
     }
   }
 
-  throw new Error('unknown block kind: ' + kind)
+  console.warn('unknown page block kind:', kind)
+  return ContentBase
 }
 
 function PageBlock(props, { slots, attrs }) {

@@ -10,6 +10,7 @@
 </template>
 
 <script setup lang="js">
+import { saveAs } from 'file-saver'
 import { useStore } from '../../store'
 
 defineOptions({
@@ -33,18 +34,6 @@ const store = useStore()
 
 function findModuleByID (...args) {
   return store.dispatch('module/findByID', ...args)
-}
-
-function saveAs (blob, filename) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.rel = 'noopener'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
 }
 
 function jsonExport (list, type) {

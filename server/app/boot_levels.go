@@ -575,6 +575,19 @@ func (app *CortezaApp) Activate(ctx context.Context) (err error) {
 		return fmt.Errorf("could not generate css for webapps: %w", err)
 	}
 
+	// re-generate CSS whenever Corteza Studio branding settings (themes, custom CSS) are saved,
+	// instead of only at boot
+	sysService.DefaultSettings.Register("ui.studio", func(ctx context.Context, current interface{}, set types.SettingValueSet) {
+		appSettings, is := current.(*types.AppSettings)
+		if !is {
+			return
+		}
+
+		if err := sysService.DefaultStylesheet.GenerateCSS(appSettings, app.Opt.Webapp.ScssDirPath, app.Log); err != nil {
+			app.Log.Error("could not regenerate css for webapps", zap.Error(err))
+		}
+	})
+
 	// messagebus reloader and consumer listeners
 	if app.Opt.Messagebus.Enabled {
 

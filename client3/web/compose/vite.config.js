@@ -6,41 +6,6 @@ import { readFileSync, writeFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const composeNm = resolve(__dirname, 'node_modules')
-
-// CRichTextInput is bundled from corteza-lib/vue/dist, so Vite walks up into
-// lib/vue/node_modules. That tree has a nested prosemirror-state under
-// @tiptap/pm that is a different copy than prosemirror-keymap's. Each copy
-// mints the default Plugin key "plugin$", and Editor mount throws
-// RangeError: Adding different instances of a keyed plugin (plugin$).
-const prosemirrorSingletons = [
-  'prosemirror-state',
-  'prosemirror-view',
-  'prosemirror-model',
-  'prosemirror-keymap',
-  'prosemirror-transform',
-  'prosemirror-commands',
-  'prosemirror-history',
-  'prosemirror-gapcursor',
-  'prosemirror-dropcursor',
-  'prosemirror-inputrules',
-  'prosemirror-tables',
-]
-const tiptapSingletons = [
-  '@tiptap/core',
-  '@tiptap/vue-3',
-  '@tiptap/starter-kit',
-  '@tiptap/extension-list',
-  '@tiptap/extension-mention',
-  '@tiptap/extension-emoji',
-  '@tiptap/extension-table',
-  '@tiptap/extension-text-align',
-  '@tiptap/extension-text-style',
-  '@tiptap/extension-placeholder',
-  '@tiptap/extension-image',
-  '@tiptap/extension-link',
-  '@tiptap/suggestion',
-]
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || './',
@@ -92,9 +57,7 @@ export default defineConfig({
     include: [
       'portal-vue', 'echarts/core', 'echarts/renderers', 'echarts/charts', 'echarts/components', 'vue-echarts',
       '@fullcalendar/vue3', '@fullcalendar/core', '@fullcalendar/daygrid', '@fullcalendar/timegrid', '@fullcalendar/list', '@fullcalendar/bootstrap',
-      'markdown-it', 'html2pdf.js', 'docx', 'vue-tweet-embed', 'mxgraph', 'v-jsoneditor', 'file-saver', 'vuedraggable',
-      ...tiptapSingletons,
-      ...prosemirrorSingletons,
+      'markdown-it', 'html2pdf.js', 'docx', 'vue-tweet-embed', 'mxgraph', 'v-jsoneditor',
     ],
     exclude: ['vue-demi', 'vue-grid-layout'],
   },
@@ -104,18 +67,14 @@ export default defineConfig({
       { find: 'corteza-webapp-compose/src/stores', replacement: resolve(__dirname, 'src/store') },
       { find: 'corteza-webapp-compose', replacement: resolve(__dirname, '.') },
 
+      { find: 'corteza-lib/vue/src', replacement: resolve(__dirname, '../../lib/vue/src') },
       { find: 'corteza-lib/vue/dist/WorkflowEditor', replacement: resolve(__dirname, '../../lib/vue/src/components/workflow/WorkflowEditor.vue') },
       { find: 'corteza-lib/vue/dist', replacement: resolve(__dirname, '../../lib/vue/dist') },
       { find: 'corteza-lib/js/dist', replacement: resolve(__dirname, '../../lib/js/dist') },
       { find: 'mxgraph', replacement: resolve(__dirname, 'node_modules/mxgraph/javascript/dist/build.js') },
       { find: 'v-jsoneditor', replacement: resolve(__dirname, 'node_modules/v-jsoneditor/dist/v-jsoneditor.min.js') },
       { find: 'file-saver', replacement: resolve(__dirname, 'node_modules/file-saver/dist/FileSaver.min.js') },
-      ...[...prosemirrorSingletons, ...tiptapSingletons].map((name) => ({
-        find: name,
-        replacement: resolve(composeNm, name),
-      })),
     ],
-    dedupe: ['vue', ...prosemirrorSingletons, ...tiptapSingletons, '@tiptap/pm'],
     modules: [
       resolve(__dirname, 'node_modules'),
       resolve(__dirname, '../../lib/vue/node_modules'),
@@ -138,7 +97,20 @@ export default defineConfig({
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },
-      '/auth': {
+      '/compose': {
+        target: process.env.VITE_API_URL || 'http://localhost:3333',
+        changeOrigin: true,
+        bypass (req) {
+          // Serve Vite's SPA entry, not /index.html (public/index.html is a
+          // Vue CLI leftover and would leak <%= BASE_URL %> into the page).
+          if (req.url?.startsWith('/compose/auth/callback')) return '/'
+          const accept = req.headers.accept || ''
+          if (accept.includes('text/html')) return '/'
+        },
+      },
+      // Negative lookahead: /auth/callback is the SPA OAuth return URL.
+      // Vite 6 bypass:false is a hard 404, not a skip.
+      '^/auth(?!/callback)': {
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },

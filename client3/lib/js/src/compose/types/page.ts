@@ -94,7 +94,15 @@ export class Page {
     Apply(this, i, Boolean, 'visible')
 
     if (i.blocks) {
-      this.blocks = i.blocks.map(block => PageBlockMaker(block))
+      this.blocks = []
+      for (const block of i.blocks) {
+        if (!block) continue
+        try {
+          this.blocks.push(PageBlockMaker(block))
+        } catch (err) {
+          console.warn(`skipping page block kind=${(block as { kind?: string }).kind}`, err)
+        }
+      }
     }
 
     if (i.children) {

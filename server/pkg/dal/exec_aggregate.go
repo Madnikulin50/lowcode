@@ -619,6 +619,11 @@ func makeExprRunners(kk ...*ql.ASTNode) (out []*runnerGval, err error) {
 func makeGroupKey(ctx context.Context, runners []*runnerGval, vals any) (gk groupKey, err error) {
 	gk = make(groupKey, len(runners))
 	for i, r := range runners {
+		if r == nil {
+			// Dummy group (no dimensions): makeExprRunners leaves a nil slot.
+			gk[i] = nil
+			continue
+		}
 		v, err := r.Eval(ctx, vals)
 		if err != nil {
 			return nil, err

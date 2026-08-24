@@ -29,6 +29,7 @@ func (ctrl *RAG) MountRoutes(r chi.Router) {
 		r.Delete("/documents/{docID}", ctrl.Delete)
 		r.Post("/search", ctrl.Search)
 	})
+	r.Get("/pages-rag/reindex/progress", ctrl.PagesReindexProgress)
 	r.Get("/pages-rag", ctrl.PagesList)
 	r.Post("/pages-rag/reindex", ctrl.PagesReindex)
 }
@@ -140,4 +141,13 @@ func (ctrl *RAG) PagesReindex(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"response": true})
+}
+
+func (ctrl *RAG) PagesReindexProgress(w http.ResponseWriter, r *http.Request) {
+	if service.DefaultPagesRAG == nil {
+		http.Error(w, "pages RAG not available", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"response": service.DefaultPagesRAG.Progress()})
 }

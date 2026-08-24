@@ -8,11 +8,12 @@
 import { computed, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose } from 'corteza-lib/js/dist'
+import { themeColor } from 'corteza-webapp-compose/src/lib/color.js'
 
 const props = defineProps({
   namespace: { type: compose.Namespace, required: true },
   field: { type: compose.ModuleField, required: true },
-  record: { type: compose.Record, required: true },
+  record: { type: Object, required: true },
   valueOnly: { type: Boolean, required: false },
   extraOptions: { type: Object, default: () => ({}) },
   includeStyles: { type: Boolean, default: false },
@@ -54,12 +55,7 @@ const themeSettings = computed(() => {
 })
 
 function getColor (value) {
-  if (!value) return undefined
-  if (value[0] === '#') return value
-  const themes = themeSettings.value
-    .filter(theme => theme.id !== 'general')
-    .map(theme => ({ id: theme.id, values: typeof theme.values === 'string' ? JSON.parse(theme.values) : theme.values }))
-  return themes[0]?.values?.[value] || value
+  return themeColor(value, themeSettings.value)
 }
 </script>
 

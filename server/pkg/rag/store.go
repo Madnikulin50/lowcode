@@ -307,6 +307,8 @@ type PageChunk struct {
 	PageID      uint64 `json:"pageID"`
 	NamespaceID uint64 `json:"namespaceID"`
 	Title       string `json:"title"`
+	BlockKind   string `json:"blockKind"`
+	BlockTitle  string `json:"blockTitle"`
 	Text        string `json:"text"`
 	ChunkIndex  int    `json:"chunkIndex"`
 }

@@ -33,11 +33,20 @@
               >
                 <div class="card-body d-flex flex-column align-items-center justify-content-center text-center">
                   <img
-                    class="rounded-bottom thumbnail mb-3"
+                    v-if="!isBuiltinLogo(app)"
+                    class="app-custom-logo mb-3"
                     :src="logoUrl(app)"
                     :alt="app.unify.name || app.name"
                   >
-                  <h6 class="my-4">{{ app.unify.name || app.name }}</h6>
+                  <div
+                    v-else
+                    class="app-tile mb-3"
+                    :style="{ backgroundColor: appTile(app).color }"
+                    aria-hidden="true"
+                  >
+                    <font-awesome-icon :icon="appTile(app).icon" />
+                  </div>
+                  <h6 class="app-name mb-0">{{ app.unify.name || app.name }}</h6>
                 </div>
 
                 <a
@@ -142,6 +151,38 @@ async function onDrop() {
   await applicationsStore.reorder(ids)
 }
 
+const APP_TILES = [
+  { test: /video.?confer|jitsi|\bmeet\b/i, icon: ['fas', 'video'], color: '#e74a3b' },
+  { test: /privacy/i, icon: ['fas', 'user-shield'], color: '#5a5c69' },
+  { test: /discovery/i, icon: ['fas', 'compass'], color: '#36b9cc' },
+  { test: /reporter|\breport\b/i, icon: ['fas', 'chart-pie'], color: '#6f42c1' },
+  { test: /workflow/i, icon: ['fas', 'diagram-project'], color: '#1cc88a' },
+  { test: /\bcrm\b|customer.?relat/i, icon: ['fas', 'users'], color: '#36b9cc' },
+  { test: /service.?solution|case.?management|low-code-service/i, icon: ['fas', 'headset'], color: '#4e73df' },
+  { test: /\bcmdb\b/i, icon: ['fas', 'sitemap'], color: '#4e73df' },
+  { test: /\badmin\b/i, icon: ['fas', 'gears'], color: '#224abe' },
+  { test: /compose|low-code-platform|low.?code.?platform/i, icon: ['fas', 'layer-group'], color: '#4e73df' },
+]
+
+const DEFAULT_TILE = { icon: ['fas', 'table-cells-large'], color: '#4e73df' }
+
+function appHaystack (app) {
+  return [app?.name, app?.unify?.name, app?.unify?.url, app?.unify?.logo]
+    .filter(Boolean)
+    .join(' ')
+}
+
+function isBuiltinLogo (app) {
+  const logo = app?.unify?.logo
+  if (!logo) return true
+  return /(?:^|\/)applications\//.test(logo)
+}
+
+function appTile (app) {
+  const hay = appHaystack(app)
+  return APP_TILES.find(({ test }) => test.test(hay)) || DEFAULT_TILE
+}
+
 function logoUrl(app) {
   if (!app.unify.logo) {
     return 'applications/default-app.png'
@@ -181,21 +222,39 @@ function openAppInNewTab(route) {
   }
 
   .app {
-    min-height: 13rem;
-    transition: all 0.2s ease;
-    box-shadow: 0;
-    top: 0;
+    min-height: 11rem;
+    border: 1px solid var(--bs-border-color, #e3e6f0);
+    overflow: hidden;
+    border-radius: 1rem;
+    box-shadow: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 
-    .thumbnail {
-      max-width: 100%;
-      max-height: 150px;
+    .app-tile {
+      width: 5.5rem;
+      height: 5.5rem;
+      border-radius: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 2.25rem;
+      box-shadow: 0 8px 18px rgba(78, 115, 223, 0.18);
+    }
+
+    .app-custom-logo {
+      width: 5.5rem;
+      height: 5.5rem;
       object-fit: contain;
+      border-radius: 1.15rem;
+    }
+
+    .app-name {
+      font-weight: 600;
     }
 
     &:hover {
-      transition: all 0.2s ease;
-      box-shadow: 0px 4px 8px rgba(38, 38, 38, 0.2);
-      top: -2px;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(78, 115, 223, 0.16);
     }
   }
 

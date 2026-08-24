@@ -3,6 +3,7 @@ import lodash from 'lodash'
 const { merge } = lodash
 import { Apply } from '../../../cast'
 import { Options as PageBlockRecordListOptions } from './record-list'
+import { isUnknownReportCount } from '../../unknown-total'
 const kind = 'Metric'
 
 type Reporter = (p: ReporterParams) => Promise<any>
@@ -188,6 +189,10 @@ export class PageBlockMetric extends PageBlock {
    */
   async fetch ({ m }: { m: Metric }, reporter: Reporter): Promise<object> {
     const w = await reporter(this.formatParams(m))
+    if (Array.isArray(w) && w.some(isUnknownReportCount)) {
+      // COUNT timed out (filter.TotalUnknown). Do not aggregate -1.
+      return [{ value: null, unknown: true }]
+    }
     const datasets = w.map((r: any) => r.rp !== undefined ? r.rp : r.count)
 
     let rtr: number

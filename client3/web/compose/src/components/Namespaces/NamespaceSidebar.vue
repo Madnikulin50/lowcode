@@ -25,16 +25,17 @@
 
         <c-input-select
           data-test-id="select-namespace"
-          :value="currentNamespaceID"
+          :model-value="currentNamespaceID"
           :options="filteredNamespaces"
           :get-option-label="getNamespaceLabel"
+          :get-option-key="n => n.namespaceID"
           :selectable="option => option.namespaceID !== namespace.namespaceID"
           :placeholder="$t('sidebar.pickNamespace')"
           :clearable="false"
           :autoscroll="false"
           :append-to-body="false"
           class="ns-switcher mt-2"
-          @input="namespaceSelected"
+          @update:model-value="namespaceSelected"
         >
           <template #list-header>
             <li
@@ -241,13 +242,13 @@ watch(() => route.params.slug, (slug = '') => {
 watch(() => namespace.value?.namespaceID, (nsID) => {
   if (!nsID) return
   ruleChainsLoading.value = true
-  $ComposeAPI.ruleChainList({ limit: 500, namespaceID: nsID })
+  $ComposeAPI.ruleChainList({ limit: 500, namespaceID: nsID }, { timeout: 15000 })
     .then(({ chains }) => { ruleChains.value = chains || [] })
     .catch(() => { ruleChains.value = [] })
     .finally(() => { ruleChainsLoading.value = false })
 
   workflowsLoading.value = true
-  $AutomationAPI.workflowList({ limit: 500, deleted: 0 })
+  $AutomationAPI.workflowList({ limit: 500, deleted: 0 }, { timeout: 15000 })
     .then(({ set }) => { workflows.value = (set || []).map(i => i?.workflow || i) })
     .catch(() => { workflows.value = [] })
     .finally(() => { workflowsLoading.value = false })

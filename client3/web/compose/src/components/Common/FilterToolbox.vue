@@ -4,7 +4,7 @@
     class="table table-sm table-borderless mb-0"
     style="border-collapse: separate; border-spacing: 0;"
   >
-    <template v-for="(filterGroup, groupIndex) in internalFilter">
+    <template v-for="(filterGroup, groupIndex) in internalFilter" :key="`group-${groupIndex}`">
       <template v-if="filterGroup.filter.length">
         <tr
           v-for="(filter, index) in filterGroup.filter"
@@ -21,7 +21,7 @@
               :placeholder="$t('recordList.filter.fieldPlaceholder')"
               :reduce="(f) => f.name"
               :class="{ 'filter-field-picker': !!filter.name }"
-              @input="onChange($event, groupIndex, index)"
+              @update:model-value="onChange($event, groupIndex, index)"
             />
           </td>
 
@@ -183,6 +183,10 @@ import { isBetweenOperator } from 'corteza-webapp-compose/src/lib/record-filter.
 const { t } = useI18n()
 
 const props = defineProps({
+  modelValue: {
+    type: Array,
+    default: undefined,
+  },
   value: {
     type: Array,
     default: undefined,
@@ -205,7 +209,11 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['input', 'value-change'])
+const emit = defineEmits(['update:modelValue', 'input', 'value-change'])
+
+const boundValue = computed(() => (
+  props.modelValue !== undefined ? props.modelValue : props.value
+))
 
 const conditions = ref([
   { value: 'AND', text: t('recordList.filter.conditions.and') },
@@ -232,8 +240,17 @@ const fields = computed(() => {
   })
 })
 
+const resolvedSelectedField = computed(() => {
+  if (props.selectedField) {
+    return props.selectedField
+  } else if (fields.value.length) {
+    return fields.value[0]
+  }
+  return {}
+})
+
 const showAddCondition = computed(() => {
-  return internalFilter.value.length >= 1 && internalFilter.value[0].filter[0].name
+  return internalFilter.value.length >= 1 && internalFilter.value[0]?.filter?.[0]?.name
 })
 
 const groupConditionOptions = computed(() => {
@@ -250,7 +267,7 @@ watch(() => props.module, (newModule) => {
   }
 }, { immediate: true })
 
-watch(() => props.value, (rawFilter) => {
+watch(() => boundValue.value, (rawFilter) => {
   let internal = []
 
   if (!rawFilter) {
@@ -273,7 +290,9 @@ watch(() => props.value, (rawFilter) => {
 
 watch(internalFilter, (val) => {
   if (isLoadingExternalData.value) return
-  emit('input', processInternalFilter(val))
+  const processed = processInternalFilter(val)
+  emit('update:modelValue', processed)
+  emit('input', processed)
 }, { deep: true })
 
 function rawFilterToInternal (recordListFilter = []) {
@@ -306,7 +325,7 @@ function processInternalFilter (filter = []) {
   if (!filter.length || !mockModule.value) return []
 
   return filter.map(({ filter = [], name, groupCondition }) => {
-    filter = filter.map(({ record, ...f }) => {
+    filter = filter.map(({ record, ...f } = {}) => {
       if (!f.name || !record) return undefined
       if (isBetweenOperator(f.operator)) {
         const field = getPreparedField(f.name)
@@ -316,15 +335,15 @@ function processInternalFilter (filter = []) {
             end: field.isSystem ? record[`${f.name}-end`] : record.values[`${f.name}-end`],
           }
         }
-      } else if (Object.keys(record.values).includes(f.name)) {
+      } else if (Object.keys(record.values || {}).includes(f.name)) {
         f.value = record.values[f.name]
       } else if (Object.keys(record).includes(f.name)) {
         f.value = record[f.name]
       }
       return f
-    })
+    }).filter(f => f && f.name)
     return { filter, name, groupCondition }
-  })
+  }).filter(({ filter }) => filter.length)
 }
 
 function prepareFields () {
@@ -460,15 +479,6 @@ function addGroup () {
   internalFilter.value.push(createDefaultFilterGroup(resolvedSelectedField.value))
   emit('value-change')
 }
-
-const resolvedSelectedField = computed(() => {
-  if (props.selectedField) {
-    return props.selectedField
-  } else if (fields.value.length) {
-    return fields.value[0]
-  }
-  return {}
-})
 </script>
 
 <style lang="scss" scoped>

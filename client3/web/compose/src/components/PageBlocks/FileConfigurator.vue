@@ -226,12 +226,13 @@ const enablePreviewStyling = computed(() => {
   return mode === 'gallery'
 })
 
-function appendAttachment ({ attachmentID } = {}) {
+function appendAttachment (payload = {}) {
+  const attachmentID = payload.attachmentID || payload.response?.attachmentID
+  if (!attachmentID) return
   options.value.attachments.push(attachmentID)
 }
 
 function uploadWebcamImage (file) {
-  const u = uploader.value
-  if (u && u.$refs.dropzone) u.$refs.dropzone.addFile(file)
+  uploader.value?.handleFile?.(file)
 }
 </script>

@@ -1,24 +1,24 @@
 editor:
-  title: User Interface Настройки
+  title: Настройки пользовательского интерфейса
 
   corteza-studio:
-    title: Theming
+    title: Оформление
     colorPicker: Выберите цвет
-    sassNotInstalled: No dart-sass binaries were detected. For guidance on how to set it up, refer to
-    installSassDocs: docs here
+    sassNotInstalled: Не обнаружены двоичные файлы dart-sass. Для инструкций по установке обратитесь к
+    installSassDocs: документации
     custom-css: Пользовательский CSS
     mainLogo:
-      title: Main logo
+      title: Основной логотип
       uploader:
-        instructions: Click or drop main logo here to upload
-        uploading: Uploading main logo
+        instructions: Нажмите или перетащите основной логотип сюда для загрузки
+        uploading: Загрузка основного логотипа
     iconLogo:
-      title: Icon logo
+      title: Логотип-иконка
       uploader:
-        instructions: Click or drop icon logo image here to upload
-        uploading: Uploading icon logo
+        instructions: Нажмите или перетащите изображение логотипа сюда для загрузки
+        uploading: Загрузка логотипа-иконки
     label:
-      default: Default
+      default: По умолчанию
     tabs:
       general: Основные
       light: Светлая
@@ -26,90 +26,107 @@ editor:
     theme:
       variables:
         white:
-          label: White
-          description: Element background color
+          label: Белый
+          description: Цвет фона элементов
         black:
-          label: Black
-          description: Element text color
+          label: Чёрный
+          description: Цвет текста элементов
         primary:
-          label: Главные
-          description: Главные action buttons, links
+          label: Основной
+          description: Основные кнопки действий, ссылки
         secondary:
-          label: Вторичное
-          description: Disabled and placeholder text color
+          label: Вторичный
+          description: Цвет отключённого и плейсхолдерного текста
         success:
           label: Успех
-          description: Success notification color
+          description: Цвет уведомлений об успехе
         warning:
           label: Предупреждение
-          description: Warning notification color
+          description: Цвет предупреждающих уведомлений
         danger:
-          label: Danger
-          description: Error notification color
+          label: Опасность
+          description: Цвет уведомлений об ошибках
         light:
-          label: Светлая
-          description: Вторичное action buttons, table headers
+          label: Светлый
+          description: Вторичные кнопки действий, заголовки таблиц
         extra-light:
-          label: Extra light
-          description: Icon buttons, borders
+          label: Сверхсветлый
+          description: Кнопки-иконки, границы
         body-bg:
-          label: Body background
-          description: Цвет фона of the application
+          label: Фон тела
+          description: Цвет фона приложения
         sidebar-bg:
-          label: Sidebar background
-          description: Цвет фона of the sidebar
+          label: Фон боковой панели
+          description: Цвет фона боковой панели
         topbar-bg:
-          label: Topbar background
-          description: Цвет фона of the topbar
+          label: Фон верхней панели
+          description: Цвет фона верхней панели
 
   topbar:
-    title: Topbar
+    title: Верхняя панель
     general: Основные
 
     search:
-      hide: Hide search
+      hide: Скрыть поиск
 
     app-selector:
-      hide: Hide app selector
+      hide: Скрыть переключатель приложений
     help:
       title: Справка
-      hide: Hide help
-      hide-forum-link: Hide forum link
-      hide-documentation-link: Hide documentation link
-      hide-feedback-link: Hide feedback link
+      hide: Скрыть справку
+      hide-forum-link: Скрыть ссылку на форум
+      hide-documentation-link: Скрыть ссылку на документацию
+      hide-feedback-link: Скрыть ссылку обратной связи
     profile:
       title: Профиль
-      hide: Hide profile
-      hide-profile-link: Hide profile link
-      hide-change-password-link: Hide change password link
-      hide-theme-selector: Hide theme selector
+      hide: Скрыть профиль
+      hide-profile-link: Скрыть ссылку на профиль
+      hide-change-password-link: Скрыть ссылку на смену пароля
+      hide-theme-selector: Скрыть переключатель тем
 
     notifications:
-      hide: Hide notifications
+      hide: Скрыть уведомления
 
     drafts:
-      hide: Hide drafts
+      hide: Скрыть черновики
 
     links:
-      title: Custom links
+      title: Пользовательские ссылки
       handle: Имя
-      invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
+      invalid-handle-characters: Должно быть не менее 2 символов. Может содержать только буквы, цифры, подчёркивания и точки. Должно заканчиваться буквой или цифрой
       url: URL
-      new-tab: New tab
+      new-tab: Новая вкладка
 
   theming:
-    title: Theming
+    title: Оформление
 
   navigation:
-    title: Navigation
+    title: Навигация
 
   location:
-    title: Location
+    title: Расположение
     geosearch:
-      title: Geosearch
+      title: Геопоиск
       provider:
-        label: Provider
-        description: Select the provider to use for location search in maps
+        label: Провайдер
+        description: Выберите провайдера для поиска местоположения на картах
       apiKey:
-        label: API Key
-        placeholder: Enter your API key
+        label: API-ключ
+        placeholder: Введите ваш API-ключ
+    map:
+      title: Тайлы карты
+      help: Базовая подложка для Geometry-полей и блоков карты. Для offline укажите URL локального tileserver (схема OSM {z}/{x}/{y}).
+      tileSource:
+        label: Источник тайлов
+        description: Online — публичный OSM CDN или свой URL. Local — свой tileserver / прокси MBTiles.
+      tileURL:
+        label: URL-шаблон тайлов
+        description: Шаблон Leaflet с {z}/{x}/{y} и опционально {s}. Пусто при Online = стандартный OpenStreetMap CDN.
+      minZoom:
+        label: Мин. zoom
+      maxZoom:
+        label: Макс. zoom
+      attribution:
+        label: Attribution
+        description: Подпись на карте. Пусто = стандартный copyright OpenStreetMap.
+        placeholder: © OpenStreetMap contributors

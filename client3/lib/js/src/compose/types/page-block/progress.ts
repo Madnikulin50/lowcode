@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { PageBlock, PageBlockInput, Registry } from './base'
 import { Compose as ComposeAPI } from '../../../api-clients'
 import { Apply } from '../../../cast'
+import { isUnknownReportCount } from '../../unknown-total'
 
 const kind = 'Progress'
 
@@ -161,7 +162,11 @@ export class PageBlockProgress extends PageBlock {
     }
 
     return Promise.all(reports).then(([value, min, max]: Array<any>) => {
-      if (Array.isArray(value)) {
+      const unknownValue = Array.isArray(value) && value.some(isUnknownReportCount)
+      const unknownMin = Array.isArray(min) && min.some(isUnknownReportCount)
+      const unknownMax = Array.isArray(max) && max.some(isUnknownReportCount)
+
+      if (Array.isArray(value) && !unknownValue) {
         const datasets = value.map((r: any) => r.rp !== undefined ? r.rp : r.count)
         if (valueOperation === 'max') {
           value = datasets.sort((a: number, b: number) => b - a)[0]
@@ -172,9 +177,11 @@ export class PageBlockProgress extends PageBlock {
         } else {
           value = datasets.reduce((acc: number, cur: number) => acc + cur, 0)
         }
+      } else if (unknownValue) {
+        value = this.options.value.default
       }
 
-      if (Array.isArray(min)) {
+      if (Array.isArray(min) && !unknownMin) {
         const datasets = min.map((r: any) => r.rp !== undefined ? r.rp : r.count)
         if (minValueOperation === 'max') {
           min = datasets.sort((a: number, b: number) => b - a)[0]
@@ -185,9 +192,11 @@ export class PageBlockProgress extends PageBlock {
         } else {
           min = datasets.reduce((acc: number, cur: number) => acc + cur, 0)
         }
+      } else if (unknownMin) {
+        min = this.options.minValue.default
       }
 
-      if (Array.isArray(max)) {
+      if (Array.isArray(max) && !unknownMax) {
         const datasets = max.map((r: any) => r.rp !== undefined ? r.rp : r.count)
         if (maxValueOperation === 'max') {
           max = datasets.sort((a: number, b: number) => b - a)[0]
@@ -198,9 +207,11 @@ export class PageBlockProgress extends PageBlock {
         } else {
           max = datasets.reduce((acc: number, cur: number) => acc + cur, 0)
         }
+      } else if (unknownMax) {
+        max = this.options.maxValue.default
       }
 
-      return { value, min, max }
+      return { value, min, max, unknown: unknownValue }
     })
   }
 }

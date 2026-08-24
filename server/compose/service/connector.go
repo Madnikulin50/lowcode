@@ -61,7 +61,7 @@ func (svc *connectorSvc) Test(ctx context.Context, cfg types.ModuleConfigConnect
 	case "db":
 		return svc.testDB(ctx, cfg)
 	case "mongodb", "kafka", "redis", "grpc":
-		return errors.Internal("connector test not implemented for %s", cfg.Type)
+		return errors.Internal("connector test not implemented for " + cfg.Type)
 	default:
 		return errors.Internal("unknown connector type: %s", cfg.Type)
 	}

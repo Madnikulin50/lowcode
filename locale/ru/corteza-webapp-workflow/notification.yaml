@@ -1,51 +1,51 @@
-'configure-triggers': Make sure all trigger steps are properly configured
-'confirm-unsaved-changes': You have unsaved changes, are you sure you want to exit?
-error: " - ERROR: "
-'event-type-not-found': Event type not found
-'event-type-fetch-failed': Failed to fetch event types
-'failed-fetch-functions': Failed to fetch functions
-'failed-fetch-triggers': Failed to fetch triggers
-'failed-fetch-workflow': Failed to fetch workflow
-'failed-fetch-workflows': Failed to fetch workflows
-'failed-load-file': Failed to load file
-'failed-save': Сохранить failed
-'failed-test': Test failed
-'fetch-types-failed': Failed to fetch types
+'configure-triggers': Убедитесь, что все шаги триггеров настроены правильно
+'confirm-unsaved-changes': У вас есть несохранённые изменения, вы уверены что хотите выйти?
+error: " — ОШИБКА: "
+'event-type-not-found': Тип события не найден
+'event-type-fetch-failed': Не удалось загрузить типы событий
+'failed-fetch-functions': Не удалось загрузить функции
+'failed-fetch-triggers': Не удалось загрузить триггеры
+'failed-fetch-workflow': Не удалось загрузить процесс
+'failed-fetch-workflows': Не удалось загрузить процессы
+'failed-load-file': Не удалось загрузить файл
+'failed-save': Ошибка сохранения
+'failed-test': Ошибка тестирования
+'fetch-types-failed': Не удалось загрузить типы
 general:
   error: Ошибка
   success: Успех
   warning: Предупреждение
-  info: Информация
+  info: Инфо
 list:
   load:
-    error: Failed to fetch workflows
+    error: Не удалось загрузить процессы
   enable:
-    success: Процесс enabled
-    failed: Failed to enable workflow
+    success: Процесс включён
+    failed: Не удалось включить процесс
   disable:
-    success: Процесс disabled
-    failed: Failed to disable workflow
+    success: Процесс отключён
+    failed: Не удалось отключить процесс
 import:
-  'failed-import': Failed to import
-  'imported-workflows': Процессы imported
-  'skipped-workflows': Skipped workflows
-'imported-workflow': Процесс imported
-'import-failed': Импорт failed
-'initial-scope-load-failed': Failed to load initial scope
-'resolve-issues': Решить issues to test workflow
-'save-workflow': Сохранить workflow first to test it
-'started-test': Процесс test started
-'test-completed': Test completed
-'test-in-progress': Test in progress
-'trace-unavailable': Trace not available
-'trigger-paths-changed': Trigger paths changed
-'workflow-test-completed': Процесс test completed
+  'failed-import': Ошибка импорта
+  'imported-workflows': Процессы импортированы
+  'skipped-workflows': Пропущенные процессы
+'imported-workflow': Процесс импортирован
+'import-failed': Ошибка импорта
+'initial-scope-load-failed': Не удалось загрузить начальную область
+'resolve-issues': Устраните проблемы для тестирования процесса
+'save-workflow': Сначала сохраните процесс для тестирования
+'started-test': Тест процесса запущен
+'test-completed': Тест завершён
+'test-in-progress': Идёт тестирование
+'trace-unavailable': Трассировка недоступна
+'trigger-paths-changed': Пути триггеров изменены
+'workflow-test-completed': Тест процесса завершён
 update:
-  success: Процесс updated
-  failed: Failed to update workflow
+  success: Процесс обновлён
+  failed: Не удалось обновить процесс
 delete:
-  success: Процесс deleted
-  failed: Failed to delete workflow
+  success: Процесс удалён
+  failed: Не удалось удалить процесс
 undelete:
-  success: Процесс restored
-  failed: Failed to restore workflow
+  success: Процесс восстановлен
+  failed: Не удалось восстановить процесс

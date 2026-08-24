@@ -1,9 +1,6 @@
 package options
 
-// This file is auto-generated version 2.
-//
-// Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated from <no value>
+// Formerly generated from CUE; now maintained by hand.
 //
 
 import (
@@ -1103,7 +1100,7 @@ func Discovery() (o *DiscoveryOpt) {
 func Attachment() (o *AttachmentOpt) {
 	o = &AttachmentOpt{
 		AvatarMaxFileSize:             1000000,
-		AvatarInitialsFontPath:        "fonts/Poppins-Regular.ttf",
+		AvatarInitialsFontPath:        "fonts/Montserrat-Regular.ttf",
 		AvatarInitialsBackgroundColor: "#F3F3F3",
 		AvatarInitialsColor:           "#0B344E",
 	}

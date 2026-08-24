@@ -113,3 +113,20 @@ editor:
       apiKey:
         label: API Key
         placeholder: Enter your API key
+    map:
+      title: Map tiles
+      help: Configure the basemap for Geometry fields and map blocks. Use a local tileserver URL for offline / air-gapped deployments (OSM-compatible {z}/{x}/{y} scheme).
+      tileSource:
+        label: Tile source
+        description: Online uses the public OSM CDN (or a custom URL). Local expects your own tile server / MBTiles proxy.
+      tileURL:
+        label: Tile URL template
+        description: Leaflet template with {z}/{x}/{y} and optional {s}. Leave empty for the default OpenStreetMap CDN when source is Online.
+      minZoom:
+        label: Min zoom
+      maxZoom:
+        label: Max zoom
+      attribution:
+        label: Attribution
+        description: Shown on the map. Leave empty for the default OpenStreetMap copyright notice.
+        placeholder: © OpenStreetMap contributors

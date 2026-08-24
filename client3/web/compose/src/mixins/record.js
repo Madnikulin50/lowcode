@@ -455,7 +455,7 @@ export default {
             }
 
             const fields = p.module.fields
-              .filter(({ canReadRecordValue, canUpdateRecordValue }) => canReadRecordValue && canUpdateRecordValue)
+              .filter(({ canReadRecordValue, canUpdateRecordValue, options, isReadonly }) => canReadRecordValue && canUpdateRecordValue && !(isReadonly || options?.readonly))
               .map(({ name }) => name)
 
             // cover the edge case where all fields are not updatable

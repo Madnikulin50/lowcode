@@ -90,6 +90,68 @@ describe('record', () => {
       const rr = new Record({ recordID: '42' }, m)
       expect(new Record(rr)).to.have.property('recordID').equal('42')
     })
+
+    it('should not treat string vs number moduleID as a module change', () => {
+      const mod = Object.freeze(new Module({
+        moduleID: '42',
+        namespaceID: '7',
+        fields: [{ name: 'simple', kind: 'String' }],
+      }))
+      expect(() => new Record({ recordID: '1', moduleID: 42, namespaceID: 7, values: { simple: 'x' } }, mod)).to.not.throw()
+      const r = new Record({ recordID: '1', moduleID: 42, namespaceID: 7, values: { simple: 'x' } }, mod)
+      expect(r.moduleID).to.equal('42')
+      expect(r.values.simple).to.equal('x')
+    })
+
+    it('should accept a module proxy that hides hasOwnProperty (Vue 3 reactive)', () => {
+      const raw = new Module({
+        moduleID: '42',
+        namespaceID: '7',
+        fields: [{ name: 'simple', kind: 'String' }],
+      })
+      const proxy = new Proxy(raw, {
+        get (target, prop) { return (target as any)[prop] },
+        has (target, prop) { return prop in target },
+        getOwnPropertyDescriptor (target, prop) {
+          if (prop === 'moduleID' || prop === 'namespaceID') {
+            return undefined
+          }
+          return Reflect.getOwnPropertyDescriptor(target, prop)
+        },
+        ownKeys (target) {
+          return Reflect.ownKeys(target).filter(k => k !== 'moduleID' && k !== 'namespaceID')
+        },
+      })
+      expect(() => new Record({ recordID: '1', moduleID: '42', namespaceID: '7', values: { simple: 'x' } }, proxy as Module)).to.not.throw()
+      const r = new Record({ recordID: '1', moduleID: '42', namespaceID: '7', values: { simple: 'x' } }, proxy as Module)
+      expect(r.moduleID).to.equal('42')
+      expect(r.values.simple).to.equal('x')
+    })
+
+    it('should construct when the module proxy is unfrozen (Vue reactive of Object.freeze)', () => {
+      const raw = Object.freeze(new Module({
+        moduleID: '509463708787081217',
+        namespaceID: '509463708777775105',
+        name: 'Devices',
+        fields: [{ name: 'hostname', kind: 'String' }],
+      }))
+      const vueLike = new Proxy(raw, {
+        get (target, prop) {
+          if (prop === '__v_raw') return raw
+          return (target as any)[prop]
+        },
+        getOwnPropertyDescriptor () { return undefined },
+        ownKeys () { return ['__v_raw'] },
+      })
+      const payload = {
+        recordID: '1',
+        values: { hostname: 'zenbook' },
+      }
+      expect(() => new Record(vueLike as Module, payload)).to.not.throw()
+      const r = new Record(vueLike as Module, payload)
+      expect(r.moduleID).to.equal('509463708787081217')
+      expect(r.values.hostname).to.equal('zenbook')
+    })
   })
 
   describe('multi value reading', () => {

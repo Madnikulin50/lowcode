@@ -10,6 +10,7 @@ import (
 	automationService "github.com/madnikulin50/lowcode/server/automation/service"
 	discoveryService "github.com/madnikulin50/lowcode/server/discovery/service"
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/chat"
 	"github.com/madnikulin50/lowcode/server/pkg/dal"
 	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
 	"github.com/madnikulin50/lowcode/server/pkg/healthcheck"
@@ -164,7 +165,9 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 	DefaultAccessControl = AccessControl(s)
 	CurrentSettings.Auth.Internal.Enabled = true
 	CurrentSettings.Auth.Internal.Signup.Enabled = true
+	CurrentSettings.AI.Enabled = true
 	DefaultSettings = Settings(ctx, DefaultStore, DefaultLogger, DefaultAccessControl, DefaultActionlog, CurrentSettings, c.Webapps)
+	wireChatAIConfig()
 	DefaultStylesheet = Stylesheet(sassTranspiler, log)
 
 	DefaultDalConnection = Connection(ctx, dal.Service(), c.DB)
@@ -421,4 +424,32 @@ func dartSassTranspiler(log *zap.Logger) *godartsass.Transpiler {
 	}
 
 	return transpiler
+}
+
+func wireChatAIConfig() {
+	chat.SetConfigProvider(func() chat.Config {
+		s := CurrentSettings.AI
+		cfg := chat.Config{
+			Enabled:   s.Enabled,
+			OllamaURL: s.OllamaURL,
+			Roles: chat.RoleModels{
+				ComposeChat:    s.Roles.ComposeChat,
+				MCPAgent:       s.Roles.MCPAgent,
+				AutomationChat: s.Roles.AutomationChat,
+				RulesgoAI:      s.Roles.RulesgoAI,
+			},
+		}
+		if len(s.Catalog) > 0 {
+			cfg.Catalog = make([]chat.CatalogEntry, 0, len(s.Catalog))
+			for _, e := range s.Catalog {
+				cfg.Catalog = append(cfg.Catalog, chat.CatalogEntry{
+					Name:    e.Name,
+					Enabled: e.Enabled,
+					Label:   e.Label,
+					Note:    e.Note,
+				})
+			}
+		}
+		return cfg
+	})
 }

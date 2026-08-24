@@ -3,6 +3,14 @@
     <div v-if="isProcessing" class="d-flex align-items-center justify-content-center h-100">
       <span class="spinner-border" />
     </div>
+    <div
+      v-else-if="unknown"
+      class="d-flex flex-column align-items-center justify-content-center h-100 text-secondary px-3 text-center"
+      :title="t('progress.countUnavailableHint')"
+    >
+      <span class="fs-4">{{ t('metric.emptyPlaceholder') || '—' }}</span>
+      <small>{{ t('progress.countUnavailable') }}</small>
+    </div>
     <div v-else class="d-flex h-100" :class="{ 'p-2': block.style.wrap.kind === 'card' }">
       <c-progress
         :value="value"
@@ -22,16 +30,17 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
-import { composables } from 'corteza-lib/vue/dist'
-import { NoID } from 'corteza-lib/js/dist'
-import { components } from 'corteza-lib/vue/dist'
+import { composables, components, useNsI18n } from 'corteza-lib/vue/dist'
+import { NoID, isUnknownTotal } from 'corteza-lib/js/dist'
 import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
 
 const { CProgress } = components
 const { toastErrorHandler } = composables.useToast()
+const t = useNsI18n()
 const $auth = window.__auth
 const $ComposeAPI = window.__composeAPI
 
@@ -57,6 +66,7 @@ const { processing, isProcessing, options, refreshBlock } = usePageBlockBase(pro
 const value = ref(undefined)
 const min = ref(undefined)
 const max = ref(undefined)
+const unknown = ref(false)
 
 watch(() => [props.record?.recordID, props.loadingRecord], () => { if (!props.loadingRecord) refresh() }, { immediate: true })
 watch(options, () => { if (!props.loadingRecord) refresh() }, { deep: true })
@@ -98,7 +108,12 @@ async function refresh() {
     maxValue: { filter: evalFilter(options.value.maxValue.filter) },
   }
   return props.block.fetch(additionalOptions, $ComposeAPI, namespaceID)
-    .then(({ value: v, min: m = 0, max: mx = 100 }) => { min.value = m; max.value = mx; value.value = v })
+    .then(({ value: v, min: m = 0, max: mx = 100, unknown: unk }) => {
+      unknown.value = !!(unk || isUnknownTotal(v))
+      min.value = isUnknownTotal(m) ? 0 : m
+      max.value = isUnknownTotal(mx) ? 100 : mx
+      value.value = unknown.value ? 0 : v
+    })
     .catch(toastErrorHandler('Progress fetch failed'))
     .finally(() => { setTimeout(() => { processing.value = false }, 300) })
 }

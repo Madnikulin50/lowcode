@@ -17,6 +17,10 @@ editor:
       title: Sidebar
       hide-namespace-list: Hide list of namespaces
       hide-namespace-list-link: Hide link to list of all namespaces
+      density: Density
+      densityOptions:
+        comfortable: Comfortable
+        compact: Compact
     record-toolbar:
       title: Record Toolbar
       hide-submit: Hide submit button

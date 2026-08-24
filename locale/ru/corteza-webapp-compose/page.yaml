@@ -102,6 +102,8 @@ icon:
   page: Иконка страницы
   upload: Загрузить иконку
   list: Загруженные иконки
+  search: Поиск иконок
+  noMatch: Иконки не найдены
   delete: Удалить выбранную страницу
 url:
   label: Или добавьте URL к иконке
@@ -163,7 +165,58 @@ public:
 
 aiChat:
   greeting: Я LowCooooode ИИ-ассистент
+  title: ИИ-ассистент
   startPrompt: Введите запрос к ИИ...
   sendMessage:
     button: Отправить
-    placeholder: Введите запрос к ИИ...
+    placeholder: Введите сообщение…
+    hint: Enter — отправить · Shift+Enter — новая строка
+    stop: Стоп
+  model:
+    label: Модель
+  chart:
+    error: Не удалось отобразить график
+  warmup:
+    inProgress: Загрузка модели в память…
+    short: Прогрев
+  status:
+    warming: Загрузка модели…
+    thinking: Думаю…
+    writing: Пишу…
+    usingTools: Использую инструменты…
+  tools:
+    enabled: Инструменты используются
+    disabled: Инструменты недоступны
+    invoked: Вызов инструментов…
+  empty:
+    suggestions:
+      capabilities: Чем ты можешь помочь?
+      modules: Какие модули есть в пространстве?
+      page: Кратко о этой странице
+  newChat:
+    label: Новый чат
+  export:
+    label: Экспорт
+    markdown: Markdown (.md)
+    pdf: PDF
+    docx: DOCX
+  expand: Развернуть
+  collapse: Свернуть
+  close: Закрыть
+  copy: Копировать
+  copied: Скопировано
+  retry: Повторить
+  edit: Изменить
+  reasoning:
+    label: Размышление
+  promptXml:
+    label: Системная часть
+  confirm:
+    title: Подтвердите действие
+    execute: Выполнить
+    cancel: Отмена
+    done: Подтверждено
+  stopped: Генерация остановлена.
+  attach:
+    label: Прикрепить файл
+    remove: Убрать

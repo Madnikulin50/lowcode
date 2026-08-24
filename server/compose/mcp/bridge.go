@@ -11,6 +11,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
 	"github.com/madnikulin50/lowcode/server/pkg/chat"
 	"github.com/madnikulin50/lowcode/server/pkg/gonec"
 	"github.com/madnikulin50/lowcode/server/pkg/jsruntime"
@@ -173,7 +174,7 @@ func initBridge() {
 	}
 
 	// Agent registry
-	chatClient, err := chat.NewClient("deepseek-v2")
+	chatClient, err := chat.NewClient(chat.ModelForRole(chat.RoleMCPAgent))
 	if err != nil {
 		log.Printf("[bridge] agent client: %v", err)
 	} else {
@@ -193,9 +194,12 @@ func initBridge() {
 		_ = aiCall
 	}
 
-	// Rulesgo engine with wired services and persistence
-	persist := rulesgo.NewMemoryPersistence()
+	// Rulesgo engine: chains persist in compose_rule_chain (PostgreSQL)
+	persist := service.NewRuleChainPersistence()
+	poller := rulesgo.NewAgentPoller()
 	rulesCfg := &rulesgo.DefaultConfig{
+		CRUD:        composeCRUD{},
+		DetachStart: poller.StartFromDetach,
 		AICall: func(ctx context.Context, agent, prompt, model string) (string, error) {
 			if handlers.AgentRegistry != nil {
 				res, err := handlers.AgentRegistry.RunAgent(ctx, agent, prompt, nil)
@@ -223,10 +227,37 @@ func initBridge() {
 		},
 	}
 	engine := rulesgo.NewEngineWithPersistence(rulesgo.DefaultRegistry(rulesCfg), persist)
-	engine.LoadFromStore(context.Background())
+	poller.SetEngine(engine.Engine)
+	rulesgo.SetDefaultPoller(poller)
+	rulesgo.CapturePollIdentity = func(ctx context.Context) (uint64, []uint64) {
+		ident := auth.GetIdentityFromContext(ctx)
+		if ident == nil || !ident.Valid() {
+			return 0, nil
+		}
+		return ident.Identity(), ident.Roles()
+	}
+	rulesgo.RestorePollIdentity = func(ctx context.Context, userID uint64, roles []uint64) context.Context {
+		if userID == 0 {
+			return ctx
+		}
+		return auth.SetIdentityToContext(ctx, auth.Authenticated(userID, roles...))
+	}
+	if err := engine.LoadFromStore(context.Background()); err != nil {
+		log.Printf("[bridge] load rule chains from DB: %v", err)
+	} else {
+		log.Printf("[bridge] loaded %d rule chains from PostgreSQL", len(engine.Chains()))
+	}
 	handlers.SetRuleEngine(engine.Engine)
+	handlers.SetOnChainMissing(func(ctx context.Context, chainID string) {
+		ensureChainAvailable(ctx, engine, chainID)
+	})
 
 	registerDemoChains(engine)
+	registerCMDBChains(engine)
+	registerBackupChains(engine)
+	rulesgo.EnsureChain = func(ctx context.Context, chainID string) {
+		ensureChainAvailable(ctx, engine, chainID)
+	}
 
 	log.Println("[bridge] all services wired")
 }

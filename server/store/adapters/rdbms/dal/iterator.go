@@ -39,6 +39,11 @@ type (
 		cursor  *filter.PagingCursor
 		limit   uint
 
+		// cancels the QueryContext used by rows; must stay alive until Close()
+		cancelFetch context.CancelFunc
+		// optional tx used so SET LOCAL statement_timeout applies to the page SELECT
+		fetchTx interface{ Rollback() error }
+
 		// set this flag when iterating over aggregated results
 		// it will affect how
 		//  - cursor conditions are applied (WHERE )
@@ -55,7 +60,29 @@ func (i *iterator) Next(ctx context.Context) bool {
 		return false
 	}
 
-	return i.rows.Next()
+	if i.rows == nil {
+		return false
+	}
+
+	if i.rows.Next() {
+		return true
+	}
+
+	if err := i.rows.Err(); err != nil {
+		i.err = err
+	}
+	return false
+}
+
+func (i *iterator) releaseFetch() {
+	if i.cancelFetch != nil {
+		i.cancelFetch()
+		i.cancelFetch = nil
+	}
+	if i.fetchTx != nil {
+		_ = i.fetchTx.Rollback()
+		i.fetchTx = nil
+	}
 }
 
 // More fetches more records from the point of last record
@@ -66,6 +93,7 @@ func (i *iterator) More(max uint, last dal.ValueGetter) (err error) {
 		}
 		i.rows = nil
 	}
+	i.releaseFetch()
 
 	i.limit = max
 	if last != nil {
@@ -90,6 +118,7 @@ func (i *iterator) Preload(_ context.Context, max uint, cur *filter.PagingCursor
 		}
 		i.rows = nil
 	}
+	i.releaseFetch()
 
 	i.limit = max
 	if cur != nil {
@@ -101,6 +130,30 @@ func (i *iterator) Preload(_ context.Context, max uint, cur *filter.PagingCursor
 
 func (i *iterator) Sorting() filter.SortExprSet {
 	return i.sorting
+}
+
+// Count returns the number of rows matching the iterator's filter, ignoring
+// limit, order and paging cursor. Used for incTotal so we do not have to
+// drain the remaining result set into Go.
+func (i *iterator) Count(ctx context.Context) (c uint, err error) {
+	if i.err != nil {
+		return 0, i.err
+	}
+	if i.query == nil {
+		return 0, fmt.Errorf("can not count without query")
+	}
+
+	q := i.query.ClearLimit().ClearOffset().ClearOrder().Select(goqu.COUNT(goqu.Star()).As("count"))
+	query, args, err := q.ToSQL()
+	if err != nil {
+		return 0, err
+	}
+
+	ctx, cancel := boundQueryContext(ctx, countQueryTimeout)
+	defer cancel()
+
+	c, err = queryRowCount(ctx, i.src.conn, query, args...)
+	return c, err
 }
 
 func (i *iterator) fetch(ctx context.Context) (rows *sql.Rows, err error) {
@@ -144,7 +197,7 @@ func (i *iterator) fetch(ctx context.Context) (rows *sql.Rows, err error) {
 				func(ident string, val any) (exp.Expression, error) {
 					attr := i.dst.model.Attributes.FindByIdent(ident)
 					if attr == nil {
-						panic("unknown attribute " + ident + " used in cursor expression cast callback")
+						return nil, fmt.Errorf("unknown attribute %q used in cursor expression cast callback", ident)
 					}
 
 					enc, err := i.dst.dialect.TypeWrap(attr.Type).Encode(val)
@@ -202,15 +255,21 @@ func (i *iterator) fetch(ctx context.Context) (rows *sql.Rows, err error) {
 		return nil, err
 	}
 
-	rows, err = i.src.conn.QueryContext(ctx, query, args...)
-	if errors.Is(err, sql.ErrNoRows) {
-		// no rows, no error
-		return nil, nil
-	}
+	i.releaseFetch()
+	fetchCtx, cancel := boundQueryContext(ctx, pageFetchTimeout)
+	i.cancelFetch = cancel
+
+	rows, tx, err := queryContextWithTimeout(fetchCtx, i.src.conn, query, args...)
 	if err != nil {
-		err = fmt.Errorf("request error %v: %w", query, err)
+		cancel()
+		i.cancelFetch = nil
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("request error %v: %w", query, err)
 	}
-	return
+	i.fetchTx = tx
+	return rows, nil
 }
 
 // generates slice of ordered-expressions
@@ -238,9 +297,12 @@ func (i *iterator) Scan(r dal.ValueSetter) (err error) {
 		return i.err
 	}
 
+	if i.rows == nil {
+		return fmt.Errorf("scan without rows")
+	}
+
 	if err = i.rows.Scan(i.scanBuf...); err != nil {
-		fmt.Errorf("scanrows err: %w\r\n", err)
-		//return err
+		return fmt.Errorf("scan rows: %w", err)
 	}
 
 	if err = i.dst.table.Decode(i.scanBuf, r); err != nil {
@@ -256,6 +318,7 @@ func (i *iterator) Err() error {
 
 // Close iterator and cleanup
 func (i *iterator) Close() error {
+	defer i.releaseFetch()
 	if i.rows == nil {
 		return nil
 	}

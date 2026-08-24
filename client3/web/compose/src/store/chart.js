@@ -2,6 +2,15 @@ import { defineStore } from 'pinia'
 import { compose } from 'corteza-lib/js/dist'
 import { getComposeAPI } from './api'
 
+function instantiateChart (c) {
+  try {
+    return new compose.Chart(c)
+  } catch (err) {
+    console.error('[chart store] failed to instantiate chart', c?.handle || c?.chartID, err)
+    return null
+  }
+}
+
 export const useChartStore = defineStore('chart', {
   state: () => ({
     loading: false,
@@ -56,9 +65,9 @@ export const useChartStore = defineStore('chart', {
       this.setLoading(true)
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
-      return ComposeAPI.chartList({ namespaceID, sort: 'name ASC' }).then(({ set }) => {
+      return ComposeAPI.chartList({ namespaceID, sort: 'name ASC' }, { timeout: 30000 }).then(({ set }) => {
         if (set && set.length > 0) {
-          this.updateSet(set.map(c => new compose.Chart(c)))
+          this.updateSet(set.map(instantiateChart).filter(Boolean))
         }
         return this.set
       }).finally(() => {

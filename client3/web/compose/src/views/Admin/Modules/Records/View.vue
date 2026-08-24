@@ -108,6 +108,7 @@ import { compose, NoID } from 'corteza-lib/js/dist'
 import RecordBase from 'corteza-webapp-compose/src/components/PageBlocks/RecordBase'
 import RecordEditor from 'corteza-webapp-compose/src/components/PageBlocks/RecordEditor'
 import recordMixin from 'corteza-webapp-compose/src/mixins/record'
+import { recordCreateLocation, takeRecordCreate } from 'corteza-webapp-compose/src/lib/record-create-nav'
 
 const { t } = useI18n()
 const store = useStore()
@@ -115,6 +116,7 @@ const router = useRouter()
 const route = useRoute()
 
 const $ComposeAPI = window.__composeAPI
+const $auth = window.__auth
 
 const props = defineProps({
   namespace: {
@@ -156,6 +158,7 @@ const processing = ref(false)
 const processingAction = ref(false)
 const loadingRecord = ref(false)
 const isDeleted = ref(false)
+const pendingCreate = ref({})
 const errors = ref({})
 
 const getNextAndPrevRecord = computed(() => store.getters['ui/getNextAndPrevRecord'])
@@ -262,7 +265,9 @@ function refresh () {
   loadingRecord.value = true
   return loadRecord().then(r => {
     record.value = r
-    initialRecordState.value = record.value.clone()
+    if (record.value?.clone) {
+      initialRecordState.value = record.value.clone()
+    }
   }).finally(() => {
     loadingRecord.value = false
     processing.value = false
@@ -291,8 +296,13 @@ async function loadRecord () {
         }
       })
   } else {
+    const incoming = takeRecordCreate()
+    if (Object.keys(incoming.values || {}).length) {
+      pendingCreate.value = incoming
+    }
+    const vals = { ...(props.values || {}), ...(pendingCreate.value.values || {}) }
     const { userID } = $auth.user
-    return new compose.Record(mdl, { ownedBy: userID, values: props.values })
+    return new compose.Record(mdl, { ownedBy: userID, values: vals })
   }
 }
 
@@ -305,7 +315,7 @@ function handleAdd () {
 }
 
 function handleClone () {
-  router.push({ name: 'admin.modules.record.create', params: { moduleID: module.value.moduleID, values: record.value.values, edit: true } })
+  router.push(recordCreateLocation({ name: 'admin.modules.record.create', moduleID: module.value.moduleID, values: record.value.values }))
 }
 
 function handleEdit () {
@@ -318,7 +328,7 @@ function handleView () {
 
 function handleRedirectToPrevOrNext (recordID) {
   if (!recordID) return
-  router.push({ params: { ...route.params, recordID } })
+  router.push({ name: route.name, params: { ...route.params, recordID } })
 }
 
 function handleFormSubmitSimple (name) {}

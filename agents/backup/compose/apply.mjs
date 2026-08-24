@@ -19,7 +19,6 @@ import {
 } from './fields.mjs'
 import { buildPages } from './pages.mjs'
 import { buildRuleChains } from './chains.mjs'
-import { attachPrompts } from '../../../scripts/ai-prompts.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -92,7 +91,7 @@ async function main () {
   const charts = { jobsByStatus, sourcesByType, snapshotsByEngine }
 
   const pageIDs = {}
-  for (const page of attachPrompts(buildPages({ modules, charts }), 'backup')) {
+  for (const page of buildPages({ modules, charts })) {
     pageIDs[page.handle] = await ensurePage(api, nsID, page)
   }
 

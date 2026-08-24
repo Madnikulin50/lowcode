@@ -172,5 +172,19 @@ describe('page', () => {
 
       expect(p.blocks).lengthOf(8)
     })
+
+    it('skips unknown block kinds instead of throwing', () => {
+      const p = new Page({
+        title: 'mixed',
+        blocks: [
+          { kind: 'RecordList', xywh: [0, 0, 3, 3] },
+          { kind: 'NotARealBlock', xywh: [0, 0, 3, 3] },
+        ] as PageBlock[],
+      })
+
+      expect(p.blocks).lengthOf(2)
+      expect(p.blocks[0].kind).to.eq('RecordList')
+      expect(p.blocks[1].kind).to.eq('NotARealBlock')
+    })
   })
 })

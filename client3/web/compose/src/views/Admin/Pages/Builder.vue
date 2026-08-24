@@ -1155,9 +1155,9 @@ function destroyEvents () {
 
 <style lang="scss">
 #page-builder .vue-grid-layout {
-  background-color: #ffffff;
+  background-color: var(--white, #ffffff);
   border-radius: 8px;
-  box-shadow: inset 0 0 0 1px #e9ecef;
+  box-shadow: inset 0 0 0 1px var(--extra-light, #e9ecef);
   padding: 4px;
 }
 

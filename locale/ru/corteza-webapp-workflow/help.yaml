@@ -1,37 +1,37 @@
 'basic-controls':
   action:
-    deselect: Deselect
-    pan: Pan
-    select: Select
-    'select-multiple': Select multiple
-    'zoom-in/out': Zoom in/out
+    deselect: Снять выделение
+    pan: Перемещение
+    select: Выделить
+    'select-multiple': Выделить несколько
+    'zoom-in/out': Приблизить/отдалить
   shortcut:
     'left-click':
-      background: Left click on background
-      drag: Left click & drag
-      label: Left click
-    pan: Scroll, Middle click & drag, or Право click & drag
-    zoom: Ctrl + Scroll
-'basic-controls-label': Basic controls
+      background: Левый клик на фоне
+      drag: Левый клик и перетаскивание
+      label: Левый клик
+    pan: Прокрутка, Средний клик и перетаскивание или Правый клик и перетаскивание
+    zoom: Ctrl + Прокрутка
+'basic-controls-label': Основные элементы управления
 'keyboard-shortcuts':
   action:
-    'add-selection': Add to selection
-    copy: Copy
-    cut: Cut
-    'delete-selected-elements': Delete selected elements
-    nudge: Nudge
-    paste: Paste
-    redo: Redo
+    'add-selection': Добавить к выделению
+    copy: Копировать
+    cut: Вырезать
+    'delete-selected-elements': Удалить выделенные элементы
+    nudge: Сдвинуть
+    paste: Вставить
+    redo: Повторить
     save: Сохранить
-    'hide-guides': Hide guides
-    'show-help': Показывать help
-    'reset-view-to-start-point': Сбросить view to starting point
-    'select-all': Select all
-    undo: Undo
+    'hide-guides': Скрыть направляющие
+    'show-help': Показать справку
+    'reset-view-to-start-point': Сбросить вид в начальную точку
+    'select-all': Выделить всё
+    undo: Отменить
   shortcut:
-    'adjust-distance': to adjust distance
-    'arrow-keys': Arrow keys - Use
-    hold: Hold
-    'left-mouse-button': left mouse button
-'keyboard-shortcuts-label': Keyboard shortcuts
-'mac-users': If using a MAC keyboard, replace Ctrl with the CMD key
+    'adjust-distance': для настройки расстояния
+    'arrow-keys': Стрелки — Используйте
+    hold: Удерживайте
+    'left-mouse-button': левую кнопку мыши
+'keyboard-shortcuts-label': Горячие клавиши
+'mac-users': При использовании клавиатуры MAC замените Ctrl на клавишу CMD

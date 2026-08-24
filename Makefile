@@ -40,19 +40,29 @@ drelease:
 	@echo "---Build server---"
 	@(cd $(CURDIR)/server  && make release-clean && make build) || true
 	@echo "---Build client---"
-	@(cd $(CURDIR)/client && make build) || true
+	@(cd $(CURDIR)/client3 && make build) || true
+	@echo "---Build manual---"
+	@(cd $(CURDIR)/manual/ru && make docker) || true
 	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build -t madnikulin50/pnp-lowcode:2026.7.6 .)
+	@(cd $(CURDIR) && docker build -t madnikulin50/pnp-lowcode:2026.08.24 .)
 	@echo "---Push docker---"
-	@(cd $(CURDIR) && docker push madnikulin50/pnp-lowcode:2026.7.6)
+	@(cd $(CURDIR) && docker push madnikulin50/pnp-lowcode:2026.08.24)
 
 ddebug:
 	@echo "---Build server---"
 	@(cd $(CURDIR)/server  && make release-clean && make build) || true
 	@echo "---Build client---"
-	##@(cd $(CURDIR)/client && make build) || true
+	@(cd $(CURDIR)/client3 && make build) || true
 	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build -t pnp-lowcode:2026.7.6 .)
+	@(cd $(CURDIR) && docker build -t pnp-lowcode:2026.08.24 .)
+
+dncdebug:
+	@echo "---Build server---"
+	@(cd $(CURDIR)/server  && make release-clean && make build) || true
+	@echo "---Build client---"
+	@(cd $(CURDIR)/client3 && make build) || true
+	@echo "---Build docker---"
+	@(cd $(CURDIR) && docker build --no-cache -t pnp-lowcode:2026.08.24 .)
 
 dpush:
 

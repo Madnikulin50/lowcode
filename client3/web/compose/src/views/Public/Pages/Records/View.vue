@@ -255,6 +255,8 @@ import { useRecordStore } from '../../../../store/record'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import { normalizeXYWH } from 'corteza-webapp-compose/src/lib/block-layout'
+import { recordCreateLocation, takeRecordCreate } from 'corteza-webapp-compose/src/lib/record-create-nav'
+import { isFieldReadonly } from 'corteza-webapp-compose/src/lib/field-editable'
 import bus from '../../../../lib/bus'
 import Grid from 'corteza-webapp-compose/src/components/Public/Page/Grid'
 import RecordToolbar from 'corteza-webapp-compose/src/components/Common/RecordToolbar'
@@ -280,6 +282,7 @@ const props = defineProps({
   values: { type: Object, required: false, default: () => ({}) },
   inModal: { type: Boolean, default: false },
   edit: { type: Boolean, default: false },
+  recordID: { type: String, default: '' },
 })
 
 const emit = defineEmits(['on-modal-back', 'handle-record-redirect'])
@@ -312,6 +315,7 @@ const recordNavigation = ref({ prev: undefined, next: undefined })
 const abortableRequests = ref([])
 const loadingRecord = ref(false)
 const activeDraftKey = ref(null)
+const pendingCreate = ref({})
 
 const isRecordPage = computed(() => record.value?.recordID || route.name === 'page.record.create')
 
@@ -334,8 +338,10 @@ const isDeleted = computed(() => record.value && record.value.deletedAt)
 const isNew = computed(() => !recordID.value || recordID.value === NoID)
 
 const recordID = computed(() => {
+  if (props.recordID) return props.recordID
+  if (route.params.recordID) return route.params.recordID
   if (record.value?.recordID && record.value.recordID !== NoID) return record.value.recordID
-  return route.params.recordID || ''
+  return ''
 })
 
 const isLoading = computed(() => loading.value || !layout.value || !blocks.value)
@@ -547,21 +553,28 @@ async function loadRecord() {
           }
         })
     } else {
-      if (props.refRecord?.recordID && props.refRecord.recordID !== NoID) {
-        recordStore.updateRecords([props.refRecord])
+      const incoming = takeRecordCreate()
+      if (incoming.refRecord || Object.keys(incoming.values || {}).length) {
+        pendingCreate.value = incoming
+      }
+      const refR = props.refRecord || pendingCreate.value.refRecord
+      const vals = { ...(props.values || {}), ...(pendingCreate.value.values || {}) }
 
-        mod.fields.filter(f => f.kind === 'Record' && f.options.moduleID === props.refRecord.moduleID).forEach(f => {
+      if (refR?.recordID && refR.recordID !== NoID) {
+        recordStore.updateRecords([refR])
+
+        mod.fields.filter(f => f.kind === 'Record' && f.options.moduleID === refR.moduleID).forEach(f => {
           if (f.isMulti) {
-            props.values[f.name] = [props.refRecord.recordID]
+            vals[f.name] = [refR.recordID]
           } else {
-            props.values[f.name] = props.refRecord.recordID
+            vals[f.name] = refR.recordID
           }
         })
       }
 
       const { userID } = $auth.user
       await new Promise(resolve => setTimeout(resolve, 300))
-      return new compose.Record(mod, { ownedBy: userID, values: props.values })
+      return new compose.Record(mod, { ownedBy: userID, values: vals })
     }
   }
 }
@@ -623,7 +636,7 @@ function handleClone() {
       emit('handle-record-redirect', { recordID: NoID, recordPageID: props.page.pageID, values: record.value?.values, edit: true })
     }
   } else {
-    router.push({ name: 'page.record.create', params: { pageID: props.page.pageID, values: record.value?.values, edit: true } })
+    router.push(recordCreateLocation({ name: 'page.record.create', pageID: props.page.pageID, values: record.value?.values }))
   }
 }
 
@@ -694,7 +707,7 @@ function handleRedirectToPrevOrNext(recID) {
       emit('handle-record-redirect', { recordID: recID, recordPageID: props.page.pageID })
     }
   } else {
-    router.push({ params: { ...route.params, recordID: recID } })
+    router.push({ name: route.name, params: { ...route.params, recordID: recID } })
     uiStore.popPreviousPages()
   }
 }
@@ -747,7 +760,9 @@ async function refresh() {
     return determineLayout({ pageLayoutID }).then(b => {
       if (b) blocks.value = b
       record.value = tempRecord.value
-      initialRecordState.value = record.value.clone()
+      if (record.value?.clone) {
+        initialRecordState.value = record.value.clone()
+      }
       getRecordDraft()
     })
   }).finally(() => {
@@ -1094,7 +1109,7 @@ async function validateRecord(pairs) {
       p.items.forEach(({ r, id }) => {
         if (r.deletedAt) return
         const fields = p.module.fields
-          .filter(({ canReadRecordValue, canUpdateRecordValue }) => canReadRecordValue && canUpdateRecordValue)
+          .filter(f => f.canReadRecordValue && f.canUpdateRecordValue && !isFieldReadonly(f))
           .map(({ name }) => name)
         if (fields.length) {
           const err = v.run(r, ...fields)

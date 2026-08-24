@@ -1,5 +1,7 @@
 automation: Automation
 chart: Charts
+rulechains: Rule chains
+workflows: Workflows
 configuration: Configuration
 editPage: Edit Page
 help:

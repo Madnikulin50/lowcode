@@ -3,6 +3,20 @@ import { compose } from 'corteza-lib/js/dist'
 import * as request from '../lib/request'
 import { getComposeAPI } from './api'
 
+function instantiateModule (m, namespace) {
+  try {
+    return new compose.Module(m, namespace)
+  } catch (err) {
+    console.error('[module store] failed to instantiate module', m?.handle || m?.moduleID, err)
+    try {
+      return new compose.Module({ ...m, fields: [] }, namespace)
+    } catch (err2) {
+      console.error('[module store] failed even without fields', err2)
+      return null
+    }
+  }
+}
+
 export const useModuleStore = defineStore('module', {
   state: () => ({
     loading: false,
@@ -12,7 +26,11 @@ export const useModuleStore = defineStore('module', {
 
   getters: {
     getByID: (state) => {
-      return (ID) => state.set.find(({ moduleID }) => ID === moduleID)
+      return (ID) => {
+        if (ID == null || ID === '') return undefined
+        const sid = String(ID)
+        return state.set.find(({ moduleID }) => String(moduleID) === sid)
+      }
     },
   },
 
@@ -57,9 +75,9 @@ export const useModuleStore = defineStore('module', {
       this.setLoading(true)
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
-      return ComposeAPI.moduleList({ namespaceID: namespace.namespaceID, sort: 'name ASC' }).then(({ set }) => {
+      return ComposeAPI.moduleList({ namespaceID: namespace.namespaceID, sort: 'name ASC' }, { timeout: 30000 }).then(({ set }) => {
         if (set && set.length > 0) {
-          this.updateSet(set.map(m => new compose.Module(m, namespace)))
+          this.updateSet(set.map(m => instantiateModule(m, namespace)).filter(Boolean))
         }
         return this.set
       }).finally(() => {

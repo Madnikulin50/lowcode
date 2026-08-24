@@ -352,7 +352,7 @@ const lastCommentTimestamp = computed(() => {
   return cs[cs.length - 1]?.createdAt || null
 })
 
-const roModule = computed(() => getModuleByID.value(props.module?.moduleID || ''))
+const roModule = computed(() => getModuleByID.value(options.value.moduleID || ''))
 
 const moduleID = computed(() => options.value.moduleID)
 
@@ -478,7 +478,7 @@ function startAutoRefresh () {
     Promise.all([
       loadNewComments(),
       loadUpdatedComments(),
-    ]).finally(() => { autoFetching.value = false })
+    ]).catch(() => {}).finally(() => { autoFetching.value = false })
   }, 5000)
 }
 
@@ -662,20 +662,15 @@ function isScrollAtBottom () {
 
 function handleFileUpload (files) {
   if (!attachmentField.value) return
-  const u = uploader.value
-  if (u?.$refs?.dropzone) {
-    Array.from(files).forEach(file => { u.$refs.dropzone.addFile(file) })
-  }
+  Array.from(files || []).forEach(file => { uploader.value?.handleFile?.(file) })
 }
 
 function openFileUpload () {
-  const u = uploader.value
-  if (u?.$refs?.dropzone) {
-    u.$refs.dropzone.dropzone.hiddenFileInput.click()
-  }
+  uploader.value?.openFileDialog?.()
 }
 
-function appendAttachment ({ attachmentID } = {}) {
+function appendAttachment (payload = {}) {
+  const attachmentID = payload.attachmentID || payload.response?.attachmentID
   if (!attachmentID) return
   if (attachmentField.value?.isMulti) {
     newRecord.attachmentIDs = [...newRecord.attachmentIDs, attachmentID]
@@ -793,7 +788,9 @@ function expandFilter () {
 }
 
 async function fetchCommentRecords (module, query, useNextPage = true) {
-  if (module.moduleID !== options.value.moduleID) throw new Error('Module mismatch')
+  if (!module?.moduleID || String(module.moduleID) !== String(options.value.moduleID || '')) {
+    return []
+  }
   let q = query || ''
   if (referenceField.value) {
     if (q.length) q += ' AND '

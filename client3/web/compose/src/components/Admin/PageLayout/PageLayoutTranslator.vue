@@ -20,7 +20,7 @@ import CTranslatorButton from 'corteza-webapp-compose/src/components/Translator/
 
 const prefixed$ = 'resources.page-layout.'
 const { t: $t } = useI18n()
-const t = (key, params) => $t(prefixed$ + key, params)
+const t = (key) => $t(prefixed$ + key)
 
 const props = defineProps({
   pageLayout: {

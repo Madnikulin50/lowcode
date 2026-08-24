@@ -1,10 +1,69 @@
 selector:
   selectableBlocks:
-    placeholder: Blocks from other layouts
+    placeholder: Блоки из других раскладок
   tooltip:
     clone:
-      ref: Клонировать with references
-      noRef: Клонировать without references
+      ref: Добавить связанную копию (останется синхронизированной с оригиналом)
+      noRef: Дублировать как независимый блок
+  searchPlaceholder: Поиск по названию или описанию
+  recordPageOnly: Страница записи
+  recordPageOnlyHint: Этот блок доступен только на странице записи
+  disabledHere: Этот блок нельзя добавить здесь
+  empty: Нет типов блоков по этому запросу
+  reuse:
+    title: Взять блок из другой раскладки
+    clone: Копия
+    reference: Связь
+  categories:
+    all: Все
+    data: Данные
+    visualize: Графики и карты
+    content: Контент
+    layout: Макет
+    automation: Автоматизация
+  types:
+    recordList:
+      description: Таблица записей модуля с поиском
+    record:
+      description: Поля текущей записи
+    recordOrganizer:
+      description: Канбан — группировка и порядок записей
+    recordRevisions:
+      description: История изменений записи
+    comment:
+      description: Обсуждение связанных записей
+    chart:
+      description: Диаграммы по агрегациям модуля
+    metric:
+      description: KPI-числа по отчётам записей
+    progress:
+      description: Индикатор прогресса к цели
+    calendar:
+      description: События из записей или напоминаний
+    geometry:
+      description: Карта с координатами записей
+    report:
+      description: Встроенный сценарий репортера
+    content:
+      description: Форматированный текст
+    file:
+      description: Галерея файлов и вложения
+    iFrame:
+      description: Встроенная веб-страница
+    tabs:
+      description: Несколько блоков во вкладках
+    navigation:
+      description: Ссылки на страницы и внешние URL
+    automation:
+      description: Кнопки запуска workflows и скриптов
+    ruleChain:
+      description: Интерактивная цепочка правил
+    aiChat:
+      description: Спросить ИИ-ассистента об этой странице
+ruleChain:
+  label: Цепочка правил
+aiChat:
+  label: ИИ-ассистент
 automation:
   addPlaceholderLabel: Добавить placeholder (dummy button)
   availableScriptsAndWorkflow: Available scripts and workflows ({{count}})
@@ -121,6 +180,13 @@ chart:
   searchPlaceholder: Тип here to search all charts in this namespace
   openInBuilder: Open in chart builder
   openChartList: Open chart list
+  dataTable:
+    title: Показать данные таблицей
+    empty: Нет данных для отображения
+    modal:
+      title: Данные графика
+  countUnavailable: Количество недоступно
+  countUnavailableHint: Не удалось посчитать записи за отведённое время
   filter:
     modal:
       title: Диаграмма Фильтр
@@ -237,6 +303,44 @@ metric:
   metricDrillDown: Проваливание при нажатии на метрику
   defaultMetricLabel: Безымянная метрика
   likeRecordList: Отображать как запись
+  emptyPlaceholder: "—"
+  countUnavailable: Количество недоступно
+  countUnavailableHint: Не удалось посчитать записи за отведённое время
+  appearance:
+    label: Оформление
+    density: Плотность
+    densityOptions:
+      comfortable: Обычная
+      compact: Компактная
+    hideEmptyMetrics: Скрывать пустые метрики
+    showEmptyPlaceholder: Показывать заглушку для пустых значений
+    showEmptyPlaceholderDescription: Показывает тире, если у метрики нет значения
+    role: Роль метрики
+    roleDescription: Визуальная роль — как у полей блока «Запись», для единого вида страницы
+    roleOptions:
+      default: Обычная
+      title: Заголовок
+      badge: Бейдж
+      meta: Мета
+      hero: Крупная
+      balloon: Отображать в виде баллона
+      topK: Отображать в виде баллона
+    balloonFullWidth: Растягивать баллон на всю ширину
+    balloonFullWidthDescription: Если выключено, ширина баллона зависит от значения относительно других баллонов
+    sections: Секции
+    sectionsDescription: Сгруппируйте обычные метрики под заголовками
+    addSection: Добавить секцию
+    sectionTitle: Заголовок
+    sectionTitlePlaceholder: Название секции
+    sectionMetrics: Метрики
+    sectionMetricsPlaceholder: Выберите метрики
+    itemsPerRow:
+      label: Метрик в строке
+      description: Сколько карточек метрик показывать в одной строке
+      one: Одна на строку
+      two: Две на строку
+      four: Четыре на строку
+      auto: Автоперенос
   drillDown:
     label: Проваливание
     description: If a record list is selected, it will be used to display the drill down data. If no record list is selected, the drill down data will be shown in a modal.
@@ -284,7 +388,19 @@ metric:
     backgroundColor: Цвет фона
     thresholds:
       label: Пороги цветов текста
-      description: Укажите какой вариант показывать если значение равно или больше порога
+      description: Укажите цвет и иконку, если значение равно или больше порога
+      valuePlaceholder: Порог
+      icon: Иконка
+      icons:
+        none: Без иконки
+        arrowUp: Стрелка вверх
+        arrowDown: Стрелка вниз
+        arrowRight: Стрелка вправо
+        alert: Алерт
+        alertCircle: Алерт (круг)
+    balloonThresholds:
+      label: Цвет баллона по значению
+      description: Цвет заливки и иконка баллона, если значение ≥ порога (берётся наибольший подходящий порог)
     color: Цвет текста
     labelColor: Цвет метки
     colorPicker: Выберите цвет
@@ -314,12 +430,40 @@ record:
     button:
       title: Изменить значение
     modal:
-      title: Обновить занчения полей
+      title: Обновить значения полей
   fieldsLayoutMode:
     label: Поля layout mode
     default: Default
     noWrap: No wrap
     wrap: Wrap
+  emptyPlaceholder: "—"
+  appearance:
+    label: Оформление
+    density: Плотность
+    densityOptions:
+      comfortable: Обычная
+      compact: Компактная
+    hideEmptyFields: Скрывать пустые поля
+    showEmptyPlaceholder: Показывать заглушку для пустых значений
+    showEmptyPlaceholderDescription: Показывает тире, если у поля нет значения
+    fieldRoles: Роли полей
+    fieldRolesDescription: Назначьте визуальные роли. Заголовок и подзаголовок — в шапке; бейджи и мета — отдельно.
+    field: Поле
+    role: Роль
+    roleOptions:
+      default: Обычное
+      title: Заголовок
+      subtitle: Подзаголовок
+      badge: Бейдж
+      meta: Мета
+      body: На всю ширину
+    sections: Секции
+    sectionsDescription: Сгруппируйте поля под заголовками. Поля вне секций остаются ниже.
+    addSection: Добавить секцию
+    sectionTitle: Заголовок
+    sectionTitlePlaceholder: Название секции
+    sectionFields: Поля
+    sectionFieldsPlaceholder: Выберите поля
   preview:
     blockNoRecord: Cannot render this block without a record
     fieldsFromModule: Single record block, displaying fields ({{0}}) from module {{1}}
@@ -552,11 +696,14 @@ recordList:
   modulePlaceholder: Выберите модуль
   moduleFootnote: Модули without a {{0}} can only be used in a record list as an inline editor
   moduleFieldsFootnote: Если поля не выбраны-отображаются поля по-умолчанию
-  noRecords: There are no records matching your request
+  noRecords: Нет записей по вашему запросу
+  empty:
+    title: Пока пусто
   pagination:
     next: Следующая
     prev: Предыдущая
     showing: "{{from}} - {{to}} из {{count}} строк"
+    unknownTotal: "{{from}} - {{to}} из ∞"
     single_one: Одна запись
     single: Единственная страница
     single_other: "{{count}} строк"
@@ -646,6 +793,23 @@ recordList:
     addRecordOptions: При клике на кнопку "Добавить"
     textStyles: Стили текста
     configureWrappedFields: Выберите поля которые могут быть свернуты
+  appearance:
+    label: Оформление
+    compactRows: Компактные строки
+    alignNumbers: Числа справа
+    stickyHeader: Закрепить заголовок
+    showRowSignal: Колонка сигнала важности
+    rowValueTooltip: Тултип строки со значениями полей
+    signalField: Поле сигнала
+    rowHighlightField: Подсветка строки по полю
+    groupByField: Группировать по полю
+    sparklineField: Поле мини-графика
+    sparklineMax: Максимум для мини-графика
+    displayMode: Режим отображения
+    displayModeOptions:
+      table: Таблица
+      cards: Карточки
+      responsive: Таблица на десктопе, карточки на мобильном
   recordPage: Страница записи
   refField:
     footnote: Поле that links records with the parent record
@@ -783,7 +947,7 @@ socialFeed:
     socialFeed: Twitter feed
   twitterProfileField: Поле that contains Twitter Профиль URL for a record
   twitterProfileLabel: Twitter Профиль URL for list pages i.e (https://twitter.com/bloomberg)
-selectBlockFootnote: Some types might be disabled for non-record pages
+selectBlockFootnote: Блоки с меткой «Страница записи» доступны только если страница привязана к модулю
 field:
   noPermission: No permission to read field value
   selector:
@@ -914,6 +1078,8 @@ progress:
     label: Поле
     select: Выберите поле
   label: Столбик прогресса
+  countUnavailable: Количество недоступно
+  countUnavailableHint: Не удалось посчитать записи за отведённое время
   module:
     select: Выбор модуля
     label: Модуль
@@ -1051,3 +1217,12 @@ ai:
   prompt:
     label: Запрос
     placeholder: Введите настройки запроса
+  chat:
+    startPrompt:
+      label: Начальный запрос
+      placeholder: Спросите ассистента об этой странице…
+      description: Показывается в поле ввода, пока чат пуст. Пользователь может ввести своё сообщение.
+    model:
+      label: Модель по умолчанию
+      placeholder: Как на сервере
+      description: Начальная модель для этого блока. Пользователь может сменить её прямо в чате.

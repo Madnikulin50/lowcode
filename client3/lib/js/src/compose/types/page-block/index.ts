@@ -21,9 +21,10 @@ export { PageBlockGeometry } from './geometry'
 export { PageBlockRuleChain } from './rule-chain'
 
 export function PageBlockMaker<T extends PageBlock> (i: { kind: string }): T {
-  const PageBlockTemp = Registry.get(i.kind)
+  const PageBlockTemp = Registry.get(i?.kind)
   if (PageBlockTemp === undefined) {
-    throw new Error(`unknown block kind '${i.kind}'`)
+    console.warn(`unknown page block kind '${i?.kind}', using generic PageBlock`)
+    return new PageBlock(i) as T
   }
 
   if (i instanceof PageBlock) {

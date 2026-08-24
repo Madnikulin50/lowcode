@@ -3,6 +3,20 @@ import { compose } from 'corteza-lib/js/dist'
 import * as request from '../lib/request'
 import { getComposeAPI } from './api'
 
+function instantiatePage (p) {
+  try {
+    return new compose.Page(p)
+  } catch (err) {
+    console.error('[page store] failed to instantiate page', p?.handle || p?.pageID, err)
+    try {
+      return new compose.Page({ ...p, blocks: [] })
+    } catch (err2) {
+      console.error('[page store] failed even without blocks', err2)
+      return null
+    }
+  }
+}
+
 export const usePageStore = defineStore('page', {
   state: () => ({
     loading: false,
@@ -63,9 +77,9 @@ export const usePageStore = defineStore('page', {
       this.setLoading(true)
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
-      return ComposeAPI.pageList({ namespaceID, sort: 'weight ASC' }).then(({ set }) => {
+      return ComposeAPI.pageList({ namespaceID, sort: 'weight ASC' }, { timeout: 30000 }).then(({ set }) => {
         if (set && set.length > 0) {
-          this.updateSet(set.map(p => new compose.Page(p)))
+          this.updateSet(set.map(instantiatePage).filter(Boolean))
         }
         return this.set
       }).finally(() => {

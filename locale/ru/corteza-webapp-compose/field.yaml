@@ -146,6 +146,7 @@ kind:
     options:
       value: Значение
       label: Метка
+      badgeGradient: Градиентная плашка
       style:
         textColor: Цвет текста
         backgroundColor: Цвет фона
@@ -169,6 +170,41 @@ kind:
     label: Строка
     multiLine: Многострочный текст
     richText: Использовать редактор форматированного текста
+    displayType:
+      label: Отображать как
+      description: Как хранимый текст показывается на страницах и в списках записей
+      text: Текст
+      json: JSON
+    json:
+      empty: Пусто
+      invalid: Некорректный JSON
+      add: Добавить элемент
+      remove: Удалить
+      key: Ключ
+      value: Значение
+      layout:
+        label: Вид JSON
+        chips: Чипы
+        table: Таблица
+        kv: Ключ / значение
+        pretty: Форматированный JSON
+      template:
+        label: Шаблон элемента
+        placeholder: '{{port}}/{{proto}} {{service}}'
+        description: Плейсхолдеры {{ключ}} из полей JSON-объекта. Пусто — склеить значения.
+      fields:
+        label: Колонки
+        placeholder: port, proto, service
+        description: Ключи JSON через запятую. Пусто — определить автоматически.
+      variantField:
+        label: Красить по полю
+        placeholder: port
+        description: Ключ JSON, значение которого сопоставляется с картой цветов
+      variants:
+        label: Карта цветов
+        match: Значение
+        color: Цвет
+        add: Добавить правило
   url:
     example: 'Пример URL: https://example.com'
     label: URL
@@ -278,6 +314,8 @@ valueExpr:
   placeholder: ((floor(numField1) + numField2) / 10) + 0.5
 label:
   required: Обязательное
+  readonly: Только для чтения
+  readonlyHelp: Пользователь не сможет изменить значение в форме. Его по-прежнему можно задавать через автоматизацию, API или внешние системы.
   multi: Множественное
 constraints:
   label: Значение должно быть уникальным

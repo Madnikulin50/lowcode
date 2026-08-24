@@ -445,7 +445,6 @@ const { t } = useI18n()
 const store = useStore()
 const router = useRouter()
 const route = useRoute()
-const { toastErrorHandler, toastSuccess } = composables.useToast()
 
 const { $ComposeAPI, $SystemAPI, $Settings, $auth } = getCurrentInstance().appContext.config.globalProperties
 
@@ -596,6 +595,8 @@ watch(() => props.chartID, () => { fetchChart() }, { immediate: true })
 watch(() => chart.value ? chart.value.config : undefined, (value, oldValue) => {
   if (value && oldValue) onConfigUpdate()
 }, { deep: true })
+
+const { toastErrorHandler, toastSuccess } = composables.useToast()
 
 function moduleName (moduleID) {
   const m = modByID.value(moduleID)
