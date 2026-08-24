@@ -76,15 +76,6 @@
           <option v-for="m in modelOptions" :key="m" :value="m">{{ modelLabel(m) }}</option>
         </select>
         <span
-          class="chat-tools-badge"
-          :class="toolsBadgeClass"
-          :title="toolsTitle"
-          role="img"
-          :aria-label="toolsTitle"
-        >
-          <font-awesome-icon :icon="['fas', 'tools']" />
-        </span>
-        <span
           v-if="warmingUp"
           class="d-flex align-items-center gap-1 text-secondary small text-nowrap"
           :title="$t('aiChat.warmup.inProgress')"
@@ -106,9 +97,6 @@
         :model="selectedModel"
         :active="showModal"
         :framed="false"
-        :show-tools-badge="false"
-        :model-tools="modelTools"
-        @tools-state="onToolsState"
         @export-menu="exportOpen = false"
       />
     </div>
@@ -118,14 +106,10 @@
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useNsI18n } from 'corteza-lib/vue/dist'
 import Chat from './Chat.vue'
-import { parseModelsPayload, modelToolsEnabled, modelLabel, pickChatModel, readStoredModel, writeStoredModel } from './chatTools.js'
 import { usePageStore } from '../../../../store/page'
 import { useModuleStore } from '../../../../store/module'
 import { useNamespaceStore } from '../../../../store/namespace'
-
-const $t = useNsI18n()
 
 const props = defineProps({
   page: { type: String, required: false, default: '' },
@@ -138,10 +122,7 @@ const startPrompt = ref('')
 const attachedFiles = ref([])
 const fullscreen = ref(false)
 const modelOptions = ref([])
-const modelTools = ref({})
 const selectedModel = ref('')
-const liveToolsEnabled = ref(null)
-const toolsActive = ref(false)
 const warmingUp = ref(false)
 const exportOpen = ref(false)
 const chatRef = ref(null)
@@ -166,29 +147,11 @@ const contextLabel = computed(() => {
   return parts.join(' · ')
 })
 
-const catalogTools = computed(() => modelToolsEnabled(selectedModel.value, modelTools.value))
-const toolsEnabled = computed(() => {
-  if (liveToolsEnabled.value !== null) return liveToolsEnabled.value
-  if (catalogTools.value !== null) return catalogTools.value
-  return false
-})
-const toolsTitle = computed(() => {
-  if (toolsActive.value) return $t('aiChat.tools.invoked')
-  return toolsEnabled.value ? $t('aiChat.tools.enabled') : $t('aiChat.tools.disabled')
-})
-const toolsBadgeClass = computed(() => ({
-  on: toolsEnabled.value && !toolsActive.value,
-  off: !toolsEnabled.value && !toolsActive.value,
-  active: toolsActive.value,
-}))
-
-function onToolsState ({ enabled, active } = {}) {
-  if (enabled === true || enabled === false) {
-    liveToolsEnabled.value = enabled
-  } else {
-    liveToolsEnabled.value = null
-  }
-  toolsActive.value = !!active
+function modelLabel (id) {
+  if (!id) return ''
+  const [name, tag] = String(id).split(':')
+  const pretty = name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  return tag ? `${pretty} (${tag})` : pretty
 }
 
 function warmUp () {
@@ -204,28 +167,35 @@ function warmUp () {
 
 function loadModels () {
   $ComposeAPI.pageAiModels().then((payload = {}) => {
-    const parsed = parseModelsPayload(payload)
-    const models = parsed.names
-    const serverDefault = parsed.defaultModel || ''
+    const models = payload.models || []
+    const serverDefault = payload.default || ''
     modelOptions.value = models
-    modelTools.value = parsed.tools
     if (!models.length) {
       selectedModel.value = ''
       return
     }
-    const saved = readStoredModel('aiChat.model')
-    selectedModel.value = pickChatModel(models, saved, serverDefault)
-    writeStoredModel(selectedModel.value, 'aiChat.model')
+    let saved = ''
+    try { saved = localStorage.getItem('aiChat.model') || '' } catch (e) {}
+    if (saved && models.includes(saved)) {
+      selectedModel.value = saved
+    } else if (serverDefault && models.includes(serverDefault)) {
+      selectedModel.value = serverDefault
+    } else {
+      selectedModel.value = models[0]
+    }
+    try {
+      localStorage.setItem('aiChat.model', selectedModel.value)
+    } catch (e) {}
     warmUp()
   }).catch(() => {})
 }
 
 watch(selectedModel, (model, prev) => {
   if (model !== prev && model) {
-    liveToolsEnabled.value = null
-    toolsActive.value = false
     warmUp()
-    writeStoredModel(model, 'aiChat.model')
+    try {
+      localStorage.setItem('aiChat.model', model)
+    } catch (e) {}
   }
 })
 
@@ -272,8 +242,10 @@ function onDocumentClick (e) {
 }
 
 onMounted(() => {
-  const saved = readStoredModel('aiChat.model')
-  if (saved) selectedModel.value = saved
+  try {
+    const saved = localStorage.getItem('aiChat.model')
+    if (saved) selectedModel.value = saved
+  } catch (e) {}
   loadModels()
   window.addEventListener('show-chat-modal', startChatModal)
   document.addEventListener('keydown', onKeydown)
@@ -352,45 +324,6 @@ onBeforeUnmount(() => {
   width: auto;
   max-width: 160px;
   flex-shrink: 0;
-}
-
-.chat-tools-badge {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  color: #8a93a0;
-  background: #f3f5f8;
-  flex-shrink: 0;
-}
-
-.chat-tools-badge.on {
-  color: #1f7a4d;
-  background: #e8f6ee;
-}
-
-.chat-tools-badge.off::after {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 2px;
-  background: currentColor;
-  transform: rotate(-45deg);
-  opacity: 0.85;
-}
-
-.chat-tools-badge.active {
-  color: #1f4b7a;
-  background: #e8eef6;
-  animation: chat-tools-pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes chat-tools-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
 }
 
 .chat-dock-body {

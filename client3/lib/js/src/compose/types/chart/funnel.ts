@@ -190,9 +190,6 @@ export default class FunnelChart extends BaseChart {
    */
   async fetchReports (a: any) {
     const rr = await super.fetchReports(a) as any
-    if ((rr || []).some((r: any) => r?.unknownTotal)) {
-      return { labels: [], datasets: [{ type: 'funnel', data: [] }], unknownTotal: true }
-    }
     const values = []
 
     let tooltip = {}

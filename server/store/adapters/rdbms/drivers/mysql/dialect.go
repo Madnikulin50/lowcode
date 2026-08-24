@@ -400,12 +400,6 @@ func (mysqlDialect) ColumnFits(target, assert *ddl.Column) bool {
 
 func (d mysqlDialect) ExprHandler(n *ql.ASTNode, args ...exp.Expression) (expr exp.Expression, err error) {
 	switch ref := strings.ToLower(n.Ref); ref {
-	case "eq":
-		return drivers.OpHandlerEq(d, n, args...)
-
-	case "ne":
-		return drivers.OpHandlerNe(d, n, args...)
-
 	case "in":
 		return drivers.OpHandlerIn(d, n, args...)
 

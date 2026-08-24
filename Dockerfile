@@ -14,7 +14,7 @@ RUN ls ./
 
 RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
-ARG VERSION=2026.08.20
+ARG VERSION=2026.7.6
 
 ARG SERVER_VERSION=${VERSION}
 ARG WEBAPP_VERSION=${VERSION}
@@ -36,13 +36,13 @@ RUN mkdir /pnp/webapp/privacy
 RUN mkdir /pnp/webapp/reporter
 RUN mkdir /pnp/webapp/workflow
 
-ADD ./client3/web/one/dist /pnp/webapp/
-ADD ./client3/web/admin/dist /pnp/webapp/admin
-ADD ./client3/web/compose/dist /pnp/webapp/compose
-ADD ./client3/web/discovery/dist /pnp/webapp/discovery
-ADD ./client3/web/privacy/dist /pnp/webapp/privacy
-ADD ./client3/web/reporter/dist /pnp/webapp/reporter
-ADD ./client3/web/workflow/dist /pnp/webapp/workflow
+ADD ./client/web/one/dist /pnp/webapp/
+ADD ./client/web/admin/dist /pnp/webapp/admin
+ADD ./client/web/compose/dist /pnp/webapp/compose
+ADD ./client/web/discovery/dist /pnp/webapp/discovery
+ADD ./client/web/privacy/dist /pnp/webapp/privacy
+ADD ./client/web/reporter/dist /pnp/webapp/reporter
+ADD ./client/web/workflow/dist /pnp/webapp/workflow
 
 
 # deploy-stage

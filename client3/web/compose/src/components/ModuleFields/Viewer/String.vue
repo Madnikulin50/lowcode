@@ -30,7 +30,7 @@ import JsonFieldView from '../Common/JsonFieldView.vue'
 const props = defineProps({
   namespace: { type: compose.Namespace, required: true },
   field: { type: compose.ModuleField, required: true },
-  record: { type: Object, required: true },
+  record: { type: compose.Record, required: true },
   valueOnly: { type: Boolean, required: false },
   extraOptions: { type: Object, default: () => ({}) },
   includeStyles: { type: Boolean, default: false },

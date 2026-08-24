@@ -152,8 +152,7 @@ function isSelectable ({ value: val } = {}) {
   if (props.field.isMulti) {
     return !props.field.options.isUniqueMultiValue || !((value.value) || []).includes(val)
   }
-  // vue-select v4 hides a non-selectable option from the selected slot.
-  return true
+  return value.value !== val
 }
 
 function getOptionStyle (v) {

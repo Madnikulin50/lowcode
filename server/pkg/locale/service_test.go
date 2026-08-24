@@ -26,16 +26,3 @@ func TestServiceReloadAndTranslate(t *testing.T) {
 	go svc.ResourceTranslations(tag, "resource")
 	go svc.ReloadStatic()
 }
-
-func TestReloadStaticSkipsUnchanged(t *testing.T) {
-	svc, err := Service(zap.NewNop(), options.LocaleOpt{Languages: "en"})
-	require.NoError(t, err)
-	require.NotNil(t, svc)
-
-	first := svc.set[language.English]
-	require.NotNil(t, first)
-	require.True(t, svc.staticLoaded)
-
-	require.NoError(t, svc.ReloadStatic())
-	require.Same(t, first, svc.set[language.English], "unchanged LOCALE_PATH must not rebuild language maps")
-}

@@ -21,7 +21,7 @@ import moduleResTr from 'corteza-webapp-compose/src/lib/resource-translations/mo
 
 const prefixed$ = 'resources.module.'
 const { t: $t } = useI18n()
-const t = (key) => $t(prefixed$ + key)
+const t = (key, params) => $t(prefixed$ + key, params)
 
 const props = defineProps({
   module: {

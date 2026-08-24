@@ -4,16 +4,16 @@ import "encoding/json"
 
 // DemoStore is a sample retail site used by the store-risk pilot.
 type DemoStore struct {
-	Name               string
-	City               string
-	Region             string
-	ShrinkPct          float64
-	Incidents90d       float64
-	DaysSinceAudit     float64
-	RevenueImpact      float64 // 1–5 business impact
+	Name                 string
+	City                 string
+	Region               string
+	ShrinkPct            float64
+	Incidents90d         float64
+	DaysSinceAudit       float64
+	RevenueImpact        float64 // 1–5 business impact
 	ControlEffectiveness float64 // 0–1
-	Likelihood         float64 // 1–5 for matrix view
-	Impact             float64 // 1–5 for matrix view
+	Likelihood           float64 // 1–5 for matrix view
+	Impact               float64 // 1–5 for matrix view
 }
 
 func (s DemoStore) Input() map[string]interface{} {

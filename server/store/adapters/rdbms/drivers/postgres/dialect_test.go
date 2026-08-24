@@ -1,15 +1,10 @@
 package postgres
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/doug-martin/goqu/v9/exp"
-	"github.com/madnikulin50/lowcode/server/pkg/dal"
 	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
-	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ql"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestColumnFits(t *testing.T) {
@@ -82,17 +77,6 @@ func TestColumnFits(t *testing.T) {
 				Type: &ddl.ColumnType{Name: "numeric(2,3)"},
 			},
 			expected: false,
-		},
-
-		{
-			name: "unconstrained numeric fits any numeric(p,s)",
-			target: &ddl.Column{
-				Type: &ddl.ColumnType{Name: "numeric"},
-			},
-			assert: &ddl.Column{
-				Type: &ddl.ColumnType{Name: "numeric(15,2)"},
-			},
-			expected: true,
 		},
 
 		{
@@ -169,60 +153,4 @@ func TestColumnFits(t *testing.T) {
 		})
 	}
 
-}
-
-func TestJSONRefEqUsesJsonbContainment(t *testing.T) {
-	attr := &dal.Attribute{
-		Ident: "device",
-		Type:  &dal.TypeRef{},
-		Store: &dal.CodecRecordValueSetJSON{Ident: "values"},
-	}
-	model := &dal.Model{Ident: "compose_record"}
-	n := &ql.ASTNode{
-		Ref: "eq",
-		Args: []*ql.ASTNode{
-			{Symbol: "device", Meta: map[string]any{"dal.Attribute": attr, "dal.Model": model}},
-			{},
-		},
-	}
-
-	expr, err := dialect.ExprHandler(n, exp.NewLiteralExpression("CAST_IGNORED"), exp.NewLiteralExpression("?", uint64(509728716461178881)))
-	require.NoError(t, err)
-
-	sql, args, err := dialect.GOQU().Select(expr).ToSQL()
-	require.NoError(t, err)
-	require.Contains(t, sql, "@>")
-	require.Contains(t, sql, "jsonb_build_object")
-	require.Contains(t, sql, "jsonb_build_array")
-	require.Contains(t, sql, "to_jsonb")
-	require.Contains(t, sql, "::text")
-	require.NotContains(t, sql, `->'device'->>0`)
-	require.NotContains(t, strings.ToUpper(sql), "BIGINT")
-	require.NotContains(t, strings.ToUpper(sql), "CASE")
-	require.Equal(t, []any{"device", uint64(509728716461178881)}, args)
-	require.Regexp(t, `jsonb_build_object\(\$\d+::text, jsonb_build_array\(to_jsonb\(\$\d+::text\)\)\)`, sql)
-}
-
-func TestJSONRefEqSkipsColumnStoredTypeID(t *testing.T) {
-	attr := &dal.Attribute{
-		Ident: "moduleID",
-		Type:  &dal.TypeID{},
-		Store: &dal.CodecAlias{Ident: "rel_module"},
-	}
-	model := &dal.Model{Ident: "compose_record"}
-	n := &ql.ASTNode{
-		Ref: "eq",
-		Args: []*ql.ASTNode{
-			{Symbol: "moduleID", Meta: map[string]any{"dal.Attribute": attr, "dal.Model": model}},
-			{},
-		},
-	}
-
-	expr, err := dialect.ExprHandler(n, exp.NewLiteralExpression("CAST_IGNORED"), exp.NewLiteralExpression("?", uint64(509463708787081217)))
-	require.NoError(t, err)
-
-	sql, _, err := dialect.GOQU().Select(expr).ToSQL()
-	require.NoError(t, err)
-	require.NotContains(t, sql, "@>")
-	require.NotContains(t, sql, "jsonb_build_object")
 }

@@ -26,8 +26,6 @@ func handleCORS(next http.Handler) http.Handler {
 			"Authorization",
 			"Content-Type",
 			"X-CSRF-ID",
-			"X-Requested-With",
-			"Cache-Control",
 		},
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers

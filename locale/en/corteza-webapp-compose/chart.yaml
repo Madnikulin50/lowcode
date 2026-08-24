@@ -29,7 +29,6 @@ edit:
     label: Animation
     enabled: Animation enabled
   dimension:
-    add: Add dimension
     calculateLabelCount: Calculate how many labels can be shown
     defaultValueFootnote: Use this value for missing dimension values
     defaultValueLabel: Default value
@@ -81,12 +80,7 @@ edit:
     fieldLabel: Field *
     fieldPlaceholder: Select metric field
     fillArea: Fill area below the line
-    showSymbol: Show data points
     fixTooltips: Always show labels
-    valueLabelPosition:
-      label: Label position
-      top: Above the bar
-      inside: Inside the bar
     options:
       label: Options
     function:
@@ -103,11 +97,6 @@ edit:
     stack:
       label: Stack
       description: Metrics with same value will be stacked
-    stacked:
-      label: Stacked
-    stackBy:
-      label: Group by field (stack)
-      placeholder: None (simple chart)
     lineStyle:
       label: Line style
       default: Default
@@ -156,37 +145,7 @@ edit:
       line: Line
       pie: Pie
       scatter: Scatter
-      sankey: Sankey
-      heatmap: Heatmap
-      waterfall: Waterfall
-      boxplot: Boxplot
-      graph: Graph
-      candlestick: Candlestick
-      map: Map
-      sunburst: Sunburst
-      parallel: Parallel
-      calendar: Calendar
-      gantt: Gantt
       placeholder: Select metric output
-    boxplot:
-      hint: The boxplot uses up to 5 metrics as the box values (min, Q1, median, Q3, max).
-    candlestick:
-      hint: The candlestick chart uses up to 4 metrics as the candle values (open, close, low, high).
-    mapType:
-      label: Map
-      options:
-        world: World
-        china: China
-    calendarType:
-      label: Calendar type
-      options:
-        scatter: Scatter
-        heatmap: Heatmap
-        effectScatter: Effect scatter
-    gantt:
-      startField: Start date
-      endField: End date
-      hint: Dimension is the bar label (project name). Each record becomes one bar from start to end.
     relative: Show relative value
     relativePrecision: 'Precision:'
     cumulative: Cumulative
@@ -212,7 +171,7 @@ edit:
       center: Center
       bottom: End
     horizontal:
-      label: Horizontal axis
+      label: Horizontal
     logarithmicScale: Logarithmic scale
     maxLabel: Max value
     maxPlaceholder: Maximum value
@@ -274,8 +233,6 @@ edit:
     label: Tools
     saveAsImage:
       label: Show "Save as Image" button
-    showDataTable:
-      label: Show "Table" button
     timeline:
       label: Timeline
       options:

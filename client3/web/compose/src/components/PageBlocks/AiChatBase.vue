@@ -1,6 +1,5 @@
 <script setup>
 import Wrap from './Wrap/index.js'
-import { computed } from 'vue'
 import { usePageBlockBase } from './usePageBlockBase'
 import Chat from '../Public/Page/AiChat/Chat.vue'
 
@@ -26,17 +25,7 @@ const emit = defineEmits(['errors'])
 
 const { options } = usePageBlockBase(props, emit)
 
-const startPrompt = computed(() => {
-  const o = props.block?.options || options.value || {}
-  return o.startPrompt || o.prompt || props.block?.prompt || props.page?.config?.prompt || props.namespace?.meta?.prompt || ''
-})
-
-const preferredModel = computed(() => options.value.model || '')
-
-const modelStorageKey = computed(() => {
-  const id = props.block?.blockID || props.block?.meta?.tempID || props.blockIndex
-  return `aiChat.model.block.${id || '0'}`
-})
+const startPrompt = options.value.startPrompt || props.page?.prompt || props.namespace?.meta?.prompt || ''
 </script>
 
 <template>
@@ -49,9 +38,6 @@ const modelStorageKey = computed(() => {
         :namespace="namespace?.namespaceID || ''"
         :magnified="magnified"
         :framed="false"
-        :show-model-switcher="true"
-        :preferred-model="preferredModel"
-        :model-storage-key="modelStorageKey"
       />
     </div>
   </Wrap>

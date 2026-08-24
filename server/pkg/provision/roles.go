@@ -47,40 +47,30 @@ func SystemRoles(ctx context.Context, log *zap.Logger, s store.Storer) (rr []*ty
 		return
 	}
 
-	var toCreate, toUpdate types.RoleSet
-
 	for i := range rr {
 		r := rr[i]
-		existing := m[r.Handle]
-		if existing == nil {
+		if m[r.Handle] == nil {
+			// this is a new role
 			r.ID = id.Next()
 			r.CreatedAt = *now()
+
 			m[r.Handle] = r
-			toCreate = append(toCreate, r)
 			log.Info("creating system role", zap.String("handle", r.Handle), logger.Uint64("ID", r.ID))
-			continue
-		}
+		} else {
+			// use existing role
+			rr[i] = m[r.Handle]
 
-		existing.DeletedAt = nil
-		existing.ArchivedAt = nil
-		rr[i] = existing
-		toUpdate = append(toUpdate, existing)
-		log.Info("updating system role", zap.String("handle", r.Handle), logger.Uint64("ID", existing.ID))
+			// make sure it's not deleted or archived
+			// and leave other props as they are
+			r.DeletedAt = nil
+			r.ArchivedAt = nil
+
+			log.Info("updating system role", zap.String("handle", r.Handle), logger.Uint64("ID", r.ID))
+		}
 	}
 
-	// Create/Update instead of Upsert: Postgres INSERT ... ON CONFLICT (id)
-	// requires a matching unique constraint, and inference can fail even when
-	// roles_pkey exists (search_path / schema mismatch). Provision already
-	// knows whether the row is new.
-	if len(toCreate) > 0 {
-		if err := store.CreateRole(ctx, s, toCreate...); err != nil {
-			return nil, fmt.Errorf("failed to provision system roles: %w", err)
-		}
-	}
-	if len(toUpdate) > 0 {
-		if err := store.UpdateRole(ctx, s, toUpdate...); err != nil {
-			return nil, fmt.Errorf("failed to provision system roles: %w", err)
-		}
+	if err := store.UpsertRole(ctx, s, rr...); err != nil {
+		return nil, fmt.Errorf("failed to provision system roles: %w", err)
 	}
 
 	return

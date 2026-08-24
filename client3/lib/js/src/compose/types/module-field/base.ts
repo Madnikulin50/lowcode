@@ -33,8 +33,6 @@ export interface Options {
   };
   suffix: string;
   prefix: string;
-  /** Users cannot change this value in forms; automation/API/external systems still can. */
-  readonly: boolean;
 }
 
 export const defaultOptions = (): Readonly<Options> => Object.freeze({
@@ -48,7 +46,6 @@ export const defaultOptions = (): Readonly<Options> => Object.freeze({
   },
     suffix: '',
     prefix: '',
-    readonly: false,
 })
 
 interface Config {
@@ -157,12 +154,6 @@ export class ModuleField {
 
           this.options.hint.edit = this.options.hint.edit || undefined
       }
-
-    Apply(this.options, o, Boolean, 'readonly')
-  }
-
-  get isReadonly (): boolean {
-    return !!this.options.readonly
   }
 
   clone (): ModuleField {
@@ -228,10 +219,6 @@ export class ModuleField {
 
     if (IsOf(f, 'expressions')) {
       this.expressions = f.expressions
-    }
-
-    if (IsOf(f, 'options')) {
-      this.applyOptions(f.options)
     }
   }
 

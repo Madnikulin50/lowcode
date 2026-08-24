@@ -6,16 +6,12 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"time"
-	"unicode"
 
 	ttlcache "github.com/jellydator/ttlcache/v3"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/chat"
-	"github.com/madnikulin50/lowcode/server/pkg/logger"
-	"go.uber.org/zap"
 
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
@@ -34,14 +30,8 @@ type (
 
 	ChatStreamFunc = chat.StreamFunc
 
-	pendingToolCalls struct {
-		Calls     []CallParam
-		Namespace uint64
-	}
-
 	chatService struct {
 		clients *ttlcache.Cache[string, *chat.Client]
-		pending *ttlcache.Cache[string, pendingToolCalls]
 		tools   []chat.ToolDef
 	}
 
@@ -55,30 +45,8 @@ type (
 		Module    uint64
 		Page      uint64
 		Record    uint64
-		Model     string
 	}
 )
-
-const chatSystemPrompt = "Ты ассистент приложения с базой данных. Для данных всегда вызывай инструмент.\n\n" +
-	"Вызов инструмента XML:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\n" +
-	"Графики и динамика:\n" +
-	"- Если пользователь называет график с ТЕКУЩЕЙ страницы по заголовку блока (список Charts on this page) — вызови show_page_chart. НЕ вызывай sales_dynamics и НЕ visualize_report для этих заголовков.\n" +
-	"- «покажи динамику продаж», выручка по месяцам, sales trend → sales_dynamics (линейный график), если это не заголовок блока на странице. НЕ вызывай create_chart и НЕ читай сырые чеки.\n" +
-	"- новый график / диаграмма / динамика / сравни / chart / trend по данным модуля → visualize_report (агрегация, не больше 24 категорий).\n" +
-	"- Никогда не вызывай module_*_records для больших таблиц вроде receipt_positions.\n" +
-	"show_page_chart вернёт блок ```compose-chart — включи его в ответ как есть (UI покажет график страницы).\n" +
-	"sales_dynamics / visualize_report вернут блок ```chart — включи его как есть.\n" +
-	"```chart\n" +
-	"{\"type\":\"line\",\"title\":\"...\",\"labels\":[...],\"series\":[{\"name\":\"...\",\"data\":[...]}]}\n" +
-	"```\n" +
-	"Типы: bar, line, pie, doughnut. Для динамики во времени — line. Только реальные числа из инструментов, не выдумывай.\n\n" +
-	"Другие правила:\n" +
-	"- показать магазины/товары/задачи → module_{handle}_records по имени сущности; не list_modules (это типы, не записи)\n" +
-	"- какие сущности есть → list_modules; страницы → list_pages; сохранённые чарты → list_charts\n" +
-	"- создать страницу/модуль/чарт → create_* (спроси подтверждение)\n" +
-	"Для списков вызывай инструмент сразу."
-
-const chatSystemPromptNoTools = "Ты ассистент приложения с базой данных. Отвечай по существу и на языке пользователя."
 
 func Chat() *chatService {
 	ttl := ttlcache.New[string, *chat.Client](
@@ -95,28 +63,11 @@ func Chat() *chatService {
 		{Name: "list_charts", Description: "List all charts in the current namespace", Handler: listCharts},
 		{Name: "list_pages", Description: "List all pages in the current namespace", Handler: listPages},
 	}
-	tools = append(tools, chatVisualizeTools()...)
-
-	pending := ttlcache.New[string, pendingToolCalls](
-		ttlcache.WithTTL[string, pendingToolCalls](30 * time.Minute),
-	)
-	go pending.Start()
 
 	return &chatService{
 		clients: ttl,
-		pending: pending,
 		tools:   tools,
 	}
-}
-
-// Preload the default model into memory at startup so the first chat
-// message is not delayed by model loading.
-func init() {
-	go func() {
-		if err := chat.WarmUp(chat.DefaultModelName()); err != nil {
-			logger.Default().Warn("failed to preload chat model", zap.Error(err))
-		}
-	}()
 }
 
 func (c *chatService) xmlToMap(xmlStr string) (map[string]string, error) {
@@ -159,9 +110,6 @@ func (c *chatService) splitPrompt(prompt string) []*schema.Message {
 	}
 	out := []*schema.Message{}
 	for k, v := range data {
-		if k == "" {
-			continue
-		}
 		out = append(out, &schema.Message{Role: "system", Content: "##" + k + "\r\n" + v})
 	}
 	noTag, ok := data[""]
@@ -178,13 +126,10 @@ func (c *chatService) modelFromPrompt(prompt string) string {
 			return prompt[start : start+end]
 		}
 	}
-	return chat.DefaultModelName()
+	return "deepseek-v2"
 }
 
-func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArguments, useTools bool) []*schema.Message {
-	if len(ask.Messages) > 10 {
-		ask.Messages = ask.Messages[len(ask.Messages)-10:]
-	}
+func (c *chatService) buildMessages(ask *ChatPromptArguments) []*schema.Message {
 	msgs := make([]*schema.Message, 0, len(ask.Messages)+2)
 
 	hasSystem := false
@@ -209,29 +154,12 @@ func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArgument
 		}
 	}
 	if !hasSystem {
-		sys := chatSystemPromptNoTools
-		if useTools {
-			sys = chatSystemPrompt
-			if extra := pageChartsSystemHint(ctx, ask); extra != "" {
-				sys += "\n\n" + extra
-			}
-		}
 		msgs = append([]*schema.Message{
-			schema.SystemMessage(sys),
+			schema.SystemMessage("You are an assistant for a database app. You MUST call a tool to get or manage data.\n\nCall a tool with XML:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\nIMPORTANT: When the user asks to show/list/view specific items (e.g. stores, products, tasks), look through all available tools for one whose description mentions that item name and call it directly. Do NOT call list_modules for this — it lists entity types, not records.\n\nRules:\n- show/list stores/products/tasks/etc → find module_{id}_records tool matching the name\n- show/list what entities exist → list_modules\n- show/list pages → list_pages\n- show/list charts → list_charts\n- create page/module/chart → create_* tool\n\nAsk before creating. For listing, call tool immediately."),
 		}, msgs...)
-	} else if useTools {
-		if extra := pageChartsSystemHint(ctx, ask); extra != "" {
-			msgs = append([]*schema.Message{
-				schema.SystemMessage(extra),
-			}, msgs...)
-		}
 	}
-
-	// Current turn is sent as ask.Prompt (history is ask.Messages without it).
-	// Dropping this made the model see only the system prompt and return empty
-	// content → "Модель не сгенерировала ответ."
-	prompt := strings.TrimSpace(ask.Prompt)
-	if prompt != "" {
+	if len(msgs) != 0 {
+		prompt := msgs[len(msgs)-1].Content
 		if len(ask.Files) > 0 {
 			var fileBlock string
 			for _, f := range ask.Files {
@@ -241,20 +169,22 @@ func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArgument
 		}
 
 		if ask.Namespace > 0 && DefaultRAG != nil {
-			if ctx == nil {
-				ctx = context.Background()
-			}
+			ctx := context.Background()
+			lastMsg := msgs[len(msgs)-1].Content
 			var allCtx string
-			ragCtx := DefaultRAG.BuildContext(ctx, fmt.Sprint(ask.Namespace), prompt, 3)
+
+			ragCtx := DefaultRAG.BuildContext(ctx, fmt.Sprint(ask.Namespace), lastMsg, 3)
 			if ragCtx != "" {
 				allCtx += "\nDocuments:\n" + ragCtx
 			}
+
 			if DefaultPagesRAG != nil {
-				pagesCtx := DefaultPagesRAG.BuildContext(ctx, prompt, 3)
+				pagesCtx := DefaultPagesRAG.BuildContext(ctx, lastMsg, 3)
 				if pagesCtx != "" {
 					allCtx += "\nPublished pages:\n" + pagesCtx
 				}
 			}
+
 			if allCtx != "" {
 				if len(allCtx) > 4096 {
 					allCtx = allCtx[:4096]
@@ -263,12 +193,12 @@ func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArgument
 			}
 		}
 
-		msgs = append(msgs, schema.UserMessage(prompt))
+		msgs[len(msgs)-1].Content = prompt
 	}
 	return msgs
 }
 
-func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt string) []chat.ToolDef {
+func (c *chatService) getTools(ctx context.Context, namespaceID uint64) []chat.ToolDef {
 	tools := make([]chat.ToolDef, len(c.tools))
 	copy(tools, c.tools)
 
@@ -276,11 +206,9 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt s
 		return tools
 	}
 
-	keywords := promptKeywords(prompt)
-
 	modules, _, err := DefaultModule.Find(ctx, types.ModuleFilter{NamespaceID: namespaceID})
 	if err == nil {
-		for _, m := range selectNamed(modules, keywords, 15, 10, func(m *types.Module) string { return m.Name + " " + m.Handle }) {
+		for _, m := range modules {
 
 			id := m.Handle
 			if len(id) == 0 {
@@ -350,7 +278,7 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt s
 
 	charts, _, err := DefaultChart.Find(ctx, types.ChartFilter{NamespaceID: namespaceID})
 	if err == nil {
-		for _, ch := range selectNamed(charts, keywords, 15, 5, func(ch *types.Chart) string { return ch.Name }) {
+		for _, ch := range charts {
 			id := ch.ID
 			name := ch.Name
 			tools = append(tools, chat.ToolDef{
@@ -365,7 +293,7 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt s
 
 	pages, _, err := DefaultPage.Find(ctx, types.PageFilter{NamespaceID: namespaceID})
 	if err == nil {
-		for _, p := range selectNamed(pages, keywords, 15, 5, func(p *types.Page) string { return p.Title }) {
+		for _, p := range pages {
 			id := p.ID
 			title := p.Title
 			tools = append(tools, chat.ToolDef{
@@ -381,162 +309,26 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt s
 	return tools
 }
 
-// promptKeywords extracts search keywords from the user's message.
-// Words shorter than 3 characters are ignored to avoid false matches.
-func promptKeywords(prompt string) []string {
-	seen := map[string]bool{}
-	out := make([]string, 0, 8)
-	for _, w := range strings.FieldsFunc(strings.ToLower(prompt), func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-	}) {
-		if len(w) < 3 || seen[w] {
-			continue
-		}
-		seen[w] = true
-		out = append(out, w)
-		if len(out) >= 20 {
-			break
-		}
-	}
-	return expandChatKeywords(out, seen)
-}
-
-func expandChatKeywords(out []string, seen map[string]bool) []string {
-	add := func(w string) {
-		if w == "" || seen[w] {
-			return
-		}
-		seen[w] = true
-		out = append(out, w)
-	}
-	joined := strings.Join(out, " ")
-	if strings.Contains(joined, "продаж") || strings.Contains(joined, "выруч") || strings.Contains(joined, "sales") || strings.Contains(joined, "revenue") {
-		add("sales")
-		add("receipt")
-		add("margin")
-		add("revenue")
-	}
-	return out
-}
-
-// selectNamed returns the entities whose name matches any prompt keyword.
-// When nothing matches, the first maxFallback entities are returned so the
-// model still has tools to work with. Keeping the tool list small makes
-// prompt evaluation dramatically faster.
-func selectNamed[T any](set []T, keywords []string, maxMatched, maxFallback int, name func(T) string) []T {
-	if len(keywords) == 0 {
-		if len(set) > maxFallback {
-			set = set[:maxFallback]
-		}
-		return set
-	}
-
-	var matched []T
-	for _, item := range set {
-		haystack := strings.ToLower(name(item))
-		for _, kw := range keywords {
-			if strings.Contains(haystack, kw) {
-				matched = append(matched, item)
-				break
-			}
-		}
-		if len(matched) >= maxMatched {
-			break
-		}
-	}
-
-	if len(matched) == 0 {
-		if len(set) > maxFallback {
-			set = set[:maxFallback]
-		}
-		return set
-	}
-	return matched
-}
-
 func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interface{}, error) {
-	ctx = c.chatEnvToContext(ask, ctx)
-
-	if ask.Chat != "" && c.pending != nil {
-		if item := c.pending.Get(ask.Chat); item != nil {
-			if userCancelled(ask.Prompt) {
-				c.pending.Delete(ask.Chat)
-				return map[string]any{"response": "Действие отменено."}, nil
-			}
-			if userConfirmed(ask.Prompt) {
-				pending := item.Value()
-				c.pending.Delete(ask.Chat)
-				ns := ask.Namespace
-				if ns == 0 {
-					ns = pending.Namespace
-				}
-				execTools := c.getTools(ctx, ns, pendingPrompt(pending.Calls))
-				result := execToolCalls(ctx, pending.Calls, ns, execTools)
-				client, err := c.getClient(ask)
-				if err != nil {
-					return map[string]any{"response": result}, err
-				}
-				if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
-					return nil, err
-				}
-				msgs := c.buildMessages(ctx, ask, client.IsToolsSupported())
-				if result != "" {
-					cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
-					if err == nil && strings.TrimSpace(cont) != "" {
-						return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
-					}
-					return map[string]any{"response": result}, nil
-				}
-				return map[string]any{"response": "Действие выполнено."}, nil
-			}
-		}
-	}
-
 	client, err := c.getClient(ask)
 	if err != nil {
 		return nil, err
 	}
-	// Warm before Generate so the 3m HTTP timeout covers inference only.
-	if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
-		return nil, err
-	}
 
-	useTools := client.IsToolsSupported()
-	var allTools []chat.ToolDef
-	if useTools {
-		allTools = c.getTools(ctx, ask.Namespace, ask.Prompt)
-	}
-	msgs := c.buildMessages(ctx, ask, useTools)
-
-	if result := showPageChartFastPath(ctx, ask); result != "" {
-		cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
-		if err == nil && strings.TrimSpace(cont) != "" {
-			return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
-		}
-		return map[string]any{"response": result}, nil
-	}
-
-	if result := salesDynamicsFastPath(ctx, ask); result != "" {
-		cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
-		if err == nil && strings.TrimSpace(cont) != "" {
-			return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
-		}
-		return map[string]any{"response": result}, nil
-	}
+	ctx = c.chatEnvToContext(ask, ctx)
+	allTools := c.getTools(ctx, ask.Namespace)
 
 	if result := directListTool(c.tools, ctx, ask); result != "" {
 		return map[string]any{"response": result}, nil
 	}
 
-	var opts []model.Option
-	if useTools {
-		toolInfos, err := chat.ToToolInfos(allTools)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build tool infos: %w", err)
-		}
-		opts = append(opts, model.WithTools(toolInfos))
+	toolInfos, err := chat.ToToolInfos(allTools)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build tool infos: %w", err)
 	}
-	out, err := client.Generate(ctx, msgs, opts...)
+
+	msgs := c.buildMessages(ask)
+	out, err := client.Generate(ctx, msgs, model.WithTools(toolInfos))
 	if err != nil {
 		return nil, err
 	}
@@ -547,10 +339,6 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 	}
 	if content == "" {
 		content = "Модель не сгенерировала ответ."
-	}
-
-	if !useTools {
-		return map[string]any{"response": content}, nil
 	}
 
 	// try native tool calls first, fall back to XML-based
@@ -578,18 +366,15 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 			})
 		}
 		if needsConfirm(parsed) && !userConfirmed(ask.Prompt) {
-			c.storePending(ask.Chat, parsed, ask.Namespace)
 			return map[string]any{
-				"response": content + confirmFence(parsed),
+				"response": content + "\n\n⚠️ **Обнаружено предлагаемое действие.** Напишите **«да»** чтобы подтвердить.",
 			}, nil
 		}
 		result := execToolCalls(ctx, parsed, ask.Namespace, allTools)
 		if result != "" {
-			cont, err := c.generateToolContinuation(ctx, client, msgs, content, result)
-			if err == nil && strings.TrimSpace(cont) != "" {
-				return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
-			}
-			return map[string]any{"response": result}, nil
+			return map[string]any{
+				"response": result,
+			}, nil
 		}
 	}
 
@@ -600,81 +385,64 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 
 func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, stream chat.StreamFunc) error {
 	ctx = c.chatEnvToContext(ask, ctx)
-
-	if handled, err := c.handlePendingStream(ctx, ask, stream); handled {
-		return err
-	}
-
-	client, err := c.getClient(ask)
-	if err != nil {
-		return err
-	}
-	// Warm before Stream so the 3m HTTP timeout covers inference only,
-	// not cold model load (which can take minutes on CPU).
-	if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
-		return err
-	}
-
-	useTools := client.IsToolsSupported()
-	chat.EmitToolsCapability(ctx, useTools)
-	var allTools []chat.ToolDef
-	if useTools {
-		allTools = c.getTools(ctx, ask.Namespace, ask.Prompt)
-	}
-	msgs := c.buildMessages(ctx, ask, useTools)
-
-	if result := showPageChartFastPath(ctx, ask); result != "" {
-		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
-			return err
-		}
-		return stream("", "", true)
-	}
-
-	if result := salesDynamicsFastPath(ctx, ask); result != "" {
-		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
-			return err
-		}
-		return stream("", "", true)
-	}
+	allTools := c.getTools(ctx, ask.Namespace)
 
 	if result := directListTool(c.tools, ctx, ask); result != "" {
 		stream(result, "", false)
 		return stream("", "", true)
 	}
 
-	var opts []model.Option
-	if useTools {
-		toolInfos, err := chat.ToToolInfos(allTools)
+	client, err := c.getClient(ask)
+	if err != nil {
+		return err
+	}
+
+	toolInfos, err := chat.ToToolInfos(allTools)
+	if err != nil {
+		return fmt.Errorf("failed to build tool infos: %w", err)
+	}
+
+	msgs := c.buildMessages(ask)
+	opts := model.Option{}
+	if client.IsToolsSupported() {
+		opts = model.WithTools(toolInfos)
+	}
+	streamReader, err := client.Stream(ctx, msgs, opts)
+	if err != nil {
+		return err
+	}
+	defer streamReader.Close()
+
+	var fullContent string
+	var toolCalls []schema.ToolCall
+	for {
+		chunk, err := streamReader.Recv()
 		if err != nil {
-			return fmt.Errorf("failed to build tool infos: %w", err)
-		}
-		opts = append(opts, model.WithTools(toolInfos))
-	}
-	streamReader, err := client.Stream(ctx, msgs, opts...)
-	if err != nil {
-		return err
-	}
-
-	fullContent, fullReasoning, toolCalls, err := pumpChatStream(ctx, streamReader, stream)
-	if err != nil {
-		return err
-	}
-
-	effective := strings.TrimSpace(fullContent)
-	if effective == "" {
-		effective = strings.TrimSpace(fullReasoning)
-	}
-
-	if !useTools {
-		if err := streamFallbackAnswer(stream, fullContent, fullReasoning); err != nil {
+			if err == io.EOF {
+				break
+			}
+			stream("⚠ Error: "+err.Error(), "", false)
 			return err
 		}
-		return stream("", "", true)
+		if chunk.Content != "" {
+			fullContent += chunk.Content
+			if err := stream(chunk.Content, "", false); err != nil {
+				return err
+			}
+		}
+		if chunk.ReasoningContent != "" {
+			if err := stream("", chunk.ReasoningContent, false); err != nil {
+				return err
+			}
+		}
+		if chunk.ToolCalls != nil && len(chunk.ToolCalls) > 0 {
+			toolCalls = append(toolCalls, chunk.ToolCalls...)
+		}
 	}
 
 	// if no native tool calls, check for XML-based tool calls in full content
-	if len(toolCalls) == 0 && chat.HasToolCallsStr(effective) {
-		xmlCalls := chat.ParseToolCallsStr(effective)
+	if len(toolCalls) == 0 && chat.HasToolCallsStr(fullContent) {
+		xmlCalls := chat.ParseToolCallsStr(fullContent)
 		toolCalls = make([]schema.ToolCall, len(xmlCalls))
 		for i, xc := range xmlCalls {
 			paramJSON, _ := json.Marshal(xc.Params)
@@ -684,9 +452,6 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 					Arguments: string(paramJSON),
 				},
 			}
-		}
-		if strings.TrimSpace(fullContent) == "" {
-			fullContent = effective
 		}
 	}
 
@@ -699,33 +464,20 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 			})
 		}
 		if needsConfirm(parsed) && !userConfirmed(ask.Prompt) {
-			c.storePending(ask.Chat, parsed, ask.Namespace)
-			stream(confirmFence(parsed), "", false)
+			stream("\n\n⚠️ **Обнаружено предлагаемое действие.** Напишите **«да»** чтобы подтвердить.", "", false)
 			return stream("", "", true)
 		}
 		result := execToolCalls(ctx, parsed, ask.Namespace, allTools)
 		if result != "" {
-			if err := c.streamToolContinuation(ctx, client, msgs, fullContent, result, stream); err != nil {
-				return err
-			}
+			stream(result, "", false)
 		}
 		return stream("", "", true)
 	}
 
-	if err := streamFallbackAnswer(stream, fullContent, fullReasoning); err != nil {
-		return err
+	if fullContent == "" {
+		stream("Модель не сгенерировала ответ.", "", false)
 	}
 	return stream("", "", true)
-}
-
-func streamFallbackAnswer(stream chat.StreamFunc, content, reasoning string) error {
-	if strings.TrimSpace(content) != "" {
-		return nil
-	}
-	if strings.TrimSpace(reasoning) != "" {
-		return stream(reasoning, "", false)
-	}
-	return stream("Модель не сгенерировала ответ.", "", false)
 }
 
 func directListTool(staticTools []chat.ToolDef, ctx context.Context, ask *ChatPromptArguments) string {
@@ -789,9 +541,6 @@ func needsConfirm(calls []CallParam) bool {
 }
 
 func execToolCalls(ctx context.Context, calls []CallParam, namespaceID uint64, tools []chat.ToolDef) string {
-	if len(calls) > 0 {
-		chat.EmitStatus(ctx, chat.StatusUsingTools)
-	}
 	var results []string
 	for _, call := range calls {
 		params := make(map[string]string)
@@ -819,261 +568,28 @@ func execToolCalls(ctx context.Context, calls []CallParam, namespaceID uint64, t
 	return ""
 }
 
-func pumpChatStream(ctx context.Context, streamReader *schema.StreamReader[*schema.Message], stream chat.StreamFunc) (fullContent, fullReasoning string, toolCalls []schema.ToolCall, err error) {
-	defer streamReader.Close()
-	for {
-		select {
-		case <-ctx.Done():
-			return fullContent, fullReasoning, toolCalls, ctx.Err()
-		default:
-		}
-		chunk, recvErr := streamReader.Recv()
-		if recvErr != nil {
-			if recvErr == io.EOF {
-				return fullContent, fullReasoning, toolCalls, nil
-			}
-			if chat.IsTimeout(recvErr) {
-				note := "Превышено время ожидания ответа модели."
-				if strings.TrimSpace(fullContent) != "" || strings.TrimSpace(fullReasoning) != "" {
-					_ = stream("\n\n"+note, "", false)
-				} else {
-					_ = stream(note, "", false)
-					fullContent = note
-				}
-				return fullContent, fullReasoning, toolCalls, nil
-			}
-			stream("⚠ Error: "+recvErr.Error(), "", false)
-			return fullContent, fullReasoning, toolCalls, recvErr
-		}
-		if chunk.Content != "" {
-			fullContent += chunk.Content
-			emit := chunk.Content
-			if idx := strings.Index(fullContent, "<tool "); idx >= 0 {
-				already := len(fullContent) - len(chunk.Content)
-				if already >= idx {
-					emit = ""
-				} else {
-					emit = fullContent[already:idx]
-				}
-			}
-			if emit != "" {
-				if err := stream(emit, "", false); err != nil {
-					return fullContent, fullReasoning, toolCalls, err
-				}
-			}
-		}
-		if chunk.ReasoningContent != "" {
-			fullReasoning += chunk.ReasoningContent
-			if err := stream("", chunk.ReasoningContent, false); err != nil {
-				return fullContent, fullReasoning, toolCalls, err
-			}
-		}
-		if len(chunk.ToolCalls) > 0 {
-			if len(toolCalls) == 0 {
-				chat.EmitStatus(ctx, chat.StatusUsingTools)
-			}
-			toolCalls = append(toolCalls, chunk.ToolCalls...)
-		}
-	}
-}
-
-func continuationMessages(msgs []*schema.Message, assistantContent, toolResult string) []*schema.Message {
-	out := make([]*schema.Message, 0, len(msgs)+2)
-	out = append(out, msgs...)
-	if stripped := stripToolXML(assistantContent); stripped != "" {
-		out = append(out, schema.AssistantMessage(stripped, nil))
-	}
-	fence := extractChartFence(toolResult)
-	payload := truncateRunes(toolResult, 16000)
-	var instruction string
-	if fence != "" {
-		if strings.Contains(strings.ToLower(fence), "compose-chart") {
-			instruction = "A page chart was already shown to the user. Write a short comment in the user's language. Do NOT repeat the ```compose-chart fence or dump JSON. Do not call tools. Do not invent numbers."
-		} else {
-			instruction = "A ```chart block from the tool was already shown to the user. Write a short comment in the user's language. Do NOT repeat the ```chart fence or dump JSON. Do not call tools. Do not invent numbers."
-		}
-	} else {
-		instruction = "Tool results (use only this data; never invent numbers):\n\n" + payload +
-			"\n\nWrite a short answer in the user's language. If a comparison, trend, or share visualization helps, append a ```chart fenced JSON block (type bar|line|pie|doughnut) with real labels and series from these results. Valid JSON, no comments. Do not call tools."
-	}
-	out = append(out, schema.UserMessage(instruction))
-	return out
-}
-
-func stripToolXML(s string) string {
-	s = strings.TrimSpace(s)
-	if s == "" || chat.HasToolCallsStr(s) {
-		return ""
-	}
-	return s
-}
-
-func salesDynamicsFastPath(ctx context.Context, ask *ChatPromptArguments) string {
-	if ask == nil || !wantsSalesDynamics(ask.Prompt) {
-		return ""
-	}
-	result := salesDynamics(ctx, nil)
-	if extractChartFence(result) == "" {
-		return ""
-	}
-	return result
-}
-
-func mergeChartAndComment(toolResult, comment string) string {
-	fence := extractChartFence(toolResult)
-	comment = strings.TrimSpace(comment)
-	if fence == "" {
-		if comment != "" {
-			return comment
-		}
-		return toolResult
-	}
-	if comment == "" || extractChartFence(comment) != "" {
-		return fence
-	}
-	return fence + "\n\n" + comment
-}
-
-func truncateRunes(s string, n int) string {
-	if n <= 0 || s == "" {
-		return s
-	}
-	r := []rune(s)
-	if len(r) <= n {
-		return s
-	}
-	return string(r[:n]) + "\n…"
-}
-
-func (c *chatService) generateToolContinuation(ctx context.Context, client *chat.Client, msgs []*schema.Message, assistantContent, toolResult string) (string, error) {
-	out, err := client.Generate(ctx, continuationMessages(msgs, assistantContent, toolResult))
-	if err != nil || out == nil {
-		return "", err
-	}
-	content := out.Content
-	if content == "" && out.ReasoningContent != "" {
-		content = out.ReasoningContent
-	}
-	return content, nil
-}
-
-func (c *chatService) streamToolContinuation(ctx context.Context, client *chat.Client, msgs []*schema.Message, assistantContent, toolResult string, stream chat.StreamFunc) error {
-	fence := extractChartFence(toolResult)
-	shownFence := false
-	if fence != "" {
-		// Stream the fence first so the UI can mount a chart even if the
-		// continuation model is told not to repeat it (commentary-only).
-		if err := stream("\n"+fence+"\n", "", false); err != nil {
-			return err
-		}
-		shownFence = true
-	}
-
-	streamReader, err := client.Stream(ctx, continuationMessages(msgs, assistantContent, toolResult))
-	if err != nil {
-		if !shownFence && toolResult != "" {
-			stream(toolResult, "", false)
-		}
-		return nil
-	}
-
-	cont, reasoning, _, err := pumpChatStream(ctx, streamReader, stream)
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(cont) != "" {
-		return nil
-	}
-	if strings.TrimSpace(reasoning) != "" {
-		return stream(reasoning, "", false)
-	}
-	if !shownFence && toolResult != "" {
-		stream(toolResult, "", false)
-	}
-	return nil
-}
-
 func (c *chatService) chatEnvToContext(ask *ChatPromptArguments, ctx context.Context) context.Context {
 	if ask.Namespace > 0 {
 		ctx = context.WithValue(ctx, "namespaceID", ask.Namespace)
 	}
 	if ask.Page > 0 {
-		ctx = context.WithValue(ctx, "pageID", ask.Page)
-	}
-	if ask.Module > 0 {
-		ctx = context.WithValue(ctx, "moduleID", ask.Module)
+		ctx = context.WithValue(ctx, "pageID", ask.Namespace)
 	}
 	return ctx
 }
 
 func (c *chatService) getClient(ask *ChatPromptArguments) (*chat.Client, error) {
-	model := ask.Model
-	if model == "" {
-		model = c.modelFromPrompt(ask.Prompt)
-	}
-
-	key := ask.Chat + "|" + model
-	client := c.clients.Get(key)
+	client := c.clients.Get(ask.Chat)
 	if client == nil {
+		model := c.modelFromPrompt(ask.Prompt)
 		cl, err := chat.NewClient(model)
 		if err != nil {
 			return nil, err
 		}
-		c.clients.Set(key, cl, 30*time.Minute)
+		c.clients.Set(ask.Chat, cl, 30*time.Minute)
 		return cl, nil
 	}
 	return client.Value(), nil
-}
-
-func (c *chatService) Models(ctx context.Context) ([]string, error) {
-	return chat.AvailableModels()
-}
-
-func (c *chatService) ModelsInfo(ctx context.Context) (map[string]any, error) {
-	models, err := chat.AvailableModels()
-	if err != nil {
-		return nil, err
-	}
-	cfg := chat.CurrentConfig()
-	return map[string]any{
-		"models":     models,
-		"default":    chat.ResolveInstalledModel(chat.DefaultModelName()),
-		"tools":      chat.ModelsToolsMap(models),
-		"enabled":    cfg.Enabled,
-		"ollamaURL":  chat.EffectiveOllamaURL(),
-		"ollamaFrom": ollamaURLSource(),
-		"roles": map[string]string{
-			chat.RoleComposeChat:    cfg.Roles.ComposeChat,
-			chat.RoleMCPAgent:       cfg.Roles.MCPAgent,
-			chat.RoleAutomationChat: cfg.Roles.AutomationChat,
-			chat.RoleRulesgoAI:      cfg.Roles.RulesgoAI,
-		},
-	}, nil
-}
-
-func ollamaURLSource() string {
-	cfg := chat.CurrentConfig()
-	if strings.TrimSpace(cfg.OllamaURL) != "" {
-		return "settings"
-	}
-	if strings.TrimSpace(os.Getenv("OLLAMA_URL")) != "" {
-		return "OLLAMA_URL"
-	}
-	if strings.TrimSpace(os.Getenv("OLLAMA_HOST")) != "" {
-		return "OLLAMA_HOST"
-	}
-	return "default"
-}
-
-func (c *chatService) DiscoverModels(ctx context.Context) ([]string, error) {
-	return chat.DiscoverModels()
-}
-
-func (c *chatService) WarmUp(ctx context.Context, model string) error {
-	if model == "" {
-		model = chat.DefaultModelName()
-	}
-	return chat.WarmUp(model)
 }
 
 func userConfirmed(prompt string) bool {
@@ -1083,119 +599,6 @@ func userConfirmed(prompt string) bool {
 		return true
 	}
 	return false
-}
-
-func userCancelled(prompt string) bool {
-	lower := strings.ToLower(strings.TrimSpace(prompt))
-	switch lower {
-	case "нет", "no", "n", "отмена", "cancel", "не надо", "стоп":
-		return true
-	}
-	return false
-}
-
-func (c *chatService) storePending(chatID string, calls []CallParam, namespaceID uint64) {
-	if chatID == "" || c.pending == nil || len(calls) == 0 {
-		return
-	}
-	c.pending.Set(chatID, pendingToolCalls{Calls: calls, Namespace: namespaceID}, ttlcache.DefaultTTL)
-}
-
-func callSummary(call CallParam) string {
-	raw := make(map[string]any)
-	if call.Params != "" {
-		_ = json.Unmarshal([]byte(call.Params), &raw)
-	}
-	label := strings.ReplaceAll(call.Name, "_", " ")
-	for _, key := range []string{"name", "title", "handle"} {
-		if v, ok := raw[key]; ok {
-			s := strings.TrimSpace(fmt.Sprintf("%v", v))
-			if s != "" && s != "<nil>" {
-				return label + ": " + s
-			}
-		}
-	}
-	return label
-}
-
-func confirmFence(calls []CallParam) string {
-	type tool struct {
-		Name    string `json:"name"`
-		Summary string `json:"summary"`
-	}
-	payload := struct {
-		Tools []tool `json:"tools"`
-	}{}
-	for _, call := range calls {
-		payload.Tools = append(payload.Tools, tool{Name: call.Name, Summary: callSummary(call)})
-	}
-	body, err := json.Marshal(payload)
-	if err != nil {
-		body = []byte(`{"tools":[]}`)
-	}
-	return "\n\nПредлагаемое действие требует подтверждения.\n```chat-confirm\n" + string(body) + "\n```\n"
-}
-
-func pendingPrompt(calls []CallParam) string {
-	var b strings.Builder
-	for _, call := range calls {
-		b.WriteString(call.Name)
-		b.WriteByte(' ')
-		b.WriteString(call.Params)
-		b.WriteByte(' ')
-	}
-	return b.String()
-}
-
-func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptArguments, stream chat.StreamFunc) (bool, error) {
-	if ask.Chat == "" || c.pending == nil {
-		return false, nil
-	}
-	item := c.pending.Get(ask.Chat)
-	if item == nil {
-		return false, nil
-	}
-	if userCancelled(ask.Prompt) {
-		c.pending.Delete(ask.Chat)
-		if err := stream("Действие отменено.", "", false); err != nil {
-			return true, err
-		}
-		return true, stream("", "", true)
-	}
-	if !userConfirmed(ask.Prompt) {
-		return false, nil
-	}
-	pending := item.Value()
-	c.pending.Delete(ask.Chat)
-
-	ns := ask.Namespace
-	if ns == 0 {
-		ns = pending.Namespace
-	}
-	execTools := c.getTools(ctx, ns, pendingPrompt(pending.Calls))
-	result := execToolCalls(ctx, pending.Calls, ns, execTools)
-
-	client, err := c.getClient(ask)
-	if err != nil {
-		if result != "" {
-			_ = stream(result, "", false)
-		} else {
-			_ = stream("Действие выполнено.", "", false)
-		}
-		return true, stream("", "", true)
-	}
-	if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
-		return true, err
-	}
-	if result != "" {
-		msgs := c.buildMessages(ctx, ask, client.IsToolsSupported())
-		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
-			return true, err
-		}
-	} else {
-		_ = stream("Действие выполнено.", "", false)
-	}
-	return true, stream("", "", true)
 }
 
 func createModule(ctx context.Context, params map[string]string) string {
@@ -1562,7 +965,6 @@ func moduleSearch(ctx context.Context, namespaceID, moduleID uint64, query strin
 		NamespaceID: namespaceID,
 		Query:       strings.Join(conditions, " OR "),
 	}
-	filter.Limit = 50
 
 	set, _, err := DefaultRecord.Find(ctx, filter)
 	if err != nil {
@@ -1597,7 +999,6 @@ func moduleRecords(ctx context.Context, namespaceID, moduleID uint64) string {
 		ModuleID:    moduleID,
 		NamespaceID: namespaceID,
 	}
-	filter.Limit = 50
 	set, _, err := DefaultRecord.Find(ctx, filter)
 	if err != nil {
 		return fmt.Sprintf("Failed to list records: %v", err)

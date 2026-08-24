@@ -2,7 +2,6 @@ package eventbus
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"unsafe"
@@ -68,14 +67,9 @@ func (b *eventbus) WaitFor(ctx context.Context, ev Event) (err error) {
 	defer b.l.RUnlock()
 
 	for _, t := range b.find(ev) {
-		err = func(ctx context.Context, t *handler) (herr error) {
+		err = func(ctx context.Context, t *handler) error {
 			b.wg.Add(1)
 			defer b.wg.Done()
-			defer func() {
-				if p := recover(); p != nil {
-					herr = fmt.Errorf("event handler panic: %v", p)
-				}
-			}()
 			return t.Handle(ctx, ev)
 
 		}(ctx, t)
@@ -96,7 +90,6 @@ func (b *eventbus) Dispatch(ctx context.Context, ev Event) {
 		b.wg.Add(1)
 		go func(ctx context.Context, t *handler) {
 			defer b.wg.Done()
-			defer func() { _ = recover() }()
 			_ = t.Handle(ctx, ev)
 		}(ctx, t)
 	}

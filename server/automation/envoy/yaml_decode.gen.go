@@ -1,6 +1,9 @@
 package envoy
 
-// Formerly generated from CUE; now maintained by hand.
+// This file is auto-generated version 2.
+//
+// Changes to this file may cause incorrect behavior and will be lost if
+// the code is regenerated from <no value>
 //
 
 import (
@@ -119,7 +122,9 @@ func (d *auxYamlDoc) UnmarshalYAML(n *yaml.Node) (err error) {
 			return err
 
 		case "trigger":
-			// @note trigger doesn't support mapped YAML inputs.
+			// @note trigger doesn't support mapped inputs. This can be
+			//       changed in the .cue definition under the
+			//       .envoy.yaml.supportMappedInput field.
 			if y7s.IsSeq(v) {
 				aux, err = d.unmarshalTriggerSeq(dctx, v)
 				d.nodes = append(d.nodes, aux...)

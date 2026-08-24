@@ -1,82 +1,82 @@
-clear: Очистить
+clear: Clear
 description: Описание
 enabled: Включено
-enable: Включить
-disable: Отключить
+enable: Enable
+disable: Disable
 error: Ошибка
-error-expression: Сообщение об ошибке (выражение)
+error-expression: Error message (expression)
 export: Экспорт
-general: Общее
+general: Основные
 handle: Дескриптор
 import:
   json: Импорт JSON
   label: Импорт
-  reassign-run-as: "ВНИМАНИЕ: свойство «Запуск от имени» не будет импортировано, его нужно переназначить"
-  upload-files: Выберите или перетащите файлы для загрузки...
+  reassign-run-as: "NOTE: the Run as workflow property won't be imported and should be reassigned"
+  upload-files: Browse or drop files to upload...
 label:
   all: Все
   any: Любой
   label: Метка
-  or: Или
-loading: Загрузка
-name: Название
+  or: ИЛИ
+loading: Загрузка...
+name: Имя
 new-workflow: Новый процесс
 none: Отсутствует
-now: Сейчас
+now: Now
 offset: Смещение
 permissions: Права доступа
 reset: Сбросить
-searchPlaceholder: Поиск процессов
-subworkflow: Подпроцесс
-subworkflows: Подпроцессы
-deleted: Удалённые
-disabled: Отключённые
-without: Без
-only: Только
+searchPlaceholder: Search workflows
+subworkflow: Subworkflow
+subworkflows: Subworkflows
+deleted: Удаленные
+disabled: Отключено
+without: Without
+only: Only
 including: Включая
 filter:
   label: Фильтр
-  title: Фильтр процессов
-  apply: Применить фильтр
+  title: Фильтр Процессы
+  apply: Apply Фильтр
   namespace:
-    label: Пространство имён
-    placeholder: Выберите пространство имён
+    label: Пространство
+    placeholder: Select namespace(s)
   module:
     label: Модуль
-    placeholder: Выберите модуль
-    template: "{{namespace}} — Модули"
+    placeholder: Выберите модуль(s)
+    template: "{{namespace}} - Модули"
 workflow-list: Список процессов
 workflow:
   single: Процесс
   plural: Процессы
 save: Сохранить
 today: Сегодня
-cancel: Отмена
+cancel: Отменить
 resourceList:
   notFound: Не найдено
-  noItems: Нет элементов
+  noItems: Нет записей для отображения
   pagination:
     next: Следующая
     prev: Предыдущая
-    showing: '{{from}} – {{to}} из {{count}} {{data}}'
+    showing: '{{from}} - {{to}} из {{count}} {{data}}'
     single_one: 'Один {{data}}'
     single_other: '{{count}} {{data}}'
     recordsPerPage: На странице
 
 tooltip:
-  permissions: Права доступа процесса
+  permissions: Разрешения для процесса
 columns:
-  name: Название
-  enabled: Включён
+  name: Имя
+  enabled: Включен
   steps: Шаги
-  changedAt: Последнее изменение
+  changedAt: Время изменения
 
 themes:
   labels:
     light: Светлая
-    dark: Тёмная
+    dark: Темная
 
 extendSession:
   labels:
-    extend: Продлить сессию
-    warning: Вы будете выведены из системы через {{ countdownTime }} сек.
+    extend: Extend Session
+    warning: You will be logged out in {{ countdownTime }} секунд

@@ -10,118 +10,74 @@
     <div
       v-else-if="mode === 'list'"
     >
-      <template v-if="enableOrder">
-        <draggable
-          item-key="attachmentID"
-          v-model="attachments"
-          handle=".handle"
-        >
-          <template #item="{ element, index }">
-            <div
-              :key="element.attachmentID"
-              class="row g-0 list-item flex-nowrap mb-1 rounded"
-            >
-              <div class="col-auto">
-                <font-awesome-icon
-                  :icon="['fas', 'bars']"
-                  class="handle text-secondary my-1 me-3"
-                  style="padding-top: 0.05rem;"
-                />
-              </div>
-              <div class="col">
-                <div class="d-flex flex-column flex-wrap align-items-start">
-                  <div
-                    class="d-flex align-items-start gap-1"
-                    style="word-break: break-all;"
-                  >
-                    <div style="margin-top: 0.1rem;">
-                      <AttachmentLink :attachment="element">
-                        {{ element.name }}
-                      </AttachmentLink>
-                    </div>
-                    <div class="d-flex align-items-center gap">
-                      <a
-                        v-if="element.download"
-                        :href="element.download"
-                        class="btn btn-outline-extra-light btn-sm download-button border-0"
-                        @click.stop
-                      >
-                        <font-awesome-icon
-                          :icon="['fas', 'download']"
-                          class="text-secondary"
-                        />
-                      </a>
-                      <c-input-confirm
-                        v-if="enableDelete"
-                        show-icon
-                        class="delete-button"
-                        @confirmed="deleteAttachment(index)"
-                      />
-                    </div>
-                  </div>
-                  <i18next
-                    path="general.label.attachmentFileInfo"
-                    tag="small"
-                    class="d-block text-muted"
-                  >
-                    <span>{{ size(element) }}</span>
-                    <span>{{ uploadedAt(element) }}</span>
-                  </i18next>
-                </div>
-              </div>
+      <draggable
+            item-key="id"
+        v-model="attachments"
+        :disabled="!enableOrder"
+        handle=".handle"
+      >
+        <template #item="{ element, index }">
+          <div
+            :key="element.attachmentID"
+            class="row g-0 list-item flex-nowrap mb-1 rounded"
+          >
+            <div class="col-auto">
+              <font-awesome-icon
+                v-if="enableOrder"
+                :icon="['fas', 'bars']"
+                class="handle text-secondary my-1 me-3"
+                style="padding-top: 0.05rem;"
+              />
             </div>
-          </template>
-        </draggable>
-      </template>
-      <template v-else>
-        <div
-          v-for="(element, index) in attachments"
-          :key="element.attachmentID"
-          class="row g-0 list-item flex-nowrap mb-1 rounded"
-        >
-          <div class="col">
-            <div class="d-flex flex-column flex-wrap align-items-start">
-              <div
-                class="d-flex align-items-start gap-1"
-                style="word-break: break-all;"
-              >
-                <div style="margin-top: 0.1rem;">
-                  <AttachmentLink :attachment="element">
-                    {{ element.name }}
-                  </AttachmentLink>
-                </div>
-                <div class="d-flex align-items-center gap">
-                  <a
-                    v-if="element.download"
-                    :href="element.download"
-                    class="btn btn-outline-extra-light btn-sm download-button border-0"
-                    @click.stop
-                  >
-                    <font-awesome-icon
-                      :icon="['fas', 'download']"
-                      class="text-secondary"
+
+            <div class="col">
+              <div class="d-flex flex-column flex-wrap align-items-start">
+                <div
+                  class="d-flex align-items-start gap-1"
+                  style="word-break: break-all;"
+                >
+                  <div style="margin-top: 0.1rem;">
+                    <AttachmentLink :attachment="element">
+                      {{ element.name }}
+                    </AttachmentLink>
+                  </div>
+
+                  <div class="d-flex align-items-center gap">
+                    <a
+                      v-if="element.download"
+                      :href="element.download"
+                      class="btn btn-outline-extra-light btn-sm download-button border-0"
+                      @click.stop
+                    >
+                      <font-awesome-icon
+                        :icon="['fas', 'download']"
+                        class="text-secondary"
+                      />
+                    </a>
+
+                    <c-input-confirm
+                      v-if="enableDelete"
+                      show-icon
+                      class="delete-button"
+                      @confirmed="deleteAttachment(index)"
                     />
-                  </a>
-                  <c-input-confirm
-                    v-if="enableDelete"
-                    show-icon
-                    class="delete-button"
-                    @confirmed="deleteAttachment(index)"
-                  />
+                  </div>
                 </div>
+
+                <i18next
+                  path="general.label.attachmentFileInfo"
+                  tag="small"
+                  class="d-block text-muted"
+                >
+                  <span>{{ size(element) }}</span>
+
+                  <span>{{ uploadedAt(element) }}</span>
+                </i18next>
               </div>
-              <i18next
-                path="general.label.attachmentFileInfo"
-                tag="small"
-                class="d-block text-muted"
-              >
-                <span>{{ size(element) }}</span>
-                <span>{{ uploadedAt(element) }}</span>
-              </i18next>
             </div>
           </div>
-        </div>
-      </template>
+        </template>
+      </draggable>
     </div>
 
     <div
@@ -179,7 +135,7 @@ import { ref, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import numeral from 'numeral'
 import moment from 'moment'
-import { compose, shared, NoID } from 'corteza-lib/js/dist'
+import { compose, shared } from 'corteza-lib/js/dist'
 import AttachmentLink from './Link.vue'
 import draggable from 'vuedraggable'
 import { url, components } from 'corteza-lib/vue/dist'
@@ -222,56 +178,48 @@ const canPreviewCheck = (a) => {
 
 const baseURL = url.Make({ url: window.CortezaAPI + '/compose' })
 
-function isAttachmentObject (a) {
-  return !!a && typeof a === 'object' && !Array.isArray(a)
-}
-
 watch(() => props.set, (set) => {
-  const list = Array.isArray(set) ? set : []
-  const att = list.map(a => {
-    if (isAttachmentObject(a)) {
+  const att = set.map(a => {
+    if (typeof a === 'object') {
       return new shared.Attachment(a, baseURL)
+    } else {
+      return null
     }
-    return null
   })
 
   const namespaceID = props.namespace.namespaceID
   processing.value = true
 
-  Promise.all(list.map((attachmentID, index) => {
-    if (typeof attachmentID === 'string' || typeof attachmentID === 'number') {
-      return $ComposeAPI.attachmentRead({ kind: props.kind, attachmentID: String(attachmentID), namespaceID }).then(a => {
+  Promise.all(Object.entries(set).map(([index, attachmentID]) => {
+    if (typeof attachmentID === 'string') {
+      return $ComposeAPI.attachmentRead({ kind: props.kind, attachmentID, namespaceID }).then(a => {
         att.splice(index, 1, new shared.Attachment(a, baseURL))
       })
     }
-    return Promise.resolve()
+    return Promise.resolve([])
   }))
     .then(() => {
       const { clickToView = true, enableDownload = true } = props.previewOptions
       attachments.value = att
-        .filter(a => isAttachmentObject(a) && a.attachmentID && a.attachmentID !== NoID)
+        .filter(a => !!a)
+        .filter(a => typeof a === 'object')
         .map(a => ({
           ...a,
           download: enableDownload ? a.download : undefined,
           clickToView,
         }))
     })
-    .catch(err => {
-      console.error('Failed to load attachments', err)
-    })
     .finally(() => {
       processing.value = false
     })
-}, { immediate: true, deep: true })
+}, { immediate: true })
 
 function size(a) {
-  const bytes = a?.meta?.original?.size
-  return bytes == null ? '' : numeral(bytes).format('0b')
+  return numeral(a.meta.original.size).format('0b')
 }
 
 function uploadedAt(a) {
-  const ts = a?.updatedAt || a?.createdAt
-  return ts ? moment(ts).fromNow() : ''
+  return moment(a.updatedAt || a.createdAt).fromNow()
 }
 
 function openLightbox(e) {
@@ -286,7 +234,7 @@ function openLightbox(e) {
 
 function deleteAttachment(index) {
   attachments.value.splice(index, 1)
-  emit('update:set', attachments.value.map(a => a.attachmentID))
+  emit('update.set', attachments.value.map(a => a.attachmentID))
 }
 
 function ext(a) {

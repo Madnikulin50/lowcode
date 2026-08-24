@@ -68,12 +68,7 @@ func CastToComposeRecord(val interface{}) (out *types.Record, err error) {
 			return assignToComposeRecord(out, k, v)
 		})
 	}
-	if val == nil {
-		return &types.Record{}, nil
-	}
 	switch val := expr.UntypedValue(val).(type) {
-	case nil:
-		return &types.Record{}, nil
 	case *types.Record:
 		if val == nil {
 			val = &types.Record{}
@@ -493,12 +488,7 @@ func (t *ComposeRecordValues) Assign(val interface{}) error {
 }
 
 func CastToComposeRecordValueErrorSet(val interface{}) (out *types.RecordValueErrorSet, err error) {
-	if val == nil {
-		return nil, nil
-	}
 	switch val := expr.UntypedValue(val).(type) {
-	case nil:
-		return nil, nil
 	case *types.RecordValueErrorSet:
 		return val, nil
 	default:

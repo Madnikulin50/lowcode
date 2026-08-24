@@ -1,122 +1,122 @@
 break:
-  label: Прерывание
-  short: Прерывание
-  tooltip: Остановить итератор и продолжить выполнение процесса
+  label: Break
+  short: Break
+  tooltip: Stop iterator execution and continue with workflow
 content:
-  label: Контент
-  short: Контент
-  tooltip: Блок контента для текстовых аннотаций
+  label: Content
+  short: Content
+  tooltip: Content block used for text annotations
   configurator:
-    ok: Ок
+    ok: Ok
     urlPlaceholder: https://example.tld
 continue:
-  label: Продолжить
-  short: Продолжить
-  tooltip: Остановить текущую итерацию и перейти к следующей
+  label: Continue
+  short: Continue
+  tooltip: Stop current iteration and continue with the next one
 debug:
-  label: Отладка
-  short: Отладка
-  tooltip: Записывает текущую область видимости процесса в логи сервера, если отладка процесса включена
+  label: Debug
+  short: Debug
+  tooltip: Logs current workflow scope into server logs. If workflow debug is enabled
 delay:
-  label: Задержка
-  short: Задержка
-  tooltip: Приостанавливает выполнение процесса
+  label: Delay
+  short: Delay
+  tooltip: Delays workflow execution
 error:
   label: Ошибка
   short: Ошибка
-  tooltip: Генерирует ошибку и останавливает выполнение процесса, также предотвращает сохранение записей, вызванных before-триггером
+  tooltip: Throws error and stops workflow execution, also prevents saving of records triggered with before trigger
 error-handler:
-  label: Обработчик ошибок
-  short: Ошибка
-  tooltip: Продолжить выполнение процесса с этого шага при возникновении ошибки
+  label: Error Handler
+  short: Error Handler
+  tooltip: Continue workflow from this step if an error is triggered
 expressions:
   configurator:
-    add-expression: + Добавить выражение
+    add-expression: + Add Выражение
     expression: Выражение
     expression-placeholder: Выражение...
-    target: Назначение
-  label: Выражения
-  short: Выражения
-  tooltip: Определение и изменение переменных области видимости
+    target: Target
+  label: Expressions
+  short: Expressions
+  tooltip: Define and mutate scope variables
 function:
   configurator:
-    arguments: Аргументы
-    constant: Константа
+    arguments: Arguments
+    constant: Constant
     expression: Выражение
     name: Имя
     option-select: Выберите опцию
     result: Результат
-    results: Результаты
-    target: Назначение
-    add-result: + Добавить результат
-    search-workflow: Поиск процесса
-    select-function: Выберите функцию
-    type: Тип
-    type*: Тип*
+    results: Results
+    target: Target
+    add-result: + Add result
+    search-workflow: Search for a workflow
+    select-function: Select function
+    type: Type
+    type*: Type*
   label: Функция
   short: Функция
-  tooltip: Выполнить выбранную предопределённую функцию
+  tooltip: Execute the chosen predefined function
 exec-workflow:
-  label: Выполнить процесс
+  label: Execute Процесс
   short: Процесс
-  tooltip: Выполнить процесс и сопоставить переменные из его области видимости с текущей
+  tooltip: Execute a workflow and map variables from its scope to the current one
 gatewayExclusive:
-  label: Шлюз (Исключающий)
-  short: Шлюз
-  tooltip: Выполнение процесса продолжится по первому пути, удовлетворяющему условию
+  label: Gateway (Exclusive)
+  short: Gateway
+  tooltip: Процесс execution can continue on first path that fits condition
 gatewayInclusive:
-  label: Шлюз (Включающий)
-  short: Шлюз
-  tooltip: Выполнение процесса продолжится по всем путям, удовлетворяющим условию
+  label: Gateway (Inclusive)
+  short: Gateway
+  tooltip: Процесс execution can continue on all paths that fit condition
 gatewayParallel:
-  label: Шлюз (Разветвление/Слияние)
-  short: Шлюз
-  tooltip: Разделяет выполнение процесса на два параллельных пути или объединяет несколько путей в один
+  label: Gateway (Fork/Join)
+  short: Gateway
+  tooltip: Splits workflow execution into two parallel paths or merges multiple paths into one
 gateway:
   configurator:
     condition: Условие
-    two-paths: Шлюз должен быть источником как минимум двух путей
+    two-paths: Gateway must be source of at least two paths
 iterator:
-  label: Итератор
-  short: Итератор
-  tooltip: Итерация по элементам
+  label: Iterator
+  short: Iterator
+  tooltip: Iterate over items
 prompt:
-  label: Запрос
-  short: Запрос
-  tooltip: Запрашивает ввод у пользователя и ожидает ответа
+  label: Prompt
+  short: Prompt
+  tooltip: Prompts user and waits for input
 swimlane:
-  label: Дорожка
-  short: Дорожка
-  tooltip: Визуальная группировка шагов
+  label: Swimlane
+  short: Swimlane
+  tooltip: Visually group steps
 termination:
-  label: Завершение
-  short: Завершение
-  tooltip: Завершить выполнение процесса
+  label: Termination (End)
+  short: Termination
+  tooltip: Terminate workflow execution
 trigger:
   configurator:
-    add: + Добавить
-    add-constraints: + Добавить ограничения
-    constraints: Ограничения
-    no-constraints: Нет ограничений
-    event*: Событие*
-    failed-fetch-event-types: Не удалось загрузить типы событий
-    initial-scope: Начальная область
+    add: + Add
+    add-constraints: + Add Constraints
+    constraints: Constraints
+    no-constraints: No constraints
+    event*: Event*
+    failed-fetch-event-types: Failed to fetch event types
+    initial-scope: Initial Scope
     equal: Равно
     not-equal: Не равно
-    like: Похоже
-    not-like: Не похоже
-    operator: Оператор
-    resource: Ресурс
-    resource*: Ресурс*
-    select-constraint-type: Выберите тип ограничения
-    select-operator: Выберите оператор
-    select-event-type: Выберите тип события
-    select-resource-type: Выберите тип ресурса
-  label: Триггер (Начало)
-  short: Триггер
-  tooltip: Запуск выполнения процесса на основе конфигурации
+    like: Like
+    not-like: Not like
+    operator: Operator
+    resource:  Resource
+    resource*:  Resource*
+    select-constraint-type: Select constraint type
+    select-operator: Select operator
+    select-event-type: Select event type
+    select-resource-type: Select resource type
+  label: Trigger (Start)
+  short: Trigger
+  tooltip: Trigger the workflow execution based on configuration
 tooltip:
-  configure-step: Настроить шаг
+  configure-step: Configure step
 path:
-  label: Путь
-  short: Путь
+  label: Path
+  short: Path

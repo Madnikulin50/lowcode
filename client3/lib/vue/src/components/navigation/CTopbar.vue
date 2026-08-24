@@ -26,21 +26,6 @@
 
       <slot name="right-tools" />
 
-      <button
-        class="btn btn-outline-light text-decoration-none text-dark rounded-circle border-0 nav-icon d-flex align-items-center justify-content-center"
-        data-test-id="theme-toggle"
-        :title="currentTheme === 'dark' ? labels.lightTheme : labels.darkTheme"
-        @click="saveThemeMode(currentTheme === 'dark' ? 'light' : 'dark')"
-      >
-        <font-awesome-icon
-          class="m-0 h5"
-          :icon="['fas', currentTheme === 'dark' ? 'sun' : 'moon']"
-        />
-        <span class="visually-hidden">
-          {{ currentTheme === 'dark' ? labels.lightTheme : labels.darkTheme }}
-        </span>
-      </button>
-
       <c-notification-button
         v-if="!settings.hideNotifications"
       />
@@ -273,12 +258,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, getCurrentInstance } from 'vue'
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 import CNotificationButton from '../notifications/CNotificationButton.vue'
 import { checkValidURL } from '../../filters/url'
-
-library.add(faSun, faMoon)
 
 declare const VERSION: string
 
@@ -375,9 +356,7 @@ async function saveThemeMode (theme: string) {
   $auth.user.meta.theme = theme
 
   $SystemAPI.userUpdate($auth.user).then(() => {
-    const html = document.getElementsByTagName('html')[0]
-    html.setAttribute('data-color-mode', theme)
-    html.setAttribute('data-bs-theme', theme)
+    document.getElementsByTagName('html')[0].setAttribute('data-color-mode', theme)
   }).catch(console.error)
 }
 </script>
@@ -399,7 +378,8 @@ $nav-user-icon-size: calc(var(--topbar-height) - 16px);
 .header-navigation {
   width: 100%;
   min-height: var(--topbar-height);
-  background-color: var(--topbar-bg, transparent);
+  //background-color: var(--topbar-bg);
+
 }
 
 .avatar {

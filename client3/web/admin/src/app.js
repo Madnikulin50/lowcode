@@ -68,9 +68,7 @@ export default (options = {}) => {
 
         // switch the webapp theme based on user preference
         if (user.meta.theme) {
-          const html = document.getElementsByTagName('html')[0]
-          html.setAttribute('data-color-mode', user.meta.theme)
-          html.setAttribute('data-bs-theme', user.meta.theme)
+          document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme)
         }
 
         // ref to vue is needed inside compose helper

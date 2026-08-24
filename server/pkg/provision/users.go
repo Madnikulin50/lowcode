@@ -49,7 +49,7 @@ func SystemUsers(ctx context.Context, log *zap.Logger, s store.Users) (uu []*typ
 			u.ID = id.Next()
 			u.CreatedAt = *now()
 
-			if err := store.CreateUser(ctx, s, u); err != nil {
+			if err := store.UpsertUser(ctx, s, u); err != nil {
 				return nil, fmt.Errorf("failed to provision system user %s: %w", u.Handle, err)
 			}
 
@@ -73,7 +73,7 @@ func SystemUsers(ctx context.Context, log *zap.Logger, s store.Users) (uu []*typ
 			u.SuspendedAt = nil
 			u.DeletedAt = nil
 
-			if err := store.UpdateUser(ctx, s, u); err != nil {
+			if err := store.UpsertUser(ctx, s, u); err != nil {
 				return nil, fmt.Errorf("failed to provision system user %s: %w", u.Handle, err)
 			}
 

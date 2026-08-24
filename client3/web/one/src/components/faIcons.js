@@ -9,17 +9,6 @@ import {
   faBellSlash,
   faBell as faBellSolid,
   faEllipsisV,
-  faCogs,
-  faLayerGroup,
-  faUsers,
-  faProjectDiagram,
-  faChartPie,
-  faCompass,
-  faUserShield,
-  faVideo,
-  faHeadset,
-  faThLarge,
-  faSitemap,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -47,15 +36,4 @@ library.add(
   faTrashAlt,
   faEnvelope,
   faEnvelopeOpen,
-  faCogs,
-  faLayerGroup,
-  faUsers,
-  faProjectDiagram,
-  faChartPie,
-  faCompass,
-  faUserShield,
-  faVideo,
-  faHeadset,
-  faThLarge,
-  faSitemap,
 )

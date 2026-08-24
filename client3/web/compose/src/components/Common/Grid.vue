@@ -21,7 +21,6 @@
       :use-css-transforms="false"
       class="flex-grow-1 d-flex w-100 h-100"
       @layout-updated="onLayoutUpdated"
-      @update:layout="onLayoutUpdated"
     >
       <template
         v-for="(item, index) in layout"
@@ -69,7 +68,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
-import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { GridLayout, GridItem } from '../../lib/vue-grid-layout'
 import { normalizeXYWH, xywhSignature } from '../../lib/block-layout'
 
@@ -149,10 +148,11 @@ function persistLayout (newLayout) {
 }
 
 function onLayoutUpdated (newLayout) {
-  if (!props.editable || !Array.isArray(newLayout)) return
-  // Keep GridItem :w/:h in sync while the user drags, otherwise the library
-  // snaps back to the stale props after resizeend.
-  if (!resizing.value && !pendingPersist.value) return
+  if (!props.editable) return
+  if (!pendingPersist.value) return
+
+  pendingPersist.value = false
+  resizing.value = false
   persistLayout(newLayout)
 }
 
@@ -162,11 +162,6 @@ function onGridAction () {
 
 function onGridSettled () {
   pendingPersist.value = true
-  resizing.value = false
-  persistLayout(layout.value)
-  nextTick(() => {
-    pendingPersist.value = false
-  })
 }
 </script>
 
@@ -180,6 +175,7 @@ function onGridSettled () {
 
   > * {
     height: 100%;
+    max-height: 100%;
   }
 }
 </style>

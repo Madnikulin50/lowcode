@@ -25,7 +25,9 @@ function flattenMessages(nestedMessages: Record<string, unknown>, prefix = ''): 
     const prefixedKey = prefix ? `${prefix}.${key}` : key
 
     if (typeof value === 'string') {
-      messages[prefixedKey] = value.replace(/\{\{(\w+)\}\}/g, '{$1}')
+      // i18next / vue-i18n v8 used {{name}} (optional spaces). vue-i18n v9+
+      // compiles {name} and rejects "{{ name }}" as a nested placeholder.
+      messages[prefixedKey] = value.replace(/\{\{\s*([\w.]+)\s*\}\}/g, '{$1}')
     } else if (typeof value === 'object' && value !== null) {
       Object.assign(messages, flattenMessages(value as Record<string, unknown>, prefixedKey))
     }

@@ -35,7 +35,7 @@
             @search="search"
           >
             <template #option="option">
-              <FieldViewer v-if="labelField && optionRecord(option).values?.[labelField.name]" :field="labelField" :record="optionRecord(option)" :namespace="namespace" disable-click value-only />
+              <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="option" :namespace="namespace" disable-click value-only />
               <template v-else>{{ option.recordID }}</template>
             </template>
             <template #selected-option="option">
@@ -64,7 +64,7 @@
             @search="search"
           >
             <template #option="option">
-              <FieldViewer v-if="labelField && optionRecord(option).values?.[labelField.name]" :field="labelField" :record="optionRecord(option)" :namespace="namespace" disable-click value-only />
+              <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="option" :namespace="namespace" disable-click value-only />
               <template v-else>{{ option.recordID }}</template>
             </template>
             <template #list-footer>
@@ -96,7 +96,7 @@
             @search="search"
           >
             <template #option="option">
-              <FieldViewer v-if="labelField && optionRecord(option).values?.[labelField.name]" :field="labelField" :record="optionRecord(option)" :namespace="namespace" disable-click value-only />
+              <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="option" :namespace="namespace" disable-click value-only />
               <template v-else>{{ option.recordID }}</template>
             </template>
             <template #selected-option="option">
@@ -133,7 +133,7 @@
           @search="search"
         >
           <template #option="option">
-            <FieldViewer v-if="labelField && optionRecord(option).values?.[labelField.name]" :field="labelField" :record="optionRecord(option)" :namespace="namespace" disable-click value-only />
+            <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="option" :namespace="namespace" disable-click value-only />
             <template v-else>{{ option.recordID }}</template>
           </template>
           <template #selected-option>
@@ -282,15 +282,6 @@ function getRecordByID (recordID) {
   const found = recordStore.findByID(id)
   if (!found) return { values: {} }
   return new compose.Record(module.value, found)
-}
-
-function optionRecord (option) {
-  if (!option) return { values: {} }
-  if (option instanceof compose.Record) return option
-  const id = option.recordID || option
-  const fromList = (records.value || []).find(r => String(r.recordID) === String(id))
-  if (fromList) return fromList
-  return getRecordByID(id)
 }
 
 function getRecord (index = undefined) {

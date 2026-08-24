@@ -36,9 +36,7 @@ type (
 		IncTotal          bool `json:"incTotal,omitempty"`
 
 		PageNavigation []*Page `json:"pageNavigation,omitempty"`
-		// Total is the matching row count. -1 (TotalUnknown) means the COUNT
-		// timed out and the client should treat the size as unknown.
-		Total int `json:"total,omitempty"`
+		Total          uint    `json:"total,omitempty"`
 	}
 
 	Page struct {
@@ -70,11 +68,6 @@ type (
 		GetValue(string, uint) (any, error)
 		CountValues() map[string]uint
 	}
-)
-
-const (
-	// TotalUnknown is returned when incTotal COUNT did not finish in time.
-	TotalUnknown = -1
 )
 
 var (

@@ -19,11 +19,7 @@ onMounted(async () => {
     const favicon = document.getElementById('favicon')
     if (favicon) favicon.href = icon
     document.body.setAttribute('dir', user.meta?.preferredLanguage?.startsWith('ar') || user.meta?.preferredLanguage?.startsWith('he') || user.meta?.preferredLanguage?.startsWith('fa') ? 'rtl' : 'ltr')
-    if (user.meta.theme) {
-      const html = document.getElementsByTagName('html')[0]
-      html.setAttribute('data-color-mode', user.meta.theme)
-      html.setAttribute('data-bs-theme', user.meta.theme)
-    }
+    if (user.meta.theme) document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme)
     loaded.value = true
   } catch (err) {
     if (err instanceof Error && err.message === 'Unauthenticated') { auth.startAuthenticationFlow(); return }

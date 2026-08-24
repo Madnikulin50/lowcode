@@ -46,114 +46,14 @@ type ValueCombo = RawValue[] | Values | Values[]
 type RecordCtorCombo = Record | Module | PartialRecord | ValueCombo
 
 /**
- * For something to be useful module (for a Record), it needs to contain fields.
- * Use property access rather than hasOwnProperty: Vue 3 reactive proxies
- * hide class fields from hasOwnProperty but still expose .fields.
+ * For something to be useful module (for a Record), it needs to contain fields
  */
 function isModule (m?: unknown): m is Module {
-  if (!m || typeof m !== 'object') {
-    return false
-  }
-  const fields = (m as Module).fields
-  if (!Array.isArray(fields) || fields.length === 0) {
-    return false
-  }
-  // A Record (or a spread of one) can leak `fields` through a Vue proxy.
-  // Modules have name/handle; records have recordID without those.
-  const rec = m as Partial<Record>
-  if (rec.recordID && rec.recordID !== NoID && (m as Module).name === undefined && (m as Module).handle === undefined) {
-    return false
-  }
-  return true
-}
-
-/**
- * Vue 3 reactive() wraps class instances in a proxy that is not frozen
- * even when the target is. Always copy from the raw target when present.
- */
-function unwrapVue<T> (v: T): T {
-  let cur: unknown = v
-  const seen = new Set<unknown>()
-  while (cur && typeof cur === 'object' && !seen.has(cur)) {
-    seen.add(cur)
-    const raw = (cur as { __v_raw?: unknown }).__v_raw
-    if (!raw || raw === cur) {
-      break
-    }
-    cur = raw
-  }
-  return cur as T
+  return !!m && IsOf<Module>(m, 'fields') && Array.isArray(m.fields) && m.fields.length > 0
 }
 
 function isRawValue (v: unknown): v is RawValue {
   return IsOf<RawValue>(v, 'name')
-}
-
-/**
- * True when the value looks like a real Corteza ID (not empty / NoID / 0).
- */
-function hasResourceID (id: unknown): boolean {
-  if (id == null || id === '' || id === 0) {
-    return false
-  }
-  try {
-    return CortezaID(id) !== NoID
-  } catch {
-    return true
-  }
-}
-
-/**
- * Compare Corteza IDs without treating string vs number as a module change.
- */
-function sameResourceID (a: unknown, b: unknown): boolean {
-  if (a === b) {
-    return true
-  }
-  if (a == null || b == null) {
-    return false
-  }
-  if (String(a) === String(b)) {
-    return true
-  }
-  try {
-    return CortezaID(a) === CortezaID(b)
-  } catch {
-    return false
-  }
-}
-
-/**
- * Read a Corteza ID from a payload without hasOwnProperty.
- * Vue 3 proxies and some class copies hide fields from hasOwnProperty,
- * so Apply() would leave recordID at NoID and the list would use a
- * placeholder like "moduleID-0-0-0:0" in bulk delete.
- */
-function resourceIDFrom (src: unknown, ...keys: string[]): string | undefined {
-  if (!src || typeof src !== 'object') {
-    return undefined
-  }
-  const o = src as { [key: string]: unknown }
-  for (const key of keys) {
-    let v: unknown
-    try {
-      v = o[key]
-    } catch {
-      continue
-    }
-    if (!hasResourceID(v)) {
-      continue
-    }
-    try {
-      const id = CortezaID(v)
-      if (id !== NoID) {
-        return id
-      }
-    } catch {
-      continue
-    }
-  }
-  return undefined
 }
 
 /**
@@ -234,19 +134,9 @@ export class Record {
 
     let r
 
-    // Determine what kind of value we got.
-    // Prefer `in` / property access: IsOf() uses hasOwnProperty, which Vue 3
-    // proxies often fail, so a real record was treated as a values blob and
-    // recordID stayed NoID.
-    const recLike = Boolean(
-      p &&
-      typeof p === 'object' &&
-      !Array.isArray(p) &&
-      ('recordID' in (p as object) || 'values' in (p as object))
-    )
-
+    // Determine what kind of value we got
     switch (true) {
-      case recLike || (!Array.isArray(p) && (IsOf<Record>(p, 'recordID') || IsOf<Record>(p, 'values'))):
+      case IsOf<Record>(p, 'recordID') || IsOf<Record>(p, 'values'):
         // p1 is something that looks like a record object
         r = p as Record
         break
@@ -262,24 +152,19 @@ export class Record {
 
     r = r as PartialRecord
 
-    // Compare against this.moduleID (set via property access on the module),
-    // not this.module.moduleID: `new Module(vueProxy)` can leave the copy at NoID
-    // because Apply uses hasOwnProperty, which Vue 3 proxies often fail.
-    if (hasResourceID(this.moduleID) && hasResourceID(r.moduleID) && !sameResourceID(r.moduleID, this.moduleID)) {
-      throw new Error(`can not change module on a record (${String(this.moduleID)} [${typeof this.moduleID}] → ${String(r.moduleID)} [${typeof r.moduleID}])`)
+    if (this.module && r.moduleID && r.moduleID !== this.module.moduleID) {
+      throw new Error('can not change module on a record')
     }
 
-    if (hasResourceID(this.namespaceID) && hasResourceID(r.namespaceID) && !sameResourceID(r.namespaceID, this.namespaceID)) {
-      throw new Error(`can not change namespace on a record (${String(this.namespaceID)} [${typeof this.namespaceID}] → ${String(r.namespaceID)} [${typeof r.namespaceID}])`)
+    if (this.namespace && r.namespaceID && r.namespaceID !== this.namespace.namespaceID) {
+      throw new Error('can not change namespace on a record')
     }
 
-    const recID = resourceIDFrom(r, 'recordID', 'ID')
-    if (recID) {
-      this.recordID = recID
-    } else {
-      Apply(this, r, CortezaID, 'recordID')
+    if (r.namespaceID && r.namespaceID !== this.module.namespaceID) {
+      throw new Error('record and module namespace do not match')
     }
-    Apply(this, r, CortezaID, 'moduleID', 'namespaceID')
+
+    Apply(this, r, CortezaID, 'recordID', 'moduleID', 'namespaceID')
     Apply(this, r, ISO8601Date, 'createdAt', 'updatedAt', 'deletedAt')
     Apply(this, r, CortezaID, 'ownedBy', 'createdBy', 'updatedBy', 'deletedBy')
 
@@ -333,10 +218,8 @@ export class Record {
   }
 
   public set module (m: Module) {
-    m = unwrapVue(m)
-
     if (this[propModule]) {
-      if (!sameResourceID((this[propModule] as Module).moduleID, m.moduleID)) {
+      if ((this[propModule] as Module).moduleID !== m.moduleID) {
         throw new Error('module for this record already set')
       }
     }
@@ -345,17 +228,8 @@ export class Record {
       throw new Error('module used to initialize a record does not contain any fields')
     }
 
-    // Prefer CortezaID so snowflake string vs number does not look like a module change later
-    try {
-      this.moduleID = CortezaID(m.moduleID)
-    } catch {
-      this.moduleID = String(m.moduleID ?? NoID)
-    }
-    try {
-      this.namespaceID = CortezaID(m.namespaceID)
-    } catch {
-      this.namespaceID = String(m.namespaceID ?? NoID)
-    }
+    this.moduleID = m.moduleID
+    this.namespaceID = m.namespaceID
 
     this[fieldIndex] = new Map()
 

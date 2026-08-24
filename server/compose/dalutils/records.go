@@ -2,11 +2,8 @@ package dalutils
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
-	"strings"
-	"time"
 
 	"github.com/madnikulin50/lowcode/server/compose/service/values"
 	"github.com/madnikulin50/lowcode/server/compose/types"
@@ -86,25 +83,17 @@ func ComposeRecordsFind(ctx context.Context, l lookuper, mod *types.Module, reco
 }
 
 func ComposeRecordsCount(ctx context.Context, c counter, mod *types.Module, filter types.RecordFilter) (cnt uint, err error) {
-	// Same constraints as list: module DAL config + model.Constraints
-	// (namespaceID/moduleID on compose_record). Do not force namespaceID here —
-	// omitted system fields have no matching attribute.
-	dalFilter := prepFilter(filter, mod)
+	constraints := map[string][]interface{}{
+		"namespaceID": {mod.NamespaceID},
+	}
+
+	if filter.ModuleID != 0 {
+		constraints["moduleID"] = []interface{}{filter.ModuleID}
+	}
+
+	dalFilter := filter.ToConstraintedFilter(constraints)
 
 	return c.Count(ctx, mod.ModelRef(), recLookupOperations(mod), dalFilter)
-}
-
-// ComposeRecordsCountWithTimeout is the Metric/Progress report COUNT path.
-// Uses recordReportCountTimeout; on timeout return TotalUnknown (-1). List
-// incTotal does not share this wait — it skips JSON Record/User filters or
-// uses recordListCountTimeout (1s).
-func ComposeRecordsCountWithTimeout(ctx context.Context, c counter, mod *types.Module, flt types.RecordFilter) (cnt int, err error) {
-	if queryFiltersJSONRecordField(mod, flt.Query) {
-		return filter.TotalUnknown, nil
-	}
-	return countWithTimeout(ctx, recordReportCountTimeout, func(countCtx context.Context) (uint, error) {
-		return ComposeRecordsCount(countCtx, c, mod, flt)
-	})
 }
 
 func ComposeRecordCreate(ctx context.Context, c creator, mod *types.Module, records ...*types.Record) (err error) {
@@ -180,7 +169,6 @@ func drainIterator(ctx context.Context, iter dal.Iterator, mod *types.Module, f 
 		fetched    uint
 		filtered   uint
 		lastRecord *types.Record
-		fetchLimit = f.Limit
 	)
 
 	// Get the requested number of record
@@ -222,21 +210,6 @@ func drainIterator(ctx context.Context, iter dal.Iterator, mod *types.Module, f 
 		// if an error occurred inside Next()/WalkIterator,
 		// we need to stop draining
 		if err != nil {
-			if isCountTimeout(err) {
-				// Page SELECT hit statement_timeout / ctx deadline. Keep
-				// whatever rows were already scanned so HTTP can return.
-				err = nil
-				if f.PageCursor != nil && f.PageCursor.ROrder {
-					set = append(add, set...)
-				} else {
-					set = append(set, add...)
-				}
-				outFilter = f
-				outFilter.IncPageNavigation = false
-				if f.IncTotal {
-					outFilter.Total = filter.TotalUnknown
-				}
-			}
 			return
 		}
 
@@ -249,17 +222,14 @@ func drainIterator(ctx context.Context, iter dal.Iterator, mod *types.Module, f 
 
 		total := fetched + filtered
 		if total == 0 || f.Limit == 0 {
-			// iterator empty, or no limit (everything was fetched)
-			break
-		}
-		if fetchLimit > 0 && total < fetchLimit {
-			// SQL returned a short page — no more rows. Do not probe with
-			// More()/cursor: that extra SELECT is what broke bulk delete
-			// (recordID='a' OR recordID='b' … with fewer matches than Limit).
+			// do not re-fetch if:
+			// 1) nothing was fetch in the previous run
+			// 2) there was no limit (everything was fetched)
+			// 3) there are less total (fetched and filtered) items then value of limit
 			break
 		}
 
-		// Fetch more records (AC/check filtered some rows out of a full SQL page)
+		// Fetch more records
 		setLen := uint(len(set))
 		if total > 0 && setLen < f.Limit {
 			fetchMore := f.Limit - setLen
@@ -275,7 +245,6 @@ func drainIterator(ctx context.Context, iter dal.Iterator, mod *types.Module, f 
 			if err = iter.More(fetchMore, crsrRec); err != nil {
 				return
 			}
-			fetchLimit = fetchMore
 		}
 	}
 
@@ -507,29 +476,13 @@ func generatePageNavigation(ctx context.Context, iter dal.Iterator, mod *types.M
 	// Sorting
 	out.Sort = dal.IteratorSorting(iter)
 
-	// First page is already in `set`. Next/prev cursor probes and page-nav
-	// walks issue extra SELECTs; a SQL error there must not drop the page
-	// (admin lists always set IncPageNavigation and would otherwise render empty).
-	keepCollected := func() {
-		err = nil
-		if !p.IncTotal {
-			return
-		}
-		if p.PageCursor == nil && (p.Limit == 0 || uint(setLen) < p.Limit) {
-			out.Total = setLen
-			return
-		}
-		out.Total = filter.TotalUnknown
-	}
-
-	// Probe next/prev only when the page is full. A short page means the
-	// iterator is exhausted; PreLoadCursor would still run an extra SELECT.
-	if p.Limit > 0 && uint(len(set)) >= p.Limit {
+	// No need to generate prev/next cursor
+	// if limit is not defined and set is empty
+	if p.Limit > 0 && len(set) > 0 {
 		// PrevPage
 		if p.PageCursor != nil {
 			out.PrevPage, err = dal.PreLoadCursor(ctx, iter, 100, true, first, recordChecker)
 			if err != nil {
-				keepCollected()
 				return
 			}
 		}
@@ -537,48 +490,14 @@ func generatePageNavigation(ctx context.Context, iter dal.Iterator, mod *types.M
 		// NextPage
 		out.NextPage, err = dal.PreLoadCursor(ctx, iter, 100, false, last, recordChecker)
 		if err != nil {
-			keepCollected()
 			return
 		}
-	}
-
-	if iter.Err() != nil {
-		keepCollected()
-		return
-	}
-
-	// Fast path: total only (no page-nav, no summaries).
-	// Never block the HTTP response on a long COUNT — the first page (and
-	// next/prev cursors) is already in `out`. JSON-stored Record/User filters
-	// (e.g. `device = ID`) make COUNT a seq-scan of compose_record.values;
-	// skip it and return TotalUnknown (-1). Other filters get a 1s budget.
-	if p.IncTotal && !p.IncPageNavigation && len(p.Summaries) == 0 {
-		if p.PageCursor == nil && (p.Limit == 0 || uint(setLen) < p.Limit) {
-			out.Total = setLen
-			return
-		}
-		if queryFiltersJSONRecordField(mod, p.Query) {
-			out.Total = filter.TotalUnknown
-			return
-		}
-		if _, ok := iter.(interface {
-			Count(context.Context) (uint, error)
-		}); ok {
-			out.Total, err = countRecordsWithTimeout(ctx, iter)
-			if err != nil {
-				keepCollected()
-			}
-			return
-		}
-		out.Total = filter.TotalUnknown
-		return
 	}
 
 	if p.IncTotal || p.IncPageNavigation || len(p.Summaries) > 0 {
 		// For the first page nav
 		err = generatePage(last)
 		if err != nil {
-			keepCollected()
 			return
 		}
 
@@ -588,7 +507,6 @@ func generatePageNavigation(ctx context.Context, iter dal.Iterator, mod *types.M
 			interLoop := 0
 
 			if err = iter.More(howMuchMore, last); err != nil {
-				keepCollected()
 				return
 			}
 
@@ -613,7 +531,6 @@ func generatePageNavigation(ctx context.Context, iter dal.Iterator, mod *types.M
 				return generatePage(rec)
 			})
 			if err != nil {
-				keepCollected()
 				return
 			}
 
@@ -625,7 +542,7 @@ func generatePageNavigation(ctx context.Context, iter dal.Iterator, mod *types.M
 
 	// Total
 	if p.IncTotal {
-		out.Total = int(total)
+		out.Total = total
 	}
 
 	// Page navigation
@@ -656,132 +573,6 @@ func generatePageNavigation(ctx context.Context, iter dal.Iterator, mod *types.M
 	}
 
 	return
-}
-
-var (
-	// List incTotal must not stall the HTTP response. 1s is enough for an
-	// indexed COUNT; JSON-extract COUNT is skipped entirely (TotalUnknown).
-	recordListCountTimeout = time.Second
-	// Metric/Progress report COUNT for non-JSON filters. JSON Record/User
-	// predicates skip COUNT (TotalUnknown) instead of waiting.
-	recordReportCountTimeout = 8 * time.Second
-	// RecordSearchBudget caps list/report DAL work per HTTP request so a
-	// JSON TypeRef seq-scan cannot hold the handler forever.
-	RecordSearchBudget = 8 * time.Second
-)
-
-// BoundRecordSearchContext puts a hard deadline on list/report DAL calls.
-func BoundRecordSearchContext(ctx context.Context) (context.Context, context.CancelFunc) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	if dl, ok := ctx.Deadline(); ok {
-		if time.Until(dl) <= RecordSearchBudget {
-			return ctx, func() {}
-		}
-	}
-	return context.WithTimeout(ctx, RecordSearchBudget)
-}
-
-// IsSearchTimeout reports a canceled/deadline/statement_timeout from list or COUNT.
-func IsSearchTimeout(err error) bool {
-	return isCountTimeout(err)
-}
-
-// QueryFiltersJSONRecordField is true when the QL query mentions a module
-// field stored in compose_record.values as a Record/User TypeRef. COUNT of
-// those predicates seq-scans JSON and must not block list or report HTTP.
-func QueryFiltersJSONRecordField(mod *types.Module, query string) bool {
-	return queryFiltersJSONRecordField(mod, query)
-}
-
-func queryFiltersJSONRecordField(mod *types.Module, query string) bool {
-	if mod == nil || strings.TrimSpace(query) == "" {
-		return false
-	}
-	q := strings.ToLower(query)
-	for _, f := range mod.Fields {
-		if f == nil {
-			continue
-		}
-		if f.Kind != "Record" && f.Kind != "User" {
-			continue
-		}
-		name := strings.ToLower(f.Name)
-		if name == "" {
-			continue
-		}
-		if strings.Contains(q, name) {
-			return true
-		}
-	}
-	return false
-}
-
-// countWithTimeout runs COUNT with the given budget. If the budget expires
-// while the parent ctx is still valid, TotalUnknown (-1) is returned.
-// The wait is in a goroutine so HTTP returns even when the DB driver
-// does not abort QueryRow immediately on context cancel.
-func countWithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context) (uint, error)) (int, error) {
-	countCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	type outcome struct {
-		n   uint
-		err error
-	}
-	ch := make(chan outcome, 1)
-	go func() {
-		n, err := fn(countCtx)
-		ch <- outcome{n, err}
-	}()
-
-	select {
-	case o := <-ch:
-		if o.err != nil {
-			if ctx.Err() != nil {
-				return 0, ctx.Err()
-			}
-			if countCtx.Err() != nil || isCountTimeout(o.err) {
-				return filter.TotalUnknown, nil
-			}
-			return 0, o.err
-		}
-		return int(o.n), nil
-	case <-countCtx.Done():
-		if ctx.Err() != nil {
-			return 0, ctx.Err()
-		}
-		return filter.TotalUnknown, nil
-	}
-}
-
-func isCountTimeout(err error) bool {
-	if err == nil {
-		return false
-	}
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		return true
-	}
-	s := strings.ToLower(err.Error())
-	return strings.Contains(s, "deadline exceeded") ||
-		strings.Contains(s, "statement timeout") ||
-		strings.Contains(s, "query canceled") ||
-		strings.Contains(s, "canceling statement")
-}
-
-// countRecordsWithTimeout runs iterator COUNT after the first page is already
-// fetched. If COUNT exceeds 1s the query is canceled and TotalUnknown (-1)
-// is returned so the HTTP handler can send the page without hanging.
-func countRecordsWithTimeout(ctx context.Context, iter dal.Iterator) (int, error) {
-	c, ok := iter.(interface {
-		Count(context.Context) (uint, error)
-	})
-	if !ok {
-		return 0, fmt.Errorf("iterator does not support count")
-	}
-
-	return countWithTimeout(ctx, recordListCountTimeout, c.Count)
 }
 
 func prepareRecordTarget(module *types.Module) *types.Record {

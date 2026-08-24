@@ -184,43 +184,13 @@ function onSearch (q: string, loading: (v: boolean) => void) {
   emit('search', q, loading)
 }
 
-// Theme tokens (danger, info, …) are stored in option.style; they are not
-// valid CSS. Bootstrap `.badge` defaults to white text, so an unresolved
-// background makes the selected value invisible on the white select.
-const THEME_COLORS: Record<string, string> = {
-  primary: '#4e73df',
-  secondary: '#858796',
-  success: '#1cc88a',
-  info: '#36b9cc',
-  warning: '#f6c23e',
-  danger: '#e74a3b',
-  light: '#f8f9fc',
-  'extra-light': '#f8f9fc',
-  dark: '#5a5c69',
-  white: '#FFFFFF',
-  black: '#0B344E',
-  'body-bg': '#F3F5F7',
-}
-
-function resolveColor (value?: string, fallback = ''): string {
-  if (!value) return fallback
-  const v = String(value).trim()
-  if (!v) return fallback
-  if (v[0] === '#' || v.startsWith('rgb') || v.startsWith('hsl') || v.startsWith('var(')) {
-    return v
-  }
-  const hex = THEME_COLORS[v]
-  if (hex) return `var(--${v}, ${hex})`
-  return v
-}
-
 function getOptionStyle ({ style = {} }: Option = {}) {
-  if (!props.badge) return {}
-  return {
-    fontSize: '0.9rem',
-    color: resolveColor(style.textColor, 'var(--dark)'),
-    backgroundColor: resolveColor(style.backgroundColor, 'var(--extra-light)'),
+  if (props.badge) {
+    style.fontSize = '0.9rem'
+    style.color = style.textColor || 'var(--dark)'
+    style.backgroundColor = style.backgroundColor || 'var(--extra-light)'
   }
+  return style
 }
 </script>
 

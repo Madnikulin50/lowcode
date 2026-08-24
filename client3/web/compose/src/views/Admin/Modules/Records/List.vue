@@ -174,18 +174,8 @@ function initBlock () {
   }
 }
 
-watch(module, (mdl) => {
-  if (mdl && !block.value) {
-    initBlock()
-  }
-}, { immediate: true })
-
 watch(() => props.moduleID, () => {
   if (module.value) {
-    if (!block.value) {
-      initBlock()
-      return
-    }
     const { meta = { ui: {} }, moduleID } = module.value || {}
     let fields = ((meta.ui || {}).admin || {}).fields || []
     fields = fields.length ? fields : [...module.value.fields.slice(0, 10), ...module.value.systemFields()]
@@ -193,6 +183,8 @@ watch(() => props.moduleID, () => {
     block.value.options.fields = fields
   }
 })
+
+initBlock()
 
 onBeforeUnmount(() => {
   block.value = undefined

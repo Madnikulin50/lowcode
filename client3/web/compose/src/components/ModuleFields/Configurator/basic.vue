@@ -12,16 +12,6 @@
     </div>
     <div class="form-check mb-2">
       <input
-        id="isReadonly"
-        v-model="field.options.readonly"
-        type="checkbox"
-        class="form-check-input"
-      />
-      <label class="form-check-label" for="isReadonly">{{ t('label.readonly') }}</label>
-      <div class="form-text">{{ t('label.readonlyHelp') }}</div>
-    </div>
-    <div class="form-check mb-2">
-      <input
         id="isMulti"
         v-model="field.isMulti"
         type="checkbox"
@@ -264,7 +254,6 @@ if (!defaultValue) defaultValue = []
 if (defaultValue.length) initMocks(defaultValue)
 if (!props.field.options.hint.edit) props.field.options.hint.edit = undefined
 if (!props.field.options.description.edit) props.field.options.description.edit = undefined
-if (props.field.options.readonly == null) props.field.options.readonly = false
 showValueExpr.value = expressions && expressions.value && expressions.value.length > 0
 if (!props.field.expressions.value) props.field.expressions.value = ''
 

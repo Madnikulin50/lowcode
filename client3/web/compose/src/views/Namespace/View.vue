@@ -80,11 +80,7 @@ watch(() => props.slug, (slug) => {
       ns = nsStore.getByUrlPart(slug)
       namespace.value = ns
       prepareNamespace()
-    }).catch((err) => {
-      errHandler(err)
-      loaded.value = true
-      router.push({ name: 'root' })
-    })
+    }).catch(errHandler)
   } else {
     namespace.value = ns
     prepareNamespace()
@@ -117,23 +113,12 @@ function prepareNamespace() {
 
   window.dispatchEvent(new CustomEvent('check-namespace-sidebar', { detail: !namespace.value.meta.hideSidebar }))
 
-  // allSettled: a failed module/chart/page load must not leave the spinner forever.
-  // The previous `.catch(errHandler)` re-rejected, so Promise.all never reached `.then`.
-  Promise.allSettled([
-    moduleStore.load(p),
-    chartStore.load(p),
-    pageStore.load(p),
-    pageLayoutStore.load(p),
-  ]).then((results) => {
-    const seen = new Set()
-    for (const r of results) {
-      if (r.status !== 'rejected') continue
-      const key = r.reason?.message || String(r.reason)
-      if (seen.has(key)) continue
-      seen.add(key)
-      errHandler(r.reason)
-    }
-  }).finally(() => {
+  Promise.all([
+    moduleStore.load(p).catch(errHandler),
+    chartStore.load(p).catch(errHandler),
+    pageStore.load(p).catch(errHandler),
+    pageLayoutStore.load(p).catch(errHandler),
+  ]).catch(errHandler).then(() => {
     setTimeout(() => {
       loaded.value = true
     }, 500)
@@ -141,15 +126,11 @@ function prepareNamespace() {
 }
 
 function errHandler(err) {
-  if (!err) return
   switch ((err.response || {}).status) {
     case 403:
       error.value = t('notification.general.composeAccessNotAllowed')
-      toastDanger(error.value)
-      return
   }
-  const msg = err.message || (typeof err === 'string' ? err : '')
-  if (msg) toastDanger(msg)
+  return Promise.reject(err)
 }
 
 function setDefaultValues() {

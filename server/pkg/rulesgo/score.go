@@ -12,16 +12,16 @@ import (
 // --- score.matrix: likelihood × impact (or custom cell lookup) ---
 
 type scoreMatrixConfig struct {
-	LikelihoodField string             `json:"likelihoodField"`
-	ImpactField     string             `json:"impactField"`
-	Likelihood      string             `json:"likelihood,omitempty"` // literal / {{template}}
-	Impact          string             `json:"impact,omitempty"`
-	Scale           int                `json:"scale,omitempty"`   // clamp 1..scale, default 5
-	Formula         string             `json:"formula,omitempty"` // product (default) | sum
-	Matrix          [][]float64        `json:"matrix,omitempty"` // optional custom cells [L-1][I-1]
-	OutScore        string             `json:"outScore,omitempty"`
-	OutX            string             `json:"outX,omitempty"`
-	OutY            string             `json:"outY,omitempty"`
+	LikelihoodField string      `json:"likelihoodField"`
+	ImpactField     string      `json:"impactField"`
+	Likelihood      string      `json:"likelihood,omitempty"` // literal / {{template}}
+	Impact          string      `json:"impact,omitempty"`
+	Scale           int         `json:"scale,omitempty"`   // clamp 1..scale, default 5
+	Formula         string      `json:"formula,omitempty"` // product (default) | sum
+	Matrix          [][]float64 `json:"matrix,omitempty"`  // optional custom cells [L-1][I-1]
+	OutScore        string      `json:"outScore,omitempty"`
+	OutX            string      `json:"outX,omitempty"`
+	OutY            string      `json:"outY,omitempty"`
 }
 
 type scoreMatrixExecutor struct{}
@@ -78,15 +78,15 @@ func (n *scoreMatrixExecutor) Execute(ctx context.Context, node ChainNode, ec *E
 type scoreFactor struct {
 	Field  string  `json:"field"`
 	Weight float64 `json:"weight"`
-	Max    float64 `json:"max"`             // normalize divisor; required > 0
+	Max    float64 `json:"max"`              // normalize divisor; required > 0
 	Invert bool    `json:"invert,omitempty"` // use (1 - x/max)
 }
 
 type scoreWeightedConfig struct {
-	Factors    []scoreFactor `json:"factors"`
-	Normalize  *bool         `json:"normalize,omitempty"` // default true → 0..100
-	OutScore   string        `json:"outScore,omitempty"`
-	ScaleMax   float64       `json:"scaleMax,omitempty"` // default 100 when normalize
+	Factors   []scoreFactor `json:"factors"`
+	Normalize *bool         `json:"normalize,omitempty"` // default true → 0..100
+	OutScore  string        `json:"outScore,omitempty"`
+	ScaleMax  float64       `json:"scaleMax,omitempty"` // default 100 when normalize
 }
 
 type scoreWeightedExecutor struct{}
@@ -163,13 +163,13 @@ type riskBandDef struct {
 }
 
 type riskBandConfig struct {
-	ScoreField             string        `json:"scoreField,omitempty"`
-	ControlField           string        `json:"controlField,omitempty"` // 0..1 effectiveness
-	Bands                  []riskBandDef `json:"bands,omitempty"`
-	OutLevel               string        `json:"outLevel,omitempty"`
-	OutResidual            string        `json:"outResidual,omitempty"`
-	CriticalLevels         []string      `json:"criticalLevels,omitempty"` // default ["critical"]
-	OutCriticalFlag        string        `json:"outCriticalFlag,omitempty"`
+	ScoreField      string        `json:"scoreField,omitempty"`
+	ControlField    string        `json:"controlField,omitempty"` // 0..1 effectiveness
+	Bands           []riskBandDef `json:"bands,omitempty"`
+	OutLevel        string        `json:"outLevel,omitempty"`
+	OutResidual     string        `json:"outResidual,omitempty"`
+	CriticalLevels  []string      `json:"criticalLevels,omitempty"` // default ["critical"]
+	OutCriticalFlag string        `json:"outCriticalFlag,omitempty"`
 }
 
 type riskBandExecutor struct{}

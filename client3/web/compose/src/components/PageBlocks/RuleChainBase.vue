@@ -28,11 +28,10 @@
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, inject, onBeforeUnmount } from 'vue'
 import { NoID } from 'corteza-lib/js/dist'
 import Wrap from './Wrap/index.js'
-import { scanIDsFromTrigger } from './cmdbAgentSync.js'
+import { scanIDsFromTrigger, pullScanResultsIntoCompose } from './cmdbAgentSync.js'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -45,10 +44,12 @@ const props = defineProps({
 })
 
 const $ComposeAPI = inject('$ComposeAPI')
-const route = useRoute()
 
 const running = ref(false)
 const result = ref(null)
+let pollAbort = false
+
+onBeforeUnmount(() => { pollAbort = true })
 
 const chainID = computed(() => props.block.options?.chainID || '')
 const label = computed(() => props.block.options?.label || 'Run Rule Chain')
@@ -142,18 +143,8 @@ function unwrapScalar (v) {
 }
 
 function triggerContext () {
-  const rec = recordPayload(props.record)
-  const rid = currentRecordID(rec)
   const ctx = { ...(props.block.options?.context || {}) }
-  for (const [k, v] of Object.entries(ctx)) {
-    ctx[k] = interpolateCtxValue(v, rec, rid)
-  }
-  if (rid) {
-    ctx.recordID = rid
-    if (!ctx.sourceID && !ctx.policyID && !ctx.snapshotID) {
-      ctx.sourceID = rid
-    }
-  }
+  const rec = recordPayload(props.record)
   const values = rec?.values || {}
   if (!ctx.cidr || ctx.cidr === 'auto') {
     if (values.cidr) ctx.cidr = unwrapScalar(values.cidr)
@@ -164,28 +155,11 @@ function triggerContext () {
   return ctx
 }
 
-function currentRecordID (rec) {
-  const fromRec = rec?.recordID
-  if (fromRec && fromRec !== NoID) return String(fromRec)
-  const fromRoute = route.params?.recordID
-  if (fromRoute && fromRoute !== NoID) return String(fromRoute)
-  return ''
-}
-
-function interpolateCtxValue (v, rec, rid) {
-  if (typeof v !== 'string') return v
-  let out = v.replace(/\$\{recordID\}/g, rid || '')
-  out = out.replace(/\$\{record\.values\.(\w+)\}/g, (_, name) => {
-    const val = unwrapScalar(rec?.values?.[name])
-    return val == null ? '' : String(val)
-  })
-  return out
-}
-
 async function runChain () {
   if (!chainID.value) return
   running.value = true
   result.value = null
+  pollAbort = false
   try {
     const { data } = await $ComposeAPI.api().request({
       method: 'post',
@@ -195,7 +169,7 @@ async function runChain () {
         pageID: props.page?.pageID,
         moduleID: props.module?.moduleID,
         namespaceID: props.namespace?.namespaceID,
-        recordID: currentRecordID(recordPayload(props.record)) || undefined,
+        recordID: props.record?.recordID && props.record.recordID !== NoID ? props.record.recordID : undefined,
         record: recordPayload(props.record),
         context: triggerContext(),
       },
@@ -206,8 +180,31 @@ async function runChain () {
     }
     const ids = scanIDsFromTrigger(result.value)
     const isScan = chainID.value === 'cmdb-trigger-scan' || ids.scanID
-    if (result.value.success && isScan && ids.scanID) {
-      result.value = { success: true, output: 'Сканирование запущено. Устройства появятся в списке по мере ingest на сервере.' }
+    if (result.value.success && isScan && ids.scanID && !pollAbort) {
+      const agentUrl = props.block.options?.context?.agentUrl || 'http://localhost:8085/api'
+      result.value = { success: true, output: 'Сканирование запущено, загрузка из CMDB API…' }
+      const pulled = await pullScanResultsIntoCompose({
+        $ComposeAPI,
+        namespaceID: props.namespace?.namespaceID,
+        agentUrl,
+        scanID: ids.scanID,
+        composeScanRecordID: ids.composeScanRecordID,
+        onProgress (s) {
+          const pct = s.progress != null ? Math.round(s.progress) : 0
+          const found = s.found != null ? s.found : 0
+          const tgt = s.target ? ` · ${s.target}` : ''
+          result.value = { success: true, output: `Сканирование ${pct}% · найдено ${found}${tgt}` }
+        },
+      })
+      const st = pulled.status?.status || pulled.status?.Status
+      const why = pulled.status?.error || pulled.status?.message || pulled.status?.Error
+      if (st === 'error' || st === 'failed') {
+        result.value = { success: false, error: why || 'Скан завершился с ошибкой' }
+      } else if (!pulled.found) {
+        result.value = { success: true, output: why ? `Найдено 0 устройств. ${why}` : 'Найдено 0 устройств' }
+      } else {
+        result.value = { success: true, output: `Загружено устройств: ${pulled.found}` }
+      }
     } else if (result.value.success && isScan && !ids.scanID) {
       result.value = { success: false, error: 'Агент не вернул scanID. Проверьте CMDB agent на :8085 и что цепочка POST /api/scan проходит.' }
     }

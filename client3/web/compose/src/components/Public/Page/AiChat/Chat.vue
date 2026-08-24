@@ -1,39 +1,6 @@
 <template>
   <div class="chat-container" :class="{ frameless: !framed }">
     <div
-      v-if="showModelSwitcher || showToolsBadge"
-      class="chat-meta-bar"
-    >
-      <select
-        v-if="showModelSwitcher"
-        v-model="selectedModel"
-        class="form-select form-select-sm chat-model-select"
-        :title="$t('aiChat.model.label')"
-        :disabled="!modelOptions.length || loading"
-        @change="onModelPicked"
-      >
-        <option v-for="m in modelOptions" :key="m" :value="m">{{ modelLabel(m) }}</option>
-      </select>
-      <span
-        v-if="showModelSwitcher && preloadWarming"
-        class="d-flex align-items-center gap-1 text-secondary small text-nowrap"
-        :title="$t('aiChat.warmup.inProgress')"
-      >
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-        <span>{{ $t('aiChat.warmup.short') }}</span>
-      </span>
-      <span
-        v-if="showToolsBadge"
-        class="chat-tools-badge"
-        :class="[toolsBadgeClass, { 'ms-auto': showModelSwitcher }]"
-        :title="toolsTitle"
-        role="img"
-        :aria-label="toolsTitle"
-      >
-        <font-awesome-icon :icon="['fas', 'tools']" />
-      </span>
-    </div>
-    <div
       v-if="isEmpty"
       class="empty-state"
     >
@@ -63,15 +30,6 @@
           <font-awesome-icon :icon="['fas', msg.role === 'user' ? 'user' : 'brain']" />
         </div>
         <div class="message-body">
-          <div
-            v-if="msg.role === 'assistant' && (msg.usedTools || (msg.active && toolsActive))"
-            class="msg-tools-flag"
-            :class="{ active: msg.active && toolsActive }"
-            :title="$t('aiChat.tools.invoked')"
-          >
-            <font-awesome-icon :icon="['fas', 'tools']" size="xs" />
-            <span>{{ $t('aiChat.tools.invoked') }}</span>
-          </div>
           <div
             v-if="msg.role === 'assistant' && (msg.reasoning || (msg.active && streamStatus === 'thinking'))"
             class="reasoning"
@@ -287,7 +245,6 @@ import html2pdf from 'html2pdf.js'
 import { Document, Packer, Paragraph, TextRun, ExternalHyperlink, HeadingLevel, AlignmentType, NumberFormat, WidthType, BorderStyle, ShadingType, Table, TableRow, TableCell } from 'docx'
 import ECharts from 'vue-echarts'
 import { splitChartParts, replaceChartFences } from './chatChart.js'
-import { parseModelsPayload, modelToolsEnabled, modelLabel, pickChatModel, readStoredModel, writeStoredModel } from './chatTools.js'
 import { useStore } from '../../../../store'
 import ChartComponent from '../../../Chart/index.vue'
 
@@ -301,16 +258,9 @@ const props = defineProps({
   magnified: { type: Boolean, default: false },
   files: { type: Array, required: false, default: () => [] },
   model: { type: String, required: false, default: '' },
-  preferredModel: { type: String, required: false, default: '' },
-  modelStorageKey: { type: String, default: 'aiChat.model' },
   active: { type: Boolean, default: true },
   framed: { type: Boolean, default: true },
-  showModelSwitcher: { type: Boolean, default: false },
-  showToolsBadge: { type: Boolean, default: true },
-  modelTools: { type: Object, default: null },
 })
-
-const emit = defineEmits(['tools-state'])
 
 const store = useStore()
 const $ComposeAPI = inject('$ComposeAPI', window.__composeAPI)
@@ -336,74 +286,6 @@ const stickToBottom = ref(true)
 const copiedIdx = ref(-1)
 let persistTimer = null
 let copiedTimer = null
-const localModelTools = ref({})
-const defaultModel = ref('')
-const modelOptions = ref([])
-const selectedModel = ref('')
-const preloadWarming = ref(false)
-const sessionTools = ref(null)
-const toolsActive = ref(false)
-let warmUpSeq = 0
-
-const resolvedModel = computed(() => props.model || selectedModel.value || defaultModel.value)
-const toolsLookup = computed(() => props.modelTools || localModelTools.value)
-const catalogTools = computed(() => modelToolsEnabled(resolvedModel.value, toolsLookup.value))
-const toolsEnabled = computed(() => {
-  if (sessionTools.value !== null) return sessionTools.value
-  if (catalogTools.value !== null) return catalogTools.value
-  return false
-})
-const toolsTitle = computed(() => {
-  if (toolsActive.value) return $t('aiChat.tools.invoked')
-  return toolsEnabled.value ? $t('aiChat.tools.enabled') : $t('aiChat.tools.disabled')
-})
-const toolsBadgeClass = computed(() => ({
-  on: toolsEnabled.value && !toolsActive.value,
-  off: !toolsEnabled.value && !toolsActive.value,
-  active: toolsActive.value,
-}))
-
-function emitToolsState () {
-  emit('tools-state', {
-    enabled: sessionTools.value,
-    active: toolsActive.value,
-  })
-}
-
-function warmUpSelected () {
-  if (!props.showModelSwitcher || !selectedModel.value || !$ComposeAPI?.pageAiWarmUp) return
-  const seq = ++warmUpSeq
-  preloadWarming.value = true
-  $ComposeAPI.pageAiWarmUp({ model: selectedModel.value }).catch(() => {}).finally(() => {
-    if (seq === warmUpSeq) preloadWarming.value = false
-  })
-}
-
-function applyCatalogSelection (names, serverDefault) {
-  if (!props.showModelSwitcher || !names.length) return
-  const saved = readStoredModel(props.modelStorageKey)
-  selectedModel.value = pickChatModel(names, saved, props.preferredModel || serverDefault)
-  warmUpSelected()
-}
-
-function onModelPicked () {
-  if (!props.showModelSwitcher || !selectedModel.value) return
-  writeStoredModel(selectedModel.value, props.modelStorageKey)
-  warmUpSelected()
-}
-
-function loadModelTools () {
-  if (!$ComposeAPI?.pageAiModels) return
-  if (!props.showModelSwitcher && props.modelTools) return
-  $ComposeAPI.pageAiModels().then((payload = {}) => {
-    const parsed = parseModelsPayload(payload)
-    if (!props.modelTools) localModelTools.value = parsed.tools
-    if (parsed.defaultModel) defaultModel.value = parsed.defaultModel
-    modelOptions.value = parsed.names
-    applyCatalogSelection(parsed.names, parsed.defaultModel)
-    emitToolsState()
-  }).catch(() => {})
-}
 
 const isEmpty = computed(() => !messages.value.some(m => m.role === 'user' || (m.role === 'assistant' && m.content)))
 const lastAssistantIdx = computed(() => {
@@ -414,7 +296,6 @@ const lastAssistantIdx = computed(() => {
 })
 const statusLabel = computed(() => {
   if (warmingUp.value || streamStatus.value === 'warming') return $t('aiChat.status.warming')
-  if (streamStatus.value === 'using-tools' || toolsActive.value) return $t('aiChat.status.usingTools')
   if (streamStatus.value === 'writing') return $t('aiChat.status.writing')
   if (loading.value) return $t('aiChat.status.thinking')
   return ''
@@ -468,7 +349,6 @@ function persistSession() {
         content: String(m.content || '').slice(0, 50000),
         reasoning: String(m.reasoning || '').slice(0, 20000),
         collapsed: !!m.collapsed,
-        usedTools: !!m.usedTools,
       })),
     }
     localStorage.setItem(sessionKey(), JSON.stringify(payload))
@@ -488,7 +368,6 @@ function restoreSession() {
       reasoning: m.reasoning || '',
       reasoningOpen: false,
       collapsed: !!m.collapsed,
-      usedTools: !!m.usedTools,
       active: false,
     }))
     return true
@@ -849,7 +728,7 @@ function formatMessageForExport(text) {
 function buildExportDocument() {
   const items = exportableMessages()
   const when = new Date().toLocaleString()
-  const model = resolvedModel.value || '—'
+  const model = props.model || '—'
   const bubbles = items.map((m, i) => {
     const isUser = m.role === 'user'
     const roleLabel = isUser ? 'User' : 'Assistant'
@@ -1007,7 +886,7 @@ const exportPdfStyles = `
 `
 
 function exportMarkdown() {
-  const lines = ['# Chat Export', '', `> ${new Date().toLocaleString()} · model: ${resolvedModel.value || '—'}`, '', '---', '']
+  const lines = ['# Chat Export', '', `> ${new Date().toLocaleString()} · model: ${props.model || '—'}`, '', '---', '']
   for (const m of exportableMessages()) {
     const role = m.role === 'user' ? '**User**' : '**Assistant**'
     lines.push(`${role}`)
@@ -1093,7 +972,7 @@ async function exportDocx() {
     new Paragraph({
       children: [
         new TextRun({
-          text: `${new Date().toLocaleString()} · Model: ${stripHtml(resolvedModel.value) || '—'}`,
+          text: `${new Date().toLocaleString()} · Model: ${stripHtml(props.model) || '—'}`,
           size: 20,
           color: '667788',
         }),
@@ -1382,13 +1261,10 @@ async function sendMessage(overrideText, opts = {}) {
     reasoningOpen: true,
     active: true,
     collapsed: false,
-    usedTools: false,
   })
   loading.value = true
   warmingUp.value = false
-  toolsActive.value = false
   streamStatus.value = 'thinking'
-  emitToolsState()
   scrollToBottom()
 
   abortController.value = new AbortController()
@@ -1407,7 +1283,7 @@ async function sendMessage(overrideText, opts = {}) {
       namespaceID: props.namespace,
       pageID: props.page,
       moduleID: props.module,
-      model: resolvedModel.value,
+      model: props.model,
       signal: abortController.value.signal,
     }, ({ token, reason, status }) => {
       if (status === 'warming') {
@@ -1419,24 +1295,6 @@ async function sendMessage(overrideText, opts = {}) {
       if (status === 'ready') {
         warmingUp.value = false
         streamStatus.value = 'thinking'
-        scrollToBottom()
-        return
-      }
-      if (status === 'tools-enabled') {
-        sessionTools.value = true
-        emitToolsState()
-        return
-      }
-      if (status === 'tools-disabled') {
-        sessionTools.value = false
-        emitToolsState()
-        return
-      }
-      if (status === 'using-tools') {
-        toolsActive.value = true
-        messages.value[msgIdxAnswer].usedTools = true
-        streamStatus.value = 'using-tools'
-        emitToolsState()
         scrollToBottom()
         return
       }
@@ -1476,12 +1334,10 @@ async function sendMessage(overrideText, opts = {}) {
   } finally {
     loading.value = false
     warmingUp.value = false
-    toolsActive.value = false
     streamStatus.value = ''
     messages.value[msgIdxAnswer].active = false
     messages.value[msgIdxAsk].active = false
     abortController.value = null
-    emitToolsState()
     schedulePersist()
     scrollToBottom()
     const queued = pendingAutoSend
@@ -1508,24 +1364,12 @@ watch(() => props.startPrompt, (prompt) => {
 
 watch(messages, schedulePersist, { deep: true })
 
-watch(resolvedModel, () => {
-  sessionTools.value = null
-  emitToolsState()
-})
-
-watch(() => props.preferredModel, () => {
-  if (!props.showModelSwitcher || !modelOptions.value.length) return
-  if (readStoredModel(props.modelStorageKey)) return
-  applyCatalogSelection(modelOptions.value, defaultModel.value)
-})
-
 watch(() => props.active, (active) => {
   if (active) focusInput()
 })
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
-  loadModelTools()
   restoreSession()
   nextTick(() => {
     const incoming = String(props.startPrompt || '').trim()
@@ -1573,9 +1417,6 @@ defineExpose({
   newChat,
   focusInput,
   applyIncomingPrompt,
-  toolsEnabled,
-  toolsActive,
-  toolsTitle,
 })
 </script>
 
@@ -1597,76 +1438,6 @@ defineExpose({
 .chat-container.frameless {
   border: none;
   border-radius: 0;
-}
-
-.chat-meta-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
-  padding: 6px 12px 0;
-  min-width: 0;
-}
-
-.chat-model-select {
-  width: auto;
-  max-width: 180px;
-  flex-shrink: 0;
-  margin-right: auto;
-}
-
-.chat-tools-badge {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  color: #8a93a0;
-  background: #f3f5f8;
-  flex-shrink: 0;
-}
-
-.chat-tools-badge.on {
-  color: #1f7a4d;
-  background: #e8f6ee;
-}
-
-.chat-tools-badge.off::after {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 2px;
-  background: currentColor;
-  transform: rotate(-45deg);
-  opacity: 0.85;
-}
-
-.chat-tools-badge.active {
-  color: #1f4b7a;
-  background: #e8eef6;
-  animation: chat-tools-pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes chat-tools-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
-}
-
-.msg-tools-flag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  font-size: 12px;
-  color: #1f7a4d;
-}
-
-.msg-tools-flag.active {
-  color: #1f4b7a;
-  animation: chat-tools-pulse 1.2s ease-in-out infinite;
 }
 
 .export-dropdown {

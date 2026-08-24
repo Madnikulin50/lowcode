@@ -176,7 +176,6 @@ import Draggable from 'vuedraggable'
 import { NoID } from 'corteza-lib/js/dist'
 import FieldSelectTranslator from 'corteza-webapp-compose/src/components/Admin/Module/FieldSelectTranslator'
 import { components } from 'corteza-lib/vue/dist'
-import { themeColor } from 'corteza-webapp-compose/src/lib/color.js'
 const { CInputColorPicker } = components
 
 const props = defineProps({
@@ -246,7 +245,12 @@ const defaultBackgroundColor = computed(() => {
 })
 
 function resolveColor (val) {
-  return themeColor(val, themeSettings.value)
+  if (!val) return val
+  if (val[0] === '#') return val
+  const themes = themeSettings.value
+    .filter(theme => theme.id !== 'general')
+    .map(theme => ({ id: theme.id, values: JSON.parse(theme.values) }))
+  return themes[0]?.values[val] || val
 }
 
 function setOptionStyle (index, key, value) {

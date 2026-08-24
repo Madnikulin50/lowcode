@@ -1424,7 +1424,7 @@ func TestSortingAndPagination(t *testing.T) {
 		req.NoError(err)
 		req.NotNil(set)
 		req.NotNil(f.PageNavigation)
-		req.Equal(9, f.Total)
+		req.Equal(uint(9), f.Total)
 		req.Len(f.PageNavigation, 5)
 
 		f.PageCursor = f.PageNavigation[1].Cursor
@@ -1455,7 +1455,7 @@ func TestSortingAndPagination(t *testing.T) {
 		req.NoError(err)
 		req.NotNil(set)
 		req.NotNil(f.PageNavigation)
-		req.Equal(9, f.Total)
+		req.Equal(uint(9), f.Total)
 		req.Len(f.PageNavigation, 5)
 
 		f.PageCursor = f.PageNavigation[1].Cursor

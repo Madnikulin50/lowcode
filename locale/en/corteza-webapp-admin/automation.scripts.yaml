@@ -4,10 +4,10 @@ list:
     updatedAt: Last update
   filter:
     absoluteTime: Show absolute time
-    incScriptsWithErrors: Errors ({ count })
-    incScriptsWithIterator: Iterator ({ count })
-    incScriptsWithSecurity: Security ({ count })
-    incScriptsWithTriggers: Triggers ({ count })
+    incScriptsWithErrors: Errors ({{ count }})
+    incScriptsWithIterator: Iterator ({{ count }})
+    incScriptsWithSecurity: Security ({{ count }})
+    incScriptsWithTriggers: Triggers ({{ count }})
     searchQuery: Search query
   flags:
     iterator: Iterator

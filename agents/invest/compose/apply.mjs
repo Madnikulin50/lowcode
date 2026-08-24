@@ -25,6 +25,7 @@ import {
 } from './fields.mjs'
 import { buildPages } from './pages.mjs'
 import { buildRuleChains } from './chains.mjs'
+import { attachPrompts } from '../../../scripts/ai-prompts.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -292,7 +293,7 @@ async function main () {
   const charts = { docsByStatus, rfcByStatus, risksByImpact, wbsGantt }
 
   const pageIDs = {}
-  for (const page of buildPages({ modules, charts })) {
+  for (const page of attachPrompts(buildPages({ modules, charts }), 'invest')) {
     pageIDs[page.handle] = await ensurePage(api, nsID, page)
   }
 

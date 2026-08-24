@@ -24,11 +24,7 @@ onMounted(async () => {
       window.__composeAPI?.setHeader?.('Accept-Language', user.meta.preferredLanguage)
       window.__composeAPI?.setHeader?.('Content-Language', user.meta.preferredLanguage)
     }
-    if (user.meta.theme) {
-      const html = document.getElementsByTagName('html')[0]
-      html.setAttribute('data-color-mode', user.meta.theme)
-      html.setAttribute('data-bs-theme', user.meta.theme)
-    }
+    if (user.meta.theme) { document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme) }
     loaded.value = true
   } catch (err) {
     if (err instanceof Error && err.message === 'Unauthenticated') { auth.startAuthenticationFlow(); return }

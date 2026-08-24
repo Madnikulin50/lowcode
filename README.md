@@ -1,206 +1,85 @@
 <h1 align="center">
-  Lowcode
+  <img width="300px" src=".github/assets/corteza_logo.svg" />
   <br />
   <br />
-  <abbr>Low-code platform for data apps, automation, and AI</abbr>
+  <abbr>Freedom. Flexibility. Performance. Speed.</abbr>
   <br />
   <br />
   <div align="center">
 
-  [![License](https://img.shields.io/github/license/Madnikulin50/lowcode?style=for-the-badge)](LICENSE)
-  [![Go Report Card](https://goreportcard.com/badge/github.com/madnikulin50/lowcode?style=for-the-badge)](https://goreportcard.com/report/github.com/madnikulin50/lowcode)
+  [![License Card](https://img.shields.io/github/license/cortezaproject/corteza?style=for-the-badge)](https://img.shields.io/github/license/cortezaproject/corteza?style=for-the-badge)
+  [![DockerHub Downloads Card](https://img.shields.io/docker/pulls/cortezaproject/corteza?style=for-the-badge)](https://img.shields.io/docker/pulls/cortezaproject/corteza?style=for-the-badge)
+  [![Latest Version Card](https://img.shields.io/github/v/release/cortezaproject/corteza?label=stable%20version&style=for-the-badge)](https://img.shields.io/github/v/release/cortezaproject/corteza?label=stable%20version&style=for-the-badge)
+
+  [![Go Report Card](https://goreportcard.com/badge/github.com/madnikulin50/lowcode?style=for-the-badge)](https://goreportcard.com/report/github.com/madnikulin50/lowcode?style=for-the-badge)
+  [![CodeCov Report Card](https://img.shields.io/codecov/c/github/cortezaproject/corteza-server?style=for-the-badge)](https://img.shields.io/codecov/c/github/cortezaproject/corteza-server?style=for-the-badge)
+
+  [![Community](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fforum.cortezaproject.org%2F&style=for-the-badge)](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fforum.cortezaproject.org%2F&style=for-the-badge)
+
 
   </div>
 </h1>
 
-Lowcode is a platform to build CRM and operations apps from modules, pages and charts, run workflows and rule chains, and talk to records through an AI assistant.
+The Corteza low-code platform lets you build and iterate CRM, business process and other structured data apps fast, create intelligent business process workflows and connect with almost any data source.
+All with the flexibility, freedom and control you get from a 100% open-source platform written on modern technologies maintained by [Planet Crust](https://www.planetcrust.com/), its founder.
 
-This repository is a fork of [Corteza](https://github.com/cortezaproject/corteza).
+<div align="center">
+  <img src=".github/assets/hero-animation.webp">
+</div>
 
-Docker image: [`madnikulin50/pnp-lowcode`](https://hub.docker.com/r/madnikulin50/pnp-lowcode).
+## Key Features
 
-## Features
+* **Standards oriented** by using well established data formats, technologies, and design decisions.
+* **Flexible security** provided as a flattened RBAC facility allows organizations to apply complex internal security policies to Corteza.
+* **Extensive privacy features** provide a way for organizations to configure Corteza to conform to data privacy regulations in the regions they are operating in.
+* **Accessible** conforming to the WCAG 2.1 guidelines allowing simple use for a wider audience.
+* **Integratable** into and with external services and other Corteza instances due to it's API-centric design, flexible data storage layer, and powerful automation facilities.
+* **Customizable** from translations and terminology to prebuilt low-code applications to completely new low-code applications and business processes.
 
-* **Vue 3 webapps** — Compose, Admin, One, Workflow, Reporter, Privacy and Discovery are Vite + Vue 3 + Bootstrap 5 + Pinia (`client3/`). Legacy Vue 2 lives in `client/` and is not the production UI.
-* **AI assistant** — in-app chat with Ollama (`qwen3:8b` by default). Static CRUD tools for modules/pages/charts plus per-module record tools. Create/delete actions ask for confirmation. Chat export to PDF and DOCX.
-* **MCP** — the same Compose tools over STDIO (`MCP_STDIO=true`) or SSE (`MCP_SSE_ADDR=:9090`). The CMDB agent exposes its own MCP tools when started with `--mcp`.
-* **Pages RAG** — index page blocks (with translations) for retrieval; record-bound blocks are skipped.
-* **Rule chains** — in-namespace graphs (HTTP, CRUD, foreach, AI nodes). Admin UI under **Rule chains**; used by CMDB and Invest packs.
-* **ETL** — per-module jobs (REST / MCP / SMB sources), run from the module editor.
-* **Charts** — ECharts: pie/bar/line/doughnut/funnel/gauge/radar/scatter, stacked bar/line, `stackBy` second dimension, fill gradient, data-table toolbox, save-as-image.
-* **i18n** — English and Russian resource translations (`locale/` and embedded `server/pkg/locale/src`).
-* **Agents** — standalone Go services that scan or calculate, then write Compose records.
+## Getting Started
 
-## Architecture
+<br />
 
-```
-┌─────────────┐     REST / WS      ┌──────────────────┐
-│  Vue 3 UI   │ ◄────────────────► │  Go server       │
-│  client3/   │                    │  server/         │
-└─────────────┘                    │  Compose, Auth,  │
-                                   │  Chat, MCP, RAG, │
-┌─────────────┐    Ollama HTTP     │  Rule chains,ETL │
-│  Ollama     │ ◄────────────────► └────────┬─────────┘
-│  :11434     │                             │
-└─────────────┘                             │ Compose API
-                                   ┌────────▼─────────┐
-                                   │  agents/         │
-                                   │  cmdb  :8085     │
-                                   │  invest :8086    │
-                                   └──────────────────┘
-```
+> **Note**
+> Planet Crust offers hosted [Corteza cloud instances](https://www.planetcrust.com/start-trial-lp-main) as the easiest way to get started.
 
-| Path | Role |
-|---|---|
-| `server/` | API, Compose, auth, chat, MCP, RAG, rule chains, ETL, locale embed |
-| `client3/` | Production webapps (Vite). Bundles go to `webapp-assets/` (not `assets/` — that path is reserved for branding CSS) |
-| `lib/` | Shared JS/Vue libraries |
-| `locale/` | YAML translations loaded in development (`LOCALE_DEVELOPMENT_MODE`) |
-| `agents/cmdb` | Network discovery agent + Compose namespace pack |
-| `agents/invest` | EVM / critical-path engine + Invest namespace pack |
-| `manual/` | AsciiDoc manuals |
+<br />
 
-## Applications
+Refer to the [DevOps guide](https://docs.cortezaproject.org/corteza-docs/2024.9/devops-guide/index.html) for a complete guide on how to get Corteza up and running.
+Additionally, we've provided some [video instructions](https://forum.cortezaproject.org/t/videos-on-how-to-set-up-corteza/91).
 
-| App | URL (typical) | Purpose |
-|---|---|---|
-| One | `/` | App launcher |
-| Compose | `/compose` | Low-code namespaces, pages, records, chat |
-| Admin | `/admin` | Users, roles, settings, AI models, automation |
-| Workflow | `/workflow` | Visual workflows |
-| Reporter | `/reporter` | Reports |
-| Privacy | `/privacy` | Privacy requests |
-| Discovery | `/discovery` | Search |
+Quick references:
+* [data backup and restore](https://docs.cortezaproject.org/corteza-docs/2024.9/devops-guide/maintenance/backups.html)
+* [troubleshooting](https://docs.cortezaproject.org/corteza-docs/2024.9/devops-guide/troubleshooting/index.html)
+* [setting up an email relay](https://docs.cortezaproject.org/corteza-docs/2024.9/devops-guide/email-relay.html)
+* [setting up sink routes](https://docs.cortezaproject.org/corteza-docs/2024.9/devops-guide/sink-route.html)
+* [offline](https://docs.cortezaproject.org/corteza-docs/2024.9/devops-guide/examples/deploy-offline/index.html) and [online](https://docs.cortezaproject.org/corteza-docs/2024.9/devops-guide/examples/deploy-online/index.html) configuration examples
+* [online demo instance](https://latest.cortezaproject.org/) for a hands-on feature exploration
 
-## Getting started
+## Creating With Corteza
 
-### Docker
+Refer to the [Integrator Guide](https://docs.cortezaproject.org/corteza-docs/2024.9/integrator-guide/index.html) to learn how you can build on the core features to create virtually anything.
 
-```bash
-# .env must set VERSION, HTTP_PORT, HTTP_DOC_PORT, LOCAL
-docker compose up -d
-```
+Quick references:
+* [Corteza Compose configuration](https://docs.cortezaproject.org/corteza-docs/2024.9/integrator-guide/compose-configuration/index.html)
+* automation using [workflows](https://docs.cortezaproject.org/corteza-docs/2024.9/integrator-guide/automation/workflows/index.html) and [automation scripts](https://docs.cortezaproject.org/corteza-docs/2024.9/integrator-guide/automation/automation-scripts/index.html)
+* [using the REST API](https://docs.cortezaproject.org/corteza-docs/2024.9/integrator-guide/accessing-corteza/index.html),
 
-`docker-compose.yml` runs `madnikulin50/pnp-lowcode:${VERSION}` on `${HTTP_PORT}` and optional docs on `${HTTP_DOC_PORT}`. Data is stored in `./data/server`.
+## Upgrading Corteza
 
-Build a local image (after compiling server + `client3`):
-
-```bash
-make ddebug          # tag pnp-lowcode:2026.08.20
-# or
-make drelease        # build, tag madnikulin50/pnp-lowcode:2026.08.20, push
-```
-
-### Local development
-
-Typical layout in this repo:
-
-| Process | Address |
-|---|---|
-| Go server | `:3333` (`server/.env` / `DB_DSN`) |
-| Compose Vite | `:8080` (proxies API to the server) |
-| Ollama | `http://localhost:11434` |
-
-1. PostgreSQL with `DB_DSN` pointing at your database.
-2. From `server/`: build and `serve-api` (or run the existing debug binary).
-3. From `client3/web/compose`: `yarn && yarn dev` (same pattern for other webapps).
-4. Optional: start Ollama and pull `qwen3:8b` (override with `CHAT_MODEL` or **System → AI models**).
-
-Chat model resolution: admin `ai.roles.*` → `CHAT_MODEL` → `<model>…</model>` in the prompt → default `qwen3:8b`. Map tiles: setting `ui.map.tileURL` (empty = public OSM).
-
-### AI / MCP
-
-```bash
-# Compose MCP over SSE
-MCP_SSE_ADDR=:9090 ./lowcode-server serve-api
-
-# or STDIO
-MCP_STDIO=true ./lowcode-server serve-api
-```
-
-Warmup and models:
-
-* `GET /compose/chat/models`
-* `POST /compose/chat/warmup`
-* `POST /compose/pages-rag/reindex`
-
-## Agents
-
-### CMDB (`agents/cmdb`)
-
-Network inventory: ICMP/TCP scan of CIDR ranges, mDNS/DNS-SD, OUI vendor lookup, rule + LLM classification, optional vulnerability pass. Writes devices (and, via the Compose pack, services / findings / scan runs).
-
-```bash
-cd agents/cmdb
-make build    # vite UI + go build → bin/cmdb-agent
-./bin/cmdb-agent --db=embedded --listen=:8085
-# or persist into Lowcode:
-./bin/cmdb-agent --db=lowcode \
-  --api=http://localhost:3333/api \
-  --namespace=<namespaceID> \
-  --token="$TOKEN" \
-  --listen=:8085
-```
-
-| Flag | Default | Meaning |
-|---|---|---|
-| `--listen` | `:8085` | HTTP (API + embedded UI) |
-| `--db` | `embedded` | `embedded` (SQLite) or `lowcode` |
-| `--db-path` | `cmdb.db` | SQLite file |
-| `--llm-url` / `--llm-model` | Ollama / `deepseek-v2` | Classification fallback |
-| `--mcp` | off | MCP listen address or `stdio` |
-| `--scan-interval` | `20m` | Periodic scan (`0` = off) |
-| `--auto-cidrs` | empty | CIDRs for periodic scan |
-| `--status-interval` | `5m` | Online/offline ping |
-
-```bash
-curl -s -X POST http://localhost:8085/api/scan \
-  -H 'Content-Type: application/json' \
-  -d '{"cidr":"192.168.1.0/24"}'
-```
-
-**Discovery signals**
-
-* TCP ports including 5555 (adb), 5223 (apns), 7000 (airplay); mDNS adds 5353/udp.
-* mDNS browse + unicast probes (AirPlay, RAOP, HiSuite, Mi PCS, Google Cast, Miracast, …). TXT `model=` / `deviceid=` fill **Model** and hostname.
-* IEEE OUI table for mobile vendors (`tools/gen_oui.py` → `agent/oui_mobile.go`) — supporting signal only.
-* Classifier: strong rules (model, mDNS service, hostname) → heuristic (OUI + empty ports) → LLM. Types: `router`, `switch`, `server`, `workstation`, `printer`, `camera`, `firewall`, `phone`, `tablet`, `iot`, `unknown`.
-
-mDNS is link-local (multicast). Remote subnets only get unicast probes. OUI alone never decides type (Apple also makes Macs; Samsung/LG also make TVs).
-
-Provision the Compose space: see [`agents/cmdb/compose/README.md`](agents/cmdb/compose/README.md).
-
-### Invest (`agents/invest`)
-
-EVM (PV/EV/AC/SPI/CPI/EAC), critical path, and threshold alerts for the investment-projects namespace.
-
-```bash
-cd agents/invest
-go run . --api=http://localhost:3333 --namespace=<id> --token="$TOKEN" --listen=:8086
-```
-
-Pack and model: [`agents/invest/compose/README.md`](agents/invest/compose/README.md).
-
-## Building webapps
-
-From `client3/`:
-
-```bash
-make build    # all webapps under client3/web/*/
-```
-
-Vite must emit `webapp-assets/` (not `assets/`). The server already serves `/assets/*` from branding/embed.
-
-Shared `lib/js` and `lib/vue` need a dist rebuild after type or component changes (`yarn build` in each lib). Keep `@tiptap/*` versions aligned between `lib/vue` and compose.
-
-## Docs
-
-Modules, pages, workflows and the REST API are covered in this README and under `agents/*/compose/`. Upstream 2024.9 integrator and DevOps guides still apply for those core concepts.
+Refer to the [changelog](https://docs.cortezaproject.org/corteza-docs/2024.9/changelog/index.html) and the [upgrade guide](https://docs.cortezaproject.org/corteza-docs/2024.9/devops-guide/upgrade/index.html) to upgrade your Corteza instance.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Issues: [github.com/Madnikulin50/lowcode](https://github.com/Madnikulin50/lowcode).
+Refer to the [Developer Guide/Corteza Server](https://docs.cortezaproject.org/corteza-docs/2024.9/developer-guide/corteza-server/index.html) document for details regarding the [development setup](https://docs.cortezaproject.org/corteza-docs/2024.9/developer-guide/corteza-server/index.html#_development_setup), the [project structure](https://docs.cortezaproject.org/corteza-docs/2024.9/developer-guide/corteza-server/structure.html), and the feature insight documents.
+
+Refer to the [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and code of conduct.
+
+## Community
+
+Reach out to us on [our forum](https://forum.cortezaproject.org/).
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+Corteza is released under the Apache-2.0 license.
+Refer to the [LICENSE](LICENSE) file for additional information.

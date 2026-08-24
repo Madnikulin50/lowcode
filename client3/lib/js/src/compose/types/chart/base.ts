@@ -16,7 +16,6 @@ import {
   ISO8601Date,
   Apply,
 } from '../../../cast'
-import { isUnknownReportCount } from '../../unknown-total'
 
 export type PartialChart = Partial<BaseChart>
 
@@ -292,17 +291,6 @@ export class BaseChart {
     const dLabel = 'dimension_0'
     const { dimensions: [dimension] = [] } = report
     let labels: Array<string> = []
-
-    // Empty-metrics COUNT timeout: [{ count: -1 }]. Do not plot -1.
-    if (results.some(isUnknownReportCount)) {
-      return {
-        labels: [],
-        datasets: [],
-        dimension,
-        rows: [],
-        unknownTotal: true,
-      }
-    }
 
     // helper to choose between eight the provided value, default value or a generic 'undefined'
     const pickValue = (val: unknown, { default: dDft }: Dimension): unknown => {
