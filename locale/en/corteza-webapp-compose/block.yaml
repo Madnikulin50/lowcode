@@ -404,7 +404,40 @@ metric:
     dateFormat: Date format
     dimensionFieldLabel: Field
     dimensionFieldPlaceholder: Dimension field
+    dimensionFieldFootnote: Prefer a field that already holds a readable name (e.g. store or category name) — grouping by an ID field shows raw ID values as labels
     dimensionLabel: Dimension
+    topNLabel: Max rows
+    topNPlaceholder: All
+    sortDirectionLabel: Sort by
+    sortDirectionOptions:
+      valueDesc: Value, high to low
+      valueAsc: Value, low to high
+      labelAsc: Label, A–Z
+      labelDesc: Label, Z–A
+    compareValuesLabel: Compare two values
+    compareValue1Placeholder: First value
+    compareValue2Placeholder: Second value
+    compareValuesFootnote: Enter the exact field values to compare, e.g. store names. Leave both empty to show a full breakdown instead.
+    periodCompare:
+      label: Period comparison
+      enable: Compare to a previous period
+      dateFieldLabel: Date field
+      dateFieldPlaceholder: Select a date field
+      granularityLabel: Period
+      granularityOptions:
+        day: Day
+        week: Week
+        month: Month
+        quarter: Quarter
+        year: Year
+      modeLabel: Compare against
+      modeOptions:
+        previousPeriod: Previous period
+        yearOverYear: Same period last year
+      trendPositiveLabel: An increase means
+      trendPositiveOptions:
+        increase: Good (green)
+        decrease: Bad (red)
     filterLabel: Filter
     filterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
     transformFootnote: Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available). Make sure to wrap the variables with quotes ("")

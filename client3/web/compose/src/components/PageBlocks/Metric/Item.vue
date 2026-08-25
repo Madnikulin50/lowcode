@@ -10,7 +10,7 @@
       :style="balloonStyle"
     >
       <div class="mb-balloon-label flex-grow-1 me-2 text-truncate">
-        {{ metric.label || '—' }}
+        {{ value.label || metric.label || '—' }}
       </div>
       <div class="mb-balloon-value flex-shrink-0 d-inline-flex align-items-center gap-1">
         <font-awesome-icon
@@ -23,6 +23,9 @@
         </template>
         <template v-else>
           <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+          <span v-if="trendInfo" class="mb-trend d-inline-flex align-items-center gap-1" :class="trendInfo.cls">
+            <font-awesome-icon :icon="trendInfo.icon" size="xs" />{{ trendInfo.text }}
+          </span>
         </template>
       </div>
     </div>
@@ -51,16 +54,19 @@
           </template>
           <template v-else>
             <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <span v-if="trendInfo" class="mb-trend d-inline-flex align-items-center gap-1" :class="trendInfo.cls">
+              <font-awesome-icon :icon="trendInfo.icon" size="xs" />{{ trendInfo.text }}
+            </span>
           </template>
         </span>
       </div>
-      <div v-if="metric.label" class="rb-label mt-1">{{ metric.label }}</div>
+      <div v-if="value.label || metric.label" class="rb-label mt-1">{{ value.label || metric.label }}</div>
     </template>
 
     <!-- Badge role -->
     <template v-else-if="role === 'badge'">
       <div class="rb-badge" :style="badgeStyle">
-        <span v-if="metric.label" class="rb-badge-label">{{ metric.label }}</span>
+        <span v-if="value.label || metric.label" class="rb-badge-label">{{ value.label || metric.label }}</span>
         <span class="rb-badge-value d-inline-flex align-items-center gap-1">
           <font-awesome-icon
             v-if="thresholdIcon"
@@ -72,6 +78,9 @@
           </template>
           <template v-else>
             <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <span v-if="trendInfo" class="mb-trend d-inline-flex align-items-center gap-1" :class="trendInfo.cls">
+              <font-awesome-icon :icon="trendInfo.icon" size="xs" />{{ trendInfo.text }}
+            </span>
           </template>
         </span>
       </div>
@@ -80,7 +89,7 @@
     <!-- Meta role -->
     <template v-else-if="role === 'meta'">
       <div class="rb-meta-item">
-        <span v-if="metric.label" class="rb-meta-label">{{ metric.label }}</span>
+        <span v-if="value.label || metric.label" class="rb-meta-label">{{ value.label || metric.label }}</span>
         <span class="rb-meta-value d-inline-flex align-items-center gap-1" :style="valueStyle">
           <font-awesome-icon
             v-if="thresholdIcon"
@@ -92,6 +101,9 @@
           </template>
           <template v-else>
             <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <span v-if="trendInfo" class="mb-trend d-inline-flex align-items-center gap-1" :class="trendInfo.cls">
+              <font-awesome-icon :icon="trendInfo.icon" size="xs" />{{ trendInfo.text }}
+            </span>
           </template>
         </span>
       </div>
@@ -112,10 +124,13 @@
             </template>
             <template v-else>
               <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+              <span v-if="trendInfo" class="mb-trend d-inline-flex align-items-center gap-1" :class="trendInfo.cls">
+                <font-awesome-icon :icon="trendInfo.icon" size="xs" />{{ trendInfo.text }}
+              </span>
             </template>
           </span>
         </div>
-        <div v-if="metric.label" class="rb-label mt-1">{{ metric.label }}</div>
+        <div v-if="value.label || metric.label" class="rb-label mt-1">{{ value.label || metric.label }}</div>
       </div>
     </template>
 
@@ -124,7 +139,7 @@
       <div v-if="options.horizontalFieldLayoutEnabled" class="row g-2">
         <div class="col-md-6 col-xl-5">
           <label class="form-label d-flex align-items-center mb-0 rb-label">
-            <span class="d-flex" style="margin-top: 0.1rem;">{{ metric.label }}</span>
+            <span class="d-flex" style="margin-top: 0.1rem;">{{ value.label || metric.label }}</span>
           </label>
         </div>
         <div class="col-md-6 col-xl-7 d-flex align-items-center">
@@ -139,13 +154,16 @@
             </template>
             <template v-else>
               <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+              <span v-if="trendInfo" class="mb-trend d-inline-flex align-items-center gap-1" :class="trendInfo.cls">
+                <font-awesome-icon :icon="trendInfo.icon" size="xs" />{{ trendInfo.text }}
+              </span>
             </template>
           </span>
         </div>
       </div>
       <template v-else>
         <label class="form-label d-flex align-items-center mb-0 rb-label">
-          <span class="d-flex" style="margin-top: 0.1rem;">{{ metric.label }}</span>
+          <span class="d-flex" style="margin-top: 0.1rem;">{{ value.label || metric.label }}</span>
         </label>
         <span class="value d-inline-flex align-items-center gap-1" :style="valueStyle">
           <font-awesome-icon
@@ -158,6 +176,9 @@
           </template>
           <template v-else>
             <template v-if="metric.prefix">{{ metric.prefix }}</template>{{ displayValue }}<template v-if="metric.suffix">{{ metric.suffix }}</template>
+            <span v-if="trendInfo" class="mb-trend d-inline-flex align-items-center gap-1" :class="trendInfo.cls">
+              <font-awesome-icon :icon="trendInfo.icon" size="xs" />{{ trendInfo.text }}
+            </span>
           </template>
         </span>
       </template>
@@ -194,7 +215,7 @@
           v-if="metric.showLabel"
           :style="genStyle(metric.valueStyle, true)"
         >
-          {{ metric.label }}:&nbsp;
+          {{ value.label || metric.label }}:&nbsp;
         </span>
         <span>
           <template v-if="isEmpty">
@@ -325,6 +346,26 @@ const thresholdIcon = computed(() => {
   const key = matchedThreshold.value?.icon
   if (!key) return null
   return THRESHOLD_ICONS[key] || null
+})
+
+// Delta/trend badge for pairwise (B) and period-over-period (C) comparison
+// rows — driven by value.delta/deltaPct (set by PageBlockMetric.fetch()),
+// not by matchThreshold()/colorThresholds (that's static-value coloring,
+// unrelated to a computed previous-value comparison).
+const trendInfo = computed(() => {
+  const { delta, deltaPct } = props.value || {}
+  if (delta === undefined || delta === null || !Number.isFinite(delta)) return null
+
+  const flat = delta === 0
+  const worse = props.metric.trendPositive === 'decrease' ? delta > 0 : delta < 0
+  const icon = flat ? THRESHOLD_ICONS['arrow-right'] : THRESHOLD_ICONS[delta > 0 ? 'arrow-up' : 'arrow-down']
+  const cls = flat ? 'text-secondary' : (worse ? 'text-danger' : 'text-success')
+
+  const text = (deltaPct !== undefined && deltaPct !== null && Number.isFinite(deltaPct))
+    ? `${deltaPct >= 0 ? '+' : ''}${fmt.number(deltaPct * 100, { maximumFractionDigits: 1 })}%`
+    : `${delta >= 0 ? '+' : ''}${fmt.number(delta, { maximumFractionDigits: 2 })}`
+
+  return { icon, cls, text }
 })
 
 /** Pick threshold color for current numeric value (highest matching threshold). */
@@ -496,6 +537,13 @@ function setDefaultValues () {
 .mb-threshold-icon {
   flex-shrink: 0;
   opacity: 0.95;
+}
+
+.mb-trend {
+  font-size: 0.75em;
+  font-weight: 600;
+  opacity: 0.9;
+  white-space: nowrap;
 }
 
 .mb-metric--balloon.mb-metric--drill {

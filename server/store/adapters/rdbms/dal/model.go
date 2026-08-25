@@ -275,48 +275,25 @@ func (d *model) Search(f filter.Filter) (i *iterator, err error) {
 
 func (d *model) Count(ctx context.Context, f filter.Filter) (c uint, err error) {
 	var (
-		aux = struct {
-			Count uint `db:"count"`
-		}{}
-
-		rows  *sql.Rows
-		exprs []exp.Expression
-
 		q = d.dialect.GOQU().
 			From(d.table.Ident()).Select(goqu.COUNT(goqu.Star()).As("count"))
 	)
 
-	for ident, val := range f.Constraints() {
-		attrExpr, err := d.table.AttributeExpression(ident)
-		if err != nil {
-			return 0, err
-		}
-
-		exprs = append(exprs, exp.NewBooleanExpression(exp.EqOp, attrExpr, val))
+	q = d.applyFiltersToQuery(q, f)
+	if err = q.Error(); err != nil {
+		return 0, err
 	}
 
-	query, args, err := q.Where(exprs...).Limit(1).ToSQL()
+	query, args, err := q.ToSQL()
 	if err != nil {
 		return
 	}
 
-	rows, err = d.conn.QueryContext(ctx, query, args...)
-	if err != nil {
-		return
-	}
+	ctx, cancel := boundQueryContext(ctx, countQueryTimeout)
+	defer cancel()
 
-	defer rows.Close()
-	if !rows.Next() {
-		return 0, errors.NotFound("not found")
-	}
-
-	if err = rows.Scan(&aux.Count); err != nil {
-		return
-	}
-
-	c = aux.Count
-
-	return c, nil
+	c, err = queryRowCount(ctx, d.conn, query, args...)
+	return
 }
 
 // Aggregate constructs SELECT sql with group-by and an optional having CLAUSE
@@ -349,6 +326,10 @@ func (d *model) Aggregate(f filter.Filter, groupBy []dal.AggregateAttr, aggrExpr
 	// prepare a bit modified module that
 	// describes aggregated columns (prepending attributes used for group-by)
 	for _, c := range append(groupBy, aggrExpr...) {
+		if c.IsDummyGroup() {
+			// SQL skips this placeholder; keep scan buffer in lockstep.
+			continue
+		}
 		srcAttr = &dal.Attribute{
 			Ident: c.Identifier,
 			Type:  c.Type,
@@ -459,7 +440,9 @@ func (d *model) applyFiltersToQuery(base *goqu.SelectDataset, f filter.Filter) *
 	for ident, vv := range cc {
 		attr := d.model.Attributes.FindByIdent(ident)
 		if attr == nil {
-			return base.SetError(fmt.Errorf("unknown attribute %q used for constrant", ident))
+			// Dedicated tables and omitted system fields (namespaceID/moduleID/…)
+			// still receive these constraints from COUNT/list helpers.
+			continue
 		}
 
 		// @note why?
@@ -601,6 +584,12 @@ func (m *model) aggregateSql(f filter.Filter, groupBy []dal.AggregateAttr, out [
 
 	nc := m.dialect.Nuances()
 	for i, c := range groupBy {
+		// In-memory aggregate injects a dummy empty group when dimensions are
+		// blank (scalar COUNT/SUM). Do not emit GROUP BY for that placeholder.
+		if c.IsDummyGroup() {
+			continue
+		}
+
 		if c.MultiValue {
 			if nc.ExpandedJsonColumnSelector != nil {
 				expr = nc.ExpandedJsonColumnSelector(c.RawExpr)

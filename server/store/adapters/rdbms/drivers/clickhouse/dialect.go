@@ -324,6 +324,12 @@ func (d clickhouseDialect) ExprHandler(n *ql.ASTNode, args ...exp.Expression) (e
 	case "concat":
 		return castColumnDataToText("concat", args...)
 
+	case "eq":
+		return drivers.OpHandlerEq(d, n, args...)
+
+	case "ne":
+		return drivers.OpHandlerNe(d, n, args...)
+
 	case "in":
 		return drivers.OpHandlerIn(d, n, args...)
 

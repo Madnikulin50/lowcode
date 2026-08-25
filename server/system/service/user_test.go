@@ -251,6 +251,41 @@ func Test_processAvatarInitials(t *testing.T) {
 			},
 			expectedInitial: "K",
 		},
+		{
+			name: "Test with russian name (two words)",
+			user: &types.User{
+				Name: "Иван Петров",
+			},
+			expectedInitial: "ИП",
+		},
+		{
+			name: "Test with russian full name (three words)",
+			user: &types.User{
+				Name: "Иванов Иван Иванович",
+			},
+			expectedInitial: "ИИИ",
+		},
+		{
+			name: "Test with one russian name",
+			user: &types.User{
+				Name: "Иванов",
+			},
+			expectedInitial: "ИВ",
+		},
+		{
+			name: "Test with russian handle",
+			user: &types.User{
+				Handle: "иван_петров",
+			},
+			expectedInitial: "ИП",
+		},
+		{
+			name: "Test with russian email",
+			user: &types.User{
+				Email: "иван@example.com",
+			},
+			expectedInitial: "И",
+		},
 	}
 
 	// Run test cases

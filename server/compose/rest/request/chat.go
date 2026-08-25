@@ -33,6 +33,7 @@ type (
 		Files       []ChatFile    `json:"files"`
 		Prompt      string        `json:"prompt"`
 		Messages    []ChatMessage `json:"messages"`
+		Model       string        `json:"model"`
 	}
 )
 
@@ -129,6 +130,10 @@ func (r *ChatAsk) Fill(req *http.Request) (err error) {
 
 		if val, ok := data["prompt"]; ok && len(val) > 0 {
 			r.Prompt = val
+		}
+
+		if val, ok := data["model"]; ok && len(val) > 0 {
+			r.Model = val
 		}
 
 	}

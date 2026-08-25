@@ -404,7 +404,40 @@ metric:
     dateFormat: Дата format
     dimensionFieldLabel: Поле
     dimensionFieldPlaceholder: Поле измерения
+    dimensionFieldFootnote: Предпочтительно поле с читаемым названием (например, название магазина или категории) — группировка по полю с ID покажет в качестве подписей необработанные значения ID
     dimensionLabel: Измерение
+    topNLabel: Макс. строк
+    topNPlaceholder: Все
+    sortDirectionLabel: Сортировка
+    sortDirectionOptions:
+      valueDesc: По значению, убывание
+      valueAsc: По значению, возрастание
+      labelAsc: По подписи, А-Я
+      labelDesc: По подписи, Я-А
+    compareValuesLabel: Сравнить два значения
+    compareValue1Placeholder: Первое значение
+    compareValue2Placeholder: Второе значение
+    compareValuesFootnote: Введите точные значения поля для сравнения, например названия магазинов. Оставьте оба поля пустыми, чтобы показать полную разбивку.
+    periodCompare:
+      label: Сравнение периодов
+      enable: Сравнивать с предыдущим периодом
+      dateFieldLabel: Поле даты
+      dateFieldPlaceholder: Выберите поле даты
+      granularityLabel: Период
+      granularityOptions:
+        day: День
+        week: Неделя
+        month: Месяц
+        quarter: Квартал
+        year: Год
+      modeLabel: Сравнивать с
+      modeOptions:
+        previousPeriod: Предыдущий период
+        yearOverYear: Тот же период год назад
+      trendPositiveLabel: Рост означает
+      trendPositiveOptions:
+        increase: Хорошо (зелёный)
+        decrease: Плохо (красный)
     filterLabel: Фильтр
     filterFootnote: Упрощенное SQL-условие (WHERE ...) синтаксис не поддерживается. Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно
     transformFootnote: Переменные типа {{0}}, {{1}}, {{2}} and {{3}} вычисляются если возможно. Переменные должны быть заключены в двойные кавычки

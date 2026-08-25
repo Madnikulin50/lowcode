@@ -165,7 +165,7 @@ func (c *SimpleJsonDocColumn) Decode(raw any, r dal.ValueSetter) (err error) {
 		return fmt.Errorf("incompatible input value type (%T), expecting *sql.RawBytes", raw)
 	}
 
-	if len(*rawJson) == 0 {
+	if rawJson == nil || len(*rawJson) == 0 {
 		// gracefully handle empty strings as valid input
 		return
 	}

@@ -121,7 +121,11 @@ func (h recordsHandler) search(ctx context.Context, args *recordsSearchArgs) (re
 
 	var auxf types.RecordFilter
 	results.Records, auxf, err = h.rec.Find(ctx, f)
-	results.Total = uint64(auxf.Total)
+	if auxf.Total < 0 {
+		results.Total = 0
+	} else {
+		results.Total = uint64(auxf.Total)
+	}
 	if auxf.NextPage != nil {
 		results.NextPage = auxf.NextPage.Encode()
 	}

@@ -25,13 +25,55 @@ type MailService interface {
 // --- CRUD Node ---
 
 type crudConfig struct {
-	Operation   string                 `json:"operation"`
-	ModuleID    uint64                 `json:"moduleID"`
-	NamespaceID uint64                 `json:"namespaceID"`
-	RecordID    string                 `json:"recordID,omitempty"`
-	Fields      map[string]interface{} `json:"fields,omitempty"`
-	Query       string                 `json:"query,omitempty"`
-	Limit       int                    `json:"limit,omitempty"`
+	Operation       string                 `json:"operation"`
+	ModuleID        flexibleID             `json:"moduleID"`
+	ModuleHandle    string                 `json:"moduleHandle,omitempty"`
+	NamespaceID     flexibleID             `json:"namespaceID"`
+	RecordID        string                 `json:"recordID,omitempty"`
+	Fields          map[string]interface{} `json:"fields,omitempty"`
+	Query           string                 `json:"query,omitempty"`
+	Limit           int                    `json:"limit,omitempty"`
+	OmitEmpty       bool                   `json:"omitEmpty,omitempty"`
+	ContinueOnError bool                   `json:"continueOnError,omitempty"`
+}
+
+// flexibleID accepts Corteza snowflake IDs as JSON strings or numbers.
+// JS Number() cannot hold them; apply.mjs and the page trigger send strings.
+type flexibleID uint64
+
+func (id *flexibleID) UnmarshalJSON(b []byte) error {
+	s := strings.TrimSpace(string(b))
+	if s == "" || s == "null" || s == `""` {
+		*id = 0
+		return nil
+	}
+	if len(s) > 0 && s[0] == '"' {
+		var str string
+		if err := json.Unmarshal(b, &str); err != nil {
+			return err
+		}
+		str = strings.TrimSpace(str)
+		if str == "" {
+			*id = 0
+			return nil
+		}
+		n, err := strconv.ParseUint(str, 10, 64)
+		if err != nil {
+			return err
+		}
+		*id = flexibleID(n)
+		return nil
+	}
+	var n uint64
+	if err := json.Unmarshal(b, &n); err != nil {
+		return err
+	}
+	*id = flexibleID(n)
+	return nil
+}
+
+type moduleResolver interface {
+	LookupModule(ctx context.Context, namespaceID uint64, handle string) (uint64, error)
 }
 
 type crudExecutor struct {
@@ -51,30 +93,58 @@ func (n *crudExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		cfg.Query = resolveTemplateValue(cfg.Query, ec)
 	}
 
+	nsID := uint64(cfg.NamespaceID)
+	if v := uint64FromAny(ec.Get("namespaceID")); v > 0 {
+		nsID = v
+	}
+	modID := uint64(cfg.ModuleID)
+	if cfg.ModuleHandle != "" {
+		handle := resolveTemplateValue(cfg.ModuleHandle, ec)
+		if resolver, ok := n.svc.(moduleResolver); ok {
+			id, err := resolver.LookupModule(ctx, nsID, handle)
+			if err != nil {
+				return nil, fmt.Errorf("module %q: %w", handle, err)
+			}
+			modID = id
+		}
+	}
+
 	switch cfg.Operation {
 	case "create":
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
 		}
-		id, createdAt, err := n.svc.Create(ctx, cfg.NamespaceID, cfg.ModuleID, resolveFieldTemplates(cfg.Fields, ec))
+		id, createdAt, err := n.svc.Create(ctx, nsID, modID, resolveFieldTemplates(cfg.Fields, ec))
 		if err != nil {
 			return nil, fmt.Errorf("create failed: %w", err)
 		}
+		ec.Set("createdRecordID", id)
 		return map[string]interface{}{"recordID": id, "createdAt": createdAt}, nil
 	case "update":
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
 		}
-		updatedAt, err := n.svc.Update(ctx, cfg.NamespaceID, cfg.ModuleID, cfg.RecordID, resolveFieldTemplates(cfg.Fields, ec))
+		recID := strings.TrimSpace(cfg.RecordID)
+		if recID == "" || recID == "<nil>" || recID == "0" {
+			return map[string]interface{}{"skipped": true, "reason": "empty recordID"}, nil
+		}
+		fields := resolveFieldTemplates(cfg.Fields, ec)
+		if cfg.OmitEmpty {
+			fields = dropEmptyFields(fields)
+		}
+		updatedAt, err := n.svc.Update(ctx, nsID, modID, recID, fields)
 		if err != nil {
+			if cfg.ContinueOnError {
+				return map[string]interface{}{"skipped": true, "error": err.Error()}, nil
+			}
 			return nil, fmt.Errorf("update failed: %w", err)
 		}
-		return map[string]interface{}{"recordID": cfg.RecordID, "updatedAt": updatedAt}, nil
+		return map[string]interface{}{"recordID": recID, "updatedAt": updatedAt}, nil
 	case "delete":
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
 		}
-		if err := n.svc.Delete(ctx, cfg.NamespaceID, cfg.ModuleID, cfg.RecordID); err != nil {
+		if err := n.svc.Delete(ctx, nsID, modID, cfg.RecordID); err != nil {
 			return nil, fmt.Errorf("delete failed: %w", err)
 		}
 		return map[string]interface{}{"recordID": cfg.RecordID, "deleted": true}, nil
@@ -82,7 +152,7 @@ func (n *crudExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		if n.svc == nil {
 			return map[string]interface{}{"status": "crud_service_not_configured"}, nil
 		}
-		records, err := n.svc.Search(ctx, cfg.NamespaceID, cfg.ModuleID, cfg.Query, cfg.Limit)
+		records, err := n.svc.Search(ctx, nsID, modID, cfg.Query, cfg.Limit)
 		if err != nil {
 			return nil, fmt.Errorf("search failed: %w", err)
 		}
@@ -163,7 +233,7 @@ func (n *httpExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 	if method == "" {
 		method = "GET"
 	}
-	body := resolveTemplateValue(cfg.Body, ec)
+	body := resolveTemplateJSON(cfg.Body, ec)
 
 	timeout := cfg.Timeout
 	if timeout <= 0 {
@@ -200,6 +270,13 @@ func (n *httpExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 	var jsonBody interface{}
 	if err := json.Unmarshal(respBody, &jsonBody); err == nil {
 		result["body"] = jsonBody
+		if m, ok := jsonBody.(map[string]interface{}); ok {
+			if id, ok := m["id"]; ok {
+				s := fmt.Sprintf("%v", id)
+				ec.Set("scanID", s)
+				ec.Set("jobID", s)
+			}
+		}
 	} else {
 		bodyStr := string(respBody)
 		if len(bodyStr) > 10000 {
@@ -208,7 +285,18 @@ func (n *httpExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		}
 		result["body"] = bodyStr
 	}
+	if resp.StatusCode >= 400 {
+		return result, fmt.Errorf("HTTP %d: %s", resp.StatusCode, truncateHTTPBody(respBody))
+	}
 	return result, nil
+}
+
+func truncateHTTPBody(b []byte) string {
+	s := string(b)
+	if len(s) > 500 {
+		return s[:500] + "..."
+	}
+	return s
 }
 
 // --- Condition Node ---
@@ -232,13 +320,19 @@ func (n *conditionExecutor) Execute(ctx context.Context, node ChainNode, ec *Exe
 	compareVal := resolveTemplateValue(cfg.Value, ec)
 
 	passed := evaluateCondition(fieldVal, compareVal, cfg.Operator)
-	passStr := "false"
+	// Empty string when false so conditional edges (GetString != "") skip the branch,
+	// matching risk.band's is_critical flag semantics.
+	passStr := ""
 	if passed {
 		passStr = "true"
 	}
 	ec.Set(node.ID+"_result", passStr)
 
-	return map[string]interface{}{"field": field, "operator": cfg.Operator, "value": compareVal, "result": passed, "passed": passStr}, nil
+	passedOut := "false"
+	if passed {
+		passedOut = "true"
+	}
+	return map[string]interface{}{"field": field, "operator": cfg.Operator, "value": compareVal, "result": passed, "passed": passedOut}, nil
 }
 
 // --- AI Node ---
@@ -382,12 +476,43 @@ func (n *gonecExecutor) Execute(ctx context.Context, node ChainNode, ec *Executi
 // --- Helpers ---
 
 func resolveTemplateValue(val string, ec *ExecutionContext) string {
+	return interpolateTemplates(val, ec, func(v interface{}) string {
+		return fmt.Sprintf("%v", v)
+	})
+}
+
+// resolveTemplateJSON interpolates placeholders and JSON-escapes replacements
+// so a JWT or quoted CIDR cannot break the request body.
+func resolveTemplateJSON(val string, ec *ExecutionContext) string {
+	return interpolateTemplates(val, ec, jsonEscapeTemplate)
+}
+
+func jsonEscapeTemplate(v interface{}) string {
+	b, err := json.Marshal(fmt.Sprintf("%v", v))
+	if err != nil {
+		return ""
+	}
+	if len(b) >= 2 && b[0] == '"' && b[len(b)-1] == '"' {
+		return string(b[1 : len(b)-1])
+	}
+	return string(b)
+}
+
+func interpolateTemplates(val string, ec *ExecutionContext, format func(interface{}) string) string {
+	if format == nil {
+		format = func(v interface{}) string { return fmt.Sprintf("%v", v) }
+	}
 	if len(val) > 4 && val[:2] == "{{" && val[len(val)-2:] == "}}" {
 		key := val[2 : len(val)-2]
-		if v := ec.Get(key); v != nil {
-			return fmt.Sprintf("%v", v)
+		// Mixed templates like "{{agentUrl}}/scans/{{scanID}}" also start with "{{"
+		// and end with "}}"; only treat as a single placeholder when the inner key
+		// has no nested "{{" / "}}".
+		if !strings.Contains(key, "{{") && !strings.Contains(key, "}}") {
+			if v := ec.Get(key); v != nil {
+				return format(v)
+			}
+			return ""
 		}
-		return ""
 	}
 
 	result := val
@@ -404,7 +529,7 @@ func resolveTemplateValue(val string, ec *ExecutionContext) string {
 		end += start + 2
 		key := result[start+2 : end]
 		if v := ec.Get(key); v != nil {
-			replacement := fmt.Sprintf("%v", v)
+			replacement := format(v)
 			result = result[:start] + replacement + result[end+2:]
 			i = start + len(replacement)
 		} else {
@@ -428,6 +553,54 @@ func resolveFieldTemplates(fields map[string]interface{}, ec *ExecutionContext) 
 		}
 	}
 	return result
+}
+
+func dropEmptyFields(fields map[string]interface{}) map[string]interface{} {
+	out := make(map[string]interface{}, len(fields))
+	for k, v := range fields {
+		if emptyAny(v) {
+			continue
+		}
+		out[k] = v
+	}
+	return out
+}
+
+func uint64FromAny(v interface{}) uint64 {
+	switch t := v.(type) {
+	case nil:
+		return 0
+	case uint64:
+		return t
+	case int:
+		if t > 0 {
+			return uint64(t)
+		}
+	case int64:
+		if t > 0 {
+			return uint64(t)
+		}
+	case float64:
+		// JSON numbers into map[string]interface{} are float64 and cannot
+		// hold Corteza snowflakes (53-bit mantissa). Refuse them so chain
+		// config namespaceID/moduleID stays authoritative.
+		if t > 0 && t < float64(uint64(1)<<53) {
+			return uint64(t)
+		}
+		return 0
+	case json.Number:
+		n, err := strconv.ParseUint(strings.TrimSpace(string(t)), 10, 64)
+		if err == nil {
+			return n
+		}
+	case string:
+		n, _ := strconv.ParseUint(strings.TrimSpace(t), 10, 64)
+		return n
+	default:
+		n, _ := strconv.ParseUint(strings.TrimSpace(fmt.Sprintf("%v", t)), 10, 64)
+		return n
+	}
+	return 0
 }
 
 func splitTrimStr(s string) []string {

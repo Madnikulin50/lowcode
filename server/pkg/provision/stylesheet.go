@@ -137,20 +137,23 @@ func processBrandingTheme(oldBranding *types.SettingValue) (themes []types.Theme
 		}
 	}
 
+	// "Almost black" dark palette — matches client3/web/*/src/themes/corteza-base/dark.scss
+	// and CUIBrandingEditor.vue's darkModeVariables, so a freshly provisioned
+	// environment's dark theme matches what ships client-side by default.
 	darkModeValues := `
     {
-        "black":"#FBF7F4",
-        "white":"#0B344E",
-        "primary":"#4e73df",
-        "secondary":"#858796",
+        "black":"#EDEDED",
+        "white":"#121212",
+        "primary":"#6E8FF0",
+        "secondary":"#9A9A9A",
         "success":"#43AA8B",
         "warning":"#E27646",
-        "danger":"#4e73df",
-        "light":"#23495F",
-        "extra-light":"#3E5A6F",
-        "body-bg":"#092B40",
-        "sidebar-bg": "#0B344E",
-        "topbar-bg": "#092B40"
+        "danger":"#F2555A",
+        "light":"#1A1A1A",
+        "extra-light":"#242424",
+        "body-bg":"#0A0A0A",
+        "sidebar-bg": "#121212",
+        "topbar-bg": "#121212"
     }`
 
 	lightModeValues, _ := json.Marshal(lightModeMap)

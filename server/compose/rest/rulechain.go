@@ -1,14 +1,18 @@
 package rest
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/madnikulin50/lowcode/server/compose/mcp/handlers"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/rulesgo"
 )
 
 type RuleChain struct {
@@ -47,22 +51,42 @@ func (rc *RuleChain) Run(w http.ResponseWriter, r *http.Request) {
 
 	var input map[string]interface{}
 	if len(body) > 0 {
-		if err := json.Unmarshal(body, &input); err != nil {
+		dec := json.NewDecoder(bytes.NewReader(body))
+		dec.UseNumber()
+		if err := dec.Decode(&input); err != nil {
 			api.Send(w, r, fmt.Errorf("invalid JSON body: %w", err))
 			return
 		}
 	}
+	if input == nil {
+		input = map[string]interface{}{}
+	}
+	input = rulesgo.NormalizeIngestEnvelope(input)
 
 	engine := handlers.RuleEngine
 	if engine == nil {
 		api.Send(w, r, fmt.Errorf("rule engine not initialized"))
 		return
 	}
+	if engine.Chain(chainID) == nil && handlers.OnChainMissing != nil {
+		handlers.OnChainMissing(r.Context(), chainID)
+	}
 
-	result, err := engine.Run(r.Context(), chainID, input)
+	runCtx := r.Context()
+	kind, _ := input["kind"].(string)
+	if kind == "complete" || kind == "failed" {
+		var cancel context.CancelFunc
+		runCtx, cancel = context.WithTimeout(context.WithoutCancel(r.Context()), 2*time.Minute)
+		defer cancel()
+	}
+
+	result, err := engine.Run(runCtx, chainID, input)
 	if err != nil {
 		api.Send(w, r, err)
 		return
+	}
+	if result != nil && result.Success {
+		rulesgo.CancelPollIfTerminal(input)
 	}
 
 	api.Send(w, r, result)

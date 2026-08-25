@@ -146,7 +146,7 @@
                 :options="options"
                 :hover="!!item.metric.drillDown?.enabled"
                 :value="v"
-                :bar-ratio="barRatioFor(item, section.items)"
+                :bar-ratio="item.metric.dimensionField ? breakdownBarRatioFor(item, v) : barRatioFor(item, section.items)"
               />
             </div>
           </template>
@@ -184,7 +184,9 @@
               :options="options"
               :hover="!!m.drillDown?.enabled"
               :value="v"
-              :bar-ratio="barRatioFor({ metric: m, index: mi, values: formatResponse(m, mi), role: metricRole(m) })"
+              :bar-ratio="m.dimensionField
+                ? breakdownBarRatioFor({ values: formatResponse(m, mi) }, v)
+                : barRatioFor({ metric: m, index: mi, values: formatResponse(m, mi), role: metricRole(m) })"
             />
           </div>
         </div>
@@ -308,6 +310,21 @@ function barRatioFor (item, peers) {
   return Math.min(1, numericAbs(item) / max)
 }
 
+function toAbsNumber (raw) {
+  const n = typeof raw === 'number' ? raw : Number(String(raw).replace(/[^\d.-]/g, ''))
+  return Number.isFinite(n) ? Math.abs(n) : 0
+}
+
+// Bar ratio for a breakdown row (dimensionField set): normalizes against
+// the max abs value among this SAME metric's own rows, not against sibling
+// metrics on the block — deliberately separate from barRatioFor()/
+// withTopKMeta() above, which compare different metrics to each other.
+function breakdownBarRatioFor (item, value) {
+  const max = Math.max(0, ...(item?.values || []).map(v => toAbsNumber(v?.value)))
+  if (!max) return 1
+  return Math.min(1, toAbsNumber(value?.value) / max)
+}
+
 function withTopKMeta (item) {
   const m = item.metric || {}
   if (!isBalloonRole(m)) return m
@@ -400,13 +417,15 @@ function refetchOnPageVariableChange ({ detail: { pageID, fieldName } } = {}) {
 function formatResponse (m, i) {
   const vals = reports.value[i]
   if (!vals) return []
-  return vals.map(({ label, value }) => {
+  return vals.map(({ label, value, ...rest }) => {
     if (m.numberFormat) {
       const n = typeof value === 'number' ? value : Number(value)
       if (Number.isFinite(n)) value = numeral(n).format(m.numberFormat)
     }
     if (m.dateFormat) label = moment(label).format(m.dateFormat)
-    return { label, value }
+    // ...rest carries previousValue/delta/deltaPct (pairwise/period-compare
+    // rows) through unformatted — Item.vue's trend badge formats those itself.
+    return { ...rest, label, value }
   })
 }
 

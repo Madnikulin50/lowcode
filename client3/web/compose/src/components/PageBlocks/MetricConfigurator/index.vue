@@ -127,6 +127,160 @@
                       <span><code>${userID}</code>, <code>${user.name}</code></span>
                     </i18next>
                   </div>
+
+                  <div v-if="selectedMetricModule" class="row">
+                    <div class="col-12 col-lg-6">
+                      <div class="mb-3">
+                        <label class="form-label text-primary">{{ $t('metric.edit.dimensionFieldLabel') }}</label>
+                        <c-input-select
+                          v-model="edit.dimensionField"
+                          :options="dimensionFields"
+                          :clearable="true"
+                          :disabled="!!edit.periodCompareEnabled"
+                          :get-option-label="o => o.label || o.name"
+                          :reduce="o => o.name"
+                          :placeholder="$t('metric.edit.dimensionFieldPlaceholder')"
+                        />
+                        <small class="text-muted d-block">{{ $t('metric.edit.dimensionFieldFootnote') }}</small>
+                      </div>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                      <div class="mb-3">
+                        <label class="form-label text-primary">{{ $t('metric.edit.bucketLabel') }}</label>
+                        <c-input-select
+                          v-model="edit.bucketSize"
+                          :options="dimensionModifiers"
+                          :clearable="false"
+                          :disabled="!isTemporalField(edit.dimensionField)"
+                          :get-option-label="o => o.text"
+                          :reduce="o => o.value"
+                          :placeholder="$t('metric.edit.bucketPlaceholder')"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <template v-if="edit.dimensionField">
+                    <div class="row">
+                      <div class="col-12 col-lg-6">
+                        <div class="mb-3">
+                          <label class="form-label text-primary">{{ $t('metric.edit.topNLabel') }}</label>
+                          <input
+                            v-model.number="edit.topN"
+                            type="number"
+                            min="0"
+                            class="form-control mb-1"
+                            :placeholder="$t('metric.edit.topNPlaceholder')"
+                          />
+                        </div>
+                      </div>
+                      <div class="col-12 col-lg-6">
+                        <div class="mb-3">
+                          <label class="form-label text-primary">{{ $t('metric.edit.sortDirectionLabel') }}</label>
+                          <c-input-select
+                            v-model="edit.sortDirection"
+                            :options="sortDirectionOptions"
+                            :clearable="false"
+                            :get-option-label="o => o.label"
+                            :reduce="o => o.value"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label text-primary">{{ $t('metric.edit.compareValuesLabel') }}</label>
+                      <div class="row g-2">
+                        <div class="col-6">
+                          <input
+                            :value="(edit.compareValues || [])[0] || ''"
+                            class="form-control"
+                            :placeholder="$t('metric.edit.compareValue1Placeholder')"
+                            @input="setCompareValue(0, $event.target.value)"
+                          />
+                        </div>
+                        <div class="col-6">
+                          <input
+                            :value="(edit.compareValues || [])[1] || ''"
+                            class="form-control"
+                            :placeholder="$t('metric.edit.compareValue2Placeholder')"
+                            @input="setCompareValue(1, $event.target.value)"
+                          />
+                        </div>
+                      </div>
+                      <small class="text-muted d-block">{{ $t('metric.edit.compareValuesFootnote') }}</small>
+                    </div>
+                  </template>
+                </fieldset>
+
+                <fieldset v-if="selectedMetricModule">
+                  <h5>{{ $t('metric.edit.periodCompare.label') }}</h5>
+
+                  <div class="mb-3">
+                    <div class="form-check">
+                      <input
+                        v-model="edit.periodCompareEnabled"
+                        type="checkbox"
+                        class="form-check-input"
+                        :disabled="!!edit.dimensionField"
+                      />
+                      <label class="form-check-label">{{ $t('metric.edit.periodCompare.enable') }}</label>
+                    </div>
+                  </div>
+
+                  <template v-if="edit.periodCompareEnabled">
+                    <div class="row">
+                      <div class="col-12 col-lg-6">
+                        <div class="mb-3">
+                          <label class="form-label text-primary">{{ $t('metric.edit.periodCompare.dateFieldLabel') }}</label>
+                          <c-input-select
+                            v-model="edit.periodDateField"
+                            :options="dateFields"
+                            :clearable="false"
+                            :get-option-label="o => o.label || o.name"
+                            :reduce="o => o.name"
+                            :placeholder="$t('metric.edit.periodCompare.dateFieldPlaceholder')"
+                          />
+                        </div>
+                      </div>
+                      <div class="col-12 col-lg-6">
+                        <div class="mb-3">
+                          <label class="form-label text-primary">{{ $t('metric.edit.periodCompare.granularityLabel') }}</label>
+                          <c-input-select
+                            v-model="edit.periodGranularity"
+                            :options="periodGranularityOptions"
+                            :clearable="false"
+                            :get-option-label="o => o.label"
+                            :reduce="o => o.value"
+                          />
+                        </div>
+                      </div>
+                      <div class="col-12 col-lg-6">
+                        <div class="mb-3">
+                          <label class="form-label text-primary">{{ $t('metric.edit.periodCompare.modeLabel') }}</label>
+                          <c-input-select
+                            v-model="edit.periodCompareMode"
+                            :options="periodCompareModeOptions"
+                            :clearable="false"
+                            :get-option-label="o => o.label"
+                            :reduce="o => o.value"
+                          />
+                        </div>
+                      </div>
+                      <div class="col-12 col-lg-6">
+                        <div class="mb-3">
+                          <label class="form-label text-primary">{{ $t('metric.edit.periodCompare.trendPositiveLabel') }}</label>
+                          <c-input-select
+                            v-model="edit.trendPositive"
+                            :options="trendPositiveOptions"
+                            :clearable="false"
+                            :get-option-label="o => o.label"
+                            :reduce="o => o.value"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </template>
                 </fieldset>
 
                 <fieldset v-if="selectedMetricModule">
@@ -515,6 +669,46 @@ const dimensionModifiers = computed(() =>
   compose.chartUtil.dimensionFunctions.map(df => ({ ...df, text: t(`chart.edit.dimension.function.${df.text}`) }))
 )
 
+// Kinds a dimension breakdown can sensibly group by — mirrors Chart's own
+// dimension-field picker (ReportEdit.vue).
+const dimensionFieldKinds = ['DateTime', 'Select', 'Number', 'Bool', 'String', 'Record', 'User']
+const dimensionFields = computed(() => fields.value.filter(f =>
+  dimensionFieldKinds.includes(f.kind) && !f.options?.useRichTextEditor && !f.options?.multiLine))
+
+const dateFields = computed(() => fields.value.filter(f => f.kind === 'DateTime'))
+
+const sortDirectionOptions = computed(() => [
+  { value: 'value-desc', label: t('metric.edit.sortDirectionOptions.valueDesc') },
+  { value: 'value-asc', label: t('metric.edit.sortDirectionOptions.valueAsc') },
+  { value: 'label-asc', label: t('metric.edit.sortDirectionOptions.labelAsc') },
+  { value: 'label-desc', label: t('metric.edit.sortDirectionOptions.labelDesc') },
+])
+
+const periodGranularityOptions = computed(() => [
+  { value: 'day', label: t('metric.edit.periodCompare.granularityOptions.day') },
+  { value: 'week', label: t('metric.edit.periodCompare.granularityOptions.week') },
+  { value: 'month', label: t('metric.edit.periodCompare.granularityOptions.month') },
+  { value: 'quarter', label: t('metric.edit.periodCompare.granularityOptions.quarter') },
+  { value: 'year', label: t('metric.edit.periodCompare.granularityOptions.year') },
+])
+
+const periodCompareModeOptions = computed(() => [
+  { value: 'previous-period', label: t('metric.edit.periodCompare.modeOptions.previousPeriod') },
+  { value: 'year-over-year', label: t('metric.edit.periodCompare.modeOptions.yearOverYear') },
+])
+
+const trendPositiveOptions = computed(() => [
+  { value: 'increase', label: t('metric.edit.periodCompare.trendPositiveOptions.increase') },
+  { value: 'decrease', label: t('metric.edit.periodCompare.trendPositiveOptions.decrease') },
+])
+
+function setCompareValue (index, value) {
+  if (!edit.value) return
+  const next = [...(edit.value.compareValues || ['', ''])]
+  next[index] = value
+  edit.value.compareValues = next
+}
+
 const aggregationOperations = computed(() => [
   { label: t('metric.edit.operationSum'), operation: 'sum' },
   { label: t('metric.edit.operationMax'), operation: 'max' },
@@ -619,6 +813,14 @@ watch(() => edit.value?.dimensionField, (df) => {
   } else {
     edit.value.dateFormat = edit.value.dateFormat || 'YYYY-MM-DD'
   }
+  // Breakdown/pairwise and period-compare are mutually exclusive per metric.
+  if (df) edit.value.periodCompareEnabled = false
+})
+
+watch(() => edit.value?.periodCompareEnabled, (enabled) => {
+  if (!edit.value || !enabled) return
+  edit.value.dimensionField = ''
+  edit.value.compareValues = undefined
 })
 
 if (!metrics.value.length) { addMetric() }

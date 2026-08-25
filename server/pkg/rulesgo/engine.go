@@ -11,6 +11,7 @@ import (
 type Engine struct {
 	registry *Registry
 	chains   map[string]*Chain
+	persist  Persistence
 }
 
 func NewEngine(registry *Registry) *Engine {
@@ -20,8 +21,32 @@ func NewEngine(registry *Registry) *Engine {
 	}
 }
 
-func (e *Engine) RegisterChain(chain *Chain) {
+func (e *Engine) SetPersistence(p Persistence) {
+	e.persist = p
+}
+
+func (e *Engine) put(chain *Chain) {
+	if chain == nil || chain.ID == "" {
+		return
+	}
 	e.chains[chain.ID] = chain
+}
+
+func (e *Engine) RegisterChain(chain *Chain) {
+	e.put(chain)
+	if e.persist != nil {
+		if err := e.persist.SaveChain(context.Background(), chain); err != nil {
+			log.Printf("[rulesgo] persist %s: %v", chain.ID, err)
+		}
+	}
+}
+
+func (e *Engine) PersistChain(chain *Chain) error {
+	e.put(chain)
+	if e.persist == nil {
+		return nil
+	}
+	return e.persist.SaveChain(context.Background(), chain)
 }
 
 func (e *Engine) Chains() []*Chain {
@@ -82,14 +107,36 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 			break
 		}
 
+		if node.Type == "foreach" {
+			bodyIDs := edgesTo(edgeMap[currentID])
+			if len(bodyIDs) == 0 {
+				bodyIDs = nextNodeIDs(edgeMap[currentID], ec)
+			}
+			start := time.Now()
+			nr, err := e.runForeach(ctx, node, nodeMap, edgeMap, bodyIDs, ec)
+			elapsed := time.Since(start)
+			result.Nodes = append(result.Nodes, nr)
+			if err != nil {
+				result.Error = fmt.Sprintf("node %s (foreach) failed: %v", node.ID, err)
+				result.Success = false
+				log.Printf("[rulesgo] node %s (foreach) FAILED in %v: %v", node.ID, elapsed, err)
+				break
+			}
+			log.Printf("[rulesgo] node %s (foreach) OK in %v items=%v", node.ID, elapsed, nr.Output["count"])
+			markDescendants(currentID, edgeMap, visited)
+			continue
+		}
+
 		start := time.Now()
 		output, err := e.registry.Execute(ctx, node.Type, *node, ec)
 		elapsed := time.Since(start)
 
+		nextIDs := nextNodeIDs(edgeMap[currentID], ec)
 		nodeResult := NodeResult{
 			NodeID: node.ID,
 			Type:   node.Type,
 			Output: output,
+			Next:   nextIDs,
 		}
 
 		if err != nil {
@@ -106,21 +153,6 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 		}
 
 		log.Printf("[rulesgo] node %s (%s) OK in %v", node.ID, node.Type, elapsed)
-
-		edges := edgeMap[currentID]
-		nextIDs := make([]string, 0)
-
-		for _, edge := range edges {
-			if edge.Condition == "" || ec.GetString(edge.Condition) != "" {
-				nextIDs = append(nextIDs, edge.To)
-			}
-		}
-
-		if len(nextIDs) == 0 {
-			nextIDs = edgesTo(edges)
-		}
-
-		nodeResult.Next = nextIDs
 		result.Nodes = append(result.Nodes, nodeResult)
 
 		for _, nid := range nextIDs {
@@ -138,6 +170,19 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 	return result, nil
 }
 
+func nextNodeIDs(edges []ChainEdge, ec *ExecutionContext) []string {
+	nextIDs := make([]string, 0)
+	for _, edge := range edges {
+		if edge.Condition == "" || ec.GetString(edge.Condition) != "" {
+			nextIDs = append(nextIDs, edge.To)
+		}
+	}
+	if len(nextIDs) == 0 {
+		return edgesTo(edges)
+	}
+	return nextIDs
+}
+
 func edgesTo(edges []ChainEdge) []string {
 	result := make([]string, 0, len(edges))
 	for _, e := range edges {
@@ -146,6 +191,16 @@ func edgesTo(edges []ChainEdge) []string {
 		}
 	}
 	return result
+}
+
+func markDescendants(from string, edgeMap map[string][]ChainEdge, visited map[string]bool) {
+	for _, to := range edgesTo(edgeMap[from]) {
+		if visited[to] {
+			continue
+		}
+		visited[to] = true
+		markDescendants(to, edgeMap, visited)
+	}
 }
 
 func (e *Engine) ExportChain(chainID string) ([]byte, error) {
@@ -174,4 +229,9 @@ func (e *Engine) ImportChain(data []byte) (*Chain, error) {
 
 func (e *Engine) DeleteChain(chainID string) {
 	delete(e.chains, chainID)
+	if e.persist != nil {
+		if err := e.persist.DeleteChain(context.Background(), chainID); err != nil {
+			log.Printf("[rulesgo] delete persist %s: %v", chainID, err)
+		}
+	}
 }

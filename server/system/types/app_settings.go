@@ -312,6 +312,19 @@ type (
 				GeoSearchProvider string `json:"geoSearchProvider"`
 				GeoSearchApiKey   string `json:"geoSearchApiKey"`
 			} `kv:"location,final" json:"location"`
+
+			// Map tile source (online OSM or local/offline tile URL)
+			Map struct {
+				// online | local — when online and TileURL empty, CMap uses public OSM tiles
+				TileSource string `json:"tileSource"`
+				// Leaflet URL template, e.g. https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+				// or /tiles/{z}/{x}/{y}.png for a local tileserver
+				TileURL string `json:"tileURL"`
+				MinZoom uint   `json:"minZoom"`
+				MaxZoom uint   `json:"maxZoom"`
+				// HTML attribution shown on the map
+				Attribution string `json:"attribution"`
+			} `kv:"map,final" json:"map"`
 		} `kv:"ui" json:"ui"`
 
 		ResourceTranslations struct {
@@ -385,6 +398,38 @@ type (
 				Enabled bool `kv:"enabled" json:"enabled"`
 			} `kv:"compose-records" json:"compose-records"`
 		} `kv:"discovery" json:"discovery"`
+
+		// AI / Ollama model catalog and role defaults (admin-managed)
+		AI AISettings `kv:"ai" json:"ai"`
+	}
+
+	// AISettings controls which Ollama models are available and which role
+	// uses which model by default (compose chat, MCP agents, etc.).
+	AISettings struct {
+		// Master switch for AI features in UIs that respect the catalog.
+		Enabled bool `kv:"enabled" json:"enabled"`
+
+		// Optional Ollama base URL override (empty → OLLAMA_URL → OLLAMA_HOST → localhost).
+		OllamaURL string `kv:"ollama-url" json:"ollamaURL"`
+
+		// Catalog of known models. Empty catalog = no filter (all Ollama chat models).
+		Catalog []AIModelCatalogEntry `kv:"catalog,final" json:"catalog"`
+
+		Roles AIModelRoles `kv:"roles" json:"roles"`
+	}
+
+	AIModelCatalogEntry struct {
+		Name    string `json:"name"`
+		Enabled bool   `json:"enabled"`
+		Label   string `json:"label,omitempty"`
+		Note    string `json:"note,omitempty"`
+	}
+
+	AIModelRoles struct {
+		ComposeChat    string `kv:"compose-chat" json:"composeChat"`
+		MCPAgent       string `kv:"mcp-agent" json:"mcpAgent"`
+		AutomationChat string `kv:"automation-chat" json:"automationChat"`
+		RulesgoAI      string `kv:"rulesgo-ai" json:"rulesgoAi"`
 	}
 
 	ExternalAuthProviderSet []*ExternalAuthProvider
