@@ -75,6 +75,30 @@ export default defineConfig({
       { find: 'v-jsoneditor', replacement: resolve(__dirname, 'node_modules/v-jsoneditor/dist/v-jsoneditor.min.js') },
       { find: 'file-saver', replacement: resolve(__dirname, 'node_modules/file-saver/dist/FileSaver.min.js') },
     ],
+    // corteza-lib/vue/dist is aliased to a file physically living under
+    // client3/lib/vue, so plain Node resolution finds its own
+    // node_modules/pinia there instead of this app's copy. Even with
+    // matching versions, Rollup treats them as two distinct modules and
+    // bundles pinia twice, each with its own (uninitialized) activePinia
+    // instance — causing "Cannot read properties of undefined (reading
+    // '_s')" on mount. Force a single shared instance.
+    //
+    // Same story for @tiptap/* + prosemirror-*: CRichTextInput lives under
+    // client3/lib/vue/src too, so it resolves its own copy of
+    // prosemirror-state instead of this app's. Two Plugin instances with
+    // the same key but different module identity make prosemirror's
+    // Configuration throw "Adding different instances of a keyed plugin"
+    // when the editor is reconfigured/remounted (e.g. Builder.vue's
+    // editBlock). Force a single shared instance here too.
+    dedupe: [
+      'pinia', 'vue', 'vue-router', 'vue-i18n',
+      '@tiptap/core', '@tiptap/vue-3', '@tiptap/suggestion', '@tiptap/starter-kit',
+      '@tiptap/extension-list', '@tiptap/extension-mention', '@tiptap/extension-emoji',
+      '@tiptap/extension-table', '@tiptap/extension-text-align', '@tiptap/extension-text-style',
+      '@tiptap/extension-placeholder', '@tiptap/extension-image',
+      'prosemirror-state', 'prosemirror-view', 'prosemirror-model',
+      'prosemirror-transform', 'prosemirror-keymap',
+    ],
     modules: [
       resolve(__dirname, 'node_modules'),
       resolve(__dirname, '../../lib/vue/node_modules'),

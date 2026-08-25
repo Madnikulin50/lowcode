@@ -42,6 +42,14 @@ export default defineConfig({
       'corteza-lib/vue/dist': resolve(__dirname, '../../lib/vue/dist'),
       'corteza-lib/js/dist': resolve(__dirname, '../../lib/js/dist'),
     },
+    // corteza-lib/vue/dist is aliased to a file physically living under
+    // client3/lib/vue, so plain Node resolution finds its own
+    // node_modules/pinia there instead of this app's copy. Even when the
+    // versions match, Rollup treats them as two distinct modules and bundles
+    // pinia twice, giving each a separate (uninitialized) activePinia
+    // instance — that's the "Cannot read properties of undefined (reading
+    // '_s')" crash on mount. Force a single shared instance.
+    dedupe: ['pinia', 'vue', 'vue-router', 'vue-i18n'],
     modules: [
       resolve(__dirname, 'node_modules'),
       resolve(__dirname, '../../lib/vue/node_modules'),

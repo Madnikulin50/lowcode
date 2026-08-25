@@ -120,6 +120,7 @@ import { ref, computed, watch, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chartConstructor } from 'corteza-webapp-compose/src/lib/charts'
 import { ensureMapRegistered } from 'corteza-webapp-compose/src/lib/chart-maps'
+import { friendlyApiErrorMessage } from 'corteza-webapp-compose/src/lib/api-error'
 import { compose, isUnknownReportCount } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
 import { useStore } from '../../store'
@@ -276,7 +277,7 @@ async function updateChart () {
     renderer.value = chart.makeOptions(data)
     }
   } catch (e) {
-    error.value = e
+    error.value = friendlyApiErrorMessage(e, t)
     processing.value = false
   }
 

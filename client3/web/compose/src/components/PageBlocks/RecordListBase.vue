@@ -466,6 +466,7 @@ import { getItem, removeItem, setItem } from 'corteza-webapp-compose/src/lib/loc
 import { recordCreateLocation } from 'corteza-webapp-compose/src/lib/record-create-nav'
 import { evalPrefilterOrSkip, formatActiveFilterOperator, isBetweenOperator, isFieldInFilter, queryToFilter, convertRecordListFilter, getFieldFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { isFieldReadonly, isUserWritableField } from 'corteza-webapp-compose/src/lib/field-editable'
+import { isTimeoutError } from 'corteza-webapp-compose/src/lib/api-error'
 import draggable from 'vuedraggable'
 import Wrap from './Wrap/index.js'
 import { usePageBlockBase } from './usePageBlockBase'
@@ -1436,6 +1437,7 @@ function bulkRecordModuleIDs () {
 
 function apiErrorMessage (err) {
   if (err == null) return ''
+  if (isTimeoutError(err)) return $t('error.timeout')
   if (typeof err === 'string') return err
   const nested = err.response?.data?.error ?? err.error ?? err
   if (nested && typeof nested === 'object' && typeof nested.message === 'string' && nested.message.trim()) {

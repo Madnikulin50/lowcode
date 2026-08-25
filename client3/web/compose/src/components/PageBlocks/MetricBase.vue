@@ -197,6 +197,7 @@
 defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { debounce } from 'lodash'
+import { useI18n } from 'vue-i18n'
 import { usePageBlockBase } from './usePageBlockBase'
 import { useStore } from '../../store'
 import Wrap from './Wrap/index.js'
@@ -205,6 +206,9 @@ import numeral from 'numeral'
 import moment from 'moment'
 import { NoID, compose, isUnknownTotal } from 'corteza-lib/js/dist'
 import { evalPrefilterOrSkip, evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { friendlyApiErrorMessage } from 'corteza-webapp-compose/src/lib/api-error'
+
+const { t: $t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -446,7 +450,7 @@ async function refresh () {
     reports.value = await Promise.all(jobs)
     setTimeout(() => { processing.value = false }, 300)
   } catch (e) {
-    error.value = e.message || 'Error'
+    error.value = friendlyApiErrorMessage(e, $t)
     setTimeout(() => { processing.value = false }, 300)
   }
 }

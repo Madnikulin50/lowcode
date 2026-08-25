@@ -646,7 +646,7 @@ const blockEditorOkDisabled = computed(() => {
   if (!editor.value) return true
   const { block } = editor.value
   if (!block) return true
-  const { customCSSClass, customID } = block.value?.meta || {}
+  const { customCSSClass, customID } = block.meta || {}
   return [handle.handleState(customID), handle.classState(customCSSClass)].includes(false)
 })
 
@@ -827,8 +827,9 @@ function onBlockUpdated (index) {
   unsavedBlocks.value.add(fetchID(blocks.value[index]))
 }
 
-function updateBlocks (block = editor.value.block) {
-  block = compose.PageBlockMaker(block)
+function updateBlocks (block) {
+  if (!editor.value) return
+  block = compose.PageBlockMaker(block || editor.value.block)
   const creatingTabbedBlock = editor.value.block.kind !== block.kind
 
   if (creatingTabbedBlock) {
