@@ -6,11 +6,7 @@
       type="button"
       :class="['btn', `btn-${variant}`, 'd-flex align-items-center d-print-none border-0 px-1 h-100', buttonClass]"
       :style="buttonStyle"
-      data-bs-toggle="popover"
-      data-bs-trigger="click"
-      data-bs-placement="bottom"
-      data-bs-boundary="window"
-      :data-bs-content="popoverContent"
+      @click.stop
     >
       <font-awesome-icon
         :icon="['fas', 'filter']"
@@ -18,9 +14,18 @@
       />
     </button>
 
-    <div
-      ref="popoverEl"
-      class="d-none"
+    <BPopover
+      ref="popoverRef"
+      class="record-list-filter shadow-sm"
+      click
+      placement="bottom"
+      :delay="0"
+      boundary="viewport"
+      :boundary-padding="2"
+      :target="popoverTarget"
+      :no-auto-close="preventPopoverClose"
+      @hide="onHide"
+      @show="onOpen"
     >
       <div class="card position-static w-100 border-0">
         <div class="card-body px-3 pb-0 overflow-auto">
@@ -62,14 +67,15 @@
           </div>
         </div>
       </div>
-    </div>
+    </BPopover>
   </div>
 </template>
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'block' } })
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { BPopover } from 'bootstrap-vue-next'
 import FilterToolbox from 'corteza-webapp-compose/src/components/Common/FilterToolbox.vue'
 
 const { t } = useI18n()
@@ -121,8 +127,7 @@ const emit = defineEmits(['filter', 'reset', 'filter-preset'])
 
 const componentFilter = ref([])
 const preventPopoverClose = ref(false)
-const popoverEl = ref(null)
-const popoverContent = computed(() => popoverEl.value?.innerHTML || '')
+const popoverRef = ref(null)
 
 const inFilter = computed(() => {
   return props.recordListFilter.some(({ filter }) => {
@@ -162,8 +167,7 @@ function resetFilter () {
 
 function onSave (close = true, type = 'filter') {
   if (close) {
-    const popover = bootstrap.Popover.getInstance(document.getElementById(popoverTarget.value))
-    if (popover) popover.hide()
+    popoverRef.value?.hide()
   }
   setTimeout(() => {
     emit(type, componentFilter.value.filter(({ filter = [] }) => filter.filter((f = {}) => !!f.name).length > 0))
@@ -187,6 +191,7 @@ function onSave (close = true, type = 'filter') {
     padding: 0;
     color: var(--black);
     background: var(--white);
+    border: 1px solid var(--bs-border-color, #dee2e6);
     border-radius: 0.25rem;
     opacity: 1 !important;
     box-shadow: 0 3px 48px #00000026;
@@ -199,7 +204,7 @@ function onSave (close = true, type = 'filter') {
     min-width: 120px;
   }
 
-  .arrow {
+  .popover-arrow {
     &::before {
       border-bottom-color: var(--white);
       border-top-color: var(--white);

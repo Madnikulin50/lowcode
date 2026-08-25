@@ -57,11 +57,16 @@ const module = ref(undefined)
 const customBlock = ref(undefined)
 
 const dialogClass = computed(() => {
-  return block.value && block.value.options?.magnifyOption === 'fullscreen' ? 'h-100 mw-100 m-0 mh-100' : 'h-100 modal-max-width'
+  // fullscreen = edge-to-edge width and full viewport height (100%);
+  // default (modal) = capped width and height (80%). `h-100` anchors an explicit
+  // height on the dialog itself so the fullscreen height chain below stays definite.
+  return block.value && block.value.options?.magnifyOption === 'fullscreen' ? 'h-100 mw-100 m-0' : 'modal-max-width'
 })
 
 const contentClass = computed(() => {
-  return `${block.value && block.value.options?.magnifyOption === 'fullscreen' ? 'mh-100 rounded-0' : ''} position-initial`
+  return block.value && block.value.options?.magnifyOption === 'fullscreen'
+    ? 'rounded-0 modal-full-height position-initial'
+    : 'modal-max-height position-initial'
 })
 
 const magnifiedBlockID = computed(() => route.query.magnifiedBlockID)
@@ -69,7 +74,11 @@ const magnifiedBlockID = computed(() => route.query.magnifiedBlockID)
 watch(magnifiedBlockID, (newVal) => {
   if (!newVal) {
     setDefaultValues()
-  } else if (newVal !== fetchID(block.value)) {
+  } else if (!block.value || newVal !== fetchID(block.value)) {
+    // !block.value: page just (re)loaded straight into a URL that already
+    // carries ?magnifiedBlockID (bookmark, share link, refresh while
+    // magnified) — fetchID(undefined) would throw before we ever get to
+    // restore the modal, so short-circuit straight into loadModal instead.
     loadModal(newVal)
   }
 }, { immediate: true })
@@ -180,5 +189,22 @@ onBeforeUnmount(() => {
 
 .modal-max-width {
   max-width: 97vw;
+}
+
+// Both of these use an explicit `height`, not just `max-height`: many PageBlocks
+// (Chart's ECharts canvas in particular) rely on an unbroken `height: 100%` chain
+// down to their content to size themselves via JS (getBoundingClientRect), not just
+// CSS layout. A `max-height`-only ancestor never resolves as a definite height for
+// that percentage chain, so it collapses to 0 and only the block header shows.
+.modal-max-height {
+  height: 80vh;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-full-height {
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
 }
 </style>

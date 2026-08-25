@@ -6,6 +6,11 @@
       "runtimeExecutable": "client3/lib/vue/node_modules/.bin/vite",
       "runtimeArgs": ["--config", "client3/lib/vue/.smoke-test/vite.config.js"],
       "port": 5199
+    },
+    {
+      "name": "compose-client3",
+      "url": "http://localhost:8081",
+      "port": 8081
     }
   ]
 }
