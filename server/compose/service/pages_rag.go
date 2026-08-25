@@ -5,27 +5,14 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/auth"
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
-	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"github.com/madnikulin50/lowcode/server/pkg/rag"
 	"go.uber.org/zap"
-	"golang.org/x/text/language"
 )
-
-type PagesRAGProgress struct {
-	Running       bool   `json:"running"`
-	TotalPages    int    `json:"totalPages"`
-	IndexedPages  int    `json:"indexedPages"`
-	CurrentPage   string `json:"currentPage"`
-	TotalBlocks   int    `json:"totalBlocks"`
-	IndexedBlocks int    `json:"indexedBlocks"`
-	Complete      bool   `json:"complete"`
-}
 
 type pagesFinder interface {
 	Find(ctx context.Context, filter types.PageFilter) (types.PageSet, types.PageFilter, error)
@@ -38,141 +25,15 @@ type PagesRAGService struct {
 	pages      pagesFinder
 	namespaces NamespaceService
 	record     RecordService
-	locale     ResourceTranslationsManagerService
-	mu         sync.Mutex
-	progress   PagesRAGProgress
 }
 
-func NewPagesRAGService(store *rag.Store, embedder *rag.Embedder, log *zap.Logger, pages pagesFinder, namespaces NamespaceService, rec RecordService, locale ResourceTranslationsManagerService) *PagesRAGService {
-	return &PagesRAGService{store: store, embedder: embedder, log: log, pages: pages, namespaces: namespaces, record: rec, locale: locale}
-}
-
-// parseModuleID extracts module ID from interface{} which could be string or float64.
-func parseModuleID(v interface{}) (uint64, bool) {
-	switch t := v.(type) {
-	case string:
-		if t == "" || t == "0" {
-			return 0, false
-		}
-		id, err := strconv.ParseUint(t, 10, 64)
-		return id, err == nil
-	case float64:
-		id := uint64(t)
-		return id, id != 0
-	}
-	return 0, false
-}
-
-// blockTiedToRecord reports whether a block's options reference the current
-// record context (${recordID} variable). Such blocks only make sense on
-// record pages and are excluded from RAG indexing.
-func blockTiedToRecord(opts map[string]interface{}) bool {
-	for _, v := range opts {
-		switch t := v.(type) {
-		case string:
-			if strings.Contains(t, "${recordID}") {
-				return true
-			}
-		case map[string]interface{}:
-			if blockTiedToRecord(t) {
-				return true
-			}
-		case []interface{}:
-			for _, item := range t {
-				if m, ok := item.(map[string]interface{}); ok && blockTiedToRecord(m) {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-// translatedBlockText collects the page and block title (plus block
-// description and content body) in every supported language except the
-// default one, so RAG chunks are searchable in all available translations.
-func (s *PagesRAGService) translatedBlockText(p *types.Page, block types.PageBlock, blockIndex int) string {
-	if s.locale == nil || s.locale.Locale() == nil {
-		return ""
-	}
-	lsvc := s.locale.Locale()
-
-	var defTag language.Tag
-	if def := lsvc.Default(); def != nil {
-		defTag = def.Tag
-	}
-
-	blockID := locale.ContentID(block.BlockID, blockIndex)
-	rpl := strings.NewReplacer("{{blockID}}", strconv.FormatUint(blockID, 10))
-	titleKey := rpl.Replace(types.LocaleKeyPagePageBlockBlockIDTitle.Path)
-	descKey := rpl.Replace(types.LocaleKeyPagePageBlockBlockIDDescription.Path)
-	bodyKey := rpl.Replace(types.LocaleKeyPagePageBlockBlockIDContentBody.Path)
-
-	baseTitle, baseDescription := block.Title, block.Description
-	var baseBody string
-	if block.Kind == "Content" {
-		baseBody, _ = block.Options["body"].(string)
-	}
-
-	var lines []string
-	for _, tag := range lsvc.Tags() {
-		if tag == defTag {
-			continue
-		}
-		tt := lsvc.ResourceTranslations(tag, p.ResourceTranslation())
-		if len(tt) == 0 {
-			continue
-		}
-
-		pageTitle, title, description := p.Title, baseTitle, baseDescription
-		body := baseBody
-
-		if aux := tt.FindByKey(types.LocaleKeyPageTitle.Path); aux != nil {
-			pageTitle = aux.Msg
-		}
-		if aux := tt.FindByKey(titleKey); aux != nil {
-			title = aux.Msg
-		}
-		if aux := tt.FindByKey(descKey); aux != nil {
-			description = aux.Msg
-		}
-		if aux := tt.FindByKey(bodyKey); aux != nil {
-			body = aux.Msg
-		}
-
-		if pageTitle == p.Title && title == baseTitle && description == baseDescription && body == "" {
-			continue
-		}
-
-		line := fmt.Sprintf("[%s] %s / %s: %s", tag, pageTitle, block.Kind, title)
-		if description != "" && description != baseDescription {
-			line += " (" + description + ")"
-		}
-		lines = append(lines, line)
-		if body != "" {
-			lines = append(lines, fmt.Sprintf("[%s] content: %s", tag, body))
-		}
-	}
-	if len(lines) == 0 {
-		return ""
-	}
-	return strings.Join(lines, "\n")
+func NewPagesRAGService(store *rag.Store, embedder *rag.Embedder, log *zap.Logger, pages pagesFinder, namespaces NamespaceService, rec RecordService) *PagesRAGService {
+	return &PagesRAGService{store: store, embedder: embedder, log: log, pages: pages, namespaces: namespaces, record: rec}
 }
 
 func (s *PagesRAGService) Crawl(ctx context.Context) error {
 	s.log.Info("pages RAG: starting daily crawl")
 	start := time.Now()
-
-	s.mu.Lock()
-	s.progress = PagesRAGProgress{Running: true}
-	s.mu.Unlock()
-
-	defer func() {
-		s.mu.Lock()
-		s.progress.Running = false
-		s.progress.Complete = true
-		s.mu.Unlock()
-	}()
 
 	// Fetch all namespaces
 	nsSet, _, err := s.namespaces.Find(ctx, types.NamespaceFilter{})
@@ -193,27 +54,13 @@ func (s *PagesRAGService) Crawl(ctx context.Context) error {
 		allPages = append(allPages, pages...)
 	}
 
-	s.mu.Lock()
-	s.progress.TotalPages = len(allPages)
-	s.mu.Unlock()
-
 	if err := s.store.ClearPages(); err != nil {
 		return fmt.Errorf("pages RAG: clear: %w", err)
 	}
 
 	var indexed int
-	for pi, p := range allPages {
-		s.mu.Lock()
-		s.progress.CurrentPage = p.Title
-		s.progress.IndexedPages = pi
-		s.mu.Unlock()
-
-		for i, block := range p.Blocks {
-			if blockTiedToRecord(block.Options) {
-				s.log.Debug("pages RAG: skip record-bound block", zap.String("page", p.Title), zap.String("kind", block.Kind), zap.String("title", block.Title))
-				continue
-			}
-
+	for _, p := range allPages {
+		for _, block := range p.Blocks {
 			cfgText := rag.ExtractBlockText(block)
 
 			var dataText string
@@ -221,9 +68,7 @@ func (s *PagesRAGService) Crawl(ctx context.Context) error {
 			case "Metric":
 				dataText = s.fetchMetricData(ctx, p.NamespaceID, block.Options)
 			case "RecordList":
-				dataText = s.fetchRecordListData(ctx, p.NamespaceID, p.ModuleID, block.Options)
-			default:
-				continue
+				dataText = s.fetchRecordListData(ctx, p.NamespaceID, block.Options)
 			}
 
 			var text string
@@ -233,10 +78,6 @@ func (s *PagesRAGService) Crawl(ctx context.Context) error {
 				text = fmt.Sprintf("Page: %s (%d)\nBlock: %s (%s)\n%s", p.Title, p.ID, block.Title, block.Kind, cfgText)
 			} else {
 				continue
-			}
-
-			if translated := s.translatedBlockText(p, block, i); translated != "" {
-				text += "\n\nTranslations:\n" + translated
 			}
 
 			chunks := rag.ChunkText(text, 512, 64)
@@ -251,8 +92,6 @@ func (s *PagesRAGService) Crawl(ctx context.Context) error {
 					PageID:      p.ID,
 					NamespaceID: p.NamespaceID,
 					Title:       p.Title,
-					BlockKind:   block.Kind,
-					BlockTitle:  block.Title,
 					Text:        chunk,
 					ChunkIndex:  i,
 				}
@@ -268,12 +107,6 @@ func (s *PagesRAGService) Crawl(ctx context.Context) error {
 	if err := s.store.SetPagesCrawlTime(time.Now().Unix()); err != nil {
 		s.log.Warn("pages RAG: save crawl time", zap.Error(err))
 	}
-
-	s.mu.Lock()
-	s.progress.IndexedPages = len(allPages)
-	s.progress.IndexedBlocks = indexed
-	s.progress.CurrentPage = ""
-	s.mu.Unlock()
 
 	s.log.Info("pages RAG: crawl done", zap.Int("blocks", indexed), zap.Int("namespaces", len(nsSet)), zap.Duration("took", time.Since(start)))
 	return nil
@@ -294,10 +127,7 @@ func (s *PagesRAGService) fetchMetricData(ctx context.Context, namespaceID uint6
 		if !ok {
 			continue
 		}
-		modID, ok := parseModuleID(mm["moduleID"])
-		if !ok || modID == 0 {
-			continue
-		}
+		modIDStr, _ := mm["moduleID"].(string)
 		metricField, _ := mm["metricField"].(string)
 		operation, _ := mm["operation"].(string)
 		filter, _ := mm["filter"].(string)
@@ -305,6 +135,13 @@ func (s *PagesRAGService) fetchMetricData(ctx context.Context, namespaceID uint6
 		prefix, _ := mm["prefix"].(string)
 		suffix, _ := mm["suffix"].(string)
 
+		if modIDStr == "" || modIDStr == "0" {
+			continue
+		}
+		modID, err := strconv.ParseUint(modIDStr, 10, 64)
+		if err != nil {
+			continue
+		}
 		if label == "" {
 			label = metricField
 		}
@@ -371,12 +208,13 @@ func (s *PagesRAGService) computeMetricValue(ctx context.Context, namespaceID, m
 	return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.2f", total), "0"), ".")
 }
 
-func (s *PagesRAGService) fetchRecordListData(ctx context.Context, namespaceID, pageModuleID uint64, opts map[string]interface{}) string {
-	modID, ok := parseModuleID(opts["moduleID"])
-	if !ok || modID == 0 {
-		modID = pageModuleID
+func (s *PagesRAGService) fetchRecordListData(ctx context.Context, namespaceID uint64, opts map[string]interface{}) string {
+	modIDStr, _ := opts["moduleID"].(string)
+	if modIDStr == "" || modIDStr == "0" {
+		return ""
 	}
-	if modID == 0 {
+	modID, err := strconv.ParseUint(modIDStr, 10, 64)
+	if err != nil {
 		return ""
 	}
 	prefilter, _ := opts["prefilter"].(string)
@@ -427,13 +265,6 @@ func (s *PagesRAGService) ListPages(ctx context.Context) ([]rag.PageChunk, error
 
 func (s *PagesRAGService) Reindex(ctx context.Context) error {
 	return s.Crawl(ctx)
-}
-
-func (s *PagesRAGService) Progress() PagesRAGProgress {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	p := s.progress
-	return p
 }
 
 func (s *PagesRAGService) BuildContext(ctx context.Context, query string, topK int) string {

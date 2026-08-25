@@ -120,11 +120,15 @@ export function Apply<DST, SRC, T extends keyof DST> (dst: DST, src: SRC, cast: 
       return
     }
 
+    // prop must exist on src
+    if (!Object.prototype.hasOwnProperty.call(src, prop)) {
+      return
+    }
+
     // sProp is prop from source
     const sProp = (prop as unknown) as keyof SRC
 
-    // Vue 3 reactive proxies hide class fields from hasOwnProperty.
-    // Read via property access so Module/Record copies keep moduleID.
+    // value on src should be defined
     if (!src || src[sProp] === undefined || src[sProp] === null) {
       return
     }
@@ -154,10 +158,15 @@ export function ApplyWhitelisted<DST, SRC, WL, T extends keyof DST> (dst: DST, s
       return
     }
 
+    // prop must exist on src
+    if (!Object.prototype.hasOwnProperty.call(src, prop)) {
+      return
+    }
+
     // sProp is prop from source
     const sProp = (prop as unknown) as keyof SRC
 
-    // See Apply(): Vue 3 proxies fail hasOwnProperty for class fields.
+    // value on src should be defined
     if (!src || src[sProp] === undefined) {
       return
     }

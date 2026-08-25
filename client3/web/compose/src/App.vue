@@ -42,9 +42,7 @@ onMounted(async () => {
     }
 
     if (user.meta.theme) {
-      const html = document.getElementsByTagName('html')[0]
-      html.setAttribute('data-color-mode', user.meta.theme)
-      html.setAttribute('data-bs-theme', user.meta.theme)
+      document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme)
     }
 
     const bundleLoaderOpt = {

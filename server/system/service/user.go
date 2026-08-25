@@ -158,12 +158,6 @@ func (svc user) FindByID(ctx context.Context, userID uint64) (u *types.User, err
 			if err = svc.generateUserAvatarInitial(ctx, u); err != nil {
 				return err
 			}
-
-			// Persist the freshly generated avatar so it survives across
-			// subsequent lookups (avatar is generated lazily here).
-			if err = store.UpdateUser(ctx, svc.store, u); err != nil {
-				return err
-			}
 		}
 
 		if !svc.ac.CanReadUser(ctx, u) {
@@ -1226,15 +1220,6 @@ func (svc user) DeleteAvatar(ctx context.Context, userID uint64) (err error) {
 	return svc.recordAction(ctx, uaProps, UserActionDeleteAvatar, err)
 }
 
-// firstRunes returns up to n first characters (runes) of s as a string.
-func firstRunes(s string, n int) string {
-	r := []rune(s)
-	if len(r) > n {
-		r = r[:n]
-	}
-	return string(r)
-}
-
 func processAvatarInitials(u *types.User) (initial string) {
 	var (
 		chars string
@@ -1244,11 +1229,15 @@ func processAvatarInitials(u *types.User) (initial string) {
 	if u.Name != "" {
 		parts = strings.Fields(u.Name)
 		if len(parts) > 2 {
-			chars = firstRunes(parts[0], 1) + firstRunes(parts[1], 1) + firstRunes(parts[2], 1)
+			chars = string(parts[0][0]) + string(parts[1][0]) + string(parts[2][0])
 		} else if len(parts) > 1 {
-			chars = firstRunes(parts[0], 1) + firstRunes(parts[1], 1)
+			chars = string(parts[0][0]) + string(parts[1][0])
 		} else {
-			chars = firstRunes(parts[0], 2)
+			if len(parts[0]) > 1 {
+				chars = string(parts[0][0]) + string(parts[0][1])
+			} else {
+				chars = string(parts[0][0])
+			}
 		}
 	} else if u.Handle != "" {
 		if strings.ContainsAny(u.Handle, "._-") {
@@ -1259,9 +1248,9 @@ func processAvatarInitials(u *types.User) (initial string) {
 				}
 			}
 
-			chars = firstRunes(parts[0], 1) + firstRunes(parts[1], 1)
+			chars = string(parts[0][0]) + string(parts[1][0])
 		} else {
-			chars = firstRunes(u.Handle, 1)
+			chars = string(u.Handle[0])
 		}
 	} else {
 		email := strings.Split(u.Email, "@")
@@ -1273,9 +1262,9 @@ func processAvatarInitials(u *types.User) (initial string) {
 				}
 			}
 
-			chars = firstRunes(parts[0], 1) + firstRunes(parts[1], 1)
+			chars = string(parts[0][0]) + string(parts[1][0])
 		} else {
-			chars = firstRunes(email[0], 1)
+			chars = string(email[0][0])
 		}
 	}
 

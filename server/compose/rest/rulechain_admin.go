@@ -4,15 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/madnikulin50/lowcode/server/compose/mcp/handlers"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
-	"github.com/madnikulin50/lowcode/server/pkg/rulesgo"
 )
 
 type RuleChainAdmin struct{}
@@ -24,17 +21,7 @@ func (a RuleChainAdmin) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nsFilter := parseUint64String(r.URL.Query().Get("namespaceID"))
-
-	all := engine.Chains()
-	chains := make([]*rulesgo.Chain, 0, len(all))
-	for _, c := range all {
-		if nsFilter > 0 && c.NamespaceID != 0 && c.NamespaceID != nsFilter {
-			continue
-		}
-		chains = append(chains, c)
-	}
-
+	chains := engine.Chains()
 	limit := queryInt(r, "limit", 50)
 	offset := queryInt(r, "offset", 0)
 
@@ -51,7 +38,6 @@ func (a RuleChainAdmin) List(w http.ResponseWriter, r *http.Request) {
 	for _, c := range chains[offset:end] {
 		result = append(result, map[string]interface{}{
 			"id":          c.ID,
-			"namespaceID": strconv.FormatUint(c.NamespaceID, 10),
 			"name":        c.Name,
 			"description": c.Description,
 			"nodeCount":   len(c.Nodes),
@@ -91,13 +77,21 @@ func (a RuleChainAdmin) Create(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, _ := io.ReadAll(r.Body)
 
-	payload, err := decodeChainPayload(body)
-	if err != nil {
+	var chain struct {
+		ID          string            `json:"id"`
+		Name        string            `json:"name"`
+		Description string            `json:"description"`
+		Nodes       []json.RawMessage `json:"nodes"`
+		Edges       []json.RawMessage `json:"edges"`
+		EntryNode   string            `json:"entryNode"`
+	}
+
+	if err := json.Unmarshal(body, &chain); err != nil {
 		api.Send(w, r, fmt.Errorf("invalid JSON: %w", err))
 		return
 	}
 
-	if payload.Name == "" {
+	if chain.Name == "" {
 		api.Send(w, r, fmt.Errorf("name is required"))
 		return
 	}
@@ -108,25 +102,23 @@ func (a RuleChainAdmin) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if payload.ID == "" {
-		payload.ID = fmt.Sprintf("rc_%s_%s", payload.Name, safeID(4))
+	// Generate ID if empty
+	if chain.ID == "" {
+		chain.ID = fmt.Sprintf("rc_%s_%s", chain.Name, safeID(4))
 	}
 
-	if engine.Chain(payload.ID) != nil {
-		api.Send(w, r, fmt.Errorf("chain %s already exists", payload.ID))
+	// Import the chain
+	chainJSON, _ := json.Marshal(chain)
+	imported, err := engine.ImportChain(chainJSON)
+	if err != nil {
+		api.Send(w, r, fmt.Errorf("import failed: %w", err))
 		return
-	}
-
-	// Register even if PostgreSQL persist fails so the chain is usable in this process.
-	engine.RegisterChain(payload)
-	if err := engine.PersistChain(payload); err != nil {
-		log.Printf("[rulechain] persist %s: %v", payload.ID, err)
 	}
 
 	api.Send(w, r, map[string]interface{}{
 		"created": true,
-		"chainID": payload.ID,
-		"chain":   payload,
+		"chainID": imported.ID,
+		"chain":   imported,
 	})
 }
 
@@ -135,8 +127,15 @@ func (a RuleChainAdmin) Update(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, _ := io.ReadAll(r.Body)
 
-	payload, err := decodeChainPayload(body)
-	if err != nil {
+	var update struct {
+		Name        string            `json:"name"`
+		Description string            `json:"description"`
+		Nodes       []json.RawMessage `json:"nodes"`
+		Edges       []json.RawMessage `json:"edges"`
+		EntryNode   string            `json:"entryNode"`
+	}
+
+	if err := json.Unmarshal(body, &update); err != nil {
 		api.Send(w, r, fmt.Errorf("invalid JSON: %w", err))
 		return
 	}
@@ -153,30 +152,14 @@ func (a RuleChainAdmin) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existing.ID = chainID
-	if payload.Name != "" {
-		existing.Name = payload.Name
+	if update.Name != "" {
+		existing.Name = update.Name
 	}
-	existing.Description = payload.Description
-	if payload.EntryNode != "" {
-		existing.EntryNode = payload.EntryNode
+	if update.Description != "" {
+		existing.Description = update.Description
 	}
-	if payload.NamespaceID > 0 {
-		existing.NamespaceID = payload.NamespaceID
-	}
-	if payload.Nodes != nil {
-		existing.Nodes = payload.Nodes
-	}
-	if payload.Edges != nil {
-		existing.Edges = payload.Edges
-	}
-	if len(payload.Config) > 0 {
-		existing.Config = payload.Config
-	}
-
-	if err := engine.PersistChain(existing); err != nil {
-		api.Send(w, r, fmt.Errorf("persist failed: %w", err))
-		return
+	if update.EntryNode != "" {
+		existing.EntryNode = update.EntryNode
 	}
 
 	api.Send(w, r, map[string]interface{}{
@@ -291,43 +274,6 @@ func nodeTypes() []map[string]interface{} {
 			},
 		},
 		{
-			"type":        "crud.upsert",
-			"label":       "Upsert Record",
-			"description": "Find a record by matchBy fields and update it, or create it",
-			"configSchema": map[string]interface{}{
-				"moduleID":     "uint64 — module ID",
-				"moduleHandle": "string — module handle (preferred over moduleID)",
-				"namespaceID":  "uint64 — namespace ID",
-				"matchBy":      "string[] — ordered fields to match (e.g. mac_address, ip_address)",
-				"fields":       "object — field templates, {{item.ip}} inside foreach",
-			},
-		},
-		{
-			"type":        "foreach",
-			"label":       "For Each Item",
-			"description": "Loop body nodes once per item in an array (items / devices)",
-			"configSchema": map[string]interface{}{
-				"items":    "string — variable name holding the array (default: items)",
-				"itemVar":  "string — prefix for item fields (default: item)",
-				"maxItems": "int — optional cap",
-				"failFast": "bool — stop on first body error",
-			},
-		},
-		{
-			"type":        "detach",
-			"label":       "Detach (poll)",
-			"description": "Start a background poller that feeds the ingest chain; does not block Run",
-			"configSchema": map[string]interface{}{
-				"kind":          "string — poll",
-				"ingestChainID": "string (required) — chain to run with the envelope",
-				"statusUrl":     "string — GET job status",
-				"itemsUrl":      "string — GET items on complete",
-				"interval":      "int — seconds (default 2)",
-				"timeout":       "int — seconds (default 900)",
-				"until":         "string — comma statuses that stop polling",
-			},
-		},
-		{
 			"type":        "mail",
 			"label":       "Send Email",
 			"description": "Send an email notification",
@@ -358,7 +304,7 @@ func nodeTypes() []map[string]interface{} {
 			"configSchema": map[string]interface{}{
 				"agent":  "string (required) — agent name: crud-agent | assistant",
 				"prompt": "string (required) — prompt with {{variable}} support",
-				"model":  "string — model name (default: qwen3:8b / CHAT_MODEL)",
+				"model":  "string — model name (default: deepseek-v2)",
 			},
 		},
 		{
@@ -395,44 +341,6 @@ func nodeTypes() []map[string]interface{} {
 				"branches": "int — number of branches (min: 2)",
 			},
 		},
-		{
-			"type":        "score.matrix",
-			"label":       "Risk Matrix",
-			"description": "5×5 (or NxN) likelihood × impact → score",
-			"configSchema": map[string]interface{}{
-				"likelihoodField": "string — input field (default: likelihood)",
-				"impactField":     "string — input field (default: impact)",
-				"scale":           "int — clamp 1..scale (default: 5)",
-				"formula":         "string — product | sum (ignored if matrix set)",
-				"matrix":          "number[][] — optional custom cell lookup [L-1][I-1]",
-				"outScore":        "string — output variable (default: score)",
-			},
-		},
-		{
-			"type":        "score.weighted",
-			"label":       "Weighted Score",
-			"description": "Σ weightᵢ · normalize(fieldᵢ / maxᵢ) → score 0..100",
-			"configSchema": map[string]interface{}{
-				"factors":   "array — [{field, weight, max, invert?}]",
-				"normalize": "bool — default true (scale to 0..scaleMax)",
-				"scaleMax":  "number — default 100",
-				"outScore":  "string — output variable (default: score)",
-			},
-		},
-		{
-			"type":        "risk.band",
-			"label":       "Risk Band",
-			"description": "Map score → level; optional residual = score × (1 − control)",
-			"configSchema": map[string]interface{}{
-				"scoreField":      "string — default score",
-				"controlField":    "string — 0..1 control effectiveness",
-				"bands":           "array — [{name, max}] ascending max",
-				"criticalLevels":  "string[] — levels that set is_critical (default: [critical])",
-				"outLevel":        "string — default level",
-				"outResidual":     "string — default residualScore",
-				"outCriticalFlag": "string — default is_critical (empty unless critical)",
-			},
-		},
 	}
 }
 
@@ -455,67 +363,6 @@ func safeID(n int) string {
 		b[i] = chars[i*7%len(chars)]
 	}
 	return string(b)
-}
-
-type chainPayloadRaw struct {
-	ID          string          `json:"id"`
-	NamespaceID json.RawMessage `json:"namespaceID"`
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	EntryNode   string          `json:"entryNode"`
-	Nodes       json.RawMessage `json:"nodes"`
-	Edges       json.RawMessage `json:"edges"`
-	Config      json.RawMessage `json:"config"`
-}
-
-func decodeChainPayload(body []byte) (*rulesgo.Chain, error) {
-	var raw chainPayloadRaw
-	if err := json.Unmarshal(body, &raw); err != nil {
-		return nil, err
-	}
-	c := &rulesgo.Chain{
-		ID:          strings.TrimSpace(raw.ID),
-		NamespaceID: parseFlexibleUint64(raw.NamespaceID),
-		Name:        raw.Name,
-		Description: raw.Description,
-		EntryNode:   raw.EntryNode,
-		Config:      raw.Config,
-	}
-	if len(raw.Nodes) > 0 && string(raw.Nodes) != "null" {
-		if err := json.Unmarshal(raw.Nodes, &c.Nodes); err != nil {
-			return nil, fmt.Errorf("invalid nodes: %w", err)
-		}
-	}
-	if len(raw.Edges) > 0 && string(raw.Edges) != "null" {
-		if err := json.Unmarshal(raw.Edges, &c.Edges); err != nil {
-			return nil, fmt.Errorf("invalid edges: %w", err)
-		}
-	}
-	return c, nil
-}
-
-func parseUint64String(s string) uint64 {
-	s = strings.TrimSpace(s)
-	if s == "" || s == "null" {
-		return 0
-	}
-	n, _ := strconv.ParseUint(s, 10, 64)
-	return n
-}
-
-func parseFlexibleUint64(raw json.RawMessage) uint64 {
-	if len(raw) == 0 || string(raw) == "null" {
-		return 0
-	}
-	var n uint64
-	if err := json.Unmarshal(raw, &n); err == nil {
-		return n
-	}
-	var s string
-	if err := json.Unmarshal(raw, &s); err == nil {
-		return parseUint64String(s)
-	}
-	return 0
 }
 
 func MountRuleChainAdminRoutes(r chi.Router) {

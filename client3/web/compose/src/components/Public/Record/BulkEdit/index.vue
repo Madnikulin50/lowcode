@@ -99,16 +99,12 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'block' } })
-import { ref, computed, watch, onBeforeUnmount, inject } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { compose, validator } from 'corteza-lib/js/dist'
-import { composables } from 'corteza-lib/vue/dist'
+import { compose } from 'corteza-lib/js/dist'
 import FieldEditor from 'corteza-webapp-compose/src/components/ModuleFields/Editor'
-import { isUserWritableField } from 'corteza-webapp-compose/src/lib/field-editable'
 
 const { t: $t } = useI18n({ useScope: 'global' })
-const $ComposeAPI = inject('$ComposeAPI')
-const { toastSuccess, toastErrorHandler } = composables.useToast()
 
 const props = defineProps({
   namespace: { type: compose.Namespace, required: true },
@@ -121,35 +117,32 @@ const props = defineProps({
   allowAddField: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['close', 'save'])
+const emit = defineEmits(['close'])
 
 const showModal = ref(false)
 const selectedField = ref(undefined)
 const fields = ref([])
-const processing = ref(false)
-const errors = ref(new validator.Validated())
 
+// Inline from record mixin
 const record = ref(new compose.Record(props.module, {}))
 
-function fieldErrors (name) {
-  if (!errors.value || typeof errors.value.filterByMeta !== 'function') {
-    return new validator.Validated()
-  }
-  return errors.value.filterByMeta('field', name)
+function fieldErrors(field) {
+  return {}
 }
 
 function isFieldEditable(field) {
-  if (!isUserWritableField(field)) return false
+  if (!field) return false
   const { canCreateOwnedRecord } = props.module || {}
   const { createdAt, canManageOwnerOnRecord } = record.value || {}
-  const { name, isSystem } = field || {}
+  const { name, canUpdateRecordValue, isSystem, expressions = {} } = field || {}
+  if (!canUpdateRecordValue) return false
   if (isSystem) {
     if (name === 'ownedBy') {
       return createdAt ? canManageOwnerOnRecord : canCreateOwnedRecord
     }
     return false
   }
-  return true
+  return !expressions.value
 }
 
 const moduleFields = computed(() => {
@@ -220,46 +213,26 @@ function setDefaultValues() {
   showModal.value = false
   selectedField.value = undefined
   fields.value = []
-  errors.value = new validator.Validated()
 }
 
 // These come from the record mixin - stub them out
 async function handleBulkUpdateSelectedRecords(query) {
-  if (!props.module || !props.module.moduleID) return
-  processing.value = true
-
-  const values = []
+  const $ComposeAPI = window.__composeAPI
+  const { namespaceID, moduleID } = props.module
+  // This would normally call recordPatch API - simplified stub
+  const values = {}
   fields.value.forEach(f => {
-    const { name, isMulti, isSystem } = getField(f)
-    const value = isSystem ? record.value[name] : record.value.values[name]
-
-    if (!isMulti) {
-      values.push({ name, value: value?.toString() ?? '' })
-    } else {
-      if (!Array.isArray(value) || value.length === 0) {
-        values.push({ name })
-        return
-      }
-
-      const multiValues = value
-        .filter(v => v !== undefined)
-        .map(v => ({ name, value: v?.toString() ?? '' }))
-
-      values.push(...multiValues)
+    if (record.value.values[f]) {
+      values[f] = record.value.values[f]
     }
   })
-
-  const { namespaceID, moduleID } = props.module
-  try {
-    await $ComposeAPI.recordPatch({ moduleID, namespaceID, values, query })
-    toastSuccess($t('notification.record.bulkRecordUpdateSuccess'))
-    showModal.value = false
-    emit('save')
-    window.dispatchEvent(new CustomEvent('refetch-records', { detail: { stayOnPage: true } }))
-  } catch (e) {
-    toastErrorHandler($t('notification.record.deleteBulkRecordUpdateFailed'))(e)
-  } finally {
-    processing.value = false
+  if (Object.keys(values).length && query) {
+    try {
+      await $ComposeAPI.recordPatch({ namespaceID, moduleID, values, query })
+      showModal.value = false
+    } catch (e) {
+      // error handling
+    }
   }
 }
 </script>

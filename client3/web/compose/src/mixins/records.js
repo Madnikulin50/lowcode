@@ -54,8 +54,6 @@ export default {
       // If new record check canCreateRecord module permissions, otherwise check canUpdateRecord and only then canUpdateRecordValue
       if (this.isNew ? !canCreateRecord : !(canUpdateRecord && canReadRecordValue && canUpdateRecordValue)) return false
 
-      if (field.options?.readonly || field.isReadonly) return false
-
       if (isSystem) {
         // Make ownedBy field editable if correct permissions
         if (name === 'ownedBy') {

@@ -132,11 +132,21 @@ watch.test.%: $(FSWATCH)
 
 watch.test: watch.test.unit
 
-# YAML codegen (REST, actions, events, type sets, automation handlers).
-# Store/DAL/RBAC/envoy/options used to come from CUE; those .gen.go files are now source.
-codegen: codegen-legacy
-watch.codegen: watch.codegen-legacy
-clean.codegen: clean.codegen-legacy
+# See codegen/README.md for details
+codegen:
+	@ make -C codegen all
+
+cue.fmt: $(CUE)
+	$(CUE) fmt -v codegen/*.cue
+	$(CUE) fmt -v codegen/schema/*.cue
+
+	$(CUE) fmt -v app/*.cue
+	$(CUE) fmt -v app/options/*.cue
+
+	$(CUE) fmt system/*.cue
+	$(CUE) fmt compose/*.cue
+	$(CUE) fmt automation/*.cue
+	$(CUE) fmt federation/*.cue
 
 codegen-legacy: $(CODEGEN)
 	@ $(CODEGEN) -v

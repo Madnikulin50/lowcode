@@ -1049,8 +1049,8 @@ endpoints:
         title: 'Metrics (eg: ''SUM(money), MAX(calls)'')'
       - type: string
         name: dimensions
-        required: false
-        title: 'Dimensions (eg: ''DATE(foo), status''). Empty = scalar aggregate (one group).'
+        required: true
+        title: 'Dimensions (eg: ''DATE(foo), status'')'
       - type: string
         name: filter
         required: false

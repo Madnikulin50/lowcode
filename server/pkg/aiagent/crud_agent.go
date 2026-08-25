@@ -8,7 +8,7 @@ func NewCRUDAgent(client *chat.Client, tools []chat.ToolDef) *Agent {
 	cfg := AgentConfig{
 		Name:        "crud-agent",
 		Description: "Autonomous data operations. Creates, updates, deletes, and searches records.",
-		Model:       chat.ModelForRole(chat.RoleMCPAgent),
+		Model:       "deepseek-v2",
 		SystemPrompt: `You are a CRUD agent for the Corteza lowcode platform.
 You can:
 - Search records with search_records(module, query, limit)
@@ -28,7 +28,7 @@ func NewAssistantAgent(client *chat.Client, tools []chat.ToolDef) *Agent {
 	cfg := AgentConfig{
 		Name:        "assistant",
 		Description: "General-purpose assistant for the Corteza platform. Can search data, answer questions, create content.",
-		Model:       chat.ModelForRole(chat.RoleMCPAgent),
+		Model:       "deepseek-v2",
 		SystemPrompt: `You are an AI assistant for the Corteza lowcode platform.
 You can help users with:
 - Finding information across modules (search_records, list_modules)

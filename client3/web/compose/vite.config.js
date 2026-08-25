@@ -67,37 +67,12 @@ export default defineConfig({
       { find: 'corteza-webapp-compose/src/stores', replacement: resolve(__dirname, 'src/store') },
       { find: 'corteza-webapp-compose', replacement: resolve(__dirname, '.') },
 
-      { find: 'corteza-lib/vue/src', replacement: resolve(__dirname, '../../lib/vue/src') },
       { find: 'corteza-lib/vue/dist/WorkflowEditor', replacement: resolve(__dirname, '../../lib/vue/src/components/workflow/WorkflowEditor.vue') },
       { find: 'corteza-lib/vue/dist', replacement: resolve(__dirname, '../../lib/vue/dist') },
       { find: 'corteza-lib/js/dist', replacement: resolve(__dirname, '../../lib/js/dist') },
       { find: 'mxgraph', replacement: resolve(__dirname, 'node_modules/mxgraph/javascript/dist/build.js') },
       { find: 'v-jsoneditor', replacement: resolve(__dirname, 'node_modules/v-jsoneditor/dist/v-jsoneditor.min.js') },
       { find: 'file-saver', replacement: resolve(__dirname, 'node_modules/file-saver/dist/FileSaver.min.js') },
-    ],
-    // corteza-lib/vue/dist is aliased to a file physically living under
-    // client3/lib/vue, so plain Node resolution finds its own
-    // node_modules/pinia there instead of this app's copy. Even with
-    // matching versions, Rollup treats them as two distinct modules and
-    // bundles pinia twice, each with its own (uninitialized) activePinia
-    // instance — causing "Cannot read properties of undefined (reading
-    // '_s')" on mount. Force a single shared instance.
-    //
-    // Same story for @tiptap/* + prosemirror-*: CRichTextInput lives under
-    // client3/lib/vue/src too, so it resolves its own copy of
-    // prosemirror-state instead of this app's. Two Plugin instances with
-    // the same key but different module identity make prosemirror's
-    // Configuration throw "Adding different instances of a keyed plugin"
-    // when the editor is reconfigured/remounted (e.g. Builder.vue's
-    // editBlock). Force a single shared instance here too.
-    dedupe: [
-      'pinia', 'vue', 'vue-router', 'vue-i18n',
-      '@tiptap/core', '@tiptap/vue-3', '@tiptap/suggestion', '@tiptap/starter-kit',
-      '@tiptap/extension-list', '@tiptap/extension-mention', '@tiptap/extension-emoji',
-      '@tiptap/extension-table', '@tiptap/extension-text-align', '@tiptap/extension-text-style',
-      '@tiptap/extension-placeholder', '@tiptap/extension-image',
-      'prosemirror-state', 'prosemirror-view', 'prosemirror-model',
-      'prosemirror-transform', 'prosemirror-keymap',
     ],
     modules: [
       resolve(__dirname, 'node_modules'),
@@ -121,20 +96,7 @@ export default defineConfig({
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },
-      '/compose': {
-        target: process.env.VITE_API_URL || 'http://localhost:3333',
-        changeOrigin: true,
-        bypass (req) {
-          // Serve Vite's SPA entry, not /index.html (public/index.html is a
-          // Vue CLI leftover and would leak <%= BASE_URL %> into the page).
-          if (req.url?.startsWith('/compose/auth/callback')) return '/'
-          const accept = req.headers.accept || ''
-          if (accept.includes('text/html')) return '/'
-        },
-      },
-      // Negative lookahead: /auth/callback is the SPA OAuth return URL.
-      // Vite 6 bypass:false is a hard 404, not a skip.
-      '^/auth(?!/callback)': {
+      '/auth': {
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },

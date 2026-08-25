@@ -18,10 +18,6 @@ label:
       list: "Charts - {{label}}"
       edit: "Edit Chart - {{label}}"
       create: Create Chart
-    rulechains:
-      list: "Rule chains - {{label}}"
-      edit: "Edit rule chain - {{label}}"
-      create: Create rule chain
   actions: Actions
   active: Active
   add: Add
@@ -150,9 +146,6 @@ reminder:
     count: Snooze count
 tooltip:
   dragAndDrop: Drag and drop to change order
-  recordEditDenied: You do not have permission to edit this record
-  recordSaveDenied: You do not have permission to save this record
-  recordCloneDenied: You do not have permission to copy this record
 fieldKinds:
   Bool:
     label: Checkbox (Y/N)

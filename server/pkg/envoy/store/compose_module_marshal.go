@@ -312,14 +312,11 @@ func (n *composeModule) Encode(ctx context.Context, pl *payload) (err error) {
 
 	// @note code copied from the service/module.go
 
-	// Set base constraints only for attributes the model actually has
+	// Set base constraints
 	if model.Ident == "compose_record" {
-		model.Constraints = map[string][]any{}
-		if model.HasAttribute("moduleID") {
-			model.Constraints["moduleID"] = []any{res.ID}
-		}
-		if model.HasAttribute("namespaceID") {
-			model.Constraints["namespaceID"] = []any{res.NamespaceID}
+		model.Constraints = map[string][]any{
+			"moduleID":    {res.ID},
+			"namespaceID": {res.NamespaceID},
 		}
 	}
 

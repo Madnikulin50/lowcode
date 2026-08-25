@@ -201,9 +201,6 @@ func nsID(ctx context.Context, params map[string]string) uint64 {
 			return id
 		}
 	}
-	if params == nil {
-		return 0
-	}
 	return parseUint64(params["namespaceID"])
 }
 

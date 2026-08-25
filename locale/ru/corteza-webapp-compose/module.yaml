@@ -301,27 +301,9 @@ tooltip:
 type:
   label: Тип
 etl:
-  title: ETL
-  settings: Настройки ETL
-  settingsDescription: Синхронизация записей из внешних источников в этот модуль.
-  create: Новая задача
-  edit: Редактирование задачи
-  name: Название
-  source: Источник
-  sources:
-    rest: REST
-    mcp: MCP
-    smb: SMB
-  sourceConfig: Конфигурация источника
-  schedule: Расписание (cron)
   enabled: Включено
   disabled: Выключено
   format: Формат
-  lastRun: Последний запуск
-  actions: Действия
-  noJobs: ETL-задач пока нет.
-  confirmRun: Запустить эту ETL-задачу сейчас?
-  confirmDelete: Удалить эту ETL-задачу?
   smb:
     password: Пароль
     username: Пользователь
@@ -334,4 +316,3 @@ etl:
   rest:
     url: URL
     method: Метод
-    body: Тело запроса (JSON)

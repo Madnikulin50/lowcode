@@ -29,7 +29,6 @@ edit:
     label: Анимация
     enabled: Анимация включена
   dimension:
-    add: Добавить измерение
     calculateМеткаCount: Calculate how many labels can be shown
     defaultValueFootnote: Use this value for missing dimension values
     defaultValueLabel: Значение по-умолчанию
@@ -81,12 +80,7 @@ edit:
     fieldLabel: Поле *
     fieldPlaceholder: Выберите поле метрики
     fillArea: Залить под графиком
-    showSymbol: Отображать точки на графике
     fixTooltips: Всегда показывать метки
-    valueLabelPosition:
-      label: Позиция метки
-      top: Над столбиком
-      inside: Внутри столбика
     options:
       label: Свойства
     function:
@@ -104,11 +98,6 @@ edit:
     stack:
       label: Стэк
       description: Метрики с одним значением будут слиты
-    stacked:
-      label: Накопленный (стек)
-    stackBy:
-      label: Группировать по полю (стек)
-      placeholder: Нет (простой график)
     lineStyle:
       label: Стиль линии
       default: По-умолчанию
@@ -157,37 +146,7 @@ edit:
       line: Кривая
       pie: Пирог
       scatter: Рассеивание
-      sankey: Санкей
-      heatmap: Тепловая карта
-      waterfall: Водопад
-      boxplot: Ящик с усами
-      graph: Граф
-      candlestick: Свечи
-      map: Карта
-      sunburst: Санберст
-      parallel: Параллельные координаты
-      calendar: Календарь
-      gantt: Диаграмма Ганта
       placeholder: Выберите вывод метрики
-    boxplot:
-      hint: Ящик с усами использует до 5 метрик как значения ящика (min, Q1, медиана, Q3, max).
-    candlestick:
-      hint: Свечной график использует до 4 метрик как значения свечи (open, close, low, high).
-    mapType:
-      label: Карта
-      options:
-        world: Мир
-        china: Китай
-    calendarType:
-      label: Тип календаря
-      options:
-        scatter: Точечная диаграмма
-        heatmap: Тепловая карта
-        effectScatter: Точечная с эффектом
-    gantt:
-      startField: Дата начала
-      endField: Дата окончания
-      hint: Измерение — подпись полосы (название проекта). Каждая запись становится полосой от даты начала до даты окончания.
     relative: Показать связанное значение
     relativePrecision: 'Точность:'
     cumulative: Кумулятивный
@@ -213,7 +172,7 @@ edit:
       center: Центр
       bottom: Конец
     horizontal:
-      label: Горизонтальная ось
+      label: Горизонтальное
     logarithmicScale: Логарифмическая шкала
     maxLabel: Максимум
     maxPlaceholder: Максимальное значение
@@ -275,8 +234,6 @@ edit:
     label: Инструменты
     saveAsImage:
       label: Показывать кнопку "Сохранить как картинку"
-    showDataTable:
-      label: Показывать кнопку "Таблица"
     timeline:
       label: Ось времени
       options:

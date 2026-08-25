@@ -31,12 +31,14 @@ interface Options {
   variables: PageVariableDef[];
   density: 'comfortable' | 'compact';
   horizontalFieldLayoutEnabled: boolean;
+  showVariableLabels: boolean;
 }
 
 const defaults: Readonly<Options> = Object.freeze({
   variables: [],
   density: 'comfortable',
   horizontalFieldLayoutEnabled: false,
+  showVariableLabels: false,
 })
 
 export class PageBlockVariables extends PageBlock {
@@ -55,7 +57,7 @@ export class PageBlockVariables extends PageBlock {
   applyOptions (o?: Partial<Options>): void {
     if (!o) return
     Apply(this.options, o, String, 'density')
-    Apply(this.options, o, Boolean, 'horizontalFieldLayoutEnabled')
+    Apply(this.options, o, Boolean, 'horizontalFieldLayoutEnabled', 'showVariableLabels')
 
     if (Array.isArray(o.variables)) {
       this.options.variables = o.variables.map(v => merge({}, defaultVariable, v))

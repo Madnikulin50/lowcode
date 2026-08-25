@@ -1217,3 +1217,15 @@ ai:
       placeholder: Server default
       description: Initial model for this chat block. Visitors can still switch models while chatting.
 
+
+error:
+  timeout: Request timed out
+variables:
+  edit:
+    nameLabel: Name
+    namePlaceholder: Variable name
+    nameFootnote: Use in page blocks as
+    labelLabel: Label
+    labelPlaceholder: Display label for this variable
+    kindLabel: Type
+    defaultValueLabel: Default value

@@ -52,9 +52,7 @@ export default defineConfig({
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },
-      // Negative lookahead: /auth/callback is the SPA OAuth return URL
-      // (rootApp). Vite 6 bypass:false is a hard 404, not a skip.
-      '^/auth(?!/callback)': {
+      '/auth': {
         target: process.env.VITE_API_URL || 'http://localhost:3333',
         changeOrigin: true,
       },

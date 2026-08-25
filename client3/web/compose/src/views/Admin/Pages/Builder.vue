@@ -646,7 +646,7 @@ const blockEditorOkDisabled = computed(() => {
   if (!editor.value) return true
   const { block } = editor.value
   if (!block) return true
-  const { customCSSClass, customID } = block.meta || {}
+  const { customCSSClass, customID } = block.value?.meta || {}
   return [handle.handleState(customID), handle.classState(customCSSClass)].includes(false)
 })
 
@@ -827,9 +827,8 @@ function onBlockUpdated (index) {
   unsavedBlocks.value.add(fetchID(blocks.value[index]))
 }
 
-function updateBlocks (block) {
-  if (!editor.value) return
-  block = compose.PageBlockMaker(block || editor.value.block)
+function updateBlocks (block = editor.value.block) {
+  block = compose.PageBlockMaker(block)
   const creatingTabbedBlock = editor.value.block.kind !== block.kind
 
   if (creatingTabbedBlock) {
@@ -1156,9 +1155,9 @@ function destroyEvents () {
 
 <style lang="scss">
 #page-builder .vue-grid-layout {
-  background-color: var(--white, #ffffff);
+  background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: inset 0 0 0 1px var(--extra-light, #e9ecef);
+  box-shadow: inset 0 0 0 1px #e9ecef;
   padding: 4px;
 }
 

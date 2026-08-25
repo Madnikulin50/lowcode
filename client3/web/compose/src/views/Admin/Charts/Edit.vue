@@ -590,13 +590,13 @@ const themeSettings = computed(() => $Settings.get('ui.studio.themes', []))
 
 const defaultReportComputed = computed(() => Object.assign({}, defaultReport))
 
-const { toastErrorHandler, toastSuccess } = composables.useToast()
-
 watch(() => props.chartID, () => { fetchChart() }, { immediate: true })
 
 watch(() => chart.value ? chart.value.config : undefined, (value, oldValue) => {
   if (value && oldValue) onConfigUpdate()
 }, { deep: true })
+
+const { toastErrorHandler, toastSuccess } = composables.useToast()
 
 function moduleName (moduleID) {
   const m = modByID.value(moduleID)

@@ -11,10 +11,6 @@ func registerDemoChains(engine *rulesgo.EngineWithPersistence) {
 		demoEmailOnRecordCreate(),
 		demoLeadScoring(),
 		demoDataCleanup(),
-		rulesgo.DemoStoreRiskChain(),
-		rulesgo.DemoStockHealthChain(),
-		rulesgo.DemoAutoReorderChain(),
-		stockReorderBatchChain(),
 	}
 
 	for _, c := range chains {
@@ -119,21 +115,4 @@ func demoDataCleanup() *rulesgo.Chain {
 
 func jsonRaw(s string) []byte {
 	return []byte(s)
-}
-
-func stockReorderBatchChain() *rulesgo.Chain {
-	return &rulesgo.Chain{
-		ID:          "stock_reorder_batch",
-		Name:        "Stock auto-reorder (batch)",
-		Description: "Пересобирает submitted-заказы из stock_reorder_fact (кнопка на странице «Остатки и автозаказ»).",
-		EntryNode:   "ready",
-		Nodes: []rulesgo.ChainNode{
-			{
-				ID:     "ready",
-				Type:   "condition",
-				Label:  "Ready",
-				Config: jsonRaw(`{"field":"namespaceID","operator":"notEmpty"}`),
-			},
-		},
-	}
 }

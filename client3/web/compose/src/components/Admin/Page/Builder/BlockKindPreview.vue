@@ -255,6 +255,21 @@
       <rect x="20" y="148" width="236" height="18" rx="9" fill="#fff" stroke="#d1d3e2" />
       <circle cx="288" cy="157" r="10" fill="#4e73df" />
     </g>
+
+    <!-- Variables -->
+    <g v-else-if="kind === 'Variables'">
+      <rect x="20" y="52" width="70" height="8" rx="2" fill="#858796" />
+      <rect x="20" y="66" width="130" height="22" rx="4" fill="#fff" stroke="#d1d3e2" />
+      <rect x="164" y="52" width="70" height="8" rx="2" fill="#858796" />
+      <rect x="164" y="66" width="130" height="22" rx="4" fill="#fff" stroke="#d1d3e2" />
+      <rect x="20" y="102" width="70" height="8" rx="2" fill="#858796" />
+      <rect x="20" y="116" width="130" height="22" rx="4" fill="#fff" stroke="#d1d3e2" />
+      <rect x="164" y="102" width="46" height="8" rx="2" fill="#858796" />
+      <rect x="220" y="112" width="18" height="10" rx="5" fill="#1cc88a" opacity=".25" />
+      <circle cx="234" cy="117" r="4" fill="#1cc88a" />
+      <rect x="20" y="150" width="60" height="18" rx="9" fill="#4e73df" opacity=".15" />
+      <rect x="32" y="156" width="36" height="6" rx="1" fill="#4e73df" />
+    </g>
   </svg>
 </template>
 

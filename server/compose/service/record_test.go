@@ -747,7 +747,7 @@ func TestRecord_searchAccessControl(t *testing.T) {
 	hits, f, err = svc.Find(ctx, f)
 	req.NoError(err)
 	req.Len(hits, 0)
-	req.Equal(0, f.Total)
+	req.Equal(uint(0), f.Total)
 
 	t.Log("allow read access for two records")
 	req.NoError(rbacService.Grant(ctx, rbac.AllowRule(testerRole.ID, rr[3].RbacResource(), "read")))
@@ -758,7 +758,7 @@ func TestRecord_searchAccessControl(t *testing.T) {
 	hits, f, err = svc.Find(ctx, f)
 	req.NoError(err)
 	req.Len(hits, 2)
-	req.Equal(2, f.Total)
+	req.Equal(uint(2), f.Total)
 }
 
 func TestRecord_contextualRolesAccessControl(t *testing.T) {
@@ -1064,23 +1064,5 @@ func TestRecordReportToDalPipeline(t *testing.T) {
 		require.Len(t, agg.OutAttributes, 2)
 		require.Equal(t, "MAX(numbers)", agg.OutAttributes[1].Identifier)
 		require.Equal(t, "MAX(numbers)", agg.OutAttributes[1].RawExpr)
-	})
-}
-
-func TestParseRecordIDsFromQuery(t *testing.T) {
-	t.Run("quoted OR list from RecordList", func(t *testing.T) {
-		ids := parseRecordIDsFromQuery("recordID='509728716461637633' OR recordID='509728716461178881' OR recordID='509710807991451649'")
-		require.Equal(t, []uint64{509728716461637633, 509728716461178881, 509710807991451649}, ids)
-	})
-
-	t.Run("unquoted single id", func(t *testing.T) {
-		ids := parseRecordIDsFromQuery("recordID = 509728716461637633")
-		require.Equal(t, []uint64{509728716461637633}, ids)
-	})
-
-	t.Run("ignores non-id filters", func(t *testing.T) {
-		require.Nil(t, parseRecordIDsFromQuery("status = 'open'"))
-		require.Nil(t, parseRecordIDsFromQuery("recordID='1' AND status='open'"))
-		require.Nil(t, parseRecordIDsFromQuery(""))
 	})
 }

@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject } from 'vue'
+import { ref, computed } from 'vue'
 import numeral from 'numeral'
 
 const props = withDefaults(defineProps<{
@@ -73,7 +73,6 @@ const props = withDefaults(defineProps<{
   maxFiles?: number
   showUploadedFileName?: boolean
   authToken?: string
-  onUploaded?: (response: any, file: File) => void
 }>(), {
   disabled: false,
   acceptedFiles: () => [],
@@ -84,14 +83,11 @@ const props = withDefaults(defineProps<{
   maxFiles: 1000,
   showUploadedFileName: false,
   authToken: '',
-  onUploaded: undefined,
 })
 
 const emit = defineEmits<{
   upload: [response: any, file: File]
 }>()
-
-const $auth = inject<any>('$auth', typeof window !== 'undefined' ? (window as any).__auth : undefined)
 
 const fileInput = ref<HTMLInputElement>()
 const isDragOver = ref(false)
@@ -99,41 +95,7 @@ const active = ref<File | null>(null)
 const processing = ref<{ file: File; progress: number; bytesSent: number } | null>(null)
 const error = ref<string | null>(null)
 
-const resolvedToken = computed(() => {
-  return props.authToken
-    || $auth?.accessToken
-    || (typeof $auth?.accessTokenFn === 'function' ? $auth.accessTokenFn() : '')
-    || (typeof window !== 'undefined' ? (window as any).__auth?.accessToken : '')
-    || ''
-})
-
-function sameOriginEndpoint (endpoint: string): string {
-  if (!endpoint || endpoint.startsWith('/')) return endpoint
-  if (typeof window === 'undefined') return endpoint
-  try {
-    const abs = new URL(endpoint, window.location.href)
-    if (abs.origin === window.location.origin) return endpoint
-    const api = (window as any).CortezaAPI
-    if (!api) return endpoint
-    const apiOrigin = new URL(String(api), window.location.href).origin
-    if (abs.origin === apiOrigin) {
-      return abs.pathname + abs.search
-    }
-  } catch {
-    return endpoint
-  }
-  return endpoint
-}
-
-function asAcceptList (types: unknown): string[] {
-  if (!types) return []
-  if (Array.isArray(types)) return types.map(String).map(s => s.trim()).filter(Boolean)
-  if (typeof types === 'string') return types.split(',').map(s => s.trim()).filter(Boolean)
-  return []
-}
-
-const acceptList = computed(() => asAcceptList(props.acceptedFiles))
-const acceptedFilesString = computed(() => acceptList.value.join(','))
+const acceptedFilesString = computed(() => props.acceptedFiles.join(','))
 
 const progressBarStyle = computed(() => ({
   width: (processing.value?.progress || 0) + '%',
@@ -197,13 +159,13 @@ function onFileSelected(e: Event) {
 function handleFile(file: File) {
   error.value = null
 
-  if (!validateFileType(file.name, acceptList.value, file.type)) {
+  if (!validateFileType(file.name, props.acceptedFiles)) {
     const errorMsg = props.labels.fileTypeNotAllowed || 'File type not allowed'
     onError(null, errorMsg)
     return
   }
 
-  if (props.maxFilesize > 0 && file.size > props.maxFilesize * 1024 * 1024) {
+  if (file.size > props.maxFilesize * 1024 * 1024) {
     const errorMsg = props.labels.fileTooLarge || `File exceeds ${props.maxFilesize}MB limit`
     onError(null, errorMsg)
     return
@@ -212,50 +174,31 @@ function handleFile(file: File) {
   uploadFile(file)
 }
 
-const EXT_MIME: Record<string, string> = {
-  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
-  webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp', ico: 'image/x-icon',
-  pdf: 'application/pdf',
-  doc: 'application/msword',
-  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  xls: 'application/vnd.ms-excel',
-  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  ppt: 'application/vnd.ms-powerpoint',
-  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  odt: 'application/vnd.oasis.opendocument.text',
-  ods: 'application/vnd.oasis.opendocument.spreadsheet',
-  rtf: 'application/rtf',
-  txt: 'text/plain',
-  csv: 'text/csv',
-  json: 'application/json',
-  zip: 'application/zip',
-  xml: 'application/xml',
-}
-
-function validateFileType(name: string, types: string[], mime = '') {
-  if (!types?.length) return true
-  if (types.some(t => t === '*/*' || t === '*')) return true
-  const ext = name.includes('.') ? name.split('.').pop()?.toLowerCase() || '' : ''
-  const fileMime = (mime || EXT_MIME[ext] || '').toLowerCase()
-  return types.some((raw: string) => {
-    const t = String(raw || '').trim().toLowerCase()
-    if (!t) return false
+function validateFileType(_name: string, types: string[]) {
+  if (!types.length || types.includes('*/*')) return true
+  const ext = _name.split('.').pop()?.toLowerCase()
+  return types.some((t: string) => {
     if (t.startsWith('.')) return ext === t.slice(1)
-    if (t.startsWith('*.')) return ext === t.slice(2)
     if (t.includes('/')) {
-      const [cat, sub] = t.split('/')
-      if (cat === '*' || sub === '*') {
-        return cat === '*' || fileMime.startsWith(cat + '/')
+      const [category] = t.split('/')
+      if (category === '*') return true
+      const mimeMap: Record<string, string> = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'pdf': 'application/pdf',
+        'csv': 'text/csv',
+        'xls': 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       }
-      return fileMime === t || EXT_MIME[ext] === t
+      return mimeMap[ext || '']?.startsWith(category) ?? false
     }
-    return ext === t.replace(/^\./, '')
+    return ext === t.toLowerCase().replace('.', '')
   })
 }
 
 function uploadFile(file: File) {
-  processing.value = { file, progress: 0, bytesSent: 0 }
-
   const xhr = new XMLHttpRequest()
 
   xhr.upload.addEventListener('progress', (e) => {
@@ -270,31 +213,17 @@ function uploadFile(file: File) {
       try {
         response = JSON.parse(xhr.responseText)
       } catch {
-        onError(null, 'Upload failed: invalid server response')
-        return
-      }
-      if (response?.error) {
-        onError(null, response.error?.message || response.error || 'Upload failed')
-        return
-      }
-      // Corteza wraps payloads as { response: { attachmentID, ... } }
-      if (response && typeof response === 'object' && response.response) {
-        response = response.response
-      }
-      if (!response || typeof response !== 'object' || !(response as any).attachmentID) {
-        onError(null, 'Upload failed: missing attachment id')
-        return
+        response = xhr.responseText
       }
       active.value = file
       processing.value = null
       error.value = null
       emit('upload', response, file)
-      props.onUploaded?.(response, file)
     } else {
       let message = 'Upload failed'
       try {
         const err = JSON.parse(xhr.responseText)
-        message = err.error?.message || err.message || message
+        message = err.message || message
       } catch {
         message = xhr.statusText || message
       }
@@ -306,16 +235,17 @@ function uploadFile(file: File) {
     onError(null, 'Network error')
   })
 
-  xhr.open('POST', sameOriginEndpoint(props.endpoint))
-  if (resolvedToken.value) {
-    xhr.setRequestHeader('Authorization', 'Bearer ' + resolvedToken.value)
+  xhr.open('POST', props.endpoint)
+  xhr.setRequestHeader('X-Requested-With', '')
+  xhr.setRequestHeader('Cache-Control', '')
+  if (props.authToken) {
+    xhr.setRequestHeader('Authorization', 'Bearer ' + props.authToken)
   }
 
   const formData = new FormData()
   formData.append(props.paramName, file)
   for (const [k, v] of Object.entries(props.formData || {})) {
-    if (v == null || v === '') continue
-    formData.append(k, String(v))
+    formData.append(k, v as string)
   }
 
   xhr.withCredentials = true
@@ -326,10 +256,7 @@ function onError(_e: any, message: string) {
   active.value = null
   error.value = message
   processing.value = null
-  console.error('[CUploader]', message)
 }
-
-defineExpose({ handleFile, openFileDialog })
 </script>
 
 <style lang="scss" scoped>

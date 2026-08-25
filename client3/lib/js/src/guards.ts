@@ -4,24 +4,9 @@ export const IsOf = <T>(v: unknown, ...props: (keyof T)[]): v is T => {
   }
 
   for (const prop of props) {
-    try {
-      if (Object.prototype.hasOwnProperty.call(v, prop)) {
-        continue
-      }
-    } catch {
-      // Vue 3 proxies may throw or lie about own keys
-    }
-    try {
-      // Property access still works on reactive class instances.
-      // Skip inherited functions (Array#values, Object#toString, …).
-      const val = (v as T)[prop]
-      if (val !== undefined && typeof val !== 'function') {
-        continue
-      }
-    } catch {
+    if (!Object.prototype.hasOwnProperty.call(v, prop)) {
       return false
     }
-    return false
   }
 
   return true

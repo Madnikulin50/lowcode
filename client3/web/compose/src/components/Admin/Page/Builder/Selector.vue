@@ -172,10 +172,10 @@ const catalog = [
   { kind: 'IFrame', category: 'content', icon: ['fas', 'external-link-alt'], recordPageOnly: false, block: new compose.PageBlockIFrame() },
   { kind: 'Tabs', category: 'layout', icon: ['fas', 'folder'], recordPageOnly: false, block: new compose.PageBlockTab() },
   { kind: 'Navigation', category: 'layout', icon: ['fas', 'bars'], recordPageOnly: false, block: new compose.PageBlockNavigation() },
-  { kind: 'Variables', category: 'layout', icon: ['fas', 'sliders-h'], recordPageOnly: false, block: new compose.PageBlockVariables() },
   { kind: 'Automation', category: 'automation', icon: ['fas', 'play'], recordPageOnly: false, block: new compose.PageBlockAutomation() },
   { kind: 'RuleChain', category: 'automation', icon: ['fas', 'project-diagram'], recordPageOnly: false, block: new compose.PageBlockRuleChain() },
   { kind: 'AiChat', category: 'automation', icon: ['fas', 'brain'], recordPageOnly: false, block: new compose.PageBlockAiChat() },
+  { kind: 'Variables', category: 'data', icon: ['fas', 'sliders-h'], recordPageOnly: false, block: new compose.PageBlockVariables() },
 ]
 
 const types = computed(() => catalog.map(def => ({

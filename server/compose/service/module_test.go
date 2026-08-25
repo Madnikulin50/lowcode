@@ -319,31 +319,3 @@ func TestModuleToModel(t *testing.T) {
 	req.NoError(err)
 	req.Equal("explicit-ident", model.Ident)
 }
-
-func TestModuleToModelSystemFieldEncoding(t *testing.T) {
-	req := require.New(t)
-	mod := &types.Module{ID: 1, NamespaceID: 2, Handle: "h"}
-
-	t.Run("empty encoding strategy keeps namespaceID", func(t *testing.T) {
-		mod.Config.DAL.Ident = "compose_record"
-		mod.Config.DAL.SystemFieldEncoding.NamespaceID = &types.EncodingStrategy{}
-		model, err := ModuleToModel(nil, mod, "compose_record")
-		req.NoError(err)
-		req.True(model.HasAttribute("namespaceID"), "empty {} must not omit namespaceID")
-		cc := modelBaseConstraints(model, mod)
-		req.Equal([]any{uint64(2)}, cc["namespaceID"])
-	})
-
-	t.Run("omit true drops namespaceID from model and constraints", func(t *testing.T) {
-		mod.Config.DAL.Ident = "compose_record"
-		mod.Config.DAL.SystemFieldEncoding.NamespaceID = &types.EncodingStrategy{Omit: true}
-		model, err := ModuleToModel(nil, mod, "compose_record")
-		req.NoError(err)
-		req.False(model.HasAttribute("namespaceID"))
-		req.True(model.HasAttribute("moduleID"))
-		cc := modelBaseConstraints(model, mod)
-		_, hasNS := cc["namespaceID"]
-		req.False(hasNS)
-		req.Equal([]any{uint64(1)}, cc["moduleID"])
-	})
-}

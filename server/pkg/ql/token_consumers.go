@@ -138,24 +138,24 @@ func (str TokenConsumerNumber) Consume(s RuneReader) Token {
 	buf.WriteRune(s.read())
 	hasDecimal := false
 	for {
-		ch := s.read()
-		if ch == eof {
+		if ch := s.read(); ch == eof {
 			break
-		}
-		if isDigit(ch) {
+		} else if !isDigit(ch) {
+			if hasDecimal {
+				s.unread()
+				break
+			}
+			switch ch {
+			case '.', ',':
+				hasDecimal = true
+				_, _ = buf.WriteRune(ch)
+			default:
+				s.unread()
+				break
+			}
+		} else {
 			_, _ = buf.WriteRune(ch)
-			continue
 		}
-		// One decimal separator is part of the number; anything else (e.g. ')'
-		// in `(device = 123)`) must stop the token. A `break` inside switch
-		// would only leave the switch and loop forever on the unread rune.
-		if !hasDecimal && (ch == '.' || ch == ',') {
-			hasDecimal = true
-			_, _ = buf.WriteRune(ch)
-			continue
-		}
-		s.unread()
-		break
 	}
 
 	// Otherwise return as a regular identifier.

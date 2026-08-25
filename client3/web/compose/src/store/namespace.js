@@ -58,7 +58,7 @@ export const useNamespaceStore = defineStore('namespace', {
       this.setLoading(true)
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
-      return ComposeAPI.namespaceList({}, { timeout: 30000 }).then(({ set }) => {
+      return ComposeAPI.namespaceList({}).then(({ set }) => {
         if (set && set.length > 0) {
           this.updateSet(set.map(n => new compose.Namespace(n)))
         }

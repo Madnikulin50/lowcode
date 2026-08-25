@@ -2,7 +2,6 @@ import { computed, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose, validator } from 'corteza-lib/js/dist'
 import { useUiStore } from '../../../store/ui'
-import { themeColor } from 'corteza-webapp-compose/src/lib/color.js'
 
 export function useEditorBase(props, emit) {
   const route = useRoute()
@@ -12,7 +11,12 @@ export function useEditorBase(props, emit) {
   const themeSettings = computed(() => $Settings?.get ? $Settings.get('ui.studio.themes', []) : [])
 
   function getColor (val) {
-    return themeColor(val, themeSettings.value)
+    if (!val) return undefined
+    if (val[0] === '#') return val
+    const themes = themeSettings.value
+      .filter(theme => theme.id !== 'general')
+      .map(theme => ({ id: theme.id, values: JSON.parse(theme.values) }))
+    return themes[0]?.values[val] || val
   }
 
   const formGroupStyleClasses = computed(() => ({
@@ -32,8 +36,8 @@ export function useEditorBase(props, emit) {
   })
 
   const state = computed(() => {
-    if (typeof props.errors?.valid !== 'function') return null
-    return props.errors.valid() ? null : false
+    if (!props.errors.valid()) return null
+    return props.errors.valid() === true ? null : false
   })
 
   const value = computed({
@@ -60,14 +64,14 @@ export function useEditorBase(props, emit) {
 
   const description = computed(() => {
     if (props.valueOnly) return ''
-    const d = props.field.options?.description || {}
-    return d.edit || d.view || ''
+    const { view, edit } = props.field.options.description
+    return edit || view
   })
 
   const hint = computed(() => {
     if (props.valueOnly) return ''
-    const h = props.field.options?.hint || {}
-    return h.edit || h.view || ''
+    const { view, edit } = props.field.options.hint
+    return edit || view
   })
 
   const inModal = computed(() => {

@@ -96,10 +96,8 @@ type EngineWithPersistence struct {
 }
 
 func NewEngineWithPersistence(registry *Registry, persist Persistence) *EngineWithPersistence {
-	eng := NewEngine(registry)
-	eng.SetPersistence(persist)
 	return &EngineWithPersistence{
-		Engine:  eng,
+		Engine:  NewEngine(registry),
 		persist: persist,
 		log:     NewExecutionLog(1000),
 	}
@@ -111,7 +109,7 @@ func (e *EngineWithPersistence) LoadFromStore(ctx context.Context) error {
 		return fmt.Errorf("load chains: %w", err)
 	}
 	for _, c := range chains {
-		e.put(c)
+		e.RegisterChain(c)
 	}
 	log.Printf("[rulesgo] loaded %d chains from store", len(chains))
 	return nil

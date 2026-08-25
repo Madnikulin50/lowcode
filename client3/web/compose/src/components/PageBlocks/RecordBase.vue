@@ -263,7 +263,6 @@ import { useModuleStore } from 'corteza-webapp-compose/src/store/module'
 import Wrap from './Wrap/index.js'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'
 import BulkEditModal from 'corteza-webapp-compose/src/components/Public/Record/BulkEdit/index.vue'
-import { isUserWritableField } from 'corteza-webapp-compose/src/lib/field-editable'
 
 const { t: $t } = useI18n({ useScope: 'global' })
 const { toastErrorHandler } = composables.useToast()
@@ -406,7 +405,7 @@ function canDisplay (field) {
 }
 
 function isFieldEditable (field) {
-  return isUserWritableField(field)
+  return field?.canUpdateRecordValue !== false
 }
 
 function getFieldValue (field) {

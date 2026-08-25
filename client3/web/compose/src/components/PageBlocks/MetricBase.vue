@@ -197,18 +197,13 @@
 defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { debounce } from 'lodash'
-import { useI18n } from 'vue-i18n'
 import { usePageBlockBase } from './usePageBlockBase'
-import { useStore } from '../../store'
 import Wrap from './Wrap/index.js'
 import MetricItem from './Metric/Item'
 import numeral from 'numeral'
 import moment from 'moment'
-import { NoID, compose, isUnknownTotal } from 'corteza-lib/js/dist'
+import { NoID, compose } from 'corteza-lib/js/dist'
 import { evalPrefilterOrSkip, evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
-import { friendlyApiErrorMessage } from 'corteza-webapp-compose/src/lib/api-error'
-
-const { t: $t } = useI18n({ useScope: 'global' })
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -229,7 +224,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['errors'])
-const store = useStore()
 const $auth = inject('$auth')
 const $ComposeAPI = inject('$ComposeAPI')
 
@@ -296,7 +290,6 @@ function isBalloonRole (m) {
 
 function numericAbs (item) {
   const raw = item?.values?.[0]?.value
-  if (item?.values?.some(v => v?.unknown || isUnknownTotal(v?.value))) return 0
   const n = typeof raw === 'number' ? raw : Number(String(raw).replace(/[^\d.-]/g, ''))
   return Number.isFinite(n) ? Math.abs(n) : 0
 }
@@ -319,7 +312,6 @@ function withTopKMeta (item) {
 
 function isMetricEmpty (values) {
   if (!values?.length) return true
-  if (values.some(v => v?.unknown || isUnknownTotal(v?.value))) return false
   return values.every(({ value }) => value === undefined || value === null || value === '' || (typeof value === 'number' && Number.isNaN(value)))
 }
 
@@ -383,7 +375,6 @@ function createEvents () {
   window.addEventListener('drill-down-chart', drillDown)
   window.addEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
   window.addEventListener('record-field-change', refetchOnPrefilterValueChange)
-  window.addEventListener('page-variable-change', refetchOnPageVariableChange)
   window.addEventListener('refetch-records', refresh)
 }
 
@@ -392,19 +383,10 @@ function refetchOnPrefilterValueChange ({ fieldName }) {
   if (metrics.some(({ filter }) => isFieldInFilter(fieldName, filter))) refresh()
 }
 
-function refetchOnPageVariableChange ({ detail: { pageID, fieldName } } = {}) {
-  if (pageID !== props.page.pageID) return
-  const { metrics } = options.value
-  if (metrics.some(({ filter }) => isFieldInFilter(`variables.${fieldName}`, filter))) refresh()
-}
-
 function formatResponse (m, i) {
   const vals = reports.value[i]
   if (!vals) return []
-  return vals.map(({ label, value, unknown }) => {
-    if (unknown || isUnknownTotal(value)) {
-      return { label, value: null, unknown: true }
-    }
+  return vals.map(({ label, value }) => {
     if (m.numberFormat) {
       const n = typeof value === 'number' ? value : Number(value)
       if (Number.isFinite(n)) value = numeral(n).format(m.numberFormat)
@@ -418,39 +400,44 @@ async function refresh () {
   error.value = undefined
   processing.value = true
   try {
+    const rtr = []
     const namespaceID = props.namespace.namespaceID
     const reporter = r => {
       const { response, cancel } = $ComposeAPI.recordReportCancellable({ ...r, namespaceID })
       abortableRequests.value.push(cancel)
       return response()
     }
-    const pageVariables = store.pageVariables.getValuesForPage(props.page.pageID)
-    const jobs = options.value.metrics.map(async (m) => {
-      if (!m.moduleID) return []
-      const auxM = { ...m }
-      if (auxM.filter) {
-        const { skip, filter } = evalPrefilterOrSkip(auxM.filter, {
-          record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
-          ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth.user || {}).userID || NoID,
-          loadingRecord: !!props.loadingRecord,
-          variables: pageVariables,
-        })
-        if (skip) return []
-        auxM.filter = filter
+    for (const m of options.value.metrics) {
+      if (m.moduleID) {
+        const auxM = { ...m }
+        if (auxM.filter) {
+          const { skip, filter } = evalPrefilterOrSkip(auxM.filter, {
+            record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
+            ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth.user || {}).userID || NoID,
+            loadingRecord: !!props.loadingRecord,
+          })
+          if (skip) {
+            rtr.push([])
+            continue
+          }
+          auxM.filter = filter
+        }
+        if (auxM.transformFx) {
+          auxM.transformFx = evaluatePrefilter(auxM.transformFx, {
+            record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
+            ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth.user || {}).userID || NoID,
+          })
+        }
+        const vals = await props.block.fetch({ m: auxM }, reporter)
+        rtr.push(vals)
+      } else {
+        rtr.push([])
       }
-      if (auxM.transformFx) {
-        auxM.transformFx = evaluatePrefilter(auxM.transformFx, {
-          record: props.record, user: $auth.user || {}, recordID: (props.record || {}).recordID || NoID,
-          ownerID: (props.record || {}).ownedBy || NoID, userID: ($auth.user || {}).userID || NoID,
-          variables: pageVariables,
-        })
-      }
-      return props.block.fetch({ m: auxM }, reporter)
-    })
-    reports.value = await Promise.all(jobs)
+    }
+    reports.value = rtr
     setTimeout(() => { processing.value = false }, 300)
   } catch (e) {
-    error.value = friendlyApiErrorMessage(e, $t)
+    error.value = e.message || 'Error'
     setTimeout(() => { processing.value = false }, 300)
   }
 }
@@ -503,9 +490,6 @@ function promptAiChat () {
     const m = options.value.metrics[mi]
     if (m.moduleID) {
       const vals = formatResponse(m, mi).map(item => {
-        if (item.unknown || isUnknownTotal(item.value)) {
-          return locale === 'ru-RU' ? 'количество недоступно' : 'count unavailable'
-        }
         if (item.label !== undefined) return item.label + ': ' + m.prefix + item.value + m.suffix
         return m.prefix + item.value + m.suffix
       })
@@ -520,7 +504,6 @@ function destroyEvents () {
   window.removeEventListener('drill-down-chart', drillDown)
   window.removeEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
   window.removeEventListener('record-field-change', refetchOnPrefilterValueChange)
-  window.removeEventListener('page-variable-change', refetchOnPageVariableChange)
   window.removeEventListener('refetch-records', refresh)
 }
 </script>

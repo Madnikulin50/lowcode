@@ -480,7 +480,7 @@ func (ctrl Namespace) importRecordData(ctx context.Context,
 	if mod, err = ctrl.module.FindByName(ctx, namespaceID, moduleName); err != nil {
 		return err
 	}
-	if mod.Config.Type == "datasource" || mod.Config.Type == "connector" {
+	if mod.Config.Type == "datasource" {
 		return nil
 	}
 	if ns, err = ctrl.namespace.FindByID(ctx, namespaceID); err != nil {

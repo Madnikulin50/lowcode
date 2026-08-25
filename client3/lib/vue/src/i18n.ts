@@ -25,7 +25,12 @@ function flattenMessages(nestedMessages: Record<string, unknown>, prefix = ''): 
     const prefixedKey = prefix ? `${prefix}.${key}` : key
 
     if (typeof value === 'string') {
-      messages[prefixedKey] = value.replace(/\{\{(\w+)\}\}/g, '{$1}')
+      // i18next-style placeholders are commonly authored with spaces for
+      // readability ("{{ handle }}"), but vue-i18n's own format only
+      // understands "{handle}" (no braces, no spaces) and hard-errors
+      // ("Not allowed nest placeholder") on anything still wrapped in {{ }}.
+      // Strip the inner whitespace too, not just the outer braces.
+      messages[prefixedKey] = value.replace(/\{\{\s*(\w+)\s*\}\}/g, '{$1}')
     } else if (typeof value === 'object' && value !== null) {
       Object.assign(messages, flattenMessages(value as Record<string, unknown>, prefixedKey))
     }

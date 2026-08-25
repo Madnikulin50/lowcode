@@ -14,15 +14,6 @@
       {{ error }}
     </label>
 
-    <div
-      v-else-if="unknownTotal"
-      class="d-flex flex-column align-items-center justify-content-center flex-fill text-secondary p-3 text-center"
-      :title="t('chart.countUnavailableHint')"
-    >
-      <span class="fs-4">—</span>
-      <small>{{ t('chart.countUnavailable') }}</small>
-    </div>
-
     <c-chart
       v-else-if="renderer"
       :chart="renderer"
@@ -62,8 +53,8 @@
               class="table-responsive"
               style="max-height: 60vh; overflow: auto"
             >
-              <table class="table record-list-table table-hover table-sm mb-0">
-                <thead>
+              <table class="table table-sm table-striped mb-0">
+                <thead class="table-light">
                   <tr>
                     <th
                       v-for="column in tableColumns"
@@ -120,8 +111,7 @@ import { ref, computed, watch, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chartConstructor } from 'corteza-webapp-compose/src/lib/charts'
 import { ensureMapRegistered } from 'corteza-webapp-compose/src/lib/chart-maps'
-import { friendlyApiErrorMessage } from 'corteza-webapp-compose/src/lib/api-error'
-import { compose, isUnknownReportCount } from 'corteza-lib/js/dist'
+import { compose } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
 import { useStore } from '../../store'
 const { CChart } = components
@@ -155,7 +145,6 @@ const error = ref(undefined)
 const processing = ref(false)
 const valueMap = ref(new Map())
 const renderer = ref(undefined)
-const unknownTotal = ref(false)
 const tableData = ref({ columns: [], rows: [] })
 const tableVisible = ref(false)
 
@@ -177,14 +166,12 @@ watch(() => props.record?.recordID, () => {
 onBeforeUnmount(() => {
   processing.value = false
   renderer.value = undefined
-  unknownTotal.value = false
   valueMap.value = new Map()
 })
 
 async function updateChart () {
   error.value = undefined
   renderer.value = undefined
-  unknownTotal.value = false
 
   const [report = {}] = props.chart.config?.reports || []
 
@@ -216,10 +203,6 @@ async function updateChart () {
       data = await chart.fetchReports({ reporter: props.reporter })
     }
 
-    if (data?.unknownTotal || (Array.isArray(data?.rows) && data.rows.some(isUnknownReportCount))) {
-      unknownTotal.value = true
-      renderer.value = undefined
-    } else {
     if (!!data.labels && Array.isArray(data.labels)) {
       const [dimension = {}] = report.dimensions
       let { field } = dimension
@@ -275,9 +258,8 @@ async function updateChart () {
     await Promise.all(mapTypes.map(name => ensureMapRegistered(name)))
 
     renderer.value = chart.makeOptions(data)
-    }
   } catch (e) {
-    error.value = friendlyApiErrorMessage(e, t)
+    error.value = e
     processing.value = false
   }
 
@@ -492,46 +474,5 @@ async function prettyDimensionValues (dimension, field, values) {
   right: 2.2rem;
   top: 0.7rem;
   z-index: 1;
-}
-
-// Match the RecordList page block's table styling (see
-// PageBlocks/RecordListBase.vue's .record-list-table) so the chart's data
-// table dialog looks consistent with the rest of the app instead of falling
-// back to plain, theme-unaware Bootstrap table classes.
-.record-list-table {
-  border-collapse: separate;
-  border-spacing: 0;
-
-  thead th {
-    background: var(--bs-tertiary-bg, #f8f9fa);
-    border-bottom: 2px solid var(--bs-border-color, #dee2e6);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--bs-secondary-color, #6c757d);
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    padding: 0.625rem 0.75rem;
-    white-space: nowrap;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-  }
-
-  tbody {
-    td {
-      padding: 0.625rem 0.75rem;
-      vertical-align: middle;
-      border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.05));
-      font-size: 0.875rem;
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    tr:hover {
-      background-color: rgba(var(--bs-primary-rgb, 13 110 253), 0.03);
-    }
-  }
 }
 </style>

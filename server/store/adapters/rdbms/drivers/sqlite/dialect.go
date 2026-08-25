@@ -318,12 +318,6 @@ func (d sqliteDialect) ExprHandler(n *ql.ASTNode, args ...exp.Expression) (expr 
 	case "concat":
 		return exp.NewLiteralExpression("?"+strings.Repeat(" || ?", len(args)-1), cast2.Anys(args...)...), nil
 
-	case "eq":
-		return drivers.OpHandlerEq(d, n, args...)
-
-	case "ne":
-		return drivers.OpHandlerNe(d, n, args...)
-
 	case "in":
 		return drivers.OpHandlerIn(d, n, args...)
 
