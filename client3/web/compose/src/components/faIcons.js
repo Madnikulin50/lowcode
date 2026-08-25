@@ -176,6 +176,7 @@ import {
   faHandsPraying,
   faBoxesStacked,
   faTimeline,
+  faSlidersH,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -205,6 +206,7 @@ import {
 } from '@fortawesome/free-regular-svg-icons'
 
 library.add(
+  faSlidersH,
   faProjectDiagram,
   faSort,
   faSortUp,

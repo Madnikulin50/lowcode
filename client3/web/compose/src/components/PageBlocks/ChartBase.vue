@@ -175,6 +175,10 @@ const $ComposeAPI = inject('$ComposeAPI')
 
 const { key, options, inModal, browserLocale, refreshBlock, setBaseDefaultValues } = usePageBlockBase(props, emit)
 
+// ${variables.x} in a chart's filter, sourced from the page's session-only
+// variable values (see PageBlocks/Variables).
+const pageVariables = computed(() => store.pageVariables.getValuesForPage(props.page.pageID))
+
 const chart = ref(null)
 const chartData = ref(null)
 const originalFilter = ref(undefined)
@@ -231,12 +235,19 @@ function createEvents () {
   window.addEventListener('drill-down-chart', drillDown)
   window.addEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
   window.addEventListener('record-field-change', refetchOnPrefilterValueChange)
+  window.addEventListener('page-variable-change', refetchOnPageVariableChange)
   window.addEventListener('refetch-records', refresh)
 }
 
 function refetchOnPrefilterValueChange ({ fieldName }) {
   const { filter: f } = filter.value || {}
   if (isFieldInFilter(fieldName, f)) refresh()
+}
+
+function refetchOnPageVariableChange ({ detail: { pageID, fieldName } } = {}) {
+  if (pageID !== props.page.pageID) return
+  const { filter: f } = filter.value || {}
+  if (isFieldInFilter(`variables.${fieldName}`, f)) refresh()
 }
 
 function refreshOnRelatedRecordsUpdate ({ moduleID } = {}) {
@@ -276,6 +287,7 @@ function reporter (r = {}) {
       ownerID: (props.record || {}).ownedBy || NoID,
       userID: ($auth.user || {}).userID || NoID,
       loadingRecord: !!props.loadingRecord,
+      variables: pageVariables.value,
     })
     if (skip) return Promise.resolve([])
     f = evaluated
@@ -399,6 +411,7 @@ function destroyEvents () {
   window.removeEventListener('drill-down-chart', drillDown)
   window.removeEventListener('module-records-updated', refreshOnRelatedRecordsUpdate)
   window.removeEventListener('record-field-change', refetchOnPrefilterValueChange)
+  window.removeEventListener('page-variable-change', refetchOnPageVariableChange)
   window.removeEventListener('refetch-records', refresh)
 }
 </script>
