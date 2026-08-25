@@ -303,10 +303,12 @@ function interpolable (value) {
 }
 
 // Evaluates the given prefilter. Allows JS template literal expressions
-// such as id = ${recordID}
-export function evaluatePrefilter (prefilter, { record, user, recordID, ownerID, userID } = {}) {
+// such as id = ${recordID} or amount < ${variables.x} (page variables,
+// see PageBlocks/Variables).
+export function evaluatePrefilter (prefilter, { record, user, recordID, ownerID, userID, variables } = {}) {
   record = interpolable(record)
   user = interpolable(user)
+  variables = interpolable(variables)
   if (recordID === undefined || recordID === null) recordID = ''
   if (ownerID === undefined || ownerID === null) ownerID = ''
   if (userID === undefined || userID === null) userID = ''
