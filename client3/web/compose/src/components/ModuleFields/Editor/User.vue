@@ -28,7 +28,7 @@
           :selectable="isSelectable"
           :loading="processing"
           @search="search"
-          @input="updateValue($event)"
+          @update:model-value="updateValue($event)"
         >
           <template #list-footer>
             <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
@@ -59,13 +59,13 @@
           :options="options"
           :get-option-label="getOptionLabel"
           :get-option-key="getOptionKey"
-          :value="getUserIDByIndex(ctx.index)"
+          :model-value="getUserIDByIndex(ctx.index)"
           :filterable="false"
           :selectable="isSelectable"
           :loading="processing"
           :clearable="false"
           @search="search"
-          @input="updateValue($event, ctx.index)"
+          @update:model-value="updateValue($event, ctx.index)"
         >
           <template #list-footer>
             <Pagination v-if="showPagination" :has-prev-page="hasPrevPage" :has-next-page="hasNextPage" @prev="goToPage(false)" @next="goToPage(true)" />
@@ -81,12 +81,12 @@
         :options="options"
         :get-option-label="getOptionLabel"
         :get-option-key="getOptionKey"
-        :value="getUserIDByIndex()"
+        :model-value="getUserIDByIndex()"
         :clearable="field.name !== 'ownedBy'"
         :filterable="false"
         :selectable="isSelectable"
         :loading="processing"
-        @input="updateValue($event)"
+        @update:model-value="updateValue($event)"
         @search="search"
       >
         <template #list-footer>

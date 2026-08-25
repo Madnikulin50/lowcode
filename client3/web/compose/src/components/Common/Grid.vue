@@ -9,7 +9,7 @@
   >
     <grid-layout
       :key="gridKey"
-      :layout="layout"
+      v-model:layout="layout"
       :col-num="48"
       :row-height="10"
       :vertical-compact="true"
@@ -90,7 +90,6 @@ const emit = defineEmits(['item-updated'])
 
 const layout = ref([])
 const resizing = ref(false)
-const pendingPersist = ref(false)
 
 const oneBlockLayout = computed(() => {
   return props.blocks.filter(({ meta }) => !meta.hidden && (!meta.invisible || props.editable)).length === 1
@@ -108,7 +107,7 @@ const columnNumber = computed(() => {
 })
 
 const gridKey = computed(() => {
-  return layout.value.map(b => b.i).join(',')
+  return [...layout.value.map(b => b.i)].sort().join(',')
 })
 
 const geometryKey = computed(() => xywhSignature(props.blocks))
@@ -123,14 +122,14 @@ function rebuildLayout () {
 }
 
 watch(geometryKey, () => {
-  if (resizing.value || pendingPersist.value) return
+  if (resizing.value) return
   rebuildLayout()
 }, { immediate: true })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('pointerup', onGridSettled)
   layout.value = []
   resizing.value = false
-  pendingPersist.value = false
 })
 
 function persistLayout (newLayout) {
@@ -148,20 +147,21 @@ function persistLayout (newLayout) {
 }
 
 function onLayoutUpdated (newLayout) {
-  if (!props.editable) return
-  if (!pendingPersist.value) return
-
-  pendingPersist.value = false
-  resizing.value = false
-  persistLayout(newLayout)
+  if (!Array.isArray(newLayout)) return
+  layout.value = newLayout
+  if (resizing.value) persistLayout(newLayout)
 }
 
 function onGridAction () {
+  if (resizing.value) return
   resizing.value = true
+  window.addEventListener('pointerup', onGridSettled, { once: true })
 }
 
 function onGridSettled () {
-  pendingPersist.value = true
+  window.removeEventListener('pointerup', onGridSettled)
+  persistLayout(layout.value)
+  resizing.value = false
 }
 </script>
 
@@ -173,9 +173,13 @@ function onGridSettled () {
 .vue-grid-item.grid-item {
   box-sizing: border-box;
 
-  > * {
+  > *:not(.vue-resizable-handle) {
     height: 100%;
     max-height: 100%;
   }
+}
+
+.vue-grid-item > .vue-resizable-handle {
+  z-index: 20;
 }
 </style>

@@ -8,17 +8,37 @@ const ROLE = {
   cmdb: 'аналитик кибербезопасности и учёта ИТ-активов: ты видишь сеть как инвентарь, поверхность атаки и очередь уязвимостей',
   invest: 'аналитик инвестиционного проекта (EVM/CPM): ты связываешь документы, график WBS, бюджет, RFC и риски в одну картину управляемости',
   loop: 'аналитик розничной сети магазинов: ты читаешь выручку, трафик, остатки, маржу, инциденты и персонал как единый операционный контур',
+  faris: 'group procurement and finance controller for a Saudi holding company: you read vendor onboarding, purchase approvals, mocked ERP budgets and cycle times as one governance picture',
 }
 
 const NS = {
   cmdb: `Это пространство CMDB: сети (цели сканирования CIDR), устройства, сервисы/порты, уязвимости и история сканов.
 
 Ты — аналитик безопасности инвентаря. По данным пространства объясни, какие активы есть, где концентрация риска (CRITICAL/HIGH, открытые находки, «зависшие» online), какие сегменты давно не сканировались. Не выдумывай CVE и IP — только из записей. В конце — приоритетный план: что сканировать, что патчить, что снять с учёта.`,
+  faris: `This is Al-Faris Holding Group procurement: eight subsidiaries, vendor onboarding, purchase requests, mocked SAP vendor master and budgets.
+
+You are a group procurement controller. Explain onboarding bottlenecks, PR queues, over-budget holds and spend concentration. Do not invent CR/VAT numbers or SAR amounts — only records. End with a prioritized action list for this week. Reply in English.`,
 }
 
 function wrap (slug, title, meaning, lookFor) {
   const role = ROLE[slug] || 'аналитик данных этого пространства'
   const name = title || 'этот блок'
+  if (slug === 'faris') {
+    return `You are ${role}.
+
+Block “${name}”: ${meaning}
+
+How to use the attached data:
+${lookFor}
+
+Response rules:
+- English, concise, executive tone;
+- first 2–4 sentences: what the block shows and which decision it supports;
+- then 3–6 concrete insights (mix, outliers, concentration, stalled work);
+- end with actions for today / this week, prioritized;
+- numbers only from the data — do not invent SAR amounts or IDs;
+- if data is thin, say what is missing.`
+  }
   return `Ты — ${role}.
 
 Блок «${name}»: ${meaning}
@@ -272,6 +292,34 @@ const BY_TITLE = {
   'Быстрые / дефицитные SKU': ['fast movers, которых нет', '- lost sales;\n- страховой запас;\n- поставщик и кратность.'],
   Store: ['магазин, привязанный к инциденту', '- повтор на точке;\n- штат/остатки как причина;\n- открыть карточку точки.'],
   'Действия': ['автоматизации по инциденту', '- побочные эффекты статуса;\n- уведомления;\n- когда не запускать.'],
+  'At a glance': {
+    cmdb: ['KPI инвентаря: устройства, online/offline, открытые находки, CRITICAL/HIGH', '- отношение online к total (мертвые «online»);\n- открытые vs критичные: тонем в low?\n- пороги balloon — уже в красной зоне?'],
+    faris: ['group KPIs: active vendor onboarding, open PRs, average approval cycle, stalled work', '- which KPI is off;\n- does a healthy approved spend hide stalled holds;\n- which subsidiary likely drives the queue.'],
+  },
+  'Purchase requests by subsidiary': ['count of PRs split by subsidiary code — where volume sits', '- one subsidiary dominating the queue;\n- quiet subsidiaries that may bypass the process;\n- mix of open vs approved in the raw list.'],
+  'Mock spend by category': ['sum of approved estimated value by spend category (SAR)', '- category absorbing most of the mock spend;\n- professional services vs materials;\n- whether holds sit in the same category.'],
+  'Vendor onboarding by status': ['doughnut of onboarding statuses', '- incomplete vs in-review vs approved;\n- stalled GCC/compliance items;\n- rejected share as a process smell.'],
+  'Spend by subsidiary': ['approved PR value by subsidiary', '- who spends;\n- construction vs ICT vs healthcare;\n- compare with remaining ERP budgets.'],
+  'Overdue or stalled requests': ['PRs flagged stalled or sitting past due_at', '- over-budget holds;\n- finance waiting on a board minute;\n- what to escalate today.'],
+  Pipeline: ['onboarding counts: incomplete, in review, approved', '- incomplete packs blocking subsidiaries;\n- review pile vs approved stock.'],
+  'All onboarding requests': ['full vendor onboarding register', '- missing CR/VAT;\n- due dates in the past;\n- ERP master blocked vs still in flight.'],
+  'Group approved vendor list': ['vendors with status = approved, usable by any subsidiary', '- coverage by category;\n- GCC vs KSA;\n- who is missing from SAP mirror.'],
+  'PR status mix': ['purchase requests by workflow status', '- finance_approval bottleneck;\n- on_hold share;\n- drafts that never moved.'],
+  Queue: ['PRs with finance, on hold, and approved value', '- hold amount vs remaining budget;\n- finance SLA.'],
+  'All purchase requests': ['PR register across the group', '- over_budget without on_hold;\n- no vendor selected;\n- cycle_days outliers.'],
+  'Al-Faris subsidiaries': ['the eight operating companies', '- ERP company codes;\n- cities;\n- which have no open PRs.'],
+  'ERP vendor master (mocked SAP)': ['mocked SAP vendor master snapshot', '- blocked vs pending_sync;\n- CR/VAT gaps;\n- last_sync freshness.'],
+  'ERP budgets (mocked)': ['annual / committed / remaining SAR by subsidiary × category', '- remaining near zero;\n- committed vs PR pipeline;\n- which cost center is exhausted.'],
+  'Vendor onboarding': ['onboarding card: CR, VAT, pack, status, ERP link', '- completeness;\n- next rule-chain button;\n- due_at vs stalled.'],
+  'Purchase request': ['PR card: item, estimate, vendor, ERP remaining, flags', '- budget_ok vs over_budget;\n- which chain to run;\n- justification quality.'],
+  'Approval history': ['audit steps for this vendor or PR', '- days_in_step outliers;\n- returned vs held;\n- missing finance step.'],
+  'Check ERP budget': ['compares estimated_value to budget_remaining from the ERP mirror', '- only marks budget_ok when within remaining;\n- otherwise use Hold;\n- remaining is mocked, not live SAP.'],
+  'Return incomplete': ['sends the vendor pack back to the subsidiary', '- CR/VAT/docs still missing;\n- do not submit again until pack_complete.'],
+  'Send to finance': ['procurement finished review — finance must check budget', '- vendor selected?;\n- estimate vs remaining.'],
+  Subsidiary: ['one operating company and its vendors/PRs', '- spend vs budget;\n- stalled PRs;\n- onboarding gaps.'],
+  'ERP vendor master': ['one mocked SAP vendor', '- blocked status;\n- CR/VAT vs onboarding record.'],
+  'ERP budget line': ['one cost center remaining vs committed', '- will the next PR fit;\n- fiscal year.'],
+  'Approval step': ['one log line: who decided what', '- comment quality;\n- days_in_step.'],
 }
 
 const PAGE = {
@@ -345,6 +393,18 @@ const PAGE = {
   'loop|projects_planned - Record Page': 'Карточка запланированного проекта сети. Сроки, затронутые магазины, риск выручки.',
   'loop|projects_planned - Record Page': 'Карточка запланированного проекта сети. Сроки, затронутые магазины, риск выручки.',
   'loop|rrere': 'Служебная страница. Если на ней есть метрики — разбери, осмысленны ли они; иначе скажи, что данных для вывода нет.',
+  'faris|dashboard': 'Group procurement dashboard for Al-Faris Holding. Read KPIs, spend mix, onboarding status and the stalled list. Say which subsidiary or category needs action this week.',
+  'faris|vendors': 'Vendor onboarding pipeline. Incomplete packs, review queue, and the register. What is blocking group-approved supply.',
+  'faris|approved-vendors': 'Vendors already approved for the whole group. Coverage by category and gaps vs the ERP master.',
+  'faris|purchase-requests': 'Purchase request kanban and register. Finance queue, over-budget holds, approved SAR.',
+  'faris|subsidiaries': 'Eight operating companies. Scale = add a row. Check who has no activity.',
+  'faris|erp-mirror': 'Mocked SAP vendor master and budgets. Treat remaining SAR as the budget check source of truth for the demo.',
+  'faris|vendor': 'One onboarding request. Completeness, next approval step, ERP link, stall risk.',
+  'faris|purchase-request': 'One PR. Budget_ok vs remaining, routing buttons, justification.',
+  'faris|subsidiary': 'One subsidiary: its vendors and PRs versus ERP budgets.',
+  'faris|erp-vendor': 'One mocked SAP vendor. Blocked or pending_sync implications.',
+  'faris|erp-budget': 'One budget line. Remaining vs incoming PRs.',
+  'faris|approval-log-item': 'One approval log row. Decision quality and delay.',
 }
 
 const KIND_FALLBACK = {
@@ -400,6 +460,14 @@ export function blockPrompt ({ slug, pageTitle, kind, title }) {
   if (AICHAT_SPECIAL[name]) return AICHAT_SPECIAL[name]
   const spec = pickSpec(slug, name)
   if (spec) return wrap(slug, name || pageTitle, spec[0], spec[1])
+  const KIND_EN = {
+    Chart: 'this is a chart. Explain the split or series, where volume concentrates, and what to do today.',
+    Metric: 'this is a KPI strip. Compare the numbers, flag contradictions, suggest three checks.',
+    RecordList: 'this is a record table. Find overdue, empty required fields, and the first rows to work.',
+    Record: 'this is a record card. State, missing links, next operator step.',
+    RuleChain: 'this is a workflow button. Effect, cautions, what should change after a successful run.',
+    RecordOrganizer: 'this is a kanban column. Bottleneck, cards sitting too long, what to move today.',
+  }
   if (kind === 'AiChat') {
     return wrap(
       slug,
@@ -408,7 +476,9 @@ export function blockPrompt ({ slug, pageTitle, kind, title }) {
       '- какие записи проверить первыми;\n- где противоречие или просрочка;\n- что должен подтвердить оператор.',
     )
   }
-  const meaning = KIND_FALLBACK[kind] || `это блок типа ${kind} на странице «${pageTitle}».`
+  const meaning = (slug === 'faris' && KIND_EN[kind])
+    || KIND_FALLBACK[kind]
+    || `это блок типа ${kind} на странице «${pageTitle}».`
   const look = '- что необычно в данных;\n- какой вывод можно сделать уверенно, а какой нет;\n- 3 действия по приоритету.'
   return wrap(slug, name || kind, meaning, look)
 }
@@ -418,6 +488,11 @@ export function pagePrompt (slug, handle, title) {
   if (hit) return hit
   if (!title) return ''
   const role = ROLE[slug] || 'аналитик данных этого пространства'
+  if (slug === 'faris') {
+    return `You are ${role}.
+
+Page “${title}”. Explain which objects and decisions it covers, which anomalies to look for in the blocks, and what to check first. Reply in English, use only page data, end with prioritized actions.`
+  }
   return `Ты — ${role}.
 
 Страница «${title}». Объясни, какие объекты и решения она закрывает, какие аномалии искать в блоках и что проверить в первую очередь. Отвечай по-русски, опирайся только на данные страницы, в конце дай приоритетные действия.`

@@ -1,84 +1,85 @@
 <template>
   <div>
-    <button
-      :id="popoverTarget"
-      :title="$t('recordList.filter.title')"
-      type="button"
-      :class="['btn', `btn-${variant}`, 'd-flex align-items-center d-print-none border-0 px-1 h-100', buttonClass]"
-      :style="buttonStyle"
-      @click.stop
-    >
-      <font-awesome-icon
-        :icon="['fas', 'filter']"
-        :class="[inFilter ? 'text-primary' : inactiveIconClass]"
-      />
-    </button>
-
     <BPopover
-      ref="popoverRef"
+      v-model="popoverOpen"
       class="record-list-filter shadow-sm"
-      click
+      teleport-to="body"
+      strategy="fixed"
+      manual
+      no-auto-close
+      no-hide
       placement="bottom"
       :delay="0"
       boundary="viewport"
       :boundary-padding="2"
-      :target="popoverTarget"
-      :no-auto-close="preventPopoverClose"
-      @hide="onHide"
       @show="onOpen"
     >
-      <div class="card position-static w-100 border-0">
-        <div class="card-body px-3 pb-0 overflow-auto">
-          <filter-toolbox
-            v-model="componentFilter"
-            :module="module"
-            :namespace="namespace"
-            :selected-field="selectedField"
-            @value-change="preventClose"
-          />
-        </div>
+      <template #target>
+        <button
+          ref="filterBtnRef"
+          :id="popoverTarget"
+          :title="$t('recordList.filter.title')"
+          type="button"
+          :class="['btn', `btn-${variant}`, 'd-flex align-items-center d-print-none border-0 px-1 h-100', buttonClass]"
+          :style="buttonStyle"
+          @click.stop="popoverOpen = !popoverOpen"
+        >
+        <font-awesome-icon
+          :icon="['fas', 'filter']"
+          :class="[inFilter ? 'text-primary' : inactiveIconClass]"
+        />
+      </button>
+    </template>
 
-        <div class="card-footer d-flex justify-content-between shadow-sm rounded">
+    <div class="card position-static w-100 border-0">
+      <div class="card-body px-3 pb-0 overflow-y-auto overflow-x-hidden">
+        <filter-toolbox
+          v-model="componentFilter"
+          :module="module"
+          :namespace="namespace"
+          :selected-field="selectedField"
+          @value-change="preventClose"
+        />
+      </div>
+
+      <div class="card-footer d-flex justify-content-between shadow-sm rounded">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          @click="resetFilter"
+        >
+          {{ $t('label.reset') }}
+        </button>
+
+        <div class="d-flex">
           <button
+            v-if="allowFilterPresetSave"
             type="button"
-            class="btn btn-outline-secondary"
-            @click="resetFilter"
+            class="btn btn-outline-primary me-2"
+            @click="onSave(true, 'filter-preset')"
           >
-            {{ $t('label.reset') }}
+            {{ $t('recordList.filter.addFilterToPreset') }}
           </button>
-
-          <div class="d-flex">
-            <button
-              v-if="allowFilterPresetSave"
-              type="button"
-              class="btn btn-outline-primary me-2"
-              @click="onSave(true, 'filter-preset')"
-            >
-              {{ $t('recordList.filter.addFilterToPreset') }}
-            </button>
-            <button
-              ref="btnSave"
-              type="button"
-              class="btn btn-primary"
-              @click="onSave"
-            >
-              {{ $t('label.save') }}
-            </button>
-          </div>
+          <button
+            ref="btnSave"
+            type="button"
+            class="btn btn-primary"
+            @click="onSave"
+          >
+            {{ $t('label.save') }}
+          </button>
         </div>
       </div>
+    </div>
     </BPopover>
   </div>
 </template>
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'block' } })
-import { ref, computed, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { BPopover } from 'bootstrap-vue-next'
 import FilterToolbox from 'corteza-webapp-compose/src/components/Common/FilterToolbox.vue'
-
-const { t } = useI18n()
 
 const props = defineProps({
   target: {
@@ -114,7 +115,7 @@ const props = defineProps({
     default: '',
   },
   buttonStyle: {
-    type: String,
+    type: [String, Object],
     default: '',
   },
   allowFilterPresetSave: {
@@ -126,8 +127,8 @@ const props = defineProps({
 const emit = defineEmits(['filter', 'reset', 'filter-preset'])
 
 const componentFilter = ref([])
-const preventPopoverClose = ref(false)
-const popoverRef = ref(null)
+const popoverOpen = ref(false)
+const filterBtnRef = ref(null)
 
 const inFilter = computed(() => {
   return props.recordListFilter.some(({ filter }) => {
@@ -143,21 +144,45 @@ watch(() => props.recordListFilter, (val) => {
   componentFilter.value = [...val]
 }, { immediate: true, deep: true })
 
-function onHide (e) {
-  if (preventPopoverClose.value) {
-    e.preventDefault()
-  }
+function isFilterUiClick (target) {
+  if (!(target instanceof Element)) return false
+  if (filterBtnRef.value?.contains(target)) return true
+  if (target.closest('.record-list-filter')) return true
+  if (target.closest('.vs__dropdown-menu')) return true
+  return false
 }
+
+function onDocumentPointerDown (e) {
+  if (!popoverOpen.value) return
+  if (isFilterUiClick(e.target)) return
+  popoverOpen.value = false
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', onDocumentPointerDown, true)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onDocumentPointerDown, true)
+})
 
 function onOpen () {
   componentFilter.value = [...props.recordListFilter]
 }
 
 function preventClose () {
-  preventPopoverClose.value = true
-  setTimeout(() => {
-    preventPopoverClose.value = false
-  }, 100)
+  // Keep the popover open while value editors (vue-select, etc.) teleport to body.
+  popoverOpen.value = true
+}
+
+function savableFilter () {
+  const groups = Array.isArray(componentFilter.value) ? componentFilter.value : []
+  return groups
+    .map(group => ({
+      ...group,
+      filter: (group.filter || []).filter(f => f && f.name),
+    }))
+    .filter(({ filter }) => filter.length > 0)
 }
 
 function resetFilter () {
@@ -166,29 +191,31 @@ function resetFilter () {
 }
 
 function onSave (close = true, type = 'filter') {
+  const next = savableFilter()
   if (close) {
-    popoverRef.value?.hide()
+    popoverOpen.value = false
   }
-  setTimeout(() => {
-    emit(type, componentFilter.value.filter(({ filter = [] }) => filter.filter((f = {}) => !!f.name).length > 0))
-  }, 100)
+  emit(type, next)
 }
 </script>
 
 <style lang="scss">
 .record-list-filter {
-  z-index: 1040;
+  z-index: 1070;
   max-width: 800px !important;
   opacity: 1 !important;
   border-color: transparent;
 
   .popover-body {
     display: flex;
-    width: 800px;
+    flex-direction: column;
+    width: 100%;
     min-width: min(99vw, 350px);
-    max-width: 99vw;
+    max-width: 100%;
     max-height: 25rem;
     padding: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
     color: var(--black);
     background: var(--white);
     border: 1px solid var(--bs-border-color, #dee2e6);
@@ -198,10 +225,16 @@ function onSave (close = true, type = 'filter') {
     font-size: 0.9rem;
   }
 
+  .card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .v-select,
   .field-operator,
   .field-editor {
-    min-width: 120px;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .popover-arrow {

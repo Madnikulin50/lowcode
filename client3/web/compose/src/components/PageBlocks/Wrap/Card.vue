@@ -6,14 +6,18 @@
       :class="[blockClass, cardClass, customCSSClass]"
     >
       <div
-        v-if="showHeader"
+        v-if="$slots.header"
         class="card-header border-bottom text-nowrap ps-3 pe-2"
         :class="[textClass, headerClass]"
       >
-        <div
-          v-if="!headerSet"
-          class="d-flex flex-column gap-1"
-        >
+        <slot name="header" />
+      </div>
+      <div
+        v-else-if="showHeader"
+        class="card-header border-bottom text-nowrap ps-3 pe-2"
+        :class="[textClass, headerClass]"
+      >
+        <div class="d-flex flex-column gap-1">
           <div
             v-if="blockTitle || showOptions"
             class="d-flex"
@@ -60,14 +64,9 @@
             {{ blockDescription }}
           </div>
         </div>
-
-        <slot
-          v-else
-          name="header"
-        />
       </div>
 
-      <div v-if="toolbarSet">
+      <div v-if="$slots.toolbar">
         <slot name="toolbar" />
       </div>
 
@@ -79,7 +78,7 @@
       </div>
 
       <div
-        v-if="footerSet"
+        v-if="$slots.footer"
         class="card-footer p-0 bg-light"
       >
         <slot name="footer" />
@@ -89,7 +88,7 @@
 </template>
 
 <script setup>
-import { computed, useSlots } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
@@ -138,14 +137,8 @@ const showMagnifyButton = computed(() => {
   return (props.block?.options?.magnifyOption || isBlockMagnified.value) && !isAnotherBlockMagnified.value
 })
 
-const slots = useSlots()
-
-const headerSet = computed(() => !!slots.header)
-const toolbarSet = computed(() => !!slots.toolbar)
-const footerSet = computed(() => !!slots.footer)
-
 const showHeader = computed(() => {
-  return [headerSet.value, props.block?.title, props.block?.description, props.block?.options?.showRefresh, showMagnifyButton.value].some(c => !!c)
+  return [props.block?.title, props.block?.description, props.block?.options?.showRefresh, showMagnifyButton.value].some(c => !!c)
 })
 
 const showOptions = computed(() => {

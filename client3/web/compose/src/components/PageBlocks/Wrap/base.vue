@@ -1,6 +1,6 @@
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'block' } })
-import { computed, useSlots } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
@@ -47,14 +47,8 @@ const showMagnifyButton = computed(() => {
   return (props.block.options.magnifyOption || isBlockMagnified.value) && !isAnotherBlockMagnified.value
 })
 
-const slots = useSlots()
-
-const headerSet = computed(() => !!slots.header)
-const toolbarSet = computed(() => !!slots.toolbar)
-const footerSet = computed(() => !!slots.footer)
-
 const showHeader = computed(() => {
-  return [headerSet.value, props.block.title, props.block.description, props.block.options.showRefresh, showMagnifyButton.value].some(c => !!c)
+  return [props.block.title, props.block.description, props.block.options.showRefresh, showMagnifyButton.value].some(c => !!c)
 })
 
 const showOptions = computed(() => {
