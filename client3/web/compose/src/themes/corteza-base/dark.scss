@@ -1,0 +1,73 @@
+$dark-palette: (
+  black: #EDEDED,
+  white: #121212,
+  primary: #6E8FF0,
+  secondary: #B3B3B3,
+  success: #43AA8B,
+  warning: #E27646,
+  danger: #F2555A,
+  light: #1A1A1A,
+  extra-light: #242424,
+  body-bg: #0A0A0A,
+  sidebar-bg: #121212,
+  topbar-bg: #121212,
+);
+
+// Fallback dark palette ("Almost black"), matching the darkModeVariables
+// defaults in client3/web/admin/.../CUIBrandingEditor.vue. Wrapped in
+// :where() so it always loses to server-generated custom.css (Admin >
+// Settings > UI > Branding > dark tab) — that admin screen is the single
+// source of truth once a tenant has saved a theme there.
+:where([data-color-mode='dark']) {
+  @each $name, $value in $dark-palette {
+    --#{$name}: #{$value};
+  }
+
+  color-scheme: dark;
+}
+
+:where([data-color-mode='dark'] body) {
+  background-color: var(--body-bg);
+  color: var(--black);
+}
+
+// Bridge Bootstrap 5's own dark-mode variables (activated by data-bs-theme="dark")
+// to the app's palette above. Not wrapped in :where() — this always applies
+// once dark mode is on, regardless of where the palette above came from
+// (Studio settings or the fallback).
+//
+// Note: --bs-body-bg is deliberately NOT overridden here. Once Corteza Studio
+// has generated real theme CSS, it ships its own more specific rule
+// ([data-color-mode="dark"] .card { background-color: ... }) that already
+// paints the card/block surface correctly and always wins over anything
+// --bs-body-bg-driven. Overriding --bs-body-bg to --body-bg only mismatched
+// things that don't have their own Studio rule, like table cells (Bootstrap's
+// `.table` fills every td/th with var(--bs-table-bg), which defaults to
+// var(--bs-body-bg)) — they came out darker than the card they sit in.
+// --bs-secondary-color/--bs-tertiary-color/--bs-emphasis-color are the ones
+// Bootstrap's own [data-bs-theme=dark] block flips for muted/emphasized text
+// (e.g. table header text, card labels) — since that attribute is never set
+// here, they were staying pinned at their light-mode values (near-black,
+// meant to sit on a light background) forever, going invisible against any
+// surface this bridge darkens.
+[data-color-mode='dark'] {
+  --bs-body-color: var(--black);
+  --bs-white: var(--white);
+  --bs-tertiary-bg: var(--extra-light);
+  --bs-secondary-bg: var(--light);
+  --bs-border-color: var(--extra-light);
+  --bs-secondary-color: var(--secondary);
+  --bs-tertiary-color: var(--secondary);
+  --bs-emphasis-color: var(--black);
+}
+
+// Tables/cells stay transparent so they show the card's own background
+// through, same as the pagination buttons (also transparent) do. Must target
+// .table directly (not just [data-color-mode='dark']) — Bootstrap's own
+// `.table { --bs-table-bg: var(--bs-body-bg); }` rule sets this custom
+// property directly on the table element, which always overrides a value
+// merely inherited from an ancestor, regardless of the ancestor rule's
+// specificity.
+[data-color-mode='dark'] .table {
+  --bs-table-bg: transparent;
+}

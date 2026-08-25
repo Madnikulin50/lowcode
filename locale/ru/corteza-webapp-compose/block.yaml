@@ -64,6 +64,59 @@ ruleChain:
   label: Цепочка правил
 aiChat:
   label: ИИ-ассистент
+  title: ИИ-чат
+  greeting: Чем могу помочь?
+  stopped: Остановлено
+  close: Закрыть
+  collapse: Свернуть
+  expand: Развернуть
+  copy: Копировать
+  edit: Изменить
+  retry: Повторить
+  newChat:
+    label: Новый чат
+  model:
+    label: Модель
+  warmup:
+    inProgress: Прогрев выбранной модели…
+    short: Прогрев
+  tools:
+    invoked: Использованы инструменты
+    enabled: Инструменты включены
+    disabled: Инструменты отключены
+  status:
+    thinking: Думаю…
+    warming: Прогреваюсь…
+    usingTools: Использую инструменты…
+    writing: Печатаю…
+  promptXml:
+    label: Показать запрос
+  reasoning:
+    label: Рассуждения
+  chart:
+    error: Не удалось построить график
+  confirm:
+    title: Подтвердите действие
+    execute: Выполнить
+    cancel: Отмена
+  export:
+    label: Экспорт
+    markdown: Markdown
+    pdf: PDF
+    docx: Word (.docx)
+  attach:
+    label: Прикрепить файл
+    remove: Удалить вложение
+  sendMessage:
+    placeholder: Введите сообщение…
+    stop: Остановить
+    button: Отправить
+    hint: "Enter — отправить, Shift+Enter — новая строка"
+  empty:
+    suggestions:
+      capabilities: Что ты умеешь?
+      modules: Расскажи о модулях на этой странице
+      page: Опиши эту страницу
 automation:
   addPlaceholderLabel: Добавить placeholder (dummy button)
   availableScriptsAndWorkflow: Available scripts and workflows ({{count}})

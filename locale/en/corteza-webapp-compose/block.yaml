@@ -64,6 +64,59 @@ ruleChain:
   label: Rule chain
 aiChat:
   label: AI assistant
+  title: AI Chat
+  greeting: How can I help?
+  stopped: Stopped
+  close: Close
+  collapse: Collapse
+  expand: Expand
+  copy: Copy
+  edit: Edit
+  retry: Retry
+  newChat:
+    label: New chat
+  model:
+    label: Model
+  warmup:
+    inProgress: Warming up the selected model…
+    short: Warming up
+  tools:
+    invoked: Tools used
+    enabled: Tools enabled
+    disabled: Tools disabled
+  status:
+    thinking: Thinking…
+    warming: Warming up…
+    usingTools: Using tools…
+    writing: Writing…
+  promptXml:
+    label: Show prompt
+  reasoning:
+    label: Reasoning
+  chart:
+    error: Could not render chart
+  confirm:
+    title: Confirm action
+    execute: Run
+    cancel: Cancel
+  export:
+    label: Export
+    markdown: Markdown
+    pdf: PDF
+    docx: Word (.docx)
+  attach:
+    label: Attach file
+    remove: Remove attachment
+  sendMessage:
+    placeholder: Type a message…
+    stop: Stop
+    button: Send
+    hint: "Enter to send, Shift+Enter for a new line"
+  empty:
+    suggestions:
+      capabilities: What can you do?
+      modules: Tell me about the modules on this page
+      page: Summarize this page
 automation:
   addPlaceholderLabel: Add placeholder (dummy button)
   availableScriptsAndWorkflow: Available scripts and workflows ({{count}})

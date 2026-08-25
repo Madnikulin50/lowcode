@@ -1,6 +1,49 @@
 <template>
   <div class="chat-container" :class="{ frameless: !framed }">
     <div
+      v-if="showModelSwitcher || showToolsBadge || showResetButton"
+      class="chat-meta-bar"
+    >
+      <button
+        v-if="showResetButton"
+        type="button"
+        class="btn btn-outline-secondary border-0 btn-sm chat-reset-btn"
+        :title="$t('aiChat.newChat.label')"
+        :disabled="!messages.length && !inputText"
+        @click="newChat"
+      >
+        <font-awesome-icon :icon="['fas', 'sync']" />
+      </button>
+      <select
+        v-if="showModelSwitcher"
+        v-model="selectedModel"
+        class="form-select form-select-sm chat-model-select"
+        :title="$t('aiChat.model.label')"
+        :disabled="!modelOptions.length || loading"
+        @change="onModelPicked"
+      >
+        <option v-for="m in modelOptions" :key="m" :value="m">{{ modelLabel(m) }}</option>
+      </select>
+      <span
+        v-if="showModelSwitcher && preloadWarming"
+        class="d-flex align-items-center gap-1 text-secondary small text-nowrap"
+        :title="$t('aiChat.warmup.inProgress')"
+      >
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+        <span>{{ $t('aiChat.warmup.short') }}</span>
+      </span>
+      <span
+        v-if="showToolsBadge"
+        class="chat-tools-badge"
+        :class="[toolsBadgeClass, { 'ms-auto': showModelSwitcher }]"
+        :title="toolsTitle"
+        role="img"
+        :aria-label="toolsTitle"
+      >
+        <font-awesome-icon :icon="['fas', 'tools']" />
+      </span>
+    </div>
+    <div
       v-if="isEmpty"
       class="empty-state"
     >
@@ -30,6 +73,15 @@
           <font-awesome-icon :icon="['fas', msg.role === 'user' ? 'user' : 'brain']" />
         </div>
         <div class="message-body">
+          <div
+            v-if="msg.role === 'assistant' && (msg.usedTools || (msg.active && toolsActive))"
+            class="msg-tools-flag"
+            :class="{ active: msg.active && toolsActive }"
+            :title="$t('aiChat.tools.invoked')"
+          >
+            <font-awesome-icon :icon="['fas', 'tools']" size="xs" />
+            <span>{{ $t('aiChat.tools.invoked') }}</span>
+          </div>
           <div
             v-if="msg.role === 'assistant' && (msg.reasoning || (msg.active && streamStatus === 'thinking'))"
             class="reasoning"
@@ -67,12 +119,11 @@
             </div>
             <div class="content-text">
               <template v-if="!msg.content && msg.active">
-                <div v-if="warmingUp" class="warmup-indicator">
-                  <span class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true" />
-                  <span>{{ statusLabel }}</span>
-                </div>
-                <div v-else class="typing-indicator">
-                  <span /><span /><span />
+                <div class="brand-thinking">
+                  <span class="brand-thinking-icon">
+                    <img :src="faviconSrc" alt="" />
+                  </span>
+                  <span class="brand-thinking-label">{{ statusLabel || $t('aiChat.status.thinking') }}</span>
                 </div>
               </template>
               <template v-for="(part, pi) in messageParts(msg.content)" :key="pi">
@@ -245,6 +296,7 @@ import html2pdf from 'html2pdf.js'
 import { Document, Packer, Paragraph, TextRun, ExternalHyperlink, HeadingLevel, AlignmentType, NumberFormat, WidthType, BorderStyle, ShadingType, Table, TableRow, TableCell } from 'docx'
 import ECharts from 'vue-echarts'
 import { splitChartParts, replaceChartFences } from './chatChart.js'
+import { parseModelsPayload, modelToolsEnabled, modelLabel, pickChatModel, readStoredModel, writeStoredModel } from './chatTools.js'
 import { useStore } from '../../../../store'
 import ChartComponent from '../../../Chart/index.vue'
 
@@ -258,9 +310,17 @@ const props = defineProps({
   magnified: { type: Boolean, default: false },
   files: { type: Array, required: false, default: () => [] },
   model: { type: String, required: false, default: '' },
+  preferredModel: { type: String, required: false, default: '' },
+  modelStorageKey: { type: String, default: 'aiChat.model' },
   active: { type: Boolean, default: true },
   framed: { type: Boolean, default: true },
+  showModelSwitcher: { type: Boolean, default: false },
+  showToolsBadge: { type: Boolean, default: true },
+  showResetButton: { type: Boolean, default: true },
+  modelTools: { type: Object, default: null },
 })
+
+const emit = defineEmits(['tools-state'])
 
 const store = useStore()
 const $ComposeAPI = inject('$ComposeAPI', window.__composeAPI)
@@ -286,6 +346,74 @@ const stickToBottom = ref(true)
 const copiedIdx = ref(-1)
 let persistTimer = null
 let copiedTimer = null
+const localModelTools = ref({})
+const defaultModel = ref('')
+const modelOptions = ref([])
+const selectedModel = ref('')
+const preloadWarming = ref(false)
+const sessionTools = ref(null)
+const toolsActive = ref(false)
+let warmUpSeq = 0
+
+const resolvedModel = computed(() => props.model || selectedModel.value || defaultModel.value)
+const toolsLookup = computed(() => props.modelTools || localModelTools.value)
+const catalogTools = computed(() => modelToolsEnabled(resolvedModel.value, toolsLookup.value))
+const toolsEnabled = computed(() => {
+  if (sessionTools.value !== null) return sessionTools.value
+  if (catalogTools.value !== null) return catalogTools.value
+  return false
+})
+const toolsTitle = computed(() => {
+  if (toolsActive.value) return $t('aiChat.tools.invoked')
+  return toolsEnabled.value ? $t('aiChat.tools.enabled') : $t('aiChat.tools.disabled')
+})
+const toolsBadgeClass = computed(() => ({
+  on: toolsEnabled.value && !toolsActive.value,
+  off: !toolsEnabled.value && !toolsActive.value,
+  active: toolsActive.value,
+}))
+
+function emitToolsState () {
+  emit('tools-state', {
+    enabled: sessionTools.value,
+    active: toolsActive.value,
+  })
+}
+
+function warmUpSelected () {
+  if (!props.showModelSwitcher || !selectedModel.value || !$ComposeAPI?.pageAiWarmUp) return
+  const seq = ++warmUpSeq
+  preloadWarming.value = true
+  $ComposeAPI.pageAiWarmUp({ model: selectedModel.value }).catch(() => {}).finally(() => {
+    if (seq === warmUpSeq) preloadWarming.value = false
+  })
+}
+
+function applyCatalogSelection (names, serverDefault) {
+  if (!props.showModelSwitcher || !names.length) return
+  const saved = readStoredModel(props.modelStorageKey)
+  selectedModel.value = pickChatModel(names, saved, props.preferredModel || serverDefault)
+  warmUpSelected()
+}
+
+function onModelPicked () {
+  if (!props.showModelSwitcher || !selectedModel.value) return
+  writeStoredModel(selectedModel.value, props.modelStorageKey)
+  warmUpSelected()
+}
+
+function loadModelTools () {
+  if (!$ComposeAPI?.pageAiModels) return
+  if (!props.showModelSwitcher && props.modelTools) return
+  $ComposeAPI.pageAiModels().then((payload = {}) => {
+    const parsed = parseModelsPayload(payload)
+    if (!props.modelTools) localModelTools.value = parsed.tools
+    if (parsed.defaultModel) defaultModel.value = parsed.defaultModel
+    modelOptions.value = parsed.names
+    applyCatalogSelection(parsed.names, parsed.defaultModel)
+    emitToolsState()
+  }).catch(() => {})
+}
 
 const isEmpty = computed(() => !messages.value.some(m => m.role === 'user' || (m.role === 'assistant' && m.content)))
 const lastAssistantIdx = computed(() => {
@@ -296,10 +424,15 @@ const lastAssistantIdx = computed(() => {
 })
 const statusLabel = computed(() => {
   if (warmingUp.value || streamStatus.value === 'warming') return $t('aiChat.status.warming')
+  if (streamStatus.value === 'using-tools' || toolsActive.value) return $t('aiChat.status.usingTools')
   if (streamStatus.value === 'writing') return $t('aiChat.status.writing')
   if (loading.value) return $t('aiChat.status.thinking')
   return ''
 })
+// The site's own (possibly rebranded) favicon, reused as the animated
+// "processing" glyph instead of a generic spinner — falls back to the
+// bundled default icon before branding/favicon has finished loading.
+const faviconSrc = computed(() => document.getElementById('favicon')?.href || '/icon.svg')
 const suggestions = computed(() => [
   { key: 'capabilities', text: $t('aiChat.empty.suggestions.capabilities') },
   { key: 'modules', text: $t('aiChat.empty.suggestions.modules') },
@@ -349,6 +482,7 @@ function persistSession() {
         content: String(m.content || '').slice(0, 50000),
         reasoning: String(m.reasoning || '').slice(0, 20000),
         collapsed: !!m.collapsed,
+        usedTools: !!m.usedTools,
       })),
     }
     localStorage.setItem(sessionKey(), JSON.stringify(payload))
@@ -368,6 +502,7 @@ function restoreSession() {
       reasoning: m.reasoning || '',
       reasoningOpen: false,
       collapsed: !!m.collapsed,
+      usedTools: !!m.usedTools,
       active: false,
     }))
     return true
@@ -728,7 +863,7 @@ function formatMessageForExport(text) {
 function buildExportDocument() {
   const items = exportableMessages()
   const when = new Date().toLocaleString()
-  const model = props.model || '—'
+  const model = resolvedModel.value || '—'
   const bubbles = items.map((m, i) => {
     const isUser = m.role === 'user'
     const roleLabel = isUser ? 'User' : 'Assistant'
@@ -886,7 +1021,7 @@ const exportPdfStyles = `
 `
 
 function exportMarkdown() {
-  const lines = ['# Chat Export', '', `> ${new Date().toLocaleString()} · model: ${props.model || '—'}`, '', '---', '']
+  const lines = ['# Chat Export', '', `> ${new Date().toLocaleString()} · model: ${resolvedModel.value || '—'}`, '', '---', '']
   for (const m of exportableMessages()) {
     const role = m.role === 'user' ? '**User**' : '**Assistant**'
     lines.push(`${role}`)
@@ -972,7 +1107,7 @@ async function exportDocx() {
     new Paragraph({
       children: [
         new TextRun({
-          text: `${new Date().toLocaleString()} · Model: ${stripHtml(props.model) || '—'}`,
+          text: `${new Date().toLocaleString()} · Model: ${stripHtml(resolvedModel.value) || '—'}`,
           size: 20,
           color: '667788',
         }),
@@ -1261,10 +1396,13 @@ async function sendMessage(overrideText, opts = {}) {
     reasoningOpen: true,
     active: true,
     collapsed: false,
+    usedTools: false,
   })
   loading.value = true
   warmingUp.value = false
+  toolsActive.value = false
   streamStatus.value = 'thinking'
+  emitToolsState()
   scrollToBottom()
 
   abortController.value = new AbortController()
@@ -1283,7 +1421,7 @@ async function sendMessage(overrideText, opts = {}) {
       namespaceID: props.namespace,
       pageID: props.page,
       moduleID: props.module,
-      model: props.model,
+      model: resolvedModel.value,
       signal: abortController.value.signal,
     }, ({ token, reason, status }) => {
       if (status === 'warming') {
@@ -1295,6 +1433,24 @@ async function sendMessage(overrideText, opts = {}) {
       if (status === 'ready') {
         warmingUp.value = false
         streamStatus.value = 'thinking'
+        scrollToBottom()
+        return
+      }
+      if (status === 'tools-enabled') {
+        sessionTools.value = true
+        emitToolsState()
+        return
+      }
+      if (status === 'tools-disabled') {
+        sessionTools.value = false
+        emitToolsState()
+        return
+      }
+      if (status === 'using-tools') {
+        toolsActive.value = true
+        messages.value[msgIdxAnswer].usedTools = true
+        streamStatus.value = 'using-tools'
+        emitToolsState()
         scrollToBottom()
         return
       }
@@ -1334,10 +1490,12 @@ async function sendMessage(overrideText, opts = {}) {
   } finally {
     loading.value = false
     warmingUp.value = false
+    toolsActive.value = false
     streamStatus.value = ''
     messages.value[msgIdxAnswer].active = false
     messages.value[msgIdxAsk].active = false
     abortController.value = null
+    emitToolsState()
     schedulePersist()
     scrollToBottom()
     const queued = pendingAutoSend
@@ -1364,12 +1522,24 @@ watch(() => props.startPrompt, (prompt) => {
 
 watch(messages, schedulePersist, { deep: true })
 
+watch(resolvedModel, () => {
+  sessionTools.value = null
+  emitToolsState()
+})
+
+watch(() => props.preferredModel, () => {
+  if (!props.showModelSwitcher || !modelOptions.value.length) return
+  if (readStoredModel(props.modelStorageKey)) return
+  applyCatalogSelection(modelOptions.value, defaultModel.value)
+})
+
 watch(() => props.active, (active) => {
   if (active) focusInput()
 })
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
+  loadModelTools()
   restoreSession()
   nextTick(() => {
     const incoming = String(props.startPrompt || '').trim()
@@ -1417,6 +1587,9 @@ defineExpose({
   newChat,
   focusInput,
   applyIncomingPrompt,
+  toolsEnabled,
+  toolsActive,
+  toolsTitle,
 })
 </script>
 
@@ -1428,16 +1601,109 @@ defineExpose({
   height: 100%;
   width: 100%;
   margin: 0 auto;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--extra-light, #e0e0e0);
   border-radius: 12px;
   overflow: hidden;
-  background: #f9f9f9;
+  background: var(--white, #f9f9f9);
   flex: 1;
 }
 
 .chat-container.frameless {
   border: none;
   border-radius: 0;
+}
+
+.chat-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 6px 12px 0;
+  min-width: 0;
+}
+
+.chat-reset-btn {
+  /* .btn-outline-secondary's icon color (#6c757d) is baked into Bootstrap's
+     CSS directly, not a var — it never adapts to the theme. Combined with
+     the disabled-state opacity on a fresh empty chat (nothing to reset yet),
+     it reads as barely-there against a dark background. */
+  color: var(--secondary, #6c757d);
+}
+
+.chat-reset-btn:hover:not(:disabled) {
+  color: var(--black, #445);
+  background: var(--extra-light, #f0f0f0);
+}
+
+.chat-model-select {
+  width: auto;
+  max-width: 180px;
+  flex-shrink: 0;
+  margin-right: auto;
+  /* Bootstrap's .form-select background comes from --bs-body-bg, which the
+     dark theme deliberately leaves unoverridden (see dark.scss) — it relies
+     on Studio-generated theme CSS to repaint known component classes, and a
+     bare native <select> here isn't one of them. Left alone, dark mode's
+     light body text (--bs-body-color -> --black) lands on the still-white
+     default select background. Paint it explicitly, same as the composer
+     textarea above. */
+  background-color: var(--white, #fff);
+  color: var(--black, inherit);
+  border-color: var(--extra-light, #ced4da);
+}
+
+.chat-tools-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--secondary, #8a93a0);
+  background: var(--extra-light, #f3f5f8);
+  flex-shrink: 0;
+}
+
+.chat-tools-badge.on {
+  color: #1f7a4d;
+  background: #e8f6ee;
+}
+
+.chat-tools-badge.off::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.85;
+}
+
+.chat-tools-badge.active {
+  color: #1f4b7a;
+  background: #e8eef6;
+  animation: chat-tools-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes chat-tools-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.msg-tools-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #1f7a4d;
+}
+
+.msg-tools-flag.active {
+  color: #1f4b7a;
+  animation: chat-tools-pulse 1.2s ease-in-out infinite;
 }
 
 .export-dropdown {
@@ -1450,8 +1716,8 @@ defineExpose({
   top: 100%;
   margin-top: 4px;
   min-width: 160px;
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--white, #fff);
+  border: 1px solid var(--extra-light, #ddd);
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   z-index: 100;
@@ -1467,12 +1733,12 @@ defineExpose({
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  color: #333;
+  color: var(--black, #333);
   line-height: 1.4;
 }
 
 .export-menu-item:hover {
-  background: #f0f0f0;
+  background: var(--extra-light, #f0f0f0);
 }
 
 .messages {
@@ -1522,7 +1788,7 @@ defineExpose({
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #999;
+  color: var(--secondary, #999);
   padding: 2px 6px;
   border-radius: 4px;
   line-height: 1;
@@ -1532,8 +1798,8 @@ defineExpose({
 }
 
 .collapse-btn:hover {
-  background: rgba(0,0,0,0.06);
-  color: #666;
+  background: var(--extra-light, rgba(0,0,0,0.06));
+  color: var(--black, #666);
 }
 
 .collapsed-content {
@@ -1647,7 +1913,7 @@ defineExpose({
 .prompt-xml-toggle {
   border: none;
   background: transparent;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
   font-size: 12px;
   padding: 0 2px 4px;
   cursor: pointer;
@@ -1656,10 +1922,10 @@ defineExpose({
 .prompt-xml-body {
   font-size: 11px;
   line-height: 1.45;
-  color: #5a6570;
+  color: var(--secondary, #5a6570);
   white-space: pre-wrap;
   word-break: break-word;
-  background: #f3f5f8;
+  background: var(--extra-light, #f3f5f8);
   border-radius: 8px;
   padding: 8px 10px;
   margin: 0 0 6px;
@@ -1696,7 +1962,7 @@ defineExpose({
 
 .chat-chart-error {
   font-size: 12px;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
   font-style: italic;
   margin: 6px 0;
 }
@@ -1706,7 +1972,7 @@ defineExpose({
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
 }
 
 .message.user .content .collapse-btn {
@@ -1730,35 +1996,61 @@ defineExpose({
   color: white;
 }
 
-.typing-indicator {
-  display: flex;
-  gap: 4px;
-  padding: 8px 0;
-}
-
-.warmup-indicator {
+.brand-thinking {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
   padding: 8px 0;
-  color: #6c757d;
-  font-size: 0.9rem;
+  min-width: 100px;
 }
 
-.typing-indicator span {
-  width: 8px;
-  height: 8px;
-  background: #999;
+.brand-thinking-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.brand-thinking-icon::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
   border-radius: 50%;
-  animation: bounce 1.4s infinite;
+  background: radial-gradient(circle, var(--primary, #ff9661) 0%, transparent 72%);
+  animation: brand-thinking-glow 1.6s ease-in-out infinite;
 }
 
-.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+.brand-thinking-icon img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+  animation: brand-thinking-pulse 1.6s ease-in-out infinite;
+}
 
-@keyframes bounce {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-10px); }
+.brand-thinking-label {
+  font-size: 0.85rem;
+  color: var(--secondary, #6c757d);
+  animation: brand-thinking-fade 1.6s ease-in-out infinite;
+}
+
+@keyframes brand-thinking-pulse {
+  0%, 100% { transform: scale(0.82) rotate(0deg); opacity: 0.55; }
+  50% { transform: scale(1.08) rotate(8deg); opacity: 1; }
+}
+
+@keyframes brand-thinking-glow {
+  0%, 100% { transform: scale(0.6); opacity: 0.12; }
+  50% { transform: scale(1.2); opacity: 0.4; }
+}
+
+@keyframes brand-thinking-fade {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 .file-chips {
@@ -1773,7 +2065,7 @@ defineExpose({
   align-items: center;
   gap: 6px;
   background: var(--extra-light);
-  border: 1px solid #ddd;
+  border: 1px solid var(--extra-light, #ddd);
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 13px;
@@ -1790,7 +2082,7 @@ defineExpose({
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #999;
+  color: var(--secondary, #999);
   padding: 0;
   width: 24px;
   height: 24px;
@@ -1800,7 +2092,7 @@ defineExpose({
 }
 
 .file-chip-download:hover {
-  color: #666;
+  color: var(--black, #666);
 }
 
 .input-area {
@@ -1809,8 +2101,8 @@ defineExpose({
   flex-shrink: 0;
   gap: 8px;
   padding: 12px 16px 10px;
-  background: white;
-  border-top: 1px solid #e0e0e0;
+  background: var(--white, #fff);
+  border-top: 1px solid var(--extra-light, #e0e0e0);
 }
 
 .composer {
@@ -1822,13 +2114,15 @@ defineExpose({
 .composer textarea {
   flex: 1;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--extra-light, #ddd);
   border-radius: 8px;
   resize: none;
   font-family: inherit;
   font-size: 14px;
   max-height: 160px;
   line-height: 1.4;
+  background: var(--white, #fff);
+  color: var(--black, inherit);
 }
 
 .composer-icon {
@@ -1836,15 +2130,15 @@ defineExpose({
   height: 36px;
   border: none;
   background: transparent;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
   cursor: pointer;
   border-radius: 8px;
   flex-shrink: 0;
 }
 
 .composer-icon:hover {
-  background: #f0f0f0;
-  color: #445;
+  background: var(--extra-light, #f0f0f0);
+  color: var(--black, #445);
 }
 
 .composer-send {
@@ -1874,7 +2168,7 @@ defineExpose({
 
 .composer-hint {
   font-size: 11px;
-  color: #99a3ad;
+  color: var(--secondary, #99a3ad);
   min-height: 16px;
 }
 
@@ -1891,7 +2185,7 @@ defineExpose({
 
 .empty-greeting {
   font-size: 1.05rem;
-  color: #445;
+  color: var(--black, #445);
   text-align: center;
 }
 
@@ -1903,18 +2197,18 @@ defineExpose({
 }
 
 .suggestion-chip {
-  border: 1px solid #d5dde6;
-  background: #fff;
+  border: 1px solid var(--extra-light, #d5dde6);
+  background: var(--white, #fff);
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 13px;
-  color: #334;
+  color: var(--black, #334);
   cursor: pointer;
 }
 
 .suggestion-chip:hover {
-  background: #f3f7fb;
-  border-color: #c5d0dc;
+  background: var(--extra-light, #f3f7fb);
+  border-color: var(--secondary, #c5d0dc);
 }
 
 .reasoning {
@@ -1924,7 +2218,7 @@ defineExpose({
 .reasoning-toggle {
   border: none;
   background: transparent;
-  color: #8899aa;
+  color: var(--secondary, #8899aa);
   font-size: 12px;
   padding: 0 2px 4px;
   cursor: pointer;
@@ -1932,9 +2226,9 @@ defineExpose({
 
 .reasoning-body {
   font-size: 12px;
-  color: #667788;
+  color: var(--secondary, #667788);
   white-space: pre-wrap;
-  background: #f3f5f8;
+  background: var(--extra-light, #f3f5f8);
   border-radius: 8px;
   padding: 8px 10px;
   margin-bottom: 6px;
@@ -1957,7 +2251,7 @@ defineExpose({
 .msg-action {
   border: none;
   background: transparent;
-  color: #99a3ad;
+  color: var(--secondary, #99a3ad);
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -1965,13 +2259,13 @@ defineExpose({
 }
 
 .msg-action:hover {
-  background: rgba(0,0,0,0.06);
-  color: #445;
+  background: var(--extra-light, rgba(0,0,0,0.06));
+  color: var(--black, #445);
 }
 
 .confirm-card {
-  border: 1px solid #d6eaf8;
-  background: #f3f7fb;
+  border: 1px solid var(--extra-light, #d6eaf8);
+  background: var(--extra-light, #f3f7fb);
   border-radius: 8px;
   padding: 10px 12px;
   margin: 8px 0 4px;
@@ -1992,10 +2286,6 @@ defineExpose({
 .confirm-actions {
   display: flex;
   gap: 8px;
-}
-
-.typing-indicator {
-  min-width: 100px;
 }
 
 @keyframes fadeIn {

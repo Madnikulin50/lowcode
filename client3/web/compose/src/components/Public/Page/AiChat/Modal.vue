@@ -76,6 +76,15 @@
           <option v-for="m in modelOptions" :key="m" :value="m">{{ modelLabel(m) }}</option>
         </select>
         <span
+          class="chat-tools-badge"
+          :class="toolsBadgeClass"
+          :title="toolsTitle"
+          role="img"
+          :aria-label="toolsTitle"
+        >
+          <font-awesome-icon :icon="['fas', 'tools']" />
+        </span>
+        <span
           v-if="warmingUp"
           class="d-flex align-items-center gap-1 text-secondary small text-nowrap"
           :title="$t('aiChat.warmup.inProgress')"
@@ -97,6 +106,10 @@
         :model="selectedModel"
         :active="showModal"
         :framed="false"
+        :show-tools-badge="false"
+        :show-reset-button="false"
+        :model-tools="modelTools"
+        @tools-state="onToolsState"
         @export-menu="exportOpen = false"
       />
     </div>
@@ -106,10 +119,14 @@
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useNsI18n } from 'corteza-lib/vue/dist'
 import Chat from './Chat.vue'
+import { parseModelsPayload, modelToolsEnabled, modelLabel, pickChatModel, readStoredModel, writeStoredModel } from './chatTools.js'
 import { usePageStore } from '../../../../store/page'
 import { useModuleStore } from '../../../../store/module'
 import { useNamespaceStore } from '../../../../store/namespace'
+
+const $t = useNsI18n()
 
 const props = defineProps({
   page: { type: String, required: false, default: '' },
@@ -122,7 +139,10 @@ const startPrompt = ref('')
 const attachedFiles = ref([])
 const fullscreen = ref(false)
 const modelOptions = ref([])
+const modelTools = ref({})
 const selectedModel = ref('')
+const liveToolsEnabled = ref(null)
+const toolsActive = ref(false)
 const warmingUp = ref(false)
 const exportOpen = ref(false)
 const chatRef = ref(null)
@@ -147,11 +167,29 @@ const contextLabel = computed(() => {
   return parts.join(' · ')
 })
 
-function modelLabel (id) {
-  if (!id) return ''
-  const [name, tag] = String(id).split(':')
-  const pretty = name.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-  return tag ? `${pretty} (${tag})` : pretty
+const catalogTools = computed(() => modelToolsEnabled(selectedModel.value, modelTools.value))
+const toolsEnabled = computed(() => {
+  if (liveToolsEnabled.value !== null) return liveToolsEnabled.value
+  if (catalogTools.value !== null) return catalogTools.value
+  return false
+})
+const toolsTitle = computed(() => {
+  if (toolsActive.value) return $t('aiChat.tools.invoked')
+  return toolsEnabled.value ? $t('aiChat.tools.enabled') : $t('aiChat.tools.disabled')
+})
+const toolsBadgeClass = computed(() => ({
+  on: toolsEnabled.value && !toolsActive.value,
+  off: !toolsEnabled.value && !toolsActive.value,
+  active: toolsActive.value,
+}))
+
+function onToolsState ({ enabled, active } = {}) {
+  if (enabled === true || enabled === false) {
+    liveToolsEnabled.value = enabled
+  } else {
+    liveToolsEnabled.value = null
+  }
+  toolsActive.value = !!active
 }
 
 function warmUp () {
@@ -167,45 +205,47 @@ function warmUp () {
 
 function loadModels () {
   $ComposeAPI.pageAiModels().then((payload = {}) => {
-    const models = payload.models || []
-    const serverDefault = payload.default || ''
+    const parsed = parseModelsPayload(payload)
+    const models = parsed.names
+    const serverDefault = parsed.defaultModel || ''
     modelOptions.value = models
+    modelTools.value = parsed.tools
     if (!models.length) {
       selectedModel.value = ''
       return
     }
-    let saved = ''
-    try { saved = localStorage.getItem('aiChat.model') || '' } catch (e) {}
-    if (saved && models.includes(saved)) {
-      selectedModel.value = saved
-    } else if (serverDefault && models.includes(serverDefault)) {
-      selectedModel.value = serverDefault
-    } else {
-      selectedModel.value = models[0]
-    }
-    try {
-      localStorage.setItem('aiChat.model', selectedModel.value)
-    } catch (e) {}
+    const saved = readStoredModel('aiChat.model')
+    selectedModel.value = pickChatModel(models, saved, serverDefault)
+    writeStoredModel(selectedModel.value, 'aiChat.model')
     warmUp()
   }).catch(() => {})
 }
 
 watch(selectedModel, (model, prev) => {
   if (model !== prev && model) {
+    liveToolsEnabled.value = null
+    toolsActive.value = false
     warmUp()
-    try {
-      localStorage.setItem('aiChat.model', model)
-    } catch (e) {}
+    writeStoredModel(model, 'aiChat.model')
   }
 })
+
+// The click that opens the dock (an "ask AI" button elsewhere on the page)
+// bubbles up to document *after* this handler runs, on the very same click.
+// Without this guard, onDocumentClick's outside-click check would see that
+// click, decide it landed outside .chat-dock, and close the dock right back
+// on the same click that opened it.
+let suppressNextOutsideClick = false
 
 function startChatModal (data) {
   const { prompt = '', files = [] } = data.detail || {}
   startPrompt.value = prompt
   attachedFiles.value = files || []
   showModal.value = true
+  suppressNextOutsideClick = true
   warmUp()
   requestAnimationFrame(() => {
+    suppressNextOutsideClick = false
     chatRef.value?.applyIncomingPrompt?.(prompt, files)
     chatRef.value?.focusInput?.()
   })
@@ -239,13 +279,15 @@ function onDocumentClick (e) {
   if (!e.target.closest('.export-dropdown')) {
     exportOpen.value = false
   }
+
+  if (showModal.value && !suppressNextOutsideClick && !e.target.closest('.chat-dock')) {
+    onHidden()
+  }
 }
 
 onMounted(() => {
-  try {
-    const saved = localStorage.getItem('aiChat.model')
-    if (saved) selectedModel.value = saved
-  } catch (e) {}
+  const saved = readStoredModel('aiChat.model')
+  if (saved) selectedModel.value = saved
   loadModels()
   window.addEventListener('show-chat-modal', startChatModal)
   document.addEventListener('keydown', onKeydown)
@@ -269,8 +311,8 @@ onBeforeUnmount(() => {
   z-index: 1045;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border-left: 1px solid #e0e0e0;
+  background: var(--white, #fff);
+  border-left: 1px solid var(--extra-light, #e0e0e0);
 }
 
 .chat-dock.fullscreen {
@@ -283,14 +325,26 @@ onBeforeUnmount(() => {
 .chat-dock-header {
   flex-shrink: 0;
   padding: 10px 12px 8px;
-  border-bottom: 1px solid #e0e0e0;
-  background: #fff;
+  border-bottom: 1px solid var(--extra-light, #e0e0e0);
+  background: var(--white, #fff);
 }
 
 .chat-dock-title-row {
   display: flex;
   align-items: center;
   gap: 8px;
+
+  /* .btn-outline-secondary's icon color (#6c757d) is baked into Bootstrap's
+     CSS directly, not a var — it never adapts to the theme, so the new-chat/
+     export/expand/close icons all go low-contrast against a dark dock. */
+  .btn-outline-secondary {
+    color: var(--secondary, #6c757d);
+
+    &:hover:not(:disabled) {
+      color: var(--black, #445);
+      background: var(--extra-light, #f0f0f0);
+    }
+  }
 }
 
 .chat-dock-title {
@@ -314,8 +368,8 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
-  color: #667788;
-  background: #f3f5f8;
+  color: var(--secondary, #667788);
+  background: var(--extra-light, #f3f5f8);
   border-radius: 999px;
   padding: 2px 10px;
 }
@@ -324,6 +378,50 @@ onBeforeUnmount(() => {
   width: auto;
   max-width: 160px;
   flex-shrink: 0;
+  /* Same fix as Chat.vue's own .chat-model-select — this is a separate
+     scoped rule in a separate SFC, so that fix doesn't reach here. */
+  background-color: var(--white, #fff);
+  color: var(--black, inherit);
+  border-color: var(--extra-light, #ced4da);
+}
+
+.chat-tools-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--secondary, #8a93a0);
+  background: var(--extra-light, #f3f5f8);
+  flex-shrink: 0;
+}
+
+.chat-tools-badge.on {
+  color: #1f7a4d;
+  background: #e8f6ee;
+}
+
+.chat-tools-badge.off::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.85;
+}
+
+.chat-tools-badge.active {
+  color: #1f4b7a;
+  background: #e8eef6;
+  animation: chat-tools-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes chat-tools-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
 }
 
 .chat-dock-body {
@@ -339,8 +437,8 @@ onBeforeUnmount(() => {
   top: 100%;
   margin-top: 4px;
   min-width: 160px;
-  background: #fff;
-  border: 1px solid #ddd;
+  background: var(--white, #fff);
+  border: 1px solid var(--extra-light, #ddd);
   border-radius: 6px;
   z-index: 20;
   overflow: hidden;
@@ -355,10 +453,10 @@ onBeforeUnmount(() => {
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  color: #333;
+  color: var(--black, #333);
 }
 
 .chat-dock .export-menu-item:hover {
-  background: #f0f0f0;
+  background: var(--extra-light, #f0f0f0);
 }
 </style>

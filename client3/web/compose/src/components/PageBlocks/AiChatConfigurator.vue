@@ -1,23 +1,38 @@
 <template>
   <div class="p-3 overflow-auto">
     <div class="mb-3">
-      <label class="form-label fw-semibold">{{ $t('ai.chat.startPrompt.label') }}</label>
+      <label class="form-label fw-semibold">{{ t('ai.chat.startPrompt.label') }}</label>
       <textarea
-        v-model="options.startPrompt"
+        v-model="startPrompt"
         class="form-control"
         rows="4"
-        :placeholder="$t('ai.chat.startPrompt.placeholder')"
+        :placeholder="t('ai.chat.startPrompt.placeholder')"
       />
-      <div class="form-text">{{ $t('ai.chat.startPrompt.description') }}</div>
+      <div class="form-text">{{ t('ai.chat.startPrompt.description') }}</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">{{ t('ai.chat.model.label') }}</label>
+      <c-input-select
+        v-model="selectedModel"
+        :options="modelOptions"
+        :get-option-label="modelLabel"
+        :disabled="!modelOptions.length"
+        :placeholder="t('ai.chat.model.placeholder')"
+        clearable
+      />
+      <div class="form-text">{{ t('ai.chat.model.description') }}</div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { usePageBlockBase } from './usePageBlockBase'
-import { useI18n } from 'vue-i18n'
+defineOptions({ i18nOptions: { namespaces: 'block' } })
+import { ref, computed, onMounted, inject } from 'vue'
+import { useNsI18n } from 'corteza-lib/vue/dist'
+import { parseModelsPayload, modelLabel } from '../Public/Page/AiChat/chatTools.js'
 
-const { t: $t } = useI18n({ useScope: 'global' })
+const t = useNsI18n()
+const $ComposeAPI = inject('$ComposeAPI', window.__composeAPI)
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -36,7 +51,46 @@ const props = defineProps({
   errors: { type: Object, required: false, default: () => ({}) },
 })
 
-const emit = defineEmits(['errors'])
+defineEmits(['errors'])
 
-const { options } = usePageBlockBase(props, emit)
+const modelOptions = ref([])
+
+function blockOptions () {
+  if (!props.block.options || typeof props.block.options !== 'object') {
+    props.block.options = {}
+  }
+  return props.block.options
+}
+
+const startPrompt = computed({
+  get: () => {
+    const o = props.block?.options || {}
+    return o.startPrompt || o.prompt || ''
+  },
+  set: (val) => {
+    const o = blockOptions()
+    const text = val == null ? '' : String(val)
+    o.startPrompt = text
+    o.prompt = text
+  },
+})
+
+const selectedModel = computed({
+  get: () => props.block?.options?.model || '',
+  set: (val) => {
+    blockOptions().model = val == null ? '' : String(val)
+  },
+})
+
+onMounted(() => {
+  const o = blockOptions()
+  if (!o.startPrompt && o.prompt) o.startPrompt = String(o.prompt)
+  if (!o.model) o.model = ''
+  if (!$ComposeAPI?.pageAiModels) return
+  $ComposeAPI.pageAiModels().then((payload = {}) => {
+    const names = parseModelsPayload(payload).names
+    const current = o.model
+    modelOptions.value = current && !names.includes(current) ? [current, ...names] : names
+  }).catch(() => {})
+})
 </script>

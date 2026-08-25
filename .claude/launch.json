@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "richtext-smoke-test",
+      "runtimeExecutable": "client3/lib/vue/node_modules/.bin/vite",
+      "runtimeArgs": ["--config", "client3/lib/vue/.smoke-test/vite.config.js"],
+      "port": 5199
+    }
+  ]
+}
