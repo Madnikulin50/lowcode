@@ -1,0 +1,32 @@
+$dark-palette: (
+  black: #EDEDED,
+  white: #121212,
+  primary: #6E8FF0,
+  secondary: #9A9A9A,
+  success: #43AA8B,
+  warning: #E27646,
+  danger: #F2555A,
+  light: #1A1A1A,
+  extra-light: #242424,
+  body-bg: #0A0A0A,
+  sidebar-bg: #121212,
+  topbar-bg: #121212,
+);
+
+// Fallback dark palette ("Almost black"), matching the darkModeVariables
+// defaults in client3/web/admin/.../CUIBrandingEditor.vue. Wrapped in
+// :where() so it always loses to server-generated custom.css (Admin >
+// Settings > UI > Branding > dark tab) — that admin screen is the single
+// source of truth once a tenant has saved a theme there.
+:where([data-color-mode='dark']) {
+  @each $name, $value in $dark-palette {
+    --#{$name}: #{$value};
+  }
+
+  color-scheme: dark;
+}
+
+:where([data-color-mode='dark'] body) {
+  background-color: var(--body-bg);
+  color: var(--black);
+}
