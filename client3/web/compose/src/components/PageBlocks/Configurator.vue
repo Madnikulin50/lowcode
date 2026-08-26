@@ -336,13 +336,14 @@
           <div class="col-12">
             <div class="mb-3">
               <div class="form-check form-switch mb-2">
-                <label class="form-check-label fw-semibold" for="hideBrainButton">{{ $t('ai.hideBrainButton.label', 'Hide AI button on block') }}</label>
                 <input
                   id="hideBrainButton"
                   v-model="block.options.hideBrainButton"
                   class="form-check-input"
                   type="checkbox"
+                  role="switch"
                 />
+                <label class="form-check-label fw-semibold" for="hideBrainButton">{{ hideBrainButtonLabel }}</label>
               </div>
 
               <label class="form-label fw-semibold">{{ $t('ai.prompt.label') }}</label>
@@ -399,8 +400,9 @@
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, onBeforeUnmount, onMounted, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { compose, NoID } from 'corteza-lib/js/dist'
-import { handle, components, composables } from 'corteza-lib/vue/dist'
+import { handle, components, composables, useNsI18n } from 'corteza-lib/vue/dist'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
 import PageBlock from './index'
 import { useRoute } from 'vue-router'
@@ -408,6 +410,16 @@ import axios from 'axios'
 
 const { CInputExpression, CRichTextInput } = components
 import { htmlToMarkdown, markdownToHtml } from '../../lib/markdown'
+
+const t = useNsI18n()
+const { locale } = useI18n({ useScope: 'global' })
+
+const hideBrainButtonLabel = computed(() => {
+  const v = t('ai.hideBrainButton.label')
+  if (v && !String(v).includes('hideBrainButton')) return v
+  const loc = String(locale.value || '').split('-')[0]
+  return loc === 'en' ? 'Hide AI button on block' : 'Скрыть кнопку ИИ на блоке'
+})
 
 const props = defineProps({
   block: { type: compose.PageBlock, required: true },

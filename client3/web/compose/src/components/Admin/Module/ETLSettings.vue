@@ -168,10 +168,11 @@
 </template>
 
 <script setup>
+defineOptions({ i18nOptions: { namespaces: 'module' } })
 import { ref, onMounted, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { useNsI18n } from 'corteza-lib/vue/dist'
 
-const { t: $t } = useI18n({ useScope: 'global' })
+const $t = useNsI18n()
 const $ComposeAPI = window.__composeAPI
 
 const props = defineProps({
