@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="field.isMulti" class="mb-3">
-      <label class="form-label text-primary">{{ t('options.multiDelimiter.label') }}</label>
+      <label class="form-label text-primary pr-2">{{ t('options.multiDelimiter.label') }}</label>
       <div class="btn-group" data-bs-toggle="buttons">
         <label
           v-for="opt in selectOptions"

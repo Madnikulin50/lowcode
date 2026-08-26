@@ -148,7 +148,7 @@
                       <textarea v-model="currentBlock.description" class="form-control" :placeholder="t('builder.block.description')" />
                     </div>
                     <div class="mb-3">
-                      <label class="text-primary form-label">{{ t('builder.layout') }}</label>
+                      <label class="text-primary form-label pr-2">{{ t('builder.layout') }}</label>
                       <div class="btn-group" role="group">
                         <input type="radio" class="btn-check" id="layout-h" value="horizontal" v-model="currentBlock.layout" />
                         <label class="btn btn-outline-primary" for="layout-h">{{ t('builder.layout-options.horizontal') }}</label>

@@ -11,7 +11,7 @@
         </div>
         <div style="min-width: 200px;">
           <div class="mb-3">
-            <label class="form-label text-primary">{{ $t('navigation.drop') }}</label>
+            <label class="form-label text-primary pr-2">{{ $t('navigation.drop') }}</label>
             <div class="btn-group" role="group" data-bs-toggle="buttons">
               <label
                 v-for="al in aligns"

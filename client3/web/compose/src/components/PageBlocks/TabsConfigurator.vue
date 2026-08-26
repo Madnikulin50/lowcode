@@ -4,7 +4,7 @@
     <div class="row text-primary g-0">
       <div class="col-12 col-lg-4">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('tabs.style.appearance.label') }}</label>
+          <label class="form-label text-primary pr-2">{{ $t('tabs.style.appearance.label') }}</label>
           <div class="btn-group btn-group-sm w-100" role="group">
             <button v-for="opt in style.appearance" :key="opt.value" :class="['btn', block.options.style.appearance === opt.value ? 'btn-secondary' : 'btn-outline-secondary']" @click="block.options.style.appearance = opt.value">{{ opt.text }}</button>
           </div>
@@ -12,7 +12,7 @@
       </div>
       <div class="col-12 col-lg-4">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('tabs.style.orientation.label') }}</label>
+          <label class="form-label text-primary pr-2">{{ $t('tabs.style.orientation.label') }}</label>
           <div class="btn-group btn-group-sm w-100" role="group">
             <button v-for="opt in style.orientation" :key="opt.value" :class="['btn', block.options.style.orientation === opt.value ? 'btn-secondary' : 'btn-outline-secondary']" @click="block.options.style.orientation = opt.value">{{ opt.text }}</button>
           </div>
@@ -20,7 +20,7 @@
       </div>
       <div class="col-12 col-lg-4">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('tabs.style.position.label') }}</label>
+          <label class="form-label text-primary pr-2">{{ $t('tabs.style.position.label') }}</label>
           <div class="btn-group btn-group-sm w-100" role="group">
             <button v-for="opt in style.position" :key="opt.value" :class="['btn', block.options.style.position === opt.value ? 'btn-secondary' : 'btn-outline-secondary']" @click="block.options.style.position = opt.value">{{ opt.text }}</button>
           </div>
@@ -28,7 +28,7 @@
       </div>
       <div class="col-12 col-lg-4">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ $t('tabs.style.alignment.label') }}</label>
+          <label class="form-label text-primary pr-2">{{ $t('tabs.style.alignment.label') }}</label>
           <div class="btn-group btn-group-sm w-100" role="group">
             <button v-for="opt in style.alignment" :key="opt.value" :class="['btn', block.options.style.alignment === opt.value ? 'btn-secondary' : 'btn-outline-secondary']" @click="block.options.style.alignment = opt.value">{{ opt.text }}</button>
           </div>

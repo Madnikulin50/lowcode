@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mb-3">
-      <label class="form-label text-primary">{{ t('kind.string.displayType.label') }}</label>
+      <label class="form-label text-primary pr-2">{{ t('kind.string.displayType.label') }}</label>
       <div class="btn-group" data-bs-toggle="buttons">
         <label
           v-for="opt in displayOptions"
@@ -25,7 +25,7 @@
 
     <template v-if="displayType === 'json'">
       <div class="mb-3">
-        <label class="form-label text-primary">{{ t('kind.string.json.layout.label') }}</label>
+        <label class="form-label text-primary pr-2">{{ t('kind.string.json.layout.label') }}</label>
         <div class="btn-group" data-bs-toggle="buttons">
           <label
             v-for="opt in layoutOptions"

@@ -6,7 +6,7 @@
         <div class="row justify-content-between text-primary">
           <div class="col-12 col-lg-4">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('navigation.appearance') }}</label>
+              <label class="form-label text-primary pr-2">{{ $t('navigation.appearance') }}</label>
               <div class="btn-group" role="group" data-bs-toggle="buttons">
                 <label
                   v-for="opt in appearanceOptions"
@@ -22,7 +22,7 @@
           </div>
           <div class="col-12 col-lg-4">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('navigation.justify') }}</label>
+              <label class="form-label text-primary pr-2">{{ $t('navigation.justify') }}</label>
               <div class="btn-group" role="group" data-bs-toggle="buttons">
                 <label
                   v-for="opt in justifyOptions"
@@ -38,7 +38,7 @@
           </div>
           <div class="col-12 col-lg-4">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('navigation.alignment') }}</label>
+              <label class="form-label text-primary pr-2">{{ $t('navigation.alignment') }}</label>
               <div class="btn-group" role="group" data-bs-toggle="buttons">
                 <label
                   v-for="opt in alignmentOptions"

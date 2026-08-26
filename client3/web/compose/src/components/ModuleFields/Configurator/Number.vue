@@ -3,7 +3,7 @@
     <div class="row">
       <div class="col-12 col-lg-6">
         <div class="mb-3">
-          <label class="form-label text-primary">{{ t('kind.number.displayType.label') }}</label>
+          <label class="form-label text-primary pr-2">{{ t('kind.number.displayType.label') }}</label>
           <div class="btn-group" data-bs-toggle="buttons">
             <label
               v-for="opt in displayOptions"

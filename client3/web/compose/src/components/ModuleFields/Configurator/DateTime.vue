@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mb-3 w-25">
-      <label class="form-label text-primary">{{ t('kind.dateTime.type.label') }}</label>
+      <label class="form-label text-primary pr-2">{{ t('kind.dateTime.type.label') }}</label>
       <div class="btn-group" data-bs-toggle="buttons">
         <label
           v-for="opt in typeOptions"
@@ -24,7 +24,7 @@
     </div>
 
     <div v-if="!f.options.onlyTime" class="mb-3 mt-2">
-      <label class="form-label text-primary">{{ t('kind.dateTime.constraints.label') }}</label>
+      <label class="form-label text-primary pr-2">{{ t('kind.dateTime.constraints.label') }}</label>
       <div class="btn-group" data-bs-toggle="buttons">
         <label
           v-for="opt in constraintOptions"

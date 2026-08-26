@@ -95,9 +95,18 @@ edit:
     fx:
       description: n - текущее значение, m - предыдущее значение
       label: Функция постобработки
+    stacked: С накоплением
+    showSymbol: Показывать символы
+    valueLabelPosition:
+      label: Позиция метки
+      top: Снаружи
+      inside: Внутри
     stack:
       label: Стэк
       description: Метрики с одним значением будут слиты
+    stackBy:
+      label: Группировать по
+      placeholder: Не выбрано
     lineStyle:
       label: Стиль линии
       default: По-умолчанию

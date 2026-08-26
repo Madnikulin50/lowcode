@@ -83,7 +83,7 @@
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label text-primary pb-0">{{ $t('chart.filter.modal.options.label') }}</label>
+                  <label class="form-label text-primary pb-0 pr-2">{{ $t('chart.filter.modal.options.label') }}</label>
                   <div class="btn-group" data-bs-toggle="buttons">
                     <label
                       v-for="(option, ci) in filterOptions"

@@ -94,9 +94,18 @@ edit:
     fx:
       description: n - current dataset value, m - previous dataset value
       label: Post processing function
+    stacked: Stacked
+    showSymbol: Show symbols
+    valueLabelPosition:
+      label: Label position
+      top: Outside
+      inside: Inside
     stack:
       label: Stack
       description: Metrics with same value will be stacked
+    stackBy:
+      label: Stack by
+      placeholder: None
     lineStyle:
       label: Line style
       default: Default

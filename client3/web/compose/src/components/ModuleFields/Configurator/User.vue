@@ -21,7 +21,7 @@
 
     <template v-if="f.isMulti">
       <div class="mb-3">
-        <label class="form-label text-primary">{{ t('kind.select.optionType.label') }}</label>
+        <label class="form-label text-primary pr-2">{{ t('kind.select.optionType.label') }}</label>
         <div class="btn-group" data-bs-toggle="buttons">
           <label
             v-for="opt in selectOptions"

@@ -11,7 +11,7 @@
         <div class="row g-3 p-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
-              <label class="form-label text-primary">{{ $t('settings.profiler.label') }}</label>
+              <label class="form-label text-primary pr-2">{{ $t('settings.profiler.label') }}</label>
               <div class="btn-group" role="group">
                 <template v-for="opt in profilerOptions" :key="opt.value">
                   <input
@@ -33,7 +33,7 @@
               </div>
             </div>
           </div>
-  
+
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('settings.proxy.label') }}</label>

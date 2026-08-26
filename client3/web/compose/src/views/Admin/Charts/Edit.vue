@@ -217,7 +217,7 @@
                       class="col-12 col-lg-6"
                     >
                       <div class="mb-3">
-                        <label class="form-label text-primary">
+                        <label class="form-label text-primary pr-2">
                           {{ $t('edit.toolbox.timeline.label') }}
                         </label>
                         <div

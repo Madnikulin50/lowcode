@@ -471,7 +471,7 @@
             v-if="metric.type === 'line'"
             class="mb-3"
           >
-            <label class="form-label text-primary">
+            <label class="form-label text-primary pr-2">
               {{ $t('edit.metric.lineStyle.label') }}
             </label>
             <div class="btn-group" data-bs-toggle="buttons">
@@ -1124,6 +1124,8 @@ import { useI18n } from 'vue-i18n'
 import { compose } from 'corteza-lib/js/dist'
 import ReportEdit from './ReportEdit.vue'
 import ChartTranslator from 'corteza-webapp-compose/src/components/Chart/ChartTranslator.vue'
+
+defineOptions({ i18nOptions: { namespaces: 'chart' } })
 
 const { t } = useI18n()
 
