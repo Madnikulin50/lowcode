@@ -137,6 +137,7 @@ export interface Report {
   legend?: Legend;
   offset?: ChartOffset;
   anomaly?: AnomalyConfig;
+  compare?: CompareConfig;
 }
 
 export interface AnomalyConfig {
@@ -146,6 +147,26 @@ export interface AnomalyConfig {
   min?: number;
   max?: number;
   color: string;
+}
+
+/**
+ * Period-over-period comparison for bar/line reports (Chart's analogue of
+ * PageBlockMetric's periodCompare* fields — see page-block/metric.ts and
+ * ../period.ts). When enabled, this replaces the report's own `dimensions`
+ * configuration: the x-axis becomes day-of-period (or day-of-week for
+ * `week` granularity), and two series per metric are rendered — one for
+ * the current period, one for the previous — aligned on that shared axis
+ * so e.g. day 15 of this month lines up with day 15 of last month.
+ */
+export interface CompareConfig {
+  enabled: boolean;
+  dateField: string;
+  granularity: 'week' | 'month' | 'quarter' | 'year';
+  mode: 'previous-period' | 'year-over-year';
+  /** Legend label for the current-period series; falls back to a generic default when empty. */
+  currentLabel?: string;
+  /** Legend label for the previous-period series; falls back to a generic default when empty. */
+  previousLabel?: string;
 }
 
 export interface ChartToolbox {

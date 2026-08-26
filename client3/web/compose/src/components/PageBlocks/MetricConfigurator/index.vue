@@ -805,7 +805,7 @@ function processRecordAutoCompleteParams ({ module: mod, operators = false } = {
   ]
 }
 
-watch(() => edit.value?.dimensionField, (df) => {
+watch(() => edit.value?.dimensionField, (df, prev) => {
   if (!edit.value) return
   if (!isTemporalField(df)) {
     edit.value.bucketSize = undefined
@@ -814,7 +814,9 @@ watch(() => edit.value?.dimensionField, (df) => {
     edit.value.dateFormat = edit.value.dateFormat || 'YYYY-MM-DD'
   }
   // Breakdown/pairwise and period-compare are mutually exclusive per metric.
-  if (df) edit.value.periodCompareEnabled = false
+  // Skip the initial bind (prev === undefined) so a saved period-compare
+  // metric is not wiped when the configurator opens.
+  if (df && prev !== undefined) edit.value.periodCompareEnabled = false
 })
 
 watch(() => edit.value?.periodCompareEnabled, (enabled) => {

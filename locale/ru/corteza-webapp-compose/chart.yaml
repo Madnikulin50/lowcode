@@ -230,6 +230,25 @@ edit:
       methodIqr: Межквартильный размах
       methodFixed: Фиксированный диапазон
       methodPctChange: Процентное изменение
+    compare:
+      label: Сравнение периодов
+      enable: Сравнивать с предыдущим периодом
+      dateField: Поле даты
+      granularity: Период
+      granularityOptions:
+        week: Неделя
+        month: Месяц
+        quarter: Квартал
+        year: Год
+      mode: Сравнивать с
+      modeOptions:
+        previousPeriod: Предыдущий период
+        yearOverYear: Тот же период год назад
+      currentLabel: Подпись текущего периода
+      currentLabelPlaceholder: Текущий период
+      previousLabel: Подпись предыдущего периода
+      previousLabelPlaceholder: Предыдущий период
+      footnote: Заменяет измерение отчёта осью «день периода», чтобы текущий и предыдущий период совпадали для сравнения. Доступно только для столбиковых и линейных графиков.
   toolbox:
     label: Инструменты
     saveAsImage:

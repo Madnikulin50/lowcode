@@ -993,6 +993,127 @@
           </template>
         </div>
       </template>
+
+      <template v-if="supportsCompare">
+        <hr>
+
+        <div class="px-3">
+          <h5 class="mb-3">
+            {{ $t('edit.additionalConfig.compare.label') }}
+          </h5>
+
+          <div class="row">
+            <div class="col-12 col-lg-6">
+              <div class="mb-3">
+                <label class="form-label text-primary">
+                  {{ $t('edit.additionalConfig.compare.enable') }}
+                </label>
+                <c-input-checkbox
+                  v-model="compareEnabled"
+                  switch
+                  :labels="checkboxLabel"
+                />
+              </div>
+            </div>
+          </div>
+
+          <template v-if="report.compare.enabled">
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.dateField') }}
+                  </label>
+                  <select
+                    v-model="report.compare.dateField"
+                    class="form-select form-control form-select-sm"
+                  >
+                    <option
+                      v-for="f in dateTimeFields"
+                      :key="f.value"
+                      :value="f.value"
+                    >
+                      {{ f.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.granularity') }}
+                  </label>
+                  <select
+                    v-model="report.compare.granularity"
+                    class="form-select form-control form-select-sm"
+                  >
+                    <option
+                      v-for="opt in compareGranularities"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.mode') }}
+                  </label>
+                  <select
+                    v-model="report.compare.mode"
+                    class="form-select form-control form-select-sm"
+                  >
+                    <option
+                      v-for="opt in compareModes"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.currentLabel') }}
+                  </label>
+                  <input
+                    v-model="report.compare.currentLabel"
+                    class="form-control form-control-sm"
+                    :placeholder="$t('edit.additionalConfig.compare.currentLabelPlaceholder')"
+                  />
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.previousLabel') }}
+                  </label>
+                  <input
+                    v-model="report.compare.previousLabel"
+                    class="form-control form-control-sm"
+                    :placeholder="$t('edit.additionalConfig.compare.previousLabelPlaceholder')"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <small class="text-muted d-block mb-2">
+              {{ $t('edit.additionalConfig.compare.footnote') }}
+            </small>
+          </template>
+        </div>
+      </template>
     </template>
   </report-edit>
 </template>
@@ -1018,7 +1139,7 @@ const emit = defineEmits(['update:report'])
 
 const editReport = computed({
   get: () => props.report,
-  set: (v) => emit('update.report', v),
+  set: (v) => emit('update:report', v),
 })
 
 const isNew = computed(() => props.chart?.chartID === compose.NoID)
@@ -1093,6 +1214,39 @@ const anomalyMethods = ref([
   { value: 'pct_change', text: t('edit.additionalConfig.anomaly.methodPctChange') },
 ])
 
+const compareEnabled = computed({
+  get: () => !!editReport.value?.compare?.enabled,
+  set (v) {
+    if (!editReport.value) return
+    editReport.value = {
+      ...editReport.value,
+      compare: {
+        dateField: '',
+        granularity: 'month',
+        mode: 'previous-period',
+        currentLabel: '',
+        previousLabel: '',
+        ...(editReport.value.compare || {}),
+        enabled: !!v,
+      },
+    }
+  },
+})
+
+const supportsCompare = computed(() => editReport.value?.metrics?.some(({ type }) => ['bar', 'line'].includes(type)))
+
+const compareGranularities = ref([
+  { value: 'week', text: t('edit.additionalConfig.compare.granularityOptions.week') },
+  { value: 'month', text: t('edit.additionalConfig.compare.granularityOptions.month') },
+  { value: 'quarter', text: t('edit.additionalConfig.compare.granularityOptions.quarter') },
+  { value: 'year', text: t('edit.additionalConfig.compare.granularityOptions.year') },
+])
+
+const compareModes = ref([
+  { value: 'previous-period', text: t('edit.additionalConfig.compare.modeOptions.previousPeriod') },
+  { value: 'year-over-year', text: t('edit.additionalConfig.compare.modeOptions.yearOverYear') },
+])
+
 const module = computed(() => {
   const mid = editReport.value?.moduleID
   if (!mid || !Array.isArray(props.modules)) return undefined
@@ -1127,6 +1281,17 @@ watch(() => props.report, (r) => {
         min: undefined,
         max: undefined,
         color: '',
+      }
+    }
+
+    if (!r.compare) {
+      r.compare = {
+        enabled: false,
+        dateField: '',
+        granularity: 'month',
+        mode: 'previous-period',
+        currentLabel: '',
+        previousLabel: '',
       }
     }
 

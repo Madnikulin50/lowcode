@@ -444,6 +444,14 @@ export class BaseChart {
         max: undefined,
         color: '',
       },
+      compare: {
+        enabled: false,
+        dateField: '',
+        granularity: 'month' as 'week' | 'month' | 'quarter' | 'year',
+        mode: 'previous-period' as 'previous-period' | 'year-over-year',
+        currentLabel: '',
+        previousLabel: '',
+      },
       yAxis: {
         axisType: 'linear',
         axisPosition: 'left',

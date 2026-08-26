@@ -4,7 +4,7 @@ const { merge } = lodash
 import { Apply } from '../../../cast'
 import { Options as PageBlockRecordListOptions } from './record-list'
 import { dimensionFunctions } from '../chart/util'
-import { buildPeriodFilters, buildEqualityFilter, PeriodGranularity, PeriodCompareMode } from './metric-period'
+import { buildPeriodFilters, buildEqualityFilter, PeriodGranularity, PeriodCompareMode } from '../period'
 const kind = 'Metric'
 
 type Reporter = (p: ReporterParams) => Promise<any>

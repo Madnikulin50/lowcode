@@ -323,6 +323,13 @@ func RegisterIteratorProviders() {
 	)
 }
 
+// sameInstant compares timestamps at second precision in UTC.
+// JS Date only has milliseconds and Date.toISOString() is always UTC, while
+// Postgres timestamptz and Go time.Time may carry microseconds and a location.
+func sameInstant(a, b time.Time) bool {
+	return a.UTC().Truncate(time.Second).Equal(b.UTC().Truncate(time.Second))
+}
+
 // Data is stale when new date does not match updatedAt or createdAt (before first update)
 func isStale(new *time.Time, updatedAt *time.Time, createdAt time.Time) bool {
 	if new == nil {
@@ -331,10 +338,10 @@ func isStale(new *time.Time, updatedAt *time.Time, createdAt time.Time) bool {
 	}
 
 	if updatedAt != nil {
-		return !new.Equal(*updatedAt)
+		return !sameInstant(*new, *updatedAt)
 	}
 
-	return new.Equal(createdAt)
+	return !sameInstant(*new, createdAt)
 }
 
 // trim1st removes 1st param and returns only error

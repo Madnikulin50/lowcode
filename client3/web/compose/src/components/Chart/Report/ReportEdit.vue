@@ -530,14 +530,14 @@ const orientations = ref([
 
 const editReport = computed({
   get: () => props.report,
-  set: (v) => emit('update.report', v),
+  set: (v) => emit('update:report', v),
 })
 
 const legendShown = computed({
   get: () => !props.report?.legend?.isHidden,
   set: (v) => {
     props.report.legend.isHidden = !v
-    emit('update.report', { ...props.report, legend: props.report.legend })
+    emit('update:report', { ...props.report, legend: props.report.legend })
   },
 })
 
@@ -547,7 +547,7 @@ const moduleID = computed({
   get: () => props.report?.moduleID,
   set: (v) => {
     props.report.moduleID = v
-    emit('update.report', { ...props.report, moduleID: v })
+    emit('update:report', { ...props.report, moduleID: v })
   },
 })
 
@@ -555,14 +555,14 @@ const metrics = computed({
   get: () => props.report?.metrics,
   set: (v) => {
     props.report.metrics = v
-    emit('update.report', { ...props.report, metrics: v })
+    emit('update:report', { ...props.report, metrics: v })
   },
 })
 
 const dimensions = computed({
   get: () => props.report?.dimensions,
   set: (v) => {
-    emit('update.report', { ...props.report, dimensions: v })
+    emit('update:report', { ...props.report, dimensions: v })
   },
 })
 

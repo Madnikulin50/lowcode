@@ -229,6 +229,25 @@ edit:
       methodIqr: IQR
       methodFixed: Fixed range
       methodPctChange: Percent change
+    compare:
+      label: Period comparison
+      enable: Compare to a previous period
+      dateField: Date field
+      granularity: Period
+      granularityOptions:
+        week: Week
+        month: Month
+        quarter: Quarter
+        year: Year
+      mode: Compare against
+      modeOptions:
+        previousPeriod: Previous period
+        yearOverYear: Same period last year
+      currentLabel: Current period label
+      currentLabelPlaceholder: Current period
+      previousLabel: Previous period label
+      previousLabelPlaceholder: Previous period
+      footnote: Replaces this report's own dimension with a day-of-period x-axis, so the current and previous period line up for comparison. Available for bar and line charts only.
   toolbox:
     label: Tools
     saveAsImage:

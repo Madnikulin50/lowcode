@@ -2,13 +2,16 @@ import { BaseChart } from './base'
 import {
   Dimension,
   Metric,
+  Report,
   TemporalDataPoint,
   formatChartValue,
   formatChartTooltip,
   TooltipParams,
   detectAnomalies,
+  makeAlias,
 } from './util'
 import { getColorschemeColors } from '../../../shared'
+import { buildPeriodFilters, andFilters, relativeBucketLabel } from '../period'
 
 function lightenColor (color: string, percent: number): string {
   if (!color) return color
@@ -34,10 +37,78 @@ function lightenColor (color: string, percent: number): string {
  */
 export default class Chart extends BaseChart {
   // Generic charts (at the moment) support only 1 report per chart
-  async fetchReports (a: any) {
-    return super.fetchReports(a).then((rr: any) => {
+  async fetchReports ({ reporter }: { reporter (p: any): Promise<any> }) {
+    const report = (this.config.reports || [])[0]
+    if (report?.compare?.enabled && report.compare.dateField) {
+      return this.fetchCompareReport(report, reporter)
+    }
+    return super.fetchReports({ reporter }).then((rr: any) => {
       return rr[0]
     })
+  }
+
+  /**
+   * Period-over-period comparison fetch (bar/line only — the config UI only
+   * exposes this for stackable chart types). Deliberately NOT built on top
+   * of processReporterResults()'s stackBy-driven grouping in base.ts: that
+   * path is shared, working, well-exercised code for a genuinely different
+   * feature (splitting one report by an arbitrary field's distinct values),
+   * and shoehorning "period" in as a synthetic stackBy value risks
+   * regressing it. This issues its own two reporter calls and builds the
+   * {labels, datasets, dimension, rows} shape makeOptions() expects
+   * directly, reusing formatReporterParams()/makeDataset()/makeAlias() for
+   * everything that doesn't need to differ.
+   */
+  private async fetchCompareReport (report: Report, reporter: (p: any) => Promise<any>): Promise<any> {
+    const cfg = report.compare!
+    const field = cfg.dateField
+    const granularity = cfg.granularity || 'month'
+
+    const { currentFilter, previousFilter } = buildPeriodFilters({ field, granularity, mode: cfg.mode || 'previous-period' })
+
+    // The x-axis is fixed to day-of-period regardless of whatever dimension
+    // the report is otherwise configured with — comparing two periods only
+    // makes sense against a shared, period-relative axis (see relativeBucketLabel).
+    const dayDimension: Dimension = { conditions: {}, field, modifier: 'DATE' }
+    const paramsFor = (extraFilter: string) => this.formatReporterParams({
+      ...report,
+      filter: andFilters(report.filter, extraFilter),
+      dimensions: [dayDimension],
+    })
+
+    const [curRows, prevRows]: [any[], any[]] = await Promise.all([
+      reporter(paramsFor(currentFilter)).then((r: any) => r || []),
+      reporter(paramsFor(previousFilter)).then((r: any) => r || []),
+    ])
+
+    const relabel = (rows: any[]) => rows.map((r: any) => ({ ...r, dimension_0: relativeBucketLabel(r.dimension_0, granularity) }))
+    const cur = relabel(curRows)
+    const prev = relabel(prevRows)
+
+    const labels = [...new Set([...cur, ...prev].map((r: any) => String(r.dimension_0)))]
+      .sort((a, b) => Number(a) - Number(b))
+
+    const currentLabel = cfg.currentLabel || 'current'
+    const previousLabel = cfg.previousLabel || 'previous'
+
+    const datasets: any[] = []
+    for (const m of (report.metrics || [])) {
+      const alias = makeAlias({ field: m.field, aggregate: m.aggregate })
+      const lookup = m.field === 'count' ? 'count' : alias
+
+      for (const [rows, tag, tagLabel] of [[cur, 'current', currentLabel], [prev, 'previous', previousLabel]] as const) {
+        const data = labels.map(l => {
+          const row = rows.find((r: any) => String(r.dimension_0) === l)
+          return row ? (row[lookup] ?? 0) : 0
+        })
+        const ds: any = this.makeDataset(m, dayDimension, data, lookup)
+        ds.label = `${m.label || m.field} — ${tagLabel}`
+        ds.compare = tag
+        datasets.push(ds)
+      }
+    }
+
+    return { labels, datasets, dimension: dayDimension, rows: [...curRows, ...prevRows] }
   }
 
   makeDataset (m: Metric, d: Dimension, data: Array<number|TemporalDataPoint>, alias: string) {
@@ -275,12 +346,21 @@ export default class Chart extends BaseChart {
       }
     })
 
-    options.series = datasets.map(({ formatting, type, label, data, stack, tooltip, fill, smooth, step, roseType, symbol, showSymbol }: any, index: number) => {
+    options.series = datasets.map(({ formatting, type, label, data, stack, tooltip, fill, smooth, step, roseType, symbol, showSymbol, compare }: any, index: number) => {
       const { fixed, relative, valueLabelPosition = 'top' } = tooltip || {}
       const labelOutside = valueLabelPosition !== 'inside'
 
       // We should render the first metric in the dataset as the last
       const z = (datasets.length - 1) - index
+
+      // Period comparison (see Chart.fetchCompareReport): current+previous
+      // are pushed in pairs, so index/2 groups them back onto one base hue
+      // per metric — "previous" gets a lighter tint of that same hue plus
+      // (for line charts) a dashed stroke, instead of relying on echarts'
+      // normal positional palette assignment which would give every series
+      // an unrelated color.
+      const compareColor = compare ? schemeColors[Math.floor(index / 2) % schemeColors.length] : undefined
+      const seriesColor = compare === 'previous' ? lightenColor(compareColor as string, 35) : compareColor
 
       if (['pie', 'doughnut'].includes(type)) {
         const startRadius = type === 'doughnut' ? 40 : 0
@@ -439,15 +519,25 @@ export default class Chart extends BaseChart {
             borderColor: themeVariables.white || '#fff',
             borderWidth: 1,
           } : {}),
+          // Period comparison wins over gradient's own color choice — the
+          // whole point is telling current/previous apart at a glance.
+          ...(compare && seriesColor ? { color: seriesColor } : {}),
         }
 
         return {
           z,
-          stack,
+          // Current/previous of the same metric must not stack on top of
+          // each other — they're meant to sit side by side (grouped bars)
+          // or overlap as two lines, not combine into one taller bar.
+          stack: compare ? undefined : stack,
           name: label,
           type: type,
           smooth,
           step,
+          ...(compare && type === 'line' ? {
+            lineStyle: { type: compare === 'previous' ? 'dashed' : 'solid', color: seriesColor },
+            itemStyle: { color: seriesColor },
+          } : {}),
           areaStyle: {
             opacity: fill ? 0.7 : 0,
             ...(gradient && type === 'line' && fill ? {

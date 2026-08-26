@@ -419,7 +419,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'chart' } })
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, toRaw } from 'vue'
 
 const chartComponentRef = ref(null)
 import { useStore } from '../../../store'
@@ -590,13 +590,17 @@ const themeSettings = computed(() => $Settings.get('ui.studio.themes', []))
 
 const defaultReportComputed = computed(() => Object.assign({}, defaultReport))
 
+const { toastErrorHandler, toastSuccess } = composables.useToast()
+
+// watch(..., { immediate: true }) runs its callback synchronously right here,
+// during setup — fetchChart() -> fetchCustomColorSchemes() can reach
+// toastErrorHandler() in the same tick, so useToast() must be initialized
+// above this point or the reference is still in its temporal dead zone.
 watch(() => props.chartID, () => { fetchChart() }, { immediate: true })
 
 watch(() => chart.value ? chart.value.config : undefined, (value, oldValue) => {
   if (value && oldValue) onConfigUpdate()
 }, { deep: true })
-
-const { toastErrorHandler, toastSuccess } = composables.useToast()
 
 function moduleName (moduleID) {
   const m = modByID.value(moduleID)
@@ -658,7 +662,34 @@ const onConfigUpdate = debounce(function () { update() }, 300)
 
 function onUpdated () { processing.value = false }
 
+function toISOTimestamp (value) {
+  if (value == null || value === '') return undefined
+  const raw = (value && typeof value === 'object') ? toRaw(value) : value
+  const date = raw instanceof Date ? raw : new Date(raw)
+  if (Number.isNaN(date.getTime())) return undefined
+  return date.toISOString()
+}
+
+function chartSavePayload (ch) {
+  // Serialize the live reactive config (not toRaw(chart)): nested fields
+  // like report.compare are added after construct and can be invisible on
+  // the shallow raw class instance.
+  const config = JSON.parse(JSON.stringify(ch?.config || {}))
+  return {
+    namespaceID: ch.namespaceID,
+    chartID: ch.chartID,
+    name: ch.name,
+    handle: ch.handle,
+    labels: ch.labels,
+    config,
+    updatedAt: toISOTimestamp(ch.updatedAt),
+    resourceTranslationLanguage: currentLanguage(),
+  }
+}
+
 function handleSave ({ ch = chart.value, closeOnSuccess = false, isClone = false } = {}) {
+  if (processing.value) return
+
   const toggleProcessing = (value = true) => {
     if (closeOnSuccess) processingSaveAndClose.value = value
     else if (isClone) processingClone.value = value
@@ -668,8 +699,7 @@ function handleSave ({ ch = chart.value, closeOnSuccess = false, isClone = false
   processing.value = true
   toggleProcessing()
 
-  const resourceTranslationLanguage = currentLanguage()
-  const c = Object.assign({}, ch, resourceTranslationLanguage)
+  const c = chartSavePayload(ch)
 
   if (ch.chartID === NoID) {
     store.dispatch('chart/create', c).then(newChart => {

@@ -50,6 +50,7 @@ type (
 		Tooltip    map[string]interface{}   `json:"tooltip,omitempty"`
 		Offset     map[string]interface{}   `json:"offset,omitempty"`
 		Anomaly    map[string]interface{}   `json:"anomaly,omitempty"`
+		Compare    map[string]interface{}   `json:"compare,omitempty"`
 		Renderer   struct {
 			Version string `json:"version,omitempty" `
 		} `json:"renderer,omitempty"`
