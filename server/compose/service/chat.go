@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -42,7 +43,14 @@ type (
 	chatService struct {
 		clients *ttlcache.Cache[string, *chat.Client]
 		pending *ttlcache.Cache[string, pendingToolCalls]
+		catalog *ttlcache.Cache[uint64, nsCatalog]
 		tools   []chat.ToolDef
+	}
+
+	nsCatalog struct {
+		modules types.ModuleSet
+		charts  types.ChartSet
+		pages   types.PageSet
 	}
 
 	ChatPromptArguments struct {
@@ -102,9 +110,15 @@ func Chat() *chatService {
 	)
 	go pending.Start()
 
+	catalog := ttlcache.New[uint64, nsCatalog](
+		ttlcache.WithTTL[uint64, nsCatalog](30 * time.Second),
+	)
+	go catalog.Start()
+
 	return &chatService{
 		clients: ttl,
 		pending: pending,
+		catalog: catalog,
 		tools:   tools,
 	}
 }
@@ -268,6 +282,28 @@ func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArgument
 	return msgs
 }
 
+func (c *chatService) loadCatalog(ctx context.Context, namespaceID uint64) nsCatalog {
+	if c.catalog != nil {
+		if item := c.catalog.Get(namespaceID); item != nil {
+			return item.Value()
+		}
+	}
+	cat := nsCatalog{}
+	if modules, _, err := DefaultModule.Find(ctx, types.ModuleFilter{NamespaceID: namespaceID}); err == nil {
+		cat.modules = modules
+	}
+	if charts, _, err := DefaultChart.Find(ctx, types.ChartFilter{NamespaceID: namespaceID}); err == nil {
+		cat.charts = charts
+	}
+	if pages, _, err := DefaultPage.Find(ctx, types.PageFilter{NamespaceID: namespaceID}); err == nil {
+		cat.pages = pages
+	}
+	if c.catalog != nil {
+		c.catalog.Set(namespaceID, cat, 30*time.Second)
+	}
+	return cat
+}
+
 func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt string) []chat.ToolDef {
 	tools := make([]chat.ToolDef, len(c.tools))
 	copy(tools, c.tools)
@@ -277,105 +313,97 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt s
 	}
 
 	keywords := promptKeywords(prompt)
+	cat := c.loadCatalog(ctx, namespaceID)
 
-	modules, _, err := DefaultModule.Find(ctx, types.ModuleFilter{NamespaceID: namespaceID})
-	if err == nil {
-		for _, m := range selectNamed(modules, keywords, 15, 10, func(m *types.Module) string { return m.Name + " " + m.Handle }) {
+	for _, m := range selectNamed(cat.modules, keywords, 15, 10, func(m *types.Module) string { return m.Name + " " + m.Handle }) {
 
-			id := m.Handle
-			if len(id) == 0 {
-				id = fmt.Sprintf("%v", m.ID)
-			}
-			id = strings.ToLower(id)
-			name := m.Name
-			name = strings.ToLower(name)
-			name = strings.Replace(name, "_", " ", -1)
-			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("show_module_%v", id),
-				Description: fmt.Sprintf("Show properties and fields of module '%s'", name),
-				Handler: func(ctx context.Context, params map[string]string) string {
-					return showModuleByID(ctx, namespaceID, m.ID)
-				},
-			})
-			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("module_search_%v", id),
-				Description: fmt.Sprintf("Search records in module '%s' by text query", name),
-				Params: []chat.ParamDef{
-					{Name: "query", Type: "string", Required: true, Description: "Search text to find in record fields"},
-				},
-				Handler: func(ctx context.Context, params map[string]string) string {
-					return moduleSearch(ctx, namespaceID, m.ID, params["query"])
-				},
-			})
-			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("module_%v_records", id),
-				Description: fmt.Sprintf("View all records in module '%s'", name),
-				Handler: func(ctx context.Context, params map[string]string) string {
-					return moduleRecords(ctx, namespaceID, m.ID)
-				},
-			})
-			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("module_%v_create_record", id),
-				Description: fmt.Sprintf("Create a new record in module '%s'. Pass field values as JSON: {\"fieldName\":\"value\"}", name),
-				Params: []chat.ParamDef{
-					{Name: "values", Type: "json", Required: true, Description: `JSON object with field values, e.g. {"title":"New Item","price":"100"}`},
-				},
-				Handler: func(ctx context.Context, params map[string]string) string {
-					return moduleCreateRecord(ctx, namespaceID, m.ID, params["values"])
-				},
-			})
-			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("module_%v_update_record", id),
-				Description: fmt.Sprintf("Update a record in module '%s' by record ID. Pass recordID and field values.", name),
-				Params: []chat.ParamDef{
-					{Name: "recordID", Type: "string", Required: true, Description: "Record ID to update"},
-					{Name: "values", Type: "json", Required: true, Description: `JSON object with field values to update, e.g. {"title":"New Title","price":"200"}`},
-				},
-				Handler: func(ctx context.Context, params map[string]string) string {
-					return moduleUpdateRecord(ctx, namespaceID, m.ID, parseUint64(params["recordID"]), params["values"])
-				},
-			})
-			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("module_%v_delete_record", id),
-				Description: fmt.Sprintf("Delete a record by ID from module '%s'", name),
-				Params: []chat.ParamDef{
-					{Name: "recordID", Type: "string", Required: true, Description: "Record ID to delete"},
-				},
-				Handler: func(ctx context.Context, params map[string]string) string {
-					return moduleDeleteRecord(ctx, namespaceID, m.ID, parseUint64(params["recordID"]))
-				},
-			})
+		id := m.Handle
+		if len(id) == 0 {
+			id = fmt.Sprintf("%v", m.ID)
 		}
+		id = strings.ToLower(id)
+		name := m.Name
+		name = strings.ToLower(name)
+		name = strings.Replace(name, "_", " ", -1)
+		tools = append(tools, chat.ToolDef{
+			Name:        fmt.Sprintf("show_module_%v", id),
+			Description: fmt.Sprintf("Show properties and fields of module '%s'", name),
+			Handler: func(ctx context.Context, params map[string]string) string {
+				return showModuleByID(ctx, namespaceID, m.ID)
+			},
+		})
+		tools = append(tools, chat.ToolDef{
+			Name:        fmt.Sprintf("module_search_%v", id),
+			Description: fmt.Sprintf("Search records in module '%s' by text query", name),
+			Params: []chat.ParamDef{
+				{Name: "query", Type: "string", Required: true, Description: "Search text to find in record fields"},
+			},
+			Handler: func(ctx context.Context, params map[string]string) string {
+				return moduleSearch(ctx, namespaceID, m.ID, params["query"])
+			},
+		})
+		tools = append(tools, chat.ToolDef{
+			Name:        fmt.Sprintf("module_%v_records", id),
+			Description: fmt.Sprintf("View all records in module '%s'", name),
+			Handler: func(ctx context.Context, params map[string]string) string {
+				return moduleRecords(ctx, namespaceID, m.ID)
+			},
+		})
+		tools = append(tools, chat.ToolDef{
+			Name:        fmt.Sprintf("module_%v_create_record", id),
+			Description: fmt.Sprintf("Create a new record in module '%s'. Pass field values as JSON: {\"fieldName\":\"value\"}", name),
+			Params: []chat.ParamDef{
+				{Name: "values", Type: "json", Required: true, Description: `JSON object with field values, e.g. {"title":"New Item","price":"100"}`},
+			},
+			Handler: func(ctx context.Context, params map[string]string) string {
+				return moduleCreateRecord(ctx, namespaceID, m.ID, params["values"])
+			},
+		})
+		tools = append(tools, chat.ToolDef{
+			Name:        fmt.Sprintf("module_%v_update_record", id),
+			Description: fmt.Sprintf("Update a record in module '%s' by record ID. Pass recordID and field values.", name),
+			Params: []chat.ParamDef{
+				{Name: "recordID", Type: "string", Required: true, Description: "Record ID to update"},
+				{Name: "values", Type: "json", Required: true, Description: `JSON object with field values to update, e.g. {"title":"New Title","price":"200"}`},
+			},
+			Handler: func(ctx context.Context, params map[string]string) string {
+				return moduleUpdateRecord(ctx, namespaceID, m.ID, parseUint64(params["recordID"]), params["values"])
+			},
+		})
+		tools = append(tools, chat.ToolDef{
+			Name:        fmt.Sprintf("module_%v_delete_record", id),
+			Description: fmt.Sprintf("Delete a record by ID from module '%s'", name),
+			Params: []chat.ParamDef{
+				{Name: "recordID", Type: "string", Required: true, Description: "Record ID to delete"},
+			},
+			Handler: func(ctx context.Context, params map[string]string) string {
+				return moduleDeleteRecord(ctx, namespaceID, m.ID, parseUint64(params["recordID"]))
+			},
+		})
 	}
 
-	charts, _, err := DefaultChart.Find(ctx, types.ChartFilter{NamespaceID: namespaceID})
-	if err == nil {
-		for _, ch := range selectNamed(charts, keywords, 15, 5, func(ch *types.Chart) string { return ch.Name }) {
-			id := ch.ID
-			name := ch.Name
-			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("show_chart_%d", id),
-				Description: fmt.Sprintf("Show details of chart '%s'", name),
-				Handler: func(ctx context.Context, params map[string]string) string {
-					return showChartByID(ctx, namespaceID, id)
-				},
-			})
-		}
+	for _, ch := range selectNamed(cat.charts, keywords, 15, 5, func(ch *types.Chart) string { return ch.Name }) {
+		id := ch.ID
+		name := ch.Name
+		tools = append(tools, chat.ToolDef{
+			Name:        fmt.Sprintf("show_chart_%d", id),
+			Description: fmt.Sprintf("Show details of chart '%s'", name),
+			Handler: func(ctx context.Context, params map[string]string) string {
+				return showChartByID(ctx, namespaceID, id)
+			},
+		})
 	}
 
-	pages, _, err := DefaultPage.Find(ctx, types.PageFilter{NamespaceID: namespaceID})
-	if err == nil {
-		for _, p := range selectNamed(pages, keywords, 15, 5, func(p *types.Page) string { return p.Title }) {
-			id := p.ID
-			title := p.Title
-			tools = append(tools, chat.ToolDef{
-				Name:        fmt.Sprintf("show_page_%d", id),
-				Description: fmt.Sprintf("Show details of page '%s'", title),
-				Handler: func(ctx context.Context, params map[string]string) string {
-					return showPageByID(ctx, namespaceID, id)
-				},
-			})
-		}
+	for _, p := range selectNamed(cat.pages, keywords, 15, 5, func(p *types.Page) string { return p.Title }) {
+		id := p.ID
+		title := p.Title
+		tools = append(tools, chat.ToolDef{
+			Name:        fmt.Sprintf("show_page_%d", id),
+			Description: fmt.Sprintf("Show details of page '%s'", title),
+			Handler: func(ctx context.Context, params map[string]string) string {
+				return showPageByID(ctx, namespaceID, id)
+			},
+		})
 	}
 
 	return tools
@@ -1534,9 +1562,28 @@ func showPageByID(ctx context.Context, namespaceID, pageID uint64) string {
 	return b.String()
 }
 
+var chatFieldIdent = regexp.MustCompile(`^[A-Za-z][0-9A-Za-z_-]*$`)
+
+func chatSearchQuery(query string) string {
+	var b strings.Builder
+	for _, r := range query {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.IsSpace(r) || r == '-' || r == '.' {
+			b.WriteRune(r)
+		}
+	}
+	s := strings.TrimSpace(strings.Join(strings.Fields(b.String()), " "))
+	s = strings.ReplaceAll(s, `'`, `''`)
+	return s
+}
+
 func moduleSearch(ctx context.Context, namespaceID, moduleID uint64, query string) string {
 	if query == "" {
 		return "Missing required parameter: query"
+	}
+
+	q := chatSearchQuery(query)
+	if q == "" {
+		return "Search query is empty after sanitization."
 	}
 
 	module, err := DefaultModule.FindByID(ctx, namespaceID, moduleID)
@@ -1547,10 +1594,10 @@ func moduleSearch(ctx context.Context, namespaceID, moduleID uint64, query strin
 	textKinds := map[string]bool{"String": true, "Text": true, "URL": true, "Email": true}
 	var conditions []string
 	for _, f := range module.Fields {
-		if textKinds[f.Kind] {
-			escaped := strings.ReplaceAll(query, "'", "\\'")
-			conditions = append(conditions, fmt.Sprintf("%s LIKE '%%%s%%'", f.Name, escaped))
+		if !textKinds[f.Kind] || !chatFieldIdent.MatchString(f.Name) {
+			continue
 		}
+		conditions = append(conditions, fmt.Sprintf("%s LIKE '%%%s%%'", f.Name, q))
 	}
 
 	if len(conditions) == 0 {
