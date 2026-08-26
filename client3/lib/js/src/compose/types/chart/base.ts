@@ -30,6 +30,15 @@ export function isStackableType (type?: string): boolean {
   return ['line', 'bar'].includes(type as string)
 }
 
+function chartPointValue (v: unknown): number | null {
+  if (v === undefined || v === null || v === '') return null
+  if (typeof v === 'object' && v !== null && 'y' in (v as Record<string, unknown>)) {
+    return chartPointValue((v as TemporalDataPoint).y)
+  }
+  const n = Number(v)
+  return Number.isFinite(n) ? n : null
+}
+
 /**
  * BaseChart represents a structure that stores any configuration data.
  * Any display and data rendering operations should be handled by any sub classes.
@@ -348,12 +357,49 @@ export class BaseChart {
       })
     }
 
+    const dropped = this.dropEmptyBarCategories(labels, datasets, dimension)
     return {
-      labels: this.processLabels(labels, dimension),
-      datasets,
+      labels: this.processLabels(dropped.labels, dimension),
+      datasets: dropped.datasets,
       dimension,
       // Raw rows; used by charts that need more than one dimension (sankey, graph, heatmap, ...)
       rows: results,
+    }
+  }
+
+  /**
+   * With skipMissing, bar charts also drop categories whose values are all
+   * zero — aggregations often return 0 for empty buckets, which still draw
+   * as a blank bar if left in the series.
+   */
+  protected dropEmptyBarCategories (
+    labels: Array<string>,
+    datasets: Array<any> | undefined,
+    dimension: Dimension,
+  ): { labels: Array<string>, datasets: Array<any> | undefined } {
+    if (!dimension?.skipMissing || !datasets?.length || !labels.length) {
+      return { labels, datasets }
+    }
+    if (!datasets.some((ds: any) => ds.type === 'bar')) {
+      return { labels, datasets }
+    }
+
+    const keep = labels.map((_, i) =>
+      datasets.some((ds: any) => {
+        const n = chartPointValue(ds.data?.[i])
+        return n !== null && n !== 0
+      }),
+    )
+    if (keep.every(Boolean)) {
+      return { labels, datasets }
+    }
+
+    return {
+      labels: labels.filter((_, i) => keep[i]),
+      datasets: datasets.map((ds: any) => ({
+        ...ds,
+        data: (ds.data || []).filter((_: any, i: number) => keep[i]),
+      })),
     }
   }
 

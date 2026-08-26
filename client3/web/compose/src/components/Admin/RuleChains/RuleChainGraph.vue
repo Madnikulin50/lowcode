@@ -37,7 +37,7 @@
     <div
       v-if="selectedNode || selectedEdgeId"
       class="border-start bg-white p-3 d-flex flex-column"
-      style="width: 320px; min-height: 0; overflow-y: auto"
+      style="width: 480px; min-width: 360px; min-height: 0; overflow-y: auto"
     >
       <template v-if="selectedEdgeId && !selectedNode">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -134,28 +134,19 @@
         >
       </div>
 
-      <div
-        v-if="selectedNodeSchema"
-        class="mb-3"
-      >
+      <div class="mb-3">
         <label class="form-label small fw-bold text-muted">
-          Config
+          {{ $t('rulechain.edit.nodes.config.label') }}
         </label>
-        <p class="small text-muted mb-1">
-          {{ selectedNodeSchema.description }}
-        </p>
-        <textarea
+        <RuleChainNodeConfigEditor
+          :key="selectedNode.id"
           v-model="selectedNode.data.configText"
-          class="form-control form-control-sm font-monospace"
-          rows="6"
-          spellcheck="false"
+          :node-type="selectedNode.data.nodeType"
+          :fields="selectedNodeSchema?.configFields"
+          :node-schema="selectedNodeSchema"
+          :description="selectedNodeSchema?.description"
+          :json-rows="12"
         />
-        <div
-          v-if="selectedNodeSchema.configSchema"
-          class="mt-1"
-        >
-          <pre class="bg-light rounded p-2 small mb-0" style="max-height: 120px; overflow: auto; font-size: 0.7rem;">{{ JSON.stringify(selectedNodeSchema.configSchema, null, 2) }}</pre>
-        </div>
       </div>
 
       <div class="mt-auto">
@@ -201,11 +192,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import RuleChainGraphNode from './RuleChainGraphNode.vue'
+import RuleChainNodeConfigEditor from './RuleChainNodeConfigEditor.vue'
 
 const { t } = useI18n()
 
@@ -319,6 +311,15 @@ function emitEntryNode () {
 }
 
 onMounted(() => syncFromProps())
+
+watch(vfNodes, () => {
+  emitNodes()
+  emitEntryNode()
+}, { deep: true })
+
+watch(vfEdges, () => {
+  emitEdges()
+}, { deep: true })
 
 function onConnect ({ source, target }) {
   if (source === target) return

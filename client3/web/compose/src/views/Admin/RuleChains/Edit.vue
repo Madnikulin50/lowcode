@@ -162,15 +162,6 @@
                           </option>
                         </select>
                       </div>
-                      <div class="col-12 col-md-4">
-                        <textarea
-                          v-model="node.configText"
-                          rows="2"
-                          class="form-control form-control-sm font-monospace"
-                          :placeholder="$t('rulechain.edit.nodes.config.placeholder')"
-                          spellcheck="false"
-                        />
-                      </div>
                       <div class="col-12 col-md-2 d-flex align-items-center gap-2">
                         <span class="text-muted small text-nowrap">
                           {{ node.id }}
@@ -184,21 +175,15 @@
                           <font-awesome-icon :icon="['fas', 'trash']" />
                         </button>
                       </div>
-                      <div
-                        v-if="nodeTypesByType[node.type]"
-                        class="col-12"
-                      >
-                        <small class="text-muted">
-                          {{ nodeTypesByType[node.type].description }}
-                        </small>
-                        <small
-                          v-if="hasConfigSchema(node)"
-                          class="d-block text-muted"
-                        >
-                          <code>
-                            {{ formatConfigSchema(node) }}
-                          </code>
-                        </small>
+                      <div class="col-12">
+                        <RuleChainNodeConfigEditor
+                          v-model="node.configText"
+                          :node-type="node.type"
+                          :fields="nodeTypesByType[node.type]?.configFields"
+                          :node-schema="nodeTypesByType[node.type]"
+                          :description="nodeTypesByType[node.type]?.description"
+                          :json-rows="8"
+                        />
                       </div>
                     </div>
                   </div>
@@ -323,9 +308,9 @@
                   </div>
                   <RuleChainGraph
                     ref="graphRef"
-                    :nodes.sync="form.nodes"
-                    :edges.sync="form.edges"
-                    :entry-node.sync="form.entryNode"
+                    v-model:nodes="form.nodes"
+                    v-model:edges="form.edges"
+                    v-model:entry-node="form.entryNode"
                     :available-node-types="nodeTypes"
                     class="flex-grow-1"
                     style="min-height: 0"
@@ -434,6 +419,7 @@ import { NoID } from 'corteza-lib/js/dist'
 import { composables } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import RuleChainGraph from 'corteza-webapp-compose/src/components/Admin/RuleChains/RuleChainGraph'
+import RuleChainNodeConfigEditor from 'corteza-webapp-compose/src/components/Admin/RuleChains/RuleChainNodeConfigEditor'
 
 const { useToast } = composables
 const { t } = useI18n()
@@ -552,16 +538,6 @@ function formatConfig (config) {
   } catch (e) {
     return '{}'
   }
-}
-
-function hasConfigSchema (node) {
-  const schema = nodeTypesByType.value[node.type]?.configSchema
-  return schema && Object.keys(schema).length
-}
-
-function formatConfigSchema (node) {
-  const schema = nodeTypesByType.value[node.type]?.configSchema
-  return JSON.stringify(schema, null, 2)
 }
 
 function addNode () {

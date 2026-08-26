@@ -380,14 +380,14 @@
                   </div>
 
                   <div class="mb-3">
-                    <label class="d-flex align-items-center text-primary form-label">
+                    <label class="form-label text-primary">
                       {{ $t('metric.drillDown.label') }}
-                      <input
-                        v-model="edit.drillDown.enabled"
-                        type="checkbox"
-                        class="form-check-input ms-1 mb-1"
-                      />
                     </label>
+                    <c-input-checkbox
+                      v-model="edit.drillDown.enabled"
+                      switch
+                      :labels="checkboxLabel"
+                    />
                     <small class="form-text">{{ $t('metric.drillDown.description') }}</small>
                     <div class="input-group">
                       <c-input-select

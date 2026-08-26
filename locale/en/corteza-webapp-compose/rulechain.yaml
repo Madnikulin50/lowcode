@@ -34,8 +34,19 @@ edit:
       placeholder: Select node type
     config:
       label: Configuration
-      placeholder: '{ }'
+      placeholder: "{'{}'}"
       invalid: Configuration must be valid JSON
+      form: Form
+      json: JSON
+      invalidJson: Invalid JSON
+      required: Required
+      noType: Select a node type to edit its configuration
+      noFields: This node type has no configuration fields
+      addField: Add field
+      addEntry: Add
+      remove: Remove
+      key: Key
+      value: Value
   edges:
     label: Connections
     placeholder: Connection label
@@ -56,7 +67,7 @@ test:
   running: Running...
   input:
       label: Input
-      placeholder: '{ }'
+      placeholder: "{'{}'}"
       invalid: Input must be valid JSON
   output:
     label: Result

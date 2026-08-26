@@ -34,8 +34,19 @@ edit:
       placeholder: Выберите тип узла
     config:
       label: Конфигурация
-      placeholder: '{ }'
+      placeholder: "{'{}'}"
       invalid: Конфигурация должна быть корректным JSON
+      form: Форма
+      json: JSON
+      invalidJson: Некорректный JSON
+      required: Обязательное поле
+      noType: Выберите тип узла, чтобы редактировать конфигурацию
+      noFields: У этого типа узла нет полей конфигурации
+      addField: Добавить поле
+      addEntry: Добавить
+      remove: Удалить
+      key: Ключ
+      value: Значение
   edges:
     label: Связи
     placeholder: Подпись связи
@@ -56,7 +67,7 @@ test:
   running: Выполняется...
   input:
       label: Входные данные
-      placeholder: '{ }'
+      placeholder: "{'{}'}"
       invalid: Входные данные должны быть корректным JSON
   output:
     label: Результат

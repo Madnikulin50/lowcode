@@ -12,6 +12,8 @@ more: More
 namespace: Namespaces
 noPageTitle: No page title
 page: Pages
+rulechains: Rule chains
+workflows: Workflows
 appMenu: Menu
 userSettings:
   changePassword: Change password

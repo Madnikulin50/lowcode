@@ -12,6 +12,8 @@ more: Еще
 namespace: Пространства
 noPageTitle: Не указан заголовок страницы
 page: Страницы
+rulechains: Цепочки правил
+workflows: Процессы
 appMenu: Меню
 userSettings:
   changePassword: Изменить пароль

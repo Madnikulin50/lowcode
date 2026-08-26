@@ -556,12 +556,22 @@ const modalCreateBlockSelectorEl = ref(null)
 const modalCreatorEl = ref(null)
 const modalEditorEl = ref(null)
 const modalScenariosEl = ref(null)
-
+const isUnmounting = ref(false)
 
 function getBlockSelectorModal() { return modalCreateBlockSelectorEl.value ? Modal.getOrCreateInstance(modalCreateBlockSelectorEl.value) : null }
 function getBlockCreatorModal() { return modalCreatorEl.value ? Modal.getOrCreateInstance(modalCreatorEl.value) : null }
 function getBlockEditorModal() { return modalEditorEl.value ? Modal.getOrCreateInstance(modalEditorEl.value) : null }
 function getScenariosModal() { return modalScenariosEl.value ? Modal.getOrCreateInstance(modalScenariosEl.value) : null }
+
+function disposeModals () {
+  for (const get of [getBlockSelectorModal, getBlockCreatorModal, getBlockEditorModal, getScenariosModal]) {
+    try { get()?.dispose() } catch (e) {}
+  }
+  document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
+  document.body.classList.remove('modal-open')
+  document.body.style.removeProperty('overflow')
+  document.body.style.removeProperty('padding-right')
+}
 
 const pagesStore = computed(() => store.getters['page/set'])
 const getModuleByID = computed(() => store.getters['module/getByID'])
@@ -687,18 +697,21 @@ watch(() => props.pageID, (pageID) => {
 }, { immediate: true })
 
 watch(showCreator, (val) => {
+  if (isUnmounting.value) return
   const m = getBlockCreatorModal()
   if (!m) return
   val ? m.show() : m.hide()
 })
 
 watch(showEditor, (val) => {
+  if (isUnmounting.value) return
   const m = getBlockEditorModal()
   if (!m) return
   val ? m.show() : m.hide()
 })
 
 watch(() => scenarios.value.showConfigurator, (val) => {
+  if (isUnmounting.value) return
   const m = getScenariosModal()
   if (!m) return
   val ? m.show() : m.hide()
@@ -717,20 +730,16 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  getBlockSelectorModal()?.hide()
-  getBlockCreatorModal()?.hide()
-  getBlockEditorModal()?.hide()
-  getScenariosModal()?.hide()
+  // Do not hide() here: hide() queues _hideModal on the DOM node, then Vue
+  // removes it and dispose() nulls _element → "Cannot read properties of null (reading 'style')".
+  isUnmounting.value = true
+  disposeModals()
   if (!['page', 'page.record', 'page.record.create', 'page.record.edit'].includes(route.name)) {
     setPageHandle('')
     setLayoutHandle('')
   }
   destroyEvents()
   setDefaultValues()
-  getBlockSelectorModal()?.dispose()
-  getBlockCreatorModal()?.dispose()
-  getBlockEditorModal()?.dispose()
-  getScenariosModal()?.dispose()
 })
 
 watch([modalCreateBlockSelectorEl, modalCreatorEl, modalEditorEl, modalScenariosEl], ([m1, m2, m3, m4]) => {

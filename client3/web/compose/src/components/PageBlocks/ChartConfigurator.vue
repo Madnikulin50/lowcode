@@ -32,14 +32,15 @@
       <div class="col-12 col-lg-6">
         <template v-if="isDrillDownAvailable">
           <div class="mb-3">
-            <label class="d-flex align-items-center text-primary form-label">
-              {{ $t('chart.drillDown.label') }}
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <label class="form-label text-primary mb-0">
+                {{ $t('chart.drillDown.label') }}
+              </label>
               <c-input-checkbox
                 v-model="options.drillDown.enabled"
                 switch
-                class="ms-1"
               />
-            </label>
+            </div>
             <small class="form-text">{{ $t('chart.drillDown.description') }}</small>
             <div class="input-group">
               <c-input-select

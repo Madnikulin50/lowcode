@@ -108,7 +108,17 @@ export default class Chart extends BaseChart {
       }
     }
 
-    return { labels, datasets, dimension: dayDimension, rows: [...curRows, ...prevRows] }
+    const skipDim: Dimension = {
+      ...dayDimension,
+      skipMissing: report.dimensions?.[0]?.skipMissing,
+    }
+    const dropped = this.dropEmptyBarCategories(labels, datasets, skipDim)
+    return {
+      labels: dropped.labels,
+      datasets: dropped.datasets,
+      dimension: dayDimension,
+      rows: [...curRows, ...prevRows],
+    }
   }
 
   makeDataset (m: Metric, d: Dimension, data: Array<number|TemporalDataPoint>, alias: string) {
