@@ -34,6 +34,7 @@ import { compose, NoID } from 'corteza-lib/js/dist'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import { usePageStore } from 'corteza-webapp-compose/src/store/page'
 import { useModuleStore } from 'corteza-webapp-compose/src/store/module'
+import { useRecordStore } from 'corteza-webapp-compose/src/store/record'
 import { composables } from 'corteza-lib/vue/dist'
 import PageBlock from 'corteza-webapp-compose/src/components/PageBlocks/index'
 
@@ -48,6 +49,7 @@ const route = useRoute()
 const router = useRouter()
 const pageStore = usePageStore()
 const moduleStore = useModuleStore()
+const recordStore = useRecordStore()
 
 const showModal = ref(false)
 const block = ref(undefined)
@@ -120,12 +122,19 @@ function loadModal(blockID) {
   showModal.value = !!(block.value || {}).blockID
 
   if (recordID) {
-    $ComposeAPI
-      .recordRead({ namespaceID, moduleID, recordID })
-      .then(raw => {
-        record.value = new compose.Record(mod, raw)
-      })
-      .catch(toastErrorHandler($t('notification.record.loadFailed')))
+    const cached = recordStore.findByID(recordID)
+    if (cached && mod) {
+      record.value = cached instanceof compose.Record ? cached : new compose.Record(mod, cached)
+    } else if (record.value?.recordID === recordID) {
+      // already loaded for this modal
+    } else {
+      $ComposeAPI
+        .recordRead({ namespaceID, moduleID, recordID })
+        .then(raw => {
+          record.value = new compose.Record(mod, raw)
+        })
+        .catch(toastErrorHandler($t('notification.record.loadFailed')))
+    }
   } else if (mod) {
     record.value = new compose.Record(mod, {})
   }
@@ -152,12 +161,38 @@ function setDefaultValues() {
 }
 
 let magnifyHandler
+let prevBodyOverflow = ''
+
+function onEsc (e) {
+  if (e.key === 'Escape') onHidden()
+}
+
+function lockBody () {
+  prevBodyOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+}
+
+function unlockBody () {
+  document.body.style.overflow = prevBodyOverflow
+}
+
+watch(showModal, (open) => {
+  if (open) {
+    lockBody()
+    window.addEventListener('keydown', onEsc)
+  } else {
+    unlockBody()
+    window.removeEventListener('keydown', onEsc)
+  }
+})
 
 function destroyEvents() {
   if (magnifyHandler) {
     window.removeEventListener('magnify-page-block', magnifyHandler)
     magnifyHandler = undefined
   }
+  window.removeEventListener('keydown', onEsc)
+  unlockBody()
 }
 
 onMounted(() => {

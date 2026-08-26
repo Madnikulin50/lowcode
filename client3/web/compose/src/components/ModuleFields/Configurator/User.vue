@@ -98,7 +98,7 @@ onMounted(() => {
   if (f.value.options.roles && f.value.options.roles.length) {
     preloadingRoles.value = true
     Promise.all(f.value.options.roles.map(roleID => {
-      return ($SystemAPI.value || {}).roleRead ? $SystemAPI.value.roleRead({ roleID }).then(role => {
+      return $SystemAPI?.roleRead ? $SystemAPI.roleRead({ roleID }).then(role => {
         currentRoles.value.push(role)
       }) : Promise.resolve()
     })).finally(() => {

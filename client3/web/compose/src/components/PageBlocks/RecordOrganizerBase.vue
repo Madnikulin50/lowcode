@@ -51,6 +51,7 @@ import { useStore } from '../../store'
 import draggable from 'vuedraggable'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'
 import { evalPrefilterOrSkip, getFieldFilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { debounce } from 'lodash'
 import Wrap from './Wrap/index.js'
 
 const { t: $t } = useI18n({ useScope: 'global' })
@@ -128,7 +129,7 @@ const isConfigured = computed(() => !!(labelField.value || descriptionField.valu
 
 const inModal = computed(() => props.mode === 'modal')
 
-watch(() => options.value, () => { refresh() }, { deep: true })
+watch(() => options.value, debounce(() => { refresh() }, 300), { deep: true })
 watch(() => props.record?.recordID, () => { refresh() }, { immediate: true })
 
 onMounted(() => {

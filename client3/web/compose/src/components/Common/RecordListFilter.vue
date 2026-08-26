@@ -33,13 +33,14 @@
 
     <div class="card position-static w-100 border-0">
       <div class="card-body px-3 pb-0 overflow-y-auto overflow-x-hidden">
-        <filter-toolbox
-          v-model="componentFilter"
-          :module="module"
-          :namespace="namespace"
-          :selected-field="selectedField"
-          @value-change="preventClose"
-        />
+          <filter-toolbox
+            v-if="popoverOpen"
+            v-model="componentFilter"
+            :module="module"
+            :namespace="namespace"
+            :selected-field="selectedField"
+            @value-change="preventClose"
+          />
       </div>
 
       <div class="card-footer d-flex justify-content-between shadow-sm rounded">
@@ -77,7 +78,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'block' } })
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { BPopover } from 'bootstrap-vue-next'
 import FilterToolbox from 'corteza-webapp-compose/src/components/Common/FilterToolbox.vue'
 
@@ -158,8 +159,12 @@ function onDocumentPointerDown (e) {
   popoverOpen.value = false
 }
 
-onMounted(() => {
-  document.addEventListener('pointerdown', onDocumentPointerDown, true)
+watch(popoverOpen, (open) => {
+  if (open) {
+    document.addEventListener('pointerdown', onDocumentPointerDown, true)
+  } else {
+    document.removeEventListener('pointerdown', onDocumentPointerDown, true)
+  }
 })
 
 onBeforeUnmount(() => {
@@ -186,7 +191,9 @@ function savableFilter () {
 }
 
 function resetFilter () {
-  componentFilter.value = undefined
+  componentFilter.value = []
+  popoverOpen.value = false
+  emit('filter', [])
   emit('reset')
 }
 

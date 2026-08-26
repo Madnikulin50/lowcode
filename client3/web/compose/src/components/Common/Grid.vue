@@ -68,7 +68,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
-import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import { GridLayout, GridItem } from '../../lib/vue-grid-layout'
 import { normalizeXYWH, xywhSignature } from '../../lib/block-layout'
 
@@ -90,6 +90,7 @@ const emit = defineEmits(['item-updated'])
 
 const layout = ref([])
 const resizing = ref(false)
+let ignoreGeometryRebuild = false
 
 const oneBlockLayout = computed(() => {
   return props.blocks.filter(({ meta }) => !meta.hidden && (!meta.invisible || props.editable)).length === 1
@@ -122,7 +123,7 @@ function rebuildLayout () {
 }
 
 watch(geometryKey, () => {
-  if (resizing.value) return
+  if (resizing.value || ignoreGeometryRebuild) return
   rebuildLayout()
 }, { immediate: true })
 
@@ -136,6 +137,7 @@ function persistLayout (newLayout) {
   if (!props.editable || !Array.isArray(newLayout)) return
 
   layout.value = newLayout
+  ignoreGeometryRebuild = true
   newLayout.forEach(({ i, x, y, w, h }) => {
     const next = normalizeXYWH([x, y, w, h])
     const block = props.blocks[i]
@@ -144,6 +146,7 @@ function persistLayout (newLayout) {
     emit('item-updated', i)
     block.xywh = next
   })
+  nextTick(() => { ignoreGeometryRebuild = false })
 }
 
 function onLayoutUpdated (newLayout) {

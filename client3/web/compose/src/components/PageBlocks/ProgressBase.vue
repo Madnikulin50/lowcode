@@ -23,6 +23,7 @@
 
 <script setup>
 import { ref, watch, onBeforeUnmount, onMounted } from 'vue'
+import { debounce } from 'lodash'
 import { composables } from 'corteza-lib/vue/dist'
 import { NoID } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
@@ -59,7 +60,7 @@ const min = ref(undefined)
 const max = ref(undefined)
 
 watch(() => [props.record?.recordID, props.loadingRecord], () => { if (!props.loadingRecord) refresh() }, { immediate: true })
-watch(options, () => { if (!props.loadingRecord) refresh() }, { deep: true })
+watch(options, debounce(() => { if (!props.loadingRecord) refresh() }, 300), { deep: true })
 
 onMounted(() => {
   refreshBlock(refresh)

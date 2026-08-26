@@ -37,7 +37,7 @@ import { compose, NoID } from 'corteza-lib/js/dist'
 import { components } from 'corteza-lib/vue/dist'
 import axios from 'axios'
 import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
-import { isNumber } from 'lodash'
+import { isNumber, debounce } from 'lodash'
 import { useStore } from '../../store'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
@@ -94,7 +94,7 @@ const localValue = computed(() => {
 watch(() => [props.record?.recordID, props.loadingRecord], () => {
   if (!props.loadingRecord) loadEvents()
 }, { immediate: true })
-watch(() => options.value, () => { if (!props.loadingRecord) loadEvents() }, { deep: true })
+watch(() => options.value, debounce(() => { if (!props.loadingRecord) loadEvents() }, 300), { deep: true })
 
 onMounted(() => {
   const bounds = options.value.bounds

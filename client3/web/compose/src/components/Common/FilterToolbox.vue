@@ -222,6 +222,29 @@ const mockModule = ref(undefined)
 const preparedFields = ref([])
 const internalFilter = ref([])
 const isLoadingExternalData = ref(false)
+const lastEmittedSignature = ref('')
+
+const preparedFieldsByName = computed(() => {
+  const map = Object.create(null)
+  for (const f of preparedFields.value) {
+    map[f.name] = f
+  }
+  return map
+})
+
+function getPreparedField (name = '') {
+  if (!name) return undefined
+  return preparedFieldsByName.value[name]
+}
+
+function filterSignature (raw) {
+  if (!raw || !raw.length) return '[]'
+  try {
+    return JSON.stringify(raw)
+  } catch (e) {
+    return '[]'
+  }
+}
 
 const fields = computed(() => {
   if (!mockModule.value) return []
@@ -264,6 +287,9 @@ watch(() => props.module, (newModule) => {
 }, { immediate: true })
 
 watch(() => props.modelValue ?? props.value, (rawFilter) => {
+  const incoming = filterSignature(rawFilter)
+  if (incoming === lastEmittedSignature.value && internalFilter.value.length) return
+
   let internal = []
 
   if (!rawFilter || !rawFilter.length) {
@@ -287,6 +313,9 @@ watch(() => props.modelValue ?? props.value, (rawFilter) => {
 watch(internalFilter, (val) => {
   if (isLoadingExternalData.value) return
   const processed = processInternalFilter(val)
+  const signature = filterSignature(processed)
+  if (signature === lastEmittedSignature.value) return
+  lastEmittedSignature.value = signature
   emit('update:modelValue', processed)
   emit('input', processed)
 }, { deep: true })
@@ -337,9 +366,9 @@ function processInternalFilter (filter = []) {
         f.value = record[f.name]
       }
       return f
-    })
+    }).filter(f => f && f.name)
     return { filter, name, groupCondition }
-  })
+  }).filter(({ filter }) => filter.length > 0)
 }
 
 function prepareFields () {
@@ -438,11 +467,6 @@ function deleteFilter (groupIndex, index) {
 
 function getOptionKey ({ name }) {
   return name
-}
-
-function getPreparedField (name = '') {
-  if (!preparedFields.value.length) return undefined
-  return preparedFields.value.find(f => f.name === name)
 }
 
 function addFilter (groupIndex) {

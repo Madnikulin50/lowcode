@@ -96,6 +96,7 @@ import '@fullcalendar/timegrid/main.css'
 import '@fullcalendar/list/main.css'
 import { BootstrapTheme } from '@fullcalendar/bootstrap'
 import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { debounce } from 'lodash'
 import { useRouter } from 'vue-router'
 import { compose, NoID, shared } from 'corteza-lib/js/dist'
 
@@ -188,7 +189,7 @@ const views = computed(() => {
 
 const weekStartDay = computed(() => getWeekStartDay(browserLocale()))
 
-watch(() => options.value, () => { updateSize(); if (!props.loadingRecord) refresh() }, { deep: true })
+watch(() => options.value, debounce(() => { updateSize(); if (!props.loadingRecord) refresh() }, 300), { deep: true })
 watch(() => props.block.xywh, () => { updateSize() }, { deep: true })
 watch(() => [props.record?.recordID, props.loadingRecord], () => { if (!props.loadingRecord) refresh() })
 watch(events, (evts) => { api()?.setOption('events', evts) }, { deep: true })

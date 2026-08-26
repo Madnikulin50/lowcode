@@ -245,7 +245,7 @@ function fetchUsers () {
     cancelRequest.value = null
   }
 
-  const api = ($SystemAPI.value || {})
+  const api = $SystemAPI || {}
   if (!api.userListCancellable) {
     processing.value = false
     return

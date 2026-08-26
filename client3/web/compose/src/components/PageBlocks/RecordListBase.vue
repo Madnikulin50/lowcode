@@ -450,6 +450,7 @@ import { useStore } from '../../store'
 import { NoID, compose, validator } from 'corteza-lib/js/dist'
 import { components, url } from 'corteza-lib/vue/dist'
 import axios from 'axios'
+import { debounce } from 'lodash'
 import ColumnPicker from 'corteza-webapp-compose/src/components/Admin/Module/Records/ColumnPicker'
 import RecordListFilter from 'corteza-webapp-compose/src/components/Common/RecordListFilter'
 import FieldEditor from 'corteza-webapp-compose/src/components/ModuleFields/Editor'
@@ -710,9 +711,9 @@ watch(recordListModule, (mod, prev) => {
   }
 })
 
-watch(() => options.value, () => {
+watch(() => options.value, debounce(() => {
   if (!props.loadingRecord) { prepRecordList(); refresh(true) }
-}, { deep: true, immediate: true })
+}, 300), { deep: true })
 
 watch(() => [props.record?.recordID, props.loadingRecord], () => {
   if (props.loadingRecord) return
@@ -1196,6 +1197,9 @@ const rowTooltip = reactive({
   lines: [],
   style: {},
 })
+let tooltipRaf = 0
+let tooltipX = 0
+let tooltipY = 0
 
 const TOOLTIP_MARKER_COLORS = [
   '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
@@ -1253,10 +1257,20 @@ function showRowValueTooltip (event, element) {
 
 function moveRowValueTooltip (event) {
   if (!rowTooltip.visible) return
-  positionRowTooltip(event.clientX, event.clientY)
+  tooltipX = event.clientX
+  tooltipY = event.clientY
+  if (tooltipRaf) return
+  tooltipRaf = requestAnimationFrame(() => {
+    tooltipRaf = 0
+    positionRowTooltip(tooltipX, tooltipY)
+  })
 }
 
 function hideRowValueTooltip () {
+  if (tooltipRaf) {
+    cancelAnimationFrame(tooltipRaf)
+    tooltipRaf = 0
+  }
   rowTooltip.visible = false
   rowTooltip.title = ''
   rowTooltip.record = null

@@ -149,6 +149,7 @@ import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
 import ChartComponent from '../Chart'
 import { NoID, compose } from 'corteza-lib/js/dist'
+import { debounce } from 'lodash'
 import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 
 const props = defineProps({
@@ -217,7 +218,7 @@ const hasDataTableEnabled = computed(() => {
 
 const hasLiveFilter = computed(() => !!liveFilterValue.value)
 
-watch(() => options.value, () => { if (!props.loadingRecord) refresh() }, { deep: true })
+watch(() => options.value, debounce(() => { if (!props.loadingRecord) refresh() }, 300), { deep: true })
 watch(() => [props.record?.recordID, props.loadingRecord], () => { if (!props.loadingRecord) refresh() })
 
 onMounted(() => {
