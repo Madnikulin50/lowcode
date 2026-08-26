@@ -1300,6 +1300,8 @@ ai:
   askAboutRecord: Спросить ИИ что она думает о записи
   tab:
     title: ИИ
+  hideBrainButton:
+    label: Скрыть кнопку ИИ на блоке
   prompt:
     label: Запрос
     placeholder: Введите настройки запроса

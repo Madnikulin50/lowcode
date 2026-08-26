@@ -262,6 +262,8 @@ edit:
     label: Инструменты
     saveAsImage:
       label: Показывать кнопку "Сохранить как картинку"
+    showDataTable:
+      label: Показывать таблицу данных
     timeline:
       label: Ось времени
       options:

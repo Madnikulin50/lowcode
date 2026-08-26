@@ -301,9 +301,20 @@ tooltip:
 type:
   label: Тип
 etl:
+  settings: Настройки ETL
+  settingsDescription: Синхронизация записей из внешних источников в этот модуль.
+  create: Новое задание
+  edit: Изменить задание
+  noJobs: Для этого модуля ещё нет заданий ETL.
+  name: Имя
+  source: Источник
   enabled: Включено
   disabled: Выключено
+  lastRun: Последний запуск
+  actions: Действия
+  schedule: Расписание (cron)
   format: Формат
+  confirmDelete: Удалить это задание ETL?
   smb:
     password: Пароль
     username: Пользователь
@@ -316,3 +327,4 @@ etl:
   rest:
     url: URL
     method: Метод
+    body: Тело (JSON)

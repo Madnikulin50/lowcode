@@ -261,6 +261,8 @@ edit:
     label: Tools
     saveAsImage:
       label: Show "Save as Image" button
+    showDataTable:
+      label: Show data table
     timeline:
       label: Timeline
       options:

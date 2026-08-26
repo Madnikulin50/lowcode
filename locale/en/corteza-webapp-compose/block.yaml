@@ -1290,6 +1290,8 @@ ai:
   askAboutRecord: Ask what AI thinking about record
   tab:
     title: AI
+  hideBrainButton:
+    label: Hide AI button on block
   prompt:
     label: Default Prompt
     placeholder: Enter default prompt
