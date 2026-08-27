@@ -59,6 +59,7 @@
         :endpoint="endpoint"
         :max-filesize="$s('compose.Page.Attachments.MaxSize', 100)"
         :accepted-files="$s('compose.Page.Attachments.Mimetypes', ['*/*'])"
+        :auth-token="authToken"
         class="flex-grow-1"
         @upload="appendAttachment"
       />
@@ -203,6 +204,8 @@ const props = defineProps({
 const emit = defineEmits(['errors'])
 const $ComposeAPI = inject('$ComposeAPI')
 const $Settings = inject('$Settings')
+const $auth = inject('$auth')
+const authToken = computed(() => $auth?.accessToken || '')
 
 const { options, themeSettings } = usePageBlockBase(props, emit)
 
@@ -226,7 +229,16 @@ const enablePreviewStyling = computed(() => {
   return mode === 'gallery'
 })
 
-function appendAttachment ({ attachmentID } = {}) {
+function unwrapUpload (payload) {
+  if (!payload || typeof payload !== 'object') return {}
+  if (payload.attachmentID) return payload
+  if (payload.response && typeof payload.response === 'object') return payload.response
+  return payload
+}
+
+function appendAttachment (payload = {}) {
+  const { attachmentID } = unwrapUpload(payload)
+  if (!attachmentID) return
   options.value.attachments.push(attachmentID)
 }
 

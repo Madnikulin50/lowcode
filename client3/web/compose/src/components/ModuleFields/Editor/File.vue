@@ -16,6 +16,7 @@
         :accepted-files="mimetypes"
         :max-filesize="maxSize"
         :form-data="uploaderFormData"
+        :auth-token="authToken"
         :labels="uploadLabels"
         class="flex-grow-1"
         @upload="appendAttachment"
@@ -72,6 +73,9 @@ const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hin
 
 const $ComposeAPI = inject('$ComposeAPI')
 const $settings = inject('$Settings')
+const $auth = inject('$auth')
+
+const authToken = computed(() => $auth?.accessToken || '')
 
 const uploaderRef = ref(null)
 
@@ -108,7 +112,11 @@ const maxSize = computed(() => {
 
 const attachmentSet = computed({
   get () {
-    return props.field.isMulti ? (value.value || []) : [(value.value || [])].filter(id => !!id)
+    // Empty single-value fields are undefined; wrapping with || [] yields [[]].
+    if (props.field.isMulti) {
+      return (value.value || []).filter(id => typeof id === 'string' && id)
+    }
+    return [value.value].filter(id => typeof id === 'string' && id)
   },
   set (v) {
     if (props.field.isMulti) {
@@ -134,7 +142,16 @@ const webcamLabels = computed(() => ({
   cameraErrorMessage: t('webcam.errors.camera'),
 }))
 
-function appendAttachment ({ attachmentID } = {}) {
+function unwrapUpload (payload) {
+  if (!payload || typeof payload !== 'object') return {}
+  if (payload.attachmentID) return payload
+  if (payload.response && typeof payload.response === 'object') return payload.response
+  return payload
+}
+
+function appendAttachment (payload = {}) {
+  const { attachmentID } = unwrapUpload(payload)
+  if (!attachmentID) return
   if (props.field.isMulti) {
     value.value = [attachmentID, ...(value.value || [])]
   } else {

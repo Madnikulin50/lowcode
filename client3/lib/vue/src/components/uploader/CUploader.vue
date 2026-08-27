@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 import numeral from 'numeral'
 
 const props = withDefaults(defineProps<{
@@ -89,6 +89,7 @@ const emit = defineEmits<{
   upload: [response: any, file: File]
 }>()
 
+const $auth = inject<{ accessToken?: string } | null>('$auth', null)
 const fileInput = ref<HTMLInputElement>()
 const isDragOver = ref(false)
 const active = ref<File | null>(null)
@@ -208,24 +209,35 @@ function uploadFile(file: File) {
   })
 
   xhr.addEventListener('load', () => {
+    let payload: any
+    try {
+      payload = JSON.parse(xhr.responseText)
+    } catch {
+      payload = xhr.responseText
+    }
+
     if (xhr.status >= 200 && xhr.status < 300) {
-      let response
-      try {
-        response = JSON.parse(xhr.responseText)
-      } catch {
-        response = xhr.responseText
+      if (payload && typeof payload === 'object') {
+        if (payload.error) {
+          const err = payload.error
+          onError(null, typeof err === 'string' ? err : (err.message || 'Upload failed'))
+          return
+        }
+        if ('response' in payload) {
+          payload = payload.response
+        }
       }
       active.value = file
       processing.value = null
       error.value = null
-      emit('upload', response, file)
+      emit('upload', payload, file)
     } else {
       let message = 'Upload failed'
-      try {
-        const err = JSON.parse(xhr.responseText)
-        message = err.message || message
-      } catch {
-        message = xhr.statusText || message
+      if (payload && typeof payload === 'object') {
+        const err = payload.error || payload
+        message = typeof err === 'string' ? err : (err.message || message)
+      } else if (xhr.statusText) {
+        message = xhr.statusText
       }
       onError(null, message)
     }
@@ -236,10 +248,9 @@ function uploadFile(file: File) {
   })
 
   xhr.open('POST', props.endpoint)
-  xhr.setRequestHeader('X-Requested-With', '')
-  xhr.setRequestHeader('Cache-Control', '')
-  if (props.authToken) {
-    xhr.setRequestHeader('Authorization', 'Bearer ' + props.authToken)
+  const token = props.authToken || $auth?.accessToken || ''
+  if (token) {
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token)
   }
 
   const formData = new FormData()

@@ -178,6 +178,7 @@
             :accepted-files="mimetypes"
             :max-filesize="maxSize"
             :max-files="attachmentField.isMulti ? undefined : 1"
+            :auth-token="$auth?.accessToken"
             class="d-none"
             @upload="appendAttachment"
           />
@@ -677,7 +678,15 @@ function openFileUpload () {
   }
 }
 
-function appendAttachment ({ attachmentID } = {}) {
+function unwrapUpload (payload) {
+  if (!payload || typeof payload !== 'object') return {}
+  if (payload.attachmentID) return payload
+  if (payload.response && typeof payload.response === 'object') return payload.response
+  return payload
+}
+
+function appendAttachment (payload = {}) {
+  const { attachmentID } = unwrapUpload(payload)
   if (!attachmentID) return
   if (attachmentField.value?.isMulti) {
     newRecord.attachmentIDs = [...newRecord.attachmentIDs, attachmentID]

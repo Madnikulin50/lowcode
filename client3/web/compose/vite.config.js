@@ -10,6 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || './',
   build: { assetsDir: 'webapp-assets' },
+  assetsInclude: ['**/*.wasm'],
   plugins: [
     {
       name: 'html-base-inject',
@@ -52,14 +53,45 @@ export default defineConfig({
         }
       },
     },
+    {
+      name: 'fix-dxf-viewer-opentype',
+      enforce: 'pre',
+      transform (code, id) {
+        if (!id.includes('dxf-viewer')) return
+        if (!code.includes('from "opentype.js"') && !code.includes("from 'opentype.js'")) return
+        const fixed = code
+          .replace(/import opentype from ["']opentype\.js["']/, 'import { parse as opentypeParse } from "opentype.js"; const opentype = { parse: opentypeParse }')
+        if (fixed !== code) {
+          console.log('FIXING opentype.js default import in:', id)
+          return fixed
+        }
+      },
+    },
   ],
   optimizeDeps: {
     include: [
       'portal-vue', 'echarts/core', 'echarts/renderers', 'echarts/charts', 'echarts/components', 'vue-echarts',
       '@fullcalendar/vue3', '@fullcalendar/core', '@fullcalendar/daygrid', '@fullcalendar/timegrid', '@fullcalendar/list', '@fullcalendar/bootstrap',
       'markdown-it', 'html2pdf.js', 'docx', 'vue-tweet-embed', 'mxgraph', 'v-jsoneditor',
+      'docx-preview', 'xlsx', 'pptx-preview', 'jszip', 'three',
     ],
-    exclude: ['vue-demi', 'vue-grid-layout'],
+    exclude: ['vue-demi', 'vue-grid-layout', 'web-ifc', '@thatopen/components', '@thatopen/fragments', 'dxf-viewer', 'opentype.js'],
+    esbuildOptions: {
+      plugins: [
+        {
+          name: 'opentype-default-export',
+          setup (build) {
+            build.onLoad({ filter: /[\\/]dxf-viewer[\\/].*DxfWorker\.js$/ }, (args) => {
+              const contents = readFileSync(args.path, 'utf8').replace(
+                /import opentype from ["']opentype\.js["']/,
+                'import { parse as opentypeParse } from "opentype.js"; const opentype = { parse: opentypeParse }',
+              )
+              return { contents, loader: 'js' }
+            })
+          },
+        },
+      ],
+    },
   },
   resolve: {
     alias: [
@@ -74,6 +106,10 @@ export default defineConfig({
       { find: 'mxgraph', replacement: resolve(__dirname, 'node_modules/mxgraph/javascript/dist/build.js') },
       { find: 'v-jsoneditor', replacement: resolve(__dirname, 'node_modules/v-jsoneditor/dist/v-jsoneditor.min.js') },
       { find: 'file-saver', replacement: resolve(__dirname, 'node_modules/file-saver/dist/FileSaver.min.js') },
+      // dxf-viewer does `import opentype from "opentype.js"`, but opentype.mjs
+      // only has named exports. Match the bare specifier only so the shim can
+      // import the real file via opentype.js/dist/opentype.mjs.
+      { find: /^opentype\.js$/, replacement: resolve(__dirname, 'src/shims/opentype-default.js') },
     ],
     // corteza-lib/vue/dist is aliased to a file physically living under
     // client3/lib/vue, so plain Node resolution finds its own
@@ -91,7 +127,7 @@ export default defineConfig({
     // when the editor is reconfigured/remounted (e.g. Builder.vue's
     // editBlock). Force a single shared instance here too.
     dedupe: [
-      'pinia', 'vue', 'vue-router', 'vue-i18n',
+      'pinia', 'vue', 'vue-router', 'vue-i18n', 'three',
       '@tiptap/core', '@tiptap/vue-3', '@tiptap/suggestion', '@tiptap/starter-kit',
       '@tiptap/extension-list', '@tiptap/extension-mention', '@tiptap/extension-emoji',
       '@tiptap/extension-table', '@tiptap/extension-text-align', '@tiptap/extension-text-style',

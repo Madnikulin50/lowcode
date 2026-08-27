@@ -3,8 +3,15 @@ general:
     attachmentFileInfo: '(File size: {{0}}, uploaded {{1}})'
     download: Download
     previewUnavailable: Preview unavailable
+  loadFailed: Failed to load preview
+  tooLarge: File is too large to preview in the browser. Please download it.
+  truncated: 'Showing #0 of #1 rows. Download the file to see all data.'
   tooltip:
     dragAndDrop: Drag and drop to change order
+hint:
+  dwg: Native DWG drawings cannot be previewed in the browser yet. Download the file, or export DXF from CAD software and attach that instead.
+  archicad: Native ArchiCAD projects cannot be opened in the browser. In ArchiCAD use File → Save as → IFC and attach that file.
+  bimx: Open this Hyper-model in the BIMx app, or export IFC from ArchiCAD for in-app 3D preview.
 pdf:
   clickToRetry: Click to retry
   downloadForAll: Download to see all pages

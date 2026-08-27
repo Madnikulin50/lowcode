@@ -1,9 +1,11 @@
 <template>
   <div>
     <button
-      v-b-tooltip.noninteractive.hover="{ title: labels.tooltip, boundary: 'body' }"
       class="btn btn-light"
       :class="buttonClass"
+      :title="labels.tooltip"
+      data-bs-toggle="tooltip"
+      data-bs-boundary="body"
       @click.prevent="openWebcamModal"
     >
       <slot />

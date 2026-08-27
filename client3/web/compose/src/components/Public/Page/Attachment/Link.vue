@@ -28,18 +28,14 @@ const props = defineProps({
 
 const canPreview = computed(() => {
   const meta = props.attachment.meta || {}
-  const type = (meta.preview || meta.original || {}).mimetype
+  const type = (meta.original || meta.preview || {}).mimetype
   const src = props.attachment.url
-  return canPreviewCheck({ type, src, name: props.attachment.name })
+  return canPreviewCheck({ type, src, name: props.attachment.name, meta })
 })
 
 function openLightbox() {
-  if (props.attachment.meta.original.ext === 'pdf') {
-    window.open(props.attachment.url, '_blank')
-  } else {
-    window.dispatchEvent(new CustomEvent('showAttachmentsModal', {
-      detail: { ...props.attachment },
-    }))
-  }
+  window.dispatchEvent(new CustomEvent('showAttachmentsModal', {
+    detail: { ...props.attachment },
+  }))
 }
 </script>

@@ -108,6 +108,7 @@ import { compose, NoID } from 'corteza-lib/js/dist'
 import RecordBase from 'corteza-webapp-compose/src/components/PageBlocks/RecordBase'
 import RecordEditor from 'corteza-webapp-compose/src/components/PageBlocks/RecordEditor'
 import recordMixin from 'corteza-webapp-compose/src/mixins/record'
+import { recordCreateLocation } from 'corteza-webapp-compose/src/lib/record-create-nav'
 
 const { t } = useI18n()
 const store = useStore()
@@ -301,19 +302,23 @@ function handleBack () {
 }
 
 function handleAdd () {
-  router.push({ name: 'admin.modules.record.create', params: { moduleID: module.value.moduleID, edit: true } })
+  router.push({ name: 'admin.modules.record.create', params: { moduleID: module.value.moduleID } })
 }
 
 function handleClone () {
-  router.push({ name: 'admin.modules.record.create', params: { moduleID: module.value.moduleID, values: record.value.values, edit: true } })
+  router.push(recordCreateLocation({
+    name: 'admin.modules.record.create',
+    moduleID: module.value.moduleID,
+    values: record.value.values,
+  }))
 }
 
 function handleEdit () {
-  router.push({ name: 'admin.modules.record.edit', params: { moduleID: module.value.moduleID, edit: true } })
+  router.push({ name: 'admin.modules.record.edit', params: { moduleID: module.value.moduleID, recordID: record.value.recordID } })
 }
 
 function handleView () {
-  router.push({ name: 'admin.modules.record.view', params: { moduleID: module.value.moduleID, edit: false } })
+  router.push({ name: 'admin.modules.record.view', params: { moduleID: module.value.moduleID, recordID: record.value.recordID } })
 }
 
 function handleRedirectToPrevOrNext (recordID) {

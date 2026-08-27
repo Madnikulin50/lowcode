@@ -4,6 +4,7 @@
     :src="(attachment || {}).document || (attachment || {}).src"
     :name="(attachment || {}).name"
     :alt="(attachment || {}).name"
+    :mime="attachmentMime"
     :labels="previewLabels"
     :meta="(attachment || {}).meta"
     @close="attachment=undefined"
@@ -27,7 +28,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'preview' } })
-import { ref, computed, onMounted, onBeforeUnmount, useAttrs } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { components } from 'corteza-lib/vue/dist'
 
@@ -41,6 +42,11 @@ const show = computed({
   set: (val) => { if (!val) attachment.value = undefined },
 })
 
+const attachmentMime = computed(() => {
+  const meta = (attachment.value || {}).meta || {}
+  return (meta.original || meta.preview || {}).mimetype
+})
+
 const previewLabels = computed(() => ({
   loading: $t('pdf.loading'),
   downloadForAll: $t('pdf.downloadForAll'),
@@ -49,6 +55,12 @@ const previewLabels = computed(() => ({
   noPages: $t('pdf.noPages'),
   clickToRetry: $t('pdf.clickToRetry'),
   previewUnavailable: $t('label.previewUnavailable'),
+  loadFailed: $t('general.loadFailed'),
+  tooLarge: $t('general.tooLarge'),
+  truncated: $t('general.truncated'),
+  hintDwg: $t('hint.dwg'),
+  hintArchicad: $t('hint.archicad'),
+  hintBimx: $t('hint.bimx'),
 }))
 
 function onKeyUp({ key }) {

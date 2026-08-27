@@ -106,7 +106,7 @@
         </button>
 
         <div class="rl-table-wrap table-responsive flex-grow-1">
-        <table data-test-id="table-record-list" class="table record-list-table mh-100 h-100 mb-0 table-hover" :class="{ 'table-sm': options.compactRows }">
+        <table data-test-id="table-record-list" class="table record-list-table mb-0 table-hover" :class="{ 'table-sm': options.compactRows }">
           <thead :class="{ 'sticky-top': options.stickyHeader !== false }">
             <tr :class="showingDeletedRecords ? 'table-warning' : ''">
               <th v-if="options.draggable && inlineEditing" style="width: 0%"></th>
@@ -462,6 +462,7 @@ import BulkEditModal from 'corteza-webapp-compose/src/components/Public/Record/B
 import ExporterModal from 'corteza-webapp-compose/src/components/Public/Record/Exporter'
 import ImporterModal from 'corteza-webapp-compose/src/components/Public/Record/Importer'
 import { getItem, removeItem, setItem } from 'corteza-webapp-compose/src/lib/local-storage'
+import { recordCreateLocation } from 'corteza-webapp-compose/src/lib/record-create-nav'
 import { evalPrefilterOrSkip, formatActiveFilterOperator, isBetweenOperator, isFieldInFilter, queryToFilter, convertRecordListFilter, getFieldFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import draggable from 'vuedraggable'
 import Wrap from './Wrap/index.js'
@@ -1614,7 +1615,12 @@ function handleAddRecord() {
   const refRecord = options.value.refField && props.record?.recordID !== NoID ? props.record : undefined
   const pageID = recordPageID.value
   if (!(pageID || options.value.rowCreateUrl)) return
-  const route = { name: options.value.rowCreateUrl || 'page.record.create', params: { pageID, refRecord }, query: null, edit: true }
+  const route = recordCreateLocation({
+    name: options.value.rowCreateUrl || 'page.record.create',
+    pageID,
+    moduleID: options.value.rowCreateUrl === 'admin.modules.record.create' ? recordListModule.value?.moduleID : undefined,
+    refRecord,
+  })
   if (props.mode === 'modal' || options.value.addRecordDisplayOption === 'modal') {
     window.dispatchEvent(new CustomEvent('show-record-modal', { detail: { recordID: NoID, recordPageID: recordPageID.value, refRecord, edit: true } }))
   } else if (options.value.addRecordDisplayOption === 'newTab') { window.open($router.resolve(route).href) }
@@ -1622,18 +1628,22 @@ function handleAddRecord() {
 }
 
 function viewRecordRoute(recordID) {
-  if (props.mode === 'modal') return { name: $route.name, params: $route.params, query: { ...$route.query, recordPageID: recordPageID.value, recordID }, edit: false }
-  return { name: options.value.rowViewUrl || 'page.record', params: { pageID: recordPageID.value, recordID }, query: null, edit: false }
+  if (props.mode === 'modal') return { name: $route.name, params: $route.params, query: { ...$route.query, recordPageID: recordPageID.value, recordID } }
+  return { name: options.value.rowViewUrl || 'page.record', params: { pageID: recordPageID.value, recordID } }
 }
 
 function editRecordRoute(recordID) {
-  if (props.mode === 'modal') return { name: $route.name, params: $route.params, query: { ...$route.query, recordPageID: recordPageID.value, recordID }, edit: true }
-  return { name: options.value.rowEditUrl || 'page.record.edit', params: { pageID: recordPageID.value, recordID }, query: null, edit: true }
+  if (props.mode === 'modal') return { name: $route.name, params: $route.params, query: { ...$route.query, recordPageID: recordPageID.value, recordID } }
+  return { name: options.value.rowEditUrl || 'page.record.edit', params: { pageID: recordPageID.value, recordID } }
 }
 
 function handleCloneRecordAction(recordID, values) {
   if (props.mode === 'modal') { window.dispatchEvent(new CustomEvent('show-record-modal', { detail: { recordID, recordPageID: recordPageID.value, values, edit: true } })); return }
-  $router.push({ name: options.value.rowCreateUrl || 'page.record.create', params: { pageID: recordPageID.value, values }, query: null, edit: true })
+  $router.push(recordCreateLocation({
+    name: options.value.rowCreateUrl || 'page.record.create',
+    pageID: recordPageID.value,
+    values,
+  }))
 }
 
 function toCSV(rows, headers) {
@@ -1715,9 +1725,12 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
   border-radius: 0.5rem;
   border: 1px solid var(--bs-border-color, #dee2e6);
   width: 100%;
+  min-height: 0;
+  overflow: auto;
 }
 
 .record-list-table {
+  height: auto;
   border-collapse: separate;
   border-spacing: 0;
 
@@ -1737,6 +1750,10 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
   }
 
   tbody {
+    tr {
+      height: auto;
+    }
+
     td {
       padding: 0.625rem 0.75rem;
       vertical-align: middle;

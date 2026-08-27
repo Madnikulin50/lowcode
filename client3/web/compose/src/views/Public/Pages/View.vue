@@ -5,13 +5,15 @@
   >
     <Teleport
       v-if="!isRecordPage"
+      defer
       to="#topbar-title"
     >
-      {{ pageTitle }}
+      <span>{{ pageTitle }}</span>
     </Teleport>
 
     <Teleport
       v-if="!isRecordPage"
+      defer
       to="#topbar-tools"
     >
       <div class="d-flex align-items-center flex-nowrap gap-1">

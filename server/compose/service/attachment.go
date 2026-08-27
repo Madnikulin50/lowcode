@@ -285,7 +285,7 @@ func (svc attachment) CreatePageAttachment(ctx context.Context, namespaceID uint
 				allowedTypes = systemService.CurrentSettings.Compose.Page.Attachments.Mimetypes
 			)
 
-			if err = svc.verifySizeAndMimetype(fh, size, maxSize, allowedTypes); err != nil {
+			if err = svc.verifySizeAndMimetype(fh, name, size, maxSize, allowedTypes); err != nil {
 				return err
 			}
 		}
@@ -321,7 +321,7 @@ func (svc attachment) CreateIconAttachment(ctx context.Context, name string, siz
 				allowedTypes = systemService.CurrentSettings.Compose.Icon.Attachments.Mimetypes
 			)
 
-			if err = svc.verifySizeAndMimetype(fh, size, maxSize, allowedTypes); err != nil {
+			if err = svc.verifySizeAndMimetype(fh, name, size, maxSize, allowedTypes); err != nil {
 				return err
 			}
 		}
@@ -337,7 +337,7 @@ func (svc attachment) CreateIconAttachment(ctx context.Context, name string, siz
 	return att, svc.recordAction(ctx, aProps, AttachmentActionCreate, err)
 }
 
-func (svc attachment) verifySizeAndMimetype(fh io.ReadSeeker, size, maxSize int64, allowedTypes []string) (err error) {
+func (svc attachment) verifySizeAndMimetype(fh io.ReadSeeker, filename string, size, maxSize int64, allowedTypes []string) (err error) {
 	// Verify size and type of the uploaded page attachment
 	// Max size & allowed mime-types are pulled from the current settings
 	var (
@@ -353,7 +353,7 @@ func (svc attachment) verifySizeAndMimetype(fh io.ReadSeeker, size, maxSize int6
 
 	if mimeType, err = svc.extractMimetype(fh); err != nil {
 		return err
-	} else if !svc.checkMimeType(mimeType, allowedTypes...) {
+	} else if !svc.checkMimeType(mimeType, filename, allowedTypes...) {
 		return AttachmentErrNotAllowedToUploadThisType()
 	}
 
@@ -442,7 +442,7 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 
 			if mimeType, err = svc.extractMimetype(fh); err != nil {
 				return err
-			} else if !svc.checkMimeType(mimeType, allowedTypes...) {
+			} else if !svc.checkMimeType(mimeType, name, allowedTypes...) {
 				return AttachmentErrNotAllowedToUploadThisType().Apply(errors.Meta("mimetype", mimeType))
 			}
 		}
@@ -480,7 +480,7 @@ func (svc attachment) CreateNamespaceAttachment(ctx context.Context, name string
 				allowedTypes = systemService.CurrentSettings.Compose.Namespace.Attachments.Mimetypes
 			)
 
-			if err = svc.verifySizeAndMimetype(fh, size, maxSize, allowedTypes); err != nil {
+			if err = svc.verifySizeAndMimetype(fh, name, size, maxSize, allowedTypes); err != nil {
 				return err
 			}
 		}
@@ -697,11 +697,13 @@ func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment
 	return svc.objects.Save(att.PreviewUrl, buf)
 }
 
-func (attachment) checkMimeType(test *mimetype.MIME, vv ...string) bool {
+func (attachment) checkMimeType(test *mimetype.MIME, filename string, vv ...string) bool {
 	if len(vv) == 0 {
 		// return true if there are no type constraints to check against
 		return true
 	}
+
+	fileExt := strings.ToLower(path.Ext(filename))
 
 	for _, v := range vv {
 		v = strings.TrimSpace(v)
@@ -709,7 +711,7 @@ func (attachment) checkMimeType(test *mimetype.MIME, vv ...string) bool {
 			return true
 		}
 		if strings.HasPrefix(v, ".") {
-			if strings.EqualFold(test.Extension(), v) || strings.EqualFold("."+test.Extension(), v) {
+			if strings.EqualFold(test.Extension(), v) || strings.EqualFold("."+test.Extension(), v) || strings.EqualFold(fileExt, v) {
 				return true
 			}
 			continue
@@ -771,6 +773,26 @@ func fieldAllowedAttachmentTypes(f *types.ModuleField, fallback []string) []stri
 		"application/rtf",
 		"text/plain",
 		"application/zip",
+		"image/vnd.dxf",
+		"application/dxf",
+		"application/x-dxf",
+		".dxf",
+		"image/vnd.dwg",
+		"application/acad",
+		"application/x-dwg",
+		"application/dwg",
+		".dwg",
+		"application/ifc",
+		"application/x-ifc",
+		"model/ifc",
+		"application/x-step",
+		"application/ifczip",
+		".ifc",
+		".ifczip",
+		".frag",
+		".pln",
+		".pla",
+		".bimx",
 	}
 }
 

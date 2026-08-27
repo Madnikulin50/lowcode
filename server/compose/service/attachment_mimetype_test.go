@@ -36,6 +36,13 @@ func TestFieldAllowedAttachmentTypes(t *testing.T) {
 	if !foundPDF {
 		t.Fatalf("documents-only list missing application/pdf: %v", got)
 	}
+	wantExt := map[string]bool{".dxf": true, ".dwg": true, ".ifc": true, ".pln": true, ".bimx": true}
+	for _, m := range got {
+		delete(wantExt, m)
+	}
+	if len(wantExt) > 0 {
+		t.Fatalf("documents-only list missing CAD/BIM extensions %v in %v", wantExt, got)
+	}
 
 	explicit := &types.ModuleField{Kind: "File", Options: types.ModuleFieldOptions{
 		"mimetypes":      "application/pdf, .docx",

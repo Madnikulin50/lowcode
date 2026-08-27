@@ -13,6 +13,7 @@ export {
   CPreviewLightbox,
   canPreview,
   getExtensionIconType,
+  getFileExt,
 } from './filePreview'
 
 export {

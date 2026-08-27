@@ -11,7 +11,7 @@
       v-else-if="mode === 'list'"
     >
       <draggable
-            item-key="id"
+        item-key="attachmentID"
         v-model="attachments"
         :disabled="!enableOrder"
         handle=".handle"
@@ -65,6 +65,7 @@
                 </div>
 
                 <i18next
+                  v-if="element.meta?.original?.size != null"
                   path="general.label.attachmentFileInfo"
                   tag="small"
                   class="d-block text-muted"
@@ -94,6 +95,7 @@
           :src="inlineUrl(a)"
           :title="a.name"
           :meta="a.meta"
+          :mime="(a.meta?.original || a.meta?.preview || {}).mimetype"
           :name="a.name"
           :alt="a.name"
           :preview-style="{ width: 'unset', ...inlineCustomStyles(a) }"
@@ -131,7 +133,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'preview' } })
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, watch, onBeforeUnmount, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import numeral from 'numeral'
 import moment from 'moment'
@@ -142,7 +144,7 @@ import { url, components } from 'corteza-lib/vue/dist'
 
 const { CPreviewInline, canPreview, getExtensionIconType } = components
 const { t: $t } = useI18n({ useScope: 'global' })
-const $ComposeAPI = window.__composeAPI
+const $ComposeAPI = inject('$ComposeAPI', typeof window !== 'undefined' ? window.__composeAPI : undefined)
 
 const props = defineProps({
   enableDelete: { type: Boolean },
@@ -167,20 +169,28 @@ const previewLabels = {
   firstPagePreview: $t('pdf.firstPagePreview'),
   pageLoadFailed: $t('pdf.pageLoadFailed'),
   pageLoading: $t('pdf.pageLoading'),
+  loadFailed: $t('general.loadFailed'),
+  tooLarge: $t('general.tooLarge'),
+  truncated: $t('general.truncated'),
+  hintDwg: $t('hint.dwg'),
+  hintArchicad: $t('hint.archicad'),
+  hintBimx: $t('hint.bimx'),
+  previewUnavailable: $t('label.previewUnavailable'),
 }
 
 const canPreviewCheck = (a) => {
   const meta = a.meta || {}
-  const type = (meta.preview || meta.original || {}).mimetype
+  const type = (meta.original || meta.preview || {}).mimetype
   const src = inlineUrl(a)
-  return canPreview({ type, src, name: a.name })
+  return canPreview({ type, src, name: a.name, meta })
 }
 
 const baseURL = url.Make({ url: window.CortezaAPI + '/compose' })
 
 watch(() => props.set, (set) => {
-  const att = set.map(a => {
-    if (typeof a === 'object') {
+  const list = Array.isArray(set) ? set : []
+  const att = list.map(a => {
+    if (a && typeof a === 'object' && !Array.isArray(a)) {
       return new shared.Attachment(a, baseURL)
     } else {
       return null
@@ -190,8 +200,8 @@ watch(() => props.set, (set) => {
   const namespaceID = props.namespace.namespaceID
   processing.value = true
 
-  Promise.all(Object.entries(set).map(([index, attachmentID]) => {
-    if (typeof attachmentID === 'string') {
+  Promise.all(Object.entries(list).map(([index, attachmentID]) => {
+    if (typeof attachmentID === 'string' && $ComposeAPI?.attachmentRead) {
       return $ComposeAPI.attachmentRead({ kind: props.kind, attachmentID, namespaceID }).then(a => {
         att.splice(index, 1, new shared.Attachment(a, baseURL))
       })
@@ -215,7 +225,11 @@ watch(() => props.set, (set) => {
 }, { immediate: true })
 
 function size(a) {
-  return numeral(a.meta.original.size).format('0b')
+  const bytes = a?.meta?.original?.size
+  if (bytes == null) {
+    return ''
+  }
+  return numeral(bytes).format('0b')
 }
 
 function uploadedAt(a) {
@@ -223,18 +237,14 @@ function uploadedAt(a) {
 }
 
 function openLightbox(e) {
-  if (ext(e) === 'pdf') {
-    window.open(e.url, '_blank')
-  } else {
-    window.dispatchEvent(new CustomEvent('showAttachmentsModal', {
-      detail: e,
-    }))
-  }
+  window.dispatchEvent(new CustomEvent('showAttachmentsModal', {
+    detail: e,
+  }))
 }
 
 function deleteAttachment(index) {
   attachments.value.splice(index, 1)
-  emit('update.set', attachments.value.map(a => a.attachmentID))
+  emit('update:set', attachments.value.map(a => a.attachmentID))
 }
 
 function ext(a) {

@@ -201,7 +201,7 @@ export default {
               ]
               relatedRecords.forEach(moduleID => emitEvent('module-records-updated', { moduleID }))
 
-              this.$router.push({ name: route, params: { ...this.$route.params, recordID: record.recordID, edit: false } })
+              this.$router.push({ name: route, params: { ...this.$route.params, recordID: record.recordID } })
             }
 
             if (this.page.meta.notifications.enabled) {
@@ -267,7 +267,7 @@ export default {
             this.processing = false
           } else {
             this.initialRecordState = this.record.clone()
-            this.$router.push({ name: route, params: { ...this.$route.params, recordID: record.recordID, edit: false } })
+            this.$router.push({ name: route, params: { ...this.$route.params, recordID: record.recordID } })
             this.toastSuccess(this.$t(`notification.record.${isNew ? 'create' : 'update'}Success`))
           }
         }).catch(this.toastErrorHandler(this.$t(`notification.record.${isNew ? 'create' : 'update'}Failed`)))

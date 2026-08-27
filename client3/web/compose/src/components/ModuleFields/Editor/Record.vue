@@ -35,7 +35,7 @@
             @search="search"
           >
             <template #option="option">
-              <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="option" :namespace="namespace" disable-click value-only />
+              <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="optionAsRecord(option)" :namespace="namespace" disable-click value-only />
               <template v-else>{{ option.recordID }}</template>
             </template>
             <template #selected-option="option">
@@ -64,7 +64,7 @@
             @search="search"
           >
             <template #option="option">
-              <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="option" :namespace="namespace" disable-click value-only />
+              <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="optionAsRecord(option)" :namespace="namespace" disable-click value-only />
               <template v-else>{{ option.recordID }}</template>
             </template>
             <template #list-footer>
@@ -96,7 +96,7 @@
             @search="search"
           >
             <template #option="option">
-              <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="option" :namespace="namespace" disable-click value-only />
+              <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="optionAsRecord(option)" :namespace="namespace" disable-click value-only />
               <template v-else>{{ option.recordID }}</template>
             </template>
             <template #selected-option="option">
@@ -133,7 +133,7 @@
           @search="search"
         >
           <template #option="option">
-            <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="option" :namespace="namespace" disable-click value-only />
+            <FieldViewer v-if="labelField && option.values[labelField.name]" :field="labelField" :record="optionAsRecord(option)" :namespace="namespace" disable-click value-only />
             <template v-else>{{ option.recordID }}</template>
           </template>
           <template #selected-option>
@@ -157,7 +157,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'field' } })
-import { ref, computed, inject, watch, onBeforeUnmount, onMounted } from 'vue'
+import { ref, shallowRef, computed, inject, watch, onBeforeUnmount, onMounted, markRaw } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { debounce } from 'lodash'
@@ -167,6 +167,7 @@ import { queryToFilter, evalPrefilterOrSkip, isFieldInFilter } from 'corteza-web
 import { useModuleStore } from 'corteza-webapp-compose/src/stores/module'
 import { useRecordStore } from 'corteza-webapp-compose/src/stores/record'
 import { usePageStore } from 'corteza-webapp-compose/src/stores/page'
+import { recordCreateLocation } from 'corteza-webapp-compose/src/lib/record-create-nav'
 import { useEditorBase } from './base'
 import Pagination from '../Common/Pagination.vue'
 import FieldViewer from '../Viewer'
@@ -199,7 +200,7 @@ const pageStore = usePageStore()
 const processing = ref(false)
 const cancelRequest = ref(null)
 const query = ref('')
-const records = ref([])
+const records = shallowRef([])
 const singleSelect = ref(null)
 const filter = ref({ query: '', sort: '', limit: 10, pageCursor: '', prevPage: '', nextPage: '' })
 
@@ -276,12 +277,22 @@ function refetchOnPrefilterValueChange ({ detail: { fieldName } = {} } = {}) {
   }
 }
 
+function optionAsRecord (option) {
+  if (!option) return option
+  if (option instanceof compose.Record) return option
+  if (!module.value) return option
+  const found = records.value.find(r => r.recordID === option.recordID)
+  if (found) return found
+  return markRaw(new compose.Record(module.value, option))
+}
+
 function getRecordByID (recordID) {
   const id = typeof recordID === 'object' && recordID ? recordID.recordID : recordID
-  if (!id || !module.value) return { values: {} }
+  if (!module.value) return { values: {} }
+  if (!id) return markRaw(new compose.Record(module.value))
   const found = recordStore.findByID(id)
-  if (!found) return { values: {} }
-  return new compose.Record(module.value, found)
+  if (!found) return markRaw(new compose.Record(module.value))
+  return markRaw(new compose.Record(module.value, found))
 }
 
 function getRecord (index = undefined) {
@@ -389,7 +400,7 @@ function fetchPrefiltered (q = filter.value) {
       filter.value.nextPage = f.nextPage
       filter.value.prevPage = f.prevPage
       recordStore.updateRecords(set)
-      records.value = set.map(r => new compose.Record(module.value, r))
+      records.value = set.map(r => markRaw(new compose.Record(module.value, r)))
       formatRecordValues(set.map(({ recordID }) => recordID))
       processing.value = false
     })
@@ -425,7 +436,7 @@ function addRecordThroughRecordSelectField () {
   if (page === undefined) return
   const { pageID } = page
 
-  const route = { name: 'page.record.create', params: { pageID, edit: true } }
+  const route = recordCreateLocation({ pageID })
 
   const { recordSelectorAddRecordDisplayOption } = props.extraOptions
 

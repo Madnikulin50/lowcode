@@ -51,6 +51,7 @@ import { useStore } from '../../store'
 import draggable from 'vuedraggable'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'
 import { evalPrefilterOrSkip, getFieldFilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { recordCreateLocation } from 'corteza-webapp-compose/src/lib/record-create-nav'
 import { debounce } from 'lodash'
 import Wrap from './Wrap/index.js'
 
@@ -187,12 +188,11 @@ function createNewRecord() {
   const { pageID } = roRecordPage.value
   const values = {}
   if (gf) values[gf] = group
-  const route = {
-    name: 'page.record.create',
-    params: { pageID, values, refRecord: props.record },
-    query: null,
-    edit: true,
-  }
+  const route = recordCreateLocation({
+    pageID,
+    values,
+    refRecord: props.record,
+  })
   if (inModal.value || options.value.displayOption === 'modal') {
     window.dispatchEvent(new CustomEvent('show-record-modal', { detail: { recordID: NoID, recordPageID: pageID, values, refRecord: props.record, edit: true } }))
   } else if (options.value.displayOption === 'newTab') {

@@ -2,13 +2,15 @@
   <div class="d-flex flex-column flex-grow-1 w-100 h-100">
     <Teleport
       v-if="viewAlive"
+      defer
       :to="portalTopbarTitle"
     >
-      {{ title }}
+      <span>{{ title }}</span>
     </Teleport>
 
     <Teleport
       v-if="viewAlive"
+      defer
       to="#topbar-tools"
     >
       <div class="d-flex align-items-center flex-nowrap gap-1">
@@ -122,6 +124,7 @@
 
     <Teleport
       v-if="viewAlive"
+      defer
       :to="portalRecordToolbar"
     >
       <record-toolbar
@@ -266,6 +269,7 @@ import { useRecordStore } from '../../../../store/record'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import { normalizeXYWH } from 'corteza-webapp-compose/src/lib/block-layout'
+import { takeRecordCreate, recordCreateLocation } from 'corteza-webapp-compose/src/lib/record-create-nav'
 import bus from '../../../../lib/bus'
 import Grid from 'corteza-webapp-compose/src/components/Public/Page/Grid'
 import RecordToolbar from 'corteza-webapp-compose/src/components/Common/RecordToolbar'
@@ -327,6 +331,14 @@ const activeDraftKey = ref(null)
 
 const viewAlive = ref(true)
 let refreshSeq = 0
+const pendingCreate = ref(null)
+
+function consumePendingCreate () {
+  if (!pendingCreate.value) {
+    pendingCreate.value = takeRecordCreate()
+  }
+  return pendingCreate.value || {}
+}
 
 const recordID = computed(() => props.recordID || route.params.recordID || '')
 
@@ -573,21 +585,26 @@ async function loadRecord() {
           throw e
         })
     } else {
-      if (props.refRecord?.recordID && props.refRecord.recordID !== NoID) {
-        recordStore.updateRecords([props.refRecord])
+      const { userID } = $auth.user
+      const pending = consumePendingCreate()
+      const refRecord = (props.refRecord?.recordID && props.refRecord.recordID !== NoID)
+        ? props.refRecord
+        : pending.refRecord
+      const values = { ...(pending.values || {}), ...(props.values || {}) }
 
-        mod.fields.filter(f => f.kind === 'Record' && f.options.moduleID === props.refRecord.moduleID).forEach(f => {
-          if (f.isMulti) {
-            props.values[f.name] = [props.refRecord.recordID]
-          } else {
-            props.values[f.name] = props.refRecord.recordID
-          }
+      if (refRecord?.recordID && refRecord.recordID !== NoID) {
+        if (props.refRecord?.serialize) {
+          recordStore.updateRecords([props.refRecord])
+        }
+
+        mod.fields.filter(f => f.kind === 'Record' && f.options.moduleID === refRecord.moduleID).forEach(f => {
+          if (values[f.name] != null && values[f.name] !== '') return
+          values[f.name] = f.isMulti ? [refRecord.recordID] : refRecord.recordID
         })
       }
 
-      const { userID } = $auth.user
       await new Promise(resolve => setTimeout(resolve, 300))
-      return new compose.Record(mod, { ownedBy: userID, values: props.values })
+      return new compose.Record(mod, { ownedBy: userID, values })
     }
   }
 }
@@ -630,7 +647,7 @@ function handleAdd() {
       emit('handle-record-redirect', { recordID: NoID, recordPageID: props.page.pageID, edit: true })
     }
   } else {
-    router.push({ name: 'page.record.create', params: { pageID: props.page.pageID, edit: true } })
+    router.push(recordCreateLocation({ pageID: props.page.pageID }))
   }
 }
 
@@ -652,7 +669,7 @@ function handleClone() {
       emit('handle-record-redirect', { recordID: NoID, recordPageID: props.page.pageID, values: record.value?.values, edit: true })
     }
   } else {
-    router.push({ name: 'page.record.create', params: { pageID: props.page.pageID, values: record.value?.values, edit: true } })
+    router.push(recordCreateLocation({ pageID: props.page.pageID, values: record.value?.values }))
   }
 }
 
@@ -662,7 +679,7 @@ function handleEdit() {
   if (props.inModal) {
     emit('handle-record-redirect', { recordID: recordID.value, recordPageID: props.page.pageID, edit: true })
   } else {
-    router.push({ name: 'page.record.edit', params: { recordID: recordID.value, pageID: props.page.pageID, edit: true } })
+    router.push({ name: 'page.record.edit', params: { recordID: recordID.value, pageID: props.page.pageID } })
   }
 }
 
@@ -680,7 +697,7 @@ function handleView() {
       emit('handle-record-redirect', { recordID: recordID.value, recordPageID: props.page.pageID, edit: false })
     }
   } else {
-    router.push({ name: 'page.record', params: { recordID: recordID.value, pageID: props.page.pageID, edit: false } })
+    router.push({ name: 'page.record', params: { recordID: recordID.value, pageID: props.page.pageID } })
   }
   processing.value = false
 }
@@ -737,7 +754,7 @@ function openDraftRecord() {
   } else if (!isNew.value) {
     router.push({ name: 'page.record', params: { ...route.params, recordID: recordID.value }, query })
   } else {
-    router.push({ name: 'page.record.create', params: { pageID: props.page.pageID, edit: true } })
+    router.push(recordCreateLocation({ pageID: props.page.pageID }))
   }
 }
 
@@ -970,7 +987,7 @@ function generateChangeID() {
   return `local-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`
 }
 
-const handleFormSubmit = throttle(async function (route = 'page.record') {
+const handleFormSubmit = throttle(async function (routeName = 'page.record') {
   processingAction.value = 'submit'
   processing.value = true
 
@@ -1073,7 +1090,7 @@ const handleFormSubmit = throttle(async function (route = 'page.record') {
             ...new Set(records.filter(r => r.module.moduleID !== props.module.moduleID).map(r => r.module.moduleID)),
           ]
           relatedRecords.forEach(moduleID => bus.$emit('module-records-updated', { moduleID }))
-          router.push({ name: route, params: { ...route.params, recordID: rec.recordID, edit: false } })
+          router.push({ name: routeName, params: { ...route.params, recordID: rec.recordID } })
         }
 
         if (props.page.meta?.notifications?.enabled) {

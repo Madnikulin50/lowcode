@@ -13,13 +13,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue'
-import { InlineIMG as IMG, PDF, NoPreview } from './common/types'
+import { computed, useAttrs, type Component } from 'vue'
+import { InlineIMG as IMG, PDF, DOCX, XLSX, PPTX, CAD, BIM, Hint, NoPreview } from './common/types'
 import { getComponent } from './common/index.js'
 
 const attrs = useAttrs()
 
+const previewComponents: Record<string, Component> = {
+  IMG, PDF, DOCX, XLSX, PPTX, CAD, BIM, Hint, NoPreview,
+}
+
 const previewType = computed(() => {
-  return getComponent({ type: attrs.mime as string, src: attrs.src as string, name: attrs.name as string })
+  const name = getComponent({
+    type: attrs.mime as string,
+    src: attrs.src as string,
+    name: attrs.name as string,
+    meta: attrs.meta as Record<string, any>,
+  })
+  return name ? previewComponents[name] : undefined
 })
 </script>

@@ -202,7 +202,16 @@ const definitions: Record<string, PromptDefinition> = {
           console.debug('reroute to %s via prompt in %d sec', name, delay, { namespaceID, slug, moduleID, recordID })
 
           const hasValues = isNew && Object.keys(values).length > 0
-          const routeParams = { name, params: { recordID, pageID, slug, edit, ...(hasValues ? { values } : {}) } }
+          const params = {}
+          if (slug) params.slug = slug
+          if (pageID) params.pageID = pageID
+          if (recordID && recordID !== NoID) params.recordID = recordID
+          const routeParams = { name, params }
+          if (hasValues) {
+            try {
+              sessionStorage.setItem('compose.pendingRecordCreate', JSON.stringify({ ts: Date.now(), values, refRecord: null }))
+            } catch {}
+          }
           if (reloadPage && !hasValues) {
             window.location.reload()
           } else if (reloadPage && hasValues) {
