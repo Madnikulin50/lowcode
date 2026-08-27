@@ -59,6 +59,15 @@ const (
 
 type statusCtxKey struct{}
 
+// EnvKey identifies chat environment values stored on context (namespace/page/module).
+type EnvKey struct{ name string }
+
+var (
+	EnvNamespaceID = EnvKey{"namespaceID"}
+	EnvPageID      = EnvKey{"pageID"}
+	EnvModuleID    = EnvKey{"moduleID"}
+)
+
 var (
 	toolsCapMu    sync.RWMutex
 	toolsCapCache = map[string]bool{}
@@ -177,7 +186,7 @@ func NewClient(model string) (*Client, error) {
 	return &Client{cm: cm, model: model}, nil
 }
 
-// ollamaHTTPClient has no overall Timeout: thinking models (qwen3, deepseek-r1)
+// ollamaHTTPClient bounds hung Ollama calls. Thinking models (qwen3, deepseek-r1)
 // can spend several minutes on reasoning after warmup. The SSE request
 // context still cancels when the browser disconnects.
 // ResponseHeaderTimeout covers a hung Ollama before the first byte.
@@ -185,7 +194,7 @@ func ollamaHTTPClient() *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.ResponseHeaderTimeout = 10 * time.Minute
 	return &http.Client{
-		Timeout:   0,
+		Timeout:   15 * time.Minute,
 		Transport: transport,
 	}
 }

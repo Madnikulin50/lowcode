@@ -196,7 +196,7 @@ func toJSON(v interface{}) string {
 }
 
 func nsID(ctx context.Context, params map[string]string) uint64 {
-	if v := ctx.Value("namespaceID"); v != nil {
+	if v := ctx.Value(chat.EnvNamespaceID); v != nil {
 		if id, ok := v.(uint64); ok {
 			return id
 		}

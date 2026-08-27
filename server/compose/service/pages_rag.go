@@ -451,7 +451,13 @@ func (s *PagesRAGService) BuildContext(ctx context.Context, query string, topK i
 func (s *PagesRAGService) StartDailyCrawl(ctx context.Context) {
 	serveCtx := auth.SetIdentityToContext(ctx, auth.ServiceUser())
 	go func() {
-		time.Sleep(1 * time.Minute)
+		timer := time.NewTimer(1 * time.Minute)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			return
+		}
 		s.log.Info("pages RAG: initial crawl starting")
 		if err := s.Crawl(serveCtx); err != nil {
 			s.log.Error("pages RAG: initial crawl failed", zap.Error(err))

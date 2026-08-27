@@ -814,12 +814,12 @@ func (ctrl Namespace) ImportRun(ctx context.Context, r *request.NamespaceImportR
 				}
 				defer reader.Close()
 
-				// Create a ReadSeeker from the byte slice
-				readSeeker := bytes.NewReader(data)
 				if len(data) == 0 {
 					continue
 				}
-				ctrl.importRecordData(ctx, namespaceID, mn, readSeeker)
+				if err := ctrl.importRecordData(ctx, namespaceID, mn, bytes.NewReader(data)); err != nil {
+					return ctrl.makePayload(ctx, ns, err)
+				}
 			}
 		}
 	}

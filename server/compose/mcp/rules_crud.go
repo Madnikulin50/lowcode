@@ -5,18 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/madnikulin50/lowcode/server/compose/mcp/handlers"
 	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/compose/types"
-	"github.com/madnikulin50/lowcode/server/pkg/auth"
 	"github.com/madnikulin50/lowcode/server/pkg/rulesgo"
 	"github.com/madnikulin50/lowcode/server/store"
 )
 
 func ensureCRUDAuth(ctx context.Context) context.Context {
-	if ident := auth.GetIdentityFromContext(ctx); ident != nil && ident.Valid() {
-		return ctx
-	}
-	return auth.SetIdentityToContext(ctx, auth.Authenticated(1))
+	return handlers.WithAuth(ctx)
 }
 
 type composeCRUD struct{}

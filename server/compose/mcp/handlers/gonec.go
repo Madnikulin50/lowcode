@@ -17,11 +17,13 @@ func SetGonecEngine(e *gonec.Engine) {
 }
 
 func initGonec(ctx context.Context, s *server.MCPServer) {
-	s.AddTool(mcp.NewTool("gonec_run",
-		mcp.WithDescription("Compile and run a Go program in a sandbox. Use for AI-generated Go code execution. The code runs as a standalone Go program with access to standard library and lowcode SDK."),
-		mcp.WithString("code", mcp.Description("Go source code to run. Must be a valid Go program. Can use standard library packages and the lowcode SDK."), mcp.Required()),
-		mcp.WithString("timeout", mcp.Description("Execution timeout in seconds (default: 30)")),
-	), handleGonecRun)
+	if mcpScriptsEnabled() {
+		s.AddTool(mcp.NewTool("gonec_run",
+			mcp.WithDescription("Compile and run a Go program in a sandbox. Use for AI-generated Go code execution. The code runs as a standalone Go program with access to standard library and lowcode SDK."),
+			mcp.WithString("code", mcp.Description("Go source code to run. Must be a valid Go program. Can use standard library packages and the lowcode SDK."), mcp.Required()),
+			mcp.WithString("timeout", mcp.Description("Execution timeout in seconds (default: 30)")),
+		), handleGonecRun)
+	}
 
 	s.AddTool(mcp.NewTool("gonec_validate",
 		mcp.WithDescription("Check if Go code is syntactically valid and compiles. Returns error details if compilation fails."),

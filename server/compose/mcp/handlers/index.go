@@ -16,7 +16,9 @@ func Init(ctx context.Context, s *server.MCPServer) {
 	initRecordResources(ctx, s)
 	initMail(ctx, s)
 	initRules(ctx, s)
-	initAIScripts(ctx, s)
+	if mcpScriptsEnabled() {
+		initAIScripts(ctx, s)
+	}
 	initAgents(ctx, s)
 	initGonec(ctx, s)
 }

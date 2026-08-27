@@ -4,13 +4,39 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/madnikulin50/lowcode/server/pkg/auth"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+const defaultMCPRecordLimit uint = 50
+
+func mcpTransportEnabled() bool {
+	return os.Getenv("MCP_STDIO") == "true" || os.Getenv("MCP_SSE_ADDR") != ""
+}
+
+func mcpScriptsEnabled() bool {
+	return os.Getenv("MCP_ENABLE_SCRIPTS") == "true"
+}
+
+// withAuth keeps a real caller identity. It never impersonates user 1.
+// STDIO (local process, no SSE) may fall back to the service user.
 func withAuth(ctx context.Context) context.Context {
-	return auth.SetIdentityToContext(ctx, auth.Authenticated(1))
+	if ident := auth.GetIdentityFromContext(ctx); ident != nil && ident.Valid() {
+		return ctx
+	}
+	if os.Getenv("MCP_STDIO") == "true" && os.Getenv("MCP_SSE_ADDR") == "" {
+		if su := auth.ServiceUserOrNil(); su != nil {
+			return auth.SetIdentityToContext(ctx, su)
+		}
+	}
+	return ctx
+}
+
+// WithAuth is the exported form used by the MCP bridge CRUD helper.
+func WithAuth(ctx context.Context) context.Context {
+	return withAuth(ctx)
 }
 
 func getString(m map[string]interface{}, key string) string {

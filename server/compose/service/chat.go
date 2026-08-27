@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -552,10 +551,6 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 		return map[string]any{"response": result}, nil
 	}
 
-	if result := directListTool(c.tools, ctx, ask); result != "" {
-		return map[string]any{"response": result}, nil
-	}
-
 	var opts []model.Option
 	if useTools {
 		toolInfos, err := chat.ToToolInfos(allTools)
@@ -665,11 +660,6 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 		return stream("", "", true)
 	}
 
-	if result := directListTool(c.tools, ctx, ask); result != "" {
-		stream(result, "", false)
-		return stream("", "", true)
-	}
-
 	var opts []model.Option
 	if useTools {
 		toolInfos, err := chat.ToToolInfos(allTools)
@@ -754,52 +744,6 @@ func streamFallbackAnswer(stream chat.StreamFunc, content, reasoning string) err
 		return stream(reasoning, "", false)
 	}
 	return stream("Модель не сгенерировала ответ.", "", false)
-}
-
-func directListTool(staticTools []chat.ToolDef, ctx context.Context, ask *ChatPromptArguments) string {
-	return ""
-	prompt := strings.ToLower(ask.Prompt)
-	var toolNames []string
-
-	for _, t := range staticTools {
-		if !strings.HasPrefix(t.Name, "list_") {
-			continue
-		}
-		keywords := keywordsForTool(t.Name)
-		for _, kw := range keywords {
-			if strings.Contains(prompt, kw) {
-				toolNames = append(toolNames, t.Name)
-				break
-			}
-		}
-	}
-
-	if len(toolNames) == 0 {
-		return ""
-	}
-
-	var results []string
-	for _, name := range toolNames {
-		for _, t := range staticTools {
-			if t.Name == name {
-				results = append(results, t.Handler(ctx, nil))
-			}
-		}
-	}
-
-	return strings.Join(results, "\n\n")
-}
-
-func keywordsForTool(name string) []string {
-	switch name {
-	case "list_modules":
-		return []string{"модул", "module", "сущност"}
-	case "list_charts":
-		return []string{"чарт", "chart", "график", "граф"}
-	case "list_pages":
-		return []string{"страниц", "страни", "page", "pages"}
-	}
-	return nil
 }
 
 type CallParam struct {
@@ -1023,13 +967,13 @@ func (c *chatService) streamToolContinuation(ctx context.Context, client *chat.C
 
 func (c *chatService) chatEnvToContext(ask *ChatPromptArguments, ctx context.Context) context.Context {
 	if ask.Namespace > 0 {
-		ctx = context.WithValue(ctx, "namespaceID", ask.Namespace)
+		ctx = context.WithValue(ctx, chat.EnvNamespaceID, ask.Namespace)
 	}
 	if ask.Page > 0 {
-		ctx = context.WithValue(ctx, "pageID", ask.Page)
+		ctx = context.WithValue(ctx, chat.EnvPageID, ask.Page)
 	}
 	if ask.Module > 0 {
-		ctx = context.WithValue(ctx, "moduleID", ask.Module)
+		ctx = context.WithValue(ctx, chat.EnvModuleID, ask.Module)
 	}
 	return ctx
 }
@@ -1227,7 +1171,7 @@ func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptAr
 }
 
 func createModule(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value("namespaceID").(uint64)
+	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
 	if !ok {
 		namespaceID = parseUint64(params["namespaceID"])
 	}
@@ -1272,7 +1216,7 @@ func createModule(ctx context.Context, params map[string]string) string {
 }
 
 func createChart(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value("namespaceID").(uint64)
+	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
 	if !ok {
 		namespaceID = parseUint64(params["namespaceID"])
 	}
@@ -1305,7 +1249,7 @@ func createChart(ctx context.Context, params map[string]string) string {
 }
 
 func createPage(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value("namespaceID").(uint64)
+	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
 	if !ok {
 		namespaceID = parseUint64(params["namespaceID"])
 	}
@@ -1371,7 +1315,7 @@ func getFieldBool(m map[string]interface{}, key string) bool {
 }
 
 func listModules(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value("namespaceID").(uint64)
+	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
 	if !ok {
 		namespaceID = parseUint64(params["namespaceID"])
 	}
@@ -1405,7 +1349,7 @@ func listModules(ctx context.Context, params map[string]string) string {
 }
 
 func listCharts(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value("namespaceID").(uint64)
+	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
 	if !ok {
 		namespaceID = parseUint64(params["namespaceID"])
 	}
@@ -1432,7 +1376,7 @@ func listCharts(ctx context.Context, params map[string]string) string {
 }
 
 func listPages(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value("namespaceID").(uint64)
+	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
 	if !ok {
 		namespaceID = parseUint64(params["namespaceID"])
 	}
@@ -1562,26 +1506,12 @@ func showPageByID(ctx context.Context, namespaceID, pageID uint64) string {
 	return b.String()
 }
 
-var chatFieldIdent = regexp.MustCompile(`^[A-Za-z][0-9A-Za-z_-]*$`)
-
-func chatSearchQuery(query string) string {
-	var b strings.Builder
-	for _, r := range query {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.IsSpace(r) || r == '-' || r == '.' {
-			b.WriteRune(r)
-		}
-	}
-	s := strings.TrimSpace(strings.Join(strings.Fields(b.String()), " "))
-	s = strings.ReplaceAll(s, `'`, `''`)
-	return s
-}
-
 func moduleSearch(ctx context.Context, namespaceID, moduleID uint64, query string) string {
 	if query == "" {
 		return "Missing required parameter: query"
 	}
 
-	q := chatSearchQuery(query)
+	q := SanitizeRecordSearchQuery(query)
 	if q == "" {
 		return "Search query is empty after sanitization."
 	}
@@ -1591,25 +1521,17 @@ func moduleSearch(ctx context.Context, namespaceID, moduleID uint64, query strin
 		return fmt.Sprintf("Failed to find module %d: %v", moduleID, err)
 	}
 
-	textKinds := map[string]bool{"String": true, "Text": true, "URL": true, "Email": true}
-	var conditions []string
-	for _, f := range module.Fields {
-		if !textKinds[f.Kind] || !chatFieldIdent.MatchString(f.Name) {
-			continue
-		}
-		conditions = append(conditions, fmt.Sprintf("%s LIKE '%%%s%%'", f.Name, q))
-	}
-
-	if len(conditions) == 0 {
+	ql := BuildRecordTextSearchQL(module.Fields, q)
+	if ql == "" {
 		return fmt.Sprintf("Module '%s' has no text fields to search.", module.Name)
 	}
 
 	filter := types.RecordFilter{
 		ModuleID:    moduleID,
 		NamespaceID: namespaceID,
-		Query:       strings.Join(conditions, " OR "),
+		Query:       ql,
 	}
-	filter.Limit = 50
+	filter.Limit = defaultRecordSearchLimit
 
 	set, _, err := DefaultRecord.Find(ctx, filter)
 	if err != nil {
@@ -1623,12 +1545,7 @@ func moduleSearch(ctx context.Context, namespaceID, moduleID uint64, query strin
 	var b strings.Builder
 	fmt.Fprintf(&b, "🔍 **Search results in '%s' (%d):**\n\n", module.Name, len(set))
 	for _, r := range set {
-		fmt.Fprintf(&b, "• **Record #%d** (ID: %d)\n", r.Revision, r.ID)
-		for _, v := range r.Values {
-			if v.Value != "" {
-				fmt.Fprintf(&b, "  - `%s`: %s\n", v.Name, v.Value)
-			}
-		}
+		appendChatRecordPreview(&b, r)
 		fmt.Fprintf(&b, "\n")
 	}
 	return b.String()
@@ -1644,7 +1561,7 @@ func moduleRecords(ctx context.Context, namespaceID, moduleID uint64) string {
 		ModuleID:    moduleID,
 		NamespaceID: namespaceID,
 	}
-	filter.Limit = 50
+	filter.Limit = defaultRecordSearchLimit
 	set, _, err := DefaultRecord.Find(ctx, filter)
 	if err != nil {
 		return fmt.Sprintf("Failed to list records: %v", err)
@@ -1657,15 +1574,47 @@ func moduleRecords(ctx context.Context, namespaceID, moduleID uint64) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "📋 **Records in '%s' (%d):**\n\n", module.Name, len(set))
 	for _, r := range set {
-		fmt.Fprintf(&b, "• **Record #%d** (ID: %d)\n", r.Revision, r.ID)
-		for _, v := range r.Values {
-			if v.Value != "" {
-				fmt.Fprintf(&b, "  - `%s`: %s\n", v.Name, v.Value)
-			}
-		}
+		appendChatRecordPreview(&b, r)
 		fmt.Fprintf(&b, "\n")
 	}
 	return b.String()
+}
+
+func appendChatRecordPreview(b *strings.Builder, r *types.Record) {
+	fmt.Fprintf(b, "• **Record #%d** (ID: %d)\n", r.Revision, r.ID)
+	const maxFields = 4
+	n := 0
+	prefer := []string{"name", "title", "label", "handle", "email"}
+	used := map[string]bool{}
+	valOf := map[string]*types.RecordValue{}
+	for _, v := range r.Values {
+		if v != nil && v.Value != "" {
+			valOf[strings.ToLower(v.Name)] = v
+		}
+	}
+	write := func(v *types.RecordValue) {
+		if v == nil || used[v.Name] || n >= maxFields {
+			return
+		}
+		used[v.Name] = true
+		val := v.Value
+		if len(val) > 100 {
+			val = val[:97] + "..."
+		}
+		fmt.Fprintf(b, "  - `%s`: %s\n", v.Name, val)
+		n++
+	}
+	for _, name := range prefer {
+		write(valOf[name])
+	}
+	if n < maxFields {
+		for _, v := range r.Values {
+			write(v)
+			if n >= maxFields {
+				break
+			}
+		}
+	}
 }
 
 func moduleCreateRecord(ctx context.Context, namespaceID, moduleID uint64, valuesJSON string) string {

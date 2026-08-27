@@ -8,11 +8,15 @@ import (
 
 	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
 
 func initModuleRecords(ctx context.Context, s *server.MCPServer) {
+	if !mcpTransportEnabled() {
+		return
+	}
 	modules, _, err := service.DefaultModule.Find(ctx, types.ModuleFilter{})
 	if err != nil || len(modules) == 0 {
 		return
@@ -26,7 +30,7 @@ func initModuleRecords(ctx context.Context, s *server.MCPServer) {
 		recordID = strings.ToLower(recordID)
 
 		s.AddTool(mcp.NewTool("module_"+recordID+"_records",
-			mcp.WithDescription(fmt.Sprintf("List all records in module '%s'", m.Name)),
+			mcp.WithDescription(fmt.Sprintf("List records in module '%s' (max %d)", m.Name, defaultMCPRecordLimit)),
 			mcp.WithString("namespaceID", mcp.Description("Namespace ID"), mcp.Required()),
 		), makeListRecordsHandler(m.NamespaceID, m.ID))
 
@@ -81,6 +85,7 @@ func makeListRecordsHandler(nsID, modID uint64) func(ctx context.Context, reques
 		set, _, err := service.DefaultRecord.Find(ctx, types.RecordFilter{
 			ModuleID:    modID,
 			NamespaceID: nsID,
+			Paging:      filter.Paging{Limit: defaultMCPRecordLimit},
 		})
 		if err != nil {
 			return errorResult(err), nil
@@ -98,23 +103,20 @@ func makeSearchRecordsHandler(nsID, modID uint64) func(ctx context.Context, requ
 			return errorResult(fmt.Errorf("module not found: %w", err)), nil
 		}
 
-		q := getString(args, "query")
-		textKinds := map[string]bool{"String": true, "Text": true, "URL": true, "Email": true}
-		var conditions []string
-		for _, f := range mod.Fields {
-			if textKinds[f.Kind] {
-				escaped := strings.ReplaceAll(q, "'", "\\'")
-				conditions = append(conditions, fmt.Sprintf("%s LIKE '%%%s%%'", f.Name, escaped))
-			}
+		q := service.SanitizeRecordSearchQuery(getString(args, "query"))
+		if q == "" {
+			return textResult("Search query is empty after sanitization."), nil
 		}
-		if len(conditions) == 0 {
+		ql := service.BuildRecordTextSearchQL(mod.Fields, q)
+		if ql == "" {
 			return jsonResult([]types.Record{}), nil
 		}
 
 		set, _, err := service.DefaultRecord.Find(ctx, types.RecordFilter{
 			ModuleID:    modID,
 			NamespaceID: nsID,
-			Query:       strings.Join(conditions, " OR "),
+			Query:       ql,
+			Paging:      filter.Paging{Limit: defaultMCPRecordLimit},
 		})
 		if err != nil {
 			return errorResult(err), nil

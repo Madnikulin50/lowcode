@@ -612,7 +612,7 @@ func (svc module) updater(ctx context.Context, namespaceID, moduleID uint64, act
 		}
 
 		if err = updateTranslations(ctx, svc.ac, svc.locale, tt...); err != nil {
-			fmt.Print("error updating translations: %v\n", err)
+			logger.Default().Warn("error updating translations", zap.Error(err))
 		}
 
 		if changes&moduleLabelsChanged > 0 {

@@ -84,6 +84,14 @@ func ServiceUser() *types.User {
 	return serviceUser.Clone()
 }
 
+// ServiceUserOrNil is ServiceUser without panicking when system users are not loaded yet.
+func ServiceUserOrNil() *types.User {
+	if serviceUser == nil {
+		return nil
+	}
+	return serviceUser.Clone()
+}
+
 // FederationUser returns clone of system federation user
 func FederationUser() *types.User {
 	return federationUser.Clone()

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/chat"
 )
 
 const chatPageChartMaxPages = 40
@@ -388,7 +389,7 @@ func chartNamesByID(ctx context.Context, ns uint64) map[uint64]string {
 
 func pageIDFromCtx(ctx context.Context, params map[string]string) uint64 {
 	if ctx != nil {
-		if v := ctx.Value("pageID"); v != nil {
+		if v := ctx.Value(chat.EnvPageID); v != nil {
 			if id, ok := v.(uint64); ok && id > 0 {
 				return id
 			}

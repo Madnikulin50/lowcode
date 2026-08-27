@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/madnikulin50/lowcode/server/pkg/datasources"
@@ -251,32 +252,101 @@ func Record(opts RecordOptions) *record {
 	return svc
 }
 
+type recordRefCacheKey struct{}
+
+type recordRefCache struct {
+	mu sync.Mutex
+	ok map[string]bool
+}
+
+func withRecordRefCache(ctx context.Context) context.Context {
+	if _, ok := ctx.Value(recordRefCacheKey{}).(*recordRefCache); ok {
+		return ctx
+	}
+	return context.WithValue(ctx, recordRefCacheKey{}, &recordRefCache{ok: make(map[string]bool)})
+}
+
+func recordRefCacheFrom(ctx context.Context) *recordRefCache {
+	c, _ := ctx.Value(recordRefCacheKey{}).(*recordRefCache)
+	return c
+}
+
+func (c *recordRefCache) get(key string) (bool, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	v, ok := c.ok[key]
+	return v, ok
+}
+
+func (c *recordRefCache) set(key string, exists bool) {
+	c.mu.Lock()
+	c.ok[key] = exists
+	c.mu.Unlock()
+}
+
 func defaultValidator(svc RecordService) recordValuesValidator {
 	// Initialize validator and setup all checkers it needs
 	validator := values.Validator()
 
 	validator.UniqueChecker(func(ctx context.Context, s store.Storer, v *types.RecordValue, f *types.ModuleField, m *types.Module) (uint64, error) {
-		if v.Ref == 0 {
+		if v == nil || f == nil || m == nil || !RecordFieldIdent.MatchString(f.Name) {
 			return 0, nil
 		}
 
-		// Unique record-ref lookup is not wired through DAL yet.
-		// Returning an error (not panic) so bulk delete/update can surface it.
-		return 0, fmt.Errorf("unique record-value ref lookup is not implemented")
+		var query string
+		switch strings.ToLower(f.Kind) {
+		case "record", "user", "file":
+			if v.Ref == 0 {
+				return 0, nil
+			}
+			query = fmt.Sprintf("%s = %d", f.Name, v.Ref)
+		default:
+			return 0, nil
+		}
+
+		d := dal.Service()
+		if d == nil {
+			return 0, nil
+		}
+		set, _, err := dalutils.ComposeRecordsList(ctx, d, m, types.RecordFilter{
+			ModuleID:    m.ID,
+			NamespaceID: m.NamespaceID,
+			Query:       query,
+			Paging:      filter.Paging{Limit: 3},
+		})
+		if err != nil {
+			return 0, err
+		}
+		for _, rec := range set {
+			if rec != nil && rec.ID != v.RecordID {
+				return rec.ID, nil
+			}
+		}
+		return 0, nil
 	})
 
 	validator.RecordRefChecker(func(ctx context.Context, s store.Storer, v *types.RecordValue, f *types.ModuleField, m *types.Module) (bool, error) {
-		if svc == nil && v.Ref == 0 {
+		if svc == nil || v == nil || v.Ref == 0 || f == nil {
 			return false, nil
 		}
 
-		var (
-			referencedModuleID = f.Options.Uint64("moduleID")
+		referencedModuleID := f.Options.Uint64("moduleID")
+		key := fmt.Sprintf("%d:%d:%d", f.NamespaceID, referencedModuleID, v.Ref)
+		if cache := recordRefCacheFrom(ctx); cache != nil {
+			if exists, ok := cache.get(key); ok {
+				return exists, nil
+			}
+		}
 
-			r, _, err = svc.FindByID(ctx, f.NamespaceID, referencedModuleID, v.Ref)
-		)
-
-		return r != nil, err
+		r, _, err := svc.FindByID(ctx, f.NamespaceID, referencedModuleID, v.Ref)
+		if err != nil {
+			return false, err
+		}
+		exists := r != nil
+		if cache := recordRefCacheFrom(ctx); cache != nil {
+			cache.set(key, exists)
+		}
+		return exists, nil
 	})
 
 	validator.UserRefChecker(func(ctx context.Context, s store.Storer, v *types.RecordValue, f *types.ModuleField, m *types.Module) (bool, error) {
@@ -1679,6 +1749,8 @@ func RecordValueUpdateOpCheck(ctx context.Context, ac recordValueAccessControlle
 }
 
 func RecordPreparer(ctx context.Context, s store.Storer, ss recordValuesSanitizer, vv recordValuesValidator, ff recordValuesFormatter, m *types.Module, new *types.Record) *types.RecordValueErrorSet {
+	ctx = withRecordRefCache(ctx)
+
 	// Before values are processed further and
 	// sent to automation scripts (if any)
 	// we need to make sure it does not get un-sanitized data

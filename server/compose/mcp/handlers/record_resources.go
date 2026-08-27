@@ -7,6 +7,7 @@ import (
 
 	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -68,7 +69,9 @@ func handleRecordListResource(ctx context.Context, request mcp.ReadResourceReque
 	}
 
 	ff := types.RecordFilter{
-		ModuleID: moduleID,
+		ModuleID:    moduleID,
+		NamespaceID: nsID,
+		Paging:      filter.Paging{Limit: defaultMCPRecordLimit},
 	}
 
 	set, _, err := service.DefaultRecord.Find(ctx, ff)

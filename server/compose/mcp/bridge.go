@@ -100,7 +100,7 @@ func initBridge() {
 	coreTools := []chat.ToolDef{
 		{
 			Name:        "search_records",
-			Description: "Search records across modules",
+			Description: "Search records in a module by text query (max 200 results)",
 			Params: []chat.ParamDef{
 				{Name: "query", Type: "string", Required: true, Description: "Search query"},
 				{Name: "moduleID", Type: "string", Required: false, Description: "Module ID to search in"},
@@ -108,17 +108,36 @@ func initBridge() {
 			},
 			Handler: func(ctx context.Context, params map[string]string) string {
 				var nsID uint64
-				if v := ctx.Value("namespaceID"); v != nil {
+				if v := ctx.Value(chat.EnvNamespaceID); v != nil {
 					nsID, _ = v.(uint64)
 				}
 				var modID uint64
 				fmt.Sscanf(params["moduleID"], "%d", &modID)
-				ff := types.RecordFilter{NamespaceID: nsID, ModuleID: modID, Query: params["query"]}
-				if params["limit"] != "" {
-					var limit uint
-					fmt.Sscanf(params["limit"], "%d", &limit)
-					ff.Limit = limit
+				if modID == 0 {
+					return "moduleID is required"
 				}
+				mod, err := service.DefaultModule.FindByID(ctx, nsID, modID)
+				if err != nil || mod == nil {
+					return fmt.Sprintf("module not found: %v", err)
+				}
+				q := service.SanitizeRecordSearchQuery(params["query"])
+				if q == "" {
+					return "Search query is empty after sanitization."
+				}
+				ql := service.BuildRecordTextSearchQL(mod.Fields, q)
+				if ql == "" {
+					return "[]"
+				}
+				var limit uint
+				if params["limit"] != "" {
+					fmt.Sscanf(params["limit"], "%d", &limit)
+				}
+				ff := types.RecordFilter{
+					NamespaceID: nsID,
+					ModuleID:    modID,
+					Query:       ql,
+				}
+				ff.Limit = service.ClampRecordSearchLimit(limit)
 				set, _, err := service.DefaultRecord.Find(ctx, ff)
 				if err != nil {
 					return fmt.Sprintf("Search error: %v", err)
@@ -145,30 +164,6 @@ func initBridge() {
 					return fmt.Sprintf("Send error: %v", err)
 				}
 				return "Email sent"
-			},
-		},
-		{
-			Name:        "run_script",
-			Description: "Execute JavaScript in sandbox with access to lowcode API",
-			Params: []chat.ParamDef{
-				{Name: "script", Type: "string", Required: true, Description: "JS code"},
-			},
-			Handler: func(ctx context.Context, params map[string]string) string {
-				result := jsRt.Run(ctx, params["script"], nil)
-				data, _ := json.Marshal(result)
-				return string(data)
-			},
-		},
-		{
-			Name:        "gonec_run",
-			Description: "Compile and run Go code in sandbox",
-			Params: []chat.ParamDef{
-				{Name: "code", Type: "string", Required: true, Description: "Go source code"},
-			},
-			Handler: func(ctx context.Context, params map[string]string) string {
-				result := gonecEngine.Run(ctx, gonec.Sanitize(params["code"]))
-				data, _ := json.Marshal(result)
-				return string(data)
 			},
 		},
 	}
