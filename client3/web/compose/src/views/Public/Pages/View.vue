@@ -207,8 +207,8 @@ onBeforeRouteUpdate((to, from, next) => {
 })
 
 watch(uniqueID, (value, oldValue) => {
-  const [pageID = '', pageLayoutID = ''] = value || []
-  const [oldPageID = ''] = oldValue || []
+  const [pageID = '', pageLayoutID = ''] = (Array.isArray(value) ? value : []).map(v => v || '')
+  const [oldPageID = ''] = (Array.isArray(oldValue) ? oldValue : []).map(v => v || '')
 
   if (!pageID || pageID === NoID) return
 

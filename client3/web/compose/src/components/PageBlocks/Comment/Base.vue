@@ -352,9 +352,9 @@ const lastCommentTimestamp = computed(() => {
   return cs[cs.length - 1]?.createdAt || null
 })
 
-const roModule = computed(() => getModuleByID.value(props.module?.moduleID || ''))
-
 const moduleID = computed(() => options.value.moduleID)
+
+const roModule = computed(() => getModuleByID.value(moduleID.value))
 
 const titleField = computed(() => {
   const fn = options.value.titleField
@@ -474,6 +474,7 @@ function startAutoRefresh () {
   commentRefreshInterval.value = setInterval(() => {
     if (autoFetching.value || submitting.value || loadingMore.value) return
     if (!showNewestFirst.value && filter.nextPage) return
+    if (!roModule.value || !isBlockConfigured.value) return
     autoFetching.value = true
     Promise.all([
       loadNewComments(),
@@ -482,7 +483,7 @@ function startAutoRefresh () {
   }, 5000)
 }
 
-function refetchOnPrefilterValueChange ({ fieldName }) {
+function refetchOnPrefilterValueChange ({ detail: { fieldName } = {} } = {}) {
   if (isFieldInFilter(fieldName, options.value.filter)) refresh()
 }
 
@@ -508,6 +509,7 @@ function getFormattedTime (date) {
 }
 
 async function loadNewComments () {
+  if (!roModule.value) return
   const f = [
     expandFilter(),
     lastCommentTimestamp.value ? `${getFieldFilter('createdAt', 'DateTime', lastCommentTimestamp.value, '>')}` : '',
@@ -613,7 +615,7 @@ function loadMoreMessages () {
   })
 }
 
-function refreshOnRelatedRecordsUpdate ({ moduleID: mid } = {}) {
+function refreshOnRelatedRecordsUpdate ({ detail: { moduleID: mid } = {} } = {}) {
   if (options.value.moduleID === mid) refresh()
 }
 
@@ -793,7 +795,7 @@ function expandFilter () {
 }
 
 async function fetchCommentRecords (module, query, useNextPage = true) {
-  if (module.moduleID !== options.value.moduleID) throw new Error('Module mismatch')
+  if (!module || module.moduleID !== options.value.moduleID) throw new Error('Module mismatch')
   let q = query || ''
   if (referenceField.value) {
     if (q.length) q += ' AND '

@@ -25,16 +25,16 @@
 
         <c-input-select
           data-test-id="select-namespace"
-          :value="currentNamespaceID"
+          :model-value="namespace"
           :options="filteredNamespaces"
           :get-option-label="getNamespaceLabel"
-          :selectable="option => option.namespaceID !== namespace.namespaceID"
+          :selectable="option => option.namespaceID !== namespace?.namespaceID"
           :placeholder="$t('sidebar.pickNamespace')"
           :clearable="false"
           :autoscroll="false"
           :append-to-body="false"
           class="ns-switcher mt-2"
-          @input="namespaceSelected"
+          @update:modelValue="namespaceSelected"
         >
           <template #list-header>
             <li
@@ -169,7 +169,6 @@ const workflowsLoading = ref(false)
 const sidebarSettings = computed(() => $Settings.get('compose.ui.sidebar', {}) || {})
 const sidebarDensity = computed(() => sidebarSettings.value.density === 'compact' ? 'compact' : 'comfortable')
 
-const currentNamespaceID = computed(() => namespace.value ? namespace.value.namespaceID : NoID)
 const loading = computed(() => moduleLoading.value || chartLoading.value || pageLoading.value || ruleChainsLoading.value || workflowsLoading.value)
 const hideNamespaceList = computed(() => {
   const { hideNamespaceList: h } = sidebarSettings.value
@@ -253,8 +252,16 @@ watch(() => namespace.value?.namespaceID, (nsID) => {
     .finally(() => { workflowsLoading.value = false })
 }, { immediate: true })
 
-function namespaceSelected ({ namespaceID: nid, canManageNamespace, slug = '' }) {
+function namespaceSelected (ns) {
+  if (!ns) return
+  if (typeof ns === 'string' || typeof ns === 'number') {
+    ns = (props.namespaces || []).find(n => String(n.namespaceID) === String(ns))
+  }
+  if (!ns?.namespaceID) return
+
+  const { namespaceID: nid, canManageNamespace, slug = '' } = ns
   let { name, params } = route
+  if (!name) name = 'pages'
   if (name.includes('admin.modules')) name = 'admin.modules'
   else if (name.includes('admin.pages')) name = 'admin.pages'
   else if (name.includes('admin.charts')) name = 'admin.charts'

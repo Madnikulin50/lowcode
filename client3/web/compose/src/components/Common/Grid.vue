@@ -8,8 +8,7 @@
     }"
   >
     <grid-layout
-      :key="gridKey"
-      v-model:layout="layout"
+      :layout="layout"
       :col-num="48"
       :row-height="10"
       :vertical-compact="true"
@@ -68,7 +67,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
-import { ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
+import { shallowRef, ref, computed, watch, onBeforeUnmount, nextTick } from 'vue'
 import { GridLayout, GridItem } from '../../lib/vue-grid-layout'
 import { normalizeXYWH, xywhSignature } from '../../lib/block-layout'
 
@@ -88,9 +87,11 @@ const props = defineProps({
 
 const emit = defineEmits(['item-updated'])
 
-const layout = ref([])
+const layout = shallowRef([])
 const resizing = ref(false)
 let ignoreGeometryRebuild = false
+let compactSynced = false
+let lastEmittedLayout = []
 
 const oneBlockLayout = computed(() => {
   return props.blocks.filter(({ meta }) => !meta.hidden && (!meta.invisible || props.editable)).length === 1
@@ -107,13 +108,11 @@ const columnNumber = computed(() => {
   return { lg: 48, md: 48, sm: 1, xs: 1, xxs: 1 }
 })
 
-const gridKey = computed(() => {
-  return [...layout.value.map(b => b.i)].sort().join(',')
-})
-
 const geometryKey = computed(() => xywhSignature(props.blocks))
 
 function rebuildLayout () {
+  compactSynced = false
+  lastEmittedLayout = []
   layout.value = (props.blocks || []).map((block, i) => {
     const meta = block.meta || {}
     if (meta.hidden || (meta.invisible && !props.editable)) return null
@@ -133,10 +132,27 @@ onBeforeUnmount(() => {
   resizing.value = false
 })
 
+function layoutItemsEqual (a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
+  return a.every((item, idx) => {
+    const o = b[idx]
+    return !!item && !!o && item.i === o.i && item.x === o.x && item.y === o.y && item.w === o.w && item.h === o.h
+  })
+}
+
+function toLayoutItems (src) {
+  return (src || []).map(({ i, x, y, w, h }) => ({
+    i,
+    x: Number(x) || 0,
+    y: Number(y) || 0,
+    w: Number(w) || 1,
+    h: Number(h) || 1,
+  }))
+}
+
 function persistLayout (newLayout) {
   if (!props.editable || !Array.isArray(newLayout)) return
 
-  layout.value = newLayout
   ignoreGeometryRebuild = true
   newLayout.forEach(({ i, x, y, w, h }) => {
     const next = normalizeXYWH([x, y, w, h])
@@ -151,8 +167,18 @@ function persistLayout (newLayout) {
 
 function onLayoutUpdated (newLayout) {
   if (!Array.isArray(newLayout)) return
-  layout.value = newLayout
-  if (resizing.value) persistLayout(newLayout)
+  const next = toLayoutItems(newLayout)
+  lastEmittedLayout = next
+  if (resizing.value) return
+  if (layoutItemsEqual(layout.value, next)) {
+    compactSynced = true
+    return
+  }
+  // GridLayout compact/emits on every prop change. Writing back re-enters its
+  // deep layout watcher and remounts page-block cards until Vue aborts.
+  if (compactSynced) return
+  compactSynced = true
+  layout.value = next
 }
 
 function onGridAction () {
@@ -163,7 +189,9 @@ function onGridAction () {
 
 function onGridSettled () {
   window.removeEventListener('pointerup', onGridSettled)
-  persistLayout(layout.value)
+  const next = lastEmittedLayout.length ? lastEmittedLayout : layout.value
+  if (!layoutItemsEqual(layout.value, next)) layout.value = next
+  persistLayout(next)
   resizing.value = false
 }
 </script>

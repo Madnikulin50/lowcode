@@ -1,15 +1,15 @@
 <template>
   <div class="header-navigation d-flex flex-wrap align-items-center p-2 gap-2">
-    <h2 class="title mb-0">
+    <h2 class="title mb-0 d-flex align-items-center gap-2 flex-wrap">
       <slot name="title" />
-      <div id="topbar-title" style="display: contents" />
-      <div id="topbar-title-target" style="display: contents" />
+      <div id="topbar-title" />
+      <div id="topbar-title-target" />
     </h2>
 
     <div class="tools-wrapper ms-auto">
-      <div>
+      <div class="d-flex align-items-center flex-wrap gap-1">
         <slot name="tools" />
-        <div id="topbar-tools" style="display: contents" />
+        <div id="topbar-tools" />
       </div>
 
     </div>

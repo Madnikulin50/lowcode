@@ -1,10 +1,16 @@
 <template>
   <div class="d-flex flex-column flex-grow-1 w-100 h-100">
-    <Teleport :to="portalTopbarTitle">
+    <Teleport
+      v-if="viewAlive"
+      :to="portalTopbarTitle"
+    >
       {{ title }}
     </Teleport>
 
-    <Teleport to="#topbar-tools">
+    <Teleport
+      v-if="viewAlive"
+      to="#topbar-tools"
+    >
       <c-input-search
         v-if="enableAI"
         v-model.trim="aiPrompt"
@@ -112,7 +118,10 @@
       class="h-100"
     />
 
-    <Teleport :to="portalRecordToolbar">
+    <Teleport
+      v-if="viewAlive"
+      :to="portalRecordToolbar"
+    >
       <record-toolbar
         :module="module"
         :record="record"
@@ -241,7 +250,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
-import { ref, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
+import { ref, shallowRef, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
 import axios from 'axios'
 import { isEqual, throttle } from 'lodash'
@@ -276,6 +285,7 @@ const props = defineProps({
   page: { type: compose.Page, required: true },
   namespace: { type: compose.Namespace, required: true },
   module: { type: compose.Module, required: false, default: () => ({}) },
+  recordID: { type: String, default: '' },
   refRecord: { type: compose.Record, required: false, default: undefined },
   values: { type: Object, required: false, default: () => ({}) },
   inModal: { type: Boolean, default: false },
@@ -303,7 +313,7 @@ const processing = ref(false)
 const processingAction = ref('')
 const record = ref(undefined)
 const initialRecordState = ref(undefined)
-const errors = ref(new validator.Validated())
+const errors = shallowRef(new validator.Validated())
 
 const aiPrompt = ref('')
 const loading = ref(false)
@@ -313,7 +323,12 @@ const abortableRequests = ref([])
 const loadingRecord = ref(false)
 const activeDraftKey = ref(null)
 
-const isRecordPage = computed(() => record.value?.recordID || route.name === 'page.record.create')
+const viewAlive = ref(true)
+let refreshSeq = 0
+
+const recordID = computed(() => props.recordID || route.params.recordID || '')
+
+const isRecordPage = computed(() => recordID.value || route.name === 'page.record.create')
 
 const isBasicModule = computed(() => {
   const type = props.module?.config?.type
@@ -332,11 +347,6 @@ const isValid = computed(() => errors.value.valid())
 const isDeleted = computed(() => record.value && record.value.deletedAt)
 
 const isNew = computed(() => !recordID.value || recordID.value === NoID)
-
-const recordID = computed(() => {
-  if (record.value?.recordID && record.value.recordID !== NoID) return record.value.recordID
-  return route.params.recordID || ''
-})
 
 const isLoading = computed(() => loading.value || !layout.value || !blocks.value)
 
@@ -402,13 +412,13 @@ const viewHasBack = computed(() => {
 })
 
 const uniqueID = computed(() => [
-  (props.page || {}).pageID,
-  route.query.layoutID,
-  route.query.modalLayoutID,
-  recordID.value,
-  props.edit,
-  route.query.draftID,
-])
+  (props.page || {}).pageID || '',
+  route.query.layoutID || '',
+  route.query.modalLayoutID || '',
+  recordID.value || '',
+  String(props.edit),
+  route.query.draftID || '',
+].join('|'))
 
 const showDrafts = computed(() => $Settings.get('ui.topbar.showDrafts', false))
 
@@ -439,8 +449,10 @@ const trPage = computed({
 const getPageLayouts = (pageID) => pageLayoutStore.getByPageID(pageID)
 
 watch(uniqueID, (value, oldValue) => {
-  const [pageID = '', pageLayoutID = '', modalPageLayoutID = '', recID = '', edit = '', draftID = ''] = value || []
-  const [oldPageID = '', oldPageLayoutID = '', oldModalPageLayoutID = '', oldRecordID = '', oldEdit = '', oldDraftID = ''] = oldValue || []
+  if (!viewAlive.value) return
+
+  const [pageID = '', pageLayoutID = '', modalPageLayoutID = '', recID = '', edit = '', draftID = ''] = (value || '').split('|')
+  const [oldPageID = '', oldPageLayoutID = '', oldModalPageLayoutID = '', oldRecordID = '', oldEdit = '', oldDraftID = ''] = (oldValue || '').split('|')
 
   if (!pageID || pageID === NoID) return
 
@@ -462,7 +474,7 @@ watch(uniqueID, (value, oldValue) => {
       .then(b => { if (b) blocks.value = b })
       .finally(() => { processing.value = false })
   }
-}, { immediate: true })
+}, { immediate: true, flush: 'post' })
 
 watch(() => layout.value?.handle, (handle, oldHandle) => {
   if (handle !== oldHandle) {
@@ -491,6 +503,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  viewAlive.value = false
+  refreshSeq++
   abortRequests()
   destroyEvents()
   cleanupDraftSync()
@@ -527,7 +541,9 @@ async function loadRecord() {
   const { namespaceID, moduleID } = props.page
 
   if (moduleID !== NoID) {
-    const mod = Object.freeze(getModuleByID(moduleID).clone())
+    const found = getModuleByID(moduleID)
+    if (!found) return
+    const mod = Object.freeze(found.clone())
     const rid = recordID.value
 
     if (rid && rid !== NoID) {
@@ -543,8 +559,16 @@ async function loadRecord() {
         .catch(e => {
           if (!axios.isCancel(e)) {
             toastErrorHandler(proxy.$t('notification.record.loadFailed'))(e)
-            handleBack()
+            // Navigate after the current Vue flush so Teleport/toaster patches
+            // do not run on a component that is already unmounting.
+            const seq = refreshSeq
+            setTimeout(() => {
+              if (!viewAlive.value || seq !== refreshSeq) return
+              viewAlive.value = false
+              handleBack()
+            }, 0)
           }
+          throw e
         })
     } else {
       if (props.refRecord?.recordID && props.refRecord.recordID !== NoID) {
@@ -567,6 +591,9 @@ async function loadRecord() {
 }
 
 async function handleBack() {
+  refreshSeq++
+  abortRequests()
+
   if (props.inModal) {
     if (checkUnsavedChanges()) {
       uiStore.popModalPreviousPage().then(({ recordID, recordPageID, edit }) => {
@@ -734,6 +761,9 @@ function refetchRecords({ recordID: rid } = {}) {
 }
 
 async function refresh() {
+  abortRequests()
+  abortableRequests.value = []
+  const seq = ++refreshSeq
   processing.value = true
   loadingRecord.value = true
 
@@ -742,15 +772,22 @@ async function refresh() {
   }
 
   return loadRecord().then(r => {
+    if (!viewAlive.value || seq !== refreshSeq || !r) return
     tempRecord.value = r
     const pageLayoutID = route.query.layoutID
     return determineLayout({ pageLayoutID }).then(b => {
+      if (!viewAlive.value || seq !== refreshSeq) return
       if (b) blocks.value = b
       record.value = tempRecord.value
-      initialRecordState.value = record.value.clone()
+      if (record.value) {
+        initialRecordState.value = record.value.clone()
+      }
       getRecordDraft()
     })
+  }).catch(() => {
+    // loadRecord already toasts and navigates back on failure
   }).finally(() => {
+    if (seq !== refreshSeq) return
     tempRecord.value = undefined
     processing.value = false
     loading.value = false
@@ -1131,6 +1168,7 @@ function setWarnings() {
 }
 
 function resetErrors() {
+  if (!viewAlive.value) return
   errors.value = new validator.Validated()
 }
 
@@ -1165,6 +1203,7 @@ function dispatchUiEvent(eventType, rec, args = {}) {
 }
 
 async function determineLayout({ pageLayoutID, redirectOnFail = true } = {}) {
+  if (!viewAlive.value) return
   if (isRecordPage.value) resetErrors()
 
   let expressions = {}

@@ -6,17 +6,11 @@
       :class="[blockClass, cardClass, customCSSClass]"
     >
       <div
-        v-if="$slots.header"
+        v-if="showHeader"
         class="card-header border-bottom text-nowrap ps-3 pe-2"
         :class="[textClass, headerClass]"
       >
-        <slot name="header" />
-      </div>
-      <div
-        v-else-if="showHeader"
-        class="card-header border-bottom text-nowrap ps-3 pe-2"
-        :class="[textClass, headerClass]"
-      >
+        <slot name="header">
         <div class="d-flex flex-column gap-1">
           <div
             v-if="blockTitle || showOptions"
@@ -64,11 +58,11 @@
             {{ blockDescription }}
           </div>
         </div>
+        </slot>
       </div>
+      <slot v-else name="header" />
 
-      <div v-if="$slots.toolbar">
-        <slot name="toolbar" />
-      </div>
+      <slot name="toolbar" />
 
       <div
         class="card-body p-0 flex-fill fixed-corner-container"
@@ -77,10 +71,7 @@
         <slot />
       </div>
 
-      <div
-        v-if="$slots.footer"
-        class="card-footer p-0 bg-light"
-      >
+      <div class="card-footer p-0 bg-light wrap-slot-footer">
         <slot name="footer" />
       </div>
     </div>
@@ -193,5 +184,9 @@ function onMagnify() {
 <style scoped>
 .fixed-corner-container {
   position: relative;
+}
+
+.wrap-slot-footer:not(:has(*)) {
+  display: none;
 }
 </style>
