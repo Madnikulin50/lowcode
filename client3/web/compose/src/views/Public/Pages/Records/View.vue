@@ -11,70 +11,72 @@
       v-if="viewAlive"
       to="#topbar-tools"
     >
-      <c-input-search
-        v-if="enableAI"
-        v-model.trim="aiPrompt"
-        class="me-2"
-        :ai="true"
-        :aria-label="$t('AI')"
-        :placeholder="$t('aiChat.startPrompt')"
-        :autocomplete="'off'"
-        submittable
-        @search="handleAiSearch"
-        @ai-search="handleAiSearch"
-      />
-
-      <router-link
-        v-if="page && isRecordPage && page.canUpdatePage"
-        :to="moduleEditor"
-        class="btn btn-primary btn-sm d-flex align-items-center me-2"
-        :class="{ disabled: !moduleEditor }"
-      >
-        {{ $t('navigation.editModule') }}
-        <font-awesome-icon
-          :icon="['far', 'edit']"
-          class="ms-2"
+      <div class="d-flex align-items-center flex-nowrap gap-1">
+        <c-input-search
+          v-if="enableAI"
+          v-model.trim="aiPrompt"
+          class="me-2"
+          :ai="true"
+          :aria-label="$t('AI')"
+          :placeholder="$t('aiChat.startPrompt')"
+          :autocomplete="'off'"
+          submittable
+          @search="handleAiSearch"
+          @ai-search="handleAiSearch"
         />
-      </router-link>
 
-      <div
-        v-if="page && page.canUpdatePage"
-        class="btn-group btn-group-sm text-nowrap"
-      >
         <router-link
-          data-test-id="button-page-builder"
-          :to="pageBuilder"
-          class="btn btn-primary d-flex align-items-center"
+          v-if="page && isRecordPage && page.canUpdatePage"
+          :to="moduleEditor"
+          class="btn btn-primary btn-sm d-flex align-items-center me-2"
+          :class="{ disabled: !moduleEditor }"
         >
-          {{ $t('label.pageBuilder') }}
+          {{ $t('navigation.editModule') }}
           <font-awesome-icon
-            :icon="['fas', 'tools']"
+            :icon="['far', 'edit']"
             class="ms-2"
           />
         </router-link>
 
-        <router-link
-          data-test-id="button-page-edit"
-          :to="pageEditor"
-          class="btn btn-primary d-flex align-items-center"
-          :title="$t('tooltip.edit.page')"
-          style="margin-left:2px;"
-          data-bs-toggle="tooltip"
-          data-bs-boundary="body"
+        <div
+          v-if="page && page.canUpdatePage"
+          class="btn-group btn-group-sm text-nowrap"
         >
-          <font-awesome-icon
-            :icon="['far', 'edit']"
-          />
-        </router-link>
+          <router-link
+            data-test-id="button-page-builder"
+            :to="pageBuilder"
+            class="btn btn-primary d-flex align-items-center"
+          >
+            {{ $t('label.pageBuilder') }}
+            <font-awesome-icon
+              :icon="['fas', 'tools']"
+              class="ms-2"
+            />
+          </router-link>
 
-        <page-translator
-          v-if="trPage"
-          data-test-id="button-page-translations"
-          :page="trPage"
-          :page-layout="layout"
-          button-variant="primary"
-          style="margin-left:2px;"
-        />
+          <router-link
+            data-test-id="button-page-edit"
+            :to="pageEditor"
+            class="btn btn-primary d-flex align-items-center"
+            :title="$t('tooltip.edit.page')"
+            style="margin-left:2px;"
+            data-bs-toggle="tooltip"
+            data-bs-boundary="body"
+          >
+            <font-awesome-icon
+              :icon="['far', 'edit']"
+            />
+          </router-link>
+
+          <page-translator
+            v-if="trPage"
+            data-test-id="button-page-translations"
+            :page="trPage"
+            :page-layout="layout"
+            button-variant="primary"
+            style="margin-left:2px;"
+          />
+        </div>
       </div>
     </Teleport>
 

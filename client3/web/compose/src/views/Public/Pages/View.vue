@@ -14,6 +14,7 @@
       v-if="!isRecordPage"
       to="#topbar-tools"
     >
+      <div class="d-flex align-items-center flex-nowrap gap-1">
         <c-input-search
           v-if="enableAI"
           v-model.trim="aiPrompt"
@@ -28,7 +29,7 @@
         />
         <div
           v-if="page && page.canUpdatePage"
-          class="btn-group btn-group-sm"
+          class="btn-group btn-group-sm text-nowrap"
         >
           <router-link
             data-test-id="button-page-builder"
@@ -64,8 +65,8 @@
             button-variant="primary"
             style="margin-left:2px;"
           />
+        </div>
       </div>
-
     </Teleport>
 
     <div class="flex-grow-1 overflow-auto d-flex p-2 w-100">
