@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/madnikulin50/lowcode/agents/sdk"
 )
 
 type Agent struct {
@@ -23,9 +23,8 @@ type Agent struct {
 	mu           sync.RWMutex
 	scans        map[string]*ScanStatus
 	moduleID     uint64
-	cidrs        []string
-	lastCallback map[string]time.Time
-	cbClient     *http.Client
+	cidrs []string
+	cb    *sdk.Callback
 }
 
 func New(cfg Config, store Storage) *Agent {
@@ -40,8 +39,7 @@ func New(cfg Config, store Storage) *Agent {
 		store:        store,
 		scans:        make(map[string]*ScanStatus),
 		cidrs:        cidrs,
-		lastCallback: make(map[string]time.Time),
-		cbClient:     &http.Client{Timeout: 8 * time.Second},
+		cb:           sdk.NewCallback(),
 	}
 }
 

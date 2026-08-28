@@ -84,7 +84,7 @@ func (h *Handler) runDue(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) listJobs(w http.ResponseWriter, r *http.Request) {
-	jsonResp(w, h.ag.ListJobs())
+	jsonResp(w, h.ag.ListJobsStatus())
 }
 
 func (h *Handler) getJob(w http.ResponseWriter, r *http.Request) {

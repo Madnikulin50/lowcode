@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/madnikulin50/lowcode/agents/cmdb/agent"
 	"github.com/madnikulin50/lowcode/agents/cmdb/api"
+	"github.com/madnikulin50/lowcode/agents/sdk"
 )
 
 //go:embed web/dist/*
@@ -91,16 +91,32 @@ func main() {
 		log.Printf("Status check every %v", *statusInterval)
 	}
 
-	r := chi.NewRouter()
+	svc := sdk.New(sdk.Config{
+		Handle:      "cmdb",
+		Name:        "CMDB Discovery Agent",
+		Listen:      *listen,
+		PublicURL:   "http://localhost" + *listen,
+		Slug:        "cmdb",
+		CortezaAPI:  *cortezaAPI,
+		Token:       *token,
+		NamespaceID: *namespaceID,
+	})
+	svc.SetBackend(ag)
+	svc.Register(agent.Components()...)
+	svc.MountAPI(api.New(ag).Mount)
+	svc.MountRoot(func(r chi.Router) {
+		if *staticDir != "" {
+			r.Handle("/*", http.StripPrefix("/", http.FileServer(http.Dir(*staticDir))))
+			return
+		}
+		sub, err := fs.Sub(webFS, "web/dist")
+		if err != nil {
+			log.Printf("No embedded frontend found (build it with 'make web'): %v", err)
+			return
+		}
+		r.Handle("/*", http.FileServer(http.FS(sub)))
+	})
 
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(corsMiddleware)
-
-	// API routes
-	r.Route("/api", api.New(ag).Mount)
-
-	// MCP server
 	if *mcpAddr != "" {
 		go func() {
 			log.Printf("MCP server starting on %s", *mcpAddr)
@@ -110,52 +126,12 @@ func main() {
 		}()
 	}
 
-	// Static frontend
-	if *staticDir != "" {
-		r.Handle("/*", http.StripPrefix("/", http.FileServer(http.Dir(*staticDir))))
-	} else {
-		sub, err := fs.Sub(webFS, "web/dist")
-		if err != nil {
-			log.Printf("No embedded frontend found (build it with 'make web'): %v", err)
-		} else {
-			r.Handle("/*", http.FileServer(http.FS(sub)))
-		}
-	}
-
-	// Health check
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"status":"ok"}`))
-	})
-
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	server := &http.Server{Addr: *listen, Handler: r}
-
-	go func() {
-		log.Printf("CMDB Discovery Agent listening on %s", *listen)
-		log.Printf("LLM: %s (%s)", *llmURL, *llmModel)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("HTTP server error: %v", err)
-		}
-	}()
-
-	<-ctx.Done()
-	log.Println("Shutting down...")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	server.Shutdown(shutdownCtx)
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+	log.Printf("CMDB Discovery Agent listening on %s", *listen)
+	log.Printf("LLM: %s (%s)", *llmURL, *llmModel)
+	if err := svc.Listen(ctx); err != nil {
+		log.Fatalf("HTTP server error: %v", err)
+	}
 }

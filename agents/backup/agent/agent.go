@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"path"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/madnikulin50/lowcode/agents/sdk"
 )
 
 type Agent struct {
@@ -21,11 +21,10 @@ type Agent struct {
 	cz           *Corteza
 	store        *ObjectStore
 	mu           sync.RWMutex
-	jobs         map[string]*JobStatus
-	lastCallback map[string]time.Time
-	lastFired    map[uint64]time.Time
-	sem          chan struct{}
-	cbClient     *http.Client
+	jobs      map[string]*JobStatus
+	lastFired map[uint64]time.Time
+	sem       chan struct{}
+	cb        *sdk.Callback
 }
 
 func New(cfg Config, store *ObjectStore, cz *Corteza) *Agent {
@@ -37,11 +36,10 @@ func New(cfg Config, store *ObjectStore, cz *Corteza) *Agent {
 		cfg:          cfg,
 		cz:           cz,
 		store:        store,
-		jobs:         map[string]*JobStatus{},
-		lastCallback: map[string]time.Time{},
-		lastFired:    map[uint64]time.Time{},
+		jobs:      map[string]*JobStatus{},
+		lastFired: map[uint64]time.Time{},
 		sem:          make(chan struct{}, n),
-		cbClient:     &http.Client{Timeout: 15 * time.Second},
+		cb:           sdk.NewCallback(),
 	}
 }
 
@@ -65,7 +63,7 @@ func (a *Agent) GetStatus(id string) *JobStatus {
 	return a.jobs[id]
 }
 
-func (a *Agent) ListJobs() []*JobStatus {
+func (a *Agent) ListJobsStatus() []*JobStatus {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	out := make([]*JobStatus, 0, len(a.jobs))
@@ -129,7 +127,7 @@ func (a *Agent) Heartbeat(ctx context.Context) {
 	if a.cz == nil || !a.cz.HasToken() {
 		return
 	}
-	caps := "fs,smb,database,s3"
+	caps := strings.Join(sdk.CapabilitiesOf(Components()), ",")
 	if resticAvailable() {
 		caps += ",restic"
 	}

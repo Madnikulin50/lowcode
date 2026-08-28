@@ -40,7 +40,15 @@ func TestComposeJobStatus(t *testing.T) {
 }
 
 func TestPostCallbackEnvelope(t *testing.T) {
-	var got ingestEnvelope
+	var got struct {
+		JobID           string   `json:"jobID"`
+		Kind            string   `json:"kind"`
+		Status          string   `json:"status"`
+		ScanRecordID    string   `json:"scanRecordID"`
+		CreatedRecordID string   `json:"createdRecordID"`
+		NamespaceID     string   `json:"namespaceID"`
+		Items           []Device `json:"items"`
+	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer tok" {
 			t.Errorf("auth header %q", r.Header.Get("Authorization"))
@@ -72,7 +80,7 @@ func TestPostCallbackEnvelope(t *testing.T) {
 	}
 	a.mu.Unlock()
 
-	a.postCallback(ScanTarget{
+	a.notifyCallback(ScanTarget{
 		CallbackURL:  srv.URL,
 		Token:        "tok",
 		NamespaceID:  FlexUint64(42),

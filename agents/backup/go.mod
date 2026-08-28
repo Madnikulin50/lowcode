@@ -6,9 +6,12 @@ require (
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/google/uuid v1.6.0
 	github.com/hirochachacha/go-smb2 v1.1.0
+	github.com/madnikulin50/lowcode/agents/sdk v0.0.0
 	github.com/minio/minio-go/v7 v7.3.0
 	github.com/prometheus/client_golang v1.24.1
 )
+
+replace github.com/madnikulin50/lowcode/agents/sdk => ../sdk
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

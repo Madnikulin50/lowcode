@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
@@ -13,11 +12,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/madnikulin50/lowcode/agents/backup/agent"
-	"github.com/madnikulin50/lowcode/agents/backup/api"
+	"github.com/madnikulin50/lowcode/agents/sdk"
 )
 
 func main() {
@@ -79,18 +77,26 @@ func main() {
 	}
 	ag := agent.New(cfg, store, cz)
 
-	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(corsMiddleware)
-	r.Handle("/metrics", promhttp.Handler())
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(ag.Health(r.Context()))
+	svc := sdk.New(sdk.Config{
+		Handle:      "backup",
+		Name:        "Backup Agent",
+		Listen:      *listen,
+		PublicURL:   cfg.PublicURL,
+		Slug:        "backup",
+		CortezaAPI:  cfg.CortezaAPI,
+		Token:       cfg.Token,
+		NamespaceID: cfg.NamespaceID,
+		Heartbeat:   sdk.HeartbeatConfig{Module: "agents"},
 	})
-	r.Route("/api", api.New(ag).Mount)
+	svc.SetBackend(ag)
+	svc.Register(agent.Components()...)
+	svc.Alias(http.MethodPost, "/restore", "restore")
+	svc.Alias(http.MethodPost, "/prune", "prune")
+	svc.Alias(http.MethodPost, "/jobs/due", "due")
+	svc.Sync("due")
+	svc.MountRoot(func(r chi.Router) {
+		r.Handle("/metrics", promhttp.Handler())
+	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -102,19 +108,10 @@ func main() {
 		log.Printf("cron poll off (no --token); Compose buttons send token in the job POST")
 	}
 
-	srv := &http.Server{Addr: *listen, Handler: r}
-	go func() {
-		log.Printf("backup-agent listening on %s (minio=%s bucket=%s api=%s)", *listen, cfg.Minio.Endpoint, cfg.Minio.Bucket, cfg.CortezaAPI)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("HTTP: %v", err)
-		}
-	}()
-
-	<-ctx.Done()
-	log.Println("shutting down")
-	shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	_ = srv.Shutdown(shutdown)
+	log.Printf("backup-agent listening on %s (minio=%s bucket=%s api=%s)", *listen, cfg.Minio.Endpoint, cfg.Minio.Bucket, cfg.CortezaAPI)
+	if err := svc.Listen(ctx); err != nil {
+		log.Fatalf("HTTP: %v", err)
+	}
 }
 
 func env(key, fallback string) string {
@@ -122,17 +119,4 @@ func env(key, fallback string) string {
 		return v
 	}
 	return fallback
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }

@@ -57,5 +57,25 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 	r.Register("score.weighted", &scoreWeightedExecutor{})
 	r.Register("risk.band", &riskBandExecutor{})
 
+	r.Register("service.call", &componentExecutor{detach: detachStart})
+	for _, spec := range RemoteCatalog() {
+		spec := spec
+		t := spec.Type
+		if t == "" {
+			t = spec.Service + "/" + spec.Operation
+		}
+		r.Register(t, &componentExecutor{spec: spec, detach: detachStart})
+	}
+
 	return r
+}
+
+func RemoteCatalog() []RemoteSpec {
+	return []RemoteSpec{
+		{Type: "cmdb/scan", Service: "cmdb", Operation: "scan", Async: true, Ingest: "cmdb-ingest-scan"},
+		{Type: "backup/run", Service: "backup", Operation: "backup", Async: true, Ingest: "backup-ingest-job"},
+		{Type: "backup/restore", Service: "backup", Operation: "restore", Async: true, Ingest: "backup-ingest-job"},
+		{Type: "backup/prune", Service: "backup", Operation: "prune", Async: true, Ingest: "backup-ingest-job"},
+		{Type: "backup/due", Service: "backup", Operation: "due", Async: false},
+	}
 }
