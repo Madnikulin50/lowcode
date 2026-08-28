@@ -182,7 +182,8 @@ import { ref, computed, inject } from 'vue'
 import { usePageBlockBase } from './usePageBlockBase'
 import ListLoader from 'corteza-webapp-compose/src/components/Public/Page/Attachment/ListLoader'
 import { components } from 'corteza-lib/vue/dist'
-const { CInputColorPicker, CUploader } = components
+import CUploader from 'corteza-lib/vue/src/components/uploader/CUploader.vue'
+const { CInputColorPicker } = components
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -243,7 +244,6 @@ function appendAttachment (payload = {}) {
 }
 
 function uploadWebcamImage (file) {
-  const u = uploader.value
-  if (u && u.$refs.dropzone) u.$refs.dropzone.addFile(file)
+  uploader.value?.addFile?.(file)
 }
 </script>

@@ -2,6 +2,7 @@ import { FontAwesomeIcon, FontAwesomeLayers } from '@fortawesome/vue-fontawesome
 import PortalVue from 'portal-vue'
 import './faIcons'
 import { components } from 'corteza-lib/vue/dist'
+import CInputSelect from 'corteza-lib/vue/src/components/input/CInputSelect.vue'
 
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
@@ -82,7 +83,7 @@ export default {
     app.component('c-input-checkbox', components.CInputCheckbox)
     app.component('c-button-submit', components.CButtonSubmit)
     app.component('c-hint', components.CHint)
-    app.component('c-input-select', components.CInputSelect)
+    app.component('c-input-select', CInputSelect)
     app.component('c-form-table-wrapper', components.CFormTableWrapper)
     app.component('c-webcam', components.CWebcam)
   },

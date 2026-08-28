@@ -57,7 +57,10 @@ export class ModuleFieldSelect extends ModuleField {
       if (AreStrings(o.options)) {
         opt = o.options.map((value: string) => this.createSelectOption({ value, text: value }))
       } else {
-        opt = o.options.map(o => this.createSelectOption(o))
+        opt = o.options.map((item: Partial<SelectOption> | string) => {
+          if (typeof item === 'string') return this.createSelectOption({ value: item, text: item })
+          return this.createSelectOption(item)
+        })
       }
 
       this.options.options = opt
@@ -68,7 +71,7 @@ export class ModuleFieldSelect extends ModuleField {
     const { textColor = '', backgroundColor = '' } = style || {}
     return {
       value,
-      text,
+      text: text || value,
       style: {
         textColor,
         backgroundColor,

@@ -9,7 +9,8 @@ import (
 
 func TestModuleField_decodeTranslationsOptionsOptionTexts(t *testing.T) {
 	rti := locale.ResourceTranslationIndex{
-		"meta.options.val1.text": &locale.ResourceTranslation{Msg: "TEXT-1"},
+		"meta.options.val1.text":  &locale.ResourceTranslation{Msg: "TEXT-1"},
+		"meta.options.draft.text": &locale.ResourceTranslation{Msg: ""},
 	}
 	tests := []struct {
 		name string
@@ -58,6 +59,16 @@ func TestModuleField_decodeTranslationsOptionsOptionTexts(t *testing.T) {
 			[]interface{}{
 				map[string]interface{}{"value": "val1", "text": "TEXT-1", "style": map[string]interface{}{"backgroundColor": "", "textColor": ""}},
 				map[string]interface{}{"value": "val2", "text": "Text2", "style": map[string]interface{}{"backgroundColor": "", "textColor": ""}},
+			},
+		},
+		{"empty-translation-keeps-original-text",
+			ModuleFieldOptions{
+				"options": []interface{}{
+					map[string]interface{}{"value": "draft", "text": "Черновик"},
+				},
+			},
+			[]interface{}{
+				map[string]interface{}{"value": "draft", "text": "Черновик", "style": map[string]interface{}{"backgroundColor": "", "textColor": ""}},
 			},
 		},
 	}

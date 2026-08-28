@@ -10,7 +10,7 @@
     </div>
     <div :class="contentColClass">
     <template v-if="field.isMulti">
-      <div v-if="field.options.selectType === 'list'">
+      <div v-if="field.options?.selectType === 'list'">
         <div v-for="option in selectOptions" :key="option.value" class="form-check d-block mb-1">
           <input
             :id="'opt-' + option.value"
@@ -34,35 +34,46 @@
             ref="singleSelect"
             :options="selectOptions"
             :placeholder="t('kind.select.placeholder')"
-            :reduce="o => o.value"
+            :reduce="reduceOption"
             :selectable="isSelectable"
+            :get-option-label="optionLabel"
+            :get-option-key="o => o.value"
             label="text"
-            :badge="field.options.displayType === 'badge'"
-            @input="selectChange"
+            :filterable="false"
+            :searchable="false"
+            :badge="false"
+            @update:model-value="selectChange"
           />
           <c-input-select
             v-if="field.options.selectType === 'multiple'"
             v-model="value"
             :options="selectOptions"
             :placeholder="t('kind.select.placeholder')"
-            :reduce="o => o.value"
+            :reduce="reduceOption"
             :selectable="isSelectable"
+            :get-option-label="optionLabel"
+            :get-option-key="o => o.value"
             label="text"
             multiple
-            :badge="field.options.displayType === 'badge'"
+            :filterable="false"
+            :badge="false"
           />
         </template>
         <template #default="ctx">
           <c-input-select
             v-if="field.options.selectType === 'each'"
-            :value="value[ctx.index]"
+            :model-value="value[ctx.index]"
             :options="selectOptions"
-            :reduce="o => o.value"
+            :reduce="reduceOption"
             :placeholder="t('kind.select.placeholder')"
             :selectable="isSelectable"
+            :get-option-label="optionLabel"
+            :get-option-key="o => o.value"
             label="text"
-            :badge="field.options.displayType === 'badge'"
-            @input="setMultiValue($event, ctx.index)"
+            :filterable="false"
+            :searchable="false"
+            :badge="false"
+            @update:model-value="setMultiValue($event, ctx.index)"
           />
           <span v-else :class="{ 'badge rounded-pill': field.options.displayType === 'badge' }" :style="getOptionStyle(value[ctx.index])">{{ findLabel(value[ctx.index]) }}</span>
         </template>
@@ -70,7 +81,7 @@
     </template>
 
     <template v-else>
-      <div v-if="field.options.selectType === 'list'" class="btn-group" data-bs-toggle="buttons">
+      <div v-if="field.options?.selectType === 'list'" class="btn-group" data-bs-toggle="buttons">
         <label
           v-for="opt in selectOptions"
           :key="opt.value"
@@ -88,16 +99,22 @@
           {{ opt.text }}
         </label>
       </div>
-      <c-input-select
+      <select
         v-else
-        v-model="value"
-        :placeholder="t('kind.select.optionNotSelected')"
-        :options="selectOptions"
-        :reduce="o => o.value"
-        :selectable="isSelectable"
-        label="text"
-        :badge="field.options.displayType === 'badge'"
-      />
+        class="form-select form-select-sm"
+        autocomplete="off"
+        :value="value == null ? '' : value"
+        @change="onNativeChange"
+      >
+        <option value="">{{ t('kind.select.optionNotSelected') }}</option>
+        <option
+          v-for="opt in selectOptions"
+          :key="opt.value"
+          :value="opt.value"
+        >
+          {{ opt.text }}
+        </option>
+      </select>
       <FieldErrors :errors="errors" />
     </template>
     </div>
@@ -130,9 +147,40 @@ const { value, formGroupStyleClasses, labelColClass, contentColClass, label, hin
 
 const singleSelect = ref(null)
 
+function rawFieldOptions () {
+  const opts = props.field?.options
+  if (!opts) return []
+  if (Array.isArray(opts.options)) return opts.options
+  if (Array.isArray(opts)) return opts
+  return []
+}
+
+function normalizeOption (opt) {
+  if (opt == null || opt === '') return null
+  if (typeof opt === 'string') return { value: opt, text: opt }
+  const v = opt.value ?? opt.Value ?? ''
+  if (!v) return null
+  const text = opt.text || opt.Text || opt.label || v
+  return { value: String(v), text: String(text), optStyle: opt.style || {} }
+}
+
 const selectOptions = computed(() => {
-  return (props.field.options.options || []).filter(({ value: v = '', text = '' }) => v && text)
+  return rawFieldOptions().map(normalizeOption).filter(Boolean)
 })
+
+function reduceOption (o) {
+  return o && typeof o === 'object' && 'value' in o ? o.value : o
+}
+
+function optionLabel (o) {
+  if (o == null) return ''
+  if (typeof o !== 'object') return String(o)
+  return o.text || o.label || o.value || ''
+}
+
+function onNativeChange (e) {
+  value.value = e.target.value
+}
 
 function selectChange (val) {
   const arr = Array.isArray(value.value) ? [...value.value] : []
@@ -147,21 +195,26 @@ function findLabel (v) {
   return (selectOptions.value.find(({ value: val }) => val === v) || {}).text || v
 }
 
-function isSelectable ({ value: val } = {}) {
-  if (props.field.options.selectType === 'list') return true
-  if (props.field.isMulti) {
-    return !props.field.options.isUniqueMultiValue || !((value.value) || []).includes(val)
-  }
-  return value.value !== val
+function optionValue (opt) {
+  if (opt == null) return opt
+  if (typeof opt === 'object' && 'value' in opt) return opt.value
+  return opt
+}
+
+function isSelectable (opt = {}) {
+  if (!props.field.isMulti) return true
+  const val = optionValue(opt)
+  return !props.field.options.isUniqueMultiValue || !((value.value) || []).includes(val)
 }
 
 function getOptionStyle (v) {
   const style = {}
   if (props.field.options.displayType === 'badge') {
-    const opt = selectOptions.value.find(({ value: val }) => val === v) || { style: {} }
+    const opt = selectOptions.value.find(({ value: val }) => val === v) || {}
+    const st = opt.optStyle || {}
     style.fontSize = '0.9rem'
-    const fg = getColor(opt.style.textColor) || 'var(--dark)'
-    const bg = getColor(opt.style.backgroundColor) || 'var(--extra-light)'
+    const fg = getColor(st.textColor) || 'var(--dark)'
+    const bg = getColor(st.backgroundColor) || 'var(--extra-light)'
     style.color = fg
     const gradient = props.field.options.badgeGradient ? badgeGradient(bg) : undefined
     if (gradient) {

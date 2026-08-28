@@ -299,8 +299,11 @@ func (f *ModuleField) decodeTranslationsMetaOptionsValueText(tt locale.ResourceT
 		// and update the option (effectively overwriting
 		// the original text value (in case of map option)
 		trKey := strings.NewReplacer("{{value}}", outOpt["value"].(string)).Replace(LocaleKeyModuleFieldMetaOptionsValueText.Path)
-		if tr = tt.FindByKey(trKey); tr != nil {
+		if tr = tt.FindByKey(trKey); tr != nil && strings.TrimSpace(tr.Msg) != "" {
 			outOpt["text"] = tr.Msg
+		}
+		if s, _ := outOpt["text"].(string); strings.TrimSpace(s) == "" {
+			outOpt["text"] = outOpt["value"]
 		}
 
 		// Update slice item with translated option

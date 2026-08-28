@@ -5,12 +5,14 @@
     v-model="_value"
     data-test-id="select"
     :clearable="clearable"
-    :options="options"
+    :options="safeOptions"
     :searchable="searchable"
     :disabled="disabled"
     :selectable="selectable"
     :multiple="multiple"
     :loading="loading"
+    :label="label"
+    :get-option-label="resolveOptionLabel"
     :calculate-position="calculateDropdownPosition"
     :append-to-body="appendToBody"
     class="bg-white rounded"
@@ -18,7 +20,7 @@
     @search="onSearch"
   >
     <template
-      v-for="(_, name) in $slots"
+      v-for="name in forwardedSlotNames"
       :key="name"
       #[name]="data"
     >
@@ -36,7 +38,7 @@
         class="badge rounded-pill"
         :style="getOptionStyle(option)"
       >
-        {{ option.text }}
+        {{ optionText(option) }}
       </span>
     </template>
 
@@ -48,7 +50,7 @@
         class="badge rounded-pill"
         :style="getOptionStyle(option)"
       >
-        {{ option.text }}
+        {{ optionText(option) }}
       </span>
     </template>
 
@@ -60,7 +62,7 @@
         class="d-flex align-items-center badge rounded-pill mx-1 mt-1 w-auto"
         :style="getOptionStyle(option)"
       >
-        {{ option.text }}
+        {{ optionText(option) }}
 
         <font-awesome-icon
           :icon="['fas', 'times']"
@@ -73,15 +75,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, useSlots } from 'vue'
 import VueSelect from 'vue-select'
 import { createPopper } from '@popperjs/core'
 import 'vue-select/dist/vue-select.css'
 
+defineOptions({ inheritAttrs: false })
+
 interface Option {
   text?: string
+  label?: string
+  value?: unknown
   disabled?: boolean
   style?: Record<string, string>
+  optStyle?: Record<string, string>
+  option?: Option
   [key: string]: unknown
 }
 
@@ -109,6 +117,8 @@ interface Props {
   multiple?: boolean
   loading?: boolean
   badge?: boolean
+  label?: string
+  getOptionLabel?: (option: Option) => string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -124,6 +134,7 @@ const props = withDefaults(defineProps<Props>(), {
   multiple: false,
   loading: false,
   badge: false,
+  label: 'label',
 })
 
 const emit = defineEmits<{
@@ -134,6 +145,52 @@ const emit = defineEmits<{
 const vueSelectRef = ref<VueSelectInstance | null>(null)
 VueSelect
 const query = ref('')
+const slots = useSlots()
+
+const forwardedSlotNames = computed(() => {
+  const skip = new Set<string>()
+  if (props.badge) {
+    skip.add('option')
+    skip.add('selected-option')
+    skip.add('selected-option-container')
+  }
+  return Object.keys(slots).filter(name => !skip.has(name))
+})
+
+function slotOption (payload: Option = {}): Option {
+  if (payload.option && typeof payload.option === 'object') return payload.option
+  return payload
+}
+
+function optionText (payload: Option = {}): string {
+  const o = slotOption(payload)
+  const text = o.text ?? o.label ?? o.value
+  return text == null ? '' : String(text)
+}
+
+function resolveOptionLabel (o: Option): string {
+  if (typeof props.getOptionLabel === 'function') return props.getOptionLabel(o)
+  if (o == null) return ''
+  if (typeof o !== 'object') return String(o)
+  const keyed = o[props.label]
+  const text = keyed ?? o.text ?? o.label ?? o.value
+  return text == null ? '' : String(text)
+}
+
+// vue-select 4 spreads each option into a Vue 3 slot. A `style` key is treated
+// as CSS, so invest badge options (style: { backgroundColor, textColor }) never
+// render as labels. Keep visual metadata on optStyle instead.
+const safeOptions = computed(() =>
+  (props.options || []).map((o) => {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return o
+    if (!('style' in o)) return o
+    const { style, ...rest } = o
+    return {
+      ...rest,
+      optStyle: (o.optStyle && typeof o.optStyle === 'object') ? o.optStyle : style,
+    }
+  })
+)
 
 const _value = computed({
   get () {
@@ -184,7 +241,12 @@ function onSearch (q: string, loading: (v: boolean) => void) {
   emit('search', q, loading)
 }
 
-function getOptionStyle ({ style = {} }: Option = {}) {
+function getOptionStyle (payload: Option = {}) {
+  const o = slotOption(payload)
+  const raw = (o.optStyle && typeof o.optStyle === 'object')
+    ? o.optStyle
+    : (o.style && typeof o.style === 'object' && !Array.isArray(o.style) ? o.style : {})
+  const style: Record<string, string> = { ...(raw as Record<string, string>) }
   if (props.badge) {
     style.fontSize = '0.9rem'
     style.color = style.textColor || 'var(--dark)'

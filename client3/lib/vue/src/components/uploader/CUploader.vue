@@ -175,6 +175,10 @@ function handleFile(file: File) {
   uploadFile(file)
 }
 
+function addFile(file: File) {
+  handleFile(file)
+}
+
 function validateFileType(_name: string, types: string[]) {
   if (!types.length || types.includes('*/*')) return true
   const ext = _name.split('.').pop()?.toLowerCase()
@@ -268,6 +272,11 @@ function onError(_e: any, message: string) {
   error.value = message
   processing.value = null
 }
+
+defineExpose({
+  addFile,
+  openFileDialog,
+})
 </script>
 
 <style lang="scss" scoped>

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -17,10 +18,14 @@ import (
 
 func main() {
 	listen := flag.String("listen", ":8086", "HTTP listen address")
-	cortezaAPI := flag.String("api", "http://localhost:3333/api", "Corteza API base URL")
+	cortezaAPI := flag.String("api", "http://localhost:3333", "Lowcode origin (not /api — APIs live at /compose on the GoLand server)")
 	token := flag.String("token", "", "Corteza API token")
 	namespaceID := flag.Uint64("namespace", 0, "Default namespace ID (slug invest if 0)")
 	flag.Parse()
+
+	if *token == "" {
+		*token = os.Getenv("TOKEN")
+	}
 
 	cfg := agent.Config{
 		ListenAddr:  *listen,
@@ -30,6 +35,11 @@ func main() {
 		HTTPTimeout: 25 * time.Second,
 	}
 	eng := agent.NewEngine(cfg)
+	if err := eng.Discover(context.Background()); err != nil {
+		log.Printf("corteza API discover: %v (will retry on first request)", err)
+	} else {
+		log.Printf("corteza API %s", eng.APIOrigin())
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)

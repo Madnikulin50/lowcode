@@ -50,11 +50,10 @@ defineOptions({ i18nOptions: { namespaces: 'general' } })
 import { computed, ref, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEditorBase } from './base'
-import { components } from 'corteza-lib/vue/dist'
+import CUploader from 'corteza-lib/vue/src/components/uploader/CUploader.vue'
 import ListLoader from 'corteza-webapp-compose/src/components/Public/Page/Attachment/ListLoader'
 import { NoID } from 'corteza-lib/js/dist'
 import FieldErrors from '../errors'
-const { CUploader } = components
 
 const props = defineProps({
   namespace: { type: Object, required: true },
@@ -160,8 +159,6 @@ function appendAttachment (payload = {}) {
 }
 
 function uploadWebcamImage (file) {
-  if (uploaderRef.value) {
-    uploaderRef.value.$refs.dropzone.addFile(file)
-  }
+  uploaderRef.value?.addFile?.(file)
 }
 </script>

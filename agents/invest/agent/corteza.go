@@ -6,15 +6,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
+type cortezaBase struct {
+	mu       sync.Mutex
+	url      string
+	resolved bool
+}
+
 type Corteza struct {
-	baseURL     string
+	base        *cortezaBase
 	token       string
 	httpClient  *http.Client
 	namespaceID uint64
@@ -26,7 +34,7 @@ func NewCorteza(baseURL, token string, namespaceID uint64, timeout time.Duration
 		timeout = 20 * time.Second
 	}
 	return &Corteza{
-		baseURL:     strings.TrimRight(baseURL, "/"),
+		base:        &cortezaBase{url: strings.TrimRight(strings.TrimSpace(baseURL), "/")},
 		token:       token,
 		httpClient:  &http.Client{Timeout: timeout},
 		namespaceID: namespaceID,
@@ -34,8 +42,17 @@ func NewCorteza(baseURL, token string, namespaceID uint64, timeout time.Duration
 	}
 }
 
+func (c *Corteza) BaseURL() string {
+	if c == nil || c.base == nil {
+		return ""
+	}
+	c.base.mu.Lock()
+	defer c.base.mu.Unlock()
+	return c.base.url
+}
+
 func (c *Corteza) WithToken(token string) *Corteza {
-	if token == "" {
+	if strings.TrimSpace(token) == "" {
 		return c
 	}
 	cp := *c
@@ -52,6 +69,111 @@ func (c *Corteza) WithNamespace(id uint64) *Corteza {
 	cp.namespaceID = id
 	cp.modules = map[string]uint64{}
 	return &cp
+}
+
+// composeOriginCandidates turns --api values into origins that, when
+// concatenated with /compose/..., hit the real Compose REST mount.
+// GoLand with HTTP_WEBAPP_ENABLED=false serves APIs at /compose, not /api/compose
+// (chi's HTML 404 is the Bootstrap 4.6 page under /api/...).
+func composeOriginCandidates(raw string) []string {
+	raw = strings.TrimRight(strings.TrimSpace(raw), "/")
+	if raw == "" {
+		raw = "http://127.0.0.1:3333"
+	}
+	origin := strings.TrimSuffix(raw, "/compose")
+	origin = strings.TrimSuffix(origin, "/api")
+	origin = strings.TrimRight(origin, "/")
+	seen := map[string]struct{}{}
+	out := make([]string, 0, 3)
+	add := func(s string) {
+		s = strings.TrimRight(s, "/")
+		if s == "" {
+			return
+		}
+		if _, ok := seen[s]; ok {
+			return
+		}
+		seen[s] = struct{}{}
+		out = append(out, s)
+	}
+	add(origin)
+	add(origin + "/api")
+	add(raw)
+	return out
+}
+
+func looksLikeHTML(body []byte) bool {
+	s := strings.TrimSpace(strings.ToLower(string(body)))
+	return strings.HasPrefix(s, "<!doctype") || strings.Contains(s, "<html")
+}
+
+func looksLikeComposeAPI(status int, body []byte) bool {
+	if looksLikeHTML(body) {
+		return false
+	}
+	if status == http.StatusNotFound {
+		return false
+	}
+	return true
+}
+
+func apiErrorBody(raw []byte) string {
+	s := strings.TrimSpace(string(raw))
+	if looksLikeHTML(raw) {
+		return "HTML 404 (Compose is not under this prefix; use --api=http://127.0.0.1:3333 not .../api)"
+	}
+	if i := strings.Index(s, "\n"); i > 0 {
+		s = strings.TrimSpace(s[:i])
+	}
+	if len(s) > 300 {
+		s = s[:300] + "..."
+	}
+	return s
+}
+
+func probeComposeOrigin(ctx context.Context, origin, token string) bool {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, origin+"/compose/namespace/?limit=1", nil)
+	if err != nil {
+		return false
+	}
+	req.Header.Set("Accept", "application/json")
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	client := &http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	return looksLikeComposeAPI(resp.StatusCode, raw)
+}
+
+// Discover picks the origin that actually serves Compose REST.
+// Safe to call repeatedly; WithToken copies share the resolved origin.
+func (c *Corteza) Discover(ctx context.Context) error {
+	if c == nil || c.base == nil {
+		return fmt.Errorf("corteza client is nil")
+	}
+	c.base.mu.Lock()
+	defer c.base.mu.Unlock()
+	if c.base.resolved {
+		return nil
+	}
+	given := c.base.url
+	candidates := composeOriginCandidates(given)
+	for _, origin := range candidates {
+		if probeComposeOrigin(ctx, origin, c.token) {
+			if origin != given {
+				log.Printf("corteza API origin %s (from --api=%s)", origin, given)
+			}
+			c.base.url = origin
+			c.base.resolved = true
+			return nil
+		}
+	}
+	return fmt.Errorf("no Compose API at %s (tried %s); pass --api=http://127.0.0.1:3333", given, strings.Join(candidates, ", "))
 }
 
 type composeModule struct {
@@ -76,6 +198,9 @@ type composeRecordValue struct {
 }
 
 func (c *Corteza) request(ctx context.Context, method, path string, body interface{}) ([]byte, error) {
+	if err := c.Discover(ctx); err != nil {
+		return nil, err
+	}
 	var b io.Reader
 	if body != nil {
 		data, err := json.Marshal(body)
@@ -84,11 +209,12 @@ func (c *Corteza) request(ctx context.Context, method, path string, body interfa
 		}
 		b = bytes.NewReader(data)
 	}
-	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, b)
+	req, err := http.NewRequestWithContext(ctx, method, c.BaseURL()+path, b)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	if c.token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
@@ -99,7 +225,7 @@ func (c *Corteza) request(ctx context.Context, method, path string, body interfa
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(raw))
+		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, apiErrorBody(raw))
 	}
 	var envelope struct {
 		Response json.RawMessage `json:"response"`

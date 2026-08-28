@@ -55,6 +55,12 @@ const chainID = computed(() => props.block.options?.chainID || '')
 const label = computed(() => props.block.options?.label || 'Run Rule Chain')
 const icon = computed(() => ['fas', props.block.options?.icon || 'play'])
 const btnClass = computed(() => `btn-${props.block.options?.variant || 'primary'} ${(props.block.options?.size) ? 'btn-' + props.block.options.size : ''}`)
+const reloadOnSuccess = computed(() => !!props.block.options?.reloadOnSuccess)
+
+function reloadPageIfNeeded () {
+  if (pollAbort || !reloadOnSuccess.value) return
+  window.location.reload()
+}
 
 const reorderSummary = computed(() => {
   const out = result.value?.output
@@ -207,6 +213,9 @@ async function runChain () {
       }
     } else if (result.value.success && isScan && !ids.scanID) {
       result.value = { success: false, error: 'Агент не вернул scanID. Проверьте CMDB agent на :8085 и что цепочка POST /api/scan проходит.' }
+    }
+    if (result.value.success) {
+      reloadPageIfNeeded()
     }
   } catch (err) {
     result.value = { success: false, error: err.message || 'Ошибка запроса' }

@@ -13,7 +13,7 @@ export default function (field, translations, currentLanguage, resource) {
     }
 
     if (typeof opt === 'object' && opt.value) {
-      opt.text = get(`${keyPrefix}${opt.value}${keySuffix}`) || opt.value
+      opt.text = get(`${keyPrefix}${opt.value}${keySuffix}`) || opt.text || opt.value
     }
 
     return opt

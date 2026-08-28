@@ -273,6 +273,7 @@ import { useStore } from '../../../store'
 import { usePageBlockBase } from '../usePageBlockBase'
 import { NoID, compose, fmt } from 'corteza-lib/js/dist'
 import { components, composables } from 'corteza-lib/vue/dist'
+import CUploader from 'corteza-lib/vue/src/components/uploader/CUploader.vue'
 import { evalPrefilterOrSkip, getFieldFilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import axios from 'axios'
 import CommentItem from './Item.vue'
@@ -280,7 +281,7 @@ import CommentReply from './Reply.vue'
 import ListLoader from 'corteza-webapp-compose/src/components/Public/Page/Attachment/ListLoader'
 import Wrap from '../Wrap/index.js'
 
-const { CRichTextInput, CUploader, CButtonSubmit, emojiData } = components
+const { CRichTextInput, CButtonSubmit, emojiData } = components
 const { toastErrorHandler } = composables.useToast()
 
 const props = defineProps({
@@ -666,16 +667,13 @@ function isScrollAtBottom () {
 function handleFileUpload (files) {
   if (!attachmentField.value) return
   const u = uploader.value
-  if (u?.$refs?.dropzone) {
-    Array.from(files).forEach(file => { u.$refs.dropzone.addFile(file) })
+  if (u?.addFile) {
+    Array.from(files).forEach(file => { u.addFile(file) })
   }
 }
 
 function openFileUpload () {
-  const u = uploader.value
-  if (u?.$refs?.dropzone) {
-    u.$refs.dropzone.dropzone.hiddenFileInput.click()
-  }
+  uploader.value?.openFileDialog?.()
 }
 
 function unwrapUpload (payload) {

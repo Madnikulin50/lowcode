@@ -170,9 +170,9 @@ type composeNamespace struct {
 }
 
 type Record struct {
-	ID        uint64         `json:"recordID,string"`
-	UpdatedAt string         `json:"updatedAt,omitempty"`
-	Values    []RecordValue  `json:"values"`
+	ID        uint64        `json:"recordID,string"`
+	UpdatedAt string        `json:"updatedAt,omitempty"`
+	Values    []RecordValue `json:"values"`
 }
 
 type RecordValue struct {
@@ -220,7 +220,11 @@ func (c *Client) Request(ctx context.Context, method, path string, body any) ([]
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, strings.TrimSpace(string(raw)))
+		msg := strings.TrimSpace(string(raw))
+		if looksLikeHTML(raw) {
+			msg = "HTML 404 (Compose is not under this prefix; use --api=http://127.0.0.1:3333 not .../api)"
+		}
+		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, msg)
 	}
 	var envelope struct {
 		Response json.RawMessage `json:"response"`

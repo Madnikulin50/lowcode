@@ -9,6 +9,7 @@ interface Options {
   variant: string;
   size: string;
   icon: string;
+  reloadOnSuccess: boolean;
   context: Record<string, unknown>;
 }
 
@@ -18,6 +19,7 @@ const defaults: Readonly<Options> = Object.freeze({
   variant: 'primary',
   size: '',
   icon: 'play',
+  reloadOnSuccess: false,
   context: {},
 })
 
@@ -34,6 +36,7 @@ export class PageBlockRuleChain extends PageBlock {
   applyOptions (o?: Partial<Options>): void {
     if (!o) return
     Apply(this.options, o, String, 'chainID', 'label', 'variant', 'size', 'icon')
+    Apply(this.options, o, Boolean, 'reloadOnSuccess')
     if (o.context) {
       this.options.context = { ...this.options.context, ...o.context }
     }

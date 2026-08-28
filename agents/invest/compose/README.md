@@ -76,7 +76,8 @@ Record revisions включены на `projects`, `wbs_items`, `documents`, `co
 
 ```bash
 cd agents/invest
-# --api = origin without /compose (see applied.json engine.flags)
+# --api = origin without /compose (see applied.json engine.flags).
+# Default is http://localhost:3333; the client also probes /api if you pass the old flag.
 go run . \
   --api=http://localhost:3333 \
   --namespace=<namespaceID> \

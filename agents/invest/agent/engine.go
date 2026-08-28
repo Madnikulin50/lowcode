@@ -18,6 +18,14 @@ func NewEngine(cfg Config) *Engine {
 	}
 }
 
+func (e *Engine) Discover(ctx context.Context) error {
+	return e.cz.Discover(ctx)
+}
+
+func (e *Engine) APIOrigin() string {
+	return e.cz.BaseURL()
+}
+
 func (e *Engine) client(req JobRequest) *Corteza {
 	cz := e.cz.WithToken(req.Token).WithNamespace(uint64(req.NamespaceID))
 	return cz
