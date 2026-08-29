@@ -31,6 +31,22 @@ type Job struct {
 
 func (j *Job) Job() *Job { return j }
 
+func (j *Job) Param(key string) string {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if j.Params == nil {
+		return ""
+	}
+	return stringify(j.Params[key])
+}
+
+func (j *Job) EnvelopeAuto() Envelope {
+	j.mu.Lock()
+	st := j.Status
+	j.mu.Unlock()
+	return j.Envelope(KindFromStatus(st))
+}
+
 func (j *Job) SetProgress(p float64, msg string) {
 	j.mu.Lock()
 	j.Progress = p

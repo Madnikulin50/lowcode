@@ -1,126 +1,82 @@
 package agent
 
-import "time"
+import (
+	"time"
 
-// RecalcEVM computes PV, EV, SPI, CPI, EAC for a work package.
-//
-// BAC = budget_planned
-// PV  = BAC * plannedPercent(now, start, end)   — linear time-phased
-// EV  = BAC * (percent_complete / 100)
-// AC  = actual_cost
-// SPI = EV / PV  (1 if PV==0)
-// CPI = EV / AC  (1 if AC==0)
-// EAC = AC + (BAC-EV)/CPI  (BAC if CPI==0)
+	calcevm "github.com/madnikulin50/lowcode/agents/services/calc-evm"
+)
+
 func RecalcEVM(bac, percentComplete, actualCost float64, start, end, now time.Time) EVMResult {
-	if percentComplete < 0 {
-		percentComplete = 0
-	}
-	if percentComplete > 100 {
-		percentComplete = 100
-	}
-	pv := bac * plannedFraction(start, end, now)
-	ev := bac * (percentComplete / 100)
-	ac := actualCost
-	spi := 1.0
-	if pv != 0 {
-		spi = ev / pv
-	}
-	cpi := 1.0
-	if ac != 0 {
-		cpi = ev / ac
-	}
-	eac := bac
-	if cpi != 0 {
-		eac = ac + (bac-ev)/cpi
-	}
-	return EVMResult{PV: pv, EV: ev, AC: ac, SPI: spi, CPI: cpi, EAC: eac, BAC: bac}
+	return evmFrom(calcevm.Recalc(bac, percentComplete, actualCost, start, end, now))
 }
 
-func plannedFraction(start, end, now time.Time) float64 {
-	if start.IsZero() || end.IsZero() || !end.After(start) {
-		if now.Before(start) {
-			return 0
-		}
-		return 1
-	}
-	if now.Before(start) {
-		return 0
-	}
-	if !now.Before(end) {
-		return 1
-	}
-	total := end.Sub(start).Seconds()
-	if total <= 0 {
-		return 1
-	}
-	return now.Sub(start).Seconds() / total
-}
-
-// MergeFacts overlays progress facts onto WBS percent/AC when facts exist.
 func MergeFacts(items []WBSItem, facts []ProgressFact) []WBSItem {
-	pct := map[string]float64{}
-	cost := map[string]float64{}
-	for _, f := range facts {
-		if f.WBSID == "" {
-			continue
-		}
-		if f.Percent > pct[f.WBSID] {
-			pct[f.WBSID] = f.Percent
-		}
-		cost[f.WBSID] += f.Cost
-	}
-	out := make([]WBSItem, len(items))
-	copy(out, items)
-	for i := range out {
-		id := formatUint(out[i].ID)
-		if p, ok := pct[id]; ok && p > out[i].PercentComplete {
-			out[i].PercentComplete = p
-		}
-		if c, ok := cost[id]; ok && c > 0 {
-			out[i].ActualCost = c
-		}
-	}
-	return out
+	out := calcevm.MergeFacts(toCalcItems(items), toCalcFacts(facts))
+	return applyCalc(items, out)
 }
 
 func ApplyEVM(items []WBSItem, now time.Time) []WBSItem {
-	out := make([]WBSItem, len(items))
-	copy(out, items)
-	for i := range out {
-		r := RecalcEVM(out[i].BudgetPlanned, out[i].PercentComplete, out[i].ActualCost, out[i].StartPlanned, out[i].EndPlanned, now)
-		out[i].PV = r.PV
-		out[i].EV = r.EV
-		out[i].SPI = r.SPI
-		out[i].CPI = r.CPI
-		out[i].EAC = r.EAC
+	return applyCalc(items, calcevm.Apply(toCalcItems(items), now))
+}
+
+func AggregateProject(items []WBSItem, projectID string) EVMResult {
+	return evmFrom(calcevm.Aggregate(toCalcItems(items), projectID))
+}
+
+func runEVM(items []WBSItem, facts []ProgressFact, projectID string, now time.Time) ([]WBSItem, EVMResult) {
+	out := calcevm.Run(calcevm.Input{
+		Now: now, ProjectID: projectID,
+		Items: toCalcItems(items), Facts: toCalcFacts(facts),
+	})
+	return applyCalc(items, out.Items), evmFrom(out.Project)
+}
+
+func toCalcItems(items []WBSItem) []calcevm.Item {
+	out := make([]calcevm.Item, len(items))
+	for i, it := range items {
+		out[i] = calcevm.Item{
+			ID: formatUint(it.ID), ProjectID: it.ProjectID,
+			BudgetPlanned: it.BudgetPlanned, PercentComplete: it.PercentComplete,
+			ActualCost: it.ActualCost, StartPlanned: it.StartPlanned, EndPlanned: it.EndPlanned,
+			PV: it.PV, EV: it.EV, SPI: it.SPI, CPI: it.CPI, EAC: it.EAC,
+		}
 	}
 	return out
 }
 
-func AggregateProject(items []WBSItem, projectID string) EVMResult {
-	var bac, pv, ev, ac float64
-	for _, it := range items {
-		if projectID != "" && it.ProjectID != projectID {
+func toCalcFacts(facts []ProgressFact) []calcevm.Fact {
+	out := make([]calcevm.Fact, len(facts))
+	for i, f := range facts {
+		out[i] = calcevm.Fact{WBSID: f.WBSID, Percent: f.Percent, Cost: f.Cost}
+	}
+	return out
+}
+
+func applyCalc(orig []WBSItem, computed []calcevm.Item) []WBSItem {
+	byID := map[string]calcevm.Item{}
+	for _, it := range computed {
+		byID[it.ID] = it
+	}
+	out := make([]WBSItem, len(orig))
+	copy(out, orig)
+	for i := range out {
+		c, ok := byID[formatUint(out[i].ID)]
+		if !ok {
 			continue
 		}
-		bac += it.BudgetPlanned
-		pv += it.PV
-		ev += it.EV
-		ac += it.ActualCost
+		out[i].PercentComplete = c.PercentComplete
+		out[i].ActualCost = c.ActualCost
+		out[i].PV = c.PV
+		out[i].EV = c.EV
+		out[i].SPI = c.SPI
+		out[i].CPI = c.CPI
+		out[i].EAC = c.EAC
 	}
-	spi := 1.0
-	if pv != 0 {
-		spi = ev / pv
-	}
-	cpi := 1.0
-	if ac != 0 {
-		cpi = ev / ac
-	}
-	eac := bac
-	if cpi != 0 {
-		eac = ac + (bac-ev)/cpi
-	}
-	return EVMResult{PV: pv, EV: ev, AC: ac, SPI: spi, CPI: cpi, EAC: eac, BAC: bac}
+	return out
+}
+
+func evmFrom(r calcevm.Result) EVMResult {
+	return EVMResult{PV: r.PV, EV: r.EV, AC: r.AC, SPI: r.SPI, CPI: r.CPI, EAC: r.EAC, BAC: r.BAC}
 }
 
 func formatUint(id uint64) string {

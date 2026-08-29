@@ -18,7 +18,7 @@ Optional env:
 |---|---|
 | `COMPOSE_API` | auto-detect `http://localhost:3333/api/compose` |
 | `TOKEN` | mint-token.mjs |
-| `CMDB_AGENT_URL` | `http://localhost:8085/api` |
+| `CMDB_AGENT_URL` | `http://localhost:8089/api` (`scan-cidr`; fat `cmdb-agent` still works at `:8085`) |
 
 The script is idempotent (updates by handle). Writes `applied.json` with IDs.
 
@@ -48,16 +48,11 @@ Device types match the agent: router, switch, server, workstation, printer, came
 
 ## Discovery (agent)
 
-The namespace is filled by `cmdb-agent`, not by Compose itself. Current scan pipeline:
+The namespace is filled by a scan skill. Default `CMDB_AGENT_URL` is `scan-cidr` (`:8089`): ICMP/TCP/ARP, callback + poll ingest. The fat `cmdb-agent` (`:8085`) still works if you point the env back — it adds mDNS, classifier and vulns.
 
-1. **ICMP + TCP** over the CIDR (ports include 5555 adb, 5223 apns, 7000 airplay).
-2. **mDNS / DNS-SD** on the local link (`224.0.0.251:5353`): browse `_services._dns-sd._udp.local` plus AirPlay, RAOP, companion-link, sleep-proxy, HiSuite, Mi PCS, Google Cast, Miracast, Android TV remote, etc. Hosts not in the browse set get a unicast probe (QU bit). PTR/SRV/TXT/A are merged by IP; TXT `model` / `deviceid` become **Model** / hostname; announced types go to `Services`; 5353/udp `mdns` is added to open ports.
-3. **OUI** — IEEE-derived mobile vendor table (`agent/oui_mobile.go`, regenerated with `tools/gen_oui.py`). Supporting signal only.
-4. **Classifier** — strong rules (model, mDNS service, hostname patterns) → heuristic (mobile OUI + no open ports → phone) → Ollama. Network-gear vendors (Cisco/Huawei/Juniper) become `switch` only when 22/23/161 are open.
+Current scan pipeline (`scan-cidr`): ICMP ping, TCP connect on common ports, ARP MAC, reverse DNS. Callback/poll envelope goes to `cmdb-ingest-scan`.
 
-Limitations: multicast mDNS does not cross routers; remote subnets get unicast probes only. UDP service scan (53/123/161/1900) per host is not implemented yet.
-
-Agent UI (`:8085`) shows a **Model** column on the device list.
+The fat `cmdb-agent` (`:8085`) additionally does mDNS/DNS-SD, OUI, LLM classification and vuln banners. Point `CMDB_AGENT_URL` back to it when you need that.
 
 ## Pages
 
@@ -82,11 +77,21 @@ In-memory on the server (re-apply after a process restart):
 
 Test from admin **Rule chains**, or click the buttons on the pages. `POST /api/compose/admin/rulechain/{id}/test` still works.
 
-## Point the agent at this namespace
+## Point a scanner at this namespace
+
+Default apply wires `scan-cidr`:
+
+```bash
+cd agents/services/scan-cidr
+go run ./cmd/scan-cidr --listen=:8089
+```
+
+Fat agent (classifier / vulns / embedded UI) still lives in `agents/cmdb`:
 
 ```bash
 cd agents/cmdb
 # after apply.mjs, namespace ID is in applied.json
+CMDB_AGENT_URL=http://localhost:8085/api
 go run . --db=lowcode \
   --api=http://localhost:3333/api \
   --namespace=<namespaceID> \
@@ -99,7 +104,7 @@ go run . --db=lowcode \
 Scan:
 
 ```bash
-curl -s -X POST http://localhost:8085/api/scan \
+curl -s -X POST http://localhost:8089/api/scan \
   -H 'Content-Type: application/json' \
   -d '{"cidr":"192.168.1.0/24"}'
 ```

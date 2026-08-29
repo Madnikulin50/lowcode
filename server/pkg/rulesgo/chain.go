@@ -74,16 +74,26 @@ func (ec *ExecutionContext) Get(key string) interface{} {
 	if ec == nil || key == "" {
 		return nil
 	}
-	if v := lookupPath(ec.Variables, key); v != nil {
+	if v := lookupPath(ec.Variables, key); !isEmptyGet(v) {
 		return v
 	}
-	if v := lookupPath(ec.Results, key); v != nil {
+	if v := lookupPath(ec.Results, key); !isEmptyGet(v) {
 		return v
 	}
-	if v := lookupPath(ec.Input, key); v != nil {
+	if v := lookupPath(ec.Input, key); !isEmptyGet(v) {
 		return v
 	}
 	return nil
+}
+
+func isEmptyGet(v interface{}) bool {
+	if v == nil {
+		return true
+	}
+	if s, ok := v.(string); ok && strings.TrimSpace(s) == "" {
+		return true
+	}
+	return false
 }
 
 func lookupPath(bag map[string]interface{}, key string) interface{} {

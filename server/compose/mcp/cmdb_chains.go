@@ -40,7 +40,7 @@ func registerCMDBChains(engine *rulesgo.EngineWithPersistence) {
 	scans := mod("scans")
 	agentURL := strings.TrimRight(os.Getenv("CMDB_AGENT_URL"), "/")
 	if agentURL == "" {
-		agentURL = "http://localhost:8085/api"
+		agentURL = "http://localhost:8089/api"
 	}
 
 	for _, c := range cmdbRuleChains(ns.ID, devices, services, vulns, scans, agentURL) {
@@ -108,15 +108,15 @@ func cmdbRuleChains(nsID, devices, services, vulns, scans uint64, agentURL strin
 					ID:    "detach_poll",
 					Type:  "detach",
 					Label: "Poll agent if no webhook",
-					Config: jsonRaw(`{
+					Config: jsonRaw(fmt.Sprintf(`{
 						"kind":"poll",
 						"ingestChainID":"cmdb-ingest-scan",
-						"statusUrl":"{{agentUrl}}/scans/{{scanID}}",
-						"itemsUrl":"{{agentUrl}}/devices",
+						"statusUrl":%q,
+						"itemsUrl":%q,
 						"interval":2,
 						"timeout":900,
 						"until":"done,error,completed,failed"
-					}`),
+					}`, agentURL+"/jobs/{{scanID}}", agentURL+"/jobs/{{scanID}}/items")),
 				},
 			},
 			Edges: []rulesgo.ChainEdge{

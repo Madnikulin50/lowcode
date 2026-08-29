@@ -1,6 +1,7 @@
 <template>
-  <div class="d-flex">
+  <div :class="hideTrigger ? '' : 'd-flex'" :style="hideTrigger ? { display: 'contents' } : undefined">
     <button
+      v-if="!hideTrigger"
       class="btn btn-outline-secondary flex-fill"
       @click="showModal=true"
     >
@@ -63,6 +64,7 @@ const { t: $t } = useI18n({ useScope: 'global' })
 const props = defineProps({
   namespace: { type: Object, required: true, default: () => ({}) },
   module: { type: Object, required: true, default: () => ({}) },
+  hideTrigger: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['importSuccessful', 'reset'])
@@ -114,4 +116,10 @@ function onReset() {
 function onClose() {
   showModal.value = false
 }
+
+function open() {
+  showModal.value = true
+}
+
+defineExpose({ open })
 </script>

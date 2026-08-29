@@ -1,4 +1,7 @@
-.PHONY: dev test lint fresh audit
+.PHONY: dev test lint fresh audit drelease ddebug dpush drelease-agents ddebug-agents
+
+VERSION     ?= 2026.7.6
+DOCKER_USER ?= madnikulin50
 
 dev:
 	@echo "---Processing libs---"
@@ -42,9 +45,9 @@ drelease:
 	@echo "---Build client---"
 	@(cd $(CURDIR)/client && make build) || true
 	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build -t madnikulin50/pnp-lowcode:2026.7.6 .)
+	@(cd $(CURDIR) && docker build -t $(DOCKER_USER)/pnp-lowcode:$(VERSION) .)
 	@echo "---Push docker---"
-	@(cd $(CURDIR) && docker push madnikulin50/pnp-lowcode:2026.7.6)
+	@(cd $(CURDIR) && docker push $(DOCKER_USER)/pnp-lowcode:$(VERSION))
 
 ddebug:
 	@echo "---Build server---"
@@ -52,9 +55,16 @@ ddebug:
 	@echo "---Build client---"
 	##@(cd $(CURDIR)/client && make build) || true
 	@echo "---Build docker---"
-	@(cd $(CURDIR) && docker build -t pnp-lowcode:2026.7.6 .)
+	@(cd $(CURDIR) && docker build -t pnp-lowcode:$(VERSION) .)
 
 dpush:
+	@(cd $(CURDIR) && docker push $(DOCKER_USER)/pnp-lowcode:$(VERSION))
+
+drelease-agents:
+	$(MAKE) -C $(CURDIR)/agents drelease VERSION=$(VERSION) DOCKER_USER=$(DOCKER_USER)
+
+ddebug-agents:
+	$(MAKE) -C $(CURDIR)/agents ddebug VERSION=$(VERSION)
 
 
 

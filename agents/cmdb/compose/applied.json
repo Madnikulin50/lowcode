@@ -19,7 +19,7 @@
     "dashboard": "/ns/cmdb/pages"
   },
   "agent": {
-    "flags": "--db=corteza --api=http://localhost:3333 --namespace=509463708777775105",
-    "scan": "POST http://localhost:8085/api/scan {\"cidr\":\"192.168.1.0/24\"}"
+    "flags": "--db=lowcode --api=http://localhost:3333 --namespace=509463708777775105",
+    "scan": "POST http://localhost:8089/api/scan {\"cidr\":\"192.168.1.0/24\"}"
   }
 }

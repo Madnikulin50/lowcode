@@ -21,6 +21,7 @@ func main() {
 	cortezaAPI := flag.String("api", "http://localhost:3333", "Lowcode origin (not /api — APIs live at /compose on the GoLand server)")
 	token := flag.String("token", "", "lowcode API token")
 	namespaceID := flag.Uint64("namespace", 0, "Default namespace ID (slug invest if 0)")
+	alertsEvery := flag.Duration("alerts-every", 5*time.Minute, "Run threshold alerts and EVM on this interval (0 to disable)")
 	flag.Parse()
 
 	if *token == "" {
@@ -61,6 +62,23 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
+
+	if *alertsEvery > 0 {
+		go func() {
+			log.Printf("alert scheduler every %v", *alertsEvery)
+			t := time.NewTicker(*alertsEvery)
+			defer t.Stop()
+			eng.RunScheduled(ctx)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-t.C:
+					eng.RunScheduled(ctx)
+				}
+			}
+		}()
+	}
 
 	<-ctx.Done()
 	shutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)

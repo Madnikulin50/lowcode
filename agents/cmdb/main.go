@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -36,6 +37,10 @@ func main() {
 	statusInterval := flag.Duration("status-interval", 5*time.Minute, "Device status check interval (e.g. 5m). 0 = disabled")
 	autoCIDRs := flag.String("auto-cidrs", "", "Comma-separated CIDRs to auto-scan periodically")
 	flag.Parse()
+
+	if *token == "" {
+		*token = os.Getenv("TOKEN")
+	}
 
 	var autoCIDRsList []string
 	if *autoCIDRs != "" {

@@ -1,6 +1,7 @@
 <template>
-  <div class="d-flex">
+  <div :class="hideTrigger ? '' : 'd-flex'" :style="hideTrigger ? { display: 'contents' } : undefined">
     <button
+      v-if="!hideTrigger"
       class="btn"
       :class="[variant ? `btn-${variant}` : 'btn-light', buttonClass]"
       :title="buttonTooltip.title"
@@ -115,6 +116,10 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  hideTrigger: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['updateFields'])
@@ -135,6 +140,12 @@ onBeforeUnmount(() => {
 function onSave () {
   emit('updateFields', filteredFields.value)
 }
+
+function open () {
+  showModal.value = true
+}
+
+defineExpose({ open })
 
 function setDefaultValues () {
   filteredFields.value = []

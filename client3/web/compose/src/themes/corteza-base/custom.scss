@@ -1,3 +1,12 @@
+// Branding exposes --black, not --dark. Select badges and many leftovers
+// still use var(--dark); without this alias Bootstrap 5 .badge stays white
+// and draft/status pills become white-on-white against --extra-light.
+:root,
+[data-color-mode='light'],
+[data-color-mode='dark'] {
+  --dark: var(--black);
+}
+
 $btn-colors: (
   primary: --primary,
   secondary: --secondary,

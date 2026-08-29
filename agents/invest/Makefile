@@ -1,13 +1,9 @@
-.PHONY: test build run apply
+AGENT := invest
+BIN   := invest-engine
 
-test:
-	go test ./...
+include ../Makefile.inc
 
-build:
-	go build -o bin/invest-engine .
-
-run: build
-	./bin/invest-engine
+.PHONY: apply
 
 apply:
 	cd compose && node apply.mjs

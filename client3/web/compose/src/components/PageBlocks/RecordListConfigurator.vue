@@ -73,6 +73,12 @@
           </div>
           <div class="col-12 col-lg-6">
             <div class="mb-3">
+              <label class="form-label text-primary">{{ $t('recordList.appearance.compactChrome') }}</label>
+              <c-input-checkbox v-model="compactChrome" switch :labels="checkboxLabel" />
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
               <label class="form-label text-primary">{{ $t('recordList.appearance.alignNumbers') }}</label>
               <c-input-checkbox v-model="options.alignNumbers" switch :labels="checkboxLabel" />
             </div>
@@ -536,6 +542,10 @@ const store = useStore()
 const $SystemAPI = inject('$SystemAPI')
 
 const options = computed(() => props.block.options)
+const compactChrome = computed({
+  get: () => options.value.compactChrome !== false,
+  set: (v) => { options.value.compactChrome = v },
+})
 const checkboxLabel = computed(() => ({ on: $t('label.yes'), off: $t('label.no') }))
 const fetchingRoles = ref(false)
 const resolvedRoles = ref({})

@@ -2,6 +2,7 @@ import { ref, computed, onBeforeUnmount } from 'vue'
 import { compose, NoID, validator } from 'corteza-lib/js/dist'
 import { useRoute } from 'vue-router'
 import { useSettings } from 'corteza-lib/vue/dist'
+import { firstThemeValues, resolveThemeColor } from 'corteza-webapp-compose/src/lib/color.js'
 
 export function usePageBlockBase (props, emit) {
   const route = useRoute()
@@ -76,12 +77,7 @@ export function usePageBlockBase (props, emit) {
   }
 
   function getColor (value) {
-    if (!value) return undefined
-    if (value[0] === '#') return value
-    const themes = themeSettings.value
-      .filter((theme) => theme.id !== 'general')
-      .map((theme) => ({ id: theme.id, values: typeof theme.values === 'string' ? JSON.parse(theme.values) : theme.values }))
-    return themes[0]?.values?.[value] || value
+    return resolveThemeColor(value, firstThemeValues(themeSettings.value))
   }
 
   function refreshBlock (refreshFunction, ...params) {

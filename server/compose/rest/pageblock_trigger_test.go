@@ -135,4 +135,32 @@ func TestAliasTriggerRecordIDs(t *testing.T) {
 	if bag["sourceID"] != nil && bag["sourceID"] != "" {
 		t.Fatalf("must not copy policy id into sourceID: %v", bag["sourceID"])
 	}
+
+	// Document card: project field present — do not use projectID as recordID.
+	bag = map[string]interface{}{"projectID": "111", "project": "111"}
+	flattenTriggerContext(bag, &triggerRequest{})
+	if bag["recordID"] != nil && bag["recordID"] != "" {
+		t.Fatalf("must not alias projectID when project field exists: recordID=%v", bag["recordID"])
+	}
+
+	bag = map[string]interface{}{"projectID": "111", "project": "111", "documentID": "222"}
+	flattenTriggerContext(bag, &triggerRequest{RecordID: "222"})
+	if bag["recordID"] != "222" {
+		t.Fatalf("document recordID=%v", bag["recordID"])
+	}
+	if bag["documentID"] != "222" {
+		t.Fatalf("documentID=%v", bag["documentID"])
+	}
+
+	// Nested record.recordID when the top-level field was omitted / blank.
+	bag = map[string]interface{}{"project": "111", "recordID": ""}
+	flattenTriggerContext(bag, &triggerRequest{
+		Record: map[string]interface{}{"recordID": "333", "values": map[string]interface{}{"project": "111"}},
+	})
+	if bag["recordID"] != "333" {
+		t.Fatalf("nested recordID=%v", bag["recordID"])
+	}
+	if bag["documentID"] != "333" {
+		t.Fatalf("nested documentID=%v", bag["documentID"])
+	}
 }

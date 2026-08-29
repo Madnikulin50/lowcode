@@ -1,14 +1,16 @@
 import {
   block, recordList, recordBlock, metricBlock, metricItem, ruleChain,
-  organizer, commentBlock, withBlockIDs, pageIcon,
+  organizer, commentBlock, withBlockIDs, pageIcon, withRoles,
 } from './helpers.mjs'
 
 const recID = '${recordID}'
 
-export function buildPages ({ modules, charts }) {
+export function buildPages ({ modules, charts, roles = {} }) {
   const m = modules
+  const finance = [roles.investor, roles.pmo, roles.bank]
+  const pmo = [roles.investor, roles.pmo]
   return [
-    dashboardPage(m, charts),
+    dashboardPage(m, charts, { finance, pmo }),
     listPage('Проекты', 'projects', 10, 'fas industry', m.projects, ['name', 'code', 'phase', 'status', 'budget_planned', 'spi', 'cpi', 'eac']),
     projectCard(m, charts),
     listPage('WBS', 'wbs', 20, 'fas sitemap', m.wbs_items, ['code', 'name', 'project', 'level', 'percent_complete', 'spi', 'cpi', 'is_critical'], { extraBlocks: [
@@ -30,18 +32,21 @@ export function buildPages ({ modules, charts }) {
     nsiPage(m),
     advisorsPage(),
     hiddenRecord('Тип документа', 'document-type', m.document_types, 91, ['name', 'code', 'description']),
+    hiddenRecord('Тип конструкции', 'construction-type', m.construction_types, 95, ['name', 'code', 'description']),
+    hiddenRecord('Шаблон WBS', 'wbs-template', m.wbs_templates, 96, ['construction_type', 'code', 'name', 'level', 'parent_code', 'budget_planned']),
+    hiddenRecord('Требование фазы', 'phase-requirement', m.phase_requirements, 97, ['phase', 'doc_type', 'required']),
     hiddenRecord('Контрагент', 'counterparty', m.counterparties, 92, ['name', 'inn', 'kpp', 'role', 'notes']),
     hiddenRecord('Материал', 'material', m.materials, 93, ['name', 'unit', 'unit_price', 'gost']),
     hiddenRecord('Норма времени', 'labor-norm', m.labor_norms, 94, ['name', 'unit', 'hours', 'notes']),
     hiddenRecord('Версия документа', 'document-version', m.document_versions, 32, ['document', 'version', 'author', 'comment', 'created_on', 'file']),
-    hiddenRecord('Согласование', 'approval', m.approvals, 33, ['document', 'approver', 'decision', 'due_date', 'decided_at', 'comment']),
+    hiddenRecord('Согласование', 'approval', m.approvals, 33, ['document', 'approver', 'decision', 'step', 'role', 'due_date', 'decided_at', 'comment']),
     hiddenRecord('Участник', 'project-member', m.project_members, 12, ['project', 'user', 'role']),
     hiddenRecord('Платёж', 'cashflow-item', m.cashflow_items, 72, ['project', 'budget_line', 'date', 'amount', 'direction', 'description']),
     hiddenRecord('Запись журнала', 'change-log-item', m.change_log, 62, ['rfc', 'project', 'summary', 'old_budget', 'new_budget', 'old_end', 'new_end', 'actor', 'changed_at']),
   ]
 }
 
-function dashboardPage (m, charts) {
+function dashboardPage (m, charts, vis = {}) {
   return {
     title: 'Дашборд',
     handle: 'dashboard',
@@ -56,18 +61,18 @@ function dashboardPage (m, charts) {
         metricItem('Открытые RFC', m.change_requests, "status = 'in_review'", { role: 'balloon', color: '#e74a3b' }),
         metricItem('Открытые риски', m.risks, "status = 'open'", { role: 'meta', color: '#e74a3b' }),
       ]),
-      ruleChain('EVM', [0, 14, 16, 10], {
+      withRoles(ruleChain('EVM', [0, 14, 16, 10], {
         chainID: 'invest-recalculate-evm',
         label: 'Пересчитать EVM',
         variant: 'primary',
         icon: 'percent',
-      }),
-      ruleChain('CPM', [16, 14, 16, 10], {
+      }), vis.pmo),
+      withRoles(ruleChain('CPM', [16, 14, 16, 10], {
         chainID: 'invest-critical-path',
         label: 'Критический путь',
         variant: 'info',
         icon: 'sitemap',
-      }),
+      }), vis.pmo),
       ruleChain('Алерты', [32, 14, 16, 10], {
         chainID: 'invest-threshold-alert',
         label: 'Проверить пороги',
@@ -76,14 +81,19 @@ function dashboardPage (m, charts) {
       }),
       block('Chart', 'Документы по статусу', [0, 24, 16, 18], { chartID: String(charts.docsByStatus) }),
       block('Chart', 'RFC по статусу', [16, 24, 16, 18], { chartID: String(charts.rfcByStatus) }),
-      block('Chart', 'Риски по влиянию', [32, 24, 16, 18], { chartID: String(charts.risksByImpact) }),
+      block('Chart', 'Риски по баллу', [32, 24, 16, 18], { chartID: String(charts.risksByScore || charts.risksByImpact) }),
       block('Chart', 'График WBS', [0, 42, 48, 22], { chartID: String(charts.wbsGantt) }),
-      recordList('Документы на мне', [0, 64, 24, 20], m.documents, ['title', 'status', 'assignee', 'due_date'], {
-        prefilter: "status = 'in_review'",
+      withRoles(recordList('Портфель', [0, 64, 48, 18], m.projects, ['name', 'phase', 'status', 'spi', 'cpi', 'eac', 'budget_planned'], {
+        presort: 'spi ASC',
+        perPage: 12,
+        hideAddButton: true,
+      }), vis.finance),
+      recordList('Документы на мне', [0, 82, 24, 18], m.documents, ['title', 'status', 'assignee', 'due_date'], {
+        prefilter: "status = 'in_review' AND assignee = ${userID}",
         perPage: 8,
         hideAddButton: true,
       }),
-      recordList('Открытые RFC', [24, 64, 24, 20], m.change_requests, ['title', 'rfc_type', 'status', 'delta_budget'], {
+      recordList('Открытые RFC', [24, 82, 24, 18], m.change_requests, ['title', 'rfc_type', 'status', 'delta_budget', 'eac_after'], {
         prefilter: "status = 'in_review'",
         perPage: 8,
         hideAddButton: true,
@@ -116,7 +126,7 @@ function projectCard (m, charts) {
     config: pageIcon('fas industry'),
     blocks: withBlockIDs([
       recordBlock('Проект', [0, 0, 32, 28], [
-        'name', 'code', 'status', 'phase', 'investor',
+        'name', 'code', 'status', 'phase', 'construction_type', 'investor',
         'start_planned', 'end_planned', 'budget_planned', 'budget_actual',
         'spi', 'cpi', 'eac', 'description',
       ], {
@@ -126,6 +136,7 @@ function projectCard (m, charts) {
           status: 'badge',
           phase: 'badge',
           investor: 'meta',
+          construction_type: 'badge',
           start_planned: 'meta',
           end_planned: 'meta',
           budget_planned: 'meta',
@@ -136,17 +147,24 @@ function projectCard (m, charts) {
         },
         sections: [{ title: 'Описание', fields: ['description'] }],
       }),
-      metricBlock('По проекту', [32, 0, 16, 16], [
-        metricItem('Документы', m.documents, `project = ${recID}`, { role: 'hero', color: '#2e59d9' }),
-        metricItem('На согласовании', m.documents, `project = ${recID} AND status = 'in_review'`, { role: 'balloon', color: '#f6c23e' }),
-        metricItem('RFC', m.change_requests, `project = ${recID} AND status = 'in_review'`, { role: 'meta', color: '#e74a3b' }),
-      ], { itemsPerRow: '1' }),
-      ruleChain('EVM', [32, 16, 16, 12], {
+      ruleChain('EVM', [32, 0, 16, 10], {
         chainID: 'invest-recalculate-evm',
         label: 'Пересчитать EVM',
         icon: 'percent',
         context: { projectID: recID },
       }),
+      ruleChain('WBS из шаблона', [32, 10, 16, 8], {
+        chainID: 'invest-clone-wbs',
+        label: 'Создать WBS из шаблона',
+        variant: 'info',
+        icon: 'sitemap',
+        context: { projectID: recID },
+      }),
+      metricBlock('По проекту', [32, 18, 16, 10], [
+        metricItem('Документы', m.documents, `project = ${recID}`, { role: 'hero', color: '#2e59d9' }),
+        metricItem('Утверждены', m.documents, `project = ${recID} AND status = 'approved'`, { role: 'balloon', color: '#1cc88a' }),
+        metricItem('RFC', m.change_requests, `project = ${recID} AND status = 'in_review'`, { role: 'meta', color: '#e74a3b' }),
+      ], { itemsPerRow: '1' }),
       recordList('WBS', [0, 28, 24, 22], m.wbs_items, ['code', 'name', 'level', 'percent_complete', 'spi'], {
         prefilter: `project = ${recID}`,
         refField: 'project',
@@ -162,6 +180,11 @@ function projectCard (m, charts) {
       recordList('Участники', [24, 50, 24, 18], m.project_members, ['user', 'role'], {
         prefilter: `project = ${recID}`,
         refField: 'project',
+      }),
+      recordList('Обязательные документы фазы', [0, 68, 48, 16], m.phase_requirements, ['phase', 'doc_type', 'required'], {
+        prefilter: "phase = '${record.values.phase}'",
+        hideAddButton: true,
+        perPage: 10,
       }),
     ]),
   }
@@ -275,9 +298,9 @@ function documentCard (m) {
         variant: 'warning',
         icon: 'share-alt',
       }),
-      ruleChain('Утвердить', [32, 9, 16, 9], {
+      ruleChain('Согласовать шаг', [32, 9, 16, 9], {
         chainID: 'invest-approve-document',
-        label: 'Утвердить',
+        label: 'Согласовать мой шаг',
         variant: 'success',
         icon: 'check',
       }),
@@ -298,13 +321,15 @@ function documentCard (m) {
         refField: 'document',
         presort: 'version DESC',
       }),
-      recordList('Маршрут', [24, 28, 24, 20], m.approvals, ['approver', 'decision', 'due_date', 'comment'], {
+      recordList('Маршрут', [24, 28, 24, 20], m.approvals, ['step', 'approver', 'role', 'decision', 'due_date', 'comment'], {
         prefilter: `document = ${recID}`,
         refField: 'document',
+        presort: 'step ASC',
       }),
       commentBlock('Комментарии', [0, 48, 48, 18], m.document_comments, {
         referenceField: 'document',
         filter: `document = ${recID}`,
+        titleField: '',
       }),
     ]),
   }
@@ -367,7 +392,7 @@ function risksPage (m) {
       organizer('Принят', [36, 0, 12, 26], m.risks, {
         labelField: 'title', descriptionField: 'impact', groupField: 'status', group: 'accepted',
       }),
-      recordList('Реестр рисков', [0, 26, 48, 24], m.risks, ['title', 'project', 'probability', 'impact', 'status', 'owner']),
+      recordList('Реестр рисков', [0, 26, 48, 24], m.risks, ['title', 'project', 'probability', 'impact', 'score', 'status', 'owner']),
     ]),
   }
 }
@@ -382,13 +407,14 @@ function riskCard (m) {
     config: pageIcon('fas triangle-exclamation'),
     blocks: withBlockIDs([
       recordBlock('Риск', [0, 0, 48, 28], [
-        'title', 'status', 'probability', 'impact', 'project', 'wbs', 'owner', 'mitigation', 'description',
+        'title', 'status', 'probability', 'impact', 'score', 'project', 'wbs', 'owner', 'mitigation', 'description',
       ], {
         fieldRoles: {
           title: 'title',
           status: 'badge',
           probability: 'badge',
           impact: 'badge',
+          score: 'badge',
           owner: 'meta',
           mitigation: 'body',
           description: 'body',
@@ -438,37 +464,45 @@ function rfcCard (m) {
     blocks: withBlockIDs([
       recordBlock('Запрос на изменение', [0, 0, 32, 28], [
         'title', 'status', 'rfc_type', 'project', 'wbs', 'delta_budget', 'delta_days',
-        'eac_before', 'eac_after', 'author', 'justification',
+        'eac_before', 'eac_after', 'end_after', 'simulated', 'author', 'justification',
       ], {
         fieldRoles: {
           title: 'title',
           status: 'badge',
           rfc_type: 'badge',
+          simulated: 'badge',
           delta_budget: 'meta',
           delta_days: 'meta',
+          eac_after: 'meta',
           justification: 'body',
         },
         sections: [{ title: 'Обоснование', fields: ['justification'] }],
       }),
-      ruleChain('На согласование', [32, 0, 16, 9], {
-        chainID: 'invest-submit-rfc',
+      ruleChain('Симулировать', [32, 0, 16, 9], {
+        chainID: 'invest-simulate-rfc',
+        label: 'Симулировать EAC',
+        variant: 'info',
+        icon: 'calculator',
+      }),
+      ruleChain('На согласование', [32, 9, 16, 9], {
+        chainID: 'invest-submit-rfc-status',
         label: 'Отправить RFC',
         variant: 'warning',
         icon: 'share-alt',
       }),
-      ruleChain('Утвердить', [32, 9, 16, 9], {
+      ruleChain('Утвердить', [32, 18, 16, 9], {
         chainID: 'invest-approve-rfc',
         label: 'Утвердить RFC',
         variant: 'success',
         icon: 'check',
       }),
-      ruleChain('Отклонить', [32, 18, 16, 9], {
+      ruleChain('Отклонить', [32, 27, 16, 9], {
         chainID: 'invest-reject-rfc',
         label: 'Отклонить RFC',
         variant: 'danger',
         icon: 'times',
       }),
-      recordList('Журнал изменений', [0, 28, 48, 20], m.change_log, ['summary', 'old_budget', 'new_budget', 'actor', 'changed_at'], {
+      recordList('Журнал изменений', [0, 36, 48, 20], m.change_log, ['summary', 'old_budget', 'new_budget', 'old_end', 'new_end', 'actor', 'changed_at'], {
         prefilter: `rfc = ${recID}`,
         refField: 'rfc',
       }),
@@ -495,8 +529,10 @@ function budgetPage (m, charts) {
         label: 'Спросить финконтролёра',
         icon: 'comments',
       }),
-      recordList('Статьи бюджета', [0, 22, 48, 22], m.budget_lines, ['article', 'project', 'wbs', 'planned', 'actual', 'reserve']),
-      recordList('Денежный поток', [0, 44, 48, 20], m.cashflow_items, ['date', 'project', 'direction', 'amount', 'description'], {
+      recordList('Статьи бюджета', [0, 22, 24, 16], m.budget_lines, ['article', 'project', 'wbs', 'planned', 'actual', 'reserve']),
+      block('Chart', 'Приход / расход', [24, 22, 24, 16], { chartID: String(charts.cashflowByDir) }),
+      block('Chart', 'Поток по датам', [0, 38, 48, 16], { chartID: String(charts.cashflowByDate) }),
+      recordList('Денежный поток', [0, 54, 48, 18], m.cashflow_items, ['date', 'project', 'direction', 'amount', 'description'], {
         presort: 'date DESC',
       }),
     ]),
@@ -538,7 +574,7 @@ function progressCard (m) {
     weight: 81,
     config: pageIcon('fas camera'),
     blocks: withBlockIDs([
-      recordBlock('Фиксация', [0, 0, 48, 30], [
+      recordBlock('Фиксация', [0, 0, 32, 30], [
         'wbs', 'project', 'quantity', 'unit', 'percent', 'cost', 'photo', 'geo', 'author', 'recorded_at', 'offline', 'notes',
       ], {
         fieldRoles: {
@@ -553,6 +589,11 @@ function progressCard (m) {
           { title: 'Фото и геолокация', fields: ['photo', 'geo'] },
         ],
       }),
+      ruleChain('EVM', [32, 0, 16, 12], {
+        chainID: 'invest-recalculate-evm-fact',
+        label: 'Зафиксировать и пересчитать',
+        icon: 'percent',
+      }),
     ]),
   }
 }
@@ -565,10 +606,13 @@ function nsiPage (m) {
     weight: 90,
     config: pageIcon('fas book'),
     blocks: withBlockIDs([
-      recordList('Типы документов', [0, 0, 24, 22], m.document_types, ['name', 'code']),
-      recordList('Контрагенты', [24, 0, 24, 22], m.counterparties, ['name', 'inn', 'role']),
-      recordList('Материалы', [0, 22, 24, 22], m.materials, ['name', 'unit', 'unit_price']),
-      recordList('Нормы времени', [24, 22, 24, 22], m.labor_norms, ['name', 'unit', 'hours']),
+      recordList('Типы документов', [0, 0, 24, 18], m.document_types, ['name', 'code']),
+      recordList('Контрагенты', [24, 0, 24, 18], m.counterparties, ['name', 'inn', 'role']),
+      recordList('Типы конструкций', [0, 18, 24, 16], m.construction_types, ['name', 'code']),
+      recordList('Шаблоны WBS', [24, 18, 24, 16], m.wbs_templates, ['construction_type', 'code', 'name', 'level']),
+      recordList('Материалы', [0, 34, 16, 16], m.materials, ['name', 'unit', 'unit_price']),
+      recordList('Нормы времени', [16, 34, 16, 16], m.labor_norms, ['name', 'unit', 'hours']),
+      recordList('Документы по фазе', [32, 34, 16, 16], m.phase_requirements, ['phase', 'doc_type', 'required']),
     ]),
   }
 }

@@ -1,6 +1,7 @@
 <template>
-  <div class="d-flex">
+  <div :class="hideTrigger ? '' : 'd-flex'" :style="hideTrigger ? { display: 'contents' } : undefined">
     <button
+      v-if="!hideTrigger"
       class="btn btn-outline-secondary flex-fill"
       @click="toggleModal"
     >
@@ -252,6 +253,7 @@ const props = defineProps({
   systemFields: { type: Array, default: () => ['ownedBy', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy'] },
   disabledTypes: { type: Array, default: () => ['File'] },
   processing: { type: Boolean, default: false },
+  hideTrigger: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['export'])
@@ -447,6 +449,13 @@ function toggleModal() {
     getTotalCount()
   }
 }
+
+function open() {
+  showExportModal.value = true
+  getTotalCount()
+}
+
+defineExpose({ open })
 
 function calcStart(m, range) {
   if (range === 'lastMonth') return fmtDate(m.subtract(1, 'months').startOf('month'))

@@ -2,6 +2,7 @@
  * Shared Corteza provisioning helpers (same pattern as agents/cmdb/compose/apply.mjs).
  */
 import { execFileSync } from 'node:child_process'
+import { createHash, createHmac } from 'node:crypto'
 
 export function selectOptions (pairs) {
   return {
@@ -292,7 +293,7 @@ export function commentBlock (title, xywh, moduleID, opts) {
   return block('Comment', title, xywh, {
     moduleID: String(moduleID),
     filter: opts.filter || '',
-    titleField: opts.titleField || 'title',
+    titleField: opts.titleField === '' ? '' : (opts.titleField || 'title'),
     contentField: opts.contentField || 'content',
     replyField: opts.replyField || '',
     referenceField: opts.referenceField || 'document',
@@ -303,6 +304,45 @@ export function commentBlock (title, xywh, moduleID, opts) {
     attachmentField: opts.attachmentField || '',
     reactionsField: '',
   })
+}
+
+export function withRoles (blk, roleIDs) {
+  const ids = (roleIDs || []).filter(Boolean).map(String)
+  if (!ids.length) return blk
+  return { ...blk, meta: { ...(blk.meta || {}), visibility: { expression: '', roles: ids } } }
+}
+
+export function barChart (name, handle, moduleID, dimField, metricField, extra = {}) {
+  return {
+    name,
+    handle,
+    config: {
+      colorScheme: 'tableau.Tableau10',
+      noAnimation: false,
+      reports: [{
+        moduleID: String(moduleID),
+        filter: extra.filter || '',
+        dimensions: [{
+          field: dimField,
+          modifier: extra.modifier || '(no grouping / buckets)',
+          skipMissing: false,
+          conditions: {},
+          meta: {},
+        }],
+        metrics: [{
+          field: metricField,
+          aggregate: extra.aggregate || 'SUM',
+          type: extra.type || 'bar',
+          label: extra.label || '',
+          fixTooltips: true,
+        }],
+        yAxis: {},
+        tooltip: {},
+        renderer: { version: '' },
+      }],
+      toolbox: { saveAsImage: false, showDataTable: true },
+    },
+  }
 }
 
 export function doughnutChart (name, handle, moduleID, dimField, filter = '') {
@@ -398,6 +438,41 @@ export function setOf (payload) {
   return []
 }
 
+function b64url (input) {
+  const buf = Buffer.isBuffer(input) ? input : Buffer.from(input)
+  return buf.toString('base64url')
+}
+
+function jwtSecretFromEnv (dsn) {
+  if (process.env.AUTH_JWT_SECRET) return process.env.AUTH_JWT_SECRET
+  const hostname = process.env.HOSTNAME || 'localhost'
+  return createHash('md5').update('jwt secret' + dsn + hostname).digest('hex')
+}
+
+function signHs512 (payload, secret) {
+  const header = b64url(JSON.stringify({ alg: 'HS512', typ: 'JWT' }))
+  const body = b64url(JSON.stringify(payload))
+  const data = `${header}.${body}`
+  return `${data}.${createHmac('sha512', secret).update(data).digest('base64url')}`
+}
+
+function psql (dsn, sql) {
+  return execFileSync('psql', [dsn, '-tA', '-c', sql], { encoding: 'utf8' }).trim()
+}
+
+async function tokenWorks (token) {
+  try {
+    const res = await fetch('http://127.0.0.1:3333/compose/namespace/?limit=1', {
+      headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    })
+    const text = await res.text()
+    return res.ok && !/unauthorized/i.test(text)
+  } catch {
+    return false
+  }
+}
+
 export async function mintToken () {
   if (process.env.TOKEN) return process.env.TOKEN.trim()
 
@@ -405,32 +480,97 @@ export async function mintToken () {
     process.env.COMPOSE_DSN,
     'postgres://postgres:Zse45rdx@127.0.0.1:5432/test10?sslmode=disable',
     'postgres://postgres:Zse45rdx@127.0.0.1:5432/test9?sslmode=disable',
+    'postgres://postgres:Zse45rdx@127.0.0.1:5432/test3?sslmode=disable',
   ].filter(Boolean))]
-  const authBase = (process.env.AUTH_API || 'http://localhost:3333').replace(/\/$/, '')
+  const authBase = (process.env.AUTH_API || 'http://127.0.0.1:3333').replace(/\/$/, '')
   let lastErr
   for (const dsn of dsnList) {
     try {
-      const refresh = execFileSync('psql', [dsn, '-tA', '-c',
-        "SELECT refresh FROM auth_oa2tokens WHERE expires_at > now() AND refresh <> '' ORDER BY created_at DESC LIMIT 1",
-      ], { encoding: 'utf8' }).trim()
-      if (!refresh) {
-        lastErr = new Error('No live refresh token in ' + dsn)
-        continue
-      }
-      const res = await fetch(authBase + '/auth/oauth2/default-client', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ refresh_token: refresh }),
-        signal: AbortSignal.timeout(15000),
-      })
-      const json = await res.json().catch(() => ({}))
-      if (json.access_token) return json.access_token
-      lastErr = new Error('token exchange failed: HTTP ' + res.status)
+      const token = await mintTokenFromDsn(dsn, authBase)
+      if (token) return token
     } catch (e) {
       lastErr = e
     }
   }
-  throw lastErr || new Error('No live refresh token in DB; set TOKEN')
+  throw lastErr || new Error('Could not mint a JWT the server accepts. Log in to Compose once, or set TOKEN / COMPOSE_DSN.')
+}
+
+async function mintTokenFromDsn (dsn, authBase) {
+  const refresh = psql(dsn, `
+    SELECT refresh FROM auth_oa2tokens
+    WHERE expires_at > now() AND refresh <> ''
+    ORDER BY created_at DESC LIMIT 1`)
+  if (refresh) {
+    const res = await fetch(authBase + '/auth/oauth2/default-client', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+      body: new URLSearchParams({ refresh_token: refresh }),
+      signal: AbortSignal.timeout(15000),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (json.access_token && await tokenWorks(json.access_token)) {
+      return json.access_token
+    }
+  }
+
+  const row = psql(dsn, `
+    SELECT access || E'\\t' || rel_user || E'\\t' || COALESCE(rel_client::text, '0')
+    FROM auth_oa2tokens
+    WHERE expires_at > now() AND access <> ''
+    ORDER BY created_at DESC
+    LIMIT 1`)
+  if (!row) {
+    throw new Error('No live access token in auth_oa2tokens; log in to Compose once, or set TOKEN')
+  }
+  const [jti, userID, clientID] = row.split('\t')
+  if (!jti || !userID) {
+    throw new Error('Malformed auth_oa2tokens row; set TOKEN')
+  }
+  if (jti.includes('.') && await tokenWorks(jti)) return jti
+
+  const rolesRaw = psql(dsn, `
+    SELECT string_agg(rel_role::text, ',')
+    FROM role_members
+    WHERE rel_resource = 'corteza::system:user/${userID}'`)
+  const extra = psql(dsn, `
+    SELECT string_agg(id::text, ',')
+    FROM roles
+    WHERE handle IN ('authenticated','super-admin') AND deleted_at IS NULL`)
+  const roles = [...new Set(
+    `${rolesRaw},${extra}`.split(',').map(s => s.trim()).filter(Boolean),
+  )]
+
+  const now = Math.floor(Date.now() / 1000)
+  const payload = {
+    jti,
+    sub: String(userID),
+    exp: now + 24 * 3600,
+    iat: now,
+    iss: 'cortezaproject.org',
+    clientID: String(clientID || '0'),
+    scope: 'profile api',
+    roles,
+  }
+
+  const secrets = []
+  if (process.env.AUTH_JWT_SECRET) secrets.push(process.env.AUTH_JWT_SECRET)
+  const dsnVariants = [...new Set([
+    dsn,
+    dsn.replace('127.0.0.1', 'localhost'),
+    dsn.replace('localhost', '127.0.0.1'),
+    dsn.replace('127.0.0.1', 'host.docker.internal'),
+    dsn.replace('localhost', 'host.docker.internal'),
+  ])]
+  for (const variant of dsnVariants) {
+    secrets.push(jwtSecretFromEnv(variant))
+  }
+
+  for (const secret of [...new Set(secrets)]) {
+    const token = signHs512(payload, secret)
+    if (await tokenWorks(token)) return token
+  }
+
+  throw new Error('Could not mint a JWT the server accepts. Log in to Compose once and retry, or set TOKEN.')
 }
 
 export async function detectBase (token) {
@@ -660,4 +800,61 @@ export async function parentPages (api, nsID, pageIDs, parentOf) {
 export async function createRecord (api, nsID, moduleID, values) {
   const payload = Object.entries(values).map(([name, value]) => ({ name, value: value == null ? '' : String(value) }))
   return api('POST', `/namespace/${nsID}/module/${moduleID}/record/`, { values: payload })
+}
+
+export async function detectSystem (token, composeBase) {
+  const origin = String(composeBase || '').replace(/\/compose$/, '').replace(/\/api$/, '')
+  const candidates = [origin + '/api/system', origin + '/system']
+  for (const base of candidates) {
+    try {
+      const res = await fetch(base + '/roles/?limit=1', {
+        headers: { Authorization: 'Bearer ' + token },
+        signal: AbortSignal.timeout(5000),
+      })
+      if (res.ok || res.status === 401 || res.status === 403) return base
+    } catch {}
+  }
+  return ''
+}
+
+export async function ensureRole (sys, { name, handle }) {
+  const listed = setOf(await sys('GET', '/roles/?limit=200'))
+  const existing = listed.find(r => r.handle === handle && !r.deletedAt)
+  if (existing) {
+    console.log('role', handle, existing.roleID)
+    return existing.roleID
+  }
+  const created = await sys('POST', '/roles/', { name, handle, enabled: true })
+  console.log('created role', handle, created.roleID)
+  return created.roleID
+}
+
+export function moduleResource (nsID, moduleID) {
+  return `corteza::compose:module/${nsID}/${moduleID}`
+}
+
+export function recordResource (nsID, moduleID) {
+  return `corteza::compose:record/${nsID}/${moduleID}/*`
+}
+
+export function fieldResource (nsID, moduleID) {
+  return `corteza::compose:module-field/${nsID}/${moduleID}/*`
+}
+
+export async function grantModuleAccess (sys, roleID, nsID, moduleID, { write = false } = {}) {
+  const rules = [
+    { roleID: String(roleID), resource: `corteza::compose:namespace/${nsID}`, operation: 'read', access: 'allow' },
+    { roleID: String(roleID), resource: moduleResource(nsID, moduleID), operation: 'read', access: 'allow' },
+    { roleID: String(roleID), resource: moduleResource(nsID, moduleID), operation: 'records.search', access: 'allow' },
+    { roleID: String(roleID), resource: recordResource(nsID, moduleID), operation: 'read', access: 'allow' },
+    { roleID: String(roleID), resource: fieldResource(nsID, moduleID), operation: 'record.value.read', access: 'allow' },
+  ]
+  if (write) {
+    rules.push(
+      { roleID: String(roleID), resource: moduleResource(nsID, moduleID), operation: 'record.create', access: 'allow' },
+      { roleID: String(roleID), resource: recordResource(nsID, moduleID), operation: 'update', access: 'allow' },
+      { roleID: String(roleID), resource: fieldResource(nsID, moduleID), operation: 'record.value.update', access: 'allow' },
+    )
+  }
+  await sys('PATCH', `/permissions/${roleID}/rules`, { rules })
 }

@@ -2,6 +2,7 @@ import { computed, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose, validator } from 'corteza-lib/js/dist'
 import { useUiStore } from '../../../store/ui'
+import { firstThemeValues, resolveThemeColor } from 'corteza-webapp-compose/src/lib/color.js'
 
 export function useEditorBase(props, emit) {
   const route = useRoute()
@@ -11,12 +12,7 @@ export function useEditorBase(props, emit) {
   const themeSettings = computed(() => $Settings?.get ? $Settings.get('ui.studio.themes', []) : [])
 
   function getColor (val) {
-    if (!val) return undefined
-    if (val[0] === '#') return val
-    const themes = themeSettings.value
-      .filter(theme => theme.id !== 'general')
-      .map(theme => ({ id: theme.id, values: JSON.parse(theme.values) }))
-    return themes[0]?.values[val] || val
+    return resolveThemeColor(val, firstThemeValues(themeSettings.value))
   }
 
   const formGroupStyleClasses = computed(() => ({

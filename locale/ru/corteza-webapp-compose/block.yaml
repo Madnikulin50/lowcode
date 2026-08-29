@@ -582,6 +582,10 @@ record:
 recordList:
   noModule: Модуль не выбран
   addRecord: Добавить
+  chrome:
+    more: Ещё
+    search: Поиск
+    filters: Фильтры
   cancelSelection: Отменить
   customFilter: Кастомный фильтр
   prefilter:
@@ -887,6 +891,7 @@ recordList:
   appearance:
     label: Оформление
     compactRows: Компактные строки
+    compactChrome: Компактная панель
     alignNumbers: Числа справа
     stickyHeader: Закрепить заголовок
     showRowSignal: Колонка сигнала важности

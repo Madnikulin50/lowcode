@@ -578,11 +578,16 @@ func (c *Corteza) LoadDocuments(ctx context.Context, projectID string) ([]Docume
 	for _, r := range recs {
 		m := recMap(r)
 		docs = append(docs, Document{
-			ID:      r.ID,
-			Project: m["project"],
-			Title:   m["title"],
-			Status:  m["status"],
-			DueDate: parseTime(m["due_date"]),
+			ID:       r.ID,
+			Project:  m["project"],
+			Title:    m["title"],
+			Status:   m["status"],
+			DueDate:  parseTime(m["due_date"]),
+			Assignee: m["assignee"],
+			Author:   m["author"],
+			Contract: m["contract"],
+			File:     m["file"],
+			Number:   m["number"],
 		})
 	}
 	return docs, nil
@@ -649,7 +654,7 @@ func (c *Corteza) EnsureRisk(ctx context.Context, a Alert) error {
 	if err == nil && len(existing) > 0 {
 		return nil
 	}
-	_, err = c.CreateValues(ctx, "risks", map[string]string{
+	vals := map[string]string{
 		"title":       a.Title,
 		"project":     a.Project,
 		"wbs":         a.WBS,
@@ -657,6 +662,254 @@ func (c *Corteza) EnsureRisk(ctx context.Context, a Alert) error {
 		"impact":      "high",
 		"status":      "open",
 		"description": a.Detail,
-	})
+		"score":       fmtNum(RiskScore("high", "high")),
+	}
+	_, err = c.CreateValues(ctx, "risks", compactValues(vals))
 	return err
+}
+
+func (c *Corteza) LoadDocument(ctx context.Context, id uint64) (*Document, error) {
+	rec, err := c.GetRecord(ctx, "documents", id)
+	if err != nil {
+		return nil, err
+	}
+	m := recMap(*rec)
+	return &Document{
+		ID: rec.ID, Project: m["project"], Title: m["title"], Status: m["status"],
+		DueDate: parseTime(m["due_date"]), Assignee: m["assignee"], Author: m["author"],
+		Contract: m["contract"], File: m["file"], Number: m["number"],
+	}, nil
+}
+
+func (c *Corteza) LoadProject(ctx context.Context, id uint64) (*Project, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("project id required")
+	}
+	rec, err := c.GetRecord(ctx, "projects", id)
+	if err != nil {
+		return nil, err
+	}
+	m := recMap(*rec)
+	return &Project{
+		ID: rec.ID, Name: m["name"], BudgetPlanned: parseFloat(m["budget_planned"]),
+		BudgetActual: parseFloat(m["budget_actual"]), EAC: parseFloat(m["eac"]),
+		EndPlanned: parseTime(m["end_planned"]), ConstructionType: m["construction_type"],
+	}, nil
+}
+
+func (c *Corteza) LoadRFC(ctx context.Context, id uint64) (*RFC, error) {
+	rec, err := c.GetRecord(ctx, "change_requests", id)
+	if err != nil {
+		return nil, err
+	}
+	m := recMap(*rec)
+	return &RFC{
+		ID: rec.ID, Project: m["project"], Title: m["title"], Status: m["status"],
+		DeltaBudget: parseFloat(m["delta_budget"]), DeltaDays: parseFloat(m["delta_days"]),
+		EACBefore: parseFloat(m["eac_before"]), EACAfter: parseFloat(m["eac_after"]),
+		Simulated: boolish(m["simulated"]), EndAfter: parseTime(m["end_after"]),
+		Author: m["author"],
+	}, nil
+}
+
+func (c *Corteza) LoadMembers(ctx context.Context, projectID string) ([]Member, error) {
+	q := ""
+	if projectID != "" && projectID != "0" {
+		q = "project = " + projectID
+	}
+	recs, err := c.ListRecords(ctx, "project_members", q)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Member, 0, len(recs))
+	for _, r := range recs {
+		m := recMap(r)
+		out = append(out, Member{User: m["user"], Role: m["role"]})
+	}
+	return out, nil
+}
+
+func (c *Corteza) LoadApprovals(ctx context.Context, documentID string) ([]Approval, error) {
+	q := ""
+	if documentID != "" && documentID != "0" {
+		q = "document = " + documentID
+	}
+	recs, err := c.ListRecords(ctx, "approvals", q)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Approval, 0, len(recs))
+	for _, r := range recs {
+		m := recMap(r)
+		out = append(out, Approval{
+			ID: r.ID, Document: m["document"], Approver: m["approver"],
+			Decision: m["decision"], Step: parseFloat(m["step"]), Role: m["role"],
+		})
+	}
+	return out, nil
+}
+
+func (c *Corteza) ListVersionNumbers(ctx context.Context, documentID string) ([]float64, error) {
+	q := ""
+	if documentID != "" && documentID != "0" {
+		q = "document = " + documentID
+	}
+	recs, err := c.ListRecords(ctx, "document_versions", q)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]float64, 0, len(recs))
+	for _, r := range recs {
+		out = append(out, parseFloat(recMap(r)["version"]))
+	}
+	return out, nil
+}
+
+func (c *Corteza) LoadBudgetLines(ctx context.Context, projectID string) ([]BudgetLine, error) {
+	q := ""
+	if projectID != "" && projectID != "0" {
+		q = "project = " + projectID
+	}
+	recs, err := c.ListRecords(ctx, "budget_lines", q)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]BudgetLine, 0, len(recs))
+	for _, r := range recs {
+		m := recMap(r)
+		out = append(out, BudgetLine{
+			Project: m["project"], Article: m["article"],
+			Reserve: parseFloat(m["reserve"]), Actual: parseFloat(m["actual"]),
+			Planned: parseFloat(m["planned"]),
+		})
+	}
+	return out, nil
+}
+
+func (c *Corteza) LoadRFCs(ctx context.Context, projectID string) ([]RFC, error) {
+	q := ""
+	if projectID != "" && projectID != "0" {
+		q = "project = " + projectID
+	}
+	recs, err := c.ListRecords(ctx, "change_requests", q)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]RFC, 0, len(recs))
+	for _, r := range recs {
+		m := recMap(r)
+		out = append(out, RFC{
+			ID: r.ID, Project: m["project"], Title: m["title"], Status: m["status"],
+			EndAfter: parseTime(m["end_after"]), Simulated: boolish(m["simulated"]),
+		})
+	}
+	return out, nil
+}
+
+func (c *Corteza) LoadWBSTemplates(ctx context.Context, typeID string) ([]WBSTemplate, error) {
+	q := ""
+	if typeID != "" && typeID != "0" {
+		q = "construction_type = " + typeID
+	}
+	recs, err := c.ListRecords(ctx, "wbs_templates", q)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]WBSTemplate, 0, len(recs))
+	for _, r := range recs {
+		m := recMap(r)
+		out = append(out, WBSTemplate{
+			ID: r.ID, Type: m["construction_type"], Code: m["code"], Name: m["name"],
+			Level: m["level"], ParentCode: m["parent_code"], PredecessorCode: m["predecessor_code"],
+			BudgetPlanned: parseFloat(m["budget_planned"]), DurationDays: parseFloat(m["duration_days"]),
+		})
+	}
+	return out, nil
+}
+
+func (c *Corteza) RefreshRiskScores(ctx context.Context) (int, error) {
+	recs, err := c.ListRecords(ctx, "risks", "")
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, r := range recs {
+		m := recMap(r)
+		score := RiskScore(m["probability"], m["impact"])
+		if parseFloat(m["score"]) == score {
+			continue
+		}
+		if err := c.UpdateValues(ctx, "risks", r.ID, map[string]string{"score": fmtNum(score)}); err != nil {
+			continue
+		}
+		n++
+	}
+	return n, nil
+}
+
+func (c *Corteza) UserEmail(ctx context.Context, userID string) (string, error) {
+	id := ParseID(userID)
+	if id == 0 {
+		return "", nil
+	}
+	if err := c.Discover(ctx); err != nil {
+		return "", err
+	}
+	origin := strings.TrimSuffix(c.BaseURL(), "/compose")
+	origin = strings.TrimSuffix(origin, "/api")
+	origin = strings.TrimRight(origin, "/")
+	for _, path := range []string{
+		fmt.Sprintf("/system/users/%d", id),
+		fmt.Sprintf("/api/system/users/%d", id),
+	} {
+		raw, err := c.requestAbs(ctx, "GET", origin+path, nil)
+		if err != nil {
+			continue
+		}
+		var u struct {
+			Email string `json:"email"`
+		}
+		if json.Unmarshal(raw, &u) == nil && strings.Contains(u.Email, "@") {
+			return u.Email, nil
+		}
+	}
+	return "", nil
+}
+
+func (c *Corteza) requestAbs(ctx context.Context, method, url string, body interface{}) ([]byte, error) {
+	var b io.Reader
+	if body != nil {
+		data, err := json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		b = bytes.NewReader(data)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, url, b)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	raw, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 400 || looksLikeHTML(raw) {
+		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, apiErrorBody(raw))
+	}
+	if msg := cortezaJSONError(raw); msg != "" {
+		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, msg)
+	}
+	var envelope struct {
+		Response json.RawMessage `json:"response"`
+	}
+	if err := json.Unmarshal(raw, &envelope); err == nil && len(envelope.Response) > 0 {
+		return envelope.Response, nil
+	}
+	return raw, nil
 }

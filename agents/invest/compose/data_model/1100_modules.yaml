@@ -32,6 +32,32 @@ modules:
       hours: { label: Норма ч, kind: Number }
       notes: { label: Заметки, kind: String }
 
+  construction_types:
+    name: Типы конструкций
+    fields:
+      name: { label: Название, kind: String, required: true }
+      code: { label: Код, kind: String, required: true }
+      description: { label: Описание, kind: String }
+
+  wbs_templates:
+    name: Шаблоны WBS
+    fields:
+      construction_type: { label: Тип конструкции, kind: Record, options: { module: construction_types, labelField: name } }
+      code: { label: Код WBS, kind: String, required: true }
+      name: { label: Название, kind: String, required: true }
+      level: { label: Уровень, kind: Select, options: { options: [stage, substage, work] } }
+      parent_code: { label: Код родителя, kind: String }
+      predecessor_code: { label: Код предшественника, kind: String }
+      budget_planned: { label: BAC шаблон, kind: Number }
+      duration_days: { label: Длительность дн, kind: Number }
+
+  phase_requirements:
+    name: Документы фазы
+    fields:
+      phase: { label: Фаза, kind: Select, options: { options: [concept, survey, design, construction, commissioning, operations] } }
+      doc_type: { label: Тип документа, kind: Record, options: { module: document_types, labelField: name } }
+      required: { label: Обязателен, kind: Bool }
+
   projects:
     name: Проекты
     fields:
@@ -39,6 +65,7 @@ modules:
       code: { label: Код, kind: String }
       phase: { label: Фаза, kind: Select, options: { options: [concept, survey, design, construction, commissioning, operations] } }
       status: { label: Статус, kind: Select, options: { options: [draft, active, on_hold, completed, cancelled] } }
+      construction_type: { label: Тип конструкции, kind: Record, options: { module: construction_types, labelField: name } }
       investor: { label: Инвестор, kind: String }
       start_planned: { label: Старт план, kind: DateTime }
       end_planned: { label: Финиш план, kind: DateTime }
@@ -128,6 +155,8 @@ modules:
       document: { label: Документ, kind: Record, options: { module: documents, labelField: title } }
       approver: { label: Согласующий, kind: User }
       decision: { label: Решение, kind: Select, options: { options: [pending, approved, rejected, escalated] } }
+      step: { label: Шаг, kind: Number }
+      role: { label: Роль шага, kind: Select, options: { options: [investor, bank, contractor, designer, government, pmo] } }
       due_date: { label: Срок, kind: DateTime }
       decided_at: { label: Дата решения, kind: DateTime }
       comment: { label: Комментарий, kind: String }
@@ -148,6 +177,7 @@ modules:
       title: { label: Название, kind: String, required: true }
       probability: { label: Вероятность, kind: Select, options: { options: [low, medium, high, critical] } }
       impact: { label: Влияние, kind: Select, options: { options: [low, medium, high, critical] } }
+      score: { label: Балл, kind: Number }
       status: { label: Статус, kind: Select, options: { options: [open, mitigating, closed, accepted] } }
       owner: { label: Владелец, kind: User }
       mitigation: { label: Митигация, kind: String }
@@ -165,6 +195,8 @@ modules:
       delta_days: { label: Влияние на срок, kind: Number }
       eac_before: { label: EAC до, kind: Number }
       eac_after: { label: EAC после, kind: Number }
+      end_after: { label: Финиш после RFC, kind: DateTime }
+      simulated: { label: Симуляция выполнена, kind: Bool }
       author: { label: Автор, kind: User }
       justification: { label: Обоснование, kind: String }
 

@@ -1,6 +1,11 @@
 <template>
-  <Wrap v-bind="$props">
-    <div class="p-3 h-100 overflow-auto">
+  <div class="h-100">
+    <Wrap
+      v-bind="$props"
+      :headerClass="editable ? '' : 'd-none'"
+      :scrollable-body="false"
+    >
+    <div class="rulechain-body h-100 d-flex flex-column justify-content-center">
       <div class="d-flex flex-wrap align-items-center gap-2">
         <button
           class="btn flex-shrink-0"
@@ -54,12 +59,14 @@
       <div class="rulechain-balloon-body">{{ balloon.text }}</div>
     </div>
   </Teleport>
+  </div>
 </template>
 
 <script setup>
-defineOptions({ i18nOptions: { namespaces: 'block' } })
+defineOptions({ inheritAttrs: false, i18nOptions: { namespaces: 'block' } })
 import { ref, computed, inject, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { NoID } from 'corteza-lib/js/dist'
 import bus from '../../lib/bus'
 import Wrap from './Wrap/index.js'
@@ -73,9 +80,17 @@ const props = defineProps({
   block: { type: Object, required: true },
   module: { type: Object, default: undefined },
   record: { type: Object, default: undefined },
+  mode: { type: String, default: '' },
+  editable: { type: Boolean, default: false },
+  resizing: { type: Boolean, default: false },
+  magnified: { type: Boolean, default: false },
+  unsavedBlocks: { type: Set, default: () => new Set() },
+  loadingRecord: { type: Boolean, default: false },
+  errors: { type: Object, default: () => ({}) },
 })
 
 const { t, locale } = useI18n({ useScope: 'global' })
+const route = useRoute()
 const $ComposeAPI = inject('$ComposeAPI')
 
 const running = ref(false)
@@ -473,7 +488,7 @@ function recordPayload (record) {
     }
   }
   return {
-    recordID: record.recordID,
+    recordID: liveRecordID() || record.recordID,
     moduleID: record.moduleID,
     namespaceID: record.namespaceID,
     values,
@@ -490,10 +505,17 @@ function unwrapScalar (v) {
   return v
 }
 
-function liveRecordID () {
-  const id = props.record?.recordID
-  if (!id || id === NoID || id === '0') return ''
+function asRecordID (id) {
+  if (id == null || id === '' || id === NoID || id === '0' || id === 0) return ''
   return String(id)
+}
+
+function liveRecordID () {
+  // View/modal often mount RuleChain before props.record is assigned.
+  // The URL always has the document id (params on the record page, query in a modal).
+  return asRecordID(props.record?.recordID)
+    || asRecordID(route.query?.recordID)
+    || asRecordID(route.params?.recordID)
 }
 
 function interpolatePlaceholders (v, recID) {
@@ -524,15 +546,35 @@ function triggerContext () {
   } else {
     ctx.cidr = unwrapScalar(ctx.cidr)
   }
+  // Prefer the record's project field (document / WBS / RFC). Using the
+  // current recordID as projectID made submit-approval look up a project
+  // in the documents module → API error 200: not found.
   if (!ctx.projectID || ctx.projectID === 'auto') {
-    if (recID) ctx.projectID = recID
-    else if (values.project) ctx.projectID = String(unwrapScalar(values.project) || '')
+    if (values.project) ctx.projectID = String(unwrapScalar(values.project) || '')
+    else if (recID) ctx.projectID = recID
+  }
+  if (recID) {
+    ctx.documentID = recID
+    ctx.recordID = recID
   }
   return ctx
 }
 
 async function runChain () {
   if (!chainID.value) return
+  const recID = liveRecordID()
+  if (!recID) {
+    result.value = {
+      success: false,
+      error: locFallback(
+        'ruleChain.needRecord',
+        'Сначала откройте или сохраните запись',
+        'Open or save the record first',
+      ),
+    }
+    notifyResult(result.value)
+    return
+  }
   running.value = true
   result.value = null
   pollAbort = false
@@ -545,7 +587,8 @@ async function runChain () {
         pageID: props.page?.pageID,
         moduleID: props.module?.moduleID,
         namespaceID: props.namespace?.namespaceID,
-        recordID: props.record?.recordID && props.record.recordID !== NoID ? props.record.recordID : undefined,
+        recordID: recID,
+        userID: window.__auth?.user?.userID,
         record: recordPayload(props.record),
         context: triggerContext(),
       },
@@ -600,6 +643,10 @@ async function runChain () {
 </script>
 
 <style scoped>
+.rulechain-body {
+  padding: 0.5rem 0.75rem;
+  min-height: 0;
+}
 .rulechain-status {
   flex: 1 1 10rem;
   min-width: 8rem;

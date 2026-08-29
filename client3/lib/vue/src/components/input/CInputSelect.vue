@@ -249,10 +249,19 @@ function getOptionStyle (payload: Option = {}) {
   const style: Record<string, string> = { ...(raw as Record<string, string>) }
   if (props.badge) {
     style.fontSize = '0.9rem'
-    style.color = style.textColor || 'var(--dark)'
-    style.backgroundColor = style.backgroundColor || 'var(--extra-light)'
+    style.color = toCssColor(style.textColor, 'var(--dark, var(--black, #212529))')
+    style.backgroundColor = toCssColor(style.backgroundColor, 'var(--extra-light, #E4E9EF)')
   }
   return style
+}
+
+function toCssColor (val: string | undefined, fallback: string) {
+  if (!val) return fallback
+  const v = String(val).trim()
+  if (!v) return fallback
+  if (v[0] === '#' || v.startsWith('rgb') || v.startsWith('hsl') || v.startsWith('var(')) return v
+  if (v === 'dark') return 'var(--dark, var(--black, #212529))'
+  return `var(--${v})`
 }
 </script>
 

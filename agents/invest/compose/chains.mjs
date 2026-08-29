@@ -1,127 +1,219 @@
-export function buildRuleChains ({ nsID, modules, engineUrl }) {
+export function buildRuleChains ({ nsID, modules, engineUrl, evmUrl }) {
   const ns = String(nsID)
-  const docs = String(modules.documents)
   const rfc = String(modules.change_requests)
-  const log = String(modules.change_log)
   const risks = String(modules.risks)
   const projects = String(modules.projects)
+  const wbs = String(modules.wbs_items)
+  const facts = String(modules.progress_facts)
+  const calc = (evmUrl || 'http://localhost:8088/api').replace(/\/$/, '')
 
-  const upd = (id, name, moduleID, handle, fields, description) => ({
+  const jobBody = extra => {
+    const fields = {
+      namespaceID: '{{namespaceID}}',
+      recordID: '{{recordID}}',
+      documentID: '{{documentID}}',
+      projectID: '{{projectID}}',
+      token: '{{authToken}}',
+      userID: '{{userID}}',
+      ...extra,
+    }
+    const inner = Object.entries(fields).map(([k, v]) => {
+      if (k === 'namespaceID') return `"${k}":${v}`
+      return `"${k}":"${v}"`
+    }).join(',')
+    return `{${inner}}`
+  }
+
+  const http = (id, name, path, description, extra = {}) => ({
     id,
     name,
     description,
-    entryNode: 'upd',
+    entryNode: 'http',
     namespaceID: ns,
     nodes: [{
-      id: 'upd',
-      type: 'crud',
+      id: 'http',
+      type: 'http',
       label: name,
       config: {
-        operation: 'update',
-        namespaceID: ns,
-        moduleID,
-        moduleHandle: handle,
-        recordID: '{{recordID}}',
-        fields,
+        url: engineUrl + path,
+        method: 'POST',
+        body: jobBody(extra),
+        timeout: 60,
       },
     }],
-    edges: [],
+    edges: extra.edges || [],
+  })
+
+  const evmChain = (id, name, description, projectExpr) => ({
+    id,
+    name,
+    description,
+    entryNode: 'search_wbs',
+    namespaceID: ns,
+    nodes: [
+      {
+        id: 'search_wbs',
+        type: 'crud',
+        label: 'WBS',
+        config: {
+          operation: 'search',
+          namespaceID: ns,
+          moduleID: wbs,
+          moduleHandle: 'wbs_items',
+          query: '',
+          limit: 500,
+        },
+      },
+      {
+        id: 'search_facts',
+        type: 'crud',
+        label: 'Факты прогресса',
+        config: {
+          operation: 'search',
+          namespaceID: ns,
+          moduleID: facts,
+          moduleHandle: 'progress_facts',
+          query: '',
+          limit: 500,
+        },
+      },
+      {
+        id: 'http',
+        type: 'http',
+        label: 'calc-evm',
+        config: {
+          url: calc + '/call/evm',
+          method: 'POST',
+          body: '{"projectID":"' + projectExpr + '","items":{{search_wbs.records}},"facts":{{search_facts.records}}}',
+          timeout: 60,
+        },
+      },
+      {
+        id: 'foreach_wbs',
+        type: 'foreach',
+        label: 'Каждая работа',
+        config: { items: 'items', itemVar: 'item' },
+      },
+      {
+        id: 'upd_wbs',
+        type: 'crud',
+        label: 'EVM на WBS',
+        config: {
+          operation: 'update',
+          namespaceID: ns,
+          moduleID: wbs,
+          moduleHandle: 'wbs_items',
+          recordID: '{{item.id}}',
+          omitEmpty: true,
+          fields: {
+            percent_complete: '{{item.percentComplete}}',
+            actual_cost: '{{item.actualCost}}',
+            pv: '{{item.pv}}',
+            ev: '{{item.ev}}',
+            spi: '{{item.spi}}',
+            cpi: '{{item.cpi}}',
+            eac: '{{item.eac}}',
+          },
+        },
+      },
+      {
+        id: 'foreach_projects',
+        type: 'foreach',
+        label: 'Каждый проект',
+        config: { items: 'projects', itemVar: 'proj' },
+      },
+      {
+        id: 'upd_project',
+        type: 'crud',
+        label: 'EVM на проект',
+        config: {
+          operation: 'update',
+          namespaceID: ns,
+          moduleID: projects,
+          moduleHandle: 'projects',
+          recordID: '{{proj.projectID}}',
+          omitEmpty: true,
+          fields: {
+            spi: '{{proj.spi}}',
+            cpi: '{{proj.cpi}}',
+            eac: '{{proj.eac}}',
+            budget_actual: '{{proj.ac}}',
+          },
+        },
+      },
+    ],
+    edges: [
+      { from: 'search_wbs', to: 'search_facts' },
+      { from: 'search_facts', to: 'http' },
+      { from: 'http', to: 'foreach_wbs' },
+      { from: 'foreach_wbs', to: 'upd_wbs' },
+      { from: 'http', to: 'foreach_projects' },
+      { from: 'foreach_projects', to: 'upd_project' },
+    ],
+  })
+
+  const httpThenMail = (id, name, path, description, extra = {}) => ({
+    id,
+    name,
+    description,
+    entryNode: 'http',
+    namespaceID: ns,
+    nodes: [
+      {
+        id: 'http',
+        type: 'http',
+        label: name,
+        config: {
+          url: engineUrl + path,
+          method: 'POST',
+          body: jobBody(extra),
+          timeout: 60,
+        },
+      },
+      { id: 'check', type: 'condition', label: 'Есть email', config: { field: 'notifyEmail', operator: 'notEmpty' } },
+      {
+        id: 'mail',
+        type: 'mail',
+        label: 'Письмо',
+        config: {
+          to: '{{notifyEmail}}',
+          subject: extra.mailSubject || 'Инвестпроекты: {{title}}',
+          body: extra.mailBody || '<p>{{message}}</p>',
+          contentType: 'html',
+        },
+      },
+    ],
+    edges: [
+      { from: 'http', to: 'check' },
+      { from: 'check', to: 'mail', condition: 'check_result' },
+    ],
   })
 
   return [
-    upd('invest-submit-approval', 'Инвест: отправить документ на согласование', docs, 'documents',
-      { status: 'in_review' }, 'Статус документа → на согласовании.'),
-    upd('invest-approve-document', 'Инвест: утвердить документ', docs, 'documents',
-      { status: 'approved' }, 'Статус документа → утверждён.'),
-    upd('invest-reject-document', 'Инвест: отклонить документ', docs, 'documents',
-      { status: 'rejected' }, 'Статус документа → отклонён.'),
-    upd('invest-escalate-approval', 'Инвест: эскалировать согласование', docs, 'documents',
-      { status: 'in_review', notes: 'Эскалация: {{notes}}' }, 'Помечает согласование как эскалированное (статус остаётся на согласовании).'),
-    upd('invest-submit-rfc', 'Инвест: отправить RFC', rfc, 'change_requests',
-      { status: 'in_review' }, 'RFC → на согласовании.'),
-    {
-      id: 'invest-approve-rfc',
-      name: 'Инвест: утвердить RFC',
-      description: 'RFC → утверждён, строка в журнале изменений.',
-      entryNode: 'upd',
-      namespaceID: ns,
-      nodes: [
-        {
-          id: 'upd',
-          type: 'crud',
-          label: 'Утвердить RFC',
-          config: {
-            operation: 'update',
-            namespaceID: ns,
-            moduleID: rfc,
-            moduleHandle: 'change_requests',
-            recordID: '{{recordID}}',
-            fields: { status: 'approved' },
-          },
-        },
-        {
-          id: 'log',
-          type: 'crud',
-          label: 'Журнал изменений',
-          config: {
-            operation: 'create',
-            namespaceID: ns,
-            moduleID: log,
-            moduleHandle: 'change_log',
-            fields: {
-              rfc: '{{recordID}}',
-              project: '{{project}}',
-              summary: 'Утверждён RFC: {{title}}',
-              new_budget: '{{eac_after}}',
-              old_budget: '{{eac_before}}',
-            },
-          },
-        },
-      ],
-      edges: [{ from: 'upd', to: 'log' }],
-    },
-    upd('invest-reject-rfc', 'Инвест: отклонить RFC', rfc, 'change_requests',
-      { status: 'rejected' }, 'RFC → отклонён.'),
-    {
-      id: 'invest-recalculate-evm',
-      name: 'Инвест: пересчитать EVM',
-      description: 'POST /recalculate-evm, затем SPI/CPI/EAC на запись проекта. Без projectID узел update пропускается.',
-      entryNode: 'http',
-      namespaceID: ns,
-      nodes: [
-        {
-          id: 'http',
-          type: 'http',
-          label: 'engine EVM',
-          config: {
-            url: engineUrl + '/recalculate-evm',
-            method: 'POST',
-            body: '{"namespaceID":{{namespaceID}},"projectID":"{{projectID}}","token":"{{authToken}}"}',
-            timeout: 60,
-          },
-        },
-        {
-          id: 'upd',
-          type: 'crud',
-          label: 'Записать EVM на проект',
-          config: {
-            operation: 'update',
-            namespaceID: ns,
-            moduleID: projects,
-            moduleHandle: 'projects',
-            recordID: '{{projectID}}',
-            omitEmpty: true,
-            fields: {
-              spi: '{{spi}}',
-              cpi: '{{cpi}}',
-              eac: '{{eac}}',
-              budget_actual: '{{ac}}',
-            },
-          },
-        },
-      ],
-      edges: [{ from: 'http', to: 'upd' }],
-    },
+    httpThenMail('invest-submit-approval', 'Инвест: отправить документ на согласование',
+      '/submit-approval', 'Статус in_review, автоверсия, шаги approvals по ролям PMO/инвестор.',
+      { mailSubject: 'На согласование: {{title}}', mailBody: '<p>Документ отправлен на согласование.</p><p>{{message}}</p>' }),
+    httpThenMail('invest-approve-document', 'Инвест: согласовать мой шаг',
+      '/decide-approval', 'Закрывает текущий шаг маршрута. Документ утверждён, когда все шаги пройдены.',
+      { decision: 'approved', mailSubject: 'Согласовано: {{title}}' }),
+    http('invest-reject-document', 'Инвест: отклонить документ', '/decide-approval',
+      'Отклоняет текущий шаг и документ.', { decision: 'rejected' }),
+    httpThenMail('invest-escalate-approval', 'Инвест: эскалировать согласование',
+      '/escalate-approval', 'Текущий шаг → escalated, новый шаг на PMO.',
+      { mailSubject: 'Эскалация: {{title}}', mailBody: '<p>Согласование эскалировано на PMO.</p>' }),
+    http('invest-submit-rfc', 'Инвест: отправить RFC', '/simulate-rfc',
+      'Сначала симулирует EAC; статус на согласовании выставляет отдельная кнопка или вручную.'),
+    http('invest-simulate-rfc', 'Инвест: симулировать RFC', '/simulate-rfc',
+      'Пишет eac_before/eac_after и прогноз финиша без изменения baseline.'),
+    http('invest-approve-rfc', 'Инвест: утвердить RFC', '/approve-rfc',
+      'Требует симуляцию. Двигает бюджет/срок проекта, журнал, пересчёт EVM.'),
+    http('invest-reject-rfc', 'Инвест: отклонить RFC', '/reject-rfc', 'RFC → отклонён.'),
+    http('invest-clone-wbs', 'Инвест: WBS из шаблона', '/clone-wbs',
+      'Копирует wbs_templates выбранного типа конструкции в проект.'),
+    evmChain('invest-recalculate-evm', 'Инвест: пересчитать EVM',
+      'Search WBS/факты → calc-evm → SPI/CPI/EAC на работы и проекты.', '{{projectID}}'),
+    evmChain('invest-recalculate-evm-fact', 'Инвест: EVM по факту прогресса',
+      'То же умение; projectID берётся из поля project записи факта.', '{{project}}'),
     {
       id: 'invest-critical-path',
       name: 'Инвест: критический путь',
@@ -141,40 +233,9 @@ export function buildRuleChains ({ nsID, modules, engineUrl }) {
       }],
       edges: [],
     },
-    {
-      id: 'invest-threshold-alert',
-      name: 'Инвест: пороговые алерты',
-      description: 'Просроченные документы на согласовании и WBS с CPI < 0.9 → риски. Движок + поиск.',
-      entryNode: 'http',
-      namespaceID: ns,
-      nodes: [
-        {
-          id: 'http',
-          type: 'http',
-          label: 'engine alerts',
-          config: {
-            url: engineUrl + '/alerts',
-            method: 'POST',
-            body: '{"namespaceID":{{namespaceID}},"projectID":"{{projectID}}","cpiThreshold":0.9,"token":"{{authToken}}"}',
-            timeout: 60,
-          },
-        },
-        {
-          id: 'overdue',
-          type: 'crud',
-          label: 'Документы на согласовании',
-          config: {
-            operation: 'search',
-            namespaceID: ns,
-            moduleID: docs,
-            moduleHandle: 'documents',
-            query: "status = 'in_review'",
-            limit: 50,
-          },
-        },
-      ],
-      edges: [{ from: 'http', to: 'overdue' }],
-    },
+    httpThenMail('invest-threshold-alert', 'Инвест: пороговые алерты',
+      '/alerts', 'Просроченные документы/RFC, CPI < 0.9, резерв ≤ 0 → риски.',
+      { mailSubject: 'Алерты Инвестпроекты', mailBody: '<p>Создано рисков: {{created}}. Всего сигналов: {{alerts}}.</p>' }),
     {
       id: 'invest-lawyer-review',
       name: 'Инвест: юрист по договору',
@@ -232,6 +293,7 @@ export function buildRuleChains ({ nsID, modules, engineUrl }) {
               title: 'CPI ниже порога: {{name}}',
               probability: 'high',
               impact: 'high',
+              score: '9',
               status: 'open',
               description: 'Автоалерт: CPI={{cpi}} на работе {{code}} {{name}}.',
             },
@@ -239,6 +301,27 @@ export function buildRuleChains ({ nsID, modules, engineUrl }) {
         },
       ],
       edges: [{ from: 'check', to: 'risk', condition: 'check_result' }],
+    },
+    {
+      id: 'invest-submit-rfc-status',
+      name: 'Инвест: RFC на согласование',
+      description: 'Только статус in_review (симуляцию делайте отдельной кнопкой).',
+      entryNode: 'upd',
+      namespaceID: ns,
+      nodes: [{
+        id: 'upd',
+        type: 'crud',
+        label: 'RFC на согласование',
+        config: {
+          operation: 'update',
+          namespaceID: ns,
+          moduleID: rfc,
+          moduleHandle: 'change_requests',
+          recordID: '{{recordID}}',
+          fields: { status: 'in_review' },
+        },
+      }],
+      edges: [],
     },
   ]
 }

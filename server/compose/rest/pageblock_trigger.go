@@ -382,8 +382,16 @@ func mergeNodeBodies(out map[string]interface{}, nodes interface{}) map[string]i
 }
 
 func flattenTriggerContext(ctx map[string]interface{}, req *triggerRequest) {
+	if req.RecordID == "" && req.Record != nil {
+		if id := bagNonPlaceholder(map[string]interface{}{"recordID": req.Record["recordID"]}, "recordID"); id != "" {
+			req.RecordID = id
+		}
+	}
 	if req.RecordID != "" {
 		ctx["recordID"] = req.RecordID
+		if bagNonPlaceholder(ctx, "documentID") == "" {
+			ctx["documentID"] = req.RecordID
+		}
 	}
 	if req.Record != nil {
 		for k, v := range req.Record {
@@ -420,7 +428,19 @@ func aliasTriggerRecordIDs(ctx map[string]interface{}) {
 	}
 	recID := bagNonPlaceholder(ctx, "recordID")
 	if recID == "" {
-		for _, k := range []string{"sourceID", "policyID", "snapshotID", "projectID"} {
+		if v := bagNonPlaceholder(ctx, "documentID"); v != "" {
+			recID = v
+		}
+	}
+	if recID == "" {
+		// Do not steal projectID when this record *points at* a project
+		// (document, WBS, RFC). That sent a project id to submit-approval
+		// → Compose "API error 200: not found" in the documents module.
+		keys := []string{"sourceID", "policyID", "snapshotID"}
+		if bagNonPlaceholder(ctx, "project") == "" {
+			keys = append(keys, "projectID")
+		}
+		for _, k := range keys {
 			if v := bagNonPlaceholder(ctx, k); v != "" {
 				recID = v
 				break

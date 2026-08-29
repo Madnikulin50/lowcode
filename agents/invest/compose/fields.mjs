@@ -115,6 +115,35 @@ export function documentTypeFields () {
   ]
 }
 
+export function constructionTypeFields () {
+  return [
+    field('name', 'Название', 'String', { required: true }),
+    field('code', 'Код', 'String', { required: true }),
+    field('description', 'Описание', 'String'),
+  ]
+}
+
+export function wbsTemplateFields (typesID) {
+  return [
+    recordRel('construction_type', 'Тип конструкции', typesID, 'name', ['name', 'code'], true),
+    field('code', 'Код WBS', 'String', { required: true }),
+    field('name', 'Название', 'String', { required: true }),
+    field('level', 'Уровень', 'Select', { options: selectOptions(WBS_LEVEL) }),
+    field('parent_code', 'Код родителя', 'String'),
+    field('predecessor_code', 'Код предшественника', 'String'),
+    moneyField('budget_planned', 'BAC шаблон'),
+    numberField('duration_days', 'Длительность, дн', { precision: 0, suffix: ' д' }),
+  ]
+}
+
+export function phaseRequirementFields (typesID) {
+  return [
+    field('phase', 'Фаза', 'Select', { options: selectOptions(PHASES), required: true }),
+    recordRel('doc_type', 'Тип документа', typesID, 'name', ['name', 'code'], true),
+    boolSwitch('required', 'Обязателен'),
+  ]
+}
+
 export function counterpartyFields () {
   return [
     field('name', 'Название', 'String', { required: true }),
@@ -143,12 +172,13 @@ export function laborNormFields () {
   ]
 }
 
-export function projectFields () {
+export function projectFields (constructionTypesID) {
   return [
     field('name', 'Название', 'String', { required: true }),
     field('code', 'Код', 'String'),
     field('phase', 'Фаза', 'Select', { options: selectOptions(PHASES) }),
     field('status', 'Статус', 'Select', { options: selectOptions(PROJECT_STATUS) }),
+    recordRel('construction_type', 'Тип конструкции', constructionTypesID, 'name', ['name', 'code']),
     field('investor', 'Инвестор', 'String'),
     dateField('start_planned', 'Старт (план)'),
     dateField('end_planned', 'Финиш (план)'),
@@ -235,7 +265,7 @@ export function documentVersionFields (documentsID) {
   return [
     recordRel('document', 'Документ', documentsID, 'title', ['title', 'number'], true),
     numberField('version', 'Версия', { precision: 0, min: 1 }),
-    fileField('file', 'Файл', { documents: true, images: true, required: true }),
+    fileField('file', 'Файл', { documents: true, images: true }),
     userField('author', 'Автор'),
     field('comment', 'Комментарий', 'String'),
     dateField('created_on', 'Дата', { onlyDate: false }),
@@ -247,6 +277,8 @@ export function approvalFields (documentsID) {
     recordRel('document', 'Документ', documentsID, 'title', ['title', 'number'], true),
     userField('approver', 'Согласующий', { required: true }),
     field('decision', 'Решение', 'Select', { options: selectOptions(APPROVAL_DECISION) }),
+    numberField('step', 'Шаг', { precision: 0, min: 1 }),
+    field('role', 'Роль шага', 'Select', { options: selectOptions(MEMBER_ROLES) }),
     dateField('due_date', 'Срок'),
     dateField('decided_at', 'Дата решения', { onlyDate: false }),
     field('comment', 'Комментарий', 'String'),
@@ -269,6 +301,7 @@ export function riskFields (projectsID, wbsID) {
     field('title', 'Название', 'String', { required: true }),
     field('probability', 'Вероятность', 'Select', { options: selectOptions(RISK_LEVEL) }),
     field('impact', 'Влияние', 'Select', { options: selectOptions(RISK_LEVEL) }),
+    numberField('score', 'Балл', { precision: 0, min: 0, max: 16 }),
     field('status', 'Статус', 'Select', { options: selectOptions(RISK_STATUS) }),
     userField('owner', 'Владелец'),
     field('mitigation', 'План митигации', 'String'),
@@ -287,6 +320,8 @@ export function rfcFields (projectsID, wbsID) {
     numberField('delta_days', 'Влияние на срок, дн', { precision: 0, suffix: ' д' }),
     moneyField('eac_before', 'EAC до'),
     moneyField('eac_after', 'EAC после'),
+    dateField('end_after', 'Финиш после RFC'),
+    boolSwitch('simulated', 'Симуляция выполнена'),
     userField('author', 'Автор'),
     field('justification', 'Обоснование', 'String'),
   ]

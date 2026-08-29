@@ -19,6 +19,7 @@ TOKEN=$(node /tmp/opencode/mint-token.mjs | head -1) \
 | `COMPOSE_API` | auto-detect `http://localhost:3333/api/compose` |
 | `TOKEN` | обмен refresh из Postgres |
 | `INVEST_ENGINE_URL` | `http://localhost:8086/api` |
+| `CALC_EVM_URL` | `http://localhost:8088/api` |
 | `COMPOSE_DSN` | `postgres://postgres:Zse45rdx@127.0.0.1:5432/test9?sslmode=disable` |
 
 Скрипт идемпотентен (обновляет по handle). Пишет `applied.json` с ID.
@@ -44,21 +45,30 @@ node seed.mjs
 | **Согласования** (`approvals`) | Маршрут: кто / решение / срок |
 | **Комментарии** (`document_comments`) | Блок Comment на карточке документа |
 | **Договоры** (`contracts`) | Реестр договоров, пакет документов |
-| **Риски** (`risks`) | Вероятность / влияние / митигация |
-| **RFC** (`change_requests`) | Запросы на изменение |
+| **Риски** (`risks`) | Вероятность / влияние / балл (score) / митигация |
+| **RFC** (`change_requests`) | Запросы на изменение + симуляция EAC |
 | **Журнал** (`change_log`) | Аудиторский след RFC |
 | **Статьи бюджета** (`budget_lines`) | План / факт / резерв; ETL-заглушка 1С (выключена) |
 | **Денежный поток** (`cashflow_items`) | Приход / расход |
 | **Факты прогресса** (`progress_facts`) | Веб-фиксация объёма + фото + гео |
-| **НСИ** | `document_types`, `counterparties`, `materials`, `labor_norms` |
+| **Типы конструкций** (`construction_types`) | НСИ для шаблонов WBS |
+| **Шаблоны WBS** (`wbs_templates`) | Типовая иерархия работ |
+| **Документы фазы** (`phase_requirements`) | Обязательные типы документов на фазу |
+| **Журнал** (`change_log`) | Аудиторский след RFC |
+| **Статьи бюджета** (`budget_lines`) | План / факт / резерв; ETL-заглушка 1С (выключена) |
+| **Денежный поток** (`cashflow_items`) | Приход / расход |
+| **Факты прогресса** (`progress_facts`) | Веб-фиксация объёма + фото + гео |
+| **НСИ** | `document_types`, `counterparties`, `materials`, `labor_norms`, `construction_types`, `wbs_templates`, `phase_requirements` |
 | **ИИ-советчики** (`ai_advisors`) | Юрист, Финконтролёр (промпты) |
+
+Системные роли (apply): `invest-investor`, `invest-bank`, `invest-contractor`, `invest-designer`, `invest-government`, `invest-pmo`.
 
 Record revisions включены на `projects`, `wbs_items`, `documents`, `contracts`, `change_requests`, `budget_lines`.
 
 ## Страницы
 
-- **Дашборд** — метрики, кнопки EVM/CPM/алерты, doughnut, Gantt, списки «на согласовании»
-- **Документы** — канбан статусов + реестр; карточка: файл, версии, маршрут, комментарии, кнопки согласования
+- **Дашборд** — метрики, кнопки EVM/CPM/алерты, портфель SPI/CPI, doughnut, Gantt, «Документы на мне» (`assignee = текущий пользователь`)
+- **Документы** — канбан + реестр; карточка: файл, автоверсия, маршрут по шагам, комментарии, «Согласовать мой шаг»
 - **Проекты / WBS / Договоры / Риски / Изменения / Бюджет / Прогресс / НСИ**
 - **ИИ-советчики** — два блока AiChat (Юрист, Финконтролёр), human-in-the-loop
 
@@ -70,17 +80,29 @@ Record revisions включены на `projects`, `wbs_items`, `documents`, `co
 
 | ID | Где | Что делает |
 |---|---|---|
-| `invest-submit-approval` / `invest-approve-document` / `invest-reject-document` / `invest-escalate-approval` | Карточка документа | Смена статуса |
-| `invest-submit-rfc` / `invest-approve-rfc` / `invest-reject-rfc` | Карточка RFC | Статус + строка `change_log` при утверждении |
-| `invest-recalculate-evm` | Дашборд, проект | HTTP POST invest-engine `/recalculate-evm` |
+| `invest-submit-approval` | Карточка документа | Engine: in_review + автоверсия + шаги `approvals` |
+| `invest-approve-document` / `invest-reject-document` | Карточка документа | Engine: закрыть шаг; документ approved только когда все шаги пройдены |
+| `invest-escalate-approval` | Карточка документа | Шаг escalated + новый шаг PMO + mail |
+| `invest-simulate-rfc` / `invest-approve-rfc` / `invest-reject-rfc` | Карточка RFC | Симуляция EAC; утверждение двигает baseline + журнал + EVM |
+| `invest-clone-wbs` | Карточка проекта | Копия `wbs_templates` выбранного типа конструкции |
+| `invest-recalculate-evm` | Дашборд, проект | Search WBS/факты → calc-evm → SPI/CPI/EAC |
+| `invest-recalculate-evm-fact` | Карточка факта | То же умение; `projectID` из поля `project` |
 | `invest-critical-path` | Дашборд | HTTP POST `/critical-path` |
-| `invest-threshold-alert` | Дашборд | HTTP POST `/alerts` + поиск документов на согласовании |
+| `invest-threshold-alert` | Дашборд | HTTP POST `/alerts` (документы, CPI, резерв, RFC) |
 | `invest-lawyer-review` | Карточка договора | AI-узел «Юрист» |
 | `invest-fin-review` | Бюджет | AI-узел «Финконтролёр» |
 | `invest-flag-low-cpi` | Карточка WBS | Риск, если CPI < 0.9 |
 
-## invest-engine
+## calc-evm
 
+Пересчёт EVM больше не идёт в invest-engine. Цепочка грузит `wbs_items` и `progress_facts`, POST на `CALC_EVM_URL/call/evm`, затем пишет метрики обратно. Engine остаётся для согласований, RFC и CPM.
+
+```bash
+cd agents/services/calc-evm
+go run ./cmd/calc-evm --listen=:8088
+```
+
+## invest-engine
 ```bash
 cd agents/invest
 # --api = origin without /compose (see applied.json engine.flags).
@@ -89,17 +111,25 @@ go run . \
   --api=http://localhost:3333 \
   --namespace=<namespaceID> \
   --token="$TOKEN" \
-  --listen=:8086
+  --listen=:8086 \
+  --alerts-every=5m
 ```
 
 | Метод | Назначение |
 |---|---|
 | `POST /api/recalculate-evm` | PV/EV/AC/SPI/CPI/EAC по WBS и фактам прогресса, агрегация на проект |
-| `POST /api/critical-path` | CPM по предшественникам (или по датам), флаг `is_critical` |
-| `POST /api/alerts` | Просроченные документы, CPI ниже порога → запись в `risks` |
+| `POST /api/critical-path` | CPM по предшественникам, флаг `is_critical` |
+| `POST /api/alerts` | Просроченные документы/RFC, CPI, резерв ≤ 0 → `risks` |
+| `POST /api/submit-approval` | Маршрут + автоверсия документа |
+| `POST /api/decide-approval` | Шаг approved/rejected (`decision`) |
+| `POST /api/escalate-approval` | Эскалация на PMO |
+| `POST /api/simulate-rfc` | EAC до/после и прогноз финиша, без смены baseline |
+| `POST /api/approve-rfc` | Применение RFC + журнал + EVM (нужна симуляция) |
+| `POST /api/reject-rfc` | RFC → отклонён |
+| `POST /api/clone-wbs` | WBS из шаблона типа конструкции проекта |
 | `GET /api/health` | Жив |
 
-Тело POST: `{ "namespaceID", "projectID", "token", "cpiThreshold" }` — все поля опциональны, кроме живого токена на агенте или в теле.
+Тело POST: `{ "namespaceID", "projectID", "recordID", "userID", "decision", "token", "cpiThreshold" }`. Планировщик `--alerts-every` сам гоняет алерты и EVM (нужен `--token`).
 
 ## ИИ-советчики
 

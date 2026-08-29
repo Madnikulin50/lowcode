@@ -1,4 +1,9 @@
-.PHONY: all build web clean run
+AGENT := cmdb
+BIN   := cmdb-agent
+
+include ../Makefile.inc
+
+.PHONY: all web clean
 
 all: web build
 
@@ -6,10 +11,7 @@ web:
 	cd web && npm install && npx vite build
 
 build: web
-	go build -o bin/cmdb-agent .
-
-run: build
-	./bin/cmdb-agent
+build-linux: web
 
 clean:
 	rm -rf bin/ web/dist/

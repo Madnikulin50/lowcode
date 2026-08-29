@@ -5,8 +5,125 @@
     </template>
 
     <template #toolbar>
-      <div v-if="recordListModule && needHeaderBlock" ref="toolbar" class="d-flex flex-column gap-2 p-3 d-print-none">
-        <div class="d-flex align-items-center justify-content-between gap-1">
+      <div v-if="recordListModule && needHeaderBlock" ref="toolbar" class="d-print-none" :class="compactChrome ? 'rl-chrome' : 'd-flex flex-column gap-2 p-3'">
+        <template v-if="compactChrome">
+        <div v-if="showChromeBar" class="rl-chrome-bar">
+          <div class="rl-chrome-left">
+            <button
+              v-if="showAddButton"
+              data-test-id="button-add-record"
+              class="btn btn-primary btn-sm rl-chrome-add"
+              :title="$t('recordList.addRecord')"
+              @click="inlineEditing ? addInlineRecord() : handleAddRecord()"
+            >+ {{ $t('recordList.addRecord') }}</button>
+
+            <div v-if="showOverflowMenu" class="dropdown">
+              <button class="btn btn-outline-secondary btn-sm rl-chrome-icon" data-bs-toggle="dropdown" aria-expanded="false" :title="$t('recordList.chrome.more')">
+                <font-awesome-icon :icon="['fas', 'ellipsis-h']" />
+              </button>
+              <ul class="dropdown-menu shadow-sm">
+                <li v-if="canImport">
+                  <button class="dropdown-item" type="button" @click="importerRef?.open()">{{ $t('label.import') }}</button>
+                </li>
+                <li v-if="canExport">
+                  <button class="dropdown-item" type="button" @click="exporterRef?.open()">{{ $t('label.export') }}</button>
+                </li>
+                <li v-if="!options.hideConfigureFieldsButton">
+                  <button class="dropdown-item" type="button" @click="columnsRef?.open()">{{ $t('module.allRecords.columns.title') }}</button>
+                </li>
+                <li v-if="(canImport || canExport || !options.hideConfigureFieldsButton) && (filterPresets.length || options.showDeletedRecordsOption)"><hr class="dropdown-divider" /></li>
+                <li v-if="filterPresets.length" class="dropdown-header">{{ $t('recordList.chrome.filters') }}</li>
+                <li v-for="(f, idx) in filterPresets" :key="`preset-${idx}`" class="d-flex align-items-center">
+                  <button class="dropdown-item" type="button" @click="updateFilter(f.filter, f.name)">{{ f.name }}</button>
+                  <c-input-confirm v-if="!f.roles" show-icon class="me-1" @confirmed="removeRecordListFilterPreset(f.name)" />
+                </li>
+                <li v-if="options.showDeletedRecordsOption">
+                  <button class="dropdown-item" type="button" @click="handleShowDeleted()">{{ showingDeletedRecords ? $t('recordList.showRecords.existing') : $t('recordList.showRecords.deleted') }}</button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div v-if="!options.hideSearch" class="rl-chrome-search" :class="{ 'is-open': searchExpanded }" @focusout="onSearchFocusOut">
+            <button
+              v-show="!searchExpanded"
+              type="button"
+              class="btn btn-outline-secondary btn-sm rl-chrome-icon"
+              :title="$t('recordList.chrome.search')"
+              @mousedown.prevent
+              @click="expandSearch"
+            >
+              <font-awesome-icon :icon="['fas', 'search']" />
+            </button>
+            <div v-show="searchExpanded" ref="searchWrap" class="w-100">
+              <c-input-search :model-value="query || ''" size="sm" :placeholder="$t('label.search', { default: 'Search' })" :ai="false" submittable @search="handleSearch" @ai-search="handleAiSearch" />
+            </div>
+          </div>
+
+          <div v-if="showCompactCount || showCompactPager" class="rl-chrome-right">
+            <button
+              v-if="showCompactPager"
+              type="button"
+              class="btn btn-outline-secondary btn-sm rl-chrome-icon"
+              :disabled="!hasPrevPage || isProcessing"
+              :title="$t('recordList.pagination.prev')"
+              @click="goToPage(getPagination.page - 1)"
+            >
+              <font-awesome-icon :icon="['fas', 'angle-left']" />
+            </button>
+            <div v-if="showCompactCount" class="dropdown">
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm rl-chrome-count"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
+                aria-expanded="false"
+              >{{ hasLoadedOnce ? pagination.count : '…' }}</button>
+              <div class="dropdown-menu dropdown-menu-end shadow-sm rl-chrome-page-menu">
+                <div v-if="options.showTotalCount" class="px-2 py-1 text-nowrap small text-secondary">
+                  <span v-if="pagination.count > recordsPerPage">{{ $t('recordList.pagination.showing', getPagination) }}</span>
+                  <span v-else>{{ $t(`recordList.pagination.single_${pagination.count === 1 ? 'one' : 'other'}`, getPagination) }}</span>
+                </div>
+                <div v-if="options.showRecordPerPageOption" class="d-flex align-items-center gap-1 px-2 py-1">
+                  <span class="small text-nowrap">{{ $t('recordList.pagination.recordsPerPage') }}</span>
+                  <select v-model="recordsPerPage" class="form-select form-select-sm" @change="handlePerPageChange">
+                    <option v-for="opt in perPageOptions" :key="opt.value" :value="opt.value">{{ opt.text }}</option>
+                  </select>
+                </div>
+                <nav v-if="options.fullPageNavigation && showCompactPager" class="px-2 py-1" aria-label="Record list pagination">
+                  <ul class="pagination pagination-sm m-0 flex-wrap">
+                    <li class="page-item" :class="{ disabled: getPagination.page <= 1 }">
+                      <button class="page-link" type="button" :disabled="getPagination.page <= 1" @click="goToPage(1)"><font-awesome-icon :icon="['fas', 'angle-double-left']" /></button>
+                    </li>
+                    <li v-for="p in pagination.pages" :key="p.page" class="page-item" :class="{ active: p.page === getPagination.page }">
+                      <button class="page-link" type="button" @click="goToPage(p.page)">{{ p.label || p.page }}</button>
+                    </li>
+                    <li class="page-item" :class="{ disabled: !hasNextPage || isProcessing }">
+                      <button class="page-link" type="button" :disabled="!hasNextPage || isProcessing" @click="goToPage(getPagination.page + 1)"><font-awesome-icon :icon="['fas', 'angle-double-right']" /></button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
+            <button
+              v-if="showCompactPager"
+              type="button"
+              class="btn btn-outline-secondary btn-sm rl-chrome-icon"
+              :disabled="!hasNextPage || isProcessing"
+              :title="$t('recordList.pagination.next')"
+              @click="goToPage(getPagination.page + 1)"
+            >
+              <font-awesome-icon :icon="['fas', 'angle-right']" />
+            </button>
+          </div>
+        </div>
+
+        <ImporterModal v-if="canImport" ref="importerRef" hide-trigger :module="recordListModule" :namespace="namespace" @importSuccessful="onImportSuccessful" />
+        <ExporterModal v-if="canExport" ref="exporterRef" hide-trigger :module="recordListModule" :filter="filter.query" :selection="selected" :selected-all-records="selectedAllRecords" :processing="processing" :preselected-fields="fields.map(({ moduleField }) => moduleField)" @export="onExport" />
+        <ColumnPicker v-if="!options.hideConfigureFieldsButton" ref="columnsRef" hide-trigger :module="recordListModule" :fields="fields.map(({ moduleField }) => moduleField)" @updateFields="onUpdateFields" />
+        </template>
+
+        <div v-else class="d-flex align-items-center justify-content-between gap-1">
           <div class="d-flex align-items-center flex-grow-1 flex-wrap flex-fill-child gap-1">
             <template v-if="recordListModule.canCreateRecord">
               <template v-if="inlineEditing">
@@ -36,7 +153,7 @@
           </div>
         </div>
 
-        <div v-if="options.showDeletedRecordsOption || groupRecordListFilter.length" class="d-flex align-items-start flex-wrap gap-1">
+        <div v-if="(options.showDeletedRecordsOption && !compactChrome) || groupRecordListFilter.length" class="d-flex align-items-start flex-wrap gap-1" :class="{ 'rl-chrome-extra': compactChrome }">
           <div v-if="groupedByConnector.length" class="d-flex align-items-center flex-wrap gap-2">
             <div v-for="(segment, segmentIdx) in groupedByConnector" :key="`segment-${segmentIdx}`" class="d-flex align-items-center gap-2">
               <div class="d-flex flex-wrap align-items-center gap-1 border rounded p-1">
@@ -73,7 +190,7 @@
           </div>
         </div>
 
-        <div v-if="(options.selectable && selected.length) || (inlineEditing && dirtyRecordsCount > 1)" class="d-flex align-items-center flex-wrap align-items-center">
+        <div v-if="(options.selectable && selected.length) || (inlineEditing && dirtyRecordsCount > 1)" class="d-flex align-items-center flex-wrap align-items-center" :class="{ 'rl-chrome-extra': compactChrome }">
           <div v-if="options.selectable && selected.length" class="me-1">{{ selectedRecordsDisplayText }}</div>
           <button v-if="!inlineEditing && options.selectable && selected.length" class="btn btn-outline-extra-light btn-sm text-primary border-0" @click="selectAllRecords()">{{ selectedAllRecords ? $t('recordList.unselectAllRecords') : $t('recordList.selectAllRecords') }}</button>
           <div class="d-flex align-items-center ms-auto gap-1">
@@ -400,11 +517,11 @@
         </div>
       </div>
 
-      <BulkEditModal v-if="options.inlineRecordEditEnabled" :namespace="namespace" :module="recordListModule" :selected-fields="inlineEdit.fields" :initial-record="inlineEdit.record" :query="inlineEdit.query" :modal-title="$t('recordList.inlineEdit.modal.title')" open-on-select :allow-add-field="options.inlineRecordEditAllowAddField" @save="onInlineEdit()" @close="onInlineEditClose()" />
-      <CustomFilterPreset v-if="options.customFilterPresets" :visible="showCustomPresetFilterModal" @save="setStorageRecordListFilterPreset" @close="showCustomPresetFilterModal = false" />
-      <CustomSummary v-if="options.customSummaries" :visible="showCustomSummariesModal" :module="recordListModule" :summary="customSummary" :summary-index="customSummaryIndex" @save="onCustomSummarySave" @delete="onCustomSummaryDelete" @close="onCustomSummaryClose" />
     </template>
   </Wrap>
+  <BulkEditModal v-if="recordListModule && options.inlineRecordEditEnabled" :namespace="namespace" :module="recordListModule" :selected-fields="inlineEdit.fields" :initial-record="inlineEdit.record" :query="inlineEdit.query" :modal-title="$t('recordList.inlineEdit.modal.title')" open-on-select :allow-add-field="options.inlineRecordEditAllowAddField" @save="onInlineEdit()" @close="onInlineEditClose()" />
+  <CustomFilterPreset v-if="recordListModule && options.customFilterPresets" :visible="showCustomPresetFilterModal" @save="setStorageRecordListFilterPreset" @close="showCustomPresetFilterModal = false" />
+  <CustomSummary v-if="recordListModule && options.customSummaries" :visible="showCustomSummariesModal" :module="recordListModule" :summary="customSummary" :summary-index="customSummaryIndex" @save="onCustomSummarySave" @delete="onCustomSummaryDelete" @close="onCustomSummaryClose" />
   <Teleport to="body">
     <div
       v-if="rowTooltip.visible && rowTooltip.record"
@@ -538,6 +655,11 @@ const selectedAllRecords = ref(false)
 const abortableRequests = ref([])
 const recordsPerPage = ref(undefined)
 const customConfiguredFields = ref([])
+const searchExpanded = ref(false)
+const searchWrap = ref(null)
+const importerRef = ref(null)
+const exporterRef = ref(null)
+const columnsRef = ref(null)
 let processingTimeout = undefined
 const cancelled = ref(false)
 const stayOnPage = ref(undefined)
@@ -546,8 +668,31 @@ const getModuleByID = computed(() => store.module.getByID)
 const pages = computed(() => store.page.set)
 const recordListModule = computed(() => options.value.moduleID ? getModuleByID.value(options.value.moduleID) : undefined)
 const isFederated = computed(() => Object.keys(recordListModule.value?.labels || {}).includes('federation'))
-const showPagination = computed(() => showPageNavigation.value || options.value.showTotalCount || options.value.showRecordPerPageOption)
-const showFooter = computed(() => showPagination.value || options.value.customSummaries)
+const compactChrome = computed(() => options.value.compactChrome !== false)
+const showAddButton = computed(() => {
+  if (!recordListModule.value?.canCreateRecord || options.value.hideAddButton) return false
+  return inlineEditing.value || !!recordPageID.value || options.value.allRecords
+})
+const canImport = computed(() => !!(recordListModule.value?.canCreateRecord && !options.value.hideImportButton && !inlineEditing.value && (recordPageID.value || options.value.allRecords)))
+const canExport = computed(() => !!(options.value.allowExport && !inlineEditing.value))
+const showOverflowMenu = computed(() => canImport.value || canExport.value || !options.value.hideConfigureFieldsButton || filterPresets.value.length > 0 || options.value.showDeletedRecordsOption)
+const hasMultiplePages = computed(() => {
+  if (options.value.hidePaging) return false
+  const pp = recordsPerPage.value
+  if (pp > 0 && pagination.count > pp) return true
+  return !!(filter.nextPage || filter.prevPage)
+})
+const showCompactCount = computed(() => !!options.value.showTotalCount)
+const showCompactPager = computed(() => hasMultiplePages.value)
+const showChromeBar = computed(() => showAddButton.value || showOverflowMenu.value || !options.value.hideSearch || showCompactCount.value || showCompactPager.value)
+const showPagination = computed(() => {
+  if (compactChrome.value) return false
+  return showPageNavigation.value || options.value.showTotalCount || options.value.showRecordPerPageOption
+})
+const showFooter = computed(() => {
+  if (compactChrome.value) return listSummaries.value.length > 0 || options.value.customSummaries
+  return showPagination.value || options.value.customSummaries
+})
 const perPageOptions = computed(() => {
   const defaultText = options.value.perPage === 0 ? $t('label.all') : String(options.value.perPage)
   return [{ text: defaultText, value: options.value.perPage }, { text: '25', value: 25 }, { text: '50', value: 50 }, { text: '100', value: 100 }]
@@ -559,7 +704,15 @@ const getPagination = computed(() => {
   const pp = recordsPerPage.value
   return { from: ((page - 1) * pp) + 1, to: pp > 0 ? Math.min(page * pp, count) : count, page, perPage: pp, count }
 })
-const needHeaderBlock = computed(() => recordListModule.value?.canCreateRecord || (options.value.allowExport && !inlineEditing.value) || filterPresets.value.length || !options.value.hideConfigureFieldsButton || !options.value.hideSearch)
+const needHeaderBlock = computed(() => {
+  if (compactChrome.value) {
+    return showChromeBar.value
+      || groupRecordListFilter.value.length > 0
+      || (options.value.selectable && selected.value.length > 0)
+      || (inlineEditing.value && Object.keys(dirtyInlineRecords.value).length > 0)
+  }
+  return recordListModule.value?.canCreateRecord || (options.value.allowExport && !inlineEditing.value) || filterPresets.value.length || !options.value.hideConfigureFieldsButton || !options.value.hideSearch
+})
 const hasPrevPage = computed(() => !!filter.prevPage)
 const hasNextPage = computed(() => !!filter.nextPage)
 const editing = computed(() => props.mode === 'editor')
@@ -777,7 +930,21 @@ function onFilter(filter = []) {
 
 function handlePerPageChange() { filter.limit = recordsPerPage.value; refresh(true) }
 
-function handleSearch(searchQuery) { query.value = searchQuery ? searchQuery.trim() : null; refresh(true) }
+function expandSearch() {
+  searchExpanded.value = true
+  nextTick(() => searchWrap.value?.querySelector('input')?.focus())
+}
+
+function onSearchFocusOut(e) {
+  const next = e.relatedTarget
+  if (next && e.currentTarget.contains(next)) return
+  nextTick(() => {
+    if (searchWrap.value?.contains(document.activeElement)) return
+    if (!query.value) searchExpanded.value = false
+  })
+}
+
+function handleSearch(searchQuery) { query.value = searchQuery ? searchQuery.trim() : null; if (query.value) searchExpanded.value = true; refresh(true) }
 
 function handleAiSearch(searchQuery) { query.value = searchQuery ? searchQuery.trim() : null; promptAiChat() }
 
@@ -2049,6 +2216,74 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
 }
 
 .record-list-table { .actions { padding-top: 8px; position: sticky; right: -1px; opacity: 0; transition: opacity 0.25s; width: 1%; font-family: var(--font-regular) !important; z-index: 3; &.actions-visible { opacity: 1; } } tbody tr td:nth-last-child(2) { padding-right: 5rem; } }
+.rl-chrome {
+  display: flex;
+  flex-direction: column;
+}
+
+.rl-chrome-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.5rem;
+  border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.rl-chrome-left,
+.rl-chrome-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.rl-chrome-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.rl-chrome-search.is-open :deep(.c-input-search) {
+  width: 100%;
+  min-width: 0;
+}
+
+.rl-chrome-add {
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.rl-chrome-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rl-chrome-count {
+  height: 1.75rem;
+  min-width: 1.75rem;
+  padding: 0 0.4rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.rl-chrome-page-menu {
+  min-width: 14rem;
+  padding: 0.35rem 0;
+}
+
+.rl-chrome-extra {
+  padding: 0.25rem 0.5rem;
+}
+
 .record-list-footer { font-family: var(--font-medium); }
 .active-filter { white-space: nowrap; font-family: var(--font-normal); .field-label { font-family: var(--font-medium); } &-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; margin: 0; } &-item { vertical-align: middle; margin: 0; } &-close-btn { vertical-align: middle; opacity: 0.5; svg { height: 0.8rem; } &:hover { opacity: 1; } } }
 </style>

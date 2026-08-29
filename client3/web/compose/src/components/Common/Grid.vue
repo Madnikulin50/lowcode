@@ -92,6 +92,7 @@ const resizing = ref(false)
 let ignoreGeometryRebuild = false
 let compactSynced = false
 let lastEmittedLayout = []
+let resyncTimer = 0
 
 const oneBlockLayout = computed(() => {
   return props.blocks.filter(({ meta }) => !meta.hidden && (!meta.invisible || props.editable)).length === 1
@@ -128,6 +129,7 @@ watch(geometryKey, () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('pointerup', onGridSettled)
+  if (resyncTimer) window.clearTimeout(resyncTimer)
   layout.value = []
   resizing.value = false
 })
@@ -150,6 +152,17 @@ function toLayoutItems (src) {
   }))
 }
 
+function cloneLayoutItems (src) {
+  return toLayoutItems(src).map((item) => ({ ...item }))
+}
+
+function applyLayout (next) {
+  const items = cloneLayoutItems(next)
+  if (layoutItemsEqual(layout.value, items)) return items
+  layout.value = items
+  return items
+}
+
 function persistLayout (newLayout) {
   if (!props.editable || !Array.isArray(newLayout)) return
 
@@ -168,8 +181,12 @@ function persistLayout (newLayout) {
 function onLayoutUpdated (newLayout) {
   if (!Array.isArray(newLayout)) return
   const next = toLayoutItems(newLayout)
-  lastEmittedLayout = next
-  if (resizing.value) return
+  // Only keep user drag/resize geometry. resizeend recalculates from stale
+  // GridItem innerH and would poison this buffer with the pre-resize height.
+  if (resizing.value) {
+    lastEmittedLayout = next
+    return
+  }
   if (layoutItemsEqual(layout.value, next)) {
     compactSynced = true
     return
@@ -190,9 +207,20 @@ function onGridAction () {
 function onGridSettled () {
   window.removeEventListener('pointerup', onGridSettled)
   const next = lastEmittedLayout.length ? lastEmittedLayout : layout.value
-  if (!layoutItemsEqual(layout.value, next)) layout.value = next
+  applyLayout(next)
   persistLayout(next)
+  lastEmittedLayout = []
+  compactSynced = true
   resizing.value = false
+  // vue-grid-layout-v3 resizeend writes stale innerH back into its state after
+  // @resized. Re-push the settled geometry on the next tick so GridItem :h stays.
+  if (resyncTimer) window.clearTimeout(resyncTimer)
+  resyncTimer = window.setTimeout(() => {
+    resyncTimer = 0
+    compactSynced = true
+    // New array so GridLayout's layout watcher re-imports after resizeend rollback.
+    layout.value = cloneLayoutItems(next)
+  }, 0)
 }
 </script>
 

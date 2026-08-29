@@ -7,6 +7,9 @@
     "counterparties": "509728716467929089",
     "materials": "509728716471336961",
     "labor_norms": "509728716473827329",
+    "construction_types": "511353837913309185",
+    "wbs_templates": "511353837915275265",
+    "phase_requirements": "511353837920059393",
     "projects": "509728716476317697",
     "project_members": "509728716484444161",
     "wbs_items": "509728716486803457",
@@ -27,6 +30,9 @@
     "docsByStatus": "509728716559024129",
     "rfcByStatus": "509728716559613953",
     "risksByImpact": "509728716560203777",
+    "risksByScore": "511353837935656961",
+    "cashflowByDir": "511353837936246785",
+    "cashflowByDate": "511353837936836609",
     "wbsGantt": "509728716560793601"
   },
   "urls": {
@@ -35,6 +41,16 @@
   },
   "engine": {
     "flags": "--api=http://localhost:3333 --namespace=509728716465438721",
-    "recalculate": "POST http://localhost:8086/api/recalculate-evm"
+    "recalculate": "POST http://localhost:8088/api/call/evm",
+    "simulateRfc": "POST http://localhost:8086/api/simulate-rfc",
+    "submitApproval": "POST http://localhost:8086/api/submit-approval"
+  },
+  "roles": {
+    "investor": "511353837938081793",
+    "bank": "511353837938278401",
+    "contractor": "511353837938475009",
+    "designer": "511353837938671617",
+    "government": "511353837938868225",
+    "pmo": "511353837939064833"
   }
 }

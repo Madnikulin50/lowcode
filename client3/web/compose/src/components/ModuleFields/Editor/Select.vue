@@ -213,8 +213,8 @@ function getOptionStyle (v) {
     const opt = selectOptions.value.find(({ value: val }) => val === v) || {}
     const st = opt.optStyle || {}
     style.fontSize = '0.9rem'
-    const fg = getColor(st.textColor) || 'var(--dark)'
-    const bg = getColor(st.backgroundColor) || 'var(--extra-light)'
+    const fg = getColor(st.textColor) || 'var(--dark, var(--black, #212529))'
+    const bg = getColor(st.backgroundColor) || 'var(--extra-light, #E4E9EF)'
     style.color = fg
     const gradient = props.field.options.badgeGradient ? badgeGradient(bg) : undefined
     if (gradient) {
@@ -234,3 +234,10 @@ function toggleCheckboxValue (val) {
   value.value = arr
 }
 </script>
+
+<style lang="scss" scoped>
+.badge {
+  color: var(--dark, var(--black, #212529));
+  background-color: var(--extra-light, #E4E9EF);
+}
+</style>

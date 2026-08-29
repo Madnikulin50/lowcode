@@ -1169,7 +1169,7 @@ function buildRuleChains ({ nsID, modules, agentUrl }) {
     {
       id: 'cmdb-trigger-scan',
       name: 'CMDB: trigger network scan',
-      description: 'POST cidr to the CMDB agent and create a scans row. Needs cidr (from the network record or block context).',
+      description: 'POST cidr to scan-cidr (or CMDB_AGENT_URL) and create a scans row. Needs cidr from the network record or block context.',
       entryNode: 'record_scan',
       nodes: [
         {
@@ -1208,8 +1208,8 @@ function buildRuleChains ({ nsID, modules, agentUrl }) {
           config: {
             kind: 'poll',
             ingestChainID: 'cmdb-ingest-scan',
-            statusUrl: '{{agentUrl}}/scans/{{scanID}}',
-            itemsUrl: '{{agentUrl}}/devices',
+            statusUrl: agentUrl + '/jobs/{{scanID}}',
+            itemsUrl: agentUrl + '/jobs/{{scanID}}/items',
             interval: 2,
             timeout: 900,
             until: 'done,error,completed,failed',
@@ -1532,7 +1532,7 @@ async function main () {
   const token = await mintToken()
   const base = await detectBase(token)
   const api = apiFactory(base, token)
-  const agentUrl = (process.env.CMDB_AGENT_URL || 'http://localhost:8085/api').replace(/\/$/, '')
+  const agentUrl = (process.env.CMDB_AGENT_URL || 'http://localhost:8089/api').replace(/\/$/, '')
 
   console.log('API', base)
 

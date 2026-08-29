@@ -261,6 +261,7 @@
 import { ref, computed, watch, onBeforeUnmount, nextTick, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fmt } from 'corteza-lib/js/dist'
+import { firstThemeValues, resolveThemeColor } from 'corteza-webapp-compose/src/lib/color.js'
 
 const { t } = useI18n({ useScope: 'global' })
 
@@ -422,12 +423,7 @@ function themeSettings () {
 }
 
 function getColor (value) {
-  if (!value) return value
-  if (value[0] === '#') return value
-  const themes = themeSettings()
-    .filter((theme) => theme.id !== 'general')
-    .map((theme) => ({ id: theme.id, values: JSON.parse(theme.values) }))
-  return themes[0]?.values?.[value] || value
+  return resolveThemeColor(value, firstThemeValues(themeSettings()))
 }
 
 function genStyle (s = {}, forLabel = false) {

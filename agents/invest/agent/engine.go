@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 )
@@ -59,12 +60,10 @@ func (e *Engine) RecalculateEVM(ctx context.Context, req JobRequest) (*RecalcRes
 		return nil, fmt.Errorf("load facts: %w", err)
 	}
 	now := time.Now()
-	items = MergeFacts(items, facts)
-	items = ApplyEVM(items, now)
+	items, agg := runEVM(items, facts, req.ProjectID, now)
 	if err := cz.SaveWBSMetrics(ctx, items); err != nil {
 		return nil, err
 	}
-	agg := AggregateProject(items, req.ProjectID)
 	resp := &RecalcResponse{
 		WBS: len(items), Project: agg, Updated: len(items), ProjectID: req.ProjectID,
 		SPI: agg.SPI, CPI: agg.CPI, EAC: agg.EAC, AC: agg.AC,
@@ -127,9 +126,10 @@ func (e *Engine) CriticalPath(ctx context.Context, req JobRequest) (*PathRespons
 }
 
 type AlertsResponse struct {
-	Alerts  int     `json:"alerts"`
-	Created int     `json:"created"`
-	Items   []Alert `json:"items"`
+	Alerts      int     `json:"alerts"`
+	Created     int     `json:"created"`
+	Items       []Alert `json:"items"`
+	NotifyEmail string  `json:"notifyEmail,omitempty"`
 }
 
 func (e *Engine) Alerts(ctx context.Context, req JobRequest) (*AlertsResponse, error) {
@@ -146,12 +146,36 @@ func (e *Engine) Alerts(ctx context.Context, req JobRequest) (*AlertsResponse, e
 	now := time.Now()
 	items = ApplyEVM(items, now)
 	alerts := CollectAlerts(docs, items, now, req.CPIThreshold)
+	if lines, err := cz.LoadBudgetLines(ctx, req.ProjectID); err == nil {
+		alerts = append(alerts, CollectReserveAlerts(lines)...)
+	}
+	if rfcs, err := cz.LoadRFCs(ctx, req.ProjectID); err == nil {
+		alerts = append(alerts, CollectRFCOverdue(rfcs, now)...)
+	}
 	created := 0
+	notify := ""
 	for _, a := range alerts {
 		if err := cz.EnsureRisk(ctx, a); err != nil {
 			continue
 		}
 		created++
+		if notify == "" && a.Email != "" {
+			notify = a.Email
+		}
 	}
-	return &AlertsResponse{Alerts: len(alerts), Created: created, Items: alerts}, nil
+	_, _ = cz.RefreshRiskScores(ctx)
+	return &AlertsResponse{Alerts: len(alerts), Created: created, Items: alerts, NotifyEmail: notify}, nil
+}
+
+func (e *Engine) RunScheduled(ctx context.Context) {
+	if e.cfg.Token == "" {
+		return
+	}
+	req := JobRequest{CPIThreshold: 0.9}
+	if _, err := e.Alerts(ctx, req); err != nil {
+		log.Printf("scheduled alerts: %v", err)
+	}
+	if _, err := e.RecalculateEVM(ctx, req); err != nil {
+		log.Printf("scheduled evm: %v", err)
+	}
 }

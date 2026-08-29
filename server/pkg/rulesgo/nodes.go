@@ -494,7 +494,24 @@ func resolveTemplateJSON(val string, ec *ExecutionContext) string {
 }
 
 func jsonEscapeTemplate(v interface{}) string {
-	b, err := json.Marshal(fmt.Sprintf("%v", v))
+	switch t := v.(type) {
+	case nil:
+		return "null"
+	case string:
+		return jsonEscapeString(t)
+	case bool, json.Number, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		return jsonEscapeString(fmt.Sprintf("%v", t))
+	default:
+		b, err := json.Marshal(v)
+		if err != nil {
+			return jsonEscapeString(fmt.Sprintf("%v", v))
+		}
+		return string(b)
+	}
+}
+
+func jsonEscapeString(s string) string {
+	b, err := json.Marshal(s)
 	if err != nil {
 		return ""
 	}

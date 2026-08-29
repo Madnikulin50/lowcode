@@ -61,8 +61,8 @@ function getOptionStyle (opt) {
   if (props.field.options.displayType === 'badge') {
     const oStyle = opt.style || {}
     style.fontSize = '0.9rem'
-    const fg = getColor(oStyle.textColor) || 'var(--dark)'
-    const bg = getColor(oStyle.backgroundColor) || 'var(--extra-light)'
+    const fg = getColor(oStyle.textColor) || 'var(--dark, var(--black, #212529))'
+    const bg = getColor(oStyle.backgroundColor) || 'var(--extra-light, #E4E9EF)'
     style.color = fg
     const gradient = props.field.options.badgeGradient ? badgeGradient(bg) : undefined
     if (gradient) {
@@ -78,5 +78,10 @@ function getOptionStyle (opt) {
 <style lang="scss" scoped>
 .badge {
   font-family: var(--font-medium);
+  // Bootstrap 5 .badge defaults to white text. Theme keys like "dark"
+  // used to fail to resolve; this keeps the label readable until inline
+  // styles apply a real color.
+  color: var(--dark, var(--black, #212529));
+  background-color: var(--extra-light, #E4E9EF);
 }
 </style>

@@ -42,6 +42,35 @@ charts:
         module: risks
       colorScheme: tableau.Tableau10
 
+  risks-by-score:
+    name: Риски по баллу
+    config:
+      reports:
+      - dimensions:
+        - field: score
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: risks
+      colorScheme: tableau.Tableau10
+
+  cashflow-by-dir:
+    name: Денежный поток
+    config:
+      reports:
+      - dimensions:
+        - field: direction
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: amount
+          type: bar
+          aggregate: SUM
+        module: cashflow_items
+      colorScheme: tableau.Tableau10
+
   wbs-gantt:
     name: График WBS
     config:

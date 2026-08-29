@@ -101,8 +101,10 @@ func (s *Service) defaultOp(req StartRequest) string {
 		switch s.cfg.Handle {
 		case "backup":
 			return "backup"
-		case "cmdb":
+		case "cmdb", "scan-cidr":
 			return "scan"
+		case "calc-evm":
+			return "evm"
 		}
 	}
 	if len(s.comps) == 1 {

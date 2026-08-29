@@ -1,13 +1,9 @@
-.PHONY: build test run minio-up minio-down
+AGENT := backup
+BIN   := backup-agent
 
-build:
-	go build -o bin/backup-agent .
+include ../Makefile.inc
 
-test:
-	go test ./...
-
-run: build
-	./bin/backup-agent
+.PHONY: minio-up minio-down
 
 minio-up:
 	docker compose up -d

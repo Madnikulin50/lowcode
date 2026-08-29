@@ -1,5 +1,6 @@
 import { computed, inject } from 'vue'
 import { useRoute } from 'vue-router'
+import { firstThemeValues, resolveThemeColor } from 'corteza-webapp-compose/src/lib/color.js'
 
 export function useViewerBase(p) {
   const r = useRoute()
@@ -29,10 +30,7 @@ export function useViewerBase(p) {
   })
   const ts = computed(() => s?.get ? s.get('ui.studio.themes', []) : [])
   function gc (val) {
-    if (!val) return undefined
-    if (val[0] === '#') return val
-    const themes = (ts.value || []).filter(t => t.id !== 'general').map(t => ({ id: t.id, values: typeof t.values === 'string' ? JSON.parse(t.values) : t.values }))
-    return themes[0]?.values?.[val] || val
+    return resolveThemeColor(val, firstThemeValues(ts.value))
   }
   return { value: v, formatted: f, classes: c, options: o, inModal: im, themeSettings: ts, getColor: gc }
 }

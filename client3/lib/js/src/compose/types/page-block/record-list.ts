@@ -107,6 +107,7 @@ export interface Options {
 
   // Appearance
   compactRows: boolean;
+  compactChrome: boolean;
   alignNumbers: boolean;
   stickyHeader: boolean;
   showRowSignal: boolean;
@@ -189,6 +190,7 @@ const defaults: Readonly<Options> = Object.freeze({
   },
 
   compactRows: true,
+  compactChrome: true,
   alignNumbers: true,
   stickyHeader: true,
   showRowSignal: false,
@@ -295,6 +297,7 @@ export class PageBlockRecordList extends PageBlock {
       'openRecordInEditMode',
       'customSummaries',
       'compactRows',
+      'compactChrome',
       'alignNumbers',
       'stickyHeader',
       'showRowSignal',

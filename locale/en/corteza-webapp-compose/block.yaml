@@ -576,6 +576,10 @@ record:
 recordList:
   noModule: No module selected
   addRecord: Add
+  chrome:
+    more: More actions
+    search: Search
+    filters: Filters
   cancelSelection: Cancel
   customFilter: Custom filter
   prefilter:
@@ -876,6 +880,7 @@ recordList:
   appearance:
     label: Appearance
     compactRows: Compact rows
+    compactChrome: Compact toolbar
     alignNumbers: Right-align numbers
     stickyHeader: Sticky header
     showRowSignal: Severity signal column

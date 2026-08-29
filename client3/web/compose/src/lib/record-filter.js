@@ -302,18 +302,38 @@ function interpolable (value) {
   })
 }
 
+const PREFILTER_RESERVED = new Set(['record', 'user', 'recordID', 'ownerID', 'userID', 'variables', 'values'])
+
+// `${phase}` → `${values.phase}` so record-page lists can use field names
+// without `record.values.`. `${recordID}` / `${userID}` stay as-is.
+function expandFieldShorthand (src) {
+  return String(src).replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (m, name) => {
+    if (PREFILTER_RESERVED.has(name)) return m
+    return `\${values.${name}}`
+  })
+}
+
+function prefilterNeedsRecord (src) {
+  return /\$\{(record|recordID|ownerID|values)\b/.test(src) ||
+    [...String(src).matchAll(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g)]
+      .some(([, name]) => !PREFILTER_RESERVED.has(name))
+}
+
 // Evaluates the given prefilter. Allows JS template literal expressions
-// such as id = ${recordID} or amount < ${variables.x} (page variables,
-// see PageBlocks/Variables).
+// such as id = ${recordID}, amount < ${variables.x} (page variables),
+// or phase = '${phase}' (parent record field shorthand).
 export function evaluatePrefilter (prefilter, { record, user, recordID, ownerID, userID, variables } = {}) {
+  const rawValues = record && record.values && typeof record.values === 'object' ? record.values : {}
   record = interpolable(record)
   user = interpolable(user)
   variables = interpolable(variables)
+  const values = interpolable(rawValues)
   if (recordID === undefined || recordID === null) recordID = ''
   if (ownerID === undefined || ownerID === null) ownerID = ''
   if (userID === undefined || userID === null) userID = ''
+  void values
   /* eslint-disable no-eval */
-  return eval('`' + (prefilter || '') + '`')
+  return eval('`' + expandFieldShorthand(prefilter || '') + '`')
 }
 
 // QL rejects `field =` (operator with no RHS). That happens when a
@@ -334,11 +354,15 @@ export function isIncompleteQl (filter) {
 export function evalPrefilterOrSkip (prefilter, ctx = {}) {
   const src = prefilter == null ? '' : String(prefilter)
   if (!src.trim()) return { skip: false, filter: '' }
-  const needsRecord = /\$\{(record|recordID|ownerID)/.test(src)
-  if (needsRecord && (ctx.loadingRecord || !ctx.record)) {
+  if (prefilterNeedsRecord(src) && (ctx.loadingRecord || !ctx.record)) {
     return { skip: true, filter: '' }
   }
-  const filter = evaluatePrefilter(src, ctx)
+  let filter
+  try {
+    filter = evaluatePrefilter(src, ctx)
+  } catch (e) {
+    return { skip: true, filter: '' }
+  }
   if (isIncompleteQl(filter)) return { skip: true, filter: '' }
   return { skip: false, filter }
 }

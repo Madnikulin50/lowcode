@@ -52,6 +52,7 @@ type JobRequest struct {
 	NamespaceID  flexUint `json:"namespaceID"`
 	ProjectID    string   `json:"projectID"`
 	RecordID     string   `json:"recordID"`
+	DocumentID   string   `json:"documentID"`
 	Token        string   `json:"token"`
 	CPIThreshold float64  `json:"cpiThreshold"`
 	Decision     string   `json:"decision"`
@@ -62,13 +63,23 @@ type JobRequest struct {
 func (r *JobRequest) Normalize() {
 	r.ProjectID = cleanID(r.ProjectID)
 	r.RecordID = cleanID(r.RecordID)
+	r.DocumentID = cleanID(r.DocumentID)
 	r.UserID = cleanID(r.UserID)
+}
+
+// DocumentRef is the document record for approval chains. Prefer documentID:
+// page triggers used to alias projectID → recordID on document cards.
+func (r JobRequest) DocumentRef() string {
+	if r.DocumentID != "" {
+		return r.DocumentID
+	}
+	return r.RecordID
 }
 
 func cleanID(s string) string {
 	s = strings.TrimSpace(s)
 	switch s {
-	case "0", "auto", "{{projectID}}", "{{recordID}}", "{{userID}}", "${recordID}", "${userID}", "${project}":
+	case "0", "auto", "{{projectID}}", "{{recordID}}", "{{documentID}}", "{{userID}}", "${recordID}", "${userID}", "${project}":
 		return ""
 	}
 	if strings.Contains(s, "{{") || strings.Contains(s, "${") {

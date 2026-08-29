@@ -90,3 +90,37 @@ func TestResolveTemplateJSONEscapesJWT(t *testing.T) {
 		t.Fatalf("quoted namespaceID: got %s want %s", got, want)
 	}
 }
+
+func TestGetSkipsEmptyString(t *testing.T) {
+	ec := &ExecutionContext{
+		Variables: map[string]interface{}{"recordID": ""},
+		Input:     map[string]interface{}{"recordID": "333", "documentID": "333"},
+	}
+	if got := ec.Get("recordID"); got != "333" {
+		t.Fatalf("empty Variables recordID should fall through, got %v", got)
+	}
+	got := resolveTemplateJSON(`{"recordID":"{{recordID}}","documentID":"{{documentID}}"}`, ec)
+	want := `{"recordID":"333","documentID":"333"}`
+	if got != want {
+		t.Fatalf("got %s want %s", got, want)
+	}
+}
+
+func TestResolveTemplateJSONRawArray(t *testing.T) {
+	ec := &ExecutionContext{
+		Variables: map[string]interface{}{
+			"search_wbs": map[string]interface{}{
+				"records": []map[string]interface{}{
+					{"recordID": "7", "budget_planned": "1000", "project": "1"},
+				},
+			},
+			"search_facts": map[string]interface{}{"records": []map[string]interface{}{}},
+		},
+		Input: map[string]interface{}{"projectID": "1"},
+	}
+	got := resolveTemplateJSON(`{"projectID":"{{projectID}}","items":{{search_wbs.records}},"facts":{{search_facts.records}}}`, ec)
+	want := `{"projectID":"1","items":[{"budget_planned":"1000","project":"1","recordID":"7"}],"facts":[]}`
+	if got != want {
+		t.Fatalf("got %s\nwant %s", got, want)
+	}
+}

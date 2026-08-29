@@ -1,0 +1,98 @@
+# Agents next to the main lowcode server.
+# Images: make -C agents drelease   (or ddebug for local tags without dockerhub prefix)
+#
+#   VERSION=2026.7.6 docker compose -f agents/docker-compose.yml up -d
+#
+# TOKEN and API flags come from the repo-root .env (same as the server).
+services:
+  backup:
+    image: docker.io/madnikulin50/pnp-backup:${VERSION:-2026.7.6}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL:-host-gateway}"
+    environment:
+      TOKEN: ${TOKEN:-}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-backups}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD:-}
+    command:
+      - --listen=:8087
+      - --api=http://host.docker.internal:${HTTP_PORT:-80}
+      - --public-url=http://localhost:8087
+      - --minio-endpoint=minio:9000
+    ports:
+      - "8087:8087"
+    depends_on:
+      minio:
+        condition: service_healthy
+
+  cmdb:
+    image: docker.io/madnikulin50/pnp-cmdb:${VERSION:-2026.7.6}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL:-host-gateway}"
+    environment:
+      TOKEN: ${TOKEN:-}
+    command:
+      - --listen=:8085
+      - --db-path=/data/cmdb.db
+      - --api=http://host.docker.internal:${HTTP_PORT:-80}
+    ports:
+      - "8085:8085"
+    volumes:
+      - cmdb-data:/data
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+  invest:
+    image: docker.io/madnikulin50/pnp-invest:${VERSION:-2026.7.6}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL:-host-gateway}"
+    environment:
+      TOKEN: ${TOKEN:-}
+    command:
+      - --listen=:8086
+      - --api=http://host.docker.internal:${HTTP_PORT:-80}
+    ports:
+      - "8086:8086"
+
+  calc-evm:
+    image: docker.io/madnikulin50/pnp-calc-evm:${VERSION:-2026.7.6}
+    restart: always
+    ports:
+      - "8088:8088"
+
+  scan-cidr:
+    image: docker.io/madnikulin50/pnp-scan-cidr:${VERSION:-2026.7.6}
+    restart: always
+    ports:
+      - "8089:8089"
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+  minio:
+    image: minio/minio:RELEASE.2023-01-31T02-24-19Z
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - backup-minio-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  cmdb-data:
+  backup-minio-data:

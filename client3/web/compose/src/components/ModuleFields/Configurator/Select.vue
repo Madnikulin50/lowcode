@@ -237,11 +237,13 @@ const themeSettings = computed(() => {
 })
 
 const defaultTextColor = computed(() => {
-  return getComputedStyle(document.documentElement).getPropertyValue('--dark')
+  const dark = getComputedStyle(document.documentElement).getPropertyValue('--dark').trim()
+  const black = getComputedStyle(document.documentElement).getPropertyValue('--black').trim()
+  return dark || black || '#212529'
 })
 
 const defaultBackgroundColor = computed(() => {
-  return getComputedStyle(document.documentElement).getPropertyValue('--extra-light')
+  return getComputedStyle(document.documentElement).getPropertyValue('--extra-light').trim() || '#E4E9EF'
 })
 
 function resolveColor (val) {
@@ -250,7 +252,9 @@ function resolveColor (val) {
   const themes = themeSettings.value
     .filter(theme => theme.id !== 'general')
     .map(theme => ({ id: theme.id, values: JSON.parse(theme.values) }))
-  return themes[0]?.values[val] || val
+  const values = themes[0]?.values || {}
+  if (val === 'dark') return values.dark || values.black || val
+  return values[val] || val
 }
 
 function setOptionStyle (index, key, value) {
