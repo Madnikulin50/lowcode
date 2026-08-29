@@ -51,15 +51,42 @@ func (id *flexUint) UnmarshalJSON(b []byte) error {
 type JobRequest struct {
 	NamespaceID  flexUint `json:"namespaceID"`
 	ProjectID    string   `json:"projectID"`
+	RecordID     string   `json:"recordID"`
 	Token        string   `json:"token"`
 	CPIThreshold float64  `json:"cpiThreshold"`
+	Decision     string   `json:"decision"`
+	UserID       string   `json:"userID"`
+	Comment      string   `json:"comment"`
 }
 
 func (r *JobRequest) Normalize() {
-	switch r.ProjectID {
-	case "0", "auto", "{{projectID}}", "${recordID}":
-		r.ProjectID = ""
+	r.ProjectID = cleanID(r.ProjectID)
+	r.RecordID = cleanID(r.RecordID)
+	r.UserID = cleanID(r.UserID)
+}
+
+func cleanID(s string) string {
+	s = strings.TrimSpace(s)
+	switch s {
+	case "0", "auto", "{{projectID}}", "{{recordID}}", "{{userID}}", "${recordID}", "${userID}", "${project}":
+		return ""
 	}
+	if strings.Contains(s, "{{") || strings.Contains(s, "${") {
+		return ""
+	}
+	return s
+}
+
+func ParseID(s string) uint64 {
+	s = strings.TrimSpace(s)
+	if s == "" || s == "0" {
+		return 0
+	}
+	n, err := strconv.ParseUint(s, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 type WBSItem struct {
@@ -90,11 +117,62 @@ type ProgressFact struct {
 }
 
 type Document struct {
-	ID      uint64
+	ID       uint64
+	Project  string
+	Title    string
+	Status   string
+	DueDate  time.Time
+	Assignee string
+	Author   string
+	Contract string
+	File     string
+	Number   string
+}
+
+type RFC struct {
+	ID          uint64
+	Project     string
+	Title       string
+	Status      string
+	DeltaBudget float64
+	DeltaDays   float64
+	EACBefore   float64
+	EACAfter    float64
+	Simulated   bool
+	EndAfter    time.Time
+	Author      string
+}
+
+type Project struct {
+	ID               uint64
+	Name             string
+	BudgetPlanned    float64
+	BudgetActual     float64
+	EAC              float64
+	EndPlanned       time.Time
+	ConstructionType string
+}
+
+type Approval struct {
+	ID       uint64
+	Document string
+	Approver string
+	Decision string
+	Step     float64
+	Role     string
+}
+
+type Member struct {
+	User string
+	Role string
+}
+
+type BudgetLine struct {
 	Project string
-	Title   string
-	Status  string
-	DueDate time.Time
+	Article string
+	Reserve float64
+	Actual  float64
+	Planned float64
 }
 
 type EVMResult struct {
@@ -113,6 +191,7 @@ type Alert struct {
 	Project string `json:"project,omitempty"`
 	WBS     string `json:"wbs,omitempty"`
 	Detail  string `json:"detail"`
+	Email   string `json:"email,omitempty"`
 }
 
 type Activity struct {
