@@ -2,6 +2,8 @@ package rulesgo
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 )
 
 type Chain struct {
@@ -53,28 +55,74 @@ type ExecutionContext struct {
 }
 
 func (ec *ExecutionContext) GetString(key string) string {
-	if v, ok := ec.Variables[key]; ok {
-		if s, ok := v.(string); ok {
-			return s
-		}
+	v := ec.Get(key)
+	if v == nil {
+		return ""
 	}
-	if v, ok := ec.Input[key]; ok {
-		if s, ok := v.(string); ok {
-			return s
-		}
+	if s, ok := v.(string); ok {
+		return s
 	}
-	return ""
+	s := fmt.Sprintf("%v", v)
+	if s == "<nil>" {
+		return ""
+	}
+	return s
 }
 
 func (ec *ExecutionContext) Get(key string) interface{} {
-	if v, ok := ec.Variables[key]; ok {
+	key = strings.TrimSpace(key)
+	if ec == nil || key == "" {
+		return nil
+	}
+	if v := lookupPath(ec.Variables, key); v != nil {
 		return v
 	}
-	if v, ok := ec.Results[key]; ok {
+	if v := lookupPath(ec.Results, key); v != nil {
 		return v
 	}
-	if v, ok := ec.Input[key]; ok {
+	if v := lookupPath(ec.Input, key); v != nil {
 		return v
+	}
+	return nil
+}
+
+func lookupPath(bag map[string]interface{}, key string) interface{} {
+	if bag == nil || key == "" {
+		return nil
+	}
+	if v, ok := bag[key]; ok {
+		return v
+	}
+	if !strings.Contains(key, ".") {
+		return mapLookupCI(bag, key)
+	}
+	var cur interface{} = bag
+	for _, part := range strings.Split(key, ".") {
+		part = strings.TrimSpace(part)
+		m := asStringMap(cur)
+		if m == nil {
+			return nil
+		}
+		v, ok := m[part]
+		if !ok {
+			v = mapLookupCI(m, part)
+		}
+		if v == nil {
+			return nil
+		}
+		cur = v
+	}
+	return cur
+}
+
+func mapLookupCI(m map[string]interface{}, key string) interface{} {
+	if m == nil || key == "" {
+		return nil
+	}
+	for k, v := range m {
+		if strings.EqualFold(k, key) {
+			return v
+		}
 	}
 	return nil
 }

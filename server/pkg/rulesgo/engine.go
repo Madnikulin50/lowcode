@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -150,6 +151,7 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 
 		if output != nil {
 			ec.SetResult(node.ID, output)
+			promoteNodeOutput(ec, node.ID, output)
 		}
 
 		log.Printf("[rulesgo] node %s (%s) OK in %v", node.ID, node.Type, elapsed)
@@ -168,6 +170,65 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 	result.Output = ec.Variables
 
 	return result, nil
+}
+
+// promoteNodeOutput copies HTTP/node results into chain variables so the
+// trigger response `output` contains the payload (wbs, SPI, …), not only
+// the original request context. Envelope wrappers (`response`/`result`/`data`)
+// and nested `project` metrics are flattened so templates like {{spi}} and
+// {{project.spi}} resolve after an HTTP node.
+func promoteNodeOutput(ec *ExecutionContext, nodeID string, output map[string]interface{}) {
+	if ec == nil || output == nil {
+		return
+	}
+	body, ok := output["body"]
+	if !ok {
+		body = output
+	}
+	if nodeID != "" {
+		ec.Set(nodeID, body)
+	}
+	promoteMap(ec, asStringMap(body))
+}
+
+func promoteMap(ec *ExecutionContext, m map[string]interface{}) {
+	if ec == nil || m == nil {
+		return
+	}
+	for _, wrap := range []string{"response", "Response", "result", "data", "Data"} {
+		if inner := asStringMap(m[wrap]); inner != nil {
+			promoteMap(ec, inner)
+		}
+	}
+	if proj := asStringMap(m["project"]); proj == nil {
+		proj = asStringMap(m["Project"])
+		if proj != nil {
+			setIfAbsent(ec, "project", proj)
+		}
+	} else {
+		setIfAbsent(ec, "project", proj)
+	}
+	if proj := asStringMap(ec.Get("project")); proj != nil {
+		for k, v := range proj {
+			setIfAbsent(ec, strings.ToLower(k), v)
+		}
+	}
+	for k, v := range m {
+		if k == "" {
+			continue
+		}
+		setIfAbsent(ec, k, v)
+	}
+}
+
+func setIfAbsent(ec *ExecutionContext, key string, v interface{}) {
+	if ec == nil || key == "" || v == nil {
+		return
+	}
+	if _, exists := ec.Variables[key]; exists {
+		return
+	}
+	ec.Set(key, v)
 }
 
 func nextNodeIDs(edges []ChainEdge, ec *ExecutionContext) []string {

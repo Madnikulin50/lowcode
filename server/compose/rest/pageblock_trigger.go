@@ -169,7 +169,7 @@ func (t PageBlockTrigger) Run(w http.ResponseWriter, r *http.Request) {
 		"success": result.Success,
 		"chainID": req.ChainID,
 		"blockID": req.BlockID,
-		"output":  result.Output,
+		"output":  mergeNodeBodies(result.Output, result.Nodes),
 		"nodes":   result.Nodes,
 		"error":   result.Error,
 	})
@@ -345,6 +345,42 @@ func composeAPIRoot() string {
 	return origin + prefix
 }
 
+func mergeNodeBodies(out map[string]interface{}, nodes interface{}) map[string]interface{} {
+	if out == nil {
+		out = map[string]interface{}{}
+	}
+	raw, err := json.Marshal(nodes)
+	if err != nil {
+		return out
+	}
+	var list []map[string]interface{}
+	if json.Unmarshal(raw, &list) != nil {
+		return out
+	}
+	for i := len(list) - 1; i >= 0; i-- {
+		output, _ := list[i]["output"].(map[string]interface{})
+		if output == nil {
+			continue
+		}
+		body := output["body"]
+		if body == nil {
+			continue
+		}
+		out["result"] = body
+		m, ok := body.(map[string]interface{})
+		if !ok {
+			break
+		}
+		for k, v := range m {
+			if _, exists := out[k]; !exists {
+				out[k] = v
+			}
+		}
+		break
+	}
+	return out
+}
+
 func flattenTriggerContext(ctx map[string]interface{}, req *triggerRequest) {
 	if req.RecordID != "" {
 		ctx["recordID"] = req.RecordID
@@ -375,8 +411,8 @@ func flattenTriggerContext(ctx map[string]interface{}, req *triggerRequest) {
 	aliasTriggerRecordIDs(ctx)
 }
 
-// aliasTriggerRecordIDs fills recordID from page-block context (sourceID/policyID/…)
-// and the other way around, so chain templates {{recordID}} and {{sourceID}} both work.
+// aliasTriggerRecordIDs fills recordID from page-block context (sourceID/policyID/projectID/…)
+// and the other way around, so chain templates {{recordID}} and {{projectID}} both work.
 // Uninterpolated "${recordID}" / "{{recordID}}" leftovers are treated as empty.
 func aliasTriggerRecordIDs(ctx map[string]interface{}) {
 	if ctx == nil {
@@ -384,7 +420,7 @@ func aliasTriggerRecordIDs(ctx map[string]interface{}) {
 	}
 	recID := bagNonPlaceholder(ctx, "recordID")
 	if recID == "" {
-		for _, k := range []string{"sourceID", "policyID", "snapshotID"} {
+		for _, k := range []string{"sourceID", "policyID", "snapshotID", "projectID"} {
 			if v := bagNonPlaceholder(ctx, k); v != "" {
 				recID = v
 				break
@@ -395,6 +431,9 @@ func aliasTriggerRecordIDs(ctx map[string]interface{}) {
 		return
 	}
 	ctx["recordID"] = recID
+	if bagNonPlaceholder(ctx, "projectID") == "" {
+		ctx["projectID"] = recID
+	}
 	if bagNonPlaceholder(ctx, "sourceID") == "" && bagNonPlaceholder(ctx, "policyID") == "" && bagNonPlaceholder(ctx, "snapshotID") == "" {
 		ctx["sourceID"] = recID
 	}

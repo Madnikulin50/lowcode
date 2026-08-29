@@ -79,7 +79,8 @@ func decodeJob(w http.ResponseWriter, r *http.Request) (agent.JobRequest, bool) 
 
 func jsonResp(w http.ResponseWriter, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{"response": v})
+	// Top-level payload so rule-chain HTTP promote copies spi/cpi/eac into {{spi}}.
+	_ = json.NewEncoder(w).Encode(v)
 }
 
 func jsonError(w http.ResponseWriter, msg string, code int) {

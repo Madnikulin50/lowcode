@@ -98,13 +98,13 @@ type Document struct {
 }
 
 type EVMResult struct {
-	PV  float64
-	EV  float64
-	AC  float64
-	SPI float64
-	CPI float64
-	EAC float64
-	BAC float64
+	PV  float64 `json:"pv"`
+	EV  float64 `json:"ev"`
+	AC  float64 `json:"ac"`
+	SPI float64 `json:"spi"`
+	CPI float64 `json:"cpi"`
+	EAC float64 `json:"eac"`
+	BAC float64 `json:"bac"`
 }
 
 type Alert struct {

@@ -314,6 +314,42 @@ func TestEngine_ExecutionLog(t *testing.T) {
 	t.Logf("Log entry: duration=%s, trigger=%s", logs[0].Duration, logs[0].TriggerType)
 }
 
+func TestPromoteNodeOutputUnwrapsEVMEnvelope(t *testing.T) {
+	ec := &ExecutionContext{Variables: map[string]interface{}{}}
+	promoteNodeOutput(ec, "http", map[string]interface{}{
+		"statusCode": 200,
+		"body": map[string]interface{}{
+			"response": map[string]interface{}{
+				"wbs":     12,
+				"updated": 12,
+				"project": map[string]interface{}{
+					"spi": 1.0,
+					"CPI": 0.95,
+					"eac": 1500.0,
+					"ac":  100.0,
+				},
+			},
+		},
+	})
+	if ec.Get("wbs") != 12 {
+		t.Fatalf("wbs=%v", ec.Get("wbs"))
+	}
+	if fmt.Sprintf("%v", ec.Get("spi")) != "1" {
+		t.Fatalf("spi=%v", ec.Get("spi"))
+	}
+	if fmt.Sprintf("%v", ec.Get("cpi")) != "0.95" {
+		t.Fatalf("cpi=%v (CPI should flatten case-insensitive)", ec.Get("cpi"))
+	}
+	got := resolveTemplateValue("{{project.spi}}", ec)
+	if got != "1" {
+		t.Fatalf("{{project.spi}}=%q", got)
+	}
+	got = resolveTemplateValue("{{eac}}", ec)
+	if got != "1500" {
+		t.Fatalf("{{eac}}=%q", got)
+	}
+}
+
 func makeCondCfg(field, operator, value string) []byte {
 	cfg := conditionConfig{
 		Field:    field,

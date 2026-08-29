@@ -4,6 +4,7 @@ export function buildRuleChains ({ nsID, modules, engineUrl }) {
   const rfc = String(modules.change_requests)
   const log = String(modules.change_log)
   const risks = String(modules.risks)
+  const projects = String(modules.projects)
 
   const upd = (id, name, moduleID, handle, fields, description) => ({
     id,
@@ -84,21 +85,42 @@ export function buildRuleChains ({ nsID, modules, engineUrl }) {
     {
       id: 'invest-recalculate-evm',
       name: 'Инвест: пересчитать EVM',
-      description: 'POST /recalculate-evm на invest-engine. Опционально projectID в контексте.',
+      description: 'POST /recalculate-evm, затем SPI/CPI/EAC на запись проекта. Без projectID узел update пропускается.',
       entryNode: 'http',
       namespaceID: ns,
-      nodes: [{
-        id: 'http',
-        type: 'http',
-        label: 'engine EVM',
-        config: {
-          url: engineUrl + '/recalculate-evm',
-          method: 'POST',
-          body: '{"namespaceID":{{namespaceID}},"projectID":"{{projectID}}","token":"{{authToken}}"}',
-          timeout: 60,
+      nodes: [
+        {
+          id: 'http',
+          type: 'http',
+          label: 'engine EVM',
+          config: {
+            url: engineUrl + '/recalculate-evm',
+            method: 'POST',
+            body: '{"namespaceID":{{namespaceID}},"projectID":"{{projectID}}","token":"{{authToken}}"}',
+            timeout: 60,
+          },
         },
-      }],
-      edges: [],
+        {
+          id: 'upd',
+          type: 'crud',
+          label: 'Записать EVM на проект',
+          config: {
+            operation: 'update',
+            namespaceID: ns,
+            moduleID: projects,
+            moduleHandle: 'projects',
+            recordID: '{{projectID}}',
+            omitEmpty: true,
+            fields: {
+              spi: '{{spi}}',
+              cpi: '{{cpi}}',
+              eac: '{{eac}}',
+              budget_actual: '{{ac}}',
+            },
+          },
+        },
+      ],
+      edges: [{ from: 'http', to: 'upd' }],
     },
     {
       id: 'invest-critical-path',

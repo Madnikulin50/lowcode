@@ -537,12 +537,17 @@ onBeforeRouteUpdate((to, from) => {
 
 function createEvents() {
   bus.$on('refetch-records', refetchRecords)
+  window.addEventListener('refetch-records', onWindowRefetch)
   bus.$on('record-field-change', evaluateLayoutConditions)
   bus.$on('record-field-change', saveDraftRevision)
 
   if (props.inModal) {
     bus.$on('bv::modal::hide', checkUnsavedChanges)
   }
+}
+
+function onWindowRefetch(e) {
+  refetchRecords(e?.detail || {})
 }
 
 function evaluateLayoutConditions() {
@@ -854,6 +859,7 @@ function abortRequests() {
 
 function destroyEvents() {
   bus.$off('refetch-records', refetchRecords)
+  window.removeEventListener('refetch-records', onWindowRefetch)
   bus.$off('record-field-change', evaluateLayoutConditions)
   bus.$off('record-field-change', saveDraftRevision)
   if (props.inModal) {

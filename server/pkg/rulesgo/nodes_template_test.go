@@ -29,6 +29,46 @@ func TestInterpolateTemplatesMixedPlaceholders(t *testing.T) {
 	}
 }
 
+func TestInterpolateDottedPaths(t *testing.T) {
+	ec := &ExecutionContext{
+		Variables: map[string]interface{}{
+			"project": map[string]interface{}{
+				"spi": 0.95,
+				"CPI": 1.1,
+			},
+			"http": map[string]interface{}{
+				"response": map[string]interface{}{
+					"project": map[string]interface{}{"eac": 1200.5},
+				},
+			},
+		},
+		Input: map[string]interface{}{
+			"projectID": "42",
+		},
+	}
+
+	got := resolveTemplateValue("{{project.spi}}", ec)
+	if got != "0.95" {
+		t.Fatalf("project.spi: got %q", got)
+	}
+	got = resolveTemplateValue("{{project.cpi}}", ec)
+	if got != "1.1" {
+		t.Fatalf("case-insensitive project.cpi: got %q", got)
+	}
+	got = resolveTemplateValue("{{http.response.project.eac}}", ec)
+	if got != "1200.5" {
+		t.Fatalf("nested http path: got %q", got)
+	}
+	got = resolveTemplateValue("{{projectID}}", ec)
+	if got != "42" {
+		t.Fatalf("flat input: got %q", got)
+	}
+	got = resolveTemplateValue("{{missing.path}}", ec)
+	if got != "" {
+		t.Fatalf("missing path should be empty, got %q", got)
+	}
+}
+
 func TestResolveTemplateJSONEscapesJWT(t *testing.T) {
 	ec := &ExecutionContext{
 		Input: map[string]interface{}{

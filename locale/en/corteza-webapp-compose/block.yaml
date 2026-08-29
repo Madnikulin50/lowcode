@@ -63,6 +63,10 @@ selector:
 ruleChain:
   label: Rule chain
   reloadOnSuccess: Reload page on successful completion
+  running: Running…
+  success: Rule chain completed successfully
+  error: Execution failed
+  resultTitle: Result
 aiChat:
   label: AI assistant
   title: AI Chat

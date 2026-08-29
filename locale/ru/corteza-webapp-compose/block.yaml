@@ -63,6 +63,10 @@ selector:
 ruleChain:
   label: Цепочка правил
   reloadOnSuccess: Обновить страницу при успешном завершении
+  running: Выполняется…
+  success: Цепочка выполнена успешно
+  error: Ошибка выполнения
+  resultTitle: Результат
 aiChat:
   label: ИИ-ассистент
   title: ИИ-чат

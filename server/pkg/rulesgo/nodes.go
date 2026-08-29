@@ -126,6 +126,12 @@ func (n *crudExecutor) Execute(ctx context.Context, node ChainNode, ec *Executio
 		}
 		recID := strings.TrimSpace(cfg.RecordID)
 		if recID == "" || recID == "<nil>" || recID == "0" {
+			recID = strings.TrimSpace(ec.GetString("projectID"))
+		}
+		if recID == "" || recID == "<nil>" || recID == "0" {
+			recID = strings.TrimSpace(ec.GetString("recordID"))
+		}
+		if recID == "" || recID == "<nil>" || recID == "0" {
 			return map[string]interface{}{"skipped": true, "reason": "empty recordID"}, nil
 		}
 		fields := resolveFieldTemplates(cfg.Fields, ec)
@@ -503,7 +509,7 @@ func interpolateTemplates(val string, ec *ExecutionContext, format func(interfac
 		format = func(v interface{}) string { return fmt.Sprintf("%v", v) }
 	}
 	if len(val) > 4 && val[:2] == "{{" && val[len(val)-2:] == "}}" {
-		key := val[2 : len(val)-2]
+		key := strings.TrimSpace(val[2 : len(val)-2])
 		// Mixed templates like "{{agentUrl}}/scans/{{scanID}}" also start with "{{"
 		// and end with "}}"; only treat as a single placeholder when the inner key
 		// has no nested "{{" / "}}".
@@ -527,7 +533,7 @@ func interpolateTemplates(val string, ec *ExecutionContext, format func(interfac
 			break
 		}
 		end += start + 2
-		key := result[start+2 : end]
+		key := strings.TrimSpace(result[start+2 : end])
 		if v := ec.Get(key); v != nil {
 			replacement := format(v)
 			result = result[:start] + replacement + result[end+2:]

@@ -118,6 +118,15 @@ func TestAliasTriggerRecordIDs(t *testing.T) {
 		t.Fatalf("sourceID=%v (placeholder should yield to recordID)", bag["sourceID"])
 	}
 
+	bag = map[string]interface{}{"projectID": "${recordID}"}
+	flattenTriggerContext(bag, &triggerRequest{RecordID: "510291663494250497"})
+	if bag["recordID"] != "510291663494250497" {
+		t.Fatalf("recordID=%v", bag["recordID"])
+	}
+	if bag["projectID"] != "510291663494250497" {
+		t.Fatalf("projectID=%v (placeholder should yield to recordID)", bag["projectID"])
+	}
+
 	bag = map[string]interface{}{"policyID": "99"}
 	flattenTriggerContext(bag, &triggerRequest{})
 	if bag["recordID"] != "99" {

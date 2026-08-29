@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -36,6 +37,14 @@ type RecalcResponse struct {
 	Project   EVMResult `json:"project"`
 	Updated   int       `json:"updated"`
 	ProjectID string    `json:"projectID,omitempty"`
+	Saved     int       `json:"saved,omitempty"`
+	SaveError string    `json:"saveError,omitempty"`
+	// Flat copies so rule-chain templates {{spi}}/{{cpi}}/{{eac}}/{{ac}}
+	// resolve after an HTTP node (promote copies top-level JSON keys).
+	SPI float64 `json:"spi"`
+	CPI float64 `json:"cpi"`
+	EAC float64 `json:"eac"`
+	AC  float64 `json:"ac"`
 }
 
 func (e *Engine) RecalculateEVM(ctx context.Context, req JobRequest) (*RecalcResponse, error) {
@@ -56,8 +65,18 @@ func (e *Engine) RecalculateEVM(ctx context.Context, req JobRequest) (*RecalcRes
 		return nil, err
 	}
 	agg := AggregateProject(items, req.ProjectID)
+	resp := &RecalcResponse{
+		WBS: len(items), Project: agg, Updated: len(items), ProjectID: req.ProjectID,
+		SPI: agg.SPI, CPI: agg.CPI, EAC: agg.EAC, AC: agg.AC,
+	}
 	if req.ProjectID != "" && req.ProjectID != "0" {
-		_ = cz.SaveProjectEVM(ctx, req.ProjectID, agg)
+		// Card / API with a project: engine writes the aggregate as a fallback.
+		// The rule chain also PATCHes the same fields after HTTP succeeds.
+		if err := cz.SaveProjectEVM(ctx, req.ProjectID, agg); err != nil {
+			resp.SaveError = err.Error()
+		} else {
+			resp.Saved = 1
+		}
 	} else {
 		seen := map[string][]WBSItem{}
 		for _, it := range items {
@@ -66,11 +85,19 @@ func (e *Engine) RecalculateEVM(ctx context.Context, req JobRequest) (*RecalcRes
 			}
 			seen[it.ProjectID] = append(seen[it.ProjectID], it)
 		}
+		var errs []string
 		for pid, group := range seen {
-			_ = cz.SaveProjectEVM(ctx, pid, AggregateProject(group, pid))
+			if err := cz.SaveProjectEVM(ctx, pid, AggregateProject(group, pid)); err != nil {
+				errs = append(errs, fmt.Sprintf("%s: %v", pid, err))
+				continue
+			}
+			resp.Saved++
+		}
+		if len(errs) > 0 {
+			resp.SaveError = strings.Join(errs, "; ")
 		}
 	}
-	return &RecalcResponse{WBS: len(items), Project: agg, Updated: len(items), ProjectID: req.ProjectID}, nil
+	return resp, nil
 }
 
 type PathResponse struct {

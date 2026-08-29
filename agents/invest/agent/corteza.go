@@ -224,8 +224,11 @@ func (c *Corteza) request(ctx context.Context, method, path string, body interfa
 	}
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode >= 400 {
+	if resp.StatusCode >= 400 || looksLikeHTML(raw) {
 		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, apiErrorBody(raw))
+	}
+	if msg := cortezaJSONError(raw); msg != "" {
+		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, msg)
 	}
 	var envelope struct {
 		Response json.RawMessage `json:"response"`
@@ -234,6 +237,61 @@ func (c *Corteza) request(ctx context.Context, method, path string, body interfa
 		return envelope.Response, nil
 	}
 	return raw, nil
+}
+
+// cortezaJSONError reads {"error":...} from a 200 OK body. Compose in
+// development often returns permission/validation failures with HTTP 200.
+func cortezaJSONError(raw []byte) string {
+	var env struct {
+		Error json.RawMessage `json:"error"`
+	}
+	if json.Unmarshal(raw, &env) != nil || len(env.Error) == 0 || string(env.Error) == "null" {
+		return ""
+	}
+	var msg string
+	if json.Unmarshal(env.Error, &msg) == nil && strings.TrimSpace(msg) != "" {
+		return msg
+	}
+	var obj struct {
+		Message string `json:"message"`
+		Details []struct {
+			Kind    string                 `json:"kind"`
+			Message string                 `json:"message"`
+			Meta    map[string]interface{} `json:"meta"`
+		} `json:"details"`
+	}
+	if json.Unmarshal(env.Error, &obj) != nil {
+		return apiErrorBody(env.Error)
+	}
+	parts := make([]string, 0, 1+len(obj.Details))
+	if strings.TrimSpace(obj.Message) != "" {
+		parts = append(parts, obj.Message)
+	}
+	for _, d := range obj.Details {
+		field, _ := d.Meta["field"].(string)
+		bit := d.Kind
+		if field != "" {
+			if bit != "" {
+				bit = field + " " + bit
+			} else {
+				bit = field
+			}
+		}
+		if d.Message != "" && d.Message != obj.Message {
+			if bit != "" {
+				bit += ": " + d.Message
+			} else {
+				bit = d.Message
+			}
+		}
+		if bit != "" {
+			parts = append(parts, bit)
+		}
+	}
+	if len(parts) == 0 {
+		return apiErrorBody(env.Error)
+	}
+	return strings.Join(parts, "; ")
 }
 
 func unwrapSet[T any](raw []byte) ([]T, error) {
@@ -336,6 +394,29 @@ func (c *Corteza) GetRecord(ctx context.Context, handle string, recordID uint64)
 	return &rec, nil
 }
 
+func overlayRecordValues(existing []composeRecordValue, patch map[string]string) []composeRecordValue {
+	out := make([]composeRecordValue, 0, len(existing)+len(patch))
+	replaced := map[string]bool{}
+	for _, v := range existing {
+		if nv, ok := patch[v.Name]; ok {
+			if replaced[v.Name] {
+				continue
+			}
+			replaced[v.Name] = true
+			out = append(out, composeRecordValue{Name: v.Name, Value: nv})
+			continue
+		}
+		out = append(out, v)
+	}
+	for k, v := range patch {
+		if replaced[k] {
+			continue
+		}
+		out = append(out, composeRecordValue{Name: k, Value: v})
+	}
+	return out
+}
+
 func (c *Corteza) UpdateValues(ctx context.Context, handle string, recordID uint64, values map[string]string) error {
 	rec, err := c.GetRecord(ctx, handle, recordID)
 	if err != nil {
@@ -349,10 +430,9 @@ func (c *Corteza) UpdateValues(ctx context.Context, handle string, recordID uint
 	if err != nil {
 		return err
 	}
-	payload := make([]composeRecordValue, 0, len(values))
-	for k, v := range values {
-		payload = append(payload, composeRecordValue{Name: k, Value: v})
-	}
+	// Compose record POST replaces the value set: omitted required fields
+	// (name/code/project) are treated as deleted → "3 issue(s) found".
+	payload := overlayRecordValues(rec.Values, values)
 	body := map[string]interface{}{"values": payload}
 	if rec.UpdatedAt != "" {
 		body["updatedAt"] = rec.UpdatedAt
@@ -551,9 +631,9 @@ func boolStr(v bool) string {
 }
 
 func (c *Corteza) SaveProjectEVM(ctx context.Context, projectID string, r EVMResult) error {
-	id, err := strconv.ParseUint(projectID, 10, 64)
+	id, err := strconv.ParseUint(strings.TrimSpace(projectID), 10, 64)
 	if err != nil || id == 0 {
-		return nil
+		return fmt.Errorf("invalid projectID %q", projectID)
 	}
 	return c.UpdateValues(ctx, "projects", id, map[string]string{
 		"spi":           fmtNum(r.SPI),

@@ -399,8 +399,13 @@ onBeforeUnmount(() => {
 }
 
 .chat-tools-badge.on {
-  color: #1f7a4d;
-  background: #e8f6ee;
+  color: var(--success, #198754);
+  background: #d1e7dd;
+}
+
+.chat-tools-badge.off {
+  color: var(--danger, #dc3545);
+  background: #f8d7da;
 }
 
 .chat-tools-badge.off::after {
