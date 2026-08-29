@@ -254,6 +254,7 @@
                   icon-class="text-warning"
                 />
                 <a
+                  v-if="visibilityDocumentationURL"
                   :href="visibilityDocumentationURL"
                   target="_blank"
                   class="text-primary ms-auto p-0 btn btn-link"
@@ -462,10 +463,7 @@ const customCSSClassState = computed(() => handle.classState(props.block.meta.cu
 
 const isRecordPage = computed(() => props.page && props.page.moduleID !== NoID)
 
-const visibilityDocumentationURL = computed(() => {
-  const [year, month] = VERSION.split('.')
-  return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/integrator-guide/compose-configuration/page-layouts.html#visibility-condition`
-})
+const visibilityDocumentationURL = computed(() => '')
 
 const recordAutoCompleteParams = computed(() => processRecordAutoCompleteParams({ module: props.module, operators: true }))
 const visibilityAutoCompleteParams = computed(() => processVisibilityAutoCompleteParams({ module: props.module }))

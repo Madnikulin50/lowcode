@@ -13,6 +13,7 @@
       >
         {{ t('ui.settings.editor.corteza-studio.sassNotInstalled') }}
         <a
+          v-if="installSassDocs"
           :href="installSassDocs"
           target="_blank"
           class="text-dark"
@@ -282,10 +283,7 @@ const sassInstalled = computed(() => {
   return props.settings['ui.studio.sass-installed']
 })
 
-const installSassDocs = computed(() => {
-  const [year, month] = VERSION.split('.')
-  return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/integrator-guide/corteza-studio/index.html`
-})
+const installSassDocs = computed(() => '')
 
 watch(() => props.settings, (settings) => {
   const themesData = settings['ui.studio.themes'] || []

@@ -202,7 +202,7 @@ func builtinNodeTypes() []nodeTypeDef {
 		{
 			Type:        "workflow",
 			Label:       "Trigger Workflow",
-			Description: "Trigger a Corteza workflow",
+			Description: "Trigger a workflow",
 			ConfigFields: []nodeTypeField{
 				nf("workflowID", "string", "Workflow ID", req),
 				nf("payload", "textarea", "Payload", rows(4), help("JSON payload passed to the workflow")),

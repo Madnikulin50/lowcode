@@ -1125,15 +1125,15 @@ func UpdateRbacRoles(ctx context.Context, log *zap.Logger, ru rbacRoleUpdater, b
 	}
 
 	if countBypass == 0 {
-		log.Warn("no bypass roles registered, Corteza might not work as expected")
+		log.Warn("no bypass roles registered, lowcode might not work as expected")
 	}
 
 	if countAuth == 0 {
-		log.Warn("no roles for authentication users registered, Corteza might not work as expected")
+		log.Warn("no roles for authentication users registered, lowcode might not work as expected")
 	}
 
 	if countAnony == 0 {
-		log.Warn("no roles for anonymous users registered, Corteza might not work as expected")
+		log.Warn("no roles for anonymous users registered, lowcode might not work as expected")
 	}
 
 	ru.UpdateRoles(rr...)

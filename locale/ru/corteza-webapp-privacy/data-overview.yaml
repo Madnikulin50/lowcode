@@ -6,7 +6,7 @@ data-types:
     description: Your contact information, names, surname, nickname, profile picture
   application-data:
     title: Данные приложения
-    description: Your personal data stored in Corteza
+    description: Your personal data stored in LowCoooode
 
 application:
   title: Данные приложения

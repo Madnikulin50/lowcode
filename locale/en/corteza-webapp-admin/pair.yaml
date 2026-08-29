@@ -1,6 +1,6 @@
 confirm: Confirm
 label: Pair Federated Node
-networkEstablished: Federated network will be established after the final confirmation from the administrator of another Corteza Federation Node.
+networkEstablished: Federated network will be established after the final confirmation from the administrator of another LowCoooode Federation Node.
 note: 'Note:'
 status:
   confirmPending:

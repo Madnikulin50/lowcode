@@ -10,7 +10,7 @@
 
         <template v-if="param.label === 'expr'">
           <a
-            v-if="param.label === 'expr'"
+            v-if="param.label === 'expr' && documentationURL"
             :href="documentationURL"
             target="_blank"
           >
@@ -198,10 +198,7 @@ const inputTypeOptions = ref([
   'Vars',
 ])
 
-const documentationURL = computed(() => {
-  const [year, month] = VERSION.split('.')
-  return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/integrator-guide/expr/index.html`
-})
+const documentationURL = computed(() => '')
 
 function getOptionKey ({ workflowID }) {
   return workflowID

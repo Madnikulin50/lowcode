@@ -19,7 +19,7 @@ import (
 func main() {
 	listen := flag.String("listen", ":8086", "HTTP listen address")
 	cortezaAPI := flag.String("api", "http://localhost:3333", "Lowcode origin (not /api — APIs live at /compose on the GoLand server)")
-	token := flag.String("token", "", "Corteza API token")
+	token := flag.String("token", "", "lowcode API token")
 	namespaceID := flag.Uint64("namespace", 0, "Default namespace ID (slug invest if 0)")
 	flag.Parse()
 
@@ -36,7 +36,7 @@ func main() {
 	}
 	eng := agent.NewEngine(cfg)
 	if err := eng.Discover(context.Background()); err != nil {
-		log.Printf("corteza API discover: %v (will retry on first request)", err)
+		log.Printf("lowcode API discover: %v (will retry on first request)", err)
 	} else {
 		log.Printf("corteza API %s", eng.APIOrigin())
 	}

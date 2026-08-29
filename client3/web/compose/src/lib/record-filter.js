@@ -4,9 +4,9 @@ export const nonQueryableFieldNames = ['recordID']
 export const nonQueryableFieldKinds = ['Number', 'Record', 'User', 'Bool', 'DateTime', 'File', 'Geometry']
 
 /**
- * Escapes special characters for Corteza QL string literals
+ * Escapes special characters for QL string literals
  *
- * Corteza QL uses backslash-based escaping within string literals (delimited by single quotes).
+ * QL uses backslash-based escaping within string literals (delimited by single quotes).
  * The QL lexer recognizes only two escape sequences:
  * - \' for single quote
  * - \\ for backslash
@@ -270,7 +270,7 @@ export function queryToFilter (searchQuery = '', prefilter = '', fields = [], re
 }
 
 // Missing ${record.values.x} must stringify to '' (not the JS word "undefined"),
-// otherwise Corteza QL sees an identifier named undefined.
+// otherwise QL sees an identifier named undefined.
 function interpolableEmpty () {
   const empty = new Proxy(function () {}, {
     get (_target, prop) {
@@ -316,7 +316,7 @@ export function evaluatePrefilter (prefilter, { record, user, recordID, ownerID,
   return eval('`' + (prefilter || '') + '`')
 }
 
-// Corteza QL rejects `field =` (operator with no RHS). That happens when a
+// QL rejects `field =` (operator with no RHS). That happens when a
 // record-page template interpolates before values exist (Builder dummy Record,
 // or load still in flight).
 export function isIncompleteQl (filter) {

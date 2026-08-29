@@ -44,7 +44,7 @@ func demoEmailOnRecordCreate() *rulesgo.Chain {
 				Label: "Send Welcome",
 				Config: jsonRaw(`{
 					"to":"{{email}}",
-					"subject":"Welcome to Corteza!",
+					"subject":"Welcome to LowCoooode!",
 					"body":"<h1>Hi {{name}}</h1><p>Welcome aboard! Your record has been created.</p>",
 					"contentType":"html"
 				}`),

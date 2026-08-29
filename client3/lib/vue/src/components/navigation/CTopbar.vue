@@ -91,39 +91,6 @@
             </a>
           </li>
 
-          <li v-if="!settings.hideForumLink">
-            <a
-              class="dropdown-item"
-              data-test-id="dropdown-helper-forum"
-              href="https://forum.cortezaproject.org/"
-              target="_blank"
-            >
-              {{ labels.helpForum }}
-            </a>
-          </li>
-
-          <li v-if="!settings.hideDocumentationLink">
-            <a
-              class="dropdown-item"
-              data-test-id="dropdown-helper-docs"
-              :href="documentationURL"
-              target="_blank"
-            >
-              {{ labels.helpDocumentation }}
-            </a>
-          </li>
-
-          <li v-if="!settings.hideFeedbackLink">
-            <a
-              class="dropdown-item"
-              data-test-id="dropdown-helper-feedback"
-              href="mailto:info@cortezaproject.org"
-              target="_blank"
-            >
-              {{ labels.helpFeedback }}
-            </a>
-          </li>
-
           <li v-if="!onlyVersion">
             <hr class="dropdown-divider">
           </li>
@@ -323,11 +290,6 @@ const changePasswordURL = computed(() => {
   return `${$auth.cortezaAuthURL}/change-password`
 })
 
-const documentationURL = computed(() => {
-  const [year, month] = VERSION.split('.')
-  return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/index.html`
-})
-
 const helpLinks = computed(() => {
   const { helpLinks = [] } = props.settings || {}
   return (helpLinks || []).filter(({ handle, url }: { handle: string; url: string }) => handle && url)
@@ -338,15 +300,7 @@ const profileLinks = computed(() => {
   return (profileLinks || []).filter(({ handle, url }: { handle: string; url: string }) => handle && url)
 })
 
-const onlyVersion = computed(() => {
-  const {
-    hideForumLink,
-    hideDocumentationLink,
-    hideFeedbackLink,
-  } = props.settings || {}
-
-  return !helpLinks.value.length && hideForumLink && hideDocumentationLink && hideFeedbackLink
-})
+const onlyVersion = computed(() => !helpLinks.value.length)
 
 const frontendVersion = computed(() => VERSION)
 

@@ -9,7 +9,7 @@ func NewCRUDAgent(client *chat.Client, tools []chat.ToolDef) *Agent {
 		Name:        "crud-agent",
 		Description: "Autonomous data operations. Creates, updates, deletes, and searches records.",
 		Model:       chat.ModelForRole(chat.RoleMCPAgent),
-		SystemPrompt: `You are a CRUD agent for the Corteza lowcode platform.
+		SystemPrompt: `You are a CRUD agent for the LowCoooode platform.
 You can:
 - Search records with search_records(module, query, limit)
 - Create records with create_record(module, values_json)
@@ -27,9 +27,9 @@ Start final answers with "FINAL:".`,
 func NewAssistantAgent(client *chat.Client, tools []chat.ToolDef) *Agent {
 	cfg := AgentConfig{
 		Name:        "assistant",
-		Description: "General-purpose assistant for the Corteza platform. Can search data, answer questions, create content.",
+		Description: "General-purpose assistant for the LowCoooode platform. Can search data, answer questions, create content.",
 		Model:       chat.ModelForRole(chat.RoleMCPAgent),
-		SystemPrompt: `You are an AI assistant for the Corteza lowcode platform.
+		SystemPrompt: `You are an AI assistant for the LowCoooode platform.
 You can help users with:
 - Finding information across modules (search_records, list_modules)
 - Creating and editing records

@@ -198,7 +198,7 @@
       <h5 class="d-flex align-items-center mb-2">
         {{ $t('record.fieldConditions.label') }}
         <c-hint :tooltip="$t('record.fieldConditions.tooltip.performance')" icon-class="text-warning" />
-        <a :href="visibilityDocumentationURL" target="_blank" class="btn btn-link p-0 ms-auto">{{ $t('label.examples') }}</a>
+        <a v-if="visibilityDocumentationURL" :href="visibilityDocumentationURL" target="_blank" class="btn btn-link p-0 ms-auto">{{ $t('label.examples') }}</a>
       </h5>
 
       <div class="row mt-3">
@@ -297,10 +297,7 @@ const referenceModule = ref(undefined)
 
 const checkboxLabel = computed(() => ({ on: $t('label.yes'), off: $t('label.no') }))
 
-const visibilityDocumentationURL = computed(() => {
-  const year = '2024'; const month = '12'
-  return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/integrator-guide/compose-configuration/page-layouts.html#visibility-condition`
-})
+const visibilityDocumentationURL = computed(() => '')
 
 const recordDisplayOptions = computed(() => [
   { value: 'sameTab', text: $t('record.openInSameTab') },

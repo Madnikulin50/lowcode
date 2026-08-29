@@ -103,7 +103,7 @@ func (app *CortezaApp) Setup() (err error) {
 
 		if app.Opt.Auth.SessionLifetime < time.Hour {
 			log.Warn("AUTH_SESSION_LIFETIME is set to less then an hour, this might not be what you want." +
-				"When user logs-in without 'remember-me',  AUTH_SESSION_LIFETIME is used to set a maximum time before session is expired if user does not interacts with Corteza. " +
+				"When user logs-in without 'remember-me',  AUTH_SESSION_LIFETIME is used to set a maximum time before session is expired if user does not interacts with LowCoooode. " +
 				"Recommended session lifetime value is between one hour (default) and a day")
 		}
 
@@ -575,7 +575,7 @@ func (app *CortezaApp) Activate(ctx context.Context) (err error) {
 		return fmt.Errorf("could not generate css for webapps: %w", err)
 	}
 
-	// re-generate CSS whenever Corteza Studio branding settings (themes, custom CSS) are saved,
+	// re-generate CSS whenever LowCoooode branding settings (themes, custom CSS) are saved,
 	// instead of only at boot
 	sysService.DefaultSettings.Register("ui.studio", func(ctx context.Context, current interface{}, set types.SettingValueSet) {
 		appSettings, is := current.(*types.AppSettings)

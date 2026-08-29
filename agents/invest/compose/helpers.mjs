@@ -401,26 +401,36 @@ export function setOf (payload) {
 export async function mintToken () {
   if (process.env.TOKEN) return process.env.TOKEN.trim()
 
-  const dsn = process.env.COMPOSE_DSN || 'postgres://postgres:Zse45rdx@127.0.0.1:5432/test9?sslmode=disable'
-  const refresh = execFileSync('psql', [dsn, '-tA', '-c',
-    'SELECT refresh FROM auth_oa2tokens WHERE expires_at > now() ORDER BY created_at DESC LIMIT 1',
-  ], { encoding: 'utf8' }).trim()
-  if (!refresh) {
-    throw new Error('No live refresh token in DB; set TOKEN')
-  }
-
+  const dsnList = [...new Set([
+    process.env.COMPOSE_DSN,
+    'postgres://postgres:Zse45rdx@127.0.0.1:5432/test10?sslmode=disable',
+    'postgres://postgres:Zse45rdx@127.0.0.1:5432/test9?sslmode=disable',
+  ].filter(Boolean))]
   const authBase = (process.env.AUTH_API || 'http://localhost:3333').replace(/\/$/, '')
-  const res = await fetch(authBase + '/auth/oauth2/default-client', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ refresh_token: refresh, client_id: 'frontend-app' }),
-    signal: AbortSignal.timeout(15000),
-  })
-  const json = await res.json().catch(() => ({}))
-  if (!json.access_token) {
-    throw new Error('token exchange failed: HTTP ' + res.status)
+  let lastErr
+  for (const dsn of dsnList) {
+    try {
+      const refresh = execFileSync('psql', [dsn, '-tA', '-c',
+        "SELECT refresh FROM auth_oa2tokens WHERE expires_at > now() AND refresh <> '' ORDER BY created_at DESC LIMIT 1",
+      ], { encoding: 'utf8' }).trim()
+      if (!refresh) {
+        lastErr = new Error('No live refresh token in ' + dsn)
+        continue
+      }
+      const res = await fetch(authBase + '/auth/oauth2/default-client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ refresh_token: refresh }),
+        signal: AbortSignal.timeout(15000),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (json.access_token) return json.access_token
+      lastErr = new Error('token exchange failed: HTTP ' + res.status)
+    } catch (e) {
+      lastErr = e
+    }
   }
-  return json.access_token
+  throw lastErr || new Error('No live refresh token in DB; set TOKEN')
 }
 
 export async function detectBase (token) {

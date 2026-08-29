@@ -77,7 +77,7 @@ func guessHostname() string {
 		}
 	}
 
-	return "local.cortezaproject.org"
+	return "local.lowcode.tld"
 }
 
 // returns path prefix

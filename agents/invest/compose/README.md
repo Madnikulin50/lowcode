@@ -23,6 +23,13 @@ TOKEN=$(node /tmp/opencode/mint-token.mjs | head -1) \
 
 Скрипт идемпотентен (обновляет по handle). Пишет `applied.json` с ID.
 
+Демо-данные (11 проектов на всех фазах и статусах) досеиваются без дублей по коду:
+
+```bash
+cd agents/invest/compose
+node seed.mjs
+```
+
 Открыть: `/ns/invest` (страница **Дашборд**).
 
 ## Модель

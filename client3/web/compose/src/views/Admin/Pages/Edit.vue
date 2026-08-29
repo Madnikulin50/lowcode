@@ -548,6 +548,7 @@
                 />
 
                 <a
+                  v-if="visibilityDocumentationURL"
                   :href="visibilityDocumentationURL"
                   target="_blank"
                   class="btn btn-link ms-auto p-0"
@@ -923,6 +924,7 @@
                 />
 
                 <a
+                  v-if="visibilityDocumentationURL"
                   :href="visibilityDocumentationURL"
                   target="_blank"
                   class="btn btn-link ms-auto p-0"
@@ -1496,10 +1498,7 @@ const faIconList = [
 ]
 
 
-const visibilityDocumentationURL = computed(() => {
-  const [year, month] = VERSION.split('.')
-  return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/integrator-guide/compose-configuration/page-layouts.html#visibility-condition`
-})
+const visibilityDocumentationURL = computed(() => '')
 
 const actionKindOptions = computed(() => [
   { value: 'toLayout', text: t('page-layout.recordToolbar.actions.kind.toLayout') },

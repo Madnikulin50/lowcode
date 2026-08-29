@@ -7,8 +7,8 @@ import (
 
 var (
 	rootCommand = &cobra.Command{
-		Use:              "corteza-server",
-		Aliases:          []string{"corteza", "server"},
+		Use:              "lowcode-server",
+		Aliases:          []string{"lowcode", "server"},
 		TraverseChildren: true,
 	}
 

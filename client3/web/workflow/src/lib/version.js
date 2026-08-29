@@ -19,8 +19,6 @@ export function parseVersion (version) {
  * @param {string} path - Documentation path (e.g., "integrator-guide/automation/workflows/index.html")
  * @returns {string} Full documentation URL
  */
-export function getDocumentationURL (path) {
-  // eslint-disable-next-line no-undef
-  const { year, month } = parseVersion(VERSION)
-  return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/${path}`
+export function getDocumentationURL (_path) {
+  return ''
 }

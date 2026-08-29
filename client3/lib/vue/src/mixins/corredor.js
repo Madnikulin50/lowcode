@@ -31,7 +31,7 @@ export default {
          * Register only server-side scripts (!bundle) and only triggers with onManual eventType
          *
          *  1. client-scripts (bundled) are registered in the bundle's boot loader
-         *  2. onManual only -- other kinds (implicit, deferred) are handled directly in/by the Corteza API backend
+         *  2. onManual only -- other kinds (implicit, deferred) are handled directly in/by the API backend
          */
         set
           .filter(({ name }) => name.substring(0, serverScriptPrefix.length) === serverScriptPrefix)

@@ -117,7 +117,7 @@
         <div v-if="!constraintNameTypes.length && item.triggers.constraints[0]" class="mt-0 mb-4 mx-4">
           <label class="d-flex align-items-center text-primary form-label">
             {{ item.triggers.eventType.replace('on', '') }}
-            <a :href="intervalDocumentationURL" target="_blank" class="d-flex align-items-center h6 mb-0 ms-1 pointer">
+            <a v-if="intervalDocumentationURL" :href="intervalDocumentationURL" target="_blank" class="d-flex align-items-center h6 mb-0 ms-1 pointer">
               <font-awesome-icon :icon="['far', 'question-circle']" />
             </a>
           </label>

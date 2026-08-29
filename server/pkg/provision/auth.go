@@ -62,7 +62,7 @@ func emailSettings(ctx context.Context, s store.Storer) error {
 }
 
 // addAuthSuperUsers assigns BYPASS roles to users from AUTH_PROVISION_SUPER_USER value
-// When in Production, Corteza should stop and report an error.
+// When in Production, lowcode should stop and report an error.
 func addAuthSuperUsers(ctx context.Context, log *zap.Logger, s store.Storer, authOpt options.AuthOpt) (err error) {
 	log.Info("provision start")
 	defer log.Info("provision end")
@@ -268,7 +268,7 @@ func defaultAuthClient(ctx context.Context, log *zap.Logger, s store.Storer, aut
 		ID:     id.Next(),
 		Handle: authOpt.DefaultClient,
 		Meta: &types.AuthClientMeta{
-			Name: "Corteza Web Applications",
+			Name: "LowCoooode Web Applications",
 		},
 		ValidGrant: "authorization_code",
 		RedirectURI: func() string {

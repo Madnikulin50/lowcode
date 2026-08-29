@@ -1,10 +1,8 @@
 openapi: 3.0.0
 info:
-  title: Corteza federation API
-  description: Corteza federation REST API definition
+  title: LowCoooode federation API
+  description: LowCoooode federation REST API definition
   version: '2022.9'
-  contact:
-    email: info@cortezaproject.org
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html

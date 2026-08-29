@@ -222,7 +222,7 @@ func (svc *service) ReloadStatic() (err error) {
 
 		if len(aux) == 0 {
 			svc.log.Warn(
-				"no languages found in path, future versions of Corteza will require at least one language to be present",
+				"no languages found in path, future versions of lowcode will require at least one language to be present",
 				zap.String("path", p),
 			)
 		}

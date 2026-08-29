@@ -61,7 +61,7 @@
 
             <div class="mb-0">
               <label class="d-flex align-items-center text-primary form-label">{{ t('steps.function.configurator.expression') }}
-                <a :href="documentationURL" target="_blank" class="d-flex align-items-center h6 mb-0 ms-1">
+                <a v-if="documentationURL" :href="documentationURL" target="_blank" class="d-flex align-items-center h6 mb-0 ms-1">
                   <font-awesome-icon :icon="['far', 'question-circle']" />
                 </a>
               </label>

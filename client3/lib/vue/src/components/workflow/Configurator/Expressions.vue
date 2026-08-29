@@ -5,6 +5,7 @@
         <h5 class="d-flex align-items-center mb-0">
           {{ t('steps.expressions.label') }}
           <a
+            v-if="documentationURL"
             :href="documentationURL"
             target="_blank"
             class="d-flex align-items-center h6 mb-0 ms-1"

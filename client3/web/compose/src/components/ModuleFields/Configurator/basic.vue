@@ -55,6 +55,7 @@
           :placeholder="t('valueExpr.placeholder')"
         />
         <a
+          v-if="documentationURL"
           :href="documentationURL"
           target="_blank"
           class="btn btn-outline-secondary d-flex justify-content-center align-items-center text-primary"
@@ -212,10 +213,7 @@ const defaultValueEnabled = computed(() => !!props.field.defaultValue && props.f
 const showDefaultField = computed(() => defaultValueEnabled.value && mock.value.show && mock.value.field)
 const isNew = computed(() => props.field.fieldID === NoID)
 
-const documentationURL = computed(() => {
-  const [year, month] = (typeof VERSION !== 'undefined' ? VERSION : '2024.0').split('.')
-  return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/integrator-guide/expr/index.html`
-})
+const documentationURL = computed(() => '')
 
 watch(defaultValueEnabled, (val) => {
   if (val) showValueExpr.value = false

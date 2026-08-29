@@ -677,7 +677,7 @@ func Eventbus() (o *EventbusOpt) {
 func Federation() (o *FederationOpt) {
 	o = &FederationOpt{
 		Label:                    "federated",
-		Host:                     "local.cortezaproject.org",
+		Host:                     "local.lowcode.tld",
 		StructureMonitorInterval: time.Minute * 2,
 		StructurePageSize:        1,
 		DataMonitorInterval:      time.Minute,

@@ -19,19 +19,19 @@ func SystemUsers(ctx context.Context, log *zap.Logger, s store.Users) (uu []*typ
 	uu = types.UserSet{
 		&types.User{
 			Email:  "provision@corteza.local",
-			Name:   "Corteza Provisioner",
+			Name:   "LowCoooode Provisioner",
 			Handle: auth.ProvisionUserHandle,
 			Kind:   types.SystemUser,
 		},
 		&types.User{
 			Email:  "service@corteza.local",
-			Name:   "Corteza Service",
+			Name:   "LowCoooode Service",
 			Handle: auth.ServiceUserHandle,
 			Kind:   types.SystemUser,
 		},
 		&types.User{
 			Email:  "federation@corteza.local",
-			Name:   "Corteza Federation",
+			Name:   "LowCoooode Federation",
 			Handle: auth.FederationUserHandle,
 			Kind:   types.SystemUser,
 		},

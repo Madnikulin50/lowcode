@@ -15,7 +15,7 @@ import { writeFileSync } from 'node:fs'
 import {
   mintToken, detectBase, apiFactory, ensureNamespace, ensureModule, ensureChart,
   ensurePage, ensureRuleChain, parentPages, doughnutChart, ganttChart,
-  withRevisions, createRecord, setOf,
+  withRevisions,
 } from './helpers.mjs'
 import {
   documentTypeFields, counterpartyFields, materialFields, laborNormFields,
@@ -25,6 +25,7 @@ import {
 } from './fields.mjs'
 import { buildPages } from './pages.mjs'
 import { buildRuleChains } from './chains.mjs'
+import { seedIfEmpty } from './seed.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -32,169 +33,6 @@ const NS_META = {
   subtitle: 'Сопровождение инвестиционных проектов',
   description: 'Единое пространство PMO: документы, WBS, договоры, бюджет, EVM, RFC и ИИ-советчики.',
   prompt: 'Это пространство сопровождения инвестиционных проектов (единый источник правды). Модули: projects, wbs_items, documents, document_versions, approvals, contracts, risks, change_requests, change_log, budget_lines, cashflow_items, progress_facts, project_members, document_types, counterparties, materials, labor_norms, ai_advisors. ИИ — только советчик (human-in-the-loop): рекомендации, решение утверждает человек. Юрист — договоры и документы. Финконтролёр — бюджет, EVM, отклонения. Не выдумывай цифры — читай записи инструментами.',
-}
-
-async function seedIfEmpty (api, nsID, modules) {
-  const existing = setOf(await api('GET', `/namespace/${nsID}/module/${modules.projects}/record/?limit=5`))
-  if (existing.length) {
-    console.log('projects already have records, skip seed')
-    return
-  }
-
-  for (const row of [
-    { name: 'Договор', code: 'CONTRACT' },
-    { name: 'ПСД', code: 'PSD' },
-    { name: 'Смета', code: 'ESTIMATE' },
-    { name: 'Акт КС-2', code: 'KS2' },
-    { name: 'Акт КС-3', code: 'KS3' },
-    { name: 'Исполнительная документация', code: 'AS_BUILT' },
-    { name: 'Приказ', code: 'ORDER' },
-  ]) {
-    await createRecord(api, nsID, modules.document_types, row)
-  }
-
-  const cp = await createRecord(api, nsID, modules.counterparties, {
-    name: 'ООО Генподрядчик-1', inn: '7700000001', role: 'contractor',
-  })
-  await createRecord(api, nsID, modules.materials, {
-    name: 'Бетон B25', unit: 'м³', unit_price: '8500', gost: 'ГОСТ 26633',
-  })
-  await createRecord(api, nsID, modules.labor_norms, {
-    name: 'Укладка бетона', unit: 'м³', hours: '2.5',
-  })
-
-  const project = await createRecord(api, nsID, modules.projects, {
-    name: 'Пилотный энергообъект',
-    code: 'ENRG-001',
-    phase: 'construction',
-    status: 'active',
-    investor: 'Инвестор А',
-    start_planned: '2026-01-01',
-    end_planned: '2027-12-31',
-    budget_planned: '1500000000',
-    budget_actual: '120000000',
-    description: 'Демонстрационный инвестиционный проект для пространства документооборота.',
-  })
-  const projectID = String(project.recordID || project.ID)
-
-  const stage = await createRecord(api, nsID, modules.wbs_items, {
-    project: projectID,
-    code: '1',
-    name: 'Строительство',
-    level: 'stage',
-    start_planned: '2026-03-01',
-    end_planned: '2027-06-30',
-    budget_planned: '900000000',
-    percent_complete: '12',
-  })
-  const stageID = String(stage.recordID || stage.ID)
-  const workA = await createRecord(api, nsID, modules.wbs_items, {
-    project: projectID,
-    parent: stageID,
-    code: '1.1',
-    name: 'Фундамент',
-    level: 'work',
-    start_planned: '2026-03-01',
-    end_planned: '2026-06-30',
-    budget_planned: '180000000',
-    actual_cost: '40000000',
-    percent_complete: '25',
-  })
-  const workAID = String(workA.recordID || workA.ID)
-  await createRecord(api, nsID, modules.wbs_items, {
-    project: projectID,
-    parent: stageID,
-    predecessor: workAID,
-    code: '1.2',
-    name: 'Каркас',
-    level: 'work',
-    start_planned: '2026-07-01',
-    end_planned: '2026-12-31',
-    budget_planned: '320000000',
-    actual_cost: '0',
-    percent_complete: '0',
-  })
-
-  const contract = await createRecord(api, nsID, modules.contracts, {
-    project: projectID,
-    number: 'ГП-001/2026',
-    title: 'Генеральный подряд',
-    counterparty: String(cp.recordID || cp.ID),
-    amount: '900000000',
-    start_date: '2026-02-01',
-    end_date: '2027-12-31',
-    status: 'active',
-    terms: 'Оплата по актам КС-2/КС-3. Штраф за просрочку 0.1% в день.',
-  })
-
-  await createRecord(api, nsID, modules.documents, {
-    title: 'Договор генподряда',
-    number: 'ГП-001/2026',
-    project: projectID,
-    contract: String(contract.recordID || contract.ID),
-    status: 'in_review',
-    sign_status: 'unsigned',
-    due_date: '2026-09-01',
-    notes: 'Черновик на согласовании юриста.',
-  })
-
-  await createRecord(api, nsID, modules.budget_lines, {
-    project: projectID,
-    wbs: workAID,
-    article: 'Фундамент — бетон',
-    planned: '180000000',
-    actual: '40000000',
-    reserve: '15000000',
-  })
-
-  await createRecord(api, nsID, modules.risks, {
-    project: projectID,
-    wbs: workAID,
-    title: 'Срыв поставки арматуры',
-    probability: 'medium',
-    impact: 'high',
-    status: 'open',
-    mitigation: 'Дублирующий поставщик, запас 14 дней.',
-  })
-
-  await createRecord(api, nsID, modules.change_requests, {
-    project: projectID,
-    wbs: workAID,
-    title: 'Увеличение объёма фундамента',
-    rfc_type: 'scope',
-    status: 'draft',
-    delta_budget: '25000000',
-    delta_days: '14',
-    justification: 'По результатам изысканий нужна доп. подушка.',
-  })
-
-  await createRecord(api, nsID, modules.progress_facts, {
-    project: projectID,
-    wbs: workAID,
-    quantity: '120',
-    unit: 'м³',
-    percent: '25',
-    cost: '40000000',
-    recorded_at: new Date().toISOString(),
-    notes: 'Первая заливка. Фото с площадки — веб-форма (мобильный офлайн — отдельное согласование).',
-  })
-
-  await createRecord(api, nsID, modules.ai_advisors, {
-    name: 'Юрист',
-    role: 'lawyer',
-    enabled: '1',
-    modules: 'contracts,documents',
-    prompt: 'Human-in-the-loop юрист: анализируй договоры и документы, не утверждай сам.',
-  })
-  await createRecord(api, nsID, modules.ai_advisors, {
-    name: 'Финконтролёр',
-    role: 'fincontroller',
-    enabled: '1',
-    modules: 'budget_lines,cashflow_items,wbs_items,change_requests',
-    prompt: 'Human-in-the-loop финконтролёр: план/факт, EVM, RFC. Не меняй цифры сам.',
-  })
-
-  console.log('seeded demo project ENRG-001')
 }
 
 async function main () {

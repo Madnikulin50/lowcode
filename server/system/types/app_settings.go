@@ -156,7 +156,7 @@ type (
 					// Require fresh TOTP on every client authorization
 					// Strict bool
 
-					// TOTP issuer, defaults to "Corteza"
+					// TOTP issuer, defaults to "LowCoooode"
 					Issuer string
 				} `kv:"totp"`
 			} `json:"-" kv:"multi-factor"`
@@ -333,7 +333,7 @@ type (
 			// field labels, descriptions, ...)
 
 			// This is always a subset of all languages available
-			// in Corteza instance (LOCALE_LANGUAGES)
+			// in the instance (LOCALE_LANGUAGES)
 			//
 			// Note: later, we will enable this to contain languages
 			//       that are not part of LOCALE_LANGUAGES
@@ -624,7 +624,7 @@ func (set *ExternalAuthProviderSet) DecodeKV(kv SettingsKV, prefix string) (err 
 				p.Label = "LinkedIn"
 			case "corteza-iam", "corteza", "corteza-one":
 				// Some legacy provider naming
-				p.Label = "Corteza IAM"
+				p.Label = "LowCoooode IAM"
 			case "crust-iam", "crust", "crust-unify":
 				// Some legacy provider naming
 				p.Label = "Crust IAM"

@@ -3,7 +3,7 @@
     <div class="mb-3">
       <label class="d-flex align-items-center text-primary">
         {{ t('sanitizers.label') }}
-        <a :href="`${documentationURL}#value-sanitizers`" target="_blank" class="btn btn-link btn-sm p-0 ms-auto">{{ t('label.examples') }}</a>
+        <a v-if="documentationURL" :href="`${documentationURL}#value-sanitizers`" target="_blank" class="btn btn-link btn-sm p-0 ms-auto">{{ t('label.examples') }}</a>
       </label>
       <div class="form-text">{{ t('sanitizers.description') }}</div>
       <c-form-table-wrapper
@@ -23,7 +23,7 @@
     <div class="mb-3 mt-3">
       <label class="d-flex align-items-center text-primary">
         {{ t('validators.label') }}
-        <a :href="`${documentationURL}#value-validators`" target="_blank" class="btn btn-link btn-sm p-0 ms-auto">{{ t('label.examples') }}</a>
+        <a v-if="documentationURL" :href="`${documentationURL}#value-validators`" target="_blank" class="btn btn-link btn-sm p-0 ms-auto">{{ t('label.examples') }}</a>
       </label>
       <div class="form-text">{{ t('validators.description') }}</div>
       <c-form-table-wrapper
@@ -140,10 +140,7 @@ const rule = ref({})
 
 const { proxy } = getCurrentInstance()
 
-const documentationURL = computed(() => {
-  const [year, month] = (typeof VERSION !== 'undefined' ? VERSION : '2024.0').split('.')
-  return `https://docs.cortezaproject.org/corteza-docs/${year}.${month}/integrator-guide/compose-configuration/index.html`
-})
+const documentationURL = computed(() => '')
 
 const modifierOptions = computed(() => [
   { value: 'ignore-case', text: t('constraints.ignoreCase') },

@@ -120,7 +120,7 @@ func (h *AuthHandlers) mfaTotpConfigQR(req *request.AuthReq) (err error) {
 	}
 
 	if len(issuer) == 0 {
-		issuer = "Corteza"
+		issuer = "LowCoooode"
 	}
 
 	account := req.AuthUser.User.Email
