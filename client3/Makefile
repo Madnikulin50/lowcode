@@ -1,4 +1,4 @@
-WEB_SUBDIRS := $(filter %/, $(wildcard $(CURDIR)/web/*/))
+WEB_SUBDIRS := $(filter-out %/node_modules/, $(filter %/, $(wildcard $(CURDIR)/web/*/)))
 
 .PHONY: dev test lint fresh build audit
 

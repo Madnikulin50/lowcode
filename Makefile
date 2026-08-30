@@ -1,6 +1,6 @@
 .PHONY: dev test lint fresh audit drelease ddebug dpush drelease-agents ddebug-agents
 
-VERSION     ?= 2026.7.6
+VERSION     ?= 2026.8.30
 DOCKER_USER ?= madnikulin50
 
 dev:
@@ -43,7 +43,8 @@ drelease:
 	@echo "---Build server---"
 	@(cd $(CURDIR)/server  && make release-clean && make build) || true
 	@echo "---Build client---"
-	@(cd $(CURDIR)/client && make build) || true
+	@(cd $(CURDIR)/client3 && make build) || true
+	@ test -s $(CURDIR)/cdist/webapp/compose/index.html || (echo "ERROR: cdist/webapp/compose/index.html is missing or empty"; exit 1)
 	@echo "---Build docker---"
 	@(cd $(CURDIR) && docker build -t $(DOCKER_USER)/pnp-lowcode:$(VERSION) .)
 	@echo "---Push docker---"
@@ -54,6 +55,7 @@ ddebug:
 	@(cd $(CURDIR)/server  && make release-clean && make build) || true
 	@echo "---Build client---"
 	##@(cd $(CURDIR)/client && make build) || true
+	@ test -s $(CURDIR)/cdist/webapp/compose/index.html || (echo "ERROR: cdist/webapp/compose/index.html is missing or empty"; exit 1)
 	@echo "---Build docker---"
 	@(cd $(CURDIR) && docker build -t pnp-lowcode:$(VERSION) .)
 
