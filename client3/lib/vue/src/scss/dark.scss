@@ -1,0 +1,145 @@
+// Canonical "Almost black" dark palette.
+//
+// Keep in sync with:
+//   - client3/web/admin/.../CUIBrandingEditor.vue  (darkModeVariables)
+//   - server/pkg/provision/stylesheet.go           (almostBlackDark)
+//   - server/assets/src/css/minified-custom.css    ([data-color-mode=dark] vars)
+//
+// Admin > Settings > UI > Branding > dark tab is the tenant override.
+// Those values are compiled into custom.css and must win over this fallback.
+$dark-palette: (
+  "black": #EDEDED,
+  "white": #121212,
+  "primary": #6E8FF0,
+  "secondary": #9A9A9A,
+  "success": #43AA8B,
+  "warning": #E27646,
+  "danger": #F2555A,
+  "light": #1A1A1A,
+  "extra-light": #242424,
+  "dark": #EDEDED,
+  "body-bg": #0A0A0A,
+  "sidebar-bg": #121212,
+  "topbar-bg": #121212,
+);
+
+// Palette fallback. :where() has zero specificity so server-generated
+// custom.css (tenant branding) always wins for the same custom properties.
+:where([data-color-mode='dark']) {
+  @each $name, $value in $dark-palette {
+    --#{$name}: #{$value};
+  }
+
+  color-scheme: dark;
+}
+
+// Body must NOT sit in :where() — Bootstrap's `body { background-color:
+// var(--bs-body-bg) }` would otherwise paint the page with Bootstrap's own
+// cool-gray dark (#212529) the moment data-bs-theme="dark" is set.
+[data-color-mode='dark'] body {
+  background-color: var(--body-bg);
+  color: var(--black);
+  color-scheme: dark;
+}
+
+// Bridge Bootstrap 5 color tokens to the Corteza palette. Surfaces use
+// --white; the page itself uses --body-bg (set on body above).
+[data-color-mode='dark'] {
+  --bs-body-color: var(--black);
+  --bs-body-bg: var(--white);
+  --bs-white: var(--white);
+  --bs-tertiary-bg: var(--extra-light);
+  --bs-secondary-bg: var(--light);
+  --bs-border-color: var(--extra-light);
+  --bs-secondary-color: var(--secondary);
+  --bs-tertiary-color: var(--secondary);
+  --bs-emphasis-color: var(--black);
+  --bs-heading-color: var(--black);
+  --bs-card-bg: var(--white);
+  --bs-card-color: var(--black);
+  --bs-card-cap-bg: var(--light);
+  --bs-modal-bg: var(--white);
+  --bs-modal-color: var(--black);
+  --bs-dropdown-bg: var(--white);
+  --bs-dropdown-color: var(--black);
+  --bs-dropdown-link-color: var(--black);
+  --bs-form-control-bg: var(--white);
+}
+
+// custom.css / minified-custom.css compile SASS colors to hex. Override the
+// main surfaces with CSS variables so they follow the palette (tenant or
+// fallback) instead of leftover navy hexes from the old Corteza dark theme.
+[data-color-mode='dark'] {
+  .b-sidebar,
+  .sidebar {
+    background-color: var(--sidebar-bg) !important;
+    color: var(--black);
+  }
+
+  .card,
+  .card-body,
+  .modal-content,
+  .dropdown-menu,
+  .offcanvas,
+  .popover,
+  .toast,
+  .form-control,
+  .form-select,
+  select.form-control,
+  .list-group-item,
+  .input-group-text {
+    background-color: var(--white);
+    color: var(--black);
+  }
+
+  .card-header,
+  .card-footer,
+  .modal-header,
+  .modal-footer,
+  .toast-header {
+    background-color: var(--light);
+    color: var(--black);
+    border-color: var(--extra-light);
+  }
+
+  .page-link {
+    background-color: var(--white);
+    color: var(--black);
+    border-color: var(--extra-light);
+  }
+
+  .table thead th,
+  .table .thead-light th,
+  .table .thead-dark th {
+    background-color: var(--light);
+    color: var(--black);
+    border-color: var(--extra-light);
+  }
+
+  .table td,
+  .table th {
+    color: var(--black);
+    border-color: var(--extra-light);
+  }
+
+  .bg-white {
+    background-color: var(--white) !important;
+  }
+}
+
+// Tables stay transparent so they show the card surface through.
+// Bootstrap sets --bs-table-bg on the table element itself, which always
+// beats an inherited value.
+[data-color-mode='dark'] .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--black);
+  --bs-table-striped-bg: var(--light);
+  --bs-table-hover-bg: var(--extra-light);
+  color: var(--black);
+}
+
+[data-color-mode='dark'] .table > :not(caption) > * > * {
+  background-color: transparent;
+  color: var(--black);
+  border-color: var(--extra-light);
+}
