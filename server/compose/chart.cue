@@ -106,6 +106,12 @@ chart: {
 		extended: true
 
 		keys: {
+			description: {
+				path: ["config", "description"]
+			}
+			help: {
+				path: ["config", "help"]
+			}
 			reportsYaxisLabel: {
 				path: ["yAxis", "label"]
 				customHandler: true

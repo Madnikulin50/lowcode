@@ -182,6 +182,9 @@ page: {
 		keys: {
 			title: {}
 			description: {}
+			help: {
+				path: ["config", "help"]
+			}
 			blockTitle: {
 				path: ["pageBlock", {part: "blockID", var: true}, "title"]
 				customHandler: true

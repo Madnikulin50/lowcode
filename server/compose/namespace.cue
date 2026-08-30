@@ -102,6 +102,9 @@ namespace: {
 			metaDescription: {
 				path: ["meta", "description"]
 			}
+			metaHelp: {
+				path: ["meta", "help"]
+			}
 		}
 	}
 
