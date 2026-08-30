@@ -59,7 +59,12 @@ const tipStyle = ref({})
 
 const helpText = computed(() => String(props.help || props.block?.options?.help || '').trim())
 
-const visible = computed(() => !!helpText.value && !props.block?.options?.hideHelpButton)
+const visible = computed(() => {
+  if (!helpText.value) return false
+  // Explicit help (chart/metric docs) always shows; hideHelpButton is for block.options.help
+  if (props.help) return true
+  return !props.block?.options?.hideHelpButton
+})
 
 const hoverText = computed(() => String(
   props.description || props.block?.description || '',
@@ -163,7 +168,7 @@ function openPanel () {
   position: absolute;
   right: 0.5rem;
   top: 0.7rem;
-  z-index: 1;
+  z-index: 10;
 }
 .block-help-chart-offset {
   right: 2.2rem;

@@ -1,7 +1,7 @@
 <template>
   <Wrap
     v-bind="$props"
-    body-class="position-relative"
+    :body-class="chartBodyClass"
     @refreshBlock="refresh"
   >
     <chart-component
@@ -15,14 +15,14 @@
 
     <button
       v-if="chart && !block.options?.hideBrainButton"
-      class="btn btn-outline-light chart-brain-button position-absolute d-flex d-print-none border-0 px-1 text-secondary"
+      class="btn btn-outline-light chart-corner-button position-absolute d-flex d-print-none border-0 px-1 text-secondary"
       title="Ask about metrics"
       @click="promptAiChat"
     >
       <font-awesome-icon :icon="['fas', 'brain']" />
     </button>
     <block-help-button
-      v-if="chart"
+      v-if="chart && chartHelpBody"
       :block="block"
       variant="chart"
       :offset="!block.options?.hideBrainButton"
@@ -161,7 +161,7 @@ import ChartComponent from '../Chart'
 import { NoID, compose } from 'corteza-lib/js/dist'
 import { debounce } from 'lodash'
 import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
-import { hydrateChartDocs } from '../../help/appDocs'
+import { chartHelpDocs, hydrateChartDocs } from '../../help/appDocs'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -193,8 +193,15 @@ const pageVariables = computed(() => store.pageVariables.getValuesForPage(props.
 
 const chart = ref(null)
 
-const chartDescription = computed(() => String(chart.value?.config?.description || '').trim())
-const chartHelpBody = computed(() => String(chart.value?.config?.help || '').trim())
+const chartDocs = computed(() => chartHelpDocs(props.namespace, chart.value))
+const chartDescription = computed(() => String(chart.value?.config?.description || chartDocs.value.description || '').trim())
+const chartHelpBody = computed(() => String(chart.value?.config?.help || chartDocs.value.help || '').trim())
+const chartBodyClass = computed(() => {
+  const cls = ['position-relative']
+  if (chartHelpBody.value) cls.push('has-chart-help')
+  if (chartHelpBody.value && !props.block.options?.hideBrainButton) cls.push('has-chart-help-offset')
+  return cls.join(' ')
+})
 const chartData = ref(null)
 const originalFilter = ref(undefined)
 const filter = ref(undefined)
@@ -441,9 +448,17 @@ function destroyEvents () {
   &.save-chart-enabled.table-enabled { right: 3.9rem; }
 }
 
-.chart-brain-button {
+.chart-corner-button {
   right: 0.5rem;
   top: 0.7rem;
-  z-index: 1;
+  z-index: 10;
+}
+
+/* Table sits at 2.2rem (next to brain). When help takes that slot, push table left. */
+:deep(.has-chart-help-offset .chart-table-button) {
+  right: 3.9rem;
+}
+:deep(.has-chart-help:not(.has-chart-help-offset) .chart-table-button) {
+  right: 2.2rem;
 }
 </style>
