@@ -1,15 +1,4 @@
-# build-stage
-FROM golang:1.25-bookworm AS build-stage
-
-WORKDIR /src
-COPY sdk /src/sdk
-COPY backup /src/backup
-WORKDIR /src/backup
-
-ENV CGO_ENABLED=0
-RUN go build -o /out/backup-agent .
-
-# deploy-stage
+# deploy-stage — binary is built by `make build-linux` (same as the main project)
 FROM ubuntu:22.04 AS deploy-stage
 
 RUN apt-get -y update \
@@ -23,7 +12,7 @@ RUN apt-get -y update \
 
 WORKDIR /app
 
-COPY --from=build-stage /out/backup-agent ./backup-agent
+COPY bin/backup-agent ./backup-agent
 
 EXPOSE 8087
 

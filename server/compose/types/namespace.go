@@ -72,6 +72,9 @@ type (
 		//          easy encoding/decoding of the outgoing/incoming values
 		Description string `json:"description,omitempty"`
 		Prompt      string `json:"prompt,omitempty"`
+
+		// Warning: value of this field is now handled via resource-translation facility
+		Help string `json:"help,omitempty"`
 	}
 )
 

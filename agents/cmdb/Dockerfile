@@ -1,26 +1,4 @@
-# web-stage
-FROM node:22-bookworm AS web-stage
-
-WORKDIR /web
-COPY cmdb/web/package.json cmdb/web/package-lock.json ./
-RUN npm ci
-COPY cmdb/web ./
-RUN npx vite build
-
-# build-stage
-FROM golang:1.25-bookworm AS build-stage
-
-WORKDIR /src
-COPY sdk /src/sdk
-COPY cmdb /src/cmdb
-COPY --from=web-stage /web/dist /src/cmdb/web/dist
-WORKDIR /src/cmdb
-
-ENV CGO_ENABLED=0
-ENV GOTOOLCHAIN=auto
-RUN go build -o /out/cmdb-agent .
-
-# deploy-stage
+# deploy-stage — binary is built by `make build-linux` (embeds web/dist)
 FROM ubuntu:22.04 AS deploy-stage
 
 RUN apt-get -y update \
@@ -32,7 +10,7 @@ RUN apt-get -y update \
 
 WORKDIR /app
 
-COPY --from=build-stage /out/cmdb-agent ./cmdb-agent
+COPY bin/cmdb-agent ./cmdb-agent
 
 VOLUME /data
 

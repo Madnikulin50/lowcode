@@ -286,6 +286,13 @@ func Test_processAvatarInitials(t *testing.T) {
 			},
 			expectedInitial: "И",
 		},
+		{
+			name: "Test with maxim-style initials",
+			user: &types.User{
+				Name: "Максим Николаев",
+			},
+			expectedInitial: "МН",
+		},
 	}
 
 	// Run test cases

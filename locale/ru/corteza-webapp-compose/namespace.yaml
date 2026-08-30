@@ -53,6 +53,10 @@ subtitle:
 prompt:
   label: ИИ-промпт
   placeholder: Введите ИИ-промпт пространства
+help:
+  label: Справка
+  description: Необязательный Markdown, который откроется по иконке справки
+  placeholder: Опишите, для чего это пространство
 title: Пространства
 tooltip:
   translations: Переводы пространства

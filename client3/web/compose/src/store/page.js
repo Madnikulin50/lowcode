@@ -2,6 +2,13 @@ import { defineStore } from 'pinia'
 import { compose } from 'corteza-lib/js/dist'
 import * as request from '../lib/request'
 import { getComposeAPI } from './api'
+import { restoreBlockHelp } from '../help/appDocs'
+
+function pageFromRaw (raw) {
+  const page = new compose.Page(raw)
+  restoreBlockHelp(page, raw)
+  return page
+}
 
 export const usePageStore = defineStore('page', {
   state: () => ({
@@ -65,7 +72,7 @@ export const usePageStore = defineStore('page', {
       const ComposeAPI = getComposeAPI()
       return ComposeAPI.pageList({ namespaceID, sort: 'weight ASC' }).then(({ set }) => {
         if (set && set.length > 0) {
-          this.updateSet(set.map(p => new compose.Page(p)))
+          this.updateSet(set.map(p => pageFromRaw(p)))
         }
         return this.set
       }).finally(() => {
@@ -84,7 +91,7 @@ export const usePageStore = defineStore('page', {
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
       return ComposeAPI.pageRead({ namespaceID, pageID }).then(raw => {
-        const page = new compose.Page(raw)
+        const page = pageFromRaw(raw)
         this.updateSet([page])
         return page
       }).finally(() => {
@@ -96,7 +103,7 @@ export const usePageStore = defineStore('page', {
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
       return ComposeAPI.pageCreate(item, request.config(item)).then(raw => {
-        const page = new compose.Page(raw)
+        const page = pageFromRaw(raw)
         this.updateSet([page])
         return page
       }).finally(() => {
@@ -108,7 +115,7 @@ export const usePageStore = defineStore('page', {
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
       return ComposeAPI.pageUpdate(item, request.config(item)).then(raw => {
-        const page = new compose.Page(raw)
+        const page = pageFromRaw(raw)
         this.updateSet([page])
         return page
       }).finally(() => {

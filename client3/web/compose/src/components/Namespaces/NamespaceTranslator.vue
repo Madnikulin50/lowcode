@@ -65,6 +65,8 @@ const updater = computed(() => {
         if (tr !== undefined) props.namespace.meta.description = tr.message
         tr = find('meta.prompt')
         if (tr !== undefined) props.namespace.meta.prompt = tr.message
+        tr = find('meta.help')
+        if (tr !== undefined) props.namespace.meta.help = tr.message
       })
   }
 })

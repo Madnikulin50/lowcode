@@ -69,6 +69,42 @@
                       </div>
                     </div>
 
+                    <div class="col-12">
+                      <div class="mb-3">
+                        <label class="form-label text-primary">
+                          {{ $t('description.label') }}
+                        </label>
+                        <div class="input-group">
+                          <textarea
+                            v-model="chart.config.description"
+                            class="form-control"
+                            rows="2"
+                            :placeholder="$t('description.placeholder')"
+                          />
+                          <chart-translator
+                            :chart="chart"
+                            highlight-key="config.description"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-12">
+                      <c-help-editor
+                        v-model="chart.config.help"
+                        :label="$t('help.label')"
+                        :description="$t('help.description')"
+                        :placeholder="$t('help.placeholder')"
+                      >
+                        <template #append>
+                          <chart-translator
+                            :chart="chart"
+                            highlight-key="config.help"
+                          />
+                        </template>
+                      </c-help-editor>
+                    </div>
+
                     <div class="col-12 col-lg-6">
                       <div class="mb-3">
                         <label class="form-label text-primary">
@@ -431,12 +467,14 @@ import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToo
 import { compose, NoID, shared } from 'corteza-lib/js/dist'
 import Export from 'corteza-webapp-compose/src/components/Admin/Export'
 import ChartComponent from 'corteza-webapp-compose/src/components/Chart'
+import ChartTranslator from 'corteza-webapp-compose/src/components/Chart/ChartTranslator'
 import { handle, components, composables } from 'corteza-lib/vue/dist'
 import draggable from 'vuedraggable'
 import ReportItem from 'corteza-webapp-compose/src/components/Chart/ReportItem'
 import Reports from 'corteza-webapp-compose/src/components/Chart/Report'
 import { chartConstructor } from 'corteza-webapp-compose/src/lib/charts'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { hydrateChartDocs } from 'corteza-webapp-compose/src/help/appDocs'
 
 const { CInputCheckbox, CInputColorPicker } = components
 const { colorschemes } = shared
@@ -627,7 +665,7 @@ function fetchChart (chartID = props.chartID) {
     loading.value = true
     processing.value = true
     store.dispatch('chart/findByID', { namespaceID, chartID, force: true }).then((c) => {
-      chart.value = chartConstructor(c)
+      chart.value = chartConstructor(hydrateChartDocs(props.namespace, c) || c)
       initialChartState.value = chart.value.clone()
       document.title = t('label.app-name.chart.edit', { label: chart.value.name, interpolation: { escapeValue: false } })
       onEditReport(0)

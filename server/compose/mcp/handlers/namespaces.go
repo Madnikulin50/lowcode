@@ -29,6 +29,8 @@ func initNamespace(ctx context.Context, s *server.MCPServer) {
 		mcp.WithDescription("Create a new namespace"),
 		mcp.WithString("name", mcp.Description("Namespace name"), mcp.Required()),
 		mcp.WithString("slug", mcp.Description("URL-safe slug")),
+		mcp.WithString("description", mcp.Description("Short namespace description")),
+		mcp.WithString("help", mcp.Description("Optional Markdown help shown to users")),
 	), handleCreateNamespace)
 
 	s.AddTool(mcp.NewTool("update_namespace",
@@ -36,6 +38,8 @@ func initNamespace(ctx context.Context, s *server.MCPServer) {
 		mcp.WithString("namespaceID", mcp.Description("Namespace ID"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Namespace name")),
 		mcp.WithString("slug", mcp.Description("URL-safe slug")),
+		mcp.WithString("description", mcp.Description("Short namespace description")),
+		mcp.WithString("help", mcp.Description("Optional Markdown help shown to users")),
 	), handleUpdateNamespace)
 
 	s.AddTool(mcp.NewTool("delete_namespace",
@@ -98,6 +102,10 @@ func handleCreateNamespace(ctx context.Context, request mcp.CallToolRequest) (*m
 	ns := &types.Namespace{
 		Name: getString(args, "name"),
 		Slug: getString(args, "slug"),
+		Meta: types.NamespaceMeta{
+			Description: getString(args, "description"),
+			Help:        getString(args, "help"),
+		},
 	}
 	created, err := service.DefaultNamespace.Create(ctx, ns)
 	if err != nil {
@@ -123,6 +131,12 @@ func handleUpdateNamespace(ctx context.Context, request mcp.CallToolRequest) (*m
 	}
 	if v := getString(args, "slug"); v != "" {
 		ns.Slug = v
+	}
+	if v := getString(args, "description"); v != "" {
+		ns.Meta.Description = v
+	}
+	if v := getString(args, "help"); v != "" {
+		ns.Meta.Help = v
 	}
 	updated, err := service.DefaultNamespace.Update(ctx, ns)
 	if err != nil {

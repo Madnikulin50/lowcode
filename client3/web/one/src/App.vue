@@ -2,7 +2,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuth, useSettings, useToast } from 'corteza-lib/vue/dist'
+import { useAuth, useSettings, useToast, applyColorMode } from 'corteza-lib/vue/dist'
 import { websocket } from 'corteza-lib/vue/dist'
 const { t } = useI18n()
 const { auth } = useAuth()
@@ -19,7 +19,9 @@ onMounted(async () => {
     const favicon = document.getElementById('favicon')
     if (favicon) favicon.href = icon
     document.body.setAttribute('dir', user.meta?.preferredLanguage?.startsWith('ar') || user.meta?.preferredLanguage?.startsWith('he') || user.meta?.preferredLanguage?.startsWith('fa') ? 'rtl' : 'ltr')
-    if (user.meta.theme) document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme)
+    if (user.meta.theme) {
+      applyColorMode(user.meta.theme)
+    }
     loaded.value = true
   } catch (err) {
     if (err instanceof Error && err.message === 'Unauthenticated') { auth.startAuthenticationFlow(); return }

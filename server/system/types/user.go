@@ -48,6 +48,8 @@ type (
 		// User's avatar initial text and background color
 		AvatarColor   string `json:"avatarColor,omitempty"`
 		AvatarBgColor string `json:"avatarBgColor,omitempty"`
+		// Font path used to rasterize initials; empty means a legacy image that may lack glyphs
+		AvatarFont string `json:"avatarFont,omitempty"`
 
 		PreferredLanguage string `json:"preferredLanguage"`
 		Theme             string `json:"theme"`

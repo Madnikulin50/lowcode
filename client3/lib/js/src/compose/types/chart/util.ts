@@ -181,6 +181,8 @@ export interface ChartConfig {
   noAnimation?: boolean;
   gradient?: 'lightToDark' | 'darkToLight' | '';
   toolbox?: ChartToolbox;
+  description?: string;
+  help?: string;
 }
 
 export const aggregateFunctions = [

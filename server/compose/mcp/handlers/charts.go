@@ -34,6 +34,8 @@ func initCharts(ctx context.Context, s *server.MCPServer) {
 		mcp.WithString("namespaceID", mcp.Description("Namespace ID"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Chart name"), mcp.Required()),
 		mcp.WithString("handle", mcp.Description("URL-safe handle")),
+		mcp.WithString("description", mcp.Description("Short chart description")),
+		mcp.WithString("help", mcp.Description("Optional Markdown help shown to users")),
 		mcp.WithString("config",
 			mcp.Description(`JSON chart config. Example: {"reports":[{"moduleID":"...","dimensions":[{"field":"createdAt","modifier":"MONTH"}],"metrics":[{"field":"count","type":"bar","label":"Count"}]}]}`),
 			mcp.Required(),
@@ -41,11 +43,13 @@ func initCharts(ctx context.Context, s *server.MCPServer) {
 	), handleCreateChart)
 
 	s.AddTool(mcp.NewTool("update_chart",
-		mcp.WithDescription("Update a chart's name, handle, or config"),
+		mcp.WithDescription("Update a chart's name, handle, description, help, or config"),
 		mcp.WithString("namespaceID", mcp.Description("Namespace ID"), mcp.Required()),
 		mcp.WithString("chartID", mcp.Description("Chart ID"), mcp.Required()),
 		mcp.WithString("name", mcp.Description("Chart name")),
 		mcp.WithString("handle", mcp.Description("URL-safe handle")),
+		mcp.WithString("description", mcp.Description("Short chart description")),
+		mcp.WithString("help", mcp.Description("Optional Markdown help shown to users")),
 		mcp.WithString("config", mcp.Description("JSON chart config")),
 	), handleUpdateChart)
 
@@ -116,6 +120,13 @@ func handleCreateChart(ctx context.Context, request mcp.CallToolRequest) (*mcp.C
 		return textResult(fmt.Sprintf("Invalid config JSON: %v", err)), nil
 	}
 
+	if v := getString(args, "description"); v != "" {
+		config.Description = v
+	}
+	if v := getString(args, "help"); v != "" {
+		config.Help = v
+	}
+
 	ch := &types.Chart{
 		NamespaceID: namespaceID,
 		Name:        name,
@@ -158,6 +169,12 @@ func handleUpdateChart(ctx context.Context, request mcp.CallToolRequest) (*mcp.C
 			return textResult(fmt.Sprintf("Invalid config JSON: %v", err)), nil
 		}
 		ch.Config = cfg
+	}
+	if v := getString(args, "description"); v != "" {
+		ch.Config.Description = v
+	}
+	if v := getString(args, "help"); v != "" {
+		ch.Config.Help = v
 	}
 
 	updated, err := service.DefaultChart.Update(ctx, ch)

@@ -103,17 +103,21 @@ func chatChartToolDefs() []chat.ToolDef {
 			Params: []chat.ParamDef{
 				{Name: "name", Type: "string", Required: true, Description: "Chart display name"},
 				{Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"},
+				{Name: "description", Type: "string", Required: false, Description: "Short chart description"},
+				{Name: "help", Type: "string", Required: false, Description: "Optional Markdown help shown to users"},
 				{Name: "config", Type: "json", Required: true, Description: `JSON chart config with reports, dimensions, metrics`},
 			},
 			Handler: chatCreateChart,
 		},
 		{
 			Name:        "update_chart",
-			Description: "Update a chart's name, handle, or config",
+			Description: "Update a chart's name, handle, description, help, or config",
 			Params: []chat.ParamDef{
 				{Name: "chartID", Type: "string", Required: true, Description: "Chart ID"},
 				{Name: "name", Type: "string", Required: false, Description: "New chart name"},
 				{Name: "handle", Type: "string", Required: false, Description: "New URL-safe handle"},
+				{Name: "description", Type: "string", Required: false, Description: "Short chart description"},
+				{Name: "help", Type: "string", Required: false, Description: "Optional Markdown help shown to users"},
 				{Name: "config", Type: "json", Required: false, Description: "JSON chart config"},
 			},
 			Handler: chatUpdateChart,
@@ -159,6 +163,7 @@ func chatPageToolDefs() []chat.ToolDef {
 				{Name: "title", Type: "string", Required: true, Description: "Page title"},
 				{Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"},
 				{Name: "description", Type: "string", Required: false, Description: "Page description"},
+				{Name: "help", Type: "string", Required: false, Description: "Optional Markdown help shown to users"},
 				{Name: "moduleID", Type: "string", Required: false, Description: "Module ID this page is for"},
 				{Name: "blocks", Type: "json", Required: false, Description: `JSON array of page blocks`},
 			},
@@ -166,12 +171,13 @@ func chatPageToolDefs() []chat.ToolDef {
 		},
 		{
 			Name:        "update_page",
-			Description: "Update a page's title, handle, description, or blocks",
+			Description: "Update a page's title, handle, description, help, or blocks",
 			Params: []chat.ParamDef{
 				{Name: "pageID", Type: "string", Required: true, Description: "Page ID"},
 				{Name: "title", Type: "string", Required: false, Description: "New page title"},
 				{Name: "handle", Type: "string", Required: false, Description: "New URL-safe handle"},
 				{Name: "description", Type: "string", Required: false, Description: "New page description"},
+				{Name: "help", Type: "string", Required: false, Description: "Optional Markdown help shown to users"},
 				{Name: "blocks", Type: "json", Required: false, Description: "JSON array of page blocks"},
 			},
 			Handler: chatUpdatePage,
@@ -402,6 +408,12 @@ func chatCreateChart(ctx context.Context, params map[string]string) string {
 	if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
 		return fmt.Sprintf("The chart config JSON has an error: %v. Please provide valid JSON with 'reports' array.", err)
 	}
+	if v := params["description"]; v != "" {
+		config.Description = v
+	}
+	if v := params["help"]; v != "" {
+		config.Help = v
+	}
 	ch := &types.Chart{
 		NamespaceID: ns,
 		Name:        name,
@@ -437,6 +449,12 @@ func chatUpdateChart(ctx context.Context, params map[string]string) string {
 			return fmt.Sprintf("Invalid config JSON: %v", err)
 		}
 		ch.Config = cfg
+	}
+	if v := params["description"]; v != "" {
+		ch.Config.Description = v
+	}
+	if v := params["help"]; v != "" {
+		ch.Config.Help = v
 	}
 	updated, err := DefaultChart.Update(ctx, ch)
 	if err != nil {
@@ -531,6 +549,7 @@ func chatCreatePage(ctx context.Context, params map[string]string) string {
 		Visible:     true,
 		Weight:      0,
 		Blocks:      blocks,
+		Config:      types.PageConfig{Help: params["help"]},
 	}
 	created, err := DefaultPage.Create(ctx, p)
 	if err != nil {
@@ -557,6 +576,9 @@ func chatUpdatePage(ctx context.Context, params map[string]string) string {
 	}
 	if v := params["description"]; v != "" {
 		p.Description = v
+	}
+	if v := params["help"]; v != "" {
+		p.Config.Help = v
 	}
 	if v := params["blocks"]; v != "" {
 		var blocks types.PageBlocks

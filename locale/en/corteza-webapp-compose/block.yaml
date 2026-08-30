@@ -277,6 +277,9 @@ file:
 general:
   descriptionLabel: Description
   descriptionPlaceholder: Block description
+  helpLabel: Block help
+  helpPlaceholder: What this block is for and how to use it
+  helpDescription: Shown when the user clicks the help button on the block (same place as the AI button).
   headerStyle: Block header style (color)
   magnifyLabel: Block Magnification
   customID:
@@ -347,6 +350,7 @@ general:
   title: Add new block
   titleLabel: Title
   titlePlaceholder: Block title
+  pageHelpHint: Page help is edited on the page form (pencil) or with the Help button in the builder. This tab is only the block title and description.
   tooltip:
     dragAndDrop: Drag and drop to change order
     translations: Field translations
@@ -1302,6 +1306,8 @@ ai:
     title: AI
   hideBrainButton:
     label: Hide AI button on block
+  hideHelpButton:
+    label: Hide help button on block
   prompt:
     label: Default Prompt
     placeholder: Enter default prompt

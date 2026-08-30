@@ -81,6 +81,20 @@
           />
         </router-link>
 
+        <button
+          type="button"
+          data-bs-toggle="tooltip"
+          :title="$t('help.section')"
+          class="btn btn-primary d-flex align-items-center"
+          style="margin-left:2px;"
+          @click="openPageHelp"
+        >
+          <font-awesome-icon
+            :icon="['far', 'question-circle']"
+          />
+          <span class="ms-1 d-none d-xl-inline">{{ $t('help.label') }}</span>
+        </button>
+
         <router-link
           data-bs-toggle="tooltip"
           :title="$t('tooltip.edit.page')"
@@ -366,6 +380,57 @@
     </div>
 
     <div
+      ref="modalPageHelpEl"
+      class="modal fade"
+      tabindex="-1"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              {{ $t('help.section') }}
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            />
+          </div>
+          <div class="modal-body">
+            <page-help-fields
+              v-if="page"
+              :page="page"
+              :namespace="namespace"
+              show-description
+            >
+              <template #append>
+                <page-translator
+                  v-model:page="trPage"
+                  highlight-key="config.help"
+                />
+              </template>
+            </page-help-fields>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="btn btn-outline-secondary"
+              data-bs-dismiss="modal"
+            >
+              {{ $t('label.cancel') }}
+            </button>
+            <button
+              class="btn btn-primary"
+              :disabled="processing"
+              @click="savePageHelp"
+            >
+              {{ $t('label.saveAndClose') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
       ref="modalScenariosEl"
       class="modal fade"
       tabindex="-1"
@@ -509,6 +574,8 @@ const uiStore = useUiStore()
 const { setPageHandle, setLayoutHandle } = uiStore
 import NewBlockSelector from 'corteza-webapp-compose/src/components/Admin/Page/Builder/Selector'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
+import PageHelpFields from 'corteza-webapp-compose/src/components/Admin/Page/PageHelpFields.vue'
+import { hydratePageDocs } from '../../../help/appDocs'
 import Grid from 'corteza-webapp-compose/src/components/Common/Grid'
 import PageBlock from 'corteza-webapp-compose/src/components/PageBlocks'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
@@ -555,16 +622,18 @@ const scenarios = ref({
 const modalCreateBlockSelectorEl = ref(null)
 const modalCreatorEl = ref(null)
 const modalEditorEl = ref(null)
+const modalPageHelpEl = ref(null)
 const modalScenariosEl = ref(null)
 const isUnmounting = ref(false)
 
 function getBlockSelectorModal() { return modalCreateBlockSelectorEl.value ? Modal.getOrCreateInstance(modalCreateBlockSelectorEl.value) : null }
 function getBlockCreatorModal() { return modalCreatorEl.value ? Modal.getOrCreateInstance(modalCreatorEl.value) : null }
 function getBlockEditorModal() { return modalEditorEl.value ? Modal.getOrCreateInstance(modalEditorEl.value) : null }
+function getPageHelpModal() { return modalPageHelpEl.value ? Modal.getOrCreateInstance(modalPageHelpEl.value) : null }
 function getScenariosModal() { return modalScenariosEl.value ? Modal.getOrCreateInstance(modalScenariosEl.value) : null }
 
 function disposeModals () {
-  for (const get of [getBlockSelectorModal, getBlockCreatorModal, getBlockEditorModal, getScenariosModal]) {
+  for (const get of [getBlockSelectorModal, getBlockCreatorModal, getBlockEditorModal, getPageHelpModal, getScenariosModal]) {
     try { get()?.dispose() } catch (e) {}
   }
   document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
@@ -692,6 +761,7 @@ watch(() => props.pageID, (pageID) => {
     title.value = ttl || handle
     document.title = t('label.app-name.page.builder', { label: title.value, interpolation: { escapeValue: false } })
     page.value = p.clone()
+    hydratePageDocs(props.namespace, page.value)
     return fetchPageLayouts().then(() => { setLayout() })
   }).catch(() => { processingLayout.value = false })
 }, { immediate: true })
@@ -753,6 +823,33 @@ watch([modalCreateBlockSelectorEl, modalCreatorEl, modalEditorEl, modalScenarios
 function toastSuccess (msg) {}
 function toastErrorHandler (msg) { return (e) => {} }
 function toastWarning (msg) {}
+
+function openPageHelp () {
+  getPageHelpModal()?.show()
+}
+
+async function savePageHelp () {
+  if (!page.value) return
+  const { namespaceID } = props.namespace
+  processing.value = true
+  try {
+    const fresh = await store.dispatch('page/findByID', { ...page.value, force: true })
+    const updated = await store.dispatch('page/update', {
+      ...fresh,
+      namespaceID,
+      description: page.value.description,
+      config: { ...(fresh.config || {}), ...(page.value.config || {}) },
+    })
+    page.value.description = updated.description
+    page.value.config = updated.config
+    getPageHelpModal()?.hide()
+    toastSuccess(t('notification.page.saved'))
+  } catch (e) {
+    toastErrorHandler(t('notification.page.saveFailed'))(e)
+  } finally {
+    processing.value = false
+  }
+}
 
 function openScenarioConfigurator () {
   scenarios.value.showConfigurator = true
@@ -965,7 +1062,7 @@ async function handleSaveLayout ({ closeOnSuccess = false, previewOnSuccess = fa
       }),
       ...blocks.value,
     ]
-    const savePayload = { ...p, namespaceID, blocks: blocksData }
+    const savePayload = { ...p, namespaceID, blocks: blocksData, description: page.value.description }
     if (page.value.config) savePayload.config = page.value.config
     if (page.value.meta.scenarios) {
       savePayload.meta = { ...(p.meta || {}), scenarios: page.value.meta.scenarios }

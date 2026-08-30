@@ -100,6 +100,7 @@ export default defineConfig({
       { find: 'corteza-webapp-compose', replacement: resolve(__dirname, '.') },
 
       { find: 'corteza-lib/vue/src', replacement: resolve(__dirname, '../../lib/vue/src') },
+      { find: '~corteza-vue', replacement: resolve(__dirname, '../../lib/vue/src') },
       { find: 'corteza-lib/vue/dist/WorkflowEditor', replacement: resolve(__dirname, '../../lib/vue/src/components/workflow/WorkflowEditor.vue') },
       { find: 'corteza-lib/vue/dist', replacement: resolve(__dirname, '../../lib/vue/dist') },
       { find: 'corteza-lib/js/dist', replacement: resolve(__dirname, '../../lib/js/dist') },

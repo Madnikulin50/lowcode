@@ -152,17 +152,21 @@ func (svc user) FindByID(ctx context.Context, userID uint64) (u *types.User, err
 
 		uaProps.setUser(u)
 
-		// If profile avatar settings is enabled and a user doesn't have an avatar image,
-		// generate one automatically when fetching their user information.
-		if svc.settings.Auth.Internal.ProfileAvatar.Enabled && u.Meta.AvatarID == 0 && u.Meta.AvatarColor == "" {
-			if err = svc.generateUserAvatarInitial(ctx, u); err != nil {
-				return err
-			}
+		// Generate missing initials avatars, and redraw ones that were baked
+		// with a Latin-only font (Cyrillic then becomes tofu boxes).
+		if svc.settings.Auth.Internal.ProfileAvatar.Enabled && u.Meta.AvatarKind != types.AttachmentKindAvatar {
+			oldAvatarID := u.Meta.AvatarID
+			oldAvatarFont := u.Meta.AvatarFont
+			if userAvatarInitialsNeedRefresh(u) {
+				if err = svc.generateUserAvatarInitial(ctx, u); err != nil {
+					return err
+				}
 
-			// Persist the freshly generated avatar so it survives across
-			// subsequent lookups (avatar is generated lazily here).
-			if err = store.UpdateUser(ctx, svc.store, u); err != nil {
-				return err
+				if u.Meta.AvatarID != oldAvatarID || u.Meta.AvatarFont != oldAvatarFont {
+					if err = store.UpdateUser(ctx, svc.store, u); err != nil {
+						return err
+					}
+				}
 			}
 		}
 
@@ -1295,6 +1299,32 @@ func processAvatarInitials(u *types.User) (initial string) {
 	return
 }
 
+func userAvatarInitialsNeedRefresh(u *types.User) bool {
+	if u == nil || u.Meta == nil {
+		return true
+	}
+	if u.Meta.AvatarID == 0 {
+		return true
+	}
+	if u.Meta.AvatarFont == "" {
+		return true
+	}
+	return u.Meta.AvatarFont == avatarFontPoppins && avatarInitialsNeedExtendedScript(processAvatarInitials(u))
+}
+
+func avatarInitialsAttachmentStale(att *types.Attachment, initial, bgColor, textColor string) bool {
+	if att == nil || att.Meta.Original.Image == nil {
+		return true
+	}
+
+	img := att.Meta.Original.Image
+	if img.Initial != initial || img.BackgroundColor != bgColor || img.InitialColor != textColor {
+		return true
+	}
+
+	return avatarInitialsFontStale(att, initial)
+}
+
 func (svc user) GenerateAvatar(ctx context.Context, userID uint64, bgColor string, initialColor string) (err error) {
 	var (
 		u       *types.User
@@ -1348,18 +1378,23 @@ func (svc user) generateUserAvatarInitial(ctx context.Context, u *types.User) (e
 			return nil
 		}
 
-		colorLogic := att.Meta.Original.Image.BackgroundColor == u.Meta.AvatarBgColor && att.Meta.Original.Image.InitialColor == u.Meta.AvatarColor
-		if att.Meta.Original.Image.Initial == initial && colorLogic {
+		if !avatarInitialsAttachmentStale(att, initial, u.Meta.AvatarBgColor, u.Meta.AvatarColor) {
+			if u.Meta.AvatarFont == "" && att.Meta.Labels != nil {
+				u.Meta.AvatarFont = att.Meta.Labels[avatarFontLabel]
+			}
 			return nil
 		}
 
-		if err = svc.att.DeleteByID(ctx, att.ID); err != nil {
+		// Keep the same attachment ID so OAuth tokens and cached <img> URLs stay valid.
+		if att, err = svc.att.RewriteAvatarInitialsAttachment(ctx, att, initial, u.Meta.AvatarBgColor, u.Meta.AvatarColor); err != nil {
 			return err
 		}
 	}
 
-	if att, err = svc.att.CreateAvatarInitialsAttachment(ctx, initial, u.Meta.AvatarBgColor, u.Meta.AvatarColor); err != nil {
-		return err
+	if att == nil {
+		if att, err = svc.att.CreateAvatarInitialsAttachment(ctx, initial, u.Meta.AvatarBgColor, u.Meta.AvatarColor); err != nil {
+			return err
+		}
 	}
 
 	if u.Meta == nil {
@@ -1368,6 +1403,9 @@ func (svc user) generateUserAvatarInitial(ctx context.Context, u *types.User) (e
 
 	u.Meta.AvatarID = att.ID
 	u.Meta.AvatarKind = types.AttachmentKindAvatarInitials
+	if att.Meta.Labels != nil {
+		u.Meta.AvatarFont = att.Meta.Labels[avatarFontLabel]
+	}
 
 	if u.Meta.AvatarBgColor == "" {
 		u.Meta.AvatarBgColor = att.Meta.Original.Image.BackgroundColor

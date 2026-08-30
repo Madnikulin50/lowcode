@@ -539,6 +539,8 @@ export class BaseChart {
         showDataTable: false,
         timeline: '',
       },
+      description: '',
+      help: '',
     })
   }
 

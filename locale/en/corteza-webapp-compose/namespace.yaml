@@ -57,6 +57,10 @@ subtitle:
 prompt:
   label: AI Prompt
   placeholder: Enter namespace AI prompt
+help:
+  label: Help
+  description: Optional Markdown shown when users open the help icon
+  placeholder: Explain what this namespace is for
 title: Namespaces
 tooltip:
   translations: Namespace translations

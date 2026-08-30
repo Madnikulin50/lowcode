@@ -5,7 +5,11 @@
       :headerClass="editable ? '' : 'd-none'"
       :scrollable-body="false"
     >
-    <div class="rulechain-body h-100 d-flex flex-column justify-content-center">
+    <div class="rulechain-body h-100 d-flex flex-column justify-content-center position-relative">
+      <block-help-button
+        :block="block"
+        variant="metric"
+      />
       <div class="d-flex flex-wrap align-items-center gap-2">
         <button
           class="btn flex-shrink-0"
@@ -70,6 +74,7 @@ import { useRoute } from 'vue-router'
 import { NoID } from 'corteza-lib/js/dist'
 import bus from '../../lib/bus'
 import Wrap from './Wrap/index.js'
+import BlockHelpButton from './Shared/BlockHelpButton.vue'
 import { scanIDsFromTrigger, pullScanResultsIntoCompose } from './cmdbAgentSync.js'
 
 const props = defineProps({

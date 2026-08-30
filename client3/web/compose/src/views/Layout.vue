@@ -67,6 +67,7 @@
           <c-draft-button
         v-if="settings.get('ui.topbar.showDrafts', false)"
           />
+          <contextual-help />
         </template>
       </c-topbar>
     </header>
@@ -160,6 +161,7 @@ import { faFile } from '@fortawesome/free-regular-svg-icons'
 import CTranslationModal from '../components/Translator/CTranslatorModal.vue'
 import CDraftSidebar from '../components/Drafts/CDraftSidebar.vue'
 import CDraftButton from '../components/Drafts/CDraftButton.vue'
+import ContextualHelp from '../components/Common/ContextualHelp.vue'
 
 library.add(faFile)
 

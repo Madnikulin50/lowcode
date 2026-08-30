@@ -21,7 +21,17 @@ export { PageBlockGeometry } from './geometry'
 export { PageBlockRuleChain } from './rule-chain'
 export { PageBlockVariables } from './variables'
 
-export function PageBlockMaker<T extends PageBlock> (i: { kind: string }): T {
+function retainBlockDocs (block: PageBlock, raw?: { options?: Record<string, unknown> }): void {
+  const src = raw?.options
+  if (!src || typeof src !== 'object') return
+  if (!block.options) (block as { options: Record<string, unknown> }).options = {}
+  const opts = block.options as Record<string, unknown>
+  if (typeof src.help === 'string') opts.help = src.help
+  if (typeof src.hideHelpButton === 'boolean') opts.hideHelpButton = src.hideHelpButton
+  if (typeof src.hideBrainButton === 'boolean') opts.hideBrainButton = src.hideBrainButton
+}
+
+export function PageBlockMaker<T extends PageBlock> (i: { kind: string; options?: Record<string, unknown> }): T {
   const PageBlockTemp = Registry.get(i.kind)
   if (PageBlockTemp === undefined) {
     throw new Error(`unknown block kind '${i.kind}'`)
@@ -32,7 +42,11 @@ export function PageBlockMaker<T extends PageBlock> (i: { kind: string }): T {
     i = JSON.parse(JSON.stringify(i))
   }
 
-  return new PageBlockTemp(i) as T
+  const block = new PageBlockTemp(i) as T
+  // Subclass field `options = { ...defaults }` wipes keys that Apply() does not know
+  // (help, hideHelpButton). Put them back from the raw payload.
+  retainBlockDocs(block, i)
+  return block
 }
 
 export {

@@ -21,6 +21,15 @@
     >
       <font-awesome-icon :icon="['fas', 'brain']" />
     </button>
+    <block-help-button
+      v-if="chart"
+      :block="block"
+      variant="chart"
+      :offset="!block.options?.hideBrainButton"
+      :title="chart?.name"
+      :description="chartDescription"
+      :help="chartHelpBody"
+    />
 
     <template v-if="options.liveFilterEnabled">
       <button
@@ -147,10 +156,12 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { useStore } from '../../store'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
+import BlockHelpButton from './Shared/BlockHelpButton.vue'
 import ChartComponent from '../Chart'
 import { NoID, compose } from 'corteza-lib/js/dist'
 import { debounce } from 'lodash'
 import { evalPrefilterOrSkip, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { hydrateChartDocs } from '../../help/appDocs'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -181,6 +192,9 @@ const { key, options, inModal, browserLocale, refreshBlock, setBaseDefaultValues
 const pageVariables = computed(() => store.pageVariables.getValuesForPage(props.page.pageID))
 
 const chart = ref(null)
+
+const chartDescription = computed(() => String(chart.value?.config?.description || '').trim())
+const chartHelpBody = computed(() => String(chart.value?.config?.help || '').trim())
 const chartData = ref(null)
 const originalFilter = ref(undefined)
 const filter = ref(undefined)
@@ -260,7 +274,7 @@ async function fetchChart (params = {}) {
   if (!chartID) return
   const { namespaceID } = props.namespace
   return store.chart.findByID({ chartID, namespaceID, ...params }).then((c) => {
-    chart.value = c
+    chart.value = hydrateChartDocs(props.namespace, c) || c
     if (isDrillDownEnabled.value) {
       const { moduleID, dimensions = [] } = c.config.reports[0] || {}
       store.module.findByID({ namespace: props.namespace, moduleID }).then(chartModule => {

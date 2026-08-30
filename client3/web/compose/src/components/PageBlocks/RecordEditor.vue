@@ -3,7 +3,11 @@
     <div v-if="busy" class="d-flex align-items-center justify-content-center h-100">
       <span class="spinner-border" />
     </div>
-    <div v-else-if="module" ref="fieldContainer" :class="fieldLayoutClass">
+    <div v-else-if="module" ref="fieldContainer" class="fixed-corner-container" :class="fieldLayoutClass">
+      <block-help-button
+        :block="block"
+        variant="metric"
+      />
       <template v-for="field in fields" :key="`${field.fieldID}-${field.name}`">
         <div v-if="canDisplay(field)" :class="`field-container ${columnWrapClass}`" :style="fieldWidth">
           <FieldEditor
@@ -43,6 +47,7 @@ import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
+import BlockHelpButton from './Shared/BlockHelpButton.vue'
 import FieldEditor from 'corteza-webapp-compose/src/components/ModuleFields/Editor'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'
 
@@ -120,4 +125,5 @@ onBeforeUnmount(() => { destroyEvents() })
 
 <style scoped>
 .field-col > * { margin-left: 1rem; margin-right: 1rem; }
+.fixed-corner-container { position: relative; }
 </style>

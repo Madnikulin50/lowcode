@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/madnikulin50/lowcode/server/pkg/sass"
@@ -55,6 +56,8 @@ func updateWebappTheme(ctx context.Context, log *zap.Logger, s store.Storer) (er
 				return err
 			}
 		}
+	} else if err = migrateLegacyNavyDark(ctx, s, studioThemes, log); err != nil {
+		return err
 	}
 
 	if customCSSThemes.IsNull() {
@@ -137,24 +140,9 @@ func processBrandingTheme(oldBranding *types.SettingValue) (themes []types.Theme
 		}
 	}
 
-	// "Almost black" dark palette — matches client3/web/*/src/themes/corteza-base/dark.scss
-	// and CUIBrandingEditor.vue's darkModeVariables, so a freshly provisioned
-	// environment's dark theme matches what ships client-side by default.
-	darkModeValues := `
-    {
-        "black":"#EDEDED",
-        "white":"#121212",
-        "primary":"#6E8FF0",
-        "secondary":"#9A9A9A",
-        "success":"#43AA8B",
-        "warning":"#E27646",
-        "danger":"#F2555A",
-        "light":"#1A1A1A",
-        "extra-light":"#242424",
-        "body-bg":"#0A0A0A",
-        "sidebar-bg": "#121212",
-        "topbar-bg": "#121212"
-    }`
+	// "Almost black" dark palette — keep in sync with
+	// client3/lib/vue/src/scss/dark.scss and CUIBrandingEditor.vue.
+	darkModeValues, _ := json.Marshal(almostBlackDark)
 
 	lightModeValues, _ := json.Marshal(lightModeMap)
 
@@ -165,7 +153,7 @@ func processBrandingTheme(oldBranding *types.SettingValue) (themes []types.Theme
 		},
 		{
 			ID:     sass.DarkTheme,
-			Values: darkModeValues,
+			Values: string(darkModeValues),
 		},
 	}
 
@@ -200,4 +188,93 @@ func processCustomCSSTheme(oldValue *types.SettingValue) (themes []types.Theme, 
 	}
 
 	return themes, nil
+}
+
+// almostBlackDark is the canonical dark palette. Keep in sync with
+// client3/lib/vue/src/scss/dark.scss and CUIBrandingEditor.vue.
+var almostBlackDark = map[string]string{
+	"black":       "#EDEDED",
+	"white":       "#121212",
+	"primary":     "#6E8FF0",
+	"secondary":   "#9A9A9A",
+	"success":     "#43AA8B",
+	"warning":     "#E27646",
+	"danger":      "#F2555A",
+	"light":       "#1A1A1A",
+	"extra-light": "#242424",
+	"body-bg":     "#0A0A0A",
+	"sidebar-bg":  "#121212",
+	"topbar-bg":   "#121212",
+}
+
+// legacyNavyDarkBodyBG / legacyNavyDarkWhite are the distinctive surface
+// colors of the old Corteza "navy" dark theme. Provision used to write them
+// as the default, and CUIBrandingEditor kept resetting to them on save.
+const (
+	legacyNavyDarkBodyBG = "#092B40"
+	legacyNavyDarkWhite  = "#0B344E"
+)
+
+func hexEq(a, b string) bool {
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
+}
+
+func isLegacyNavyDark(vars map[string]string) bool {
+	return hexEq(vars["body-bg"], legacyNavyDarkBodyBG) && hexEq(vars["white"], legacyNavyDarkWhite)
+}
+
+// migrateLegacyNavyDark replaces a stored dark theme that still has the old
+// Corteza navy defaults with the almost-black palette. Custom dark themes
+// (anything that is not exactly that old default pair of surface colors)
+// are left alone. ui.studio.themes is only created when null, so without
+// this, existing installs keep the navy forever.
+func migrateLegacyNavyDark(ctx context.Context, s store.Storer, studioThemes *types.SettingValue, log *zap.Logger) error {
+	if studioThemes == nil || studioThemes.IsNull() {
+		return nil
+	}
+
+	var themes []types.Theme
+	if err := studioThemes.Value.Unmarshal(&themes); err != nil {
+		return err
+	}
+
+	changed := false
+	for i := range themes {
+		if themes[i].ID != sass.DarkTheme {
+			continue
+		}
+
+		vars := map[string]string{}
+		if err := json.Unmarshal([]byte(themes[i].Values), &vars); err != nil {
+			log.Warn("skipping dark-theme migration; values are not a JSON object", zap.Error(err))
+			continue
+		}
+
+		if !isLegacyNavyDark(vars) {
+			continue
+		}
+
+		encoded, err := json.Marshal(almostBlackDark)
+		if err != nil {
+			return err
+		}
+		themes[i].Values = string(encoded)
+		changed = true
+	}
+
+	if !changed {
+		return nil
+	}
+
+	if err := studioThemes.SetSetting(themes); err != nil {
+		return err
+	}
+	studioThemes.UpdatedAt = time.Now()
+	if err := store.UpdateSettingValue(ctx, s, studioThemes); err != nil {
+		log.Error("failed to migrate legacy navy dark theme", zap.Error(err))
+		return err
+	}
+
+	log.Info("migrated legacy navy dark theme to almost-black")
+	return nil
 }

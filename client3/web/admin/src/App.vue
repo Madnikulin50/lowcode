@@ -10,7 +10,7 @@ import { useStore } from './store'
 import { useI18n } from 'vue-i18n'
 import { system } from 'corteza-lib/js/dist'
 import { websocket } from 'corteza-lib/vue/dist'
-import { useAuth, useSettings, useToast, toasts, components } from 'corteza-lib/vue/dist'
+import { useAuth, useSettings, useToast, toasts, components, applyColorMode } from 'corteza-lib/vue/dist'
 
 const { CToaster } = components
 const router = useRouter()
@@ -84,7 +84,7 @@ onMounted(async () => {
     }
 
     if (user.meta.theme) {
-      document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme)
+      applyColorMode(user.meta.theme)
     }
 
     const bundleLoaderOpt = {

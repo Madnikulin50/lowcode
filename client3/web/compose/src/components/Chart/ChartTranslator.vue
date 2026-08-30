@@ -78,6 +78,16 @@ const updater = computed(() => {
       .then((translations) => {
         const find = (key) => translations.find(t => t.key === key && t.resource === resource.value)
         let tr
+        tr = find('config.description')
+        if (tr !== undefined) {
+          if (!props.chart.config) props.chart.config = {}
+          props.chart.config.description = tr.message
+        }
+        tr = find('config.help')
+        if (tr !== undefined) {
+          if (!props.chart.config) props.chart.config = {}
+          props.chart.config.help = tr.message
+        }
         const [report = {}] = props.chart.config.reports
         tr = find('yAxis.label')
         if (tr !== undefined) {

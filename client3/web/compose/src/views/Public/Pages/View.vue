@@ -8,7 +8,14 @@
       defer
       to="#topbar-title"
     >
-      <span>{{ pageTitle }}</span>
+      <span class="d-inline-flex align-items-center gap-1">
+        {{ pageTitle }}
+        <c-help-trigger
+          v-if="pageHelp.hasAny"
+          v-bind="pageHelp.triggerProps"
+          :label="helpOpenLabel"
+        />
+      </span>
     </Teleport>
 
     <Teleport
@@ -71,28 +78,36 @@
       </div>
     </Teleport>
 
-    <div class="flex-grow-1 overflow-auto d-flex p-2 w-100">
-      <router-view
-        v-if="isRecordPage"
-        :namespace="namespace"
-        :module="module"
+    <div class="flex-grow-1 overflow-auto d-flex flex-column p-2 w-100">
+      <page-help-bar
+        v-if="pageHelp.hasApp"
+        class="flex-shrink-0"
         :page="page"
+        :namespace="namespace"
       />
+      <div class="flex-grow-1 overflow-auto d-flex w-100">
+        <router-view
+          v-if="isRecordPage"
+          :namespace="namespace"
+          :module="module"
+          :page="page"
+        />
 
-      <div
-        v-else-if="!layout"
-        class="d-flex align-items-center justify-content-center w-100"
-      >
-        <span class="spinner-border" />
+        <div
+          v-else-if="!layout"
+          class="d-flex align-items-center justify-content-center w-100"
+        >
+          <span class="spinner-border" />
+        </div>
+
+        <grid
+          v-else-if="blocks"
+          :namespace="namespace"
+          :module="module"
+          :page="page"
+          :blocks="blocks"
+        />
       </div>
-
-      <grid
-        v-else-if="blocks"
-        :namespace="namespace"
-        :module="module"
-        :page="page"
-        :blocks="blocks"
-      />
     </div>
 
     <record-modal
@@ -129,6 +144,9 @@ import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Mod
 import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Page/Block/Modal'
 import AiChatModal from 'corteza-webapp-compose/src/components/Public/Page/AiChat/Modal'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
+import { useHelp } from '../../../composables/useHelp'
+import { pageHelpDocs, hydratePageDocs } from '../../../help/appDocs'
+import PageHelpBar from '../../../components/Common/PageHelpBar.vue'
 
 const { CInputSearch } = components
 const { toastErrorHandler, toastWarning } = composables.useToast()
@@ -157,6 +175,17 @@ const blocks = ref(undefined)
 const tempRecord = ref(undefined)
 const pageTitle = ref('')
 const aiPrompt = ref('')
+
+const pageHelp = useHelp('compose.page.view', computed(() => pageHelpDocs(props.namespace, props.page)))
+watch(
+  () => [props.namespace, props.page],
+  () => { hydratePageDocs(props.namespace, props.page) },
+  { immediate: true },
+)
+const helpOpenLabel = computed(() => {
+  const value = proxy.$t('help.bar.open')
+  return !value || value === 'help.bar.open' ? 'Справка' : value
+})
 
 const recordID = computed(() => route.params.recordID || '')
 

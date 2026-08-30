@@ -1,16 +1,4 @@
-# build-stage
-FROM golang:1.25-bookworm AS build-stage
-
-WORKDIR /src
-COPY services/calc-evm /src/services/calc-evm
-COPY sdk /src/sdk
-COPY invest /src/invest
-WORKDIR /src/invest
-
-ENV CGO_ENABLED=0
-RUN go build -o /out/invest-engine .
-
-# deploy-stage
+# deploy-stage — binary is built by `make build-linux` (same as the main project)
 FROM ubuntu:22.04 AS deploy-stage
 
 RUN apt-get -y update \
@@ -21,7 +9,7 @@ RUN apt-get -y update \
 
 WORKDIR /app
 
-COPY --from=build-stage /out/invest-engine ./invest-engine
+COPY bin/invest-engine ./invest-engine
 
 EXPOSE 8086
 

@@ -1641,13 +1641,9 @@ defineExpose({
   max-width: 180px;
   flex-shrink: 0;
   margin-right: auto;
-  /* Bootstrap's .form-select background comes from --bs-body-bg, which the
-     dark theme deliberately leaves unoverridden (see dark.scss) — it relies
-     on Studio-generated theme CSS to repaint known component classes, and a
-     bare native <select> here isn't one of them. Left alone, dark mode's
-     light body text (--bs-body-color -> --black) lands on the still-white
-     default select background. Paint it explicitly, same as the composer
-     textarea above. */
+  /* Bootstrap form-select uses --bs-body-bg, which dark.scss maps to
+     --white (the card/surface color). Paint it the same way here so a
+     native <select> matches the composer textarea. */
   background-color: var(--white, #fff);
   color: var(--black, inherit);
   border-color: var(--extra-light, #ced4da);

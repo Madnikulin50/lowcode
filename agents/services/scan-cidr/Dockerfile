@@ -1,15 +1,4 @@
-# build-stage
-FROM golang:1.25-bookworm AS build-stage
-
-WORKDIR /src
-COPY sdk /src/sdk
-COPY services/scan-cidr /src/services/scan-cidr
-WORKDIR /src/services/scan-cidr
-
-ENV CGO_ENABLED=0
-RUN go build -o /out/scan-cidr ./cmd/scan-cidr
-
-# deploy-stage
+# deploy-stage — binary is built by `make build-linux` (same as the main project)
 FROM ubuntu:22.04 AS deploy-stage
 
 RUN apt-get -y update \
@@ -21,7 +10,7 @@ RUN apt-get -y update \
 
 WORKDIR /app
 
-COPY --from=build-stage /out/scan-cidr ./scan-cidr
+COPY bin/scan-cidr ./scan-cidr
 
 EXPOSE 8089
 

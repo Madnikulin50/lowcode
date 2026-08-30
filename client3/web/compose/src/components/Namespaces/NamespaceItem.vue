@@ -41,6 +41,14 @@
       >
         <small>{{ namespace.meta.description }}</small>
       </p>
+      <div
+        v-if="nsHelp.app.html"
+        class="position-relative mt-2"
+        style="z-index: 2"
+        @click.stop
+      >
+        <c-help-trigger v-bind="nsHelp.triggerProps" />
+      </div>
       <router-link
         v-if="isEnabled"
         :to="{ name: 'pages', params: { slug: (namespace.slug || namespace.namespaceID) } }"
@@ -56,6 +64,8 @@
 defineOptions({ i18nOptions: { namespaces: 'namespace' } })
 import { ref, computed, watch } from 'vue'
 import { namespaceIconName, namespaceImageSrc, namespacePalette } from './namespaceIcon'
+import { useHelp } from '../../composables/useHelp'
+import { namespaceHelpDocs } from '../../help/appDocs'
 
 const props = defineProps({
   namespace: { type: Object, required: true },
@@ -63,6 +73,8 @@ const props = defineProps({
 
 const hovered = ref(false)
 const imageFailed = ref(false)
+
+const nsHelp = useHelp('compose.namespaces.list', computed(() => namespaceHelpDocs(props.namespace)), { includeProduct: false })
 
 const isEnabled = computed(() => !!props.namespace.enabled)
 const imageSrc = computed(() => namespaceImageSrc(props.namespace))

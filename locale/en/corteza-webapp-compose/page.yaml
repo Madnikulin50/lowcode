@@ -129,6 +129,11 @@ navigation:
 prompt:
   label: AI Prompt
   placeholder: Enter namespace AI prompt
+help:
+  label: Help
+  section: Page help
+  description: The short description is shown on the page. The full Markdown text opens with the Help button.
+  placeholder: What this screen is for and how to use it
 noBlock: No block added yet
 noPages: No pages
 notVisible: Hidden

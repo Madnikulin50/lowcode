@@ -247,6 +247,7 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 import CNotificationButton from '../notifications/CNotificationButton.vue'
 import { checkValidURL } from '../../filters/url'
+import { applyColorMode } from '../../libs/theme'
 
 library.add(faSun, faMoon)
 
@@ -325,17 +326,15 @@ const themes = computed(() => [
 
 watch(() => $auth.user.meta.theme, (theme: string) => {
   currentTheme.value = theme
+  applyColorMode(theme)
 }, { immediate: true })
 
 async function saveThemeMode (theme: string) {
   currentTheme.value = theme
   $auth.user.meta.theme = theme
+  applyColorMode(theme)
 
-  $SystemAPI.userUpdate($auth.user).then(() => {
-    const html = document.getElementsByTagName('html')[0]
-    html.setAttribute('data-color-mode', theme)
-    html.setAttribute('data-bs-theme', theme)
-  }).catch(console.error)
+  $SystemAPI.userUpdate($auth.user).catch(console.error)
 }
 </script>
 

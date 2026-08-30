@@ -35,18 +35,20 @@ func initPages(ctx context.Context, s *server.MCPServer) {
 		mcp.WithString("title", mcp.Description("Page title"), mcp.Required()),
 		mcp.WithString("handle", mcp.Description("URL-safe handle")),
 		mcp.WithString("description", mcp.Description("Page description")),
+		mcp.WithString("help", mcp.Description("Optional Markdown help shown to users")),
 		mcp.WithString("moduleID", mcp.Description("Module ID that this page is for")),
 		mcp.WithString("selfID", mcp.Description("Parent page ID (0 for root)")),
 		mcp.WithString("blocks", mcp.Description(`JSON array of page blocks. Example: [{"kind":"RecordList","options":{"fields":["field1","field2"]}}]`)),
 	), handleCreatePage)
 
 	s.AddTool(mcp.NewTool("update_page",
-		mcp.WithDescription("Update a page's title, handle, description, or blocks"),
+		mcp.WithDescription("Update a page's title, handle, description, help, or blocks"),
 		mcp.WithString("namespaceID", mcp.Description("Namespace ID"), mcp.Required()),
 		mcp.WithString("pageID", mcp.Description("Page ID"), mcp.Required()),
 		mcp.WithString("title", mcp.Description("Page title")),
 		mcp.WithString("handle", mcp.Description("URL-safe handle")),
 		mcp.WithString("description", mcp.Description("Page description")),
+		mcp.WithString("help", mcp.Description("Optional Markdown help shown to users")),
 		mcp.WithString("blocks", mcp.Description("JSON array of page blocks")),
 	), handleUpdatePage)
 
@@ -131,6 +133,7 @@ func handleCreatePage(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 		Visible:     true,
 		Weight:      0,
 		Blocks:      blocks,
+		Config:      types.PageConfig{Help: getString(args, "help")},
 	}
 
 	created, err := service.DefaultPage.Create(ctx, p)
@@ -164,6 +167,9 @@ func handleUpdatePage(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 	}
 	if v := getString(args, "description"); v != "" {
 		p.Description = v
+	}
+	if v := getString(args, "help"); v != "" {
+		p.Config.Help = v
 	}
 	if v := getString(args, "blocks"); v != "" {
 		var blocks types.PageBlocks

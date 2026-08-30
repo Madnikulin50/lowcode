@@ -34,6 +34,8 @@ const (
 
 var (
 	// @todo can we remove LocaleKey struct for string constant?
+	LocaleKeyChartConfigDescription                         = LocaleKey{Path: "config.description"}
+	LocaleKeyChartConfigHelp                                = LocaleKey{Path: "config.help"}
 	LocaleKeyChartYAxisLabel                                = LocaleKey{Path: "yAxis.label"}
 	LocaleKeyChartMetricsMetricIDLabel                      = LocaleKey{Path: "metrics.{{metricID}}.label"}
 	LocaleKeyChartMetricsMetricIDPrefix                     = LocaleKey{Path: "metrics.{{metricID}}.prefix"}
@@ -54,8 +56,10 @@ var (
 	LocaleKeyNamespaceMetaSubtitle                          = LocaleKey{Path: "meta.subtitle"}
 	LocaleKeyNamespaceMetaDescription                       = LocaleKey{Path: "meta.description"}
 	LocaleKeyNamespaceMetaPrompt                            = LocaleKey{Path: "meta.prompt"}
+	LocaleKeyNamespaceMetaHelp                              = LocaleKey{Path: "meta.help"}
 	LocaleKeyPageTitle                                      = LocaleKey{Path: "title"}
 	LocaleKeyPageDescription                                = LocaleKey{Path: "description"}
+	LocaleKeyPageConfigHelp                                 = LocaleKey{Path: "config.help"}
 	LocaleKeyPagePageBlockBlockIDTitle                      = LocaleKey{Path: "pageBlock.{{blockID}}.title"}
 	LocaleKeyPagePageBlockBlockIDDescription                = LocaleKey{Path: "pageBlock.{{blockID}}.description"}
 	LocaleKeyPagePageBlockBlockIDMetricsMetricIDLabel       = LocaleKey{Path: "pageBlock.{{blockID}}.metrics.{{metricID}}.label"}
@@ -103,12 +107,33 @@ func ChartResourceTranslationTpl() string {
 }
 
 func (r *Chart) DecodeTranslations(tt locale.ResourceTranslationIndex) {
+	var aux *locale.ResourceTranslation
+
+	if aux = tt.FindByKey(LocaleKeyChartConfigDescription.Path); aux != nil {
+		r.Config.Description = aux.Msg
+	}
+
+	if aux = tt.FindByKey(LocaleKeyChartConfigHelp.Path); aux != nil {
+		r.Config.Help = aux.Msg
+	}
 
 	r.decodeTranslations(tt)
 }
 
 func (r *Chart) EncodeTranslations() (out locale.ResourceTranslationSet) {
 	out = locale.ResourceTranslationSet{}
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyChartConfigDescription.Path,
+		Msg:      locale.SanitizeMessage(r.Config.Description),
+	})
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyChartConfigHelp.Path,
+		Msg:      locale.SanitizeMessage(r.Config.Help),
+	})
 
 	out = append(out, r.encodeTranslations()...)
 
@@ -294,6 +319,10 @@ func (r *Namespace) DecodeTranslations(tt locale.ResourceTranslationIndex) {
 	if aux = tt.FindByKey(LocaleKeyNamespaceMetaDescription.Path); aux != nil {
 		r.Meta.Description = aux.Msg
 	}
+
+	if aux = tt.FindByKey(LocaleKeyNamespaceMetaHelp.Path); aux != nil {
+		r.Meta.Help = aux.Msg
+	}
 }
 
 func (r *Namespace) EncodeTranslations() (out locale.ResourceTranslationSet) {
@@ -321,6 +350,12 @@ func (r *Namespace) EncodeTranslations() (out locale.ResourceTranslationSet) {
 		Resource: r.ResourceTranslation(),
 		Key:      LocaleKeyNamespaceMetaDescription.Path,
 		Msg:      locale.SanitizeMessage(r.Meta.Description),
+	})
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyNamespaceMetaHelp.Path,
+		Msg:      locale.SanitizeMessage(r.Meta.Help),
 	})
 
 	return out
@@ -365,6 +400,10 @@ func (r *Page) DecodeTranslations(tt locale.ResourceTranslationIndex) {
 		r.Description = aux.Msg
 	}
 
+	if aux = tt.FindByKey(LocaleKeyPageConfigHelp.Path); aux != nil {
+		r.Config.Help = aux.Msg
+	}
+
 	r.decodeTranslations(tt)
 }
 
@@ -381,6 +420,12 @@ func (r *Page) EncodeTranslations() (out locale.ResourceTranslationSet) {
 		Resource: r.ResourceTranslation(),
 		Key:      LocaleKeyPageDescription.Path,
 		Msg:      locale.SanitizeMessage(r.Description),
+	})
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyPageConfigHelp.Path,
+		Msg:      locale.SanitizeMessage(r.Config.Help),
 	})
 
 	out = append(out, r.encodeTranslations()...)

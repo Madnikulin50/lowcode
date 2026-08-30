@@ -31,6 +31,7 @@ interface PageConfig {
     expanded: false;
   };
   prompt: string
+  help: string
 }
 
 export class Page {
@@ -60,7 +61,8 @@ export class Page {
       },
       expanded: false,
     },
-    prompt: ''
+    prompt: '',
+    help: '',
   }
 
   public meta: PageMeta = {

@@ -230,6 +230,21 @@
                 </div>
               </div>
 
+              <c-help-editor
+                v-model="namespace.meta.help"
+                :label="$t('help.label')"
+                :description="$t('help.description')"
+                :placeholder="$t('help.placeholder')"
+              >
+                <template #append>
+                  <namespace-translator
+                    :namespace="namespace"
+                    highlight-key="meta.help"
+                    :disabled="isNew"
+                  />
+                </template>
+              </c-help-editor>
+
               <div class="mb-3">
                 <label class="form-label text-primary">{{ $t('prompt.label') }}</label>
                 <div class="input-group">
@@ -562,6 +577,7 @@ async function fetchNamespace() {
     subtitle: '',
     prompt: '',
     description: '',
+    help: '',
     hideSidebar: false,
     logoEnabled: null,
     ...namespace.value.meta,

@@ -11,10 +11,10 @@ export default [
         component: () => import('./Namespace/Index.vue'),
         redirect: 'namespaces.list',
         children: [
-          { name: 'namespace.list', path: '/namespaces', component: () => import('./Namespace/List.vue'), props: r => ({ ...r.params }) },
-          { name: 'namespace.manage', path: '/namespaces/manage', component: () => import('./Namespace/Manage.vue'), props: r => ({ ...r.params }) },
-          { name: 'namespace.create', path: '/admin/namespace/create', component: () => import('./Namespace/Edit.vue'), props: r => ({ ...r.params }) },
-          { name: 'namespace.edit', path: '/admin/namespace/edit/:namespaceID', component: () => import('./Namespace/Edit.vue'), props: r => ({ ...r.params }) },
+          { name: 'namespace.list', path: '/namespaces', component: () => import('./Namespace/List.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.namespaces.list' } },
+          { name: 'namespace.manage', path: '/namespaces/manage', component: () => import('./Namespace/Manage.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.namespaces.list' } },
+          { name: 'namespace.create', path: '/admin/namespace/create', component: () => import('./Namespace/Edit.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.namespace.edit' } },
+          { name: 'namespace.edit', path: '/admin/namespace/edit/:namespaceID', component: () => import('./Namespace/Edit.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.namespace.edit' } },
           {
             name: 'namespace',
             path: '/ns/:slug',
@@ -59,14 +59,14 @@ export default [
                   { name: 'admin.modules.record.create', path: 'modules/:moduleID/record', component: () => import('./Admin/Modules/Records/View.vue'), props: r => ({ edit: true, ...r.params }) },
                   { name: 'admin.modules.record.edit', path: 'modules/:moduleID/record/:recordID/edit', component: () => import('./Admin/Modules/Records/View.vue'), props: r => ({ edit: true, ...r.params }) },
 
-                  { name: 'admin.pages', path: 'pages', component: () => import('./Admin/Pages/List.vue'), props: r => ({ ...r.params }) },
-                  { name: 'admin.pages.edit', path: 'pages/:pageID/edit', component: () => import('./Admin/Pages/Edit.vue'), props: r => ({ ...r.params }) },
-                  { name: 'admin.pages.builder', path: 'pages/:pageID/builder', component: () => import('./Admin/Pages/Builder.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.pages', path: 'pages', component: () => import('./Admin/Pages/List.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.pages.list' } },
+                  { name: 'admin.pages.edit', path: 'pages/:pageID/edit', component: () => import('./Admin/Pages/Edit.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.page.edit' } },
+                  { name: 'admin.pages.builder', path: 'pages/:pageID/builder', component: () => import('./Admin/Pages/Builder.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.page.builder' } },
                   { name: 'admin.pages.rag', path: 'pages/rag', component: () => import('./Admin/Pages/RAG.vue'), props: r => ({ ...r.params }) },
 
-                  { name: 'admin.charts', path: 'charts', component: () => import('./Admin/Charts/List.vue'), props: r => ({ ...r.params }) },
-                  { name: 'admin.charts.create', path: 'charts/new/:category?', component: () => import('./Admin/Charts/Edit.vue'), props: r => ({ ...r.params }) },
-                  { name: 'admin.charts.edit', path: 'charts/:chartID/edit', component: () => import('./Admin/Charts/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.charts', path: 'charts', component: () => import('./Admin/Charts/List.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.charts.list' } },
+                  { name: 'admin.charts.create', path: 'charts/new/:category?', component: () => import('./Admin/Charts/Edit.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.chart.edit' } },
+                  { name: 'admin.charts.edit', path: 'charts/:chartID/edit', component: () => import('./Admin/Charts/Edit.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.chart.edit' } },
 
                   { name: 'admin.etl', path: 'etl', component: () => import('./Admin/ETL/List.vue'), props: r => ({ ...r.params }) },
                   { name: 'admin.etl.create', path: 'etl/new', component: () => import('./Admin/ETL/Edit.vue'), props: r => ({ ...r.params }) },

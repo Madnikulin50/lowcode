@@ -7,7 +7,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAuth, useSettings, useToast, toasts, components } from 'corteza-lib/vue/dist'
+import { useAuth, useSettings, useToast, toasts, components, applyColorMode } from 'corteza-lib/vue/dist'
 import { websocket } from 'corteza-lib/vue/dist'
 
 const { CToaster } = components
@@ -56,7 +56,7 @@ onMounted(async () => {
     }
 
     if (user.meta.theme) {
-      document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme)
+      applyColorMode(user.meta.theme)
     }
 
     i18nLoaded.value = true

@@ -1,7 +1,7 @@
 <template><router-view v-if="loaded && i18nLoaded" /><c-toaster :toasts="toasts" /></template>
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useAuth, useSettings, useToast, toasts, components } from 'corteza-lib/vue/dist'
+import { useAuth, useSettings, useToast, toasts, components, applyColorMode } from 'corteza-lib/vue/dist'
 import { websocket } from 'corteza-lib/vue/dist'
 
 const { CToaster } = components
@@ -24,7 +24,9 @@ onMounted(async () => {
       window.__composeAPI?.setHeader?.('Accept-Language', user.meta.preferredLanguage)
       window.__composeAPI?.setHeader?.('Content-Language', user.meta.preferredLanguage)
     }
-    if (user.meta.theme) { document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme) }
+    if (user.meta.theme) {
+      applyColorMode(user.meta.theme)
+    }
     loaded.value = true
   } catch (err) {
     if (err instanceof Error && err.message === 'Unauthenticated') { auth.startAuthenticationFlow(); return }

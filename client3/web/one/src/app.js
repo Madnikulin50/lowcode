@@ -54,7 +54,8 @@ export default (options = {}) => {
 
         // switch the webapp theme based on user preference
         if (user.meta.theme) {
-          document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme)
+          document.documentElement.setAttribute('data-color-mode', user.meta.theme)
+          document.documentElement.setAttribute('data-bs-theme', user.meta.theme)
         }
 
         this.$store.dispatch('wfPrompts/update')

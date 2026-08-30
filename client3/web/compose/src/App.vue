@@ -6,7 +6,7 @@
 import { ref, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from './store'
-import { corredor, websocket, i18n } from 'corteza-lib/vue/dist'
+import { corredor, websocket, i18n, applyColorMode } from 'corteza-lib/vue/dist'
 import { compose } from 'corteza-lib/js/dist'
 
 const router = useRouter()
@@ -42,7 +42,7 @@ onMounted(async () => {
     }
 
     if (user.meta.theme) {
-      document.getElementsByTagName('html')[0].setAttribute('data-color-mode', user.meta.theme)
+      applyColorMode(user.meta.theme)
     }
 
     const bundleLoaderOpt = {

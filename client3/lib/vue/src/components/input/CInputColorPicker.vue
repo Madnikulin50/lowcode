@@ -257,7 +257,7 @@ function closeMenu() {
 </script>
 
 <style lang="css">
-@import 'vue-color/dist/vue-color.css';
+@import 'vue-color/style.css';
 </style>
 
 <style lang="scss" scoped>

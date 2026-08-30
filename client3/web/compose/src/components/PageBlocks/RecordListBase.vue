@@ -18,7 +18,7 @@
             >+ {{ $t('recordList.addRecord') }}</button>
 
             <div v-if="showOverflowMenu" class="dropdown">
-              <button class="btn btn-outline-secondary btn-sm rl-chrome-icon" data-bs-toggle="dropdown" aria-expanded="false" :title="$t('recordList.chrome.more')">
+              <button class="btn btn-outline-secondary btn-sm rl-chrome-icon" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" :title="$t('recordList.chrome.more')">
                 <font-awesome-icon :icon="['fas', 'ellipsis-h']" />
               </button>
               <ul class="dropdown-menu shadow-sm">
@@ -28,16 +28,16 @@
                 <li v-if="canExport">
                   <button class="dropdown-item" type="button" @click="exporterRef?.open()">{{ $t('label.export') }}</button>
                 </li>
-                <li v-if="!options.hideConfigureFieldsButton">
+                <li v-if="canConfigureFields">
                   <button class="dropdown-item" type="button" @click="columnsRef?.open()">{{ $t('module.allRecords.columns.title') }}</button>
                 </li>
-                <li v-if="(canImport || canExport || !options.hideConfigureFieldsButton) && (filterPresets.length || options.showDeletedRecordsOption)"><hr class="dropdown-divider" /></li>
+                <li v-if="(canImport || canExport || canConfigureFields) && (filterPresets.length || canShowDeletedRecords)"><hr class="dropdown-divider" /></li>
                 <li v-if="filterPresets.length" class="dropdown-header">{{ $t('recordList.chrome.filters') }}</li>
                 <li v-for="(f, idx) in filterPresets" :key="`preset-${idx}`" class="d-flex align-items-center">
                   <button class="dropdown-item" type="button" @click="updateFilter(f.filter, f.name)">{{ f.name }}</button>
                   <c-input-confirm v-if="!f.roles" show-icon class="me-1" @confirmed="removeRecordListFilterPreset(f.name)" />
                 </li>
-                <li v-if="options.showDeletedRecordsOption">
+                <li v-if="canShowDeletedRecords">
                   <button class="dropdown-item" type="button" @click="handleShowDeleted()">{{ showingDeletedRecords ? $t('recordList.showRecords.existing') : $t('recordList.showRecords.deleted') }}</button>
                 </li>
               </ul>
@@ -77,6 +77,7 @@
                 class="btn btn-outline-secondary btn-sm rl-chrome-count"
                 data-bs-toggle="dropdown"
                 data-bs-auto-close="outside"
+                data-bs-popper-config='{"strategy":"fixed"}'
                 aria-expanded="false"
               >{{ hasLoadedOnce ? pagination.count : '…' }}</button>
               <div class="dropdown-menu dropdown-menu-end shadow-sm rl-chrome-page-menu">
@@ -120,7 +121,7 @@
 
         <ImporterModal v-if="canImport" ref="importerRef" hide-trigger :module="recordListModule" :namespace="namespace" @importSuccessful="onImportSuccessful" />
         <ExporterModal v-if="canExport" ref="exporterRef" hide-trigger :module="recordListModule" :filter="filter.query" :selection="selected" :selected-all-records="selectedAllRecords" :processing="processing" :preselected-fields="fields.map(({ moduleField }) => moduleField)" @export="onExport" />
-        <ColumnPicker v-if="!options.hideConfigureFieldsButton" ref="columnsRef" hide-trigger :module="recordListModule" :fields="fields.map(({ moduleField }) => moduleField)" @updateFields="onUpdateFields" />
+        <ColumnPicker v-if="canConfigureFields" ref="columnsRef" hide-trigger :module="recordListModule" :fields="fields.map(({ moduleField }) => moduleField)" @updateFields="onUpdateFields" />
         </template>
 
         <div v-else class="d-flex align-items-center justify-content-between gap-1">
@@ -224,7 +225,7 @@
 
         <div class="rl-table-wrap table-responsive flex-grow-1">
         <table data-test-id="table-record-list" class="table record-list-table mb-0 table-hover" :class="{ 'table-sm': options.compactRows }">
-          <thead :class="{ 'sticky-top': options.stickyHeader !== false }">
+          <thead :class="{ 'rl-sticky-head': options.stickyHeader !== false }">
             <tr :class="showingDeletedRecords ? 'table-warning' : ''">
               <th v-if="options.draggable && inlineEditing" style="width: 0%"></th>
               <th v-if="options.selectable" style="width: 0%;" class="d-print-none rl-check-col">
@@ -293,7 +294,7 @@
                     </button>
                     <div v-if="inlineEditing && !editing && showSaveAction(element) && areActionsVisible(element.r)" class="border-start mx-1" style="height: 1.5rem;" />
                     <div v-if="areActionsVisible(element.r)" class="dropdown dropstart">
-                      <button class="btn btn-outline-extra-light d-flex align-items-center justify-content-center border-0 dropdown-toggle" style="width: 2rem; height: 2rem;" data-bs-toggle="dropdown" aria-expanded="false">
+                      <button class="btn btn-outline-extra-light d-flex align-items-center justify-content-center border-0 dropdown-toggle" style="width: 2rem; height: 2rem;" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
                         <font-awesome-icon :icon="['fas', 'ellipsis-v']" class="text-primary" />
                       </button>
                       <ul class="dropdown-menu m-0">
@@ -675,7 +676,8 @@ const showAddButton = computed(() => {
 })
 const canImport = computed(() => !!(recordListModule.value?.canCreateRecord && !options.value.hideImportButton && !inlineEditing.value && (recordPageID.value || options.value.allRecords)))
 const canExport = computed(() => !!(options.value.allowExport && !inlineEditing.value))
-const showOverflowMenu = computed(() => canImport.value || canExport.value || !options.value.hideConfigureFieldsButton || filterPresets.value.length > 0 || options.value.showDeletedRecordsOption)
+const canConfigureFields = computed(() => options.value.hideConfigureFieldsButton === false)
+const canShowDeletedRecords = computed(() => !!options.value.showDeletedRecordsOption)
 const hasMultiplePages = computed(() => {
   if (options.value.hidePaging) return false
   const pp = recordsPerPage.value
@@ -737,7 +739,7 @@ const allFields = computed(() => recordListModule.value ? [...recordListModule.v
 const fields = computed(() => {
   let flds = []
   const editableFields = !inlineEditing.value ? [] : options.value.editFields.map(({ name }) => name)
-  if (!options.value.hideConfigureFieldsButton && customConfiguredFields.value.length > 0) {
+  if (canConfigureFields.value && customConfiguredFields.value.length > 0) {
     flds = recordListModule.value.filterFields(customConfiguredFields.value)
   } else if (options.value.fields.length > 0) {
     flds = recordListModule.value.filterFields(options.value.fields)
@@ -797,7 +799,20 @@ const canUpdateSelectedRecords = computed(() => items.value.filter(({ id, r }) =
 const canRestoreSelectedRecords = computed(() => items.value.filter(({ id, r }) => selected.value.includes(id) && r.canUndeleteRecord).length > 0)
 const isCloneRecordActionVisible = computed(() => !options.value.hideRecordCloneButton && recordListModule.value?.canCreateRecord && (options.value.rowCreateUrl || recordPageID.value || inlineEditing.value))
 const isReminderActionVisible = computed(() => !options.value.hideRecordReminderButton)
-const filterPresets = computed(() => [...options.value.filterPresets.filter(({ name, roles }) => name && isUserRoleMember(roles)), ...customPresetFilters.value])
+const filterPresets = computed(() => {
+  const presets = Array.isArray(options.value.filterPresets) ? options.value.filterPresets : []
+  return [
+    ...presets.filter(({ name, roles }) => name && isUserRoleMember(roles)),
+    ...customPresetFilters.value,
+  ]
+})
+const showOverflowMenu = computed(() => !!(
+  canImport.value
+  || canExport.value
+  || canConfigureFields.value
+  || filterPresets.value.length
+  || canShowDeletedRecords.value
+))
 const authUserRoles = computed(() => $auth?.user?.roles || [])
 const selectedRecordsDisplayText = computed(() => {
   const count = selectedAllRecords.value ? (options.value.showTotalCount ? pagination.count : undefined) : selected.value.length
@@ -1655,8 +1670,19 @@ function isDeleteActionVisible({ deletedAt, canDeleteRecord }) { return !options
 function isRestoreActionVisible({ canUndeleteRecord }) { return !options.value.hideRecordDeleteButton && canUndeleteRecord }
 
 function areActionsVisible(record) {
-  if (inlineEditing.value && editing.value) return [isCloneRecordActionVisible.value, isInlineRestoreActionVisible(record), isInlineDeleteActionVisible(record)].some(v => v)
-  return [isCloneRecordActionVisible.value, isReminderActionVisible.value, isViewRecordActionVisible(record), isEditRecordActionVisible(record), isRecordPermissionButtonVisible(record), isDeleteActionVisible(record), isRestoreActionVisible(record)].some(v => v)
+  if (!record) return false
+  if (inlineEditing.value && editing.value) {
+    return [isCloneRecordActionVisible.value, isInlineRestoreActionVisible(record), isInlineDeleteActionVisible(record)].some(v => v)
+  }
+  return [
+    isViewRecordActionVisible(record),
+    isEditRecordActionVisible(record),
+    isCloneRecordActionVisible.value,
+    isReminderActionVisible.value,
+    isRecordPermissionButtonVisible(record),
+    isDeleteActionVisible(record),
+    isRestoreActionVisible(record),
+  ].some(v => v)
 }
 
 function onBulkUpdate() { selectedAllRecords.value = false }
@@ -1723,7 +1749,10 @@ function removeFilter(groupIndex, filterIndex) {
   refresh(true)
 }
 
-function isUserRoleMember(roles) { return !roles.length || roles.some(roleID => authUserRoles.value.includes(roleID)) }
+function isUserRoleMember(roles) {
+  if (!Array.isArray(roles) || !roles.length) return true
+  return roles.some(roleID => authUserRoles.value.includes(roleID))
+}
 
 function openCustomSummaryModal(summary) {
   const { custom, metric, field } = summary || {}
@@ -1902,12 +1931,18 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
   border-spacing: 0;
 
   thead {
+    &.rl-sticky-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
     th {
-      background: #f8f9fa;
+      background: var(--light, #f8f9fa);
       border-bottom: 2px solid var(--bs-border-color, #dee2e6);
       font-size: 0.8125rem;
       font-weight: 600;
-      color: var(--bs-secondary-color, #6c757d);
+      color: var(--secondary, var(--bs-secondary-color, #6c757d));
       text-transform: uppercase;
       letter-spacing: 0.025em;
       padding: 0.625rem 0.75rem;
@@ -2215,10 +2250,12 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
   }
 }
 
-.record-list-table { .actions { padding-top: 8px; position: sticky; right: -1px; opacity: 0; transition: opacity 0.25s; width: 1%; font-family: var(--font-regular) !important; z-index: 3; &.actions-visible { opacity: 1; } } tbody tr td:nth-last-child(2) { padding-right: 5rem; } }
+.record-list-table { .actions { padding-top: 8px; position: sticky; right: -1px; opacity: 0; transition: opacity 0.25s; width: 1%; font-family: var(--font-regular) !important; z-index: 3; &.actions-visible { opacity: 1; } } tbody tr td:nth-last-child(2) { padding-right: 5rem; } .dropdown-menu { z-index: 1060; } }
 .rl-chrome {
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 5;
 }
 
 .rl-chrome-bar {
@@ -2228,6 +2265,10 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
   min-height: 2rem;
   padding: 0.2rem 0.5rem;
   border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.rl-chrome :deep(.dropdown-menu) {
+  z-index: 1060;
 }
 
 .rl-chrome-left,

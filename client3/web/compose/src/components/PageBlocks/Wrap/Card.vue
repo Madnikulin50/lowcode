@@ -68,6 +68,11 @@
         class="card-body p-0 flex-fill fixed-corner-container"
         :class="[bodyClass, { 'overflow-auto': scrollableBody }]"
       >
+        <block-help-button
+          v-if="!ownsOwnHelpButton"
+          :block="block"
+          :offset="helpOffset"
+        />
         <slot />
       </div>
 
@@ -83,6 +88,10 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import BlockHelpButton from '../Shared/BlockHelpButton.vue'
+
+const BRAIN_KINDS = new Set(['RecordList', 'Record'])
+const OWN_HELP_KINDS = new Set(['Chart', 'Metric', 'Record', 'RuleChain'])
 
 const $auth = window.__auth
 const route = useRoute()
@@ -126,6 +135,12 @@ const isAnotherBlockMagnified = computed(() => {
 
 const showMagnifyButton = computed(() => {
   return (props.block?.options?.magnifyOption || isBlockMagnified.value) && !isAnotherBlockMagnified.value
+})
+
+const ownsOwnHelpButton = computed(() => OWN_HELP_KINDS.has(props.block?.kind))
+
+const helpOffset = computed(() => {
+  return BRAIN_KINDS.has(props.block?.kind) && !props.block?.options?.hideBrainButton
 })
 
 const showHeader = computed(() => {

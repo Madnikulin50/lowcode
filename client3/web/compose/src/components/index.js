@@ -2,6 +2,7 @@ import { FontAwesomeIcon, FontAwesomeLayers } from '@fortawesome/vue-fontawesome
 import PortalVue from 'portal-vue'
 import './faIcons'
 import { components } from 'corteza-lib/vue/dist'
+import { CHelpTrigger, CHelpPanel, CHelpEditor } from 'corteza-lib/vue/src/components/help'
 import CInputSelect from 'corteza-lib/vue/src/components/input/CInputSelect.vue'
 
 import ECharts from 'vue-echarts'
@@ -83,6 +84,9 @@ export default {
     app.component('c-input-checkbox', components.CInputCheckbox)
     app.component('c-button-submit', components.CButtonSubmit)
     app.component('c-hint', components.CHint)
+    app.component('c-help-trigger', CHelpTrigger)
+    app.component('c-help-panel', CHelpPanel)
+    app.component('c-help-editor', CHelpEditor)
     app.component('c-input-select', CInputSelect)
     app.component('c-form-table-wrapper', components.CFormTableWrapper)
     app.component('c-webcam', components.CWebcam)

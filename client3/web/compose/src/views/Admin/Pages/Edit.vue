@@ -172,6 +172,21 @@
             </div>
           </div>
           <div class="col-12">
+            <div class="mb-3 p-3 border rounded bg-light">
+              <page-help-fields
+                :page="page"
+                :namespace="namespace"
+              >
+                <template #append>
+                  <page-translator
+                    v-model:page="page"
+                    highlight-key="config.help"
+                  />
+                </template>
+              </page-help-fields>
+            </div>
+          </div>
+          <div class="col-12">
             <div class="mb-3">
               <label class="form-label text-primary">
                 {{ $t('prompt.label') }}
@@ -1286,6 +1301,8 @@ import { components, handle } from 'corteza-lib/vue/dist'
 import { htmlToMarkdown, markdownToHtml } from '../../../lib/markdown'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
+import PageHelpFields from 'corteza-webapp-compose/src/components/Admin/Page/PageHelpFields.vue'
+import { hydratePageDocs } from '../../../help/appDocs'
 import PageLayoutTranslator from 'corteza-webapp-compose/src/components/Admin/PageLayout/PageLayoutTranslator'
 import pages from 'corteza-webapp-compose/src/mixins/pages'
 import { isEqual } from 'lodash'
@@ -1638,7 +1655,10 @@ function fetchPage (pageID = props.pageID) {
 
   store.dispatch('page/findByID', { namespaceID, pageID, force: true }).then((p) => {
     page.value = p.clone()
-    initialPageState.value = p.clone()
+    if (!page.value.config) page.value.config = {}
+    if (page.value.config.help == null) page.value.config.help = ''
+    hydratePageDocs(props.namespace, page.value)
+    initialPageState.value = page.value.clone()
     document.title = t('label.app-name.page.edit', { label: p.title || p.handle, interpolation: { escapeValue: false } })
     return fetchAttachments()
   }).then(fetchLayouts)

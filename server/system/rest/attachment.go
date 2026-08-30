@@ -107,6 +107,11 @@ func (ctrl Attachment) serve(ctx context.Context, attachmentID uint64, preview, 
 			return
 		}
 
+		if att, err = ctrl.attachment.RefreshStaleAvatarInitials(ctx, att); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		var fh io.ReadSeekCloser
 
 		if preview {
@@ -131,7 +136,15 @@ func (ctrl Attachment) serve(ctx context.Context, attachmentID uint64, preview, 
 			w.Header().Add("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
 		}
 
-		http.ServeContent(w, req, name, att.CreatedAt, fh)
+		if att.Kind == types.AttachmentKindAvatarInitials || (att.Meta.Labels != nil && att.Meta.Labels["key"] == types.AttachmentKindAvatarInitials) {
+			w.Header().Set("Cache-Control", "no-cache")
+		}
+
+		mod := att.CreatedAt
+		if att.UpdatedAt != nil {
+			mod = *att.UpdatedAt
+		}
+		http.ServeContent(w, req, name, mod, fh)
 	}, nil
 }
 

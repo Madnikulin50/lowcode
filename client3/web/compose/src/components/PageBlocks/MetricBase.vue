@@ -28,6 +28,11 @@
       >
         <font-awesome-icon :icon="['fas', 'brain']" />
       </button>
+      <block-help-button
+        :block="block"
+        variant="metric"
+        :offset="!block.options?.hideBrainButton"
+      />
 
       <!-- Record-style layout -->
       <div
@@ -201,6 +206,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, inject } from 'vue'
 import { debounce } from 'lodash'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
+import BlockHelpButton from './Shared/BlockHelpButton.vue'
 import MetricItem from './Metric/Item'
 import numeral from 'numeral'
 import moment from 'moment'

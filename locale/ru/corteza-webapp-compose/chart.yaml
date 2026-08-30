@@ -293,6 +293,13 @@ import: 'Импорт диаграмм:'
 newLabel: 'Создать новую диаграмму:'
 name: Имя диаграммы *
 handle: Дескриптор
+description:
+  label: Описание
+  placeholder: Краткое описание на блоке графика
+help:
+  label: Справка
+  description: Необязательный Markdown по иконке справки
+  placeholder: Опишите, что показывает этот график
 generalSettings: Основные настройки
 notification:
   loadFailed: Ошибка загрузки диаграммы

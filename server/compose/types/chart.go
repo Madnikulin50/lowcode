@@ -37,6 +37,10 @@ type (
 		NoAnimation bool                   `json:"noAnimation,omitempty"`
 		Gradient    string                 `json:"gradient,omitempty"`
 		Toolbox     map[string]interface{} `json:"toolbox,omitempty"`
+
+		// Warning: values of these fields are now handled via resource-translation facility
+		Description string `json:"description,omitempty"`
+		Help        string `json:"help,omitempty"`
 	}
 
 	ChartConfigReport struct {

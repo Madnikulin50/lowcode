@@ -7,8 +7,21 @@
       >
         <div class="d-flex align-items-start gap-2">
           <div class="flex-grow-1 min-w-0">
-            <div class="ns-name text-truncate" :title="namespace?.name">
-              {{ namespace?.name || $t('sidebar.pickNamespace') }}
+            <div class="d-flex align-items-center gap-1 min-w-0">
+              <div class="ns-name text-truncate" :title="namespace?.name">
+                {{ namespace?.name || $t('sidebar.pickNamespace') }}
+              </div>
+              <c-help-trigger
+                v-if="nsHelp.app.html"
+                v-bind="nsHelp.triggerProps"
+              />
+            </div>
+            <div
+              v-if="namespace?.meta?.subtitle"
+              class="small text-muted text-truncate"
+              :title="namespace.meta.subtitle"
+            >
+              {{ namespace.meta.subtitle }}
             </div>
           </div>
           <button
@@ -135,6 +148,8 @@ import { NoID } from 'corteza-lib/js/dist'
 import { components, filter } from 'corteza-lib/vue/dist'
 import { Portal } from 'portal-vue'
 import { useStore } from '../../store'
+import { useHelp } from '../../composables/useHelp'
+import { namespaceHelpDocs } from '../../help/appDocs'
 const { CSidebarNavItems, CInputSearch } = components
 
 const props = defineProps({
@@ -151,6 +166,8 @@ const $AutomationAPI = window.__automationAPI
 
 const namespace = ref(undefined)
 const query = ref('')
+
+const nsHelp = useHelp('compose.namespace.edit', computed(() => namespaceHelpDocs(namespace.value)), { includeProduct: false })
 
 const moduleLoading = computed(() => store.module.loading)
 const chartLoading = computed(() => store.chart.loading)

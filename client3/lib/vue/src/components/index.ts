@@ -101,6 +101,12 @@ export {
 } from './hint'
 
 export {
+  CHelpTrigger,
+  CHelpPanel,
+  CHelpEditor,
+} from './help'
+
+export {
   CMap,
 } from './map'
 

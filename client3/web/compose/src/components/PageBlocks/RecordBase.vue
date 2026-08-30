@@ -18,6 +18,11 @@
       >
         <font-awesome-icon :icon="['fas', 'brain']" />
       </button>
+      <block-help-button
+        :block="block"
+        variant="metric"
+        :offset="!block.options?.hideBrainButton"
+      />
 
       <!-- Title / subtitle / badges -->
       <div
@@ -261,6 +266,7 @@ import axios from 'axios'
 import { usePageBlockBase } from './usePageBlockBase'
 import { useModuleStore } from 'corteza-webapp-compose/src/store/module'
 import Wrap from './Wrap/index.js'
+import BlockHelpButton from './Shared/BlockHelpButton.vue'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'
 import BulkEditModal from 'corteza-webapp-compose/src/components/Public/Record/BulkEdit/index.vue'
 
@@ -509,8 +515,11 @@ onBeforeUnmount(() => {
 .field-col > * { margin-left: 1rem; margin-right: 1rem; }
 .fixed-corner-container { position: relative; }
 .fixed-corner-button {
-  position: absolute; top: 3px; right: 0px;
-  transform: translateY(-50%); z-index: 10;
+  position: absolute;
+  top: 20px;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 10;
 }
 
 .rb-label {

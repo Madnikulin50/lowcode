@@ -292,6 +292,13 @@ import: 'Import chart(s):'
 newLabel: 'Create a new chart:'
 name: Chart name *
 handle: Handle
+description:
+  label: Description
+  placeholder: Short description shown on the chart block
+help:
+  label: Help
+  description: Optional Markdown shown when users open the help icon
+  placeholder: Explain what this chart shows
 generalSettings: General settings
 notification:
   loadFailed: Could not load chart

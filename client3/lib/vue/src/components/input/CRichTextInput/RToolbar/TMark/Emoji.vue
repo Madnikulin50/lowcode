@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import CEmojiPicker from '~corteza-vue/components/CEmojiPicker.vue'
+import CEmojiPicker from '../../../../CEmojiPicker.vue'
 
 let popoverCounter = 0
 

@@ -255,19 +255,24 @@ const lightModeVariables = {
   'sidebar-bg': '#FFFFFF',
   'topbar-bg': '#F3F5F7',
 }
+// Almost-black dark palette. Keep in sync with
+// client3/lib/vue/src/scss/dark.scss and server/pkg/provision/stylesheet.go.
+// Saving this screen writes ui.studio.themes, which compiles into custom.css
+// and overrides the client fallback — stale navy values here are why the
+// blue dark theme kept coming back.
 const darkModeVariables = {
-  black: '#FBF7F4',
-  white: '#0B344E',
-  primary: '#4e73df',
-  secondary: '#858796',
+  black: '#EDEDED',
+  white: '#121212',
+  primary: '#6E8FF0',
+  secondary: '#9A9A9A',
   success: '#43AA8B',
   warning: '#E27646',
-  danger: '#4e73df',
-  light: '#23495F',
-  'extra-light': '#3E5A6F',
-  'body-bg': '#092B40',
-  'sidebar-bg': '#0B344E',
-  'topbar-bg': '#092B40',
+  danger: '#F2555A',
+  light: '#1A1A1A',
+  'extra-light': '#242424',
+  'body-bg': '#0A0A0A',
+  'sidebar-bg': '#121212',
+  'topbar-bg': '#121212',
 }
 
 const activeTab = ref('general')

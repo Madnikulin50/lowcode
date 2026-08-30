@@ -91,6 +91,10 @@ type (
 	}
 
 	PageConfig struct {
+		// Optional markdown help shown to users in the page header.
+		// Warning: value of this field is now handled via resource-translation facility
+		Help string `json:"help,omitempty"`
+
 		// How page is presented in the navigation
 		NavItem struct {
 			// Expanded menu

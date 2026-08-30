@@ -163,6 +163,25 @@ func (svc resourceTranslationsManager) Chart(ctx context.Context, namespaceID ui
 		return nil, err
 	}
 
+	var k types.LocaleKey
+	for _, tag := range svc.locale.Tags() {
+		k = types.LocaleKeyChartConfigDescription
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+
+		k = types.LocaleKeyChartConfigHelp
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+	}
+
 	tmp, err := svc.chartExtended(ctx, res)
 	return append(out, tmp...), err
 }
@@ -241,6 +260,14 @@ func (svc resourceTranslationsManager) Namespace(ctx context.Context, id uint64)
 			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
 		})
 
+		k = types.LocaleKeyNamespaceMetaHelp
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+
 	}
 
 	return out, nil
@@ -269,6 +296,14 @@ func (svc resourceTranslationsManager) Page(ctx context.Context, namespaceID uin
 		})
 
 		k = types.LocaleKeyPageDescription
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+
+		k = types.LocaleKeyPageConfigHelp
 		out = append(out, &locale.ResourceTranslation{
 			Resource: res.ResourceTranslation(),
 			Lang:     tag.String(),

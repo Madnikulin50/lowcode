@@ -55,6 +55,8 @@ type (
 		CreateApplicationAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker, labels map[string]string) (*types.Attachment, error)
 		CreateAuthAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker, labels map[string]string) (*types.Attachment, error)
 		CreateAvatarInitialsAttachment(ctx context.Context, initials string, bgColor string, textColor string) (att *types.Attachment, err error)
+		RewriteAvatarInitialsAttachment(ctx context.Context, att *types.Attachment, initials string, bgColor string, textColor string) (*types.Attachment, error)
+		RefreshStaleAvatarInitials(ctx context.Context, att *types.Attachment) (*types.Attachment, error)
 		OpenOriginal(att *types.Attachment) (io.ReadSeekCloser, error)
 		OpenPreview(att *types.Attachment) (io.ReadSeekCloser, error)
 		DeleteByID(ctx context.Context, ID uint64) error
@@ -272,7 +274,7 @@ func (svc attachment) CreateAvatarInitialsAttachment(ctx context.Context, initia
 	dc.SetHexColor(bgColor)
 	dc.Clear()
 
-	fontBytes, err := svc.processFontsFile()
+	fontBytes, fontPath, err := svc.loadAvatarFont(initials)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +306,10 @@ func (svc attachment) CreateAvatarInitialsAttachment(ctx context.Context, initia
 		att.ID = nextID()
 		att.CreatedAt = *now()
 		att.Meta.Original.Extension = "png"
-		att.Meta.Labels = map[string]string{"key": types.AttachmentKindAvatarInitials}
+		att.Meta.Labels = map[string]string{
+			"key":  types.AttachmentKindAvatarInitials,
+			"font": fontPath,
+		}
 
 		if att.Meta.Original.Image == nil {
 			att.Meta.Original.Image = &types.AttachmentImageMeta{}
@@ -336,6 +341,122 @@ func (svc attachment) CreateAvatarInitialsAttachment(ctx context.Context, initia
 	}()
 
 	return att, nil
+}
+
+func (svc attachment) renderAvatarInitials(initials, bgColor, textColor string) (img image.Image, fontPath string, err error) {
+	if bgColor == "" {
+		bgColor = svc.opt.AvatarInitialsBackgroundColor
+	}
+	if textColor == "" {
+		textColor = svc.opt.AvatarInitialsColor
+	}
+
+	dc := gg.NewContext(avatarWidth, avatarHeight)
+	dc.SetHexColor(bgColor)
+	dc.Clear()
+
+	fontBytes, fontPath, err := svc.loadAvatarFont(initials)
+	if err != nil {
+		return nil, "", err
+	}
+
+	f, err := truetype.Parse(fontBytes)
+	if err != nil {
+		return nil, "", err
+	}
+
+	face := truetype.NewFace(f, &truetype.Options{
+		Size:    120,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+
+	dc.SetFontFace(face)
+	dc.SetHexColor(textColor)
+	textWidth, textHeight := dc.MeasureString(initials)
+	dc.DrawString(initials, (avatarWidth-textWidth)/2, (avatarHeight+textHeight)/2.2)
+	return dc.Image(), fontPath, nil
+}
+
+func (svc attachment) saveAvatarInitialsImage(att *types.Attachment, img image.Image) error {
+	var buf = &bytes.Buffer{}
+	if err := imaging.Encode(buf, img, imaging.PNG); err != nil {
+		return err
+	}
+	if err := svc.files.Save(att.Url, buf); err != nil {
+		aaProps := &attachmentActionProps{attachment: att}
+		aaProps.setUrl(att.Url)
+		return AttachmentErrFailedToStoreFile(aaProps).Wrap(err)
+	}
+	return nil
+}
+
+func (svc attachment) RewriteAvatarInitialsAttachment(ctx context.Context, att *types.Attachment, initials string, bgColor string, textColor string) (*types.Attachment, error) {
+	if att == nil {
+		return nil, fmt.Errorf("missing avatar attachment")
+	}
+	if bgColor == "" {
+		bgColor = svc.opt.AvatarInitialsBackgroundColor
+	}
+	if textColor == "" {
+		textColor = svc.opt.AvatarInitialsColor
+	}
+
+	img, fontPath, err := svc.renderAvatarInitials(initials, bgColor, textColor)
+	if err != nil {
+		return nil, err
+	}
+
+	if att.Meta.Labels == nil {
+		att.Meta.Labels = map[string]string{}
+	}
+	att.Meta.Labels["key"] = types.AttachmentKindAvatarInitials
+	att.Meta.Labels[avatarFontLabel] = fontPath
+	if att.Meta.Original.Image == nil {
+		att.Meta.Original.Image = &types.AttachmentImageMeta{}
+	}
+	att.Meta.Original.Image.Initial = initials
+	att.Meta.Original.Image.InitialColor = textColor
+	att.Meta.Original.Image.BackgroundColor = bgColor
+	att.UpdatedAt = now()
+
+	if err = svc.saveAvatarInitialsImage(att, img); err != nil {
+		return nil, err
+	}
+	if err = store.UpdateAttachment(ctx, svc.store, att); err != nil {
+		return nil, err
+	}
+	return att, nil
+}
+
+func (svc attachment) RefreshStaleAvatarInitials(ctx context.Context, att *types.Attachment) (*types.Attachment, error) {
+	if att == nil {
+		return att, nil
+	}
+	isInitials := att.Kind == types.AttachmentKindAvatarInitials
+	if att.Meta.Labels != nil && att.Meta.Labels["key"] == types.AttachmentKindAvatarInitials {
+		isInitials = true
+	}
+	if !isInitials {
+		return att, nil
+	}
+
+	initials := ""
+	bgColor := svc.opt.AvatarInitialsBackgroundColor
+	textColor := svc.opt.AvatarInitialsColor
+	if att.Meta.Original.Image != nil {
+		initials = att.Meta.Original.Image.Initial
+		if att.Meta.Original.Image.BackgroundColor != "" {
+			bgColor = att.Meta.Original.Image.BackgroundColor
+		}
+		if att.Meta.Original.Image.InitialColor != "" {
+			textColor = att.Meta.Original.Image.InitialColor
+		}
+	}
+	if initials == "" || !avatarInitialsFontStale(att, initials) {
+		return att, nil
+	}
+	return svc.RewriteAvatarInitialsAttachment(ctx, att, initials, bgColor, textColor)
 }
 
 func (svc attachment) create(ctx context.Context, name string, size int64, fh io.ReadSeeker, att *types.Attachment) (err error) {
@@ -525,11 +646,50 @@ func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment
 	return svc.files.Save(att.PreviewUrl, buf)
 }
 
-// processFontsFile checks if the file exists and has the correct file extension,
-// It validates the file path provided in the AVATAR_INITIALS_FONT_PATH environment variable,
-// then reads and returns the file content
-func (svc attachment) processFontsFile() (fontBytes []byte, err error) {
-	ext := strings.ToLower(filepath.Ext(svc.opt.AvatarInitialsFontPath))
+const (
+	avatarFontMontserrat = "fonts/Montserrat-Regular.ttf"
+	avatarFontPoppins    = "fonts/Poppins-Regular.ttf"
+	avatarFontLabel      = "font"
+)
+
+func avatarInitialsNeedExtendedScript(s string) bool {
+	for _, r := range s {
+		if r > 0x7F {
+			return true
+		}
+	}
+	return false
+}
+
+func fontCovers(fontBytes []byte, text string) bool {
+	f, err := truetype.Parse(fontBytes)
+	if err != nil {
+		return false
+	}
+	for _, r := range text {
+		if r == ' ' {
+			continue
+		}
+		if f.Index(r) == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func avatarInitialsFontStale(att *types.Attachment, initials string) bool {
+	font := ""
+	if att != nil && att.Meta.Labels != nil {
+		font = att.Meta.Labels[avatarFontLabel]
+	}
+	if font == "" {
+		return true
+	}
+	return font == avatarFontPoppins && avatarInitialsNeedExtendedScript(initials)
+}
+
+func (svc attachment) readFontFile(fontPath string) (fontBytes []byte, err error) {
+	ext := strings.ToLower(filepath.Ext(fontPath))
 	if ext != ".ttf" {
 		err = fmt.Errorf("invalid font file extension, please provide a truetype font (.ttf) file")
 		svc.logger.Error(err.Error())
@@ -537,7 +697,7 @@ func (svc attachment) processFontsFile() (fontBytes []byte, err error) {
 	}
 
 	assetsFile := assets.Files(svc.logger, "")
-	fontFile, err := assetsFile.Open(svc.opt.AvatarInitialsFontPath)
+	fontFile, err := assetsFile.Open(fontPath)
 	if err != nil {
 		err = fmt.Errorf("%w : please ensure that the correct AVATAR_INITIALS_FONT_PATH is set", err)
 		svc.logger.Error(err.Error())
@@ -552,4 +712,50 @@ func (svc attachment) processFontsFile() (fontBytes []byte, err error) {
 	}
 
 	return fontBytes, nil
+}
+
+// loadAvatarFont returns a TrueType font that can render the given initials.
+// Configured path is tried first, then Montserrat (Cyrillic), then Poppins.
+func (svc attachment) loadAvatarFont(initials string) (fontBytes []byte, fontPath string, err error) {
+	seen := map[string]bool{}
+	candidates := []string{
+		svc.opt.AvatarInitialsFontPath,
+		avatarFontMontserrat,
+		avatarFontPoppins,
+	}
+
+	var firstBytes []byte
+	var firstPath string
+	var lastErr error
+
+	for _, p := range candidates {
+		if p == "" || seen[p] {
+			continue
+		}
+		seen[p] = true
+
+		b, e := svc.readFontFile(p)
+		if e != nil {
+			lastErr = e
+			continue
+		}
+		if firstBytes == nil {
+			firstBytes, firstPath = b, p
+		}
+		if initials == "" || fontCovers(b, initials) {
+			return b, p, nil
+		}
+		svc.logger.Warn("avatar initials font missing glyphs, trying fallback",
+			zap.String("font", p),
+			zap.String("initials", initials),
+		)
+	}
+
+	if firstBytes != nil {
+		return firstBytes, firstPath, nil
+	}
+	if lastErr == nil {
+		lastErr = fmt.Errorf("no avatar initials font available")
+	}
+	return nil, "", lastErr
 }

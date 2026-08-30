@@ -13,6 +13,7 @@ interface Meta {
   subtitle: string;
   prompt: string;
   description: string;
+  help: string;
   hideSidebar: boolean;
   // Temporary icon & logo URLs
   // @todo rework this when we rework attachment management

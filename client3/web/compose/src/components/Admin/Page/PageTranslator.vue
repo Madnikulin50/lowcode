@@ -125,6 +125,12 @@ const updater = computed(() => {
           props.page.description = tr.message
         }
 
+        tr = find('config.help')
+        if (tr !== undefined) {
+          if (!props.page.config) props.page.config = {}
+          props.page.config.help = tr.message
+        }
+
         if (props.page.moduleID && props.page.moduleID !== NoID) {
           tr = find('recordToolbar.new.label')
           if (tr) props.page.config.buttons.new.label = tr.message

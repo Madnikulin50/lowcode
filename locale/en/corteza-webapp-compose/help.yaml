@@ -35,3 +35,91 @@
     'left-mouse-button': left mouse button
 'keyboard-shortcuts-label': Keyboard shortcuts
 'mac-users': If using a MAC keyboard, replace Ctrl with the CMD key
+panel:
+  title: Help
+  app: About this
+  product: How to use
+  close: Close
+bar:
+  open: Help
+  empty: Open help to see how to use this page
+topics:
+  compose:
+    namespaces:
+      list:
+        title: Namespaces
+        hint: Choose a workspace to open its pages
+        body: |
+          A namespace is an application workspace: pages, modules, and charts live here.
+
+          - Open a card to enter the workspace
+          - Use **Manage** to create, import, or disable namespaces
+          - Subtitle and description appear on the card; the **?** icon opens longer help if the author added it
+    namespace:
+      edit:
+        title: Edit namespace
+        hint: Name, appearance, and help for this workspace
+        body: |
+          Set the name and short URL slug, then describe the workspace for users.
+
+          - **Subtitle** is a one-line hint (sidebar and cards)
+          - **Description** is a short summary on the namespace card
+          - **Help** is optional Markdown shown when users open **?**
+          - **AI prompt** is for the assistant only, not shown as help
+    pages:
+      list:
+        title: Pages
+        hint: Build the navigation tree of this namespace
+        body: |
+          Pages are screens users open from the sidebar.
+
+          - Drag pages to reorder or nest them
+          - A page can be a regular layout or a record page bound to a module
+          - Use **Page builder** to place blocks (lists, charts, content)
+    page:
+      edit:
+        title: Edit page
+        hint: Title, visibility, description, and help
+        body: |
+          Configure how the page appears in navigation.
+
+          - **Description** is a short summary shown next to the page title help
+          - **Help** is optional Markdown for users of this page
+          - Visibility and icon control the sidebar item
+      builder:
+        title: Page builder
+        hint: Add and arrange blocks on the page
+        body: |
+          The builder is a grid of blocks.
+
+          - Click **+** to add a block type
+          - Drag the header to move, drag the corner to resize
+          - Each block has its own title and description in the configurator
+      view:
+        title: Page
+        hint: The Help button on the page opens a description of this screen
+        body: |
+          This is a live page in the namespace.
+
+          - The strip under the title is a short description of the screen
+          - **Help** opens the full notes for this page
+          - Editors see **Page builder** and **Edit** in the top bar
+    charts:
+      list:
+        title: Charts
+        hint: Visual reports over module records
+        body: |
+          Charts read records from a module and draw metrics over dimensions.
+
+          - Create a chart, then place it on a page with a Chart block
+          - Description and help on the chart are shown to users on that block
+    chart:
+      edit:
+        title: Edit chart
+        hint: Name, description, reports, and help
+        body: |
+          Pick a module, then add dimensions (grouping) and metrics (values).
+
+          - **Description** is a short summary on the chart block
+          - **Help** is optional Markdown behind the **?** icon
+          - Reports define what is plotted; toolbox options add export and table views

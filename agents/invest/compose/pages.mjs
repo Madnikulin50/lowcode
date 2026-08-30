@@ -2,6 +2,7 @@ import {
   block, recordList, recordBlock, metricBlock, metricItem, ruleChain,
   organizer, commentBlock, withBlockIDs, pageIcon, withRoles,
 } from './helpers.mjs'
+import { INVEST_PAGE_DOCS } from '../../../client3/web/compose/src/help/appDocs.js'
 
 const recID = '${recordID}'
 
@@ -43,7 +44,17 @@ export function buildPages ({ modules, charts, roles = {} }) {
     hiddenRecord('Участник', 'project-member', m.project_members, 12, ['project', 'user', 'role']),
     hiddenRecord('Платёж', 'cashflow-item', m.cashflow_items, 72, ['project', 'budget_line', 'date', 'amount', 'direction', 'description']),
     hiddenRecord('Запись журнала', 'change-log-item', m.change_log, 62, ['rfc', 'project', 'summary', 'old_budget', 'new_budget', 'old_end', 'new_end', 'actor', 'changed_at']),
-  ]
+  ].map(withPageDocs)
+}
+
+function withPageDocs (page) {
+  const docs = INVEST_PAGE_DOCS[page.handle]
+  if (!docs) return page
+  return {
+    ...page,
+    description: docs.description,
+    config: { ...(page.config || {}), help: docs.help },
+  }
 }
 
 function dashboardPage (m, charts, vis = {}) {

@@ -276,6 +276,9 @@ file:
     label: Файл block
 general:
   descriptionLabel: Описание
+  helpLabel: Справка блока
+  helpPlaceholder: Для чего этот блок и как им пользоваться
+  helpDescription: Открывается по круглой кнопке «?» на блоке (рядом с кнопкой ИИ).
   descriptionPlaceholder: Описание блока
   headerStyle: Цвет заголовка
   magnifyLabel: Кнопка увеличения
@@ -347,6 +350,7 @@ general:
   title: Добавить новый блок
   titleLabel: Заголовок
   titlePlaceholder: Заголовок блока
+  pageHelpHint: Справка всей страницы — в форме страницы (карандаш) или кнопкой «Справка» в конструкторе. Здесь только заголовок и описание блока.
   tooltip:
     dragAndDrop: Переместите для изменения порядка
     translations: Поле translations
@@ -1312,6 +1316,8 @@ ai:
     title: ИИ
   hideBrainButton:
     label: Скрыть кнопку ИИ на блоке
+  hideHelpButton:
+    label: Скрыть кнопку справки на блоке
   prompt:
     label: Запрос
     placeholder: Введите настройки запроса

@@ -101,6 +101,25 @@
                 <code>${ownerID}</code>
                 <span><code>${userID}</code>, <code>${user.name}</code></span>
               </i18next>
+              <div class="form-text mt-2">
+                {{ $t('general.pageHelpHint') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">{{ $t('general.helpLabel') }}</label>
+              <textarea
+                v-model="block.options.help"
+                data-test-id="input-block-help"
+                class="form-control"
+                rows="5"
+                :placeholder="$t('general.helpPlaceholder')"
+              />
+              <div class="form-text">
+                {{ $t('general.helpDescription') }}
+              </div>
             </div>
           </div>
 
@@ -346,6 +365,16 @@
                 />
                 <label class="form-check-label fw-semibold" for="hideBrainButton">{{ hideBrainButtonLabel }}</label>
               </div>
+              <div class="form-check form-switch mb-2">
+                <input
+                  id="hideHelpButton"
+                  v-model="block.options.hideHelpButton"
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                />
+                <label class="form-check-label fw-semibold" for="hideHelpButton">{{ hideHelpButtonLabel }}</label>
+              </div>
 
               <label class="form-label fw-semibold">{{ $t('ai.prompt.label') }}</label>
               <div class="input-group">
@@ -420,6 +449,13 @@ const hideBrainButtonLabel = computed(() => {
   if (v && !String(v).includes('hideBrainButton')) return v
   const loc = String(locale.value || '').split('-')[0]
   return loc === 'en' ? 'Hide AI button on block' : 'Скрыть кнопку ИИ на блоке'
+})
+
+const hideHelpButtonLabel = computed(() => {
+  const v = t('ai.hideHelpButton.label')
+  if (v && !String(v).includes('hideHelpButton')) return v
+  const loc = String(locale.value || '').split('-')[0]
+  return loc === 'en' ? 'Hide help button on block' : 'Скрыть кнопку справки на блоке'
 })
 
 const props = defineProps({
