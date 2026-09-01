@@ -16,6 +16,14 @@ func TestAISettingsDecodeKV(t *testing.T) {
 		"ai.roles.mcp-agent":       sqlTypes.JSONText(`"qwen3:8b"`),
 		"ai.roles.automation-chat": sqlTypes.JSONText(`""`),
 		"ai.roles.rulesgo-ai":      sqlTypes.JSONText(`"qwen3:8b"`),
+		"ai.agents": sqlTypes.JSONText(`[
+			{"handle":"ops","enabled":true,"description":"Ops","prompt":"Be brief.","model":"mcp.agent","toolkits":["cmdb","backup"],"maxSteps":6,"confirm":false},
+			{"handle":"off","enabled":false,"description":"Disabled"}
+		]`),
+		"ai.toolkits": sqlTypes.JSONText(`[
+			{"handle":"cmdb","url":"http://cmdb:8085/api","enabled":true,"token":"s3cret"},
+			{"handle":"off","url":"http://off:9/api","enabled":false}
+		]`),
 	}
 
 	var aux AppSettings
@@ -30,6 +38,23 @@ func TestAISettingsDecodeKV(t *testing.T) {
 	require.Equal(t, "qwen3:8b", aux.AI.Roles.MCPAgent)
 	require.Equal(t, "", aux.AI.Roles.AutomationChat)
 	require.Equal(t, "qwen3:8b", aux.AI.Roles.RulesgoAI)
+	require.Len(t, aux.AI.Agents, 2)
+	require.Equal(t, "ops", aux.AI.Agents[0].Handle)
+	require.NotNil(t, aux.AI.Agents[0].Enabled)
+	require.True(t, *aux.AI.Agents[0].Enabled)
+	require.Equal(t, []string{"cmdb", "backup"}, aux.AI.Agents[0].Toolkits)
+	require.Equal(t, 6, aux.AI.Agents[0].MaxSteps)
+	require.False(t, aux.AI.Agents[0].Confirm)
+	require.NotNil(t, aux.AI.Agents[1].Enabled)
+	require.False(t, *aux.AI.Agents[1].Enabled)
+	require.Len(t, aux.AI.Toolkits, 2)
+	require.Equal(t, "cmdb", aux.AI.Toolkits[0].Handle)
+	require.Equal(t, "http://cmdb:8085/api", aux.AI.Toolkits[0].URL)
+	require.Equal(t, "s3cret", aux.AI.Toolkits[0].Token)
+	require.NotNil(t, aux.AI.Toolkits[0].Enabled)
+	require.True(t, *aux.AI.Toolkits[0].Enabled)
+	require.NotNil(t, aux.AI.Toolkits[1].Enabled)
+	require.False(t, *aux.AI.Toolkits[1].Enabled)
 }
 
 func TestUIMapSettingsDecodeKV(t *testing.T) {

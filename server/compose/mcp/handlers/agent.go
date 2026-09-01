@@ -27,7 +27,7 @@ func SetAgentClient(c *chat.Client) {
 func initAgents(ctx context.Context, s *server.MCPServer) {
 	s.AddTool(mcp.NewTool("agent_call",
 		mcp.WithDescription("Call an AI agent by name to perform a task. Agents have access to all data and tools."),
-		mcp.WithString("agent", mcp.Description("Agent name: crud-agent, assistant, or custom agent"), mcp.Required()),
+		mcp.WithString("agent", mcp.Description("Agent handle from agent_list (crud-agent, assistant, cmdb-operator, or a custom catalog agent)"), mcp.Required()),
 		mcp.WithString("task", mcp.Description("Task description for the agent"), mcp.Required()),
 		mcp.WithString("context", mcp.Description("JSON object with additional context data")),
 	), handleAgentCall)
@@ -70,6 +70,6 @@ func handleAgentList(ctx context.Context, request mcp.CallToolRequest) (*mcp.Cal
 	}
 
 	return jsonResult(map[string]interface{}{
-		"agents": AgentRegistry.List(),
+		"agents": AgentRegistry.ListInfo(),
 	}), nil
 }

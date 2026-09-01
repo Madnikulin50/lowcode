@@ -143,3 +143,42 @@ $dark-palette: (
   color: var(--black);
   border-color: var(--extra-light);
 }
+
+// Keep dismiss buttons in the top-right corner. Bootstrap 5 relies on
+// margin-left: auto; a global rtlcss pass flips that to margin-right: auto
+// and parks the control on the left.
+/*!rtl:begin:ignore*/
+.modal-header .btn-close {
+  margin-left: auto;
+  margin-right: calc(-0.5 * var(--bs-modal-header-padding-x, 1rem));
+  align-self: flex-start;
+}
+
+.offcanvas-header .btn-close {
+  margin-left: auto;
+  margin-right: calc(-0.5 * var(--bs-offcanvas-padding-x, 1rem));
+  align-self: flex-start;
+}
+
+// Tenant custom.css still ships Bootstrap 4 .form-check (absolute input,
+// 1.25rem gutter). Combined with an rtlcss-flipped Bootstrap 5 .form-switch
+// that parks padding on the right, the 2em track overlaps the label.
+.form-switch {
+  padding-left: 2.5em;
+  padding-right: 0;
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  float: left;
+  width: 2em;
+  margin-top: 0.25em;
+  margin-left: -2.5em;
+  margin-right: 0;
+  background-position: left center;
+}
+
+.form-switch .form-check-input:checked {
+  background-position: right center;
+}
+/*!rtl:end:ignore*/

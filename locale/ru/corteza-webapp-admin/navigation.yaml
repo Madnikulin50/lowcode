@@ -11,6 +11,7 @@ system:
     authclients: Auth Clients
     connections: Соединения
     code-snippets: Code Snippets
+    ai: ИИ
     sensitivityLevel: Sensitivity Levels
     permissions: Права доступа
     queues: Messaging QueuesF

@@ -8,6 +8,14 @@
       :success="save.success"
       @submit="onSubmit"
     />
+    <c-ai-toolkits-editor
+      class="mt-3"
+      :can-manage="canManage"
+    />
+    <c-ai-agents-editor
+      class="mt-3"
+      :can-manage="canManage"
+    />
   </div>
 </template>
 
@@ -19,6 +27,8 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { cloneDeep } from 'lodash'
 import CAiModelsEditor from '../../../components/Settings/System/CAIModelsEditor.vue'
+import CAiToolkitsEditor from '../../../components/Settings/System/CAIToolkitsEditor.vue'
+import CAiAgentsEditor from '../../../components/Settings/System/CAIAgentsEditor.vue'
 
 const router = useRouter()
 const { t } = useI18n()

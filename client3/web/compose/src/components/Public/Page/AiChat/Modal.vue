@@ -308,7 +308,7 @@ onBeforeUnmount(() => {
   right: 0;
   bottom: 0;
   width: min(100vw, max(440px, 40vw));
-  z-index: 1045;
+  z-index: 1051;
   display: flex;
   flex-direction: column;
   background: var(--white, #fff);

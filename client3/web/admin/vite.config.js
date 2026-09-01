@@ -29,6 +29,19 @@ export default defineConfig({
       },
     },
     vue(),
+    {
+      name: 'fix-dxf-viewer-opentype',
+      enforce: 'pre',
+      transform (code, id) {
+        if (!id.includes('dxf-viewer')) return
+        if (!code.includes('from "opentype.js"') && !code.includes("from 'opentype.js'")) return
+        const fixed = code
+          .replace(/import opentype from ["']opentype\.js["']/, 'import { parse as opentypeParse } from "opentype.js"; const opentype = { parse: opentypeParse }')
+        if (fixed !== code) {
+          return fixed
+        }
+      },
+    },
   ],
   define: {
     WEBAPP: JSON.stringify('Admin'),
@@ -36,12 +49,17 @@ export default defineConfig({
     BUILD_TIME: JSON.stringify(new Date().toISOString()),
   },
   resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-      'corteza-webapp-admin': resolve(__dirname, '.'),
-      'corteza-lib/vue/dist': resolve(__dirname, '../../lib/vue/dist'),
-      'corteza-lib/js/dist': resolve(__dirname, '../../lib/js/dist'),
-    },
+    alias: [
+      { find: '@', replacement: resolve(__dirname, 'src') },
+      { find: 'corteza-webapp-admin', replacement: resolve(__dirname, '.') },
+      { find: 'corteza-lib/vue/dist', replacement: resolve(__dirname, '../../lib/vue/dist') },
+      { find: 'corteza-lib/js/dist', replacement: resolve(__dirname, '../../lib/js/dist') },
+      // dxf-viewer does `import opentype from "opentype.js"`, but opentype.mjs
+      // only has named exports. Match the bare specifier only so the shim can
+      // import the real file via opentype.js/dist/opentype.mjs.
+      { find: /^opentype\.js$/, replacement: resolve(__dirname, 'src/shims/opentype-default.js') },
+      { find: 'opentype.js/dist/opentype.mjs', replacement: resolve(__dirname, '../../lib/vue/node_modules/opentype.js/dist/opentype.mjs') },
+    ],
     modules: [
       resolve(__dirname, 'node_modules'),
       resolve(__dirname, '../../lib/vue/node_modules'),
@@ -50,6 +68,25 @@ export default defineConfig({
       'node_modules',
     ],
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+  },
+  optimizeDeps: {
+    exclude: ['dxf-viewer', 'opentype.js'],
+    esbuildOptions: {
+      plugins: [
+        {
+          name: 'opentype-default-export',
+          setup (build) {
+            build.onLoad({ filter: /[\\/]dxf-viewer[\\/].*DxfWorker\.js$/ }, (args) => {
+              const contents = readFileSync(args.path, 'utf8').replace(
+                /import opentype from ["']opentype\.js["']/,
+                'import { parse as opentypeParse } from "opentype.js"; const opentype = { parse: opentypeParse }',
+              )
+              return { contents, loader: 'js' }
+            })
+          },
+        },
+      ],
+    },
   },
   server: {
     proxy: {

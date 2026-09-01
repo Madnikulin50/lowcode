@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="hasAny"
+    v-if="help.hasAny"
     class="page-help-bar d-flex align-items-start gap-2 px-3 py-2 mb-2 rounded border bg-white"
   >
     <div class="flex-grow-1 min-w-0">
@@ -27,7 +27,7 @@
     </button>
     <c-help-panel
       v-model:open="open"
-      v-bind="triggerProps"
+      v-bind="help.panelProps"
     />
   </div>
 </template>
@@ -47,9 +47,9 @@ const { t } = useI18n({ useScope: 'global' })
 const open = ref(false)
 
 const docs = computed(() => pageHelpDocs(props.namespace, props.page))
-const { hasAny, triggerProps, app } = useHelp('compose.page.view', docs)
+const help = useHelp('compose.page.view', docs)
 
-const description = computed(() => app.value.description)
+const description = computed(() => help.app.description)
 
 function label (key, fallback) {
   const value = t(key)

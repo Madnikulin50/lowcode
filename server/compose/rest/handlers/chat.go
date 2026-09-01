@@ -21,6 +21,8 @@ type (
 		AskStream(context.Context, *request.ChatAsk, service.ChatStreamFunc) error
 		Models(context.Context) (interface{}, error)
 		DiscoverModels(context.Context) (interface{}, error)
+		Agents(context.Context) (interface{}, error)
+		ProbeToolkits(context.Context, string, string) (interface{}, error)
 		WarmUp(context.Context, *request.ChatAsk) error
 	}
 	Chat struct {
@@ -28,6 +30,8 @@ type (
 		AskStream      func(http.ResponseWriter, *http.Request)
 		Models         func(http.ResponseWriter, *http.Request)
 		DiscoverModels func(http.ResponseWriter, *http.Request)
+		Agents         func(http.ResponseWriter, *http.Request)
+		ProbeToolkits  func(http.ResponseWriter, *http.Request)
 		WarmUp         func(http.ResponseWriter, *http.Request)
 	}
 )
@@ -65,6 +69,38 @@ func NewChat(h ChatAPI) *Chat {
 				api.Send(w, r, map[string]any{
 					"error": err.Error(),
 				})
+				return
+			}
+			api.Send(w, r, payload)
+		},
+
+		Agents: func(w http.ResponseWriter, r *http.Request) {
+			payload, err := h.Agents(r.Context())
+			if err != nil {
+				api.Send(w, r, map[string]any{
+					"error": err.Error(),
+				})
+				return
+			}
+			api.Send(w, r, payload)
+		},
+
+		ProbeToolkits: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			var in struct {
+				URL   string `json:"url"`
+				Token string `json:"token"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&in)
+			if in.URL == "" {
+				in.URL = r.URL.Query().Get("url")
+			}
+			if in.Token == "" {
+				in.Token = r.URL.Query().Get("token")
+			}
+			payload, err := h.ProbeToolkits(r.Context(), in.URL, in.Token)
+			if err != nil {
+				api.Send(w, r, map[string]any{"error": err.Error()})
 				return
 			}
 			api.Send(w, r, payload)
@@ -155,6 +191,9 @@ func (h *Chat) MountRoutes(r chi.Router, middlewares ...func(http.Handler) http.
 		r.Use(middlewares...)
 		r.Get("/chat/models", h.Models)
 		r.Get("/chat/models/discover", h.DiscoverModels)
+		r.Get("/chat/agents", h.Agents)
+		r.Get("/chat/toolkits/probe", h.ProbeToolkits)
+		r.Post("/chat/toolkits/probe", h.ProbeToolkits)
 		r.Post("/chat/warmup", h.WarmUp)
 		r.Post("/namespace/{namespaceID}/prompt", h.Ask)
 		r.Post("/namespace/{namespaceID}/page/{pageID}/prompt", h.Ask)

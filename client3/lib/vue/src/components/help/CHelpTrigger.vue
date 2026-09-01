@@ -3,6 +3,7 @@
     v-if="hintOnly"
     ref="anchor"
     class="d-flex align-items-center ms-1 c-help-trigger"
+    v-bind="attrs"
     :aria-label="hoverText"
     @mouseenter="onEnter"
     @mouseleave="onLeave"
@@ -18,6 +19,7 @@
     v-else-if="hasContent"
     ref="anchor"
     class="d-inline-flex align-items-center c-help-trigger"
+    v-bind="attrs"
     @mouseenter="onEnter"
     @mouseleave="onLeave"
     @focusin="onEnter"
@@ -63,8 +65,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useAttrs } from 'vue'
 import CHelpPanel from './CHelpPanel.vue'
+
+defineOptions({ inheritAttrs: false })
+
+const attrs = useAttrs()
 
 const props = defineProps({
   icon: {

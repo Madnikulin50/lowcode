@@ -1,14 +1,14 @@
 <template>
   <c-help-trigger
-    v-if="hasAny"
+    v-if="help.hasAny"
     class="ms-1"
     icon-class="text-dark"
-    v-bind="triggerProps"
+    v-bind="help.triggerProps"
   />
 </template>
 
 <script setup>
 import { useHelp } from '../../composables/useHelp'
 
-const { hasAny, triggerProps } = useHelp()
+const help = useHelp()
 </script>

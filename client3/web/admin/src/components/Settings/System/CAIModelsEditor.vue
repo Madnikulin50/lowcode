@@ -392,6 +392,8 @@ function onSave () {
     unique.push(e)
   }
   local['ai.catalog'] = unique
+  delete local['ai.agents']
+  delete local['ai.toolkits']
   emit('submit', cloneDeep(local))
 }
 </script>

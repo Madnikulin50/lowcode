@@ -416,6 +416,12 @@ type (
 		Catalog []AIModelCatalogEntry `kv:"catalog,final" json:"catalog"`
 
 		Roles AIModelRoles `kv:"roles" json:"roles"`
+
+		// Optional named AI agents. Empty = built-in catalog (crud-agent, assistant, …).
+		Agents []AIAgentEntry `kv:"agents,final" json:"agents"`
+
+		// External HTTP toolkits (GET {url}/meta). Empty = env seed (CMDB/BACKUP/INVEST_AGENT_URL).
+		Toolkits []AIToolkitEntry `kv:"toolkits,final" json:"toolkits"`
 	}
 
 	AIModelCatalogEntry struct {
@@ -430,6 +436,24 @@ type (
 		MCPAgent       string `kv:"mcp-agent" json:"mcpAgent"`
 		AutomationChat string `kv:"automation-chat" json:"automationChat"`
 		RulesgoAI      string `kv:"rulesgo-ai" json:"rulesgoAi"`
+	}
+
+	AIAgentEntry struct {
+		Handle      string   `json:"handle"`
+		Enabled     *bool    `json:"enabled,omitempty"`
+		Description string   `json:"description,omitempty"`
+		Prompt      string   `json:"prompt,omitempty"`
+		Model       string   `json:"model,omitempty"`
+		Toolkits    []string `json:"toolkits,omitempty"`
+		MaxSteps    int      `json:"maxSteps,omitempty"`
+		Confirm     bool     `json:"confirm,omitempty"`
+	}
+
+	AIToolkitEntry struct {
+		Handle  string `json:"handle"`
+		URL     string `json:"url"`
+		Enabled *bool  `json:"enabled,omitempty"`
+		Token   string `json:"token,omitempty"`
 	}
 
 	ExternalAuthProviderSet []*ExternalAuthProvider

@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/madnikulin50/lowcode/server/compose/mcp/handlers"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
 )
 
@@ -52,8 +53,9 @@ func (h *HealthService) Status(w http.ResponseWriter, r *http.Request) {
 
 	if handlers.AgentRegistry != nil {
 		components["ai_agents"] = map[string]interface{}{
-			"status": "ok",
-			"agents": handlers.AgentRegistry.List(),
+			"status":   "ok",
+			"agents":   handlers.AgentRegistry.ListInfo(),
+			"toolkits": aiagent.DefaultCatalog().Names(),
 		}
 	} else {
 		components["ai_agents"] = map[string]interface{}{"status": "not_initialized"}

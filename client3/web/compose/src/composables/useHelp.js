@@ -1,4 +1,4 @@
-import { computed, unref } from 'vue'
+import { computed, reactive, unref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import MarkdownIt from 'markdown-it'
@@ -71,9 +71,8 @@ export function useHelp (topic, appDocs = {}, options = {}) {
   const hasAny = computed(() => hasApp.value || hasProduct.value || !!app.value.hint || !!app.value.html)
   const hint = computed(() => app.value.hint || app.value.description || (includeProduct.value ? product.value.hint : ''))
 
-  const triggerProps = computed(() => ({
+  const panelProps = computed(() => ({
     title: app.value.title || (includeProduct.value ? product.value.title : ''),
-    hint: hint.value,
     description: app.value.description,
     bodyHtml: app.value.html,
     productHint: includeProduct.value ? product.value.hint : '',
@@ -81,7 +80,14 @@ export function useHelp (topic, appDocs = {}, options = {}) {
     labels: labels.value,
   }))
 
-  return {
+  const triggerProps = computed(() => ({
+    ...panelProps.value,
+    hint: hint.value,
+  }))
+
+  // reactive() unwraps nested computeds so v-bind="help.triggerProps" in
+  // templates spreads the props object, not the ComputedRef internals.
+  return reactive({
     labels,
     product,
     app,
@@ -89,6 +95,7 @@ export function useHelp (topic, appDocs = {}, options = {}) {
     hasProduct,
     hasAny,
     hint,
+    panelProps,
     triggerProps,
-  }
+  })
 }

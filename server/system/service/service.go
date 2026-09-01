@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/bep/godartsass/v2"
@@ -10,6 +11,7 @@ import (
 	automationService "github.com/madnikulin50/lowcode/server/automation/service"
 	discoveryService "github.com/madnikulin50/lowcode/server/discovery/service"
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"github.com/madnikulin50/lowcode/server/pkg/chat"
 	"github.com/madnikulin50/lowcode/server/pkg/dal"
 	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
@@ -452,4 +454,73 @@ func wireChatAIConfig() {
 		}
 		return cfg
 	})
+
+	aiagent.SetExtrasProvider(func() []aiagent.AgentSpec {
+		return agentSpecsFromSettings(CurrentSettings.AI.Agents)
+	})
+	aiagent.SetConnectorsProvider(func() []aiagent.Connector {
+		return toolkitConnectorsFromSettings(CurrentSettings.AI.Toolkits)
+	})
+	if DefaultSettings != nil {
+		DefaultSettings.Register("ai.", func(ctx context.Context, current interface{}, _ types.SettingValueSet) {
+			if cat := aiagent.DefaultCatalog(); cat != nil {
+				cat.RefreshRemotesNow(ctx)
+			}
+			if reg := aiagent.DefaultRegistry(); reg != nil {
+				reg.Reload(nil)
+			}
+		})
+	}
+}
+
+func toolkitConnectorsFromSettings(entries []types.AIToolkitEntry) []aiagent.Connector {
+	if len(entries) == 0 {
+		return nil
+	}
+	out := make([]aiagent.Connector, 0, len(entries))
+	for _, e := range entries {
+		c := aiagent.Connector{
+			Handle: strings.TrimSpace(e.Handle),
+			URL:    strings.TrimSpace(e.URL),
+			Token:  strings.TrimSpace(e.Token),
+			Source: "settings",
+		}
+		if e.Enabled != nil {
+			v := *e.Enabled
+			c.Enabled = &v
+		}
+		if c.Handle == "" || aiagent.ReservedKitName(c.Handle) {
+			continue
+		}
+		out = append(out, c)
+	}
+	return out
+}
+
+func agentSpecsFromSettings(entries []types.AIAgentEntry) []aiagent.AgentSpec {
+	if len(entries) == 0 {
+		return nil
+	}
+	out := make([]aiagent.AgentSpec, 0, len(entries))
+	for _, e := range entries {
+		s := aiagent.AgentSpec{
+			Handle:      strings.TrimSpace(e.Handle),
+			Description: e.Description,
+			Prompt:      e.Prompt,
+			Model:       e.Model,
+			Toolkits:    append([]string(nil), e.Toolkits...),
+			MaxSteps:    e.MaxSteps,
+			Confirm:     e.Confirm,
+			Source:      "settings",
+		}
+		if e.Enabled != nil {
+			v := *e.Enabled
+			s.Enabled = &v
+		}
+		if s.Handle == "" {
+			continue
+		}
+		out = append(out, s)
+	}
+	return out
 }

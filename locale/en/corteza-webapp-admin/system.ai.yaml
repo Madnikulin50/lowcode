@@ -1,5 +1,5 @@
 list:
-  title: AI models
+  title: AI models, toolkits & agents
 
 editor:
   title: Ollama models
@@ -19,7 +19,7 @@ editor:
     composeChat: Compose chat
     composeChatHelp: AI chat on compose pages and warmup default.
     mcpAgent: MCP agents
-    mcpAgentHelp: CRUD / assistant agents in the MCP bridge.
+    mcpAgentHelp: Default model for catalog agents (crud-agent, assistant, …) unless an agent sets its own.
     automationChat: Automation chat
     automationChatHelp: Workflow assistant chat.
     rulesgoAi: Rulesgo AI nodes
@@ -42,3 +42,49 @@ editor:
       enabled: On
       tools: Tools
       usedAs: Used as
+  agents:
+    title: Agents
+    help: Built-in agents come with the server. Saving an agent writes only that handle into the database (overlay). Reset removes the overlay and restores the built-in. YAML in AI_AGENTS_DIR wins over the database and cannot be edited here.
+    empty: No agents.
+    add: Add agent
+    edit: Edit
+    reset: Reset
+    remove: Remove
+    cancel: Cancel
+    handle: Handle
+    description: Description
+    model: Model
+    maxSteps: Max steps
+    enabled: On
+    toolkits: Toolkits
+    confirm: Ask for confirmation (create/delete/restore/prune)
+    confirmHelp: MCP agent_call has no “yes” step — leave this off for agents invoked from MCP or rule chains.
+    prompt: System prompt
+    source: Source
+    sourceBuiltin: built-in
+    sourceSettings: database
+    sourceFile: file
+  toolkits:
+    title: External toolkits
+    help: HTTP agents discovered via GET {url}/meta. Built-in compose.* kits cannot be replaced. Empty database overlay uses CMDB/BACKUP/INVEST_AGENT_URL and optional AI_TOOLKITS. Saving writes only ai.toolkits.
+    empty: No external toolkits.
+    add: Add toolkit
+    edit: Edit
+    reset: Reset
+    remove: Remove
+    cancel: Cancel
+    handle: Handle
+    handleHelp: Short name (cmdb, backup, …). Names starting with compose. are reserved.
+    url: URL
+    urlHelp: Base URL of the agent API (http or https), without a trailing slash.
+    urlInvalid: URL must be http or https with a host.
+    token: Token
+    tokenHelp: Optional Bearer token sent to /meta and /jobs.
+    enabled: On
+    test: Test connection
+    testEmpty: Connected, but /meta listed no tools.
+    reserved: Handle cannot start with compose.
+    source: Source
+    sourceEnv: env
+    sourceSettings: database
+

@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -96,77 +95,8 @@ func initBridge() {
 	})
 	handlers.SetJSRuntime(jsRt)
 
-	// Build core tools for agents
-	coreTools := []chat.ToolDef{
-		{
-			Name:        "search_records",
-			Description: "Search records in a module by text query (max 200 results)",
-			Params: []chat.ParamDef{
-				{Name: "query", Type: "string", Required: true, Description: "Search query"},
-				{Name: "moduleID", Type: "string", Required: false, Description: "Module ID to search in"},
-				{Name: "limit", Type: "string", Required: false, Description: "Max results"},
-			},
-			Handler: func(ctx context.Context, params map[string]string) string {
-				var nsID uint64
-				if v := ctx.Value(chat.EnvNamespaceID); v != nil {
-					nsID, _ = v.(uint64)
-				}
-				var modID uint64
-				fmt.Sscanf(params["moduleID"], "%d", &modID)
-				if modID == 0 {
-					return "moduleID is required"
-				}
-				mod, err := service.DefaultModule.FindByID(ctx, nsID, modID)
-				if err != nil || mod == nil {
-					return fmt.Sprintf("module not found: %v", err)
-				}
-				q := service.SanitizeRecordSearchQuery(params["query"])
-				if q == "" {
-					return "Search query is empty after sanitization."
-				}
-				ql := service.BuildRecordTextSearchQL(mod.Fields, q)
-				if ql == "" {
-					return "[]"
-				}
-				var limit uint
-				if params["limit"] != "" {
-					fmt.Sscanf(params["limit"], "%d", &limit)
-				}
-				ff := types.RecordFilter{
-					NamespaceID: nsID,
-					ModuleID:    modID,
-					Query:       ql,
-				}
-				ff.Limit = service.ClampRecordSearchLimit(limit)
-				set, _, err := service.DefaultRecord.Find(ctx, ff)
-				if err != nil {
-					return fmt.Sprintf("Search error: %v", err)
-				}
-				data, _ := json.Marshal(recordSetToMap(set))
-				return string(data)
-			},
-		},
-		{
-			Name:        "send_mail",
-			Description: "Send an email notification",
-			Params: []chat.ParamDef{
-				{Name: "to", Type: "string", Required: true, Description: "Recipient emails"},
-				{Name: "subject", Type: "string", Required: true, Description: "Subject"},
-				{Name: "body", Type: "string", Required: true, Description: "Email body"},
-			},
-			Handler: func(ctx context.Context, params map[string]string) string {
-				n := &types.EmailNotification{
-					To:          splitComma(params["to"]),
-					Subject:     params["subject"],
-					ContentHTML: params["body"],
-				}
-				if err := service.DefaultNotification.SendEmail(ctx, n); err != nil {
-					return fmt.Sprintf("Send error: %v", err)
-				}
-				return "Email sent"
-			},
-		},
-	}
+	service.RegisterComposeToolKits(aiagent.DefaultCatalog())
+	aiagent.DefaultCatalog().StartRemoteDiscovery()
 
 	// Agent registry
 	chatClient, err := chat.NewClient(chat.ModelForRole(chat.RoleMCPAgent))
@@ -174,7 +104,7 @@ func initBridge() {
 		log.Printf("[bridge] agent client: %v", err)
 	} else {
 		reg := aiagent.NewRegistry(chatClient)
-		reg.RegisterDefault(coreTools)
+		reg.RegisterDefault(nil)
 		handlers.SetAgentRegistry(reg)
 		handlers.SetAgentClient(chatClient)
 
@@ -274,26 +204,4 @@ func trimQuotes(s string) string {
 		return s[1 : len(s)-1]
 	}
 	return s
-}
-
-func splitComma(s string) []string {
-	if s == "" {
-		return nil
-	}
-	result := make([]string, 0)
-	current := ""
-	for _, ch := range s {
-		if ch == ',' {
-			if current != "" {
-				result = append(result, current)
-				current = ""
-			}
-		} else {
-			current += string(ch)
-		}
-	}
-	if current != "" {
-		result = append(result, current)
-	}
-	return result
 }

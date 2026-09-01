@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/madnikulin50/lowcode/server/compose/rest/request"
 	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"github.com/madnikulin50/lowcode/server/pkg/chat"
 )
 
@@ -91,6 +93,40 @@ func (ctrl *Chat) DiscoverModels(ctx context.Context) (interface{}, error) {
 		"models":     out,
 		"ollamaURL":  chat.EffectiveOllamaURL(),
 		"ollamaFrom": ollamaURLSourceLabel(),
+	}, nil
+}
+
+func (ctrl *Chat) Agents(ctx context.Context) (interface{}, error) {
+	return aiagent.CatalogPayload(), nil
+}
+
+func (ctrl *Chat) ProbeToolkits(ctx context.Context, rawURL, token string) (interface{}, error) {
+	base, err := aiagent.ValidConnectorURL(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	tctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	svc, err := aiagent.FetchRemoteMeta(tctx, base, token)
+	if err != nil {
+		return nil, err
+	}
+	kit := aiagent.RemoteKit(svc)
+	names := make([]string, 0, len(kit.Tools))
+	for _, t := range kit.Tools {
+		if t.Name != "" {
+			names = append(names, t.Name)
+		}
+	}
+	handle := kit.Name
+	if handle == "" {
+		handle = svc.Handle
+	}
+	return map[string]any{
+		"handle": handle,
+		"name":   strings.TrimSuffix(kit.Description, " agent operations"),
+		"url":    base,
+		"tools":  names,
 	}, nil
 }
 

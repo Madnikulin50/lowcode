@@ -12,14 +12,14 @@
     <button
       type="button"
       :class="buttonClass"
-      :aria-label="labels.title"
+      :aria-label="help.labels.title"
       @click.stop.prevent="openPanel"
     >
       <font-awesome-icon :icon="['far', 'question-circle']" />
     </button>
     <c-help-panel
       v-model:open="open"
-      v-bind="triggerProps"
+      v-bind="help.panelProps"
     />
   </div>
 
@@ -89,7 +89,7 @@ const buttonClass = computed(() => {
   return 'block-help-button'
 })
 
-const { labels, triggerProps } = useHelp('', computed(() => ({
+const help = useHelp('', computed(() => ({
   title: props.title || props.block?.title || '',
   description: hoverText.value,
   help: helpText.value,

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"time"
@@ -13,11 +12,11 @@ import (
 
 	ttlcache "github.com/jellydator/ttlcache/v3"
 	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"github.com/madnikulin50/lowcode/server/pkg/chat"
 	"github.com/madnikulin50/lowcode/server/pkg/logger"
 	"go.uber.org/zap"
 
-	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 )
 
@@ -35,7 +34,7 @@ type (
 	ChatStreamFunc = chat.StreamFunc
 
 	pendingToolCalls struct {
-		Calls     []CallParam
+		Calls     []aiagent.Call
 		Namespace uint64
 	}
 
@@ -306,6 +305,7 @@ func (c *chatService) loadCatalog(ctx context.Context, namespaceID uint64) nsCat
 func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt string) []chat.ToolDef {
 	tools := make([]chat.ToolDef, len(c.tools))
 	copy(tools, c.tools)
+	tools = append(tools, aiagent.DefaultCatalog().Resolve(aiagent.AssistantKitNames()...)...)
 
 	if namespaceID == 0 {
 		return tools
@@ -486,35 +486,31 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 
 	if ask.Chat != "" && c.pending != nil {
 		if item := c.pending.Get(ask.Chat); item != nil {
-			if userCancelled(ask.Prompt) {
+			if aiagent.UserCancelled(ask.Prompt) {
 				c.pending.Delete(ask.Chat)
 				return map[string]any{"response": "Действие отменено."}, nil
 			}
-			if userConfirmed(ask.Prompt) {
+			if aiagent.UserConfirmed(ask.Prompt) {
 				pending := item.Value()
 				c.pending.Delete(ask.Chat)
+				client, err := c.getClient(ask)
+				if err != nil {
+					return nil, err
+				}
 				ns := ask.Namespace
 				if ns == 0 {
 					ns = pending.Namespace
 				}
-				execTools := c.getTools(ctx, ns, pendingPrompt(pending.Calls))
-				result := execToolCalls(ctx, pending.Calls, ns, execTools)
-				client, err := c.getClient(ask)
-				if err != nil {
-					return map[string]any{"response": result}, err
+				opt := c.chatRuntimeOpts(ctx, ask, client, ns, pendingPrompt(pending.Calls), nil)
+				opt.Continue = confirmContinue
+				out := aiagent.ContinueFromTools(ctx, opt, pending.Calls)
+				if out.Err != nil {
+					return nil, out.Err
 				}
-				if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
-					return nil, err
+				if strings.TrimSpace(out.Output) == "" {
+					return map[string]any{"response": "Действие выполнено."}, nil
 				}
-				msgs := c.buildMessages(ctx, ask, client.IsToolsSupported())
-				if result != "" {
-					cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
-					if err == nil && strings.TrimSpace(cont) != "" {
-						return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
-					}
-					return map[string]any{"response": result}, nil
-				}
-				return map[string]any{"response": "Действие выполнено."}, nil
+				return map[string]any{"response": out.Output}, nil
 			}
 		}
 	}
@@ -523,102 +519,39 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 	if err != nil {
 		return nil, err
 	}
-	// Warm before Generate so the 3m HTTP timeout covers inference only.
-	if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
-		return nil, err
-	}
-
-	useTools := client.IsToolsSupported()
-	var allTools []chat.ToolDef
-	if useTools {
-		allTools = c.getTools(ctx, ask.Namespace, ask.Prompt)
-	}
-	msgs := c.buildMessages(ctx, ask, useTools)
+	opt := c.chatRuntimeOpts(ctx, ask, client, ask.Namespace, ask.Prompt, nil)
 
 	if result := showPageChartFastPath(ctx, ask); result != "" {
-		cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
-		if err == nil && strings.TrimSpace(cont) != "" {
-			return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
+		out := aiagent.ContinueAfterResult(ctx, opt, result)
+		if out.Err != nil {
+			return nil, out.Err
 		}
-		return map[string]any{"response": result}, nil
+		if strings.TrimSpace(out.Output) == "" {
+			return map[string]any{"response": result}, nil
+		}
+		return map[string]any{"response": out.Output}, nil
 	}
 
 	if result := salesDynamicsFastPath(ctx, ask); result != "" {
-		cont, err := c.generateToolContinuation(ctx, client, msgs, "", result)
-		if err == nil && strings.TrimSpace(cont) != "" {
-			return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
+		out := aiagent.ContinueAfterResult(ctx, opt, result)
+		if out.Err != nil {
+			return nil, out.Err
 		}
-		return map[string]any{"response": result}, nil
-	}
-
-	var opts []model.Option
-	if useTools {
-		toolInfos, err := chat.ToToolInfos(allTools)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build tool infos: %w", err)
-		}
-		opts = append(opts, model.WithTools(toolInfos))
-	}
-	out, err := client.Generate(ctx, msgs, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	content := out.Content
-	if content == "" && out.ReasoningContent != "" {
-		content = out.ReasoningContent
-	}
-	if content == "" {
-		content = "Модель не сгенерировала ответ."
-	}
-
-	if !useTools {
-		return map[string]any{"response": content}, nil
-	}
-
-	// try native tool calls first, fall back to XML-based
-	toolCalls := out.ToolCalls
-	if len(toolCalls) == 0 && chat.HasToolCallsStr(content) {
-		xmlCalls := chat.ParseToolCallsStr(content)
-		toolCalls = make([]schema.ToolCall, len(xmlCalls))
-		for i, xc := range xmlCalls {
-			paramJSON, _ := json.Marshal(xc.Params)
-			toolCalls[i] = schema.ToolCall{
-				Function: schema.FunctionCall{
-					Name:      xc.Name,
-					Arguments: string(paramJSON),
-				},
-			}
-		}
-	}
-
-	if len(toolCalls) > 0 {
-		parsed := make([]CallParam, 0, len(toolCalls))
-		for _, tc := range toolCalls {
-			parsed = append(parsed, CallParam{
-				Name:   tc.Function.Name,
-				Params: tc.Function.Arguments,
-			})
-		}
-		if needsConfirm(parsed) && !userConfirmed(ask.Prompt) {
-			c.storePending(ask.Chat, parsed, ask.Namespace)
-			return map[string]any{
-				"response": content + confirmFence(parsed),
-			}, nil
-		}
-		result := execToolCalls(ctx, parsed, ask.Namespace, allTools)
-		if result != "" {
-			cont, err := c.generateToolContinuation(ctx, client, msgs, content, result)
-			if err == nil && strings.TrimSpace(cont) != "" {
-				return map[string]any{"response": mergeChartAndComment(result, cont)}, nil
-			}
+		if strings.TrimSpace(out.Output) == "" {
 			return map[string]any{"response": result}, nil
 		}
+		return map[string]any{"response": out.Output}, nil
 	}
 
-	return map[string]any{
-		"response": content,
-	}, nil
+	out := aiagent.Run(ctx, opt)
+	if out.Err != nil {
+		return nil, out.Err
+	}
+	if out.ConfirmNeeded {
+		c.storePending(ask.Chat, out.ConfirmCalls, ask.Namespace)
+		return map[string]any{"response": out.Output + confirmFence(out.ConfirmCalls)}, nil
+	}
+	return map[string]any{"response": out.Output}, nil
 }
 
 func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, stream chat.StreamFunc) error {
@@ -632,252 +565,88 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 	if err != nil {
 		return err
 	}
-	// Warm before Stream so the 3m HTTP timeout covers inference only,
-	// not cold model load (which can take minutes on CPU).
-	if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
-		return err
-	}
-
-	useTools := client.IsToolsSupported()
-	chat.EmitToolsCapability(ctx, useTools)
-	var allTools []chat.ToolDef
-	if useTools {
-		allTools = c.getTools(ctx, ask.Namespace, ask.Prompt)
-	}
-	msgs := c.buildMessages(ctx, ask, useTools)
+	opt := c.chatRuntimeOpts(ctx, ask, client, ask.Namespace, ask.Prompt, stream)
+	chat.EmitToolsCapability(ctx, client.IsToolsSupported())
 
 	if result := showPageChartFastPath(ctx, ask); result != "" {
-		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
-			return err
+		out := aiagent.ContinueAfterResult(ctx, opt, result)
+		if out.Err != nil {
+			return out.Err
 		}
 		return stream("", "", true)
 	}
 
 	if result := salesDynamicsFastPath(ctx, ask); result != "" {
-		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
+		out := aiagent.ContinueAfterResult(ctx, opt, result)
+		if out.Err != nil {
+			return out.Err
+		}
+		return stream("", "", true)
+	}
+
+	out := aiagent.Run(ctx, opt)
+	if out.Err != nil {
+		return out.Err
+	}
+	if out.ConfirmNeeded {
+		c.storePending(ask.Chat, out.ConfirmCalls, ask.Namespace)
+		if err := stream(confirmFence(out.ConfirmCalls), "", false); err != nil {
 			return err
 		}
-		return stream("", "", true)
-	}
-
-	var opts []model.Option
-	if useTools {
-		toolInfos, err := chat.ToToolInfos(allTools)
-		if err != nil {
-			return fmt.Errorf("failed to build tool infos: %w", err)
-		}
-		opts = append(opts, model.WithTools(toolInfos))
-	}
-	streamReader, err := client.Stream(ctx, msgs, opts...)
-	if err != nil {
-		return err
-	}
-
-	fullContent, fullReasoning, toolCalls, err := pumpChatStream(ctx, streamReader, stream)
-	if err != nil {
-		return err
-	}
-
-	effective := strings.TrimSpace(fullContent)
-	if effective == "" {
-		effective = strings.TrimSpace(fullReasoning)
-	}
-
-	if !useTools {
-		if err := streamFallbackAnswer(stream, fullContent, fullReasoning); err != nil {
-			return err
-		}
-		return stream("", "", true)
-	}
-
-	// if no native tool calls, check for XML-based tool calls in full content
-	if len(toolCalls) == 0 && chat.HasToolCallsStr(effective) {
-		xmlCalls := chat.ParseToolCallsStr(effective)
-		toolCalls = make([]schema.ToolCall, len(xmlCalls))
-		for i, xc := range xmlCalls {
-			paramJSON, _ := json.Marshal(xc.Params)
-			toolCalls[i] = schema.ToolCall{
-				Function: schema.FunctionCall{
-					Name:      xc.Name,
-					Arguments: string(paramJSON),
-				},
-			}
-		}
-		if strings.TrimSpace(fullContent) == "" {
-			fullContent = effective
-		}
-	}
-
-	if len(toolCalls) > 0 {
-		parsed := make([]CallParam, 0, len(toolCalls))
-		for _, tc := range toolCalls {
-			parsed = append(parsed, CallParam{
-				Name:   tc.Function.Name,
-				Params: tc.Function.Arguments,
-			})
-		}
-		if needsConfirm(parsed) && !userConfirmed(ask.Prompt) {
-			c.storePending(ask.Chat, parsed, ask.Namespace)
-			stream(confirmFence(parsed), "", false)
-			return stream("", "", true)
-		}
-		result := execToolCalls(ctx, parsed, ask.Namespace, allTools)
-		if result != "" {
-			if err := c.streamToolContinuation(ctx, client, msgs, fullContent, result, stream); err != nil {
-				return err
-			}
-		}
-		return stream("", "", true)
-	}
-
-	if err := streamFallbackAnswer(stream, fullContent, fullReasoning); err != nil {
-		return err
 	}
 	return stream("", "", true)
 }
 
-func streamFallbackAnswer(stream chat.StreamFunc, content, reasoning string) error {
-	if strings.TrimSpace(content) != "" {
-		return nil
+func (c *chatService) chatRuntimeOpts(ctx context.Context, ask *ChatPromptArguments, client *chat.Client, namespaceID uint64, toolPrompt string, stream chat.StreamFunc) aiagent.Options {
+	extra := map[string]string{}
+	if namespaceID > 0 {
+		extra["namespaceID"] = fmt.Sprintf("%d", namespaceID)
 	}
-	if strings.TrimSpace(reasoning) != "" {
-		return stream(reasoning, "", false)
+	useTools := client.IsToolsSupported()
+	tools := []chat.ToolDef(nil)
+	if useTools {
+		tools = c.getTools(ctx, namespaceID, toolPrompt)
 	}
-	return stream("Модель не сгенерировала ответ.", "", false)
-}
-
-type CallParam struct {
-	Name   string
-	Params string
-}
-
-func needsConfirm(calls []CallParam) bool {
-	for _, call := range calls {
-		if strings.HasPrefix(call.Name, "create_") || strings.HasPrefix(call.Name, "delete_") {
-			return true
-		}
-	}
-	return false
-}
-
-func execToolCalls(ctx context.Context, calls []CallParam, namespaceID uint64, tools []chat.ToolDef) string {
-	if len(calls) > 0 {
-		chat.EmitStatus(ctx, chat.StatusUsingTools)
-	}
-	var results []string
-	for _, call := range calls {
-		params := make(map[string]string)
-		if call.Params != "" {
-			raw := make(map[string]any)
-			if err := json.Unmarshal([]byte(call.Params), &raw); err == nil {
-				for k, v := range raw {
-					params[k] = fmt.Sprintf("%v", v)
-				}
-			}
-		}
-		if _, ok := params["namespaceID"]; !ok && namespaceID > 0 {
-			params["namespaceID"] = fmt.Sprintf("%d", namespaceID)
-		}
-		for _, t := range tools {
-			if t.Name == call.Name {
-				results = append(results, t.Handler(ctx, params))
-				break
-			}
-		}
-	}
-	if len(results) > 0 {
-		return strings.Join(results, "\n")
-	}
-	return ""
-}
-
-func pumpChatStream(ctx context.Context, streamReader *schema.StreamReader[*schema.Message], stream chat.StreamFunc) (fullContent, fullReasoning string, toolCalls []schema.ToolCall, err error) {
-	defer streamReader.Close()
-	for {
-		select {
-		case <-ctx.Done():
-			return fullContent, fullReasoning, toolCalls, ctx.Err()
-		default:
-		}
-		chunk, recvErr := streamReader.Recv()
-		if recvErr != nil {
-			if recvErr == io.EOF {
-				return fullContent, fullReasoning, toolCalls, nil
-			}
-			if chat.IsTimeout(recvErr) {
-				note := "Превышено время ожидания ответа модели."
-				if strings.TrimSpace(fullContent) != "" || strings.TrimSpace(fullReasoning) != "" {
-					_ = stream("\n\n"+note, "", false)
-				} else {
-					_ = stream(note, "", false)
-					fullContent = note
-				}
-				return fullContent, fullReasoning, toolCalls, nil
-			}
-			stream("⚠ Error: "+recvErr.Error(), "", false)
-			return fullContent, fullReasoning, toolCalls, recvErr
-		}
-		if chunk.Content != "" {
-			fullContent += chunk.Content
-			emit := chunk.Content
-			if idx := strings.Index(fullContent, "<tool "); idx >= 0 {
-				already := len(fullContent) - len(chunk.Content)
-				if already >= idx {
-					emit = ""
-				} else {
-					emit = fullContent[already:idx]
-				}
-			}
-			if emit != "" {
-				if err := stream(emit, "", false); err != nil {
-					return fullContent, fullReasoning, toolCalls, err
-				}
-			}
-		}
-		if chunk.ReasoningContent != "" {
-			fullReasoning += chunk.ReasoningContent
-			if err := stream("", chunk.ReasoningContent, false); err != nil {
-				return fullContent, fullReasoning, toolCalls, err
-			}
-		}
-		if len(chunk.ToolCalls) > 0 {
-			if len(toolCalls) == 0 {
-				chat.EmitStatus(ctx, chat.StatusUsingTools)
-			}
-			toolCalls = append(toolCalls, chunk.ToolCalls...)
-		}
+	msgs := c.buildMessages(ctx, ask, useTools)
+	return aiagent.Options{
+		Client:       client,
+		Messages:     msgs,
+		Tools:        tools,
+		MaxSteps:     6,
+		ExtraParams:  extra,
+		Confirmed:    aiagent.UserConfirmed(ask.Prompt),
+		NeedsConfirm: aiagent.DefaultNeedsConfirm,
+		Continue:     chatContinue,
+		Stream:       stream,
+		HideToolXML:  stream != nil,
+		EmptyAnswer:  "Модель не сгенерировала ответ.",
 	}
 }
 
-func continuationMessages(msgs []*schema.Message, assistantContent, toolResult string) []*schema.Message {
-	out := make([]*schema.Message, 0, len(msgs)+2)
-	out = append(out, msgs...)
-	if stripped := stripToolXML(assistantContent); stripped != "" {
-		out = append(out, schema.AssistantMessage(stripped, nil))
-	}
+func chatContinue(_ string, toolResult string, _ []aiagent.Call) aiagent.ContinueHint {
 	fence := extractChartFence(toolResult)
-	payload := truncateRunes(toolResult, 16000)
-	var instruction string
 	if fence != "" {
+		instruction := "A ```chart block from the tool was already shown to the user. Write a short comment in the user's language. Do NOT repeat the ```chart fence or dump JSON. Do not call tools. Do not invent numbers."
 		if strings.Contains(strings.ToLower(fence), "compose-chart") {
 			instruction = "A page chart was already shown to the user. Write a short comment in the user's language. Do NOT repeat the ```compose-chart fence or dump JSON. Do not call tools. Do not invent numbers."
-		} else {
-			instruction = "A ```chart block from the tool was already shown to the user. Write a short comment in the user's language. Do NOT repeat the ```chart fence or dump JSON. Do not call tools. Do not invent numbers."
 		}
-	} else {
-		instruction = "Tool results (use only this data; never invent numbers):\n\n" + payload +
-			"\n\nWrite a short answer in the user's language. If a comparison, trend, or share visualization helps, append a ```chart fenced JSON block (type bar|line|pie|doughnut) with real labels and series from these results. Valid JSON, no comments. Do not call tools."
+		return aiagent.ContinueHint{
+			UserMessage:  instruction,
+			DisableTools: true,
+			StreamPrefix: "\n" + fence + "\n",
+		}
 	}
-	out = append(out, schema.UserMessage(instruction))
-	return out
+	payload := truncateRunes(toolResult, 16000)
+	return aiagent.ContinueHint{
+		UserMessage: "Tool results (use only this data; never invent numbers):\n\n" + payload +
+			"\n\nIf you need more data, call another tool. Otherwise write a short answer in the user's language. If a comparison, trend, or share visualization helps, append a ```chart fenced JSON block (type bar|line|pie|doughnut) with real labels and series from these results. Valid JSON, no comments.",
+	}
 }
 
-func stripToolXML(s string) string {
-	s = strings.TrimSpace(s)
-	if s == "" || chat.HasToolCallsStr(s) {
-		return ""
-	}
-	return s
+func confirmContinue(assistant, toolResult string, calls []aiagent.Call) aiagent.ContinueHint {
+	h := chatContinue(assistant, toolResult, calls)
+	h.DisableTools = true
+	return h
 }
 
 func salesDynamicsFastPath(ctx context.Context, ask *ChatPromptArguments) string {
@@ -915,54 +684,6 @@ func truncateRunes(s string, n int) string {
 		return s
 	}
 	return string(r[:n]) + "\n…"
-}
-
-func (c *chatService) generateToolContinuation(ctx context.Context, client *chat.Client, msgs []*schema.Message, assistantContent, toolResult string) (string, error) {
-	out, err := client.Generate(ctx, continuationMessages(msgs, assistantContent, toolResult))
-	if err != nil || out == nil {
-		return "", err
-	}
-	content := out.Content
-	if content == "" && out.ReasoningContent != "" {
-		content = out.ReasoningContent
-	}
-	return content, nil
-}
-
-func (c *chatService) streamToolContinuation(ctx context.Context, client *chat.Client, msgs []*schema.Message, assistantContent, toolResult string, stream chat.StreamFunc) error {
-	fence := extractChartFence(toolResult)
-	shownFence := false
-	if fence != "" {
-		// Stream the fence first so the UI can mount a chart even if the
-		// continuation model is told not to repeat it (commentary-only).
-		if err := stream("\n"+fence+"\n", "", false); err != nil {
-			return err
-		}
-		shownFence = true
-	}
-
-	streamReader, err := client.Stream(ctx, continuationMessages(msgs, assistantContent, toolResult))
-	if err != nil {
-		if !shownFence && toolResult != "" {
-			stream(toolResult, "", false)
-		}
-		return nil
-	}
-
-	cont, reasoning, _, err := pumpChatStream(ctx, streamReader, stream)
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(cont) != "" {
-		return nil
-	}
-	if strings.TrimSpace(reasoning) != "" {
-		return stream(reasoning, "", false)
-	}
-	if !shownFence && toolResult != "" {
-		stream(toolResult, "", false)
-	}
-	return nil
 }
 
 func (c *chatService) chatEnvToContext(ask *ChatPromptArguments, ctx context.Context) context.Context {
@@ -1048,23 +769,7 @@ func (c *chatService) WarmUp(ctx context.Context, model string) error {
 	return chat.WarmUp(model)
 }
 
-func userConfirmed(prompt string) bool {
-	lower := strings.ToLower(strings.TrimSpace(prompt))
-	switch lower {
-	case "да", "yes", "y", "ok", "ок", "гоу", "do it", "создай", "подтверждаю", "confirm", "выполнить":
-		return true
-	}
-	return false
-}
-
-func userCancelled(prompt string) bool {
-	lower := strings.ToLower(strings.TrimSpace(prompt))
-	switch lower {
-	case "нет", "no", "n", "отмена", "cancel", "не надо", "стоп":
-		return true
-	}
-	return false
-}
+type CallParam = aiagent.Call
 
 func (c *chatService) storePending(chatID string, calls []CallParam, namespaceID uint64) {
 	if chatID == "" || c.pending == nil || len(calls) == 0 {
@@ -1127,14 +832,14 @@ func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptAr
 	if item == nil {
 		return false, nil
 	}
-	if userCancelled(ask.Prompt) {
+	if aiagent.UserCancelled(ask.Prompt) {
 		c.pending.Delete(ask.Chat)
 		if err := stream("Действие отменено.", "", false); err != nil {
 			return true, err
 		}
 		return true, stream("", "", true)
 	}
-	if !userConfirmed(ask.Prompt) {
+	if !aiagent.UserConfirmed(ask.Prompt) {
 		return false, nil
 	}
 	pending := item.Value()
@@ -1144,27 +849,17 @@ func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptAr
 	if ns == 0 {
 		ns = pending.Namespace
 	}
-	execTools := c.getTools(ctx, ns, pendingPrompt(pending.Calls))
-	result := execToolCalls(ctx, pending.Calls, ns, execTools)
-
 	client, err := c.getClient(ask)
 	if err != nil {
-		if result != "" {
-			_ = stream(result, "", false)
-		} else {
-			_ = stream("Действие выполнено.", "", false)
-		}
-		return true, stream("", "", true)
-	}
-	if err := chat.EnsureWarm(ctx, client.Model()); err != nil {
 		return true, err
 	}
-	if result != "" {
-		msgs := c.buildMessages(ctx, ask, client.IsToolsSupported())
-		if err := c.streamToolContinuation(ctx, client, msgs, "", result, stream); err != nil {
-			return true, err
-		}
-	} else {
+	opt := c.chatRuntimeOpts(ctx, ask, client, ns, pendingPrompt(pending.Calls), stream)
+	opt.Continue = confirmContinue
+	out := aiagent.ContinueFromTools(ctx, opt, pending.Calls)
+	if out.Err != nil {
+		return true, out.Err
+	}
+	if strings.TrimSpace(out.Output) == "" {
 		_ = stream("Действие выполнено.", "", false)
 	}
 	return true, stream("", "", true)

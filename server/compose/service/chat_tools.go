@@ -260,6 +260,58 @@ func chatSearchModules(ctx context.Context, params map[string]string) string {
 	return toJSON(set)
 }
 
+func chatRecordSearchToolDef() chat.ToolDef {
+	return chat.ToolDef{
+		Name:        "search_records",
+		Description: "Search records in a module by text query (max 200 results)",
+		Params: []chat.ParamDef{
+			{Name: "query", Type: "string", Required: true, Description: "Search query"},
+			{Name: "moduleID", Type: "string", Required: true, Description: "Module ID to search in"},
+			{Name: "limit", Type: "string", Required: false, Description: "Max results"},
+		},
+		Handler: chatSearchRecords,
+	}
+}
+
+func chatSearchRecords(ctx context.Context, params map[string]string) string {
+	ns := nsID(ctx, params)
+	modID := parseUint64(params["moduleID"])
+	if modID == 0 {
+		return "moduleID is required"
+	}
+	mod, err := DefaultModule.FindByID(ctx, ns, modID)
+	if err != nil || mod == nil {
+		return fmt.Sprintf("module not found: %v", err)
+	}
+	q := SanitizeRecordSearchQuery(params["query"])
+	if q == "" {
+		return "Search query is empty after sanitization."
+	}
+	ql := BuildRecordTextSearchQL(mod.Fields, q)
+	if ql == "" {
+		return "[]"
+	}
+	var limit uint
+	if params["limit"] != "" {
+		fmt.Sscanf(params["limit"], "%d", &limit)
+	}
+	ff := types.RecordFilter{NamespaceID: ns, ModuleID: modID, Query: ql}
+	ff.Limit = ClampRecordSearchLimit(limit)
+	set, _, err := DefaultRecord.Find(ctx, ff)
+	if err != nil {
+		return fmt.Sprintf("Search error: %v", err)
+	}
+	rows := make([]map[string]interface{}, 0, len(set))
+	for _, r := range set {
+		row := map[string]interface{}{"recordID": fmt.Sprintf("%d", r.ID)}
+		for _, v := range r.Values {
+			row[v.Name] = v.Value
+		}
+		rows = append(rows, row)
+	}
+	return toJSON(rows)
+}
+
 func chatCreateModule(ctx context.Context, params map[string]string) string {
 	ns := nsID(ctx, params)
 	name := params["name"]
@@ -607,6 +659,22 @@ func chatDeletePage(ctx context.Context, params map[string]string) string {
 }
 
 func newChatTools() []chat.ToolDef {
+	return append(chatMailToolDefs(), chat.ToolDef{
+		Name:        "run_script",
+		Description: "Execute a JavaScript snippet with access to lowcode runtime (mcp, mail, http, log). Use for custom data processing, automation, or integration logic.",
+		Params: []chat.ParamDef{
+			{Name: "script", Type: "string", Required: true, Description: "JavaScript code to execute. Has access to runtime.mcp (CRUD), runtime.mail (send), runtime.http (get/post), runtime.log (info/warn/error), runtime.context (input data)."},
+			{Name: "input", Type: "string", Required: false, Description: "JSON input data for the script"},
+		},
+		Handler: func(ctx context.Context, params map[string]string) string {
+			_ = ctx
+			_ = params
+			return `Script execution via chat requires MCP tool 'run_ai_script'. Use the MCP interface for script execution.`
+		},
+	})
+}
+
+func chatMailToolDefs() []chat.ToolDef {
 	return []chat.ToolDef{
 		{
 			Name:        "send_mail",
@@ -642,19 +710,6 @@ func newChatTools() []chat.ToolDef {
 					return fmt.Sprintf("Failed to send email: %v", err)
 				}
 				return fmt.Sprintf("Email sent to %v with subject '%s'", to, params["subject"])
-			},
-		},
-		{
-			Name:        "run_script",
-			Description: "Execute a JavaScript snippet with access to lowcode runtime (mcp, mail, http, log). Use for custom data processing, automation, or integration logic.",
-			Params: []chat.ParamDef{
-				{Name: "script", Type: "string", Required: true, Description: "JavaScript code to execute. Has access to runtime.mcp (CRUD), runtime.mail (send), runtime.http (get/post), runtime.log (info/warn/error), runtime.context (input data)."},
-				{Name: "input", Type: "string", Required: false, Description: "JSON input data for the script"},
-			},
-			Handler: func(ctx context.Context, params map[string]string) string {
-				_ = ctx
-				_ = params
-				return `Script execution via chat requires MCP tool 'run_ai_script'. Use the MCP interface for script execution.`
 			},
 		},
 	}

@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"strings"
 
 	"github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"github.com/madnikulin50/lowcode/server/pkg/chat"
 
-	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 )
 
@@ -94,190 +92,55 @@ func (c *workflowChat) buildMessages(ask *WorkflowChatPromptArguments, useTools 
 	return msgs
 }
 
-func (c *workflowChat) Ask(ctx context.Context, ask *WorkflowChatPromptArguments) (interface{}, error) {
-	if err := chat.EnsureWarm(ctx, c.client.Model()); err != nil {
-		return nil, err
-	}
+func (c *workflowChat) runtimeOpts(ask *WorkflowChatPromptArguments, stream chat.StreamFunc) aiagent.Options {
 	useTools := c.client.IsToolsSupported()
-	msgs := c.buildMessages(ask, useTools)
-	var opts []model.Option
+	tools := []chat.ToolDef(nil)
 	if useTools {
-		toolInfos, err := chat.ToToolInfos(c.tools)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build tool infos: %w", err)
-		}
-		opts = append(opts, model.WithTools(toolInfos))
+		tools = c.tools
 	}
-	out, err := c.client.Generate(ctx, msgs, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	content := out.Content
-
-	if !useTools {
-		return map[string]any{"response": content}, nil
-	}
-
-	toolCalls := out.ToolCalls
-	if len(toolCalls) == 0 && chat.HasToolCallsStr(content) {
-		xmlCalls := chat.ParseToolCallsStr(content)
-		toolCalls = make([]schema.ToolCall, len(xmlCalls))
-		for i, xc := range xmlCalls {
-			paramJSON, _ := json.Marshal(xc.Params)
-			toolCalls[i] = schema.ToolCall{
-				Function: schema.FunctionCall{
-					Name:      xc.Name,
-					Arguments: string(paramJSON),
-				},
+	return aiagent.Options{
+		Client:       c.client,
+		Messages:     c.buildMessages(ask, useTools),
+		Tools:        tools,
+		MaxSteps:     4,
+		Confirmed:    aiagent.UserConfirmed(ask.Prompt),
+		NeedsConfirm: aiagent.DefaultNeedsConfirm,
+		Continue: func(_ string, toolResult string, _ []aiagent.Call) aiagent.ContinueHint {
+			return aiagent.ContinueHint{
+				UserMessage:  "Tool results:\n" + toolResult + "\n\nWrite a short confirmation in the user's language. Do not call tools.",
+				DisableTools: true,
 			}
-		}
+		},
+		Stream:      stream,
+		HideToolXML: stream != nil,
+		EmptyAnswer: "Модель не сгенерировала ответ.",
 	}
+}
 
-	if len(toolCalls) > 0 {
-		if !userConfirmedWorkflow(ask.Prompt) {
-			return map[string]any{
-				"response": content + "\n\n⚠️ **Обнаружено предлагаемое действие.** Напишите **«да»** чтобы подтвердить.",
-			}, nil
-		}
-		parsed := make([]CallParamWorkflow, 0, len(toolCalls))
-		for _, tc := range toolCalls {
-			parsed = append(parsed, CallParamWorkflow{
-				Name:   tc.Function.Name,
-				Params: tc.Function.Arguments,
-			})
-		}
-		result := execWorkflowToolCalls(ctx, parsed, c.tools)
-		if result != "" {
-			return map[string]any{"response": result}, nil
-		}
+func (c *workflowChat) Ask(ctx context.Context, ask *WorkflowChatPromptArguments) (interface{}, error) {
+	out := aiagent.Run(ctx, c.runtimeOpts(ask, nil))
+	if out.Err != nil {
+		return nil, out.Err
 	}
-
-	return map[string]any{
-		"response": content,
-	}, nil
+	if out.ConfirmNeeded {
+		return map[string]any{
+			"response": out.Output + "\n\n⚠️ **Обнаружено предлагаемое действие.** Напишите **«да»** чтобы подтвердить.",
+		}, nil
+	}
+	return map[string]any{"response": out.Output}, nil
 }
 
 func (c *workflowChat) AskStream(ctx context.Context, ask *WorkflowChatPromptArguments, stream chat.StreamFunc) error {
-	if err := chat.EnsureWarm(ctx, c.client.Model()); err != nil {
-		return err
+	out := aiagent.Run(ctx, c.runtimeOpts(ask, stream))
+	if out.Err != nil {
+		return out.Err
 	}
-	useTools := c.client.IsToolsSupported()
-	msgs := c.buildMessages(ask, useTools)
-	var opts []model.Option
-	if useTools {
-		toolInfos, err := chat.ToToolInfos(c.tools)
-		if err != nil {
-			return fmt.Errorf("failed to build tool infos: %w", err)
-		}
-		opts = append(opts, model.WithTools(toolInfos))
-	}
-	streamReader, err := c.client.Stream(ctx, msgs, opts...)
-	if err != nil {
-		return err
-	}
-	defer streamReader.Close()
-
-	var fullContent string
-	var toolCalls []schema.ToolCall
-	for {
-		chunk, err := streamReader.Recv()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
+	if out.ConfirmNeeded {
+		if err := stream("\n\n⚠️ **Обнаружено предлагаемое действие.** Напишите **«да»** чтобы подтвердить.", "", false); err != nil {
 			return err
 		}
-		if chunk.Content != "" {
-			fullContent += chunk.Content
-			if err := stream(chunk.Content, "", false); err != nil {
-				return err
-			}
-		}
-		if chunk.ToolCalls != nil && len(chunk.ToolCalls) > 0 {
-			toolCalls = append(toolCalls, chunk.ToolCalls...)
-		}
-		if len(chunk.ReasoningContent) > 0 {
-			if err := stream("", chunk.ReasoningContent, false); err != nil {
-				return err
-			}
-		}
 	}
-
-	if len(toolCalls) == 0 && useTools && chat.HasToolCallsStr(fullContent) {
-		xmlCalls := chat.ParseToolCallsStr(fullContent)
-		toolCalls = make([]schema.ToolCall, len(xmlCalls))
-		for i, xc := range xmlCalls {
-			paramJSON, _ := json.Marshal(xc.Params)
-			toolCalls[i] = schema.ToolCall{
-				Function: schema.FunctionCall{
-					Name:      xc.Name,
-					Arguments: string(paramJSON),
-				},
-			}
-		}
-	}
-
-	if useTools && len(toolCalls) > 0 {
-		if !userConfirmedWorkflow(ask.Prompt) {
-			stream("\n\n⚠️ **Обнаружено предлагаемое действие.** Напишите **«да»** чтобы подтвердить.", "", false)
-
-			return stream("", "", true)
-		}
-		parsed := make([]CallParamWorkflow, 0, len(toolCalls))
-		for _, tc := range toolCalls {
-			parsed = append(parsed, CallParamWorkflow{
-				Name:   tc.Function.Name,
-				Params: tc.Function.Arguments,
-			})
-		}
-		result := execWorkflowToolCalls(ctx, parsed, c.tools)
-		if result != "" {
-			stream("\n\n"+result, "", false)
-		}
-		return stream("", "", true)
-	}
-
 	return stream("", "", true)
-}
-
-type CallParamWorkflow struct {
-	Name   string
-	Params string
-}
-
-func execWorkflowToolCalls(ctx context.Context, calls []CallParamWorkflow, tools []chat.ToolDef) string {
-	var results []string
-	for _, call := range calls {
-		params := make(map[string]string)
-		if call.Params != "" {
-			raw := make(map[string]any)
-			if err := json.Unmarshal([]byte(call.Params), &raw); err == nil {
-				for k, v := range raw {
-					params[k] = fmt.Sprintf("%v", v)
-				}
-			}
-		}
-		for _, t := range tools {
-			if t.Name == call.Name {
-				results = append(results, t.Handler(ctx, params))
-				break
-			}
-		}
-	}
-	if len(results) > 0 {
-		return "**Tool Results:**\n" + strings.Join(results, "\n")
-	}
-	return ""
-}
-
-func userConfirmedWorkflow(prompt string) bool {
-	lower := strings.ToLower(strings.TrimSpace(prompt))
-	switch lower {
-	case "да", "yes", "y", "ok", "ок", "гоу", "do it", "создай", "подтверждаю", "confirm", "выполнить":
-		return true
-	}
-	return false
 }
 
 func createWorkflowHandler(ctx context.Context, params map[string]string) string {

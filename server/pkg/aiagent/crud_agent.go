@@ -5,41 +5,22 @@ import (
 )
 
 func NewCRUDAgent(client *chat.Client, tools []chat.ToolDef) *Agent {
-	cfg := AgentConfig{
-		Name:        "crud-agent",
-		Description: "Autonomous data operations. Creates, updates, deletes, and searches records.",
-		Model:       chat.ModelForRole(chat.RoleMCPAgent),
-		SystemPrompt: `You are a CRUD agent for the LowCoooode platform.
-You can:
-- Search records with search_records(module, query, limit)
-- Create records with create_record(module, values_json)
-- Update records with update_record(module, recordID, values_json)
-- Delete records with delete_record(module, recordID)
-
-Always present search results as a table. Confirm before deleting.
-Start final answers with "FINAL:".`,
-		Tools:    tools,
-		MaxSteps: 8,
-	}
-	return New(client, cfg)
+	a := NewFromSpec(client, mustBuiltin("crud-agent"))
+	a.cfg.Tools = tools
+	return a
 }
 
 func NewAssistantAgent(client *chat.Client, tools []chat.ToolDef) *Agent {
-	cfg := AgentConfig{
-		Name:        "assistant",
-		Description: "General-purpose assistant for the LowCoooode platform. Can search data, answer questions, create content.",
-		Model:       chat.ModelForRole(chat.RoleMCPAgent),
-		SystemPrompt: `You are an AI assistant for the LowCoooode platform.
-You can help users with:
-- Finding information across modules (search_records, list_modules)
-- Creating and editing records
-- Answering questions about data
-- Generating reports and summaries
+	a := NewFromSpec(client, mustBuiltin("assistant"))
+	a.cfg.Tools = tools
+	return a
+}
 
-Be helpful and concise. When presenting data, use clear formatting.
-Start final answers with "FINAL:".`,
-		Tools:    tools,
-		MaxSteps: 6,
+func mustBuiltin(handle string) AgentSpec {
+	for _, s := range BuiltinSpecs() {
+		if s.Handle == handle {
+			return s
+		}
 	}
-	return New(client, cfg)
+	return AgentSpec{Handle: handle, MaxSteps: 5}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	discoveryService "github.com/madnikulin50/lowcode/server/discovery/service"
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"github.com/madnikulin50/lowcode/server/pkg/chat"
 	"github.com/madnikulin50/lowcode/server/pkg/corredor"
 	"github.com/madnikulin50/lowcode/server/pkg/dal"
@@ -202,6 +203,8 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	DefaultPageLayout = PageLayout()
 	DefaultChart = Chart()
 	DefaultChat = Chat()
+	RegisterComposeToolKits(aiagent.DefaultCatalog())
+	aiagent.DefaultCatalog().StartRemoteDiscovery()
 	DefaultNotification = Notification(c.UserFinder)
 	DefaultAttachment = Attachment(DefaultObjectStore, dal.Service())
 	DefaultDataPrivacy = DataPrivacy()
