@@ -13,25 +13,65 @@ import (
 )
 
 type ParsedDocument struct {
-	Text  string
-	Title string
+	Text     string
+	Title    string
+	Kind     string
+	Partial  bool
+	NeedsOCR bool
 }
 
+const DefaultExtractMaxChars = 64000
+
 func ParseDocument(data []byte, filename, mimetype string) (*ParsedDocument, error) {
-	ext := strings.ToLower(filename)
-	switch {
-	case strings.HasSuffix(ext, ".txt") || mimetype == "text/plain":
-		return parseText(data)
-	case strings.HasSuffix(ext, ".html") || strings.HasSuffix(ext, ".htm") || mimetype == "text/html":
-		return parseHTML(data)
-	case strings.HasSuffix(ext, ".docx") || mimetype == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-		return parseDocx(data)
-	case strings.HasSuffix(ext, ".pdf") || mimetype == "application/pdf":
-		return parsePDF(data)
+	kind := DetectKind(filename, mimetype)
+	var (
+		doc *ParsedDocument
+		err error
+	)
+	switch kind {
+	case "txt":
+		doc, err = parseText(data)
+	case "html":
+		doc, err = parseHTML(data)
+	case "docx":
+		doc, err = parseDocx(data)
+	case "pdf":
+		doc, err = parsePDF(data)
+	case "xlsx":
+		doc, err = parseXLSX(data)
+	case "dxf":
+		doc, err = parseDXF(data)
+	case "ifc":
+		doc, err = parseIFC(data)
+	case "ifczip":
+		doc, err = parseIFCZip(data)
+	case "bimx":
+		doc, err = parseBIMX(data)
+	case "dwg":
+		doc, err = parseDWG(data, filename)
+	case "pln", "pla":
+		doc, err = parseArchiCAD(data, kind)
 	default:
-		// Try as plain text
-		return parseText(data)
+		if looksBinary(data) {
+			doc, err = harvestDocument(data, kind, true)
+		} else {
+			doc, err = parseText(data)
+		}
 	}
+	if err != nil {
+		return nil, err
+	}
+	if doc == nil {
+		doc = &ParsedDocument{}
+	}
+	if doc.Kind == "" {
+		doc.Kind = kind
+		if doc.Kind == "" {
+			doc.Kind = "text"
+		}
+	}
+	doc.Text = SanitizeExtractedText(doc.Text)
+	return doc, nil
 }
 
 func parseText(data []byte) (*ParsedDocument, error) {
@@ -39,7 +79,7 @@ func parseText(data []byte) (*ParsedDocument, error) {
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	text = strings.ReplaceAll(text, "\r", "\n")
 	title := extractTitle(text)
-	return &ParsedDocument{Text: text, Title: title}, nil
+	return &ParsedDocument{Text: text, Title: title, Kind: "txt"}, nil
 }
 
 var htmlTagRe = regexp.MustCompile(`<[^>]*>`)
@@ -60,7 +100,7 @@ func parseHTML(data []byte) (*ParsedDocument, error) {
 	text = decodeHTMLEntities(text)
 	text = multSpaceRe.ReplaceAllString(text, "\n\n")
 	text = strings.TrimSpace(text)
-	return &ParsedDocument{Text: text, Title: title}, nil
+	return &ParsedDocument{Text: text, Title: title, Kind: "html"}, nil
 }
 
 func decodeHTMLEntities(s string) string {
@@ -77,6 +117,10 @@ func decodeHTMLEntities(s string) string {
 		"&hellip;", "…",
 	)
 	return repl.Replace(s)
+}
+
+type docxDocument struct {
+	Body docxBody `xml:"body"`
 }
 
 type docxBody struct {
@@ -114,25 +158,26 @@ func parseDocx(data []byte) (*ParsedDocument, error) {
 	if docXML == nil {
 		return nil, fmt.Errorf("parse docx: word/document.xml not found")
 	}
-	var body docxBody
-	if err := xml.Unmarshal(docXML, &body); err != nil {
-		// Try to extract text directly from XML
-		text := extractDocxTextSimple(docXML)
-		return &ParsedDocument{Text: text}, nil
-	}
-	var paragraphs []string
-	for _, p := range body.Paragraphs {
-		var line strings.Builder
-		for _, r := range p.Runs {
-			line.WriteString(r.Text)
+	text := ""
+	var doc docxDocument
+	if err := xml.Unmarshal(docXML, &doc); err == nil {
+		var paragraphs []string
+		for _, p := range doc.Body.Paragraphs {
+			var line strings.Builder
+			for _, r := range p.Runs {
+				line.WriteString(r.Text)
+			}
+			if s := strings.TrimSpace(line.String()); s != "" {
+				paragraphs = append(paragraphs, s)
+			}
 		}
-		if s := strings.TrimSpace(line.String()); s != "" {
-			paragraphs = append(paragraphs, s)
-		}
+		text = strings.Join(paragraphs, "\n")
 	}
-	text := strings.Join(paragraphs, "\n")
+	if strings.TrimSpace(text) == "" {
+		text = extractDocxTextSimple(docXML)
+	}
 	title := extractTitle(text)
-	return &ParsedDocument{Text: text, Title: title}, nil
+	return &ParsedDocument{Text: text, Title: title, Kind: "docx"}, nil
 }
 
 var docxTextRe = regexp.MustCompile(`<w:t[^>]*>([^<]*)</w:t>`)
@@ -170,7 +215,12 @@ func parsePDF(data []byte) (*ParsedDocument, error) {
 	}
 	result := strings.TrimSpace(text.String())
 	title := extractTitle(result)
-	return &ParsedDocument{Text: result, Title: title}, nil
+	doc := &ParsedDocument{Text: result, Title: title, Kind: "pdf"}
+	if result == "" {
+		doc.NeedsOCR = true
+		doc.Partial = true
+	}
+	return doc, nil
 }
 
 var titleRe = regexp.MustCompile(`(?m)^(.{1,100})$`)

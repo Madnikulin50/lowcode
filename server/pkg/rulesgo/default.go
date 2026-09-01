@@ -8,6 +8,7 @@ type DefaultConfig struct {
 	AICall      func(ctx context.Context, agent, prompt, model string) (string, error)
 	ScriptExec  func(ctx context.Context, code string, ec *ExecutionContext) (map[string]interface{}, error)
 	DetachStart DetachStartFunc
+	ExtractExec NodeExecutor
 }
 
 func DefaultRegistry(cfg *DefaultConfig) *Registry {
@@ -56,6 +57,12 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 	r.Register("score.matrix", &scoreMatrixExecutor{})
 	r.Register("score.weighted", &scoreWeightedExecutor{})
 	r.Register("risk.band", &riskBandExecutor{})
+
+	if cfg != nil && cfg.ExtractExec != nil {
+		r.Register("document.extract", cfg.ExtractExec)
+	} else {
+		r.Register("document.extract", extractStub{})
+	}
 
 	r.Register("service.call", &componentExecutor{detach: detachStart})
 	for _, spec := range RemoteCatalog() {

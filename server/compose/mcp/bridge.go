@@ -125,6 +125,7 @@ func initBridge() {
 	rulesCfg := &rulesgo.DefaultConfig{
 		CRUD:        composeCRUD{},
 		DetachStart: poller.StartFromDetach,
+		ExtractExec: service.NewDocumentExtractExecutor(),
 		AICall: func(ctx context.Context, agent, prompt, model string) (string, error) {
 			if handlers.AgentRegistry != nil {
 				res, err := handlers.AgentRegistry.RunAgent(ctx, agent, prompt, nil)
@@ -173,6 +174,7 @@ func initBridge() {
 		log.Printf("[bridge] loaded %d rule chains from PostgreSQL", len(engine.Chains()))
 	}
 	handlers.SetRuleEngine(engine.Engine)
+	service.StartRuleChainRecordTriggers(engine.Engine)
 	handlers.SetOnChainMissing(func(ctx context.Context, chainID string) {
 		ensureChainAvailable(ctx, engine, chainID)
 	})

@@ -272,7 +272,7 @@ function documentsPage (m, charts) {
         labelField: 'title', descriptionField: 'number', groupField: 'status', group: 'rejected',
       }),
       block('Chart', 'По статусу', [0, 38, 16, 18], { chartID: String(charts.docsByStatus) }),
-      recordList('Реестр документов', [16, 38, 32, 22], m.documents, ['title', 'number', 'doc_type', 'project', 'status', 'assignee', 'due_date']),
+      recordList('Реестр документов', [16, 38, 32, 22], m.documents, ['title', 'number', 'doc_type', 'project', 'status', 'extract_status', 'assignee', 'due_date']),
     ]),
   }
 }
@@ -287,21 +287,26 @@ function documentCard (m) {
     config: pageIcon('fas file'),
     blocks: withBlockIDs([
       recordBlock('Документ', [0, 0, 32, 28], [
-        'title', 'number', 'status', 'sign_status', 'doc_type', 'project', 'wbs', 'contract',
-        'author', 'assignee', 'due_date', 'file', 'notes',
+        'title', 'number', 'status', 'sign_status', 'extract_status', 'doc_type', 'project', 'wbs', 'contract',
+        'author', 'assignee', 'due_date', 'file', 'summary', 'notes',
       ], {
         fieldRoles: {
           title: 'title',
           number: 'subtitle',
           status: 'badge',
           sign_status: 'badge',
+          extract_status: 'badge',
           doc_type: 'badge',
           project: 'meta',
           assignee: 'meta',
           due_date: 'meta',
+          summary: 'body',
           notes: 'body',
         },
-        sections: [{ title: 'Файл', fields: ['file'] }],
+        sections: [
+          { title: 'Файл', fields: ['file'] },
+          { title: 'ИИ', fields: ['summary', 'extracted_text', 'extract_error', 'extracted_at'] },
+        ],
       }),
       ruleChain('На согласование', [32, 0, 16, 9], {
         chainID: 'invest-submit-approval',
@@ -327,17 +332,23 @@ function documentCard (m) {
         variant: 'info',
         icon: 'arrow-up',
       }),
-      recordList('Версии', [0, 28, 24, 20], m.document_versions, ['version', 'author', 'comment', 'created_on'], {
+      ruleChain('Summary', [32, 36, 16, 9], {
+        chainID: 'invest-summarize-document',
+        label: 'Обновить summary',
+        variant: 'primary',
+        icon: 'align-left',
+      }),
+      recordList('Версии', [0, 46, 24, 20], m.document_versions, ['version', 'author', 'comment', 'created_on'], {
         prefilter: `document = ${recID}`,
         refField: 'document',
         presort: 'version DESC',
       }),
-      recordList('Маршрут', [24, 28, 24, 20], m.approvals, ['step', 'approver', 'role', 'decision', 'due_date', 'comment'], {
+      recordList('Маршрут', [24, 46, 24, 20], m.approvals, ['step', 'approver', 'role', 'decision', 'due_date', 'comment'], {
         prefilter: `document = ${recID}`,
         refField: 'document',
         presort: 'step ASC',
       }),
-      commentBlock('Комментарии', [0, 48, 48, 18], m.document_comments, {
+      commentBlock('Комментарии', [0, 66, 48, 18], m.document_comments, {
         referenceField: 'document',
         filter: `document = ${recID}`,
         titleField: '',

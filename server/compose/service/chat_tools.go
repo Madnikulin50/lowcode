@@ -15,6 +15,7 @@ func AllChatToolDefs() []chat.ToolDef {
 	defs = append(defs, chatModuleToolDefs()...)
 	defs = append(defs, chatChartToolDefs()...)
 	defs = append(defs, chatPageToolDefs()...)
+	defs = append(defs, chatExtractAttachmentToolDef())
 	defs = append(defs, newChatTools()...)
 	return defs
 }

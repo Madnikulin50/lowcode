@@ -221,7 +221,17 @@ export function pageHelpDocs (namespace, page) {
   }
 }
 
-/** Copy options.help from the API payload after JS page-block types drop unknown keys. */
+/** Store pages/charts are Object.freeze'd; Vue 3 props are also readonly. */
+function setProp (obj, key, value) {
+  if (obj == null) return false
+  try {
+    obj[key] = value
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function restoreBlockHelp (page, raw) {
   if (!page?.blocks) return page
   const rawBlocks = Array.isArray(raw?.blocks) ? raw.blocks : []
@@ -229,12 +239,13 @@ export function restoreBlockHelp (page, raw) {
   page.blocks.forEach((block, i) => {
     const src = byID.get(String(block.blockID || '')) || rawBlocks[i]
     const help = src?.options?.help
-    if (!block.options) block.options = {}
+    if (!block.options) setProp(block, 'options', {})
+    if (!block.options) return
     if (!String(block.options.help || '').trim() && help) {
-      block.options.help = help
+      setProp(block.options, 'help', help)
     }
     if (src?.options?.hideHelpButton != null) {
-      block.options.hideHelpButton = src.options.hideHelpButton
+      setProp(block.options, 'hideHelpButton', src.options.hideHelpButton)
     }
   })
   return page
@@ -246,13 +257,14 @@ export function hydrateBlockDocs (namespace, page) {
   const handle = page.handle || page.pageID || ''
   page.blocks.forEach(block => {
     if (!block) return
-    if (!block.options) block.options = {}
+    if (!block.options) setProp(block, 'options', {})
+    if (!block.options) return
     const current = String(block.options.help || '').trim()
     const genericMetric = current.includes('Каждое число — агрегат по модулю')
     if (current && !genericMetric) return
     const docs = GENERATED_BLOCK_DOCS?.[`${slug}/${handle}/${block.blockID}`]
       || GENERATED_BLOCK_DOCS?.[`${slug}/${page.pageID}/${block.blockID}`]
-    if (docs?.help) block.options.help = docs.help
+    if (docs?.help) setProp(block.options, 'help', docs.help)
   })
   return page
 }
@@ -261,12 +273,12 @@ export function hydrateBlockDocs (namespace, page) {
 export function hydratePageDocs (namespace, page) {
   if (!page) return page
   const docs = pageHelpDocs(namespace, page)
-  if (!page.config) page.config = {}
-  if (!String(page.config.help || '').trim() && docs.help) {
-    page.config.help = docs.help
+  if (!page.config) setProp(page, 'config', {})
+  if (page.config && !String(page.config.help || '').trim() && docs.help) {
+    setProp(page.config, 'help', docs.help)
   }
   if (docs.description && pickDescription(page.description, docs.description) !== page.description) {
-    page.description = docs.description
+    setProp(page, 'description', docs.description)
   }
   hydrateBlockDocs(namespace, page)
   return page
@@ -295,12 +307,12 @@ export function chartHelpDocs (namespace, chart) {
 export function hydrateChartDocs (namespace, chart) {
   if (!chart) return chart
   const docs = chartHelpDocs(namespace, chart)
-  if (!chart.config) chart.config = {}
-  if (!String(chart.config.help || '').trim() && docs.help) {
-    chart.config.help = docs.help
+  if (!chart.config) setProp(chart, 'config', {})
+  if (chart.config && !String(chart.config.help || '').trim() && docs.help) {
+    setProp(chart.config, 'help', docs.help)
   }
-  if (!String(chart.config.description || '').trim() && docs.description) {
-    chart.config.description = docs.description
+  if (chart.config && !String(chart.config.description || '').trim() && docs.description) {
+    setProp(chart.config, 'description', docs.description)
   }
   return chart
 }

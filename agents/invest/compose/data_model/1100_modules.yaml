@@ -137,6 +137,12 @@ modules:
       assignee: { label: Согласующий, kind: User }
       due_date: { label: Срок, kind: DateTime }
       file: { label: Файл, kind: File }
+      summary: { label: Summary, kind: String }
+      extracted_text: { label: Извлечённый текст, kind: String }
+      extract_status: { label: Статус извлечения, kind: Select, options: { options: [idle, pending, ready, partial, failed, unsupported] } }
+      extract_error: { label: Ошибка извлечения, kind: String }
+      extracted_at: { label: Извлечено, kind: DateTime }
+      file_hash: { label: Хэш файла, kind: String }
       notes: { label: Заметки, kind: String }
 
   document_versions:

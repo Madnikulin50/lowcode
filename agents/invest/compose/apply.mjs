@@ -173,7 +173,7 @@ async function main () {
   }
 
   try {
-    await seedIfEmpty(api, nsID, modules, userFromToken(token))
+    await seedIfEmpty(api, nsID, modules, userFromToken(token), { token, base })
   } catch (e) {
     console.warn('seed skipped:', e.message)
   }

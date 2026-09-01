@@ -91,6 +91,10 @@ pages:
           kind: RuleChain
           options:
             chain: invest-reject-document
+        - title: Summary
+          kind: RuleChain
+          options:
+            chain: invest-summarize-document
         - title: Комментарии
           kind: Comment
 

@@ -217,6 +217,16 @@ func builtinNodeTypes() []nodeTypeDef {
 			},
 		},
 		{
+			Type:        "document.extract",
+			Label:       "Extract document text",
+			Description: "Read a File-field attachment (docx, xlsx, pdf, dxf, dwg, ifc, ArchiCAD) and put text into the chain context",
+			ConfigFields: []nodeTypeField{
+				nf("attachmentField", "string", "File field", def("file"), help("Record field holding attachment IDs")),
+				nf("maxChars", "number", "Max characters", def(64000)),
+				nf("outText", "string", "Text variable", def("extracted_text")),
+			},
+		},
+		{
 			Type:        "score.matrix",
 			Label:       "Risk Matrix",
 			Description: "5×5 (or NxN) likelihood × impact → score",

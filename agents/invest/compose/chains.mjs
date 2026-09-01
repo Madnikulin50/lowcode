@@ -5,6 +5,7 @@ export function buildRuleChains ({ nsID, modules, engineUrl, evmUrl }) {
   const projects = String(modules.projects)
   const wbs = String(modules.wbs_items)
   const facts = String(modules.progress_facts)
+  const documents = String(modules.documents)
   const calc = (evmUrl || 'http://localhost:8088/api').replace(/\/$/, '')
 
   const jobBody = extra => {
@@ -322,6 +323,107 @@ export function buildRuleChains ({ nsID, modules, engineUrl, evmUrl }) {
         },
       }],
       edges: [],
+    },
+    {
+      id: 'invest-summarize-document',
+      name: 'Инвест: summary документа',
+      description: 'Извлечь текст вложения (docx/xlsx/pdf/dxf/dwg/ifc/ArchiCAD) и записать summary в запись. Автозапуск после смены файла.',
+      entryNode: 'has_file',
+      namespaceID: ns,
+      config: {
+        triggers: [{
+          resourceType: 'compose:record',
+          eventType: 'afterCreate,afterUpdate',
+          moduleHandle: 'documents',
+          async: true,
+          fileField: 'file',
+        }],
+      },
+      nodes: [
+        { id: 'has_file', type: 'condition', label: 'Есть файл', config: { field: 'file', operator: 'notEmpty' } },
+        {
+          id: 'pending',
+          type: 'crud',
+          label: 'Статус pending',
+          config: {
+            operation: 'update',
+            namespaceID: ns,
+            moduleID: documents,
+            moduleHandle: 'documents',
+            recordID: '{{recordID}}',
+            omitEmpty: true,
+            continueOnError: true,
+            fields: { extract_status: 'pending' },
+          },
+        },
+        {
+          id: 'extract',
+          type: 'document.extract',
+          label: 'Извлечь текст',
+          config: { attachmentField: 'file', maxChars: 64000, outText: 'extracted_text' },
+        },
+        { id: 'check_ok', type: 'condition', label: 'Текст есть', config: { field: 'extract_ok', operator: 'eq', value: 'true' } },
+        {
+          id: 'ai',
+          type: 'ai',
+          label: 'Summary',
+          config: {
+            agent: 'assistant',
+            prompt: 'Составь краткое summary (5–10 предложений) инвестиционного документа «{{title}}» № {{number}} (тип {{doc_type}}). Пиши по-русски, только текст резюме, без префикса FINAL и без markdown-заголовков. Укажи стороны, даты, суммы, обязательства; для чертежей/BIM — листы, слои, этажи, штамп, если они есть в тексте.\n\nТекст документа:\n{{extracted_text}}',
+          },
+        },
+        {
+          id: 'save_ok',
+          type: 'crud',
+          label: 'Записать summary',
+          config: {
+            operation: 'update',
+            namespaceID: ns,
+            moduleID: documents,
+            moduleHandle: 'documents',
+            recordID: '{{recordID}}',
+            fields: {
+              summary: '{{ai_response}}',
+              extracted_text: '{{extracted_text}}',
+              extract_status: '{{extract_status}}',
+              extract_error: '',
+              extracted_at: '{{extracted_at}}',
+              file_hash: '{{file_hash}}',
+            },
+          },
+        },
+        { id: 'check_fail', type: 'condition', label: 'Извлечение не удалось', config: { field: 'extract_ok', operator: 'eq', value: 'false' } },
+        {
+          id: 'save_fail',
+          type: 'crud',
+          label: 'Записать ошибку',
+          config: {
+            operation: 'update',
+            namespaceID: ns,
+            moduleID: documents,
+            moduleHandle: 'documents',
+            recordID: '{{recordID}}',
+            omitEmpty: true,
+            continueOnError: true,
+            fields: {
+              extract_status: '{{extract_status}}',
+              extract_error: '{{extract_error}}',
+              extracted_text: '{{extracted_text}}',
+              extracted_at: '{{extracted_at}}',
+              file_hash: '{{file_hash}}',
+            },
+          },
+        },
+      ],
+      edges: [
+        { from: 'has_file', to: 'pending', condition: 'has_file_result' },
+        { from: 'pending', to: 'extract' },
+        { from: 'extract', to: 'check_ok' },
+        { from: 'extract', to: 'check_fail' },
+        { from: 'check_ok', to: 'ai', condition: 'check_ok_result' },
+        { from: 'ai', to: 'save_ok' },
+        { from: 'check_fail', to: 'save_fail', condition: 'check_fail_result' },
+      ],
     },
   ]
 }

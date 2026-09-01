@@ -40,7 +40,7 @@ node seed.mjs
 | **Проекты** (`projects`) | Карточка проекта, фаза 1–6, SPI/CPI/EAC |
 | **Участники** (`project_members`) | User + роль в проекте |
 | **WBS** (`wbs_items`) | Иерархия стадия/подстадия/работа, предшественник, EVM-поля |
-| **Документы** (`documents`) | Реестр + статус согласования + заглушка УКЭП (`sign_status`) |
+| **Документы** (`documents`) | Реестр + статус согласования + summary файла (`summary`, `extracted_text`, `extract_status`) |
 | **Версии** (`document_versions`) | Обход отсутствия file-versioning |
 | **Согласования** (`approvals`) | Маршрут: кто / решение / срок |
 | **Комментарии** (`document_comments`) | Блок Comment на карточке документа |
@@ -68,7 +68,7 @@ Record revisions включены на `projects`, `wbs_items`, `documents`, `co
 ## Страницы
 
 - **Дашборд** — метрики, кнопки EVM/CPM/алерты, портфель SPI/CPI, doughnut, Gantt, «Документы на мне» (`assignee = текущий пользователь`)
-- **Документы** — канбан + реестр; карточка: файл, автоверсия, маршрут по шагам, комментарии, «Согласовать мой шаг»
+- **Документы** — канбан + реестр; карточка: файл, summary ИИ, автоверсия, маршрут по шагам, комментарии, «Согласовать мой шаг»
 - **Проекты / WBS / Договоры / Риски / Изменения / Бюджет / Прогресс / НСИ**
 - **ИИ-советчики** — два блока AiChat (Юрист, Финконтролёр), human-in-the-loop
 
@@ -92,6 +92,9 @@ Record revisions включены на `projects`, `wbs_items`, `documents`, `co
 | `invest-lawyer-review` | Карточка договора | AI-узел «Юрист» |
 | `invest-fin-review` | Бюджет | AI-узел «Финконтролёр» |
 | `invest-flag-low-cpi` | Карточка WBS | Риск, если CPI < 0.9 |
+| `invest-summarize-document` | Карточка документа (авто + кнопка) | Извлечь текст файла → AI summary → поля `summary` / `extracted_text` |
+
+После загрузки файла в `documents` цепь стартует с `afterCreate`/`afterUpdate` (файл сменился). Узел `document.extract` читает вложение in-process (docx, xlsx, pdf, dxf, ifc; DWG/PLN — harvest или `dwg2dxf` на PATH). Агент `assistant` пишет `summary`. Повтор — кнопка «Обновить summary». Сканированный PDF без текстового слоя → `failed` / needs_ocr (OCR не в v1).
 
 ## calc-evm
 

@@ -43,6 +43,15 @@ export const DOC_STATUS = [
   ['archived', 'Архив', { backgroundColor: 'secondary', textColor: 'white' }],
 ]
 
+export const EXTRACT_STATUS = [
+  ['idle', 'Нет файла', { backgroundColor: 'light', textColor: 'dark' }],
+  ['pending', 'Извлечение…', { backgroundColor: 'info', textColor: 'white' }],
+  ['ready', 'Готово', { backgroundColor: 'success', textColor: 'white' }],
+  ['partial', 'Частично', { backgroundColor: 'warning', textColor: 'dark' }],
+  ['failed', 'Ошибка', { backgroundColor: 'danger', textColor: 'white' }],
+  ['unsupported', 'Формат ограничен', { backgroundColor: 'secondary', textColor: 'white' }],
+]
+
 export const SIGN_STATUS = [
   ['unsigned', 'Не подписан', { backgroundColor: 'light', textColor: 'dark' }],
   ['pending', 'Ожидает УКЭП', { backgroundColor: 'warning', textColor: 'dark' }],
@@ -256,7 +265,13 @@ export function documentFields (projectsID, wbsID, contractsID, typesID) {
     userField('author', 'Автор'),
     userField('assignee', 'Согласующий'),
     dateField('due_date', 'Срок согласования'),
-    fileField('file', 'Текущий файл', { documents: true, images: true }),
+    fileField('file', 'Текущий файл', { documents: true, images: true, multi: true }),
+    field('summary', 'Summary', 'String'),
+    field('extracted_text', 'Извлечённый текст', 'String'),
+    field('extract_status', 'Статус извлечения', 'Select', { options: selectOptions(EXTRACT_STATUS) }),
+    field('extract_error', 'Ошибка извлечения', 'String'),
+    dateField('extracted_at', 'Извлечено', { onlyDate: false }),
+    field('file_hash', 'Хэш файла', 'String'),
     field('notes', 'Заметки', 'String'),
   ]
 }

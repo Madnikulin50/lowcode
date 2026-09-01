@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url'
 
 import { createRecord, setOf, detectBase, apiFactory } from './helpers.mjs'
 import { mintToken } from '../../backup/compose/helpers.mjs'
+import { seedDocumentFiles } from './seed_files.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -624,7 +625,7 @@ const PROJECTS = [
   },
 ]
 
-export async function seedIfEmpty (api, nsID, modules, userID = '') {
+export async function seedIfEmpty (api, nsID, modules, userID = '', opts = {}) {
   const typeRows = await listAll(api, nsID, modules.document_types)
   const typesByCode = indexBy(typeRows, 'code')
   for (const row of DOC_TYPES) {
@@ -922,6 +923,11 @@ export async function seedIfEmpty (api, nsID, modules, userID = '') {
   }
 
   console.log(`seeded invest demo (${createdProjects} new projects, rest reused by code)`)
+  try {
+    await seedDocumentFiles(api, nsID, modules, opts)
+  } catch (e) {
+    console.warn('document files:', e.message || e)
+  }
 }
 
 async function main () {
@@ -930,7 +936,7 @@ async function main () {
   const base = await detectBase(token)
   const api = apiFactory(base, token)
   console.log('API', base, 'ns', applied.namespaceID)
-  await seedIfEmpty(api, applied.namespaceID, applied.modules, userFromToken(token))
+  await seedIfEmpty(api, applied.namespaceID, applied.modules, userFromToken(token), { token, base })
 }
 
 const isDirect = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]
