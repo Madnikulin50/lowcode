@@ -5,8 +5,10 @@ import { execSync } from 'child_process'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
+import { vueRuntimeSingletons } from '../vite.singletons.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const singletons = vueRuntimeSingletons(__dirname)
 
 export default defineConfig({
   base: './',
@@ -50,6 +52,7 @@ export default defineConfig({
   },
   resolve: {
     alias: [
+      ...singletons.aliasEntries,
       { find: '@', replacement: resolve(__dirname, 'src') },
       { find: 'corteza-webapp-admin', replacement: resolve(__dirname, '.') },
       { find: 'corteza-lib/vue/dist', replacement: resolve(__dirname, '../../lib/vue/dist') },
@@ -60,6 +63,7 @@ export default defineConfig({
       { find: /^opentype\.js$/, replacement: resolve(__dirname, 'src/shims/opentype-default.js') },
       { find: 'opentype.js/dist/opentype.mjs', replacement: resolve(__dirname, '../../lib/vue/node_modules/opentype.js/dist/opentype.mjs') },
     ],
+    dedupe: singletons.dedupe,
     modules: [
       resolve(__dirname, 'node_modules'),
       resolve(__dirname, '../../lib/vue/node_modules'),

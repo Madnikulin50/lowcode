@@ -5,8 +5,10 @@ import { execSync } from 'child_process'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
+import { vueRuntimeSingletons } from '../vite.singletons.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const singletons = vueRuntimeSingletons(__dirname)
 
 export default defineConfig({
   base: './',
@@ -43,11 +45,13 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      ...singletons.aliases,
       '@': resolve(__dirname, 'src'),
       'corteza-webapp-reporter': resolve(__dirname, '.'),
       'corteza-lib/vue/dist': resolve(__dirname, '../../lib/vue/dist'),
       'corteza-lib/js/dist': resolve(__dirname, '../../lib/js/dist'),
     },
+    dedupe: singletons.dedupe,
     modules: [
       resolve(__dirname, 'node_modules'),
       resolve(__dirname, '../../lib/vue/node_modules'),

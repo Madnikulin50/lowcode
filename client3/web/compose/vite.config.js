@@ -4,8 +4,10 @@ import { resolve, dirname } from 'path'
 import { execSync } from 'child_process'
 import { readFileSync, writeFileSync } from 'fs'
 import { fileURLToPath } from 'url'
+import { vueRuntimeSingletons } from '../vite.singletons.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const singletons = vueRuntimeSingletons(__dirname)
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || './',
@@ -95,6 +97,7 @@ export default defineConfig({
   },
   resolve: {
     alias: [
+      ...singletons.aliasEntries,
       { find: '@', replacement: resolve(__dirname, 'src') },
       { find: 'corteza-webapp-compose/src/stores', replacement: resolve(__dirname, 'src/store') },
       { find: 'corteza-webapp-compose', replacement: resolve(__dirname, '.') },
@@ -118,7 +121,7 @@ export default defineConfig({
     // matching versions, Rollup treats them as two distinct modules and
     // bundles pinia twice, each with its own (uninitialized) activePinia
     // instance — causing "Cannot read properties of undefined (reading
-    // '_s')" on mount. Force a single shared instance.
+    // '_s')" on mount. Force a single shared instance (see vite.singletons.js).
     //
     // Same story for @tiptap/* + prosemirror-*: CRichTextInput lives under
     // client3/lib/vue/src too, so it resolves its own copy of
@@ -128,7 +131,7 @@ export default defineConfig({
     // when the editor is reconfigured/remounted (e.g. Builder.vue's
     // editBlock). Force a single shared instance here too.
     dedupe: [
-      'pinia', 'vue', 'vue-router', 'vue-i18n', 'three',
+      ...singletons.dedupe, 'three',
       '@tiptap/core', '@tiptap/vue-3', '@tiptap/suggestion', '@tiptap/starter-kit',
       '@tiptap/extension-list', '@tiptap/extension-mention', '@tiptap/extension-emoji',
       '@tiptap/extension-table', '@tiptap/extension-text-align', '@tiptap/extension-text-style',

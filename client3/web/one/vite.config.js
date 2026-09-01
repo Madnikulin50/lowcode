@@ -5,8 +5,10 @@ import { execSync } from 'child_process'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
+import { vueRuntimeSingletons } from '../vite.singletons.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const singletons = vueRuntimeSingletons(__dirname)
 
 export default defineConfig({
   base: './',
@@ -29,14 +31,31 @@ export default defineConfig({
       },
     },
     vue(),
+    {
+      name: 'fix-dxf-viewer-opentype',
+      enforce: 'pre',
+      transform (code, id) {
+        if (!id.includes('dxf-viewer')) return
+        if (!code.includes('from "opentype.js"') && !code.includes("from 'opentype.js'")) return
+        const fixed = code
+          .replace(/import opentype from ["']opentype\.js["']/, 'import { parse as opentypeParse } from "opentype.js"; const opentype = { parse: opentypeParse }')
+        if (fixed !== code) {
+          return fixed
+        }
+      },
+    },
   ],
   resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-      'corteza-webapp-one': resolve(__dirname, '.'),
-      'corteza-lib/vue/dist': resolve(__dirname, '../../lib/vue/dist'),
-      'corteza-lib/js/dist': resolve(__dirname, '../../lib/js/dist'),
-    },
+    alias: [
+      ...singletons.aliasEntries,
+      { find: '@', replacement: resolve(__dirname, 'src') },
+      { find: 'corteza-webapp-one', replacement: resolve(__dirname, '.') },
+      { find: 'corteza-lib/vue/dist', replacement: resolve(__dirname, '../../lib/vue/dist') },
+      { find: 'corteza-lib/js/dist', replacement: resolve(__dirname, '../../lib/js/dist') },
+      { find: /^opentype\.js$/, replacement: resolve(__dirname, 'src/shims/opentype-default.js') },
+      { find: 'opentype.js/dist/opentype.mjs', replacement: resolve(__dirname, '../../lib/vue/node_modules/opentype.js/dist/opentype.mjs') },
+    ],
+    dedupe: singletons.dedupe,
     modules: [
       resolve(__dirname, 'node_modules'),
       resolve(__dirname, '../../lib/vue/node_modules'),
@@ -45,6 +64,9 @@ export default defineConfig({
       'node_modules',
     ],
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+  },
+  optimizeDeps: {
+    exclude: ['dxf-viewer', 'opentype.js'],
   },
   server: {
     proxy: {

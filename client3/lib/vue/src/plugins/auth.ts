@@ -279,10 +279,6 @@ export class Auth {
       this.cleanFlags()
     })
 
-    this.registerEventListener('unload', () => {
-      this.cleanFlags()
-    })
-
     this.registerEventListener('beforeunload', () => {
       this.cleanFlags()
     })
