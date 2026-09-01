@@ -5,7 +5,7 @@ import { execSync } from 'child_process'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
-import { vueRuntimeSingletons } from '../vite.singletons.js'
+import { vueRuntimeSingletons, quietVendorAnnotations, withQuietRollup } from '../vite.singletons.js'
 import { dxfOpentypePlugin, dxfOpentypeAliases } from '../vite.dxf-opentype.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -13,7 +13,7 @@ const singletons = vueRuntimeSingletons(__dirname)
 
 export default defineConfig({
   base: './',
-  build: { assetsDir: 'webapp-assets' },
+  build: withQuietRollup({ assetsDir: 'webapp-assets' }),
   plugins: [    {
       name: 'html-base-inject',
       apply: 'build',
@@ -32,6 +32,7 @@ export default defineConfig({
       },
     },
     vue(),
+    quietVendorAnnotations(),
     dxfOpentypePlugin(),
   ],
   define: {

@@ -4,14 +4,14 @@ import { resolve, dirname } from 'path'
 import { execSync } from 'child_process'
 import { readFileSync, writeFileSync } from 'fs'
 import { fileURLToPath } from 'url'
-import { vueRuntimeSingletons } from '../vite.singletons.js'
+import { vueRuntimeSingletons, quietVendorAnnotations, withQuietRollup } from '../vite.singletons.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const singletons = vueRuntimeSingletons(__dirname)
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || './',
-  build: { assetsDir: 'webapp-assets' },
+  build: withQuietRollup({ assetsDir: 'webapp-assets' }),
   assetsInclude: ['**/*.wasm'],
   plugins: [
     {
@@ -30,6 +30,7 @@ export default defineConfig({
       },
     },
     vue(),
+    quietVendorAnnotations(),
     {
       name: 'fix-vue-default-import',
       transform (code, id) {
