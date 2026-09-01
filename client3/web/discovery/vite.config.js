@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import { vueRuntimeSingletons } from '../vite.singletons.js'
+import { dxfOpentypePlugin, dxfOpentypeAliases } from '../vite.dxf-opentype.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const singletons = vueRuntimeSingletons(__dirname)
@@ -31,6 +32,7 @@ export default defineConfig({
       },
     },
     vue(),
+    dxfOpentypePlugin(),
   ],
   define: {
     WEBAPP: JSON.stringify('Discovery'),
@@ -38,13 +40,14 @@ export default defineConfig({
     BUILD_TIME: JSON.stringify(new Date().toISOString()),
   },
   resolve: {
-    alias: {
-      ...singletons.aliases,
-      '@': resolve(__dirname, 'src'),
-      'corteza-webapp-discovery': resolve(__dirname, '.'),
-      'corteza-lib/vue/dist': resolve(__dirname, '../../lib/vue/dist'),
-      'corteza-lib/js/dist': resolve(__dirname, '../../lib/js/dist'),
-    },
+    alias: [
+      ...singletons.aliasEntries,
+      { find: '@', replacement: resolve(__dirname, 'src') },
+      { find: 'corteza-webapp-discovery', replacement: resolve(__dirname, '.') },
+      { find: 'corteza-lib/vue/dist', replacement: resolve(__dirname, '../../lib/vue/dist') },
+      { find: 'corteza-lib/js/dist', replacement: resolve(__dirname, '../../lib/js/dist') },
+      ...dxfOpentypeAliases(__dirname),
+    ],
     dedupe: singletons.dedupe,
     modules: [
       resolve(__dirname, 'node_modules'),
@@ -82,5 +85,6 @@ export default defineConfig({
       'corteza-lib/js/dist',
       'vue-simple-markdown',
     ],
+    exclude: ['dxf-viewer', 'opentype.js'],
   },
 })

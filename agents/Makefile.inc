@@ -1,7 +1,7 @@
 # Shared by agent Makefiles. Set AGENT (image suffix) before including.
 # Optional: BIN, BUILD_PKG.
 
-VERSION      ?= 2026.8.30
+VERSION      ?= 2026.9.1
 DOCKER_USER  ?= madnikulin50
 DOCKER       ?= docker
 GO           ?= go

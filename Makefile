@@ -1,6 +1,6 @@
 .PHONY: dev test lint fresh audit drelease ddebug dpush drelease-agents ddebug-agents
 
-VERSION     ?= 2026.8.30
+VERSION     ?= 2026.9.1
 DOCKER_USER ?= madnikulin50
 
 dev:

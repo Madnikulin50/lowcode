@@ -1,13 +1,13 @@
 # Agents next to the main lowcode server.
 # Images: make -C agents drelease   (or ddebug for local tags without dockerhub prefix)
 #
-#   VERSION=2026.8.30 docker compose -f agents/docker-compose.yml up -d
+#   VERSION=2026.9.1 docker compose -f agents/docker-compose.yml up -d
 #   DOCKER_IMAGE_PREFIX= docker compose -f agents/docker-compose.yml up -d   # after make ddebug
 #
 # TOKEN and API flags come from the repo-root .env (same as the server).
 services:
   backup:
-    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-backup:${VERSION:-2026.8.30}
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-backup:${VERSION:-2026.9.1}
     restart: always
     extra_hosts:
       - "host.docker.internal:${LOCAL:-host-gateway}"
@@ -30,7 +30,7 @@ services:
         condition: service_healthy
 
   cmdb:
-    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-cmdb:${VERSION:-2026.8.30}
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-cmdb:${VERSION:-2026.9.1}
     restart: always
     extra_hosts:
       - "host.docker.internal:${LOCAL:-host-gateway}"
@@ -49,7 +49,7 @@ services:
       - NET_ADMIN
 
   invest:
-    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-invest:${VERSION:-2026.8.30}
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-invest:${VERSION:-2026.9.1}
     restart: always
     extra_hosts:
       - "host.docker.internal:${LOCAL:-host-gateway}"
@@ -62,13 +62,13 @@ services:
       - "8086:8086"
 
   calc-evm:
-    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-calc-evm:${VERSION:-2026.8.30}
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-calc-evm:${VERSION:-2026.9.1}
     restart: always
     ports:
       - "8088:8088"
 
   scan-cidr:
-    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-scan-cidr:${VERSION:-2026.8.30}
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-scan-cidr:${VERSION:-2026.9.1}
     restart: always
     ports:
       - "8089:8089"
