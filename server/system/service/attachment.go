@@ -340,7 +340,7 @@ func (svc attachment) CreateAvatarInitialsAttachment(ctx context.Context, initia
 		return nil
 	}()
 
-	return att, nil
+	return att, err
 }
 
 func (svc attachment) renderAvatarInitials(initials, bgColor, textColor string) (img image.Image, fontPath string, err error) {

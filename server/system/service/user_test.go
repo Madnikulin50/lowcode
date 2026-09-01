@@ -304,6 +304,18 @@ func Test_processAvatarInitials(t *testing.T) {
 	}
 }
 
+func TestMaybeRefreshAvatarInitialsNilSafe(t *testing.T) {
+	req := require.New(t)
+	svc := user{settings: &types.AppSettings{}}
+	svc.settings.Auth.Internal.ProfileAvatar.Enabled = true
+
+	req.NotPanics(func() {
+		svc.maybeRefreshAvatarInitials(context.Background(), nil)
+		svc.maybeRefreshAvatarInitials(context.Background(), &types.User{Name: "Максим Николаев"})
+		svc.maybeRefreshAvatarInitials(context.Background(), &types.User{Name: "Максим Николаев", Meta: nil})
+	})
+}
+
 func (uu u) LookupUserByHandle(ctx context.Context, handle string) (*types.User, error) {
 	return uu.L(ctx, handle)
 }

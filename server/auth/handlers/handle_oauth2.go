@@ -409,13 +409,20 @@ func (h *AuthHandlers) handleTokenRequest(req *request.AuthReq, client *types.Au
 			}
 		}
 
-		if sessionUserExists && req.AuthUser.User.ID == cast.ToUint64(userID) {
+		if sessionUserExists && user != nil && req.AuthUser.User.ID == cast.ToUint64(userID) {
 			req.AuthUser.User = user
 			req.AuthUser.Save(req.Session)
 		}
 
 	default:
 		return fmt.Errorf("unsupported oauth2 grant type: %v", gt)
+	}
+
+	if user == nil {
+		return h.tokenError(w, fmt.Errorf("could not generate token: user not found"))
+	}
+	if user.Meta == nil {
+		user.Meta = &types.UserMeta{}
 	}
 
 	var (

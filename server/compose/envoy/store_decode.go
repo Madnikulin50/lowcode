@@ -297,9 +297,10 @@ func (d StoreDecoder) decodeRecordDatasource(ctx context.Context, s store.Storer
 		},
 	}
 
-	// Get access controller to enforce field-level read permissions
+	// Get access controller to enforce field-level read permissions.
+	// Namespace ZIP export is a full snapshot: skip field ACL so File IDs are present for remapping on import.
 	ac := service.AccessControl(s)
-	if rbac.Global() == nil {
+	if rbac.Global() == nil || cast.ToBool(p.Params["skipAccessControl"]) {
 		ac = nil
 	}
 

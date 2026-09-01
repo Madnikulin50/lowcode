@@ -64,16 +64,12 @@
                   </div>
                 </div>
 
-                <i18next
-                  v-if="element.meta?.original?.size != null"
-                  path="general.label.attachmentFileInfo"
-                  tag="small"
+                <small
+                  v-if="fileInfo(element)"
                   class="d-block text-muted"
                 >
-                  <span>{{ size(element) }}</span>
-
-                  <span>{{ uploadedAt(element) }}</span>
-                </i18next>
+                  {{ fileInfo(element) }}
+                </small>
               </div>
             </div>
           </div>
@@ -187,26 +183,32 @@ const canPreviewCheck = (a) => {
 
 const baseURL = url.Make({ url: window.CortezaAPI + '/compose' })
 
+function normalizeSet (set) {
+  if (set == null || set === '') return []
+  return Array.isArray(set) ? set : [set]
+}
+
 watch(() => props.set, (set) => {
-  const list = Array.isArray(set) ? set : []
+  const list = normalizeSet(set)
   const att = list.map(a => {
     if (a && typeof a === 'object' && !Array.isArray(a)) {
       return new shared.Attachment(a, baseURL)
-    } else {
-      return null
     }
+    return null
   })
 
   const namespaceID = props.namespace.namespaceID
   processing.value = true
+  const api = $ComposeAPI || (typeof window !== 'undefined' ? window.__composeAPI : undefined)
 
-  Promise.all(Object.entries(list).map(([index, attachmentID]) => {
-    if (typeof attachmentID === 'string' && $ComposeAPI?.attachmentRead) {
-      return $ComposeAPI.attachmentRead({ kind: props.kind, attachmentID, namespaceID }).then(a => {
+  Promise.all(list.map((item, index) => {
+    const attachmentID = (item != null && typeof item !== 'object') ? String(item) : ''
+    if (attachmentID && api?.attachmentRead) {
+      return api.attachmentRead({ kind: props.kind, attachmentID, namespaceID }).then(a => {
         att.splice(index, 1, new shared.Attachment(a, baseURL))
       })
     }
-    return Promise.resolve([])
+    return Promise.resolve()
   }))
     .then(() => {
       const { clickToView = true, enableDownload = true } = props.previewOptions
@@ -226,14 +228,25 @@ watch(() => props.set, (set) => {
 
 function size(a) {
   const bytes = a?.meta?.original?.size
-  if (bytes == null) {
+  if (bytes == null || bytes === '') {
     return ''
   }
   return numeral(bytes).format('0b')
 }
 
 function uploadedAt(a) {
-  return moment(a.updatedAt || a.createdAt).fromNow()
+  const ts = a.updatedAt || a.createdAt
+  if (!ts) return ''
+  const m = moment(ts)
+  return m.isValid() ? m.fromNow() : ''
+}
+
+function fileInfo(a) {
+  const s = size(a)
+  const when = uploadedAt(a)
+  if (!s && !when) return ''
+  // vue-i18n already empties {{0}}/{{1}} from the locale string; fill values here.
+  return `(${[s, when].filter(Boolean).join(', ')})`
 }
 
 function openLightbox(e) {

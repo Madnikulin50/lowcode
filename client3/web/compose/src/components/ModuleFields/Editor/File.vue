@@ -111,11 +111,9 @@ const maxSize = computed(() => {
 
 const attachmentSet = computed({
   get () {
-    // Empty single-value fields are undefined; wrapping with || [] yields [[]].
-    if (props.field.isMulti) {
-      return (value.value || []).filter(id => typeof id === 'string' && id)
-    }
-    return [value.value].filter(id => typeof id === 'string' && id)
+    const raw = value.value
+    const list = raw == null || raw === '' ? [] : (Array.isArray(raw) ? raw : [raw])
+    return list.map(id => id == null ? '' : String(id)).filter(Boolean)
   },
   set (v) {
     if (props.field.isMulti) {

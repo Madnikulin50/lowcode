@@ -272,7 +272,7 @@ function documentsPage (m, charts) {
         labelField: 'title', descriptionField: 'number', groupField: 'status', group: 'rejected',
       }),
       block('Chart', 'По статусу', [0, 38, 16, 18], { chartID: String(charts.docsByStatus) }),
-      recordList('Реестр документов', [16, 38, 32, 22], m.documents, ['title', 'number', 'doc_type', 'project', 'status', 'extract_status', 'assignee', 'due_date']),
+      recordList('Реестр документов', [16, 38, 32, 22], m.documents, ['title', 'number', 'doc_type', 'project', 'status', 'extract_status', 'file', 'assignee', 'due_date']),
     ]),
   }
 }
@@ -288,7 +288,7 @@ function documentCard (m) {
     blocks: withBlockIDs([
       recordBlock('Документ', [0, 0, 32, 28], [
         'title', 'number', 'status', 'sign_status', 'extract_status', 'doc_type', 'project', 'wbs', 'contract',
-        'author', 'assignee', 'due_date', 'file', 'summary', 'notes',
+        'author', 'assignee', 'due_date', 'file', 'summary', 'extracted_text', 'extract_error', 'extracted_at', 'notes',
       ], {
         fieldRoles: {
           title: 'title',

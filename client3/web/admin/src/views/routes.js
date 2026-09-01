@@ -218,5 +218,7 @@ export default [
     ],
   },
 
-  { path: '/:pathMatch(.*)*', redirect: { name: 'dashboard' } },
+  { path: '/auth/callback', name: 'auth.callback', component: () => import('./Layout.vue') },
+  { path: '/admin/auth/callback', name: 'auth.callback.admin', component: () => import('./Dashboard.vue') },
+  { path: '/:pathMatch(.*)*', redirect: () => ({ name: 'dashboard' }) },
 ]

@@ -48,11 +48,33 @@ func (r *RawRecord) UnmarshalJSON(data []byte) error {
 			continue
 		}
 
+		var num json.Number
+		if err := json.Unmarshal(v, &num); err == nil {
+			result[k] = RawRecordValue{
+				Name:   k,
+				Values: []string{num.String()},
+			}
+			continue
+		}
+
 		var multi []string
 		if err := json.Unmarshal(v, &multi); err == nil {
 			result[k] = RawRecordValue{
 				Name:   k,
 				Values: multi,
+			}
+			continue
+		}
+
+		var multiNum []json.Number
+		if err := json.Unmarshal(v, &multiNum); err == nil {
+			vals := make([]string, 0, len(multiNum))
+			for _, n := range multiNum {
+				vals = append(vals, n.String())
+			}
+			result[k] = RawRecordValue{
+				Name:   k,
+				Values: vals,
 			}
 			continue
 		}

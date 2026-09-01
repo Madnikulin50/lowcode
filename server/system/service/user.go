@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/mail"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -152,23 +153,9 @@ func (svc user) FindByID(ctx context.Context, userID uint64) (u *types.User, err
 
 		uaProps.setUser(u)
 
-		// Generate missing initials avatars, and redraw ones that were baked
-		// with a Latin-only font (Cyrillic then becomes tofu boxes).
-		if svc.settings.Auth.Internal.ProfileAvatar.Enabled && u.Meta.AvatarKind != types.AttachmentKindAvatar {
-			oldAvatarID := u.Meta.AvatarID
-			oldAvatarFont := u.Meta.AvatarFont
-			if userAvatarInitialsNeedRefresh(u) {
-				if err = svc.generateUserAvatarInitial(ctx, u); err != nil {
-					return err
-				}
-
-				if u.Meta.AvatarID != oldAvatarID || u.Meta.AvatarFont != oldAvatarFont {
-					if err = store.UpdateUser(ctx, svc.store, u); err != nil {
-						return err
-					}
-				}
-			}
-		}
+		// Best-effort: never fail a user lookup (login/token exchange) because
+		// avatar rendering or font assets are unavailable.
+		svc.maybeRefreshAvatarInitials(ctx, u)
 
 		if !svc.ac.CanReadUser(ctx, u) {
 			return UserErrNotAllowedToRead()
@@ -281,6 +268,15 @@ func (svc user) proc(ctx context.Context, u *types.User, err error) (*types.User
 		}
 
 		return nil, err
+	}
+
+	if u != nil && u.Meta == nil {
+		u.Meta = &types.UserMeta{}
+	}
+	if u != nil {
+		if lang := os.Getenv("PREFERRED_LANGUAGE"); lang != "" {
+			u.Meta.PreferredLanguage = lang
+		}
 	}
 
 	svc.handlePrivateData(ctx, u)
@@ -1299,6 +1295,36 @@ func processAvatarInitials(u *types.User) (initial string) {
 	return
 }
 
+// maybeRefreshAvatarInitials redraws initials avatars that were baked with a
+// Latin-only font (Cyrillic then becomes tofu). Lookup must not fail if
+// rendering or storage is unavailable — OAuth token exchange calls FindByID.
+func (svc user) maybeRefreshAvatarInitials(ctx context.Context, u *types.User) {
+	if u == nil {
+		return
+	}
+	if u.Meta == nil {
+		u.Meta = &types.UserMeta{}
+	}
+	if svc.settings == nil || !svc.settings.Auth.Internal.ProfileAvatar.Enabled {
+		return
+	}
+	if u.Meta.AvatarKind == types.AttachmentKindAvatar {
+		return
+	}
+	if svc.att == nil || !userAvatarInitialsNeedRefresh(u) {
+		return
+	}
+
+	oldAvatarID := u.Meta.AvatarID
+	oldAvatarFont := u.Meta.AvatarFont
+	if err := svc.generateUserAvatarInitial(ctx, u); err != nil {
+		return
+	}
+	if u.Meta.AvatarID != oldAvatarID || u.Meta.AvatarFont != oldAvatarFont {
+		_ = store.UpdateUser(ctx, svc.store, u)
+	}
+}
+
 func userAvatarInitialsNeedRefresh(u *types.User) bool {
 	if u == nil || u.Meta == nil {
 		return true
@@ -1407,12 +1433,14 @@ func (svc user) generateUserAvatarInitial(ctx context.Context, u *types.User) (e
 		u.Meta.AvatarFont = att.Meta.Labels[avatarFontLabel]
 	}
 
-	if u.Meta.AvatarBgColor == "" {
-		u.Meta.AvatarBgColor = att.Meta.Original.Image.BackgroundColor
-	}
+	if att.Meta.Original.Image != nil {
+		if u.Meta.AvatarBgColor == "" {
+			u.Meta.AvatarBgColor = att.Meta.Original.Image.BackgroundColor
+		}
 
-	if u.Meta.AvatarColor == "" {
-		u.Meta.AvatarColor = att.Meta.Original.Image.InitialColor
+		if u.Meta.AvatarColor == "" {
+			u.Meta.AvatarColor = att.Meta.Original.Image.InitialColor
+		}
 	}
 
 	return nil

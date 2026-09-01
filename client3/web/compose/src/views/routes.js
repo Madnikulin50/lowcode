@@ -83,7 +83,7 @@ export default [
                 ],
               },
 
-              { path: ':pathMatch(.*)*', redirect: { name: 'pages' } },
+              { path: ':pathMatch(.*)*', redirect: () => ({ name: 'pages' }) },
             ],
           },
         ],
@@ -91,5 +91,7 @@ export default [
     ],
   },
 
-  { path: '/:pathMatch(.*)*', redirect: { name: 'root' } },
+  { path: '/auth/callback', name: 'auth.callback', component: () => import('./Layout.vue') },
+  { path: '/compose/auth/callback', name: 'auth.callback.compose', component: () => import('./Layout.vue') },
+  { path: '/:pathMatch(.*)*', redirect: () => ({ name: 'root' }) },
 ]

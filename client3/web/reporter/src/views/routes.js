@@ -13,5 +13,7 @@ export default [
     ],
   },
 
-  { path: '/:pathMatch(.*)*', redirect: { name: 'root' } },
+  { path: '/auth/callback', name: 'auth.callback', component: () => import('./Layout') },
+  { path: '/reporter/auth/callback', name: 'auth.callback.reporter', component: () => import('./Layout') },
+  { path: '/:pathMatch(.*)*', redirect: () => ({ name: 'root' }) },
 ]

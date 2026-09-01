@@ -233,15 +233,17 @@ func (h *AuthHandlers) handle(fn handlerFn) http.HandlerFunc {
 					auth.Authenticated(req.AuthUser.User.ID, req.AuthUser.User.Roles()...),
 				))
 
-				userPreferredLanguage := language.Make(req.AuthUser.User.Meta.PreferredLanguage)
+				if req.AuthUser.User.Meta != nil {
+					userPreferredLanguage := language.Make(req.AuthUser.User.Meta.PreferredLanguage)
 
-				// set user's preferred language
-				if h.Locale.HasLanguage(userPreferredLanguage) {
-					ctx := req.Request.Context()
-					ctx = locale.SetAcceptLanguageToContext(ctx, userPreferredLanguage)
-					ctx = locale.SetContentLanguageToContext(ctx, userPreferredLanguage)
+					// set user's preferred language
+					if h.Locale.HasLanguage(userPreferredLanguage) {
+						ctx := req.Request.Context()
+						ctx = locale.SetAcceptLanguageToContext(ctx, userPreferredLanguage)
+						ctx = locale.SetContentLanguageToContext(ctx, userPreferredLanguage)
 
-					req.Request = req.Request.WithContext(ctx)
+						req.Request = req.Request.WithContext(ctx)
+					}
 				}
 			}
 
@@ -368,7 +370,9 @@ func (h *AuthHandlers) enrichTmplData(req *request.AuthReq) interface{} {
 		}
 
 		d["user"] = user
-		d["theme"] = user.Meta.Theme
+		if user != nil && user.Meta != nil {
+			d["theme"] = user.Meta.Theme
+		}
 	}
 
 	if req.Client != nil {

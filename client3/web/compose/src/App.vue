@@ -36,12 +36,12 @@ onMounted(async () => {
     })
 
 
-    if (user.meta.preferredLanguage) {
+    if (user.meta?.preferredLanguage) {
       $ComposeAPI.setHeader('Accept-Language', user.meta.preferredLanguage)
         .setHeader('Content-Language', user.meta.preferredLanguage)
     }
 
-    if (user.meta.theme) {
+    if (user.meta?.theme) {
       applyColorMode(user.meta.theme)
     }
 

@@ -11,5 +11,7 @@ export default [
     ],
   },
 
-  { path: '/:pathMatch(.*)*', redirect: { name: 'root' } },
+  { path: '/auth/callback', name: 'auth.callback', component: () => import('./Layout.vue') },
+  { path: '/workflow/auth/callback', name: 'auth.callback.workflow', component: () => import('./Layout.vue') },
+  { path: '/:pathMatch(.*)*', redirect: () => ({ name: 'root' }) },
 ]

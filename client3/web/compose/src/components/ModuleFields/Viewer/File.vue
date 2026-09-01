@@ -28,7 +28,18 @@ const props = defineProps({
 
 const { value, options } = useViewerBase(props)
 
-const attachmentSet = computed(() => {
-  return props.field.isMulti ? value.value : [value.value]
-})
+function attachmentIDs (raw) {
+  if (raw == null || raw === '') return []
+  const list = Array.isArray(raw) ? raw : [raw]
+  return list
+    .flatMap(v => Array.isArray(v) ? v : [v])
+    .map(v => {
+      if (v == null || v === '') return ''
+      if (typeof v === 'object') return v
+      return String(v)
+    })
+    .filter(v => v !== '')
+}
+
+const attachmentSet = computed(() => attachmentIDs(value.value))
 </script>

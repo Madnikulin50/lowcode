@@ -12,5 +12,6 @@ export default [
     ],
   },
 
-  { path: '/:pathMatch(.*)*', redirect: { name: 'layout' } },
+  { path: '/auth/callback', name: 'auth.callback', component: Layout },
+  { path: '/:pathMatch(.*)*', redirect: () => ({ name: 'layout' }) },
 ]

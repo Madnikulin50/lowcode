@@ -419,11 +419,22 @@ func namespaceImportInit(t *testing.T, h helper, arch []byte) (uint64, error) {
 }
 
 func namespaceImportRun(ctx context.Context, s store.Storer, t *testing.T, h helper, sessionID uint64, name, slug string) (*types.Namespace, types.ModuleSet, types.PageSet, types.ChartSet) {
+	return namespaceImportRunData(ctx, s, t, h, sessionID, name, slug, false)
+}
+
+func namespaceImportRunData(ctx context.Context, s store.Storer, t *testing.T, h helper, sessionID uint64, name, slug string, importData bool) (*types.Namespace, types.ModuleSet, types.PageSet, types.ChartSet) {
+	body, err := json.Marshal(map[string]any{
+		"name":       name,
+		"slug":       slug,
+		"importData": importData,
+	})
+	h.a.NoError(err)
+
 	h.apiInit().
 		Post(fmt.Sprintf("/namespace/import/%d", sessionID)).
 		Header("Accept", "application/json").
-		FormData("name", name).
-		FormData("slug", slug).
+		ContentType("application/json").
+		Body(string(body)).
 		Expect(h.t).
 		Status(http.StatusOK).
 		Assert(helpers.AssertNoErrors).

@@ -63,6 +63,7 @@ type (
 		CreateIconAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
 		CreateRecordAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string) (*types.Attachment, error)
 		CreateNamespaceAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
+		CreateImported(ctx context.Context, namespaceID uint64, kind, name string, meta types.AttachmentMeta, original io.ReadSeeker, originalSize int64, preview io.ReadSeeker) (*types.Attachment, error)
 		OpenOriginal(att *types.Attachment) (io.ReadSeekCloser, error)
 		OpenPreview(att *types.Attachment) (io.ReadSeekCloser, error)
 		DeleteByID(ctx context.Context, namespaceID, attachmentID uint64) error
@@ -548,6 +549,78 @@ func (svc attachment) create(ctx context.Context, s store.ComposeAttachments, na
 	}
 
 	return nil
+}
+
+func (svc attachment) CreateImported(ctx context.Context, namespaceID uint64, kind, name string, meta types.AttachmentMeta, original io.ReadSeeker, originalSize int64, preview io.ReadSeeker) (att *types.Attachment, err error) {
+	var (
+		aProps = &attachmentActionProps{}
+	)
+
+	err = store.Tx(ctx, svc.store, func(ctx context.Context, s store.Storer) (err error) {
+		if originalSize == 0 {
+			return AttachmentErrNotAllowedToCreateEmptyAttachment()
+		}
+
+		if !svc.ac.CanCreateNamespace(ctx) {
+			return AttachmentErrNotAllowedToUpdateNamespace()
+		}
+
+		if svc.objects == nil {
+			return errors.Internal("cannot create attachment: store handler not set")
+		}
+
+		att = &types.Attachment{
+			NamespaceID: namespaceID,
+			Name:        strings.TrimSpace(name),
+			Kind:        kind,
+			Meta:        meta,
+		}
+		if kind == types.IconAttachment {
+			att.NamespaceID = 0
+		}
+
+		att.ID = nextID()
+		att.CreatedAt = *now()
+		if att.OwnerID == 0 {
+			att.OwnerID = auth.GetIdentityFromContext(ctx).Identity()
+		}
+
+		att.Meta.Original.Extension = strings.Trim(path.Ext(strings.Trim(name, ".")), ".")
+		if att.Meta.Original.Extension == "" && meta.Original.Extension != "" {
+			att.Meta.Original.Extension = meta.Original.Extension
+		}
+		att.Meta.Original.Size = originalSize
+		if att.Meta.Original.Mimetype, err = svc.extractMimetypeS(original); err != nil {
+			return AttachmentErrFailedToExtractMimeType(aProps).Wrap(err)
+		}
+
+		att.Url = svc.objects.Original(att.ID, att.Meta.Original.Extension)
+		if _, err = original.Seek(0, 0); err != nil {
+			return err
+		}
+		if err = svc.objects.Save(att.Url, original); err != nil {
+			return AttachmentErrFailedToStoreFile(aProps).Wrap(err)
+		}
+
+		if preview != nil && att.Meta.Preview != nil && att.Meta.Preview.Extension != "" {
+			att.PreviewUrl = svc.objects.Preview(att.ID, att.Meta.Preview.Extension)
+			if _, err = preview.Seek(0, 0); err != nil {
+				return err
+			}
+			if err = svc.objects.Save(att.PreviewUrl, preview); err != nil {
+				return AttachmentErrFailedToStoreFile(aProps).Wrap(err)
+			}
+		} else {
+			att.Meta.Preview = meta.Preview
+			if err = svc.processImage(original, att); err != nil {
+				return AttachmentErrFailedToProcessImage(aProps).Wrap(err)
+			}
+		}
+
+		return store.CreateComposeAttachment(ctx, s, att)
+	})
+
+	return att, svc.recordAction(ctx, aProps, AttachmentActionCreate, err)
 }
 
 func (svc attachment) extractMimetype(file io.ReadSeeker) (mType *mimetype.MIME, err error) {
