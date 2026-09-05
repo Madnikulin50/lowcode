@@ -37,6 +37,21 @@ const modelStorageKey = computed(() => {
   const id = props.block?.blockID || props.block?.meta?.tempID || props.blockIndex
   return `aiChat.model.block.${id || '0'}`
 })
+
+const blockTemperature = computed(() => {
+  const t = options.value.temperature
+  return t === null || t === undefined || t === '' ? null : Number(t)
+})
+
+const temperatureStorageKey = computed(() => {
+  const id = props.block?.blockID || props.block?.meta?.tempID || props.blockIndex
+  return `aiChat.temperature.block.${id || '0'}`
+})
+
+const confidenceStorageKey = computed(() => {
+  const id = props.block?.blockID || props.block?.meta?.tempID || props.blockIndex
+  return `aiChat.confidence.block.${id || '0'}`
+})
 </script>
 
 <template>
@@ -52,6 +67,11 @@ const modelStorageKey = computed(() => {
         :show-model-switcher="true"
         :preferred-model="preferredModel"
         :model-storage-key="modelStorageKey"
+        :temperature="blockTemperature"
+        :temperature-storage-key="temperatureStorageKey"
+        :show-temperature-control="true"
+        :confidence-storage-key="confidenceStorageKey"
+        :show-confidence-toggle="true"
       />
     </div>
   </Wrap>

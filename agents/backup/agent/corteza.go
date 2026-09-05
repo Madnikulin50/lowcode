@@ -367,7 +367,7 @@ func (c *Corteza) GetRecord(ctx context.Context, handle string, recordID uint64)
 	}
 	raw, err := c.request(ctx, "GET", fmt.Sprintf("/compose/namespace/%d/module/%d/record/%d", nsID, modID, recordID), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s record %d: %w", handle, recordID, err)
 	}
 	var rec composeRecord
 	if err := json.Unmarshal(raw, &rec); err != nil {

@@ -229,7 +229,7 @@ function onGridSettled () {
   background: var(--primary) !important;
 }
 
-.vue-grid-item.grid-item {
+.vue-grid-item {
   box-sizing: border-box;
 
   > *:not(.vue-resizable-handle) {

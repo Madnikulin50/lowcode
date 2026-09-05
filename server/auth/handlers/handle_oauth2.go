@@ -220,6 +220,10 @@ func (h *AuthHandlers) oauth2Info(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, ok := claims["roles"]; !ok || claims["roles"] == nil {
+		claims["roles"] = []string{}
+	}
+
 	_ = json.NewEncoder(w).Encode(claims)
 }
 
@@ -425,26 +429,25 @@ func (h *AuthHandlers) handleTokenRequest(req *request.AuthReq, client *types.Au
 		user.Meta = &types.UserMeta{}
 	}
 
+	roles := user.Roles()
+	if client.Security != nil {
+		roles = auth.ApplyRoleSecurity(
+			payload.ParseUint64s(client.Security.PermittedRoles),
+			payload.ParseUint64s(client.Security.ProhibitedRoles),
+			payload.ParseUint64s(client.Security.ForcedRoles),
+			roles...,
+		)
+	}
+
 	var (
 		signed []byte
 		scope  = strings.Split(ti.GetScope(), " ")
 	)
 
-	// Here set roles to signed
 	signed, err = auth.TokenIssuer.Sign(
 		auth.WithAccessToken(ti.GetAccess()),
 		auth.WithIdentity(user),
 		func(tr *auth.TokenRequest) error {
-			// Calculate user's roles
-			roles := user.Roles()
-			if client.Security != nil {
-				roles = auth.ApplyRoleSecurity(
-					payload.ParseUint64s(client.Security.PermittedRoles),
-					payload.ParseUint64s(client.Security.ProhibitedRoles),
-					payload.ParseUint64s(client.Security.ForcedRoles),
-					roles...,
-				)
-			}
 			tr.Roles = roles
 			return nil
 		},
@@ -456,13 +459,16 @@ func (h *AuthHandlers) handleTokenRequest(req *request.AuthReq, client *types.Au
 		return h.tokenError(w, err)
 	}
 
-	// modify token info with signed JWT
-	// this will be sent back to the user
 	ti.SetAccess(string(signed))
 
 	response := h.OAuth2.GetTokenData(ti)
 
-	// include user's avatarID
+	roleIDs := make([]string, len(roles))
+	for i, id := range roles {
+		roleIDs[i] = strconv.FormatUint(id, 10)
+	}
+	response["roles"] = roleIDs
+
 	if user.Meta.AvatarID != 0 {
 		response["avatarID"] = strconv.FormatUint(user.Meta.AvatarID, 10)
 	}

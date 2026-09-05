@@ -115,7 +115,7 @@ function GetComponent({ block, mode = defaultMode }) {
 
 function PageBlock(props, { slots, attrs }) {
   const component = GetComponent(props)
-  return h(component, { ...props, ...attrs }, slots)
+  return h(component, { ...attrs, ...props, class: ['h-100', attrs.class, props.class] }, slots)
 }
 
 export { Registry, GetComponent }

@@ -65,8 +65,9 @@
       <slot name="toolbar" />
 
       <div
-        class="card-body p-0 flex-fill fixed-corner-container"
+        class="card-body p-0 fixed-corner-container"
         :class="[bodyClass, { 'overflow-auto': scrollableBody }]"
+        style="flex-shrink: 10; min-height: 0;"
       >
         <block-help-button
           v-if="!ownsOwnHelpButton"

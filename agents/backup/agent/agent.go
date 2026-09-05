@@ -17,14 +17,13 @@ import (
 )
 
 type Agent struct {
-	cfg          Config
-	cz           *Corteza
-	store        *ObjectStore
-	mu           sync.RWMutex
-	jobs      map[string]*JobStatus
-	lastFired map[uint64]time.Time
-	sem       chan struct{}
-	cb        *sdk.Callback
+	cfg   Config
+	cz    *Corteza
+	store *ObjectStore
+	mu    sync.RWMutex
+	jobs  map[string]*JobStatus
+	sem   chan struct{}
+	cb    *sdk.Callback
 }
 
 func New(cfg Config, store *ObjectStore, cz *Corteza) *Agent {
@@ -33,13 +32,12 @@ func New(cfg Config, store *ObjectStore, cz *Corteza) *Agent {
 		n = 2
 	}
 	return &Agent{
-		cfg:          cfg,
-		cz:           cz,
-		store:        store,
-		jobs:      map[string]*JobStatus{},
-		lastFired: map[uint64]time.Time{},
-		sem:          make(chan struct{}, n),
-		cb:           sdk.NewCallback(),
+		cfg:   cfg,
+		cz:    cz,
+		store: store,
+		jobs:  map[string]*JobStatus{},
+		sem:   make(chan struct{}, n),
+		cb:    sdk.NewCallback(),
 	}
 }
 
@@ -97,12 +95,62 @@ func (a *Agent) runningCount() int {
 	return n
 }
 
-func (a *Agent) StartScheduler(ctx context.Context) {
-	if a.cfg.PollInterval <= 0 {
-		return
+// ReconcileStaleJobs marks "jobs"/"restores" records a *previous* process
+// left in "running" as failed. Job state only ever lives in this process's
+// in-memory a.jobs map — a fresh process starts with that map empty, so any
+// record still "running" at this point cannot belong to it: the process
+// that owned it crashed, was redeployed, or was killed before it reached
+// finish()/persistJob(), and nothing was ever going to flip that status
+// again.
+//
+// It takes an explicit *Corteza (rather than always using a.cz) because it
+// runs two ways: once at startup using the agent's own static token (when
+// configured — see main.go), and on demand via StartReconcile/Call using
+// whatever token the caller's request carries — deployments that skip a
+// static agent token (cron polling off, "Compose buttons send token in the
+// job POST") never get the startup pass, so the on-demand path is the only
+// one that ever runs for them.
+func (a *Agent) ReconcileStaleJobs(ctx context.Context, cz *Corteza) (int, error) {
+	if cz == nil || !cz.HasToken() {
+		return 0, fmt.Errorf("corteza is not configured (no token)")
 	}
-	t := time.NewTicker(a.cfg.PollInterval)
-	defer t.Stop()
+	const staleMsg = "backup agent restarted while this job was running; marked as failed"
+	now := time.Now().UTC().Format(time.RFC3339)
+	n := 0
+	for _, handle := range []string{"jobs", "restores"} {
+		set, err := cz.ListRecords(ctx, handle, "status = 'running'")
+		if err != nil {
+			return n, fmt.Errorf("%s: %w", handle, err)
+		}
+		for i := range set {
+			id := set[i].ID
+			if err := cz.UpdateValues(ctx, handle, id, map[string]string{
+				"status":      string(StatusFailed),
+				"error":       staleMsg,
+				"finished_at": now,
+			}); err != nil {
+				log.Printf("reconcile %s %d: %v", handle, id, err)
+				continue
+			}
+			log.Printf("reconcile: %s %d was stuck running, marked failed", handle, id)
+			n++
+		}
+	}
+	return n, nil
+}
+
+// StartScheduler keeps the agent's heartbeat going (presence + capabilities
+// in the "agents" module). It used to also decide which backup policies
+// were due and start them directly — that meant this agent process was the
+// only thing that would ever write the resulting "jobs" row back to
+// "completed"/"failed", so an agent restart mid-backup left it stuck
+// "running" forever. Policy scheduling now lives server-side: the
+// "backup-run-due" rule chain (see agents/backup/compose/chains.mjs /
+// compose/mcp/backup_chains.go) polls DuePolicies, creates the Compose row
+// itself, and tracks status via the same poll/ingest mechanism used for
+// interactively-started backups. Trigger that chain on a schedule (cron,
+// systemd timer, Corteza Automation) instead of relying on this loop.
+func (a *Agent) StartScheduler(ctx context.Context) {
 	a.Heartbeat(ctx)
 	hb := time.NewTicker(2 * time.Minute)
 	defer hb.Stop()
@@ -110,13 +158,6 @@ func (a *Agent) StartScheduler(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-t.C:
-			if a.cz == nil || !a.cz.HasToken() {
-				continue
-			}
-			if _, err := a.RunDue(ctx, JobRequest{}); err != nil {
-				log.Printf("scheduler: %v", err)
-			}
 		case <-hb.C:
 			a.Heartbeat(ctx)
 		}
@@ -136,7 +177,18 @@ func (a *Agent) Heartbeat(ctx context.Context) {
 	}
 }
 
-func (a *Agent) RunDue(ctx context.Context, req JobRequest) ([]*JobStatus, error) {
+// DuePolicies reports enabled policies whose cron schedule matches right
+// now. Read-only by design: it starts nothing and writes nothing — the
+// caller (the "backup-run-due" rule chain) is the one that creates the
+// Compose "jobs" row and starts the backup, so that row is always owned by
+// something that can reliably flip it to "completed"/"failed" (see
+// StartScheduler's doc comment).
+//
+// A policy already backing up (an existing "jobs" row for it with
+// status="running") is excluded, so calling this repeatedly — e.g. every
+// minute from an external cron — never starts the same policy twice while
+// its previous run is still in flight.
+func (a *Agent) DuePolicies(ctx context.Context, req JobRequest) ([]DuePolicy, error) {
 	cz := a.Corteza(req)
 	if cz == nil {
 		return nil, fmt.Errorf("corteza is not configured")
@@ -149,37 +201,27 @@ func (a *Agent) RunDue(ctx context.Context, req JobRequest) ([]*JobStatus, error
 		return nil, err
 	}
 	now := time.Now()
-	var started []*JobStatus
+	var due []DuePolicy
 	for i := range pols {
 		p := pols[i]
 		if CronValid(p.Cron) != nil || !MatchCron(p.Cron, now) {
 			continue
 		}
-		a.mu.Lock()
-		last := a.lastFired[p.ID]
-		if !last.IsZero() && now.Sub(last) < time.Minute {
-			a.mu.Unlock()
-			continue
-		}
-		if !p.LastRun.IsZero() && now.Sub(p.LastRun) < time.Minute {
-			a.mu.Unlock()
-			continue
-		}
-		a.lastFired[p.ID] = now
-		a.mu.Unlock()
-		st, err := a.StartBackup(ctx, JobRequest{
-			PolicyID:    fmtUint(p.ID),
-			SourceID:    fmtUint(p.SourceID),
-			Token:       firstNonEmpty(req.Token, a.cfg.Token),
-			NamespaceID: firstNonEmpty(req.NamespaceID, fmtUint(a.cfg.NamespaceID)),
-		})
+		// Nothing updates policies.last_run any more (see recordSnapshot's
+		// doc comment) — a currently-running job for this policy is the
+		// real, live signal that it's not due again, so that's the only
+		// guard left against double-firing.
+		running, err := cz.ListRecords(ctx, "jobs", fmt.Sprintf("policy = %d AND status = 'running'", p.ID))
 		if err != nil {
-			log.Printf("due policy %s: %v", p.Name, err)
+			log.Printf("due policy %s: check running: %v", p.Name, err)
 			continue
 		}
-		started = append(started, st)
+		if len(running) > 0 {
+			continue
+		}
+		due = append(due, DuePolicy{ID: fmtUint(p.ID), SourceID: fmtUint(p.SourceID), Name: p.Name})
 	}
-	return started, nil
+	return due, nil
 }
 
 func (a *Agent) StartBackup(ctx context.Context, req JobRequest) (*JobStatus, error) {
@@ -197,7 +239,7 @@ func (a *Agent) StartBackup(ctx context.Context, req JobRequest) (*JobStatus, er
 	if polID > 0 {
 		pol, err = cz.LoadPolicy(ctx, polID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("policy %d: %w", polID, err)
 		}
 		if srcID == 0 {
 			srcID = pol.SourceID
@@ -212,7 +254,7 @@ func (a *Agent) StartBackup(ctx context.Context, req JobRequest) (*JobStatus, er
 	}
 	src, err := cz.LoadSource(ctx, srcID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("source %d: %w", srcID, err)
 	}
 	cred, err := cz.LoadCredential(ctx, src.CredID)
 	if err != nil {
@@ -239,18 +281,14 @@ func (a *Agent) StartBackup(ctx context.Context, req JobRequest) (*JobStatus, er
 		st.Kind = string(KindIncremental)
 	}
 
-	if st.JobRecordID == "" {
-		if jid, err := cz.CreateValues(ctx, "jobs", map[string]string{
-			"policy":     st.PolicyID,
-			"source":     st.SourceID,
-			"status":     string(StatusRunning),
-			"progress":   "0",
-			"kind":       st.Kind,
-			"started_at": st.StartedAt.UTC().Format(time.RFC3339),
-		}); err == nil {
-			st.JobRecordID = fmtUint(jid)
-		}
-	}
+	// st.JobRecordID (the Compose "jobs" row) is expected to come from the
+	// caller — the "backup-run-source"/"backup-run-policy"/"backup-run-due"
+	// chains all create it *before* calling this endpoint, and the poll/
+	// ingest mechanism they set up afterwards is what tracks status from
+	// here. This agent no longer creates or updates that row itself (see
+	// StartScheduler's doc comment): a job started without a JobRecordID
+	// simply isn't linked to Compose — still trackable via GetStatus/
+	// ListJobsStatus while this process is alive, nothing more.
 
 	a.mu.Lock()
 	a.jobs[id] = st
@@ -271,11 +309,11 @@ func (a *Agent) StartRestore(ctx context.Context, req JobRequest) (*JobStatus, e
 	}
 	snap, err := cz.LoadSnapshot(ctx, snapID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("snapshot %d: %w", snapID, err)
 	}
 	src, err := cz.LoadSource(ctx, snap.SourceID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("source %d: %w", snap.SourceID, err)
 	}
 	cred, _ := cz.LoadCredential(ctx, src.CredID)
 	id := uuid.New().String()
@@ -294,22 +332,12 @@ func (a *Agent) StartRestore(ctx context.Context, req JobRequest) (*JobStatus, e
 		S3Key:       snap.S3Key,
 		Engine:      snap.Engine,
 	}
-	if st.JobRecordID == "" {
-		if rid, err := cz.CreateValues(ctx, "restores", map[string]string{
-			"snapshot":   fmtUint(snap.ID),
-			"dest_type":  firstNonEmpty(req.DestType, "path"),
-			"dest_path":  req.DestPath,
-			"status":     string(StatusRunning),
-			"progress":   "0",
-			"started_at": st.StartedAt.UTC().Format(time.RFC3339),
-		}); err == nil {
-			st.JobRecordID = fmtUint(rid)
-		}
-	}
+	// See StartBackup: st.JobRecordID comes from the caller (the
+	// "backup-restore" chain's "record" step), not created here.
 	a.mu.Lock()
 	a.jobs[id] = st
 	a.mu.Unlock()
-	go a.runRestore(context.Background(), st, src, snap, cred, req, cz)
+	go a.runRestore(context.Background(), st, src, snap, cred, req)
 	return st, nil
 }
 
@@ -379,7 +407,7 @@ func (a *Agent) runBackup(ctx context.Context, st *JobStatus, src *Source, pol *
 			}
 		}
 		metricDuration.WithLabelValues(label).Observe(time.Since(start).Seconds())
-		a.persistJob(ctx, cz, st, src, pol, res)
+		a.recordSnapshot(ctx, cz, st, pol, res)
 		a.notifyCallback(st, kind)
 	}
 
@@ -406,7 +434,6 @@ func (a *Agent) backupSource(ctx context.Context, st *JobStatus, src *Source, po
 	useRestic := pol.Incremental && resticAvailable() && src.Type == SourceFS
 	if useRestic {
 		st.Message = "restic backup"
-		a.syncJob(ctx, st)
 		id, err := resticBackupPath(ctx, a.cfg, handle, src.Path, a.cfg.ResticPassword)
 		if err != nil {
 			return nil, err
@@ -519,7 +546,6 @@ func (a *Agent) dumpToMinio(ctx context.Context, st *JobStatus, src *Source, use
 		pw.Close()
 	}()
 	st.Message = "dumping database"
-	a.syncJob(ctx, st)
 	written, err := a.store.Put(ctx, key, pr, -1, "application/octet-stream")
 	if err != nil {
 		return nil, err
@@ -539,7 +565,7 @@ func (a *Agent) dumpToMinio(ctx context.Context, st *JobStatus, src *Source, use
 	}, nil
 }
 
-func (a *Agent) runRestore(ctx context.Context, st *JobStatus, src *Source, snap *Snapshot, cred *Credential, req JobRequest, cz *Corteza) {
+func (a *Agent) runRestore(ctx context.Context, st *JobStatus, src *Source, snap *Snapshot, cred *Credential, req JobRequest) {
 	a.sem <- struct{}{}
 	defer func() { <-a.sem }()
 	secret := ""
@@ -575,14 +601,10 @@ func (a *Agent) runRestore(ctx context.Context, st *JobStatus, src *Source, snap
 		metricRestores.WithLabelValues("completed").Inc()
 		a.notifyCallback(st, "complete")
 	}
-	if cz != nil && st.JobRecordID != "" {
-		_ = cz.UpdateValues(ctx, "restores", ParseUint(st.JobRecordID), map[string]string{
-			"status":      string(st.Status),
-			"progress":    "100",
-			"error":       st.Error,
-			"finished_at": now.UTC().Format(time.RFC3339),
-		})
-	}
+	// st.Status/Progress are already updated above — GetStatus/ListJobsStatus
+	// reflect it immediately. The "backup-ingest-restore" chain's poller
+	// picks it up from there and writes the "restores" row; this agent
+	// doesn't write Compose directly (see StartScheduler's doc comment).
 }
 
 func (a *Agent) restoreOriginal(ctx context.Context, src *Source, snap *Snapshot, username, secret string) error {
@@ -708,66 +730,40 @@ func (a *Agent) runPrune(ctx context.Context, st *JobStatus, req JobRequest, cz 
 	a.notifyCallback(st, "complete")
 }
 
-func (a *Agent) persistJob(ctx context.Context, cz *Corteza, st *JobStatus, src *Source, pol *Policy, res *BackupResult) {
-	if cz == nil {
+// recordSnapshot creates the "snapshots" row for a completed backup — the
+// actual artifact metadata (where the data landed, its checksum/size),
+// which only this agent knows and nobody else can reconstruct from polling.
+// This is data the backup produced, not job-status bookkeeping, so it's
+// kept here unlike the "jobs"/"restores" status writes this agent used to
+// also do (see StartScheduler's doc comment for why those moved to the
+// server-side poll/ingest chains instead).
+func (a *Agent) recordSnapshot(ctx context.Context, cz *Corteza, st *JobStatus, pol *Policy, res *BackupResult) {
+	if cz == nil || res == nil || st.Status != StatusCompleted {
 		return
 	}
-	vals := map[string]string{
-		"status":        string(st.Status),
-		"progress":      strconv.FormatFloat(st.Progress, 'f', 1, 64),
-		"bytes_read":    fmtInt(st.BytesRead),
-		"bytes_written": fmtInt(st.BytesWritten),
-		"files_count":   strconv.Itoa(st.Files),
-		"kind":          st.Kind,
-		"engine":        st.Engine,
-		"error":         st.Error,
-		"message":       st.Message,
+	exp := ""
+	if pol != nil && pol.RetentionDays > 0 {
+		exp = time.Now().Add(time.Duration(pol.RetentionDays) * 24 * time.Hour).UTC().Format(time.RFC3339)
 	}
-	if st.FinishedAt != nil {
-		vals["finished_at"] = st.FinishedAt.UTC().Format(time.RFC3339)
-	}
-	if st.JobRecordID != "" {
-		_ = cz.UpdateValues(ctx, "jobs", ParseUint(st.JobRecordID), vals)
-	}
-	if st.Status == StatusCompleted && res != nil {
-		exp := ""
-		if pol != nil && pol.RetentionDays > 0 {
-			exp = time.Now().Add(time.Duration(pol.RetentionDays) * 24 * time.Hour).UTC().Format(time.RFC3339)
-		}
-		sid, err := cz.CreateValues(ctx, "snapshots", map[string]string{
-			"job":         st.JobRecordID,
-			"source":      st.SourceID,
-			"policy":      st.PolicyID,
-			"s3_bucket":   res.Bucket,
-			"s3_key":      res.Key,
-			"size_bytes":  fmtInt(res.BytesWritten),
-			"checksum":    res.Checksum,
-			"files_count": strconv.Itoa(res.Files),
-			"kind":        string(res.Kind),
-			"engine":      res.Engine,
-			"restic_id":   res.ResticID,
-			"expires_at":  exp,
-			"restorable":  "1",
-			"verified":    "0",
-		})
-		if err == nil {
-			st.SnapshotID = fmtUint(sid)
-		}
-		if pol != nil && pol.ID > 0 {
-			_ = cz.UpdateValues(ctx, "policies", pol.ID, map[string]string{
-				"last_run": time.Now().UTC().Format(time.RFC3339),
-			})
-		}
-	}
-}
-
-func (a *Agent) syncJob(ctx context.Context, st *JobStatus) {
-	if a.cz == nil || st.JobRecordID == "" {
-		return
-	}
-	_ = a.cz.UpdateValues(ctx, "jobs", ParseUint(st.JobRecordID), map[string]string{
-		"status":   string(st.Status),
-		"progress": strconv.FormatFloat(st.Progress, 'f', 1, 64),
-		"message":  st.Message,
+	sid, err := cz.CreateValues(ctx, "snapshots", map[string]string{
+		"job":         st.JobRecordID,
+		"source":      st.SourceID,
+		"policy":      st.PolicyID,
+		"s3_bucket":   res.Bucket,
+		"s3_key":      res.Key,
+		"size_bytes":  fmtInt(res.BytesWritten),
+		"checksum":    res.Checksum,
+		"files_count": strconv.Itoa(res.Files),
+		"kind":        string(res.Kind),
+		"engine":      res.Engine,
+		"restic_id":   res.ResticID,
+		"expires_at":  exp,
+		"restorable":  "1",
+		"verified":    "0",
 	})
+	if err != nil {
+		log.Printf("record snapshot for job %s: %v", st.ID, err)
+		return
+	}
+	st.SnapshotID = fmtUint(sid)
 }

@@ -22,7 +22,7 @@ function GetWrapComponent({ block }) {
 
 function Wrap(props, { slots, attrs }) {
   const component = GetWrapComponent(props)
-  return h(component, { ...props, ...attrs }, slots)
+  return h(component, { ...attrs, ...props, class: ['h-100', attrs.class, props.class] }, slots)
 }
 
 export { GetWrapComponent, Registry }

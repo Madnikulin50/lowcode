@@ -132,7 +132,7 @@ func (t PageBlockTrigger) Run(w http.ResponseWriter, r *http.Request) {
 	if tok := persistedAuthToken(r); tok != "" {
 		bag["authToken"] = tok
 	}
-	injectAgentCallback(r, bag)
+	injectAgentCallback(r, req.ChainID, bag)
 
 	var riskIn *service.StoreRiskInput
 	if req.ChainID == storeRiskChainID {
@@ -219,7 +219,7 @@ func (t PageBlockTrigger) Batch(w http.ResponseWriter, r *http.Request) {
 		if tok := persistedAuthToken(r); tok != "" {
 			bag["authToken"] = tok
 		}
-		injectAgentCallback(r, bag)
+		injectAgentCallback(r, req.ChainID, bag)
 		var riskIn *service.StoreRiskInput
 		if req.ChainID == storeRiskChainID {
 			riskIn, err = enrichStoreRiskContext(r.Context(), bag)
@@ -288,29 +288,49 @@ func persistedAuthToken(r *http.Request) string {
 	return string(tok)
 }
 
-func injectAgentCallback(_ *http.Request, bag map[string]interface{}) {
+func injectAgentCallback(_ *http.Request, chainID string, bag map[string]interface{}) {
 	if bag == nil {
 		return
 	}
+	defURL, defIngest := agentDefaultsForChain(chainID)
+
 	agentURL := strings.TrimSpace(fmt.Sprintf("%v", bag["agentUrl"]))
 	if agentURL == "" || agentURL == "<nil>" {
-		agentURL = strings.TrimRight(os.Getenv("CMDB_AGENT_URL"), "/")
+		agentURL = defURL
 	}
-	if agentURL == "" {
-		agentURL = "http://localhost:8085/api"
+	if agentURL != "" {
+		bag["agentUrl"] = strings.TrimRight(agentURL, "/")
 	}
-	bag["agentUrl"] = strings.TrimRight(agentURL, "/")
 
 	ingestID := strings.TrimSpace(fmt.Sprintf("%v", bag["ingestChainID"]))
 	if ingestID == "" || ingestID == "<nil>" {
-		ingestID = "cmdb-ingest-scan"
+		ingestID = defIngest
 	}
-	bag["ingestChainID"] = ingestID
+	if ingestID != "" {
+		bag["ingestChainID"] = ingestID
+	}
 
 	if cb := strings.TrimSpace(fmt.Sprintf("%v", bag["callbackUrl"])); cb != "" && cb != "<nil>" {
 		return
 	}
+	if ingestID == "" {
+		return
+	}
 	bag["callbackUrl"] = composeAPIRoot() + "/compose/rulechain/" + ingestID + "/run"
+}
+
+func agentDefaultsForChain(chainID string) (agentURL, ingestID string) {
+	id := strings.ToLower(strings.TrimSpace(chainID))
+	switch {
+	case strings.HasPrefix(id, "backup-restore"):
+		return envOr("BACKUP_AGENT_URL", "http://localhost:8087/api"), "backup-ingest-restore"
+	case strings.HasPrefix(id, "backup"):
+		return envOr("BACKUP_AGENT_URL", "http://localhost:8087/api"), "backup-ingest-job"
+	case strings.HasPrefix(id, "invest"):
+		return envOr("INVEST_AGENT_URL", "http://localhost:8086/api"), ""
+	default:
+		return envOr("CMDB_AGENT_URL", "http://localhost:8085/api"), "cmdb-ingest-scan"
+	}
 }
 
 // composeAPIRoot is the origin (+ HTTP_API_BASE_URL) the Go server actually mounts on.

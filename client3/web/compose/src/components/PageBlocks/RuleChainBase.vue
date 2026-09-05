@@ -605,7 +605,13 @@ async function runChain () {
       bus.$emit('refetch-records', detail)
     }
     const ids = scanIDsFromTrigger(result.value)
-    const isScan = chainID.value === 'cmdb-trigger-scan' || ids.scanID
+    // Only the CMDB scan chain polls the CMDB agent's /api/scans/{id}. Every
+    // remote component (backup/run, invest/…) sets the same generic
+    // scanID/jobID output fields via rulesgo's componentExecutor, so an
+    // `|| ids.scanID` fallback here used to hijack e.g. backup-run-source
+    // into CMDB polling against the wrong agent/port (localhost:8085) →
+    // "failed to fetch" once the backup job itself succeeded.
+    const isScan = chainID.value === 'cmdb-trigger-scan'
     if (result.value.success && isScan && ids.scanID && !pollAbort) {
       const agentUrl = props.block.options?.context?.agentUrl || 'http://localhost:8085/api'
       result.value = { success: true, output: 'Сканирование запущено, загрузка из CMDB API…' }

@@ -163,3 +163,47 @@ func TestBridge_ChainImportExport(t *testing.T) {
 
 	t.Logf("Export/Import/Delete OK")
 }
+
+func TestBackupRuleChainsUseComponents(t *testing.T) {
+	chains := backupRuleChains(1, 2, 3, "http://localhost:8087/api")
+	want := map[string]string{
+		"backup-run-source":     "backup/run",
+		"backup-run-policy":     "backup/run",
+		"backup-run-due":        "backup/due",
+		"backup-restore":        "backup/restore",
+		"backup-prune":          "backup/prune",
+		"backup-ingest-job":     "crud",
+		"backup-ingest-restore": "crud",
+	}
+	found := map[string]bool{}
+	for _, c := range chains {
+		found[c.ID] = true
+		agentType, ok := want[c.ID]
+		if !ok {
+			continue
+		}
+		hasHTTP, hasDetach, hasAgent := false, false, false
+		for _, n := range c.Nodes {
+			if n.Type == "http" {
+				hasHTTP = true
+			}
+			if n.Type == "detach" {
+				hasDetach = true
+			}
+			if n.Type == agentType {
+				hasAgent = true
+			}
+		}
+		if hasHTTP || hasDetach {
+			t.Errorf("%s still has http/detach nodes", c.ID)
+		}
+		if !hasAgent {
+			t.Errorf("%s missing %s node", c.ID, agentType)
+		}
+	}
+	for id := range want {
+		if !found[id] {
+			t.Errorf("missing chain %s", id)
+		}
+	}
+}

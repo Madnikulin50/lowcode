@@ -65,3 +65,32 @@ export function writeStoredModel (value, key = 'aiChat.model') {
   if (!value) return
   try { localStorage.setItem(key, value) } catch (e) {}
 }
+
+export function readStoredNumber (key, fallback = null) {
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw === null || raw === '') return fallback
+    const n = Number(raw)
+    return Number.isFinite(n) ? n : fallback
+  } catch (e) {
+    return fallback
+  }
+}
+
+export function writeStoredNumber (value, key) {
+  try { localStorage.setItem(key, String(value)) } catch (e) {}
+}
+
+export function readStoredBool (key, fallback = false) {
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw === null) return fallback
+    return raw === 'true'
+  } catch (e) {
+    return fallback
+  }
+}
+
+export function writeStoredBool (value, key) {
+  try { localStorage.setItem(key, value ? 'true' : 'false') } catch (e) {}
+}

@@ -22,6 +22,20 @@
       />
       <div class="form-text">{{ t('ai.chat.model.description') }}</div>
     </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">
+        {{ t('ai.chat.temperature.label') }}: <strong>{{ temperatureDisplay }}</strong>
+      </label>
+      <input
+        v-model.number="temperature"
+        type="range"
+        min="0"
+        max="1.5"
+        step="0.1"
+        class="form-range"
+      >
+      <div class="form-text">{{ t('ai.chat.temperature.description') }}</div>
+    </div>
   </div>
 </template>
 
@@ -81,6 +95,21 @@ const selectedModel = computed({
     blockOptions().model = val == null ? '' : String(val)
   },
 })
+
+const DEFAULT_TEMPERATURE = 0.8
+
+const temperature = computed({
+  get: () => {
+    const t = props.block?.options?.temperature
+    return t === null || t === undefined || t === '' ? DEFAULT_TEMPERATURE : Number(t)
+  },
+  set: (val) => {
+    const n = Number(val)
+    blockOptions().temperature = Number.isFinite(n) ? n : DEFAULT_TEMPERATURE
+  },
+})
+
+const temperatureDisplay = computed(() => temperature.value.toFixed(1))
 
 onMounted(() => {
   const o = blockOptions()

@@ -121,11 +121,15 @@
         >
           <div
             v-if="avatarExists"
-            class="avatar d-flex h-100 w-100"
-            :style="{
-              'background-image': `url(${profileAvatarUrl})`,
-            }"
-          />
+            class="avatar d-flex h-100 w-100 overflow-hidden"
+          >
+            <img
+              class="h-100 w-100"
+              :src="profileAvatarUrl"
+              alt=""
+              @error="avatarBroken = true"
+            >
+          </div>
 
           <div
             v-else
@@ -282,6 +286,7 @@ const props = defineProps({
 
 const currentTheme = ref('light')
 const isThemeDropdownVisible = ref(false)
+const avatarBroken = ref(false)
 
 const userProfileURL = computed(() => {
   return $auth.cortezaAuthURL
@@ -306,11 +311,20 @@ const onlyVersion = computed(() => !helpLinks.value.length)
 const frontendVersion = computed(() => VERSION)
 
 const profileAvatarUrl = computed(() => {
-  return `${$SystemAPI.baseURL}/attachment/avatar/${$auth.user.meta.avatarID}/original/profile-photo-avatar`
+  const avatarID = $auth.user?.meta?.avatarID
+  if (!avatarID || avatarID === '0') {
+    return ''
+  }
+  return `${$SystemAPI.baseURL}/attachment/avatar/${avatarID}/original/profile-photo-avatar`
 })
 
 const avatarExists = computed(() => {
-  return $auth.user.meta.avatarID !== '0' && $auth.user.meta.avatarID
+  const avatarID = $auth.user?.meta?.avatarID
+  return !avatarBroken.value && !!avatarID && avatarID !== '0'
+})
+
+watch(() => $auth.user?.meta?.avatarID, () => {
+  avatarBroken.value = false
 })
 
 const themes = computed(() => [
@@ -324,14 +338,17 @@ const themes = computed(() => [
   },
 ])
 
-watch(() => $auth.user.meta.theme, (theme: string) => {
+watch(() => $auth.user?.meta?.theme, (theme: string) => {
+  if (!theme) return
   currentTheme.value = theme
   applyColorMode(theme)
 }, { immediate: true })
 
 async function saveThemeMode (theme: string) {
   currentTheme.value = theme
-  $auth.user.meta.theme = theme
+  if ($auth.user?.meta) {
+    $auth.user.meta.theme = theme
+  }
   applyColorMode(theme)
 
   $SystemAPI.userUpdate($auth.user).catch(console.error)
@@ -363,6 +380,11 @@ $nav-user-icon-size: calc(var(--topbar-height) - 16px);
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
+
+  img {
+    object-fit: cover;
+    border-radius: 50%;
+  }
 
   &:hover {
     opacity: 0.8;

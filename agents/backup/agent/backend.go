@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/madnikulin50/lowcode/agents/sdk"
@@ -82,14 +83,21 @@ func (a *Agent) StartJob(ctx context.Context, req sdk.StartRequest) (*sdk.Envelo
 	case "prune":
 		st, err = a.StartPrune(ctx, jr)
 	case "due":
-		list, err := a.RunDue(ctx, jr)
+		// "due" only lists due policies now — see Agent.DuePolicies — so it
+		// doesn't fit the single-job Envelope shape StartJob returns.
+		// svc.Sync("due") routes real traffic through Call below; this path
+		// only exists for callers that hit StartJob directly.
+		list, err := a.DuePolicies(ctx, jr)
 		if err != nil {
 			return nil, err
 		}
-		if len(list) == 0 {
-			return &sdk.Envelope{Service: "backup", Operation: "due", Status: sdk.StatusCompleted, Kind: sdk.KindComplete}, nil
-		}
-		return list[0].Envelope(sdk.KindProgress), nil
+		return &sdk.Envelope{
+			Service:   "backup",
+			Operation: "due",
+			Status:    sdk.StatusCompleted,
+			Kind:      sdk.KindComplete,
+			Result:    map[string]any{"due": list},
+		}, nil
 	default:
 		st, err = a.StartBackup(ctx, jr)
 	}
@@ -120,7 +128,21 @@ func (a *Agent) Call(ctx context.Context, operation string, req sdk.StartRequest
 	jr := jobRequestFrom(req)
 	switch operation {
 	case "due":
-		return a.RunDue(ctx, jr)
+		return a.DuePolicies(ctx, jr)
+	case "reconcile":
+		// On-demand cleanup for "jobs"/"restores" records stuck "running"
+		// from an earlier process — see ReconcileStaleJobs. Uses the
+		// caller's own token (like restore/prune), so it works even when
+		// this agent has no static token of its own configured.
+		cz := a.Corteza(jr)
+		if cz == nil {
+			return nil, fmt.Errorf("corteza is not configured")
+		}
+		n, err := a.ReconcileStaleJobs(ctx, cz)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"reconciled": n}, nil
 	default:
 		env, err := a.StartJob(ctx, req)
 		return env, err

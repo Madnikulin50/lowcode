@@ -93,7 +93,9 @@ func main() {
 	svc.Alias(http.MethodPost, "/restore", "restore")
 	svc.Alias(http.MethodPost, "/prune", "prune")
 	svc.Alias(http.MethodPost, "/jobs/due", "due")
+	svc.Alias(http.MethodPost, "/jobs/reconcile", "reconcile")
 	svc.Sync("due")
+	svc.Sync("reconcile")
 	svc.MountRoot(func(r chi.Router) {
 		r.Handle("/metrics", promhttp.Handler())
 	})
@@ -101,11 +103,31 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if *poll > 0 && cfg.Token != "" {
+	if cfg.Token != "" {
+		// This process starts with no in-memory job state, so any "jobs"/
+		// "restores" record still marked "running" belongs to whatever
+		// process owned it before this restart/deploy — it's never going
+		// to finish. Runs once, before we start accepting new job requests.
+		// Deployments without a static token (cron polling off, tokens
+		// supplied per-request instead) skip this — POST /jobs/reconcile
+		// with a bearer token does the same cleanup on demand.
+		reconcileCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		if n, err := ag.ReconcileStaleJobs(reconcileCtx, cz); err != nil {
+			log.Printf("reconcile on startup: %v", err)
+		} else if n > 0 {
+			log.Printf("reconcile on startup: %d stale job(s) marked failed", n)
+		}
+		cancel()
+	}
+
+	// StartScheduler is heartbeat-only now (see its doc comment) — policy
+	// scheduling moved to the server-side "backup-run-due" rule chain, so
+	// there's no PollInterval knob to gate this on any more.
+	if cfg.Token != "" {
 		go ag.StartScheduler(ctx)
-		log.Printf("scheduler every %v", *poll)
-	} else if *poll > 0 {
-		log.Printf("cron poll off (no --token); Compose buttons send token in the job POST")
+		log.Printf("heartbeat enabled")
+	} else {
+		log.Printf("heartbeat off (no --token); this agent won't show as online in Compose")
 	}
 
 	log.Printf("backup-agent listening on %s (minio=%s bucket=%s api=%s)", *listen, cfg.Minio.Endpoint, cfg.Minio.Bucket, cfg.CortezaAPI)

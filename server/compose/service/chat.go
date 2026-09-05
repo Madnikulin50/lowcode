@@ -62,6 +62,12 @@ type (
 		Page      uint64
 		Record    uint64
 		Model     string
+		// Temperature overrides the model's sampling temperature (nil keeps
+		// the model/provider default).
+		Temperature *float32
+		// WantConfidence asks the model to self-report a confidence score
+		// for its final answer (see confidenceInstruction).
+		WantConfidence bool
 	}
 )
 
@@ -85,6 +91,15 @@ const chatSystemPrompt = "Ты ассистент приложения с баз
 	"Для списков вызывай инструмент сразу."
 
 const chatSystemPromptNoTools = "Ты ассистент приложения с базой данных. Отвечай по существу и на языке пользователя."
+
+// confidenceInstruction asks the model to self-report how confident it is in
+// its own final answer. There's no logprobs/token-probability API on the
+// Ollama client this project vendors, so this is a verbal self-assessment,
+// not a calibrated probability — treat it as a hint, not a metric.
+const confidenceInstruction = "Когда пишешь ФИНАЛЬНЫЙ ответ пользователю (не вызов инструмента и не промежуточный шаг), " +
+	"добавь в самом конце, отдельной строкой, тег <confidence value=\"N\"></confidence>, где N — целое число от 0 до 100 — " +
+	"твоя собственная оценка уверенности в правильности и полноте этого ответа. " +
+	"Не объясняй эту оценку в тексте ответа и не упоминай сам тег пользователю."
 
 func Chat() *chatService {
 	ttl := ttlcache.New[string, *chat.Client](
@@ -228,13 +243,25 @@ func (c *chatService) buildMessages(ctx context.Context, ask *ChatPromptArgument
 				sys += "\n\n" + extra
 			}
 		}
+		if ask.WantConfidence {
+			sys += "\n\n" + confidenceInstruction
+		}
 		msgs = append([]*schema.Message{
 			schema.SystemMessage(sys),
 		}, msgs...)
-	} else if useTools {
-		if extra := pageChartsSystemHint(ctx, ask); extra != "" {
+	} else {
+		extras := make([]string, 0, 2)
+		if useTools {
+			if extra := pageChartsSystemHint(ctx, ask); extra != "" {
+				extras = append(extras, extra)
+			}
+		}
+		if ask.WantConfidence {
+			extras = append(extras, confidenceInstruction)
+		}
+		if len(extras) > 0 {
 			msgs = append([]*schema.Message{
-				schema.SystemMessage(extra),
+				schema.SystemMessage(strings.Join(extras, "\n\n")),
 			}, msgs...)
 		}
 	}
@@ -620,6 +647,7 @@ func (c *chatService) chatRuntimeOpts(ctx context.Context, ask *ChatPromptArgume
 		Stream:       stream,
 		HideToolXML:  stream != nil,
 		EmptyAnswer:  "Модель не сгенерировала ответ.",
+		Temperature:  ask.Temperature,
 	}
 }
 

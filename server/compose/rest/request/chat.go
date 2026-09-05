@@ -3,6 +3,7 @@ package request
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"encoding/json"
@@ -34,6 +35,11 @@ type (
 		Prompt      string        `json:"prompt"`
 		Messages    []ChatMessage `json:"messages"`
 		Model       string        `json:"model"`
+		// Temperature is nil when the client didn't send one (use the
+		// model/provider default); otherwise it's the requested sampling
+		// temperature.
+		Temperature    *float32 `json:"temperature"`
+		WantConfidence bool     `json:"wantConfidence"`
 	}
 )
 
@@ -134,6 +140,17 @@ func (r *ChatAsk) Fill(req *http.Request) (err error) {
 
 		if val, ok := data["model"]; ok && len(val) > 0 {
 			r.Model = val
+		}
+
+		if val, ok := data["temperature"]; ok && len(val) > 0 {
+			if f, err := strconv.ParseFloat(val, 32); err == nil {
+				t := float32(f)
+				r.Temperature = &t
+			}
+		}
+
+		if val, ok := data["wantConfidence"]; ok && len(val) > 0 {
+			r.WantConfidence = val == "true" || val == "1"
 		}
 
 	}

@@ -3,7 +3,7 @@
     v-if="page"
     id="page-builder"
     ref="pageBuilder"
-    class="flex-grow-1 overflow-auto d-flex p-3 w-100 bg-light"
+    class="flex-grow-1 overflow-auto d-flex p-3 w-100 h-100 bg-light"
     tabindex="1"
   >
     <Teleport to="#topbar-title">
@@ -210,7 +210,7 @@
             :resizing="resizing"
             :unsaved-blocks="unsavedBlocks"
             editable
-            class="p-2"
+            class="h-100 p-2"
             @edit-block="editBlock"
             @clone-block="cloneTabbedBlock"
             @copy-block="copyBlock"

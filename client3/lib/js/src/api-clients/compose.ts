@@ -4454,6 +4454,8 @@ export default class Compose {
             messages,
             files,
             model,
+            temperature,
+            wantConfidence,
         } = (a as KV) || {}
 
         const cfg: AxiosRequestConfig = {
@@ -4474,6 +4476,8 @@ export default class Compose {
             messages,
             files,
             model,
+            temperature,
+            wantConfidence,
         }
         return this.api().request(cfg).then(result => stdResolve(result))
     }
@@ -4490,6 +4494,8 @@ export default class Compose {
             messages,
             files,
             model,
+            temperature,
+            wantConfidence,
             signal,
         } = (a as KV) || {}
 
@@ -4520,6 +4526,8 @@ export default class Compose {
                 messages,
                 files,
                 model,
+                temperature,
+                wantConfidence,
             }),
         })
 

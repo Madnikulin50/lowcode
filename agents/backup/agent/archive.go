@@ -41,6 +41,19 @@ func PackTarGz(ctx context.Context, w io.Writer, walker FileWalker, onFile func(
 		if hdr.ModTime.IsZero() {
 			hdr.ModTime = time.Now()
 		}
+		if entry.LinkTarget != "" {
+			hdr.Typeflag = tar.TypeSymlink
+			hdr.Linkname = entry.LinkTarget
+			hdr.Size = 0
+			if err := tw.WriteHeader(hdr); err != nil {
+				return err
+			}
+			files++
+			if onFile != nil {
+				onFile(entry, 0)
+			}
+			return nil
+		}
 		if err := tw.WriteHeader(hdr); err != nil {
 			return err
 		}
@@ -96,6 +109,15 @@ func UnpackTarGz(ctx context.Context, r io.Reader, dest string) (files int, err 
 			if err := os.MkdirAll(target, 0o755); err != nil {
 				return files, err
 			}
+		case tar.TypeSymlink:
+			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+				return files, err
+			}
+			_ = os.Remove(target)
+			if err := os.Symlink(hdr.Linkname, target); err != nil {
+				return files, err
+			}
+			files++
 		default:
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return files, err

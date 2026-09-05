@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -347,6 +350,94 @@ func TestPromoteNodeOutputUnwrapsEVMEnvelope(t *testing.T) {
 	got = resolveTemplateValue("{{eac}}", ec)
 	if got != "1500" {
 		t.Fatalf("{{eac}}=%q", got)
+	}
+}
+
+func TestPromoteDoesNotStealTriggerRecordID(t *testing.T) {
+	ec := &ExecutionContext{
+		Variables: map[string]interface{}{},
+		Input: map[string]interface{}{
+			"recordID":    "source-1",
+			"sourceID":    "source-1",
+			"namespaceID": "ns-1",
+		},
+	}
+	ec.Set("createdRecordID", "job-9")
+	promoteNodeOutput(ec, "record", map[string]interface{}{
+		"recordID":  "job-9",
+		"createdAt": "now",
+	})
+	if got := fmt.Sprintf("%v", ec.Get("recordID")); got != "source-1" {
+		t.Fatalf("create output stole recordID: %s", got)
+	}
+	if got := fmt.Sprintf("%v", ec.Get("sourceID")); got != "source-1" {
+		t.Fatalf("sourceID=%s", got)
+	}
+	if got := fmt.Sprintf("%v", ec.Get("createdRecordID")); got != "job-9" {
+		t.Fatalf("createdRecordID=%s", got)
+	}
+	body := resolveTemplateJSON(`{"sourceID":"{{sourceID}}","source":"{{recordID}}","jobID":"{{createdRecordID}}"}`, ec)
+	want := `{"sourceID":"source-1","source":"source-1","jobID":"job-9"}`
+	if body != want {
+		t.Fatalf("body %s want %s", body, want)
+	}
+}
+
+func TestBackupRunSourceKeepsSourceIDAfterCreate(t *testing.T) {
+	var gotPath, gotBody string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		raw, _ := io.ReadAll(r.Body)
+		gotBody = string(raw)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"agent-job-1","status":"running"}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	crud := &memCRUD{}
+	engine := NewEngine(DefaultRegistry(&DefaultConfig{CRUD: crud}))
+	engine.RegisterChain(&Chain{
+		ID:        "backup-run-source",
+		EntryNode: "record",
+		Nodes: []ChainNode{
+			{ID: "record", Type: "crud", Config: json.RawMessage(`{"operation":"create","namespaceID":"1","moduleID":"2","fields":{"source":"{{recordID}}","status":"running"}}`)},
+			{ID: "run", Type: "backup/run", Config: json.RawMessage(`{"sourceID":"{{sourceID}}","source":"{{recordID}}","jobID":"{{createdRecordID}}"}`)},
+		},
+		Edges: []ChainEdge{{From: "record", To: "run"}},
+	})
+
+	res, err := engine.Run(context.Background(), "backup-run-source", map[string]interface{}{
+		"recordID": "510291663494250497",
+		"sourceID": "510291663494250497",
+		"agentUrl": srv.URL,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !res.Success {
+		t.Fatalf("chain failed: %s", res.Error)
+	}
+	if gotPath != "/jobs" {
+		t.Fatalf("agent path %s want /jobs", gotPath)
+	}
+	var payload map[string]string
+	if err := json.Unmarshal([]byte(gotBody), &payload); err != nil {
+		t.Fatalf("agent body %q: %v", gotBody, err)
+	}
+	if payload["operation"] != "backup" {
+		t.Fatalf("operation=%q body=%s", payload["operation"], gotBody)
+	}
+	if payload["sourceID"] != "510291663494250497" {
+		t.Fatalf("agent got sourceID=%q body=%s", payload["sourceID"], gotBody)
+	}
+	if payload["source"] != "510291663494250497" {
+		t.Fatalf("agent got source=%q (jobs row leaked as source)", payload["source"])
+	}
+	if payload["jobID"] == "" || payload["jobID"] == payload["sourceID"] {
+		t.Fatalf("jobID should be the created jobs row, got %q", payload["jobID"])
+	}
+	if payload["recordID"] != payload["jobID"] {
+		t.Fatalf("recordID should be jobs row, got %q jobID=%q", payload["recordID"], payload["jobID"])
 	}
 }
 

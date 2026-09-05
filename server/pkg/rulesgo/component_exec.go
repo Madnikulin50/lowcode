@@ -49,30 +49,28 @@ type componentExecutor struct {
 
 func (n *componentExecutor) Execute(ctx context.Context, node ChainNode, ec *ExecutionContext) (map[string]interface{}, error) {
 	spec := n.spec
-	if spec.Service == "" || spec.Operation == "" {
-		var cfg struct {
-			Service   string `json:"service"`
-			Operation string `json:"operation"`
-			URL       string `json:"url"`
-			Async     bool   `json:"async"`
-			Ingest    string `json:"ingestChainID"`
-		}
-		_ = json.Unmarshal(node.Config, &cfg)
-		if spec.Service == "" {
-			spec.Service = resolveTemplateValue(cfg.Service, ec)
-		}
-		if spec.Operation == "" {
-			spec.Operation = resolveTemplateValue(cfg.Operation, ec)
-		}
-		if spec.Ingest == "" {
-			spec.Ingest = resolveTemplateValue(cfg.Ingest, ec)
-		}
-		if cfg.URL != "" {
-			spec.DefaultURL = resolveTemplateValue(cfg.URL, ec)
-		}
-		if cfg.Async {
-			spec.Async = true
-		}
+	var cfg struct {
+		Service   string `json:"service"`
+		Operation string `json:"operation"`
+		URL       string `json:"url"`
+		Async     bool   `json:"async"`
+		Ingest    string `json:"ingestChainID"`
+	}
+	_ = json.Unmarshal(node.Config, &cfg)
+	if spec.Service == "" {
+		spec.Service = resolveTemplateValue(cfg.Service, ec)
+	}
+	if spec.Operation == "" {
+		spec.Operation = resolveTemplateValue(cfg.Operation, ec)
+	}
+	if spec.Ingest == "" {
+		spec.Ingest = resolveTemplateValue(cfg.Ingest, ec)
+	}
+	if cfg.URL != "" {
+		spec.DefaultURL = resolveTemplateValue(cfg.URL, ec)
+	}
+	if cfg.Async {
+		spec.Async = true
 	}
 	if spec.Service == "" || spec.Operation == "" {
 		return nil, fmt.Errorf("service and operation are required")
@@ -85,8 +83,10 @@ func (n *componentExecutor) Execute(ctx context.Context, node ChainNode, ec *Exe
 	if emptyAny(ec.Get("agentUrl")) && base != "" {
 		ec.Set("agentUrl", base)
 	}
-	if v := strings.TrimSpace(fmt.Sprintf("%v", ec.Get("agentUrl"))); v != "" && v != "<nil>" {
-		base = strings.TrimRight(v, "/")
+	if spec.DefaultURL == "" {
+		if v := strings.TrimSpace(fmt.Sprintf("%v", ec.Get("agentUrl"))); v != "" && v != "<nil>" {
+			base = strings.TrimRight(v, "/")
+		}
 	}
 	if base == "" {
 		return map[string]interface{}{"status": "agent_not_configured", "service": spec.Service, "operation": spec.Operation}, nil
@@ -102,17 +102,24 @@ func (n *componentExecutor) Execute(ctx context.Context, node ChainNode, ec *Exe
 					continue
 				}
 				if s, ok := v.(string); ok {
-					body[k] = resolveTemplateValue(s, ec)
-				} else {
-					body[k] = v
+					resolved := resolveTemplateValue(s, ec)
+					if emptyAny(resolved) {
+						continue
+					}
+					body[k] = resolved
+					continue
 				}
+				body[k] = v
 			}
 		}
 	}
+	copyIfEmpty(body, "sourceID", firstEC(ec, "sourceID"))
+	copyIfEmpty(body, "policyID", firstEC(ec, "policyID"))
+	copyIfEmpty(body, "snapshotID", firstEC(ec, "snapshotID"))
 	copyIfEmpty(body, "namespaceID", ec.Get("namespaceID"))
 	copyIfEmpty(body, "token", firstEC(ec, "authToken", "token"))
 	copyIfEmpty(body, "callbackUrl", ec.Get("callbackUrl"))
-	copyIfEmpty(body, "recordID", firstEC(ec, "createdRecordID", "scanRecordID", "jobID"))
+	copyIfEmpty(body, "recordID", firstEC(ec, "createdRecordID", "scanRecordID", "jobRecordID"))
 
 	raw, err := json.Marshal(body)
 	if err != nil {

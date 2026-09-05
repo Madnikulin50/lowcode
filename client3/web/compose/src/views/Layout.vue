@@ -27,7 +27,7 @@
       </c-sidebar>
     </aside>
 
-    <div class="d-flex flex-column overflow-hidden" style="min-width: 0">
+    <div class="d-flex flex-column overflow-hidden" style="min-width: 0; min-height: 0; height: 100%">
     <header>
       <c-topbar
         :expanded="expanded"

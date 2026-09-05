@@ -1,7 +1,7 @@
 <template>
   <div class="chat-container" :class="{ frameless: !framed }">
     <div
-      v-if="showModelSwitcher || showToolsBadge || showResetButton"
+      v-if="showModelSwitcher || showToolsBadge || showResetButton || showTemperatureControl || showConfidenceToggle"
       class="chat-meta-bar"
     >
       <button
@@ -32,10 +32,55 @@
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
         <span>{{ $t('aiChat.warmup.short') }}</span>
       </span>
+      <div
+        v-if="showTemperatureControl"
+        class="chat-temp-control"
+      >
+        <button
+          type="button"
+          class="chat-tools-badge chat-temp-btn"
+          :title="$t('aiChat.temperature.title', { value: temperatureLabel })"
+          @click.stop="tempOpen = !tempOpen"
+        >
+          <font-awesome-icon :icon="['fas', 'sliders-h']" size="xs" />
+          <span class="chat-temp-value">{{ temperatureLabel }}</span>
+        </button>
+        <div
+          v-if="tempOpen"
+          class="chat-temp-popover"
+          @click.stop
+        >
+          <div class="chat-temp-popover-label">
+            {{ $t('aiChat.temperature.label') }}: <strong>{{ temperatureLabel }}</strong>
+          </div>
+          <input
+            v-model.number="selectedTemperature"
+            type="range"
+            min="0"
+            max="1.5"
+            step="0.1"
+            class="chat-temp-range"
+          >
+          <div class="chat-temp-popover-hints">
+            <span>{{ $t('aiChat.temperature.precise') }}</span>
+            <span>{{ $t('aiChat.temperature.creative') }}</span>
+          </div>
+        </div>
+      </div>
+      <button
+        v-if="showConfidenceToggle"
+        type="button"
+        class="chat-tools-badge chat-confidence-toggle"
+        :class="{ on: confidenceEnabled }"
+        :title="confidenceEnabled ? $t('aiChat.confidence.on') : $t('aiChat.confidence.off')"
+        @click="confidenceEnabled = !confidenceEnabled"
+      >
+        <font-awesome-icon :icon="['fas', 'gauge']" size="xs" />
+      </button>
       <span
         v-if="showToolsBadge"
         class="chat-tools-badge"
-        :class="[toolsBadgeClass, { 'ms-auto': showModelSwitcher }]"
+        :class="[toolsBadgeClass, { 'ms-auto': showModelSwitcher || showTemperatureControl || showConfidenceToggle }]"
         :title="toolsTitle"
         role="img"
         :aria-label="toolsTitle"
@@ -197,6 +242,12 @@
             </button>
           </div>
           <div v-if="!msg.active && (msg.content || msg.role === 'user')" class="msg-actions">
+            <span
+              v-if="resolvedConfidenceEnabled && msg.role === 'assistant' && msg.confidence != null"
+              class="confidence-badge"
+              :class="confidenceClass(msg.confidence)"
+              :title="$t('aiChat.confidence.badgeTitle')"
+            >{{ msg.confidence }}%</span>
             <button type="button" class="msg-action" :title="$t('aiChat.copy')" @click="copyMessage(msg)">
               <font-awesome-icon :icon="copiedIdx === idx ? ['fas', 'check'] : ['fas', 'copy']" size="xs" />
             </button>
@@ -296,7 +347,7 @@ import html2pdf from 'html2pdf.js'
 import { Document, Packer, Paragraph, TextRun, ExternalHyperlink, HeadingLevel, AlignmentType, NumberFormat, WidthType, BorderStyle, ShadingType, Table, TableRow, TableCell } from 'docx'
 import ECharts from 'vue-echarts'
 import { splitChartParts, replaceChartFences } from './chatChart.js'
-import { parseModelsPayload, modelToolsEnabled, modelLabel, pickChatModel, readStoredModel, writeStoredModel } from './chatTools.js'
+import { parseModelsPayload, modelToolsEnabled, modelLabel, pickChatModel, readStoredModel, writeStoredModel, readStoredNumber, writeStoredNumber, readStoredBool, writeStoredBool } from './chatTools.js'
 import { useStore } from '../../../../store'
 import ChartComponent from '../../../Chart/index.vue'
 
@@ -318,6 +369,16 @@ const props = defineProps({
   showToolsBadge: { type: Boolean, default: true },
   showResetButton: { type: Boolean, default: true },
   modelTools: { type: Object, default: null },
+  temperature: { type: Number, default: null },
+  temperatureStorageKey: { type: String, default: 'aiChat.temperature' },
+  showTemperatureControl: { type: Boolean, default: false },
+  confidenceStorageKey: { type: String, default: 'aiChat.confidence' },
+  showConfidenceToggle: { type: Boolean, default: false },
+  // When a parent renders its own temperature/confidence controls (the
+  // global chat dock does), it drives the value directly through these —
+  // same relationship as `model` overriding the in-chat model switcher.
+  temperatureOverride: { type: Number, default: null },
+  confidenceOverride: { type: Boolean, default: null },
 })
 
 const emit = defineEmits(['tools-state'])
@@ -354,6 +415,42 @@ const preloadWarming = ref(false)
 const sessionTools = ref(null)
 const toolsActive = ref(false)
 let warmUpSeq = 0
+
+const DEFAULT_TEMPERATURE = 0.8
+const TEMPERATURE_MIN = 0
+const TEMPERATURE_MAX = 1.5
+
+function clampTemperature (v) {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return DEFAULT_TEMPERATURE
+  return Math.min(TEMPERATURE_MAX, Math.max(TEMPERATURE_MIN, n))
+}
+
+const selectedTemperature = ref(clampTemperature(
+  readStoredNumber(props.temperatureStorageKey, props.temperature != null ? props.temperature : DEFAULT_TEMPERATURE),
+))
+const tempOpen = ref(false)
+const temperatureLabel = computed(() => selectedTemperature.value.toFixed(1))
+const resolvedTemperature = computed(() => (
+  props.temperatureOverride != null ? props.temperatureOverride : selectedTemperature.value
+))
+
+const confidenceEnabled = ref(readStoredBool(props.confidenceStorageKey, false))
+const resolvedConfidenceEnabled = computed(() => (
+  props.confidenceOverride != null ? props.confidenceOverride : confidenceEnabled.value
+))
+
+function confidenceClass (value) {
+  if (value >= 80) return 'high'
+  if (value >= 50) return 'mid'
+  return 'low'
+}
+
+function closeTempPopover (e) {
+  if (tempOpen.value && !e.target.closest('.chat-temp-control')) {
+    tempOpen.value = false
+  }
+}
 
 const resolvedModel = computed(() => props.model || selectedModel.value || defaultModel.value)
 const toolsLookup = computed(() => props.modelTools || localModelTools.value)
@@ -483,6 +580,7 @@ function persistSession() {
         reasoning: String(m.reasoning || '').slice(0, 20000),
         collapsed: !!m.collapsed,
         usedTools: !!m.usedTools,
+        confidence: m.confidence != null ? m.confidence : null,
       })),
     }
     localStorage.setItem(sessionKey(), JSON.stringify(payload))
@@ -504,6 +602,7 @@ function restoreSession() {
       collapsed: !!m.collapsed,
       usedTools: !!m.usedTools,
       active: false,
+      confidence: m.confidence != null ? m.confidence : null,
     }))
     return true
   } catch (e) {
@@ -657,10 +756,22 @@ const HTML_TAGS = new Set([
 function splitPromptXml (text) {
   let rest = String(text || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
   const blocks = []
+  // Self-reported confidence (see confidenceInstruction on the server) rides
+  // as its own hidden tag — pulled out separately, not lumped into the
+  // generic "raw XML" toggle below.
+  let confidence = null
   const re = /<([A-Za-z_][\w:.-]*)(?:\s[^>]*)?>[\s\S]*?<\/\1>/g
   rest = rest.replace(re, (full, tag) => {
-    if (HTML_TAGS.has(String(tag).toLowerCase()) || String(tag).toLowerCase() === 'tool') {
+    const lower = String(tag).toLowerCase()
+    if (HTML_TAGS.has(lower) || lower === 'tool') {
       return full
+    }
+    if (lower === 'confidence') {
+      const m = full.match(/value\s*=\s*["']?(\d{1,3})["']?/i)
+      if (m) {
+        confidence = Math.max(0, Math.min(100, parseInt(m[1], 10)))
+      }
+      return '\n'
     }
     blocks.push(full.trim())
     return '\n'
@@ -668,6 +779,7 @@ function splitPromptXml (text) {
   return {
     body: rest.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim(),
     xml: blocks.join('\n\n'),
+    confidence,
   }
 }
 
@@ -812,6 +924,10 @@ watch(
   () => {
     for (const msg of messages.value) {
       if (!msg?.content) continue
+      const confidence = splitPromptXml(msg.content).confidence
+      if (confidence != null && msg.confidence !== confidence) {
+        msg.confidence = confidence
+      }
       for (const part of splitChartParts(normalizeMessageText(msg.content))) {
         if (part.kind === 'compose-chart' && part.spec) {
           loadComposeChart(part.spec)
@@ -1397,6 +1513,7 @@ async function sendMessage(overrideText, opts = {}) {
     active: true,
     collapsed: false,
     usedTools: false,
+    confidence: null,
   })
   loading.value = true
   warmingUp.value = false
@@ -1422,6 +1539,8 @@ async function sendMessage(overrideText, opts = {}) {
       pageID: props.page,
       moduleID: props.module,
       model: resolvedModel.value,
+      temperature: resolvedTemperature.value,
+      wantConfidence: resolvedConfidenceEnabled.value,
       signal: abortController.value.signal,
     }, ({ token, reason, status }) => {
       if (status === 'warming') {
@@ -1508,6 +1627,7 @@ async function sendMessage(overrideText, opts = {}) {
 
 function handleDocumentClick(e) {
   closeExport(e)
+  closeTempPopover(e)
 }
 
 watch(() => props.files, (files) => {
@@ -1531,6 +1651,21 @@ watch(() => props.preferredModel, () => {
   if (!props.showModelSwitcher || !modelOptions.value.length) return
   if (readStoredModel(props.modelStorageKey)) return
   applyCatalogSelection(modelOptions.value, defaultModel.value)
+})
+
+watch(selectedTemperature, (v) => {
+  writeStoredNumber(v, props.temperatureStorageKey)
+})
+
+watch(() => props.temperature, (v) => {
+  // Only follow the block's default while the user hasn't picked their own
+  // value for this chat yet (no stored override).
+  if (readStoredNumber(props.temperatureStorageKey, null) !== null) return
+  selectedTemperature.value = clampTemperature(v != null ? v : DEFAULT_TEMPERATURE)
+})
+
+watch(confidenceEnabled, (v) => {
+  writeStoredBool(v, props.confidenceStorageKey)
 })
 
 watch(() => props.active, (active) => {
@@ -1705,6 +1840,95 @@ defineExpose({
 .msg-tools-flag.active {
   color: #1f4b7a;
   animation: chat-tools-pulse 1.2s ease-in-out infinite;
+}
+
+.chat-temp-control {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chat-temp-btn,
+.chat-confidence-toggle {
+  border: none;
+  cursor: pointer;
+}
+
+.chat-temp-btn {
+  width: auto;
+  padding: 0 8px;
+  gap: 5px;
+}
+
+.chat-temp-value {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chat-temp-popover {
+  position: absolute;
+  /* Anchored to the button's right edge (like .export-menu below) so it
+     opens leftward — the control sits mid-bar, and left-anchoring pushed
+     a fixed-width popover straight off the right edge of narrow chats. */
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  width: 190px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px;
+  background: var(--white, #fff);
+  border: 1px solid var(--extra-light, #ddd);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+}
+
+.chat-temp-popover-label {
+  font-size: 12px;
+  color: var(--black, #333);
+  margin-bottom: 6px;
+}
+
+.chat-temp-range {
+  width: 100%;
+}
+
+.chat-temp-popover-hints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--secondary, #8a93a0);
+  margin-top: 2px;
+}
+
+.chat-confidence-toggle.on {
+  color: #1f4b7a;
+  background: #e8eef6;
+}
+
+.confidence-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.confidence-badge.high {
+  color: #198754;
+  background: #d1e7dd;
+}
+
+.confidence-badge.mid {
+  color: #a15c00;
+  background: #fff1cc;
+}
+
+.confidence-badge.low {
+  color: #dc3545;
+  background: #f8d7da;
 }
 
 .export-dropdown {

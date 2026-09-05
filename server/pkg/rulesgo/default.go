@@ -81,7 +81,7 @@ func RemoteCatalog() []RemoteSpec {
 	return []RemoteSpec{
 		{Type: "cmdb/scan", Service: "cmdb", Operation: "scan", Async: true, Ingest: "cmdb-ingest-scan"},
 		{Type: "backup/run", Service: "backup", Operation: "backup", Async: true, Ingest: "backup-ingest-job"},
-		{Type: "backup/restore", Service: "backup", Operation: "restore", Async: true, Ingest: "backup-ingest-job"},
+		{Type: "backup/restore", Service: "backup", Operation: "restore", Async: true, Ingest: "backup-ingest-restore"},
 		{Type: "backup/prune", Service: "backup", Operation: "prune", Async: true, Ingest: "backup-ingest-job"},
 		{Type: "backup/due", Service: "backup", Operation: "due", Async: false},
 	}

@@ -17,6 +17,7 @@
           :page="page"
           :namespace="namespace"
           magnified
+          class="h-100"
         />
       </div>
     </div>

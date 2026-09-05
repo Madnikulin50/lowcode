@@ -75,6 +75,47 @@
         >
           <option v-for="m in modelOptions" :key="m" :value="m">{{ modelLabel(m) }}</option>
         </select>
+        <div class="chat-temp-control">
+          <button
+            type="button"
+            class="chat-tools-badge chat-temp-btn"
+            :title="$t('aiChat.temperature.title', { value: temperatureLabel })"
+            @click.stop="tempOpen = !tempOpen"
+          >
+            <font-awesome-icon :icon="['fas', 'sliders-h']" size="xs" />
+            <span class="chat-temp-value">{{ temperatureLabel }}</span>
+          </button>
+          <div
+            v-if="tempOpen"
+            class="chat-temp-popover"
+            @click.stop
+          >
+            <div class="chat-temp-popover-label">
+              {{ $t('aiChat.temperature.label') }}: <strong>{{ temperatureLabel }}</strong>
+            </div>
+            <input
+              v-model.number="selectedTemperature"
+              type="range"
+              min="0"
+              max="1.5"
+              step="0.1"
+              class="chat-temp-range"
+            >
+            <div class="chat-temp-popover-hints">
+              <span>{{ $t('aiChat.temperature.precise') }}</span>
+              <span>{{ $t('aiChat.temperature.creative') }}</span>
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="chat-tools-badge chat-confidence-toggle"
+          :class="{ on: confidenceEnabled }"
+          :title="confidenceEnabled ? $t('aiChat.confidence.on') : $t('aiChat.confidence.off')"
+          @click="confidenceEnabled = !confidenceEnabled"
+        >
+          <font-awesome-icon :icon="['fas', 'gauge']" size="xs" />
+        </button>
         <span
           class="chat-tools-badge"
           :class="toolsBadgeClass"
@@ -104,6 +145,8 @@
         :namespace="namespace"
         :magnified="fullscreen"
         :model="selectedModel"
+        :temperature-override="selectedTemperature"
+        :confidence-override="confidenceEnabled"
         :active="showModal"
         :framed="false"
         :show-tools-badge="false"
@@ -121,7 +164,7 @@ defineOptions({ i18nOptions: { namespaces: 'page' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useNsI18n } from 'corteza-lib/vue/dist'
 import Chat from './Chat.vue'
-import { parseModelsPayload, modelToolsEnabled, modelLabel, pickChatModel, readStoredModel, writeStoredModel } from './chatTools.js'
+import { parseModelsPayload, modelToolsEnabled, modelLabel, pickChatModel, readStoredModel, writeStoredModel, readStoredNumber, writeStoredNumber, readStoredBool, writeStoredBool } from './chatTools.js'
 import { usePageStore } from '../../../../store/page'
 import { useModuleStore } from '../../../../store/module'
 import { useNamespaceStore } from '../../../../store/namespace'
@@ -141,6 +184,23 @@ const fullscreen = ref(false)
 const modelOptions = ref([])
 const modelTools = ref({})
 const selectedModel = ref('')
+
+const DEFAULT_TEMPERATURE = 0.8
+const TEMPERATURE_MIN = 0
+const TEMPERATURE_MAX = 1.5
+function clampTemperature (v) {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return DEFAULT_TEMPERATURE
+  return Math.min(TEMPERATURE_MAX, Math.max(TEMPERATURE_MIN, n))
+}
+const selectedTemperature = ref(clampTemperature(readStoredNumber('aiChat.temperature', DEFAULT_TEMPERATURE)))
+const temperatureLabel = computed(() => selectedTemperature.value.toFixed(1))
+const tempOpen = ref(false)
+const confidenceEnabled = ref(readStoredBool('aiChat.confidence', false))
+
+watch(selectedTemperature, (v) => writeStoredNumber(v, 'aiChat.temperature'))
+watch(confidenceEnabled, (v) => writeStoredBool(v, 'aiChat.confidence'))
+
 const liveToolsEnabled = ref(null)
 const toolsActive = ref(false)
 const warmingUp = ref(false)
@@ -278,6 +338,10 @@ function onKeydown (e) {
 function onDocumentClick (e) {
   if (!e.target.closest('.export-dropdown')) {
     exportOpen.value = false
+  }
+
+  if (!e.target.closest('.chat-temp-control')) {
+    tempOpen.value = false
   }
 
   if (showModal.value && !suppressNextOutsideClick && !e.target.closest('.chat-dock')) {
@@ -427,6 +491,69 @@ onBeforeUnmount(() => {
 @keyframes chat-tools-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
+}
+
+.chat-temp-control {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chat-temp-btn,
+.chat-confidence-toggle {
+  border: none;
+  cursor: pointer;
+}
+
+.chat-temp-btn {
+  width: auto;
+  padding: 0 8px;
+  gap: 5px;
+}
+
+.chat-temp-value {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chat-temp-popover {
+  position: absolute;
+  /* Anchored to the button's right edge (like .export-menu above) so it
+     opens leftward — left-anchoring pushed a fixed-width popover straight
+     off the right edge of the dock. */
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  width: 190px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px;
+  background: var(--white, #fff);
+  border: 1px solid var(--extra-light, #ddd);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+}
+
+.chat-temp-popover-label {
+  font-size: 12px;
+  color: var(--black, #333);
+  margin-bottom: 6px;
+}
+
+.chat-temp-range {
+  width: 100%;
+}
+
+.chat-temp-popover-hints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--secondary, #8a93a0);
+  margin-top: 2px;
+}
+
+.chat-confidence-toggle.on {
+  color: #1f4b7a;
+  background: #e8eef6;
 }
 
 .chat-dock-body {

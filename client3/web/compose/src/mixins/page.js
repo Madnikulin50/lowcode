@@ -145,22 +145,21 @@ export default {
 
       let expressions = {}
 
-      // Only evaluate if one of the layouts has an expressions variable
-      if (this.layouts.some(({ config = {} }) => config.visibility.expression)) {
+      if ((this.layouts || []).some(({ config = {} }) => config.visibility?.expression)) {
         expressions = await this.evaluateLayoutExpressions()
       }
 
-      // Check layouts for expressions/roles and find the first one that fits
-      const matchedLayout = this.layouts.find(l => {
+      const matchedLayout = (this.layouts || []).find(l => {
         if (pageLayoutID && l.pageLayoutID !== pageLayoutID) return false
 
-        const { expression, roles = [] } = l.config.visibility
+        const { expression, roles = [] } = l.config?.visibility || {}
 
         if (expression && !expressions[l.pageLayoutID]) return false
 
         if (!roles.length) return true
 
-        return this.$auth.user.roles.some(roleID => roles.includes(roleID))
+        const have = new Set((this.$auth.user?.roles || []).map(String))
+        return roles.some(roleID => have.has(String(roleID)))
       })
 
       if (!matchedLayout) {
@@ -201,17 +200,18 @@ export default {
       const tempBlocks = []
       const { blocks = [] } = this.layout || {}
       const tabbedIDs = new Set()
+      const pageBlocks = this.page?.blocks || []
 
       blocks.forEach(({ blockID, xywh }) => {
-        const block = this.page.blocks.find(b => b.blockID === blockID)
+        const block = pageBlocks.find(b => b.blockID === blockID)
 
         if (block) {
           block.xywh = xywh
           tempBlocks.push(block)
 
           if (block.kind === 'Tabs') {
-            const { tabs = [] } = block.options
-            tabs.forEach(t => {
+            const { tabs = [] } = block.options || {}
+            ;(tabs || []).forEach(t => {
               if (t.blockID && !blocks.some(b => b.blockID === t.blockID)) {
                 tabbedIDs.add(t.blockID)
               }
@@ -221,7 +221,7 @@ export default {
       })
 
       // Include blocks that are only in tabs
-      this.page.blocks.forEach(block => {
+      pageBlocks.forEach(block => {
         if (tabbedIDs.has(block.blockID)) {
           tempBlocks.push(block)
         }
@@ -231,6 +231,7 @@ export default {
     },
 
     async evaluateBlocks (blocks = this.page.blocks) {
+      blocks = blocks || []
       let layoutBlocksExpressions = {}
 
       // Only evaluate expressions if any blocks have visibility expressions
@@ -246,7 +247,7 @@ export default {
 
         // Determine if block should be shown based on expression and roles
         const validExpression = !visibility.expression || layoutBlocksExpressions[blockID]
-        const validRole = !roles.length || this.$auth.user.roles.some(roleID => roles.includes(roleID))
+        const validRole = !roles.length || (this.$auth.user?.roles || []).some(roleID => roles.map(String).includes(String(roleID)))
         const showBlock = block && validExpression && validRole
 
         // Update invisible status based on visibility evaluation
@@ -259,8 +260,8 @@ export default {
       // Propagate invisibility to Tabs blocks
       blocks.forEach(block => {
         if (block.kind === 'Tabs' && !block.meta.invisible) {
-          const { tabs = [] } = block.options
-          const hasVisibleTab = tabs.some(t => {
+          const { tabs = [] } = block.options || {}
+          const hasVisibleTab = (tabs || []).some(t => {
             const b = blocks.find(b => fetchID(b) === t.blockID)
             return b ? !b.meta.invisible : !!t.title
           })

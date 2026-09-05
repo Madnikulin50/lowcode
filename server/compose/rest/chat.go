@@ -41,15 +41,17 @@ func (Chat) New() *Chat {
 func (ctrl *Chat) Ask(ctx context.Context, r *request.ChatAsk) (interface{}, error) {
 	res, err := ctrl.chat.Ask(ctx,
 		&service.ChatPromptArguments{
-			Chat:      r.ChatID,
-			Prompt:    r.Prompt,
-			Messages:  toChatMessages(r.Messages),
-			Files:     toChatFiles(r.Files),
-			Namespace: r.NamespaceID,
-			Page:      r.PageID,
-			Module:    r.ModuleID,
-			Facts:     r.Facts,
-			Model:     r.Model,
+			Chat:           r.ChatID,
+			Prompt:         r.Prompt,
+			Messages:       toChatMessages(r.Messages),
+			Files:          toChatFiles(r.Files),
+			Namespace:      r.NamespaceID,
+			Page:           r.PageID,
+			Module:         r.ModuleID,
+			Facts:          r.Facts,
+			Model:          r.Model,
+			Temperature:    r.Temperature,
+			WantConfidence: r.WantConfidence,
 		})
 
 	return ctrl.makePayload(ctx, res, err)
@@ -57,15 +59,17 @@ func (ctrl *Chat) Ask(ctx context.Context, r *request.ChatAsk) (interface{}, err
 
 func (ctrl *Chat) AskStream(ctx context.Context, r *request.ChatAsk, stream service.ChatStreamFunc) error {
 	return ctrl.chat.AskStream(ctx, &service.ChatPromptArguments{
-		Chat:      r.ChatID,
-		Prompt:    r.Prompt,
-		Messages:  toChatMessages(r.Messages),
-		Files:     toChatFiles(r.Files),
-		Namespace: r.NamespaceID,
-		Page:      r.PageID,
-		Module:    r.ModuleID,
-		Facts:     r.Facts,
-		Model:     r.Model,
+		Chat:           r.ChatID,
+		Prompt:         r.Prompt,
+		Messages:       toChatMessages(r.Messages),
+		Files:          toChatFiles(r.Files),
+		Namespace:      r.NamespaceID,
+		Page:           r.PageID,
+		Module:         r.ModuleID,
+		Facts:          r.Facts,
+		Model:          r.Model,
+		Temperature:    r.Temperature,
+		WantConfidence: r.WantConfidence,
 	}, stream)
 }
 

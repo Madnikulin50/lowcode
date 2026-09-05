@@ -58,6 +58,19 @@ func (l *localFS) Walk(ctx context.Context, fn func(FileEntry, openFn) error) er
 			Mode:    uint32(info.Mode()),
 			ModTime: info.ModTime(),
 		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			// info.Size() here is the length of the link text (Lstat), not
+			// the target's size, and os.Open below would follow the link
+			// and read the (differently sized) target. Record it as a
+			// symlink instead of copying content.
+			target, err := os.Readlink(path)
+			if err != nil {
+				return err
+			}
+			entry.LinkTarget = target
+			entry.Size = 0
+			return fn(entry, nil)
+		}
 		return fn(entry, func() (io.ReadCloser, error) {
 			return os.Open(path)
 		})

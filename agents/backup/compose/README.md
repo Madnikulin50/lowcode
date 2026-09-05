@@ -35,6 +35,8 @@ API `http://127.0.0.1:9000`, консоль `http://127.0.0.1:9001`, ключи 
 
 ## Агент
 
+SDK-контракт: все операции идут в `POST /api/jobs` с полем `operation` (`backup`, `restore`, `prune`, `due`). Rule chains вызывают типизированные ноды `backup/run`, `backup/restore`, `backup/prune`, `backup/due` — без ручных HTTP/detach.
+
 ```bash
 cd agents/backup
 go run . \
@@ -52,11 +54,12 @@ go run . \
 
 | Метод | Назначение |
 |---|---|
-| `POST /api/jobs` | Старт бэкапа (`sourceID` или `policyID`) |
-| `POST /api/jobs/due` | Политики, у которых cron совпал |
+| `POST /api/jobs` | SDK: `operation=backup\|restore\|prune\|due` |
 | `GET /api/jobs/{id}` | Статус |
-| `POST /api/restore` | Восстановление снапшота |
-| `POST /api/prune` | Retention |
+| `POST /api/restore` | Alias → `operation=restore` |
+| `POST /api/prune` | Alias → `operation=prune` |
+| `POST /api/jobs/due` | Alias → `operation=due` |
+| `GET /api/meta` | Дескрипторы компонентов |
 | `POST /api/register` | Heartbeat в модуль agents |
 | `GET /api/health` | Жив + MinIO |
 | `GET /metrics` | Prometheus |

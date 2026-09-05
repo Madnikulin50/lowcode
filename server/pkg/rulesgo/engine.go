@@ -228,6 +228,13 @@ func setIfAbsent(ec *ExecutionContext, key string, v interface{}) {
 	if _, exists := ec.Variables[key]; exists {
 		return
 	}
+	// Trigger context lives in Input, not Variables. A CRUD create returns
+	// {recordID: <new row>}; promoting that would shadow the page's source
+	// / policy / snapshot id and the next HTTP node would look up the jobs
+	// row in the wrong module → Compose "not found".
+	if !isEmptyGet(lookupPath(ec.Input, key)) {
+		return
+	}
 	ec.Set(key, v)
 }
 

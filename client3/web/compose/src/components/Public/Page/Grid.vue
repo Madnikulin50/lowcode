@@ -22,7 +22,7 @@
         :resizing="resizing"
         :magnified="magnified"
         :unsaved-blocks="unsavedBlocks"
-        class="p-2"
+        class="h-100 p-2"
       />
     </template>
   </grid>

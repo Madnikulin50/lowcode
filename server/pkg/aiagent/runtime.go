@@ -44,6 +44,9 @@ type Options struct {
 	HideToolXML  bool
 	EmptyAnswer  string
 	SkipWarm     bool
+	// Temperature overrides the model's sampling temperature for this run
+	// (nil keeps the model/provider default).
+	Temperature *float32
 }
 
 func AgentContinue(_ string, toolResult string, _ []Call) ContinueHint {
@@ -144,6 +147,9 @@ func run(ctx context.Context, opt Options, messages []*schema.Message, bindTools
 				return result
 			}
 			opts = append(opts, model.WithTools(infos))
+		}
+		if opt.Temperature != nil {
+			opts = append(opts, model.WithTemperature(*opt.Temperature))
 		}
 
 		turn, err := generateTurn(ctx, opt, messages, opts)

@@ -64,7 +64,7 @@ func TestInjectAgentCallbackURL(t *testing.T) {
 	t.Setenv("HTTP_ADDR", "")
 
 	bag := map[string]interface{}{}
-	injectAgentCallback(nil, bag)
+	injectAgentCallback(nil, "", bag)
 	got := fmt.Sprintf("%v", bag["callbackUrl"])
 	want := "http://localhost:3333/compose/rulechain/cmdb-ingest-scan/run"
 	if got != want {
@@ -73,7 +73,7 @@ func TestInjectAgentCallbackURL(t *testing.T) {
 
 	t.Setenv("CORTEZA_API", "http://localhost:3333/api")
 	bag = map[string]interface{}{}
-	injectAgentCallback(nil, bag)
+	injectAgentCallback(nil, "", bag)
 	got = fmt.Sprintf("%v", bag["callbackUrl"])
 	if got != want {
 		t.Fatalf("stripped /api callback %q want %q", got, want)
@@ -83,7 +83,7 @@ func TestInjectAgentCallbackURL(t *testing.T) {
 	t.Setenv("HTTP_API_BASE_URL", "/api")
 	t.Setenv("HTTP_ADDR", ":3333")
 	bag = map[string]interface{}{}
-	injectAgentCallback(nil, bag)
+	injectAgentCallback(nil, "", bag)
 	got = fmt.Sprintf("%v", bag["callbackUrl"])
 	wantAPI := "http://localhost:3333/api/compose/rulechain/cmdb-ingest-scan/run"
 	if got != wantAPI {
@@ -91,7 +91,7 @@ func TestInjectAgentCallbackURL(t *testing.T) {
 	}
 
 	bag = map[string]interface{}{"callbackUrl": "http://example/custom"}
-	injectAgentCallback(nil, bag)
+	injectAgentCallback(nil, "", bag)
 	if bag["callbackUrl"] != "http://example/custom" {
 		t.Fatalf("explicit callback overwritten: %v", bag["callbackUrl"])
 	}
@@ -101,10 +101,49 @@ func TestInjectAgentCallbackURL(t *testing.T) {
 	t.Setenv("HTTP_BASE_URL", "")
 	t.Setenv("HTTP_ADDR", ":3333")
 	bag = map[string]interface{}{}
-	injectAgentCallback(nil, bag)
+	injectAgentCallback(nil, "", bag)
 	got = fmt.Sprintf("%v", bag["callbackUrl"])
 	if got != want {
 		t.Fatalf("HTTP_API_BASE_URL=/ callback %q want %q", got, want)
+	}
+}
+
+func TestInjectAgentCallbackBackupAndInvest(t *testing.T) {
+	t.Setenv("CORTEZA_API", "")
+	t.Setenv("HTTP_API_BASE_URL", "")
+	t.Setenv("HTTP_ADDR", "")
+	t.Setenv("BACKUP_AGENT_URL", "")
+	t.Setenv("INVEST_AGENT_URL", "")
+	t.Setenv("CMDB_AGENT_URL", "")
+
+	bag := map[string]interface{}{}
+	injectAgentCallback(nil, "backup-run-source", bag)
+	if bag["agentUrl"] != "http://localhost:8087/api" {
+		t.Fatalf("backup agentUrl=%v", bag["agentUrl"])
+	}
+	if bag["ingestChainID"] != "backup-ingest-job" {
+		t.Fatalf("backup ingest=%v", bag["ingestChainID"])
+	}
+	if fmt.Sprintf("%v", bag["callbackUrl"]) != "http://localhost:3333/compose/rulechain/backup-ingest-job/run" {
+		t.Fatalf("backup callback=%v", bag["callbackUrl"])
+	}
+
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, "backup-restore", bag)
+	if bag["ingestChainID"] != "backup-ingest-restore" {
+		t.Fatalf("restore ingest=%v", bag["ingestChainID"])
+	}
+
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, "invest-recalculate-evm", bag)
+	if bag["agentUrl"] != "http://localhost:8086/api" {
+		t.Fatalf("invest agentUrl=%v", bag["agentUrl"])
+	}
+	if _, ok := bag["ingestChainID"]; ok {
+		t.Fatalf("invest should not default ingest: %v", bag["ingestChainID"])
+	}
+	if _, ok := bag["callbackUrl"]; ok {
+		t.Fatalf("invest should not default callback: %v", bag["callbackUrl"])
 	}
 }
 

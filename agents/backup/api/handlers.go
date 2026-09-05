@@ -52,7 +52,7 @@ func (h *Handler) startJob(w http.ResponseWriter, r *http.Request) {
 		jsonResp(w, st)
 		return
 	case "due":
-		list, err := h.ag.RunDue(r.Context(), req)
+		list, err := h.ag.DuePolicies(r.Context(), req)
 		if err != nil {
 			jsonError(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -75,7 +75,7 @@ func (h *Handler) startJob(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) runDue(w http.ResponseWriter, r *http.Request) {
 	var req agent.JobRequest
 	_ = json.NewDecoder(r.Body).Decode(&req)
-	list, err := h.ag.RunDue(r.Context(), req)
+	list, err := h.ag.DuePolicies(r.Context(), req)
 	if err != nil {
 		jsonError(w, err.Error(), http.StatusInternalServerError)
 		return

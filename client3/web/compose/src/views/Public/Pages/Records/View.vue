@@ -317,6 +317,11 @@ const tempRecord = ref(undefined)
 const inEditing = ref(props.edit)
 const processing = ref(false)
 const processingAction = ref('')
+
+function userMatchesVisibilityRoles (roles = []) {
+  const have = new Set(($auth.user?.roles || []).map(String))
+  return (roles || []).some(roleID => have.has(String(roleID)))
+}
 const record = ref(undefined)
 const initialRecordState = ref(undefined)
 const errors = shallowRef(new validator.Validated())
@@ -1232,16 +1237,16 @@ async function determineLayout({ pageLayoutID, redirectOnFail = true } = {}) {
   if (isRecordPage.value) resetErrors()
 
   let expressions = {}
-  if (layouts.value.some(({ config = {} }) => config.visibility?.expression)) {
+  if ((layouts.value || []).some(({ config = {} }) => config.visibility?.expression)) {
     expressions = await evaluateLayoutExpressions()
   }
 
-  const matchedLayout = layouts.value.find(l => {
+  const matchedLayout = (layouts.value || []).find(l => {
     if (pageLayoutID && l.pageLayoutID !== pageLayoutID) return false
-    const { expression, roles = [] } = l.config.visibility || {}
+    const { expression, roles = [] } = l.config?.visibility || {}
     if (expression && !expressions[l.pageLayoutID]) return false
     if (!roles.length) return true
-    return $auth.user.roles.some(roleID => roles.includes(roleID))
+    return userMatchesVisibilityRoles(roles)
   })
 
   if (!matchedLayout) {
@@ -1315,15 +1320,16 @@ async function prepareBlocks() {
   const tempBlocks = []
   const layoutBlocks = layout.value?.blocks || []
   const tabbedIDs = new Set()
+  const pageBlocks = props.page?.blocks || []
 
   layoutBlocks.forEach(({ blockID, xywh }) => {
-    const block = props.page.blocks.find(b => b.blockID === blockID)
+    const block = pageBlocks.find(b => b.blockID === blockID)
     if (block) {
       block.xywh = normalizeXYWH(xywh)
       tempBlocks.push(block)
       if (block.kind === 'Tabs') {
-        const { tabs = [] } = block.options
-        tabs.forEach(t => {
+        const { tabs = [] } = block.options || {}
+        ;(tabs || []).forEach(t => {
           if (t.blockID && !layoutBlocks.some(b => b.blockID === t.blockID)) {
             tabbedIDs.add(t.blockID)
           }
@@ -1332,7 +1338,7 @@ async function prepareBlocks() {
     }
   })
 
-  props.page.blocks.forEach(block => {
+  pageBlocks.forEach(block => {
     if (tabbedIDs.has(block.blockID)) tempBlocks.push(block)
   })
 
@@ -1340,18 +1346,19 @@ async function prepareBlocks() {
 }
 
 async function evaluateBlocks(pageBlocks) {
+  pageBlocks = pageBlocks || []
   let layoutBlocksExpressions = {}
   if (pageBlocks.some(({ meta = {} }) => (meta.visibility || {}).expression)) {
     layoutBlocksExpressions = await evaluateBlocksExpressions(pageBlocks)
   }
 
   pageBlocks.forEach(block => {
-    const { meta = {} } = block
+    const { meta = {} } = block || {}
     const blockID = fetchID(block)
     const visibility = meta.visibility || {}
     const { roles = [] } = visibility
     const validExpression = !visibility.expression || layoutBlocksExpressions[blockID]
-    const validRole = !roles.length || $auth.user.roles.some(roleID => roles.includes(roleID))
+    const validRole = !roles.length || userMatchesVisibilityRoles(roles)
     const showBlock = block && validExpression && validRole
     if (!block.meta) block.meta = {}
     block.meta.invisible = !showBlock
@@ -1359,8 +1366,8 @@ async function evaluateBlocks(pageBlocks) {
 
   pageBlocks.forEach(block => {
     if (block.kind === 'Tabs' && !block.meta.invisible) {
-      const { tabs = [] } = block.options
-      const hasVisibleTab = tabs.some(t => {
+      const { tabs = [] } = block.options || {}
+      const hasVisibleTab = (tabs || []).some(t => {
         const b = pageBlocks.find(b2 => fetchID(b2) === t.blockID)
         return b ? !b.meta.invisible : !!t.title
       })

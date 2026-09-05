@@ -93,6 +93,15 @@ type Source struct {
 	Notes      string
 }
 
+// DuePolicy is the read-only shape returned by Agent.DuePolicies — just
+// enough for a caller (the "backup-run-due" rule chain) to start a backup
+// via the normal record+backup/run path.
+type DuePolicy struct {
+	ID       string `json:"id"`
+	SourceID string `json:"sourceID"`
+	Name     string `json:"name"`
+}
+
 type Policy struct {
 	ID            uint64
 	Name          string
@@ -148,6 +157,12 @@ type FileEntry struct {
 	Size    int64
 	Mode    uint32
 	ModTime time.Time
+	// LinkTarget, when non-empty, marks this entry as a symlink: it is
+	// written as a tar symlink record (no body) instead of having its
+	// content copied. Without this, WalkDir's Lstat-based Size (the length
+	// of the link text) never matches what os.Open (which follows the
+	// link) actually reads, and archive/tar errors "write too long".
+	LinkTarget string
 }
 
 type ingestEnvelope struct {
