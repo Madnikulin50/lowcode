@@ -196,7 +196,15 @@ type (
 	}
 
 	ObjectStoreOpt struct {
-		Path            string `env:"STORAGE_PATH"`
+		Path string `env:"STORAGE_PATH"`
+		// Driver selects the default attachment storage backend when a
+		// module field (or system default setting) does not specify its
+		// own: "plain" (disk, default), "minio", or "db" (store file
+		// content directly in the database).
+		Driver string `env:"STORAGE_DRIVER"`
+		// DSN for the "db" driver — reuses the main app DB connection
+		// string, no separate configuration needed.
+		DSN             string `env:"DB_DSN"`
 		MinioEndpoint   string `env:"MINIO_ENDPOINT"`
 		MinioSecure     bool   `env:"MINIO_SECURE"`
 		MinioAccessKey  string `env:"MINIO_ACCESS_KEY"`

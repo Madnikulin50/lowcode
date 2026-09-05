@@ -20,6 +20,7 @@ import (
 	"github.com/cloudwego/eino-ext/components/model/ollama"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
+	ollamaapi "github.com/eino-contrib/ollama/api"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -168,12 +169,28 @@ func DefaultModelName() string {
 }
 
 func NewClient(model string) (*Client, error) {
+	return newClient(model, nil)
+}
+
+// NewClientNoThink is NewClient with thinking explicitly disabled. Reasoning
+// models (qwen3, deepseek-r1, …) otherwise spend the whole non-streaming
+// Generate call on the hidden <think> block and can leave both Content and
+// ReasoningContent empty when the turn ends before the visible answer — the
+// agent/rulechain "ai" node needs a plain one-shot answer in Content, not a
+// chain-of-thought transcript to parse.
+func NewClientNoThink(model string) (*Client, error) {
+	thinking := ollamaapi.ThinkValue{Value: false}
+	return newClient(model, &thinking)
+}
+
+func newClient(model string, thinking *ollamaapi.ThinkValue) (*Client, error) {
 	if model == "" {
 		model = DefaultModelName()
 	}
 	cm, err := ollama.NewChatModel(context.Background(), &ollama.ChatModelConfig{
-		BaseURL: ollamaURL(),
-		Model:   model,
+		BaseURL:  ollamaURL(),
+		Model:    model,
+		Thinking: thinking,
 		KeepAlive: func() *time.Duration {
 			d := 30 * time.Minute
 			return &d

@@ -11,6 +11,27 @@
     >
       <div class="card-body">
         <div class="pb-3">
+          <h5>{{ t('attachments.storage.title') }}</h5>
+
+          <div class="row">
+            <div class="col-12 col-lg-6">
+              <div class="mb-0">
+                <label class="form-label text-primary">{{ t('attachments.storage.default-driver') }}</label>
+                <div class="form-text mb-2">{{ t('attachments.storage.default-driver-description') }}</div>
+                <select
+                  v-model="basic['compose.attachments.default-driver']"
+                  class="form-select"
+                >
+                  <option value="db">{{ t('attachments.storage.driver.db') }}</option>
+                  <option value="plain">{{ t('attachments.storage.driver.plain') }}</option>
+                  <option value="minio">{{ t('attachments.storage.driver.minio') }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pb-3">
           <h5>{{ t('attachments.namespace') }}</h5>
 
           <div class="row">

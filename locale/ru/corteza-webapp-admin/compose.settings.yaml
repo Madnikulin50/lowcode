@@ -10,6 +10,14 @@ editor:
       type:
         description: 'MIME types, separated with ",". Example: "text/plain,text/csv"'
         whitelist: File type whitelist
+      storage:
+        title: Хранилище вложений
+        default-driver: Хранилище по умолчанию
+        default-driver-description: Используется для загрузок, если поле модуля не задаёт своё место хранения
+        driver:
+          db: База данных
+          plain: Локальный диск
+          minio: S3 (Minio)
     title: Basic
   ui:
     title: User interface

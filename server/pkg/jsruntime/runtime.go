@@ -86,6 +86,24 @@ func (r *Runtime) Run(ctx context.Context, script string, input map[string]inter
 		}
 	}
 
+	// The async-IIFE wrapper above makes `val` a Promise, not the script's
+	// returned value. Since these scripts run to completion with no real
+	// Go-side async gap, the promise is already settled by the time
+	// RunString returns — unwrap it instead of exporting the *goja.Promise
+	// struct itself (which has no exported fields and serializes as `{}`).
+	if p, ok := val.Export().(*goja.Promise); ok {
+		switch p.State() {
+		case goja.PromiseStateFulfilled:
+			val = p.Result()
+		case goja.PromiseStateRejected:
+			result.Error = fmt.Sprintf("%v", p.Result().Export())
+			return result
+		default:
+			result.Error = "script did not resolve synchronously (unexpected pending promise)"
+			return result
+		}
+	}
+
 	if val != nil && !goja.IsUndefined(val) && !goja.IsNull(val) {
 		result.Output = val.Export()
 	}

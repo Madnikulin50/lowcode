@@ -39,10 +39,20 @@ var (
 type (
 	attachment struct {
 		actionlog actionlog.Recorder
-		objects   objstore.Store
-		ac        attachmentAccessController
-		store     store.Storer
-		dal       dalDater
+		// objects holds every configured storage backend, keyed by driver
+		// name ("plain", "minio" if configured, "db"). Which one a given
+		// attachment actually uses is resolved per-attachment — see
+		// storeFor/driverForNewAttachment/driverForExistingAttachment.
+		objects map[string]objstore.Store
+		// legacyDriver is whichever single backend ("plain" or "minio") was
+		// configured before per-field/per-attachment storage selection
+		// existed — the fallback for attachments with no recorded
+		// Meta.StorageDriver (they were physically saved there, not to
+		// whatever the current default happens to be).
+		legacyDriver string
+		ac           attachmentAccessController
+		store        store.Storer
+		dal          dalDater
 	}
 
 	attachmentAccessController interface {
@@ -70,13 +80,57 @@ type (
 	}
 )
 
-func Attachment(store objstore.Store, dal dalDater) *attachment {
+func Attachment(stores map[string]objstore.Store, legacyDriver string, dal dalDater) *attachment {
 	return &attachment{
-		objects: store,
-		ac:      DefaultAccessControl,
-		store:   DefaultStore,
-		dal:     dal,
+		objects:      stores,
+		legacyDriver: legacyDriver,
+		ac:           DefaultAccessControl,
+		store:        DefaultStore,
+		dal:          dal,
 	}
+}
+
+// storeFor resolves a driver name to its backend, falling back to whatever
+// is actually configured if the requested one isn't (e.g. "minio" requested
+// but MINIO_ENDPOINT was never set).
+func (svc attachment) storeFor(driver string) objstore.Store {
+	if driver != "" {
+		if s, ok := svc.objects[driver]; ok {
+			return s
+		}
+	}
+	if s, ok := svc.objects[svc.legacyDriver]; ok {
+		return s
+	}
+	for _, s := range svc.objects {
+		return s
+	}
+	return nil
+}
+
+// driverForNewAttachment resolves which backend a brand-new attachment
+// should be saved to: the module field's own "storageDriver" option
+// (fieldDriver) if it set one, else the system-wide default setting
+// (Compose.Attachments.DefaultDriver, "db" if that's unset too).
+func (svc attachment) driverForNewAttachment(fieldDriver string) string {
+	if fieldDriver != "" {
+		return fieldDriver
+	}
+	if d := strings.TrimSpace(systemService.CurrentSettings.Compose.Attachments.DefaultDriver); d != "" {
+		return d
+	}
+	return "db"
+}
+
+// driverForExistingAttachment resolves which backend an already-stored
+// attachment lives on: its own frozen Meta.StorageDriver, or — for
+// attachments created before this feature existed — the single legacy
+// backend that was in effect back then.
+func (svc attachment) driverForExistingAttachment(att *types.Attachment) string {
+	if att != nil && att.Meta.StorageDriver != "" {
+		return att.Meta.StorageDriver
+	}
+	return svc.legacyDriver
 }
 
 func (svc attachment) Find(ctx context.Context, filter types.AttachmentFilter) (set types.AttachmentSet, f types.AttachmentFilter, err error) {
@@ -239,7 +293,12 @@ func (svc attachment) OpenOriginal(att *types.Attachment) (io.ReadSeekCloser, er
 		return nil, nil
 	}
 
-	return svc.objects.Open(att.Url)
+	objects := svc.storeFor(svc.driverForExistingAttachment(att))
+	if objects == nil {
+		return nil, errors.Internal("cannot open attachment: store handler not set")
+	}
+
+	return objects.Open(att.Url)
 }
 
 func (svc attachment) OpenPreview(att *types.Attachment) (io.ReadSeekCloser, error) {
@@ -247,7 +306,12 @@ func (svc attachment) OpenPreview(att *types.Attachment) (io.ReadSeekCloser, err
 		return nil, nil
 	}
 
-	return svc.objects.Open(att.PreviewUrl)
+	objects := svc.storeFor(svc.driverForExistingAttachment(att))
+	if objects == nil {
+		return nil, errors.Internal("cannot open attachment: store handler not set")
+	}
+
+	return objects.Open(att.PreviewUrl)
 }
 
 func (svc attachment) CreatePageAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, pageID uint64) (att *types.Attachment, err error) {
@@ -413,6 +477,8 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 			}
 		}
 
+		var fieldStorageDriver string
+
 		{
 			// Verify size and type of the uploaded record attachment
 			// Max size & allowed mime-types are pulled from the current settings
@@ -433,6 +499,7 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 				maxSize = aux * megabyte
 			}
 			allowedTypes = fieldAllowedAttachmentTypes(f, allowedTypes)
+			fieldStorageDriver = f.Options.String("storageDriver")
 
 			if maxSize > 0 && maxSize < size {
 				return AttachmentErrTooLarge().Apply(
@@ -452,6 +519,7 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 			NamespaceID: namespaceID,
 			Name:        strings.TrimSpace(name),
 			Kind:        types.RecordAttachment,
+			Meta:        types.AttachmentMeta{StorageDriver: fieldStorageDriver},
 		}
 
 		return svc.create(ctx, s, name, size, fh, att)
@@ -512,7 +580,12 @@ func (svc attachment) create(ctx context.Context, s store.ComposeAttachments, na
 		att.OwnerID = auth.GetIdentityFromContext(ctx).Identity()
 	}
 
-	if svc.objects == nil {
+	// Field (or system default) may have already set Meta.StorageDriver
+	// (see CreateRecordAttachment); freeze the resolved choice either way
+	// so later config changes never orphan this specific file.
+	att.Meta.StorageDriver = svc.driverForNewAttachment(att.Meta.StorageDriver)
+	objects := svc.storeFor(att.Meta.StorageDriver)
+	if objects == nil {
 		return errors.Internal("cannot create attachment: store handler not set")
 	}
 
@@ -531,10 +604,10 @@ func (svc attachment) create(ctx context.Context, s store.ComposeAttachments, na
 		return AttachmentErrFailedToExtractMimeType(aProps).Wrap(err)
 	}
 
-	att.Url = svc.objects.Original(att.ID, att.Meta.Original.Extension)
+	att.Url = objects.Original(att.ID, att.Meta.Original.Extension)
 	aProps.setUrl(att.Url)
 
-	if err = svc.objects.Save(att.Url, fh); err != nil {
+	if err = objects.Save(att.Url, fh); err != nil {
 		return AttachmentErrFailedToStoreFile(aProps).Wrap(err)
 	}
 
@@ -565,10 +638,6 @@ func (svc attachment) CreateImported(ctx context.Context, namespaceID uint64, ki
 			return AttachmentErrNotAllowedToUpdateNamespace()
 		}
 
-		if svc.objects == nil {
-			return errors.Internal("cannot create attachment: store handler not set")
-		}
-
 		att = &types.Attachment{
 			NamespaceID: namespaceID,
 			Name:        strings.TrimSpace(name),
@@ -577,6 +646,12 @@ func (svc attachment) CreateImported(ctx context.Context, namespaceID uint64, ki
 		}
 		if kind == types.IconAttachment {
 			att.NamespaceID = 0
+		}
+
+		att.Meta.StorageDriver = svc.driverForNewAttachment(att.Meta.StorageDriver)
+		objects := svc.storeFor(att.Meta.StorageDriver)
+		if objects == nil {
+			return errors.Internal("cannot create attachment: store handler not set")
 		}
 
 		att.ID = nextID()
@@ -594,20 +669,20 @@ func (svc attachment) CreateImported(ctx context.Context, namespaceID uint64, ki
 			return AttachmentErrFailedToExtractMimeType(aProps).Wrap(err)
 		}
 
-		att.Url = svc.objects.Original(att.ID, att.Meta.Original.Extension)
+		att.Url = objects.Original(att.ID, att.Meta.Original.Extension)
 		if _, err = original.Seek(0, 0); err != nil {
 			return err
 		}
-		if err = svc.objects.Save(att.Url, original); err != nil {
+		if err = objects.Save(att.Url, original); err != nil {
 			return AttachmentErrFailedToStoreFile(aProps).Wrap(err)
 		}
 
 		if preview != nil && att.Meta.Preview != nil && att.Meta.Preview.Extension != "" {
-			att.PreviewUrl = svc.objects.Preview(att.ID, att.Meta.Preview.Extension)
+			att.PreviewUrl = objects.Preview(att.ID, att.Meta.Preview.Extension)
 			if _, err = preview.Seek(0, 0); err != nil {
 				return err
 			}
-			if err = svc.objects.Save(att.PreviewUrl, preview); err != nil {
+			if err = objects.Save(att.PreviewUrl, preview); err != nil {
 				return AttachmentErrFailedToStoreFile(aProps).Wrap(err)
 			}
 		} else {
@@ -765,9 +840,13 @@ func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment
 	}
 
 	// Can and how we make a preview of this attachment?
-	att.PreviewUrl = svc.objects.Preview(att.ID, meta.Extension)
+	// att.Meta.StorageDriver is already resolved by the caller (create /
+	// CreateImported) by the time processImage runs.
+	objects := svc.storeFor(att.Meta.StorageDriver)
 
-	return svc.objects.Save(att.PreviewUrl, buf)
+	att.PreviewUrl = objects.Preview(att.ID, meta.Extension)
+
+	return objects.Save(att.PreviewUrl, buf)
 }
 
 func (attachment) checkMimeType(test *mimetype.MIME, filename string, vv ...string) bool {

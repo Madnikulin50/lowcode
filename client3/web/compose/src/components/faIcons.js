@@ -177,6 +177,14 @@ import {
   faBoxesStacked,
   faTimeline,
   faSlidersH,
+  faGaugeHigh,
+  faListCheck,
+  faFileArrowUp,
+  faClipboardCheck,
+  faFileInvoiceDollar,
+  faTableList,
+  faFileLines,
+  faCodeCompare,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -407,4 +415,12 @@ library.add(
   faServer,
   faBug,
   faPlug,
+  faGaugeHigh,
+  faListCheck,
+  faFileArrowUp,
+  faClipboardCheck,
+  faFileInvoiceDollar,
+  faTableList,
+  faFileLines,
+  faCodeCompare,
 )

@@ -196,6 +196,18 @@ type (
 				} `kv:"record-toolbar,final" json:"record-toolbar"`
 			} `kv:"ui" json:"ui"`
 
+			// Attachment storage settings, shared across record/page/icon/
+			// namespace attachments (each of those still has its own
+			// per-kind MaxSize/Mimetypes below).
+			Attachments struct {
+				// DefaultDriver selects the objstore.Store backend used for
+				// new attachments when a module File-field doesn't specify
+				// its own "storageDriver" option: "db" (default — file
+				// content stored in the database), "plain" (disk), or
+				// "minio" (S3-compatible).
+				DefaultDriver string `kv:"default-driver" json:"defaultDriver"`
+			} `kv:"attachments" json:"attachments"`
+
 			// Record related settings
 			Record struct {
 				// @todo implementation
@@ -569,6 +581,10 @@ func (cs AppSettings) WithDefaults() *AppSettings {
 	}
 	if len(strings.TrimSpace(cs.UI.MainLogo)) == 0 {
 		cs.UI.MainLogo = "/assets/logo.svg"
+	}
+
+	if len(strings.TrimSpace(cs.Compose.Attachments.DefaultDriver)) == 0 {
+		cs.Compose.Attachments.DefaultDriver = "db"
 	}
 
 	return &cs

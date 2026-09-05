@@ -77,6 +77,15 @@ type (
 
 		Icon    *AttachmentIconMeta    `json:"icon,omitempty"`
 		IconSvg *AttachmentIconSvgMeta `json:"iconSvg,omitempty"`
+
+		// StorageDriver is the objstore.Store backend ("plain", "minio", "db")
+		// this attachment's content was actually saved with, resolved once at
+		// upload time from the field's "storageDriver" option (or the system
+		// default) and frozen from then on — so a later change to the field's
+		// setting or the system default never orphans already-uploaded files.
+		// Empty for attachments created before this feature existed; readers
+		// fall back to the legacy single-backend behavior in that case.
+		StorageDriver string `json:"storageDriver,omitempty"`
 	}
 )
 

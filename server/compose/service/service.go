@@ -22,6 +22,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"github.com/madnikulin50/lowcode/server/pkg/logger"
 	"github.com/madnikulin50/lowcode/server/pkg/objstore"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore/dbblob"
 	"github.com/madnikulin50/lowcode/server/pkg/objstore/minio"
 	"github.com/madnikulin50/lowcode/server/pkg/objstore/plain"
 	"github.com/madnikulin50/lowcode/server/pkg/options"
@@ -61,7 +62,19 @@ type (
 )
 
 var (
+	// DefaultObjectStore is kept for backward compat / anything that just
+	// wants "the" store — it's an alias for DefaultObjectStores[DefaultObjectStoreLegacyDriver].
 	DefaultObjectStore objstore.Store
+
+	// DefaultObjectStores holds every configured attachment storage backend,
+	// keyed by driver name ("plain", "minio", "db") — see attachment.go's
+	// per-field/per-attachment resolver.
+	DefaultObjectStores map[string]objstore.Store
+
+	// DefaultObjectStoreLegacyDriver is whichever single backend ("plain" or
+	// "minio") was configured before per-field storage selection existed —
+	// the fallback for attachments with no recorded Meta.StorageDriver.
+	DefaultObjectStoreLegacyDriver string
 
 	// DefaultStore is an interface to storage backend(s)
 	// ng (next-gen) is a temporary prefix
@@ -161,10 +174,13 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 			bucket string
 		)
 		const svcPath = "compose"
+
+		DefaultObjectStores = make(map[string]objstore.Store, 3)
+
 		if opt.MinioEndpoint != "" {
 			bucket = minio.GetBucket(opt.MinioBucket, svcPath)
 
-			DefaultObjectStore, err = minio.New(bucket, opt.MinioPathPrefix, svcPath, minio.Options{
+			DefaultObjectStores["minio"], err = minio.New(bucket, opt.MinioPathPrefix, svcPath, minio.Options{
 				Endpoint:        opt.MinioEndpoint,
 				Secure:          opt.MinioSecure,
 				Strict:          opt.MinioStrict,
@@ -178,19 +194,38 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 				zap.String("bucket", bucket),
 				zap.String("endpoint", opt.MinioEndpoint),
 				zap.Error(err))
+
+			DefaultObjectStoreLegacyDriver = "minio"
 		} else {
 			path := opt.Path + "/" + svcPath
-			DefaultObjectStore, err = plain.New(path)
+			DefaultObjectStores["plain"], err = plain.New(path)
 			log.Info("initializing store",
 				zap.String("path", path),
 				zap.Error(err))
 
+			DefaultObjectStoreLegacyDriver = "plain"
 		}
-
-		hcd.Add(objstore.Healthcheck(DefaultObjectStore), "ObjectStore/Compose")
 
 		if err != nil {
 			return err
+		}
+
+		// "db" — file content stored directly in the database — is always
+		// available (see pkg/objstore/dbblob), regardless of which of the
+		// two legacy drivers above is configured; it needs no separate
+		// endpoint/path, just the main DB connection string.
+		if opt.DSN != "" {
+			DefaultObjectStores["db"], err = dbblob.New(opt.DSN, svcPath)
+			log.Info("initializing db-backed store", zap.Error(err))
+			if err != nil {
+				return err
+			}
+		}
+
+		DefaultObjectStore = DefaultObjectStores[DefaultObjectStoreLegacyDriver]
+
+		for name, s := range DefaultObjectStores {
+			hcd.Add(objstore.Healthcheck(s), "ObjectStore/Compose/"+name)
 		}
 	}
 
@@ -206,7 +241,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	RegisterComposeToolKits(aiagent.DefaultCatalog())
 	aiagent.DefaultCatalog().StartRemoteDiscovery()
 	DefaultNotification = Notification(c.UserFinder)
-	DefaultAttachment = Attachment(DefaultObjectStore, dal.Service())
+	DefaultAttachment = Attachment(DefaultObjectStores, DefaultObjectStoreLegacyDriver, dal.Service())
 	DefaultDataPrivacy = DataPrivacy()
 	DefaultImageSearch = ImageSearch(c.ImageSearch.Enabled)
 	DefaultETL = ETL()

@@ -18,6 +18,11 @@
         class="badge bg-success me-1"
         title="Entry node"
       >▶</span>
+      <font-awesome-icon
+        :icon="['fas', icon]"
+        class="rule-node-type-icon me-1"
+        :title="data.nodeType"
+      />
       <span class="rule-node-type">{{ nodeTypeLabel || data.nodeType || '?' }}</span>
     </div>
     <div class="rule-node-body">
@@ -33,6 +38,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
+import { nodeTypeIcon } from './nodeTypeIcons'
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -46,6 +52,8 @@ const nodeTypeLabel = computed(() => {
   const caps = props.data.nodeType.replace(/([A-Z])/g, ' $1')
   return caps.charAt(0).toUpperCase() + caps.slice(1)
 })
+
+const icon = computed(() => nodeTypeIcon(props.data.nodeType))
 </script>
 
 <style lang="scss" scoped>
@@ -110,6 +118,19 @@ const nodeTypeLabel = computed(() => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+
+    .rule-node-type-icon {
+      flex: none;
+      color: var(--bs-primary, #0d6efd);
+      font-size: 0.75rem;
+    }
+
+    .rule-node-type {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 
   .rule-node-body {

@@ -10,6 +10,10 @@ export const modes = [
   'gallery',
 ]
 
+// Empty string ('') means "inherit the system-wide default" (Compose ›
+// Attachments › Default storage, itself "db" unless an admin changes it).
+export const storageDrivers = ['', 'db', 'plain', 'minio']
+
 interface FileOptions extends Options {
   allowImages: boolean;
   allowDocuments: boolean;
@@ -18,6 +22,10 @@ interface FileOptions extends Options {
   inline: boolean;
   hideFileName: boolean;
   mimetypes?: string;
+  // Which objstore.Store backend this field's uploads are saved to.
+  // '' = system default, 'db' = stored in the database, 'plain' = local
+  // disk, 'minio' = S3-compatible storage.
+  storageDriver?: string;
   height?: string;
   width?: string;
   maxHeight?: string;
@@ -51,6 +59,7 @@ const defaults = (): Readonly<FileOptions> => Object.freeze({
   enableDownload: true,
   multiDelimiter: '\n',
   enableWebcam: false,
+  storageDriver: '',
 })
 
 export class ModuleFieldFile extends ModuleField {
@@ -79,6 +88,7 @@ export class ModuleFieldFile extends ModuleField {
     }
 
     ApplyWhitelisted(this.options, o, modes, 'mode')
+    ApplyWhitelisted(this.options, o, storageDrivers, 'storageDriver')
   }
 }
 

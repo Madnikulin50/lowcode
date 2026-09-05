@@ -25,7 +25,7 @@ func initBridge() {
 		RecordCreate: func(ctx context.Context, nsID, modID uint64, values map[string]interface{}) (string, string, error) {
 			r := &types.Record{NamespaceID: nsID, ModuleID: modID, Values: make([]*types.RecordValue, 0)}
 			for name, val := range values {
-				r.Values = append(r.Values, &types.RecordValue{Name: name, Value: fmt.Sprintf(`"%v"`, val)})
+				r.Values = append(r.Values, &types.RecordValue{Name: name, Value: fmt.Sprintf("%v", val)})
 			}
 			created, _, err := service.DefaultRecord.Create(ctx, r)
 			if err != nil {
@@ -44,13 +44,13 @@ func initBridge() {
 				found := false
 				for _, rv := range existing.Values {
 					if rv.Name == name {
-						rv.Value = fmt.Sprintf(`"%v"`, val)
+						rv.Value = fmt.Sprintf("%v", val)
 						found = true
 						break
 					}
 				}
 				if !found {
-					existing.Values = append(existing.Values, &types.RecordValue{Name: name, Value: fmt.Sprintf(`"%v"`, val)})
+					existing.Values = append(existing.Values, &types.RecordValue{Name: name, Value: fmt.Sprintf("%v", val)})
 				}
 			}
 			updated, _, err := service.DefaultRecord.Update(ctx, existing)

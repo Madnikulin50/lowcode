@@ -105,7 +105,7 @@ func (a *Agent) clientForRun() ChatModel {
 	if a.client != nil && a.client.Model() == want {
 		return a.client
 	}
-	cl, err := chat.NewClient(want)
+	cl, err := chat.NewClientNoThink(want)
 	if err != nil {
 		if a.client != nil {
 			return a.client

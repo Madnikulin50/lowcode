@@ -14,6 +14,17 @@
     </div>
 
     <div class="mb-3 mt-2">
+      <label class="form-label text-primary">{{ t('kind.file.view.storageDriverLabel') }}</label>
+      <div class="form-text">{{ t('kind.file.view.storageDriverFootnote') }}</div>
+      <select v-model="f.options.storageDriver" class="form-select form-select-sm">
+        <option value="">{{ t('kind.file.view.storageDriverDefault') }}</option>
+        <option value="db">{{ t('kind.file.view.storageDriverDb') }}</option>
+        <option value="plain">{{ t('kind.file.view.storageDriverPlain') }}</option>
+        <option value="minio">{{ t('kind.file.view.storageDriverMinio') }}</option>
+      </select>
+    </div>
+
+    <div class="mb-3 mt-2">
       <div class="form-text">{{ t('kind.file.view.webcam.enable.footnote') }}</div>
       <div class="form-check">
         <input id="enableWebcam" v-model="f.options.enableWebcam" type="checkbox" class="form-check-input" />

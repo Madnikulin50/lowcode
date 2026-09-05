@@ -49,6 +49,12 @@ kind:
           label: Подключить возможность использования камеры
           footnote: Использовать камеру для захвата картинки
       mimetypesLabel: Разрешенные типы файлов
+      storageDriverLabel: Место хранения
+      storageDriverFootnote: Куда фактически сохраняется содержимое загруженного файла
+      storageDriverDefault: По умолчанию (системная настройка)
+      storageDriverDb: База данных
+      storageDriverPlain: Локальный диск
+      storageDriverMinio: S3 (Minio)
       modeFootnote: Как файлы отображаются в блоке страницы
       modeLabel: Режим просмотра
       showName: Скрывать имя файла
