@@ -39,7 +39,7 @@
         <code>${record.values.fieldName}</code>
         <code>${recordID}</code>
         <code>${ownerID}</code>
-        <span><code>${userID}</code>, <code>${user.name}</code></span>
+        <span><code>${userID}</code>, <code>${user.name}</code>, <code>${namespaceID}</code>, <code>${moduleID}</code></span>
       </i18next>
     </div>
 
@@ -111,6 +111,8 @@ function processRecordAutoCompleteParams ({ module: mod, operators = false } = {
     ...recordSuggestions,
     ...(operators ? ['AND', 'OR'] : []),
     { interpolate: true, value: 'userID' },
+    { interpolate: true, value: 'namespaceID' },
+    { interpolate: true, value: 'moduleID' },
     { interpolate: true, value: 'user', properties: userProperties },
     ...moduleFields,
   ]

@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сравнение ПД/РД</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --fg: #1b1f24;
+    --muted: #6b7280;
+    --border: #e2e5e9;
+    --panel: #f7f8fa;
+    --accent: #2e59d9;
+    --ok: #1a7f37;
+    --warn: #9a6700;
+    --bad: #cf222e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f1115; --fg:#e6e8eb; --muted:#9aa4af; --border:#2a2f37; --panel:#171a20; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 13px/1.4 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { padding: 12px; }
+  .head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 6px; }
+  .head h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+  }
+  .badge.ok { color: #fff; background: var(--ok); border-color: var(--ok); }
+  .badge.warn { color: #fff; background: var(--warn); border-color: var(--warn); }
+  .badge.bad { color: #fff; background: var(--bad); border-color: var(--bad); }
+  .badge .spin { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .files { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .files b { color: var(--fg); font-weight: 600; }
+  .simbar-row { display: flex; align-items: center; gap: 8px; margin: 6px 0 10px; }
+  .simbar-row .simlabel { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .simbar { flex: 1; max-width: 260px; height: 8px; border-radius: 999px; background: var(--panel); border: 1px solid var(--border); overflow: hidden; }
+  .simbar > div { height: 100%; border-radius: 999px; }
+  .comment { color: var(--muted); margin: 4px 0 12px; }
+  .mode-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 4px; }
+  .mode-sep { width: 1px; align-self: stretch; background: var(--border); margin: 0 4px; min-height: 26px; }
+  .modes { display: flex; flex-wrap: wrap; gap: 4px; }
+  .modes button {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--border); background: var(--panel); color: var(--fg);
+    padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;
+  }
+  .modes button svg { width: 14px; height: 14px; flex: none; }
+  .modes button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .mode-hint { font-size: 11.5px; color: var(--muted); margin: 4px 0 8px; }
+  .toolbar-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .zoom { display: flex; align-items: center; gap: 2px; }
+  .zoom button { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 13px; line-height: 1; }
+  .zoom button:disabled { opacity: .4; cursor: default; }
+  .zoom .zlevel { font-size: 11px; color: var(--muted); min-width: 38px; text-align: center; }
+  .pager { display: flex; align-items: center; gap: 8px; }
+  .pager button { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+  .pager button:disabled { opacity: .4; cursor: default; }
+  .stage { position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: auto; background: var(--panel); min-height: 200px; }
+  .side-by-side { display: flex; gap: 8px; }
+  .side-by-side .col { flex: 1 1 0; min-width: 0; text-align: center; }
+  .side-by-side img { max-width: 100%; border: 1px solid var(--border); border-radius: 4px; }
+  .side-by-side .label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .overlay-stage, .diff-stage { position: relative; display: flex; justify-content: center; }
+  .overlay-stage img, .diff-stage img { max-width: 100%; display: block; }
+  .overlay-stage .top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); }
+  .diff-stage { background: #000; }
+  .diff-stage .top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); mix-blend-mode: difference; }
+  .opacity-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; color: var(--muted); }
+  .opacity-row input { flex: 1; max-width: 240px; }
+  .unsupported { padding: 24px; text-align: center; color: var(--muted); }
+  .text-legend { display: flex; gap: 16px; margin-bottom: 8px; font-size: 12px; }
+  .text-legend .tdiff-del, .text-legend .tdiff-add { padding: 1px 6px; border-radius: 4px; }
+  .text-diff {
+    white-space: pre-wrap; line-height: 1.7; font-size: 13px;
+    padding: 14px 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    max-height: 70vh; overflow: auto;
+  }
+  .tdiff-del { color: var(--bad); text-decoration: line-through; background: rgba(207,34,46,.10); }
+  .tdiff-add { color: var(--ok); text-decoration: underline; background: rgba(26,127,55,.10); }
+  .discrepancies { margin-top: 14px; }
+  .discrepancies h2 { font-size: 13px; margin: 0 0 6px; }
+  .disc-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .disc-summary .chip {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel); color: var(--muted);
+  }
+  .disc-summary .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .disc-summary .chip.high { color: var(--bad); }
+  .disc-summary .chip.medium { color: var(--warn); }
+  .disc-summary .chip.low { color: var(--muted); }
+  .disc { display: flex; gap: 8px; padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 4px; align-items: flex-start; }
+  .disc .sev { flex: none; }
+  .disc .sev.low { color: var(--muted); }
+  .disc .sev.medium { color: var(--warn); }
+  .disc .sev.high { color: var(--bad); font-weight: 600; }
+  .disc .body { min-width: 0; }
+  .disc .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 3px; }
+  .disc .tag {
+    display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 4px;
+    background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+  }
+  .disc .tag.src-ai { color: var(--accent); border-color: var(--accent); }
+  .disc .tag.tag-page { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .disc .tag.tag-page-unavailable { color: var(--muted); border-color: var(--border); border-style: dashed; font-weight: 400; }
+  .disc.clickable { cursor: pointer; }
+  .disc.clickable:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
+  .disc-fallback { color: var(--muted); font-style: italic; }
+  .disc-note { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .empty { color: var(--muted); padding: 8px; }
+  .err { color: var(--bad); padding: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">Загрузка…</div>
+<script src="/vendor/jszip.min.js"></script>
+<script src="/vendor/docx-preview.min.js"></script>
+<script src="/vendor/html2canvas.min.js"></script>
+<script>
+const params = new URLSearchParams(location.search)
+const recordID = params.get('recordID') || ''
+const namespaceID = params.get('namespaceID') || ''
+const qs = `recordID=${encodeURIComponent(recordID)}&namespaceID=${encodeURIComponent(namespaceID)}`
+
+const STATUS_LABEL = { new: 'Новое', processing: 'В обработке', done: 'Готово', failed: 'Ошибка' }
+const STATUS_CLASS = { new: '', processing: 'warn', done: 'ok', failed: 'bad' }
+const STATUS_ICON = { new: '•', processing: '⏳', done: '✓', failed: '⚠' }
+const SEV_ORDER = { high: 0, medium: 1, low: 2 }
+const SEV_LABEL = { low: 'низкая', medium: 'средняя', high: 'высокая' }
+const TYPE_LABEL = {
+  content: 'содержание', numbering: 'нумерация', drawing: 'чертёж',
+  missing_page: 'нет страницы', extra_page: 'лишняя страница',
+}
+
+// Small currentColor icons for the mode switcher (no icon font/CDN needed
+// for four glyphs) — viewBox 0 0 16 16, stroke-based so they follow badge
+// colors including the active/inverted state.
+const ICONS = {
+  side: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="2" width="6" height="12" rx="1"/><rect x="9" y="2" width="6" height="12" rx="1"/></svg>',
+  overlay: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3" width="9" height="10" rx="1"/><rect x="5" y="3" width="9" height="10" rx="1" opacity="0.55"/></svg>',
+  diff: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6"/><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor" stroke="none"/></svg>',
+  text: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2 4h12M2 8h12M2 12h8"/></svg>',
+}
+
+// One-line explanation shown under the toolbar for whichever mode is
+// selected — the button labels alone don't say what each mode is *for*.
+const MODE_META = {
+  side: { label: 'Рядом', hint: 'Страницы рядом друг с другом — для сопоставления вручную.' },
+  overlay: { label: 'Наложение', hint: 'РД поверх ПД с регулируемой прозрачностью — заметны сдвиги и смещения.' },
+  diff: { label: 'Авто-разница', hint: 'Совпадающие области гасятся в чёрный, различия остаются светлыми пятнами.' },
+  text: { label: 'Текст', hint: 'Слова, отсутствующие в одном из файлов, подсвечиваются: красный — только в ПД, зелёный — только в РД.' },
+}
+
+const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200]
+
+let mode = 'side'
+let page = 1
+let zoomIdx = ZOOM_LEVELS.indexOf(100)
+let pdPages = { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
+let rdPages = { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
+
+// DOCX has no server-side page-image concept (no LibreOffice on this host),
+// so it's rendered client-side: docx-preview lays it out into paginated
+// HTML (one <section class="docx"> per page), then html2canvas rasterizes
+// each page into an image — same page-image abstraction the PDF side
+// already gets from the server, so the rest of the viewer (side-by-side /
+// overlay / diff) doesn't need to know which kind it's looking at.
+async function renderDocxPages (side) {
+  const res = await fetch(`/api/file?${qs}&side=${side}`)
+  if (!res.ok) throw new Error('не удалось получить файл (' + res.status + ')')
+  const blob = await res.blob()
+
+  // A far-offscreen fixed position (the old approach) still grows the
+  // document's scrollable area in most browsers, dragging the real viewport
+  // sideways. Clip through a 0x0 overflow:hidden ancestor instead — the
+  // inner host keeps its real width for layout/html2canvas, it's just not
+  // visible or scrollable-to.
+  const clip = document.createElement('div')
+  clip.style.cssText = 'position:fixed; top:0; left:0; width:0; height:0; overflow:hidden;'
+  document.body.appendChild(clip)
+  const host = document.createElement('div')
+  host.style.cssText = 'width:794px; background:#fff;'
+  clip.appendChild(host)
+  const shadow = host.attachShadow({ mode: 'open' })
+  const styleHost = document.createElement('div')
+  const body = document.createElement('div')
+  shadow.appendChild(styleHost)
+  shadow.appendChild(body)
+
+  try {
+    await window.docx.renderAsync(blob, body, styleHost, { inWrapper: true, breakPages: true, ignoreLastRenderedPageBreak: true })
+    const sections = body.querySelectorAll('.docx-wrapper > section.docx')
+    const images = []
+    const texts = []
+    for (const sec of sections) {
+      const canvas = await window.html2canvas(sec, { scale: 2, backgroundColor: '#ffffff' })
+      images.push(canvas.toDataURL('image/jpeg', 0.92))
+      texts.push(sec.textContent || '')
+    }
+    return { images, texts }
+  } finally {
+    clip.remove()
+  }
+}
+
+async function loadSide (side, hasFile) {
+  if (!hasFile) return { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
+  let info
+  try {
+    info = await getJSON(`/api/pages?${qs}&side=${side}`)
+  } catch (e) {
+    return { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
+  }
+  if (info.kind === 'docx') {
+    try {
+      const { images, texts } = await renderDocxPages(side)
+      info.images = images
+      info.texts = texts
+      info.pageCount = images.length
+      if (!images.length) { info.supported = false; info.kind = 'other' }
+    } catch (e) {
+      console.error('docx render failed for side=' + side, e)
+      info.supported = false
+      info.kind = 'other'
+    }
+  } else if (info.kind === 'pdf') {
+    // Page-image fetching for PDF stays lazy (/api/page, per view), but text
+    // is cheap and cached server-side, so just fetch it eagerly here — the
+    // "text" view mode needs it and there's no per-page round trip to avoid.
+    try {
+      const t = await getJSON(`/api/text?${qs}&side=${side}`)
+      info.texts = t.pages || []
+    } catch (e) {
+      console.error('pdftotext failed for side=' + side, e)
+      info.texts = []
+    }
+  }
+  return info
+}
+
+// Resolves one page's image source regardless of whether it came from the
+// server (PDF, fetched on demand) or was rendered client-side (DOCX, already
+// a data: URL in memory).
+function pageSrc (info, side, n) {
+  if (!info) return ''
+  if (info.kind === 'pdf') return `/api/page?${qs}&side=${side}&n=${n}`
+  if (info.kind === 'docx' && info.images) return info.images[n - 1] || ''
+  return ''
+}
+
+// Resolves one page's extracted text, regardless of source (server-side
+// pdftotext for PDF, docx-preview's own DOM for DOCX).
+function pageText (info, n) {
+  if (!info || !info.texts) return ''
+  return info.texts[n - 1] || ''
+}
+
+// Word-level LCS diff (classic O(n*m) table — page-sized text, so this is
+// milliseconds even for a couple thousand words). Whitespace is collapsed
+// before diffing (pdftotext -layout vs. docx-preview's DOM produce very
+// different incidental spacing for the same content) and reinserted as a
+// single space on render, so highlights track real wording changes, not
+// formatting differences.
+function diffWords (aText, bText) {
+  const a = (aText || '').split(/\s+/).filter(Boolean)
+  const b = (bText || '').split(/\s+/).filter(Boolean)
+  const n = a.length, m = b.length
+  const dp = new Array(n + 1)
+  for (let i = 0; i <= n; i++) dp[i] = new Uint32Array(m + 1)
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1])
+    }
+  }
+  const ops = []
+  let i = 0, j = 0
+  while (i < n && j < m) {
+    if (a[i] === b[j]) { ops.push({ type: 'equal', text: a[i] }); i++; j++ }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) { ops.push({ type: 'del', text: a[i] }); i++ }
+    else { ops.push({ type: 'add', text: b[j] }); j++ }
+  }
+  while (i < n) { ops.push({ type: 'del', text: a[i] }); i++ }
+  while (j < m) { ops.push({ type: 'add', text: b[j] }); j++ }
+  return ops
+}
+
+async function getJSON (url) {
+  const res = await fetch(url)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || data.error) throw new Error(data.error || res.statusText)
+  return data
+}
+
+function el (tag, attrs, children) {
+  const e = document.createElement(tag)
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'class') e.className = v
+    else if (k === 'text') e.textContent = v
+    else e.setAttribute(k, v)
+  }
+  for (const c of children || []) if (c) e.appendChild(c)
+  return e
+}
+
+// Only place we need raw markup (inline SVG icons) — el() stays text-safe
+// for everything that comes from server data.
+function iconEl (svg, cls) {
+  const span = document.createElement('span')
+  if (cls) span.className = cls
+  span.innerHTML = svg
+  return span
+}
+
+let pollTimer = null
+
+async function main () {
+  const app = document.getElementById('app')
+  if (!recordID || !namespaceID) {
+    app.innerHTML = ''
+    app.appendChild(el('div', { class: 'err', text: 'Не переданы recordID/namespaceID.' }))
+    return
+  }
+
+  let comparison
+  try {
+    comparison = await getJSON(`/api/comparison?${qs}`)
+  } catch (e) {
+    app.innerHTML = ''
+    app.appendChild(el('div', { class: 'err', text: 'Не удалось загрузить сравнение: ' + e.message }))
+    return
+  }
+
+  const [pd, rd] = await Promise.allSettled([
+    loadSide('pd', comparison.hasPdFile),
+    loadSide('rd', comparison.hasRdFile),
+  ])
+  pdPages = pd.status === 'fulfilled' ? pd.value : { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
+  rdPages = rd.status === 'fulfilled' ? rd.value : { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
+
+  render(comparison)
+  schedulePoll(comparison)
+}
+
+// The agent's own analysis chain takes minutes on CPU-only inference — while
+// it's running, poll the lightweight /api/comparison endpoint (no page
+// images) rather than making the user reload by hand. Once the status
+// leaves new/processing, the pages/attachments may have changed too, so a
+// full reload picks those up cleanly instead of reconciling state in place.
+function schedulePoll (comparison) {
+  clearTimeout(pollTimer)
+  if (comparison.status !== 'new' && comparison.status !== 'processing') return
+  pollTimer = setTimeout(async () => {
+    let next
+    try {
+      next = await getJSON(`/api/comparison?${qs}`)
+    } catch (e) {
+      schedulePoll(comparison)
+      return
+    }
+    if (next.status !== comparison.status) {
+      location.reload()
+      return
+    }
+    render(next)
+    schedulePoll(next)
+  }, 4000)
+}
+
+let lastComparison = null
+
+function render (comparison) {
+  lastComparison = comparison
+  const app = document.getElementById('app')
+  app.innerHTML = ''
+
+  const statusCls = STATUS_CLASS[comparison.status] || ''
+  const spinning = comparison.status === 'processing'
+  app.appendChild(el('div', { class: 'head' }, [
+    el('h1', { text: comparison.title || ('Сравнение #' + recordID) }),
+    el('span', { class: 'badge ' + statusCls }, [
+      iconEl(STATUS_ICON[comparison.status] || '•', spinning ? 'spin' : ''),
+      document.createTextNode(STATUS_LABEL[comparison.status] || comparison.status || '—'),
+    ]),
+  ]))
+
+  if (comparison.pdFileName || comparison.rdFileName) {
+    app.appendChild(el('div', { class: 'files' }, [
+      comparison.pdFileName ? el('span', {}, [document.createTextNode('ПД: '), el('b', { text: comparison.pdFileName })]) : null,
+      comparison.rdFileName ? el('span', {}, [document.createTextNode('РД: '), el('b', { text: comparison.rdFileName })]) : null,
+    ]))
+  }
+
+  if (comparison.similarityPercent) {
+    const pct = Math.max(0, Math.min(100, Number(comparison.similarityPercent) || 0))
+    const barColor = pct >= 80 ? 'var(--ok)' : pct >= 50 ? 'var(--warn)' : 'var(--bad)'
+    const fill = el('div', {})
+    fill.style.cssText = `width:${pct}%; background:${barColor};`
+    app.appendChild(el('div', { class: 'simbar-row' }, [
+      el('span', { class: 'simlabel', text: 'Схожесть' }),
+      el('div', { class: 'simbar' }, [fill]),
+      el('span', { class: 'simlabel', text: pct + '%' }),
+    ]))
+  }
+
+  if (comparison.comment) app.appendChild(el('div', { class: 'comment', text: comparison.comment }))
+
+  const bothSupported = pdPages.supported && rdPages.supported
+  const pageCount = Math.max(pdPages.pageCount || 0, rdPages.pageCount || 0)
+
+  if (bothSupported && pageCount > 0) {
+    app.appendChild(buildViewer(pageCount))
+  } else {
+    app.appendChild(el('div', { class: 'unsupported' }, [
+      el('div', { text: 'Визуальное постраничное наложение доступно для PDF и DOCX.' }),
+      el('div', { text: (comparison.hasPdFile && !pdPages.supported) || (comparison.hasRdFile && !rdPages.supported)
+        ? 'Один из файлов не удалось отобразить постранично, показан только текстовый список расхождений ниже.'
+        : 'Файлы ещё не загружены.' }),
+    ]))
+  }
+
+  app.appendChild(buildDiscrepancies(comparison.discrepancies || [], bothSupported ? pageCount : 0))
+}
+
+function buildViewer (pageCount) {
+  if (page > pageCount) page = pageCount
+  if (page < 1) page = 1
+
+  const container = el('div', {})
+
+  const modes = el('div', { class: 'modes' }, [
+    modeBtn('side'), modeBtn('overlay'), modeBtn('diff'),
+    el('span', { class: 'mode-sep' }),
+    modeBtn('text'),
+  ])
+  container.appendChild(modes)
+  container.appendChild(el('div', { class: 'mode-hint', text: MODE_META[mode].hint }))
+
+  const toolbarRow = el('div', { class: 'toolbar-row' })
+  const pager = el('div', { class: 'pager' }, [
+    el('button', { text: '‹ Пред.' }),
+    el('span', { text: `Стр. ${page} / ${pageCount}` }),
+    el('button', { text: 'След. ›' }),
+  ])
+  pager.children[0].disabled = page <= 1
+  pager.children[2].disabled = page >= pageCount
+  pager.children[0].onclick = () => { page--; rerender() }
+  pager.children[2].onclick = () => { page++; rerender() }
+  toolbarRow.appendChild(pager)
+
+  if (mode !== 'text') toolbarRow.appendChild(buildZoomControls())
+  container.appendChild(toolbarRow)
+
+  const pdUrl = pageSrc(pdPages, 'pd', page)
+  const rdUrl = pageSrc(rdPages, 'rd', page)
+  const zoomPct = ZOOM_LEVELS[zoomIdx]
+  const applyZoom = (img) => {
+    if (zoomPct === 100) return
+    img.style.maxWidth = 'none'
+    img.style.width = zoomPct + '%'
+  }
+
+  if (mode === 'side') {
+    const pdImg = el('img', { src: pdUrl, alt: 'ПД' })
+    const rdImg = el('img', { src: rdUrl, alt: 'РД' })
+    applyZoom(pdImg); applyZoom(rdImg)
+    container.appendChild(el('div', { class: 'stage side-by-side' }, [
+      el('div', { class: 'col' }, [el('div', { class: 'label', text: pdLabel() }), pdImg]),
+      el('div', { class: 'col' }, [el('div', { class: 'label', text: rdLabel() }), rdImg]),
+    ]))
+  } else if (mode === 'overlay') {
+    const bottom = el('img', { src: pdUrl, alt: 'ПД' })
+    const top = el('img', { class: 'top', src: rdUrl, alt: 'РД' })
+    applyZoom(bottom); applyZoom(top)
+    top.style.opacity = '0.5'
+    container.appendChild(el('div', { class: 'opacity-row' }, [
+      el('span', { text: 'Прозрачность РД поверх ПД:' }),
+      (() => {
+        const input = el('input', { type: 'range', min: '0', max: '100', value: '50' })
+        input.oninput = () => { top.style.opacity = String(input.value / 100) }
+        return input
+      })(),
+    ]))
+    container.appendChild(el('div', { class: 'stage overlay-stage' }, [bottom, top]))
+  } else if (mode === 'diff') {
+    const bottom = el('img', { src: pdUrl, alt: 'ПД' })
+    const top = el('img', { class: 'top', src: rdUrl, alt: 'РД' })
+    applyZoom(bottom); applyZoom(top)
+    container.appendChild(el('div', { class: 'stage diff-stage' }, [bottom, top]))
+  } else if (mode === 'text') {
+    container.appendChild(buildTextDiff(page))
+  }
+
+  function modeBtn (key) {
+    const meta = MODE_META[key]
+    const b = el('button', { class: mode === key ? 'active' : '' }, [iconEl(ICONS[key]), document.createTextNode(meta.label)])
+    b.onclick = () => { mode = key; rerender() }
+    return b
+  }
+
+  function buildZoomControls () {
+    const minus = el('button', { text: '−' })
+    const plus = el('button', { text: '+' })
+    const levelLabel = el('span', { class: 'zlevel', text: ZOOM_LEVELS[zoomIdx] + '%' })
+    minus.disabled = zoomIdx <= 0
+    plus.disabled = zoomIdx >= ZOOM_LEVELS.length - 1
+    minus.onclick = () => { if (zoomIdx > 0) { zoomIdx--; rerender() } }
+    plus.onclick = () => { if (zoomIdx < ZOOM_LEVELS.length - 1) { zoomIdx++; rerender() } }
+    const reset = el('button', { text: 'Сброс' })
+    reset.onclick = () => { zoomIdx = ZOOM_LEVELS.indexOf(100); rerender() }
+    return el('div', { class: 'zoom' }, [minus, levelLabel, plus, reset])
+  }
+
+  return container
+}
+
+function pdLabel () { return lastComparison && lastComparison.pdFileName ? 'ПД — ' + lastComparison.pdFileName : 'ПД' }
+function rdLabel () { return lastComparison && lastComparison.rdFileName ? 'РД — ' + lastComparison.rdFileName : 'РД' }
+
+// Redline-style page text: PD is the baseline, words missing from RD are
+// struck through in red, words RD adds are underlined in green, matching
+// text stays plain — same idiom as Word's "compare documents".
+function buildTextDiff (n) {
+  const container = el('div', {})
+  container.appendChild(el('div', { class: 'text-legend' }, [
+    el('span', { class: 'tdiff-del', text: 'есть в ПД, нет в РД' }),
+    el('span', { class: 'tdiff-add', text: 'есть в РД, нет в ПД' }),
+  ]))
+
+  const pdText = pageText(pdPages, n)
+  const rdText = pageText(rdPages, n)
+  if (!pdText && !rdText) {
+    container.appendChild(el('div', { class: 'empty', text: 'На этой странице нет извлечённого текста ни в одном из файлов.' }))
+    return container
+  }
+
+  const ops = diffWords(pdText, rdText)
+  const box = el('div', { class: 'text-diff' })
+  for (const op of ops) {
+    const span = document.createElement('span')
+    span.textContent = op.text + ' '
+    if (op.type === 'del') span.className = 'tdiff-del'
+    else if (op.type === 'add') span.className = 'tdiff-add'
+    box.appendChild(span)
+  }
+  container.appendChild(box)
+  return container
+}
+
+function rerender () {
+  if (lastComparison) render(lastComparison)
+}
+
+// The rule chain bakes its finding source into the description text itself
+// as a "[ИИ] "/"[детерм.] " prefix (chains.mjs, compareChain finalize) —
+// there's no separate field for it. Pull it back out here so it renders as
+// a real tag instead of leading text the eye has to parse every time.
+function splitSource (description) {
+  const text = description || ''
+  if (text.startsWith('[ИИ] ')) return { source: 'ai', text: text.slice(5) }
+  if (text.startsWith('[детерм.] ')) return { source: 'det', text: text.slice(10) }
+  return { source: null, text }
+}
+
+// Jumps the page viewer to a discrepancy's page and scrolls it into view —
+// called from a discrepancy row click (see buildDiscrepancies).
+function jumpToPage (n) {
+  page = n
+  rerender()
+  const target = document.querySelector('.stage, .text-diff')
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+function buildDiscrepancies (list, pageCount) {
+  const box = el('div', { class: 'discrepancies' }, [
+    el('h2', { text: `Расхождения (${list.length})` }),
+  ])
+  if (!list.length) {
+    box.appendChild(el('div', { class: 'empty', text: 'Расхождений не найдено.' }))
+    return box
+  }
+
+  const counts = { high: 0, medium: 0, low: 0 }
+  for (const d of list) if (counts[d.severity] != null) counts[d.severity]++
+  const summary = el('div', { class: 'disc-summary' })
+  for (const sev of ['high', 'medium', 'low']) {
+    if (!counts[sev]) continue
+    summary.appendChild(el('span', { class: 'chip ' + sev }, [
+      el('span', { class: 'dot' }),
+      document.createTextNode(`${SEV_LABEL[sev]}: ${counts[sev]}`),
+    ]))
+  }
+  box.appendChild(summary)
+
+  const sorted = list.slice().sort((a, b) => (SEV_ORDER[a.severity] ?? 9) - (SEV_ORDER[b.severity] ?? 9))
+  for (const d of sorted) {
+    const { source, text } = splitSource(d.description)
+    const typeLabel = d.type && TYPE_LABEL[d.type] ? TYPE_LABEL[d.type] : null
+    const hasText = !!text.trim()
+    // Some discrepancies (demo/seed data, or a check that only flags a page
+    // without generating wording) carry no description at all — rendering
+    // an empty row reads as broken. Fall back to naming the type instead of
+    // showing nothing, and say plainly that there's no further detail.
+    const primaryText = hasText ? text : (typeLabel ? `Расхождение: ${typeLabel}` : 'Расхождение без описания')
+
+    // A page number is only trustworthy if it's actually inside the
+    // rendered preview — a check can flag a page the viewer never loaded
+    // (fewer real pages than expected, a fetch that came back short, …).
+    // Rendering it exactly like a working "стр. N" link in that case reads
+    // as a broken reference rather than what it is: informational only.
+    const n = Number(d.pageNumber)
+    const hasPage = !!d.pageNumber
+    const pageAvailable = pageCount > 0 && n >= 1 && n <= pageCount
+    const pageTag = hasPage
+      ? el('span', {
+          class: 'tag tag-page' + (pageAvailable ? '' : ' tag-page-unavailable'),
+          text: 'стр. ' + d.pageNumber + (pageAvailable ? '' : ' ⚠'),
+          title: pageAvailable ? 'Открыть страницу ' + d.pageNumber : `Страницы ${d.pageNumber} нет в загруженном предпросмотре (доступно страниц: ${pageCount || 0})`,
+        })
+      : null
+
+    const tags = el('div', { class: 'tags' }, [
+      source ? el('span', { class: 'tag ' + (source === 'ai' ? 'src-ai' : ''), text: source === 'ai' ? '🤖 ИИ' : '⚙ детерминированно' }) : null,
+      typeLabel ? el('span', { class: 'tag', text: typeLabel }) : null,
+      pageTag,
+    ])
+    const body = [tags, el('span', { class: hasText ? '' : 'disc-fallback', text: primaryText })]
+    if (!hasText) {
+      let note = 'Автоматическая проверка не добавила текстовое описание.'
+      if (hasPage) note += pageAvailable ? ' Откройте страницу, чтобы сравнить визуально.' : ' Указанной страницы нет в загруженном предпросмотре — визуальное сравнение недоступно.'
+      body.push(el('div', { class: 'disc-note', text: note }))
+    }
+
+    const row = el('div', { class: 'disc' }, [
+      el('span', { class: 'sev ' + (d.severity || ''), text: '● ' + (SEV_LABEL[d.severity] || d.severity || '') }),
+      el('div', { class: 'body' }, body),
+    ])
+
+    if (pageAvailable) {
+      row.classList.add('clickable')
+      row.title = 'Открыть страницу ' + n
+      row.onclick = () => jumpToPage(n)
+    }
+    box.appendChild(row)
+  }
+  return box
+}
+
+main()
+</script>
+</body>
+</html>

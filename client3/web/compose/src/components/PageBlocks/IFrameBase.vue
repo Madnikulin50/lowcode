@@ -4,12 +4,19 @@
     @refreshBlock="refresh"
   >
     <img
-      v-if="src"
+      v-if="src && displayAsImage"
       ref="iframe"
       class="h-100 w-100 border-0"
       :src="src"
       style="object-fit: contain;"
     >
+    <iframe
+      v-else-if="src"
+      ref="iframe"
+      class="h-100 w-100 border-0"
+      :src="src"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
+    />
   </Wrap>
 </template>
 
@@ -44,6 +51,8 @@ const iframe = ref(null)
 
 const { refreshBlock } = usePageBlockBase(props, emit)
 
+const displayAsImage = computed(() => !!props.block.options.displayAsImage)
+
 const src = computed(() => {
   const { srcField, src: srcUrl } = props.block.options
   const blank = 'about:blank'
@@ -57,6 +66,8 @@ const src = computed(() => {
     recordID: (props.record || {}).recordID || NoID,
     ownerID: (props.record || {}).ownedBy || NoID,
     userID: ($auth.user || {}).userID || NoID,
+    namespaceID: props.namespace?.namespaceID || NoID,
+    moduleID: props.module?.moduleID || NoID,
   })
   if (interpolatedURL[0] !== 'h') interpolatedURL = window.CortezaAPI + interpolatedURL
   return interpolatedURL || blank

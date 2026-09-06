@@ -302,7 +302,7 @@ function interpolable (value) {
   })
 }
 
-const PREFILTER_RESERVED = new Set(['record', 'user', 'recordID', 'ownerID', 'userID', 'variables', 'values'])
+const PREFILTER_RESERVED = new Set(['record', 'user', 'recordID', 'ownerID', 'userID', 'namespaceID', 'moduleID', 'variables', 'values'])
 
 // `${phase}` → `${values.phase}` so record-page lists can use field names
 // without `record.values.`. `${recordID}` / `${userID}` stay as-is.
@@ -322,7 +322,7 @@ function prefilterNeedsRecord (src) {
 // Evaluates the given prefilter. Allows JS template literal expressions
 // such as id = ${recordID}, amount < ${variables.x} (page variables),
 // or phase = '${phase}' (parent record field shorthand).
-export function evaluatePrefilter (prefilter, { record, user, recordID, ownerID, userID, variables } = {}) {
+export function evaluatePrefilter (prefilter, { record, user, recordID, ownerID, userID, namespaceID, moduleID, variables } = {}) {
   const rawValues = record && record.values && typeof record.values === 'object' ? record.values : {}
   record = interpolable(record)
   user = interpolable(user)
@@ -331,6 +331,8 @@ export function evaluatePrefilter (prefilter, { record, user, recordID, ownerID,
   if (recordID === undefined || recordID === null) recordID = ''
   if (ownerID === undefined || ownerID === null) ownerID = ''
   if (userID === undefined || userID === null) userID = ''
+  if (namespaceID === undefined || namespaceID === null) namespaceID = ''
+  if (moduleID === undefined || moduleID === null) moduleID = ''
   void values
   /* eslint-disable no-eval */
   return eval('`' + expandFieldShorthand(prefilter || '') + '`')
