@@ -269,6 +269,12 @@ func (c *connection) AssertSchemaAlterations(ctx context.Context, model *dal.Mod
 		colIndex[c.Ident] = c
 	}
 
+	// Index indexes(!) by ident for easier lookup
+	idxIndex := make(map[string]*ddl.Index)
+	for _, i := range t.Indexes {
+		idxIndex[i.Ident] = i
+	}
+
 	for _, a := range aa {
 		switch {
 		case a.AttributeAdd != nil:
@@ -303,6 +309,18 @@ func (c *connection) AssertSchemaAlterations(ctx context.Context, model *dal.Mod
 			out = append(out, aux...)
 		case a.ModelDelete != nil:
 			aux, err = c.assertAlterationModelDelete(t, colIndex, a)
+			if err != nil {
+				return
+			}
+			out = append(out, aux...)
+		case a.IndexAdd != nil:
+			aux, err = c.assertAlterationIndexAdd(idxIndex, a)
+			if err != nil {
+				return
+			}
+			out = append(out, aux...)
+		case a.IndexDelete != nil:
+			aux, err = c.assertAlterationIndexDelete(idxIndex, a)
 			if err != nil {
 				return
 			}
@@ -343,6 +361,10 @@ func (c *connection) ApplyAlteration(ctx context.Context, model *dal.Model, alt 
 			err = c.applyAlterationModelAdd(ctx, model, a)
 		case a.ModelDelete != nil:
 			err = c.applyAlterationModelDelete(ctx, model, a)
+		case a.IndexAdd != nil:
+			err = c.applyAlterationIndexAdd(ctx, model, a)
+		case a.IndexDelete != nil:
+			err = c.applyAlterationIndexDelete(ctx, model, a)
 		}
 
 		if err != nil {
@@ -556,4 +578,40 @@ func (c *connection) assertAlterationModelDelete(table *ddl.Table, colIndex map[
 
 	out = append(out, alt)
 	return
+}
+
+// assertAlterationIndexAdd skips the alteration if an index with the same
+// Ident already exists on the live table — unlike attribute adds, there's no
+// "does it fit" check here: a changed index (different fields/uniqueness
+// under the same Ident) is expressed by diff.go as an IndexDelete followed
+// by a matching IndexAdd, not a single mutating alteration.
+func (c *connection) assertAlterationIndexAdd(idxIndex map[string]*ddl.Index, alt *dal.Alteration) (out []*dal.Alteration, err error) {
+	if idxIndex[alt.IndexAdd.Index.Ident] != nil {
+		return
+	}
+
+	out = append(out, alt)
+	return
+}
+
+func (c *connection) assertAlterationIndexDelete(idxIndex map[string]*ddl.Index, alt *dal.Alteration) (out []*dal.Alteration, err error) {
+	if idxIndex[alt.IndexDelete.Ident] == nil {
+		return
+	}
+
+	out = append(out, alt)
+	return
+}
+
+func (c *connection) applyAlterationIndexAdd(ctx context.Context, model *dal.Model, alt *dal.Alteration) (err error) {
+	idx, err := c.dataDefiner.ConvertIndex(alt.IndexAdd.Index, model.Attributes, model.Ident)
+	if err != nil {
+		return
+	}
+
+	return c.dataDefiner.IndexCreate(ctx, model.Ident, idx)
+}
+
+func (c *connection) applyAlterationIndexDelete(ctx context.Context, model *dal.Model, alt *dal.Alteration) (err error) {
+	return c.dataDefiner.IndexDrop(ctx, model.Ident, alt.IndexDelete.Ident)
 }

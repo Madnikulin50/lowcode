@@ -45,6 +45,8 @@ type (
 		AttributeReEncode *dal.AttributeReEncode `json:"attributeReEncode,omitempty"`
 		ModelAdd          *dal.ModelAdd          `json:"modelAdd,omitempty"`
 		ModelDelete       *dal.ModelDelete       `json:"modelDelete,omitempty"`
+		IndexAdd          *dal.IndexAdd          `json:"indexAdd,omitempty"`
+		IndexDelete       *dal.IndexDelete       `json:"indexDelete,omitempty"`
 	}
 
 	DalSchemaAlterationFilter struct {

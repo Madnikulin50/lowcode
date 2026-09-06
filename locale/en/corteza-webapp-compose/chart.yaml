@@ -257,6 +257,25 @@ edit:
       previousLabel: Previous period label
       previousLabelPlaceholder: Previous period
       footnote: Replaces this report's own dimension with a day-of-period x-axis, so the current and previous period line up for comparison. Available for bar and line charts only.
+    forecast:
+      label: Forecast
+      enable: Show a forecast
+      method: Method
+      methodLinear: Linear trend
+      methodMovingAverage: Moving average
+      methodExpSmoothing: Exponential smoothing
+      periods: Periods to project
+      color: Forecast color
+      scenarios: Show optimistic/pessimistic scenarios
+      scenarioStyle: Scenario display
+      scenarioStyleLines: Three dashed lines
+      scenarioStyleBand: Shaded band
+      deviation: Scenario spread
+      deviationAuto: Automatic (based on historical volatility)
+      deviationManual: Manual percentage
+      deviationPct: Deviation
+      needsTimeLabels: 'This dimension does not have "time labels" enabled, so the forecast has nothing temporal to project — enable it in the dimension''s options above.'
+      footnote: Projects the line forward past the last data point, drawn dashed in a secondary color. Only available for line charts with a temporal x-axis, and not combined with period comparison.
   toolbox:
     label: Tools
     saveAsImage:

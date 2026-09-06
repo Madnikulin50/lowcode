@@ -127,6 +127,7 @@ page:
   duplicateFailed: Could not duplicate block
   blockWaiting: There is a page block awaiting
   copyFailed: Could not copy page block {{reason}}
+  clipboardUnavailable: clipboard access is unavailable (requires HTTPS or localhost)
   invalidBlock: Not a valid page block
   page-layout:
     notFound:

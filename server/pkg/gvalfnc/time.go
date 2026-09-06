@@ -207,6 +207,33 @@ func DayOfQuarter(t time.Time) int {
 	return days
 }
 
+// LastNDays reports whether the given date falls within the last `days`
+// days up to and including now. Unlike the this_*/prev_* buckets above,
+// it's a rolling window, not aligned to calendar month/week/quarter/year
+// boundaries — so there's no "truncated" variant to pair it with, that
+// distinction only matters for buckets that can be partially elapsed.
+func LastNDays(in any, days int) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now()
+	from := now.AddDate(0, 0, -days)
+	return !t.Before(from) && !t.After(now), nil
+}
+
+func Last30(in any) (bool, error) {
+	return LastNDays(in, 30)
+}
+
+func Last180(in any) (bool, error) {
+	return LastNDays(in, 180)
+}
+
+func Last365(in any) (bool, error) {
+	return LastNDays(in, 365)
+}
+
 func PrevQuarterTruncated(in any) (bool, error) {
 	t, _, err := PrepMod(in, 0)
 	if err != nil {

@@ -328,6 +328,24 @@ var (
 			},
 			OutType: &TypeBoolean{},
 		},
+		"last_30": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("last_30(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"last_180": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("last_180(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"last_365": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("last_365(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
 		"date_format": {
 			Handler: func(args ...string) string {
 				return fmt.Sprintf("strftime(%s, %s)", args[0], args[1])
@@ -443,6 +461,12 @@ func newRunnerGvalParsed(n *ql.ASTNode) (out *runnerGval, err error) {
 		expr = "prev_year($[\"date\"])"
 	case "prev_year_truncated(date)":
 		expr = "prev_year($[\"date\"])"
+	case "last_30(date)":
+		expr = "last_30($[\"date\"])"
+	case "last_180(date)":
+		expr = "last_180($[\"date\"])"
+	case "last_365(date)":
+		expr = "last_365($[\"date\"])"
 	case "this_week(date)":
 		expr = "this_week($[\"date\"])"
 	case "prev_week(date)":
@@ -491,6 +515,9 @@ func newGval(e string) (gval.Evaluable, error) {
 		gval.Function("this_year", gvalfnc.ThisYear),
 		gval.Function("prev_year", gvalfnc.PrevYear),
 		gval.Function("prev_year_truncated", gvalfnc.PrevYearTruncated),
+		gval.Function("last_30", gvalfnc.Last30),
+		gval.Function("last_180", gvalfnc.Last180),
+		gval.Function("last_365", gvalfnc.Last365),
 		gval.Function("this_week", gvalfnc.ThisWeek),
 		gval.Function("prev_week", gvalfnc.PrevWeek),
 		gval.Function("prev_week_truncated", gvalfnc.PrevWeekTruncated),

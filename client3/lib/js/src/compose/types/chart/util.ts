@@ -138,6 +138,7 @@ export interface Report {
   offset?: ChartOffset;
   anomaly?: AnomalyConfig;
   compare?: CompareConfig;
+  forecast?: ForecastConfig;
 }
 
 export interface AnomalyConfig {
@@ -167,6 +168,29 @@ export interface CompareConfig {
   currentLabel?: string;
   /** Legend label for the previous-period series; falls back to a generic default when empty. */
   previousLabel?: string;
+}
+
+/**
+ * Forward projection of a temporal bar/line report (Chart's `forecast`,
+ * alongside `anomaly` and `compare` above). Unlike `compare`, it does not
+ * replace the report's dimension — it only makes sense on top of a genuinely
+ * temporal x-axis, and extends it with `periods` future points continuing
+ * the existing series. Optionally adds an optimistic/pessimistic band around
+ * that projection (see computeForecast below).
+ */
+export interface ForecastConfig {
+  enabled: boolean;
+  method: 'linear' | 'moving-average' | 'exp-smoothing';
+  /** Number of future points to project past the last known data point. */
+  periods: number;
+  /** Show an optimistic/pessimistic scenario around the main projection. */
+  scenarios: boolean;
+  /** 'lines': three dashed/dotted lines. 'band': shaded area between the two scenarios, main projection dashed on top. */
+  scenarioStyle: 'lines' | 'band';
+  /** 'auto' derives the scenario spread from historical volatility; 'manual' uses deviationPct. */
+  deviation: 'auto' | 'manual';
+  deviationPct?: number;
+  color?: string;
 }
 
 export interface ChartToolbox {
@@ -399,6 +423,151 @@ export function detectAnomalies(values: number[], cfg: AnomalyConfig): boolean[]
   return flags
 }
 
+export interface ForecastResult {
+  main: number[];
+  positive?: number[];
+  negative?: number[];
+}
+
+/**
+ * Fits one of the supported trend models to `values` and returns a function
+ * predicting the value at any point index — including indexes past the end
+ * of the input, i.e. the forecast itself. Deliberately simple, explainable
+ * math (no ML), same spirit as detectAnomalies() above.
+ */
+function fitTrend (values: number[], method: ForecastConfig['method']): (x: number) => number {
+  const n = values.length
+
+  if (method === 'moving-average') {
+    // Project forward from the last value using the average point-to-point
+    // change over a short recent window — follows recent momentum without
+    // being thrown off by one-off spikes further back.
+    const window = Math.min(5, n - 1)
+    let sum = 0
+    for (let i = n - window; i < n; i++) sum += values[i] - values[i - 1]
+    const avgDelta = sum / window
+    const last = values[n - 1]
+    return (x: number) => last + avgDelta * (x - (n - 1))
+  }
+
+  if (method === 'exp-smoothing') {
+    // Holt's linear (double exponential smoothing): a level and a trend
+    // that both adapt to recent data, so a shifting trend is picked up
+    // faster than a single best-fit line over the whole history would.
+    const alpha = 0.3
+    const beta = 0.3
+    let level = values[0]
+    let trend = values[1] - values[0]
+    for (let i = 1; i < n; i++) {
+      const prevLevel = level
+      level = alpha * values[i] + (1 - alpha) * (level + trend)
+      trend = beta * (level - prevLevel) + (1 - beta) * trend
+    }
+    const finalTrend = trend
+    const finalLevel = level
+    return (x: number) => finalLevel + finalTrend * (x - (n - 1))
+  }
+
+  // 'linear' (default): ordinary least-squares fit over the point index.
+  const xMean = (n - 1) / 2
+  const yMean = values.reduce((a, b) => a + b, 0) / n
+  let num = 0
+  let den = 0
+  for (let i = 0; i < n; i++) {
+    num += (i - xMean) * (values[i] - yMean)
+    den += (i - xMean) ** 2
+  }
+  const slope = den ? num / den : 0
+  const intercept = yMean - slope * xMean
+  return (x: number) => intercept + slope * x
+}
+
+/**
+ * Projects `cfg.periods` future points from a historical numeric series.
+ * Returns null when there isn't enough history to fit a trend (fewer than
+ * 2 points) or forecasting is off/misconfigured.
+ *
+ * When `cfg.scenarios` is set, also returns an optimistic (`positive`) and
+ * pessimistic (`negative`) variant around the main projection: either a
+ * fixed `deviationPct` of the projected value, or (auto) a spread derived
+ * from how far actual history deviated from its own fitted trend, widening
+ * the further out the forecast reaches — the further ahead, the less sure
+ * we can be.
+ */
+export function computeForecast (values: number[], cfg: ForecastConfig): ForecastResult | null {
+  const n = values.length
+  if (!cfg?.enabled || n < 2 || !cfg.periods || cfg.periods < 1) return null
+
+  const trend = fitTrend(values, cfg.method)
+  const main = Array.from({ length: cfg.periods }, (_, i) => trend(n + i))
+
+  if (!cfg.scenarios) return { main }
+
+  let widths: number[]
+  if (cfg.deviation === 'manual') {
+    const pct = (cfg.deviationPct ?? 10) / 100
+    widths = main.map(v => Math.abs(v) * pct)
+  } else {
+    const residuals = values.map((v, i) => v - trend(i))
+    const mean = residuals.reduce((a, b) => a + b, 0) / n
+    const std = Math.sqrt(residuals.reduce((s, r) => s + (r - mean) ** 2, 0) / n)
+    widths = main.map((_, i) => std * 1.5 * Math.sqrt(i + 1))
+  }
+
+  return {
+    main,
+    positive: main.map((v, i) => v + widths[i]),
+    negative: main.map((v, i) => v - widths[i]),
+  }
+}
+
+function calendarStepper (modifier?: string): ((d: Date) => Date) | null {
+  switch (modifier) {
+    case 'DATE': return d => { const r = new Date(d); r.setUTCDate(r.getUTCDate() + 1); return r }
+    case 'WEEK': return d => { const r = new Date(d); r.setUTCDate(r.getUTCDate() + 7); return r }
+    case 'MONTH': return d => { const r = new Date(d); r.setUTCMonth(r.getUTCMonth() + 1); return r }
+    case 'QUARTER': return d => { const r = new Date(d); r.setUTCMonth(r.getUTCMonth() + 3); return r }
+    case 'YEAR': return d => { const r = new Date(d); r.setUTCFullYear(r.getUTCFullYear() + 1); return r }
+    default: return null
+  }
+}
+
+/**
+ * Generates `count` future labels continuing a temporal x-axis. When
+ * `modifier` is one of the calendar buckets DATE/WEEK/MONTH/QUARTER/YEAR
+ * (see dimensionFunctions above), steps the calendar exactly that much each
+ * time — a fixed millisecond delta would drift on months/quarters/years,
+ * whose lengths vary. Otherwise (an ungrouped raw datetime field, whose
+ * bucket size isn't known upfront) falls back to repeating the gap between
+ * the last two known labels. Returns [] when there are too few labels, or
+ * they don't parse as dates, to extrapolate from.
+ */
+export function nextTemporalLabels (labels: string[], count: number, modifier?: string): string[] {
+  const n = labels.length
+  if (n < 2 || count < 1) return []
+
+  const lastTime = new Date(labels[n - 1]).getTime()
+  if (Number.isNaN(lastTime)) return []
+
+  const stepper = calendarStepper(modifier)
+  if (stepper) {
+    const out: string[] = []
+    let cur = new Date(lastTime)
+    for (let i = 0; i < count; i++) {
+      cur = stepper(cur)
+      out.push(cur.toISOString())
+    }
+    return out
+  }
+
+  const prevTime = new Date(labels[n - 2]).getTime()
+  if (Number.isNaN(prevTime)) return []
+  const delta = lastTime - prevTime
+  if (!delta) return []
+
+  return Array.from({ length: count }, (_, i) => new Date(lastTime + delta * (i + 1)).toISOString())
+}
+
 const chartUtil = {
   dimensionFunctions,
   hasRelativeDisplay,
@@ -406,6 +575,8 @@ const chartUtil = {
   predefinedFilters,
   ChartType,
   detectAnomalies,
+  computeForecast,
+  nextTemporalLabels,
 }
 
 export {

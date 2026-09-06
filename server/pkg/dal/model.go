@@ -145,20 +145,20 @@ type (
 	AttributeSet []*Attribute
 
 	Index struct {
-		Ident  string
-		Type   string
-		Unique bool
+		Ident  string `json:"ident"`
+		Type   string `json:"type"`
+		Unique bool   `json:"unique"`
 
-		Fields []*IndexField
+		Fields []*IndexField `json:"fields"`
 
-		Predicate string
+		Predicate string `json:"predicate,omitempty"`
 	}
 
 	IndexField struct {
-		AttributeIdent string
-		Modifiers      []IndexFieldModifier
-		Sort           IndexFieldSort
-		Nulls          IndexFieldNulls
+		AttributeIdent string               `json:"attributeIdent"`
+		Modifiers      []IndexFieldModifier `json:"modifiers,omitempty"`
+		Sort           IndexFieldSort       `json:"sort"`
+		Nulls          IndexFieldNulls      `json:"nulls"`
 	}
 
 	IndexSet []*Index

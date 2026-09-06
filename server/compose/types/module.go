@@ -1,7 +1,9 @@
 package types
 
 import (
+	"crypto/sha1"
 	"database/sql/driver"
+	"encoding/hex"
 	"encoding/json"
 	"strings"
 	"time"
@@ -102,7 +104,32 @@ type (
 		Ident string `json:"ident"`
 
 		SystemFieldEncoding SystemFieldEncoding `json:"systemFieldEncoding"`
+
+		// Indexes an admin has declared on this module's fields. Converted to
+		// dal.Model.Indexes in ModuleToModel(), which is where the usual
+		// module-save -> schema-diff -> DalSchemaAlterations review/apply
+		// flow (see pkg/dal.Model.Diff) picks up additions/removals — same
+		// path already used for field changes, nothing index-specific needed
+		// there.
+		Indexes ModuleConfigDALIndexSet `json:"indexes,omitempty"`
 	}
+
+	// ModuleConfigDALIndex is the admin-facing shape for one index: which
+	// field(s) (by their Compose field name), and whether it's unique. Kept
+	// deliberately narrower than dal.Index (no per-field sort/nulls/
+	// modifiers, no partial-index predicate) — ModuleToModel fills those in
+	// with plain-ascending defaults. Extend here first if a future UI needs
+	// more control, then thread it through to dal.Index in ModuleToModel.
+	ModuleConfigDALIndex struct {
+		// Ident is stable and derived from Fields (see DeriveIdent) so the
+		// same declaration always diffs to the same alteration — never set
+		// this by hand from the UI.
+		Ident  string   `json:"ident"`
+		Fields []string `json:"fields"`
+		Unique bool     `json:"unique"`
+	}
+
+	ModuleConfigDALIndexSet []ModuleConfigDALIndex
 
 	ModuleConfigRecordRevisions struct {
 		// enable or disable revisions
@@ -231,6 +258,34 @@ func (set ModuleSet) FindByHandle(handle string) *Module {
 	}
 
 	return nil
+}
+
+// DeriveIdent (re)computes Ident from Fields/Unique, deterministically —
+// the same declaration always resolves to the same DB index name, so saving
+// the module again (or re-importing it) diffs to "nothing changed" instead
+// of piling up duplicate indexes under fresh random names.
+//
+// Call this whenever Fields or Unique changes, before the index reaches
+// ModuleToModel(); the admin-facing UI should treat Ident as derived, not
+// editable.
+func (i *ModuleConfigDALIndex) DeriveIdent() {
+	prefix := "idx"
+	if i.Unique {
+		prefix = "uq"
+	}
+
+	ident := prefix + "_" + strings.Join(i.Fields, "_")
+
+	// Stay clear of typical DB identifier length limits (Postgres 63,
+	// MySQL 64) for wide composite indexes; a short content hash keeps the
+	// truncated name unique instead of colliding with another long one.
+	const maxLen = 60
+	if len(ident) > maxLen {
+		sum := sha1.Sum([]byte(ident))
+		ident = ident[:maxLen-9] + "_" + hex.EncodeToString(sum[:4])
+	}
+
+	i.Ident = ident
 }
 
 func (c *ModuleConfig) Scan(src any) error { return sql.ParseJSON(src, c) }

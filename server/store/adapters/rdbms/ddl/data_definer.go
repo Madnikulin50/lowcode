@@ -21,6 +21,7 @@ type (
 	DataDefiner interface {
 		ConvertModel(*dal.Model) (*Table, error)
 		ConvertAttribute(attr *dal.Attribute) (*Column, error)
+		ConvertIndex(idx *dal.Index, aa dal.AttributeSet, table string) (*Index, error)
 
 		// Tables(ctx context.Context) ([]*Table, error)
 		TableLookup(context.Context, string) (*Table, error)

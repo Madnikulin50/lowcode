@@ -586,7 +586,7 @@ import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Mod
 import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Page/Block/Modal'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import { normalizeXYWH } from 'corteza-webapp-compose/src/lib/block-layout'
-import { handle, useNsI18n } from 'corteza-lib/vue/dist'
+import { handle, useNsI18n, composables } from 'corteza-lib/vue/dist'
 import ScenarioConfigurator from 'corteza-webapp-compose/src/components/Public/Page/Scenarios'
 import { Modal } from 'bootstrap'
 
@@ -594,6 +594,11 @@ const t = useNsI18n()
 const store = useStore()
 const router = useRouter()
 const route = useRoute()
+
+// Declared this early (before any immediate watcher/onMounted below) since
+// some of those can reach a toast* call in the same tick — see the
+// analogous note in Admin/Charts/Edit.vue.
+const { toastSuccess, toastWarning, toastErrorHandler } = composables.useToast()
 
 const props = defineProps({
   namespace: { type: compose.Namespace, required: true },
@@ -820,10 +825,6 @@ watch([modalCreateBlockSelectorEl, modalCreatorEl, modalEditorEl, modalScenarios
   }
 })
 
-function toastSuccess (msg) {}
-function toastErrorHandler (msg) { return (e) => {} }
-function toastWarning (msg) {}
-
 function openPageHelp () {
   getPageHelpModal()?.show()
 }
@@ -991,7 +992,7 @@ function appendBlock (block, msg) {
     msg && toastSuccess(msg)
     return true
   } else {
-    msg && toastErrorHandler(t('notification.page.duplicateFailed'))
+    msg && toastErrorHandler(t('notification.page.duplicateFailed'))()
     return false
   }
 }
@@ -1152,7 +1153,10 @@ function isValid (block) {
 }
 
 async function copyBlock (index) {
-  const block = JSON.stringify(blocks.value[index].clone())
+  // Build the plain object first — kind/options are only there before
+  // stringifying, so the Tabs remap below was dead code while it ran
+  // against the JSON string.
+  const block = blocks.value[index].clone()
   if (block.kind === 'Tabs') {
     const { tabs = [] } = block.options
     block.options.tabs = tabs.map(b => {
@@ -1161,11 +1165,21 @@ async function copyBlock (index) {
       return b
     })
   }
-  navigator.clipboard.writeText(block).then(() => {
+  const text = JSON.stringify(block)
+
+  // navigator.clipboard is only defined in a secure context (HTTPS or
+  // localhost) — silently missing over plain HTTP, which otherwise made
+  // this button look like it did nothing at all.
+  if (!navigator.clipboard) {
+    toastErrorHandler(t('notification.page.copyFailed', { reason: t('notification.page.clipboardUnavailable') }))()
+    return
+  }
+
+  navigator.clipboard.writeText(text).then(() => {
     toastSuccess(t('notification.page.copySuccess'))
     document.getElementById('page-builder').focus()
   }, (err) => {
-    toastErrorHandler(t('notification.page.copyFailed', { reason: err }))
+    toastErrorHandler(t('notification.page.copyFailed', { reason: err }))(err)
   })
 }
 

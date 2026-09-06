@@ -55,6 +55,7 @@ type (
 		Offset     map[string]interface{}   `json:"offset,omitempty"`
 		Anomaly    map[string]interface{}   `json:"anomaly,omitempty"`
 		Compare    map[string]interface{}   `json:"compare,omitempty"`
+		Forecast   map[string]interface{}   `json:"forecast,omitempty"`
 		Renderer   struct {
 			Version string `json:"version,omitempty" `
 		} `json:"renderer,omitempty"`

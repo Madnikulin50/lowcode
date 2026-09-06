@@ -81,6 +81,10 @@ func (dd *dataDefiner) ConvertAttribute(attr *dal.Attribute) (*ddl.Column, error
 	return ddl.ConvertAttribute(attr, dd.d)
 }
 
+func (dd *dataDefiner) ConvertIndex(idx *dal.Index, aa dal.AttributeSet, table string) (*ddl.Index, error) {
+	return ddl.ConvertIndex(idx, aa, table, dd.d)
+}
+
 func (dd *dataDefiner) TableCreate(ctx context.Context, t *ddl.Table) error {
 	engine := "MergeTree()"
 	orderBy := "id"

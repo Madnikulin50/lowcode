@@ -9,6 +9,8 @@ import {
   TooltipParams,
   detectAnomalies,
   makeAlias,
+  computeForecast,
+  nextTemporalLabels,
 } from './util'
 import { getColorschemeColors } from '../../../shared'
 import { buildPeriodFilters, andFilters, relativeBucketLabel } from '../period'
@@ -43,8 +45,107 @@ export default class Chart extends BaseChart {
       return this.fetchCompareReport(report, reporter)
     }
     return super.fetchReports({ reporter }).then((rr: any) => {
-      return rr[0]
+      return this.applyForecast(rr[0], report)
     })
+  }
+
+  /**
+   * Extends a processed report's labels/datasets with a forward projection
+   * (see computeForecast/nextTemporalLabels in util.ts). Only meaningful on
+   * a genuinely temporal x-axis — extrapolating a categorical one (e.g.
+   * "region") would be meaningless — and only for line series, which is
+   * what the report editor's forecast panel restricts it to.
+   *
+   * Deliberately independent of fetchCompareReport: the two features are
+   * mutually exclusive (the editor hides forecast once compare is on), so
+   * there is nothing to share, and compare's period-relative axis wouldn't
+   * make sense to extrapolate into the future anyway.
+   */
+  private applyForecast (data: any, report?: Report): any {
+    const cfg = report?.forecast
+    if (!cfg?.enabled) return data
+    if (!data?.dimension?.timeLabels) {
+      console.warn('[Corteza] Forecast is enabled but this report\'s dimension does not have "time labels" turned on — a forecast needs a genuinely temporal x-axis to project. Enable it in the dimension\'s options.')
+      return data
+    }
+
+    const { labels = [], datasets = [] } = data
+    const futureLabels = nextTemporalLabels(labels, cfg.periods, data.dimension.modifier)
+    if (!futureLabels.length) {
+      console.warn('[Corteza] Forecast is enabled but there are too few historical data points (or their labels don\'t parse as dates) to project forward from.')
+      return data
+    }
+
+    const tail = new Array(futureLabels.length).fill(null)
+    const extended: any[] = []
+    let extendedAny = false
+
+    datasets.forEach((ds: any, baseColorIndex: number) => {
+      extended.push({ ...ds, data: [...ds.data, ...tail] })
+
+      if (ds.type !== 'line') return
+
+      const values = ds.data.map((v: any) => {
+        const n = v?.y != null ? v.y : v
+        return typeof n === 'number' && Number.isFinite(n) ? n : null
+      })
+      if (values.some((v: number | null) => v === null)) {
+        console.warn(`[Corteza] Forecast is enabled but series "${ds.label}" has missing/non-numeric historical values — skipping forecast for it.`)
+        return
+      }
+
+      const result = computeForecast(values as number[], cfg)
+      if (!result) return
+      extendedAny = true
+
+      // A gap-only lead-in (no data at any historical index) would leave a
+      // visible disconnect where the forecast starts, since ECharts doesn't
+      // connect across nulls by default. Anchoring the lead-in at the last
+      // actual value makes the forecast line pick up exactly where the real
+      // one ends. The band's boundary series skip this — their uncertainty
+      // only exists going forward, there's nothing to anchor at width 0 for.
+      const anchor = values[values.length - 1] as number
+      const leadIn = [...new Array(labels.length - 1).fill(null), anchor]
+      const gapOnly = new Array(labels.length).fill(null)
+
+      const tagLabel = { main: 'forecast', positive: 'optimistic', negative: 'pessimistic' }
+      const push = (tag: 'main' | 'positive' | 'negative', vals?: number[], extra: object = {}, connect = true) => {
+        if (!vals) return
+        extended.push({
+          ...ds,
+          ...extra,
+          label: `${ds.label} — ${tagLabel[tag]}`,
+          data: [...(connect ? leadIn : gapOnly), ...vals],
+          forecast: tag,
+          baseColorIndex,
+        })
+      }
+
+      if (cfg.scenarios && cfg.scenarioStyle === 'band') {
+        // Standard ECharts "confidence band" trick: stack an invisible
+        // lower-bound series with a delta-only series on top of it, so the
+        // visible area's top edge lands exactly on the upper bound while
+        // only that delta gets the area fill.
+        const bandStack = `forecast-band-${baseColorIndex}`
+        const delta = result.positive!.map((v, i) => v - result.negative![i])
+        push('negative', result.negative, { stack: bandStack, band: true }, false)
+        push('positive', delta, { stack: bandStack, band: true }, false)
+        push('main', result.main)
+      } else {
+        push('main', result.main)
+        if (cfg.scenarios) {
+          push('positive', result.positive)
+          push('negative', result.negative)
+        }
+      }
+    })
+
+    if (!extendedAny) {
+      console.warn('[Corteza] Forecast is enabled but none of this report\'s series are line charts — forecast only projects line series.')
+      return data
+    }
+
+    return { ...data, labels: [...labels, ...futureLabels], datasets: extended }
   }
 
   /**
@@ -356,7 +457,7 @@ export default class Chart extends BaseChart {
       }
     })
 
-    options.series = datasets.map(({ formatting, type, label, data, stack, tooltip, fill, smooth, step, roseType, symbol, showSymbol, compare }: any, index: number) => {
+    options.series = datasets.map(({ formatting, type, label, data, stack, tooltip, fill, smooth, step, roseType, symbol, showSymbol, compare, forecast, baseColorIndex, band }: any, index: number) => {
       const { fixed, relative, valueLabelPosition = 'top' } = tooltip || {}
       const labelOutside = valueLabelPosition !== 'inside'
 
@@ -370,7 +471,18 @@ export default class Chart extends BaseChart {
       // normal positional palette assignment which would give every series
       // an unrelated color.
       const compareColor = compare ? schemeColors[Math.floor(index / 2) % schemeColors.length] : undefined
-      const seriesColor = compare === 'previous' ? lightenColor(compareColor as string, 35) : compareColor
+
+      // Forecast overlay (see Chart.applyForecast): each extra series carries
+      // baseColorIndex pointing back at the metric series it extends, so it
+      // borrows that series' hue instead of continuing the palette with an
+      // unrelated color of its own.
+      const forecastColor = forecast ? (report.forecast?.color || schemeColors[baseColorIndex % schemeColors.length]) : undefined
+
+      const seriesColor = compare
+        ? (compare === 'previous' ? lightenColor(compareColor as string, 35) : compareColor)
+        : forecast
+          ? lightenColor(forecastColor as string, forecast === 'main' ? 20 : 45)
+          : undefined
 
       if (['pie', 'doughnut'].includes(type)) {
         const startRadius = type === 'doughnut' ? 40 : 0
@@ -488,7 +600,9 @@ export default class Chart extends BaseChart {
 
         const values = data.map((v: any) => v?.y != null ? v.y : v)
         const anomalyCfg = report.anomaly || (this.config.reports?.[0]?.anomaly)
-        const anomalyFlags = anomalyCfg?.enabled ? detectAnomalies(values, anomalyCfg) : []
+        // Forecast series are projections, not observed data — flagging them
+        // as anomalies against themselves doesn't mean anything.
+        const anomalyFlags = anomalyCfg?.enabled && !forecast ? detectAnomalies(values, anomalyCfg) : []
 
         if (anomalyFlags.length) {
           const anomalyColor = anomalyCfg!.color || themeVariables?.danger || '#ff4444'
@@ -534,12 +648,46 @@ export default class Chart extends BaseChart {
           ...(compare && seriesColor ? { color: seriesColor } : {}),
         }
 
+        // Forecast overlay styling. Applied as an override spread at the very
+        // end of this series object (see below) so it wins over the bar/line
+        // styling computed above, regardless of chart type.
+        const forecastOverrides: any = {}
+        if (forecast && band) {
+          // Standard ECharts "confidence band": this series and its paired
+          // lower/delta series (see Chart.applyForecast) share a `stack`, so
+          // the visible fill's top edge lands on the upper bound while only
+          // the delta between them gets painted.
+          forecastOverrides.lineStyle = { opacity: 0 }
+          forecastOverrides.itemStyle = { color: seriesColor, opacity: 0 }
+          forecastOverrides.areaStyle = { opacity: forecast === 'negative' ? 0 : 0.18, color: seriesColor }
+          forecastOverrides.symbol = 'none'
+          forecastOverrides.showSymbol = false
+          forecastOverrides.tooltip = { show: false }
+          forecastOverrides.silent = true
+        } else if (forecast && type === 'line') {
+          forecastOverrides.lineStyle = {
+            type: forecast === 'main' ? 'dashed' : 'dotted',
+            width: forecast === 'main' ? 2 : 1.5,
+            color: seriesColor,
+          }
+          forecastOverrides.itemStyle = { color: seriesColor }
+          forecastOverrides.symbol = 'none'
+          forecastOverrides.showSymbol = false
+        } else if (forecast) {
+          // Bar (or scatter) forecast: same hue family as the series it
+          // extends, softened — there's no stroke to dash on a bar.
+          forecastOverrides.itemStyle = { color: seriesColor, opacity: 0.55 }
+        }
+
         return {
           z,
           // Current/previous of the same metric must not stack on top of
           // each other — they're meant to sit side by side (grouped bars)
-          // or overlap as two lines, not combine into one taller bar.
-          stack: compare ? undefined : stack,
+          // or overlap as two lines, not combine into one taller bar. Same
+          // for a forecast overlay joining whatever stack its source metric
+          // was in — except the band's own synthetic stack (see
+          // Chart.applyForecast), which is exactly how that fill works.
+          stack: compare || (forecast && !band) ? undefined : stack,
           name: label,
           type: type,
           smooth,
@@ -626,6 +774,7 @@ export default class Chart extends BaseChart {
           // Allow outside labels to render past the bar/grid edge
           clip: !(fixed && labelOutside),
           data,
+          ...forecastOverrides,
         }
       }
     })

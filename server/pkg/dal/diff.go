@@ -9,6 +9,12 @@ type (
 		Original *Attribute
 		// Asserted will be nil wen an existing attribute is being removed
 		Asserted *Attribute
+
+		// OriginalIndex/AssertedIndex mirror Original/Asserted above, but for
+		// IndexMissing diffs. Kept as separate fields (rather than reusing
+		// Original/Asserted) since an Index isn't an Attribute.
+		OriginalIndex *Index
+		AssertedIndex *Index
 	}
 
 	ModelDiffSet []*ModelDiff
@@ -19,6 +25,14 @@ const (
 	AttributeTypeMissmatch       modelDiffType = "typeMissmatch"
 	AttributeSensitivityMismatch modelDiffType = "sensitivityMismatch"
 	AttributeCodecMismatch       modelDiffType = "codecMismatch"
+
+	// IndexMissing covers both directions (see ModelDiff.OriginalIndex vs
+	// AssertedIndex): the index doesn't exist yet, or an index under the
+	// same Ident changed shape (fields/uniqueness) — the latter surfaces as
+	// a matched pair of "missing on each side" diffs (drop then recreate),
+	// same as how attribute type changes are handled via AttributeReType
+	// rather than here, except indexes don't support an in-place ALTER.
+	IndexMissing modelDiffType = "indexMissing"
 )
 
 // Diff calculates the diff between models a and b where a is used as base
@@ -119,7 +133,58 @@ func (a *Model) Diff(b *Model) (out ModelDiffSet) {
 		}
 	}
 
+	out = append(out, diffIndexes(a.Indexes, b.Indexes)...)
+
 	return
+}
+
+// diffIndexes compares two Index sets by Ident, additionally treating an
+// Ident present on both sides but with a different shape (fields order,
+// attributes, or uniqueness) as dropped-then-recreated, since there's no
+// in-place ALTER INDEX equivalent across the supported drivers.
+func diffIndexes(a, b IndexSet) (out ModelDiffSet) {
+	bByIdent := make(map[string]*Index, len(b))
+	for _, idx := range b {
+		bByIdent[idx.Ident] = idx
+	}
+	aByIdent := make(map[string]*Index, len(a))
+	for _, idx := range a {
+		aByIdent[idx.Ident] = idx
+	}
+
+	for _, idxA := range a {
+		idxB, ok := bByIdent[idxA.Ident]
+		if !ok || !indexesEqualShape(idxA, idxB) {
+			out = append(out, &ModelDiff{Type: IndexMissing, OriginalIndex: idxA})
+		}
+	}
+	for _, idxB := range b {
+		idxA, ok := aByIdent[idxB.Ident]
+		if !ok || !indexesEqualShape(idxA, idxB) {
+			out = append(out, &ModelDiff{Type: IndexMissing, AssertedIndex: idxB})
+		}
+	}
+
+	return
+}
+
+// indexesEqualShape reports whether two indexes would produce the same DDL:
+// same uniqueness and the same attributes, in the same order. Sort/Nulls/
+// Modifiers per field are intentionally not compared yet (v1 only exposes
+// plain ascending indexes to admins; nothing can produce a difference there).
+func indexesEqualShape(a, b *Index) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	if a.Unique != b.Unique || len(a.Fields) != len(b.Fields) {
+		return false
+	}
+	for i, f := range a.Fields {
+		if f.AttributeIdent != b.Fields[i].AttributeIdent {
+			return false
+		}
+	}
+	return true
 }
 
 func (dd ModelDiffSet) Alterations() (out []*Alteration) {
@@ -182,6 +247,21 @@ func (dd ModelDiffSet) Alterations() (out []*Alteration) {
 					To:   d.Asserted.Store,
 				},
 			})
+
+		case IndexMissing:
+			if d.AssertedIndex == nil {
+				add(&Alteration{
+					IndexDelete: &IndexDelete{
+						Ident: d.OriginalIndex.Ident,
+					},
+				})
+			} else {
+				add(&Alteration{
+					IndexAdd: &IndexAdd{
+						Index: d.AssertedIndex,
+					},
+				})
+			}
 		}
 	}
 

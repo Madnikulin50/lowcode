@@ -127,6 +127,7 @@ page:
   duplicateFailed: Could not duplicate block
   blockWaiting: There is a page block awaiting
   copyFailed: Could not copy page block {{reason}}
+  clipboardUnavailable: буфер обмена недоступен (нужен HTTPS или localhost)
   invalidBlock: Not a valid page block
   page-layout:
     notFound:

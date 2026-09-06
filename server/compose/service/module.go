@@ -1394,6 +1394,57 @@ func ModuleToModel(ns *types.Namespace, mod *types.Module, inhIdent string) (mod
 		}
 	}
 
+	model.Indexes, err = moduleConfigDALIndexesToIndexes(mod.Config.DAL.Indexes, model.Attributes)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// moduleConfigDALIndexesToIndexes converts the admin-facing index
+// declarations on a module into dal.Index, resolving each field name
+// against the module's already-built attribute set.
+//
+// Fields backed by AttributeCodecRecordValueSetJSON are rejected: several
+// Compose fields can share one JSON column there, so "indexing" one by its
+// field ident would really index the whole shared blob, not the field —
+// the admin UI is expected to only offer indexing for fields that map to
+// their own real column (external/native modules with a plain/alias
+// codec), but this guard is what actually keeps a stale or hand-edited
+// config from producing a misleading index.
+func moduleConfigDALIndexesToIndexes(dd types.ModuleConfigDALIndexSet, aa dal.AttributeSet) (out dal.IndexSet, err error) {
+	byIdent := make(map[string]*dal.Attribute, len(aa))
+	for _, a := range aa {
+		byIdent[a.Ident] = a
+	}
+
+	for _, d := range dd {
+		d.DeriveIdent()
+
+		fields := make([]*dal.IndexField, 0, len(d.Fields))
+		for _, fieldIdent := range d.Fields {
+			attr, ok := byIdent[fieldIdent]
+			if !ok {
+				return nil, fmt.Errorf("cannot index unknown field %q", fieldIdent)
+			}
+			if attr.Store != nil && attr.Store.Type() == dal.AttributeCodecRecordValueSetJSON {
+				return nil, fmt.Errorf("cannot index field %q: stored as part of a shared JSON column, not its own column", fieldIdent)
+			}
+
+			fields = append(fields, &dal.IndexField{
+				AttributeIdent: fieldIdent,
+				Sort:           dal.IndexFieldSortAsc,
+			})
+		}
+
+		out = append(out, &dal.Index{
+			Ident:  d.Ident,
+			Unique: d.Unique,
+			Fields: fields,
+		})
+	}
+
 	return
 }
 

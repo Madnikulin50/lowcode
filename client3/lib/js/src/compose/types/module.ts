@@ -22,12 +22,25 @@ interface Meta {
 
 type systemFieldEncoding = null | { omit: true } | { ident: string }
 
+/**
+ * Admin-facing declaration of one index on this module's underlying table.
+ * `ident` is derived server-side (compose/types.ModuleConfigDALIndex.
+ * DeriveIdent, called from ModuleToModel on every save) from `fields`+
+ * `unique` — sending an empty string is fine, don't try to compute it here.
+ */
+export interface ModuleConfigDALIndex {
+  ident: string;
+  fields: string[];
+  unique: boolean;
+}
+
 interface Config {
   dal: {
     connectionID: string;
     // operations
     // constraints
     ident: string;
+    indexes: ModuleConfigDALIndex[];
     systemFieldEncoding: {
       id: systemFieldEncoding;
       revision: systemFieldEncoding;
@@ -123,6 +136,7 @@ export class Module {
     dal: {
       connectionID: NoID,
       ident: '',
+      indexes: [],
       systemFieldEncoding: {
         id: null,
         revision: null,

@@ -1114,6 +1114,176 @@
           </template>
         </div>
       </template>
+
+      <template v-if="isForecastable && !report.compare.enabled">
+        <hr>
+
+        <div class="px-3">
+          <h5 class="mb-3">
+            {{ $t('edit.additionalConfig.forecast.label') }}
+          </h5>
+
+          <div class="row">
+            <div class="col-12 col-lg-6">
+              <div class="mb-3">
+                <label class="form-label text-primary">
+                  {{ $t('edit.additionalConfig.forecast.enable') }}
+                </label>
+                <c-input-checkbox
+                  v-model="report.forecast.enabled"
+                  switch
+                  :labels="checkboxLabel"
+                />
+              </div>
+            </div>
+          </div>
+
+          <template v-if="report.forecast.enabled">
+            <div
+              v-if="!forecastDimensionReady"
+              class="alert alert-warning py-2 px-3 mb-3"
+            >
+              {{ $t('edit.additionalConfig.forecast.needsTimeLabels') }}
+            </div>
+
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.forecast.method') }}
+                  </label>
+                  <select
+                    v-model="report.forecast.method"
+                    class="form-select form-control form-select-sm"
+                  >
+                    <option
+                      v-for="opt in forecastMethods"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.forecast.periods') }}
+                  </label>
+                  <input
+                    v-model.number="report.forecast.periods"
+                    type="number"
+                    min="1"
+                    max="24"
+                    class="form-control form-control-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.forecast.color') }}
+                  </label>
+                  <input
+                    v-model="report.forecast.color"
+                    type="color"
+                    class="form-control form-control-sm color-picker"
+                  />
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.forecast.scenarios') }}
+                  </label>
+                  <c-input-checkbox
+                    v-model="report.forecast.scenarios"
+                    switch
+                    :labels="checkboxLabel"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <template v-if="report.forecast.scenarios">
+              <div class="row">
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label class="form-label text-primary">
+                      {{ $t('edit.additionalConfig.forecast.scenarioStyle') }}
+                    </label>
+                    <select
+                      v-model="report.forecast.scenarioStyle"
+                      class="form-select form-control form-select-sm"
+                    >
+                      <option
+                        v-for="opt in forecastScenarioStyles"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >
+                        {{ opt.text }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label class="form-label text-primary">
+                      {{ $t('edit.additionalConfig.forecast.deviation') }}
+                    </label>
+                    <select
+                      v-model="report.forecast.deviation"
+                      class="form-select form-control form-select-sm"
+                    >
+                      <option
+                        v-for="opt in forecastDeviations"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >
+                        {{ opt.text }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="report.forecast.deviation === 'manual'"
+                class="row"
+              >
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label class="form-label text-primary">
+                      {{ $t('edit.additionalConfig.forecast.deviationPct') }}
+                    </label>
+                    <div class="input-group input-group-sm">
+                      <input
+                        v-model.number="report.forecast.deviationPct"
+                        type="number"
+                        min="0"
+                        max="100"
+                        class="form-control form-control-sm"
+                      />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <small class="text-muted d-block mb-2">
+              {{ $t('edit.additionalConfig.forecast.footnote') }}
+            </small>
+          </template>
+        </div>
+      </template>
     </template>
   </report-edit>
 </template>
@@ -1249,6 +1419,34 @@ const compareModes = ref([
   { value: 'year-over-year', text: t('edit.additionalConfig.compare.modeOptions.yearOverYear') },
 ])
 
+// Forecast only makes sense on a line series drawn against a genuinely
+// temporal x-axis — extrapolating a categorical one (e.g. "region") would
+// be meaningless. The dimension-level check happens where the data is
+// actually built (Chart.applyForecast); this just gates the panel itself.
+const isForecastable = computed(() => editReport.value?.metrics?.some(({ type }) => type === 'line'))
+
+// Forecast only extends a genuinely temporal x-axis (see Chart.applyForecast
+// in corteza-lib) — silently does nothing otherwise. Surfaced here so
+// enabling the checkbox without also turning on the dimension's "time
+// labels" doesn't look like the feature is broken.
+const forecastDimensionReady = computed(() => !!editReport.value?.dimensions?.[0]?.timeLabels)
+
+const forecastMethods = ref([
+  { value: 'linear', text: t('edit.additionalConfig.forecast.methodLinear') },
+  { value: 'moving-average', text: t('edit.additionalConfig.forecast.methodMovingAverage') },
+  { value: 'exp-smoothing', text: t('edit.additionalConfig.forecast.methodExpSmoothing') },
+])
+
+const forecastScenarioStyles = ref([
+  { value: 'lines', text: t('edit.additionalConfig.forecast.scenarioStyleLines') },
+  { value: 'band', text: t('edit.additionalConfig.forecast.scenarioStyleBand') },
+])
+
+const forecastDeviations = ref([
+  { value: 'auto', text: t('edit.additionalConfig.forecast.deviationAuto') },
+  { value: 'manual', text: t('edit.additionalConfig.forecast.deviationManual') },
+])
+
 const module = computed(() => {
   const mid = editReport.value?.moduleID
   if (!mid || !Array.isArray(props.modules)) return undefined
@@ -1294,6 +1492,19 @@ watch(() => props.report, (r) => {
         mode: 'previous-period',
         currentLabel: '',
         previousLabel: '',
+      }
+    }
+
+    if (!r.forecast) {
+      r.forecast = {
+        enabled: false,
+        method: 'linear',
+        periods: 6,
+        scenarios: false,
+        scenarioStyle: 'lines',
+        deviation: 'auto',
+        deviationPct: 10,
+        color: '',
       }
     }
 

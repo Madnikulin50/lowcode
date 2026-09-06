@@ -13,13 +13,21 @@ import (
 )
 
 const (
-	// pageFetchTimeout caps each list/report SELECT. Without a deadline the
-	// HTTP handler waits for Postgres forever (lib/pq cancel is not always
-	// enough; SET LOCAL statement_timeout aborts on the server).
-	pageFetchTimeout = 8 * time.Second
+	// pageFetchTimeout caps each list/report SELECT — including every
+	// aggregate (chart/report) query, which goes through the same iterator
+	// page-fetch path as a plain list. Without a deadline the HTTP handler
+	// waits for Postgres forever (lib/pq cancel is not always enough;
+	// SET LOCAL statement_timeout aborts on the server).
+	//
+	// Raised 8s -> 40s (5x): multi-step datasource pipelines (load ->
+	// aggregate -> join -> ...) issue several of these page-fetch queries
+	// per request, one fresh pageFetchTimeout window each, and a handful of
+	// them landing back-to-back on a loaded DB could add up past the old
+	// 8s well before the query itself was actually slow.
+	pageFetchTimeout = 90 * time.Second
 	// countQueryTimeout is the hard cap for COUNT(*) when the caller did not
 	// set a shorter deadline.
-	countQueryTimeout = 8 * time.Second
+	countQueryTimeout = 30 * time.Second
 )
 
 // boundQueryContext returns ctx with a deadline of at most timeout.

@@ -19,6 +19,8 @@ type (
 		AttributeReEncode *AttributeReEncode
 		ModelAdd          *ModelAdd
 		ModelDelete       *ModelDelete
+		IndexAdd          *IndexAdd
+		IndexDelete       *IndexDelete
 	}
 
 	AlterationSet []*Alteration
@@ -29,6 +31,19 @@ type (
 
 	AttributeDelete struct {
 		Attr *Attribute `json:"attr"`
+	}
+
+	// IndexAdd creates the given index. Index.Fields reference attributes by
+	// Ident on the same model the alteration's Resource/ResourceType/
+	// ConnectionID point at.
+	IndexAdd struct {
+		Index *Index `json:"index"`
+	}
+
+	// IndexDelete drops the index by Ident. Unlike AttributeDelete, no
+	// Attribute payload is needed to reconstruct DROP INDEX.
+	IndexDelete struct {
+		Ident string `json:"ident"`
 	}
 
 	AttributeReType struct {
@@ -299,6 +314,12 @@ func (a Alteration) compare(b Alteration) (cmp bool) {
 	if a.ModelDelete == nil && b.ModelDelete != nil {
 		return false
 	}
+	if a.IndexAdd == nil && b.IndexAdd != nil {
+		return false
+	}
+	if a.IndexDelete == nil && b.IndexDelete != nil {
+		return false
+	}
 
 	switch {
 	case a.AttributeAdd != nil:
@@ -313,6 +334,10 @@ func (a Alteration) compare(b Alteration) (cmp bool) {
 		return a.compareModelAdd(b)
 	case a.ModelDelete != nil:
 		return a.compareModelDelete(b)
+	case a.IndexAdd != nil:
+		return a.compareIndexAdd(b)
+	case a.IndexDelete != nil:
+		return a.compareIndexDelete(b)
 	}
 
 	return false
@@ -366,4 +391,21 @@ func (a Alteration) compareModelDelete(b Alteration) bool {
 		return a.ModelDelete == b.ModelDelete
 	}
 	return a.ModelDelete.Model.Compare(*b.ModelDelete.Model)
+}
+
+func (a Alteration) compareIndexAdd(b Alteration) bool {
+	if a.IndexAdd == nil || b.IndexAdd == nil {
+		return a.IndexAdd == b.IndexAdd
+	}
+	if a.IndexAdd.Index.Ident != b.IndexAdd.Index.Ident {
+		return false
+	}
+	return indexesEqualShape(a.IndexAdd.Index, b.IndexAdd.Index)
+}
+
+func (a Alteration) compareIndexDelete(b Alteration) bool {
+	if a.IndexDelete == nil || b.IndexDelete == nil {
+		return a.IndexDelete == b.IndexDelete
+	}
+	return a.IndexDelete.Ident == b.IndexDelete.Ident
 }

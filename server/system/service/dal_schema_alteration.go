@@ -127,6 +127,10 @@ func (svc DalSchemaAlteration) modelAlterations(ctx context.Context, s store.Sto
 			t.ModelAdd = a.Params.ModelAdd
 		case "modelDelete":
 			t.ModelDelete = a.Params.ModelDelete
+		case "indexAdd":
+			t.IndexAdd = a.Params.IndexAdd
+		case "indexDelete":
+			t.IndexDelete = a.Params.IndexDelete
 		}
 
 		out = append(out, t)
@@ -204,6 +208,14 @@ func (svc DalSchemaAlteration) SetAlterations(ctx context.Context, s store.Store
 		case a.ModelDelete != nil:
 			t.Kind = "modelDelete"
 			t.Params.ModelDelete = a.ModelDelete
+
+		case a.IndexAdd != nil:
+			t.Kind = "indexAdd"
+			t.Params.IndexAdd = a.IndexAdd
+
+		case a.IndexDelete != nil:
+			t.Kind = "indexDelete"
+			t.Params.IndexDelete = a.IndexDelete
 
 		default:
 			panic(fmt.Sprintf("unknown alteration type %v", a))
@@ -383,6 +395,10 @@ func (svc DalSchemaAlteration) toPkgAlterations(ctx context.Context, aa ...*type
 			t.ModelAdd = a.Params.ModelAdd
 		case "modelDelete":
 			t.ModelDelete = a.Params.ModelDelete
+		case "indexAdd":
+			t.IndexAdd = a.Params.IndexAdd
+		case "indexDelete":
+			t.IndexDelete = a.Params.IndexDelete
 		}
 
 		out[i] = t

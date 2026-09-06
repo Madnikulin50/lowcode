@@ -96,6 +96,21 @@ var (
 				return exp.NewLiteralExpression("(?::timestamp >= date_trunc('year', NOW()::timestamp - interval '1 year')::timestamp AND ?::timestamp < (date_trunc('year', NOW()::timestamp - interval '1 year')+ interval '"+interval+"')::timestamp)", args[0], args[0])
 			},
 		},
+		"last_30": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(?::timestamp >= NOW()::timestamp - interval '30 days' AND ?::timestamp <= NOW()::timestamp)", args[0], args[0])
+			},
+		},
+		"last_180": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(?::timestamp >= NOW()::timestamp - interval '180 days' AND ?::timestamp <= NOW()::timestamp)", args[0], args[0])
+			},
+		},
+		"last_365": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(?::timestamp >= NOW()::timestamp - interval '365 days' AND ?::timestamp <= NOW()::timestamp)", args[0], args[0])
+			},
+		},
 
 		"this_week": {
 			Handler: func(args ...exp.Expression) exp.Expression {

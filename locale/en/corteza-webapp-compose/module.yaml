@@ -118,6 +118,10 @@ edit:
       model:
         add: Add schema for model {{ident}}
         delete: Delete schema for model {{ident}}
+      index:
+        add: Add index {{ident}} on ({{fields}})
+        addUnique: Add unique index {{ident}} on ({{fields}})
+        delete: Drop index {{ident}}
 
   config:
     dal:
@@ -134,6 +138,16 @@ edit:
       connections:
         fetch-failed: Could not fetch available connections
 
+      indexes:
+        label: Indexes
+        description: Speeds up filtering, sorting and grouping on the fields below — worth adding for fields used often in charts, filters or record lists on a module with many records. Applied like any other schema change, via the review below after saving.
+        fieldsPlaceholder: Select field(s)
+        unique: Unique
+        remove: Remove index
+        add: Add index
+        suggestions:
+          label: 'Suggested, based on how this module''s charts use these fields:'
+          buttonTitle: Used as a dimension or compare date field in {{count}} chart(s) in this namespace
 
       module-fields:
         label: Module field mapping and encoding

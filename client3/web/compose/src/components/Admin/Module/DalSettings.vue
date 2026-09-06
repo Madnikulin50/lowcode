@@ -26,6 +26,73 @@
     </div>
 
     <div class="mb-3">
+      <label class="form-label text-primary">{{ t('indexes.label') }}</label>
+      <div class="form-text mb-2">{{ t('indexes.description') }}</div>
+
+      <div
+        v-for="(idx, i) in indexes"
+        :key="i"
+        class="d-flex align-items-start gap-2 mb-2"
+      >
+        <c-input-select
+          v-model="idx.fields"
+          :options="fieldOptions"
+          multiple
+          label="text"
+          :reduce="f => f.value"
+          class="flex-grow-1"
+          :placeholder="t('indexes.fieldsPlaceholder')"
+        />
+        <div class="form-check text-nowrap pt-2">
+          <input
+            :id="`idx-unique-${i}`"
+            v-model="idx.unique"
+            type="checkbox"
+            class="form-check-input"
+          >
+          <label
+            class="form-check-label"
+            :for="`idx-unique-${i}`"
+          >{{ t('indexes.unique') }}</label>
+        </div>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-danger"
+          :title="t('indexes.remove')"
+          @click="removeIndex(i)"
+        >
+          <font-awesome-icon :icon="['fas', 'trash']" />
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary"
+        :disabled="!fieldOptions.length"
+        @click="addIndex"
+      >
+        {{ t('indexes.add') }}
+      </button>
+
+      <div
+        v-if="indexSuggestions.length"
+        class="mt-2"
+      >
+        <div class="form-text mb-1">{{ t('indexes.suggestions.label') }}</div>
+        <button
+          v-for="s in indexSuggestions"
+          :key="s.field"
+          type="button"
+          class="btn btn-sm btn-outline-secondary me-1 mb-1"
+          :title="t('indexes.suggestions.buttonTitle', { count: s.count })"
+          @click="addSuggestedIndex(s.field)"
+        >
+          + {{ s.label }} ({{ s.count }})
+        </button>
+      </div>
+    </div>
+
+    <div class="mb-3">
       <label class="form-label text-primary">{{ t('module-fields.label') }}</label>
       <div class="form-text mb-2">{{ t('module-fields.description') }}</div>
       <dal-field-store-encoding
@@ -106,7 +173,17 @@ const props = defineProps({
 })
 
 const $SystemAPI = window.__systemAPI
+const $ComposeAPI = window.__composeAPI
 const PrimaryConnType = 'corteza::system:primary-dal-connection'
+
+// Index advisor (option C): counts how often each field of this module is
+// used as a chart dimension or period-compare date field across the
+// namespace's charts, so admins get a nudge toward the fields actually
+// worth indexing instead of guessing. Purely a client-side scan over
+// chartList() — charts don't carry a moduleID column to filter by
+// server-side (it's nested inside their JSON config), so there's nothing a
+// dedicated backend endpoint would do here that this can't.
+const chartFieldUsage = ref({})
 
 const processing = ref(false)
 const connections = ref([])
@@ -126,6 +203,79 @@ const optionsGroups = ref([
 ])
 
 const moduleFieldDefaultEncodingStrategy = computed(() => types.JSON)
+
+// Indexes an admin declares here (module.config.dal.indexes) flow through
+// the same save -> ModuleToModel -> Model.Diff -> DalSchemaAlterations
+// review/apply path already used for every other field/DAL change — no
+// separate save step or endpoint for this section.
+const indexes = computed(() => {
+  if (!props.module.config.dal.indexes) {
+    props.module.config.dal.indexes = []
+  }
+  return props.module.config.dal.indexes
+})
+
+const fieldOptions = computed(() => moduleFields.value.map(({ field, label }) => ({ value: field, text: label })))
+
+function addIndex () {
+  indexes.value.push({ ident: '', fields: [], unique: false })
+}
+
+function removeIndex (i) {
+  indexes.value.splice(i, 1)
+}
+
+function addSuggestedIndex (field) {
+  indexes.value.push({ ident: '', fields: [field], unique: false })
+}
+
+const indexSuggestions = computed(() => {
+  const alreadyIndexed = new Set(indexes.value.flatMap(idx => idx.fields || []))
+  const labelByField = fieldOptions.value.reduce((acc, { value, text }) => {
+    acc[value] = text
+    return acc
+  }, {})
+
+  return Object.entries(chartFieldUsage.value)
+    .filter(([field, count]) => count > 0 && !alreadyIndexed.has(field) && labelByField[field])
+    .map(([field, count]) => ({ field, count, label: labelByField[field] }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8)
+})
+
+async function fetchChartUsage () {
+  if (!$ComposeAPI || !props.module.namespaceID) return
+
+  try {
+    const { set = [] } = await $ComposeAPI.chartList({ namespaceID: props.module.namespaceID })
+    const usage = {}
+
+    const bump = (field) => {
+      if (!field) return
+      usage[field] = (usage[field] || 0) + 1
+    }
+
+    for (const chart of set) {
+      const reports = chart?.config?.reports || []
+      for (const report of reports) {
+        if (report.moduleID !== props.module.moduleID) continue
+
+        for (const dim of (report.dimensions || [])) {
+          bump(dim.field)
+        }
+        if (report.compare?.enabled && report.compare.dateField) {
+          bump(report.compare.dateField)
+        }
+      }
+    }
+
+    chartFieldUsage.value = usage
+  } catch {
+    // Advisory only — a failed scan just means no suggestions show up,
+    // nothing about manually adding indexes depends on this.
+    chartFieldUsage.value = {}
+  }
+}
 
 const moduleType = computed(() => {
   const ds = props.module.config.type ?? 'basic'
@@ -191,6 +341,7 @@ watch(() => props.module.fields, (fields) => {
 
 onMounted(() => {
   fetchConnections()
+  fetchChartUsage()
 })
 
 onBeforeUnmount(() => {
@@ -269,6 +420,7 @@ function setDefaultValues () {
   systemFields.value = []
   systemFieldEncoding.value = {}
   optionsGroups.value = []
+  chartFieldUsage.value = {}
 }
 
 function toastErrorHandler (msg) {

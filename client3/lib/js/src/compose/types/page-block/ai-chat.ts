@@ -31,7 +31,9 @@ export class PageBlockAiChat extends PageBlock {
   applyOptions (o?: Partial<Options>): void {
     if (!o) return
     Apply(this.options, o, String, 'prompt', 'model')
-    if (o.temperature === null || o.temperature === undefined || o.temperature === '') {
+    // o.temperature is typed number|null, but a form field bound to it can
+    // still hand us '' (cleared input) at runtime — check for that too.
+    if (o.temperature === null || o.temperature === undefined || (o.temperature as unknown) === '') {
       this.options.temperature = null
     } else {
       const n = Number(o.temperature)

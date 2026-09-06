@@ -87,6 +87,21 @@ var (
 				return exp.NewLiteralExpression("(? >= toStartOfYear(now() - INTERVAL 1 YEAR) AND ? < toStartOfYear(now() - INTERVAL 1 YEAR) + INTERVAL '"+interval+"' DAY)", args[0], args[0])
 			},
 		},
+		"last_30": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(? >= now() - INTERVAL 30 DAY AND ? <= now())", args[0], args[0])
+			},
+		},
+		"last_180": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(? >= now() - INTERVAL 180 DAY AND ? <= now())", args[0], args[0])
+			},
+		},
+		"last_365": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("(? >= now() - INTERVAL 365 DAY AND ? <= now())", args[0], args[0])
+			},
+		},
 
 		"this_week": {
 			Handler: func(args ...exp.Expression) exp.Expression {

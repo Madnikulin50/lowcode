@@ -498,6 +498,16 @@ export class BaseChart {
         currentLabel: '',
         previousLabel: '',
       },
+      forecast: {
+        enabled: false,
+        method: 'linear' as 'linear' | 'moving-average' | 'exp-smoothing',
+        periods: 6,
+        scenarios: false,
+        scenarioStyle: 'lines' as 'lines' | 'band',
+        deviation: 'auto' as 'auto' | 'manual',
+        deviationPct: 10,
+        color: '',
+      },
       yAxis: {
         axisType: 'linear',
         axisPosition: 'left',

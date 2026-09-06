@@ -180,7 +180,10 @@ const $Settings = app?.config?.globalProperties?.$Settings || window.__settings
 const $SystemAPI = app?.config?.globalProperties?.$SystemAPI || window.__systemAPI
 const settings = $Settings
 
-const expanded = ref(false)
+// Open by default on entry — the user still collapses it manually via
+// CSidebar's own toggle (see @update:expanded below); only the starting
+// state changes here.
+const expanded = ref(true)
 const toasts = toastsBus
 const disabledRoutes = ref([
   'namespaces',

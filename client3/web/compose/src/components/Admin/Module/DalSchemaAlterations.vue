@@ -260,6 +260,10 @@ function stringifyParams (params) {
       return stringifyModelAddParams(params.modelAdd)
     case !!params.modelDelete:
       return stringifyModelDeleteParams(params.modelDelete)
+    case !!params.indexAdd:
+      return stringifyIndexAddParams(params.indexAdd)
+    case !!params.indexDelete:
+      return stringifyIndexDeleteParams(params.indexDelete)
   }
   throw new Error('Unknown alteration type')
 }
@@ -286,6 +290,15 @@ function stringifyModelAddParams ({ model = {} }) {
 
 function stringifyModelDeleteParams ({ model = {} }) {
   return t('params.model.delete', { ident: model.ident })
+}
+
+function stringifyIndexAddParams ({ index = {} }) {
+  const fields = (index.fields || []).map(f => f.attributeIdent).join(', ')
+  return t(index.unique ? 'params.index.addUnique' : 'params.index.add', { ident: index.ident, fields })
+}
+
+function stringifyIndexDeleteParams ({ ident }) {
+  return t('params.index.delete', { ident })
 }
 
 function canDismiss (alteration) {
