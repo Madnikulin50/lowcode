@@ -18,45 +18,58 @@ func pipelineClobberSteps(in Pipeline) (Pipeline, error) {
 	//
 	// The clobbering for a branch ends when there is a node that can't be clobbered.
 	// The progression ends because application level nodes can't be offloaded to.
+	//
+	// @note this used to be gated behind `if len(in) < 3`, silently skipping
+	//       the whole pass for any pipeline of 3+ steps — exactly the
+	//       load->aggregate->join shape this optimization exists for. The
+	//       loop itself has no length assumptions (walks parent links, stops
+	//       at the first non-clobberable step). What actually made longer
+	//       pipelines unsafe was a separate bug: collectAttributes() for a
+	//       clobbered *Datasource returned its pre-aggregation OutAttributes
+	//       instead of the folded aggregate's real output, so a downstream
+	//       step referencing a computed column (e.g. an AVG/SUM) failed
+	//       with "unknown attribute" — fixed in collectAttributes (service.go)
+	//       and covered by TestCollectAttributesClobberedDatasource, which
+	//       reproduces that exact failure. TestClobberStep's "agg agg ds"
+	//       (3 steps) and "join join agg ds ds ds" (6 steps) cases were
+	//       already asserting clobbering happens at those lengths.
 	ll := wrapPpSteps(in)
-	if len(in) < 3 {
-		for _, l := range ll {
-			for {
-				// When there is no parent, we can't progress further
-				if l.parent == nil {
-					break
-				}
-
-				// if step can't clobber, skip
-				cs, ok := l.step.(clobberableStep)
-				if !ok {
-					break
-				}
-
-				// if child fails to clobber parent, skip to the next child
-				// @note for now we can end the clobbering if any of the steps
-				//       can't be clobbered as all of the application defined steps
-				//       are focused on the single op. and can't do anything else.
-				if !cs.clobber(l.parent.step) {
-					break
-				}
-
-				// if clobbered successfully, update references
-				if l.parent != nil && l.parent.parent != nil {
-					// - update child ref of the parent's parent
-					for i, c := range l.parent.parent.child {
-						if c == l.parent {
-							l.parent.parent.child[i] = l
-						}
-					}
-				}
-
-				l.parent = l.parent.parent
-
-				// @todo for now, clobbering ends after one successfull instance; this is due
-				//       to the current DB implementation doesn't allow nested things.
+	for _, l := range ll {
+		for {
+			// When there is no parent, we can't progress further
+			if l.parent == nil {
 				break
 			}
+
+			// if step can't clobber, skip
+			cs, ok := l.step.(clobberableStep)
+			if !ok {
+				break
+			}
+
+			// if child fails to clobber parent, skip to the next child
+			// @note for now we can end the clobbering if any of the steps
+			//       can't be clobbered as all of the application defined steps
+			//       are focused on the single op. and can't do anything else.
+			if !cs.clobber(l.parent.step) {
+				break
+			}
+
+			// if clobbered successfully, update references
+			if l.parent != nil && l.parent.parent != nil {
+				// - update child ref of the parent's parent
+				for i, c := range l.parent.parent.child {
+					if c == l.parent {
+						l.parent.parent.child[i] = l
+					}
+				}
+			}
+
+			l.parent = l.parent.parent
+
+			// @todo for now, clobbering ends after one successfull instance; this is due
+			//       to the current DB implementation doesn't allow nested things.
+			break
 		}
 	}
 

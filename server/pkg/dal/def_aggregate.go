@@ -142,8 +142,13 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	}
 
 	// Collect attributes from the underlaying step in case own are not provided
+	//
+	// Excludes self: if def got clobbered into def.rel (see
+	// pipelineClobberSteps / collectAttributesExcluding), it must still see
+	// rel's raw, pre-aggregation columns here — not its own not-yet-computed
+	// Group/OutAttributes — to validate its own expressions against.
 	if len(def.SourceAttributes) == 0 {
-		def.SourceAttributes = collectAttributes(def.rel)
+		def.SourceAttributes = collectAttributesExcluding(def.rel, def)
 	}
 
 	// Index source attributes for group/aggregate definition validation

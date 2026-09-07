@@ -604,8 +604,39 @@ func (svc *service) run(ctx context.Context, s PipelineStep, dry bool) (it Itera
 }
 
 func collectAttributes(s PipelineStep) (out []AttributeMapping) {
+	return collectAttributesExcluding(s, nil)
+}
+
+// collectAttributesExcluding is collectAttributes, except a Datasource's
+// clobbered aggregate is treated as not-yet-folded (falling back to the
+// Datasource's raw, pre-aggregation OutAttributes) when that clobbered
+// aggregate is self.
+//
+// That self case is exactly what happens for the overwhelmingly common
+// [Datasource -> Aggregate] report pipeline (any plain "sum/count/avg by
+// dimension" report on a single module): pipelineClobberSteps folds the
+// Aggregate into its own upstream Datasource, so by the time that same
+// Aggregate's own init() asks collectAttributes(def.rel) for the raw columns
+// it needs to validate its own Group/OutAttributes expressions against, rel
+// is a Datasource whose clobbered aggregate *is* def itself. Recursing into
+// it there means an aggregate validates its inputs against its own
+// not-yet-computed output — e.g. a report selecting raw "ID"/"dt" columns
+// gets "unknown attribute ID/dt for aggregate agg for X", on virtually any
+// report, because almost every report is exactly this two-step shape.
+//
+// A different, downstream step (a second Aggregate, Join or Link genuinely
+// consuming the clobbered Datasource as ITS OWN upstream source) is not
+// self, so it still sees the clobbered aggregate's real computed output —
+// which is the case this delegation exists for in the first place (see
+// TestCollectAttributesClobberedDatasource).
+func collectAttributesExcluding(s PipelineStep, self PipelineStep) (out []AttributeMapping) {
 	switch s := s.(type) {
 	case *Datasource:
+		if n := len(s.clobbered); n > 0 {
+			if last := PipelineStep(s.clobbered[n-1]); last != self {
+				return collectAttributesExcluding(last, self)
+			}
+		}
 		return s.OutAttributes
 
 	case *Aggregate:
