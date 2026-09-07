@@ -22,7 +22,7 @@
     />
 
     <button
-      v-if="renderer && hasDataTableEnabled"
+      v-if="showTableButton && !headerMode"
       class="btn btn-outline-light chart-table-button position-absolute d-flex d-print-none border-0 px-1 text-secondary"
       :class="[tableVisible && 'text-primary']"
       :title="t('chart.dataTable.title')"
@@ -136,23 +136,33 @@ const props = defineProps({
     required: false,
     default: undefined,
   },
+  // When true, the block's own header hosts the "show data table" button,
+  // so this component hides its own floating copy of it.
+  headerMode: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['updated', 'drill-down'])
-defineExpose({ updateChart })
 
 const error = ref(undefined)
 const processing = ref(false)
 const valueMap = ref(new Map())
 const renderer = ref(undefined)
 const tableData = ref({ columns: [], rows: [] })
-const tableVisible = ref(false)
+const tableVisible = defineModel('tableVisible', { default: false })
 
 const hasDataTableEnabled = computed(() => {
   const { config = {} } = props.chart || {}
   if (!config.toolbox) return false
   return config.toolbox.showDataTable
 })
+
+const showTableButton = computed(() => !!renderer.value && hasDataTableEnabled.value)
+
+defineExpose({ updateChart, showTableButton })
 
 const tableColumns = computed(() => tableData.value.columns || [])
 const tableRows = computed(() => tableData.value.rows || [])

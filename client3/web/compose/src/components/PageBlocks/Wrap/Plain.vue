@@ -47,6 +47,14 @@
               >
                 <font-awesome-icon :icon="['fas', isBlockMagnified ? 'times' : 'search-plus']" />
               </button>
+
+              <slot name="header-actions" />
+
+              <block-help-button
+                v-if="!ownsOwnHelpButton"
+                :block="block"
+                variant="header"
+              />
             </div>
           </div>
 
@@ -69,11 +77,11 @@
         style="flex-shrink: 10; min-height: 0;"
       >
         <block-help-button
-          v-if="!ownsOwnHelpButton"
+          v-if="!ownsOwnHelpButton && !showHeader"
           :block="block"
           :offset="helpOffset"
         />
-        <slot />
+        <slot :has-header="showHeader" />
       </div>
 
       <div class="card-footer bg-transparent p-0 border-top wrap-slot-footer">
@@ -84,7 +92,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 import { useRoute } from 'vue-router'
 import { compose, NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
@@ -95,6 +103,7 @@ const OWN_HELP_KINDS = new Set(['Chart', 'Metric', 'Record', 'RuleChain'])
 
 const $auth = window.__auth
 const route = useRoute()
+const slots = useSlots()
 
 const props = defineProps({
   block: { type: compose.PageBlock, required: true },
@@ -148,7 +157,7 @@ const showHeader = computed(() => {
 })
 
 const showOptions = computed(() => {
-  return [props.block.options.magnifyOption, props.block.options.showRefresh, showMagnifyButton.value].some(c => !!c)
+  return [props.block.options.magnifyOption, props.block.options.showRefresh, showMagnifyButton.value].some(c => !!c) || !!slots['header-actions'] || !ownsOwnHelpButton.value
 })
 
 const textClass = computed(() => {

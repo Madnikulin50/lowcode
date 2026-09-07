@@ -1,5 +1,22 @@
 <template>
   <Wrap :block="block" :record="record" :loading-record="loadingRecord" :magnified="magnified" body-class="pt-3 px-3">
+    <template #header-actions>
+      <button
+        v-if="!block.options?.hideBrainButton"
+        class="btn btn-outline-light d-print-none text-secondary px-2 py-1 border-0"
+        title="Ask AI about this record"
+        :disabled="editable"
+        @click="promptAiChat"
+      >
+        <font-awesome-icon :icon="['fas', 'brain']" />
+      </button>
+      <block-help-button
+        :block="block"
+        variant="header"
+      />
+    </template>
+
+    <template #default="{ hasHeader }">
     <div v-if="isProcessing" class="d-flex align-items-center justify-content-center h-100">
       <span class="spinner-border" />
     </div>
@@ -9,20 +26,22 @@
       class="fixed-corner-container rb"
       :class="[fieldLayoutClass, densityClass]"
     >
-      <button
-        v-if="!block.options?.hideBrainButton"
-        class="btn btn-outline-extra-light text-secondary border-0 fixed-corner-button btn-sm"
-        title="Ask AI about this record"
-        :disabled="editable"
-        @click="promptAiChat"
-      >
-        <font-awesome-icon :icon="['fas', 'brain']" />
-      </button>
-      <block-help-button
-        :block="block"
-        variant="metric"
-        :offset="!block.options?.hideBrainButton"
-      />
+      <template v-if="!hasHeader">
+        <button
+          v-if="!block.options?.hideBrainButton"
+          class="btn btn-outline-extra-light text-secondary border-0 fixed-corner-button btn-sm"
+          title="Ask AI about this record"
+          :disabled="editable"
+          @click="promptAiChat"
+        >
+          <font-awesome-icon :icon="['fas', 'brain']" />
+        </button>
+        <block-help-button
+          :block="block"
+          variant="metric"
+          :offset="!block.options?.hideBrainButton"
+        />
+      </template>
 
       <!-- Title / subtitle / badges -->
       <div
@@ -253,6 +272,7 @@
       @save="onInlineEdit()"
       @close="onInlineEditClose()"
     />
+    </template>
   </Wrap>
 </template>
 

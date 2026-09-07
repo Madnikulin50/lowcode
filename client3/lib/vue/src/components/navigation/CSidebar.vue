@@ -125,6 +125,9 @@ const emit = defineEmits(['update:expanded'])
 
 const route = inject(routeLocationKey, {} as any) || {}
 const isMobile = ref(false)
+// Tracks whether the previous check landed on a disabled route, so we know
+// to restore the sidebar when navigating away from one (see checkSidebar).
+const wasDisabled = ref(false)
 
 const isExpanded = computed({
   get: () => props.expanded,
@@ -136,12 +139,19 @@ const checkIfMobile = throttle(() => {
 }, 500)
 
 function checkSidebar (initial = false) {
-  if ((props.disabledRoutes as string[]).includes(route?.name as string)) {
+  const isDisabled = (props.disabledRoutes as string[]).includes(route?.name as string)
+
+  if (isDisabled) {
     isExpanded.value = false
-  } else if (!isMobile.value && initial) {
+  } else if (!isMobile.value && (initial || wasDisabled.value)) {
+    // Restore on the initial mount, and whenever we're arriving from a
+    // disabled route (e.g. the namespace list) — but not on every
+    // navigation between allowed routes, so a manual collapse sticks.
     const stored = localStorage.getItem(props.storageKey)
     isExpanded.value = stored ? stored === 'true' : true
   }
+
+  wasDisabled.value = isDisabled
 }
 
 function openSidebar () {

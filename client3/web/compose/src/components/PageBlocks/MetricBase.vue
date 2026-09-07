@@ -4,6 +4,23 @@
     class="fixed-corner-container"
     @refreshBlock="refresh"
   >
+    <template #header-actions>
+      <button
+        v-if="!block.options?.hideBrainButton"
+        title="Ask about metrics"
+        :disabled="editable"
+        class="btn btn-outline-light d-print-none text-secondary px-2 py-1 border-0"
+        @click="promptAiChat"
+      >
+        <font-awesome-icon :icon="['fas', 'brain']" />
+      </button>
+      <block-help-button
+        :block="block"
+        variant="header"
+      />
+    </template>
+
+    <template #default="{ hasHeader }">
     <div
       v-if="isProcessing"
       class="d-flex align-items-center justify-content-center h-100"
@@ -19,20 +36,22 @@
     </label>
 
     <template v-else>
-      <button
-        v-if="!block.options?.hideBrainButton"
-        title="Ask about metrics"
-        :disabled="editable"
-        class="btn btn-outline-light text-secondary border-0 fixed-corner-button btn-sm"
-        @click="promptAiChat"
-      >
-        <font-awesome-icon :icon="['fas', 'brain']" />
-      </button>
-      <block-help-button
-        :block="block"
-        variant="metric"
-        :offset="!block.options?.hideBrainButton"
-      />
+      <template v-if="!hasHeader">
+        <button
+          v-if="!block.options?.hideBrainButton"
+          title="Ask about metrics"
+          :disabled="editable"
+          class="btn btn-outline-light text-secondary border-0 fixed-corner-button btn-sm"
+          @click="promptAiChat"
+        >
+          <font-awesome-icon :icon="['fas', 'brain']" />
+        </button>
+        <block-help-button
+          :block="block"
+          variant="metric"
+          :offset="!block.options?.hideBrainButton"
+        />
+      </template>
 
       <!-- Record-style layout -->
       <div
@@ -196,6 +215,7 @@
           </div>
         </div>
       </div>
+    </template>
     </template>
   </Wrap>
 </template>

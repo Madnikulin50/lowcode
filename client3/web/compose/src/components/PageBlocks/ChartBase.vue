@@ -4,32 +4,66 @@
     :body-class="chartBodyClass"
     @refreshBlock="refresh"
   >
+    <template #header-actions>
+      <button
+        v-if="showTableButton"
+        class="btn btn-outline-light d-print-none px-2 py-1 border-0"
+        :class="[tableVisible ? 'text-primary' : 'text-secondary']"
+        :title="$t('chart.dataTable.title')"
+        @click="tableVisible = !tableVisible"
+      >
+        <font-awesome-icon :icon="['fas', 'table']" />
+      </button>
+      <button
+        v-if="chart && !block.options?.hideBrainButton"
+        class="btn btn-outline-light d-print-none text-secondary px-2 py-1 border-0"
+        title="Ask about metrics"
+        @click="promptAiChat"
+      >
+        <font-awesome-icon :icon="['fas', 'brain']" />
+      </button>
+      <block-help-button
+        v-if="chart && chartHelpBody"
+        :block="block"
+        variant="header"
+        :title="chart?.name"
+        :description="chartDescription"
+        :help="chartHelpBody"
+      />
+    </template>
+
+    <template #default="{ hasHeader }">
     <chart-component
       v-if="chart"
+      ref="chartComponentRef"
       :key="key"
       :chart="chart"
       :record="record"
       :reporter="reporter"
+      :header-mode="hasHeader"
+      v-model:table-visible="tableVisible"
       @drill-down="drillDown"
     />
 
-    <button
-      v-if="chart && !block.options?.hideBrainButton"
-      class="btn btn-outline-light chart-corner-button position-absolute d-flex d-print-none border-0 px-1 text-secondary"
-      title="Ask about metrics"
-      @click="promptAiChat"
-    >
-      <font-awesome-icon :icon="['fas', 'brain']" />
-    </button>
-    <block-help-button
-      v-if="chart && chartHelpBody"
-      :block="block"
-      variant="chart"
-      :offset="!block.options?.hideBrainButton"
-      :title="chart?.name"
-      :description="chartDescription"
-      :help="chartHelpBody"
-    />
+    <template v-if="!hasHeader">
+      <button
+        v-if="chart && !block.options?.hideBrainButton"
+        class="btn btn-outline-light chart-corner-button position-absolute d-flex d-print-none border-0 px-1 text-secondary"
+        title="Ask about metrics"
+        @click="promptAiChat"
+      >
+        <font-awesome-icon :icon="['fas', 'brain']" />
+      </button>
+      <block-help-button
+        v-if="chart && chartHelpBody"
+        :block="block"
+        variant="chart"
+        :offset="!block.options?.hideBrainButton"
+        :title="chart?.name"
+        :description="chartDescription"
+        :help="chartHelpBody"
+      />
+    </template>
 
     <template v-if="options.liveFilterEnabled">
       <button
@@ -37,7 +71,7 @@
         :class="[
           hasLiveFilter ? 'text-primary' : 'text-secondary',
           hasSaveChartEnabled && 'save-chart-enabled',
-          hasDataTableEnabled && 'table-enabled'
+          hasDataTableEnabled && !hasHeader && 'table-enabled'
         ]"
         @click="showFilterModal"
       >
@@ -148,6 +182,7 @@
         @click="liveFilterModal.show = false"
       />
     </template>
+    </template>
   </Wrap>
 </template>
 
@@ -192,6 +227,9 @@ const { key, options, inModal, browserLocale, refreshBlock, setBaseDefaultValues
 const pageVariables = computed(() => store.pageVariables.getValuesForPage(props.page.pageID))
 
 const chart = ref(null)
+const chartComponentRef = ref(null)
+const tableVisible = ref(false)
+const showTableButton = computed(() => chartComponentRef.value?.showTableButton ?? false)
 
 const chartDocs = computed(() => chartHelpDocs(props.namespace, chart.value))
 const chartDescription = computed(() => String(chart.value?.config?.description || chartDocs.value.description || '').trim())

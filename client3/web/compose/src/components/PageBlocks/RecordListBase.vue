@@ -1,5 +1,11 @@
 <template>
   <Wrap v-bind="{ ...$props, ...$attrs }" :scrollable-body="false" @refreshBlock="refresh(true, false)">
+    <template #header-actions>
+      <button v-if="!block.options?.hideBrainButton" class="btn btn-outline-light d-print-none text-secondary px-2 py-1 border-0" @click="promptAiChat" :title="$t('ai.askAboutRecord')">
+        <font-awesome-icon :icon="['fas', 'brain']" />
+      </button>
+    </template>
+
     <template v-if="recordListModule && isFederated" #title-badge>
       <span class="badge bg-primary d-inline-block mb-0 ms-2">{{ $t('recordList.federated') }}</span>
     </template>
@@ -217,9 +223,9 @@
       </div>
     </template>
 
-    <template #default>
+    <template #default="{ hasHeader }">
       <div v-if="recordListModule" class="d-flex position-relative h-100 rl-root" :class="[rlDisplayClass, { 'overflow-hidden': showListLoader || !items.length, 'rl-compact': options.compactRows, 'rl-align-numbers': options.alignNumbers }]">
-        <button v-if="!block.options?.hideBrainButton" class="brain-button position-absolute d-flex align-items-center justify-content-center d-print-none" @click="promptAiChat" :title="$t('ai.askAboutRecord')">
+        <button v-if="!hasHeader && !block.options?.hideBrainButton" class="brain-button position-absolute d-flex align-items-center justify-content-center d-print-none" @click="promptAiChat" :title="$t('ai.askAboutRecord')">
           <font-awesome-icon :icon="['fas', 'brain']" />
         </button>
 

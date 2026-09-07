@@ -48,7 +48,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'float',
-    validator: (v) => ['float', 'metric', 'chart'].includes(v),
+    validator: (v) => ['float', 'metric', 'chart', 'header'].includes(v),
   },
 })
 
@@ -77,6 +77,7 @@ const wrapClass = computed(() => ({
   'block-help-metric-offset': props.variant === 'metric' && props.offset,
   'block-help-chart': props.variant === 'chart',
   'block-help-chart-offset': props.variant === 'chart' && props.offset,
+  'd-inline-flex align-items-center': props.variant === 'header',
 }))
 
 const buttonClass = computed(() => {
@@ -85,6 +86,9 @@ const buttonClass = computed(() => {
   }
   if (props.variant === 'chart') {
     return 'btn btn-outline-light d-flex d-print-none border-0 px-1 text-secondary'
+  }
+  if (props.variant === 'header') {
+    return 'btn btn-outline-light d-print-none text-secondary px-2 py-1 border-0'
   }
   return 'block-help-button'
 })
