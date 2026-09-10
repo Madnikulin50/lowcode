@@ -1,0 +1,5 @@
+# This directory holds local build output (compiled server binaries) and
+# runtime data (var/store — uploaded files from a locally running server).
+# None of it belongs in version control.
+*
+!.gitignore

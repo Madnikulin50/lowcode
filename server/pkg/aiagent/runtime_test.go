@@ -221,6 +221,44 @@ func TestDefaultNeedsConfirm(t *testing.T) {
 	if DefaultNeedsConfirm([]Call{{Name: "list_modules"}}) {
 		t.Fatal("list should not confirm")
 	}
+	// Dynamic per-module record tools (compose/service/chat.go getTools())
+	// are named module_<handle>_create_record etc, not create_*/delete_* —
+	// they must still require confirmation.
+	for _, name := range []string{"module_tasks_create_record", "module_tasks_update_record", "module_tasks_delete_record"} {
+		if !DefaultNeedsConfirm([]Call{{Name: name}}) {
+			t.Fatalf("%s should confirm", name)
+		}
+	}
+	if DefaultNeedsConfirm([]Call{{Name: "module_tasks_records"}}) {
+		t.Fatal("read-only module_*_records should not confirm")
+	}
+}
+
+func TestNeedsConfirmFromToolDefs(t *testing.T) {
+	defs := []chat.ToolDef{
+		{Name: "create_module", Mutating: true},
+		{Name: "list_modules", Mutating: false},
+		{Name: "module_tasks_create_record", Mutating: true},
+	}
+	needsConfirm := NeedsConfirmFromToolDefs(defs)
+
+	if !needsConfirm([]Call{{Name: "create_module"}}) {
+		t.Fatal("explicit Mutating:true should confirm")
+	}
+	if needsConfirm([]Call{{Name: "list_modules"}}) {
+		t.Fatal("explicit Mutating:false should not confirm, regardless of any name heuristic")
+	}
+	if !needsConfirm([]Call{{Name: "module_tasks_create_record"}}) {
+		t.Fatal("explicit Mutating:true on a dynamic tool should confirm")
+	}
+	// A tool absent from defs falls back to the name-based heuristic
+	// (DefaultNeedsConfirm) instead of silently allowing it through.
+	if !needsConfirm([]Call{{Name: "delete_page"}}) {
+		t.Fatal("unknown delete_* tool should fall back to the heuristic and confirm")
+	}
+	if needsConfirm([]Call{{Name: "show_module_tasks"}}) {
+		t.Fatal("unknown read-only tool should fall back to the heuristic and not confirm")
+	}
 }
 
 func TestUserConfirmed(t *testing.T) {

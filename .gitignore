@@ -11,3 +11,16 @@
 node_modules
 ignore
 data
+
+# Vite dependency pre-bundling cache (client3/web/*) — regenerated locally.
+.vite/
+
+# Built webapp bundles (cdist target of the server's webapp build step).
+cdist/
+
+# Extracted dart-sass toolchain (the .tar.gz itself is checked in and
+# unpacked locally as needed; the extracted tree should not be).
+dart-sass-*/
+
+# Python bytecode cache, wherever it turns up (e.g. compose test fixtures).
+__pycache__/

@@ -3,7 +3,7 @@
     <portal to="sidebar-header-expanded">
       <div
         v-if="!hideNamespaceList"
-        class="ns-sidebar-header mt-2"
+        class="ns-sidebar-header"
       >
         <div class="d-flex align-items-start gap-2">
           <div class="flex-grow-1 min-w-0">
@@ -67,9 +67,16 @@
       </div>
       <div
         v-else-if="namespace"
-        class="ns-sidebar-header mt-2"
+        class="ns-sidebar-header"
       >
-        <div class="ns-name text-truncate">{{ namespace.name }}</div>
+        <div class="ns-name text-truncate" :title="namespace.name">{{ namespace.name }}</div>
+        <div
+          v-if="namespace.meta?.subtitle"
+          class="small text-muted text-truncate"
+          :title="namespace.meta.subtitle"
+        >
+          {{ namespace.meta.subtitle }}
+        </div>
       </div>
     </portal>
 
@@ -431,6 +438,7 @@ function getNamespaceLabel (value) {
 
 <style scoped>
 .ns-sidebar-header {
+  margin-top: 0.5rem;
   padding: 0 0.15rem 0.25rem;
 }
 

@@ -10,9 +10,9 @@ func RegisterComposeToolKits(cat *aiagent.Catalog) {
 		cat = aiagent.DefaultCatalog()
 	}
 	schemaTools := make([]chat.ToolDef, 0, 24)
-	schemaTools = append(schemaTools, chatModuleToolDefs()...)
-	schemaTools = append(schemaTools, chatChartToolDefs()...)
-	schemaTools = append(schemaTools, chatPageToolDefs()...)
+	schemaTools = append(schemaTools, ToChatToolDefs(ModuleToolDefs()...)...)
+	schemaTools = append(schemaTools, ToChatToolDefs(ChartToolDefs()...)...)
+	schemaTools = append(schemaTools, ToChatToolDefs(PageToolDefs()...)...)
 	cat.Register(aiagent.ToolKit{
 		Name:        "compose.schema",
 		Description: "Modules, pages, and charts",

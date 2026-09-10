@@ -108,14 +108,25 @@ func Chat() *chatService {
 
 	go ttl.Start()
 
-	tools := []chat.ToolDef{
-		{Name: "create_module", Description: "Create a new module (entity to store records)", Params: []chat.ParamDef{{Name: "name", Type: "string", Required: true, Description: "Module display name"}, {Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"}, {Name: "fields", Type: "json", Required: true, Description: `JSON array. Each field: {"name":"...","kind":"String|Number|DateTime|Select|Bool|User|Record|File|URL|Email","label":"...","required":true/false}`}}, Handler: createModule},
-		{Name: "create_chart", Description: "Create a new chart", Params: []chat.ParamDef{{Name: "name", Type: "string", Required: true, Description: "Chart display name"}, {Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"}, {Name: "config", Type: "json", Required: true, Description: "JSON chart config with reports, dimensions, metrics"}}, Handler: createChart},
-		{Name: "create_page", Description: "Create a new page", Params: []chat.ParamDef{{Name: "title", Type: "string", Required: true, Description: "Page title"}, {Name: "handle", Type: "string", Required: false, Description: "URL-safe handle"}, {Name: "description", Type: "string", Required: false, Description: "Page description"}, {Name: "moduleID", Type: "string", Required: false, Description: "Module ID this page is for"}, {Name: "blocks", Type: "json", Required: false, Description: "JSON array of page blocks"}}, Handler: createPage},
-		{Name: "list_modules", Description: "List all modules (entities/collections/tables) in the current namespace with their fields. Use this to show stores, products, tasks, or any data entities.", Handler: listModules},
-		{Name: "list_charts", Description: "List all charts in the current namespace", Handler: listCharts},
-		{Name: "list_pages", Description: "List all pages in the current namespace", Handler: listPages},
-	}
+	// The static chat tool set is intentionally small (unlike MCP, which
+	// exposes the full read/list/search/create/update/delete set from the
+	// same registry — see mcp/handlers/{modules,charts,pages}.go): a short
+	// tool list keeps prompt evaluation fast (see the comment on
+	// selectNamed below, which applies the same principle to per-object
+	// tools). create_module's description is kept chat-specific since it
+	// doubles as the model's cue for "what is a module" in this UI.
+	moduleDefs, chartDefs, pageDefs := ModuleToolDefs(), ChartToolDefs(), PageToolDefs()
+	listModulesDef := byName(moduleDefs, "list_modules")
+	listModulesDef.Description = "List all modules (entities/collections/tables) in the current namespace with their fields. Use this to show stores, products, tasks, or any data entities."
+
+	tools := ToChatToolDefs(
+		byName(moduleDefs, "create_module"),
+		byName(chartDefs, "create_chart"),
+		byName(pageDefs, "create_page"),
+		listModulesDef,
+		byName(chartDefs, "list_charts"),
+		byName(pageDefs, "list_pages"),
+	)
 	tools = append(tools, chatVisualizeTools()...)
 
 	pending := ttlcache.New[string, pendingToolCalls](
@@ -378,6 +389,7 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt s
 		tools = append(tools, chat.ToolDef{
 			Name:        fmt.Sprintf("module_%v_create_record", id),
 			Description: fmt.Sprintf("Create a new record in module '%s'. Pass field values as JSON: {\"fieldName\":\"value\"}", name),
+			Mutating:    true,
 			Params: []chat.ParamDef{
 				{Name: "values", Type: "json", Required: true, Description: `JSON object with field values, e.g. {"title":"New Item","price":"100"}`},
 			},
@@ -388,6 +400,7 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt s
 		tools = append(tools, chat.ToolDef{
 			Name:        fmt.Sprintf("module_%v_update_record", id),
 			Description: fmt.Sprintf("Update a record in module '%s' by record ID. Pass recordID and field values.", name),
+			Mutating:    true,
 			Params: []chat.ParamDef{
 				{Name: "recordID", Type: "string", Required: true, Description: "Record ID to update"},
 				{Name: "values", Type: "json", Required: true, Description: `JSON object with field values to update, e.g. {"title":"New Title","price":"200"}`},
@@ -399,6 +412,7 @@ func (c *chatService) getTools(ctx context.Context, namespaceID uint64, prompt s
 		tools = append(tools, chat.ToolDef{
 			Name:        fmt.Sprintf("module_%v_delete_record", id),
 			Description: fmt.Sprintf("Delete a record by ID from module '%s'", name),
+			Mutating:    true,
 			Params: []chat.ParamDef{
 				{Name: "recordID", Type: "string", Required: true, Description: "Record ID to delete"},
 			},
@@ -642,7 +656,7 @@ func (c *chatService) chatRuntimeOpts(ctx context.Context, ask *ChatPromptArgume
 		MaxSteps:     6,
 		ExtraParams:  extra,
 		Confirmed:    aiagent.UserConfirmed(ask.Prompt),
-		NeedsConfirm: aiagent.DefaultNeedsConfirm,
+		NeedsConfirm: aiagent.NeedsConfirmFromToolDefs(tools),
 		Continue:     chatContinue,
 		Stream:       stream,
 		HideToolXML:  stream != nil,
@@ -893,123 +907,6 @@ func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptAr
 	return true, stream("", "", true)
 }
 
-func createModule(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
-	if !ok {
-		namespaceID = parseUint64(params["namespaceID"])
-	}
-
-	name := params["name"]
-	handle := params["handle"]
-	fieldsJSON := params["fields"]
-
-	if namespaceID == 0 || name == "" || fieldsJSON == "" {
-		return fmt.Sprintf("Missing required parameters for create_module (namespaceID='%s', name='%s')", params["namespaceID"], name)
-	}
-
-	var fields []map[string]interface{}
-	if err := json.Unmarshal([]byte(fieldsJSON), &fields); err != nil {
-		return fmt.Sprintf("Invalid fields JSON for module '%s': %v", name, err)
-	}
-
-	fieldSet := make(types.ModuleFieldSet, 0, len(fields))
-	for _, f := range fields {
-		fieldSet = append(fieldSet, &types.ModuleField{
-			Name:     getFieldStr(f, "name"),
-			Kind:     getFieldStr(f, "kind"),
-			Label:    getFieldStr(f, "label"),
-			Required: getFieldBool(f, "required"),
-		})
-	}
-
-	module := &types.Module{
-		NamespaceID: namespaceID,
-		Name:        name,
-		Handle:      handle,
-		Fields:      fieldSet,
-		Config:      types.ModuleConfig{},
-	}
-
-	created, err := DefaultModule.Create(ctx, module)
-	if err != nil {
-		return fmt.Sprintf("Failed to create module '%s': %v", name, err)
-	}
-
-	return fmt.Sprintf("✅ Module '%s' created! ID: %d, Handle: %s, Fields: %d", created.Name, created.ID, created.Handle, len(created.Fields))
-}
-
-func createChart(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
-	if !ok {
-		namespaceID = parseUint64(params["namespaceID"])
-	}
-	name := params["name"]
-	handle := params["handle"]
-	configJSON := params["config"]
-
-	if namespaceID == 0 || name == "" || configJSON == "" {
-		return fmt.Sprintf("Missing required parameters for create_chart (namespaceID='%s', name='%s')", params["namespaceID"], name)
-	}
-
-	var config types.ChartConfig
-	if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
-		return fmt.Sprintf("Invalid config JSON for chart '%s': %v", name, err)
-	}
-
-	chart := &types.Chart{
-		NamespaceID: namespaceID,
-		Name:        name,
-		Handle:      handle,
-		Config:      config,
-	}
-
-	created, err := DefaultChart.Create(ctx, chart)
-	if err != nil {
-		return fmt.Sprintf("Failed to create chart '%s': %v", name, err)
-	}
-
-	return fmt.Sprintf("✅ Chart '%s' created! ID: %d, Handle: %s", created.Name, created.ID, created.Handle)
-}
-
-func createPage(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
-	if !ok {
-		namespaceID = parseUint64(params["namespaceID"])
-	}
-	title := params["title"]
-	handle := params["handle"]
-	description := params["description"]
-	moduleID := parseUint64(params["moduleID"])
-
-	if namespaceID == 0 || title == "" {
-		return fmt.Sprintf("Missing required parameters for create_page (namespaceID='%s', title='%s')", params["namespaceID"], title)
-	}
-
-	var blocks types.PageBlocks
-	if b := params["blocks"]; b != "" {
-		if err := json.Unmarshal([]byte(b), &blocks); err != nil {
-			return fmt.Sprintf("Invalid blocks JSON for page '%s': %v", title, err)
-		}
-	}
-
-	page := &types.Page{
-		NamespaceID: namespaceID,
-		Title:       title,
-		Handle:      handle,
-		Description: description,
-		ModuleID:    moduleID,
-		Visible:     true,
-		Blocks:      blocks,
-	}
-
-	created, err := DefaultPage.Create(ctx, page)
-	if err != nil {
-		return fmt.Sprintf("Failed to create page '%s': %v", title, err)
-	}
-
-	return fmt.Sprintf("✅ Page '%s' created! ID: %d, Handle: %s", created.Title, created.ID, created.Handle)
-}
-
 func parseUint64(s string) uint64 {
 	if s == "" {
 		return 0
@@ -1035,120 +932,6 @@ func getFieldBool(m map[string]interface{}, key string) bool {
 		}
 	}
 	return false
-}
-
-func listModules(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
-	if !ok {
-		namespaceID = parseUint64(params["namespaceID"])
-	}
-	if namespaceID == 0 {
-		return "Missing required parameter: namespaceID"
-	}
-
-	set, _, err := DefaultModule.Find(ctx, types.ModuleFilter{NamespaceID: namespaceID})
-	if err != nil {
-		return fmt.Sprintf("Failed to list modules: %v", err)
-	}
-
-	if len(set) == 0 {
-		return "No modules found in this namespace."
-	}
-
-	var b strings.Builder
-	fmt.Fprintf(&b, "📦 **Modules (%d):**\n\n", len(set))
-	for _, m := range set {
-		fields := make([]string, 0, len(m.Fields))
-		for _, f := range m.Fields {
-			fields = append(fields, f.Name+" ("+f.Kind+")")
-		}
-		fs := strings.Join(fields, "\r\n")
-		fmt.Fprintf(&b, "• **%s** (ID: %d, Handle: %s)\r\n", m.Name, m.ID, m.Handle)
-		if fs != "" {
-			fmt.Fprintf(&b, "\r\n *Fields*: %s\r\n\r\n", fs)
-		}
-	}
-	return b.String()
-}
-
-func listCharts(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
-	if !ok {
-		namespaceID = parseUint64(params["namespaceID"])
-	}
-	if namespaceID == 0 {
-		return "Missing required parameter: namespaceID"
-	}
-
-	set, _, err := DefaultChart.Find(ctx, types.ChartFilter{NamespaceID: namespaceID})
-	if err != nil {
-		return fmt.Sprintf("Failed to list charts: %v", err)
-	}
-
-	if len(set) == 0 {
-		return "No charts found in this namespace."
-	}
-
-	var b strings.Builder
-	fmt.Fprintf(&b, "📊 **Charts (%d):**\n\n", len(set))
-	for _, c := range set {
-		reports := len(c.Config.Reports)
-		fmt.Fprintf(&b, "• **%s** (ID: %d, Handle: %s, Reports: %d)\n", c.Name, c.ID, c.Handle, reports)
-	}
-	return b.String()
-}
-
-func listPages(ctx context.Context, params map[string]string) string {
-	namespaceID, ok := ctx.Value(chat.EnvNamespaceID).(uint64)
-	if !ok {
-		namespaceID = parseUint64(params["namespaceID"])
-	}
-	if namespaceID == 0 {
-		return "Missing required parameter: namespaceID"
-	}
-
-	set, _, err := DefaultPage.Find(ctx, types.PageFilter{NamespaceID: namespaceID})
-	if err != nil {
-		return fmt.Sprintf("Failed to list pages: %v", err)
-	}
-
-	if len(set) == 0 {
-		return "No pages found in this namespace."
-	}
-
-	var b strings.Builder
-	fmt.Fprintf(&b, "📄 **Pages (%d):**\n\n", len(set))
-	for _, p := range set {
-		fmt.Fprintf(&b, "### %s\n", p.Title)
-		fmt.Fprintf(&b, "- **ID:** %d\n", p.ID)
-		fmt.Fprintf(&b, "- **Handle:** `%s`\n", p.Handle)
-		if p.Description != "" {
-			fmt.Fprintf(&b, "- **Description:** %s\n", p.Description)
-		}
-		if p.ModuleID > 0 {
-			fmt.Fprintf(&b, "- **ModuleID:** %d\n", p.ModuleID)
-		}
-		if p.Visible {
-			fmt.Fprintf(&b, "- **Visible:** ✅\n")
-		}
-		fmt.Fprintf(&b, "- **Blocks (%d):**\n", len(p.Blocks))
-		for _, blk := range p.Blocks {
-			title := blk.Title
-			if title == "" {
-				title = blk.Kind
-			}
-			fmt.Fprintf(&b, "  - `%s`", title)
-			if blk.Kind != "" && blk.Kind != title {
-				fmt.Fprintf(&b, " (_%s_)", blk.Kind)
-			}
-			if blk.Description != "" {
-				fmt.Fprintf(&b, ": %s", blk.Description)
-			}
-			fmt.Fprintf(&b, "\n")
-		}
-		fmt.Fprintf(&b, "\n")
-	}
-	return b.String()
 }
 
 func showModuleByID(ctx context.Context, namespaceID, moduleID uint64) string {

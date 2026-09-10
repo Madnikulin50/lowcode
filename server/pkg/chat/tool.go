@@ -22,7 +22,11 @@ type (
 		Name        string
 		Description string
 		Params      []ParamDef
-		Handler     func(ctx context.Context, params map[string]string) string
+		// Mutating marks tools that change data. aiagent.NeedsConfirmFromToolDefs
+		// uses this explicit flag to decide whether a call needs the user's
+		// "да" before it runs — see server/pkg/aiagent/calls.go.
+		Mutating bool
+		Handler  func(ctx context.Context, params map[string]string) string
 	}
 )
 

@@ -16,11 +16,23 @@ type Call struct {
 	Params string `json:"params"`
 }
 
-// DefaultNeedsConfirm matches compose chat: create_* / delete_* require a user "да".
+// DefaultNeedsConfirm is a name-based heuristic: create_* / delete_* require
+// a user "да", as do the dynamically generated per-module record mutators
+// (module_<handle>_create_record / _update_record / _delete_record — see
+// getTools() in compose/service/chat.go) and *_restore / *_prune actions.
+//
+// This is a fallback for tool sources that don't (yet) declare
+// chat.ToolDef.Mutating explicitly — e.g. remote/agent-kit tools resolved
+// through aiagent.Catalog. Anything that *does* declare it should be
+// checked with NeedsConfirmFromToolDefs instead, which trusts the flag
+// rather than guessing from the name.
 func DefaultNeedsConfirm(calls []Call) bool {
 	for _, c := range calls {
 		n := c.Name
 		if strings.HasPrefix(n, "create_") || strings.HasPrefix(n, "delete_") {
+			return true
+		}
+		if strings.HasSuffix(n, "_create_record") || strings.HasSuffix(n, "_update_record") || strings.HasSuffix(n, "_delete_record") {
 			return true
 		}
 		if strings.HasSuffix(n, "_restore") || strings.HasSuffix(n, "_prune") {
@@ -28,6 +40,38 @@ func DefaultNeedsConfirm(calls []Call) bool {
 		}
 	}
 	return false
+}
+
+// NeedsConfirmFromToolDefs builds a NeedsConfirm function that trusts each
+// tool's explicit chat.ToolDef.Mutating flag instead of guessing from its
+// name. defs should be the same tool list offered to the model for this
+// request (aiagent.Options.Tools) — every callable tool name is expected to
+// be in it. A tool absent from defs (should not normally happen, but keeps
+// this safe for partially-migrated tool sources) falls back to
+// DefaultNeedsConfirm for that call, so nothing loses existing confirmation
+// coverage by omission.
+func NeedsConfirmFromToolDefs(defs []chat.ToolDef) func([]Call) bool {
+	mutating := make(map[string]bool, len(defs))
+	for _, d := range defs {
+		mutating[d.Name] = d.Mutating
+	}
+	return func(calls []Call) bool {
+		var unknown []Call
+		for _, c := range calls {
+			isMutating, known := mutating[c.Name]
+			if !known {
+				unknown = append(unknown, c)
+				continue
+			}
+			if isMutating {
+				return true
+			}
+		}
+		if len(unknown) > 0 {
+			return DefaultNeedsConfirm(unknown)
+		}
+		return false
+	}
 }
 
 func UserConfirmed(prompt string) bool {
