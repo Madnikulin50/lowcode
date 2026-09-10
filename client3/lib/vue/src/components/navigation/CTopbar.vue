@@ -1,17 +1,41 @@
 <template>
   <div class="header-navigation d-flex flex-wrap align-items-center p-2 gap-2">
+    <button
+      v-if="showMenuToggle"
+      class="btn btn-outline-light d-flex align-items-center justify-content-center border-0 text-dark rounded-circle nav-icon menu-toggle-btn flex-shrink-0"
+      data-test-id="button-topbar-menu-toggle"
+      aria-label="Toggle menu"
+      @click="$emit('update:expanded', !expanded)"
+    >
+      <font-awesome-icon
+        :icon="['fas', 'bars']"
+        class="h5 mb-0"
+      />
+    </button>
+
     <h2 class="title mb-0 d-flex align-items-center gap-2 flex-wrap">
       <slot name="title" />
       <div id="topbar-title" />
       <div id="topbar-title-target" />
     </h2>
 
+    <!--
+      Dedicated slot for a search/filter control. Kept out of tools-wrapper
+      so its own width doesn't force the (much narrower) button group in
+      #topbar-tools onto a lonely, mostly-empty line below md — see
+      .topbar-search-slot below for how it claims a full row on mobile.
+    -->
+    <div
+      id="topbar-search"
+      class="topbar-search-slot"
+    />
+
     <div class="tools-wrapper ms-auto">
       <div class="d-flex align-items-center flex-wrap gap-1">
         <slot name="tools" />
         <div
           id="topbar-tools"
-          class="d-flex align-items-center flex-nowrap gap-1 flex-shrink-0"
+          class="d-flex align-items-center flex-wrap gap-1"
         />
       </div>
 
@@ -53,7 +77,7 @@
         class="dropdown nav-icon text-sm-nowrap"
       >
         <button
-          class="btn btn-outline-light text-decoration-none text-dark rounded-circle border-0 w-100 dropdown-toggle no-caret"
+          class="btn btn-outline-light text-decoration-none text-dark rounded-circle border-0 w-100 h-100 dropdown-toggle no-caret"
           data-bs-toggle="dropdown"
           data-test-id="dropdown-helper"
           aria-expanded="false"
@@ -248,12 +272,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, getCurrentInstance } from 'vue'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
+import { faSun, faMoon, faBars } from '@fortawesome/free-solid-svg-icons'
 import CNotificationButton from '../notifications/CNotificationButton.vue'
 import { checkValidURL } from '../../filters/url'
 import { applyColorMode } from '../../libs/theme'
 
-library.add(faSun, faMoon)
+library.add(faSun, faMoon, faBars)
 
 declare const VERSION: string
 
@@ -261,8 +285,21 @@ const vm = getCurrentInstance()!
 const $auth = (vm.appContext.config.globalProperties as any).$auth
 const $SystemAPI = (vm.appContext.config.globalProperties as any).$SystemAPI
 
+defineEmits(['update:expanded'])
+
 const props = defineProps({
   expanded: {
+    type: Boolean,
+    default: false,
+  },
+  // Renders an inline hamburger button, at every width, that toggles
+  // `expanded` via v-model, for apps that have a CSidebar and pass
+  // `hide-floating-toggle` to it (see CSidebar.vue) to give up its floating
+  // collapsed-rail trigger in favour of this one — so the collapsed sidebar
+  // never needs to reserve rail width just to avoid overlapping the page.
+  // Off by default to avoid a dead button in apps without a sidebar (e.g.
+  // One's launcher) or whose CSidebar still relies on its own rail.
+  showMenuToggle: {
     type: Boolean,
     default: false,
   },
@@ -369,6 +406,11 @@ $nav-user-icon-size: calc(var(--topbar-height) - 16px);
   min-height: $nav-user-icon-size;
 }
 
+.menu-toggle-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 .header-navigation {
   width: 100%;
   min-height: var(--topbar-height);
@@ -420,6 +462,35 @@ $nav-user-icon-size: calc(var(--topbar-height) - 16px);
     justify-content: end;
     align-items: center;
     flex-wrap: wrap;
+  }
+}
+
+.topbar-search-slot {
+  min-width: 0;
+
+  > * {
+    width: 100%;
+  }
+
+  &:empty {
+    display: none;
+  }
+}
+
+// Below md, the search control and the #topbar-tools button group each get
+// their own full-width row instead of sharing one with the Меню/theme/avatar
+// cluster: that used to mean two `ms-auto` items competing for the same
+// line's leftover space, which left the tool buttons bunched at the left
+// edge with an oversized, accidental-looking gap before the chrome icons
+// rather than a deliberate layout.
+@media (max-width: 767.98px) {
+  .topbar-search-slot {
+    flex-basis: 100%;
+  }
+
+  .tools-wrapper {
+    flex-basis: 100%;
+    margin-left: 0 !important;
   }
 }
 

@@ -1,9 +1,8 @@
 <template>
   <button
-    class="btn"
-    :class="[`btn-${buttonVariant}`, buttonClass]"
+    class="btn d-flex align-items-center justify-content-center"
+    :class="[`btn-${buttonVariant}`, sizeClass, buttonClass]"
     :disabled="disabled"
-    :size="size"
     @click="onClick"
   >
     <slot>
@@ -13,6 +12,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faLanguage } from '@fortawesome/free-solid-svg-icons'
 
@@ -31,6 +31,14 @@ const props = defineProps({
   updater: { type: Function, default: undefined },
   keyPrettyfier: { type: Function, default: undefined },
 })
+
+// `size` used to be bound as a literal (meaningless) `size="md"` HTML
+// attribute on the <button>, so it never actually resized anything — inside
+// a .btn-group-sm this button kept its default line-height-driven height
+// instead of matching its icon-sized siblings (which are all d-flex, sizing
+// tightly to their icon rather than a text line box), and `align-items:
+// stretch` on the group then dragged those siblings back up to match it.
+const sizeClass = computed(() => props.size === 'sm' ? 'btn-sm' : props.size === 'lg' ? 'btn-lg' : '')
 
 function onClick() {
   window.dispatchEvent(new CustomEvent('c-translator', {

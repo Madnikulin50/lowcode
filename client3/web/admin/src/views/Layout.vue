@@ -3,13 +3,14 @@
     <aside
       v-if="allowed"
       class="sidebar-container"
-      :style="{ width: expanded ? '320px' : '66px', transition: 'width 0.2s' }"
+      :style="{ width: expanded ? '320px' : '0px', transition: 'width 0.2s' }"
     >
       <c-sidebar
         :expanded="expanded"
         :icon="icon"
         :logo="logo"
         expand-on-click
+        hide-floating-toggle
         @update:expanded="expanded = $event"
       >
         <template #body-expanded>
@@ -22,6 +23,7 @@
       <header>
         <c-topbar
           :expanded="expanded"
+          show-menu-toggle
           :settings="settings.get('ui.topbar', {})"
           :labels="{
             appMenu: $t('navigation.appMenu'),
@@ -37,6 +39,7 @@
             lightTheme: $t('themes.labels.light'),
             darkTheme: $t('themes.labels.dark'),
           }"
+          @update:expanded="expanded = $event"
         />
       </header>
 
@@ -128,16 +131,21 @@ function can(resource, operation) {
 }
 
 /*!rtl:ignore*/
-.sidebar-container :deep(.sidebar) {
-  position: relative !important;
-  left: 0 !important;
-  right: auto !important;
+/* Push-layout (sidebar reserves grid-column space, content shifts over) only
+   applies at md and up. Below that, CSidebar's own fixed-position overlay
+   drawer + backdrop take over instead — see the max-width block further down. */
+@media (min-width: 768px) {
+  .sidebar-container :deep(.sidebar) {
+    position: relative !important;
+    left: 0 !important;
+    right: auto !important;
+  }
+
+  .sidebar-container :deep(.b-sidebar-backdrop) {
+    display: none !important;
+  }
 }
 /*!rtl:end:ignore*/
-
-.sidebar-container :deep(.b-sidebar-backdrop) {
-  display: none !important;
-}
 </style>
 
 <style>
@@ -149,35 +157,52 @@ function can(resource, operation) {
   height: 100%;
 }
 
-.sidebar-container .sidebar {
-  position: relative !important;
-  left: 0 !important;
-  right: auto !important;
-  width: 320px;
-  height: 100%;
+@media (min-width: 768px) {
+  .sidebar-container .sidebar {
+    position: relative !important;
+    left: 0 !important;
+    right: auto !important;
+    width: 320px;
+    height: 100%;
+  }
+
+  .sidebar-container .sidebar-body {
+    position: absolute;
+    top: 64px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-y: auto !important;
+  }
+
+  .sidebar-container .sidebar:not(.expanded) {
+    /* The collapsed rail used to reserve 66px here for CSidebar's floating
+       toggle (see hide-floating-toggle above) so it wouldn't overlap the
+       page. That toggle now lives inline in CTopbar instead, so collapsed
+       reserves nothing at any width, matching the <aside> inline style. */
+    width: 0;
+    overflow: hidden;
+    height: 0;
+  }
+
+  .sidebar-container .sidebar:not(.expanded) .sidebar-body {
+    display: none;
+  }
+
+  .sidebar-container .b-sidebar-backdrop {
+    display: none !important;
+  }
 }
 
-.sidebar-container .sidebar-body {
-  position: absolute;
-  top: 64px;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  overflow-y: auto !important;
-}
-
-.sidebar-container .sidebar:not(.expanded) {
-  width: 66px;
-  overflow: hidden;
-  height: 0;
-}
-
-.sidebar-container .sidebar:not(.expanded) .sidebar-body {
-  display: none;
-}
-
-.sidebar-container .b-sidebar-backdrop {
-  display: none !important;
+/* Below md the *expanded* sidebar drawer is an overlay, not a grid column
+   (collapsed is already 0 above at every width) — so the page doesn't need
+   to make room for it here either (overrides the inline `width` style set
+   on <aside> above — a stylesheet !important beats an inline style without
+   one). */
+@media (max-width: 767.98px) {
+  .sidebar-container {
+    width: 0 !important;
+  }
 }
 
 #resource-list td.actions {

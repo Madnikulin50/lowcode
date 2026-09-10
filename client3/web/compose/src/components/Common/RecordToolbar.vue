@@ -9,6 +9,7 @@
         type="button"
         data-test-id="button-back"
         :disabled="isProcessing"
+        :title="backLabel"
         class="btn btn-outline-light btn-lg border-0 text-dark back"
         @click.prevent="$emit('back')"
       >
@@ -17,7 +18,7 @@
             :icon="['fas', hasBack ? 'chevron-left' : 'times']"
             :class="hasBack ? 'back-icon' : ''"
           />
-          {{ backLabel }}
+          <span class="d-none d-sm-inline">{{ backLabel }}</span>
         </span>
       </button>
 
@@ -66,6 +67,10 @@
         :disabled="!record || isProcessing"
         :processing="processingAction === 'delete'"
         :text="labels.delete || $t('label.delete')"
+        :tooltip="labels.delete || $t('label.delete')"
+        show-icon
+        text-class="d-none d-sm-inline"
+        icon-class="me-sm-2"
         size="lg"
         size-confirm="lg"
         variant="danger"
@@ -78,6 +83,11 @@
         :disabled="!record || isProcessing"
         :processing="processingAction === 'undelete'"
         :text="$t('label.restore')"
+        :tooltip="$t('label.restore')"
+        :icon="['fas', 'trash-restore']"
+        show-icon
+        text-class="d-none d-sm-inline"
+        icon-class="me-sm-2"
         size="lg"
         size-confirm="lg"
         variant="warning"
@@ -94,11 +104,16 @@
         <button
           type="button"
           data-test-id="button-clone"
+          :title="cloneLabel"
           class="btn btn-outline-secondary btn-lg text-nowrap"
           :disabled="!record || isProcessing || !canCreateRecord"
           @click.prevent="$emit('clone')"
         >
-          {{ labels.clone || (isDraft ? $t('label.saveAsNewDraft') : $t('label.saveAsCopy')) }}
+          <font-awesome-icon
+            :icon="['far', 'copy']"
+            class="me-sm-2"
+          />
+          <span class="d-none d-sm-inline">{{ cloneLabel }}</span>
         </button>
       </span>
 
@@ -110,17 +125,26 @@
         <button
           type="button"
           data-test-id="button-edit"
+          :title="editLabel"
           :disabled="!record || isProcessing || !canManageRecord"
           class="btn btn-lg text-nowrap"
           :class="editButtonClass"
           @click.prevent="$emit('edit')"
         >
-          {{ labels.edit || $t('label.edit') }}
-          <font-awesome-icon
-            v-if="forceShowEdit"
-            :icon="['far', 'edit']"
-            class="ms-2"
-          />
+          <template v-if="forceShowEdit">
+            <span class="d-none d-sm-inline">{{ editLabel }}</span>
+            <font-awesome-icon
+              :icon="['far', 'edit']"
+              class="ms-sm-2"
+            />
+          </template>
+          <template v-else>
+            <font-awesome-icon
+              :icon="['far', 'edit']"
+              class="me-sm-2"
+            />
+            <span class="d-none d-sm-inline">{{ editLabel }}</span>
+          </template>
         </button>
       </span>
 
@@ -128,22 +152,32 @@
         v-if="showView"
         type="button"
         data-test-id="button-view"
+        :title="viewLabel"
         :disabled="!record || isProcessing"
         class="btn btn-outline-secondary btn-lg text-nowrap"
         @click.prevent="$emit('view')"
       >
-        {{ labels.edit || $t('label.view') }}
+        <font-awesome-icon
+          :icon="['far', 'eye']"
+          class="me-sm-2"
+        />
+        <span class="d-none d-sm-inline">{{ viewLabel }}</span>
       </button>
 
       <button
         v-if="!inEditing && module.canCreateRecord && !(hideNew || settings.hideNew)"
         type="button"
         data-test-id="button-add-new"
+        :title="addNewLabel"
         class="btn btn-primary btn-lg text-nowrap"
         :disabled="!record || isProcessing"
         @click.prevent="$emit('add')"
       >
-        {{ labels.new || $t('label.addNew') }}
+        <font-awesome-icon
+          :icon="['fas', 'plus']"
+          class="me-sm-2"
+        />
+        <span class="d-none d-sm-inline">{{ addNewLabel }}</span>
       </button>
 
       <span
@@ -155,7 +189,11 @@
           data-test-id="button-save"
           :disabled="!record || isProcessing || !canManageRecord"
           :processing="processingAction === 'submit'"
-          :text="labels.submit || $t('label.save')"
+          :text="submitLabel"
+          :title="submitLabel"
+          :icon="['far', 'save']"
+          icon-class="me-sm-2"
+          text-class="d-none d-sm-inline"
           size="lg"
           class="text-nowrap"
           @submit="$emit('submit')"
@@ -306,7 +344,12 @@ const showSubmit = computed(() => {
 })
 
 const editButtonClass = computed(() => {
-  if (props.forceShowEdit) return 'btn-primary d-flex align-items-center'
+  // Plain btn-lg (no d-flex) like every other action button here — d-flex
+  // align-items-center made this one a flex box while its siblings stay
+  // inline-block, so it sized to the icon's own height instead of the
+  // shared line-height-driven btn-lg height, standing out as visibly
+  // shorter once the label is icon-only on mobile.
+  if (props.forceShowEdit) return 'btn-primary'
   return 'btn-outline-secondary'
 })
 
@@ -326,6 +369,16 @@ const backLabel = computed(() => {
   }
   return props.hasBack ? props.labels.back || t('label.back') : t('label.home')
 })
+
+// Below sm these buttons show only their icon (see the template) — the
+// label text still needs computing for the button's `title` (native
+// accessible-name fallback once the visible text is display:none) and for
+// the un-hidden label at sm and up.
+const cloneLabel = computed(() => props.labels.clone || (props.isDraft ? t('label.saveAsNewDraft') : t('label.saveAsCopy')))
+const editLabel = computed(() => props.labels.edit || t('label.edit'))
+const viewLabel = computed(() => props.labels.edit || t('label.view'))
+const addNewLabel = computed(() => props.labels.new || t('label.addNew'))
+const submitLabel = computed(() => props.labels.submit || t('label.save'))
 
 const navigateToRecord = throttle(function (recordID) {
   emit('update-navigation', recordID)

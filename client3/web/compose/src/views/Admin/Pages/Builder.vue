@@ -512,6 +512,17 @@
           + {{ $t('build.addBlock') }}
         </button>
 
+        <button
+          v-if="page?.canUpdatePage && layout"
+          type="button"
+          data-test-id="button-layout-settings"
+          class="btn btn-outline-secondary btn-lg"
+          data-bs-toggle="modal"
+          data-bs-target="#layoutSettingsModal"
+        >
+          {{ $t('build.layoutSettings.button') }}
+        </button>
+
         <template #saveAsCopy>
           <div
             v-if="page?.canUpdatePage"
@@ -559,6 +570,61 @@
     <magnification-modal
       :namespace="namespace"
     />
+
+    <div
+      v-if="layout"
+      id="layoutSettingsModal"
+      class="modal"
+      tabindex="-1"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              {{ $t('build.layoutSettings.title') }}
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              :aria-label="$t('label.cancel')"
+            />
+          </div>
+          <div class="modal-body">
+            <div class="form-check form-switch mb-3">
+              <input
+                id="layoutMobileOnly"
+                class="form-check-input"
+                type="checkbox"
+                role="switch"
+                :checked="isMobileOnlyExpression"
+                @change="toggleMobileOnly($event.target.checked)"
+              />
+              <label
+                class="form-check-label"
+                for="layoutMobileOnly"
+              >
+                {{ $t('build.layoutSettings.mobileOnly') }}
+              </label>
+              <div class="form-text">
+                {{ $t('build.layoutSettings.mobileOnlyHint') }}
+              </div>
+            </div>
+
+            <label class="form-label fw-semibold">{{ $t('build.layoutSettings.expressionLabel') }}</label>
+            <input
+              v-model="layout.config.visibility.expression"
+              type="text"
+              class="form-control"
+              placeholder="screen.width < 768"
+            />
+            <div class="form-text">
+              {{ $t('build.layoutSettings.expressionHint') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -615,6 +681,25 @@ const processingLayout = ref(false)
 const page = ref(undefined)
 const layout = ref(undefined)
 const layouts = ref([])
+
+// Toggle-friendly shortcut for a PageLayout's own visibility.expression
+// (config.visibility, evaluated server-side against `screen.width` among
+// other things — see determineLayout()/mixins/page.js): most authors want
+// "give me a mobile version of this layout", not to hand-write an
+// expression. The free-text field right below the switch in the modal still
+// takes any expression, e.g. for a tablet-specific layout instead.
+const MOBILE_LAYOUT_EXPRESSION = 'screen.width < 768'
+
+const isMobileOnlyExpression = computed(() => {
+  return layout.value?.config?.visibility?.expression === MOBILE_LAYOUT_EXPRESSION
+})
+
+function toggleMobileOnly (checked) {
+  if (!layout.value) return
+  if (!layout.value.config) layout.value.config = {}
+  if (!layout.value.config.visibility) layout.value.config.visibility = { expression: '', roles: [] }
+  layout.value.config.visibility.expression = checked ? MOBILE_LAYOUT_EXPRESSION : ''
+}
 const blocks = ref([])
 const editor = ref(undefined)
 const unsavedBlocks = ref(new Set())

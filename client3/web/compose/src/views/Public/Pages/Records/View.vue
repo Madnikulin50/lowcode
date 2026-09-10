@@ -27,18 +27,23 @@
           @ai-search="handleAiSearch"
         />
 
-        <router-link
+        <div
           v-if="page && isRecordPage && page.canUpdatePage"
-          :to="moduleEditor"
-          class="btn btn-primary btn-sm d-flex align-items-center me-2"
-          :class="{ disabled: !moduleEditor }"
+          class="btn-group btn-group-sm me-2"
         >
-          {{ $t('navigation.editModule') }}
-          <font-awesome-icon
-            :icon="['far', 'edit']"
-            class="ms-2"
-          />
-        </router-link>
+          <router-link
+            :to="moduleEditor"
+            :title="$t('navigation.editModule')"
+            class="btn btn-primary d-flex align-items-center"
+            :class="{ disabled: !moduleEditor }"
+          >
+            <span class="d-none d-md-inline">{{ $t('navigation.editModule') }}</span>
+            <font-awesome-icon
+              :icon="['fas', 'database']"
+              class="ms-md-2"
+            />
+          </router-link>
+        </div>
 
         <div
           v-if="page && page.canUpdatePage"
@@ -47,12 +52,13 @@
           <router-link
             data-test-id="button-page-builder"
             :to="pageBuilder"
+            :title="$t('label.pageBuilder')"
             class="btn btn-primary d-flex align-items-center"
           >
-            {{ $t('label.pageBuilder') }}
+            <span class="d-none d-md-inline">{{ $t('label.pageBuilder') }}</span>
             <font-awesome-icon
               :icon="['fas', 'tools']"
-              class="ms-2"
+              class="ms-md-2"
             />
           </router-link>
 

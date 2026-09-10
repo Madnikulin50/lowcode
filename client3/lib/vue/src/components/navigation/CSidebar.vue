@@ -18,7 +18,8 @@
               :src="logo"
             >
             <button
-              class="btn btn-outline-light d-flex align-items-center justify-content-center p-2 border-0 text-secondary"
+              class="btn btn-outline-light d-flex align-items-center justify-content-center border-0 text-secondary close-btn"
+              aria-label="Close menu"
               @click="closeSidebar()"
             >
               <font-awesome-icon
@@ -47,7 +48,10 @@
       @click="closeSidebar()"
     />
 
-    <div class="d-flex align-items-center justify-content-center tab position-absolute p-2">
+    <div
+      v-if="!hideFloatingToggle"
+      class="d-flex align-items-center justify-content-center tab position-absolute p-2"
+    >
       <div
         v-if="!isExpanded && disabledRoutes.includes(route.name)"
         class="d-flex align-items-center border-0 p-2"
@@ -102,6 +106,17 @@ const props = defineProps({
   disabledRoutes: {
     type: Array,
     default: () => [],
+  },
+  // Suppresses the floating collapsed-state rail (hamburger/home icon) at
+  // every width, not just below md — for consumers that render their own
+  // toggle inline in CTopbar (`show-menu-toggle`) instead, so the collapsed
+  // state doesn't need to keep 66px reserved just to avoid the rail
+  // overlapping the page. Defaults off so existing consumers without a
+  // topbar toggle (reporter, discovery, workflow, privacy) keep their only
+  // way to reopen the sidebar.
+  hideFloatingToggle: {
+    type: Boolean,
+    default: false,
   },
   icon: {
     type: String,
@@ -194,6 +209,14 @@ $header-height: 64px;
   top: 0;
   height: $header-height;
   width: 66px;
+
+  // Below md the trigger lives inline in CTopbar instead (see its
+  // `show-menu-toggle` prop) — this floating rail would otherwise force the
+  // page to permanently reserve 66px just to avoid overlapping it, which on
+  // a ~375px phone is ~18% of the screen for one icon.
+  @media (max-width: 767.98px) {
+    display: none !important;
+  }
 }
 
 .icon {
@@ -203,6 +226,10 @@ $header-height: 64px;
 
 .logo {
   max-height: 40px;
+
+  @media (max-width: 767.98px) {
+    max-height: 32px;
+  }
 }
 
 .sidebar-header {
@@ -215,11 +242,20 @@ $header-height: 64px;
   flex-direction: column;
   min-height: 0;
 }
+
+// A 44x44 hit area regardless of the icon's own size — the icon stays small,
+// the tappable box around it doesn't (WCAG 2.5.5 / iOS HIG minimum).
+.close-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
 </style>
 
 <style lang="scss">
 $nav-width: 320px;
-$nav-width-mobile: 400px;
+// Capped at 90vw so the drawer never exceeds the viewport on narrow phones
+// (e.g. 375px devices), where a flat 400px used to cause horizontal overflow.
+$nav-width-mobile: min(400px, 90vw);
 
 .b-sidebar {
   background-color: var(--white, #fff) !important;
@@ -245,13 +281,25 @@ $nav-width-mobile: 400px;
     left: 0 !important;
     transition: left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
+
+  // Below md the drawer floats over the page rather than sitting in a grid
+  // column next to it, so it needs its own depth cue, and it spans the full
+  // device height/width, so it needs to clear the notch/home-indicator itself.
+  @media (max-width: 767.98px) {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+
+    &.expanded {
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    }
+  }
 }
 
 // Mobile sidebar should be 400px wide to match notifications and drafts
 @media (max-width: 1023px) {
   .sidebar {
     width: $nav-width-mobile !important;
-    left: calc(-#{$nav-width-mobile}) !important;
+    left: calc(-1 * #{$nav-width-mobile}) !important;
   }
 }
 

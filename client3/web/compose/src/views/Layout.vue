@@ -4,13 +4,14 @@
     class="h-viewport overflow-hidden"
     style="display: grid; grid-template-columns: auto 1fr; grid-template-rows: 1fr; width: 100%"
   >
-    <aside class="sidebar-container" :style="{ width: expanded ? '320px' : '35px', transition: 'width 0.2s' }">
+    <aside class="sidebar-container" :style="{ width: expanded ? '320px' : '0px', transition: 'width 0.2s' }">
       <c-sidebar
         :expanded="expanded"
         :icon="icon"
         :logo="logo"
         :disabled-routes="disabledRoutes"
         expand-on-click
+        hide-floating-toggle
         @update:expanded="expanded = $event"
       >
         <template #header-expanded>
@@ -31,6 +32,7 @@
     <header>
       <c-topbar
         :expanded="expanded"
+        :show-menu-toggle="!isSidebarDisabledRoute"
         :settings="settings.get('ui.topbar', {})"
         :labels="{
           appMenu: $t('appMenu'),
@@ -46,6 +48,7 @@
           lightTheme: $t('themes.labels.light'),
           darkTheme: $t('themes.labels.dark'),
         }"
+        @update:expanded="expanded = $event"
       >
         <template #title>
         </template>
@@ -193,6 +196,13 @@ const disabledRoutes = ref([
   'namespace.clone',
   'namespace.manage',
 ])
+
+// On these routes CSidebar itself forces `expanded` back to false whenever
+// they're entered (see its checkSidebar()) — the topbar toggle shouldn't
+// offer a way to override that, mirroring what its own (now hidden, see
+// hide-floating-toggle above) floating rail used to do: show no interactive
+// control at all here rather than one that immediately gets fought over.
+const isSidebarDisabledRoute = computed(() => disabledRoutes.value.includes(route.name))
 
 const user = computed(() => {
   const { user } = $auth
@@ -382,35 +392,57 @@ function destroyEvents() {
 
 
 
-.sidebar-container :deep(.sidebar) {
-  position: relative !important;
-  left: 0 !important;
-  right: auto !important;
-}
+// Push-layout (sidebar reserves grid-column space, content shifts over) only
+// applies at md and up. Below that, CSidebar's own fixed-position overlay
+// drawer + backdrop take over instead — see the max-width block further down.
+@media (min-width: 768px) {
+  .sidebar-container :deep(.sidebar) {
+    position: relative !important;
+    left: 0 !important;
+    right: auto !important;
+  }
 
-.sidebar-container :deep(.b-sidebar-backdrop) {
-  display: none !important;
+  .sidebar-container :deep(.b-sidebar-backdrop) {
+    display: none !important;
+  }
 }
 </style>
 
 <style lang="scss">
-.sidebar-container .sidebar {
-  position: relative !important;
-  left: 0 !important;
-  right: auto !important;
-  width: 320px;
-  height: 100%;
-  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+@media (min-width: 768px) {
+  .sidebar-container .sidebar {
+    position: relative !important;
+    left: 0 !important;
+    right: auto !important;
+    width: 320px;
+    height: 100%;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .sidebar-container .sidebar:not(.expanded) {
+    // The collapsed rail used to reserve 66px here for CSidebar's floating
+    // toggle (see hide-floating-toggle above) so it wouldn't overlap the
+    // page. That toggle now lives inline in CTopbar instead, so collapsed
+    // reserves nothing at any width, matching the <aside> inline style.
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .sidebar-container .b-sidebar-backdrop {
+    display: none !important;
+  }
 }
 
-.sidebar-container .sidebar:not(.expanded) {
-  width: 66px;
-  height: 0;
-  overflow: hidden;
-}
-
-.sidebar-container .b-sidebar-backdrop {
-  display: none !important;
+// Below md the *expanded* sidebar drawer is an overlay, not a grid column
+// (collapsed is already 0 above at every width) — so the page doesn't need
+// to make room for it here either (overrides the inline `width` style set
+// on <aside> above — a stylesheet !important beats an inline style without
+// one).
+@media (max-width: 767.98px) {
+  .sidebar-container {
+    width: 0 !important;
+  }
 }
 
 .sidebar-body {

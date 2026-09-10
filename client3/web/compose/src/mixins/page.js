@@ -1,3 +1,4 @@
+import { debounce } from 'lodash'
 import { compose } from 'corteza-lib/js/dist'
 import { fetchID } from 'corteza-webapp-compose/src/lib/block'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
@@ -9,6 +10,26 @@ import { usePageStore } from '../store/page'
 export default {
   components: {
     PageTranslator,
+  },
+
+  mounted () {
+    // A page can have multiple PageLayouts selected by a visibility
+    // expression (see determineLayout) — e.g. one gated on `screen.width` to
+    // give authors a hand-built mobile arrangement (per-block xywh, not the
+    // <768px CSS auto-fit reflow in Grid.vue, which only handles pages that
+    // don't have one). Expression evaluation is a server round-trip, so this
+    // only re-runs it on resize when there's actually a layout gated by one,
+    // and even then only after the browser settles (not per drag-resize tick).
+    this.handleViewportResize = debounce(() => {
+      if ((this.layouts || []).some(({ config = {} }) => config.visibility?.expression)) {
+        this.determineLayout({ redirectOnFail: false })
+      }
+    }, 300)
+    window.addEventListener('resize', this.handleViewportResize)
+  },
+
+  beforeUnmount () {
+    window.removeEventListener('resize', this.handleViewportResize)
   },
 
   props: {
