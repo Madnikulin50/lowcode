@@ -260,7 +260,7 @@
       class="modal fade"
       tabindex="-1"
     >
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-dialog modal-block-editor modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header p-3 pb-0 border-bottom-0">
             <div class="d-flex gap-1 align-items-center">
@@ -315,7 +315,7 @@
       class="modal fade"
       tabindex="-1"
     >
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-dialog modal-block-editor modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header p-3 pb-0 border-bottom-0">
             <div class="d-flex gap-1 align-items-center">
@@ -1311,5 +1311,11 @@ div.toolbox {
     left: 0;
     right: auto;
   }
+}
+
+// Block create/edit modal — wide enough that the (often long) configurator
+// forms aren't cramped, regardless of viewport size.
+.modal-block-editor {
+  max-width: 80vw;
 }
 </style>

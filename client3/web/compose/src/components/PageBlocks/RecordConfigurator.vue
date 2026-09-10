@@ -1,5 +1,24 @@
 <template>
   <div>
+    <div class="d-flex">
+      <nav class="chart-editor-nav d-none d-lg-flex flex-column">
+        <button
+          v-for="step in navSteps"
+          :key="step.id"
+          type="button"
+          class="chart-editor-nav-item"
+          @click="scrollToSection(step.id)"
+        >
+          <span class="chart-editor-nav-num">{{ step.num }}</span>
+          {{ step.label }}
+        </button>
+      </nav>
+
+      <div class="chart-editor-content flex-grow-1">
+      <section
+        id="section-record-general"
+        class="chart-editor-section"
+      >
     <h5 class="mb-3">{{ $t('recordList.record.generalLabel') }}</h5>
     <div class="row">
       <div class="col-12">
@@ -40,8 +59,12 @@
         </div>
       </div>
     </div>
+      </section>
 
-    <hr />
+      <section
+        id="section-record-appearance"
+        class="chart-editor-section"
+      >
     <h5 class="mb-3">{{ $t('record.appearance.label') }}</h5>
     <div class="row">
       <div class="col-12 col-lg-6">
@@ -74,10 +97,13 @@
         </BlockStyle>
       </div>
     </div>
+      </section>
 
-    <hr v-if="module" />
-
-    <div v-if="module" class="">
+      <section
+        v-if="module"
+        id="section-record-fields"
+        class="chart-editor-section"
+      >
       <h5 class="mb-3">{{ $t('module.general.fields') }}</h5>
       <div class="row">
         <div class="col-12">
@@ -190,11 +216,12 @@
           </div>
         </div>
       </div>
-    </div>
+      </section>
 
-    <hr />
-
-    <div class="">
+      <section
+        id="section-record-conditions"
+        class="chart-editor-section"
+      >
       <h5 class="d-flex align-items-center mb-2">
         {{ $t('record.fieldConditions.label') }}
         <c-hint :tooltip="$t('record.fieldConditions.tooltip.performance')" icon-class="text-warning" />
@@ -258,6 +285,8 @@
         <code>record.ownedBy == user.userID</code>
         <code>screen.width &lt; 1024</code>
       </small>
+      </section>
+      </div>
     </div>
   </div>
 </template>
@@ -294,6 +323,19 @@ const options = computed(() => {
   return o
 })
 const referenceModule = ref(undefined)
+
+// Quick-jump nav for the editor form — mirrors the Chart/Metric editors'.
+const navSteps = computed(() => [
+  { id: 'section-record-general', num: 1, label: $t('recordList.record.generalLabel') },
+  { id: 'section-record-appearance', num: 2, label: $t('record.appearance.label') },
+  { id: 'section-record-fields', num: 3, label: $t('module.general.fields') },
+  { id: 'section-record-conditions', num: 4, label: $t('record.fieldConditions.label') },
+])
+
+function scrollToSection (id) {
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 const checkboxLabel = computed(() => ({ on: $t('label.yes'), off: $t('label.no') }))
 

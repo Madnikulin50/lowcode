@@ -568,7 +568,12 @@ function triggerContext () {
 async function runChain () {
   if (!chainID.value) return
   const recID = liveRecordID()
-  if (!recID) {
+  // Only record-bound pages (page.moduleID set → props.module present) ever
+  // get a recordID here, so only gate those: a Device/Network/Vulnerability/…
+  // detail page whose record hasn't been saved yet. Dashboard/list-style
+  // pages (e.g. CMDB's "Scan Office LAN" / "Start scan" buttons) never have
+  // a record to begin with and must be able to run the chain regardless.
+  if (props.module && !recID) {
     result.value = {
       success: false,
       error: locFallback(

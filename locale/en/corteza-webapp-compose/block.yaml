@@ -408,6 +408,7 @@ metric:
     description: If a record list is selected, it will be used to display the drill down data. If no record list is selected, the drill down data will be shown in a modal.
     openInModal: Open in modal
   edit:
+    basicsLabel: Basics
     bucketLabel: Bucket size
     bucketPlaceholder: Select a bucket size
     dateFormat: Date format

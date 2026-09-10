@@ -1,62 +1,74 @@
 <template>
   <div>
-    <ul class="nav nav-tabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button
-          class="nav-link"
-          :class="{ active: activeTab === 0 }"
-          @click="activeTab = 0"
-        >
+    <div
+      v-for="(m, i) in metrics"
+      :key="i"
+      class="chart-editor-chip"
+      :class="{ 'is-open': edit === m }"
+    >
+      <div
+        class="chart-editor-chip-head"
+        @click="editMetric(m)"
+      >
+        <span class="chart-editor-chip-tag chart-editor-chip-tag--metric">
           {{ $t('metric.edit.tabTitle') }}
-        </button>
-      </li>
-    </ul>
+        </span>
+        <span class="chart-editor-chip-title">
+          {{ m.label || $t('metric.defaultMetricLabel') }}
+        </span>
+        <small
+          v-if="metrics.length > 1"
+          class="text-muted ms-1"
+        >
+          {{ i + 1 }}
+        </small>
 
-    <div class="tab-content">
-      <div class="tab-pane active">
-        <div class="row g-0">
-          <div class="col-12">
-            <div
-              v-for="(m, i) in metrics"
-              :key="i"
-              class="mb-2"
-            >
-              <button
-                class="btn btn-outline-secondary me-1"
-                @click="editMetric(m)"
-              >
-                {{ $t('label.edit') }}
-              </button>
-              <button
-                class="btn btn-outline-danger me-2"
-                @click="removeMetric(i)"
-              >
-                {{ $t('label.remove') }}
-              </button>
-              <span class="btn">
-                {{ m.label || $t('metric.defaultMetricLabel') }}
-              </span>
-            </div>
+        <c-input-confirm
+          show-icon
+          class="ms-auto chart-editor-chip-delete"
+          @click.stop
+          @confirmed="removeMetric(i)"
+        />
+      </div>
+    </div>
 
-            <button
-              class="btn btn-link px-1"
-              @click="addMetric"
-            >
-              + {{ $t('label.add') }}
-            </button>
-          </div>
-        </div>
+    <button
+      class="btn btn-link px-1 mb-2"
+      @click="addMetric"
+    >
+      + {{ $t('label.add') }}
+    </button>
 
-        <hr />
+    <hr />
 
-        <div class="row mt-3">
-          <div
-            v-if="edit"
-            class="col-12 col-lg-7"
+    <div class="row mt-3">
+      <div
+        v-if="edit"
+        class="col-12 col-lg-7 d-flex"
+      >
+        <nav class="chart-editor-nav d-none d-lg-flex flex-column">
+          <button
+            v-for="step in navSteps"
+            :key="step.id"
+            type="button"
+            class="chart-editor-nav-item"
+            @click="scrollToSection(step.id)"
           >
-            <div class="card mb-5">
-              <div class="card-body">
-                <fieldset>
+            <span class="chart-editor-nav-num">{{ step.num }}</span>
+            {{ step.label }}
+          </button>
+        </nav>
+
+        <div class="chart-editor-content flex-grow-1">
+        <section
+          id="section-metric-basics"
+          class="chart-editor-section"
+        >
+          <h5 class="mb-3">
+            {{ $t('metric.edit.basicsLabel') }}
+          </h5>
+
+          <fieldset>
                   <div class="mb-3">
                     <label class="form-label text-primary">{{ $t('metric.edit.labelLabel') }}</label>
                     <input
@@ -90,7 +102,12 @@
                     </div>
                   </div>
                 </template>
+        </section>
 
+        <section
+          id="section-metric-dimension"
+          class="chart-editor-section"
+        >
                 <fieldset>
                   <h5>{{ $t('metric.edit.dimensionLabel') }}</h5>
 
@@ -212,8 +229,14 @@
                     </div>
                   </template>
                 </fieldset>
+        </section>
 
-                <fieldset v-if="selectedMetricModule">
+        <section
+          v-if="selectedMetricModule"
+          id="section-metric-period-compare"
+          class="chart-editor-section"
+        >
+                <fieldset>
                   <h5>{{ $t('metric.edit.periodCompare.label') }}</h5>
 
                   <div class="mb-3">
@@ -282,8 +305,14 @@
                     </div>
                   </template>
                 </fieldset>
+        </section>
 
-                <fieldset v-if="selectedMetricModule">
+        <section
+          v-if="selectedMetricModule"
+          id="section-metric-metric"
+          class="chart-editor-section"
+        >
+                <fieldset>
                   <h5>{{ $t('metric.edit.metricLabel') }}</h5>
 
                   <div class="mb-3">
@@ -414,9 +443,12 @@
                     </div>
                   </div>
                 </fieldset>
-              </div>
-            </div>
+        </section>
 
+        <section
+          id="section-metric-appearance"
+          class="chart-editor-section"
+        >
             <div class="mb-3">
               <div class="form-check">
                 <input
@@ -429,7 +461,6 @@
               </div>
             </div>
 
-            <hr />
             <h5 class="mb-3">{{ $t('metric.appearance.label') }}</h5>
             <div class="row">
               <div class="col-12 col-lg-6">
@@ -566,7 +597,12 @@
                 </div>
               </div>
             </template>
+        </section>
 
+        <section
+          id="section-metric-style"
+          class="chart-editor-section"
+        >
             <m-style
               class="mt-2"
               :options="edit.valueStyle"
@@ -576,9 +612,11 @@
                 <h5>{{ $t('metric.editStyle.valueLabel') }}</h5>
               </template>
             </m-style>
-          </div>
+        </section>
+        </div>
+      </div>
 
-          <div class="col-12 col-lg-5">
+      <div class="col-12 col-lg-5">
             <div
               v-if="metrics.length"
               class="d-flex flex-column position-sticky pt-2"
@@ -604,8 +642,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -645,8 +681,22 @@ const store = useStore()
 const $auth = inject('$auth')
 
 const { options, setBaseDefaultValues } = usePageBlockBase(props, emit)
-const activeTab = ref(0)
 const edit = ref(undefined)
+
+// Quick-jump nav for the (long) editor form — mirrors the Chart editor's.
+const navSteps = computed(() => [
+  { id: 'section-metric-basics', num: 1, label: t('metric.edit.basicsLabel') },
+  { id: 'section-metric-dimension', num: 2, label: t('metric.edit.dimensionLabel') },
+  { id: 'section-metric-period-compare', num: 3, label: t('metric.edit.periodCompare.label') },
+  { id: 'section-metric-metric', num: 4, label: t('metric.edit.metricLabel') },
+  { id: 'section-metric-appearance', num: 5, label: t('metric.appearance.label') },
+  { id: 'section-metric-style', num: 6, label: t('metric.editStyle.valueLabel') },
+])
+
+function scrollToSection (id) {
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 // Normalize appearance defaults for older blocks
 if (!options.value.density) options.value.density = 'comfortable'

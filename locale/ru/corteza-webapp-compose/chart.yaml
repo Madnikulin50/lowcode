@@ -25,6 +25,9 @@ general:
     handle: Уникальный идентификатор (a - z, 0 - 9, _, -)
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
 edit:
+  nav:
+    axesLegend: Оси и легенда
+    advanced: Дополнительно
   animation:
     label: Анимация
     enabled: Анимация включена
@@ -45,7 +48,7 @@ edit:
       week: Неделя
       year: Год
     gaugeSteps: Шаги
-    label: Dimensions
+    label: Измерения
     skipMissingValues: Пропускать отсутсвующие значения
     timeLabels: Метки времени
     options:

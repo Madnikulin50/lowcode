@@ -45,10 +45,27 @@
             <div class="overflow-auto" style="flex: 1 1 0%; min-height: 0;">
             <div class="row pb-5">
               <div
-                class="col-12 col-lg-7 border-end"
+                class="col-12 col-lg-7 border-end d-flex"
               >
-                <div class="pt-3 px-3">
-                  <h5>
+                <nav class="chart-editor-nav d-none d-lg-flex flex-column">
+                  <button
+                    v-for="step in navSteps"
+                    :key="step.id"
+                    type="button"
+                    class="chart-editor-nav-item"
+                    @click="scrollToSection(step.id)"
+                  >
+                    <span class="chart-editor-nav-num">{{ step.num }}</span>
+                    {{ step.label }}
+                  </button>
+                </nav>
+
+                <div class="chart-editor-content flex-grow-1">
+                <section
+                  id="section-general"
+                  class="chart-editor-section"
+                >
+                  <h5 class="mb-3">
                     {{ $t('generalSettings') }}
                   </h5>
                   <div
@@ -204,8 +221,7 @@
                       </div>
                     </div>
                   </div>
-                </div>
-                <hr v-if="modules">
+                </section>
 
                 <component
                   :is="reportEditor"
@@ -216,13 +232,27 @@
                   :supported-metrics="1"
                 />
 
-                <hr>
+                <section
+                  id="section-advanced"
+                  class="chart-editor-section"
+                >
+                  <button
+                    type="button"
+                    class="chart-editor-advanced-toggle"
+                    :class="{ 'is-open': advancedOpen }"
+                    @click="advancedOpen = !advancedOpen"
+                  >
+                    <font-awesome-icon
+                      :icon="['fas', 'chevron-right']"
+                      class="chart-editor-chevron"
+                    />
+                    {{ $t('edit.nav.advanced') }}
+                  </button>
 
-                <div class="px-3">
-                  <h5 class="mb-3">
-                    {{ $t('edit.toolbox.label') }}
-                  </h5>
-
+                  <div
+                    v-show="advancedOpen"
+                    class="chart-editor-advanced-body"
+                  >
                   <div class="row">
                     <div class="col-12 col-lg-6">
                       <div class="mb-3">
@@ -275,14 +305,15 @@
                             />
                             {{ opt.text }}
                           </label>
+                        </div>
                       </div>
                     </div>
 
-
-                  </div>
-                </div>
-                  <div class="col-12 col-lg-6 mt-2 mt-md-0">
-                      <div v-if="hasGradient" class="mb-3">
+                    <div
+                      v-if="hasGradient"
+                      class="col-12 col-lg-6"
+                    >
+                      <div class="mb-3">
                         <label class="form-label text-primary">
                           {{ $t('edit.gradient.label', 'Gradient') }}
                         </label>
@@ -297,6 +328,9 @@
                         />
                       </div>
                     </div>
+                  </div>
+                  </div>
+                </section>
                 </div>
               </div>
 
@@ -500,6 +534,25 @@ const processingClone = ref(false)
 const processingSaveAndClose = ref(false)
 const processingDelete = ref(false)
 const loading = ref(false)
+const advancedOpen = ref(false)
+
+// Quick-jump nav for the (long) editor form. It only scrolls to a section —
+// dimensions/metrics/axes only exist once a module is picked, so a click
+// before that is a no-op rather than an error.
+const navSteps = computed(() => [
+  { id: 'section-general', num: 1, label: t('generalSettings') },
+  { id: 'section-data-source', num: 2, label: t('edit.module.title') },
+  { id: 'section-dimensions', num: 3, label: t('edit.dimension.label') },
+  { id: 'section-metrics', num: 4, label: t('edit.metric.title') },
+  { id: 'section-axes-legend', num: 5, label: t('edit.nav.axesLegend') },
+  { id: 'section-advanced', num: 6, label: t('edit.nav.advanced') },
+])
+
+function scrollToSection (id) {
+  if (id === 'section-advanced') advancedOpen.value = true
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 const editReportIndex = ref(undefined)
 const customColorSchemes = ref([])
 const colorSchemeModal = ref({
@@ -882,6 +935,11 @@ function checkUnsavedChanges (next) {
 </script>
 
 <style lang="scss">
+// The .chart-editor-* layout classes (nav, sections, chips) used below live
+// in src/scss/chart-editor.scss, imported globally from main.js — this view
+// is reached through its own lazy-loaded route chunk, and PageBlocks
+// configurators (Metric/Record/RecordList, reached via the Page Builder
+// route) need the same classes without ever loading this chunk.
 .chart-preview {
   max-height: 50%;
 }

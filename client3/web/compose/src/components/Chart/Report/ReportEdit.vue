@@ -1,6 +1,9 @@
 <template>
   <div>
-    <div class="px-3">
+    <section
+      id="section-data-source"
+      class="chart-editor-section"
+    >
       <h5 class="mb-3">
         {{ $t('edit.module.title') }}
       </h5>
@@ -67,35 +70,63 @@
           </div>
         </div>
       </div>
-    </div>
-    <hr v-if="module">
+    </section>
 
-    <div
+    <section
       v-if="!!module"
-      class="px-3"
+      id="section-dimensions"
+      class="chart-editor-section"
     >
-      <fieldset
+      <h5 class="d-flex align-items-center mb-3">
+        {{ $t('edit.dimension.label') }}
+        <button
+          v-if="canAddDimension"
+          type="button"
+          class="btn btn-link text-decoration-none"
+          @click.prevent="addDimension"
+        >
+          + {{ $t('edit.dimension.add') }}
+        </button>
+      </h5>
+
+      <div
         v-for="(d, i) in dimensions"
         :key="i"
+        class="chart-editor-chip"
+        :class="{ 'is-open': !!openDimensions[i] }"
       >
-        <h5 class="mb-3">
-          {{ $t('edit.dimension.label') }}
+        <div
+          class="chart-editor-chip-head"
+          @click="toggleDimension(i)"
+        >
+          <span class="chart-editor-chip-tag chart-editor-chip-tag--dimension">
+            {{ $t('edit.dimension.label') }}
+          </span>
+          <span class="chart-editor-chip-title">
+            {{ dimensionSummary(d).title }}
+          </span>
+          <span
+            v-if="dimensionSummary(d).subtitle"
+            class="chart-editor-chip-sub"
+          >
+            · {{ dimensionSummary(d).subtitle }}
+          </span>
           <small
             v-if="dimensions.length > 1"
-            class="text-muted"
+            class="text-muted ms-1"
           >
             {{ i + 1 }}
           </small>
-          <button
-            v-if="i === dimensions.length - 1 && canAddDimension"
-            type="button"
-            class="btn btn-link text-decoration-none p-0 ms-2 align-baseline"
-            @click.prevent="addDimension"
-          >
-            + {{ $t('edit.dimension.add') }}
-          </button>
-        </h5>
+          <font-awesome-icon
+            :icon="['fas', 'chevron-down']"
+            class="chart-editor-chip-chevron ms-auto"
+          />
+        </div>
 
+        <div
+          v-show="openDimensions[i]"
+          class="chart-editor-chip-body"
+        >
         <template v-if="usesDimensionsField">
           <div class="row">
             <div class="col-12 col-lg-6">
@@ -181,19 +212,20 @@
           </template>
         </template>
 
-        <slot
-          name="dimension-options"
-          :index="i"
-          :dimension="d"
-          :field="getField(d)"
-        />
-      </fieldset>
-    </div>
-    <hr v-if="!!module">
+          <slot
+            name="dimension-options"
+            :index="i"
+            :dimension="d"
+            :field="getField(d)"
+          />
+        </div>
+      </div>
+    </section>
 
-    <div
+    <section
       v-if="!!module"
-      class="px-3"
+      id="section-metrics"
+      class="chart-editor-section"
     >
       <h5 class="d-flex align-items-center mb-3">
         {{ $t('edit.metric.title') }}
@@ -217,81 +249,115 @@
         <template #item="{ element, index }">
           <div
             :key="index"
-            class="metric rounded border border-light p-3 mb-3"
+            class="chart-editor-chip"
+            :class="{ 'is-open': !!openMetrics[index] }"
           >
-            <h5
-              v-if="metrics.length > 1"
-              class="d-flex align-items-center mb-3"
+            <div
+              class="chart-editor-chip-head"
+              @click="toggleMetric(index)"
             >
-              {{ $t('edit.metric.label') }} {{ index + 1 }}
-
-              <div class="d-flex align-items-center ms-auto">
-                <c-input-confirm
-                  show-icon
-                  class="me-2"
-                  @confirmed="removeMetric(index)"
+              <button
+                v-if="metrics.length > 1"
+                type="button"
+                class="btn btn-link btn-sm p-0 chart-editor-chip-grab"
+                @click.stop
+              >
+                <font-awesome-icon
+                  :icon="['fas', 'bars']"
+                  class="grab text-secondary"
                 />
+              </button>
 
-                <button
-                  type="button"
-                  class="btn btn-link btn-sm ms-auto px-0"
-                >
-                  <font-awesome-icon
-                    :icon="['fas', 'bars']"
-                    class="grab text-secondary"
-                  />
-                </button>
-              </div>
-            </h5>
+              <span class="chart-editor-chip-tag chart-editor-chip-tag--metric">
+                {{ $t('edit.metric.label') }}
+              </span>
+              <span class="chart-editor-chip-title">
+                {{ metricSummary(element).title }}
+              </span>
+              <span
+                v-if="metricSummary(element).subtitle"
+                class="chart-editor-chip-sub"
+              >
+                · {{ metricSummary(element).subtitle }}
+              </span>
+              <small
+                v-if="metrics.length > 1"
+                class="text-muted ms-1"
+              >
+                {{ index + 1 }}
+              </small>
 
-            <div class="row">
-              <div class="col-12 col-lg-6">
-                <div class="mb-3">
-                  <label class="form-label text-primary">
-                    {{ $t('edit.metric.fieldLabel') }}
-                  </label>
-                  <c-input-select
-                    v-model="element.field"
-                    :options="metricFields"
-                    :get-option-key="option => option.text"
-                    label="text"
-                    :reduce="option => option.value"
-                    @input="value => onMetricFieldChange(value, element)"
-                  />
-                </div>
-              </div>
+              <c-input-confirm
+                v-if="metrics.length > 1"
+                show-icon
+                class="ms-auto chart-editor-chip-delete"
+                @click.stop
+                @confirmed="removeMetric(index)"
+              />
 
-              <div class="col-12 col-lg-6">
-                <div class="mb-3">
-                  <label class="form-label text-primary">
-                    {{ $t('edit.metric.function.label') }}
-                  </label>
-                  <c-input-select
-                    v-model="element.aggregate"
-                    :disabled="!element.field || element.field === 'count'"
-                    :options="metricAggregates"
-                    label="text"
-                    :reduce="option => option.value"
-                    :get-option-key="option => option.text"
-                    :placeholder="$t('edit.metric.function.placeholder')"
-                    @input="value => onMetricFieldChange(value, element)"
-                  />
-                </div>
-              </div>
+              <font-awesome-icon
+                :icon="['fas', 'chevron-down']"
+                class="chart-editor-chip-chevron"
+                :class="{ 'ms-auto': metrics.length <= 1 }"
+              />
             </div>
 
-            <slot
-              name="metric-options"
-              :metric="element"
-              :report="editReport"
-            />
+            <div
+              v-show="openMetrics[index]"
+              class="chart-editor-chip-body"
+            >
+              <div class="row">
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label class="form-label text-primary">
+                      {{ $t('edit.metric.fieldLabel') }}
+                    </label>
+                    <c-input-select
+                      v-model="element.field"
+                      :options="metricFields"
+                      :get-option-key="option => option.text"
+                      label="text"
+                      :reduce="option => option.value"
+                      @input="value => onMetricFieldChange(value, element)"
+                    />
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label class="form-label text-primary">
+                      {{ $t('edit.metric.function.label') }}
+                    </label>
+                    <c-input-select
+                      v-model="element.aggregate"
+                      :disabled="!element.field || element.field === 'count'"
+                      :options="metricAggregates"
+                      label="text"
+                      :reduce="option => option.value"
+                      :get-option-key="option => option.text"
+                      :placeholder="$t('edit.metric.function.placeholder')"
+                      @input="value => onMetricFieldChange(value, element)"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <slot
+                name="metric-options"
+                :metric="element"
+                :report="editReport"
+              />
+            </div>
           </div>
         </template>
       </draggable>
-    </div>
+    </section>
 
-    <hr v-if="!!module && hasAxis">
-
+    <section
+      v-if="!!module && (hasAxis || hasLegend)"
+      id="section-axes-legend"
+      class="chart-editor-section"
+    >
     <template v-if="hasAxis">
       <slot
         name="y-axis"
@@ -299,11 +365,9 @@
       />
     </template>
 
-    <hr v-if="hasLegend">
-
     <div
       v-if="hasLegend"
-      class="px-3"
+      :class="{ 'mt-4': hasAxis }"
     >
       <h5 class="mb-3">
         {{ $t('edit.additionalConfig.legend.label') }}
@@ -464,6 +528,7 @@
         </div>
       </div>
     </div>
+    </section>
 
     <slot
       name="additional-config"
@@ -475,7 +540,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import draggable from 'vuedraggable'
 import { compose } from 'corteza-lib/js/dist'
@@ -566,6 +631,42 @@ const dimensions = computed({
   },
 })
 
+// Dimension/metric cards are collapsible — only the first of each starts
+// expanded, the rest collapse to a one-line summary (field + function).
+// Re-seeded whenever the report itself is swapped for another one (e.g.
+// funnel charts editing a different report), not on every field edit.
+const openDimensions = ref((props.report?.dimensions || []).map((_, i) => i === 0))
+const openMetrics = ref((props.report?.metrics || []).map((_, i) => i === 0))
+
+watch(() => props.report, () => {
+  openDimensions.value = (dimensions.value || []).map((_, i) => i === 0)
+  openMetrics.value = (metrics.value || []).map((_, i) => i === 0)
+})
+
+function toggleDimension (i) { openDimensions.value[i] = !openDimensions.value[i] }
+
+function toggleMetric (i) { openMetrics.value[i] = !openMetrics.value[i] }
+
+function dimensionSummary (d) {
+  if (!d?.field) return { title: t('edit.dimension.fieldPlaceholder') }
+  const field = dimensionFields.value.find(f => f.value === d.field)
+  const modifier = dimensionModifiers.value.find(m => m.value === d.modifier)
+  return {
+    title: field ? field.text : d.field,
+    subtitle: modifier?.value ? modifier.text : '',
+  }
+}
+
+function metricSummary (m) {
+  if (!m?.field) return { title: t('edit.metric.fieldPlaceholder') }
+  const field = metricFields.value.find(f => f.value === m.field)
+  const aggregate = metricAggregates.value.find(a => a.value === m.aggregate)
+  return {
+    title: field ? field.text : m.field,
+    subtitle: aggregate ? aggregate.text : '',
+  }
+}
+
 const hasLegend = computed(() => !metrics.value?.some(({ type }) => ['gauge'].includes(type)))
 
 const hasAxis = computed(() => metrics.value?.some(({ type }) => ['bar', 'line', 'scatter', 'waterfall', 'boxplot', 'candlestick', 'heatmap', 'parallel'].includes(type)))
@@ -617,10 +718,12 @@ function getField ({ field }) {
 
 function addMetric () {
   metrics.value = [...(metrics.value || []), props.chart.defMetric()]
+  openMetrics.value.push(true)
 }
 
 function addDimension () {
   dimensions.value = [...(dimensions.value || []), props.chart.defDimension()]
+  openDimensions.value.push(true)
 }
 
 function onDimFieldChange (f, d) {
@@ -656,6 +759,7 @@ function removeMetric (i) {
   const newMetrics = [...(metrics.value || [])]
   newMetrics.splice(i, 1)
   metrics.value = newMetrics
+  openMetrics.value.splice(i, 1)
 }
 
 function isTemporalField (name) {
@@ -670,11 +774,3 @@ onBeforeUnmount(() => {
   orientations.value = []
 })
 </script>
-
-<style lang="scss" scoped>
-.metrics {
-  .metric {
-    background-color: var(--body-bg);
-  }
-}
-</style>

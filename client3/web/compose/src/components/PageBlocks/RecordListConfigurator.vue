@@ -1,6 +1,25 @@
 <template>
   <div>
-    <div data-test-id="record-list-configurator">
+    <div class="d-flex">
+      <nav class="chart-editor-nav d-none d-lg-flex flex-column">
+        <button
+          v-for="step in navSteps"
+          :key="step.id"
+          type="button"
+          class="chart-editor-nav-item"
+          @click="scrollToSection(step.id)"
+        >
+          <span class="chart-editor-nav-num">{{ step.num }}</span>
+          {{ step.label }}
+        </button>
+      </nav>
+
+      <div class="chart-editor-content flex-grow-1">
+    <section
+      id="section-list-general"
+      class="chart-editor-section"
+      data-test-id="record-list-configurator"
+    >
       <h5 class="mb-3">{{ $t('recordList.record.generalLabel') }}</h5>
       <div class="row">
         <div class="col-12" :class="isInlineEditorAllowed ? 'col-lg-6' : 'col-lg-12'">
@@ -19,12 +38,13 @@
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
     <template v-if="recordListModule">
-      <hr>
-
-      <div class="">
+      <section
+        id="section-list-fields"
+        class="chart-editor-section"
+      >
         <div class="mb-3">
           <h5 class="d-flex align-items-center mb-1">
             {{ $t('module.general.fields') }}
@@ -58,11 +78,12 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <hr>
-
-      <div>
+      <section
+        id="section-list-appearance"
+        class="chart-editor-section"
+      >
         <h5 class="mb-3">{{ $t('recordList.appearance.label') }}</h5>
         <div class="row">
           <div class="col-12 col-lg-6">
@@ -142,11 +163,13 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <hr>
-
-      <div v-if="options.editable" class="">
+      <section
+        v-if="options.editable"
+        id="section-list-inline-edit"
+        class="chart-editor-section"
+      >
         <h5 class="mb-3">{{ $t('recordList.record.inlineEditor') }}</h5>
         <div v-if="recordListModule && options.editable" class="mb-3">
           <label class="form-label text-primary">{{ $t('recordList.editFields') }}</label>
@@ -167,11 +190,12 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <hr v-if="options.editable">
-
-      <div class="">
+      <section
+        id="section-list-filters"
+        class="chart-editor-section"
+      >
         <h5 class="mb-3">{{ $t('recordList.record.prefilterLabel') }}</h5>
         <div class="row">
           <div class="col-12 col-lg-6">
@@ -242,10 +266,13 @@
             </div>
           </div>
         </div>
-      </div>
-      <hr>
+      </section>
 
-      <div v-if="!options.positionField" class="">
+      <section
+        v-if="!options.positionField"
+        id="section-list-presort"
+        class="chart-editor-section"
+      >
         <h5 class="mb-3">{{ $t('recordList.record.presortLabel') }}</h5>
         <div class="row">
           <div class="col">
@@ -260,10 +287,12 @@
             <c-input-presort v-model="options.presort" :fields="recordListModuleFields" :labels="{ ascending: $t('label.ascending'), descending: $t('label.descending'), none: $t('label.none'), placeholder: $t('recordList.record.presortPlaceholder'), footnote: $t('recordList.record.presortFootnote'), toggleInput: $t('recordList.record.presortToggleInput'), addButton: $t('label.add'), title: $t('recordList.record.presortInputLabel') }" allow-text-input />
           </div>
         </div>
-      </div>
-      <hr v-if="!options.positionField">
+      </section>
 
-      <div class="">
+      <section
+        id="section-list-paging"
+        class="chart-editor-section"
+      >
         <h5 class="mb-3">{{ $t('recordList.record.pagingLabel') }}</h5>
         <div class="row">
           <div class="col-12 col-lg-6">
@@ -303,11 +332,12 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <hr>
-
-      <div class="">
+      <section
+        id="section-list-summaries"
+        class="chart-editor-section"
+      >
         <h5 class="mb-3">{{ $t('recordList.summaries.label') }}</h5>
         <div class="row">
           <div class="col-12">
@@ -347,11 +377,12 @@
             </c-form-table-wrapper>
           </div>
         </div>
-      </div>
+      </section>
 
-      <hr>
-
-      <div class="">
+      <section
+        id="section-list-records"
+        class="chart-editor-section"
+      >
         <h5 class="mb-3">{{ $t('recordList.record.recordsLabel') }}</h5>
         <div class="row">
           <div class="col-12 col-lg-6">
@@ -506,8 +537,10 @@
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </template>
+      </div>
+    </div>
 
     <AutomationTab v-bind="$props" :module="recordListModule" :buttons="options.selectionButtons" @update:buttons="options.selectionButtons = $event" />
   </div>
@@ -549,6 +582,24 @@ const compactChrome = computed({
 const checkboxLabel = computed(() => ({ on: $t('label.yes'), off: $t('label.no') }))
 const fetchingRoles = ref(false)
 const resolvedRoles = ref({})
+
+// Quick-jump nav for the (long) editor form — mirrors the Chart/Metric editors'.
+const navSteps = computed(() => [
+  { id: 'section-list-general', num: 1, label: $t('recordList.record.generalLabel') },
+  { id: 'section-list-fields', num: 2, label: $t('module.general.fields') },
+  { id: 'section-list-appearance', num: 3, label: $t('recordList.appearance.label') },
+  { id: 'section-list-inline-edit', num: 4, label: $t('recordList.record.inlineEditor') },
+  { id: 'section-list-filters', num: 5, label: $t('recordList.record.prefilterLabel') },
+  { id: 'section-list-presort', num: 6, label: $t('recordList.record.presortLabel') },
+  { id: 'section-list-paging', num: 7, label: $t('recordList.record.pagingLabel') },
+  { id: 'section-list-summaries', num: 8, label: $t('recordList.summaries.label') },
+  { id: 'section-list-records', num: 9, label: $t('recordList.record.recordsLabel') },
+])
+
+function scrollToSection (id) {
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 const getModuleByID = computed(() => store.module.getByID)
 const modules = computed(() => store.module.set)

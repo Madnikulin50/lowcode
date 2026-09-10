@@ -39,6 +39,19 @@
             :placeholder="$t('value')"
           />
 
+          <span
+            class="input-group-text"
+            data-bs-toggle="tooltip"
+            :title="$t('edit.metric.gaugeColor')"
+          >
+            <c-input-color-picker
+              v-model="step.color"
+              :show-text="false"
+              :translations="colorPickerTranslations"
+              :theme-settings="themeSettings"
+            />
+          </span>
+
           <span class="input-group-text">
             <c-input-confirm
               show-icon
@@ -201,13 +214,16 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose, NoID } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import ReportEdit from './ReportEdit.vue'
 import ChartTranslator from 'corteza-webapp-compose/src/components/Chart/ChartTranslator.vue'
 
+const { CInputColorPicker } = components
 const { t } = useI18n()
+const $Settings = inject('$Settings')
 
 const props = defineProps({
   report: { type: Object, required: false, default: undefined },
@@ -233,4 +249,14 @@ const formatOptions = ref([
   { value: 'custom', text: t('edit.formatting.presetFormats.options.custom') },
   { value: 'accounting', text: t('edit.formatting.presetFormats.options.accounting') },
 ])
+
+const themeSettings = computed(() => $Settings.get('ui.studio.themes', []))
+
+const colorPickerTranslations = computed(() => ({
+  modalTitle: t('colorScheme.pickAColor'),
+  light: t('themes.labels.light'),
+  dark: t('themes.labels.dark'),
+  cancelBtnLabel: t('label.cancel'),
+  saveBtnLabel: t('label.saveAndClose'),
+}))
 </script>

@@ -982,10 +982,11 @@
                   <label class="form-label text-primary">
                     {{ $t('edit.additionalConfig.anomaly.color') }}
                   </label>
-                  <input
+                  <c-input-color-picker
                     v-model="report.anomaly.color"
-                    type="color"
-                    class="form-control form-control-sm color-picker"
+                    :show-text="false"
+                    :translations="colorPickerTranslations"
+                    :theme-settings="themeSettings"
                   />
                 </div>
               </div>
@@ -1189,10 +1190,11 @@
                   <label class="form-label text-primary">
                     {{ $t('edit.additionalConfig.forecast.color') }}
                   </label>
-                  <input
+                  <c-input-color-picker
                     v-model="report.forecast.color"
-                    type="color"
-                    class="form-control form-control-sm color-picker"
+                    :show-text="false"
+                    :translations="colorPickerTranslations"
+                    :theme-settings="themeSettings"
                   />
                 </div>
               </div>
@@ -1289,15 +1291,28 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onBeforeUnmount, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
 import ReportEdit from './ReportEdit.vue'
 import ChartTranslator from 'corteza-webapp-compose/src/components/Chart/ChartTranslator.vue'
 
 defineOptions({ i18nOptions: { namespaces: 'chart' } })
 
+const { CInputColorPicker } = components
 const { t } = useI18n()
+const $Settings = inject('$Settings')
+
+const themeSettings = computed(() => $Settings.get('ui.studio.themes', []))
+
+const colorPickerTranslations = computed(() => ({
+  modalTitle: t('colorScheme.pickAColor'),
+  light: t('themes.labels.light'),
+  dark: t('themes.labels.dark'),
+  cancelBtnLabel: t('label.cancel'),
+  saveBtnLabel: t('label.saveAndClose'),
+}))
 
 const ignoredCharts = ['funnel', 'gauge', 'radar']
 
@@ -1593,9 +1608,3 @@ function chartTypeChanged (metric) {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.color-picker {
-  max-width: 50px;
-}
-</style>

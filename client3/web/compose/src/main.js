@@ -1,6 +1,7 @@
 import { createApp, h, defineComponent } from 'vue'
 import { createPinia } from 'pinia'
 import './themes'
+import './scss/chart-editor.scss'
 
 import App from './App.vue'
 import router from './router'
