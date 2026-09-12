@@ -4,43 +4,51 @@ type (
 	ModuleConfigConnector struct {
 		Type string `json:"type"` // "rest", "db", "graphql", "elasticsearch", "mongodb", "kafka", "redis", "grpc"
 
-		RestURL       string            `json:"restUrl,omitempty"`
-		RestMethod    string            `json:"restMethod,omitempty"`
-		RestHeaders   map[string]string `json:"restHeaders,omitempty"`
-		RestBody      string            `json:"restBody,omitempty"`
-		RestDataPath  string            `json:"restDataPath,omitempty"`
-		RestPageParam string            `json:"restPageParam,omitempty"`
-		RestLimitParam string           `json:"restLimitParam,omitempty"`
-		RestOffsetParam string          `json:"restOffsetParam,omitempty"`
+		RestURL         string            `json:"restUrl,omitempty"`
+		RestMethod      string            `json:"restMethod,omitempty"`
+		RestHeaders     map[string]string `json:"restHeaders,omitempty"`
+		RestBody        string            `json:"restBody,omitempty"`
+		RestDataPath    string            `json:"restDataPath,omitempty"`
+		RestPageParam   string            `json:"restPageParam,omitempty"`
+		RestLimitParam  string            `json:"restLimitParam,omitempty"`
+		RestOffsetParam string            `json:"restOffsetParam,omitempty"`
 
-	DBConnectionID     uint64 `json:"dbConnectionId,string,omitempty"`
-	DBDriver           string `json:"dbDriver,omitempty"`
-	DBConnectionString string `json:"dbConnectionString,omitempty"`
-	DBQuery            string `json:"dbQuery,omitempty"`
+		DBConnectionID     uint64 `json:"dbConnectionId,string,omitempty"`
+		DBDriver           string `json:"dbDriver,omitempty"`
+		DBConnectionString string `json:"dbConnectionString,omitempty"`
+		DBQuery            string `json:"dbQuery,omitempty"`
 
 		EsIndex string `json:"esIndex,omitempty"`
 
-		MongoHost string `json:"mongoHost,omitempty"`
-		MongoPort int    `json:"mongoPort,omitempty"`
-		MongoDB   string `json:"mongoDb,omitempty"`
-		MongoColl string `json:"mongoCollection,omitempty"`
+		MongoHost  string `json:"mongoHost,omitempty"`
+		MongoPort  int    `json:"mongoPort,omitempty"`
+		MongoDB    string `json:"mongoDb,omitempty"`
+		MongoColl  string `json:"mongoCollection,omitempty"`
 		MongoQuery string `json:"mongoQuery,omitempty"`
 
 		KafkaBrokers string `json:"kafkaBrokers,omitempty"`
 		KafkaTopic   string `json:"kafkaTopic,omitempty"`
 		KafkaGroup   string `json:"kafkaGroup,omitempty"`
 
-		RedisHost   string `json:"redisHost,omitempty"`
-		RedisPort   int    `json:"redisPort,omitempty"`
-		RedisPass   string `json:"redisPass,omitempty"`
-		RedisKey    string `json:"redisKey,omitempty"`
-		RedisDB     int    `json:"redisDb,omitempty"`
+		RedisHost string `json:"redisHost,omitempty"`
+		RedisPort int    `json:"redisPort,omitempty"`
+		RedisPass string `json:"redisPass,omitempty"`
+		RedisKey  string `json:"redisKey,omitempty"`
+		RedisDB   int    `json:"redisDb,omitempty"`
 
 		GrpcAddr    string `json:"grpcAddr,omitempty"`
 		GrpcMethod  string `json:"grpcMethod,omitempty"`
 		GrpcPayload string `json:"grpcPayload,omitempty"`
 
 		FieldMapping ConnectorFieldMappingSet `json:"fieldMapping,omitempty"`
+
+		// SecretRefs points sensitive fields at a Vault secret instead of
+		// storing them in plaintext above. Keys are logical field names:
+		// "dbConnectionString", "redisPass", or "restHeader:<HeaderName>"
+		// (e.g. "restHeader:Authorization"). A ref present here always wins
+		// over the plaintext field of the same name - see
+		// service.resolveConnectorSecrets.
+		SecretRefs map[string]string `json:"secretRefs,omitempty"`
 	}
 
 	ConnectorFieldMapping struct {

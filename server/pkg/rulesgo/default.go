@@ -9,6 +9,13 @@ type DefaultConfig struct {
 	ScriptExec  func(ctx context.Context, code string, ec *ExecutionContext) (map[string]interface{}, error)
 	DetachStart DetachStartFunc
 	ExtractExec NodeExecutor
+
+	// KafkaSubscribeStart/RabbitMQSubscribeStart back the kafka.subscribe and
+	// rabbitmq.subscribe nodes - normally BrokerSubscriber.StartKafkaSubscribe
+	// / StartRabbitMQSubscribe. Left nil, those node types report
+	// "not_configured" instead of failing.
+	KafkaSubscribeStart    func(ctx context.Context, subKey string, cfg KafkaConfig, ingestChainID string) error
+	RabbitMQSubscribeStart func(ctx context.Context, subKey string, cfg RabbitMQConfig, ingestChainID string) error
 }
 
 func DefaultRegistry(cfg *DefaultConfig) *Registry {
@@ -57,6 +64,20 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 	r.Register("score.matrix", &scoreMatrixExecutor{})
 	r.Register("score.weighted", &scoreWeightedExecutor{})
 	r.Register("risk.band", &riskBandExecutor{})
+
+	r.Register("kafka.produce", &kafkaProduceExecutor{})
+	r.Register("kafka.consume", &kafkaConsumeExecutor{})
+	r.Register("rabbitmq.publish", &rabbitmqPublishExecutor{})
+	r.Register("rabbitmq.consume", &rabbitmqConsumeExecutor{})
+
+	var kafkaSubStart func(ctx context.Context, subKey string, cfg KafkaConfig, ingestChainID string) error
+	var rabbitmqSubStart func(ctx context.Context, subKey string, cfg RabbitMQConfig, ingestChainID string) error
+	if cfg != nil {
+		kafkaSubStart = cfg.KafkaSubscribeStart
+		rabbitmqSubStart = cfg.RabbitMQSubscribeStart
+	}
+	r.Register("kafka.subscribe", &kafkaSubscribeExecutor{start: kafkaSubStart})
+	r.Register("rabbitmq.subscribe", &rabbitmqSubscribeExecutor{start: rabbitmqSubStart})
 
 	if cfg != nil && cfg.ExtractExec != nil {
 		r.Register("document.extract", cfg.ExtractExec)

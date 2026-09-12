@@ -65,6 +65,8 @@ require (
 	github.com/ollama/ollama v0.30.10
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
+	github.com/rabbitmq/amqp091-go v1.10.0
+	github.com/segmentio/kafka-go v0.4.51
 	github.com/sony/sonyflake v1.0.0
 	github.com/spf13/afero v1.8.2
 	github.com/spf13/cast v1.7.1

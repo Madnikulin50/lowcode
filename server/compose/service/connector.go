@@ -14,6 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/vault"
 	"github.com/madnikulin50/lowcode/server/store"
 )
 
@@ -30,6 +31,11 @@ func Connector() *connectorSvc {
 }
 
 func (svc *connectorSvc) Fetch(ctx context.Context, mod *types.Module, filter types.RecordFilter) (set types.RecordSet, outFilter types.RecordFilter, err error) {
+	mod, err = withResolvedConnectorSecrets(ctx, mod)
+	if err != nil {
+		return nil, filter, err
+	}
+
 	switch mod.Config.Connector.Type {
 	case "rest":
 		return svc.fetchREST(ctx, mod, filter)
@@ -53,6 +59,11 @@ func (svc *connectorSvc) Fetch(ctx context.Context, mod *types.Module, filter ty
 }
 
 func (svc *connectorSvc) Test(ctx context.Context, cfg types.ModuleConfigConnector) error {
+	cfg, err := resolveConnectorSecrets(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
 	switch cfg.Type {
 	case "rest", "graphql":
 		return svc.testHTTP(ctx, cfg)
@@ -65,6 +76,68 @@ func (svc *connectorSvc) Test(ctx context.Context, cfg types.ModuleConfigConnect
 	default:
 		return errors.Internal("unknown connector type: %s", cfg.Type)
 	}
+}
+
+// withResolvedConnectorSecrets returns mod unchanged if its connector has no
+// SecretRefs, otherwise a shallow copy with Config.Connector's sensitive
+// fields resolved from Vault (see resolveConnectorSecrets). The original mod
+// is never mutated.
+func withResolvedConnectorSecrets(ctx context.Context, mod *types.Module) (*types.Module, error) {
+	if mod == nil || len(mod.Config.Connector.SecretRefs) == 0 {
+		return mod, nil
+	}
+	resolved, err := resolveConnectorSecrets(ctx, mod.Config.Connector)
+	if err != nil {
+		return nil, fmt.Errorf("module %d connector: %w", mod.ID, err)
+	}
+	clone := *mod
+	clone.Config.Connector = resolved
+	return &clone, nil
+}
+
+// resolveConnectorSecrets fills in the plaintext fields a connector actually
+// uses (DBConnectionString, RedisPass, individual RestHeaders) from Vault,
+// for every entry in cfg.SecretRefs. cfg is returned by value, so the
+// caller's copy (and its RestHeaders map) is never mutated.
+func resolveConnectorSecrets(ctx context.Context, cfg types.ModuleConfigConnector) (types.ModuleConfigConnector, error) {
+	if len(cfg.SecretRefs) == 0 {
+		return cfg, nil
+	}
+
+	if cfg.RestHeaders != nil {
+		headers := make(map[string]string, len(cfg.RestHeaders))
+		for k, v := range cfg.RestHeaders {
+			headers[k] = v
+		}
+		cfg.RestHeaders = headers
+	}
+
+	for field, ref := range cfg.SecretRefs {
+		value, err := vault.Resolve(ctx, ref)
+		if err != nil {
+			return cfg, fmt.Errorf("secret %q: %w", field, err)
+		}
+
+		switch {
+		case field == "dbConnectionString":
+			cfg.DBConnectionString = value
+		case field == "redisPass":
+			cfg.RedisPass = value
+		case strings.HasPrefix(field, "restHeader:"):
+			header := strings.TrimPrefix(field, "restHeader:")
+			if header == "" {
+				return cfg, fmt.Errorf("secret %q: empty header name", field)
+			}
+			if cfg.RestHeaders == nil {
+				cfg.RestHeaders = map[string]string{}
+			}
+			cfg.RestHeaders[header] = value
+		default:
+			return cfg, fmt.Errorf("secret %q: unknown connector field", field)
+		}
+	}
+
+	return cfg, nil
 }
 
 func (svc *connectorSvc) testHTTP(ctx context.Context, cfg types.ModuleConfigConnector) error {

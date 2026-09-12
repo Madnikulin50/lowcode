@@ -122,10 +122,13 @@ func initBridge() {
 	// Rulesgo engine: chains persist in compose_rule_chain (PostgreSQL)
 	persist := service.NewRuleChainPersistence()
 	poller := rulesgo.NewAgentPoller()
+	brokerSub := rulesgo.NewBrokerSubscriber()
 	rulesCfg := &rulesgo.DefaultConfig{
-		CRUD:        composeCRUD{},
-		DetachStart: poller.StartFromDetach,
-		ExtractExec: service.NewDocumentExtractExecutor(),
+		CRUD:                   composeCRUD{},
+		DetachStart:            poller.StartFromDetach,
+		ExtractExec:            service.NewDocumentExtractExecutor(),
+		KafkaSubscribeStart:    brokerSub.StartKafkaSubscribe,
+		RabbitMQSubscribeStart: brokerSub.StartRabbitMQSubscribe,
 		AICall: func(ctx context.Context, agent, prompt, model string) (string, error) {
 			if handlers.AgentRegistry != nil {
 				res, err := handlers.AgentRegistry.RunAgent(ctx, agent, prompt, nil)
@@ -154,6 +157,7 @@ func initBridge() {
 	}
 	engine := rulesgo.NewEngineWithPersistence(rulesgo.DefaultRegistry(rulesCfg), persist)
 	poller.SetEngine(engine)
+	brokerSub.SetEngine(engine)
 	rulesgo.SetDefaultPoller(poller)
 	rulesgo.CapturePollIdentity = func(ctx context.Context) (uint64, []uint64) {
 		ident := auth.GetIdentityFromContext(ctx)
