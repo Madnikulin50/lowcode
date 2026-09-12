@@ -153,7 +153,7 @@ func initBridge() {
 		},
 	}
 	engine := rulesgo.NewEngineWithPersistence(rulesgo.DefaultRegistry(rulesCfg), persist)
-	poller.SetEngine(engine.Engine)
+	poller.SetEngine(engine)
 	rulesgo.SetDefaultPoller(poller)
 	rulesgo.CapturePollIdentity = func(ctx context.Context) (uint64, []uint64) {
 		ident := auth.GetIdentityFromContext(ctx)
@@ -173,8 +173,8 @@ func initBridge() {
 	} else {
 		log.Printf("[bridge] loaded %d rule chains from PostgreSQL", len(engine.Chains()))
 	}
-	handlers.SetRuleEngine(engine.Engine)
-	service.StartRuleChainRecordTriggers(engine.Engine)
+	handlers.SetRuleEngine(engine)
+	service.StartRuleChainRecordTriggers(engine)
 	handlers.SetOnChainMissing(func(ctx context.Context, chainID string) {
 		ensureChainAvailable(ctx, engine, chainID)
 	})

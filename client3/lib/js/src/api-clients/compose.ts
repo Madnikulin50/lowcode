@@ -5108,4 +5108,31 @@ export default class Compose {
             ...extra,
         }).then(result => stdResolve(result))
     }
+
+    async ruleChainRuns (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            chainID,
+            limit = 20,
+            offset = 0,
+            success,
+            triggerType,
+        } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/rulechain/${chainID}/runs`,
+            params: { limit, offset, success, triggerType },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainRunGet (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID, runID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/rulechain/${chainID}/runs/${runID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
 }

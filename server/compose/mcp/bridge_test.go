@@ -11,8 +11,9 @@ import (
 
 func TestBridge_RuleEngine(t *testing.T) {
 	// Simulate bridge initialization
-	engine := rulesgo.NewEngine(rulesgo.DefaultRegistry(&rulesgo.DefaultConfig{}))
-	handlers.SetRuleEngine(engine)
+	ewp := rulesgo.NewEngineWithPersistence(rulesgo.DefaultRegistry(&rulesgo.DefaultConfig{}), rulesgo.NewMemoryPersistence())
+	handlers.SetRuleEngine(ewp)
+	engine := ewp.Engine
 
 	// Create a simple chain
 	chain := &rulesgo.Chain{
@@ -42,7 +43,7 @@ func TestBridge_DemoChains(t *testing.T) {
 		rulesgo.DefaultRegistry(&rulesgo.DefaultConfig{}),
 		persist,
 	)
-	handlers.SetRuleEngine(engineWithPersist.Engine)
+	handlers.SetRuleEngine(engineWithPersist)
 
 	registerDemoChains(engineWithPersist)
 
@@ -86,8 +87,9 @@ func TestBridge_DemoChains(t *testing.T) {
 
 func TestBridge_AllNodeTypes(t *testing.T) {
 	registry := rulesgo.DefaultRegistry(&rulesgo.DefaultConfig{})
-	engine := rulesgo.NewEngine(registry)
-	handlers.SetRuleEngine(engine)
+	ewp := rulesgo.NewEngineWithPersistence(registry, rulesgo.NewMemoryPersistence())
+	handlers.SetRuleEngine(ewp)
+	engine := ewp.Engine
 
 	nodeTests := []struct {
 		nodeType string
@@ -121,8 +123,9 @@ func TestBridge_AllNodeTypes(t *testing.T) {
 }
 
 func TestBridge_ChainImportExport(t *testing.T) {
-	engine := rulesgo.NewEngine(rulesgo.DefaultRegistry(&rulesgo.DefaultConfig{}))
-	handlers.SetRuleEngine(engine)
+	ewp := rulesgo.NewEngineWithPersistence(rulesgo.DefaultRegistry(&rulesgo.DefaultConfig{}), rulesgo.NewMemoryPersistence())
+	handlers.SetRuleEngine(ewp)
+	engine := ewp.Engine
 
 	chain := &rulesgo.Chain{
 		ID:        "test_import",

@@ -34,6 +34,15 @@
                   <font-awesome-icon :icon="['fas', 'play']" class="me-1" />
                   {{ $t('rulechain.test.title') }}
                 </button>
+                <button
+                  class="btn btn-outline-secondary"
+                  :disabled="!isEdit"
+                  :title="!isEdit ? $t('rulechain.runs.selectHint') : ''"
+                  @click="openRunsModal"
+                >
+                  <font-awesome-icon :icon="['fas', 'list']" class="me-1" />
+                  {{ $t('rulechain.runs.title') }}
+                </button>
                 <div class="d-flex ms-auto gap-2">
                   <button
                     v-if="!isGraphMode"
@@ -407,6 +416,199 @@
         </div>
       </div>
     </div>
+
+    <div
+      ref="runsModalEl"
+      class="modal fade"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              {{ $t('rulechain.runs.title') }}
+            </h5>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary ms-auto me-2"
+              :disabled="runsLoading"
+              @click="loadRuns"
+            >
+              <span
+                v-if="runsLoading"
+                class="spinner-border spinner-border-sm"
+              />
+              <template v-else>
+                {{ $t('rulechain.runs.refresh') }}
+              </template>
+            </button>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            />
+          </div>
+          <div
+            class="modal-body d-flex gap-3"
+            style="min-height: 60vh;"
+          >
+            <div
+              class="border-end pe-3 overflow-auto"
+              style="flex: 1 1 40%; min-width: 0;"
+            >
+              <div
+                v-if="runsLoading && !runs.length"
+                class="d-flex align-items-center justify-content-center py-4"
+              >
+                <span class="spinner-border spinner-border-sm" />
+              </div>
+              <div
+                v-else-if="!runs.length"
+                class="text-muted small py-3"
+              >
+                {{ $t('rulechain.runs.empty') }}
+              </div>
+              <table
+                v-else
+                class="table table-sm table-hover mb-0"
+              >
+                <thead>
+                  <tr>
+                    <th style="width: 2rem" />
+                    <th>{{ $t('rulechain.runs.columns.trigger') }}</th>
+                    <th>{{ $t('rulechain.runs.columns.startedAt') }}</th>
+                    <th class="text-end">
+                      {{ $t('rulechain.runs.columns.duration') }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="run in runs"
+                    :key="run.runID"
+                    role="button"
+                    :class="{ 'table-active': selectedRun && selectedRun.runID === run.runID }"
+                    @click="selectRun(run)"
+                  >
+                    <td>
+                      <font-awesome-icon
+                        :icon="['fas', run.success ? 'check-circle' : 'exclamation-circle']"
+                        :class="run.success ? 'text-success' : 'text-danger'"
+                      />
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">{{ run.triggerType || '—' }}</span>
+                    </td>
+                    <td class="small text-nowrap">
+                      {{ formatRunDate(run.startedAt) }}
+                    </td>
+                    <td class="small text-nowrap text-end">
+                      {{ run.durationMs != null ? `${run.durationMs} ms` : '—' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              class="overflow-auto"
+              style="flex: 1 1 60%; min-width: 0;"
+            >
+              <div
+                v-if="!selectedRun"
+                class="text-muted small py-3"
+              >
+                {{ $t('rulechain.runs.selectHint') }}
+              </div>
+              <div
+                v-else-if="runDetailLoading"
+                class="d-flex align-items-center justify-content-center py-4"
+              >
+                <span class="spinner-border spinner-border-sm" />
+              </div>
+              <div v-else-if="selectedRunDetail">
+                <div class="mb-2 d-flex align-items-center gap-2">
+                  <span
+                    class="badge"
+                    :class="selectedRunDetail.success ? 'bg-success' : 'bg-danger'"
+                  >
+                    {{ selectedRunDetail.success ? $t('rulechain.test.modal.success') : $t('rulechain.test.modal.failed') }}
+                  </span>
+                  <span class="text-muted small">
+                    {{ formatRunDate(selectedRunDetail.startedAt) }}
+                  </span>
+                </div>
+
+                <div
+                  v-if="selectedRunDetail.error"
+                  class="alert alert-danger py-2 small mb-3"
+                >
+                  {{ selectedRunDetail.error }}
+                </div>
+
+                <h6 class="small text-muted text-uppercase mb-2">
+                  {{ $t('rulechain.runs.trace') }}
+                </h6>
+
+                <div
+                  v-if="!(selectedRunDetail.nodes && selectedRunDetail.nodes.length)"
+                  class="text-muted small mb-3"
+                >
+                  {{ $t('rulechain.runs.noTrace') }}
+                </div>
+
+                <div
+                  v-for="(node, ix) in selectedRunDetail.nodes"
+                  :key="ix"
+                  class="card mb-2"
+                >
+                  <div class="card-body py-2">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <font-awesome-icon
+                        :icon="['fas', node.error ? 'exclamation-circle' : 'check-circle']"
+                        :class="node.error ? 'text-danger' : 'text-success'"
+                      />
+                      <strong class="small">{{ node.nodeID }}</strong>
+                      <span class="badge bg-light text-dark border">{{ node.type }}</span>
+                    </div>
+                    <div
+                      v-if="node.error"
+                      class="text-danger small mb-1"
+                    >
+                      {{ node.error }}
+                    </div>
+                    <pre
+                      v-if="node.output"
+                      class="bg-light border rounded p-2 mb-0 small"
+                      style="max-height: 20vh; overflow: auto; white-space: pre-wrap;"
+                    >{{ JSON.stringify(node.output, null, 2) }}</pre>
+                  </div>
+                </div>
+
+                <h6 class="small text-muted text-uppercase mt-3 mb-2">
+                  {{ $t('rulechain.runs.output') }}
+                </h6>
+                <pre
+                  class="bg-light border rounded p-2 mb-0 small"
+                  style="max-height: 20vh; overflow: auto; white-space: pre-wrap;"
+                >{{ JSON.stringify(selectedRunDetail.output, null, 2) }}</pre>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              {{ $t('label.close', 'Close') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -472,6 +674,14 @@ const testInput = ref('')
 const testResult = ref('')
 const testRunning = ref(false)
 
+const runsModalEl = ref(null)
+const runsModal = ref(undefined)
+const runs = ref([])
+const runsLoading = ref(false)
+const selectedRun = ref(null)
+const selectedRunDetail = ref(null)
+const runDetailLoading = ref(false)
+
 let nodeCounter = 0
 
 const { toastSuccess, toastErrorHandler } = useToast()
@@ -486,10 +696,18 @@ onMounted(() => {
     testResult.value = ''
     testRunning.value = false
   })
+
+  runsModal.value = new Modal(runsModalEl.value)
+  runsModalEl.value.addEventListener('hidden.bs.modal', () => {
+    runs.value = []
+    selectedRun.value = null
+    selectedRunDetail.value = null
+  })
 })
 
 onBeforeUnmount(() => {
   testModal.value?.dispose()
+  runsModal.value?.dispose()
 })
 
 function loadNodeTypes () {
@@ -702,5 +920,55 @@ async function runTest () {
       testResult.value = JSON.stringify({ error: e?.response?.data?.error?.message || String(e.message || e) }, null, 2)
     })
     .finally(() => { testRunning.value = false })
+}
+
+function openRunsModal () {
+  if (!isEdit.value) return
+  runsModal.value?.show()
+  loadRuns()
+}
+
+function loadRuns () {
+  runsLoading.value = true
+  $ComposeAPI.ruleChainRuns({ chainID: props.chainID, limit: 20 })
+    .then(({ runs: list }) => {
+      runs.value = list || []
+      // keep the current selection in sync with the freshly loaded list,
+      // or default to the most recent run on first load
+      if (runs.value.length) {
+        const stillThere = selectedRun.value && runs.value.find((r) => r.runID === selectedRun.value.runID)
+        selectRun(stillThere || runs.value[0])
+      } else {
+        selectedRun.value = null
+        selectedRunDetail.value = null
+      }
+    })
+    .catch(toastErrorHandler(t('rulechain.runs.loadFailed')))
+    .finally(() => { runsLoading.value = false })
+}
+
+function selectRun (run) {
+  selectedRun.value = run
+  selectedRunDetail.value = null
+  runDetailLoading.value = true
+  $ComposeAPI.ruleChainRunGet({ chainID: props.chainID, runID: run.runID })
+    .then(({ run: detail }) => {
+      selectedRunDetail.value = {
+        ...detail,
+        nodes: detail.nodes || [],
+        output: detail.output || {},
+      }
+    })
+    .catch(toastErrorHandler(t('rulechain.runs.detailFailed')))
+    .finally(() => { runDetailLoading.value = false })
+}
+
+function formatRunDate (v) {
+  if (!v) return '—'
+  try {
+    return new Date(v).toLocaleString()
+  } catch (e) {
+    return v
+  }
 }
 </script>

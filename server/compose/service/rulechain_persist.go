@@ -60,6 +60,46 @@ func (p *RuleChainDBPersist) DeleteChain(ctx context.Context, chainID string) er
 	return rdbms.DeleteRuleChainByHandle(ctx, rs, chainID)
 }
 
+// SaveRun implements rulesgo.RunLogPersistence: it durably stores one
+// execution record (ExecRecord) as a compose_rule_chain_run row.
+func (p *RuleChainDBPersist) SaveRun(ctx context.Context, rec rulesgo.ExecRecord) error {
+	rs := p.store()
+	if rs == nil {
+		return errors.Internal("rule chain store not ready")
+	}
+
+	// ExecRecord carries no namespace context on its own; resolve it from the
+	// chain's own row so runs of a namespaced chain stay filterable by it.
+	var namespaceID uint64
+	if chain, err := rdbms.LookupRuleChainByHandle(ctx, rs, rec.ChainID); err == nil && chain != nil {
+		namespaceID = chain.NamespaceID
+	}
+
+	run := types.RuleChainRunFromExecRecord(namespaceID, rec)
+	run.ID = id.Next()
+	run.CreatedAt = time.Now().UTC()
+	return rdbms.InsertRuleChainRun(ctx, rs, run)
+}
+
+// SearchRuleChainRuns returns persisted rule chain run-log entries, newest first.
+func SearchRuleChainRuns(ctx context.Context, f types.RuleChainRunFilter) (types.RuleChainRunSet, types.RuleChainRunFilter, error) {
+	rs := rdbmsStore(DefaultStore)
+	if rs == nil {
+		return nil, f, errors.Internal("rule chain store not ready")
+	}
+	return rdbms.SearchRuleChainRuns(ctx, rs, f)
+}
+
+// LookupRuleChainRun returns one persisted run-log entry, including its full
+// per-node trace.
+func LookupRuleChainRun(ctx context.Context, runID uint64) (*types.RuleChainRun, error) {
+	rs := rdbmsStore(DefaultStore)
+	if rs == nil {
+		return nil, errors.Internal("rule chain store not ready")
+	}
+	return rdbms.LookupRuleChainRunByID(ctx, rs, runID)
+}
+
 func (p *RuleChainDBPersist) upsert(ctx context.Context, chain *rulesgo.Chain) error {
 	rs := p.store()
 	if rs == nil {

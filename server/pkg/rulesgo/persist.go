@@ -15,6 +15,15 @@ type Persistence interface {
 	UpdateChain(ctx context.Context, chain *Chain) error
 }
 
+// RunLogPersistence is an optional capability a Persistence implementation can
+// provide to durably store run-log entries (ExecRecord) written by
+// EngineWithPersistence.RunWithLog. It is checked with a type assertion, so
+// implementations that only care about chain CRUD (e.g. MemoryPersistence,
+// used in tests) are unaffected and simply keep the in-memory log only.
+type RunLogPersistence interface {
+	SaveRun(ctx context.Context, rec ExecRecord) error
+}
+
 type MemoryPersistence struct {
 	chains map[string]*Chain
 }
@@ -148,6 +157,18 @@ func (e *EngineWithPersistence) RunWithLog(ctx context.Context, chainID string, 
 		TriggerType: triggerType,
 	}
 	e.log.Add(record)
+
+	if rlp, ok := e.persist.(RunLogPersistence); ok {
+		// Persist off the request path: the caller's context may already be
+		// cancelled/timed out by the time we get here (HTTP handlers return
+		// right after RunWithLog), so detach it but keep any identity/values.
+		saveCtx := context.WithoutCancel(ctx)
+		go func() {
+			if serr := rlp.SaveRun(saveCtx, record); serr != nil {
+				log.Printf("[rulesgo] persist run log for %s: %v", chainID, serr)
+			}
+		}()
+	}
 
 	return result, err
 }

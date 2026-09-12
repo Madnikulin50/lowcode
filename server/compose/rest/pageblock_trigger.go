@@ -148,7 +148,7 @@ func (t PageBlockTrigger) Run(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result, err := engine.Run(r.Context(), req.ChainID, bag)
+	result, err := engine.RunWithLog(r.Context(), req.ChainID, bag, "pageblock")
 	if err != nil {
 		api.Send(w, r, fmt.Errorf("chain execution failed: %w", err))
 		return
@@ -229,7 +229,7 @@ func (t PageBlockTrigger) Batch(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 		}
-		result, err := engine.Run(r.Context(), req.ChainID, bag)
+		result, err := engine.RunWithLog(r.Context(), req.ChainID, bag, "pageblock-batch")
 		if err != nil {
 			resultMap["error"] = err.Error()
 		} else {

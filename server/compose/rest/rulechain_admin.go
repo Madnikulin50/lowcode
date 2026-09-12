@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/madnikulin50/lowcode/server/compose/mcp/handlers"
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
 	"github.com/madnikulin50/lowcode/server/pkg/rulesgo"
 )
@@ -200,7 +202,10 @@ func (a RuleChainAdmin) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	engine.DeleteChain(chainID)
+	if err := engine.DeleteChain(r.Context(), chainID); err != nil {
+		api.Send(w, r, fmt.Errorf("delete failed: %w", err))
+		return
+	}
 
 	api.Send(w, r, map[string]interface{}{
 		"deleted": true,
@@ -224,7 +229,7 @@ func (a RuleChainAdmin) Test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := engine.Run(r.Context(), chainID, input)
+	result, err := engine.RunWithLog(r.Context(), chainID, input, "manual-test")
 	if err != nil {
 		api.Send(w, r, err)
 		return
@@ -256,6 +261,79 @@ func (a RuleChainAdmin) Stats(w http.ResponseWriter, r *http.Request) {
 		"totalNodes":  totalNodes,
 		"nodeTypes":   nodeStats,
 		"registry":    nodeTypes(),
+	})
+}
+
+// ListRuns returns persisted run-log entries (compose_rule_chain_run) for one
+// chain, newest first. Only summary fields - the full per-node trace is
+// fetched per-run via GetRun to keep the list payload light.
+func (a RuleChainAdmin) ListRuns(w http.ResponseWriter, r *http.Request) {
+	chainID := chi.URLParam(r, "chainID")
+
+	f := types.RuleChainRunFilter{
+		ChainID:     chainID,
+		NamespaceID: parseUint64String(r.URL.Query().Get("namespaceID")),
+		TriggerType: strings.TrimSpace(r.URL.Query().Get("triggerType")),
+		Limit:       queryInt(r, "limit", 50),
+		Offset:      queryInt(r, "offset", 0),
+	}
+	if v := strings.TrimSpace(r.URL.Query().Get("success")); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			f.Success = &b
+		}
+	}
+
+	runs, _, err := service.SearchRuleChainRuns(r.Context(), f)
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+
+	out := make([]map[string]interface{}, 0, len(runs))
+	for _, run := range runs {
+		out = append(out, map[string]interface{}{
+			"runID":       strconv.FormatUint(run.ID, 10),
+			"namespaceID": strconv.FormatUint(run.NamespaceID, 10),
+			"chainID":     run.ChainID,
+			"triggerType": run.TriggerType,
+			"success":     run.Success,
+			"error":       run.Error,
+			"startedAt":   run.StartedAt,
+			"finishedAt":  run.FinishedAt,
+			"durationMs":  run.DurationMs,
+		})
+	}
+
+	api.Send(w, r, map[string]interface{}{
+		"runs":   out,
+		"total":  len(out),
+		"limit":  f.Limit,
+		"offset": f.Offset,
+	})
+}
+
+// GetRun returns one persisted run-log entry, including its full per-node
+// trace, input and output.
+func (a RuleChainAdmin) GetRun(w http.ResponseWriter, r *http.Request) {
+	chainID := chi.URLParam(r, "chainID")
+	runID := parseUint64String(chi.URLParam(r, "runID"))
+	if runID == 0 {
+		api.Send(w, r, fmt.Errorf("invalid runID"))
+		return
+	}
+
+	run, err := service.LookupRuleChainRun(r.Context(), runID)
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+	if chainID != "" && run.ChainID != chainID {
+		api.Send(w, r, fmt.Errorf("run not found for chain %s", chainID))
+		return
+	}
+
+	api.Send(w, r, map[string]interface{}{
+		"run": run,
 	})
 }
 
@@ -358,5 +436,7 @@ func MountRuleChainAdminRoutes(r chi.Router) {
 		r.Put("/{chainID}", admin.Update)
 		r.Delete("/{chainID}", admin.Delete)
 		r.Post("/{chainID}/test", admin.Test)
+		r.Get("/{chainID}/runs", admin.ListRuns)
+		r.Get("/{chainID}/runs/{runID}", admin.GetRun)
 	})
 }

@@ -13,7 +13,7 @@ import (
 )
 
 type AgentPoller struct {
-	engine  *Engine
+	engine  *EngineWithPersistence
 	mu      sync.Mutex
 	cancels map[string]context.CancelFunc
 	client  *http.Client
@@ -26,7 +26,7 @@ func NewAgentPoller() *AgentPoller {
 	}
 }
 
-func (p *AgentPoller) SetEngine(e *Engine) {
+func (p *AgentPoller) SetEngine(e *EngineWithPersistence) {
 	p.engine = e
 }
 
@@ -225,7 +225,7 @@ func (p *AgentPoller) runIngest(ctx context.Context, spec pollSpec, envelope map
 		ingestCtx, cancel = context.WithTimeout(ingestCtx, 2*time.Minute)
 		defer cancel()
 	}
-	res, err := p.engine.Run(ingestCtx, spec.ingestChainID, envelope)
+	res, err := p.engine.RunWithLog(ingestCtx, spec.ingestChainID, envelope, "poll")
 	if err != nil {
 		log.Printf("[poller] ingest %s: %v", spec.ingestChainID, err)
 	}

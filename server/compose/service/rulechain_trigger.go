@@ -25,7 +25,7 @@ type composeRecordEvent interface {
 }
 
 // StartRuleChainRecordTriggers subscribes once to compose:record afterCreate/afterUpdate.
-func StartRuleChainRecordTriggers(engine *rulesgo.Engine) {
+func StartRuleChainRecordTriggers(engine *rulesgo.EngineWithPersistence) {
 	if engine == nil {
 		return
 	}
@@ -41,7 +41,7 @@ func StartRuleChainRecordTriggers(engine *rulesgo.Engine) {
 	})
 }
 
-func runMatchingRecordChains(ctx context.Context, engine *rulesgo.Engine, ev eventbus.Event) {
+func runMatchingRecordChains(ctx context.Context, engine *rulesgo.EngineWithPersistence, ev eventbus.Event) {
 	re, ok := ev.(composeRecordEvent)
 	if !ok || engine == nil {
 		return
@@ -94,7 +94,7 @@ func runMatchingRecordChains(ctx context.Context, engine *rulesgo.Engine, ev eve
 				if ident != nil && ident.Valid() {
 					bg = auth.SetIdentityToContext(bg, ident)
 				}
-				if _, err := engine.Run(bg, chain.ID, input); err != nil {
+				if _, err := engine.RunWithLog(bg, chain.ID, input, "record-event"); err != nil {
 					log.Printf("[rulechain] trigger %s: %v", chain.ID, err)
 				}
 			}

@@ -73,14 +73,16 @@ func (rc *RuleChain) Run(w http.ResponseWriter, r *http.Request) {
 	}
 
 	runCtx := r.Context()
+	triggerType := "api"
 	kind, _ := input["kind"].(string)
 	if kind == "complete" || kind == "failed" {
+		triggerType = "poll-callback"
 		var cancel context.CancelFunc
 		runCtx, cancel = context.WithTimeout(context.WithoutCancel(r.Context()), 2*time.Minute)
 		defer cancel()
 	}
 
-	result, err := engine.Run(runCtx, chainID, input)
+	result, err := engine.RunWithLog(runCtx, chainID, input, triggerType)
 	if err != nil {
 		api.Send(w, r, err)
 		return
@@ -93,9 +95,29 @@ func (rc *RuleChain) Run(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rc *RuleChain) Executions(w http.ResponseWriter, r *http.Request) {
+	engine := handlers.RuleEngine
+	if engine == nil {
+		api.Send(w, r, fmt.Errorf("rule engine not initialized"))
+		return
+	}
+
+	chainID := r.URL.Query().Get("chainID")
+	limit := queryInt(r, "limit", 50)
+	// pull a larger window from the in-memory log so filtering by chainID
+	// below still returns up to `limit` matching records
+	records := engine.ExecutionLogs(0)
+
+	executions := make([]rulesgo.ExecRecord, 0, limit)
+	for i := len(records) - 1; i >= 0 && len(executions) < limit; i-- {
+		if chainID != "" && records[i].ChainID != chainID {
+			continue
+		}
+		executions = append(executions, records[i])
+	}
+
 	api.Send(w, r, map[string]interface{}{
-		"executions": []interface{}{},
-		"message":    "execution log available via persistence engine",
+		"executions": executions,
+		"total":      len(executions),
 	})
 }
 

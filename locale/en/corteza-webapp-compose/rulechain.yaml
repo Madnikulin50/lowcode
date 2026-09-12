@@ -75,6 +75,20 @@ test:
     title: Test result
     success: Success
     failed: Failed
+runs:
+  title: Execution history
+  refresh: Refresh
+  empty: No runs yet
+  selectHint: Select a run on the left to see its step-by-step trace
+  trace: Step-by-step trace
+  noTrace: No step data for this run
+  output: Result
+  columns:
+    trigger: Trigger
+    startedAt: Started
+    duration: Duration
+  loadFailed: Rule chain runs could not be loaded
+  detailFailed: Run trace could not be loaded
 notification:
   created: Rule chain created
   updated: Rule chain updated

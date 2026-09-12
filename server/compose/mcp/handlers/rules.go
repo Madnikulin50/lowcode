@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	RuleEngine     *rulesgo.Engine
+	RuleEngine     *rulesgo.EngineWithPersistence
 	OnChainMissing func(ctx context.Context, chainID string)
 )
 
-func SetRuleEngine(engine *rulesgo.Engine) {
+func SetRuleEngine(engine *rulesgo.EngineWithPersistence) {
 	RuleEngine = engine
 }
 
@@ -74,7 +74,7 @@ func handleRunRuleChain(ctx context.Context, request mcp.CallToolRequest) (*mcp.
 		return textResult("Rule engine not initialized"), nil
 	}
 
-	result, err := RuleEngine.Run(ctx, chainID, input)
+	result, err := RuleEngine.RunWithLog(ctx, chainID, input, "mcp")
 	if err != nil {
 		return errorResult(fmt.Errorf("rule chain execution failed: %w", err)), nil
 	}
