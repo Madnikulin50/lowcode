@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { createRecord, setOf, mintToken, detectBase, apiFactory } from './helpers.mjs'
-import { docFile, uploadAttachment, patchFields } from './filegen.mjs'
+import { docFile, uploadAttachment, patchFields, pdRdParagraphs } from './filegen.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const TARGET_OBJECTS = Number(process.env.SEED_OBJECTS || 120)
@@ -234,12 +234,8 @@ async function seedObject (ctx, i) {
       matching_pages: matching,
       differing_pages: differing,
     })
-    const pdFile = docFile(`${o.code}-PD-${c}`, [
-      `Проектная документация — ${o.name}`, `Страниц: ${totalPagesPd}`, '', 'Демо-файл ПД.',
-    ])
-    const rdFile = docFile(`${o.code}-RD-${c}`, [
-      `Рабочая документация — ${o.name}`, `Страниц: ${totalPagesRd}`, '', 'Демо-файл РД.',
-    ])
+    const pdFile = docFile(`${o.code}-PD-${c}`, pdRdParagraphs('pd', o, { totalPages: totalPagesPd }))
+    const rdFile = docFile(`${o.code}-RD-${c}`, pdRdParagraphs('rd', o, { totalPages: totalPagesRd }))
     const [pdAtt, rdAtt] = await Promise.all([
       uploadAttachment(base, token, nsID, m.pd_rd_comparisons, comparisonID, 'pd_file', pdFile),
       uploadAttachment(base, token, nsID, m.pd_rd_comparisons, comparisonID, 'rd_file', rdFile),

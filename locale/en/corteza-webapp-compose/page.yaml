@@ -88,6 +88,13 @@ build:
   saveAsCopy:
     ref: With references
     noRef: Without references
+  layoutSettings:
+    button: Layout
+    title: Layout settings
+    mobileOnly: Show only on mobile
+    mobileOnlyHint: This layout is picked automatically instead of the default one when the screen is narrower than 768px — lay out blocks separately for phones here.
+    expressionLabel: Visibility condition
+    expressionHint: 'A custom condition instead of the toggle above, e.g. screen.width < 768 or screen.breakpoint == "xs". Empty means this layout is always a candidate (weighed against other layouts).'
 edit:
   create: Create page
   edit: Edit page

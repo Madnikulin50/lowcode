@@ -79,6 +79,71 @@ function safeName (name) {
   return String(name || 'doc').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'doc'
 }
 
+const PD_SECTIONS = [
+  'Пояснительная записка',
+  'Схема планировочной организации земельного участка',
+  'Архитектурные решения',
+  'Конструктивные и объёмно-планировочные решения',
+  'Сведения об инженерном оборудовании, сетях и мероприятиях',
+  'Проект организации строительства',
+  'Проект организации работ по сносу или демонтажу объектов',
+  'Перечень мероприятий по охране окружающей среды',
+  'Мероприятия по обеспечению пожарной безопасности',
+  'Мероприятия по обеспечению доступа инвалидов',
+  'Смета на строительство',
+  'Иная документация в случаях, предусмотренных законодательством',
+]
+
+const RD_SECTIONS = [
+  'Общие данные',
+  'Архитектурно-строительные решения (АР)',
+  'Конструкции железобетонные (КЖ)',
+  'Конструкции металлические (КМ)',
+  'Отопление, вентиляция и кондиционирование (ОВ)',
+  'Водоснабжение и канализация (ВК)',
+  'Электроснабжение и электроосвещение (ЭОМ)',
+  'Слаботочные системы (СС)',
+  'Автоматизация и диспетчеризация (АТХ)',
+  'Наружные сети и сооружения (НС)',
+  'Организация строительства (ПОС/ППР)',
+]
+
+/**
+ * Paragraph text for a demo ПД/РД docx: title block + table of contents +
+ * a sheet-by-sheet listing, padded to at least MIN_LINES paragraphs so the
+ * generated file reads as a real multi-page set rather than a stub.
+ */
+const MIN_LINES = 30
+
+export function pdRdParagraphs (kind, obj, meta = {}) {
+  const isPd = kind === 'pd'
+  const sections = isPd ? PD_SECTIONS : RD_SECTIONS
+  const label = isPd ? 'Проектная документация' : 'Рабочая документация'
+  const totalPages = Number(meta.totalPages) || sections.length
+  const lines = [
+    `${label} — ${obj.name}`,
+    `Объект: ${obj.name}`,
+    `Адрес: ${obj.address || '—'}`,
+    `Шифр объекта: ${obj.code || '—'}`,
+    `Комплект: ${isPd ? 'ПД' : 'РД'}, стадия «${isPd ? 'П' : 'Р'}»`,
+    `Всего листов: ${totalPages}`,
+    `Дата формирования: ${new Date().toLocaleDateString('ru-RU')}`,
+    '',
+    'Содержание комплекта:',
+    ...sections.map((s, i) => `Раздел ${i + 1}. ${s}`),
+    '',
+    'Ведомость листов основного комплекта:',
+  ]
+  for (let i = 1; i <= totalPages && lines.length < MIN_LINES + totalPages; i++) {
+    lines.push(`Лист ${i} — ${sections[(i - 1) % sections.length]}`)
+  }
+  while (lines.length < MIN_LINES) {
+    lines.push(`Лист ${lines.length} — ${sections[lines.length % sections.length]}`)
+  }
+  lines.push('', `Демо-файл ${isPd ? 'ПД' : 'РД'}.`)
+  return lines
+}
+
 export function docFile (baseName, paragraphs) {
   return {
     name: `${safeName(baseName)}.docx`,
