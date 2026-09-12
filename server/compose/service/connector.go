@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -45,6 +46,8 @@ func (svc *connectorSvc) Fetch(ctx context.Context, mod *types.Module, filter ty
 		return svc.fetchElasticSearch(ctx, mod, filter)
 	case "db":
 		return svc.fetchDB(ctx, mod, filter)
+	case "1c-odata":
+		return svc.fetch1C(ctx, mod, filter)
 	case "mongodb":
 		return nil, filter, errors.Internal("mongodb connector not implemented")
 	case "kafka":
@@ -71,6 +74,8 @@ func (svc *connectorSvc) Test(ctx context.Context, cfg types.ModuleConfigConnect
 		return svc.testElasticSearch(ctx, cfg)
 	case "db":
 		return svc.testDB(ctx, cfg)
+	case "1c-odata":
+		return svc.test1C(ctx, cfg)
 	case "mongodb", "kafka", "redis", "grpc":
 		return errors.Internal("connector test not implemented for %s", cfg.Type)
 	default:
@@ -123,6 +128,8 @@ func resolveConnectorSecrets(ctx context.Context, cfg types.ModuleConfigConnecto
 			cfg.DBConnectionString = value
 		case field == "redisPass":
 			cfg.RedisPass = value
+		case field == "oneCPassword":
+			cfg.OneCPassword = value
 		case strings.HasPrefix(field, "restHeader:"):
 			header := strings.TrimPrefix(field, "restHeader:")
 			if header == "" {
@@ -596,4 +603,135 @@ func scanRows(rows *sql.Rows) ([]map[string]any, error) {
 	}
 
 	return result, nil
+}
+
+// --- 1C:Enterprise OData connector ("1c-odata") ---
+//
+// 1C:Enterprise publishes a standard OData HTTP service at
+// "<base>/odata/standard.odata" for every base; RestURL is that service
+// root, OneCEntity the catalog/document name (e.g. Catalog_Номенклатура).
+// The response envelope is "{"value": [...]}"} on modern 1C versions - see
+// pkg/rulesgo/onec_node.go for the write-side (1c.sync node), which talks
+// to the same API for two-way sync.
+
+func (svc *connectorSvc) fetch1C(ctx context.Context, mod *types.Module, filter types.RecordFilter) (set types.RecordSet, outFilter types.RecordFilter, err error) {
+	cfg := mod.Config.Connector
+
+	if cfg.RestURL == "" {
+		return nil, filter, errors.Internal("1C connector: OData service URL is empty")
+	}
+	if cfg.OneCEntity == "" {
+		return nil, filter, errors.Internal("1C connector: entity is empty")
+	}
+
+	reqURL := strings.TrimRight(cfg.RestURL, "/") + "/" + strings.TrimLeft(cfg.OneCEntity, "/") + "?" + oneCQuery(cfg, filter).Encode()
+
+	headers := map[string]string{"Accept": "application/json"}
+	for k, v := range cfg.RestHeaders {
+		headers[k] = v
+	}
+
+	raw, err := svc.do1CHTTP(ctx, http.MethodGet, reqURL, headers, nil, cfg)
+	if err != nil {
+		return nil, filter, err
+	}
+
+	dataPath := cfg.RestDataPath
+	if dataPath == "" {
+		dataPath = "value"
+	}
+	items, err := parseJSONItems(raw, dataPath)
+	if err != nil {
+		return nil, filter, fmt.Errorf("1C connector parse: %w", err)
+	}
+
+	set, err = mapToRecordSet(items, mod)
+	if err != nil {
+		return nil, filter, err
+	}
+
+	outFilter = filter
+	outFilter.Total = len(set)
+	return set, outFilter, nil
+}
+
+func (svc *connectorSvc) test1C(ctx context.Context, cfg types.ModuleConfigConnector) error {
+	if cfg.RestURL == "" {
+		return errors.Internal("1C connector: OData service URL is empty")
+	}
+
+	reqURL := strings.TrimRight(cfg.RestURL, "/")
+	if cfg.OneCEntity != "" {
+		q := url.Values{}
+		q.Set("$format", "json")
+		q.Set("$top", "1")
+		reqURL = reqURL + "/" + strings.TrimLeft(cfg.OneCEntity, "/") + "?" + q.Encode()
+	}
+
+	if _, err := svc.do1CHTTP(ctx, http.MethodGet, reqURL, map[string]string{"Accept": "application/json"}, nil, cfg); err != nil {
+		return fmt.Errorf("connection failed: %w", err)
+	}
+	return nil
+}
+
+// oneCQuery builds the OData query string ($format, $select, $filter, $top)
+// for a fetch. $top is capped by both cfg.OneCTop (default 100) and the
+// caller's filter.Limit, whichever is smaller.
+func oneCQuery(cfg types.ModuleConfigConnector, filter types.RecordFilter) url.Values {
+	q := url.Values{}
+	q.Set("$format", "json")
+	if cfg.OneCSelect != "" {
+		q.Set("$select", cfg.OneCSelect)
+	}
+	if cfg.OneCFilter != "" {
+		q.Set("$filter", cfg.OneCFilter)
+	}
+	top := cfg.OneCTop
+	if top <= 0 {
+		top = 100
+	}
+	if filter.Limit > 0 && int(filter.Limit) < top {
+		top = int(filter.Limit)
+	}
+	q.Set("$top", strconv.Itoa(top))
+	return q
+}
+
+// do1CHTTP performs one OData request with HTTP Basic Auth (1C's standard
+// authentication for its http-services), returning the raw response body.
+// Unlike doHTTP (used by the generic REST/GraphQL/ES connectors), it never
+// adds RestLimitParam/RestOffsetParam query params - $top/$skip are OData's
+// own, fixed names and are set by the caller (oneCQuery).
+func (svc *connectorSvc) do1CHTTP(ctx context.Context, method, reqURL string, headers map[string]string, body []byte, cfg types.ModuleConfigConnector) ([]byte, error) {
+	var bodyReader io.Reader
+	if body != nil {
+		bodyReader = bytes.NewReader(body)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, reqURL, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("1C connector request: %w", err)
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	if cfg.OneCUsername != "" {
+		req.SetBasicAuth(cfg.OneCUsername, cfg.OneCPassword)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("1C connector do: %w", err)
+	}
+	defer resp.Body.Close()
+
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("1C connector read: %w", err)
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("1C connector bad status %d: %s", resp.StatusCode, strings.TrimSpace(string(raw)))
+	}
+
+	return raw, nil
 }

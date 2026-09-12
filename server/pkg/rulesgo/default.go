@@ -69,6 +69,8 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 	r.Register("kafka.consume", &kafkaConsumeExecutor{})
 	r.Register("rabbitmq.publish", &rabbitmqPublishExecutor{})
 	r.Register("rabbitmq.consume", &rabbitmqConsumeExecutor{})
+	r.Register("1c.sync", &oneCSyncExecutor{})
+	r.Register("format.convert", &formatConvertExecutor{})
 
 	var kafkaSubStart func(ctx context.Context, subKey string, cfg KafkaConfig, ingestChainID string) error
 	var rabbitmqSubStart func(ctx context.Context, subKey string, cfg RabbitMQConfig, ingestChainID string) error
