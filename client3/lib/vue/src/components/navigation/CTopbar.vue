@@ -31,11 +31,11 @@
     />
 
     <div class="tools-wrapper ms-auto">
-      <div class="d-flex align-items-center flex-wrap gap-1">
+      <div class="d-flex align-items-center flex-nowrap gap-1">
         <slot name="tools" />
         <div
           id="topbar-tools"
-          class="d-flex align-items-center flex-wrap gap-1"
+          class="d-flex align-items-center flex-nowrap gap-1"
         />
       </div>
 
@@ -456,12 +456,46 @@ $nav-user-icon-size: calc(var(--topbar-height) - 16px);
 
 .tools-wrapper {
   flex-grow: 1;
+  // Refuse to shrink itself — on wide screens (flex-nowrap, see the
+  // template and the media query below) this must stay wide enough for its
+  // own content, or its content will be individually squeezed by the
+  // browser instead. If it and its content genuinely don't fit, the root
+  // header-navigation row (d-flex flex-wrap) already wraps this whole block
+  // onto its own line rather than distorting anything inside it.
+  flex-shrink: 0;
 
   > * {
     display: flex;
     justify-content: end;
     align-items: center;
     flex-wrap: wrap;
+  }
+}
+
+// #topbar-tools can carry arbitrary teleported content (the Page Builder
+// puts a scenario picker + layout <select>, each up to 300px, plus a
+// Показать страницу/Справка/Изменить/Переводы btn-group) — none of it
+// should shrink, for the same reason a select box shrunk to a sliver reads
+// as broken, not "responsive".
+//
+// This used to be `flex-shrink: 0` (content sizes itself, refuses to
+// compress) but that hit a genuine browser flex quirk: Bootstrap's own
+// `.btn-group > .btn` rule makes every grouped button flex-shrink:1, and —
+// even with that overridden back to 0 — this element's own auto/
+// fit-content intrinsic width still came out ~200px short of what its
+// btn-group actually renders at, so the group's last button silently
+// overflowed past the visible edge instead of the whole thing wrapping to
+// a new line. Sidestepping content-based sizing entirely fixes it: grow to
+// fill whatever space `.tools-wrapper > div` actually has (flex-basis 0 +
+// grow 1, ignoring the buggy intrinsic-size math), then right-align the
+// content within that guaranteed-correct box.
+#topbar-tools {
+  flex: 1 0 0;
+  min-width: 0;
+  justify-content: flex-end;
+
+  > * {
+    flex-shrink: 0;
   }
 }
 
@@ -491,6 +525,16 @@ $nav-user-icon-size: calc(var(--topbar-height) - 16px);
   .tools-wrapper {
     flex-basis: 100%;
     margin-left: 0 !important;
+
+    // Wide screens keep this on one line (flex-nowrap, see the template) —
+    // e.g. the Page Builder teleports a scenario picker + layout select
+    // (300px each) + several buttons in here, which is exactly the content
+    // that needs to wrap once it no longer fits below md, rather than
+    // overflowing its now-full-width row.
+    > div,
+    #topbar-tools {
+      flex-wrap: wrap !important;
+    }
   }
 }
 
