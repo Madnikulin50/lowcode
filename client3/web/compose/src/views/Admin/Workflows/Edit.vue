@@ -20,7 +20,28 @@
       class="d-flex flex-column flex-grow-1"
       style="min-height: 0"
     >
+      <div class="d-flex gap-2 px-2 pt-2">
+        <button
+          class="btn btn-sm"
+          :class="bpmnMode ? 'btn-outline-secondary' : 'btn-secondary'"
+          @click="bpmnMode = false"
+        >
+          {{ $t('workflow.edit.classicMode', 'Classic') }}
+        </button>
+        <button
+          class="btn btn-sm"
+          :class="bpmnMode ? 'btn-secondary' : 'btn-outline-secondary'"
+          @click="bpmnMode = true"
+        >
+          BPMN
+        </button>
+        <span v-if="bpmnMode" class="small text-muted align-self-center">
+          {{ $t('workflow.bpmn.previewOnly', 'Preview only for now - Compile shows the automation steps this diagram translates to; saving from here is not wired up yet.') }}
+        </span>
+      </div>
+
       <WorkflowEditor
+        v-if="!bpmnMode"
         ref="editorRef"
         :workflow-object="workflowObject"
         :change-detected="false"
@@ -30,8 +51,15 @@
         @save="onEditorSave"
         @delete="handleDelete"
       />
+      <BPMNEditor
+        v-else
+        ref="bpmnEditorRef"
+        class="flex-grow-1"
+        style="height: 0"
+      />
 
       <editor-toolbar
+        v-if="!bpmnMode"
         :processing="processing"
         :processing-save="processingSave"
         :processing-save-and-close="processingSaveAndClose"
@@ -44,6 +72,11 @@
         @saveAndClose="handleToolbarSave({ closeOnSuccess: true })"
         @back="router.push({ name: 'admin.workflows' })"
       />
+      <div v-else class="p-2 border-top">
+        <button class="btn btn-outline-secondary" @click="router.push({ name: 'admin.workflows' })">
+          {{ $t('label.back', 'Back') }}
+        </button>
+      </div>
     </div>
 
     <div
@@ -156,6 +189,7 @@ import { NoID } from 'corteza-lib/js/dist'
 import { composables } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import WorkflowEditor from 'corteza-lib/vue/dist/WorkflowEditor'
+import BPMNEditor from 'corteza-webapp-compose/src/components/Admin/Workflows/BPMNEditor'
 
 const { useToast } = composables
 const { t } = useI18n()
@@ -273,6 +307,8 @@ function onEditorSave (wf = {}) {
 
 const pendingSaveOptions = ref({})
 const editorRef = ref(null)
+const bpmnMode = ref(false)
+const bpmnEditorRef = ref(null)
 
 function handleToolbarSave (options = {}) {
   pendingSaveOptions.value = options

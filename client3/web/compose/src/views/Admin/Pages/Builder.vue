@@ -495,11 +495,9 @@
         :processing="processing"
         :processing-save="processingSave"
         :processing-save-and-close="processingSaveAndClose"
-        :processing-delete="processingDelete"
-        :processing-clone="processingClone"
         hide-clone
+        hide-delete
         @save="handleSaveLayout()"
-        @delete="handleDeleteLayout()"
         @saveAndClose="handleSaveLayout({ closeOnSuccess: true })"
         @back="router.push(previousPage || { name: 'admin.pages' })"
       >
@@ -512,51 +510,75 @@
           + {{ $t('build.addBlock') }}
         </button>
 
-        <button
-          v-if="page?.canUpdatePage && layout"
-          type="button"
-          data-test-id="button-layout-settings"
-          class="btn btn-outline-secondary btn-lg"
-          data-bs-toggle="modal"
-          data-bs-target="#layoutSettingsModal"
-        >
-          {{ $t('build.layoutSettings.button') }}
-        </button>
-
-        <template #saveAsCopy>
+        <template #afterSave>
           <div
             v-if="page?.canUpdatePage"
-            class="dropdown"
+            class="dropdown dropup"
           >
             <button
-              data-test-id="dropdown-saveAsCopy"
-              class="btn btn-outline-secondary btn-lg dropdown-toggle"
+              data-test-id="dropdown-more-actions"
+              :title="$t('label.actions')"
+              class="btn btn-outline-secondary btn-lg"
               type="button"
               data-bs-toggle="dropdown"
+              data-bs-popper-config='{"strategy":"fixed"}'
               :disabled="processing"
               aria-expanded="false"
             >
-              {{ $t('label.saveAsCopy') }}
+              <font-awesome-icon :icon="['fas', 'ellipsis-v']" />
             </button>
-            <ul class="dropdown-menu m-0">
+            <ul class="dropdown-menu dropdown-menu-end m-0">
+              <li v-if="layout">
+                <button
+                  type="button"
+                  data-test-id="button-layout-settings"
+                  class="dropdown-item"
+                  data-bs-toggle="modal"
+                  data-bs-target="#layoutSettingsModal"
+                >
+                  {{ $t('build.layoutSettings.button') }}
+                </button>
+              </li>
+
               <li>
                 <button
                   data-test-id="dropdown-item-saveAsCopy-ref"
+                  type="button"
                   class="dropdown-item"
                   @click="handleCloneLayout({ ref: true })"
                 >
-                  {{ $t('build.saveAsCopy.ref') }}
+                  {{ $t('label.saveAsCopy') }} ({{ $t('build.saveAsCopy.ref') }})
                 </button>
               </li>
               <li>
                 <button
                   data-test-id="dropdown-item-saveAsCopy-noRef"
+                  type="button"
                   class="dropdown-item"
                   @click="handleCloneLayout({ ref: false })"
                 >
-                  {{ $t('build.saveAsCopy.noRef') }}
+                  {{ $t('label.saveAsCopy') }} ({{ $t('build.saveAsCopy.noRef') }})
                 </button>
               </li>
+
+              <template v-if="!hideDelete">
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <c-input-confirm
+                    data-test-id="button-delete"
+                    :text="$t('label.delete')"
+                    :processing="processingDelete"
+                    show-icon
+                    borderless
+                    variant="link"
+                    size="md"
+                    button-class="dropdown-item text-danger"
+                    icon-class="text-danger"
+                    class="w-100"
+                    @confirmed="handleDeleteLayout()"
+                  />
+                </li>
+              </template>
             </ul>
           </div>
         </template>
@@ -947,8 +969,7 @@ function setCurrentScenario (index = -1) {
 }
 
 function addScenario () {
-  if (!currentScenarios.value) currentScenarios.value = []
-  currentScenarios.value.push({ label: 'Scenario Name', filters: {} })
+  currentScenarios.value = [...currentScenarios.value, { label: 'Scenario Name', filters: {} }]
   setCurrentScenario(currentScenarios.value.length - 1)
 }
 

@@ -257,6 +257,15 @@ func builtinNodeTypes() []nodeTypeDef {
 			},
 		},
 		{
+			Type:        "automation.correlate",
+			Label:       "Resume BPMN process",
+			Description: "Resume a suspended automation/BPMN process waiting on a correlation key (message intermediate catch event) - typically the last step in an ingest chain fed by kafka.subscribe/rabbitmq.subscribe",
+			ConfigFields: []nodeTypeField{
+				nf("key", "string", "Correlation key", req, tmpl, help("Matched against the waiting process's correlationKey, e.g. {{value}} or {{key}}")),
+				nf("input", "keymap", "Resume input", help("Named value → template forwarded to the resumed process; leave empty to forward the whole ingest envelope")),
+			},
+		},
+		{
 			Type:        "format.convert",
 			Label:       "Convert format",
 			Description: "Convert data between JSON, XML, CSV and XLSX (parses input to records, re-serializes to the target format)",
@@ -280,6 +289,21 @@ func builtinNodeTypes() []nodeTypeDef {
 				nf("prompt", "textarea", "Prompt", req, tmpl, rows(6), help("Supports {{variable}} templates")),
 				nf("model", "string", "Model", help("Default: qwen3:8b / CHAT_MODEL")),
 				nf("maxTokens", "number", "Max tokens"),
+				nf("allowMutating", "bool", "Allow mutating actions", help("Off by default: a create/update/delete tool call the agent attempts is blocked instead of executed unconfirmed")),
+			},
+		},
+		{
+			Type:        "ai.operation",
+			Label:       "AI Operation",
+			Description: "Call an AI agent as a function: named input parameters in, a validated JSON object out (not free text)",
+			ConfigFields: []nodeTypeField{
+				nf("agent", "enum", "Agent", req, opts("crud-agent", "assistant")),
+				nf("prompt", "textarea", "Instruction", req, tmpl, rows(6), help("What the agent should do with the inputs below")),
+				nf("model", "string", "Model", help("Default: qwen3:8b / CHAT_MODEL")),
+				nf("inputs", "keymap", "Input parameters", help("Named values passed to the agent, e.g. {\"customerName\": \"{{name}}\"}")),
+				nf("outputSchema", "keymap", "Output schema", help("Required response fields → type (string/number/boolean/array/object), e.g. {\"risk\": \"number\"}")),
+				nf("allowMutating", "bool", "Allow mutating actions", help("Off by default: a create/update/delete tool call the agent attempts is blocked instead of executed unconfirmed")),
+				nf("maxRetries", "number", "Max retries", def(1), help("Re-asks the agent if its answer isn't valid JSON matching the output schema; 0 = fail on the first bad answer")),
 			},
 		},
 		{

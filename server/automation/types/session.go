@@ -153,6 +153,15 @@ func (s *Session) PendingPrompts(ownerId uint64) []*wfexec.PendingPrompt {
 	return s.session.UserPendingPrompts(ownerId)
 }
 
+// AllPendingPrompts returns every pending prompt on this session regardless
+// of owner - used by system-level resolvers (e.g. message-correlation, see
+// automation/service/correlation.go) that aren't acting as a specific end
+// user, unlike PendingPrompts which is scoped to one owner for the
+// interactive "my tasks" case.
+func (s *Session) AllPendingPrompts() []*wfexec.PendingPrompt {
+	return s.session.AllPendingPrompts()
+}
+
 func (s *Session) GC() bool {
 	s.l.RLock()
 	defer s.l.RUnlock()

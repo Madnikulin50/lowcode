@@ -343,15 +343,31 @@ func (n *conditionExecutor) Execute(ctx context.Context, node ChainNode, ec *Exe
 
 // --- AI Node ---
 
+// AIOperationResult is what an AI call injected into rulesgo (the AICall
+// config func) returns. It's deliberately independent of pkg/aiagent's own
+// AgentResult type, so rulesgo doesn't need to import aiagent - just enough
+// to let the ai/ai.operation nodes enforce the same guardrail every other
+// caller gets: a mutating tool call the agent attempts is reported via
+// ConfirmNeeded/ConfirmCalls instead of silently executing, unless the node
+// config explicitly opts in (allowMutating).
+type AIOperationResult struct {
+	Output        string
+	Success       bool
+	Error         string
+	ConfirmNeeded bool
+	ConfirmCalls  []string
+}
+
 type aiConfig struct {
-	Agent     string `json:"agent"`
-	Prompt    string `json:"prompt"`
-	Model     string `json:"model,omitempty"`
-	MaxTokens int    `json:"maxTokens,omitempty"`
+	Agent         string `json:"agent"`
+	Prompt        string `json:"prompt"`
+	Model         string `json:"model,omitempty"`
+	MaxTokens     int    `json:"maxTokens,omitempty"`
+	AllowMutating bool   `json:"allowMutating,omitempty"`
 }
 
 type aiExecutor struct {
-	call func(ctx context.Context, agent, prompt, model string) (string, error)
+	call func(ctx context.Context, agent, prompt, model string, allowMutating bool) (*AIOperationResult, error)
 }
 
 func (n *aiExecutor) Execute(ctx context.Context, node ChainNode, ec *ExecutionContext) (map[string]interface{}, error) {
@@ -372,13 +388,16 @@ func (n *aiExecutor) Execute(ctx context.Context, node ChainNode, ec *ExecutionC
 		return map[string]interface{}{"agent": agent, "status": "not_configured"}, nil
 	}
 
-	response, err := n.call(ctx, agent, prompt, model)
+	res, err := n.call(ctx, agent, prompt, model, cfg.AllowMutating)
 	if err != nil {
 		return nil, fmt.Errorf("AI call failed: %w", err)
 	}
+	if res.ConfirmNeeded {
+		return nil, fmt.Errorf("AI node blocked: agent attempted a mutating action requiring confirmation (%s) - set allowMutating:true on this node to permit it", strings.Join(res.ConfirmCalls, ", "))
+	}
 
-	ec.Set("ai_response", response)
-	return map[string]interface{}{"agent": agent, "response": response}, nil
+	ec.Set("ai_response", res.Output)
+	return map[string]interface{}{"agent": agent, "response": res.Output}, nil
 }
 
 // --- Workflow Node ---

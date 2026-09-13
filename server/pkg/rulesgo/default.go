@@ -3,9 +3,14 @@ package rulesgo
 import "context"
 
 type DefaultConfig struct {
-	CRUD        CRUDService
-	Mail        MailService
-	AICall      func(ctx context.Context, agent, prompt, model string) (string, error)
+	CRUD CRUDService
+	Mail MailService
+	// AICall backs both the ai and ai.operation nodes. allowMutating stands
+	// in for the interactive "да" a chat user would type before a mutating
+	// tool call executes - the implementation is expected to route it
+	// through to the agent runtime's confirmation gate (see
+	// aiagent.Agent.RunConfirmed) rather than always allowing it.
+	AICall      func(ctx context.Context, agent, prompt, model string, allowMutating bool) (*AIOperationResult, error)
 	ScriptExec  func(ctx context.Context, code string, ec *ExecutionContext) (map[string]interface{}, error)
 	DetachStart DetachStartFunc
 	ExtractExec NodeExecutor
@@ -16,6 +21,11 @@ type DefaultConfig struct {
 	// "not_configured" instead of failing.
 	KafkaSubscribeStart    func(ctx context.Context, subKey string, cfg KafkaConfig, ingestChainID string) error
 	RabbitMQSubscribeStart func(ctx context.Context, subKey string, cfg RabbitMQConfig, ingestChainID string) error
+
+	// ResolveCorrelation backs the automation.correlate node - normally
+	// automation/service.ResolveCorrelation. Left nil, the node reports
+	// "not_configured" instead of failing.
+	ResolveCorrelation func(ctx context.Context, key string, input map[string]interface{}) error
 }
 
 func DefaultRegistry(cfg *DefaultConfig) *Registry {
@@ -39,11 +49,12 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 	r.Register("http", &httpExecutor{})
 	r.Register("condition", &conditionExecutor{})
 
-	if cfg != nil && cfg.AICall != nil {
-		r.Register("ai", &aiExecutor{call: cfg.AICall})
-	} else {
-		r.Register("ai", &aiExecutor{})
+	var aiCall func(ctx context.Context, agent, prompt, model string, allowMutating bool) (*AIOperationResult, error)
+	if cfg != nil {
+		aiCall = cfg.AICall
 	}
+	r.Register("ai", &aiExecutor{call: aiCall})
+	r.Register("ai.operation", &aiOperationExecutor{call: aiCall})
 
 	r.Register("workflow", &wfExecutor{})
 	r.Register("fork", &forkExecutor{})
@@ -71,6 +82,12 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 	r.Register("rabbitmq.consume", &rabbitmqConsumeExecutor{})
 	r.Register("1c.sync", &oneCSyncExecutor{})
 	r.Register("format.convert", &formatConvertExecutor{})
+
+	var resolveCorrelation func(ctx context.Context, key string, input map[string]interface{}) error
+	if cfg != nil {
+		resolveCorrelation = cfg.ResolveCorrelation
+	}
+	r.Register("automation.correlate", &automationCorrelateExecutor{resolve: resolveCorrelation})
 
 	var kafkaSubStart func(ctx context.Context, subKey string, cfg KafkaConfig, ingestChainID string) error
 	var rabbitmqSubStart func(ctx context.Context, subKey string, cfg RabbitMQConfig, ingestChainID string) error

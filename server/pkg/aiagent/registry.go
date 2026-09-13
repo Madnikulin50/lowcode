@@ -139,9 +139,18 @@ func (r *Registry) ListInfo() []AgentInfo {
 }
 
 func (r *Registry) RunAgent(ctx context.Context, name, input string, contextData map[string]interface{}) (*AgentResult, error) {
+	return r.RunAgentConfirmed(ctx, name, input, contextData, false)
+}
+
+// RunAgentConfirmed is RunAgent with an explicit stand-in for the user "да"
+// a chat surface would otherwise require before a mutating tool call can
+// execute - see Agent.RunConfirmed. Non-interactive callers (a rulechain
+// ai.operation node, say) pass their own allowMutating setting through here
+// instead of always getting a silent yes.
+func (r *Registry) RunAgentConfirmed(ctx context.Context, name, input string, contextData map[string]interface{}, confirmed bool) (*AgentResult, error) {
 	agent := r.Get(name)
 	if agent == nil {
 		return nil, fmt.Errorf("agent not found: %s (available: %v)", name, r.List())
 	}
-	return agent.Run(ctx, input, contextData), nil
+	return agent.RunConfirmed(ctx, input, contextData, confirmed), nil
 }

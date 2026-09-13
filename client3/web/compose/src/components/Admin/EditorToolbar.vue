@@ -75,6 +75,8 @@
         size="lg"
         @submit="$emit('save')"
       />
+
+      <slot name="afterSave" />
     </template>
   </c-toolbar>
 </template>

@@ -41,7 +41,7 @@ const props = defineProps({
   values: {
     type: Object,
     default: () => {
-      return { values: [] }
+      return { list: [] }
     },
   },
 })
@@ -49,6 +49,7 @@ const props = defineProps({
 const render = ref(true)
 
 function addValue () {
+  if (!props.values.list) props.values.list = []
   props.values.list.push({ symbol: '', value: '', type: 'String' })
   reRender()
 }

@@ -170,6 +170,22 @@ func (svc *session) PendingPrompts(ctx context.Context) (pp []*wfexec.PendingPro
 	return
 }
 
+// AllPendingPrompts returns every pending prompt on every session in the
+// pool, regardless of owner - see types.Session.AllPendingPrompts. Intended
+// for system-level resolvers, not for anything reachable by an end user
+// (there's no per-owner filtering here).
+func (svc *session) AllPendingPrompts() (pp []*wfexec.PendingPrompt) {
+	svc.mux.RLock()
+	defer svc.mux.RUnlock()
+
+	pp = make([]*wfexec.PendingPrompt, 0, len(svc.pool))
+	for _, s := range svc.pool {
+		pp = append(pp, s.AllPendingPrompts()...)
+	}
+
+	return
+}
+
 // Start new workflow session on a specific step with a given identity and scope
 //
 // # Start is an asynchronous operation

@@ -11,7 +11,7 @@
     <div class="mb-3">
       <label class="form-label text-primary">{{ $t('scenarios.values') }}</label>
       <Values
-        v-model="values"
+        :values="values"
       />
     </div>
   </div>
@@ -34,7 +34,10 @@ const columns = ref([])
 const currentDatasourceName = ref('')
 
 const values = computed({
-  get: () => props.scenario.values,
+  get: () => {
+    if (!props.scenario.values) props.scenario.values = { list: [] }
+    return props.scenario.values
+  },
   set: (v) => { props.scenario.values = v },
 })
 

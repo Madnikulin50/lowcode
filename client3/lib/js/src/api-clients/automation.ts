@@ -1298,4 +1298,17 @@ export default class Automation {
     return `/permissions/${roleID}/rules`
   }
 
+  // BPMN 2.0 compiler (hand-written - not part of the generated routes above)
+  async bpmnCompile (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { xml } = (a as KV) || {}
+
+    return this.api().request({
+      method: 'post',
+      url: '/bpmn/compile',
+      headers: { 'Content-Type': 'application/xml' },
+      data: xml,
+      ...extra,
+    }).then(result => stdResolve(result))
+  }
+
 }

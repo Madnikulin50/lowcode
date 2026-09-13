@@ -21,6 +21,7 @@ func MountRoutes() func(r chi.Router) {
 			handlers.NewPermissions(Permissions{}.New()).MountRoutes(r)
 			handlers.NewEventTypes(EventTypes{}.New()).MountRoutes(r)
 			handlers.NewChat(Chat{}.New()).MountRoutes(r)
+			MountBPMNRoutes(r)
 		})
 	}
 }

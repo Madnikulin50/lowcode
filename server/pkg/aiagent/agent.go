@@ -63,7 +63,26 @@ func New(client *chat.Client, cfg AgentConfig) *Agent {
 func (a *Agent) Name() string        { return a.cfg.Name }
 func (a *Agent) Description() string { return a.cfg.Description }
 
+// Run executes the agent without allowing any mutating tool call to go
+// through unconfirmed - equivalent to RunConfirmed(ctx, input, contextData,
+// false). Use this from any non-interactive caller (a scheduled job, a
+// rulechain node, ...): there's no human to type "да", so a mutating call
+// the agent attempts is reported via AgentResult.ConfirmNeeded/ConfirmCalls
+// instead of executing. Callers that intend to allow it (e.g. a rulechain
+// node with an explicit allowMutating:true) should call RunConfirmed with
+// confirmed=true instead.
 func (a *Agent) Run(ctx context.Context, input string, contextData map[string]interface{}) (result *AgentResult) {
+	return a.RunConfirmed(ctx, input, contextData, false)
+}
+
+// RunConfirmed is like Run, but confirmed stands in for the interactive "да"
+// a chat user would otherwise have to type before a mutating tool call
+// executes (see aiagent.NeedsConfirmFromToolDefs and Options.Confirmed).
+// Every tool call is checked against its declared chat.ToolDef.Mutating flag
+// regardless of a.cfg.Confirm - so an agent has exactly as much power as its
+// caller explicitly grants, never silently more, no matter which surface
+// (chat, MCP, or a rulechain ai/ai.operation node) is driving it.
+func (a *Agent) RunConfirmed(ctx context.Context, input string, contextData map[string]interface{}, confirmed bool) (result *AgentResult) {
 	start := time.Now()
 	result = &AgentResult{Steps: make([]AgentStep, 0)}
 
@@ -81,17 +100,17 @@ func (a *Agent) Run(ctx context.Context, input string, contextData map[string]in
 
 	cl := a.clientForRun()
 	systemPrompt := a.buildSystemPrompt(cl, contextData)
+	tools := a.resolveTools()
 	opt := Options{
-		Client:      cl,
-		Messages:    []*schema.Message{schema.SystemMessage(systemPrompt), schema.UserMessage(input)},
-		Tools:       a.resolveTools(),
-		MaxSteps:    a.cfg.MaxSteps,
-		ExtraParams: extraFromContext(contextData),
-		Continue:    AgentContinue,
-		Validator:   a.cfg.Validator,
-	}
-	if a.cfg.Confirm {
-		opt.NeedsConfirm = DefaultNeedsConfirm
+		Client:       cl,
+		Messages:     []*schema.Message{schema.SystemMessage(systemPrompt), schema.UserMessage(input)},
+		Tools:        tools,
+		MaxSteps:     a.cfg.MaxSteps,
+		ExtraParams:  extraFromContext(contextData),
+		Continue:     AgentContinue,
+		Validator:    a.cfg.Validator,
+		NeedsConfirm: NeedsConfirmFromToolDefs(tools),
+		Confirmed:    confirmed,
 	}
 	result = Run(ctx, opt)
 	return result

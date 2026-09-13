@@ -273,7 +273,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 		DefaultRecord,
 	)
 
-	automationService.Registry().AddFunctions(LoopIncidentApply())
+	automationService.Registry().AddFunctions(LoopIncidentApply(), RunRuleChainFunction())
 
 	automation.ModulesHandler(
 		automationService.Registry(),
