@@ -75,6 +75,7 @@
               :options="options"
               :hover="!!item.metric.drillDown?.enabled"
               :value="v"
+              :error="item.error"
             />
           </div>
         </div>
@@ -94,6 +95,7 @@
               :options="options"
               :hover="!!item.metric.drillDown?.enabled"
               :value="v"
+              :error="item.error"
             />
           </div>
         </div>
@@ -120,6 +122,7 @@
               :options="options"
               :hover="!!item.metric.drillDown?.enabled"
               :value="v"
+              :error="item.error"
             />
           </div>
         </div>
@@ -145,6 +148,7 @@
               :options="options"
               :hover="!!item.metric.drillDown?.enabled"
               :value="v"
+              :error="item.error"
             />
           </div>
 
@@ -171,6 +175,7 @@
                 :hover="!!item.metric.drillDown?.enabled"
                 :value="v"
                 :bar-ratio="item.metric.dimensionField ? breakdownBarRatioFor(item, v) : barRatioFor(item, section.items)"
+                :error="item.error"
               />
             </div>
           </template>
@@ -193,7 +198,7 @@
           :style="spanStyle(m)"
         >
           <div
-            v-for="(v, i) in formatResponse(m, mi)"
+            v-for="(v, i) in displayValuesFor(m, mi)"
             :key="i"
             class="py-1 px-2"
             :class="{
@@ -211,6 +216,7 @@
               :bar-ratio="m.dimensionField
                 ? breakdownBarRatioFor({ values: formatResponse(m, mi) }, v)
                 : barRatioFor({ metric: m, index: mi, values: formatResponse(m, mi), role: metricRole(m) })"
+              :error="metricErrors[mi]"
             />
           </div>
         </div>
@@ -367,10 +373,17 @@ function isMetricEmpty (values) {
 const preparedMetrics = computed(() => {
   return (options.value.metrics || []).map((metric, index) => {
     const values = formatResponse(metric, index)
-    return { metric, index, values, role: metricRole(metric), empty: isMetricEmpty(values) }
+    const error = metricErrors.value[index]
+    // A failed metric has no rows to iterate over — force one placeholder
+    // row through so its metric-item still renders (and can show the error)
+    // instead of silently vanishing.
+    const displayValues = values.length ? values : (error ? [{}] : values)
+    return { metric, index, values: displayValues, role: metricRole(metric), empty: isMetricEmpty(values), error }
   }).filter(item => {
-    if (!item.metric.moduleID && !item.values.length) return false
-    if (options.value.hideEmptyMetrics && item.empty) return false
+    if (!item.metric.moduleID && !item.values.length && !item.error) return false
+    // A failed metric is kept visible (even when "hide empty" is on) so its
+    // error is surfaced instead of silently disappearing.
+    if (options.value.hideEmptyMetrics && item.empty && !item.error) return false
     return true
   })
 })
@@ -408,6 +421,7 @@ const displaySections = computed(() => {
 })
 
 const error = ref(undefined)
+const metricErrors = ref({})
 const reports = ref([])
 const abortableRequests = ref([])
 
@@ -457,6 +471,7 @@ function formatResponse (m, i) {
 
 async function refresh () {
   error.value = undefined
+  metricErrors.value = {}
   processing.value = true
   try {
     const rtr = []
@@ -466,8 +481,16 @@ async function refresh () {
       abortableRequests.value.push(cancel)
       return response()
     }
-    for (const m of options.value.metrics) {
-      if (m.moduleID) {
+    for (const [index, m] of options.value.metrics.entries()) {
+      if (!m.moduleID) {
+        rtr.push([])
+        continue
+      }
+
+      // Each metric is calculated independently — a bad filter/expression
+      // on one metric must not blank out the whole block, so its error is
+      // recorded per-index (metricErrors) instead of aborting the loop.
+      try {
         const auxM = { ...m }
         if (auxM.filter) {
           const { skip, filter } = evalPrefilterOrSkip(auxM.filter, {
@@ -490,7 +513,8 @@ async function refresh () {
         }
         const vals = await props.block.fetch({ m: auxM }, reporter)
         rtr.push(vals)
-      } else {
+      } catch (e) {
+        metricErrors.value = { ...metricErrors.value, [index]: e.message || 'Error' }
         rtr.push([])
       }
     }
@@ -500,6 +524,14 @@ async function refresh () {
     error.value = e.message || 'Error'
     setTimeout(() => { processing.value = false }, 300)
   }
+}
+
+// Legacy (likeRecordList: false) layout equivalent of preparedMetrics'
+// displayValues: a failed metric has no rows, so force one placeholder
+// through the v-for so its metric-item still renders the error.
+function displayValuesFor (m, mi) {
+  const values = formatResponse(m, mi)
+  return values.length ? values : (metricErrors.value[mi] ? [{}] : values)
 }
 
 function drillDown ({ label: name = '', filter, moduleID, drillDown }, metricIndex) {

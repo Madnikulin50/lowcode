@@ -16,6 +16,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/expr"
 	"github.com/madnikulin50/lowcode/server/pkg/gonec"
 	"github.com/madnikulin50/lowcode/server/pkg/jsruntime"
+	"github.com/madnikulin50/lowcode/server/pkg/riskstore"
 	"github.com/madnikulin50/lowcode/server/pkg/rulesgo"
 )
 
@@ -189,6 +190,8 @@ func initBridge() {
 	}
 	handlers.SetRuleEngine(engine)
 	service.StartRuleChainRecordTriggers(engine)
+	riskstore.EnsurePersistence()
+	service.StartRiskRecordTriggers()
 	handlers.SetOnChainMissing(func(ctx context.Context, chainID string) {
 		ensureChainAvailable(ctx, engine, chainID)
 	})

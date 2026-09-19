@@ -33,4 +33,9 @@ func RegisterComposeToolKits(cat *aiagent.Catalog) {
 		Description: "Charts and reports from live data",
 		Tools:       chatVisualizeTools(),
 	})
+	cat.Register(aiagent.ToolKit{
+		Name:        "risk",
+		Description: "Suggest risk factors and explain risk model assessments",
+		Tools:       chatRiskToolDefs(),
+	})
 }

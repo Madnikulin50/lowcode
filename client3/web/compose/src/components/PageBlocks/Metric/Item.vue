@@ -1,7 +1,21 @@
 <template>
+  <!-- Calculation error — shown per metric so it's clear which one failed,
+       instead of one generic error blanking out the whole block. -->
+  <div
+    v-if="error"
+    class="mb-metric mb-metric--error text-danger d-flex align-items-start gap-1"
+    :title="error"
+  >
+    <font-awesome-icon :icon="['fas', 'exclamation-triangle']" class="mb-error-icon flex-shrink-0" />
+    <span class="mb-error-text small">
+      <strong>{{ metric.label || t('metric.defaultMetricLabel') }}:</strong>
+      {{ error }}
+    </span>
+  </div>
+
   <!-- Balloon (баллон) — pill bar, color by value thresholds -->
   <div
-    v-if="isBalloon"
+    v-else-if="isBalloon"
     class="mb-metric mb-metric--balloon"
     :class="{ 'mb-metric--drill': hover, 'mb-metric--empty': isEmpty }"
   >
@@ -272,6 +286,8 @@ const props = defineProps({
   hover: { type: Boolean, required: false, default: false },
   /** 0..1 relative bar length among sibling topK metrics */
   barRatio: { type: Number, required: false, default: 1 },
+  /** Set when this metric's own calculation failed — shown instead of the value */
+  error: { type: String, required: false, default: undefined },
 })
 
 const $Settings = inject('$Settings')
@@ -505,6 +521,19 @@ function setDefaultValues () {
 
 .rb-empty {
   color: var(--bs-secondary-color, #adb5bd);
+}
+
+.mb-metric--error {
+  width: 100%;
+  padding: 0.35rem 0;
+}
+
+.mb-error-icon {
+  margin-top: 0.15rem;
+}
+
+.mb-error-text {
+  word-break: break-word;
 }
 
 .mb-metric-hero-value {

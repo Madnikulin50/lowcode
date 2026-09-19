@@ -1558,17 +1558,7 @@ function processVisibilityAutoCompleteParams ({ module: mod = module.value } = {
   const moduleFields = fields.map(({ name }) => name)
   const userProperties = $auth?.user?.properties?.() || []
 
-  const recordSuggestions = isRecordPage.value && record.value
-    ? [
-        {
-          value: 'record',
-          properties: [
-            { value: 'values', properties: Object.keys(record.value?.values || {}) },
-            ...(record.value?.properties || []),
-          ],
-        },
-      ]
-    : []
+  const recordSuggestions = []
 
   return [
     ...recordSuggestions,
@@ -1583,19 +1573,7 @@ function processRecordAutoCompleteParams ({ module: mod = module.value, operator
   const moduleFields = fields.map(({ name }) => name)
   const userProperties = $auth?.user?.properties?.() || []
 
-  const recordSuggestions = isRecordPage.value && record.value
-    ? [
-        ...(['ownerID', 'recordID'].map(value => ({ interpolate: true, value }))),
-        {
-          interpolate: true,
-          value: 'record',
-          properties: [
-            { value: 'values', properties: Object.keys(record.value?.values || {}) },
-            ...(record.value?.properties || []),
-          ],
-        },
-      ]
-    : []
+  const recordSuggestions = []
 
   return [
     ...recordSuggestions,

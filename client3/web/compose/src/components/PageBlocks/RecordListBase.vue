@@ -838,8 +838,9 @@ const pageVariables = computed(() => store.pageVariables.getValuesForPage(props.
 
 const groupRecordListFilter = computed(() => {
   return recordListFilter.value.map(group => {
-    group.filter = convertRecordListFilter(group.filter.map(f => createDefaultFilter(f, f.value, f.operator)))
-    return group
+    const raw = (group.filter || []).filter(f => f && f.name)
+    const filter = convertRecordListFilter(raw.map(f => createDefaultFilter(f, f.value, f.operator)))
+    return { ...group, filter }
   }).filter(({ filter }) => filter.length)
 })
 

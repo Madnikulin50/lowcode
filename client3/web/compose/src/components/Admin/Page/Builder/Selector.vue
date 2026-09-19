@@ -167,6 +167,8 @@ const catalog = [
   { kind: 'Calendar', category: 'visualize', icon: ['fas', 'calendar-alt'], recordPageOnly: false, block: new compose.PageBlockCalendar() },
   { kind: 'Geometry', category: 'visualize', icon: ['fas', 'map-marked-alt'], recordPageOnly: false, block: new compose.PageBlockGeometry() },
   { kind: 'Report', category: 'visualize', icon: ['fas', 'book'], recordPageOnly: false, block: new compose.PageBlockReport() },
+  { kind: 'Risk', category: 'visualize', icon: ['fas', 'shield-halved'], recordPageOnly: false, block: new compose.PageBlockRisk() },
+  { kind: 'ImageSearch', category: 'content', icon: ['fas', 'images'], recordPageOnly: true, block: new compose.PageBlockImageSearch() },
   { kind: 'Content', category: 'content', icon: ['fas', 'paragraph'], recordPageOnly: false, block: new compose.PageBlockContent() },
   { kind: 'File', category: 'content', icon: ['fas', 'paperclip'], recordPageOnly: false, block: new compose.PageBlockFile() },
   { kind: 'IFrame', category: 'content', icon: ['fas', 'external-link-alt'], recordPageOnly: false, block: new compose.PageBlockIFrame() },

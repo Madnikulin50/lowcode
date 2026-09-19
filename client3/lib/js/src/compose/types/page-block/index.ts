@@ -19,6 +19,8 @@ export { PageBlockNavigation } from './navigation'
 export { PageBlockTab } from './tabs'
 export { PageBlockGeometry } from './geometry'
 export { PageBlockRuleChain } from './rule-chain'
+export { PageBlockRisk } from './risk'
+export { PageBlockImageSearch } from './image-search'
 export { PageBlockVariables } from './variables'
 
 function retainBlockDocs (block: PageBlock, raw?: { options?: Record<string, unknown> }): void {

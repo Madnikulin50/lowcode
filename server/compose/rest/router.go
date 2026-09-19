@@ -54,6 +54,7 @@ func MountRoutes() func(r chi.Router) {
 			handlers.NewDatasource(Datasource{}.New()).MountRoutes(r)
 			MountRuleChainRoutes(r)
 			MountRuleChainAdminRoutes(r)
+			MountRiskAdminRoutes(r)
 			MountPageBlockTriggerRoutes(r)
 			MountStockReorderRoutes(r)
 			MountMCPHTTPBridge(r)

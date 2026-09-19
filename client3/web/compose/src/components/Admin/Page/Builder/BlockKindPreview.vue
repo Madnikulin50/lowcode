@@ -257,6 +257,29 @@
     </g>
 
     <!-- Variables -->
+    <!-- Risk -->
+    <g v-else-if="kind === 'Risk'">
+      <rect x="22" y="52" width="52" height="10" rx="5" fill="#1cc88a" opacity=".85" />
+      <rect x="22" y="52" width="10" height="10" rx="5" fill="#1cc88a" />
+      <rect x="22" y="70" width="88" height="10" rx="5" fill="#f6c23e" opacity=".85" />
+      <rect x="22" y="70" width="10" height="10" rx="5" fill="#f6c23e" />
+      <rect x="22" y="88" width="130" height="10" rx="5" fill="#fd7e14" opacity=".85" />
+      <rect x="22" y="88" width="10" height="10" rx="5" fill="#fd7e14" />
+      <rect x="22" y="106" width="180" height="10" rx="5" fill="#e74a3b" opacity=".85" />
+      <rect x="22" y="106" width="10" height="10" rx="5" fill="#e74a3b" />
+      <rect x="228" y="52" width="70" height="64" rx="6" fill="#f8f9fc" stroke="#e3e6f0" />
+      <path d="M263 62l24 10v14c0 12-10 20-24 26-14-6-24-14-24-26V72z" fill="none" stroke="#e74a3b" stroke-width="3" />
+    </g>
+
+    <!-- ImageSearch -->
+    <g v-else-if="kind === 'ImageSearch'">
+      <rect x="20" y="50" width="66" height="66" rx="6" fill="#eaecf4" />
+      <rect x="94" y="50" width="66" height="66" rx="6" fill="#dfe3f0" />
+      <rect x="168" y="50" width="66" height="66" rx="6" fill="#eaecf4" />
+      <circle cx="40" cy="68" r="6" fill="#c3c8dc" />
+      <path d="M20 100l16-16 12 10 14-18 24 24" fill="none" stroke="#c3c8dc" stroke-width="3" />
+    </g>
+
     <g v-else-if="kind === 'Variables'">
       <rect x="20" y="52" width="70" height="8" rx="2" fill="#858796" />
       <rect x="20" y="66" width="130" height="22" rx="4" fill="#fff" stroke="#d1d3e2" />

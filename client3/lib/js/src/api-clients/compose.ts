@@ -5135,4 +5135,283 @@ export default class Compose {
             ...extra,
         }).then(result => stdResolve(result))
     }
+
+    // Risk engine (factor library, models, subject bindings, assessments & treatments)
+
+    async riskFactorList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { limit = 500, offset = 0, namespaceID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/admin/risk/factors/',
+            params: { limit, offset, namespaceID },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskFactorRead (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { factorID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/factors/${factorID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskFactorCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/risk/factors/',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskFactorUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { factorID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/risk/factors/${factorID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskFactorDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { factorID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/risk/factors/${factorID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { limit = 500, offset = 0, namespaceID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/admin/risk/models/',
+            params: { limit, offset, namespaceID },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelRead (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID, withFactors } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/models/${modelID}`,
+            params: { withFactors },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/risk/models/',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/risk/models/${modelID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/risk/models/${modelID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelTest (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/risk/models/${modelID}/test`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelExplain (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/risk/models/${modelID}/explain`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskSuggestFactors (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/risk/suggest-factors',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskBindingList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/admin/risk/bindings/',
+            params: { namespaceID },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskBindingCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/risk/bindings/',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskBindingUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/risk/bindings/${bindingID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskBindingDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/risk/bindings/${bindingID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskAssess (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/risk/bindings/${bindingID}/assess`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskAssessmentList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID, subjectRecordID, latestPerSubject } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/bindings/${bindingID}/assessments`,
+            params: { subjectRecordID, latestPerSubject },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskPortfolioSummary (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/bindings/${bindingID}/summary`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskTreatmentList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/bindings/${bindingID}/treatments`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskTreatmentCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/risk/bindings/${bindingID}/treatments`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskTreatmentUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { treatmentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/risk/treatments/${treatmentID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskTreatmentDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { treatmentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/risk/treatments/${treatmentID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    // Image search (DuckDuckGo-backed) — returns candidate {title, image,
+    // thumbnail, url, width, height} results; the caller renders <img> tags
+    // pointing at their "image"/"thumbnail" URLs directly, it does not proxy
+    // image bytes through this API.
+
+    async imageSearch (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { q, limit } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/image/search',
+            params: { q, limit },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
 }

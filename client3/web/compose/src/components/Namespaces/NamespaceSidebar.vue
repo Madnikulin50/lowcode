@@ -291,6 +291,9 @@ function namespaceSelected (ns) {
   else if (name.includes('admin.charts')) name = 'admin.charts'
   else if (name.includes('admin.rulechains')) name = 'admin.rulechains'
   else if (name.includes('admin.workflows')) name = 'admin.workflows'
+  else if (name.includes('admin.risk.models')) name = 'admin.risk.models'
+  else if (name.includes('admin.risk.factors')) name = 'admin.risk.factors'
+  else if (name.includes('admin.risk.registry')) name = 'admin.risk.registry'
 
   name = !params.pageID && canManageNamespace && !name.includes('namespace.') ? name : 'pages'
   router.push({ name, params: { slug: slug || nid } })
@@ -389,6 +392,9 @@ function adminRoutes () {
     ...ruleChains.value.map(ruleChainWrap),
     { page: { pageID: 'workflows', selfID: NoID, name: 'admin.workflows', title: t('navigation.workflows'), visible: true, section: true }, children: [] },
     ...workflows.value.map(workflowWrap),
+    { page: { pageID: 'risk', selfID: NoID, name: 'admin.risk.models', title: t('navigation.riskModels', 'Модели риска'), visible: true, section: true }, children: [] },
+    { page: { pageID: 'risk-factors', selfID: 'risk', rootSelfID: 'risk', name: 'admin.risk.factors', title: t('navigation.riskFactors', 'Библиотека факторов'), visible: true, icon: ['fas', 'list'] }, children: [] },
+    { page: { pageID: 'risk-registry', selfID: 'risk', rootSelfID: 'risk', name: 'admin.risk.registry', title: t('navigation.riskRegistry', 'Реестр рисков'), visible: true, icon: ['fas', 'table-list'] }, children: [] },
   ]
 }
 

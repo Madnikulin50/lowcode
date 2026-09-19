@@ -60,6 +60,14 @@ selector:
       description: Interactive rule-chain diagram
     aiChat:
       description: Ask the AI assistant about this page
+    risk:
+      description: A record's risk assessment or a portfolio summary
+    imageSearch:
+      description: Search images by the record's own field values
+risk:
+  label: Risk
+imageSearch:
+  label: Image search
 ruleChain:
   label: Rule chain
   reloadOnSuccess: Reload page on successful completion

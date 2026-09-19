@@ -34,6 +34,10 @@ import RecordOrganizerBase from './RecordOrganizerBase.vue'
 import RecordOrganizerConfigurator from './RecordOrganizerConfigurator.vue'
 import RecordRevisionsBase from './RecordRevisionsBase.vue'
 import RecordRevisionsConfigurator from './RecordRevisionsConfigurator.vue'
+import RiskBase from './RiskBase.vue'
+import RiskConfigurator from './RiskConfigurator.vue'
+import ImageSearchBase from './ImageSearchBase.vue'
+import ImageSearchConfigurator from './ImageSearchConfigurator.vue'
 import ReportBase from './Report/Base.vue'
 import ReportConfigurator from './Report/Configurator.vue'
 import RuleChainBase from './RuleChainBase.vue'
@@ -69,6 +73,10 @@ const Registry = {
   RecordRevisionsConfigurator,
   RecordOrganizerBase,
   RecordOrganizerConfigurator,
+  RiskBase,
+  RiskConfigurator,
+  ImageSearchBase,
+  ImageSearchConfigurator,
   ReportBase,
   ReportConfigurator,
   RuleChainBase,

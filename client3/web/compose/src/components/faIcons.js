@@ -52,6 +52,7 @@ import {
   faHeart,
   faHome,
   faImage,
+  faImages,
   faIndent,
   faItalic,
   faKey,
@@ -185,6 +186,7 @@ import {
   faTableList,
   faFileLines,
   faCodeCompare,
+  faShieldHalved,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -423,4 +425,6 @@ library.add(
   faTableList,
   faFileLines,
   faCodeCompare,
+  faImages,
+  faShieldHalved,
 )

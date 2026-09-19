@@ -60,6 +60,14 @@ selector:
       description: Интерактивная цепочка правил
     aiChat:
       description: Спросить ИИ-ассистента об этой странице
+    risk:
+      description: Оценка риска записи или портфельная сводка
+    imageSearch:
+      description: Поиск изображений по полям записи
+risk:
+  label: Риск
+imageSearch:
+  label: Поиск изображений
 ruleChain:
   label: Цепочка правил
   reloadOnSuccess: Обновить страницу при успешном завершении

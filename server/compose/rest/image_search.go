@@ -1,11 +1,8 @@
 package rest
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/madnikulin50/lowcode/server/compose/rest/request"
 	"github.com/madnikulin50/lowcode/server/compose/service"
@@ -31,31 +28,15 @@ func (ImageSearch) New() *ImageSearch {
 	}
 }
 
-func downloadImage(url string) (data []byte, err error) {
-	// 1. Fetch the data from the URL
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make request: %w", err)
-	}
-	// Always close the body to prevent resource leaks
-	defer resp.Body.Close()
-
-	// 2. Check for successful server response
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad status code: %s", resp.Status)
-	}
-
-	// 3. Create the empty destination file
-	out := bytes.NewBuffer(nil)
-	// 4. Stream the response body directly into the local file
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to save image content: %w", err)
-	}
-
-	return out.Bytes(), nil
-}
-
+// Search returns candidate images (title/thumbnail/full image URL/source) for
+// a free-text query — it never proxies image bytes itself. The caller (a
+// PageBlock, typically) renders <img> tags pointing straight at the returned
+// URLs; the browser fetches those directly from wherever they're hosted, no
+// further round-trip through this API. This intentionally does not embed the
+// image behind our own auth: an <iframe>/<img> loading an API URl that
+// *does* require a Bearer token can't authenticate itself and either fails
+// silently or, worse, gets served the JSON error body as a download — which
+// is exactly the failure mode that prompted this fix.
 func (ctrl *ImageSearch) Search(ctx context.Context, r *request.ImageSearchSearch) (interface{}, error) {
 	if r.Query == "" {
 		return nil, fmt.Errorf("query is required")
@@ -65,9 +46,6 @@ func (ctrl *ImageSearch) Search(ctx context.Context, r *request.ImageSearchSearc
 	if err != nil {
 		return nil, err
 	}
-	data, err := downloadImage(results[0].ImageURL)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+
+	return imageSearchPayload{Results: results}, nil
 }
