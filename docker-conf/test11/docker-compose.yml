@@ -1,0 +1,102 @@
+# Server (test11) + agents next to it.
+#
+#   docker compose up -d
+#
+# TOKEN минтится из живой сессии test11 (см. agents/backup/README.md,
+# agents/stroykontrol/mint-token.sh) и прописывается в .env.
+# MinIO для backup-агента переиспользуется общий (agents/backup/docker-compose.yml,
+# host.docker.internal:9000) — отдельный тут не поднимаем.
+#
+# Агентские порты сдвинуты (8095-8099) относительно docker-conf/test9,
+# чтобы оба стека можно было держать поднятыми одновременно.
+services:
+  server:
+    image: docker.io/madnikulin50/pnp-lowcode:${VERSION}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL}"
+    env_file: [ .env ]
+    ports:
+      - "${HTTP_PORT}:80"
+    volumes:
+      - ./data/server:/data
+
+  backup:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-backup:${VERSION}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL}"
+    environment:
+      TOKEN: ${TOKEN:-}
+      MINIO_ENDPOINT: host.docker.internal:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-backups}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD:-}
+    command:
+      - --listen=:8097
+      - --api=http://host.docker.internal:${HTTP_PORT}
+      - --public-url=http://localhost:8097
+      - --minio-endpoint=host.docker.internal:9000
+    ports:
+      - "8097:8097"
+    depends_on:
+      - server
+
+  cmdb:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-cmdb:${VERSION}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL}"
+    environment:
+      TOKEN: ${TOKEN:-}
+    command:
+      - --listen=:8095
+      - --db-path=/data/cmdb.db
+      - --api=http://host.docker.internal:${HTTP_PORT}
+    ports:
+      - "8095:8095"
+    volumes:
+      - cmdb-data:/data
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    depends_on:
+      - server
+
+  invest:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-invest:${VERSION}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL}"
+    environment:
+      TOKEN: ${TOKEN:-}
+    command:
+      - --listen=:8096
+      - --api=http://host.docker.internal:${HTTP_PORT}
+    ports:
+      - "8096:8096"
+    depends_on:
+      - server
+
+  calc-evm:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-calc-evm:${VERSION}
+    restart: always
+    command:
+      - --listen=:8098
+    ports:
+      - "8098:8098"
+
+  scan-cidr:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-scan-cidr:${VERSION}
+    restart: always
+    command:
+      - --listen=:8099
+    ports:
+      - "8099:8099"
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+volumes:
+  cmdb-data:

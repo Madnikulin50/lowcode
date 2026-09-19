@@ -1,0 +1,42 @@
+[
+  {
+    "factorID": "1",
+    "namespaceID": "1",
+    "handle": "shrinkPct",
+    "label": "Усадка",
+    "scale": "numeric",
+    "max": 10,
+    "source": "field",
+    "fieldName": "shrinkPct"
+  },
+  {
+    "factorID": "2",
+    "namespaceID": "1",
+    "handle": "incidents90d",
+    "label": "Инциденты за 90 дней",
+    "scale": "numeric",
+    "max": 20,
+    "source": "field",
+    "fieldName": "incidents90d"
+  },
+  {
+    "factorID": "3",
+    "namespaceID": "1",
+    "handle": "daysSinceAudit",
+    "label": "Давность аудита",
+    "scale": "numeric",
+    "max": 365,
+    "source": "field",
+    "fieldName": "daysSinceAudit"
+  },
+  {
+    "factorID": "4",
+    "namespaceID": "1",
+    "handle": "revenueImpact",
+    "label": "Влияние на выручку",
+    "scale": "numeric",
+    "max": 5,
+    "source": "field",
+    "fieldName": "revenueImpact"
+  }
+]

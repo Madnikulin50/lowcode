@@ -1,0 +1,42 @@
+[
+  {
+    "factorID": "11",
+    "namespaceID": "1",
+    "handle": "daysSinceAudit",
+    "label": "Давность аудита",
+    "scale": "states",
+    "states": [
+      { "code": "recent", "label": "Недавно", "severity": "low", "order": 0 },
+      { "code": "aging", "label": "Давно", "severity": "medium", "order": 1 },
+      { "code": "overdue", "label": "Просрочено", "severity": "high", "order": 2 }
+    ],
+    "source": "field",
+    "fieldName": "daysSinceAuditState"
+  },
+  {
+    "factorID": "12",
+    "namespaceID": "1",
+    "handle": "staffTurnover",
+    "label": "Текучесть персонала",
+    "scale": "states",
+    "states": [
+      { "code": "stable", "label": "Стабильно", "severity": "low", "order": 0 },
+      { "code": "elevated", "label": "Повышенная", "severity": "medium", "order": 1 },
+      { "code": "exodus", "label": "Массовый отток", "severity": "critical", "order": 2 }
+    ],
+    "source": "field",
+    "fieldName": "staffTurnoverState"
+  },
+  {
+    "factorID": "13",
+    "namespaceID": "1",
+    "handle": "auditRisk",
+    "label": "Риск по аудиту",
+    "scale": "states",
+    "states": [
+      { "code": "low", "label": "Низкий", "severity": "low", "order": 0 },
+      { "code": "high", "label": "Высокий", "severity": "high", "order": 1 }
+    ],
+    "source": "manual"
+  }
+]

@@ -1,0 +1,95 @@
+# Server (test9) + agents next to it.
+#
+#   docker compose up -d
+#
+# TOKEN минтится из живой сессии test9 (см. agents/backup/README.md,
+# agents/stroykontrol/mint-token.sh) и прописывается в .env.
+# MinIO для backup-агента переиспользуется общий (agents/backup/docker-compose.yml,
+# host.docker.internal:9000) — отдельный тут не поднимаем.
+services:
+  server:
+    image: docker.io/madnikulin50/pnp-lowcode:${VERSION}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL}"
+    env_file: [ .env ]
+    ports:
+      - "${HTTP_PORT}:80"
+    volumes:
+      - ./data/server:/data
+
+  backup:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-backup:${VERSION}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL}"
+    environment:
+      TOKEN: ${TOKEN:-}
+      MINIO_ENDPOINT: host.docker.internal:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-backups}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD:-}
+    command:
+      - --listen=:8087
+      - --api=http://host.docker.internal:${HTTP_PORT}
+      - --public-url=http://localhost:8087
+      - --minio-endpoint=host.docker.internal:9000
+    ports:
+      - "8087:8087"
+    depends_on:
+      - server
+
+  cmdb:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-cmdb:${VERSION}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL}"
+    environment:
+      TOKEN: ${TOKEN:-}
+    command:
+      - --listen=:8085
+      - --db-path=/data/cmdb.db
+      - --api=http://host.docker.internal:${HTTP_PORT}
+    ports:
+      - "8085:8085"
+    volumes:
+      - cmdb-data:/data
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    depends_on:
+      - server
+
+  invest:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-invest:${VERSION}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL}"
+    environment:
+      TOKEN: ${TOKEN:-}
+    command:
+      - --listen=:8086
+      - --api=http://host.docker.internal:${HTTP_PORT}
+    ports:
+      - "8086:8086"
+    depends_on:
+      - server
+
+  calc-evm:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-calc-evm:${VERSION}
+    restart: always
+    ports:
+      - "8088:8088"
+
+  scan-cidr:
+    image: ${DOCKER_IMAGE_PREFIX:-docker.io/madnikulin50/}pnp-scan-cidr:${VERSION}
+    restart: always
+    ports:
+      - "8089:8089"
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+volumes:
+  cmdb-data:
