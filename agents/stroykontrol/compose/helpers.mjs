@@ -480,6 +480,7 @@ export async function mintToken () {
 
   const dsnList = [...new Set([
     process.env.COMPOSE_DSN,
+    'postgres://postgres:Zse45rdx@127.0.0.1:5432/test11?sslmode=disable',
     'postgres://postgres:Zse45rdx@127.0.0.1:5432/test10?sslmode=disable',
     'postgres://postgres:Zse45rdx@127.0.0.1:5432/test9?sslmode=disable',
     'postgres://postgres:Zse45rdx@127.0.0.1:5432/test3?sslmode=disable',

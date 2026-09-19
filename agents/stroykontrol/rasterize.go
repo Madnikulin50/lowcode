@@ -69,6 +69,25 @@ func IsDOCX(mimetype string, data []byte) bool {
 	return false
 }
 
+// IsDXF recognizes ASCII DXF: mimetype hint first (matches the CAD mimetype
+// list Compose's own attachment service accepts — image/vnd.dxf etc, see
+// server/compose/service/attachment.go), then content sniff for the group-code
+// opener every ASCII DXF starts with ("0" then "SECTION" as the first two
+// lines, whitespace aside). Binary DXF ("AutoCAD Binary DXF" magic) is also
+// classified as dxf — the client-side entity parser just won't find anything
+// parseable in it and falls back to unsupported, same failure path a DOCX
+// that fails to render already takes.
+func IsDXF(mimetype string, data []byte) bool {
+	if strings.Contains(strings.ToLower(mimetype), "dxf") {
+		return true
+	}
+	if bytes.Contains(data[:min(len(data), 32)], []byte("AutoCAD Binary DXF")) {
+		return true
+	}
+	lines := strings.SplitN(strings.TrimLeft(string(data), " \t\r\n"), "\n", 3)
+	return len(lines) >= 2 && strings.TrimSpace(lines[0]) == "0" && strings.TrimSpace(lines[1]) == "SECTION"
+}
+
 // Pages returns the cache directory holding page-N.jpg files for this PDF's
 // content, rasterizing on first request. Safe for concurrent callers with
 // the same content (de-duplicates via inFlight).

@@ -146,6 +146,37 @@ func ModelForRole(role string) string {
 	return DefaultModel
 }
 
+// IsRole reports whether s is one of the role identifiers above, as opposed
+// to a literal Ollama model name.
+func IsRole(s string) bool {
+	switch s {
+	case RoleComposeChat, RoleMCPAgent, RoleAutomationChat, RoleRulesgoAI:
+		return true
+	default:
+		return false
+	}
+}
+
+// ResolveModel returns the literal Ollama model name for want: empty or one
+// of the role identifiers (RoleMCPAgent, ...) resolves through ModelForRole;
+// anything else (an agent spec's own explicit model name) passes through
+// unchanged. Several built-in agent specs (defs/*.yaml) set `model:
+// mcp.agent` meaning "whatever the mcp.agent role currently points at", not
+// a model literally named "mcp.agent" - calling Ollama with the alias
+// itself 404s ("model 'mcp.agent' not found"), which for a rulechain "ai"
+// node quietly turns into an empty ai_response (see NewClientNoThink's own
+// doc comment) rather than a visible error.
+func ResolveModel(want string) string {
+	want = strings.TrimSpace(want)
+	if want == "" {
+		return ModelForRole(RoleMCPAgent)
+	}
+	if IsRole(want) {
+		return ModelForRole(want)
+	}
+	return want
+}
+
 // CurrentConfig exposes the active AI config (for admin/API helpers).
 func CurrentConfig() Config {
 	return currentConfig()

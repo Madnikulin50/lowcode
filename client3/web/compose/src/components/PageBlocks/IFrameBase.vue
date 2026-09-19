@@ -23,7 +23,7 @@
 <script setup>
 import { computed, ref, inject, onMounted, onBeforeUnmount } from 'vue'
 import { NoID } from 'corteza-lib/js/dist'
-import { evaluatePrefilter, isFieldInFilter } from 'corteza-webapp-compose/src/lib/record-filter'
+import { evaluatePrefilter, isFieldInFilter, prefilterNeedsRecord } from 'corteza-webapp-compose/src/lib/record-filter'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
 
@@ -59,6 +59,16 @@ const src = computed(() => {
   let url = srcUrl
   if (props.block.options.srcField) {
     if (props.record) url = props.record.values[srcField]
+  }
+  // A template referencing ${recordID}/${record...} before the real record
+  // has loaded would otherwise interpolate with the NoID ('0') placeholder
+  // below — sending whatever's on the other end (an agent iframe, say) a
+  // request for record "0", which is never a real record and just errors.
+  // Wait for the actual record instead; this recomputes (and the template's
+  // reactive :src re-navigates the iframe) once it arrives.
+  const hasRealRecord = props.record && props.record.recordID && props.record.recordID !== NoID
+  if (prefilterNeedsRecord(url) && !hasRealRecord) {
+    return blank
   }
   let interpolatedURL = evaluatePrefilter(url, {
     record: props.record,

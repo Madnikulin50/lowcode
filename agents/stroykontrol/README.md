@@ -8,6 +8,20 @@ platform.
 
 ## Run
 
+**Local dev, quickest path:** `./run.sh` — mints a fresh Compose token
+itself (`mintToken()`, same as `seed.mjs`) and starts the agent against the
+namespace it's set up for by default. No manual token, no fixtures.
+
+```bash
+cd agents/stroykontrol
+./run.sh                    # defaults: api=localhost:3333/compose, the stroykontrol dev namespace
+./run.sh --listen=:9000      # extra args pass straight to the binary
+TOKEN=<token> ./run.sh       # skip minting, use a token you already have
+NAMESPACE_ID=<id> ./run.sh   # point at a different namespace
+```
+
+**Manual / non-dev / a real service token:**
+
 ```bash
 cd agents/stroykontrol
 go build -o bin/stroykontrol-web .
@@ -16,6 +30,39 @@ TOKEN=<compose api token> ./bin/stroykontrol-web \
   --api=http://localhost:3333/compose \
   --namespace=<stroykontrol namespaceID>
 ```
+
+## Debugging in GoLand
+
+`run.sh` is a shell wrapper, so GoLand can't attach a real breakpoint
+debugger to what it starts. Use a native **Go Build** run/debug
+configuration instead, with the token refresh split out as a "Before
+launch" step — that way hitting the Debug button always gets a fresh token,
+never a manually copy-pasted one that quietly expires mid-session (the JWT
+is short-lived, ~2h).
+
+A best-effort configuration named **"stroykontrol-web (debug)"** is
+committed under `.idea/runConfigurations/` — open Run/Debug Configurations
+and it should already be there with the right module/working
+directory/program arguments (`--token-file=var/dev-token`, see below);
+adjust `--namespace` if you're pointed at a different one. `.idea/` itself
+is gitignored, so this doesn't sync between machines — every dev sets up
+their own once. If it doesn't show up or the module name doesn't resolve,
+just create one by hand:
+
+1. **Run → Edit Configurations → + → Go Build.**
+   - Run kind: **Directory**, pointing at `agents/stroykontrol`.
+   - Working directory: `agents/stroykontrol`.
+   - Program arguments: `--api=http://localhost:3333/compose --namespace=512312736219004929 --token-file=var/dev-token`
+2. **Before launch → + → Run External tool** (create one if you don't have
+   it yet: Program `bash`, Arguments `mint-token.sh`, Working directory
+   `agents/stroykontrol`, pointing at [mint-token.sh](mint-token.sh) —
+   it just mints a token and writes it to `var/dev-token`, which `--token-file`
+   above reads on every startup).
+3. Set your breakpoints, hit **Debug** (not Run) on this configuration.
+
+`--token-file` (main.go) is only consulted when both `--token` and `TOKEN`
+are empty, so this doesn't interfere with `run.sh` or a real service token
+in CI/prod.
 
 `--namespace` is only the *default* (used if a request omits `?namespaceID=`;
 the IFrame block always sends it explicitly). Rasterized PDF pages are
@@ -39,6 +86,22 @@ words only in RD are underlined in green. Page text comes from `pdftotext
 docx-preview's own paginated DOM for DOCX (`section.textContent`, no extra
 round trip). Useful when a discrepancy is wording/numbers rather than
 layout, and pairs with the visual modes rather than replacing them.
+
+### Running without Compose
+
+`--fixtures=<dir>` runs the whole agent against a local directory instead
+of a live Compose instance — no server, no network call, no API token.
+Useful for developing/demoing the viewer itself:
+
+```bash
+go run . --listen=:8092 --fixtures=fixtures
+# http://localhost:8092/?recordID=demo-1&namespaceID=x
+```
+
+See [fixtures/README.md](fixtures/README.md) for the directory layout;
+`fixtures/demo-1` is a ready-to-run example. `ComposeClient` and
+`FixtureStore` both implement the same `store` interface (`store.go`), so
+main.go's HTTP handlers don't know or care which backend is active.
 
 **Token stability**: the token needs to stay valid for as long as the agent
 runs. The `mintToken()` dev helper in `compose/helpers.mjs` mints from a

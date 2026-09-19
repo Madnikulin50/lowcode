@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/cloudwego/eino/schema"
@@ -117,10 +116,12 @@ func (a *Agent) RunConfirmed(ctx context.Context, input string, contextData map[
 }
 
 func (a *Agent) clientForRun() ChatModel {
-	want := strings.TrimSpace(a.cfg.Model)
-	if want == "" {
-		want = chat.ModelForRole(chat.RoleMCPAgent)
-	}
+	// a.cfg.Model may be a literal Ollama model name (agent config a user
+	// typed directly) or a role alias like "mcp.agent" (what every built-in
+	// spec under defs/*.yaml uses) - ResolveModel tells the two apart and
+	// only resolves the latter, so a call never hits a model literally
+	// named after the role (see ResolveModel's doc comment).
+	want := chat.ResolveModel(a.cfg.Model)
 	if a.client != nil && a.client.Model() == want {
 		return a.client
 	}

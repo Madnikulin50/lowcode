@@ -1,0 +1,6 @@
+{
+  "title": "Демо: Сравнение ПД/РД (офлайн фикстура, без Compose)",
+  "status": "done",
+  "similarityPercent": "92.5",
+  "comment": "Синтетические данные для запуска stroykontrol-web без живого Compose/токена."
+}

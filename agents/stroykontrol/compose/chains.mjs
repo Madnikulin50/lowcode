@@ -83,7 +83,13 @@ try {
     };
   }) : [];
 } catch (e) {
-  out.ai_notes = 'ai verdict unavailable: ' + e.message;
+  // User-facing (this lands verbatim in the record's "comment" field via
+  // finalizeCode below) - never leak e.message here: JS/goja exception text
+  // for a JSON parse failure on empty input literally reads "EOF" to a
+  // human, which is meaningless noise, not a real explanation.
+  out.ai_notes = raw
+    ? 'вердикт ИИ недоступен: ответ модели не в ожидаемом формате JSON'
+    : 'вердикт ИИ недоступен: модель не вернула ответ';
 }
 if (out.ai_score == null) {
   out.ai_score = (${detNode} && ${detNode}.output && typeof ${detNode}.output.det_score === 'number') ? ${detNode}.output.det_score : 50;

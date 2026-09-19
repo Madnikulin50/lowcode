@@ -313,7 +313,7 @@ function expandFieldShorthand (src) {
   })
 }
 
-function prefilterNeedsRecord (src) {
+export function prefilterNeedsRecord (src) {
   return /\$\{(record|recordID|ownerID|values)\b/.test(src) ||
     [...String(src).matchAll(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g)]
       .some(([, name]) => !PREFILTER_RESERVED.has(name))

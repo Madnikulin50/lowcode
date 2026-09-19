@@ -79,6 +79,14 @@ export default [
                   { name: 'admin.workflows.create', path: 'workflows/new', component: () => import('./Admin/Workflows/Edit.vue'), props: r => ({ ...r.params }) },
                   { name: 'admin.workflows.edit', path: 'workflows/:workflowID/edit', component: () => import('./Admin/Workflows/Edit.vue'), props: r => ({ ...r.params }) },
 
+                  { name: 'admin.risk.factors', path: 'risk/factors', component: () => import('./Admin/Risk/Factors.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.risk.factors.create', path: 'risk/factors/new', component: () => import('./Admin/Risk/FactorEdit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.risk.factors.edit', path: 'risk/factors/:factorID/edit', component: () => import('./Admin/Risk/FactorEdit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.risk.models', path: 'risk/models', component: () => import('./Admin/Risk/Models.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.risk.models.create', path: 'risk/models/new', component: () => import('./Admin/Risk/ModelEdit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.risk.models.edit', path: 'risk/models/:modelID/edit', component: () => import('./Admin/Risk/ModelEdit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.risk.registry', path: 'risk/registry', component: () => import('./Admin/Risk/Registry.vue'), props: r => ({ ...r.params }) },
+
                   { name: 'admin.configuration', path: 'configuration', component: () => import('./Admin/Configuration/Index.vue'), props: r => ({ ...r.params }) },
                 ],
               },

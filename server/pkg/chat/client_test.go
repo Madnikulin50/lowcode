@@ -200,6 +200,36 @@ func TestModelForRoleUsesConfig(t *testing.T) {
 	}
 }
 
+// TestResolveModelDistinguishesRoleFromLiteral pins the bug behind every
+// built-in agent spec (defs/*.yaml) setting `model: mcp.agent`: that's a
+// role alias meaning "whatever mcp.agent currently points at", not a model
+// literally named "mcp.agent" - passing it straight to Ollama 404s ("model
+// 'mcp.agent' not found"), which a rulechain "ai" node then sees as an
+// empty ai_response rather than a visible error (see NewClientNoThink).
+func TestResolveModelDistinguishesRoleFromLiteral(t *testing.T) {
+	t.Setenv("CHAT_MODEL", "")
+	SetConfigProvider(func() Config {
+		return Config{
+			Enabled: true,
+			Catalog: []CatalogEntry{{Name: "qwen3:8b", Enabled: true}},
+			Roles:   RoleModels{MCPAgent: "qwen3:8b"},
+		}
+	})
+	t.Cleanup(func() { SetConfigProvider(nil) })
+
+	if got := ResolveModel(RoleMCPAgent); got != "qwen3:8b" {
+		t.Fatalf("ResolveModel(role alias) = %q, want the resolved model %q, not the alias itself", got, "qwen3:8b")
+	}
+	if got := ResolveModel(""); got != "qwen3:8b" {
+		t.Fatalf("ResolveModel(\"\") = %q, want the mcp.agent role's model %q", got, "qwen3:8b")
+	}
+	// A literal model name an agent spec set explicitly must pass through
+	// unchanged, even one that happens not to be the current role default.
+	if got := ResolveModel("deepseek-r1"); got != "deepseek-r1" {
+		t.Fatalf("ResolveModel(literal model) = %q, want it unchanged", got)
+	}
+}
+
 func TestNormalizeOllamaBaseURL(t *testing.T) {
 	cases := map[string]string{
 		"":                       "http://127.0.0.1:11434",

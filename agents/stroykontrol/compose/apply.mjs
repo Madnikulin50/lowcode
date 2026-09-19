@@ -291,7 +291,7 @@ async function main () {
     }),
 
     listPage('Сравнения ПД/РД', 'pd_rd_comparisons', 20, 'fas file-invoice', m.pd_rd_comparisons,
-      ['title', 'object', 'status', 'similarity_percent', 'differing_pages']),
+      ['title', 'object', 'pd_file', 'rd_file', 'status', 'similarity_percent', 'differing_pages']),
     card('Сравнение ПД/РД', 'pd_rd_comparison', m.pd_rd_comparisons, 21, [
       'title', 'object', 'status', 'pd_file', 'rd_file', 'similarity_percent',
       'total_pages_pd', 'total_pages_rd', 'matching_pages', 'differing_pages', 'report_file', 'comment',

@@ -77,14 +77,41 @@
   .opacity-row input { flex: 1; max-width: 240px; }
   .unsupported { padding: 24px; text-align: center; color: var(--muted); }
   .text-legend { display: flex; gap: 16px; margin-bottom: 8px; font-size: 12px; }
-  .text-legend .tdiff-del, .text-legend .tdiff-add { padding: 1px 6px; border-radius: 4px; }
+  .text-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .text-legend .swatch.del { background: rgba(207,34,46,.35); }
+  .text-legend .swatch.add { background: rgba(26,127,55,.35); }
+  /* Git-diff-style unified view: monospace, one <div> row per line, a
+     fixed-width gutter carrying the -/+ marker, background tint on the row
+     for whole-line add/del, and (for a clean 1:1 line replace) extra
+     tdiff-del/tdiff-add spans *inside* the row for the changed words only —
+     same idiom GitHub/GitLab use for line-level diffs. */
+  /* No max-height/overflow here on purpose: this sits inside a Compose
+     IFrame block with a fixed box height, and the page is already paginated
+     (one page's diff at a time) — capping this box too would give it its
+     own inner scrollbar nested inside the iframe's own outer one (the
+     iframe already has to scroll to reach the discrepancies list below),
+     i.e. exactly the "double scroll" a fixed-height nested box causes. Let
+     it flow to its natural height instead, so there's one scroll region. */
   .text-diff {
-    white-space: pre-wrap; line-height: 1.7; font-size: 13px;
-    padding: 14px 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-    max-height: 70vh; overflow: auto;
+    font: 12.5px/1.55 ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Roboto Mono", monospace;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
   }
-  .tdiff-del { color: var(--bad); text-decoration: line-through; background: rgba(207,34,46,.10); }
-  .tdiff-add { color: var(--ok); text-decoration: underline; background: rgba(26,127,55,.10); }
+  .tdiff-row { display: flex; }
+  .tdiff-row .marker { flex: none; width: 22px; text-align: center; user-select: none; color: var(--muted); }
+  .tdiff-row .content { flex: 1; min-width: 0; white-space: pre-wrap; word-break: break-word; padding: 0 10px 0 0; }
+  .tdiff-row.del { background: rgba(207,34,46,.10); }
+  .tdiff-row.del .marker { color: var(--bad); }
+  .tdiff-row.add { background: rgba(26,127,55,.10); }
+  .tdiff-row.add .marker { color: var(--ok); }
+  .tdiff-row.ctx .content { color: var(--muted); }
+  .tdiff-del { background: rgba(207,34,46,.35); text-decoration: line-through; border-radius: 2px; }
+  .tdiff-add { background: rgba(26,127,55,.35); border-radius: 2px; }
+  .tdiff-fold {
+    display: flex; align-items: center; gap: 6px; padding: 3px 10px; cursor: pointer;
+    color: var(--muted); font-size: 11.5px; background: var(--bg); border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border);
+  }
+  .tdiff-fold:hover { color: var(--fg); }
+  .tdiff-match { padding: 10px; color: var(--muted); }
   .discrepancies { margin-top: 14px; }
   .discrepancies h2 { font-size: 13px; margin: 0 0 6px; }
   .disc-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
@@ -155,7 +182,7 @@ const MODE_META = {
   side: { label: 'Рядом', hint: 'Страницы рядом друг с другом — для сопоставления вручную.' },
   overlay: { label: 'Наложение', hint: 'РД поверх ПД с регулируемой прозрачностью — заметны сдвиги и смещения.' },
   diff: { label: 'Авто-разница', hint: 'Совпадающие области гасятся в чёрный, различия остаются светлыми пятнами.' },
-  text: { label: 'Текст', hint: 'Слова, отсутствующие в одном из файлов, подсвечиваются: красный — только в ПД, зелёный — только в РД.' },
+  text: { label: 'Текст', hint: 'Построчное сравнение, как git diff: «−» красным — строка только в ПД, «+» зелёным — только в РД.' },
 }
 
 const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200]
@@ -171,7 +198,34 @@ let rdPages = { supported: false, kind: 'other', pageCount: 0, images: null, tex
 // HTML (one <section class="docx"> per page), then html2canvas rasterizes
 // each page into an image — same page-image abstraction the PDF side
 // already gets from the server, so the rest of the viewer (side-by-side /
-// overlay / diff) doesn't need to know which kind it's looking at.
+// overlay / diff) doesn't need to know which kind it's looking at. DXF gets
+// the same client-side treatment for the same reason (no CAD rasterizer on
+// this host either) — see renderDxfPages() further down.
+// Recursively pulls one text "line" per paragraph/heading/list-item/table
+// row out of a docx-preview page section. Plain sec.textContent would flatten
+// every paragraph into one blob (browsers don't insert separators between
+// block elements), which is fine for the old flowing word-diff but useless
+// for a line-based git-style diff — this is what gives DOCX pages the same
+// line boundaries a PDF page already gets for free from `pdftotext -layout`.
+function linesFromElement (root) {
+  const lines = []
+  const LEAF = /^(P|LI|H[1-6])$/
+  ;(function walk (node) {
+    for (const child of node.children || []) {
+      if (child.tagName === 'TABLE') {
+        for (const tr of child.querySelectorAll('tr')) {
+          lines.push(Array.from(tr.children).map(td => (td.textContent || '').trim()).join(' | '))
+        }
+      } else if (LEAF.test(child.tagName)) {
+        lines.push((child.textContent || '').trim())
+      } else {
+        walk(child)
+      }
+    }
+  })(root)
+  return lines
+}
+
 async function renderDocxPages (side) {
   const res = await fetch(`/api/file?${qs}&side=${side}`)
   if (!res.ok) throw new Error('не удалось получить файл (' + res.status + ')')
@@ -202,12 +256,194 @@ async function renderDocxPages (side) {
     for (const sec of sections) {
       const canvas = await window.html2canvas(sec, { scale: 2, backgroundColor: '#ffffff' })
       images.push(canvas.toDataURL('image/jpeg', 0.92))
-      texts.push(sec.textContent || '')
+      texts.push(linesFromElement(sec).join('\n'))
     }
     return { images, texts }
   } finally {
     clip.remove()
   }
+}
+
+// DXF gets the same treatment as DOCX above: no server-side rasterizer for
+// CAD on this host either, so it's parsed and drawn to a <canvas> right here
+// in the browser, producing one page image (a DXF's ENTITIES section is one
+// model-space sheet — no multi-sheet/layout concept, unlike PDF/DOCX). Only
+// straight-line geometry (LINE/LWPOLYLINE/POLYLINE), circles/arcs and
+// TEXT/MTEXT labels are drawn — covers what dxfFile() in filegen.mjs
+// generates and the bulk of a typical 2D чертёж's linework; splines,
+// hatches, dimensions-as-blocks and inserted blocks are silently skipped
+// rather than attempted badly.
+const ACI_COLORS = { 1: '#e5352b', 2: '#e0c020', 3: '#37b52b', 4: '#2bb5c0', 5: '#3050d0', 6: '#c02bc0', 7: '#2a2a2a', 8: '#808080', 9: '#a8a8a8' }
+const DXF_DEFAULT_STROKE = '#2a2a2a'
+
+// Same group-code walk as extractDXFText in server/pkg/rag/parser_cad.go —
+// kept as a *separate* pass (not fused with the geometry parser below) so
+// the "Текст" view mode shows exactly the text the backend's own extractor
+// fed into the det/AI comparison, not a reformatted version of it.
+function extractDxfText (src) {
+  const lines = src.replace(/\r\n/g, '\n').split('\n')
+  const out = []
+  let entity = ''
+  let pending = ''
+  const flush = () => { if (pending) { out.push(pending); pending = '' } }
+  for (let i = 0; i + 1 < lines.length; i += 2) {
+    const code = lines[i].trim()
+    const val = lines[i + 1].trim()
+    if (code === '0') { flush(); entity = val.toUpperCase(); continue }
+    if (code === '1' || code === '3' || code === '4') {
+      if (!val) continue
+      if (entity === 'MTEXT' && pending) pending += ' ' + val
+      else { flush(); pending = val }
+    } else if (code === '2') {
+      if (val && ['LAYER', 'TABLE', 'BLOCK', 'STYLE'].includes(entity)) out.push(entity + ': ' + val)
+    } else if (code === '8') {
+      if (val && ['TEXT', 'MTEXT', 'DIMENSION', 'INSERT'].includes(entity)) out.push('LAYER ' + val)
+    }
+  }
+  flush()
+  const seen = new Set()
+  return out.filter(s => { const t = s.trim(); if (!t || seen.has(t)) return false; seen.add(t); return true }).join('\n')
+}
+
+// Geometry-only pass: walks the same group-code stream but only cares about
+// ENTITIES-section drawables, collecting points/radius/angle/text per entity
+// so drawDxfPage() below can rasterize them. Also collects the TABLES
+// section's LAYER colors (name -> ACI color) along the way — entities here
+// carry no explicit per-entity color (group 62), they're BYLAYER like real
+// DXF exports default to, so drawDxfPage needs the layer table to know what
+// color each one actually is.
+function parseDxfEntities (src) {
+  const lines = src.replace(/\r\n/g, '\n').split('\n')
+  const DRAWABLE = new Set(['LINE', 'LWPOLYLINE', 'POLYLINE', 'CIRCLE', 'ARC', 'TEXT', 'MTEXT'])
+  const entities = []
+  const layerColors = {}
+  let cur = null
+  let curLayerDef = null
+  for (let i = 0; i + 1 < lines.length; i += 2) {
+    const code = lines[i].trim()
+    const val = lines[i + 1].trim()
+    if (code === '0') {
+      if (cur && cur.pts.length) entities.push(cur)
+      if (curLayerDef && curLayerDef.name) layerColors[curLayerDef.name] = curLayerDef.color
+      curLayerDef = val === 'LAYER' ? { name: null, color: null } : null
+      cur = DRAWABLE.has(val) ? { type: val, pts: [], layer: '0', color: null, text: '', size: null, startAngle: 0, endAngle: 360, _x: null, _y: null, _x2: null, _y2: null } : null
+      continue
+    }
+    if (curLayerDef) {
+      if (code === '2') curLayerDef.name = val
+      else if (code === '62') curLayerDef.color = parseInt(val, 10)
+      continue
+    }
+    if (!cur) continue
+    switch (code) {
+      case '8': cur.layer = val; break
+      case '62': cur.color = parseInt(val, 10); break
+      case '10': cur._x = parseFloat(val); break
+      case '20':
+        cur._y = parseFloat(val)
+        if (cur._x != null && !isNaN(cur._x) && !isNaN(cur._y)) { cur.pts.push([cur._x, cur._y]); cur._x = null }
+        break
+      // A LINE's *end* point comes as group 11/21 (start is 10/20 above) —
+      // without this, every LINE entity ends up with only its start point
+      // and gets silently dropped by drawDxfPage's `pts.length >= 2` check.
+      case '11': cur._x2 = parseFloat(val); break
+      case '21':
+        cur._y2 = parseFloat(val)
+        if (cur._x2 != null && !isNaN(cur._x2) && !isNaN(cur._y2)) { cur.pts.push([cur._x2, cur._y2]); cur._x2 = null }
+        break
+      case '40': cur.size = parseFloat(val); break
+      case '50': cur.startAngle = parseFloat(val); break
+      case '51': cur.endAngle = parseFloat(val); break
+      case '1': case '3': case '4':
+        if (val) cur.text = cur.text ? cur.text + ' ' + val : val
+        break
+    }
+  }
+  if (cur && cur.pts.length) entities.push(cur)
+  if (curLayerDef && curLayerDef.name) layerColors[curLayerDef.name] = curLayerDef.color
+  return { entities, layerColors }
+}
+
+function dxfBBox (entities) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  const consider = (x, y) => { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y }
+  for (const e of entities) {
+    for (const [x, y] of e.pts) consider(x, y)
+    if ((e.type === 'CIRCLE' || e.type === 'ARC') && e.pts[0] && e.size) {
+      const [cx, cy] = e.pts[0]
+      consider(cx - e.size, cy - e.size); consider(cx + e.size, cy + e.size)
+    }
+  }
+  if (!isFinite(minX)) return { minX: 0, minY: 0, maxX: 100, maxY: 100 }
+  return { minX, minY, maxX, maxY }
+}
+
+function drawDxfPage (entities, layerColors) {
+  const bbox = dxfBBox(entities)
+  const w = Math.max(bbox.maxX - bbox.minX, 1)
+  const h = Math.max(bbox.maxY - bbox.minY, 1)
+  const PAD = 40
+  const CW = 1600
+  const CH = Math.round(CW * (h / w)) || 1131
+  const canvas = document.createElement('canvas')
+  canvas.width = CW
+  canvas.height = CH
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, CW, CH)
+
+  const scale = Math.min((CW - PAD * 2) / w, (CH - PAD * 2) / h)
+  const ox = PAD + (CW - PAD * 2 - w * scale) / 2 - bbox.minX * scale
+  const oy = CH - (PAD + (CH - PAD * 2 - h * scale) / 2) + bbox.minY * scale // DXF is Y-up, canvas is Y-down
+  const tx = (x) => ox + x * scale
+  const ty = (y) => oy - y * scale
+
+  for (const e of entities) {
+    // BYLAYER: an entity with no explicit group-62 color (the common case —
+    // real DXF exports default to it) takes its layer's color from the
+    // TABLES section instead of a flat default.
+    const aci = e.color != null ? e.color : (layerColors || {})[e.layer]
+    const color = ACI_COLORS[aci] || DXF_DEFAULT_STROKE
+    ctx.strokeStyle = color
+    ctx.fillStyle = color
+    ctx.lineWidth = e.layer === 'СТЕНЫ' ? 2.5 : 1
+    if (e.type === 'LINE' && e.pts.length >= 2) {
+      ctx.beginPath()
+      ctx.moveTo(tx(e.pts[0][0]), ty(e.pts[0][1]))
+      ctx.lineTo(tx(e.pts[1][0]), ty(e.pts[1][1]))
+      ctx.stroke()
+    } else if ((e.type === 'LWPOLYLINE' || e.type === 'POLYLINE') && e.pts.length >= 2) {
+      ctx.beginPath()
+      ctx.moveTo(tx(e.pts[0][0]), ty(e.pts[0][1]))
+      for (let i = 1; i < e.pts.length; i++) ctx.lineTo(tx(e.pts[i][0]), ty(e.pts[i][1]))
+      ctx.stroke()
+    } else if (e.type === 'CIRCLE' && e.pts[0] && e.size) {
+      ctx.beginPath()
+      ctx.arc(tx(e.pts[0][0]), ty(e.pts[0][1]), e.size * scale, 0, Math.PI * 2)
+      ctx.stroke()
+    } else if (e.type === 'ARC' && e.pts[0] && e.size != null) {
+      const a0 = -(e.startAngle || 0) * Math.PI / 180
+      const a1 = -(e.endAngle || 0) * Math.PI / 180
+      ctx.beginPath()
+      ctx.arc(tx(e.pts[0][0]), ty(e.pts[0][1]), Math.max(e.size, 0.01) * scale, a0, a1, true)
+      ctx.stroke()
+    } else if ((e.type === 'TEXT' || e.type === 'MTEXT') && e.pts[0] && e.text) {
+      const size = Math.max((e.size || 2.5) * scale, 9)
+      ctx.font = size + 'px sans-serif'
+      ctx.fillText(e.text, tx(e.pts[0][0]), ty(e.pts[0][1]))
+    }
+  }
+  return canvas
+}
+
+async function renderDxfPages (side) {
+  const res = await fetch(`/api/file?${qs}&side=${side}`)
+  if (!res.ok) throw new Error('не удалось получить файл (' + res.status + ')')
+  const src = await res.text()
+  const { entities, layerColors } = parseDxfEntities(src)
+  if (!entities.length) return { images: [], texts: [] }
+  const canvas = drawDxfPage(entities, layerColors)
+  return { images: [canvas.toDataURL('image/jpeg', 0.92)], texts: [extractDxfText(src)] }
 }
 
 async function loadSide (side, hasFile) {
@@ -227,6 +463,18 @@ async function loadSide (side, hasFile) {
       if (!images.length) { info.supported = false; info.kind = 'other' }
     } catch (e) {
       console.error('docx render failed for side=' + side, e)
+      info.supported = false
+      info.kind = 'other'
+    }
+  } else if (info.kind === 'dxf') {
+    try {
+      const { images, texts } = await renderDxfPages(side)
+      info.images = images
+      info.texts = texts
+      info.pageCount = images.length
+      if (!images.length) { info.supported = false; info.kind = 'other' }
+    } catch (e) {
+      console.error('dxf render failed for side=' + side, e)
       info.supported = false
       info.kind = 'other'
     }
@@ -251,7 +499,7 @@ async function loadSide (side, hasFile) {
 function pageSrc (info, side, n) {
   if (!info) return ''
   if (info.kind === 'pdf') return `/api/page?${qs}&side=${side}&n=${n}`
-  if (info.kind === 'docx' && info.images) return info.images[n - 1] || ''
+  if ((info.kind === 'docx' || info.kind === 'dxf') && info.images) return info.images[n - 1] || ''
   return ''
 }
 
@@ -262,15 +510,12 @@ function pageText (info, n) {
   return info.texts[n - 1] || ''
 }
 
-// Word-level LCS diff (classic O(n*m) table — page-sized text, so this is
-// milliseconds even for a couple thousand words). Whitespace is collapsed
-// before diffing (pdftotext -layout vs. docx-preview's DOM produce very
-// different incidental spacing for the same content) and reinserted as a
-// single space on render, so highlights track real wording changes, not
-// formatting differences.
-function diffWords (aText, bText) {
-  const a = (aText || '').split(/\s+/).filter(Boolean)
-  const b = (bText || '').split(/\s+/).filter(Boolean)
+// Generic LCS diff (classic O(n*m) table — page-sized input, so this is
+// milliseconds even for a couple thousand tokens) over two arrays of
+// already-tokenized items, compared by === . Used both at line granularity
+// (the git-diff-style page view) and, within one changed line pair, at word
+// granularity (see wordDiffSpans).
+function diffSeq (a, b) {
   const n = a.length, m = b.length
   const dp = new Array(n + 1)
   for (let i = 0; i <= n; i++) dp[i] = new Uint32Array(m + 1)
@@ -289,6 +534,87 @@ function diffWords (aText, bText) {
   while (i < n) { ops.push({ type: 'del', text: a[i] }); i++ }
   while (j < m) { ops.push({ type: 'add', text: b[j] }); j++ }
   return ops
+}
+
+// Splits page text into comparable lines: pdftotext -layout gives PDF pages
+// real line breaks; linesFromElement() gives DOCX pages one line per
+// paragraph/row (see above). Internal whitespace runs are collapsed per
+// line — same rationale as the old word-diff had: the two extraction
+// pipelines produce very different incidental spacing for identical
+// wording, so a highlight should track real content changes, not that.
+// Runs of 2+ blank lines collapse to one, so pdftotext's spacing blank
+// lines don't inflate the diff with noise docx never had.
+function textLines (text) {
+  const raw = (text || '').split(/\r?\n/).map(l => l.replace(/\s+/g, ' ').trim())
+  const out = []
+  for (const l of raw) {
+    if (l === '' && out[out.length - 1] === '') continue
+    out.push(l)
+  }
+  while (out.length && out[0] === '') out.shift()
+  while (out.length && out[out.length - 1] === '') out.pop()
+  return out
+}
+
+// Word-level ops for one changed line pair, as spans to insert inside that
+// line's row — lets a one-line edit ("2.4 м" → "2.6 м") show exactly which
+// words changed instead of tinting the whole line, same as GitHub/GitLab's
+// intra-line diff highlighting.
+function wordDiffSpans (delText, addText) {
+  const ops = diffSeq(delText.split(/\s+/).filter(Boolean), addText.split(/\s+/).filter(Boolean))
+  const delSpans = [], addSpans = []
+  for (const op of ops) {
+    if (op.type === 'equal') { delSpans.push({ t: op.text, hi: false }); addSpans.push({ t: op.text, hi: false }) }
+    else if (op.type === 'del') delSpans.push({ t: op.text, hi: true })
+    else addSpans.push({ t: op.text, hi: true })
+  }
+  return { delSpans, addSpans }
+}
+
+function lineRow (kind, marker, text) {
+  return el('div', { class: 'tdiff-row ' + kind }, [
+    el('span', { class: 'marker', text: marker }),
+    el('span', { class: 'content', text: text || ' ' }),
+  ])
+}
+
+// Same as lineRow but with word-level highlight spans inside .content
+// instead of plain text — used for a 1:1 changed-line pair.
+function lineRowHi (kind, marker, spans) {
+  const content = el('span', { class: 'content' })
+  spans.forEach((s, idx) => {
+    if (idx > 0) content.appendChild(document.createTextNode(' '))
+    const node = s.hi ? el('span', { class: kind === 'del' ? 'tdiff-del' : 'tdiff-add', text: s.t }) : document.createTextNode(s.t)
+    content.appendChild(node)
+  })
+  return el('div', { class: 'tdiff-row ' + kind }, [el('span', { class: 'marker', text: marker }), content])
+}
+
+const DIFF_CONTEXT = 3 // unchanged lines kept visible around each change, like `git diff -U3`
+let foldState = {} // "<page>:<blockIndex>" -> true once a fold's been expanded by the user
+
+// Groups line-level diff ops into alternating context/change blocks, the
+// same shape a unified diff's hunks have: a run of untouched lines, then a
+// run of removed lines followed by added lines, and so on.
+function buildBlocks (ops) {
+  const blocks = []
+  let i = 0
+  while (i < ops.length) {
+    if (ops[i].type === 'equal') {
+      const lines = []
+      while (i < ops.length && ops[i].type === 'equal') { lines.push(ops[i].text); i++ }
+      blocks.push({ kind: 'ctx', lines })
+    } else {
+      const dels = [], adds = []
+      while (i < ops.length && ops[i].type !== 'equal') {
+        if (ops[i].type === 'del') dels.push(ops[i].text)
+        else adds.push(ops[i].text)
+        i++
+      }
+      blocks.push({ kind: 'change', dels, adds })
+    }
+  }
+  return blocks
 }
 
 async function getJSON (url) {
@@ -418,7 +744,7 @@ function render (comparison) {
     app.appendChild(buildViewer(pageCount))
   } else {
     app.appendChild(el('div', { class: 'unsupported' }, [
-      el('div', { text: 'Визуальное постраничное наложение доступно для PDF и DOCX.' }),
+      el('div', { text: 'Визуальное постраничное наложение доступно для PDF, DOCX и DXF.' }),
       el('div', { text: (comparison.hasPdFile && !pdPages.supported) || (comparison.hasRdFile && !rdPages.supported)
         ? 'Один из файлов не удалось отобразить постранично, показан только текстовый список расхождений ниже.'
         : 'Файлы ещё не загружены.' }),
@@ -523,14 +849,17 @@ function buildViewer (pageCount) {
 function pdLabel () { return lastComparison && lastComparison.pdFileName ? 'ПД — ' + lastComparison.pdFileName : 'ПД' }
 function rdLabel () { return lastComparison && lastComparison.rdFileName ? 'РД — ' + lastComparison.rdFileName : 'РД' }
 
-// Redline-style page text: PD is the baseline, words missing from RD are
-// struck through in red, words RD adds are underlined in green, matching
-// text stays plain — same idiom as Word's "compare documents".
+// Unified, git-diff-style page text: PD is "a", RD is "b", removed lines get
+// a red "−" row, added lines a green "+" row, matching lines are dimmed
+// context — same layout `git diff`/GitHub give two versions of a source
+// file. Long unchanged stretches collapse behind a click-to-expand fold
+// (like `git diff -U3`), and a clean 1:1 line replacement gets word-level
+// highlighting inside the row instead of a flat color (see wordDiffSpans).
 function buildTextDiff (n) {
   const container = el('div', {})
   container.appendChild(el('div', { class: 'text-legend' }, [
-    el('span', { class: 'tdiff-del', text: 'есть в ПД, нет в РД' }),
-    el('span', { class: 'tdiff-add', text: 'есть в РД, нет в ПД' }),
+    el('span', {}, [el('span', { class: 'swatch del' }), document.createTextNode('только в ПД')]),
+    el('span', {}, [el('span', { class: 'swatch add' }), document.createTextNode('только в РД')]),
   ]))
 
   const pdText = pageText(pdPages, n)
@@ -540,15 +869,61 @@ function buildTextDiff (n) {
     return container
   }
 
-  const ops = diffWords(pdText, rdText)
+  const pdLines = textLines(pdText)
+  const rdLines = textLines(rdText)
+  const ops = diffSeq(pdLines, rdLines)
+  const blocks = buildBlocks(ops)
   const box = el('div', { class: 'text-diff' })
-  for (const op of ops) {
-    const span = document.createElement('span')
-    span.textContent = op.text + ' '
-    if (op.type === 'del') span.className = 'tdiff-del'
-    else if (op.type === 'add') span.className = 'tdiff-add'
-    box.appendChild(span)
+
+  if (blocks.length === 1 && blocks[0].kind === 'ctx') {
+    box.appendChild(el('div', { class: 'tdiff-match', text: '✓ Текст страницы совпадает построчно.' }))
+    container.appendChild(box)
+    return container
   }
+
+  blocks.forEach((block, blockIdx) => {
+    if (block.kind === 'change') {
+      // A clean 1:1 line-for-line substitution (same count on both sides,
+      // most commonly exactly one) gets word-level highlighting per pair;
+      // anything lumpier (added/removed whole lines) just gets flat rows —
+      // still perfectly readable, it's what plain `git diff` shows too.
+      const paired = block.dels.length === block.adds.length
+      if (paired) {
+        for (let k = 0; k < block.dels.length; k++) {
+          const { delSpans, addSpans } = wordDiffSpans(block.dels[k], block.adds[k])
+          box.appendChild(lineRowHi('del', '−', delSpans))
+          box.appendChild(lineRowHi('add', '+', addSpans))
+        }
+      } else {
+        for (const l of block.dels) box.appendChild(lineRow('del', '−', l))
+        for (const l of block.adds) box.appendChild(lineRow('add', '+', l))
+      }
+      return
+    }
+
+    // Context block: show up to DIFF_CONTEXT lines at each edge that
+    // actually borders a change (the very first/last block only borders a
+    // change on one side), folding away a longer untouched middle behind a
+    // click-to-expand toggle.
+    const isFirst = blockIdx === 0
+    const isLast = blockIdx === blocks.length - 1
+    const headN = isFirst ? 0 : DIFF_CONTEXT
+    const tailN = isLast ? 0 : DIFF_CONTEXT
+    const foldKey = page + ':' + blockIdx
+    const expanded = foldState[foldKey]
+    const hiddenCount = block.lines.length - headN - tailN
+
+    if (expanded || hiddenCount <= 0) {
+      for (const l of block.lines) box.appendChild(lineRow('ctx', ' ', l))
+      return
+    }
+    for (const l of block.lines.slice(0, headN)) box.appendChild(lineRow('ctx', ' ', l))
+    const fold = el('div', { class: 'tdiff-fold', text: `⋯ ${hiddenCount} совпадающих строк без изменений — показать ⋯` })
+    fold.onclick = () => { foldState[foldKey] = true; rerender() }
+    box.appendChild(fold)
+    for (const l of block.lines.slice(block.lines.length - tailN)) box.appendChild(lineRow('ctx', ' ', l))
+  })
+
   container.appendChild(box)
   return container
 }

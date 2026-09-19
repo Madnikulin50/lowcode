@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { createRecord, setOf, mintToken, detectBase, apiFactory } from './helpers.mjs'
-import { docFile, uploadAttachment, patchFields, pdRdParagraphs } from './filegen.mjs'
+import { docFile, dxfFile, uploadAttachment, patchFields, pdRdParagraphs } from './filegen.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const TARGET_OBJECTS = Number(process.env.SEED_OBJECTS || 120)
@@ -234,8 +234,21 @@ async function seedObject (ctx, i) {
       matching_pages: matching,
       differing_pages: differing,
     })
-    const pdFile = docFile(`${o.code}-PD-${c}`, pdRdParagraphs('pd', o, { totalPages: totalPagesPd }))
-    const rdFile = docFile(`${o.code}-RD-${c}`, pdRdParagraphs('rd', o, { totalPages: totalPagesRd }))
+    // ~30% of pairs are real чертежи (synthetic ASCII DXF, see dxfFile() in
+    // filegen.mjs) instead of docx placeholders, so extract_attachment_text
+    // and the 'drawing' discrepancy_type below have actual drawing content
+    // to work with rather than being permanently unreachable.
+    const isDrawingPair = chance(0.3)
+    const dxfDrift = isDrawingPair && chance(0.5) ? randInt(50, 400) : 0
+    let pdFile, rdFile
+    if (isDrawingPair) {
+      const dxfMeta = { sheetIndex: randInt(0, 5), sheetNo: c + 1, sheetsTotal: comparisonCount, drift: dxfDrift }
+      pdFile = dxfFile(`${o.code}-PD-${c}`, 'pd', o, dxfMeta)
+      rdFile = dxfFile(`${o.code}-RD-${c}`, 'rd', o, dxfMeta)
+    } else {
+      pdFile = docFile(`${o.code}-PD-${c}`, pdRdParagraphs('pd', o, { totalPages: totalPagesPd }))
+      rdFile = docFile(`${o.code}-RD-${c}`, pdRdParagraphs('rd', o, { totalPages: totalPagesRd }))
+    }
     const [pdAtt, rdAtt] = await Promise.all([
       uploadAttachment(base, token, nsID, m.pd_rd_comparisons, comparisonID, 'pd_file', pdFile),
       uploadAttachment(base, token, nsID, m.pd_rd_comparisons, comparisonID, 'rd_file', rdFile),
@@ -246,18 +259,19 @@ async function seedObject (ctx, i) {
       for (let d = 0; d < Math.min(differing, 4); d++) {
         await put(api, nsID, m.pd_rd_discrepancies, {
           comparison: comparisonID,
-          // pd_file/rd_file are minimal placeholder docx (a few lines of
-          // text — see docFile() above), which always renders as a single
-          // page in the viewer, regardless of the fictional total_pages_pd
-          // metadata above. A random page_number up to that fake page count
-          // reads as a broken/nonexistent page reference once you actually
-          // open the comparison. Page 1 is the only page that ever really
-          // exists, so that's what demo data should point at.
+          // pd_file/rd_file (docx or dxf, see above) always render as a
+          // single page/sheet in the viewer, regardless of the fictional
+          // total_pages_pd metadata above. A random page_number up to that
+          // fake page count reads as a broken/nonexistent page reference
+          // once you actually open the comparison. Page 1 is the only page
+          // that ever really exists, so that's what demo data should point at.
           page_number: 1,
-          // 'drawing' isn't in this pool: pd_file/rd_file are plain-text
-          // placeholders (see docFile() above) — there's no actual drawing
-          // content for a "чертёж" finding to plausibly refer to.
-          discrepancy_type: pick(['content', 'numbering', 'missing_page', 'extra_page']),
+          // 'drawing' only makes sense when the pair is actually a dxf
+          // (isDrawingPair) — otherwise there's no drawing content for a
+          // "чертёж" finding to plausibly refer to.
+          discrepancy_type: pick(isDrawingPair
+            ? ['content', 'numbering', 'missing_page', 'extra_page', 'drawing']
+            : ['content', 'numbering', 'missing_page', 'extra_page']),
           severity: pick(['low', 'low', 'medium', 'high']),
         })
       }
