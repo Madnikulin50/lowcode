@@ -1,4 +1,4 @@
-const DEFAULT_AGENT = 'http://localhost:8085/api'
+const DEFAULT_AGENT = 'http://localhost:8089/api'
 
 function agentBase (url) {
   return String(url || DEFAULT_AGENT).replace(/\/$/, '')

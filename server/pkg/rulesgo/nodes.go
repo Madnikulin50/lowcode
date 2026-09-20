@@ -660,7 +660,12 @@ func splitTrimStr(s string) []string {
 }
 
 func evaluateCondition(fieldVal interface{}, compareVal, operator string) bool {
-	fieldStr := fmt.Sprintf("%v", fieldVal)
+	var fieldStr string
+	if fieldVal != nil {
+		// fmt.Sprintf("%v", nil) yields the literal string "<nil>", which
+		// would make "empty"/"notEmpty" see a missing field as non-empty.
+		fieldStr = fmt.Sprintf("%v", fieldVal)
+	}
 	switch operator {
 	case "empty":
 		return fieldStr == ""

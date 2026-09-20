@@ -6,6 +6,10 @@
 // (see client3/web/compose/src/components/PageBlocks/IFrameBase.vue).
 //
 //	go run . --listen=:8092 --api=http://localhost:3333/compose --token=$TOKEN --namespace=<nsID>
+//
+// Or skip --token/$TOKEN entirely with AGENT_SHARED_SECRET set the same in
+// this process's env and the server's (self-enrolls via POST /agents/enroll,
+// see agents/sdk/authtoken.go).
 package main
 
 import (
@@ -16,6 +20,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -23,6 +28,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/madnikulin50/lowcode/agents/sdk"
 )
 
 //go:embed web/static
@@ -65,7 +72,21 @@ func main() {
 			*token = strings.TrimSpace(string(b))
 		}
 		if *token == "" {
-			log.Fatal("--token (or TOKEN env, or --token-file) is required (or pass --fixtures=<dir> to run standalone, see fixtures/README.md)")
+			// Self-enroll via AGENT_SHARED_SECRET, same as backup/cmdb/invest
+			// (see agents/sdk/authtoken.go) — no manual mint-token.sh step.
+			// The enroll endpoint is mounted on the server's root router,
+			// not under /api or /compose (see mountAgentEnroll in
+			// server/app/servers.go, called before the /api route is
+			// mounted) — so this needs the bare origin, whatever path
+			// suffix --api happens to carry.
+			if root, err := rootOrigin(*api); err != nil {
+				log.Printf("self-enroll: could not derive server origin from --api=%q: %v", *api, err)
+			} else {
+				*token = sdk.SelfToken(root)
+			}
+		}
+		if *token == "" {
+			log.Fatal("--token (or TOKEN env, AGENT_SHARED_SECRET, or --token-file) is required (or pass --fixtures=<dir> to run standalone, see fixtures/README.md)")
 		}
 		compose = NewComposeClient(*api, *token, mintTokenViaNode)
 	}
@@ -94,6 +115,18 @@ func main() {
 
 	log.Printf("stroykontrol-web listening on %s (api=%s ns=%s)", *listen, *api, *namespace)
 	log.Fatal(http.ListenAndServe(*listen, r))
+}
+
+// rootOrigin strips whatever path --api carries (/compose, /api/compose,
+// ...) down to just scheme://host[:port], since the agent self-enrollment
+// endpoint lives on the server's root router, not under the Compose API path.
+func rootOrigin(apiURL string) (string, error) {
+	u, err := url.Parse(apiURL)
+	if err != nil {
+		return "", err
+	}
+	u.Path, u.RawQuery, u.Fragment = "", "", ""
+	return u.String(), nil
 }
 
 // mintTokenViaNode re-mints a Compose dev token the same way run.sh and

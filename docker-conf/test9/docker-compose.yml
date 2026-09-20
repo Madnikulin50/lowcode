@@ -25,6 +25,7 @@ services:
       - "host.docker.internal:${LOCAL}"
     environment:
       TOKEN: ${TOKEN:-}
+      AGENT_SHARED_SECRET: ${AGENT_SHARED_SECRET:-}
       MINIO_ENDPOINT: host.docker.internal:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
@@ -47,6 +48,7 @@ services:
       - "host.docker.internal:${LOCAL}"
     environment:
       TOKEN: ${TOKEN:-}
+      AGENT_SHARED_SECRET: ${AGENT_SHARED_SECRET:-}
     command:
       - --listen=:8085
       - --db-path=/data/cmdb.db
@@ -68,6 +70,7 @@ services:
       - "host.docker.internal:${LOCAL}"
     environment:
       TOKEN: ${TOKEN:-}
+      AGENT_SHARED_SECRET: ${AGENT_SHARED_SECRET:-}
     command:
       - --listen=:8086
       - --api=http://host.docker.internal:${HTTP_PORT}

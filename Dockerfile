@@ -14,7 +14,7 @@ RUN ls ./
 
 RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
-ARG VERSION=2026.9.1
+ARG VERSION=2026.09.20
 
 ARG SERVER_VERSION=${VERSION}
 ARG WEBAPP_VERSION=${VERSION}
@@ -47,6 +47,23 @@ ADD ./client3/web/workflow/dist /pnp/webapp/workflow
 RUN test -s /pnp/webapp/compose/index.html || (echo "ERROR: compose webapp index.html is missing or empty" && exit 1)
 
 
+# libredwg-stage: builds dwg2dxf (DWG -> DXF conversion) from source, since
+# no distro package exists for Ubuntu 22.04. Pinned to the 0.14 release tag.
+FROM ubuntu:22.04 as libredwg-stage
+
+RUN apt-get -y update && apt-get -y install \
+    build-essential autoconf automake libtool pkg-config \
+    git ca-certificates texinfo python3 \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+RUN git clone --branch 0.14 --depth 1 https://github.com/LibreDWG/libredwg.git .
+RUN ./autogen.sh
+RUN ./configure --disable-bindings --disable-static --without-libintl-prefix --without-libiconv-prefix
+RUN make -j"$(nproc)"
+RUN make DESTDIR=/out install
+
+
 # deploy-stage
 FROM ubuntu:22.04 as deploy-stage
 
@@ -55,6 +72,10 @@ RUN apt-get -y update \
     ca-certificates \
     curl \
  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=libredwg-stage /out/usr/local/bin/dwg2dxf /usr/local/bin/dwg2dxf
+COPY --from=libredwg-stage /out/usr/local/lib/libredwg.so.0.0.14 /usr/local/lib/libredwg.so.0
+RUN ldconfig
 
 ENV STORAGE_PATH="/data"
 ENV CORREDOR_ADDR="corredor:80"

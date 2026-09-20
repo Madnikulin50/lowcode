@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/madnikulin50/lowcode/agents/invest/agent"
 	"github.com/madnikulin50/lowcode/agents/invest/api"
+	"github.com/madnikulin50/lowcode/agents/sdk"
 )
 
 func main() {
@@ -25,7 +25,7 @@ func main() {
 	flag.Parse()
 
 	if *token == "" {
-		*token = os.Getenv("TOKEN")
+		*token = sdk.SelfToken(*cortezaAPI)
 	}
 
 	cfg := agent.Config{

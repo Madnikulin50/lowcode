@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	if *token == "" {
-		*token = os.Getenv("TOKEN")
+		*token = sdk.SelfToken(*cortezaAPI)
 	}
 
 	cfg := agent.Config{

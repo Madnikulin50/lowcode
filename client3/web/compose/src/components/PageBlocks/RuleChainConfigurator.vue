@@ -106,7 +106,7 @@ onMounted(async () => {
   try {
     const { data } = await $ComposeAPI.api().request({
       method: 'get',
-      url: $ComposeAPI.baseURL + '/rulechain/',
+      url: '/rulechain/',
     })
     availableChains.value = data?.response?.chains || data?.chains || []
   } catch {

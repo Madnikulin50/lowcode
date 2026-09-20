@@ -125,7 +125,7 @@ async function loadChainName () {
   try {
     const { data } = await $ComposeAPI.api().request({
       method: 'get',
-      url: $ComposeAPI.baseURL + '/rulechain/',
+      url: '/rulechain/',
     })
     const chains = data?.response?.chains || data?.chains || []
     const found = chains.find(c => c.id === id || c.ID === id)
@@ -591,7 +591,7 @@ async function runChain () {
   try {
     const { data } = await $ComposeAPI.api().request({
       method: 'post',
-      url: $ComposeAPI.baseURL + '/pageblock/trigger',
+      url: '/pageblock/trigger',
       data: {
         chainID: chainID.value,
         pageID: props.page?.pageID,
@@ -614,11 +614,11 @@ async function runChain () {
     // remote component (backup/run, invest/…) sets the same generic
     // scanID/jobID output fields via rulesgo's componentExecutor, so an
     // `|| ids.scanID` fallback here used to hijack e.g. backup-run-source
-    // into CMDB polling against the wrong agent/port (localhost:8085) →
+    // into CMDB polling against the wrong agent/port (localhost:8089) →
     // "failed to fetch" once the backup job itself succeeded.
     const isScan = chainID.value === 'cmdb-trigger-scan'
     if (result.value.success && isScan && ids.scanID && !pollAbort) {
-      const agentUrl = props.block.options?.context?.agentUrl || 'http://localhost:8085/api'
+      const agentUrl = props.block.options?.context?.agentUrl || 'http://localhost:8089/api'
       result.value = { success: true, output: 'Сканирование запущено, загрузка из CMDB API…' }
       const pulled = await pullScanResultsIntoCompose({
         $ComposeAPI,
@@ -643,7 +643,7 @@ async function runChain () {
         result.value = { success: true, output: `Загружено устройств: ${pulled.found}` }
       }
     } else if (result.value.success && isScan && !ids.scanID) {
-      result.value = { success: false, error: 'Агент не вернул scanID. Проверьте CMDB agent на :8085 и что цепочка POST /api/scan проходит.' }
+      result.value = { success: false, error: 'Агент не вернул scanID. Проверьте CMDB agent на :8089 и что цепочка POST /api/scan проходит.' }
     }
     notifyResult(result.value)
     if (result.value.success) {

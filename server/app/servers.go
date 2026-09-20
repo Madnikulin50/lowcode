@@ -98,6 +98,9 @@ func (app *CortezaApp) mountHttpRoutes(r chi.Router) {
 	// Auth server
 	app.AuthService.MountHttpRoutes(ho.BaseUrl, r)
 
+	// Optional agent self-enrollment (AGENT_SHARED_SECRET) — see agent_enroll.go
+	app.mountAgentEnroll(r, ho.BaseUrl)
+
 	func() {
 		if !ho.ApiEnabled {
 			app.Log.Info("JSON REST API disabled")

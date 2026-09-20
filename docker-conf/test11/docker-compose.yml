@@ -28,6 +28,7 @@ services:
       - "host.docker.internal:${LOCAL}"
     environment:
       TOKEN: ${TOKEN:-}
+      AGENT_SHARED_SECRET: ${AGENT_SHARED_SECRET:-}
       MINIO_ENDPOINT: host.docker.internal:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
@@ -50,6 +51,7 @@ services:
       - "host.docker.internal:${LOCAL}"
     environment:
       TOKEN: ${TOKEN:-}
+      AGENT_SHARED_SECRET: ${AGENT_SHARED_SECRET:-}
     command:
       - --listen=:8095
       - --db-path=/data/cmdb.db
@@ -71,11 +73,34 @@ services:
       - "host.docker.internal:${LOCAL}"
     environment:
       TOKEN: ${TOKEN:-}
+      AGENT_SHARED_SECRET: ${AGENT_SHARED_SECRET:-}
     command:
       - --listen=:8096
       - --api=http://host.docker.internal:${HTTP_PORT}
     ports:
       - "8096:8096"
+    depends_on:
+      - server
+
+  stroykontrol:
+    # Не публикуется в docker hub — собери локально: make -C agents/stroykontrol ddebug
+    image: pnp-stroykontrol:${VERSION}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:${LOCAL}"
+    environment:
+      # Самоэнролл через AGENT_SHARED_SECRET (см. agents/sdk/authtoken.go,
+      # server/app/agent_enroll.go) — та же строка, что и у backup/cmdb/invest
+      # выше. TOKEN — старый ручной способ (mint-token.sh), в приоритете,
+      # если задан явно.
+      TOKEN: ${TOKEN:-}
+      AGENT_SHARED_SECRET: ${AGENT_SHARED_SECRET:-}
+    command:
+      - --listen=:8100
+      - --api=http://host.docker.internal:${HTTP_PORT}/api/compose
+      - --namespace=512312736219004929 # "Стройконтроль ПТО", см. compose_namespace в test11
+    ports:
+      - "8100:8100"
     depends_on:
       - server
 

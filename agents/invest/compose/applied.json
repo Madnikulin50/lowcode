@@ -1,7 +1,7 @@
 {
   "namespaceID": "509728716465438721",
   "slug": "invest",
-  "api": "http://localhost:3333/compose",
+  "api": "http://161.104.90.77:28082/api/compose",
   "modules": {
     "document_types": "509728716465963009",
     "counterparties": "509728716467929089",
@@ -40,10 +40,10 @@
     "dashboard": "/ns/invest/pages"
   },
   "engine": {
-    "flags": "--api=http://localhost:3333 --namespace=509728716465438721",
-    "recalculate": "POST http://localhost:8088/api/call/evm",
-    "simulateRfc": "POST http://localhost:8086/api/simulate-rfc",
-    "submitApproval": "POST http://localhost:8086/api/submit-approval"
+    "flags": "--api=http://161.104.90.77:28082/api --namespace=509728716465438721",
+    "recalculate": "POST http://calc-evm:8088/api/call/evm",
+    "simulateRfc": "POST http://invest:8086/api/simulate-rfc",
+    "submitApproval": "POST http://invest:8086/api/submit-approval"
   },
   "roles": {
     "investor": "511353837938081793",
