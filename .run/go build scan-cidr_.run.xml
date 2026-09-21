@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="go build scan-cidr/" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+    <module name="lowcode" />
+    <working_directory value="$PROJECT_DIR$/agents/services/scan-cidr" />
+    <kind value="PACKAGE" />
+    <package value="github.com/madnikulin50/lowcode/agents/services/scan-cidr/cmd/scan-cidr" />
+    <directory value="$PROJECT_DIR$" />
+    <method v="2" />
+  </configuration>
+</component>
