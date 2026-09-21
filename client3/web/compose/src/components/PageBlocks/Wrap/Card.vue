@@ -36,7 +36,7 @@
                 title="Refresh"
                 @click="$emit('refreshBlock')"
               >
-                <font-awesome-icon :icon="['fa', 'sync']" />
+                <font-awesome-icon :icon="['fas', 'sync']" />
               </button>
 
               <button

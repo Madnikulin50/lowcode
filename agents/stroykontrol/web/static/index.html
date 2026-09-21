@@ -73,6 +73,32 @@
   .overlay-stage .top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); }
   .diff-stage { background: #000; }
   .diff-stage .top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); mix-blend-mode: difference; }
+  /* Colorized variant: white stage, ПД recolored red / РД recolored green
+     (see the #diffRedTint/#diffGreenTint SVG filters below), combined with
+     multiply instead of difference — ink present in only one side keeps its
+     tint (red/green), ink present in both multiplies to black, and the
+     shared white background multiplies to white. Same red=removed/
+     green=added convention the "Текст" mode's word-diff already uses. */
+  .diff-stage.colorized { background: #fff; }
+  .diff-stage.colorized .bottom { filter: url(#diffRedTint); }
+  .diff-stage.colorized .top { filter: url(#diffGreenTint); mix-blend-mode: multiply; }
+  .diff-toggle-row, .fit-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 8px 0; color: var(--muted); font-size: 12px; }
+  .switch {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+  }
+  .switch button {
+    border: none; background: var(--panel); color: var(--fg); padding: 4px 10px; font-size: 12px; cursor: pointer;
+  }
+  .switch button.active { background: var(--accent); color: #fff; }
+  .diff-legend { display: flex; gap: 16px; margin-bottom: 8px; font-size: 12px; }
+  .diff-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .diff-legend .swatch.pd { background: #e5484d; }
+  .diff-legend .swatch.rd { background: #30a46c; }
+  .diff-legend .swatch.both { background: #1b1f24; }
+  .fit-manual { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0 0 8px; color: var(--muted); font-size: 12px; }
+  .fit-manual label { display: inline-flex; align-items: center; gap: 5px; }
+  .fit-manual input[type="number"] { width: 60px; border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 3px 6px; font-size: 12px; }
+  .fit-manual button { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 12px; }
   .opacity-row { display: flex; align-items: center; gap: 8px; margin: 8px 0; color: var(--muted); }
   .opacity-row input { flex: 1; max-width: 240px; }
   .unsupported { padding: 24px; text-align: center; color: var(--muted); }
@@ -146,10 +172,33 @@
 </style>
 </head>
 <body>
+<!-- Referenced by .diff-stage.colorized (filter: url(#diffRedTint) / #diffGreenTint)
+     for the red/green diff overlay — feColorMatrix keeps the input's own
+     value (our page images are effectively grayscale ink-on-white) as the
+     G+B channels while forcing R to full, or vice versa: white stays white,
+     dark ink becomes pure red or pure green. Combined via mix-blend-mode:
+     multiply in CSS, overlapping ink (present on both sides) multiplies to
+     black instead of staying colored. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="diffRedTint" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0 0 0 0 1  1 0 0 0 0  1 0 0 0 0  0 0 0 1 0" />
+  </filter>
+  <filter id="diffGreenTint" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 1  1 0 0 0 0  0 0 0 1 0" />
+  </filter>
+</svg>
 <div class="wrap" id="app">Загрузка…</div>
-<script src="/vendor/jszip.min.js"></script>
-<script src="/vendor/docx-preview.min.js"></script>
-<script src="/vendor/html2canvas.min.js"></script>
+<!-- Relative, not root-absolute (was "/vendor/..."): this page can be served
+     either at its own origin (agents/stroykontrol directly) or mounted under
+     a sub-path via a reverse proxy (see agents/stroykontrol/compose's
+     create_apigw_proxy.mjs — /gateway/agents/stroykontrol/*). A leading "/"
+     always resolves against the origin root regardless of the current
+     document's path, breaking every asset/API request the moment this is
+     accessed through any prefix — relative paths resolve against wherever
+     this document itself actually is, so the same markup works both ways. -->
+<script src="vendor/jszip.min.js"></script>
+<script src="vendor/docx-preview.min.js"></script>
+<script src="vendor/html2canvas.min.js"></script>
 <script>
 const params = new URLSearchParams(location.search)
 const recordID = params.get('recordID') || ''
@@ -182,6 +231,7 @@ const MODE_META = {
   side: { label: 'Рядом', hint: 'Страницы рядом друг с другом — для сопоставления вручную.' },
   overlay: { label: 'Наложение', hint: 'РД поверх ПД с регулируемой прозрачностью — заметны сдвиги и смещения.' },
   diff: { label: 'Авто-разница', hint: 'Совпадающие области гасятся в чёрный, различия остаются светлыми пятнами.' },
+  diffColorized: { label: 'Авто-разница', hint: 'ПД красным, РД зелёным — совпадающее гасится в чёрный, различия остаются цветными.' },
   text: { label: 'Текст', hint: 'Построчное сравнение, как git diff: «−» красным — строка только в ПД, «+» зелёным — только в РД.' },
 }
 
@@ -190,6 +240,20 @@ const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200]
 let mode = 'side'
 let page = 1
 let zoomIdx = ZOOM_LEVELS.indexOf(100)
+let diffColorized = false // "Авто-разница" sub-option: gray (mix-blend difference) vs red/green
+
+// How the РД image gets sized against ПД in "Наложение"/"Авто-разница" when
+// the two page images have different pixel dimensions (different source
+// format/DPI — DOCX vs PDF vs DXF, or just a different page size) — without
+// this they'd each independently fill the stage width and silently drift
+// out of alignment. 'contain'/'cover' scale РД uniformly (no distortion),
+// 'stretch' scales X/Y independently to exactly match ПД's box. manualDX/DY/
+// Scale are a fine-tune layered on top of whichever auto-fit is picked, for
+// scans/exports that are close but not pixel-aligned even after auto-fit.
+let fitMode = 'contain'
+let manualDX = 0
+let manualDY = 0
+let manualScale = 100
 let pdPages = { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
 let rdPages = { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
 
@@ -227,7 +291,7 @@ function linesFromElement (root) {
 }
 
 async function renderDocxPages (side) {
-  const res = await fetch(`/api/file?${qs}&side=${side}`)
+  const res = await fetch(`api/file?${qs}&side=${side}`)
   if (!res.ok) throw new Error('не удалось получить файл (' + res.status + ')')
   const blob = await res.blob()
 
@@ -437,7 +501,7 @@ function drawDxfPage (entities, layerColors) {
 }
 
 async function renderDxfPages (side) {
-  const res = await fetch(`/api/file?${qs}&side=${side}`)
+  const res = await fetch(`api/file?${qs}&side=${side}`)
   if (!res.ok) throw new Error('не удалось получить файл (' + res.status + ')')
   const src = await res.text()
   const { entities, layerColors } = parseDxfEntities(src)
@@ -450,7 +514,7 @@ async function loadSide (side, hasFile) {
   if (!hasFile) return { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
   let info
   try {
-    info = await getJSON(`/api/pages?${qs}&side=${side}`)
+    info = await getJSON(`api/pages?${qs}&side=${side}`)
   } catch (e) {
     return { supported: false, kind: 'other', pageCount: 0, images: null, texts: null }
   }
@@ -483,7 +547,7 @@ async function loadSide (side, hasFile) {
     // is cheap and cached server-side, so just fetch it eagerly here — the
     // "text" view mode needs it and there's no per-page round trip to avoid.
     try {
-      const t = await getJSON(`/api/text?${qs}&side=${side}`)
+      const t = await getJSON(`api/text?${qs}&side=${side}`)
       info.texts = t.pages || []
     } catch (e) {
       console.error('pdftotext failed for side=' + side, e)
@@ -498,7 +562,7 @@ async function loadSide (side, hasFile) {
 // a data: URL in memory).
 function pageSrc (info, side, n) {
   if (!info) return ''
-  if (info.kind === 'pdf') return `/api/page?${qs}&side=${side}&n=${n}`
+  if (info.kind === 'pdf') return `api/page?${qs}&side=${side}&n=${n}`
   if ((info.kind === 'docx' || info.kind === 'dxf') && info.images) return info.images[n - 1] || ''
   return ''
 }
@@ -656,7 +720,7 @@ async function main () {
 
   let comparison
   try {
-    comparison = await getJSON(`/api/comparison?${qs}`)
+    comparison = await getJSON(`api/comparison?${qs}`)
   } catch (e) {
     app.innerHTML = ''
     app.appendChild(el('div', { class: 'err', text: 'Не удалось загрузить сравнение: ' + e.message }))
@@ -685,7 +749,7 @@ function schedulePoll (comparison) {
   pollTimer = setTimeout(async () => {
     let next
     try {
-      next = await getJSON(`/api/comparison?${qs}`)
+      next = await getJSON(`api/comparison?${qs}`)
     } catch (e) {
       schedulePoll(comparison)
       return
@@ -766,7 +830,8 @@ function buildViewer (pageCount) {
     modeBtn('text'),
   ])
   container.appendChild(modes)
-  container.appendChild(el('div', { class: 'mode-hint', text: MODE_META[mode].hint }))
+  const hintKey = mode === 'diff' && diffColorized ? 'diffColorized' : mode
+  container.appendChild(el('div', { class: 'mode-hint', text: MODE_META[hintKey].hint }))
 
   const toolbarRow = el('div', { class: 'toolbar-row' })
   const pager = el('div', { class: 'pager' }, [
@@ -801,7 +866,7 @@ function buildViewer (pageCount) {
       el('div', { class: 'col' }, [el('div', { class: 'label', text: rdLabel() }), rdImg]),
     ]))
   } else if (mode === 'overlay') {
-    const bottom = el('img', { src: pdUrl, alt: 'ПД' })
+    const bottom = el('img', { class: 'bottom', src: pdUrl, alt: 'ПД' })
     const top = el('img', { class: 'top', src: rdUrl, alt: 'РД' })
     applyZoom(bottom); applyZoom(top)
     top.style.opacity = '0.5'
@@ -813,12 +878,34 @@ function buildViewer (pageCount) {
         return input
       })(),
     ]))
+    buildFitControls(bottom, top).forEach(row => container.appendChild(row))
+    scheduleApplyFit(bottom, top)
     container.appendChild(el('div', { class: 'stage overlay-stage' }, [bottom, top]))
   } else if (mode === 'diff') {
-    const bottom = el('img', { src: pdUrl, alt: 'ПД' })
+    const bottom = el('img', { class: 'bottom', src: pdUrl, alt: 'ПД' })
     const top = el('img', { class: 'top', src: rdUrl, alt: 'РД' })
     applyZoom(bottom); applyZoom(top)
-    container.appendChild(el('div', { class: 'stage diff-stage' }, [bottom, top]))
+
+    const grayBtn = el('button', { class: diffColorized ? '' : 'active', text: 'Серый' })
+    const colorBtn = el('button', { class: diffColorized ? 'active' : '', text: 'Красный/зелёный' })
+    grayBtn.onclick = () => { diffColorized = false; rerender() }
+    colorBtn.onclick = () => { diffColorized = true; rerender() }
+    container.appendChild(el('div', { class: 'diff-toggle-row' }, [
+      el('span', { text: 'Режим:' }),
+      el('div', { class: 'switch' }, [grayBtn, colorBtn]),
+    ]))
+
+    if (diffColorized) {
+      container.appendChild(el('div', { class: 'diff-legend' }, [
+        el('span', {}, [el('span', { class: 'swatch pd' }), document.createTextNode('только в ПД')]),
+        el('span', {}, [el('span', { class: 'swatch rd' }), document.createTextNode('только в РД')]),
+        el('span', {}, [el('span', { class: 'swatch both' }), document.createTextNode('совпадает')]),
+      ]))
+    }
+
+    buildFitControls(bottom, top).forEach(row => container.appendChild(row))
+    scheduleApplyFit(bottom, top)
+    container.appendChild(el('div', { class: 'stage diff-stage' + (diffColorized ? ' colorized' : '') }, [bottom, top]))
   } else if (mode === 'text') {
     container.appendChild(buildTextDiff(page))
   }
@@ -843,7 +930,139 @@ function buildViewer (pageCount) {
     return el('div', { class: 'zoom' }, [minus, levelLabel, plus, reset])
   }
 
+  function buildFitControls (bottom, top) {
+    const modes = [['contain', 'Вписать'], ['cover', 'Заполнить'], ['stretch', 'Растянуть']]
+    const btns = modes.map(([key, label]) => {
+      const b = el('button', { class: fitMode === key ? 'active' : '', text: label })
+      b.onclick = () => { fitMode = key; rerender() }
+      return b
+    })
+    const fitRow = el('div', { class: 'fit-row' }, [
+      el('span', { text: 'Подгонка РД под ПД:' }),
+      el('div', { class: 'switch' }, btns),
+    ])
+
+    const hBtns = [['left', 'Лево'], ['center', 'По центру'], ['right', 'Право']].map(([h, label]) => {
+      const b = el('button', { text: label })
+      b.onclick = () => alignTo(bottom, top, h, null)
+      return b
+    })
+    const vBtns = [['top', 'Верх'], ['center', 'По центру'], ['bottom', 'Низ']].map(([v, label]) => {
+      const b = el('button', { text: label })
+      b.onclick = () => alignTo(bottom, top, null, v)
+      return b
+    })
+    const alignRow = el('div', { class: 'fit-row' }, [
+      el('span', { text: 'Выровнять края РД:' }),
+      el('div', { class: 'switch' }, hBtns),
+      el('div', { class: 'switch' }, vBtns),
+    ])
+
+    const dxInput = el('input', { type: 'number', value: String(manualDX) })
+    const dyInput = el('input', { type: 'number', value: String(manualDY) })
+    const scaleInput = el('input', { type: 'number', value: String(manualScale) })
+    dxInput.onchange = () => { manualDX = Number(dxInput.value) || 0; rerender() }
+    dyInput.onchange = () => { manualDY = Number(dyInput.value) || 0; rerender() }
+    scaleInput.onchange = () => { manualScale = Number(scaleInput.value) || 100; rerender() }
+    const resetBtn = el('button', { text: 'Сброс' })
+    resetBtn.onclick = () => { manualDX = 0; manualDY = 0; manualScale = 100; rerender() }
+
+    const manualRow = el('div', { class: 'fit-manual' }, [
+      el('label', {}, [document.createTextNode('Сдвиг X, px:'), dxInput]),
+      el('label', {}, [document.createTextNode('Сдвиг Y, px:'), dyInput]),
+      el('label', {}, [document.createTextNode('Масштаб, %:'), scaleInput]),
+      resetBtn,
+    ])
+
+    return [fitRow, alignRow, manualRow]
+  }
+
   return container
+}
+
+// Shared by applyFit (needs the scale factors to build the CSS transform)
+// and the align-* buttons (need to know how much smaller/larger top's box
+// ends up than bottom's, to compute the dx/dy that lines a given edge or
+// the center up) — bottom's own rendered box plus top's rendered box size
+// after the active auto-fit mode's scale, both in real CSS px, before any
+// manual offset/scale. Returns null while either image isn't laid out yet.
+function computeFitBox (bottom, top) {
+  if (!bottom.complete || !top.complete || !bottom.naturalWidth || !top.naturalWidth) return null
+  const bRect = bottom.getBoundingClientRect()
+  if (!bRect.width || !bRect.height) return null
+  const bw = bottom.naturalWidth, bh = bottom.naturalHeight
+  const tw = top.naturalWidth, th = top.naturalHeight
+  const pxPerUnit = bRect.width / bw
+  let sx, sy
+  if (fitMode === 'stretch') {
+    sx = bw / tw
+    sy = bh / th
+  } else {
+    const s = fitMode === 'cover' ? Math.max(bw / tw, bh / th) : Math.min(bw / tw, bh / th)
+    sx = sy = s
+  }
+  return { bw: bRect.width, bh: bRect.height, finalW: tw * pxPerUnit * sx, finalH: th * pxPerUnit * sy }
+}
+
+// Sizes/positions the "top" (РД) image against "bottom" (ПД) so their
+// content lines up even when the two page images have different pixel
+// dimensions (different export path/DPI — DOCX vs PDF vs DXF client-side
+// rendering, or genuinely a different page size). Without this, both images
+// independently fill the stage width via CSS and same-looking content
+// quietly drifts out of alignment. 'contain'/'cover' scale uniformly (no
+// distortion, only differ in whether they under- or over-fill ПД's box —
+// 'cover' can overflow it, left to the stage's own scroll rather than a
+// hard clip); 'stretch' scales X/Y independently to force an exact match.
+// manualDX/DY/Scale is a fine-tune (typed in, or set by the align-* buttons)
+// layered on top of whichever auto-fit is active.
+function applyFit (bottom, top) {
+  top.style.transform = 'none'
+  const box = computeFitBox(bottom, top)
+  if (!box) return
+  const tRect = top.getBoundingClientRect()
+  if (!tRect.width || !tRect.height) return
+  const scaleX = box.finalW / tRect.width
+  const scaleY = box.finalH / tRect.height
+  const manualS = manualScale / 100
+  top.style.transformOrigin = 'top left'
+  top.style.transform = `translate(${manualDX}px, ${manualDY}px) scale(${scaleX * manualS}, ${scaleY * manualS})`
+}
+
+// Quick-align buttons: sets manualDX/DY to whatever offset makes the given
+// edge (or center) of РД's *current* auto-fit box (contain/cover/stretch,
+// already scaled by manualScale) coincide with ПД's — a one-click substitute
+// for dragging the manual X/Y inputs to the right number by eye. 'left'/'top'
+// is just 0 (also the default, before any manual offset); the other four are
+// genuinely only reachable through this or hand-typed input.
+function alignTo (bottom, top, h, v) {
+  const box = computeFitBox(bottom, top)
+  if (!box) return
+  const s = manualScale / 100
+  const scaledW = box.finalW * s
+  const scaledH = box.finalH * s
+  if (h === 'left') manualDX = 0
+  else if (h === 'right') manualDX = box.bw - scaledW
+  else if (h === 'center') manualDX = (box.bw - scaledW) / 2
+  if (v === 'top') manualDY = 0
+  else if (v === 'bottom') manualDY = box.bh - scaledH
+  else if (v === 'center') manualDY = (box.bh - scaledH) / 2
+  rerender()
+}
+
+// applyFit needs real layout (getBoundingClientRect) from both images, which
+// only exists once each has actually loaded AND the stage is attached to the
+// document — neither is guaranteed synchronously inside buildViewer() (the
+// container isn't attached yet, and images are freshly created <img>
+// elements with a network fetch ahead of them). Re-running opportunistically
+// on each image's own load event, plus once via requestAnimationFrame for
+// the case both are already browser-cached and .complete immediately, covers
+// every ordering; applyFit's own completeness guard makes redundant calls
+// harmless no-ops.
+function scheduleApplyFit (bottom, top) {
+  const run = () => applyFit(bottom, top)
+  if (bottom.complete) run(); else bottom.onload = run
+  if (top.complete) run(); else top.onload = run
+  requestAnimationFrame(run)
 }
 
 function pdLabel () { return lastComparison && lastComparison.pdFileName ? 'ПД — ' + lastComparison.pdFileName : 'ПД' }

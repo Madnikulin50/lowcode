@@ -1,11 +1,14 @@
 import axios from 'axios'
 import { useUiStore } from '../store/ui'
 import { useRouter, useRoute } from 'vue-router'
+import { useNsI18n, useToast } from 'corteza-lib/vue/dist'
 
-export function useListHelpers() {
+export function useListHelpers ({ editRoute, primaryKey } = {}) {
   const ui = useUiStore()
   const router = useRouter()
   const route = useRoute()
+  const t = useNsI18n()
+  const { toastErrorHandler } = useToast()
 
   const pagination = {
     limit: 100,
@@ -73,7 +76,7 @@ export function useListHelpers() {
     }
   }
 
-  function filterList(paginationState) {
+  function filterList(paginationState = pagination) {
     paginationState.pageCursor = ''
     paginationState.page = 1
     abortRequests()
@@ -137,9 +140,10 @@ export function useListHelpers() {
         return set
       }).catch(error => {
         if (!axios.isCancel(error)) {
-          // toastErrorHandler
+          toastErrorHandler({ title: 'Failed to load list' })(error)
         }
         decLoader()
+        return []
       })
   }
 
@@ -152,8 +156,9 @@ export function useListHelpers() {
     return { 'text-secondary': item && !!item.deletedAt }
   }
 
-  function handleRowClicked(item, editRoute, primaryKey) {
-    router.push({ name: editRoute, params: { [primaryKey]: item[primaryKey] } })
+  function handleRowClicked (item, routeName = editRoute, key = primaryKey) {
+    if (!item || !routeName || !key) return
+    router.push({ name: routeName, params: { [key]: item[key] } })
   }
 
   function handleItemDelete({ resource, resourceName, locale, api = 'system' }, filterState, paginationState) {
@@ -175,8 +180,8 @@ export function useListHelpers() {
     return conditions.some(c => resource[c])
   }
 
-  function getActionText(r, t) {
-    return r.deletedAt ? (t('undelete') || 'Undelete') : (t('delete') || 'Delete')
+  function getActionText (r) {
+    return r.deletedAt ? t('undelete') : t('delete')
   }
 
   function getActionIcon(r) {

@@ -431,6 +431,8 @@ flowchart LR
 
 Стенды: `docker-conf/test9` (сервер + backup/cmdb/invest/скиллы), `docker-conf/test11` (+ stroykontrol, сдвинутые порты). Агенты достучаются до сервера через `host.docker.internal:${HTTP_PORT}`. Корневой `docker-compose.yml` поднимает только сервер.
 
+Пошаговая инструкция: [deploy.md](deploy.md).
+
 Сборка фронтенда: сначала `client3/lib/js` и `lib/vue` (`yarn build`), затем `make -C client3 build`. Артефакты уезжают в `cdist/webapp/` и упаковываются `server/webapp/Makefile`.
 
 ---

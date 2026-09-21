@@ -1153,7 +1153,7 @@
                   :title="fi"
                   @click="faIcon = fi"
                 >
-                  <font-awesome-icon :icon="fi.split(' ')"/>
+                  <font-awesome-icon :icon="parseFaIcon(fi)"/>
                   <span class="fa-icon-picker__name">{{ fi.split(' ').pop() }}</span>
                 </button>
               </div>
@@ -1299,6 +1299,7 @@ import { getCurrentInstance } from 'vue'
 import { NoID, compose } from 'corteza-lib/js/dist'
 import { components, handle } from 'corteza-lib/vue/dist'
 import { htmlToMarkdown, markdownToHtml } from '../../../lib/markdown'
+import { parseFaIcon } from '../../../lib/fa-icon'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
 import PageHelpFields from 'corteza-webapp-compose/src/components/Admin/Page/PageHelpFields.vue'
@@ -1415,8 +1416,7 @@ const pageIcon = computed(() => {
 
 const pageIconFA = computed(() => {
   if (icon.value.type !== 'fontawesome' || !icon.value.src) return ['fas', 'file-alt']
-  const parts = icon.value.src.split(' ')
-  return parts.length >= 2 ? [parts[0], parts.slice(1).join(' ').replace(/^fa-/, '')] : ['fas', icon.value.src.replace(/^fa-/, '')]
+  return parseFaIcon(icon.value.src)
 })
 
 const faIconList = [

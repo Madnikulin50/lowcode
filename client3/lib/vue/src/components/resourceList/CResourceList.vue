@@ -423,8 +423,13 @@ async function loadItems() {
   try {
     const items = await props.items()
     if (id !== requestId) return
-    selectableItemIDs.value = items.filter(props.isItemSelectable).map(i => i[props.primaryKey])
-    tableItems.value = items
+    const list = Array.isArray(items) ? items : []
+    selectableItemIDs.value = list.filter(props.isItemSelectable).map(i => i[props.primaryKey])
+    tableItems.value = list
+  } catch {
+    if (id !== requestId) return
+    selectableItemIDs.value = []
+    tableItems.value = []
   } finally {
     if (id === requestId) loading.value = false
   }

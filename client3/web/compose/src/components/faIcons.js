@@ -13,6 +13,12 @@ import {
   faArrowRight,
   faArrowUp,
   faArrowDown,
+  faArrowLeft,
+  faSun,
+  faMoon,
+  faHistory,
+  faLanguage,
+  faExpandAlt,
   faBars,
   faBellSlash,
   faBell as faBellSolid,
@@ -212,6 +218,7 @@ import {
   faTrashAlt,
   faEnvelopeOpen,
   faFaceSmile,
+  faFile as faFileRegular,
   faUser as faUserRegular,
 } from '@fortawesome/free-regular-svg-icons'
 
@@ -427,4 +434,11 @@ library.add(
   faCodeCompare,
   faImages,
   faShieldHalved,
+  faArrowLeft,
+  faSun,
+  faMoon,
+  faHistory,
+  faLanguage,
+  faExpandAlt,
+  faFileRegular,
 )

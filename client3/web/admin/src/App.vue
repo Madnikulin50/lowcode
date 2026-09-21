@@ -73,6 +73,11 @@ onMounted(async () => {
   try {
     const { user } = await auth.handle()
 
+    const tokenFn = auth.accessTokenFn
+    for (const api of [window.__systemAPI, window.__composeAPI, window.__automationAPI, window.__federationAPI]) {
+      api?.setAccessTokenFn?.(tokenFn)
+    }
+
     await $Settings.init({ api: window.__systemAPI })
     const icon = $Settings.attachment('ui.iconLogo') || '/icon.svg'
     const favicon = document.getElementById('favicon')

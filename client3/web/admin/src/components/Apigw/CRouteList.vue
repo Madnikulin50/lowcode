@@ -137,6 +137,9 @@ const $Settings = inject('$Settings', {})
 const store = useStore()
 const { proxy } = getCurrentInstance()
 
+const primaryKey = 'routeID'
+const editRoute = 'system.apigw.edit'
+
 const {
   pagination,
   genericRowClass,
@@ -148,10 +151,7 @@ const {
   encodeListParams,
   filterList,
   handleItemDelete,
-} = useListHelpers()
-
-const primaryKey = 'routeID'
-const editRoute = 'system.apigw.edit'
+} = useListHelpers({ editRoute, primaryKey })
 
 const filter = reactive({
   query: '',

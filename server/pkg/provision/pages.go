@@ -264,8 +264,15 @@ func migratePageChunk(ctx context.Context, s store.Storer, nsRules, pgRules rbac
 			b.XYWH = adjustBlockScale(b.XYWH, 12, 48)
 
 			ly.Blocks = append(ly.Blocks, types.PageLayoutBlock{
-				BlockID: b.BlockID,
-				XYWH:    b.XYWH,
+				BlockID:     b.BlockID,
+				XYWH:        b.XYWH,
+				Meta:        b.Meta,
+				Options:     b.Options,
+				Style:       b.Style,
+				Kind:        b.Kind,
+				Title:       b.Title,
+				Description: b.Description,
+				Prompt:      b.Prompt,
 			})
 		}
 

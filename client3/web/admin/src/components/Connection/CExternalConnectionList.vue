@@ -92,6 +92,9 @@ import moment from 'moment'
 const { CResourceList } = components
 const { t } = useI18n()
 
+const primaryKey = 'connectionID'
+const editRoute = 'system.connection.edit'
+
 const {
   pagination,
   genericRowClass,
@@ -102,10 +105,7 @@ const {
   encodeListParams,
   filterList,
   handleItemDelete,
-} = useListHelpers()
-
-const primaryKey = 'connectionID'
-const editRoute = 'system.connection.edit'
+} = useListHelpers({ editRoute, primaryKey })
 
 const filter = reactive({
   type: 'corteza::system:dal-connection',

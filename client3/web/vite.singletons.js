@@ -2,10 +2,10 @@ import { resolve } from 'path'
 
 /**
  * corteza-lib/vue/dist is aliased into client3/lib/vue, so Node resolution
- * finds that tree's own node_modules/{pinia,vue,...}. Rollup then emits two
- * copies — two Pinia runtimes, two `activePinia`s — and any lib store
- * (CPromptToast, CNotificationSidebar, …) throws:
+ * finds that tree's own node_modules/{pinia,vue,fortawesome,...}. Rollup then
+ * emits two copies — two Pinia runtimes, two Font Awesome `library`s — and:
  *   TypeError: Cannot read properties of undefined (reading '_s')
+ *   "Could not find one or more icon(s)" for icons added in lib/vue (sun/moon)
  *
  * Pin every webapp to the copies in its own node_modules.
  */
@@ -15,6 +15,10 @@ export function vueRuntimeSingletons (appRoot) {
     vue: resolve(appRoot, 'node_modules/vue'),
     'vue-i18n': resolve(appRoot, 'node_modules/vue-i18n'),
     'vue-router': resolve(appRoot, 'node_modules/vue-router'),
+    '@fortawesome/fontawesome-svg-core': resolve(appRoot, 'node_modules/@fortawesome/fontawesome-svg-core'),
+    '@fortawesome/free-solid-svg-icons': resolve(appRoot, 'node_modules/@fortawesome/free-solid-svg-icons'),
+    '@fortawesome/free-regular-svg-icons': resolve(appRoot, 'node_modules/@fortawesome/free-regular-svg-icons'),
+    '@fortawesome/vue-fontawesome': resolve(appRoot, 'node_modules/@fortawesome/vue-fontawesome'),
   }
   return {
     aliases,

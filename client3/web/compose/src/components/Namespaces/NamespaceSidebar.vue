@@ -157,6 +157,7 @@ import { Portal } from 'portal-vue'
 import { useStore } from '../../store'
 import { useHelp } from '../../composables/useHelp'
 import { namespaceHelpDocs } from '../../help/appDocs'
+import { parseFaIcon } from '../../lib/fa-icon'
 const { CSidebarNavItems, CInputSearch } = components
 
 const props = defineProps({
@@ -418,8 +419,7 @@ function adminPageWrap (pages) {
 function resolvePageIcon (icon, blocks) {
   if (icon && icon.type && icon.src) {
     if (icon.type === 'fontawesome') {
-      const parts = icon.src.split(' ')
-      return parts.length >= 2 ? [parts[0], parts.slice(1).join(' ').replace(/^fa-/, '')] : ['fas', icon.src.replace(/^fa-/, '')]
+      return parseFaIcon(icon.src)
     }
     if (icon.type === 'attachment') return `${$ComposeAPI.baseURL}${icon.src}`
     if (icon.type === 'link') return icon.src

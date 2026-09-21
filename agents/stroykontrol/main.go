@@ -111,7 +111,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("embedded frontend: %v", err)
 	}
-	r.Handle("/*", http.FileServer(http.FS(sub)))
+	static := http.FileServer(http.FS(sub))
+	// No Cache-Control was set here at all before, so http.FileServer sent
+	// none either — browsers then fall back to heuristic caching for a
+	// same-URL GET with no cache directives, which can keep serving a
+	// pre-rebuild copy of index.html (loaded earlier in the same tab/iframe,
+	// e.g. via the Compose IFrame block) after this binary is rebuilt and
+	// restarted, with nothing about the request/response visibly wrong.
+	// This is a small, frequently-iterated dev UI embedded in an iframe, not
+	// a CDN-fronted asset bundle, so unconditionally disabling caching costs
+	// nothing and removes that whole class of "I restarted but nothing
+	// changed" confusion.
+	r.Handle("/*", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		static.ServeHTTP(w, req)
+	}))
 
 	log.Printf("stroykontrol-web listening on %s (api=%s ns=%s)", *listen, *api, *namespace)
 	log.Fatal(http.ListenAndServe(*listen, r))

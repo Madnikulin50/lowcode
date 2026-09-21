@@ -113,3 +113,20 @@ editor:
       apiKey:
         label: API Key
         placeholder: Enter your API key
+    map:
+      title: Карта
+      help: Источник тайлов и пределы масштаба для карт в compose и других приложениях.
+      tileSource:
+        label: Источник тайлов
+        description: Использовать онлайн-тайлы или локальный/офлайн-сервер
+      tileURL:
+        label: URL тайлов
+        description: Шаблон URL тайлов, например https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+      minZoom:
+        label: Минимальный масштаб
+      maxZoom:
+        label: Максимальный масштаб
+      attribution:
+        label: Атрибуция
+        description: Текст авторства, отображаемый на карте
+        placeholder: © OpenStreetMap contributors

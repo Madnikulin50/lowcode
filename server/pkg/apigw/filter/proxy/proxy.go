@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	actx "github.com/madnikulin50/lowcode/server/pkg/apigw/ctx"
 	"github.com/madnikulin50/lowcode/server/pkg/apigw/types"
 	pe "github.com/madnikulin50/lowcode/server/pkg/errors"
@@ -113,7 +115,19 @@ func (h proxy) Handler() types.HandlerFunc {
 			scope = actx.ScopeFromContext(ctx)
 		)
 
-		ctx, cancel := context.WithTimeout(ctx, scope.Opts().ProxyOutboundTimeout)
+		// Opts() can legitimately return nil (no scope in context), and no
+		// "apigw.proxy.outbound-timeout" setting has ever been stored, so
+		// ProxyOutboundTimeout can resolve to 0. A 0-duration context is
+		// already expired, which would fail every proxied request instantly
+		// with "context deadline exceeded" — fall back to a sane default
+		// instead of trusting an unset/zero/absent config value blindly.
+		opts := scope.Opts()
+		outboundTimeout := 30 * time.Second
+		if opts != nil && opts.ProxyOutboundTimeout > 0 {
+			outboundTimeout = opts.ProxyOutboundTimeout
+		}
+		debugLog := opts != nil && opts.ProxyEnableDebugLog
+		ctx, cancel := context.WithTimeout(ctx, outboundTimeout)
 		defer cancel()
 
 		log := h.log.With(zap.String("ref", h.Name))
@@ -124,6 +138,17 @@ func (h proxy) Handler() types.HandlerFunc {
 
 		if err != nil {
 			return pe.InvalidData("could not parse destination location for proxying: (%v)", err)
+		}
+
+		// A wildcard route ("/agents/foo/*") only tells the mux "match
+		// everything under this prefix" — without this, every request under
+		// the prefix would land on Location verbatim (its own path
+		// untouched), so a multi-route backend (its own /api/*, /vendor/*,
+		// ...) would have every sub-request collapse onto the same URL as
+		// the root. Append whatever the wildcard actually captured onto
+		// Location's own path, so the backend sees the sub-path it expects.
+		if suffix := chi.URLParam(r, "*"); suffix != "" {
+			l.Path = strings.TrimSuffix(l.Path, "/") + "/" + suffix
 		}
 
 		outreq.URL = l
@@ -143,7 +168,7 @@ func (h proxy) Handler() types.HandlerFunc {
 		// do it after the authServicer, since we also may add them there
 		mergeQueryParams(r, outreq)
 
-		if scope.Opts().ProxyEnableDebugLog {
+		if debugLog {
 			o, _ := httputil.DumpRequestOut(outreq, false)
 			log.Debug("proxy outbound request", zap.Any("request", string(o)))
 		}
@@ -159,7 +184,7 @@ func (h proxy) Handler() types.HandlerFunc {
 			return pe.Internal("could not proxy request: (%v)", err)
 		}
 
-		if scope.Opts().ProxyEnableDebugLog {
+		if debugLog {
 			o, _ := httputil.DumpResponse(resp, false)
 			log.Debug("proxy outbound response", zap.Any("request", string(o)), zap.Duration("duration", time.Since(startTime)))
 		}

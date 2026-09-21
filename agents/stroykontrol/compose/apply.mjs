@@ -303,8 +303,17 @@ async function main () {
         // Visual comparison viewer — a standalone agent (agents/stroykontrol),
         // not the lowcode platform itself; embedded via the IFrame block.
         // See client3/web/compose/src/components/PageBlocks/IFrameBase.vue.
+        //
+        // Relative path, not an absolute host:port: IFrameBase.vue already
+        // prepends window.CortezaAPI to any src that doesn't start with
+        // "http" (IFrameBase.vue:82), and /gateway/agents/stroykontrol/* is
+        // an API Gateway route (create_apigw_proxy.mjs) reverse-proxying to
+        // wherever the agent actually runs in *this* environment — so the
+        // page-layout JSON itself never needs editing again per
+        // dev/staging/prod; only the gateway route's `location` filter param
+        // does (see create_apigw_proxy.mjs's AGENT_URL).
         block('IFrame', 'Просмотр сравнения (агент)', [0, 36, 48, 44], {
-          src: (process.env.STROYKONTROL_WEB_URL || 'http://localhost:8092') + '/?recordID=${recordID}&namespaceID=${namespaceID}',
+          src: '/gateway/agents/stroykontrol/?recordID=${recordID}&namespaceID=${namespaceID}',
           srcField: '',
           displayAsImage: false,
         }),

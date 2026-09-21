@@ -272,12 +272,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, getCurrentInstance } from 'vue'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faSun, faMoon, faBars } from '@fortawesome/free-solid-svg-icons'
+import { faSun, faMoon, faBars, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import CNotificationButton from '../notifications/CNotificationButton.vue'
 import { checkValidURL } from '../../filters/url'
 import { applyColorMode } from '../../libs/theme'
 
-library.add(faSun, faMoon, faBars)
+library.add(faSun, faMoon, faBars, faChevronLeft, faChevronRight)
 
 declare const VERSION: string
 

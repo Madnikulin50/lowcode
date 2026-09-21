@@ -42,10 +42,35 @@ type (
 
 	PageLayoutBlocks []PageLayoutBlock
 
+	// Mirrors PageBlock (page.go) field-for-field: this type existed with only
+	// BlockID/XYWH/Meta, so Kind/Title/Description/Prompt/Options/Style were
+	// silently dropped by encoding/json on every read AND write through this
+	// API path (json.Unmarshal ignores unknown fields, and Value()'s
+	// json.Marshal only emits what the struct declares) — corrupting stored
+	// page_layout.blocks the moment anything round-tripped through it, even
+	// though the JSON payload the frontend (PageBlock in
+	// client3/lib/js/src/compose/types/page-block/base.ts) actually sends
+	// always carried the full shape.
 	PageLayoutBlock struct {
 		BlockID uint64         `json:"blockID,string,omitempty" yaml:"blockID"`
 		XYWH    [4]int         `json:"xywh" yaml:"xywh"`
 		Meta    map[string]any `json:"meta,omitempty"`
+
+		Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty"`
+		Style   PageBlockStyle         `json:"style,omitempty" yaml:"style,omitempty"`
+		Kind    string                 `json:"kind" yaml:"kind"`
+
+		// Warning: value of this field is now handled via resource-translation facility
+		//          struct field is kept for the convenience for now since it allows us
+		//          easy encoding/decoding of the outgoing/incoming values
+		Title string `json:"title,omitempty" yaml:"title,omitempty"`
+
+		// Warning: value of this field is now handled via resource-translation facility
+		//          struct field is kept for the convenience for now since it allows us
+		//          easy encoding/decoding of the outgoing/incoming values
+		Description string `json:"description,omitempty" yaml:"description,omitempty"`
+
+		Prompt string `json:"prompt,omitempty" yaml:"prompt,omitempty"`
 	}
 
 	PageLayoutMeta struct {

@@ -348,7 +348,7 @@
                     class="btn btn-outline-light btn-lg d-flex align-items-center text-primary ms-auto border-0 px-2 mt-2 me-2"
                     @click.prevent="update"
                   >
-                    <font-awesome-icon :icon="['fa', 'sync']" />
+                    <font-awesome-icon :icon="['fas', 'sync']" />
                   </button>
 
                   <chart-component
@@ -404,7 +404,7 @@
                   class="btn btn-outline-light btn-sm text-primary border-0"
                   @click="addColor"
                 >
-                  <font-awesome-icon :icon="['fa', 'plus']" />
+                  <font-awesome-icon :icon="['fas', 'plus']" />
                 </button>
               </label>
 

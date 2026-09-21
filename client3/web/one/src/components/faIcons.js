@@ -9,6 +9,11 @@ import {
   faBellSlash,
   faBell as faBellSolid,
   faEllipsisV,
+  faChevronLeft,
+  faChevronRight,
+  faBars,
+  faSun,
+  faMoon,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -36,4 +41,9 @@ library.add(
   faTrashAlt,
   faEnvelope,
   faEnvelopeOpen,
+  faChevronLeft,
+  faChevronRight,
+  faBars,
+  faSun,
+  faMoon,
 )

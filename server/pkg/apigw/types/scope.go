@@ -43,6 +43,21 @@ func (s Scp) Opts() *options.ApigwOpt {
 			return sss
 		case options.ApigwOpt:
 			return &sss
+		case Config:
+			// route.go's ServeHTTP stores the apigw package's own (narrower)
+			// Config here, not options.ApigwOpt — this type switch never
+			// matched it, so Opts() always fell through to nil for every
+			// route. A proxy filter dereferencing Opts().ProxyOutboundTimeout
+			// then panics with a nil pointer dereference on its very first
+			// real request (apigw_routes/filters were empty until now, so
+			// this path had never actually been exercised).
+			return &options.ApigwOpt{
+				Enabled:              sss.Enabled,
+				ProfilerEnabled:      sss.Profiler.Enabled,
+				ProfilerGlobal:       sss.Profiler.Global,
+				ProxyFollowRedirects: sss.Proxy.FollowRedirects,
+				ProxyOutboundTimeout: sss.Proxy.OutboundTimeout,
+			}
 		}
 	}
 
