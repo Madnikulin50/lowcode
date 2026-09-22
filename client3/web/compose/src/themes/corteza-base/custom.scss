@@ -111,3 +111,27 @@ $btn-colors: (
   color: var(--secondary);
   opacity: 1;
 }
+
+.ace-editor-wrapper {
+  width: 100%;
+}
+
+.ace-editor-wrapper .ace_editor,
+.ace_editor.ace-chrome {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100%;
+  line-height: normal;
+}
+
+.ace_editor * {
+  box-sizing: content-box !important;
+  line-height: inherit;
+}
+
+.ace_editor .ace_placeholder {
+  font-style: italic;
+  margin: 0;
+  padding: 0 8px !important;
+  transform: none !important;
+}

@@ -2,7 +2,7 @@
   <div>
   <div class="card shadow-sm">
     <div class="card-header border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
-      <h4 class="m-0">{{ t('toolkits.title') }}</h4>
+      <h4 class="ae-section-title">{{ t('toolkits.title') }}</h4>
       <button
         type="button"
         class="btn btn-outline-primary btn-sm"

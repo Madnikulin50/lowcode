@@ -1,5 +1,6 @@
 <template>
-  <div class="d-flex align-items-center flex-wrap gap-1 ml-8">
+  <div class="d-flex align-items-center flex-wrap gap-2">
+    <span class="text-nowrap small text-muted">{{ label }}</span>
     <div class="btn-group" role="group">
       <input
         :id="uid + '0'"
@@ -12,7 +13,7 @@
       >
       <label
         :for="uid + '0'"
-        class="btn btn-outline-primary btn-sm"
+        class="btn btn-outline-secondary btn-sm"
       >{{ excludedLabel }}</label>
 
       <input
@@ -26,7 +27,7 @@
       >
       <label
         :for="uid + '1'"
-        class="btn btn-outline-primary btn-sm"
+        class="btn btn-outline-secondary btn-sm"
       >{{ inclusiveLabel }}</label>
 
       <input
@@ -40,10 +41,9 @@
       >
       <label
         :for="uid + '2'"
-        class="btn btn-outline-primary btn-sm"
+        class="btn btn-outline-secondary btn-sm"
       >{{ exclusiveLabel }}</label>
     </div>
-    <span class="text-nowrap ml-2">{{ label }}</span>
   </div>
 </template>
 

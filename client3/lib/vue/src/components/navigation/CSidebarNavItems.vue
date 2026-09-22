@@ -19,15 +19,24 @@
         class="nav-section-head d-flex align-items-center"
       >
         <router-link
+          v-if="page.name"
           active-class="nav-active"
           exact-active-class="nav-exact-active"
           :title="page.title"
-          :to="{ name: page.name || defaultRouteName, params }"
+          :to="{ name: page.name, params }"
           class="nav-section-title text-decoration-none flex-grow-1 text-start"
           @click="onItemClick()"
         >
           {{ page.title }}
         </router-link>
+        <span
+          v-else
+          class="nav-section-title flex-grow-1 text-start"
+          :class="{ pointer: children.length }"
+          @click="children.length && toggle(page)"
+        >
+          {{ page.title }}
+        </span>
         <button
           v-if="children.length"
           class="btn btn-outline-light p-0 border-0 ms-auto nav-chevron"
@@ -209,6 +218,10 @@ function showChildren ({ params = {}, children = [] }: any): boolean {
     color: var(--bs-secondary-color, #6c757d);
     line-height: 1.4;
 
+    &.pointer {
+      cursor: pointer;
+    }
+
     &.nav-active,
     &.nav-exact-active {
       color: var(--primary);
@@ -224,7 +237,6 @@ function showChildren ({ params = {}, children = [] }: any): boolean {
   .nav-children {
     padding: 0.15rem 0 0.25rem 0.5rem;
     margin-left: 0.25rem;
-    border-left: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.06));
   }
 
   .nav-item {

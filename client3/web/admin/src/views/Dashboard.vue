@@ -1,5 +1,5 @@
 <template>
-  <div class="container d-flex flex-column pt-2 pb-3 flex-fill">
+  <div class="container-fluid d-flex flex-column pt-2 pb-3 flex-fill">
     <c-content-header :title="$t('dashboard.title')">
       <c-corredor-manual-buttons
         ui-page="dashboard"
@@ -9,188 +9,81 @@
       />
     </c-content-header>
 
-    <div class="row flex-fill">
-      <div class="col-12">
-        <div class="card shadow-sm h-100" style="min-height: 500px;">
-          <div class="card-header border-bottom">
-            <h4 class="card-title">
-              <router-link
-                :to="{ name: 'system.user.list' }"
-                :area-label="`${users.valid} ${$t('dashboard.users.title')}`"
-                class="display-3 text-decoration-none"
-              >
-                {{ users.valid }}
-              </router-link>
-            </h4>
-            <h4>
-              {{ $t('dashboard.users.title') }}
-            </h4>
+    <div class="row g-3">
+      <div class="col-12 col-md-4">
+        <router-link
+          :to="{ name: 'system.user.list' }"
+          class="ae-kpi card shadow-sm text-decoration-none"
+        >
+          <div class="ae-kpi-value">{{ users.valid }}</div>
+          <div class="ae-kpi-label">{{ tr('dashboard.kpi.users', 'Users') }}</div>
+          <div class="ae-kpi-meta">
+            <span><strong>{{ users.total }}</strong> {{ $t('dashboard.users.total') }}</span>
+            <span><strong>{{ users.suspended }}</strong> {{ $t('dashboard.users.suspended') }}</span>
+            <span><strong>{{ users.deleted }}</strong> {{ $t('dashboard.users.deleted') }}</span>
           </div>
+        </router-link>
+      </div>
 
-          <div class="card-body position-relative p-0">
-            <c-chart
-              v-if="userChart"
-              :chart="userChart"
-            />
+      <div class="col-12 col-md-4">
+        <router-link
+          :to="{ name: 'system.role.list' }"
+          class="ae-kpi card shadow-sm text-decoration-none"
+        >
+          <div class="ae-kpi-value">{{ roles.valid }}</div>
+          <div class="ae-kpi-label">{{ tr('dashboard.kpi.roles', 'Roles') }}</div>
+          <div class="ae-kpi-meta">
+            <span><strong>{{ roles.total }}</strong> {{ $t('dashboard.roles.total') }}</span>
+            <span><strong>{{ roles.archived }}</strong> {{ $t('dashboard.roles.archived') }}</span>
+            <span><strong>{{ roles.deleted }}</strong> {{ $t('dashboard.roles.deleted') }}</span>
           </div>
+        </router-link>
+      </div>
 
-          <div class="card-footer border-top">
-            <div class="row">
-              <div class="col-12 col-sm-4 mb-2 mb-sm-0">
-                <router-link
-                  :to="{ name: 'system.user.list', query: { deleted: 1, suspended: 1 } }"
-                  :aria-label="users.total + ' ' + $t('dashboard.users.users') + ' ' + $t('dashboard.users.total')"
-                  class="text-decoration-none"
-                >
-                  {{ users.total }}
-                </router-link>
-                <span class="d-sm-block">
-                  {{ $t('dashboard.users.total') }}
-                </span>
-              </div>
-              <div class="col-12 col-sm-4 mb-2 mb-sm-0">
-                <router-link
-                  :to="{ name: 'system.user.list', query: { deleted: 1, suspended: 2 } }"
-                  :aria-label="users.suspended + ' ' + $t('dashboard.users.users') + ' ' + $t('dashboard.users.suspended')"
-                  class="text-decoration-none"
-                >
-                  {{ users.suspended }}
-                </router-link>
-                <span class="d-sm-block">
-                  {{ $t('dashboard.users.suspended') }}
-                </span>
-              </div>
-              <div class="col-12 col-sm-4 mb-2 mb-sm-0">
-                <router-link
-                  :to="{ name: 'system.user.list', query: { deleted: 2, suspended: 1 } }"
-                  :aria-label="users.deleted + ' ' + $t('dashboard.users.users') + ' ' + $t('dashboard.users.deleted')"
-                  class="text-decoration-none"
-                >
-                  {{ users.deleted }}
-                </router-link>
-                <span class="d-sm-block">
-                  {{ $t('dashboard.users.deleted') }}
-                </span>
-              </div>
-            </div>
+      <div class="col-12 col-md-4">
+        <router-link
+          :to="{ name: 'system.application.list' }"
+          class="ae-kpi card shadow-sm text-decoration-none"
+        >
+          <div class="ae-kpi-value">{{ applications.valid }}</div>
+          <div class="ae-kpi-label">{{ tr('dashboard.kpi.applications', 'Applications') }}</div>
+          <div class="ae-kpi-meta">
+            <span><strong>{{ applications.total }}</strong> {{ $t('dashboard.applications.total') }}</span>
+            <span><strong>{{ applications.deleted }}</strong> {{ $t('dashboard.applications.deleted') }}</span>
           </div>
-        </div>
+        </router-link>
       </div>
     </div>
 
-    <div class="row align-items-stretch">
-      <div
-        v-show="roles.total"
-        class="col-12 col-md-6 mt-3"
-      >
-        <div class="card shadow-sm h-100">
-          <div class="card-header border-bottom">
-            <h4 class="card-title">
-              <router-link
-                :to="{ name: 'system.role.list' }"
-                :aria-label="roles.valid + ' ' + $t('dashboard.roles.title')"
-                class="display-4 text-decoration-none"
-              >
-                {{ roles.valid }}
-              </router-link>
-            </h4>
-            <h4>
-              {{ $t('dashboard.roles.title') }}
-            </h4>
-          </div>
-
-          <div class="card-footer border-top">
-            <div class="row">
-              <div class="col-12 col-sm-4 mb-2 mb-sm-0">
-                <router-link
-                  :to="{ name: 'system.role.list', query: { deleted: 1, archived: 1 } }"
-                  :aria-label="roles.total + ' ' + $t('dashboard.roles.roles') + ' ' + $t('dashboard.roles.total')"
-                  class="text-decoration-none"
-                >
-                  {{ roles.total }}
-                </router-link>
-                <span class="d-sm-block">
-                  {{ $t('dashboard.roles.total') }}
-                </span>
-              </div>
-              <div class="col-12 col-sm-4 mb-2 mb-sm-0">
-                <router-link
-                  :to="{ name: 'system.role.list', query: { deleted: 1, archived: 2 } }"
-                  :aria-label="roles.archived + ' ' + $t('dashboard.roles.roles') + ' ' + $t('dashboard.roles.archived')"
-                  class="text-decoration-none"
-                >
-                  {{ roles.archived }}
-                </router-link>
-                <span class="d-sm-block">
-                  {{ $t('dashboard.roles.archived') }}
-                </span>
-              </div>
-              <div class="col-12 col-sm-4 mb-2 mb-sm-0">
-                <router-link
-                  :to="{ name: 'system.role.list', query: { deleted: 2, archived: 1 } }"
-                  :aria-label="roles.deleted + ' ' + $t('dashboard.roles.roles') + ' ' + $t('dashboard.roles.deleted')"
-                  class="text-decoration-none"
-                >
-                  {{ roles.deleted }}
-                </router-link>
-                <span class="d-sm-block">
-                  {{ $t('dashboard.roles.deleted') }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div
+      v-if="userChart"
+      class="card shadow-sm mt-3"
+      style="min-height: 280px;"
+    >
+      <div class="card-header border-bottom">
+        <div class="ae-section-title">{{ $t('dashboard.users.created') }}</div>
       </div>
+      <div class="card-body position-relative p-0" style="min-height: 240px;">
+        <c-chart :chart="userChart" />
+      </div>
+    </div>
 
-      <div
-        v-show="applications.total"
-        class="col-12 col-md-6 mt-3"
-      >
-        <div class="card shadow-sm h-100">
-          <div class="card-header border-bottom">
-            <h4 class="card-title">
-              <router-link
-                :to="{ name: 'system.application.list' }"
-                :aria-label="applications.valid + ' ' + $t('dashboard.applications.title')"
-                class="display-4 text-decoration-none"
-              >
-                {{ applications.valid }}
-              </router-link>
-            </h4>
-            <h4>
-              {{ $t('dashboard.applications.title') }}
-            </h4>
-          </div>
-
-          <div class="card-footer border-top">
-            <div class="row">
-              <div class="col-12 col-sm-4 mb-2 mb-sm-0">
-                <router-link
-                  :to="{ name: 'system.application.list', query: { deleted: 1 } }"
-                  :aria-label="applications.total + ' ' + $t('dashboard.applications.applications') + ' ' + $t('dashboard.applications.total')"
-                  class="text-decoration-none"
-                >
-                  {{ applications.total }}
-                </router-link>
-                <span class="d-sm-block">
-                  {{ $t('dashboard.applications.total') }}
-                </span>
-              </div>
-              <div class="col-12 col-sm-4 mb-2 mb-sm-0">
-                <router-link
-                  :to="{ name: 'system.application.list', query: { deleted: 2 } }"
-                  :aria-label="applications.deleted + ' ' + $t('dashboard.applications.applications') + ' ' + $t('dashboard.applications.deleted')"
-                  class="text-decoration-none"
-                >
-                  {{ applications.deleted }}
-                </router-link>
-                <span class="d-sm-block">
-                  {{ $t('dashboard.applications.deleted') }}
-                </span>
-              </div>
-            </div>
-          </div>
+    <div
+      v-else-if="loaded && users.total === 0"
+      class="card shadow-sm mt-3"
+    >
+      <div class="ae-empty">
+        <div class="ae-empty-icon">
+          <font-awesome-icon :icon="['fas', 'inbox']" />
         </div>
+        <p class="ae-empty-title mb-1">{{ tr('dashboard.empty.title', 'Nothing to show yet') }}</p>
+        <p class="ae-empty-text mb-3">{{ tr('dashboard.empty.text', 'Create a user to see activity here.') }}</p>
+        <router-link
+          :to="{ name: 'system.user.new' }"
+          class="btn btn-primary btn-sm"
+        >
+          {{ tr('dashboard.empty.create', 'New user') }}
+        </router-link>
       </div>
     </div>
   </div>
@@ -206,10 +99,16 @@ import moment from 'moment'
 const { CChart } = components
 const { t } = useI18n()
 
+const loaded = ref(false)
 const userChart = ref(null)
 const users = ref({ total: 0, valid: 0, deleted: 0, suspended: 0, dailyCreated: [], dailyUpdated: [], dailySuspended: [], dailyDeleted: [] })
 const roles = ref({ total: 0, valid: 0, archived: 0, deleted: 0 })
 const applications = ref({ total: 0, valid: 0, deleted: 0 })
+
+function tr (key, fallback) {
+  const v = t(key)
+  return (!v || v === key || v.endsWith(`.${key}`)) ? fallback : v
+}
 
 onMounted(() => {
   window.__systemAPI.statsList().then(({ users: u, roles: r, applications: a }) => {
@@ -217,7 +116,7 @@ onMounted(() => {
     if (r) roles.value = r
     if (a) applications.value = a
     initUserChart()
-  })
+  }).finally(() => { loaded.value = true })
 })
 
 function initUserChart() {
@@ -245,7 +144,7 @@ function getThemeVariables() {
 }
 
 function getUserTimeline() {
-  const data = users.value.dailyCreated
+  const data = users.value.dailyCreated || []
   const unit = getComfortableTimeUnit(data)
   const aux = {}
   for (let i = 0; i < data.length; i += 2) {

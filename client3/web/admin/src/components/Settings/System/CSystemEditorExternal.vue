@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">
+      <h4 class="ae-section-title">
         {{ t('title') }}
       </h4>
     </div>
@@ -47,7 +47,7 @@
             <td>
               <div class="form-check">
                 <input
-                  class="form-check-input-v3"
+                  class="form-check-input"
                   type="checkbox"
                   :checked="item.enabled"
                   @change="item.enable($event.target.checked)"

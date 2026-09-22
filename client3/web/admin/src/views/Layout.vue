@@ -3,7 +3,7 @@
     <aside
       v-if="allowed"
       class="sidebar-container"
-      :style="{ width: expanded ? '320px' : '0px', transition: 'width 0.2s' }"
+      :style="{ width: expanded ? '320px' : '0px', transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }"
     >
       <c-sidebar
         :expanded="expanded"
@@ -49,6 +49,7 @@
         style="min-width: 0"
       >
         <router-view />
+        <div id="admin-toolbar"></div>
       </main>
     </div>
 
@@ -107,7 +108,7 @@ const settings = {
   attachment: (key) => window.__settings?.attachment?.(key) ?? '',
 }
 
-const expanded = ref(false)
+const expanded = ref(true)
 const allowed = ref(true)
 
 const user = computed(() => {
@@ -164,6 +165,7 @@ function can(resource, operation) {
     right: auto !important;
     width: 320px;
     height: 100%;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .sidebar-container .sidebar-body {
@@ -208,5 +210,54 @@ function can(resource, operation) {
 #resource-list td.actions {
   padding: 0.5rem !important;
   vertical-align: middle;
+}
+
+.sidebar-container .sidebar-body {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.sidebar-container .sidebar-body:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+
+.sidebar-container .sidebar-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-container .sidebar-body::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.sidebar-container .sidebar-body:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.c-page-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.c-page-title__name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.c-page-title__sub {
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color, #6c757d);
+}
+
+.c-page-actions .btn-lg {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.c-page-actions .flex-fill {
+  flex: 0 0 auto !important;
 }
 </style>

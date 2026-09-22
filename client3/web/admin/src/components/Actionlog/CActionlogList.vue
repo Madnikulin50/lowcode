@@ -1,49 +1,58 @@
 <template>
   <div class="card shadow-sm">
-    <div class="card-header">
-      <div class="card-body">
-  <form class="d-flex flex-column w-100" @submit.prevent="search">
+    <div class="card-header border-0">
+      <form class="d-flex flex-column w-100" @submit.prevent="search">
           <div class="row">
             <div class="col-12 col-lg-6 mb-2">
-              <label class="text-primary small">{{ $t('filter.from') }}</label>
+              <label class="form-label">{{ $t('filter.from') }}</label>
               <c-input-date-time v-model="filter.from" :labels="{ clear: $t('label.clear'), none: $t('label.none'), now: $t('label.now'), today: $t('label.today') }" />
             </div>
             <div class="col-12 col-lg-6 mb-2">
-              <label class="text-primary small">{{ $t('filter.to') }}</label>
+              <label class="form-label">{{ $t('filter.to') }}</label>
               <c-input-date-time v-model="filter.to" only-past :labels="{ clear: $t('label.clear'), none: $t('label.none'), now: $t('label.now'), today: $t('label.today') }" />
             </div>
           </div>
           <div class="row">
             <div class="col-12 col-lg-4 mb-2">
-              <label class="text-primary small">{{ $t('filter.resource') }}</label>
+              <label class="form-label">{{ $t('filter.resource') }}</label>
               <input v-model="filter.resource" class="form-control form-control-sm" data-test-id="input-resource">
             </div>
             <div class="col-12 col-lg-4 mb-2">
-              <label class="text-primary small">{{ $t('filter.action') }}</label>
+              <label class="form-label">{{ $t('filter.action') }}</label>
               <input v-model="filter.action" class="form-control form-control-sm" data-test-id="input-action">
             </div>
             <div class="col-12 col-lg-4 mb-2">
-              <label class="text-primary small">{{ $t('filter.actor') }}</label>
+              <label class="form-label">{{ $t('filter.actor') }}</label>
               <input v-model="filter.actorID" class="form-control form-control-sm" data-test-id="input-user-id">
             </div>
           </div>
           <div class="d-flex">
-            <button type="submit" class="btn btn-primary ms-auto" :disabled="processing" data-test-id="button-submit">
+            <button type="submit" class="btn btn-primary btn-sm ms-auto" :disabled="processing" data-test-id="button-submit">
               {{ $t('filter.search') }}
             </button>
           </div>
         </form>
-  </div>
     </div>
 
     <div class="table-responsive">
-      <table class="table table-hover mb-0 small">
-        <thead class="table-secondary">
+      <table class="table table-hover mb-0 small ae-table">
+        <thead>
           <tr>
             <th v-for="f in fields" :key="f.key">{{ f.label }}</th>
           </tr>
         </thead>
         <tbody v-if="!processing">
+          <tr v-if="!items.length">
+            <td :colspan="fields.length">
+              <div class="ae-empty">
+                <div class="ae-empty-icon">
+                  <font-awesome-icon :icon="['fas', 'inbox']" />
+                </div>
+                <p class="ae-empty-title mb-1">{{ $t('system.actionlog.list.empty') }}</p>
+                <p class="ae-empty-text mb-0">{{ $t('admin.general.notFound') }}</p>
+              </div>
+            </td>
+          </tr>
           <template v-for="a in items" :key="a.actionID">
             <tr class="pointer" @click="a._showDetails = !a._showDetails">
               <td class="text-nowrap">{{ $locFullDateTime(a.timestamp) }}</td>

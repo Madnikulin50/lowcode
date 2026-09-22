@@ -1,13 +1,13 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">
+      <h4 class="ae-section-title">
         {{ t("title") }}
       </h4>
     </div>
 
     <div class="card-body">
-      <div class="row">
+      <div class="row g-3">
         <div class="col-12 col-lg-6">
           <div class="mb-3">
             <label class="d-flex align-items-center form-label text-primary">

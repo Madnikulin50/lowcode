@@ -1,4 +1,12 @@
 dashboard: Dashboard
+search: Search
+noResults: No matching pages
+
+groups:
+  userManagement: User management
+  access: Access
+  platform: Platform
+  integrations: Integrations
 
 system:
   group: System

@@ -1,12 +1,12 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('title') }}</h4>
     </div>
 
     <div class="card-body">
   <form @submit.prevent="$emit('submit', queue)">
-        <div class="row g-3 p-3">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('name') }}</label>
@@ -59,7 +59,7 @@
                   id="checkbox-dispatch-events"
                   v-model="queue.meta.dispatch_events"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                 >
                 <label class="form-check-label" for="checkbox-dispatch-events">{{ $t("dispatch_events") }}</label>
               </div>

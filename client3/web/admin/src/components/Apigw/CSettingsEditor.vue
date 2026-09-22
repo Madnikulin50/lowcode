@@ -1,14 +1,14 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">
+      <h4 class="ae-section-title">
         {{ $t('settings.title') }}
       </h4>
     </div>
 
     <div class="card-body">
   <form @submit.prevent="$emit('submit', settings)">
-        <div class="row g-3 p-3">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary pr-2">{{ $t('settings.profiler.label') }}</label>
@@ -42,7 +42,7 @@
                   id="proxy-follow"
                   v-model="settings['apigw.proxy.follow-redirects']"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                 >
                 <label
                   class="form-check-label"

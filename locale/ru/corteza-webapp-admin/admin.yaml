@@ -72,7 +72,9 @@ automation:
   title: List of automation script
 general:
   resource-list:
-    no-items: No matches for your search
+    no-items: Нет совпадений
+    empty-title: Пока ничего нет
+    empty-text: Создайте элемент или измените фильтры.
   notFound: 'Не найдено'
   loading: Загрузка...
   label:

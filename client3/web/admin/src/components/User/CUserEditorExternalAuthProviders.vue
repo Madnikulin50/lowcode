@@ -5,7 +5,7 @@
     data-test-id="card-external-auth-providers"
   >
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('title') }}</h4>
     </div>
 
     <div class="card-body p-0">

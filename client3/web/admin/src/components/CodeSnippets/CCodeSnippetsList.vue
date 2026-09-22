@@ -51,7 +51,7 @@
           </div>
           <div class="modal-body">
             <div class="form-check mb-3">
-              <input id="snippet-enabled" v-model="modal.data.enabled" type="checkbox" class="form-check-input-v3">
+              <input id="snippet-enabled" v-model="modal.data.enabled" type="checkbox" class="form-check-input">
               <label class="form-check-label" for="snippet-enabled">{{ $t('editor.code-snippets.enabled') }}</label>
             </div>
 
@@ -66,9 +66,9 @@
               <c-ace-editor
                 v-model="modal.data.script"
                 lang="javascript"
-                min-height="500"
+                min-height="500px"
                 :show-line-numbers="true"
-                :border="false"
+                :border="true"
                 :show-popout="false"
                 :resizable="true"
               />

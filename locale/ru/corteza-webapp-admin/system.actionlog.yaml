@@ -1,4 +1,5 @@
 list:
+  empty: Нет записей
   columns:
     action: Action
     actor: Пользователь

@@ -1,10 +1,10 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('title') }}</h4>
     </div>
 
-    <div v-if="issues.length" class="row">
+    <div v-if="issues.length" class="row g-3">
       <div class="col-12">
         <div class="mb-3">
           <label class="form-label text-primary">{{ $t('system.connections.editor.dal.connectivity-issues') }}</label>
@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row g-3">
       <div class="col-12">
         <div class="mb-3">
           <label class="form-label text-primary">{{ $t('system.connections.editor.dal.form.model-ident.label') }}</label>
@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row g-3">
       <div class="col-12">
         <div class="mb-3">
           <label class="form-label text-primary">{{ $t('system.connections.editor.dal.form.type.label') }}</label>
@@ -47,7 +47,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row g-3">
       <div class="col-12">
         <div class="mb-3">
           <label class="form-label text-primary">{{ $t('system.connections.editor.dal.form.params.label') }}</label>

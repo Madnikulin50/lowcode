@@ -1,12 +1,12 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('editor.server.title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('editor.server.title') }}</h4>
     </div>
 
     <div class="card-body">
   <form @submit.prevent="$emit('submit', serverData)">
-        <div class="row g-3 p-3">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('editor.server.host.label') }}</label>
@@ -33,7 +33,7 @@
           </div>
         </div>
   
-        <div class="row g-3 p-3 pt-0">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('editor.server.user.label') }}</label>
@@ -63,7 +63,7 @@
   
         <hr class="mx-3">
   
-        <div class="row g-3 p-3 pt-0">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('editor.server.from.label') }}</label>
@@ -80,7 +80,7 @@
   
         <hr class="mx-3">
   
-        <div class="row g-3 p-3 pt-0">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('editor.server.tlsServerName.label') }}</label>
@@ -100,7 +100,7 @@
                   id="tls-insecure"
                   v-model="serverData.tlsInsecure"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                 >
                 <label class="form-check-label" for="tls-insecure">
                   {{ $t('editor.server.tlsInsecure.label') }}

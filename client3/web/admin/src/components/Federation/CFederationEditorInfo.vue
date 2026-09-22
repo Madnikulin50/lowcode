@@ -1,12 +1,12 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('federation.nodes.editor.info.title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('federation.nodes.editor.info.title') }}</h4>
     </div>
 
     <div class="card-body">
   <form @submit.prevent="$emit('submit', node)">
-        <div class="row">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('federation.nodes.editor.info.name') }}</label>

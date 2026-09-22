@@ -1,18 +1,28 @@
 <template>
   <div class="container pt-2 pb-3">
     <c-content-header :title="$t('compose.settings.list.title')" />
-    <c-compose-editor-basic :basic="settings" :processing="basic.processing" :success="basic.success" :can-manage="canManage" @submit="onSubmit($event, 'basic')" />
-    <c-compose-editor-ui :settings="settings" :processing="ui.processing" :success="ui.success" :can-manage="canManage" class="mt-3" @submit="onSubmit($event, 'ui')" />
+    <CComposeEditorBasic :basic="settings" :processing="basic.processing" :success="basic.success" :can-manage="canManage" @submit="onSubmit($event, 'basic')" />
+    <CComposeEditorUi :settings="settings" :processing="ui.processing" :success="ui.success" :can-manage="canManage" class="mt-3" @submit="onSubmit($event, 'ui')" />
   </div>
 </template>
 <script setup>
-defineOptions({ i18nOptions: { namespaces: 'compose.settings', keyPrefix: 'editor' } })
 import { ref, reactive, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { isEqual, cloneDeep } from 'lodash'
 import CComposeEditorBasic from '../../../components/Settings/Compose/CComposeEditorBasic.vue'
-import CComposeEditorUI from '../../../components/Settings/Compose/CComposeEditorUI.vue'
+import CComposeEditorUi from '../../../components/Settings/Compose/CComposeEditorUI.vue'
+
+defineOptions({
+  i18nOptions: { namespaces: 'compose.settings', keyPrefix: 'editor' },
+  components: {
+    CComposeEditorBasic,
+    CComposeEditorUi,
+    CComposeEditorUI: CComposeEditorUi,
+    'c-compose-editor-ui': CComposeEditorUi,
+    'c-compose-editor-u-i': CComposeEditorUi,
+  },
+})
 const router = useRouter()
 const { t } = useI18n()
 const prefix = 'compose.'

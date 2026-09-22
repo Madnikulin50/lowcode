@@ -72,8 +72,9 @@ keyed by file content hash — same PDF is never re-rasterized.
 Needs `pdftoppm` (poppler-utils) on PATH for PDF pages. DOCX pages don't need
 it: there's no LibreOffice on this host to convert DOCX→PDF server-side, so
 DOCX is instead rendered **client-side** — the browser fetches the raw file
-(`/api/file`) and paginates it with `docx-preview` + `html2canvas` (vendored
-under `web/static/vendor/`, no CDN/build step), producing the same kind of
+(`/api/file`) and paginates it with `docx-preview` + `html2canvas` (npm
+deps of the Vue 3 + Vite frontend under `web/`, built via `make web` into
+`web/dist` and embedded into the binary), producing the same kind of
 page images the PDF side gets from the server. Both PDF and DOCX therefore
 share one viewer (side-by-side / opacity overlay / diff / **text**).
 Anything else (other formats) falls back to the text-only discrepancy list.
@@ -148,7 +149,7 @@ viewer. Fixed to always seed `page_number: 1`, the only page that's real.
 | `GET /api/page?recordID=&namespaceID=&side=pd\|rd&n=` | One PDF page as JPEG (PDF only) |
 | `GET /api/file?recordID=&namespaceID=&side=pd\|rd` | Raw attachment bytes with its Content-Type (used by the browser to render DOCX client-side) |
 | `GET /api/text?recordID=&namespaceID=&side=pd\|rd` | `{pages: [...]}` — per-page extracted text, PDF only (via `pdftotext -layout`, cached); DOCX text comes from the client's own render, no call needed |
-| `GET /*` | The viewer UI (`web/static/index.html`) |
+| `GET /*` | The viewer UI (Vue 3 + Vite app in `web/`, built to `web/dist` and embedded) |
 
 ## Wired into Compose
 

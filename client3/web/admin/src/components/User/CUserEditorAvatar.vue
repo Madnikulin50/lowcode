@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm" data-test-id="card-user-profile-avatar">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('system.users.editor.avatar.title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('system.users.editor.avatar.title') }}</h4>
     </div>
 
     <div class="card-body">

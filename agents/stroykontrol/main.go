@@ -32,7 +32,7 @@ import (
 	"github.com/madnikulin50/lowcode/agents/sdk"
 )
 
-//go:embed web/static
+//go:embed web/dist
 var webFS embed.FS
 
 var (
@@ -51,6 +51,7 @@ func main() {
 	namespace := flag.String("namespace", "", "Default namespace ID (used if a request doesn't pass ?namespaceID=)")
 	cacheDir := flag.String("cache", "var/stroykontrol-raster-cache", "Directory for rasterized page cache")
 	fixtures := flag.String("fixtures", "", "Run standalone against a local fixtures directory instead of a live Compose instance (see fixtures/README.md) — skips --api/--token/--namespace entirely")
+	staticDir := flag.String("static", "", "Serve the frontend from this directory instead of the embedded web/dist — point at web/dist while running `npx vite build --watch` to see frontend changes without rebuilding this binary")
 	flag.Parse()
 
 	if *fixtures != "" {
@@ -107,11 +108,16 @@ func main() {
 		r.Get("/text", handleText)
 	})
 
-	sub, err := fs.Sub(webFS, "web/static")
-	if err != nil {
-		log.Fatalf("embedded frontend: %v", err)
+	var static http.Handler
+	if *staticDir != "" {
+		static = http.FileServer(http.Dir(*staticDir))
+	} else {
+		sub, err := fs.Sub(webFS, "web/dist")
+		if err != nil {
+			log.Fatalf("embedded frontend: %v", err)
+		}
+		static = http.FileServer(http.FS(sub))
 	}
-	static := http.FileServer(http.FS(sub))
 	// No Cache-Control was set here at all before, so http.FileServer sent
 	// none either — browsers then fall back to heuristic caching for a
 	// same-URL GET with no cache directives, which can keep serving a

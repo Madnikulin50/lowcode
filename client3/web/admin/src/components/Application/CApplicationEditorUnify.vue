@@ -8,7 +8,7 @@
 
     <div class="card-body">
   <form @submit.prevent="$emit('submit', { unify, unifyAssets })">
-        <div class="row">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('system.applications.editor.unify.name.label') }}</label>

@@ -1,17 +1,23 @@
 <template>
-  <div class="row py-4">
-    <div v-if="id && id !== '0'" class="col-12">
-      <div class="mb-3">
-        <label class="form-label text-primary">{{ $t('id') }}</label>
-        <p class="form-control-plaintext">{{ id }}</p>
-      </div>
+  <div class="row g-3 ae-system-fields">
+    <div
+      v-if="id && id !== '0'"
+      class="col-12 col-lg-6"
+    >
+      <label class="form-label">{{ $t('id') }}</label>
+      <p class="ae-field-value mb-0">{{ id }}</p>
     </div>
 
-    <div v-for="(f, i) in systemFields" :key="i" class="col-12">
-      <div v-if="getFieldValue(f) !== '0'" class="mb-3">
-        <label class="form-label text-primary" :data-test-id="`input-${generateTestID(f)}`">{{ $t(f) || $t(label) }}</label>
-        <p class="form-control-plaintext">{{ getFieldValue(f) }}</p>
-      </div>
+    <div
+      v-for="(f, i) in visibleFields"
+      :key="i"
+      class="col-12 col-lg-6"
+    >
+      <label
+        class="form-label"
+        :data-test-id="`input-${generateTestID(f)}`"
+      >{{ $t(f) || $t(label) }}</label>
+      <p class="ae-field-value mb-0">{{ getFieldValue(f) }}</p>
     </div>
     <slot name="custom-field" />
   </div>
@@ -32,6 +38,7 @@ const props = defineProps({
 })
 
 const systemFields = computed(() => getSystemFields(props.resource))
+const visibleFields = computed(() => systemFields.value.filter(f => getFieldValue(f) !== '0'))
 
 function generateTestID(field) {
   return kebabize(field)

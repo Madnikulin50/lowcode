@@ -15,7 +15,7 @@
     </div>
 
     <div v-if="connection">
-      <div class="row">
+      <div class="row g-3">
         <div class="col-12 col-lg-6">
           <div class="mb-3">
             <label class="form-label text-primary">{{ $t('name') }}</label>
@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <div class="row">
+      <div class="row g-3">
         <div class="col-12 col-lg-6">
           <div class="mb-3">
             <label class="form-label text-primary">{{ $t('sensitivity-level') }}</label>

@@ -1,4 +1,8 @@
 editor:
+  badges:
+    deleted: Удалён
+    suspended: Отключён
+    emailUnconfirmed: Email не подтверждён
   external-auth-providers:
     label: Метка
     title: Manage external auth providers

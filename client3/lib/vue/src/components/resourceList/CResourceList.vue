@@ -2,7 +2,6 @@
     <div
       id="resource-list-wrapper"
       class="card shadow-sm d-flex flex-column"
-      style="min-height: 45rem;"
     >
     <div
       class="card-header border-0"
@@ -94,7 +93,7 @@
               :disabled="disableSelectAll"
               :checked="allRowsSelected && !disableSelectAll"
               type="checkbox"
-              class="form-check-input-v3"
+              class="form-check-input"
               @change="selectAllRows"
             >
           </div>
@@ -108,7 +107,7 @@
             <input
               v-if="isItemSelectable(item)"
               type="checkbox"
-              class="form-check-input-v3"
+              class="form-check-input"
               :checked="selected.includes(item[primaryKey])"
               @change="onSelectRow(($event.target as HTMLInputElement).checked, item[primaryKey])"
             >
@@ -123,13 +122,23 @@
         </template>
 
         <template #empty>
-          <p
+          <div
             data-test-id="no-matches"
-            class="text-center text-dark"
-            style="margin-top: 1vh;"
+            class="rl-empty"
           >
-            {{ translations.noItems }}
-          </p>
+            <div class="rl-empty-icon">
+              <font-awesome-icon :icon="['fas', 'inbox']" />
+            </div>
+            <p class="rl-empty-title mb-1">
+              {{ translations.emptyTitle || translations.noItems }}
+            </p>
+            <p
+              v-if="translations.emptyText || translations.notFound"
+              class="rl-empty-text mb-0 text-muted"
+            >
+              {{ translations.emptyText || translations.notFound }}
+            </p>
+          </div>
         </template>
 
         <template
@@ -531,6 +540,9 @@ onBeforeUnmount(() => {
 }
 
 #resource-list-wrapper {
+  min-height: 0;
+  overflow: hidden;
+
   .b-table-sticky-header {
     margin-bottom: 0 !important;
     flex-grow: 1 !important;
@@ -542,11 +554,67 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.resource-list-table > :not(caption) > * > * {
-  padding: 0.75rem 0.5rem;
+.resource-list-table {
+  --bs-table-bg: transparent;
+
+  > :not(caption) > * > * {
+    padding: 0.625rem 0.75rem;
+  }
+
+  thead th {
+    background: var(--light, #f8f9fa);
+    border-bottom: 2px solid var(--bs-border-color, #dee2e6);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--secondary, #858796);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.08));
+    vertical-align: middle;
+  }
+
+  tbody tr:hover > * {
+    --bs-table-bg-state: rgba(var(--bs-primary-rgb, 13 110 253), 0.03);
+    background-color: rgba(var(--bs-primary-rgb, 13 110 253), 0.03);
+  }
 }
 
-.resource-list-thead {
+.rl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  min-height: 12rem;
+}
+
+.rl-empty-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--light, #f8f9fa);
+  color: var(--bs-secondary-color, #adb5bd);
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.rl-empty-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.rl-empty-text {
+  font-size: 0.875rem;
+  max-width: 22rem;
 }
 
 #resource-list td.actions {

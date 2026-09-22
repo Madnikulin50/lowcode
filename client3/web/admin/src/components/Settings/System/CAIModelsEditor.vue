@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
-      <h4 class="m-0">{{ t('title') }}</h4>
+      <h4 class="ae-section-title">{{ t('title') }}</h4>
       <div class="d-flex gap-2">
         <button
           type="button"

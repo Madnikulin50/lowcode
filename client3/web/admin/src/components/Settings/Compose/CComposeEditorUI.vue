@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">
+      <h4 class="ae-section-title">
         {{ t('title') }}
       </h4>
     </div>
@@ -59,7 +59,7 @@
             <input
               id="hide-submit"
               v-model="recordToolbar.hideSubmit"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -71,7 +71,7 @@
             <input
               id="hide-delete"
               v-model="recordToolbar.hideDelete"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -83,7 +83,7 @@
             <input
               id="hide-edit"
               v-model="recordToolbar.hideEdit"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -95,7 +95,7 @@
             <input
               id="hide-new"
               v-model="recordToolbar.hideNew"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -107,7 +107,7 @@
             <input
               id="hide-clone"
               v-model="recordToolbar.hideClone"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -119,7 +119,7 @@
             <input
               id="hide-back"
               v-model="recordToolbar.hideBack"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -145,9 +145,13 @@
 </template>
 
 <script setup>
-defineOptions({ i18nOptions: { namespaces: 'compose.settings', keyPrefix: 'editor.ui' } })
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+defineOptions({
+  name: 'CComposeEditorUi',
+  i18nOptions: { namespaces: 'compose.settings', keyPrefix: 'editor.ui' },
+})
 
 const { t: _t } = useI18n()
 

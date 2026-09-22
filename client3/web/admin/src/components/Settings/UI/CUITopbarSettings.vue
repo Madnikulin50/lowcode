@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">
+      <h4 class="ae-section-title">
         {{ t('title') }}
       </h4>
     </div>
@@ -16,7 +16,7 @@
             <input
               id="hide-app-selector"
               v-model="topbarSettings.hideAppSelector"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -29,7 +29,7 @@
             <input
               id="hide-drafts"
               v-model="hideDrafts"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -45,7 +45,7 @@
             <input
               id="hide-notifications"
               v-model="topbarSettings.hideNotifications"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -58,7 +58,7 @@
             <input
               id="hide-help"
               v-model="topbarSettings.hideHelp"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -74,7 +74,7 @@
             <input
               id="hide-search"
               v-model="hideSearch"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -87,7 +87,7 @@
             <input
               id="hide-profile"
               v-model="topbarSettings.hideProfile"
-              class="form-check-input-v3"
+              class="form-check-input"
               type="checkbox"
             >
             <label
@@ -100,7 +100,7 @@
         <div>
           <hr>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-3">
               <h5>{{ t('help.title') }}</h5>
               <div class="mb-3">
@@ -108,7 +108,7 @@
                   <input
                     id="hide-forum-link"
                     v-model="topbarSettings.hideForumLink"
-                    class="form-check-input-v3"
+                    class="form-check-input"
                     type="checkbox"
                   >
                   <label
@@ -121,7 +121,7 @@
                   <input
                     id="hide-documentation-link"
                     v-model="topbarSettings.hideDocumentationLink"
-                    class="form-check-input-v3"
+                    class="form-check-input"
                     type="checkbox"
                   >
                   <label
@@ -134,7 +134,7 @@
                   <input
                     id="hide-feedback-link"
                     v-model="topbarSettings.hideFeedbackLink"
-                    class="form-check-input-v3"
+                    class="form-check-input"
                     type="checkbox"
                   >
                   <label
@@ -184,7 +184,7 @@
                             <input
                               :id="'help-newtab-' + index"
                               v-model="item.newTab"
-                              class="form-check-input-v3"
+                              class="form-check-input"
                               type="checkbox"
                             >
                             <label
@@ -211,7 +211,7 @@
         <div>
           <hr>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-3">
               <h5>{{ t('profile.title') }}</h5>
 
@@ -220,7 +220,7 @@
                   <input
                     id="hide-profile-link"
                     v-model="topbarSettings.hideProfileLink"
-                    class="form-check-input-v3"
+                    class="form-check-input"
                     type="checkbox"
                   >
                   <label
@@ -233,7 +233,7 @@
                   <input
                     id="hide-change-password-link"
                     v-model="topbarSettings.hideChangePasswordLink"
-                    class="form-check-input-v3"
+                    class="form-check-input"
                     type="checkbox"
                   >
                   <label
@@ -246,7 +246,7 @@
                   <input
                     id="hide-theme-selector"
                     v-model="topbarSettings.hideThemeSelector"
-                    class="form-check-input-v3"
+                    class="form-check-input"
                     type="checkbox"
                   >
                   <label
@@ -296,7 +296,7 @@
                             <input
                               :id="'profile-newtab-' + index"
                               v-model="item.newTab"
-                              class="form-check-input-v3"
+                              class="form-check-input"
                               type="checkbox"
                             >
                             <label

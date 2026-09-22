@@ -10,6 +10,14 @@ roles:
   title: Active role(s)
   total: Total
 title: Dashboard
+empty:
+  title: Nothing to show yet
+  text: Create a user to see activity here.
+  create: New user
+kpi:
+  users: Users
+  roles: Roles
+  applications: Applications
 users:
   created: Created users(s)
   deleted: Deleted

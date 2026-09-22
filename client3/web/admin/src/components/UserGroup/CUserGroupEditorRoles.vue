@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm" data-test-id="card-user-group-edit-roles">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('system.user-groups.editor.roles.title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('system.user-groups.editor.roles.title') }}</h4>
     </div>
 
     <div class="card-body">

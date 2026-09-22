@@ -2,7 +2,7 @@
   <div
     ref="container"
     class="position-relative ace-editor-wrapper"
-    :class="{ 'resizable': resizable }"
+    :class="{ 'resizable': resizable, 'ace-editor-wrapper--bordered': border }"
     :style="containerStyle"
   >
     <v-ace-editor
@@ -15,9 +15,8 @@
       :placeholder="placeholder"
       :readonly="readOnly"
       :wrap="true"
-      :print-print-margin="showPrintMargin"
-      width="100%"
-      :height="effectiveHeight"
+      :print-margin="showPrintMargin"
+      :style="editorStyle"
       :class="{ 'border-0 rounded-0': !border }"
       @init="editorInit"
       @update:value="onValueUpdate"
@@ -25,8 +24,8 @@
 
     <button
       v-if="showPopout"
-      class="popout position-absolute px-2 py-1 me-3"
-      variant="link"
+      type="button"
+      class="popout btn btn-link position-absolute px-2 py-1 me-3"
       @click="$emit('open')"
     >
       <font-awesome-icon
@@ -163,27 +162,18 @@ const editorOptions = computed(() => {
     opts.fontSize = props.fontSize
   }
 
-  const minHeightPx = parseHeight(props.minHeight)
-  const computedMinLines = Math.max(1, Math.floor(minHeightPx / 16))
-  opts.minLines = computedMinLines
-
-  if (!props.resizable) {
-    opts.maxLines = computedMinLines
-  }
-
   return opts
 })
 
-const containerStyle = computed(() => {
-  const style = {}
-  if (props.minHeight) {
-    style.minHeight = props.minHeight
-  }
-  if (props.resizable) {
-    style.height = effectiveHeight.value
-  }
-  return style
-})
+const editorStyle = computed(() => ({
+  width: '100%',
+  height: '100%',
+}))
+
+const containerStyle = computed(() => ({
+  minHeight: cssHeight(props.minHeight),
+  height: effectiveHeight.value,
+}))
 
 const effectiveHeight = computed(() => {
   if (props.resizable) {
@@ -193,15 +183,28 @@ const effectiveHeight = computed(() => {
     const maxHeight = Math.max(manualHeightPx, contentHeightPx, minHeightPx)
     return `${maxHeight}px`
   }
-  return props.minHeight
+  return cssHeight(props.minHeight)
 })
 
-function parseHeight(height) {
+function cssHeight (height) {
+  if (typeof height === 'number' && !Number.isNaN(height)) return `${height}px`
+  if (typeof height !== 'string') return '0px'
+  const trimmed = height.trim()
+  if (!trimmed) return '0px'
+  if (/^\d+(\.\d+)?$/.test(trimmed)) return `${trimmed}px`
+  return trimmed
+}
+
+function parseHeight (height) {
   if (typeof height === 'number') return height
-  if (typeof height === 'string') {
-    return parseFloat(height.replace('px', '').replace('rem', '')) * (height.includes('rem') ? 16 : 1)
-  }
-  return 0
+  if (typeof height !== 'string') return 0
+  const trimmed = height.trim()
+  if (trimmed.endsWith('rem')) return parseFloat(trimmed) * 16
+  if (trimmed.endsWith('vh')) return (parseFloat(trimmed) / 100) * (typeof window !== 'undefined' ? window.innerHeight : 0)
+  if (trimmed.endsWith('%')) return parseFloat(trimmed)
+  if (trimmed.endsWith('px')) return parseFloat(trimmed)
+  if (/^\d+(\.\d+)?$/.test(trimmed)) return parseFloat(trimmed)
+  return parseFloat(trimmed) || 0
 }
 
 function onValueUpdate(value = '') {
@@ -315,6 +318,10 @@ function editorInit(editor) {
       calculateContentHeight(editor)
     })
   }
+
+  nextTick(() => {
+    editor.resize()
+  })
 
   if (props.initExpressions) {
     processExpressionAutoComplete(editor)
@@ -437,9 +444,40 @@ function getSuggestionsForContext(context) {
 }
 
 .ace-editor-wrapper {
-  &.resizable {
-    resize: vertical;
-    overflow: auto;
-  }
+  width: 100%;
+  overflow: hidden;
+}
+
+.ace-editor-wrapper--bordered {
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: var(--bs-border-radius, 0.375rem);
+}
+
+.ace-editor-wrapper.resizable {
+  resize: vertical;
+  overflow: auto;
+}
+
+.ace-editor-wrapper :deep(.ace_editor) {
+  position: relative;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100%;
+  font-family: var(--bs-font-monospace, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  line-height: normal;
+}
+
+.ace-editor-wrapper :deep(.ace_editor *) {
+  box-sizing: content-box;
+  line-height: inherit;
+}
+
+.ace-editor-wrapper :deep(.ace_placeholder) {
+  font-family: inherit;
+  font-style: italic;
+  margin: 0;
+  padding: 0 8px !important;
+  transform: none !important;
+  color: var(--bs-secondary-color, #6c757d);
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">
+      <h4 class="ae-section-title">
         {{ t('title') }}
       </h4>
     </div>
@@ -10,7 +10,7 @@
       @submit.prevent="submit()"
     >
       <div class="card-body">
-        <div class="row">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ t('host.label') }}</label>
@@ -40,7 +40,7 @@
           </div>
         </div>
 
-        <div class="row">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ t('user.label') }}</label>
@@ -73,7 +73,7 @@
 
         <hr>
 
-        <div class="row">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ t('from.label') }}</label>
@@ -92,7 +92,7 @@
 
         <hr>
 
-        <div class="row">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ t('tlsServerName.label') }}</label>
@@ -113,7 +113,7 @@
                 <input
                   id="tls-insecure"
                   v-model="server.tlsInsecure"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                   data-test-id="checkbox-allow-invalid-certificates"
                   type="checkbox"
                   :disabled="disabled"

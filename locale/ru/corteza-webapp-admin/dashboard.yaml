@@ -10,6 +10,14 @@ roles:
   title: Active role(s)
   total: Всего
 title: Dashboard
+empty:
+  title: Пока ничего нет
+  text: Создайте пользователя, чтобы увидеть активность.
+  create: Новый пользователь
+kpi:
+  users: Пользователи
+  roles: Роли
+  applications: Приложения
 users:
   created: Создано users(s)
   deleted: Удаленные

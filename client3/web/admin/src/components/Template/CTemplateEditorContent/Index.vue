@@ -10,7 +10,7 @@
     <div class="col-12 col-lg-9 mb-3">
       <div v-if="!template.partial" class="card shadow-sm">
         <div class="card-header border-bottom">
-          <h4 class="m-0">{{ $t('system.templates.editor.content.preview.title') }}</h4>
+          <h4 class="ae-section-title">{{ $t('system.templates.editor.content.preview.title') }}</h4>
         </div>
         <div class="card-body p-0">
           <c-ace-editor
@@ -51,7 +51,7 @@
     <div class="col-12">
       <div class="card shadow-sm">
         <div class="card-header border-bottom d-flex align-items-center">
-          <h4 class="m-0">{{ $t('system.templates.editor.content.title') }}</h4>
+          <h4 class="ae-section-title">{{ $t('system.templates.editor.content.title') }}</h4>
           <span
             v-if="template.partial"
             class="badge bg-primary ms-2"

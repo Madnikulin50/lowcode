@@ -2,7 +2,7 @@
   <div>
     <div class="card shadow-sm">
       <div class="card-header border-bottom">
-        <h4 class="m-0">
+        <h4 class="ae-section-title">
           {{ t('geosearch.title') }}
         </h4>
       </div>
@@ -39,7 +39,7 @@
 
     <div class="card shadow-sm mt-3">
       <div class="card-header border-bottom">
-        <h4 class="m-0">
+        <h4 class="ae-section-title">
           {{ t('map.title') }}
         </h4>
       </div>

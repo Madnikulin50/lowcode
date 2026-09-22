@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm mt-3 overflow-hidden">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('automation.workflows.editor.triggers.title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('automation.workflows.editor.triggers.title') }}</h4>
     </div>
 
     <div class="card-body p-0">

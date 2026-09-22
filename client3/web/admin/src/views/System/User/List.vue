@@ -62,7 +62,7 @@
       </template>
 
       <template #toolbar>
-        <div class="d-flex align-items-center flex-wrap gap-1">
+        <div class="d-flex align-items-center flex-wrap gap-3">
           <c-resource-list-status-filter
             v-model="filter.deleted"
             data-test-id="filter-deleted-users"
@@ -72,7 +72,6 @@
             :exclusive-label="$t('system.users.list.filterForm.exclusive.label')"
             @change="filterList"
           />
-          <div class="ml-4"></div>
           <c-resource-list-status-filter
             v-model="filter.suspended"
             data-test-id="filter-suspended-users"

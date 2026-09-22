@@ -1,9 +1,9 @@
 <template>
   <div
     v-if="user"
-    class="container pt-2 pb-3"
+    class="container pt-2 pb-5"
   >
-    <c-content-header :title="title">
+    <c-content-header :title="title" :subtitle="headerSubtitle">
       <button
         v-if="userID && canCreate"
         data-test-id="button-new-user"
@@ -32,6 +32,30 @@
         @click="dispatchCortezaSystemUserEvent($event, { user })"
       />
     </c-content-header>
+
+    <div
+      v-if="userID && user"
+      class="ae-header"
+    >
+      <div class="ae-title">{{ displayName }}</div>
+      <div
+        v-if="headerMeta"
+        class="ae-subtitle"
+      >
+        {{ headerMeta }}
+      </div>
+      <div
+        v-if="badges.length"
+        class="ae-badges"
+      >
+        <span
+          v-for="badge in badges"
+          :key="badge.label"
+          class="ae-badge"
+          :class="badge.className"
+        >{{ badge.label }}</span>
+      </div>
+    </div>
 
     <c-user-editor-info
       :user="user"
@@ -131,6 +155,31 @@ const roles = reactive({ processing: false, success: false })
 const canCreate = computed(() => can('system/', 'user.create'))
 const canGrant = computed(() => can('system/', 'grant'))
 const title = computed(() => props.userID ? t('system.users.editor.title.edit') : t('system.users.editor.title.create'))
+const displayName = computed(() => {
+  const u = user.value
+  if (!u) return ''
+  return u.name || u.email || u.handle || props.userID || ''
+})
+const headerSubtitle = computed(() => (props.userID && displayName.value) ? displayName.value : '')
+const headerMeta = computed(() => {
+  const u = user.value
+  if (!u) return ''
+  return [u.handle, u.email].filter(v => v && v !== displayName.value).join(' · ')
+})
+function tr (key, fallback) {
+  const v = t(key)
+  return (!v || v === key || v.endsWith(`.${key}`)) ? fallback : v
+}
+
+const badges = computed(() => {
+  const u = user.value
+  if (!u) return []
+  const list = []
+  if (u.deletedAt) list.push({ label: tr('system.users.editor.badges.deleted', 'Deleted'), className: 'ae-badge-danger' })
+  if (u.suspendedAt) list.push({ label: tr('system.users.editor.badges.suspended', 'Suspended'), className: 'ae-badge-warning' })
+  if (u.email && !u.emailConfirmed) list.push({ label: tr('system.users.editor.badges.emailUnconfirmed', 'Email unconfirmed'), className: '' })
+  return list
+})
 
 function can(resource, operation) { return true }
 

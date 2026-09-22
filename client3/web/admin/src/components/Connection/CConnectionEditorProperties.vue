@@ -1,17 +1,17 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('title') }}</h4>
     </div>
 
-    <div v-for="prop in list" :key="prop" class="row">
+    <div v-for="prop in list" :key="prop" class="row g-3">
       <div class="col-12">
         <div class="form-check mb-1">
           <input
             :id="'prop-' + prop"
             v-model="properties[prop].enabled"
             type="checkbox"
-            class="form-check-input-v3"
+            class="form-check-input"
           >
           <label :for="'prop-' + prop" class="form-check-label">
             {{ $t('form.' + kebabCase(prop) + '.checkbox.label') }}

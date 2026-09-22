@@ -5,7 +5,7 @@
         <input
           id="oidc-enabled"
           v-model="value.enabled"
-          class="form-check-input-v3"
+          class="form-check-input"
           type="checkbox"
           :true-value="true"
           :false-value="false"

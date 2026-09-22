@@ -1,17 +1,28 @@
 <template>
-  <Teleport v-if="title && ready" to="#topbar-title">
-    <h3 class="me-auto">{{ title }}</h3>
+  <Teleport v-if="ready && title" to="#topbar-title">
+    <div class="c-page-title">
+      <div class="c-page-title__name">{{ title }}</div>
+      <div v-if="subtitle" class="c-page-title__sub">{{ subtitle }}</div>
+    </div>
   </Teleport>
-  <div class="d-flex justify-content-end flex-wrap gap-1 mb-2 flex-fill-child">
-    <slot />
-  </div>
+  <Teleport v-if="ready && hasActions" to="#topbar-tools">
+    <div class="c-page-actions d-flex align-items-center flex-wrap gap-1">
+      <slot />
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, ref, useSlots } from 'vue'
 
-defineProps({ title: { type: String, default: '' } })
+defineProps({
+  title: { type: String, default: '' },
+  subtitle: { type: String, default: '' },
+})
 
+const slots = useSlots()
 const ready = ref(false)
+const hasActions = computed(() => !!slots.default)
+
 onMounted(() => { ready.value = true })
 </script>

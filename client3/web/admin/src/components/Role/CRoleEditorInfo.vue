@@ -1,12 +1,12 @@
 <template>
   <div class="card shadow-sm" data-test-id="card-role-info">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('title') }}</h4>
     </div>
 
     <div class="card-body">
   <form @submit.prevent="submit()">
-        <div class="row g-3 p-3">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('name') }}</label>
@@ -63,7 +63,7 @@
           </div>
         </div>
   
-        <div v-if="isContextual" class="row g-3 my-3 px-3">
+        <div v-if="isContextual" class="row g-3">
           <div class="col-12">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('system.roles.editor.info.context.expression-label') }}</label>
@@ -85,7 +85,7 @@
                   :id="'resource-type-' + i"
                   v-model="role.meta.context.resourceTypes"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                   :data-test-id="`checkbox-resource-type-${resourceType.text}`"
                   :value="resourceType.value"
                   :disabled="!editable"

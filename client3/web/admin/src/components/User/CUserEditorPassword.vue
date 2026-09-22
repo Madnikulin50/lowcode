@@ -1,12 +1,12 @@
 <template>
   <div class="card shadow-sm" data-test-id="card-user-password">
     <div class="card-header border-bottom">
-      <h4 data-test-id="card-title" class="m-0">{{ $t('system.users.editor.password.title') }}</h4>
+      <h4 data-test-id="card-title" class="ae-section-title">{{ $t('system.users.editor.password.title') }}</h4>
     </div>
 
     <div class="card-body">
   <form @submit.prevent="onPasswordSubmit">
-        <div class="row g-3 p-3">
+        <div class="row g-3">
           <div class="col-12">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('system.users.editor.password.new') }}</label>

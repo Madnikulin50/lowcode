@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm mt-3" data-test-id="card-filter-list">
     <div class="card-header">
-      <h4 class="m-0">
+      <h4 class="ae-section-title">
         {{ $t('filters.title') }}
       </h4>
     </div>

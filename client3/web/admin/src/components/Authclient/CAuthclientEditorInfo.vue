@@ -1,12 +1,12 @@
 <template>
   <div class="card shadow-sm auth-clients" data-test-id="card-auth-client-info" v-if="resource">
     <div class="card-header border-bottom">
-      <h4 class="m-0">{{ $t('title') }}</h4>
+      <h4 class="ae-section-title">{{ $t('title') }}</h4>
     </div>
 
     <div class="card-body">
   <form @submit.prevent="submit">
-        <div class="row">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('name') }}</label>
@@ -149,7 +149,7 @@
                 <input
                   id="scope-profile"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                   data-test-id="checkbox-allow-access-to-user-profile"
                   :checked="(resource.scope || []).includes('profile')"
                   @change="setScope($event, 'profile')"
@@ -160,7 +160,7 @@
                 <input
                   id="scope-api"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                   data-test-id="checkbox-allow-access-to-corteza-api"
                   :checked="(resource.scope || []).includes('api')"
                   @change="setScope($event, 'api')"
@@ -171,7 +171,7 @@
                 <input
                   id="scope-openid"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                   data-test-id="checkbox-allow-client-to-use-oidc"
                   :checked="(resource.scope || []).includes('openid')"
                   @change="setScope($event, 'openid')"
@@ -182,7 +182,7 @@
                 <input
                   id="scope-discovery"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                   data-test-id="checkbox-allow-client-access-to-discovery"
                   :checked="(resource.scope || []).includes('discovery')"
                   @change="setScope($event, 'discovery')"
@@ -233,7 +233,7 @@
                   id="checkbox-enabled"
                   v-model="resource.enabled"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                   data-test-id="checkbox-is-client-enabled"
                   :disabled="resource.isDefault"
                 >
@@ -250,7 +250,7 @@
                   id="checkbox-trusted"
                   v-model="resource.trusted"
                   type="checkbox"
-                  class="form-check-input-v3"
+                  class="form-check-input"
                   data-test-id="checkbox-is-client-trusted"
                 >
                 <label class="form-check-label" for="checkbox-trusted">{{ $t('system.authclients.editor.info.trusted.label') }}</label>
@@ -260,7 +260,7 @@
           </div>
         </div>
   
-        <div class="row">
+        <div class="row g-3">
           <div v-show="isClientCredentialsGrant" class="col-12 col-lg-6">
             <div class="mb-3" data-test-id="impersonate-user">
               <label class="form-label text-primary">{{ $t('system.authclients.editor.info.security.impersonateUser.label') }}</label>
@@ -359,7 +359,7 @@
           </div>
         </div>
   
-        <div class="row">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ $t('system.authclients.editor.info.security.defaultUserGroup.label') }}</label>

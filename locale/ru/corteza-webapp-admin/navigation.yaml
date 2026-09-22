@@ -1,4 +1,12 @@
 dashboard: Dashboard
+search: Поиск
+noResults: Нет совпадений
+
+groups:
+  userManagement: Управление пользователями
+  access: Доступ
+  platform: Платформа
+  integrations: Интеграции
 
 system:
   group: System

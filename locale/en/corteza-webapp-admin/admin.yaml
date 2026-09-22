@@ -73,6 +73,8 @@ automation:
 general:
   resource-list:
     no-items: No matches for your search
+    empty-title: Nothing here yet
+    empty-text: Create a new item or adjust the filters.
   notFound: 'Not found'
   loading: Loading
   label:

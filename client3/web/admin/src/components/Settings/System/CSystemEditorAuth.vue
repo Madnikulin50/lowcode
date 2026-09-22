@@ -4,7 +4,7 @@
     data-test-id="card-edit-authentication"
   >
     <div class="card-header border-bottom">
-      <h4 class="m-0">
+      <h4 class="ae-section-title">
         {{ t('title') }}
       </h4>
     </div>
@@ -17,7 +17,7 @@
           {{ t('internal.title') }}
         </h5>
 
-        <div class="row">
+        <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="mb-3">
               <label class="form-label text-primary">{{ t('internal.enabled') }}</label>
@@ -113,7 +113,7 @@
             {{ t('internal.password-constraints.ignored-security') }}
           </div>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('internal.password-constraints.min-upper-case-length') }}</label>
@@ -143,7 +143,7 @@
             </div>
           </div>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('internal.password-constraints.min-length') }}</label>
@@ -173,7 +173,7 @@
             </div>
           </div>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('internal.password-constraints.min-special-count') }}</label>
@@ -193,7 +193,7 @@
         <hr>
 
         <div>
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('mfa.emailOTP.enabled') }}</label>
@@ -248,7 +248,7 @@
         <hr>
 
         <div>
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('mfa.TOTP.enabled') }}</label>
@@ -305,7 +305,7 @@
             {{ t('mail.title') }}
           </h5>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('mail.from-address') }}</label>
@@ -341,7 +341,7 @@
             {{ t('internal.send-user-invite-email.title') }}
           </h5>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('internal.send-user-invite-email.enabled') }}</label>
@@ -380,7 +380,7 @@
             {{ t('auto-logout.title') }}
           </h5>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('auto-logout.enabled.label') }}</label>

@@ -1,7 +1,7 @@
 <template>
   <div class="card shadow-sm">
     <div class="card-header border-bottom">
-      <h4 class="m-0">
+      <h4 class="ae-section-title">
         {{ t('title') }}
       </h4>
     </div>
@@ -13,7 +13,7 @@
         <div class="pb-3">
           <h5>{{ t('attachments.storage.title') }}</h5>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-0">
                 <label class="form-label text-primary">{{ t('attachments.storage.default-driver') }}</label>
@@ -34,7 +34,7 @@
         <div class="pb-3">
           <h5>{{ t('attachments.namespace') }}</h5>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('attachments.max-size') }}</label>
@@ -63,7 +63,7 @@
         <div class="pb-3">
           <h5>{{ t('attachments.page') }}</h5>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('attachments.max-size') }}</label>
@@ -91,7 +91,7 @@
         <div class="pb-3">
           <h5>{{ t('attachments.record') }}</h5>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('attachments.max-size') }}</label>
@@ -119,7 +119,7 @@
         <div>
           <h5>{{ t('attachments.icon') }}</h5>
 
-          <div class="row">
+          <div class="row g-3">
             <div class="col-12 col-lg-6">
               <div class="mb-3">
                 <label class="form-label text-primary">{{ t('attachments.max-size') }}</label>
