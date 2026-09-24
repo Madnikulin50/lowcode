@@ -146,6 +146,7 @@ codegen.check:
 		automation/types automation/model \
 		compose/types compose/model \
 		system/types system/model \
+		anomaly/types anomaly/model \
 		store/interfaces.gen.go \
 		store/adapters/rdbms/aux_types.gen.go \
 		store/adapters/rdbms/queries.gen.go \

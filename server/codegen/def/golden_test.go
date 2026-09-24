@@ -72,6 +72,7 @@ func TestGoldenGeneration(t *testing.T) {
 		def.Automation.Resolve(),
 		def.Compose.Resolve(),
 		def.System.Resolve(),
+		def.Anomaly.Resolve(),
 	}
 
 	var tasks []def.Task
