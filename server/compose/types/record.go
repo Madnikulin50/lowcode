@@ -43,26 +43,26 @@ type (
 
 	// Record is a stored row in the `record` table
 	Record struct {
-		ID       uint64 `json:"recordID,string"`
-		ModuleID uint64 `json:"moduleID,string"`
+		ID       uint64 `json:"recordID,string" schema:"col=id,dal=id,unique"`
+		ModuleID uint64 `json:"moduleID,string" schema:"col=module_id,store=rel_module,dal=ref:corteza::compose:module"`
 
-		Revision int `json:"revision,omitempty"`
+		Revision int `json:"revision,omitempty" schema:"col=revision,dal=number:default0"`
 
-		module *Module
+		module *Module `schema:"col=module,nostore,omit"`
 
-		Values RecordValueSet `json:"values,omitempty"`
+		Values RecordValueSet `json:"values,omitempty" schema:"col=values,dal=json:empty,omit"`
 
-		Meta map[string]any `json:"meta,omitempty"`
+		Meta map[string]any `json:"meta,omitempty" schema:"col=meta,goType=map[string]any,dal=json:empty"`
 
-		NamespaceID uint64 `json:"namespaceID,string"`
+		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
 
-		OwnedBy   uint64     `json:"ownedBy,string"`
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		CreatedBy uint64     `json:"createdBy,string" `
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		UpdatedBy uint64     `json:"updatedBy,string,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
-		DeletedBy uint64     `json:"deletedBy,string,omitempty"`
+		OwnedBy   uint64     `json:"ownedBy,string" schema:"col=owned_by,dal=userref,alias=ownedBy|OwnedBy|owned_by"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		CreatedBy uint64     `json:"createdBy,string" schema:"col=created_by,dal=userref,alias=createdBy|CreatedBy|created_by"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		UpdatedBy uint64     `json:"updatedBy,string,omitempty" schema:"col=updated_by,dal=userref,alias=updatedBy|UpdatedBy|updated_by"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
+		DeletedBy uint64     `json:"deletedBy,string,omitempty" schema:"col=deleted_by,dal=userref,alias=deletedBy|DeletedBy|deleted_by"`
 	}
 
 	RecordSummary struct {

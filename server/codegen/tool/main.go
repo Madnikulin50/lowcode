@@ -9,6 +9,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/madnikulin50/lowcode/server/codegen/tool/render"
 	"github.com/madnikulin50/lowcode/server/pkg/cli"
 )
 
@@ -65,7 +66,7 @@ func main() {
 
 	println(time.Now().Sub(started).Round(time.Second)/time.Second, "sec")
 
-	if tpl, err = loadTemplates(baseTemplate(), tplRootPath); err != nil {
+	if tpl, err = render.Load(tplRootPath); err != nil {
 		cli.HandleError(fmt.Errorf("failed to load templates: %v", err))
 	}
 
@@ -78,11 +79,22 @@ func main() {
 			output := path.Join(outputBase, o.Output)
 			print(fmt.Sprintf("generating %s (from %s) ...", output, o.Template))
 
+			var out []byte
 			switch o.Syntax {
 			case "go":
-				err = writeFormattedGo(output, tpl.Lookup(o.Template), j.Payload)
+				out, err = render.RenderGo(tpl, o.Template, j.Payload)
+				if err != nil {
+					// mirror codegen/tool's previous behaviour: a gofmt
+					// failure is a warning, not fatal - write what we have
+					_, _ = fmt.Fprintf(os.Stderr, "%s fmt warn: %v\n", output, err)
+					err = nil
+				}
 			default:
-				err = write(output, tpl.Lookup(o.Template), j.Payload)
+				out, err = render.Render(tpl, o.Template, j.Payload)
+			}
+
+			if err == nil {
+				err = writeFile(output, out)
 			}
 
 			if err != nil {
@@ -92,6 +104,22 @@ func main() {
 			}
 		}
 	}
+}
+
+func writeFile(dst string, out []byte) error {
+	if dst == "" || dst == "-" {
+		_, err := os.Stdout.Write(out)
+		return err
+	}
+
+	f, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.Write(out)
+	return err
 }
 
 func print(msg string) {

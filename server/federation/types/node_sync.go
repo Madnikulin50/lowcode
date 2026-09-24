@@ -15,12 +15,12 @@ var (
 
 type (
 	NodeSync struct {
-		NodeID     uint64 `json:"nodeID,string"`
-		ModuleID   uint64 `json:"moduleID,string"`
-		SyncStatus string `json:"syncStatus"`
-		SyncType   string `json:"syncType"`
+		NodeID     uint64 `json:"nodeID,string" schema:"col=rel_node,dal=id,sortable"`
+		ModuleID   uint64 `json:"moduleID,string" schema:"col=rel_module,store=rel_compose_module,dal=id,sortable"`
+		SyncStatus string `json:"syncStatus" schema:"col=sync_status,dal,sortable"`
+		SyncType   string `json:"syncType" schema:"col=sync_type,dal,sortable"`
 
-		TimeOfAction time.Time `json:"timeOfAction"`
+		TimeOfAction time.Time `json:"timeOfAction" schema:"col=time_of_action,dal=timestamp,sortable"`
 	}
 
 	NodeSyncFilter struct {

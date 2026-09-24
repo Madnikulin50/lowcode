@@ -16,35 +16,35 @@ import (
 type (
 	// Workflow represents entire workflow definition
 	Workflow struct {
-		ID      uint64                           `json:"workflowID,string"`
-		Handle  string                           `json:"handle"`
+		ID      uint64                           `json:"workflowID,string" schema:"col=id,dal=id,unique"`
+		Handle  string                           `json:"handle" schema:"col=handle,dal=text:64,unique,ignoreCase"`
 		Labels  map[string]labelTypes.LabelValue `json:"labels,omitempty"`
-		Meta    *WorkflowMeta                    `json:"meta,omitempty"`
-		Enabled bool                             `json:"enabled"`
+		Meta    *WorkflowMeta                    `json:"meta,omitempty" schema:"col=meta,dal=json:empty,omit"`
+		Enabled bool                             `json:"enabled" schema:"col=enabled,dal=bool:true,sortable"`
 
-		Trace bool `json:"trace"`
+		Trace bool `json:"trace" schema:"col=trace,dal=bool:false"`
 
 		// how much time do we keep completed sessions (in sec)
-		KeepSessions int `json:"keepSessions"`
+		KeepSessions int `json:"keepSessions" schema:"col=keep_sessions,dal=number:default0"`
 
 		// Initial input scope
-		Scope *expr.Vars `json:"scope"`
+		Scope *expr.Vars `json:"scope" schema:"col=scope,dal=json:empty,omit"`
 
-		Steps WorkflowStepSet `json:"steps"`
-		Paths WorkflowPathSet `json:"paths"`
+		Steps WorkflowStepSet `json:"steps" schema:"col=steps,dal=json:empty,omit"`
+		Paths WorkflowPathSet `json:"paths" schema:"col=paths,dal=json:empty,omit"`
 
 		// Collection of issues from the last parse
-		Issues WorkflowIssueSet `json:"issues,omitempty"`
+		Issues WorkflowIssueSet `json:"issues,omitempty" schema:"col=issues,dal=json:empty,omit"`
 
-		RunAs uint64 `json:"runAs,string"`
+		RunAs uint64 `json:"runAs,string" schema:"col=run_as,dal=userref"`
 
-		OwnedBy   uint64     `json:"ownedBy,string"`
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		CreatedBy uint64     `json:"createdBy,string" `
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		UpdatedBy uint64     `json:"updatedBy,string,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
-		DeletedBy uint64     `json:"deletedBy,string,omitempty"`
+		OwnedBy   uint64     `json:"ownedBy,string" schema:"col=owned_by,dal=userref"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		CreatedBy uint64     `json:"createdBy,string" schema:"col=created_by,dal=userref"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		UpdatedBy uint64     `json:"updatedBy,string,omitempty" schema:"col=updated_by,dal=userref"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
+		DeletedBy uint64     `json:"deletedBy,string,omitempty" schema:"col=deleted_by,dal=userref"`
 	}
 
 	WorkflowFilter struct {

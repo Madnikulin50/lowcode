@@ -6,11 +6,11 @@ import (
 
 type (
 	ModuleMapping struct {
-		NodeID             uint64                `json:"nodeID,string"`
-		FederationModuleID uint64                `json:"federationModuleID,string"`
-		ComposeModuleID    uint64                `json:"composeModuleID,string"`
-		ComposeNamespaceID uint64                `json:"composeNamespaceID,string"`
-		FieldMapping       ModuleFieldMappingSet `json:"fields"`
+		NodeID             uint64                `json:"nodeID,string" schema:"col=node_id,dal=id,unique"`
+		FederationModuleID uint64                `json:"federationModuleID,string" schema:"col=federation_module_id,store=rel_federation_module,dal=id,sortable"`
+		ComposeModuleID    uint64                `json:"composeModuleID,string" schema:"col=compose_module_id,store=rel_compose_module,dal=id,sortable"`
+		ComposeNamespaceID uint64                `json:"composeNamespaceID,string" schema:"col=compose_namespace_id,store=rel_compose_namespace,dal=id,sortable"`
+		FieldMapping       ModuleFieldMappingSet `json:"fields" schema:"col=field_mapping,omit,dal=json:empty"`
 	}
 
 	ModuleMappingFilter struct {

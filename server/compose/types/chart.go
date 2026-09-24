@@ -17,18 +17,18 @@ import (
 
 type (
 	Chart struct {
-		ID     uint64      `json:"chartID,string"`
-		Handle string      `json:"handle"`
-		Name   string      `json:"name"`
-		Config ChartConfig `json:"config"`
+		ID     uint64      `json:"chartID,string" schema:"col=id,dal=id,unique"`
+		Handle string      `json:"handle" schema:"col=handle,dal=text:64,unique,ignoreCase"`
+		Name   string      `json:"name" schema:"col=name,dal,sortable"`
+		Config ChartConfig `json:"config" schema:"col=config,dal,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
-		NamespaceID uint64 `json:"namespaceID,string"`
+		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 	}
 
 	ChartConfig struct {

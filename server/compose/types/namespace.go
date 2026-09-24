@@ -12,21 +12,21 @@ import (
 
 type (
 	Namespace struct {
-		ID      uint64        `json:"namespaceID,string"`
-		Slug    string        `json:"slug"`
-		Enabled bool          `json:"enabled"`
-		Meta    NamespaceMeta `json:"meta"`
+		ID      uint64        `json:"namespaceID,string" schema:"col=id,dal=id,unique"`
+		Slug    string        `json:"slug" schema:"col=slug,dal,sortable"`
+		Enabled bool          `json:"enabled" schema:"col=enabled,dal=bool"`
+		Meta    NamespaceMeta `json:"meta" schema:"col=meta,dal=json:empty,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 
 		// Warning: value of this field is now handled via resource-translation facility
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
-		Name string `json:"name"`
+		Name string `json:"name" schema:"col=name,dal,sortable"`
 	}
 
 	NamespaceFilter struct {

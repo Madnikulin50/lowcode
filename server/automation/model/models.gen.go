@@ -79,6 +79,14 @@ var Session = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "CreatedAt", Sortable: true,
+			Type: &dal.TypeTimestamp{
+				DefaultCurrentTimestamp: true, Timezone: true, Precision: -1,
+			},
+			Store: &dal.CodecAlias{Ident: "created_at"},
+		},
+
+		&dal.Attribute{
 			Ident: "CreatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -89,14 +97,6 @@ var Session = &dal.Model{
 				},
 			},
 			Store: &dal.CodecAlias{Ident: "created_by"},
-		},
-
-		&dal.Attribute{
-			Ident: "CreatedAt", Sortable: true,
-			Type: &dal.TypeTimestamp{
-				DefaultCurrentTimestamp: true, Timezone: true, Precision: -1,
-			},
-			Store: &dal.CodecAlias{Ident: "created_at"},
 		},
 
 		&dal.Attribute{
@@ -216,6 +216,14 @@ var Trigger = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "Enabled", Sortable: true,
+			Type: &dal.TypeBoolean{HasDefault: true,
+				DefaultValue: true,
+			},
+			Store: &dal.CodecAlias{Ident: "enabled"},
+		},
+
+		&dal.Attribute{
 			Ident: "WorkflowID", Sortable: true,
 			Type: &dal.TypeRef{
 				RefAttribute: "id",
@@ -230,22 +238,6 @@ var Trigger = &dal.Model{
 			Ident: "StepID",
 			Type:  &dal.TypeID{},
 			Store: &dal.CodecAlias{Ident: "rel_step"},
-		},
-
-		&dal.Attribute{
-			Ident: "Enabled", Sortable: true,
-			Type: &dal.TypeBoolean{HasDefault: true,
-				DefaultValue: true,
-			},
-			Store: &dal.CodecAlias{Ident: "enabled"},
-		},
-
-		&dal.Attribute{
-			Ident: "Meta",
-			Type: &dal.TypeJSON{
-				DefaultValue: "{}",
-			},
-			Store: &dal.CodecAlias{Ident: "meta"},
 		},
 
 		&dal.Attribute{
@@ -277,6 +269,14 @@ var Trigger = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "Meta",
+			Type: &dal.TypeJSON{
+				DefaultValue: "{}",
+			},
+			Store: &dal.CodecAlias{Ident: "meta"},
+		},
+
+		&dal.Attribute{
 			Ident: "OwnedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -298,18 +298,6 @@ var Trigger = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "UpdatedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "updated_at"},
-		},
-
-		&dal.Attribute{
-			Ident: "DeletedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "deleted_at"},
-		},
-
-		&dal.Attribute{
 			Ident: "CreatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -323,6 +311,12 @@ var Trigger = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "UpdatedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "updated_at"},
+		},
+
+		&dal.Attribute{
 			Ident: "UpdatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -333,6 +327,12 @@ var Trigger = &dal.Model{
 				},
 			},
 			Store: &dal.CodecAlias{Ident: "updated_by"},
+		},
+
+		&dal.Attribute{
+			Ident: "DeletedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "deleted_at"},
 		},
 
 		&dal.Attribute{
@@ -480,18 +480,6 @@ var Workflow = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "UpdatedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "updated_at"},
-		},
-
-		&dal.Attribute{
-			Ident: "DeletedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "deleted_at"},
-		},
-
-		&dal.Attribute{
 			Ident: "CreatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -505,6 +493,12 @@ var Workflow = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "UpdatedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "updated_at"},
+		},
+
+		&dal.Attribute{
 			Ident: "UpdatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -515,6 +509,12 @@ var Workflow = &dal.Model{
 				},
 			},
 			Store: &dal.CodecAlias{Ident: "updated_by"},
+		},
+
+		&dal.Attribute{
+			Ident: "DeletedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "deleted_at"},
 		},
 
 		&dal.Attribute{

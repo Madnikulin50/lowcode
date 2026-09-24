@@ -1049,9 +1049,9 @@ func TruncateAuthClients(ctx context.Context, s AuthClients) error {
 	return s.TruncateAuthClients(ctx)
 }
 
-// LookupAuthClientByID 	searches for auth client by ID
+// LookupAuthClientByID searches for auth client by ID
 //
-//	It returns auth clint even if deleted
+// # It returns auth clint even if deleted
 //
 // This function is auto-generated
 func LookupAuthClientByID(ctx context.Context, s AuthClients, id uint64) (*systemType.AuthClient, error) {

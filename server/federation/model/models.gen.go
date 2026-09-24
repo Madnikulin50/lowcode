@@ -23,18 +23,6 @@ var ExposedModule = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "Handle",
-			Type:  &dal.TypeText{Length: 64},
-			Store: &dal.CodecAlias{Ident: "handle"},
-		},
-
-		&dal.Attribute{
-			Ident: "Name", Sortable: true,
-			Type:  &dal.TypeText{},
-			Store: &dal.CodecAlias{Ident: "name"},
-		},
-
-		&dal.Attribute{
 			Ident: "NodeID", Sortable: true,
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -60,6 +48,18 @@ var ExposedModule = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "Handle",
+			Type:  &dal.TypeText{Length: 64},
+			Store: &dal.CodecAlias{Ident: "handle"},
+		},
+
+		&dal.Attribute{
+			Ident: "Name", Sortable: true,
+			Type:  &dal.TypeText{},
+			Store: &dal.CodecAlias{Ident: "name"},
+		},
+
+		&dal.Attribute{
 			Ident: "Fields",
 			Type: &dal.TypeJSON{
 				DefaultValue: "{}",
@@ -76,18 +76,6 @@ var ExposedModule = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "UpdatedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "updated_at"},
-		},
-
-		&dal.Attribute{
-			Ident: "DeletedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "deleted_at"},
-		},
-
-		&dal.Attribute{
 			Ident: "CreatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -101,6 +89,12 @@ var ExposedModule = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "UpdatedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "updated_at"},
+		},
+
+		&dal.Attribute{
 			Ident: "UpdatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -111,6 +105,12 @@ var ExposedModule = &dal.Model{
 				},
 			},
 			Store: &dal.CodecAlias{Ident: "updated_by"},
+		},
+
+		&dal.Attribute{
+			Ident: "DeletedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "deleted_at"},
 		},
 
 		&dal.Attribute{
@@ -214,21 +214,9 @@ var Node = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "SharedNodeID", Sortable: true,
-			Type:  &dal.TypeID{},
-			Store: &dal.CodecAlias{Ident: "shared_node_id"},
-		},
-
-		&dal.Attribute{
 			Ident: "Name", Sortable: true,
 			Type:  &dal.TypeText{},
 			Store: &dal.CodecAlias{Ident: "name"},
-		},
-
-		&dal.Attribute{
-			Ident: "BaseURL", Sortable: true,
-			Type:  &dal.TypeText{},
-			Store: &dal.CodecAlias{Ident: "base_url"},
 		},
 
 		&dal.Attribute{
@@ -238,9 +226,21 @@ var Node = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "BaseURL", Sortable: true,
+			Type:  &dal.TypeText{},
+			Store: &dal.CodecAlias{Ident: "base_url"},
+		},
+
+		&dal.Attribute{
 			Ident: "Contact", Sortable: true,
 			Type:  &dal.TypeText{},
 			Store: &dal.CodecAlias{Ident: "contact"},
+		},
+
+		&dal.Attribute{
+			Ident: "SharedNodeID", Sortable: true,
+			Type:  &dal.TypeID{},
+			Store: &dal.CodecAlias{Ident: "shared_node_id"},
 		},
 
 		&dal.Attribute{
@@ -264,18 +264,6 @@ var Node = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "UpdatedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "updated_at"},
-		},
-
-		&dal.Attribute{
-			Ident: "DeletedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "deleted_at"},
-		},
-
-		&dal.Attribute{
 			Ident: "CreatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -289,6 +277,12 @@ var Node = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "UpdatedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "updated_at"},
+		},
+
+		&dal.Attribute{
 			Ident: "UpdatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -299,6 +293,12 @@ var Node = &dal.Model{
 				},
 			},
 			Store: &dal.CodecAlias{Ident: "updated_by"},
+		},
+
+		&dal.Attribute{
+			Ident: "DeletedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "deleted_at"},
 		},
 
 		&dal.Attribute{
@@ -347,15 +347,15 @@ var NodeSync = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "SyncType", Sortable: true,
-			Type:  &dal.TypeText{},
-			Store: &dal.CodecAlias{Ident: "sync_type"},
-		},
-
-		&dal.Attribute{
 			Ident: "SyncStatus", Sortable: true,
 			Type:  &dal.TypeText{},
 			Store: &dal.CodecAlias{Ident: "sync_status"},
+		},
+
+		&dal.Attribute{
+			Ident: "SyncType", Sortable: true,
+			Type:  &dal.TypeText{},
+			Store: &dal.CodecAlias{Ident: "sync_type"},
 		},
 
 		&dal.Attribute{
@@ -391,15 +391,15 @@ var SharedModule = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "Handle",
-			Type:  &dal.TypeText{Length: 64},
-			Store: &dal.CodecAlias{Ident: "handle"},
-		},
-
-		&dal.Attribute{
 			Ident: "NodeID", Sortable: true,
 			Type:  &dal.TypeID{},
 			Store: &dal.CodecAlias{Ident: "rel_node"},
+		},
+
+		&dal.Attribute{
+			Ident: "Handle",
+			Type:  &dal.TypeText{Length: 64},
+			Store: &dal.CodecAlias{Ident: "handle"},
 		},
 
 		&dal.Attribute{
@@ -431,18 +431,6 @@ var SharedModule = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "UpdatedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "updated_at"},
-		},
-
-		&dal.Attribute{
-			Ident: "DeletedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "deleted_at"},
-		},
-
-		&dal.Attribute{
 			Ident: "CreatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -456,6 +444,12 @@ var SharedModule = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "UpdatedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "updated_at"},
+		},
+
+		&dal.Attribute{
 			Ident: "UpdatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -466,6 +460,12 @@ var SharedModule = &dal.Model{
 				},
 			},
 			Store: &dal.CodecAlias{Ident: "updated_by"},
+		},
+
+		&dal.Attribute{
+			Ident: "DeletedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "deleted_at"},
 		},
 
 		&dal.Attribute{

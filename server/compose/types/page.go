@@ -18,40 +18,43 @@ import (
 
 type (
 	Page struct {
-		ID     uint64 `json:"pageID,string"`
-		SelfID uint64 `json:"selfID,string"`
+		ID     uint64 `json:"pageID,string" schema:"col=id,dal=id,unique"`
+		SelfID uint64 `json:"selfID,string" schema:"col=self_id,dal=ref:corteza::compose:page,sortable"`
 
-		NamespaceID uint64 `json:"namespaceID,string"`
+		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
 
-		ModuleID uint64 `json:"moduleID,string"`
+		ModuleID uint64 `json:"moduleID,string" schema:"col=module_id,store=rel_module,dal=ref:corteza::compose:module"`
 
-		Handle string `json:"handle"`
+		Handle string `json:"handle" schema:"col=handle,dal=text:64,unique,ignoreCase"`
 
-		Config PageConfig `json:"config"`
-		Blocks PageBlocks `json:"blocks"`
+		Config PageConfig `json:"config" schema:"col=config,dal=json:empty,omit"`
+		Blocks PageBlocks `json:"blocks" schema:"col=blocks,dal=json:empty,omit"`
 
-		Meta PageMeta `json:"meta"`
+		Meta PageMeta `json:"meta" schema:"col=meta,dal=json:empty,omit"`
 
-		Children PageSet `json:"children,omitempty"`
+		Children PageSet `json:"children,omitempty" schema:"col=children,nostore,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
-		Visible bool `json:"visible"`
-		Weight  int  `json:"weight"`
+		Visible bool `json:"visible" schema:"col=visible,dal=bool:true"`
+		Weight  int  `json:"weight" schema:"col=weight,dal=number:default0,sortable"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
-
-		// Warning: value of this field is now handled via resource-translation facility
-		//          struct field is kept for the convenience for now since it allows us
-		//          easy encoding/decoding of the outgoing/incoming values
-		Title string `json:"title"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 
 		// Warning: value of this field is now handled via resource-translation facility
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
-		Description string `json:"description"`
+		Title string `json:"title" schema:"col=title,dal,sortable"`
+
+		// Per-page default prompt for the AI chat/Ask feature.
+		Prompt string `json:"prompt,omitempty" schema:"col=prompt,dal,sortable"`
+
+		// Warning: value of this field is now handled via resource-translation facility
+		//          struct field is kept for the convenience for now since it allows us
+		//          easy encoding/decoding of the outgoing/incoming values
+		Description string `json:"description" schema:"col=description,dal"`
 	}
 
 	PageBlocks []PageBlock

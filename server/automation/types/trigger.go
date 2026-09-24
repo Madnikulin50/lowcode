@@ -13,36 +13,36 @@ import (
 
 type (
 	Trigger struct {
-		ID      uint64 `json:"triggerID,string"`
-		Enabled bool   `json:"enabled"`
+		ID      uint64 `json:"triggerID,string" schema:"col=id,dal=id,unique"`
+		Enabled bool   `json:"enabled" schema:"col=enabled,dal=bool:true,sortable"`
 
-		WorkflowID uint64 `json:"workflowID,string"`
+		WorkflowID uint64 `json:"workflowID,string" schema:"col=workflow_id,store=rel_workflow,dal=ref:corteza::automation:workflow,sortable"`
 		// Start workflow on this step. If 0, find first (only) orphan
-		StepID uint64 `json:"stepID,string"`
+		StepID uint64 `json:"stepID,string" schema:"col=step_id,store=rel_step,dal=id"`
 
 		// Resource type that can trigger the workflow
-		ResourceType string `json:"resourceType"`
+		ResourceType string `json:"resourceType" schema:"col=resource_type,dal=text:64,sortable"`
 
 		// Event type that can trigger the workflow
-		EventType string `json:"eventType"`
+		EventType string `json:"eventType" schema:"col=event_type,dal,sortable"`
 
 		// Trigger constraints
-		Constraints TriggerConstraintSet `json:"constraints"`
+		Constraints TriggerConstraintSet `json:"constraints" schema:"col=constraints,dal=json:empty,omit"`
 
 		// Initial input scope,
 		// will be merged merged with workflow variables
-		Input *expr.Vars `json:"input"`
+		Input *expr.Vars `json:"input" schema:"col=input,dal=json:empty,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
-		Meta   *TriggerMeta                     `json:"meta,omitempty"`
+		Meta   *TriggerMeta                     `json:"meta,omitempty" schema:"col=meta,dal=json:empty,omit"`
 
-		OwnedBy   uint64     `json:"ownedBy,string"`
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		CreatedBy uint64     `json:"createdBy,string" `
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		UpdatedBy uint64     `json:"updatedBy,string,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
-		DeletedBy uint64     `json:"deletedBy,string,omitempty"`
+		OwnedBy   uint64     `json:"ownedBy,string" schema:"col=owned_by,dal=userref"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		CreatedBy uint64     `json:"createdBy,string" schema:"col=created_by,dal=userref"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		UpdatedBy uint64     `json:"updatedBy,string,omitempty" schema:"col=updated_by,dal=userref"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
+		DeletedBy uint64     `json:"deletedBy,string,omitempty" schema:"col=deleted_by,dal=userref"`
 	}
 
 	TriggerConstraint struct {

@@ -11,19 +11,19 @@ import (
 
 type (
 	Attachment struct {
-		ID         uint64         `json:"attachmentID,string"`
-		OwnerID    uint64         `json:"ownerID,string"`
-		Kind       string         `json:"-"`
-		Url        string         `json:"url,omitempty"`
-		PreviewUrl string         `json:"previewUrl,omitempty"`
-		Name       string         `json:"name,omitempty"`
-		Meta       AttachmentMeta `json:"meta"`
+		ID         uint64         `json:"attachmentID,string" schema:"col=id,dal=id,unique"`
+		OwnerID    uint64         `json:"ownerID,string" schema:"col=owner_id,store=rel_owner,dal=ref:corteza::system:user,sortable"`
+		Kind       string         `json:"-" schema:"col=kind,dal,sortable"`
+		Url        string         `json:"url,omitempty" schema:"col=url,dal"`
+		PreviewUrl string         `json:"previewUrl,omitempty" schema:"col=preview_url,dal"`
+		Name       string         `json:"name,omitempty" schema:"col=name,dal,sortable"`
+		Meta       AttachmentMeta `json:"meta" schema:"col=meta,dal=json:empty,omit"`
 
-		NamespaceID uint64 `json:"namespaceID,string"`
+		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 	}
 
 	// AttachmentFilter is used for filtering and as a return value from Find

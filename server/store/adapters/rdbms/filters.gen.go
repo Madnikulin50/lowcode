@@ -358,7 +358,7 @@ func AuthConfirmedClientFilter(d drivers.Dialect, f systemType.AuthConfirmedClie
 func AuthOa2tokenFilter(d drivers.Dialect, f systemType.AuthOa2tokenFilter) (ee []goqu.Expression, _ systemType.AuthOa2tokenFilter, err error) {
 
 	if f.UserID > 0 {
-		ee = append(ee, goqu.C("user_id").Eq(f.UserID))
+		ee = append(ee, goqu.C("rel_user").Eq(f.UserID))
 	}
 
 	return ee, f, err
@@ -511,7 +511,7 @@ func ComposeAttachmentFilter(d drivers.Dialect, f composeType.AttachmentFilter) 
 	}
 
 	if f.NamespaceID > 0 {
-		ee = append(ee, goqu.C("namespace_id").Eq(f.NamespaceID))
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
 	}
 
 	return ee, f, err

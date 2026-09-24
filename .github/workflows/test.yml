@@ -87,6 +87,9 @@ jobs:
       - name: "Copy language files"
         working-directory: server/pkg/locale
         run: make src/en
+      - name: "Codegen drift check"
+        working-directory: server
+        run: make codegen.check
       - name: "Unit"
         working-directory: server
         run: make test.unit

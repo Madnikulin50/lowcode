@@ -21,35 +21,39 @@ import (
 
 type (
 	Module struct {
-		ID     uint64 `json:"moduleID,string"`
-		Handle string `json:"handle"`
+		ID     uint64 `json:"moduleID,string" schema:"col=id,dal=id,unique"`
+		Handle string `json:"handle" schema:"col=handle,dal=text:64,unique,ignoreCase"`
 
 		// collection of configurations for various subsystems that
 		// use this module and how it affects their behaviour
-		Config ModuleConfig `json:"config"`
+		Config ModuleConfig `json:"config" schema:"col=config,dal=json:empty,omit"`
 
 		// @todo should be removed and placed into a separate subsystem
 		//       mostly because we want to allow client apps to store
 		//       application configs away from the module config
 		//       using separate access-control
-		Meta types.JSONText `json:"meta"`
+		//
+		// schema: the store's aux struct represents this as the store
+		// package's own "rawJson" type, not types.JSONText - hence the
+		// goType= override (see codegen/def/reflectattr.go).
+		Meta types.JSONText `json:"meta" schema:"col=meta,goType=rawJson,dal=json:empty,omit"`
 
-		Fields ModuleFieldSet `json:"fields"`
+		Fields ModuleFieldSet `json:"fields" schema:"col=fields,nostore,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		Issues []dal.Issue `json:"issues,omitempty"`
 
-		NamespaceID uint64 `json:"namespaceID,string"`
+		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 
 		// Warning: value of this field is now handled via resource-translation facility
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
-		Name string `json:"name"`
+		Name string `json:"name" schema:"col=name,dal,sortable"`
 	}
 
 	ModuleConfig struct {

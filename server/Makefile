@@ -133,21 +133,24 @@ watch.test.%: $(FSWATCH)
 
 watch.test: watch.test.unit
 
-# See codegen/README.md for details
 codegen:
 	@ make -C codegen all
 
-cue.fmt: $(CUE)
-	$(CUE) fmt -v codegen/*.cue
-	$(CUE) fmt -v codegen/schema/*.cue
-
-	$(CUE) fmt -v app/*.cue
-	$(CUE) fmt -v app/options/*.cue
-
-	$(CUE) fmt system/*.cue
-	$(CUE) fmt compose/*.cue
-	$(CUE) fmt automation/*.cue
-	$(CUE) fmt federation/*.cue
+# Regenerates server files and fails if the result doesn't match what's
+# committed - catches codegen/def (or a hand-written struct's schema tags)
+# drifting out of sync with the checked-in .gen.go files. Meant for CI.
+codegen.check:
+	@ $(MAKE) --directory=codegen server
+	@ git diff --exit-code -- \
+		federation/types federation/model \
+		automation/types automation/model \
+		compose/types compose/model \
+		system/types system/model \
+		store/interfaces.gen.go \
+		store/adapters/rdbms/aux_types.gen.go \
+		store/adapters/rdbms/queries.gen.go \
+		store/adapters/rdbms/filters.gen.go \
+		|| (echo "Generated code is out of date - run 'make codegen' (or 'make -C codegen server') and commit the result." && exit 1)
 
 codegen-legacy: $(CODEGEN)
 	@ $(CODEGEN) -v

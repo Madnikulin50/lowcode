@@ -19,37 +19,40 @@ import (
 type (
 	// Modules - CRM module definitions
 	ModuleField struct {
-		ID          uint64 `json:"fieldID,string"`
+		ID uint64 `json:"fieldID,string" schema:"col=id,dal=id,unique"`
+		// NamespaceID is not part of compose_module_field's own schema
+		// (no column for it - populated by joins/lookups), so it's
+		// intentionally left without a `schema` tag.
 		NamespaceID uint64 `json:"namespaceID,string"`
-		ModuleID    uint64 `json:"moduleID,string"`
-		Place       int    `json:"-"`
+		ModuleID    uint64 `json:"moduleID,string" schema:"col=module_id,store=rel_module,dal=ref:corteza::compose:module"`
+		Place       int    `json:"-" schema:"col=place,dal=number,sortable"`
 
-		Kind string `json:"kind"`
-		Name string `json:"name"`
+		Kind string `json:"kind" schema:"col=kind,dal,sortable"`
+		Name string `json:"name" schema:"col=name,dal,sortable"`
 
 		// Options relevant to field type
-		Options ModuleFieldOptions `json:"options"`
+		Options ModuleFieldOptions `json:"options" schema:"col=options,dal=json:empty,omit"`
 
 		// Configuration - how sub-services and sub-systems like DAL and record revisions
 		// are configured to work with this field
-		Config ModuleFieldConfig `json:"config"`
+		Config ModuleFieldConfig `json:"config" schema:"col=config,dal=json:empty,omit"`
 
-		Required     bool           `json:"isRequired"`
-		Multi        bool           `json:"isMulti"`
-		DefaultValue RecordValueSet `json:"defaultValue"`
+		Required     bool           `json:"isRequired" schema:"col=required,store=is_required,dal=bool"`
+		Multi        bool           `json:"isMulti" schema:"col=multi,store=is_multi,dal=bool"`
+		DefaultValue RecordValueSet `json:"defaultValue" schema:"col=default_value,dal=json:empty,omit"`
 
-		Expressions ModuleFieldExpr `json:"expressions"`
+		Expressions ModuleFieldExpr `json:"expressions" schema:"col=expressions,dal=json:empty,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 
 		// Warning: value of this field is now handled via resource-translation facility
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
-		Label string `json:"label"`
+		Label string `json:"label" schema:"col=label,dal,sortable"`
 	}
 
 	ModuleFieldConfig struct {

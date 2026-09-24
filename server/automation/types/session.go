@@ -24,29 +24,29 @@ type (
 
 	// Instance of single workflow execution
 	Session struct {
-		ID         uint64 `json:"sessionID,string"`
-		WorkflowID uint64 `json:"workflowID,string"`
+		ID         uint64 `json:"sessionID,string" schema:"col=id,dal=id,unique"`
+		WorkflowID uint64 `json:"workflowID,string" schema:"col=workflow_id,store=rel_workflow,dal=ref:corteza::automation:workflow,sortable"`
 
-		Status SessionStatus `json:"status,string"`
+		Status SessionStatus `json:"status,string" schema:"col=status,dal=number:default0,sortable,omit"`
 
-		EventType    string `json:"eventType"`
-		ResourceType string `json:"resourceType"`
+		EventType    string `json:"eventType" schema:"col=event_type,dal=text:32,sortable"`
+		ResourceType string `json:"resourceType" schema:"col=resource_type,dal=text:64,sortable"`
 
-		Input  *expr.Vars `json:"input"`
-		Output *expr.Vars `json:"output"`
+		Input  *expr.Vars `json:"input" schema:"col=input,dal=json:empty,omit"`
+		Output *expr.Vars `json:"output" schema:"col=output,dal=json:empty,omit"`
 
 		// Stacktrace that gets stored (if/when configured)
-		Stacktrace Stacktrace `json:"stacktrace"`
+		Stacktrace Stacktrace `json:"stacktrace" schema:"col=stacktrace,dal=json:empty,omit"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		CreatedBy uint64     `json:"createdBy,string"`
-		PurgeAt   *time.Time `json:"purgeAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		CreatedBy uint64     `json:"createdBy,string" schema:"col=created_by,dal=userref"`
+		PurgeAt   *time.Time `json:"purgeAt,omitempty" schema:"col=purge_at,dal=timestamp:nil,sortable"`
 
 		// here we join suspended & prompted state;
 		// we treat both states as suspended
-		SuspendedAt *time.Time `json:"suspendedAt,omitempty"`
-		CompletedAt *time.Time `json:"completedAt,omitempty"`
-		Error       string     `json:"error,omitempty"`
+		SuspendedAt *time.Time `json:"suspendedAt,omitempty" schema:"col=suspended_at,dal=timestamp:nil,sortable"`
+		CompletedAt *time.Time `json:"completedAt,omitempty" schema:"col=completed_at,dal=timestamp:nil,sortable"`
+		Error       string     `json:"error,omitempty" schema:"col=error,dal"`
 
 		session *wfexec.Session
 
