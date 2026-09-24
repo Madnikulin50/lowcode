@@ -171,12 +171,23 @@ function checkSidebar (initial = false) {
 
 function openSidebar () {
   isExpanded.value = true
-  localStorage.setItem(props.storageKey, 'true')
+
+  // Only persist the desktop push-layout preference. On mobile the sidebar
+  // is an overlay drawer that's opened/closed as part of normal navigation
+  // (e.g. via the backdrop or the close button), and writing that here would
+  // clobber the desktop preference under the same storage key — leaving the
+  // sidebar collapsed on desktop the next time it loads.
+  if (!isMobile.value) {
+    localStorage.setItem(props.storageKey, 'true')
+  }
 }
 
 function closeSidebar () {
   isExpanded.value = false
-  localStorage.setItem(props.storageKey, 'false')
+
+  if (!isMobile.value) {
+    localStorage.setItem(props.storageKey, 'false')
+  }
 }
 
 watch(() => route.name, () => {
