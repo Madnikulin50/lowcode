@@ -9,6 +9,7 @@
         :icon="icon"
         :logo="logo"
         :disabled-routes="disabledRoutes"
+        storage-key="sidebar-expanded:reporter"
         expand-on-click
         @update:expanded="expanded = $event"
       >
@@ -27,6 +28,9 @@
             appMenu: t('navigation.appMenu', 'App menu'),
             helpForum: t('navigation.help.forum', 'Forum'),
             helpDocumentation: t('navigation.help.documentation', 'Documentation'),
+            helpUserDocs: t('navigation.help.userDocs', 'User guide'),
+            helpApiDocs: t('navigation.help.apiDocs', 'API reference'),
+            helpArchitecture: t('navigation.help.architecture', 'Architecture'),
             helpFeedback: t('navigation.help.feedback', 'Feedback'),
             helpVersion: t('navigation.help.version', 'Version'),
             userSettingsLoggedInAs: t('navigation.userSettings.loggedInAs', { user }),
@@ -98,7 +102,7 @@ const { t } = useI18n()
 const { auth } = useAuth()
 const { $Settings: settings } = useSettings()
 
-const expanded = ref(false)
+const expanded = ref(true)
 const disabledRoutes = ['report.list', 'report.create', 'report.edit']
 
 const user = computed(() => {

@@ -8,18 +8,24 @@ MD_DIR = Path(os.environ.get('DOCS_DIR', '/docs'))
 OUT_DIR = Path(os.environ.get('OUT_DIR', '/usr/share/nginx/html'))
 
 HEAD = '''<!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-color-mode="light">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{title} &mdash; LowCoooode Docs</title>
+<title>{title} &mdash; Документация</title>
 <link rel="stylesheet" href="/static/docs.css">
 <link rel="stylesheet" href="/static/docs-override.css">
 <script src="/static/sidebar.js"></script></head>
-<body><header><div class="header-inner">
-<a href="/">&#128216; LowCoooode Documentation</a>
-</div></header><div class="layout">
+<body>
+<header class="topbar">
+<button type="button" class="menu-btn" id="docs-menu" aria-label="Меню"><span></span></button>
+<div class="header-inner"><a href="/">Документация</a></div>
+<button type="button" class="theme-btn" id="docs-theme" aria-label="Тема"></button>
+</header>
+<div class="layout">
 <nav class="sidebar"><ul>{nav}</ul></nav>
-<main class="content"><article>{content}</article></main>
-</div></body></html>'''
+<main class="content"><article class="page-card">{content}</article></main>
+</div>
+<div class="sidebar-backdrop" id="docs-backdrop"></div>
+</body></html>'''
 
 def build_tree(base: Path, prefix='') -> list:
     items = []
@@ -42,8 +48,8 @@ def render_nav(tree, active_path: str) -> str:
         label = _nav_label(entry)
         if is_dir:
             kh = render_nav(kids, active_path) if kids else ''
-            exp = ' expanded' if kh else ''
-            h += f'<li class="dir"><span class="dir-label"><span class="chevron">&#9654;</span>{label}</span><ul style="display:block">{kh}</ul></li>'
+            opened = ' expanded' if (' class="active"' in kh or active_path.startswith(rel + '/')) else ''
+            h += f'<li class="dir{opened}"><span class="dir-label"><span class="chevron"></span>{html.escape(label)}</span><ul>{kh}</ul></li>'
         else:
             if label.lower() == 'index':
                 parent_label = entry.parent.name.replace('-',' ').title()
@@ -52,29 +58,75 @@ def render_nav(tree, active_path: str) -> str:
             h += f'<li{cls}><a href="/{rel.replace(".md",".html")}">{label}</a></li>'
     return h
 
+def _table(rows: list) -> str:
+    body = []
+    for i, row in enumerate(rows):
+        tag = 'th' if i == 0 else 'td'
+        cells = ''.join(f'<{tag}>{inline_md(c.strip())}</{tag}>' for c in row)
+        body.append(f'<tr>{cells}</tr>')
+    return '<table>' + ''.join(body) + '</table>'
+
+def _split_row(line: str) -> list:
+    return [c.strip() for c in line.strip().strip('|').split('|')]
+
+def _is_sep(line: str) -> bool:
+    return bool(re.match(r'^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$', line))
+
 def render_md(text: str) -> str:
-    lines, out, in_code, in_table = text.split('\n'), [], False, False
-    for line in lines:
+    lines, out, in_code = text.split('\n'), [], False
+    i = 0
+    while i < len(lines):
+        line = lines[i]
         if line.startswith('```'):
-            out.append(('</code></pre>' if in_code else '<pre><code>'))
+            out.append('</code></pre>' if in_code else '<pre><code>')
             in_code = not in_code
+            i += 1
             continue
-        if in_code: out.append(html.escape(line)); continue
-        
+        if in_code:
+            out.append(html.escape(line))
+            i += 1
+            continue
+
+        if '|' in line and i + 1 < len(lines) and _is_sep(lines[i + 1]):
+            rows = [_split_row(line)]
+            i += 2
+            while i < len(lines) and '|' in lines[i] and lines[i].strip():
+                rows.append(_split_row(lines[i]))
+                i += 1
+            out.append(_table(rows))
+            continue
+
         m = re.match(r'^!!!\s*(note|important|warning|caution|tip)', line)
-        if m: out.append(f'<div class="admonition {m.group(1)}">'); continue
-        
+        if m:
+            out.append(f'<div class="admonition {m.group(1)}">')
+            i += 1
+            continue
+
         m = re.match(r'^(#{1,6})\s+(.+)$', line)
-        if m: out.append(f'<h{len(m.group(1))}>{m.group(2).strip()}</h{len(m.group(1))}>'); continue
-        
+        if m:
+            out.append(f'<h{len(m.group(1))}>{inline_md(m.group(2).strip())}</h{len(m.group(1))}>')
+            i += 1
+            continue
+
         if re.match(r'^---+\s*$', line) or re.match(r'^\*\*\*+\s*$', line):
-            out.append('<hr>'); continue
-        
+            out.append('<hr>')
+            i += 1
+            continue
+
         s = line.strip()
-        if not s: out.append(''); continue
+        if not s:
+            out.append('')
+            i += 1
+            continue
+        if s.startswith(('- ', '* ')):
+            out.append(f'<li>{inline_md(s[2:])}</li>')
+            i += 1
+            continue
         out.append(f'<p>{inline_md(s)}</p>')
+        i += 1
     
     h = '\n'.join(out)
+    h = re.sub(r'(?:<li>.*?</li>\n?)+', lambda m: '<ul>' + m.group(0) + '</ul>', h)
     h = re.sub(r'href="([^"]+?)\.md"', r'href="\1.html"', h)
     return h
 

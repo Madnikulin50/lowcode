@@ -115,7 +115,7 @@
             </a>
           </li>
 
-          <li v-if="!onlyVersion">
+          <li v-if="helpLinks.length">
             <hr class="dropdown-divider">
           </li>
 
@@ -255,6 +255,42 @@
           <li><hr class="dropdown-divider"></li>
 
           <li>
+            <div
+              class="dropdown-item d-flex align-items-center justify-content-between"
+              style="cursor: pointer;"
+              data-test-id="dropdown-profile-docs"
+              @click.stop="isDocsDropdownVisible = !isDocsDropdownVisible"
+            >
+              <span>{{ docsSectionLabel }}</span>
+              <font-awesome-icon
+                v-if="!isDocsDropdownVisible"
+                class="text-dark"
+                :icon="['fas', 'chevron-right']"
+              />
+              <font-awesome-icon
+                v-else
+                class="text-primary"
+                :icon="['fas', 'chevron-left']"
+              />
+            </div>
+
+            <div v-show="isDocsDropdownVisible" class="ps-2">
+              <a
+                v-for="doc in docLinks"
+                :key="doc.href"
+                class="dropdown-item"
+                :href="doc.href"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ doc.label }}
+              </a>
+            </div>
+          </li>
+
+          <li><hr class="dropdown-divider"></li>
+
+          <li>
             <button
               class="dropdown-item mt-2"
               data-test-id="dropdown-profile-logout"
@@ -323,6 +359,7 @@ const props = defineProps({
 
 const currentTheme = ref('light')
 const isThemeDropdownVisible = ref(false)
+const isDocsDropdownVisible = ref(false)
 const avatarBroken = ref(false)
 
 const userProfileURL = computed(() => {
@@ -338,12 +375,27 @@ const helpLinks = computed(() => {
   return (helpLinks || []).filter(({ handle, url }: { handle: string; url: string }) => handle && url)
 })
 
+function docLabel (key: string, fallback: string) {
+  const value = props.labels?.[key]
+  if (!value || String(value).includes('help.')) return fallback
+  return value
+}
+
+const docsSectionLabel = computed(() => docLabel('helpDocumentation', 'Документация'))
+
+const docLinks = computed(() => {
+  const root = String((window as any).CortezaAPI || '').replace(/\/$/, '')
+  return [
+    { href: `${root}/manual/`, label: docLabel('helpUserDocs', 'Документация пользователя') },
+    { href: `${root}/docs/`, label: docLabel('helpApiDocs', 'Документация API') },
+    { href: `${root}/architecture/`, label: docLabel('helpArchitecture', 'Архитектура') },
+  ]
+})
+
 const profileLinks = computed(() => {
   const { profileLinks = [] } = props.settings || {}
   return (profileLinks || []).filter(({ handle, url }: { handle: string; url: string }) => handle && url)
 })
-
-const onlyVersion = computed(() => !helpLinks.value.length)
 
 const frontendVersion = computed(() => VERSION)
 

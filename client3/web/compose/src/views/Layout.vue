@@ -10,6 +10,7 @@
         :icon="icon"
         :logo="logo"
         :disabled-routes="disabledRoutes"
+        storage-key="sidebar-expanded:compose"
         expand-on-click
         hide-floating-toggle
         @update:expanded="expanded = $event"
@@ -38,6 +39,9 @@
           appMenu: $t('appMenu'),
           helpForum: $t('help.forum'),
           helpDocumentation: $t('help.documentation'),
+          helpUserDocs: $t('help.userDocs'),
+          helpApiDocs: $t('help.apiDocs'),
+          helpArchitecture: $t('help.architecture'),
           helpFeedback: $t('help.feedback'),
           helpVersion: $t('help.version'),
           userSettingsLoggedInAs: $t('userSettings.loggedInAs', { user }),

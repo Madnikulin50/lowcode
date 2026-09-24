@@ -24,3 +24,7 @@ dart-sass-*/
 
 # Python bytecode cache, wherever it turns up (e.g. compose test fixtures).
 __pycache__/
+
+# Copied into the Go module by server/docs/pack.py so go:embed can include them.
+server/docs/manual/
+server/docs/architecture/

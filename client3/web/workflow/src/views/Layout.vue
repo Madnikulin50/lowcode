@@ -9,6 +9,7 @@
         :icon="icon"
         :logo="logo"
         :disabled-routes="['root']"
+        storage-key="sidebar-expanded:workflow"
         expand-on-click
         @update:expanded="expanded = $event"
       >
@@ -33,6 +34,9 @@
             appMenu: $t('navigation.appMenu', 'App menu'),
             helpForum: $t('navigation.help.forum', 'Forum'),
             helpDocumentation: $t('navigation.help.documentation', 'Documentation'),
+            helpUserDocs: $t('navigation.help.userDocs', 'User guide'),
+            helpApiDocs: $t('navigation.help.apiDocs', 'API reference'),
+            helpArchitecture: $t('navigation.help.architecture', 'Architecture'),
             helpFeedback: $t('navigation.help.feedback', 'Feedback'),
             helpVersion: $t('navigation.help.version', 'Version'),
             userSettingsLoggedInAs: $t('navigation.userSettings.loggedInAs', { user }),
@@ -111,7 +115,7 @@ const settings = {
   attachment: (key) => window.__settings?.attachment?.(key) ?? '',
 }
 
-const expanded = ref(false)
+const expanded = ref(true)
 
 const user = computed(() => {
   const { user } = $auth

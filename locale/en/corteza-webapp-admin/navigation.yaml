@@ -1,6 +1,16 @@
 dashboard: Dashboard
+openApiDocs: Open in new tab
 search: Search
 noResults: No matching pages
+
+help:
+  documentation: Documentation
+  userDocs: User guide
+  apiDocs: API reference
+  architecture: Architecture
+  feedback: Send feedback
+  forum: Help
+  version: "Version:"
 
 groups:
   userManagement: User management
@@ -20,6 +30,7 @@ system:
     connections: Connections
     code-snippets: Code Snippets
     ai: AI
+    apidocs: API docs
     sensitivityLevel: Sensitivity Levels
     permissions: Permissions
     queues: Messaging Queues

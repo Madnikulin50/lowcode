@@ -128,14 +128,19 @@ func (app *CortezaApp) mountHttpRoutes(r chi.Router) {
 				r.Route("/federation", federationRest.MountRoutes(app.Opt.Limit))
 			}
 
-			var fullpathDocs = options.CleanBase(ho.BaseUrl, ho.ApiBaseUrl, "docs")
-			app.Log.Info(
-				"API docs enabled",
-				zap.String("baseUrl", fullpathDocs),
-			)
-
-			r.Handle("/docs", http.RedirectHandler(fullpathDocs+"/", http.StatusPermanentRedirect))
-			r.Handle("/docs*", http.StripPrefix(fullpathDocs, http.FileServer(docs.GetFS())))
+			mountEmbedded := func(name string, fsys http.FileSystem) {
+				full := options.CleanBase(ho.BaseUrl, ho.ApiBaseUrl, name)
+				app.Log.Info(
+					"embedded docs enabled",
+					zap.String("name", name),
+					zap.String("baseUrl", full),
+				)
+				r.Handle("/"+name, http.RedirectHandler(full+"/", http.StatusPermanentRedirect))
+				r.Handle("/"+name+"*", http.StripPrefix(full, http.FileServer(fsys)))
+			}
+			mountEmbedded("docs", docs.GetFS())
+			mountEmbedded("manual", docs.ManualFS())
+			mountEmbedded("architecture", docs.ArchitectureFS())
 
 			var fullpathGateway = options.CleanBase(ho.BaseUrl, ho.ApiBaseUrl, "gateway")
 			r.Handle("/gateway*", http.StripPrefix(fullpathGateway, app.ApigwService))

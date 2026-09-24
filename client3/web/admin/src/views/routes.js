@@ -13,6 +13,7 @@ import SystemConnectionIndex from './System/Connection/Index.vue'
 import SystemConnectionEditor from './System/Connection/Editor.vue'
 import SystemCodeSnippetsIndex from './System/CodeSnippets/Index.vue'
 import SystemAIIndex from './System/AI/Index.vue'
+import SystemApiDocsIndex from './System/ApiDocs/Index.vue'
 import ComposeSettingsIndex from './Compose/Settings/Index.vue'
 import ComposePermissionsIndex from './Compose/Permissions/Index.vue'
 import AutomationScriptsIndex from './Automation/Scripts/Index.vue'
@@ -62,6 +63,7 @@ const lookup = {
   'System/Connection/Editor': SystemConnectionEditor,
   'System/CodeSnippets/Index': SystemCodeSnippetsIndex,
   'System/AI/Index': SystemAIIndex,
+  'System/ApiDocs/Index': SystemApiDocsIndex,
   'Compose/Settings/Index': ComposeSettingsIndex,
   'Compose/Permissions/Index': ComposePermissionsIndex,
   'Automation/Scripts/Index': AutomationScriptsIndex,
@@ -173,6 +175,7 @@ export default [
 
           r('system.codesnippets', 'codesnippets', 'System/CodeSnippets/Index'),
           r('system.ai', 'ai', 'System/AI/Index'),
+          r('system.apidocs', 'apidocs', 'System/ApiDocs/Index'),
 
           combo('system', 'sensitivityLevel'),
 

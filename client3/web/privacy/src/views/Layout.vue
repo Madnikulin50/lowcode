@@ -9,6 +9,7 @@
         :icon="icon"
         :logo="logo"
         :disabled-routes="['dashboard']"
+        storage-key="sidebar-expanded:privacy"
         @update:expanded="expanded = $event"
       />
     </aside>
@@ -22,6 +23,9 @@
             appMenu: t('navigation.appMenu'),
             helpForum: t('navigation.help.forum'),
             helpDocumentation: t('navigation.help.documentation'),
+            helpUserDocs: t('navigation.help.userDocs'),
+            helpApiDocs: t('navigation.help.apiDocs'),
+            helpArchitecture: t('navigation.help.architecture'),
             helpFeedback: t('navigation.help.feedback'),
             helpVersion: t('navigation.help.version'),
             userSettingsLoggedInAs: t('navigation.userSettings.loggedInAs', { user }),
@@ -65,7 +69,7 @@ const { t } = useI18n()
 const { auth } = useAuth()
 const { $Settings: settings } = useSettings()
 
-const expanded = ref(false)
+const expanded = ref(true)
 
 const user = computed(() => {
   const { user } = auth

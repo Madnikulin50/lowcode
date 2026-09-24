@@ -72,6 +72,7 @@ const nav = [
       { label: 'system.items.templates', route: 'system.template', icon: 'file-code', can: ['system/', 'templates.search'] },
       { label: 'system.items.code-snippets', route: 'system.codesnippets', icon: 'code', can: [['system/', 'settings.read'], ['system/', 'settings.manage']] },
       { label: 'system.items.ai', route: 'system.ai', icon: 'microchip', can: [['system/', 'settings.read'], ['system/', 'settings.manage']] },
+      { label: 'system.items.apidocs', fallback: 'API docs', route: 'system.apidocs', icon: 'file-alt' },
       { label: 'system.items.sensitivityLevel', route: 'system.sensitivityLevel', icon: 'stamp', can: ['system/', 'dal-sensitivity-level.manage'] },
       { label: 'system.items.actionlog', route: 'system.actionlog', icon: 'glasses', can: ['system/', 'action-log.read'] },
     ],
@@ -131,7 +132,7 @@ function toPage (itm) {
   return {
     page: {
       name: itm.route,
-      title: tr(itm.label, itm.label),
+      title: tr(itm.label, itm.fallback || itm.label),
       icon: ['fas', itm.icon],
     },
   }

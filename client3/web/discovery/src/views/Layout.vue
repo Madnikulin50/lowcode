@@ -8,6 +8,7 @@
         :expanded="expanded"
         :icon="icon"
         :logo="logo"
+        storage-key="sidebar-expanded:discovery"
         expand-on-click
         @update:expanded="expanded = $event"
       >
@@ -26,6 +27,9 @@
             appMenu: t('appMenu'),
             helpForum: t('help.forum'),
             helpDocumentation: t('help.documentation'),
+            helpUserDocs: t('help.userDocs'),
+            helpApiDocs: t('help.apiDocs'),
+            helpArchitecture: t('help.architecture'),
             helpFeedback: t('help.feedback'),
             helpVersion: t('help.version'),
             userSettingsLoggedInAs: t('userSettings.loggedInAs', { user }),
@@ -81,7 +85,7 @@ const { t } = useI18n({
 const { auth } = useAuth()
 const { $Settings: settings } = useSettings()
 
-const expanded = ref(false)
+const expanded = ref(true)
 
 const user = computed(() => {
   const { user } = auth

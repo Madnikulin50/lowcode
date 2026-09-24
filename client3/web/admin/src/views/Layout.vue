@@ -9,6 +9,7 @@
         :expanded="expanded"
         :icon="icon"
         :logo="logo"
+        storage-key="sidebar-expanded:admin"
         expand-on-click
         hide-floating-toggle
         @update:expanded="expanded = $event"
@@ -29,6 +30,9 @@
             appMenu: $t('navigation.appMenu'),
             helpForum: $t('navigation.help.forum'),
             helpDocumentation: $t('navigation.help.documentation'),
+            helpUserDocs: $t('navigation.help.userDocs'),
+            helpApiDocs: $t('navigation.help.apiDocs'),
+            helpArchitecture: $t('navigation.help.architecture'),
             helpFeedback: $t('navigation.help.feedback'),
             helpVersion: $t('navigation.help.version'),
             userSettingsLoggedInAs: $t('navigation.userSettings.loggedInAs', { user }),

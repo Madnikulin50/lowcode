@@ -1,4 +1,4 @@
-.PHONY: pack build help qa critic vet codegen provision docs build auth webapp
+.PHONY: pack build help qa critic vet codegen provision docs docs.pack build auth webapp
 
 include Makefile.inc
 
@@ -80,7 +80,7 @@ help:
 
 build: $(BUILD_DEST_DIR)/$(BUILD_BIN_NAME)
 
-$(BUILD_DEST_DIR)/$(BUILD_BIN_NAME):
+$(BUILD_DEST_DIR)/$(BUILD_BIN_NAME): docs.pack
 		@ mkdir -p $(BUILD_DEST_DIR)
 		GOOS=$(BUILD_OS) GOARCH=$(BUILD_ARCH) $(GO) build $(LDFLAGS) -o $@ cmd/corteza/main.go
 
@@ -151,6 +151,13 @@ codegen.check:
 		store/adapters/rdbms/queries.gen.go \
 		store/adapters/rdbms/filters.gen.go \
 		|| (echo "Generated code is out of date - run 'make codegen' (or 'make -C codegen server') and commit the result." && exit 1)
+
+docs:
+	python3 docs/convert.py
+	python3 docs/pack.py
+
+docs.pack:
+	python3 docs/pack.py
 
 codegen-legacy: $(CODEGEN)
 	@ $(CODEGEN) -v
