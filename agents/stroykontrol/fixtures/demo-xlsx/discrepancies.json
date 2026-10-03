@@ -1,0 +1,62 @@
+[
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в ПД, нет в РД: a500c 12 1450",
+    "pageNumber": ""
+  },
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в ПД, нет в РД: a500c 20 980",
+    "pageNumber": ""
+  },
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в ПД, нет в РД: 7 фундамент фм-7 b25 9.75",
+    "pageNumber": ""
+  },
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в ПД, нет в РД: 22 фундамент фм-22 b25 21.0",
+    "pageNumber": ""
+  },
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в ПД, нет в РД: 41 фундамент фм-41 b25 35.25",
+    "pageNumber": ""
+  },
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в РД, нет в ПД: a500c 12 1520",
+    "pageNumber": ""
+  },
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в РД, нет в ПД: a500c 25 980",
+    "pageNumber": ""
+  },
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в РД, нет в ПД: 7 фундамент фм-7 b35 9.75",
+    "pageNumber": ""
+  },
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в РД, нет в ПД: 22 фундамент фм-22 b25 99.9",
+    "pageNumber": ""
+  },
+  {
+    "type": "content",
+    "severity": "medium",
+    "description": "[детерм.] Есть в РД, нет в ПД: 61 фундамент фм-61 (добавлен) b25 12.0",
+    "pageNumber": ""
+  }
+]

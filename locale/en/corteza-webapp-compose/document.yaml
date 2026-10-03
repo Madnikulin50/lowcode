@@ -1,0 +1,35 @@
+title: Documentation
+newMarkdown: New markdown
+newPdf: Upload PDF
+empty: No documents yet
+hidden: Hidden
+edit: Edit
+delete: Delete
+deleteConfirm: Delete this document?
+save: Save
+cancel: Cancel
+preview: Preview
+noFile: PDF is not uploaded yet
+toc: Contents
+previous: Previous
+next: Next
+add: Add
+searchPlaceholder: Search by title
+kind:
+  markdown: Markdown
+  pdf: PDF
+columns:
+  title: Title
+  kind: Kind
+  handle: Handle
+  visible: In contents
+notification:
+  deleted: Document deleted
+  deleteFailed: Could not delete the document
+  listFailed: Could not load documents
+field:
+  title: Title
+  handle: Handle
+  visible: Show in sidebar
+  body: Markdown
+  file: PDF file
