@@ -23,8 +23,11 @@ function scriptNode (id, label, code) {
   return { id, type: 'script', label, config: { code } }
 }
 
-function aiNode (id, label, prompt) {
-  return { id, type: 'ai', label, config: { agent: 'assistant', prompt } }
+// The AI verdict is advisory: every chain falls back to its deterministic
+// score in aiParseCode, so a slow/unavailable LLM (CPU-only Ollama can take
+// 10+ minutes) must not block the deterministic result from being written.
+function aiNode (id, label, prompt, { timeout = 180, optional = true } = {}) {
+  return { id, type: 'ai', label, config: { agent: 'assistant', prompt, timeout, optional } }
 }
 
 function conditionNode (id, label, field, operator, value) {
@@ -132,8 +135,12 @@ var extra = [];
 b.forEach(function (l) { if (bA[l] > 0) { bA[l]--; } else { extra.push(l); } });
 
 var discrepancies = [];
-missing.slice(0, 6).forEach(function (l) { discrepancies.push({ source: 'det', type: 'content', severity: 'medium', description: 'Есть в ПД, нет в РД: ' + l.slice(0, 220) }); });
-extra.slice(0, 6).forEach(function (l) { discrepancies.push({ source: 'det', type: 'content', severity: 'medium', description: 'Есть в РД, нет в ПД: ' + l.slice(0, 220) }); });
+var MAX_DET = 200;
+missing.slice(0, MAX_DET).forEach(function (l) { discrepancies.push({ source: 'det', type: 'content', severity: 'medium', description: 'Есть в ПД, нет в РД: ' + l.slice(0, 220) }); });
+extra.slice(0, MAX_DET).forEach(function (l) { discrepancies.push({ source: 'det', type: 'content', severity: 'medium', description: 'Есть в РД, нет в ПД: ' + l.slice(0, 220) }); });
+if (missing.length > MAX_DET || extra.length > MAX_DET) {
+  discrepancies.push({ source: 'det', type: 'content', severity: 'low', description: 'Показаны первые ' + MAX_DET + ' из ' + missing.length + ' (ПД) и ' + extra.length + ' (РД) расхождений' });
+}
 
 return {
   det_score: detScore,
@@ -153,6 +160,13 @@ var aiOut = (ai_parse && ai_parse.output) || {};
 var discrepancies = (detOut.det_discrepancies || []).concat(aiOut.ai_discrepancies || []);
 var errors = [];
 
+// Re-runs replace the previous result instead of piling up duplicates.
+var prev = runtime.mcp.searchRecords(namespaceID, '${m.pd_rd_discrepancies}', "comparison = '" + recordID + "'", 1000) || [];
+prev.forEach(function (r) {
+  var del = runtime.mcp.deleteRecord(namespaceID, '${m.pd_rd_discrepancies}', r.recordID);
+  if (del && del.error) errors.push('deleteRecord discrepancy: ' + del.error);
+});
+
 var upd = runtime.mcp.updateRecord(namespaceID, '${m.pd_rd_comparisons}', recordID, {
   status: 'done',
   similarity_percent: final_score,
@@ -162,7 +176,7 @@ var upd = runtime.mcp.updateRecord(namespaceID, '${m.pd_rd_comparisons}', record
 });
 if (upd && upd.error) errors.push('updateRecord: ' + upd.error);
 
-discrepancies.slice(0, 12).forEach(function (d) {
+discrepancies.forEach(function (d) {
   var created = runtime.mcp.createRecord(namespaceID, '${m.pd_rd_discrepancies}', {
     comparison: recordID,
     discrepancy_type: d.type,
@@ -187,7 +201,7 @@ return { final_score: final_score, discrepancy_count: discrepancies.length, erro
         eventType: 'afterCreate,afterUpdate',
         moduleHandle: 'pd_rd_comparisons',
         async: true,
-        fileField: 'pd_file',
+        fileField: 'pd_file,rd_file',
       }],
     },
     nodes: [

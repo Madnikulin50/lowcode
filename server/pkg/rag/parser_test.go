@@ -22,7 +22,7 @@ func TestParseDocument_DocxAndPDFKinds(t *testing.T) {
 
 func TestParseDocument_XLSX(t *testing.T) {
 	raw := mustZip(t, map[string]string{
-		"xl/sharedStrings.xml": `<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><si><t>Смета</t></si><si><t>1200000</t></si></sst>`,
+		"xl/sharedStrings.xml":     `<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><si><t>Смета</t></si><si><t>1200000</t></si></sst>`,
 		"xl/worksheets/sheet1.xml": `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row><c t="s"><v>0</v></c><c t="s"><v>1</v></c></row></sheetData></worksheet>`,
 	})
 	doc, err := ParseDocument(raw, "budget.xlsx", "")
@@ -34,6 +34,29 @@ func TestParseDocument_XLSX(t *testing.T) {
 	}
 	if !strings.Contains(doc.Text, "Смета") || !strings.Contains(doc.Text, "1200000") {
 		t.Fatalf("xlsx text: %q", doc.Text)
+	}
+}
+
+func TestParseDocument_XLSXSheetOrderAndNames(t *testing.T) {
+	ws := func(v string) string {
+		return `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row><c t="inlineStr"><is><t>` + v + `</t></is></c></row></sheetData></worksheet>`
+	}
+	// Tab order (Ведомость, then Смета) differs from archive/file order.
+	raw := mustZip(t, map[string]string{
+		"xl/workbook.xml": `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>` +
+			`<sheet name="Ведомость" sheetId="2" r:id="rId2"/><sheet name="Смета" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+		"xl/_rels/workbook.xml.rels": `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+			`<Relationship Id="rId1" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Target="/xl/worksheets/sheet2.xml"/></Relationships>`,
+		"xl/worksheets/sheet1.xml": ws("бетон B25"),
+		"xl/worksheets/sheet2.xml": ws("арматура A500"),
+	})
+	doc, err := ParseDocument(raw, "book.xlsx", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "Лист: Ведомость\nарматура A500\n\nЛист: Смета\nбетон B25"
+	if doc.Text != want {
+		t.Fatalf("xlsx text:\n got %q\nwant %q", doc.Text, want)
 	}
 }
 

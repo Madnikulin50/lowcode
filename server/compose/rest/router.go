@@ -52,6 +52,7 @@ func MountRoutes() func(r chi.Router) {
 			handlers.NewETL(ETL{}.New()).MountRoutes(r)
 			handlers.NewConnector(Connector{}.New()).MountRoutes(r)
 			handlers.NewDatasource(Datasource{}.New()).MountRoutes(r)
+			MountDocumentRoutes(r)
 			MountRuleChainRoutes(r)
 			MountRuleChainAdminRoutes(r)
 			MountRiskAdminRoutes(r)

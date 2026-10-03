@@ -8,6 +8,7 @@ package store
 
 import (
 	"context"
+	anomalyType "github.com/madnikulin50/lowcode/server/anomaly/types"
 	automationType "github.com/madnikulin50/lowcode/server/automation/types"
 	composeType "github.com/madnikulin50/lowcode/server/compose/types"
 	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
@@ -45,6 +46,9 @@ type (
 
 		Healthcheck(context.Context) error
 		Actionlogs
+		AnomalyBaselines
+		AnomalyFindings
+		AnomalyRules
 		ApigwFilters
 		ApigwRoutes
 		Applications
@@ -102,6 +106,44 @@ type (
 		DeleteActionlogByID(ctx context.Context, id uint64) error
 		TruncateActionlogs(ctx context.Context) error
 		LookupActionlogByID(ctx context.Context, id uint64) (*actionlogType.Action, error)
+	}
+
+	AnomalyBaselines interface {
+		SearchAnomalyBaselines(ctx context.Context, f anomalyType.BaselineFilter) (anomalyType.BaselineSet, anomalyType.BaselineFilter, error)
+		CreateAnomalyBaseline(ctx context.Context, rr ...*anomalyType.Baseline) error
+		UpdateAnomalyBaseline(ctx context.Context, rr ...*anomalyType.Baseline) error
+		UpsertAnomalyBaseline(ctx context.Context, rr ...*anomalyType.Baseline) error
+		DeleteAnomalyBaseline(ctx context.Context, rr ...*anomalyType.Baseline) error
+
+		DeleteAnomalyBaselineByID(ctx context.Context, id uint64) error
+		TruncateAnomalyBaselines(ctx context.Context) error
+		LookupAnomalyBaselineByRuleID(ctx context.Context, ruleID uint64) (*anomalyType.Baseline, error)
+	}
+
+	AnomalyFindings interface {
+		SearchAnomalyFindings(ctx context.Context, f anomalyType.FindingFilter) (anomalyType.FindingSet, anomalyType.FindingFilter, error)
+		CreateAnomalyFinding(ctx context.Context, rr ...*anomalyType.Finding) error
+		UpdateAnomalyFinding(ctx context.Context, rr ...*anomalyType.Finding) error
+		UpsertAnomalyFinding(ctx context.Context, rr ...*anomalyType.Finding) error
+		DeleteAnomalyFinding(ctx context.Context, rr ...*anomalyType.Finding) error
+
+		DeleteAnomalyFindingByID(ctx context.Context, id uint64) error
+		TruncateAnomalyFindings(ctx context.Context) error
+		LookupAnomalyFindingByID(ctx context.Context, id uint64) (*anomalyType.Finding, error)
+		LookupAnomalyFindingByRuleIDRecordID(ctx context.Context, ruleID uint64, recordID uint64) (*anomalyType.Finding, error)
+	}
+
+	AnomalyRules interface {
+		SearchAnomalyRules(ctx context.Context, f anomalyType.RuleFilter) (anomalyType.RuleSet, anomalyType.RuleFilter, error)
+		CreateAnomalyRule(ctx context.Context, rr ...*anomalyType.Rule) error
+		UpdateAnomalyRule(ctx context.Context, rr ...*anomalyType.Rule) error
+		UpsertAnomalyRule(ctx context.Context, rr ...*anomalyType.Rule) error
+		DeleteAnomalyRule(ctx context.Context, rr ...*anomalyType.Rule) error
+
+		DeleteAnomalyRuleByID(ctx context.Context, id uint64) error
+		TruncateAnomalyRules(ctx context.Context) error
+		LookupAnomalyRuleByID(ctx context.Context, id uint64) (*anomalyType.Rule, error)
+		LookupAnomalyRuleByModuleIDField(ctx context.Context, moduleID uint64, field string) (*anomalyType.Rule, error)
 	}
 
 	ApigwFilters interface {
@@ -740,6 +782,198 @@ func TruncateActionlogs(ctx context.Context, s Actionlogs) error {
 // This function is auto-generated
 func LookupActionlogByID(ctx context.Context, s Actionlogs, id uint64) (*actionlogType.Action, error) {
 	return s.LookupActionlogByID(ctx, id)
+}
+
+// SearchAnomalyBaselines returns all matching AnomalyBaselines from store
+//
+// This function is auto-generated
+func SearchAnomalyBaselines(ctx context.Context, s AnomalyBaselines, f anomalyType.BaselineFilter) (anomalyType.BaselineSet, anomalyType.BaselineFilter, error) {
+	return s.SearchAnomalyBaselines(ctx, f)
+}
+
+// CreateAnomalyBaseline creates one or more AnomalyBaselines in store
+//
+// This function is auto-generated
+func CreateAnomalyBaseline(ctx context.Context, s AnomalyBaselines, rr ...*anomalyType.Baseline) error {
+	return s.CreateAnomalyBaseline(ctx, rr...)
+}
+
+// UpdateAnomalyBaseline updates one or more (existing) AnomalyBaselines in store
+//
+// This function is auto-generated
+func UpdateAnomalyBaseline(ctx context.Context, s AnomalyBaselines, rr ...*anomalyType.Baseline) error {
+	return s.UpdateAnomalyBaseline(ctx, rr...)
+}
+
+// UpsertAnomalyBaseline creates new or updates existing one or more AnomalyBaselines in store
+//
+// This function is auto-generated
+func UpsertAnomalyBaseline(ctx context.Context, s AnomalyBaselines, rr ...*anomalyType.Baseline) error {
+	return s.UpsertAnomalyBaseline(ctx, rr...)
+}
+
+// DeleteAnomalyBaseline deletes one or more AnomalyBaselines from store
+//
+// This function is auto-generated
+func DeleteAnomalyBaseline(ctx context.Context, s AnomalyBaselines, rr ...*anomalyType.Baseline) error {
+	return s.DeleteAnomalyBaseline(ctx, rr...)
+}
+
+// DeleteAnomalyBaselineByID deletes one or more AnomalyBaselines from store
+//
+// This function is auto-generated
+func DeleteAnomalyBaselineByID(ctx context.Context, s AnomalyBaselines, id uint64) error {
+	return s.DeleteAnomalyBaselineByID(ctx, id)
+}
+
+// TruncateAnomalyBaselines Deletes all AnomalyBaselines from store
+//
+// This function is auto-generated
+func TruncateAnomalyBaselines(ctx context.Context, s AnomalyBaselines) error {
+	return s.TruncateAnomalyBaselines(ctx)
+}
+
+// LookupAnomalyBaselineByRuleID searches for anomaly baseline by rule - baselines are scoped per rule since different rules on the same field can use incompatible detector state shapes
+//
+// # It returns anomaly baseline
+//
+// This function is auto-generated
+func LookupAnomalyBaselineByRuleID(ctx context.Context, s AnomalyBaselines, ruleID uint64) (*anomalyType.Baseline, error) {
+	return s.LookupAnomalyBaselineByRuleID(ctx, ruleID)
+}
+
+// SearchAnomalyFindings returns all matching AnomalyFindings from store
+//
+// This function is auto-generated
+func SearchAnomalyFindings(ctx context.Context, s AnomalyFindings, f anomalyType.FindingFilter) (anomalyType.FindingSet, anomalyType.FindingFilter, error) {
+	return s.SearchAnomalyFindings(ctx, f)
+}
+
+// CreateAnomalyFinding creates one or more AnomalyFindings in store
+//
+// This function is auto-generated
+func CreateAnomalyFinding(ctx context.Context, s AnomalyFindings, rr ...*anomalyType.Finding) error {
+	return s.CreateAnomalyFinding(ctx, rr...)
+}
+
+// UpdateAnomalyFinding updates one or more (existing) AnomalyFindings in store
+//
+// This function is auto-generated
+func UpdateAnomalyFinding(ctx context.Context, s AnomalyFindings, rr ...*anomalyType.Finding) error {
+	return s.UpdateAnomalyFinding(ctx, rr...)
+}
+
+// UpsertAnomalyFinding creates new or updates existing one or more AnomalyFindings in store
+//
+// This function is auto-generated
+func UpsertAnomalyFinding(ctx context.Context, s AnomalyFindings, rr ...*anomalyType.Finding) error {
+	return s.UpsertAnomalyFinding(ctx, rr...)
+}
+
+// DeleteAnomalyFinding deletes one or more AnomalyFindings from store
+//
+// This function is auto-generated
+func DeleteAnomalyFinding(ctx context.Context, s AnomalyFindings, rr ...*anomalyType.Finding) error {
+	return s.DeleteAnomalyFinding(ctx, rr...)
+}
+
+// DeleteAnomalyFindingByID deletes one or more AnomalyFindings from store
+//
+// This function is auto-generated
+func DeleteAnomalyFindingByID(ctx context.Context, s AnomalyFindings, id uint64) error {
+	return s.DeleteAnomalyFindingByID(ctx, id)
+}
+
+// TruncateAnomalyFindings Deletes all AnomalyFindings from store
+//
+// This function is auto-generated
+func TruncateAnomalyFindings(ctx context.Context, s AnomalyFindings) error {
+	return s.TruncateAnomalyFindings(ctx)
+}
+
+// LookupAnomalyFindingByID searches for anomaly finding by ID
+//
+// # It returns anomaly finding
+//
+// This function is auto-generated
+func LookupAnomalyFindingByID(ctx context.Context, s AnomalyFindings, id uint64) (*anomalyType.Finding, error) {
+	return s.LookupAnomalyFindingByID(ctx, id)
+}
+
+// LookupAnomalyFindingByRuleIDRecordID searches for an existing finding by rule and record, to update it instead of creating a duplicate
+//
+// # It returns anomaly finding
+//
+// This function is auto-generated
+func LookupAnomalyFindingByRuleIDRecordID(ctx context.Context, s AnomalyFindings, ruleID uint64, recordID uint64) (*anomalyType.Finding, error) {
+	return s.LookupAnomalyFindingByRuleIDRecordID(ctx, ruleID, recordID)
+}
+
+// SearchAnomalyRules returns all matching AnomalyRules from store
+//
+// This function is auto-generated
+func SearchAnomalyRules(ctx context.Context, s AnomalyRules, f anomalyType.RuleFilter) (anomalyType.RuleSet, anomalyType.RuleFilter, error) {
+	return s.SearchAnomalyRules(ctx, f)
+}
+
+// CreateAnomalyRule creates one or more AnomalyRules in store
+//
+// This function is auto-generated
+func CreateAnomalyRule(ctx context.Context, s AnomalyRules, rr ...*anomalyType.Rule) error {
+	return s.CreateAnomalyRule(ctx, rr...)
+}
+
+// UpdateAnomalyRule updates one or more (existing) AnomalyRules in store
+//
+// This function is auto-generated
+func UpdateAnomalyRule(ctx context.Context, s AnomalyRules, rr ...*anomalyType.Rule) error {
+	return s.UpdateAnomalyRule(ctx, rr...)
+}
+
+// UpsertAnomalyRule creates new or updates existing one or more AnomalyRules in store
+//
+// This function is auto-generated
+func UpsertAnomalyRule(ctx context.Context, s AnomalyRules, rr ...*anomalyType.Rule) error {
+	return s.UpsertAnomalyRule(ctx, rr...)
+}
+
+// DeleteAnomalyRule deletes one or more AnomalyRules from store
+//
+// This function is auto-generated
+func DeleteAnomalyRule(ctx context.Context, s AnomalyRules, rr ...*anomalyType.Rule) error {
+	return s.DeleteAnomalyRule(ctx, rr...)
+}
+
+// DeleteAnomalyRuleByID deletes one or more AnomalyRules from store
+//
+// This function is auto-generated
+func DeleteAnomalyRuleByID(ctx context.Context, s AnomalyRules, id uint64) error {
+	return s.DeleteAnomalyRuleByID(ctx, id)
+}
+
+// TruncateAnomalyRules Deletes all AnomalyRules from store
+//
+// This function is auto-generated
+func TruncateAnomalyRules(ctx context.Context, s AnomalyRules) error {
+	return s.TruncateAnomalyRules(ctx)
+}
+
+// LookupAnomalyRuleByID searches for anomaly rule by ID
+//
+// # It returns anomaly rule
+//
+// This function is auto-generated
+func LookupAnomalyRuleByID(ctx context.Context, s AnomalyRules, id uint64) (*anomalyType.Rule, error) {
+	return s.LookupAnomalyRuleByID(ctx, id)
+}
+
+// LookupAnomalyRuleByModuleIDField searches for anomaly rule by module and field
+//
+// # It returns anomaly rule
+//
+// This function is auto-generated
+func LookupAnomalyRuleByModuleIDField(ctx context.Context, s AnomalyRules, moduleID uint64, field string) (*anomalyType.Rule, error) {
+	return s.LookupAnomalyRuleByModuleIDField(ctx, moduleID, field)
 }
 
 // SearchApigwFilters returns all matching ApigwFilters from store

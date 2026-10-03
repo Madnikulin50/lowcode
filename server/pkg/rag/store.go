@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	bolt "go.etcd.io/bbolt"
 )
@@ -50,9 +51,13 @@ func NewStore(path string) (*Store, error) {
 	if err := os.MkdirAll(dir, 0750); err != nil {
 		return nil, fmt.Errorf("rag store: mkdir %s: %w", dir, err)
 	}
-	db, err := bolt.Open(path, 0600, nil)
+	// A nil *bolt.Options (or a zero Timeout) makes bbolt wait on the file
+	// lock forever, so a second process opening the same path - e.g. a
+	// stale server instance that wasn't shut down cleanly - hangs this
+	// boot indefinitely instead of failing with a clear error.
+	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 5 * time.Second})
 	if err != nil {
-		return nil, fmt.Errorf("rag store: open %s: %w", path, err)
+		return nil, fmt.Errorf("rag store: open %s (is another server instance already running against this path?): %w", path, err)
 	}
 	if err := db.Update(func(tx *bolt.Tx) error {
 		for _, b := range [][]byte{bucketDocuments, bucketChunks, bucketVectors, bucketMeta, bucketPagesMeta, bucketPagesChunks, bucketPagesVectors} {

@@ -94,6 +94,7 @@ const (
 	IconAttachment      string = "icon"
 	RecordAttachment    string = "record"
 	NamespaceAttachment string = "namespace"
+	DocumentAttachment  string = "document"
 )
 
 func (a *Attachment) SetOriginalImageMeta(width, height int, animated bool) *AttachmentFileMeta {

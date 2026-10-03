@@ -17,6 +17,7 @@ func main() {
 		def.Automation.Resolve(),
 		def.Compose.Resolve(),
 		def.System.Resolve(),
+		def.Anomaly.Resolve(),
 	}
 
 	tasks := make([]def.Task, 0)

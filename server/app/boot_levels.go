@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/lestrrat-go/jwx/jwt"
+	anomalyService "github.com/madnikulin50/lowcode/server/anomaly/service"
 	authService "github.com/madnikulin50/lowcode/server/auth"
 	"github.com/madnikulin50/lowcode/server/auth/saml"
 	authSettings "github.com/madnikulin50/lowcode/server/auth/settings"
@@ -457,6 +458,10 @@ func (app *CortezaApp) InitServices(ctx context.Context) (err error) {
 		}
 	}
 
+	if err = anomalyService.Initialize(ctx, app.Log, app.Store); err != nil {
+		return fmt.Errorf("could not initialize anomaly services: %w", err)
+	}
+
 	// Initializing discovery
 	if app.Opt.Discovery.Enabled {
 		err = discoveryService.Initialize(ctx, app.Log, app.Opt.Discovery, app.Store)
@@ -508,6 +513,8 @@ func (app *CortezaApp) Activate(ctx context.Context) (err error) {
 	if app.Opt.Federation.Enabled {
 		fedService.Watchers(ctx)
 	}
+
+	anomalyService.Watch(ctx)
 
 	monitor.Watcher(ctx)
 

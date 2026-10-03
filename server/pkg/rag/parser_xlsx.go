@@ -17,24 +17,91 @@ func parseXLSX(data []byte) (*ParsedDocument, error) {
 		return nil, fmt.Errorf("parse xlsx: %w", err)
 	}
 	shared := readXLSXSharedStrings(zr)
-	var sheets []string
+	files := map[string]*zip.File{}
 	for _, f := range zr.File {
-		name := strings.ToLower(f.Name)
-		if !strings.HasPrefix(name, "xl/worksheets/sheet") || !strings.HasSuffix(name, ".xml") {
+		files[strings.ToLower(f.Name)] = f
+	}
+	var sheets []string
+	for _, ref := range xlsxSheetOrder(zr, files) {
+		f := files[strings.ToLower(ref.path)]
+		if f == nil {
 			continue
 		}
 		raw, err := readZipFile(f)
 		if err != nil {
 			continue
 		}
-		text := extractXLSXSheet(raw, shared)
-		if strings.TrimSpace(text) == "" {
+		text := strings.TrimSpace(extractXLSXSheet(raw, shared))
+		if text == "" {
 			continue
 		}
-		sheets = append(sheets, strings.TrimSpace(text))
+		// Sheet header keeps discrepancies attributable to a sheet; it is a
+		// line of its own so row lines still match across renamed sheets.
+		if ref.name != "" {
+			text = "Лист: " + ref.name + "\n" + text
+		}
+		sheets = append(sheets, text)
 	}
 	joined := strings.Join(sheets, "\n\n")
 	return &ParsedDocument{Text: joined, Title: extractTitle(joined), Kind: "xlsx"}, nil
+}
+
+type xlsxSheetRef struct {
+	name string
+	path string
+}
+
+type xlsxWorkbook struct {
+	Sheets []struct {
+		Name string `xml:"name,attr"`
+		RID  string `xml:"http://schemas.openxmlformats.org/officeDocument/2006/relationships id,attr"`
+	} `xml:"sheets>sheet"`
+}
+
+type xlsxRels struct {
+	Rels []struct {
+		ID     string `xml:"Id,attr"`
+		Target string `xml:"Target,attr"`
+	} `xml:"Relationship"`
+}
+
+// xlsxSheetOrder lists worksheets in workbook (tab) order with their names.
+// Falls back to the archive's own order when workbook.xml/rels are missing
+// or unreadable, so a slightly malformed file still yields its text.
+func xlsxSheetOrder(zr *zip.Reader, files map[string]*zip.File) []xlsxSheetRef {
+	var out []xlsxSheetRef
+	wbf, relf := files["xl/workbook.xml"], files["xl/_rels/workbook.xml.rels"]
+	if wbf != nil && relf != nil {
+		var wb xlsxWorkbook
+		var rels xlsxRels
+		wbRaw, err1 := readZipFile(wbf)
+		relRaw, err2 := readZipFile(relf)
+		if err1 == nil && err2 == nil && xml.Unmarshal(wbRaw, &wb) == nil && xml.Unmarshal(relRaw, &rels) == nil {
+			targets := map[string]string{}
+			for _, r := range rels.Rels {
+				t := strings.TrimPrefix(r.Target, "/")
+				if !strings.HasPrefix(t, "xl/") {
+					t = "xl/" + t
+				}
+				targets[r.ID] = t
+			}
+			for _, sh := range wb.Sheets {
+				if t, ok := targets[sh.RID]; ok && strings.Contains(strings.ToLower(t), "worksheets/") {
+					out = append(out, xlsxSheetRef{name: sh.Name, path: t})
+				}
+			}
+		}
+	}
+	if len(out) > 0 {
+		return out
+	}
+	for _, f := range zr.File {
+		name := strings.ToLower(f.Name)
+		if strings.HasPrefix(name, "xl/worksheets/sheet") && strings.HasSuffix(name, ".xml") {
+			out = append(out, xlsxSheetRef{path: f.Name})
+		}
+	}
+	return out
 }
 
 func readZipFile(f *zip.File) ([]byte, error) {
@@ -51,8 +118,8 @@ type xlsxSST struct {
 }
 
 type xlsxSI struct {
-	T      string       `xml:"t"`
-	Richer []xlsxSIRun  `xml:"r"`
+	T      string      `xml:"t"`
+	Richer []xlsxSIRun `xml:"r"`
 }
 
 type xlsxSIRun struct {

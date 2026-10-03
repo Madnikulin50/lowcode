@@ -1,6 +1,8 @@
 import { capitalize, uniq } from 'lodash'
 import { h } from 'vue'
 
+import AnomalyBase from './AnomalyBase.vue'
+import AnomalyConfigurator from './AnomalyConfigurator.vue'
 import AutomationBase from './AutomationBase.vue'
 import AutomationConfigurator from './AutomationConfigurator.vue'
 import AiChatBase from './AiChatBase.vue'
@@ -13,6 +15,8 @@ import CommentBase from './Comment/Base.vue'
 import CommentConfigurator from './Comment/Configurator.vue'
 import ContentBase from './ContentBase.vue'
 import ContentConfigurator from './ContentConfigurator.vue'
+import DocumentBase from './DocumentBase.vue'
+import DocumentConfigurator from './DocumentConfigurator.vue'
 import FileBase from './FileBase.vue'
 import FileConfigurator from './FileConfigurator.vue'
 import GeometryBase from './GeometryBase.vue'
@@ -50,6 +54,8 @@ import VariablesBase from './Variables/Base.vue'
 import VariablesConfigurator from './Variables/Configurator.vue'
 
 const Registry = {
+  AnomalyBase,
+  AnomalyConfigurator,
   AutomationBase,
   AutomationConfigurator,
   AiChatBase,
@@ -60,6 +66,8 @@ const Registry = {
   ChartConfigurator,
   ContentBase,
   ContentConfigurator,
+  DocumentBase,
+  DocumentConfigurator,
   FileBase,
   FileConfigurator,
   IFrameBase,

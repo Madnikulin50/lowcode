@@ -45,7 +45,9 @@ selector:
     report:
       description: Embedded reporter scenario
     content:
-      description: Formatted text and rich content
+      description: Formatted text
+    document:
+      description: Markdown or PDF from the namespace documentation
     file:
       description: File gallery or attachments
     iFrame:
@@ -64,6 +66,33 @@ selector:
       description: A record's risk assessment or a portfolio summary
     imageSearch:
       description: Search images by the record's own field values
+    anomaly:
+      description: Anomaly detection stats and findings
+anomaly:
+  label: Anomaly
+  allModules: All modules
+  allSeverities: All severities
+  allStatuses: All statuses
+  noFindings: No anomalies found.
+  nothingToShow: Nothing to show - enable the summary or the list in block settings.
+  module: Module
+  field: Field
+  severity: Severity
+  status: Status
+  resolve: Resolve
+  openCenter: Open Anomaly Center
+  severityLow: Low
+  severityMedium: Medium
+  severityHigh: High
+  statusNew: New
+  statusAcknowledged: Acknowledged
+  statusResolved: Resolved
+  statusFalsePositive: False positive
+  configurator:
+    module: Module
+    showSummary: Show summary tiles
+    showList: Show findings list
+    limit: Rows in list
 risk:
   label: Risk
 imageSearch:
@@ -268,6 +297,11 @@ chart:
         and: Join filters with AND
         or: Join filters with OR
         overwrite: Overwrite original filter
+document:
+  label: Document
+  pick: Document
+  empty: Select a document
+  noFile: PDF is not uploaded yet
 content:
   ok: Ok
   label: Content

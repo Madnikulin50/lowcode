@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve, dirname } from 'path'
 import { execSync } from 'child_process'
@@ -157,6 +157,14 @@ export default defineConfig({
   },
   server: {
     port: 8080,
+    fs: {
+      // lib/vue is resolved from outside this app's root; without this Vite
+      // 403s on files like pdfjs-dist's worker (loaded via new URL(...)).
+      allow: [
+        searchForWorkspaceRoot(process.cwd()),
+        resolve(__dirname, '../../lib'),
+      ],
+    },
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:3333',

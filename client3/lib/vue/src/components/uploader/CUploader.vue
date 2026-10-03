@@ -96,14 +96,18 @@ const active = ref<File | null>(null)
 const processing = ref<{ file: File; progress: number; bytesSent: number } | null>(null)
 const error = ref<string | null>(null)
 
-const acceptedFilesString = computed(() => props.acceptedFiles.join(','))
+// Callers may pass null explicitly (e.g. from settings); withDefaults only covers undefined
+const acceptedFiles = computed<string[]>(() => Array.isArray(props.acceptedFiles) ? props.acceptedFiles : [])
+const labels = computed<Record<string, string>>(() => props.labels || {})
+
+const acceptedFilesString = computed(() => acceptedFiles.value.join(','))
 
 const progressBarStyle = computed(() => ({
   width: (processing.value?.progress || 0) + '%',
 }))
 
 const uploadingLabel = computed(() => {
-  const base = props.labels.uploading || 'Uploading files'
+  const base = labels.value.uploading || 'Uploading files'
   const file = processing.value?.file
   return file ? `${base} ${file.name} (${size(file)})` : base
 })
@@ -114,7 +118,7 @@ const activeLabel = computed(() => {
 })
 
 const placeholderLabel = computed(() => {
-  return props.labels.placeholder || 'Click or drop files here to upload'
+  return labels.value.placeholder || 'Click or drop files here to upload'
 })
 
 function size(a: File) {
@@ -160,14 +164,16 @@ function onFileSelected(e: Event) {
 function handleFile(file: File) {
   error.value = null
 
-  if (!validateFileType(file.name, props.acceptedFiles)) {
-    const errorMsg = props.labels.fileTypeNotAllowed || 'File type not allowed'
+  if (!validateFileType(file.name, acceptedFiles.value)) {
+    const errorMsg = labels.value.fileTypeNotAllowed || 'File type not allowed'
     onError(null, errorMsg)
     return
   }
 
-  if (file.size > props.maxFilesize * 1024 * 1024) {
-    const errorMsg = props.labels.fileTooLarge || `File exceeds ${props.maxFilesize}MB limit`
+  // 0/empty means "no limit" (same as server-side MaxSize settings)
+  const maxFilesize = Number(props.maxFilesize) || 0
+  if (maxFilesize > 0 && file.size > maxFilesize * 1024 * 1024) {
+    const errorMsg = labels.value.fileTooLarge || `File exceeds ${maxFilesize}MB limit`
     onError(null, errorMsg)
     return
   }

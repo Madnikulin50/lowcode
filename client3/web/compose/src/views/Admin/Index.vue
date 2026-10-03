@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="namespace?.canManageNamespace"
-    class="d-flex flex-column w-100 flex-grow-1"
+    class="d-flex flex-column w-100 h-100 flex-grow-1"
     style="min-height: 0"
   >
     <router-view

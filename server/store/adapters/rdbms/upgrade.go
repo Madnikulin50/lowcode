@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	anomalyModels "github.com/madnikulin50/lowcode/server/anomaly/model"
 	automationModels "github.com/madnikulin50/lowcode/server/automation/model"
 	composeModels "github.com/madnikulin50/lowcode/server/compose/model"
 	federationModels "github.com/madnikulin50/lowcode/server/federation/model"
@@ -29,6 +30,7 @@ func (s *Store) Upgrade(ctx context.Context) (err error) {
 		composeModels.Models(),
 		automationModels.Models(),
 		federationModels.Models(),
+		anomalyModels.Models(),
 	)
 
 	if err != nil {
@@ -200,6 +202,7 @@ func tableNames() (tnames []string) {
 	cortezaModels := append(systemModels.Models(), composeModels.Models()...)
 	cortezaModels = append(cortezaModels, automationModels.Models()...)
 	cortezaModels = append(cortezaModels, federationModels.Models()...)
+	cortezaModels = append(cortezaModels, anomalyModels.Models()...)
 
 	for _, m := range cortezaModels {
 		tnames = append(tnames, m.Ident)

@@ -45,6 +45,15 @@ func ParseUint64s(ss []string) []uint64 {
 	return uu
 }
 
+// ParseFloat64 parses a string to float64
+func ParseFloat64(s string) float64 {
+	if s == "" {
+		return 0
+	}
+	f, _ := strconv.ParseFloat(s, 64)
+	return f
+}
+
 func ParseJSONTextWithErr(s string) (types.JSONText, error) {
 	result := &types.JSONText{}
 	err := fmt.Errorf("error parsing JSONText: %w", result.Scan(s))

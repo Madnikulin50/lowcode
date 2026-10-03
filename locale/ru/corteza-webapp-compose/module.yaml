@@ -67,6 +67,32 @@ edit:
     public: Public
     private: Private
     protected: Protected
+  anomalySettings:
+    title: Поиск аномалий
+    description: Выберите поля модуля, которые должен отслеживать сканер аномалий.
+    noNumericFields: В этом модуле нет полей для отслеживания.
+    field: Поле
+    enabled: Отслеживать
+    detector: Детектор
+    threshold: Порог
+    min: Мин
+    max: Макс
+    noThreshold: Без порога — флагуется любое новое значение
+    detectorZscore: Z-score
+    detectorEwma: EWMA (самоадаптирующийся)
+    detectorCusum: CUSUM (дрейф)
+    detectorMad: MAD (робастный)
+    detectorRange: Диапазон (мин/макс)
+    detectorRareCategory: Редкое значение
+    detectorNewCategory: Новое значение
+    hint:
+      zscore: Сколько стандартных отклонений от среднего считать аномалией.
+      ewma: Как z-score, но среднее подстраивается со временем и забывает старые выбросы.
+      cusum: Сколько накопленного отклонения (устойчивого дрейфа) вызывает срабатывание.
+      mad: Как z-score, но устойчив к уже встречавшимся выбросам в этом поле.
+      range: Значения вне этого диапазона считаются аномалией.
+      rare_category: Значения, встречающиеся реже этой доли записей (например 0.01 = 1%), считаются аномалией.
+      new_category: Любое значение, которого раньше не было, считается аномалией.
   fieldPermissions: Поле прав доступа
   manageRecordFields: Управление полями
   moduleFieldSettings: Настройки полей
@@ -315,9 +341,20 @@ tooltip:
 type:
   label: Тип
 etl:
+  settings: Настройки ETL
+  settingsDescription: Синхронизация записей из внешних источников в этот модуль.
+  create: Новое задание
+  edit: Изменить задание
+  noJobs: Для этого модуля пока нет заданий ETL.
+  name: Название
+  source: Источник
   enabled: Включено
   disabled: Выключено
   format: Формат
+  schedule: Расписание (cron)
+  lastRun: Последний запуск
+  actions: Действия
+  confirmDelete: Удалить это задание ETL?
   smb:
     password: Пароль
     username: Пользователь
@@ -330,3 +367,38 @@ etl:
   rest:
     url: URL
     method: Метод
+    body: Тело (JSON)
+anomaly:
+  title: Центр аномалий
+  allModules: Все модули
+  allSeverities: Все уровни
+  allStatuses: Все статусы
+  noFindings: В этом пространстве не найдено аномалий.
+  module: Модуль
+  field: Поле
+  score: Оценка
+  severity: Уровень
+  status: Статус
+  detected: Обнаружено
+  viewRecord: Открыть запись
+  acknowledge: Принять
+  resolve: Решено
+  falsePositive: Ложное срабатывание
+  severityLow: Низкий
+  severityMedium: Средний
+  severityHigh: Высокий
+  statusNew: Новая
+  statusAcknowledged: Принята
+  statusResolved: Решена
+  statusFalsePositive: Ложное срабатывание
+  watchedFields: Отслеживаемые поля
+  noRules: В этом пространстве пока нет полей, отслеживаемых на аномалии.
+  detector: Детектор
+  threshold: Порог
+  enabled: Отслеживается
+  lastScanned: Последняя проверка
+  neverScanned: Ещё не проверялось
+  loading: Загрузка…
+  searchPlaceholder: Поиск по находкам
+  findingSingle: находка
+  findingPlural: находки

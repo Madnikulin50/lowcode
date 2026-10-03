@@ -27,6 +27,7 @@ server: $(JSONTPLEXEC)
 	@ mkdir -p $(GENGO_TMP)/automation/types $(GENGO_TMP)/automation/model
 	@ mkdir -p $(GENGO_TMP)/compose/types $(GENGO_TMP)/compose/model
 	@ mkdir -p $(GENGO_TMP)/system/types $(GENGO_TMP)/system/model
+	@ mkdir -p $(GENGO_TMP)/anomaly/types $(GENGO_TMP)/anomaly/model
 	@ mkdir -p $(GENGO_TMP)/store/adapters/rdbms
 	@ $(GO) run github.com/madnikulin50/lowcode/server/codegen/def/cmd/gengo | $(JSONTPLEXEC) -v -p $(ROOT_DIR)/codegen/assets/templates -b $(GENGO_TMP)
 	@ echo "$(COLOUR_GREEN)Merging store files$(COLOUR_END)"
@@ -36,6 +37,7 @@ server: $(JSONTPLEXEC)
 	@ cp -r $(GENGO_TMP)/automation/. $(ROOT_DIR)/automation/
 	@ cp -r $(GENGO_TMP)/compose/. $(ROOT_DIR)/compose/
 	@ cp -r $(GENGO_TMP)/system/. $(ROOT_DIR)/system/
+	@ cp -r $(GENGO_TMP)/anomaly/. $(ROOT_DIR)/anomaly/
 	@ rm -rf $(GENGO_TMP)
 
 all: server

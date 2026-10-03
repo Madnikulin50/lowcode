@@ -3,6 +3,7 @@ package rulesgo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -364,6 +365,12 @@ type aiConfig struct {
 	Model         string `json:"model,omitempty"`
 	MaxTokens     int    `json:"maxTokens,omitempty"`
 	AllowMutating bool   `json:"allowMutating,omitempty"`
+	// Timeout caps the AI call, in seconds (0 = no own limit).
+	Timeout int `json:"timeout,omitempty"`
+	// Optional lets the chain continue without the AI verdict when the call
+	// fails or times out: ai_response is set to "" and the output carries
+	// status "failed" + error instead of aborting the whole chain.
+	Optional bool `json:"optional,omitempty"`
 }
 
 type aiExecutor struct {
@@ -388,12 +395,29 @@ func (n *aiExecutor) Execute(ctx context.Context, node ChainNode, ec *ExecutionC
 		return map[string]interface{}{"agent": agent, "status": "not_configured"}, nil
 	}
 
-	res, err := n.call(ctx, agent, prompt, model, cfg.AllowMutating)
-	if err != nil {
-		return nil, fmt.Errorf("AI call failed: %w", err)
+	callCtx := ctx
+	if cfg.Timeout > 0 {
+		var cancel context.CancelFunc
+		callCtx, cancel = context.WithTimeout(ctx, time.Duration(cfg.Timeout)*time.Second)
+		defer cancel()
 	}
-	if res.ConfirmNeeded {
-		return nil, fmt.Errorf("AI node blocked: agent attempted a mutating action requiring confirmation (%s) - set allowMutating:true on this node to permit it", strings.Join(res.ConfirmCalls, ", "))
+
+	res, err := n.call(callCtx, agent, prompt, model, cfg.AllowMutating)
+	if err == nil && res.ConfirmNeeded {
+		err = fmt.Errorf("AI node blocked: agent attempted a mutating action requiring confirmation (%s) - set allowMutating:true on this node to permit it", strings.Join(res.ConfirmCalls, ", "))
+	} else if err != nil {
+		if errors.Is(callCtx.Err(), context.DeadlineExceeded) && ctx.Err() == nil {
+			err = fmt.Errorf("AI call timed out after %ds: %w", cfg.Timeout, err)
+		} else {
+			err = fmt.Errorf("AI call failed: %w", err)
+		}
+	}
+	if err != nil {
+		if !cfg.Optional {
+			return nil, err
+		}
+		ec.Set("ai_response", "")
+		return map[string]interface{}{"agent": agent, "response": "", "status": "failed", "error": err.Error()}, nil
 	}
 
 	ec.Set("ai_response", res.Output)

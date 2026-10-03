@@ -30,6 +30,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/madnikulin50/lowcode/agents/sdk"
+	"github.com/madnikulin50/lowcode/agents/stroykontrol/idcheck"
 )
 
 //go:embed web/dist
@@ -39,6 +40,9 @@ var (
 	compose            store
 	raster             *Rasterizer
 	defaultNamespaceID string
+	idRunner           *idcheck.Runner
+	idBackend          idcheck.Backend
+	idCacheDir         string
 	comparisonModule   = "pd_rd_comparisons"
 	discrepancyModule  = "pd_rd_discrepancies"
 )
@@ -51,8 +55,21 @@ func main() {
 	namespace := flag.String("namespace", "", "Default namespace ID (used if a request doesn't pass ?namespaceID=)")
 	cacheDir := flag.String("cache", "var/stroykontrol-raster-cache", "Directory for rasterized page cache")
 	fixtures := flag.String("fixtures", "", "Run standalone against a local fixtures directory instead of a live Compose instance (see fixtures/README.md) — skips --api/--token/--namespace entirely")
+	ollamaURL := flag.String("ollama", envOr("OLLAMA_URL", "http://localhost:11434"), "Ollama base URL for the ИД check vision model")
+	visionModel := flag.String("vision-model", envOr("IDCHECK_VISION_MODEL", "qwen3.5"), "Multimodal Ollama model used to read scanned acts (empty disables scan recognition)")
+	tesseractBin := flag.String("tesseract", "tesseract", "tesseract binary for OCR of scanned acts (optional: without it pages are classified by the vision model)")
+	ocrLang := flag.String("ocr-lang", "rus", "tesseract language")
+	idcheckCache := flag.String("idcheck-cache", "var/idcheck-cache", "Directory for ИД check page images / OCR / model reply cache")
+	maxAttached := flag.Int("max-attached", 6, "Attached quality-document pages per act sent to the vision model (-1 = all)")
+	classifyPages := flag.Bool("classify-pages", false, "Without tesseract, classify every scanned page with the vision model (slow on CPU; default uses layout rules)")
+	external := flag.Bool("external", true, "Check legal entities in ЕГРЮЛ (egrul.nalog.ru) and specialists in НРС (nrs.nostroy.ru)")
 	staticDir := flag.String("static", "", "Serve the frontend from this directory instead of the embedded web/dist — point at web/dist while running `npx vite build --watch` to see frontend changes without rebuilding this binary")
+	dumpNorms := flag.Bool("dump-norms", false, "Print the built-in regulatory documents catalog (idcheck.DefaultNorms) as JSON and exit — used by compose_id/apply_id.mjs to seed «Нормативные документы»")
 	flag.Parse()
+	if *dumpNorms {
+		_ = json.NewEncoder(os.Stdout).Encode(idcheck.DefaultNorms)
+		return
+	}
 
 	if *fixtures != "" {
 		fs, err := NewFixtureStore(*fixtures)
@@ -92,6 +109,25 @@ func main() {
 		compose = NewComposeClient(*api, *token, mintTokenViaNode)
 	}
 	raster = NewRasterizer(*cacheDir)
+	if cc, ok := compose.(*ComposeClient); ok {
+		ocr := idcheck.NewTesseract(*tesseractBin, *ocrLang)
+		if !ocr.Available() {
+			log.Printf("idcheck: tesseract (%s, lang %s) not found — scanned pages will be classified by the vision model only", *tesseractBin, *ocrLang)
+		}
+		var ext *idcheck.External
+		if *external {
+			ext = idcheck.NewExternal()
+		}
+		idBackend, idCacheDir = composeBackend{cc}, *idcheckCache
+		idRunner = idcheck.NewRunner(idBackend, &idcheck.Extractor{
+			CacheDir:      *idcheckCache,
+			DPI:           150,
+			OCR:           ocr,
+			Vision:        idcheck.NewVision(*ollamaURL, *visionModel, *idcheckCache, 0),
+			MaxAttached:   *maxAttached,
+			ClassifyPages: *classifyPages,
+		}, ext)
+	}
 	defaultNamespaceID = *namespace
 
 	r := chi.NewRouter()
@@ -106,6 +142,11 @@ func main() {
 		r.Get("/page", handlePage)
 		r.Get("/file", handleFile)
 		r.Get("/text", handleText)
+		r.Post("/idcheck/run", handleIDCheckRun)
+		r.Get("/idcheck/run", handleIDCheckRun)
+		r.Get("/idcheck/status", handleIDCheckStatus)
+		r.Get("/idcheck/view", handleIDCheckView)
+		r.Get("/idcheck/page", handleIDCheckPage)
 	})
 
 	var static http.Handler
@@ -157,9 +198,18 @@ func rootOrigin(apiURL string) (string, error) {
 // mirrors, so it's a no-op-on-failure dev convenience, not a real refresh
 // mechanism for a deployment with a dedicated service token.
 func mintTokenViaNode() (string, error) {
-	out, err := exec.Command("node", "-e",
+	cmd := exec.Command("node", "-e",
 		"import('./compose/helpers.mjs').then(h=>h.mintToken()).then(t=>process.stdout.write(t))",
-	).Output()
+	)
+	// mintToken() returns $TOKEN as-is when set — and the agent itself is
+	// usually started with TOKEN=…, so the child would hand back the very
+	// token that just expired. Drop it to force a real re-mint.
+	for _, kv := range os.Environ() {
+		if !strings.HasPrefix(kv, "TOKEN=") {
+			cmd.Env = append(cmd.Env, kv)
+		}
+	}
+	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("mint token via node: %w", err)
 	}
@@ -263,6 +313,9 @@ func fetchSideFile(ns, recordID, side string) (data []byte, mimetype string, err
 //     (LINE/LWPOLYLINE/CIRCLE/ARC/TEXT/MTEXT) onto a canvas itself. Always
 //     one page (a DXF's ENTITIES section is one model-space sheet, no
 //     multi-sheet/layout concept here).
+//   - "xlsx": same client-side pattern — the browser fetches /api/file,
+//     parses the workbook and draws each sheet as a grid, split into pages
+//     of a fixed number of rows so long sheets stay pageable.
 //   - "other": genuinely unsupported, falls back to the text-only diff list.
 type pagesOut struct {
 	Supported bool   `json:"supported"` // kept for older clients: true unless kind=="other"
@@ -296,6 +349,8 @@ func handlePages(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, pagesOut{Supported: true, Kind: "docx", PageCount: 0})
 	case IsDXF(mimetype, data):
 		writeJSON(w, http.StatusOK, pagesOut{Supported: true, Kind: "dxf", PageCount: 0})
+	case IsXLSX(mimetype, data):
+		writeJSON(w, http.StatusOK, pagesOut{Supported: true, Kind: "xlsx", PageCount: 0})
 	default:
 		writeJSON(w, http.StatusOK, pagesOut{Supported: false, Kind: "other"})
 	}
@@ -391,5 +446,91 @@ func handlePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Cache-Control", "private, max-age=300")
+	http.ServeFile(w, r, path)
+}
+
+func envOr(k, def string) string {
+	if v := os.Getenv(k); v != "" {
+		return v
+	}
+	return def
+}
+
+// handleIDCheckRun queues an ИД package check. Called by the Compose rule
+// chain "stroykontrol-id-run" (http node) with ?packageID=&namespaceID= or
+// a JSON body {"packageID": "...", "namespaceID": "..."}; returns at once —
+// the run writes its progress into the package record.
+func handleIDCheckRun(w http.ResponseWriter, r *http.Request) {
+	if idRunner == nil {
+		writeErr(w, http.StatusServiceUnavailable, fmt.Errorf("ИД check needs a live Compose backend (not available with --fixtures)"))
+		return
+	}
+	var body struct {
+		PackageID   string `json:"packageID"`
+		NamespaceID string `json:"namespaceID"`
+	}
+	if r.Method == http.MethodPost && r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&body)
+	}
+	pkg := strings.TrimSpace(firstNonEmpty(r.URL.Query().Get("packageID"), body.PackageID))
+	ns := strings.TrimSpace(firstNonEmpty(r.URL.Query().Get("namespaceID"), body.NamespaceID, defaultNamespaceID))
+	if pkg == "" || ns == "" {
+		writeErr(w, http.StatusBadRequest, fmt.Errorf("packageID and namespaceID are required"))
+		return
+	}
+	queued := idRunner.Enqueue(ns, pkg)
+	writeJSON(w, http.StatusAccepted, map[string]interface{}{"packageID": pkg, "queued": queued, "status": idRunner.Status(pkg)})
+}
+
+func handleIDCheckStatus(w http.ResponseWriter, r *http.Request) {
+	if idRunner == nil {
+		writeErr(w, http.StatusServiceUnavailable, fmt.Errorf("ИД check not available"))
+		return
+	}
+	pkg := r.URL.Query().Get("packageID")
+	writeJSON(w, http.StatusOK, map[string]interface{}{"packageID": pkg, "status": idRunner.Status(pkg)})
+}
+
+func firstNonEmpty(v ...string) string {
+	for _, s := range v {
+		if s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
+// handleIDCheckView returns everything the in-place findings viewer needs
+// (?namespaceID=&packageID= or &actID=).
+func handleIDCheckView(w http.ResponseWriter, r *http.Request) {
+	if idBackend == nil {
+		writeErr(w, http.StatusServiceUnavailable, fmt.Errorf("ИД check not available"))
+		return
+	}
+	q := r.URL.Query()
+	v, err := idcheck.BuildView(idBackend, firstNonEmpty(q.Get("namespaceID"), defaultNamespaceID), q.Get("packageID"), q.Get("actID"), q.Get("findingID"))
+	if err != nil {
+		writeErr(w, http.StatusBadGateway, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, v)
+}
+
+// handleIDCheckPage serves one rendered page of an act scan as JPEG
+// (?namespaceID=&actID=&n=).
+func handleIDCheckPage(w http.ResponseWriter, r *http.Request) {
+	if idBackend == nil {
+		writeErr(w, http.StatusServiceUnavailable, fmt.Errorf("ИД check not available"))
+		return
+	}
+	q := r.URL.Query()
+	n, _ := strconv.Atoi(q.Get("n"))
+	path, _, err := idcheck.ActPageImage(r.Context(), idBackend, idCacheDir, firstNonEmpty(q.Get("namespaceID"), defaultNamespaceID), q.Get("actID"), n, 150)
+	if err != nil {
+		writeErr(w, http.StatusNotFound, err)
+		return
+	}
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Cache-Control", "private, max-age=3600")
 	http.ServeFile(w, r, path)
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	anomalyRest "github.com/madnikulin50/lowcode/server/anomaly/rest"
 	"github.com/madnikulin50/lowcode/server/assets"
 	automationRest "github.com/madnikulin50/lowcode/server/automation/rest"
 	composeRest "github.com/madnikulin50/lowcode/server/compose/rest"
@@ -118,6 +119,7 @@ func (app *CortezaApp) mountHttpRoutes(r chi.Router) {
 			r.Route("/system", systemRest.MountRoutes())
 			r.Route("/automation", automationRest.MountRoutes())
 			r.Route("/compose", composeRest.MountRoutes())
+			r.Group(anomalyRest.MountRoutes())
 			r.Route("/websocket", app.WsServer.MountRoutes)
 
 			if app.Opt.Discovery.Enabled {

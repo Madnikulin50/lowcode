@@ -7,6 +7,7 @@ package rdbms
 //
 
 import (
+	anomalyType "github.com/madnikulin50/lowcode/server/anomaly/types"
 	automationType "github.com/madnikulin50/lowcode/server/automation/types"
 	composeType "github.com/madnikulin50/lowcode/server/compose/types"
 	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
@@ -36,6 +37,52 @@ type (
 		Severity      actionlogType.Severity `db:"severity"`
 		Description   string                 `db:"description"`
 		Meta          actionlogType.Meta     `db:"meta"`
+	}
+
+	// auxAnomalyBaseline is an auxiliary structure used for transporting to/from RDBMS store
+	auxAnomalyBaseline struct {
+		ID          uint64                    `db:"id"`
+		NamespaceID uint64                    `db:"rel_namespace"`
+		ModuleID    uint64                    `db:"rel_module"`
+		RuleID      uint64                    `db:"rel_rule"`
+		Field       string                    `db:"field"`
+		Count       uint64                    `db:"count"`
+		State       anomalyType.BaselineState `db:"state"`
+		UpdatedAt   *time.Time                `db:"updated_at"`
+	}
+
+	// auxAnomalyFinding is an auxiliary structure used for transporting to/from RDBMS store
+	auxAnomalyFinding struct {
+		ID          uint64                         `db:"id"`
+		NamespaceID uint64                         `db:"rel_namespace"`
+		ModuleID    uint64                         `db:"rel_module"`
+		RecordID    uint64                         `db:"rel_record"`
+		RuleID      uint64                         `db:"rel_rule"`
+		Score       float64                        `db:"score"`
+		Severity    string                         `db:"severity"`
+		Status      string                         `db:"status"`
+		Explanation anomalyType.FindingExplanation `db:"explanation"`
+		CreatedAt   time.Time                      `db:"created_at"`
+		UpdatedAt   *time.Time                     `db:"updated_at"`
+	}
+
+	// auxAnomalyRule is an auxiliary structure used for transporting to/from RDBMS store
+	auxAnomalyRule struct {
+		ID            uint64                         `db:"id"`
+		NamespaceID   uint64                         `db:"rel_namespace"`
+		ModuleID      uint64                         `db:"rel_module"`
+		Field         string                         `db:"field"`
+		Detector      string                         `db:"detector"`
+		Threshold     float64                        `db:"threshold"`
+		Enabled       bool                           `db:"enabled"`
+		Params        anomalyType.FindingExplanation `db:"params"`
+		LastScannedAt *time.Time                     `db:"last_scanned_at"`
+		CreatedAt     time.Time                      `db:"created_at"`
+		CreatedBy     uint64                         `db:"created_by"`
+		UpdatedAt     *time.Time                     `db:"updated_at"`
+		UpdatedBy     uint64                         `db:"updated_by"`
+		DeletedAt     *time.Time                     `db:"deleted_at"`
+		DeletedBy     uint64                         `db:"deleted_by"`
 	}
 
 	// auxApigwFilter is an auxiliary structure used for transporting to/from RDBMS store
@@ -739,6 +786,177 @@ func (aux *auxActionlog) scan(row scanner) error {
 		&aux.Severity,
 		&aux.Description,
 		&aux.Meta,
+	)
+}
+
+// encodes AnomalyBaseline to auxAnomalyBaseline
+//
+// This function is auto-generated
+func (aux *auxAnomalyBaseline) encode(res *anomalyType.Baseline) (_ error) {
+	aux.ID = res.ID
+	aux.NamespaceID = res.NamespaceID
+	aux.ModuleID = res.ModuleID
+	aux.RuleID = res.RuleID
+	aux.Field = res.Field
+	aux.Count = res.Count
+	aux.State = res.State
+	aux.UpdatedAt = res.UpdatedAt
+	return
+}
+
+// decodes AnomalyBaseline from auxAnomalyBaseline
+//
+// This function is auto-generated
+func (aux auxAnomalyBaseline) decode() (res *anomalyType.Baseline, _ error) {
+	res = new(anomalyType.Baseline)
+	res.ID = aux.ID
+	res.NamespaceID = aux.NamespaceID
+	res.ModuleID = aux.ModuleID
+	res.RuleID = aux.RuleID
+	res.Field = aux.Field
+	res.Count = aux.Count
+	res.State = aux.State
+	res.UpdatedAt = aux.UpdatedAt
+	return
+}
+
+// scans row and fills auxAnomalyBaseline fields
+//
+// This function is auto-generated
+func (aux *auxAnomalyBaseline) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.NamespaceID,
+		&aux.ModuleID,
+		&aux.RuleID,
+		&aux.Field,
+		&aux.Count,
+		&aux.State,
+		&aux.UpdatedAt,
+	)
+}
+
+// encodes AnomalyFinding to auxAnomalyFinding
+//
+// This function is auto-generated
+func (aux *auxAnomalyFinding) encode(res *anomalyType.Finding) (_ error) {
+	aux.ID = res.ID
+	aux.NamespaceID = res.NamespaceID
+	aux.ModuleID = res.ModuleID
+	aux.RecordID = res.RecordID
+	aux.RuleID = res.RuleID
+	aux.Score = res.Score
+	aux.Severity = res.Severity
+	aux.Status = res.Status
+	aux.Explanation = res.Explanation
+	aux.CreatedAt = res.CreatedAt
+	aux.UpdatedAt = res.UpdatedAt
+	return
+}
+
+// decodes AnomalyFinding from auxAnomalyFinding
+//
+// This function is auto-generated
+func (aux auxAnomalyFinding) decode() (res *anomalyType.Finding, _ error) {
+	res = new(anomalyType.Finding)
+	res.ID = aux.ID
+	res.NamespaceID = aux.NamespaceID
+	res.ModuleID = aux.ModuleID
+	res.RecordID = aux.RecordID
+	res.RuleID = aux.RuleID
+	res.Score = aux.Score
+	res.Severity = aux.Severity
+	res.Status = aux.Status
+	res.Explanation = aux.Explanation
+	res.CreatedAt = aux.CreatedAt
+	res.UpdatedAt = aux.UpdatedAt
+	return
+}
+
+// scans row and fills auxAnomalyFinding fields
+//
+// This function is auto-generated
+func (aux *auxAnomalyFinding) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.NamespaceID,
+		&aux.ModuleID,
+		&aux.RecordID,
+		&aux.RuleID,
+		&aux.Score,
+		&aux.Severity,
+		&aux.Status,
+		&aux.Explanation,
+		&aux.CreatedAt,
+		&aux.UpdatedAt,
+	)
+}
+
+// encodes AnomalyRule to auxAnomalyRule
+//
+// This function is auto-generated
+func (aux *auxAnomalyRule) encode(res *anomalyType.Rule) (_ error) {
+	aux.ID = res.ID
+	aux.NamespaceID = res.NamespaceID
+	aux.ModuleID = res.ModuleID
+	aux.Field = res.Field
+	aux.Detector = res.Detector
+	aux.Threshold = res.Threshold
+	aux.Enabled = res.Enabled
+	aux.Params = res.Params
+	aux.LastScannedAt = res.LastScannedAt
+	aux.CreatedAt = res.CreatedAt
+	aux.CreatedBy = res.CreatedBy
+	aux.UpdatedAt = res.UpdatedAt
+	aux.UpdatedBy = res.UpdatedBy
+	aux.DeletedAt = res.DeletedAt
+	aux.DeletedBy = res.DeletedBy
+	return
+}
+
+// decodes AnomalyRule from auxAnomalyRule
+//
+// This function is auto-generated
+func (aux auxAnomalyRule) decode() (res *anomalyType.Rule, _ error) {
+	res = new(anomalyType.Rule)
+	res.ID = aux.ID
+	res.NamespaceID = aux.NamespaceID
+	res.ModuleID = aux.ModuleID
+	res.Field = aux.Field
+	res.Detector = aux.Detector
+	res.Threshold = aux.Threshold
+	res.Enabled = aux.Enabled
+	res.Params = aux.Params
+	res.LastScannedAt = aux.LastScannedAt
+	res.CreatedAt = aux.CreatedAt
+	res.CreatedBy = aux.CreatedBy
+	res.UpdatedAt = aux.UpdatedAt
+	res.UpdatedBy = aux.UpdatedBy
+	res.DeletedAt = aux.DeletedAt
+	res.DeletedBy = aux.DeletedBy
+	return
+}
+
+// scans row and fills auxAnomalyRule fields
+//
+// This function is auto-generated
+func (aux *auxAnomalyRule) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.NamespaceID,
+		&aux.ModuleID,
+		&aux.Field,
+		&aux.Detector,
+		&aux.Threshold,
+		&aux.Enabled,
+		&aux.Params,
+		&aux.LastScannedAt,
+		&aux.CreatedAt,
+		&aux.CreatedBy,
+		&aux.UpdatedAt,
+		&aux.UpdatedBy,
+		&aux.DeletedAt,
+		&aux.DeletedBy,
 	)
 }
 

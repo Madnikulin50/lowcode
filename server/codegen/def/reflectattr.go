@@ -37,7 +37,7 @@ import (
 //   - dal=<spec>      optional; absence means no dal block (excluded from
 //     dal/$component_model generation, like module.fields). <spec> is one
 //     of: id | userref | ref:<resType>[:default0] | timestamp[:now|:nil] |
-//     text[:<length>] | json[:empty] | number[:default0] | bool[:true|:false]
+//     text[:<length>] | json[:empty] | number[:default0|:float] | bool[:true|:false]
 //   - or empty ("dal" bare) for a plain Text column. number always
 //     carries the {"rdbms:type":"integer"} meta hint, matching every
 //     Number attribute in the ported schema so far.
@@ -195,10 +195,22 @@ func parseDalDirective(spec string) *AttributeDal {
 		}
 		return d
 	case "number":
+		// Every Number attribute ported so far (place, weight, revision, ...)
+		// is conceptually an integer, hence the unconditional "rdbms:type":
+		// "integer" meta hint. "number:float" opts out of that hint so the
+		// rdbms dialect falls back to its default NUMERIC column (see
+		// store/adapters/rdbms/drivers/postgres/dialect.go's *dal.TypeNumber
+		// case) - needed for genuinely fractional values like a z-score
+		// threshold, which "integer" would silently truncate.
 		d := &AttributeDal{Type: "Number", Meta: map[string]interface{}{"rdbms:type": "integer"}}
-		if hasRest && rest == "default0" {
-			d.HasDefault = true
-			d.DefaultValue = 0
+		if hasRest {
+			switch rest {
+			case "default0":
+				d.HasDefault = true
+				d.DefaultValue = 0
+			case "float":
+				d.Meta = nil
+			}
 		}
 		return d
 	case "bool":

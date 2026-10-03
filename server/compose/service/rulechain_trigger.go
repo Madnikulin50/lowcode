@@ -137,27 +137,38 @@ func recordTriggerBag(rec *types.Record, mod *types.Module, nsID uint64) map[str
 	return out
 }
 
+// fileFieldKey returns a stable key of attachment IDs in field. field may be
+// a comma-separated list (e.g. "pd_file,rd_file"): the key then changes when
+// any of them changes, and is empty unless every listed field has a file.
 func fileFieldKey(rec *types.Record, field string) string {
 	if rec == nil || field == "" {
 		return ""
 	}
-	var raw []string
-	for _, v := range rec.Values.FilterByName(field) {
-		if v == nil || v.DeletedAt != nil {
+	var keys []string
+	for _, f := range strings.Split(field, ",") {
+		f = strings.TrimSpace(f)
+		if f == "" {
 			continue
 		}
-		raw = append(raw, v.Value)
+		var raw []string
+		for _, v := range rec.Values.FilterByName(f) {
+			if v == nil || v.DeletedAt != nil {
+				continue
+			}
+			raw = append(raw, v.Value)
+		}
+		ids := rulesgo.AttachmentIDsFromValue(strings.Join(raw, "\n"))
+		if len(ids) == 0 {
+			return ""
+		}
+		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+		parts := make([]string, len(ids))
+		for i, id := range ids {
+			parts[i] = fmt.Sprintf("%d", id)
+		}
+		keys = append(keys, f+"="+strings.Join(parts, ","))
 	}
-	ids := rulesgo.AttachmentIDsFromValue(strings.Join(raw, "\n"))
-	if len(ids) == 0 {
-		return ""
-	}
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
-	parts := make([]string, len(ids))
-	for i, id := range ids {
-		parts[i] = fmt.Sprintf("%d", id)
-	}
-	return strings.Join(parts, ",")
+	return strings.Join(keys, ";")
 }
 
 func copyStringMap(in map[string]interface{}) map[string]interface{} {

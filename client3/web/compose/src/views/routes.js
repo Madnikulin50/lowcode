@@ -44,6 +44,32 @@ export default [
                 ],
               },
               {
+                name: 'namespace.documents',
+                path: 'docs',
+                component: () => import('./Public/Docs/List.vue'),
+                props: r => ({ ...r.params }),
+              },
+              {
+                path: 'docs/new',
+                redirect: to => ({ name: 'admin.documents.create', params: { slug: to.params.slug }, query: to.query }),
+              },
+              {
+                path: 'docs/:documentID/edit',
+                redirect: to => ({ name: 'admin.documents.edit', params: { slug: to.params.slug, documentID: to.params.documentID } }),
+              },
+              {
+                name: 'namespace.document',
+                path: 'docs/:documentID',
+                component: () => import('./Public/Docs/View.vue'),
+                props: r => ({ ...r.params }),
+              },
+              {
+                name: 'namespace.anomaly',
+                path: 'anomaly',
+                component: () => import('./Admin/Anomaly/Index.vue'),
+                props: r => ({ ...r.params }),
+              },
+              {
                 name: 'admin',
                 path: 'admin',
                 component: () => import('./Admin/Index.vue'),
@@ -68,6 +94,10 @@ export default [
                   { name: 'admin.charts.create', path: 'charts/new/:category?', component: () => import('./Admin/Charts/Edit.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.chart.edit' } },
                   { name: 'admin.charts.edit', path: 'charts/:chartID/edit', component: () => import('./Admin/Charts/Edit.vue'), props: r => ({ ...r.params }), meta: { helpTopic: 'compose.chart.edit' } },
 
+                  { name: 'admin.documents', path: 'documents', component: () => import('./Admin/Docs/List.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.documents.create', path: 'documents/new', component: () => import('./Public/Docs/Edit.vue'), props: r => ({ ...r.params }) },
+                  { name: 'admin.documents.edit', path: 'documents/:documentID', component: () => import('./Public/Docs/Edit.vue'), props: r => ({ ...r.params }) },
+
                   { name: 'admin.etl', path: 'etl', component: () => import('./Admin/ETL/List.vue'), props: r => ({ ...r.params }) },
                   { name: 'admin.etl.create', path: 'etl/new', component: () => import('./Admin/ETL/Edit.vue'), props: r => ({ ...r.params }) },
                   { name: 'admin.etl.edit', path: 'etl/:etlID/edit', component: () => import('./Admin/ETL/Edit.vue'), props: r => ({ ...r.params }) },
@@ -86,6 +116,8 @@ export default [
                   { name: 'admin.risk.models.create', path: 'risk/models/new', component: () => import('./Admin/Risk/ModelEdit.vue'), props: r => ({ ...r.params }) },
                   { name: 'admin.risk.models.edit', path: 'risk/models/:modelID/edit', component: () => import('./Admin/Risk/ModelEdit.vue'), props: r => ({ ...r.params }) },
                   { name: 'admin.risk.registry', path: 'risk/registry', component: () => import('./Admin/Risk/Registry.vue'), props: r => ({ ...r.params }) },
+
+                  { name: 'admin.anomaly', path: 'anomaly', component: () => import('./Admin/Anomaly/Index.vue'), props: r => ({ ...r.params }) },
 
                   { name: 'admin.configuration', path: 'configuration', component: () => import('./Admin/Configuration/Index.vue'), props: r => ({ ...r.params }) },
                 ],

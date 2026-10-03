@@ -4,6 +4,7 @@ manageNamespaces: Управление пространствами
 module: Модули
 noResults: Ничего не найдено
 page: Страницы
+documents: Документация
 pickNamespace: Выбрать пространство
 publicPages: Опубликованные страницы
 editNamespace: Изменить namespace

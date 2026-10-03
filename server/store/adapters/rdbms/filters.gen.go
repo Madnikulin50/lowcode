@@ -8,6 +8,7 @@ package rdbms
 
 import (
 	"github.com/doug-martin/goqu/v9"
+	anomalyType "github.com/madnikulin50/lowcode/server/anomaly/types"
 	automationType "github.com/madnikulin50/lowcode/server/automation/types"
 	composeType "github.com/madnikulin50/lowcode/server/compose/types"
 	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
@@ -32,6 +33,15 @@ type (
 
 		// optional actionlog filter function called after the generated function
 		Actionlog func(*Store, actionlogType.Filter) ([]goqu.Expression, actionlogType.Filter, error)
+
+		// optional anomalyBaseline filter function called after the generated function
+		AnomalyBaseline func(*Store, anomalyType.BaselineFilter) ([]goqu.Expression, anomalyType.BaselineFilter, error)
+
+		// optional anomalyFinding filter function called after the generated function
+		AnomalyFinding func(*Store, anomalyType.FindingFilter) ([]goqu.Expression, anomalyType.FindingFilter, error)
+
+		// optional anomalyRule filter function called after the generated function
+		AnomalyRule func(*Store, anomalyType.RuleFilter) ([]goqu.Expression, anomalyType.RuleFilter, error)
 
 		// optional apigwFilter filter function called after the generated function
 		ApigwFilter func(*Store, systemType.ApigwFilterFilter) ([]goqu.Expression, systemType.ApigwFilterFilter, error)
@@ -193,6 +203,100 @@ func ActionlogFilter(d drivers.Dialect, f actionlogType.Filter) (ee []goqu.Expre
 
 	if len(f.ActorID) > 0 {
 		ee = append(ee, goqu.C("actor_id").In(f.ActorID))
+	}
+
+	return ee, f, err
+}
+
+// AnomalyBaselineFilter returns logical expressions
+//
+// This function is called from Store.QueryAnomalyBaselines() and can be extended
+// by setting Store.Filters.AnomalyBaseline. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AnomalyBaselineFilter(d drivers.Dialect, f anomalyType.BaselineFilter) (ee []goqu.Expression, _ anomalyType.BaselineFilter, err error) {
+
+	if f.NamespaceID > 0 {
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
+	}
+
+	if f.ModuleID > 0 {
+		ee = append(ee, goqu.C("rel_module").Eq(f.ModuleID))
+	}
+
+	if f.RuleID > 0 {
+		ee = append(ee, goqu.C("rel_rule").Eq(f.RuleID))
+	}
+
+	if val := strings.TrimSpace(f.Field); len(val) > 0 {
+		ee = append(ee, goqu.C("field").Eq(f.Field))
+	}
+
+	return ee, f, err
+}
+
+// AnomalyFindingFilter returns logical expressions
+//
+// This function is called from Store.QueryAnomalyFindings() and can be extended
+// by setting Store.Filters.AnomalyFinding. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AnomalyFindingFilter(d drivers.Dialect, f anomalyType.FindingFilter) (ee []goqu.Expression, _ anomalyType.FindingFilter, err error) {
+
+	if f.NamespaceID > 0 {
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
+	}
+
+	if f.ModuleID > 0 {
+		ee = append(ee, goqu.C("rel_module").Eq(f.ModuleID))
+	}
+
+	if f.RecordID > 0 {
+		ee = append(ee, goqu.C("rel_record").Eq(f.RecordID))
+	}
+
+	if val := strings.TrimSpace(f.Status); len(val) > 0 {
+		ee = append(ee, goqu.C("status").Eq(f.Status))
+	}
+
+	if val := strings.TrimSpace(f.Severity); len(val) > 0 {
+		ee = append(ee, goqu.C("severity").Eq(f.Severity))
+	}
+
+	return ee, f, err
+}
+
+// AnomalyRuleFilter returns logical expressions
+//
+// This function is called from Store.QueryAnomalyRules() and can be extended
+// by setting Store.Filters.AnomalyRule. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AnomalyRuleFilter(d drivers.Dialect, f anomalyType.RuleFilter) (ee []goqu.Expression, _ anomalyType.RuleFilter, err error) {
+
+	if expr := stateNilComparison(d, "deleted_at", f.Deleted); expr != nil {
+		ee = append(ee, expr)
+	}
+
+	if f.NamespaceID > 0 {
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
+	}
+
+	if f.ModuleID > 0 {
+		ee = append(ee, goqu.C("rel_module").Eq(f.ModuleID))
+	}
+
+	if f.Enabled {
+		ee = append(ee, goqu.C("enabled").IsTrue())
+	}
+
+	if f.Query != "" {
+		ee = append(ee, goqu.Or(
+			goqu.C("field").ILike("%"+f.Query+"%"),
+		))
 	}
 
 	return ee, f, err

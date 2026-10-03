@@ -12,6 +12,12 @@ const md = new MarkdownIt({
   breaks: true,
 })
 
+const safeMd = new MarkdownIt({
+  html: false,
+  linkify: true,
+  breaks: true,
+})
+
 export function htmlToMarkdown(html) {
   if (!html) return ''
   return turndownService.turndown(html)
@@ -20,4 +26,9 @@ export function htmlToMarkdown(html) {
 export function markdownToHtml(markdown) {
   if (!markdown) return ''
   return md.render(markdown)
+}
+
+export function markdownToSafeHtml(markdown) {
+  if (!markdown) return ''
+  return safeMd.render(markdown)
 }

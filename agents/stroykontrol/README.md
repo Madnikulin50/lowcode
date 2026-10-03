@@ -1,5 +1,9 @@
 # stroykontrol-web — agent-hosted comparison viewer
 
+> Также хостит **проверку ИД (АОСР ↔ реестр ↔ КС-2)** — пакет
+> [`idcheck/`](idcheck), пространство `stroykontrol-id`, эндпоинт
+> `POST /api/idcheck/run`. См. [compose_id/README.md](compose_id/README.md).
+
 Standalone service (like `agents/cmdb`'s `web/`) that owns the **visual**
 side of "Сравнить документы": Compose only needed a working `IFrame` page
 block (see below) — everything document-comparison-specific (fetching
@@ -77,6 +81,13 @@ deps of the Vue 3 + Vite frontend under `web/`, built via `make web` into
 `web/dist` and embedded into the binary), producing the same kind of
 page images the PDF side gets from the server. Both PDF and DOCX therefore
 share one viewer (side-by-side / opacity overlay / diff / **text**).
+XLSX follows the same client-side path: the workbook is unzipped in the
+browser (`jszip`) and each sheet is drawn as a grid (raw cell values, column
+letters and row numbers), split into pages of 50 rows. Same-named sheets on
+both sides share column widths so overlay/diff line up cell-for-cell; the
+text mode uses the backend extractor's line shape (one row per line, cells
+tab-separated, a `Лист: <name>` header per sheet). Legacy binary `.xls` is
+not supported. Try it offline with the `demo-xlsx` fixture.
 Anything else (other formats) falls back to the text-only discrepancy list.
 
 **Text mode** compares each page's actual wording, not its image: a
@@ -145,7 +156,7 @@ viewer. Fixed to always seed `page_number: 1`, the only page that's real.
 | Route | What |
 |---|---|
 | `GET /api/comparison?recordID=&namespaceID=` | Title/status/similarity/comment/file names + `pd_rd_discrepancies` for the record |
-| `GET /api/pages?recordID=&namespaceID=&side=pd\|rd` | `{supported, kind, pageCount}` — `kind` is `pdf`/`docx`/`other`; PDF is rasterized server-side on first call, DOCX reports `pageCount:0` (the browser determines it after rendering) |
+| `GET /api/pages?recordID=&namespaceID=&side=pd\|rd` | `{supported, kind, pageCount}` — `kind` is `pdf`/`docx`/`dxf`/`xlsx`/`other`; PDF is rasterized server-side on first call, DOCX/DXF/XLSX report `pageCount:0` (the browser determines it after rendering) |
 | `GET /api/page?recordID=&namespaceID=&side=pd\|rd&n=` | One PDF page as JPEG (PDF only) |
 | `GET /api/file?recordID=&namespaceID=&side=pd\|rd` | Raw attachment bytes with its Content-Type (used by the browser to render DOCX client-side) |
 | `GET /api/text?recordID=&namespaceID=&side=pd\|rd` | `{pages: [...]}` — per-page extracted text, PDF only (via `pdftotext -layout`, cached); DOCX text comes from the client's own render, no call needed |

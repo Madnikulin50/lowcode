@@ -5404,6 +5404,97 @@ export default class Compose {
     // pointing at their "image"/"thumbnail" URLs directly, it does not proxy
     // image bytes through this API.
 
+    async documentList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, query } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/namespace/${namespaceID}/document/`,
+            params: { query },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentRead (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/namespace/${namespaceID}/document/${documentID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/namespace/${namespaceID}/document/`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/namespace/${namespaceID}/document/${documentID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/namespace/${namespaceID}/document/${documentID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentReorder (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentIDs } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/namespace/${namespaceID}/document/reorder`,
+            headers: { 'Content-Type': 'application/json' },
+            data: { documentIDs },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentUpload (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentID, file } = (a as KV) || {}
+        const data = new FormData()
+        data.append('file', file as Blob)
+
+        return this.api().request({
+            method: 'post',
+            url: `/namespace/${namespaceID}/document/${documentID}/file`,
+            data,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentFile (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<Blob> {
+        const { namespaceID, documentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/namespace/${namespaceID}/document/${documentID}/file`,
+            responseType: 'blob',
+            ...extra,
+        }).then(result => result.data as Blob)
+    }
+
     async imageSearch (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
         const { q, limit } = (a as KV) || {}
 

@@ -57,6 +57,7 @@ type (
 
 	attachmentAccessController interface {
 		CanReadNamespace(context.Context, *types.Namespace) bool
+		CanUpdateNamespace(context.Context, *types.Namespace) bool
 		CanCreateNamespace(context.Context) bool
 		CanReadModule(context.Context, *types.Module) bool
 		CanReadPage(context.Context, *types.Page) bool
@@ -73,6 +74,7 @@ type (
 		CreateIconAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
 		CreateRecordAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string) (*types.Attachment, error)
 		CreateNamespaceAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
+		CreateDocumentAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
 		CreateImported(ctx context.Context, namespaceID uint64, kind, name string, meta types.AttachmentMeta, original io.ReadSeeker, originalSize int64, preview io.ReadSeeker) (*types.Attachment, error)
 		OpenOriginal(att *types.Attachment) (io.ReadSeekCloser, error)
 		OpenPreview(att *types.Attachment) (io.ReadSeekCloser, error)
@@ -561,6 +563,49 @@ func (svc attachment) CreateNamespaceAttachment(ctx context.Context, name string
 
 		// @todo limit upload on image/* only!
 
+		return svc.create(ctx, s, name, size, fh, att)
+	})
+
+	return att, svc.recordAction(ctx, aProps, AttachmentActionCreate, err)
+}
+
+func (svc attachment) CreateDocumentAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker) (att *types.Attachment, err error) {
+	var (
+		ns     *types.Namespace
+		aProps = &attachmentActionProps{namespace: &types.Namespace{ID: namespaceID}}
+	)
+
+	err = store.Tx(ctx, svc.store, func(ctx context.Context, s store.Storer) (err error) {
+		if size == 0 {
+			return AttachmentErrNotAllowedToCreateEmptyAttachment()
+		}
+		if namespaceID == 0 {
+			return AttachmentErrInvalidNamespaceID()
+		}
+
+		ns, err = loadNamespace(ctx, s, namespaceID)
+		if err != nil {
+			return err
+		}
+		aProps.setNamespace(ns)
+
+		if !svc.ac.CanUpdateNamespace(ctx, ns) {
+			return AttachmentErrNotAllowedToUpdateNamespace()
+		}
+
+		maxSize := int64(systemService.CurrentSettings.Compose.Page.Attachments.MaxSize) * megabyte
+		if maxSize <= 0 {
+			maxSize = 32 * megabyte
+		}
+		if err = svc.verifySizeAndMimetype(fh, name, size, maxSize, []string{"application/pdf", ".pdf"}); err != nil {
+			return err
+		}
+
+		att = &types.Attachment{
+			NamespaceID: namespaceID,
+			Name:        strings.TrimSpace(name),
+			Kind:        types.DocumentAttachment,
+		}
 		return svc.create(ctx, s, name, size, fh, att)
 	})
 

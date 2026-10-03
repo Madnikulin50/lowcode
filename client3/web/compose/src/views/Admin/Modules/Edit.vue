@@ -230,6 +230,18 @@
                   </a>
                 </li>
                 <li
+                  v-if="isEdit"
+                  class="nav-item"
+                >
+                  <a
+                    class="nav-link"
+                    :class="{ active: activeTab === 7 }"
+                    @click.prevent="activeTab = 7"
+                  >
+                    {{ $t('edit.anomalySettings.title') }}
+                  </a>
+                </li>
+                <li
                   v-if="isConnector"
                   class="nav-item"
                 >
@@ -602,6 +614,17 @@
                   />
                 </div>
                 <div
+                  v-if="isEdit"
+                  class="tab-pane"
+                  :class="{ active: activeTab === 7 }"
+                >
+                  <anomaly-settings
+                    v-if="activeTab === 7"
+                    :namespace="namespace"
+                    :module="module"
+                  />
+                </div>
+                <div
                   v-if="isConnector"
                   class="tab-pane"
                   :class="{ active: activeTab === 8 }"
@@ -731,6 +754,7 @@ import FieldRowEdit from 'corteza-webapp-compose/src/components/Admin/Module/Fie
 import FederationSettings from 'corteza-webapp-compose/src/components/Admin/Module/FederationSettings'
 import DalSchemaAlterations from 'corteza-webapp-compose/src/components/Admin/Module/DalSchemaAlterations'
 import DiscoverySettings from 'corteza-webapp-compose/src/components/Admin/Module/DiscoverySettings'
+import AnomalySettings from 'corteza-webapp-compose/src/components/Admin/Module/AnomalySettings'
 import DalSettings from 'corteza-webapp-compose/src/components/Admin/Module/DalSettings'
 import DataSourceSettings from 'corteza-webapp-compose/src/components/Admin/Module/DataSourceSettings'
 import RecordRevisionsSettings from 'corteza-webapp-compose/src/components/Admin/Module/RecordRevisionsSettings'

@@ -69,6 +69,27 @@ func IsDOCX(mimetype string, data []byte) bool {
 	return false
 }
 
+// IsXLSX: an OOXML spreadsheet (zip with xl/workbook.xml). Legacy binary
+// .xls is not handled — neither here nor by the backend's text extractor.
+func IsXLSX(mimetype string, data []byte) bool {
+	if strings.Contains(strings.ToLower(mimetype), "spreadsheetml") {
+		return true
+	}
+	if len(data) < 4 || data[0] != 'P' || data[1] != 'K' {
+		return false
+	}
+	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return false
+	}
+	for _, f := range zr.File {
+		if f.Name == "xl/workbook.xml" {
+			return true
+		}
+	}
+	return false
+}
+
 // IsDXF recognizes ASCII DXF: mimetype hint first (matches the CAD mimetype
 // list Compose's own attachment service accepts — image/vnd.dxf etc, see
 // server/compose/service/attachment.go), then content sniff for the group-code

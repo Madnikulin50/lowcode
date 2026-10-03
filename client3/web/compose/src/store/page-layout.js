@@ -79,7 +79,9 @@ export const usePageLayoutStore = defineStore('pageLayout', {
     async findByID ({ namespaceID, pageID, pageLayoutID, force = false } = {}) {
       if (!force) {
         const oldItem = this.getByID(pageLayoutID)
-        return new Promise((resolve) => resolve(oldItem))
+        if (oldItem) {
+          return oldItem
+        }
       }
       this.setPending(true)
       const ComposeAPI = getComposeAPI()
@@ -95,7 +97,9 @@ export const usePageLayoutStore = defineStore('pageLayout', {
     async findByPageID ({ namespaceID, pageID, force = false } = {}) {
       if (!force) {
         const oldItems = this.getByPageID(pageID)
-        return new Promise((resolve) => resolve(oldItems))
+        if (oldItems.length > 0) {
+          return oldItems
+        }
       }
       this.setPending(true)
       const ComposeAPI = getComposeAPI()

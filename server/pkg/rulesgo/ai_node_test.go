@@ -76,3 +76,37 @@ func TestAINode_NotConfiguredWhenNoCallFunc(t *testing.T) {
 		t.Fatalf("unexpected output: %#v", out)
 	}
 }
+
+func TestAINode_OptionalTimeoutContinues(t *testing.T) {
+	n := &aiExecutor{
+		call: func(ctx context.Context, agent, prompt, model string, allowMutating bool) (*AIOperationResult, error) {
+			<-ctx.Done()
+			return nil, ctx.Err()
+		},
+	}
+	node := ChainNode{Config: json.RawMessage(`{"agent":"assistant","prompt":"compare","timeout":1,"optional":true}`)}
+	ec := &ExecutionContext{Variables: map[string]interface{}{}}
+	out, err := n.Execute(context.Background(), node, ec)
+	if err != nil {
+		t.Fatalf("optional AI node must not fail the chain, got: %v", err)
+	}
+	if out["status"] != "failed" || !strings.Contains(out["error"].(string), "timed out") {
+		t.Fatalf("expected failed status with timeout error, got: %v", out)
+	}
+	if v, ok := ec.Variables["ai_response"]; !ok || v != "" {
+		t.Fatalf("expected ai_response to be set to empty string, got: %#v", v)
+	}
+}
+
+func TestAINode_TimeoutFailsWhenNotOptional(t *testing.T) {
+	n := &aiExecutor{
+		call: func(ctx context.Context, agent, prompt, model string, allowMutating bool) (*AIOperationResult, error) {
+			<-ctx.Done()
+			return nil, ctx.Err()
+		},
+	}
+	node := ChainNode{Config: json.RawMessage(`{"agent":"assistant","prompt":"compare","timeout":1}`)}
+	if _, err := n.Execute(context.Background(), node, &ExecutionContext{Variables: map[string]interface{}{}}); err == nil {
+		t.Fatal("expected timeout error for non-optional AI node")
+	}
+}

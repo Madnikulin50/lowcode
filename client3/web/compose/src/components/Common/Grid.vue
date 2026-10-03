@@ -207,9 +207,16 @@ function onLayoutUpdated (newLayout) {
   }
   // GridLayout compact/emits on every prop change. Writing back re-enters its
   // deep layout watcher and remounts page-block cards until Vue aborts.
+  // Keep authored width/height: the library's first emit after opening the
+  // builder (often right after the public page grid) must not replace h.
   if (compactSynced) return
   compactSynced = true
-  layout.value = next
+  const authored = layout.value
+  layout.value = next.map((item) => {
+    const prev = authored.find(o => o.i === item.i)
+    if (!prev) return item
+    return { ...item, w: prev.w, h: prev.h }
+  })
 }
 
 function onGridAction () {

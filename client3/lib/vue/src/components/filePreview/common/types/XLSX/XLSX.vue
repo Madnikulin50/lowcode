@@ -33,18 +33,33 @@
         </ul>
 
         <div class="table-responsive">
-          <table class="table table-sm table-bordered mb-0 xlsx-table">
+          <table class="xlsx-table">
+            <colgroup>
+              <col
+                v-for="col in grid.cols"
+                :key="col.c"
+                :style="{ width: `${col.widthPx}px` }"
+              >
+            </colgroup>
             <tbody>
               <tr
-                v-for="(row, r) in visibleRows"
-                :key="r"
+                v-for="row in grid.rows"
+                :key="row.r"
+                :style="{ height: `${row.heightPx}px` }"
               >
-                <td
-                  v-for="(cell, c) in row"
-                  :key="c"
+                <template
+                  v-for="cell in row.cells"
+                  :key="cell.c"
                 >
-                  {{ formatCell(cell) }}
-                </td>
+                  <td
+                    v-if="!cell.covered"
+                    :rowspan="cell.rowspan > 1 ? cell.rowspan : undefined"
+                    :colspan="cell.colspan > 1 ? cell.colspan : undefined"
+                    :style="cell.style"
+                  >
+                    {{ cell.text }}
+                  </td>
+                </template>
               </tr>
             </tbody>
           </table>
@@ -62,9 +77,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, useAttrs } from 'vue'
+import { ref, shallowRef, computed, onMounted, useAttrs } from 'vue'
 import PreviewStatus from '../PreviewStatus.vue'
 import { OFFICE_MAX_BYTES, assertPreviewSize, fetchBinary } from '../../binary.js'
+import { readLayout, ptToPx, colWidthToPx, DEFAULT_ROW_HEIGHT_PT, DEFAULT_COL_WIDTH_PX } from './layout.js'
 
 defineOptions({ inheritAttrs: false })
 
@@ -80,7 +96,9 @@ const emit = defineEmits<{
 
 const loading = ref(true)
 const loadError = ref<Error | null>(null)
-const sheets = ref<Record<string, any[][]>>({})
+const sheets = shallowRef<Record<string, any>>({})
+const layouts = shallowRef<Record<string, any>>({})
+let utils: any = null
 const sheetNames = ref<string[]>([])
 const activeSheet = ref('')
 
@@ -92,27 +110,119 @@ const inline = computed(() => (attrs as any).inline ?? props.inline)
 const maxRows = computed(() => inline.value ? 8 : 1000)
 const maxCols = computed(() => inline.value ? 8 : 64)
 
-const rawRows = computed(() => sheets.value[activeSheet.value] || [])
-const totalRows = computed(() => rawRows.value.length)
-const visibleRows = computed(() => {
-  return rawRows.value
-    .slice(0, maxRows.value)
-    .map(row => (row || []).slice(0, maxCols.value))
+// Visible (non-hidden) row/column indexes of the active sheet, in sheet coordinates.
+const sheetRange = computed(() => {
+  const ws = sheets.value[activeSheet.value]
+  if (!ws || !ws['!ref'] || !utils) {
+    return { rows: [] as number[], cols: [] as number[] }
+  }
+  const { s, e } = utils.decode_range(ws['!ref'])
+  const rows: number[] = []
+  const cols: number[] = []
+  for (let r = s.r; r <= e.r; r++) {
+    if (!ws['!rows']?.[r]?.hidden) rows.push(r)
+  }
+  for (let c = s.c; c <= e.c; c++) {
+    if (!ws['!cols']?.[c]?.hidden) cols.push(c)
+  }
+  return { rows, cols }
 })
-const truncated = computed(() => totalRows.value > maxRows.value || rawRows.value.some(r => (r || []).length > maxCols.value))
+
+const totalRows = computed(() => sheetRange.value.rows.length)
+
+const grid = computed(() => {
+  const ws = sheets.value[activeSheet.value]
+  const layout = layouts.value[activeSheet.value] || {}
+  const borders: Map<string, any> = layout.borders || new Map()
+  const rowIdx = sheetRange.value.rows.slice(0, maxRows.value)
+  const colIdx = sheetRange.value.cols.slice(0, maxCols.value)
+  if (!ws) {
+    return { rows: [], cols: [] }
+  }
+
+  const rowPos = new Map(rowIdx.map((r, i) => [r, i]))
+  const colPos = new Map(colIdx.map((c, i) => [c, i]))
+
+  // Merges → span at the top-left visible cell, every other cell is covered.
+  const spans = new Map<string, { rowspan: number, colspan: number }>()
+  const covered = new Set<string>()
+  for (const m of ws['!merges'] || []) {
+    const mr = rowIdx.filter(r => r >= m.s.r && r <= m.e.r)
+    const mc = colIdx.filter(c => c >= m.s.c && c <= m.e.c)
+    if (!mr.length || !mc.length) continue
+    spans.set(`${mr[0]}:${mc[0]}`, { rowspan: mr.length, colspan: mc.length })
+    for (const r of mr) {
+      for (const c of mc) {
+        if (r !== mr[0] || c !== mc[0]) covered.add(`${r}:${c}`)
+      }
+    }
+  }
+
+  const cols = colIdx.map(c => ({
+    c,
+    widthPx: colWidthToPx(ws['!cols']?.[c]) ?? layout.defaultColWidthPx ?? DEFAULT_COL_WIDTH_PX,
+  }))
+
+  const rows = rowIdx.map(r => {
+    const info = ws['!rows']?.[r]
+    const heightPx = info?.hpt != null
+      ? ptToPx(info.hpt)
+      : info?.hpx ?? ptToPx(layout.defaultRowHeightPt ?? DEFAULT_ROW_HEIGHT_PT)
+
+    return {
+      r,
+      heightPx,
+      cells: colIdx.map(c => {
+        const key = `${r}:${c}`
+        const span = spans.get(key)
+        let style = borders.get(key)
+        if (span) {
+          // Merged range draws its outer edges from the bottom/right corner cells too.
+          const lastR = rowIdx[(rowPos.get(r) as number) + span.rowspan - 1]
+          const lastC = colIdx[(colPos.get(c) as number) + span.colspan - 1]
+          const br = borders.get(`${lastR}:${lastC}`) || {}
+          const tr = borders.get(`${r}:${lastC}`) || {}
+          const bl = borders.get(`${lastR}:${c}`) || {}
+          style = {
+            ...style,
+            ...(tr.borderRight && { borderRight: tr.borderRight }),
+            ...(bl.borderBottom && { borderBottom: bl.borderBottom }),
+            ...(br.borderRight && { borderRight: br.borderRight }),
+            ...(br.borderBottom && { borderBottom: br.borderBottom }),
+          }
+        }
+        return {
+          c,
+          text: formatCell(ws[utils.encode_cell({ r, c })]),
+          style,
+          rowspan: span?.rowspan || 1,
+          colspan: span?.colspan || 1,
+          covered: covered.has(key),
+        }
+      }),
+    }
+  })
+
+  return { rows, cols }
+})
+
+const truncated = computed(() => totalRows.value > maxRows.value || sheetRange.value.cols.length > maxCols.value)
 const truncatedLabel = computed(() => {
   const tpl = labels.value.truncated || 'Showing #0 of #1 rows. Download the file to see all data.'
-  return tpl.replace('#0', String(visibleRows.value.length)).replace('#1', String(totalRows.value))
+  return tpl.replace('#0', String(grid.value.rows.length)).replace('#1', String(totalRows.value))
 })
 
 function formatCell (cell: any) {
   if (cell == null) {
     return ''
   }
-  if (cell instanceof Date) {
-    return cell.toISOString().slice(0, 10)
+  if (cell.w != null) {
+    return cell.w
   }
-  return String(cell)
+  if (cell.v instanceof Date) {
+    return cell.v.toISOString().slice(0, 10)
+  }
+  return cell.v == null ? '' : String(cell.v)
 }
 
 function onPreviewClick () {
@@ -132,12 +242,10 @@ async function init () {
     assertPreviewSize((attrs as any).meta, OFFICE_MAX_BYTES, labels.value)
     const buffer = await fetchBinary(src.value)
     const XLSX = await import('xlsx')
-    const wb = XLSX.read(buffer, { type: 'array', cellDates: true })
-    const next: Record<string, any[][]> = {}
-    for (const name of wb.SheetNames) {
-      next[name] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: false, defval: '' }) as any[][]
-    }
-    sheets.value = next
+    const wb = XLSX.read(buffer, { type: 'array', cellDates: true, cellStyles: true })
+    utils = XLSX.utils
+    layouts.value = await readLayout(buffer)
+    sheets.value = wb.Sheets
     sheetNames.value = wb.SheetNames
     activeSheet.value = wb.SheetNames[0] || ''
   } catch (err: any) {
@@ -173,11 +281,21 @@ onMounted(() => {
 
 .xlsx-table {
   font-size: 0.8rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: max-content;
+
   td {
+    padding: 0 3px;
+    line-height: 1.2;
+    vertical-align: bottom;
     white-space: nowrap;
-    max-width: 16rem;
     overflow: hidden;
     text-overflow: ellipsis;
+    // Excel-like gridlines as a shadow, so they never win border-collapse
+    // conflicts against real (dashed/dotted) borders coming as inline styles.
+    border: none;
+    box-shadow: inset -1px -1px 0 #e1e1e1;
   }
 }
 </style>

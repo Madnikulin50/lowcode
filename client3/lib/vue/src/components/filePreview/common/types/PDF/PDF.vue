@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, useAttrs } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, useAttrs, markRaw } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
 import { makePlaceholder, makeFailedPage, Page, Document } from './helpers'
 
@@ -69,6 +69,8 @@ function sleep(t: number) {
 const pages = ref<HTMLElement | null>(null)
 
 const document_ = ref<any>(null)
+// pdf.js objects use #private fields, which break when accessed through
+// Vue's reactive Proxy — Document/Page instances are kept markRaw.
 const pagesArr = ref<any[]>([])
 const show = ref(false)
 const loadError = ref<Error | undefined>(undefined)
@@ -118,7 +120,7 @@ async function pdfjsLoad(src: string) {
 
 async function loadDocument(src: any) {
   if (src instanceof Document) {
-    document_.value = new Document({ ...src, scale: props.initialScale ?? 1 })
+    document_.value = markRaw(new Document({ ...src, scale: props.initialScale ?? 1 }))
   } else if (typeof src === 'string') {
     let retries = 0
     let err: any
@@ -128,7 +130,7 @@ async function loadDocument(src: any) {
       return sleep(retries * retryBackoff)
         .then(() => pdfjsLoad(src))
         .then(pdf => {
-          document_.value = new Document({ pdf, src, scale: props.initialScale ?? 1 })
+          document_.value = markRaw(new Document({ pdf, src, scale: props.initialScale ?? 1 }))
         })
     }
 
@@ -152,7 +154,7 @@ async function renderDocument(doc: any) {
   const rf = pages.value!
   const maxPages = props.maxPages ?? 25
   const pgCount = Math.min(pageCount.value, maxPages)
-  pagesArr.value = [...new Array(pgCount)].map((_, i) => new Page({ index: i }))
+  pagesArr.value = [...new Array(pgCount)].map((_, i) => markRaw(new Page({ index: i })))
 
   if (pgCount <= 0) {
     show.value = true
@@ -162,7 +164,7 @@ async function renderDocument(doc: any) {
   for (let i = 0; i < pgCount; i++) {
     const node = makePlaceholder(labels.value)
     rf.appendChild(node)
-    pagesArr.value.splice(i, 1, new Page({ ...pagesArr.value[i], node, loading: true }))
+    pagesArr.value.splice(i, 1, markRaw(new Page({ ...pagesArr.value[i], node, loading: true })))
 
     renderPage(pagesArr.value[i], doc, rf)
       .then(page => {
@@ -178,7 +180,7 @@ async function renderDocument(doc: any) {
 
 async function renderPage(page: any, doc: any, rf: Node) {
   return doc.pdf.getPage(page.index + 1).then((p: any) => {
-    const np = new Page(page)
+    const np = markRaw(new Page(page))
     np.loading = false
     np.loaded = true
     np.page = p

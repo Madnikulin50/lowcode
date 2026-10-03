@@ -46,6 +46,8 @@ selector:
       description: Встроенный сценарий репортера
     content:
       description: Форматированный текст
+    document:
+      description: Markdown или PDF из документации пространства
     file:
       description: Галерея файлов и вложения
     iFrame:
@@ -64,6 +66,33 @@ selector:
       description: Оценка риска записи или портфельная сводка
     imageSearch:
       description: Поиск изображений по полям записи
+    anomaly:
+      description: Статистика и находки поиска аномалий
+anomaly:
+  label: Аномалии
+  allModules: Все модули
+  allSeverities: Все уровни
+  allStatuses: Все статусы
+  noFindings: Аномалии не найдены.
+  nothingToShow: Нечего показать — включите сводку или список в настройках блока.
+  module: Модуль
+  field: Поле
+  severity: Уровень
+  status: Статус
+  resolve: Решено
+  openCenter: Открыть Anomaly Center
+  severityLow: Низкий
+  severityMedium: Средний
+  severityHigh: Высокий
+  statusNew: Новая
+  statusAcknowledged: Принята
+  statusResolved: Решена
+  statusFalsePositive: Ложное срабатывание
+  configurator:
+    module: Модуль
+    showSummary: Показывать сводку
+    showList: Показывать список находок
+    limit: Строк в списке
 risk:
   label: Риск
 imageSearch:
@@ -268,6 +297,11 @@ chart:
         and: Join filters with AND
         or: Join filters with ИЛИ
         overwrite: Overwrite original filter
+document:
+  label: Документ
+  pick: Документ
+  empty: Выберите документ
+  noFile: PDF ещё не загружен
 content:
   ok: Ok
   label: Content

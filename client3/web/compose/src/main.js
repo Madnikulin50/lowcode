@@ -42,6 +42,10 @@ import { CortezaAPI } from 'corteza-lib/vue/dist'
 app.use(CortezaAPI('system'))
 app.use(CortezaAPI('compose'))
 app.use(CortezaAPI('automation'))
+// Mounted at the API root (no /anomaly prefix - see server/app/servers.go),
+// so its own paths already start with /namespace/...; override baseURL to
+// avoid CortezaAPI's default {apiBase}/anomaly.
+app.use(CortezaAPI('anomaly', { baseURL: window.CortezaAPI }))
 app.use(plugins.Settings, { api: app.config.globalProperties.$SystemAPI })
 app.use(plugins.EventBus(), { strict: true })
 app.use(plugins.UIHooks(), { app: 'compose' })
@@ -72,6 +76,7 @@ const provides = [
   ['$ComposeAPI', 'composeAPI'],
   ['$SystemAPI', 'systemAPI'],
   ['$AutomationAPI', 'automationAPI'],
+  ['$AnomalyAPI', 'anomalyAPI'],
   ['$Settings'],
   ['$auth'],
   ['$EventBus'],
@@ -89,6 +94,7 @@ window.__settings = gp.$Settings
 window.__systemAPI = gp.$SystemAPI
 window.__composeAPI = gp.$ComposeAPI
 window.__automationAPI = gp.$AutomationAPI
+window.__anomalyAPI = gp.$AnomalyAPI
 window.__eventBus = gp.$EventBus
 window.__uiHooks = gp.$UIHooks
 window.__Reminder = gp.$Reminder

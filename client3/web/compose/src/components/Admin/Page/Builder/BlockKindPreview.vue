@@ -108,6 +108,17 @@
       <circle cx="36" cy="151" r="5" fill="#4e73df" />
     </g>
 
+    <!-- Document -->
+    <g v-else-if="kind === 'Document'">
+      <rect x="24" y="54" width="36" height="44" rx="3" fill="#f8f9fc" stroke="#d1d3e2" />
+      <rect x="72" y="58" width="140" height="8" rx="2" fill="#3a3b45" />
+      <rect x="72" y="74" width="180" height="5" rx="1" fill="#858796" />
+      <rect x="72" y="86" width="160" height="5" rx="1" fill="#b7b9cc" />
+      <rect x="24" y="112" width="272" height="36" rx="4" fill="#f8f9fc" stroke="#e3e6f0" />
+      <rect x="36" y="124" width="70" height="6" rx="1" fill="#e74a3b" />
+      <rect x="36" y="134" width="48" height="5" rx="1" fill="#b7b9cc" />
+    </g>
+
     <!-- Content -->
     <g v-else-if="kind === 'Content'">
       <rect x="24" y="54" width="160" height="10" rx="2" fill="#3a3b45" />

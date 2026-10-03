@@ -148,7 +148,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'sidebar' } })
-import { ref, computed, watch, inject } from 'vue'
+import { ref, computed, watch, inject, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NoID } from 'corteza-lib/js/dist'
@@ -171,6 +171,7 @@ const { t } = useI18n()
 const $Settings = inject('$Settings')
 const $ComposeAPI = window.__composeAPI
 const $AutomationAPI = window.__automationAPI
+const $AnomalyAPI = window.__anomalyAPI
 
 const namespace = ref(undefined)
 const query = ref('')
@@ -187,9 +188,14 @@ const can = computed(() => store.rbac.can)
 
 const ruleChains = ref([])
 const ruleChainsLoading = ref(false)
+const documents = ref([])
 
 const workflows = ref([])
 const workflowsLoading = ref(false)
+
+// Whether this namespace has any anomaly rule at all (any module/field) -
+// gates whether "Anomaly Center" shows up in admin nav (see adminRoutes()).
+const anomalyEnabled = ref(false)
 
 const sidebarSettings = computed(() => $Settings.get('compose.ui.sidebar', {}) || {})
 const sidebarDensity = computed(() => sidebarSettings.value.density === 'compact' ? 'compact' : 'comfortable')
@@ -213,7 +219,7 @@ const filteredPages = computed(() => {
   if (namespace.value) {
     const p = [...(isAdminPage.value ? adminRoutes() : publicPageWrap(publicRoutes.value))]
     if (!query.value) return p
-    return p.filter(({ page: pg }) => !['pages', 'modules', 'charts', 'rulechains', 'workflows'].includes(pg.pageID) && filter.Assert(pg, query.value, 'title'))
+    return p.filter(({ page: pg }) => !['pages', 'modules', 'charts', 'documents', 'rulechains', 'workflows'].includes(pg.pageID) && filter.Assert(pg, query.value, 'title'))
   }
   return []
 })
@@ -250,7 +256,59 @@ const navItems = computed(() => {
       if (cp.page.visible) p.children.unshift(cp)
     }
   }
-  return current.filter(i => i?.page?.title || i?.page?.name)
+  const pageItems = current.filter(i => i?.page?.title || i?.page?.name)
+  if (isAdminPage.value) return pageItems
+  return [...pageItems, ...anomalyNav.value, ...documentNav.value]
+})
+const anomalyNav = computed(() => {
+  if (!anomalyEnabled.value) return []
+  const slug = route.params.slug || namespace.value?.slug || namespace.value?.namespaceID
+  if (!slug) return []
+  return [{
+    page: {
+      pageID: 'anomaly',
+      selfID: NoID,
+      name: 'namespace.anomaly',
+      title: t('navigation.anomaly', 'Anomaly Center'),
+      visible: true,
+      icon: ['fas', 'chart-line'],
+    },
+    children: [],
+    params: { slug },
+  }]
+})
+const documentNav = computed(() => {
+  const slug = route.params.slug || namespace.value?.slug || namespace.value?.namespaceID
+  if (!slug) return []
+  const q = query.value.toLowerCase()
+  const children = documents.value
+    .filter(doc => doc.visible)
+    .filter(doc => !q || String(doc.title || '').toLowerCase().includes(q))
+    .map(doc => ({
+      page: {
+        name: 'namespace.document',
+        pageID: `document-${doc.documentID}`,
+        selfID: 'documents',
+        title: doc.title,
+        visible: true,
+        icon: doc.kind === 'pdf' ? ['far', 'file-pdf'] : ['fas', 'file-lines'],
+      },
+      children: [],
+      params: { slug, documentID: doc.documentID },
+    }))
+  if (!children.length) return []
+  return [{
+    page: {
+      pageID: 'documents',
+      selfID: NoID,
+      name: 'namespace.documents',
+      title: t('sidebar.documents'),
+      visible: true,
+      section: true,
+    },
+    children,
+    params: { slug },
+  }]
 })
 const canUpdateNamespace = computed(() => namespace.value ? namespace.value.canUpdateNamespace : false)
 const namespaceID = computed(() => namespace.value ? namespace.value.namespaceID : NoID)
@@ -264,6 +322,7 @@ watch(() => route.params.slug, (slug = '') => {
 
 watch(() => namespace.value?.namespaceID, (nsID) => {
   if (!nsID) return
+  loadDocuments(nsID)
   ruleChainsLoading.value = true
   $ComposeAPI.ruleChainList({ limit: 500, namespaceID: nsID })
     .then(({ chains }) => { ruleChains.value = chains || [] })
@@ -275,7 +334,24 @@ watch(() => namespace.value?.namespaceID, (nsID) => {
     .then(({ set }) => { workflows.value = (set || []).map(i => i?.workflow || i) })
     .catch(() => { workflows.value = [] })
     .finally(() => { workflowsLoading.value = false })
+
+  $AnomalyAPI?.ruleSearch({ namespaceID: nsID, enabled: true, limit: 1 })
+    .then(({ set }) => { anomalyEnabled.value = !!(set || []).length })
+    .catch(() => { anomalyEnabled.value = false })
 }, { immediate: true })
+
+function loadDocuments (nsID) {
+  $ComposeAPI.documentList({ namespaceID: nsID })
+    .then(({ set }) => { documents.value = set || [] })
+    .catch(() => { documents.value = [] })
+}
+
+function onDocumentsChanged () {
+  if (namespace.value?.namespaceID) loadDocuments(namespace.value.namespaceID)
+}
+
+window.addEventListener('compose-documents-changed', onDocumentsChanged)
+onBeforeUnmount(() => window.removeEventListener('compose-documents-changed', onDocumentsChanged))
 
 function namespaceSelected (ns) {
   if (!ns) return
@@ -285,18 +361,26 @@ function namespaceSelected (ns) {
   if (!ns?.namespaceID) return
 
   const { namespaceID: nid, canManageNamespace, slug = '' } = ns
+  if (String(nid) === String(namespace.value?.namespaceID)) return
+
   let { name, params } = route
   if (!name) name = 'pages'
   if (name.includes('admin.modules')) name = 'admin.modules'
   else if (name.includes('admin.pages')) name = 'admin.pages'
   else if (name.includes('admin.charts')) name = 'admin.charts'
+  else if (name.includes('admin.documents')) name = 'admin.documents'
   else if (name.includes('admin.rulechains')) name = 'admin.rulechains'
   else if (name.includes('admin.workflows')) name = 'admin.workflows'
+  else if (name.includes('admin.anomaly')) name = 'admin.anomaly'
   else if (name.includes('admin.risk.models')) name = 'admin.risk.models'
   else if (name.includes('admin.risk.factors')) name = 'admin.risk.factors'
   else if (name.includes('admin.risk.registry')) name = 'admin.risk.registry'
+  else if (name.startsWith('namespace.document')) name = 'namespace.documents'
+  else if (name === 'namespace.anomaly') name = 'namespace.anomaly'
 
-  name = !params.pageID && canManageNamespace && !name.includes('namespace.') ? name : 'pages'
+  if (!name.startsWith('namespace.document') && name !== 'namespace.anomaly') {
+    name = !params.pageID && canManageNamespace && !name.includes('namespace.') ? name : 'pages'
+  }
   router.push({ name, params: { slug: slug || nid } })
 }
 
@@ -336,6 +420,22 @@ function chartIcon (chart) {
   const type = chart.config?.reports?.[0]?.metrics?.[0]?.type
   if (type && chartIconMap[type]) return chartIconMap[type]
   return chartIconMap.bar
+}
+
+function documentWrap (doc) {
+  return {
+    page: {
+      name: 'admin.documents.edit',
+      pageID: `document-${doc.documentID}`,
+      selfID: 'documents',
+      rootSelfID: 'documents',
+      title: doc.title,
+      visible: true,
+      icon: doc.kind === 'pdf' ? ['far', 'file-pdf'] : ['fas', 'file-lines'],
+    },
+    children: [],
+    params: { documentID: doc.documentID },
+  }
 }
 
 function chartWrap (chart) {
@@ -387,6 +487,9 @@ function adminRoutes () {
     ...modules.value.map((m) => moduleWrap(m, pageName)),
     { page: { pageID: 'pages', selfID: NoID, name: 'admin.pages', title: t('navigation.page'), visible: true, section: true }, children: [] },
     ...adminPageWrap(pages.value),
+    ...(anomalyEnabled.value ? [{ page: { pageID: 'anomaly', selfID: NoID, name: 'admin.anomaly', title: t('navigation.anomaly', 'Anomaly Center'), visible: true, section: true, icon: ['fas', 'chart-line'] }, children: [] }] : []),
+    { page: { pageID: 'documents', selfID: NoID, name: 'admin.documents', title: t('navigation.documents'), visible: true, section: true }, children: [] },
+    ...documents.value.map(documentWrap),
     { page: { pageID: 'charts', selfID: NoID, name: 'admin.charts', title: t('navigation.chart'), visible: true, section: true }, children: [] },
     ...charts.value.map(chartWrap),
     { page: { pageID: 'rulechains', selfID: NoID, name: 'admin.rulechains', title: t('navigation.rulechains'), visible: true, section: true }, children: [] },
@@ -432,6 +535,7 @@ function resolvePageIcon (icon, blocks) {
     if (kinds.has('SocialFeed')) return ['fas', 'rss']
     if (kinds.has('Comment')) return ['fas', 'comments']
     if (kinds.has('Tabs') || kinds.has('Navigation')) return ['fas', 'sitemap']
+    if (kinds.has('Anomaly')) return ['fas', 'triangle-exclamation']
   }
   return ['fas', 'file-alt']
 }

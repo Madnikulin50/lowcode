@@ -65,7 +65,9 @@ func isExpiredToken(err error) bool {
 		return false
 	}
 	msg := err.Error()
-	return strings.Contains(msg, "token is expired") || strings.Contains(msg, "HTTP 401")
+	// "unauthorized": the dev token was rotated by another mintToken() call
+	// (see README "Token stability") — re-minting recovers that too.
+	return strings.Contains(msg, "token is expired") || strings.Contains(msg, "HTTP 401") || strings.Contains(msg, "unauthorized")
 }
 
 // refreshToken re-mints the token, but only if it still matches failedToken

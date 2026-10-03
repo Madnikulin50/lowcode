@@ -3,7 +3,8 @@
     v-if="page"
     id="page-builder"
     ref="pageBuilder"
-    class="flex-grow-1 overflow-auto d-flex p-3 w-100 h-100 bg-light"
+    class="flex-grow-1 overflow-auto d-flex flex-column p-3 w-100 h-100 bg-light"
+    style="min-height: 0"
     tabindex="1"
   >
     <Teleport to="#topbar-title">
@@ -128,6 +129,7 @@
       v-else-if="layout"
       v-model:blocks="blocks"
       editable
+      class="h-100 flex-grow-1"
       @item-updated="onBlockUpdated"
     >
       <template
@@ -136,7 +138,7 @@
         <div
           v-if="block"
           :data-test-id="`block-${block.kind}`"
-          class="h-100"
+          class="d-flex flex-column h-100 min-h-0 position-relative"
         >
           <div
             class="toolbox border-0 p-2 m-0 text-white text-center"
@@ -210,7 +212,7 @@
             :resizing="resizing"
             :unsaved-blocks="unsavedBlocks"
             editable
-            class="h-100 p-2"
+            class="flex-grow-1 min-h-0 h-100 p-2"
             @edit-block="editBlock"
             @clone-block="cloneTabbedBlock"
             @copy-block="copyBlock"
@@ -1110,9 +1112,16 @@ function calculateNewBlockPosition (block) {
   }
 }
 
+function toISOTimestamp (value) {
+  if (value == null || value === '') return undefined
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+  return date.toISOString()
+}
+
 async function fetchPageLayouts () {
   const { namespaceID } = props.namespace
-  return store.dispatch('pageLayout/findByPageID', { namespaceID, pageID: props.pageID }).then(ly => {
+  return store.dispatch('pageLayout/findByPageID', { namespaceID, pageID: props.pageID, force: true }).then(ly => {
     layouts.value = ly.map(l => {
       l = new compose.PageLayout(l)
       l.label = l.meta.title || l.handle || l.pageLayoutID
@@ -1133,6 +1142,7 @@ function checkRequiredRecordFields () {
 }
 
 async function handleSaveLayout ({ closeOnSuccess = false, previewOnSuccess = false, alert = true } = {}) {
+  if (processing.value) return
   const { namespaceID } = props.namespace
   if (module.value && !checkRequiredRecordFields()) {
     toastErrorHandler(t('notification.page.saveFailedRequired'))()
@@ -1159,13 +1169,11 @@ async function handleSaveLayout ({ closeOnSuccess = false, previewOnSuccess = fa
   if (closeOnSuccess) processingSaveAndClose.value = true
   else processingSave.value = true
 
-  return Promise.all([
-    store.dispatch('page/findByID', { ...page.value, force: true }),
-    store.dispatch('pageLayout/findByID', { ...layout.value }),
-  ]).then(([p, ly]) => {
+  const currentLayout = layout.value
+  return store.dispatch('page/findByID', { ...page.value, force: true }).then((p) => {
     const blocksData = [
       ...p.blocks.filter(({ blockID }) => {
-        return !blocks.value.some(b => b.blockID === blockID) && layouts.value.some(({ pageLayoutID, blocks: lyBlocks }) => pageLayoutID !== ly.pageLayoutID && lyBlocks.some(b => b.blockID === blockID))
+        return !blocks.value.some(b => b.blockID === blockID) && layouts.value.some(({ pageLayoutID, blocks: lyBlocks }) => pageLayoutID !== currentLayout.pageLayoutID && lyBlocks.some(b => b.blockID === blockID))
       }),
       ...blocks.value,
     ]
@@ -1175,13 +1183,27 @@ async function handleSaveLayout ({ closeOnSuccess = false, previewOnSuccess = fa
       savePayload.meta = { ...(p.meta || {}), scenarios: page.value.meta.scenarios }
     }
     return store.dispatch('page/update', savePayload)
-      .then((freshPage) => {
+      .then(async (freshPage) => {
         page.value.blocks = freshPage.blocks
         const newBlocks = blocks.value.map(({ blockID, meta, xywh }) => {
           if (blockID === NoID) blockID = (freshPage.blocks.find(b => b.meta.tempID === meta.tempID) || {}).blockID
           return { blockID, xywh: normalizeXYWH(xywh), meta }
         })
-        return store.dispatch('pageLayout/update', { ...ly, blocks: newBlocks })
+        // Page save can bump the layout revision (workflow or a previous
+        // attempt). Re-read after that write and send the fresh updatedAt,
+        // or the optimistic lock rejects the layout with staleData.
+        const freshLayout = await store.dispatch('pageLayout/findByID', {
+          namespaceID,
+          pageID: currentLayout.pageID,
+          pageLayoutID: currentLayout.pageLayoutID,
+          force: true,
+        })
+        return store.dispatch('pageLayout/update', {
+          ...currentLayout,
+          namespaceID,
+          blocks: newBlocks,
+          updatedAt: toISOTimestamp(freshLayout && freshLayout.updatedAt),
+        })
       })
   }).then(async () => {
     unsavedBlocks.value.clear()

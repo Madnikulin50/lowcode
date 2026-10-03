@@ -67,6 +67,32 @@ edit:
     public: Public
     private: Private
     protected: Protected
+  anomalySettings:
+    title: Anomaly detection
+    description: Pick which fields the anomaly scanner should watch on this module.
+    noNumericFields: This module has no fields to watch.
+    field: Field
+    enabled: Watch
+    detector: Detector
+    threshold: Threshold
+    min: Min
+    max: Max
+    noThreshold: No threshold - any new value is flagged
+    detectorZscore: Z-score
+    detectorEwma: EWMA (self-adjusting)
+    detectorCusum: CUSUM (drift)
+    detectorMad: MAD (robust)
+    detectorRange: Range (min/max)
+    detectorRareCategory: Rare value
+    detectorNewCategory: New value
+    hint:
+      zscore: How many standard deviations from the average counts as anomalous.
+      ewma: Like z-score, but the average adapts over time and forgets old outliers.
+      cusum: How much sustained drift (accumulated deviation) triggers an alert.
+      mad: Like z-score, but robust to outliers already seen for this field.
+      range: Values outside this range are flagged.
+      rare_category: Values seen less often than this share of records (e.g. 0.01 = 1%) are flagged.
+      new_category: Any value never seen before is flagged.
   fieldPermissions: Field permissions
   manageRecordFields: Manage record fields
   moduleFieldSettings: Module field settings
@@ -300,3 +326,66 @@ searchPlaceholder: Search modules in this namespace
 title: List of Modules
 tooltip:
   permissions: Module permissions
+
+etl:
+  settings: ETL settings
+  settingsDescription: Synchronize records from external sources into this module.
+  create: New job
+  edit: Edit job
+  noJobs: No ETL jobs for this module yet.
+  name: Name
+  source: Source
+  enabled: Enabled
+  disabled: Disabled
+  format: Format
+  schedule: Schedule (cron)
+  lastRun: Last run
+  actions: Actions
+  confirmDelete: Delete this ETL job?
+  smb:
+    password: Password
+    username: Username
+    filePath: Path
+    share: Share
+    host: Host
+  mcp:
+    server: Server
+    tool: Tool
+  rest:
+    url: URL
+    method: Method
+    body: Body (JSON)
+anomaly:
+  title: Anomaly Center
+  allModules: All modules
+  allSeverities: All severities
+  allStatuses: All statuses
+  noFindings: No anomalies found for this namespace.
+  module: Module
+  field: Field
+  score: Score
+  severity: Severity
+  status: Status
+  detected: Detected
+  viewRecord: View record
+  acknowledge: Acknowledge
+  resolve: Resolve
+  falsePositive: False positive
+  severityLow: Low
+  severityMedium: Medium
+  severityHigh: High
+  statusNew: New
+  statusAcknowledged: Acknowledged
+  statusResolved: Resolved
+  statusFalsePositive: False positive
+  watchedFields: Watched fields
+  noRules: No fields are being watched for anomalies in this namespace yet.
+  detector: Detector
+  threshold: Threshold
+  enabled: Watching
+  lastScanned: Last scanned
+  neverScanned: Never scanned yet
+  loading: Loading…
+  searchPlaceholder: Search findings
+  findingSingle: finding
+  findingPlural: findings

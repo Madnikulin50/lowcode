@@ -8,6 +8,7 @@ package rdbms
 
 import (
 	"github.com/doug-martin/goqu/v9"
+	anomalyType "github.com/madnikulin50/lowcode/server/anomaly/types"
 	automationType "github.com/madnikulin50/lowcode/server/automation/types"
 	composeType "github.com/madnikulin50/lowcode/server/compose/types"
 	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
@@ -132,6 +133,346 @@ var (
 	//
 	// This function is auto-generated
 	actionlogPrimaryKeys = func(res *actionlogType.Action) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// anomalyBaselineTable represents anomalyBaselines store table
+	//
+	// This value is auto-generated
+	anomalyBaselineTable = goqu.T("anomaly_baselines")
+
+	// anomalyBaselineSelectQuery assembles select query for fetching anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_namespace",
+			"rel_module",
+			"rel_rule",
+			"field",
+			"count",
+			"state",
+			"updated_at",
+		).From(anomalyBaselineTable)
+	}
+
+	// anomalyBaselineInsertQuery assembles query inserting anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineInsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Baseline) *goqu.InsertDataset {
+		return d.Insert(anomalyBaselineTable).
+			Rows(goqu.Record{
+				"id":            res.ID,
+				"rel_namespace": res.NamespaceID,
+				"rel_module":    res.ModuleID,
+				"rel_rule":      res.RuleID,
+				"field":         res.Field,
+				"count":         res.Count,
+				"state":         res.State,
+				"updated_at":    res.UpdatedAt,
+			})
+	}
+
+	// anomalyBaselineUpsertQuery assembles (insert+on-conflict) query for replacing anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineUpsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Baseline) *goqu.InsertDataset {
+		var target = `,id`
+
+		return anomalyBaselineInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_namespace": res.NamespaceID,
+						"rel_module":    res.ModuleID,
+						"rel_rule":      res.RuleID,
+						"field":         res.Field,
+						"count":         res.Count,
+						"state":         res.State,
+						"updated_at":    res.UpdatedAt,
+					},
+				),
+			)
+	}
+
+	// anomalyBaselineUpdateQuery assembles query for updating anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineUpdateQuery = func(d goqu.DialectWrapper, res *anomalyType.Baseline) *goqu.UpdateDataset {
+		return d.Update(anomalyBaselineTable).
+			Set(goqu.Record{
+				"rel_namespace": res.NamespaceID,
+				"rel_module":    res.ModuleID,
+				"rel_rule":      res.RuleID,
+				"field":         res.Field,
+				"count":         res.Count,
+				"state":         res.State,
+				"updated_at":    res.UpdatedAt,
+			}).
+			Where(anomalyBaselinePrimaryKeys(res))
+	}
+
+	// anomalyBaselineDeleteQuery assembles delete query for removing anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(anomalyBaselineTable).Where(ee...)
+	}
+
+	// anomalyBaselineDeleteQuery assembles delete query for removing anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(anomalyBaselineTable)
+	}
+
+	// anomalyBaselinePrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	anomalyBaselinePrimaryKeys = func(res *anomalyType.Baseline) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// anomalyFindingTable represents anomalyFindings store table
+	//
+	// This value is auto-generated
+	anomalyFindingTable = goqu.T("anomaly_findings")
+
+	// anomalyFindingSelectQuery assembles select query for fetching anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_namespace",
+			"rel_module",
+			"rel_record",
+			"rel_rule",
+			"score",
+			"severity",
+			"status",
+			"explanation",
+			"created_at",
+			"updated_at",
+		).From(anomalyFindingTable)
+	}
+
+	// anomalyFindingInsertQuery assembles query inserting anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingInsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Finding) *goqu.InsertDataset {
+		return d.Insert(anomalyFindingTable).
+			Rows(goqu.Record{
+				"id":            res.ID,
+				"rel_namespace": res.NamespaceID,
+				"rel_module":    res.ModuleID,
+				"rel_record":    res.RecordID,
+				"rel_rule":      res.RuleID,
+				"score":         res.Score,
+				"severity":      res.Severity,
+				"status":        res.Status,
+				"explanation":   res.Explanation,
+				"created_at":    res.CreatedAt,
+				"updated_at":    res.UpdatedAt,
+			})
+	}
+
+	// anomalyFindingUpsertQuery assembles (insert+on-conflict) query for replacing anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingUpsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Finding) *goqu.InsertDataset {
+		var target = `,id`
+
+		return anomalyFindingInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_namespace": res.NamespaceID,
+						"rel_module":    res.ModuleID,
+						"rel_record":    res.RecordID,
+						"rel_rule":      res.RuleID,
+						"score":         res.Score,
+						"severity":      res.Severity,
+						"status":        res.Status,
+						"explanation":   res.Explanation,
+						"created_at":    res.CreatedAt,
+						"updated_at":    res.UpdatedAt,
+					},
+				),
+			)
+	}
+
+	// anomalyFindingUpdateQuery assembles query for updating anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingUpdateQuery = func(d goqu.DialectWrapper, res *anomalyType.Finding) *goqu.UpdateDataset {
+		return d.Update(anomalyFindingTable).
+			Set(goqu.Record{
+				"rel_namespace": res.NamespaceID,
+				"rel_module":    res.ModuleID,
+				"rel_record":    res.RecordID,
+				"rel_rule":      res.RuleID,
+				"score":         res.Score,
+				"severity":      res.Severity,
+				"status":        res.Status,
+				"explanation":   res.Explanation,
+				"created_at":    res.CreatedAt,
+				"updated_at":    res.UpdatedAt,
+			}).
+			Where(anomalyFindingPrimaryKeys(res))
+	}
+
+	// anomalyFindingDeleteQuery assembles delete query for removing anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(anomalyFindingTable).Where(ee...)
+	}
+
+	// anomalyFindingDeleteQuery assembles delete query for removing anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(anomalyFindingTable)
+	}
+
+	// anomalyFindingPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	anomalyFindingPrimaryKeys = func(res *anomalyType.Finding) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// anomalyRuleTable represents anomalyRules store table
+	//
+	// This value is auto-generated
+	anomalyRuleTable = goqu.T("anomaly_rules")
+
+	// anomalyRuleSelectQuery assembles select query for fetching anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_namespace",
+			"rel_module",
+			"field",
+			"detector",
+			"threshold",
+			"enabled",
+			"params",
+			"last_scanned_at",
+			"created_at",
+			"created_by",
+			"updated_at",
+			"updated_by",
+			"deleted_at",
+			"deleted_by",
+		).From(anomalyRuleTable)
+	}
+
+	// anomalyRuleInsertQuery assembles query inserting anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleInsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Rule) *goqu.InsertDataset {
+		return d.Insert(anomalyRuleTable).
+			Rows(goqu.Record{
+				"id":              res.ID,
+				"rel_namespace":   res.NamespaceID,
+				"rel_module":      res.ModuleID,
+				"field":           res.Field,
+				"detector":        res.Detector,
+				"threshold":       res.Threshold,
+				"enabled":         res.Enabled,
+				"params":          res.Params,
+				"last_scanned_at": res.LastScannedAt,
+				"created_at":      res.CreatedAt,
+				"created_by":      res.CreatedBy,
+				"updated_at":      res.UpdatedAt,
+				"updated_by":      res.UpdatedBy,
+				"deleted_at":      res.DeletedAt,
+				"deleted_by":      res.DeletedBy,
+			})
+	}
+
+	// anomalyRuleUpsertQuery assembles (insert+on-conflict) query for replacing anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleUpsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Rule) *goqu.InsertDataset {
+		var target = `,id`
+
+		return anomalyRuleInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_namespace":   res.NamespaceID,
+						"rel_module":      res.ModuleID,
+						"field":           res.Field,
+						"detector":        res.Detector,
+						"threshold":       res.Threshold,
+						"enabled":         res.Enabled,
+						"params":          res.Params,
+						"last_scanned_at": res.LastScannedAt,
+						"created_at":      res.CreatedAt,
+						"created_by":      res.CreatedBy,
+						"updated_at":      res.UpdatedAt,
+						"updated_by":      res.UpdatedBy,
+						"deleted_at":      res.DeletedAt,
+						"deleted_by":      res.DeletedBy,
+					},
+				),
+			)
+	}
+
+	// anomalyRuleUpdateQuery assembles query for updating anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleUpdateQuery = func(d goqu.DialectWrapper, res *anomalyType.Rule) *goqu.UpdateDataset {
+		return d.Update(anomalyRuleTable).
+			Set(goqu.Record{
+				"rel_namespace":   res.NamespaceID,
+				"rel_module":      res.ModuleID,
+				"field":           res.Field,
+				"detector":        res.Detector,
+				"threshold":       res.Threshold,
+				"enabled":         res.Enabled,
+				"params":          res.Params,
+				"last_scanned_at": res.LastScannedAt,
+				"created_at":      res.CreatedAt,
+				"created_by":      res.CreatedBy,
+				"updated_at":      res.UpdatedAt,
+				"updated_by":      res.UpdatedBy,
+				"deleted_at":      res.DeletedAt,
+				"deleted_by":      res.DeletedBy,
+			}).
+			Where(anomalyRulePrimaryKeys(res))
+	}
+
+	// anomalyRuleDeleteQuery assembles delete query for removing anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(anomalyRuleTable).Where(ee...)
+	}
+
+	// anomalyRuleDeleteQuery assembles delete query for removing anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(anomalyRuleTable)
+	}
+
+	// anomalyRulePrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	anomalyRulePrimaryKeys = func(res *anomalyType.Rule) goqu.Ex {
 		return goqu.Ex{
 			"id": res.ID,
 		}

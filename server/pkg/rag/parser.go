@@ -3,11 +3,14 @@ package rag
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io"
+	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/ledongthuc/pdf"
 )
@@ -193,34 +196,90 @@ func extractDocxTextSimple(xmlData []byte) string {
 	return strings.Join(parts, "")
 }
 
+// pdftotextTimeout bounds the external extractor so a pathological file
+// cannot stall the caller (rule chains, RAG ingest) indefinitely.
+const pdftotextTimeout = 2 * time.Minute
+
 func parsePDF(data []byte) (*ParsedDocument, error) {
+	// Prefer poppler's pdftotext when installed: it handles PNG predictors,
+	// CID fonts and Cyrillic far better than the pure-Go reader below.
+	if text, err := pdftotext(data); err == nil {
+		return newPDFDocument(text, false), nil
+	}
+	return parsePDFGo(data)
+}
+
+func pdftotext(data []byte) (string, error) {
+	bin, err := exec.LookPath("pdftotext")
+	if err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), pdftotextTimeout)
+	defer cancel()
+	var out, stderr bytes.Buffer
+	cmd := exec.CommandContext(ctx, bin, "-enc", "UTF-8", "-q", "-", "-")
+	cmd.Stdin = bytes.NewReader(data)
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("pdftotext: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	// Form feeds separate pages.
+	return strings.ReplaceAll(out.String(), "\f", "\n"), nil
+}
+
+func parsePDFGo(data []byte) (*ParsedDocument, error) {
 	reader := bytes.NewReader(data)
 	size := reader.Size()
 	pdfReader, err := pdf.NewReader(reader, size)
 	if err != nil {
 		return nil, fmt.Errorf("parse pdf: %w", err)
 	}
-	var text strings.Builder
+	var (
+		text    strings.Builder
+		skipped int
+	)
 	for i := 1; i <= pdfReader.NumPage(); i++ {
-		page := pdfReader.Page(i)
-		if page.V.IsNull() {
-			continue
+		if !appendPDFPageText(&text, pdfReader, i) {
+			skipped++
 		}
-		content := page.Content()
-		for _, t := range content.Text {
-			text.WriteString(t.S)
-			text.WriteString(" ")
-		}
-		text.WriteString("\n")
 	}
-	result := strings.TrimSpace(text.String())
-	title := extractTitle(result)
-	doc := &ParsedDocument{Text: result, Title: title, Kind: "pdf"}
+	doc := newPDFDocument(text.String(), skipped > 0)
+	return doc, nil
+}
+
+// appendPDFPageText extracts one page; the pdf library panics on some
+// encodings (e.g. unsupported stream predictors), so a bad page is skipped
+// rather than aborting the whole document.
+func appendPDFPageText(text *strings.Builder, r *pdf.Reader, i int) (ok bool) {
+	defer func() {
+		if recover() != nil {
+			ok = false
+		}
+	}()
+	page := r.Page(i)
+	if page.V.IsNull() {
+		return true
+	}
+	content := page.Content()
+	var b strings.Builder
+	for _, t := range content.Text {
+		b.WriteString(t.S)
+		b.WriteString(" ")
+	}
+	text.WriteString(b.String())
+	text.WriteString("\n")
+	return true
+}
+
+func newPDFDocument(text string, partial bool) *ParsedDocument {
+	result := strings.TrimSpace(strings.ReplaceAll(text, "\x00", ""))
+	doc := &ParsedDocument{Text: result, Title: extractTitle(result), Kind: "pdf", Partial: partial}
 	if result == "" {
 		doc.NeedsOCR = true
 		doc.Partial = true
 	}
-	return doc, nil
+	return doc
 }
 
 var titleRe = regexp.MustCompile(`(?m)^(.{1,100})$`)

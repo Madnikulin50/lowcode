@@ -62,7 +62,7 @@
                 :options="moduleFields"
                 :selectable="option => !fields.includes(option.name)"
                 :reduce="f => f.name"
-                @input="addField"
+                @update:modelValue="addField"
               />
               <hr class="my-3">
             </template>
@@ -101,7 +101,8 @@
 defineOptions({ i18nOptions: { namespaces: 'block' } })
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { compose } from 'corteza-lib/js/dist'
+import { compose, validator } from 'corteza-lib/js/dist'
+import { composables } from 'corteza-lib/vue/dist'
 import FieldEditor from 'corteza-webapp-compose/src/components/ModuleFields/Editor'
 
 const { t: $t } = useI18n({ useScope: 'global' })
@@ -117,17 +118,21 @@ const props = defineProps({
   allowAddField: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'save'])
+const { toastSuccess, toastErrorHandler } = composables.useToast()
 
 const showModal = ref(false)
+const processing = ref(false)
 const selectedField = ref(undefined)
 const fields = ref([])
 
 // Inline from record mixin
 const record = ref(new compose.Record(props.module, {}))
 
-function fieldErrors(field) {
-  return {}
+const fieldErrorSet = new validator.Validated()
+
+function fieldErrors () {
+  return fieldErrorSet
 }
 
 function isFieldEditable(field) {
@@ -215,24 +220,38 @@ function setDefaultValues() {
   fields.value = []
 }
 
-// These come from the record mixin - stub them out
-async function handleBulkUpdateSelectedRecords(query) {
-  const $ComposeAPI = window.__composeAPI
-  const { namespaceID, moduleID } = props.module
-  // This would normally call recordPatch API - simplified stub
-  const values = {}
+async function handleBulkUpdateSelectedRecords (query) {
+  if (!query || processing.value) return
+  processing.value = true
+  const values = []
   fields.value.forEach(f => {
-    if (record.value.values[f]) {
-      values[f] = record.value.values[f]
+    const { name, isMulti, isSystem } = getField(f)
+    if (!name) return
+    const value = isSystem ? record.value[name] : record.value.values[name]
+    if (!isMulti) {
+      values.push({ name, value: value?.toString() ?? '' })
+      return
     }
+    const list = Array.isArray(value) ? value.filter(v => v !== undefined) : []
+    if (!list.length) {
+      values.push({ name })
+      return
+    }
+    list.forEach(v => values.push({ name, value: v?.toString() ?? '' }))
   })
-  if (Object.keys(values).length && query) {
-    try {
-      await $ComposeAPI.recordPatch({ namespaceID, moduleID, values, query })
-      showModal.value = false
-    } catch (e) {
-      // error handling
-    }
+
+  const namespaceID = props.module.namespaceID || props.namespace.namespaceID
+  const moduleID = props.module.moduleID
+  try {
+    await window.__composeAPI.recordPatch({ namespaceID, moduleID, values, query })
+    toastSuccess($t('notification.record.bulkRecordUpdateSuccess'))
+    showModal.value = false
+    emit('save')
+    window.dispatchEvent(new CustomEvent('refetch-records', { detail: { stayOnPage: true } }))
+  } catch (e) {
+    toastErrorHandler($t('notification.record.deleteBulkRecordUpdateFailed'))(e)
+  } finally {
+    processing.value = false
   }
 }
 </script>
