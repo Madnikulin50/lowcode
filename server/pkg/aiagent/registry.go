@@ -154,3 +154,13 @@ func (r *Registry) RunAgentConfirmed(ctx context.Context, name, input string, co
 	}
 	return agent.RunConfirmed(ctx, input, contextData, confirmed), nil
 }
+
+// ExecApproved executes previously proposed, human-approved tool calls on
+// the named agent - see Agent.ExecApproved.
+func (r *Registry) ExecApproved(ctx context.Context, name string, calls []Call) (string, error) {
+	agent := r.Get(name)
+	if agent == nil {
+		return "", fmt.Errorf("agent not found: %s", name)
+	}
+	return agent.ExecApproved(ctx, calls)
+}

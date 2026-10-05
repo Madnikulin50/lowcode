@@ -3,6 +3,7 @@
 // This is a generated file.
 // See README.md file for update instructions
 
+import { postForEvents, StreamEvent } from './sse'
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 
 interface KV {
@@ -5091,6 +5092,35 @@ export default class Compose {
             data: a,
             ...extra,
         }).then(result => stdResolve(result))
+    }
+
+    // Tries one AI node against the real model with a sample input (hand-written)
+    async ruleChainNodeTest (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { type, config, input } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: '/admin/rulechain/node-test',
+            headers: { 'Content-Type': 'application/json' },
+            data: { type, config, input },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    // Same as ruleChainNodeTest, streamed: `onEvent` gets {status}, {token, reason}
+    // or {attempt} while the model works; resolves with the final event, whose
+    // `result` is what ruleChainNodeTest returns (hand-written)
+    async ruleChainNodeTestStream (a: KV, onEvent: (ev: StreamEvent) => void, signal?: AbortSignal): Promise<StreamEvent> {
+        const { type, config, input } = (a as KV) || {}
+        const path = '/admin/rulechain/node-test?stream=1'
+
+        return postForEvents({
+            url: this.baseURL ? `${this.baseURL.replace(/\/+$/, '')}${path}` : path,
+            headers: this.headers,
+            accessToken: this.accessTokenFn ? this.accessTokenFn() : undefined,
+            body: { type, config, input },
+            signal,
+        }, onEvent)
     }
 
     async ruleChainNodeTypes (extra: AxiosRequestConfig = {}): Promise<KV> {

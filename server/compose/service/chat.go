@@ -36,6 +36,9 @@ type (
 	pendingToolCalls struct {
 		Calls     []aiagent.Call
 		Namespace uint64
+		// Skills the run had loaded when it stopped for confirmation; the
+		// tools they brought must exist again to run the approved calls
+		Skills []string
 	}
 
 	chatService struct {
@@ -542,7 +545,7 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 				if ns == 0 {
 					ns = pending.Namespace
 				}
-				opt := c.chatRuntimeOpts(ctx, ask, client, ns, pendingPrompt(pending.Calls), nil)
+				opt := c.chatRuntimeOpts(ctx, ask, client, ns, pendingPrompt(pending.Calls), nil, pending.Skills...)
 				opt.Continue = confirmContinue
 				out := aiagent.ContinueFromTools(ctx, opt, pending.Calls)
 				if out.Err != nil {
@@ -589,7 +592,7 @@ func (c *chatService) Ask(ctx context.Context, ask *ChatPromptArguments) (interf
 		return nil, out.Err
 	}
 	if out.ConfirmNeeded {
-		c.storePending(ask.Chat, out.ConfirmCalls, ask.Namespace)
+		c.storePending(ask.Chat, out.ConfirmCalls, ask.Namespace, out.Skills)
 		return map[string]any{"response": out.Output + confirmFence(out.ConfirmCalls)}, nil
 	}
 	return map[string]any{"response": out.Output}, nil
@@ -630,7 +633,7 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 		return out.Err
 	}
 	if out.ConfirmNeeded {
-		c.storePending(ask.Chat, out.ConfirmCalls, ask.Namespace)
+		c.storePending(ask.Chat, out.ConfirmCalls, ask.Namespace, out.Skills)
 		if err := stream(confirmFence(out.ConfirmCalls), "", false); err != nil {
 			return err
 		}
@@ -638,7 +641,7 @@ func (c *chatService) AskStream(ctx context.Context, ask *ChatPromptArguments, s
 	return stream("", "", true)
 }
 
-func (c *chatService) chatRuntimeOpts(ctx context.Context, ask *ChatPromptArguments, client *chat.Client, namespaceID uint64, toolPrompt string, stream chat.StreamFunc) aiagent.Options {
+func (c *chatService) chatRuntimeOpts(ctx context.Context, ask *ChatPromptArguments, client *chat.Client, namespaceID uint64, toolPrompt string, stream chat.StreamFunc, restoreSkills ...string) aiagent.Options {
 	extra := map[string]string{}
 	if namespaceID > 0 {
 		extra["namespaceID"] = fmt.Sprintf("%d", namespaceID)
@@ -649,7 +652,7 @@ func (c *chatService) chatRuntimeOpts(ctx context.Context, ask *ChatPromptArgume
 		tools = c.getTools(ctx, namespaceID, toolPrompt)
 	}
 	msgs := c.buildMessages(ctx, ask, useTools)
-	return aiagent.Options{
+	opt := aiagent.Options{
 		Client:       client,
 		Messages:     msgs,
 		Tools:        tools,
@@ -663,6 +666,8 @@ func (c *chatService) chatRuntimeOpts(ctx context.Context, ask *ChatPromptArgume
 		EmptyAnswer:  "Модель не сгенерировала ответ.",
 		Temperature:  ask.Temperature,
 	}
+	// skills of the assistant: a catalog to load from, and the tools they bring
+	return aiagent.AttachSkills(ctx, opt, aiagent.AssistantSkills(), restoreSkills)
 }
 
 func chatContinue(_ string, toolResult string, _ []aiagent.Call) aiagent.ContinueHint {
@@ -813,11 +818,11 @@ func (c *chatService) WarmUp(ctx context.Context, model string) error {
 
 type CallParam = aiagent.Call
 
-func (c *chatService) storePending(chatID string, calls []CallParam, namespaceID uint64) {
+func (c *chatService) storePending(chatID string, calls []CallParam, namespaceID uint64, skills []string) {
 	if chatID == "" || c.pending == nil || len(calls) == 0 {
 		return
 	}
-	c.pending.Set(chatID, pendingToolCalls{Calls: calls, Namespace: namespaceID}, ttlcache.DefaultTTL)
+	c.pending.Set(chatID, pendingToolCalls{Calls: calls, Namespace: namespaceID, Skills: skillHandles(skills)}, ttlcache.DefaultTTL)
 }
 
 func callSummary(call CallParam) string {
@@ -895,7 +900,7 @@ func (c *chatService) handlePendingStream(ctx context.Context, ask *ChatPromptAr
 	if err != nil {
 		return true, err
 	}
-	opt := c.chatRuntimeOpts(ctx, ask, client, ns, pendingPrompt(pending.Calls), stream)
+	opt := c.chatRuntimeOpts(ctx, ask, client, ns, pendingPrompt(pending.Calls), stream, pending.Skills...)
 	opt.Continue = confirmContinue
 	out := aiagent.ContinueFromTools(ctx, opt, pending.Calls)
 	if out.Err != nil {
@@ -1252,4 +1257,15 @@ func moduleDeleteRecord(ctx context.Context, namespaceID, moduleID, recordID uin
 	}
 
 	return fmt.Sprintf("Record %d deleted from '%s'.", recordID, module.Name)
+}
+
+// skillHandles turns "handle@version" refs into handles; a restored run follows
+// the version in use now, like the confirmation it serves
+func skillHandles(refs []string) []string {
+	out := make([]string, 0, len(refs))
+	for _, r := range refs {
+		h, _ := aiagent.SplitSkillRef(r)
+		out = append(out, h)
+	}
+	return out
 }

@@ -11,10 +11,10 @@ package rulesgo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
+
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
+	"github.com/madnikulin50/lowcode/server/pkg/chat"
 )
 
 type AIOperationConfig struct {
@@ -42,19 +42,31 @@ type aiOperationExecutor struct {
 }
 
 func (n *aiOperationExecutor) Execute(ctx context.Context, node ChainNode, ec *ExecutionContext) (map[string]interface{}, error) {
+	out, trace, err := n.execute(ctx, node, ec)
+	if trace != nil {
+		recordTrace(ctx, trace.Map())
+	}
+	return out, err
+}
+
+func (n *aiOperationExecutor) execute(ctx context.Context, node ChainNode, ec *ExecutionContext) (map[string]interface{}, *aiagent.CallTrace, error) {
 	cfg, err := ParseNodeConfig[AIOperationConfig](node.Config)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	rawPrompt, promptRef, err := aiagent.ResolvePrompt(ctx, cfg.Prompt)
+	if err != nil {
+		return nil, nil, fmt.Errorf("ai.operation: %w", err)
 	}
 	cfg.Agent = resolveTemplateValue(cfg.Agent, ec)
-	cfg.Prompt = resolveTemplateValue(cfg.Prompt, ec)
+	cfg.Prompt = resolveTemplateValue(rawPrompt, ec)
 	cfg.Model = resolveTemplateValue(cfg.Model, ec)
 
 	if cfg.Agent == "" {
-		return nil, fmt.Errorf("ai.operation: agent is required")
+		return nil, nil, fmt.Errorf("ai.operation: agent is required")
 	}
 	if cfg.Prompt == "" {
-		return nil, fmt.Errorf("ai.operation: prompt is required")
+		return nil, nil, fmt.Errorf("ai.operation: prompt is required")
 	}
 
 	inputs := make(map[string]interface{}, len(cfg.Inputs))
@@ -63,180 +75,77 @@ func (n *aiOperationExecutor) Execute(ctx context.Context, node ChainNode, ec *E
 	}
 
 	if n.call == nil {
-		return map[string]interface{}{"agent": cfg.Agent, "status": "not_configured"}, nil
+		return map[string]interface{}{"agent": cfg.Agent, "status": "not_configured"}, nil, nil
 	}
 
 	// MaxRetries is taken at face value (0 = try once, no retry): a plain
 	// int can't tell "explicitly 0" apart from "field omitted" in JSON, so
 	// clamping a zero value up to some implicit default would silently
 	// override an explicit "don't retry" from the chain author.
-	maxRetries := cfg.MaxRetries
-	if maxRetries < 0 {
-		maxRetries = 0
+	sr, err := aiagent.RunStructured(ctx, aiagent.BudgetedRunner(n.runner()), aiagent.StructuredRequest{
+		Agent:         cfg.Agent,
+		Prompt:        cfg.Prompt,
+		PromptRef:     promptRef,
+		Model:         cfg.Model,
+		Inputs:        inputs,
+		OutputSchema:  cfg.OutputSchema,
+		AllowMutating: cfg.AllowMutating,
+		MaxRetries:    cfg.MaxRetries,
+	})
+	trace := &sr.Trace
+	if err != nil {
+		return nil, trace, fmt.Errorf("ai.operation: %w", err)
 	}
 
-	basePrompt := buildOperationPrompt(cfg.Prompt, inputs, cfg.OutputSchema)
-	prompt := basePrompt
+	return map[string]interface{}{
+		"success": true,
+		"agent":   cfg.Agent,
+		"result":  sr.Result,
+		"raw":     sr.Raw,
+	}, trace, nil
+}
 
-	var lastErr error
-	for attempt := 0; attempt <= maxRetries; attempt++ {
-		res, err := n.call(ctx, cfg.Agent, prompt, cfg.Model, cfg.AllowMutating)
+// runner adapts the injected AICall to the shared structured-call loop. The
+// model override travels on the context (aiagent.ContextWithModel).
+func (n *aiOperationExecutor) runner() aiagent.Runner {
+	return func(ctx context.Context, agent, prompt string, allowMutating bool) (*aiagent.AgentResult, error) {
+		res, err := n.call(ctx, agent, prompt, aiagent.ModelFromContext(ctx), allowMutating)
 		if err != nil {
-			return nil, fmt.Errorf("ai.operation: %w", err)
-		}
-		if res.ConfirmNeeded {
-			return nil, fmt.Errorf("ai.operation: blocked - agent attempted a mutating action requiring confirmation (%s) - set allowMutating:true on this node to permit it", strings.Join(res.ConfirmCalls, ", "))
+			return nil, err
 		}
 
-		jsonStr, ok := extractJSONObject(res.Output)
-		if !ok {
-			lastErr = fmt.Errorf("response did not contain a JSON object: %s", truncateForError(res.Output, 200))
-			prompt = retryPrompt(basePrompt, lastErr)
-			continue
+		out := &aiagent.AgentResult{
+			Success:          res.Success,
+			Output:           res.Output,
+			Error:            res.Error,
+			ConfirmNeeded:    res.ConfirmNeeded,
+			Model:            res.Model,
+			LLMCalls:         res.LLMCalls,
+			PromptTokens:     res.PromptTokens,
+			CompletionTokens: res.CompletionTokens,
 		}
-
-		var result map[string]interface{}
-		if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
-			lastErr = fmt.Errorf("invalid JSON: %w", err)
-			prompt = retryPrompt(basePrompt, lastErr)
-			continue
+		for _, name := range res.ConfirmCalls {
+			out.ConfirmCalls = append(out.ConfirmCalls, aiagent.Call{Name: name})
 		}
-
-		if len(cfg.OutputSchema) > 0 {
-			if err := validateOutputSchema(result, cfg.OutputSchema); err != nil {
-				lastErr = err
-				prompt = retryPrompt(basePrompt, lastErr)
-				continue
+		if len(res.Tools) > 0 {
+			step := aiagent.AgentStep{Type: "execute"}
+			for _, name := range res.Tools {
+				step.Tools = append(step.Tools, chat.ToolCall{Name: name})
 			}
+			out.Steps = []aiagent.AgentStep{step}
 		}
-
-		return map[string]interface{}{
-			"success": true,
-			"agent":   cfg.Agent,
-			"result":  result,
-			"raw":     res.Output,
-		}, nil
-	}
-
-	return nil, fmt.Errorf("ai.operation: agent did not produce a valid response after %d attempt(s): %w", maxRetries+1, lastErr)
-}
-
-func retryPrompt(basePrompt string, lastErr error) string {
-	return basePrompt + "\n\nYour previous answer was rejected: " + lastErr.Error() +
-		"\nRespond again with ONLY the JSON object, no prose, no markdown fences, matching every required field exactly."
-}
-
-// buildOperationPrompt appends a rendered input-parameters block and a
-// strict output-contract instruction to the base prompt.
-func buildOperationPrompt(base string, inputs map[string]interface{}, outputSchema map[string]string) string {
-	var b strings.Builder
-	b.WriteString(base)
-
-	if len(inputs) > 0 {
-		if raw, err := json.MarshalIndent(inputs, "", "  "); err == nil {
-			b.WriteString("\n\n## Input parameters\n```json\n")
-			b.Write(raw)
-			b.WriteString("\n```\n")
-		}
-	}
-
-	if len(outputSchema) > 0 {
-		keys := make([]string, 0, len(outputSchema))
-		for k := range outputSchema {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-
-		b.WriteString("\n## Required output\nRespond with ONLY a single JSON object with exactly these fields (no prose, no markdown fences):\n")
-		for _, k := range keys {
-			fmt.Fprintf(&b, "- %q: %s\n", k, outputSchema[k])
-		}
-	}
-
-	return b.String()
-}
-
-// extractJSONObject finds the first balanced {...} object in s, tolerating
-// surrounding prose or ```json fences (LLMs add these despite instructions
-// not to).
-func extractJSONObject(s string) (string, bool) {
-	start := strings.IndexByte(s, '{')
-	if start < 0 {
-		return "", false
-	}
-
-	depth := 0
-	inString := false
-	escaped := false
-	for i := start; i < len(s); i++ {
-		c := s[i]
-		if inString {
-			switch {
-			case escaped:
-				escaped = false
-			case c == '\\':
-				escaped = true
-			case c == '"':
-				inString = false
-			}
-			continue
-		}
-		switch c {
-		case '"':
-			inString = true
-		case '{':
-			depth++
-		case '}':
-			depth--
-			if depth == 0 {
-				return s[start : i+1], true
-			}
-		}
-	}
-	return "", false
-}
-
-func validateOutputSchema(result map[string]interface{}, schema map[string]string) error {
-	keys := make([]string, 0, len(schema))
-	for k := range schema {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, field := range keys {
-		wantType := schema[field]
-		v, ok := result[field]
-		if !ok {
-			return fmt.Errorf("missing required field %q", field)
-		}
-		if !jsonTypeMatches(v, wantType) {
-			return fmt.Errorf("field %q: expected %s, got %T", field, wantType, v)
-		}
-	}
-	return nil
-}
-
-func jsonTypeMatches(v interface{}, want string) bool {
-	switch want {
-	case "string":
-		_, ok := v.(string)
-		return ok
-	case "number":
-		_, ok := v.(float64)
-		return ok
-	case "boolean":
-		_, ok := v.(bool)
-		return ok
-	case "array":
-		_, ok := v.([]interface{})
-		return ok
-	case "object":
-		_, ok := v.(map[string]interface{})
-		return ok
-	default:
-		return true // unknown declared type - don't block on something we can't check
+		return out, nil
 	}
 }
+
+// The prompt contract, JSON extraction and schema validation are shared with
+// the automation workflow ai* functions - see pkg/aiagent/structured.go.
+var (
+	retryPrompt          = aiagent.RetryPrompt
+	buildOperationPrompt = aiagent.BuildOperationPrompt
+	extractJSONObject    = aiagent.ExtractJSONObject
+	validateOutputSchema = aiagent.ValidateOutputSchema
+)
 
 func truncateForError(s string, n int) string {
 	if len(s) <= n {

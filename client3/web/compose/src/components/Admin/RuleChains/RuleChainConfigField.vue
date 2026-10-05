@@ -35,6 +35,7 @@
         v-for="opt in field.options || []"
         :key="opt"
         :value="opt"
+        :title="(field.optionLabels || {})[opt]"
       >
         {{ opt }}
       </option>
@@ -117,7 +118,28 @@
           <label class="form-label small fw-bold text-muted mb-1">
             {{ $t('rulechain.edit.nodes.config.value') }}
           </label>
+          <select
+            v-if="(field.valueOptions || []).length"
+            class="form-select form-select-sm"
+            :value="row.value"
+            @change="updateKeymapRow(ix, 'value', $event.target.value)"
+          >
+            <option
+              v-if="row.value && !field.valueOptions.includes(row.value)"
+              :value="row.value"
+            >
+              {{ row.value }}
+            </option>
+            <option
+              v-for="opt in field.valueOptions"
+              :key="opt"
+              :value="opt"
+            >
+              {{ opt }}
+            </option>
+          </select>
           <input
+            v-else
             class="form-control form-control-sm"
             :placeholder="$t('rulechain.edit.nodes.config.value')"
             :value="row.value"
@@ -208,17 +230,35 @@
       </button>
     </template>
 
-    <input
-      v-else
-      type="text"
-      class="form-control form-control-sm"
-      :class="{ 'is-invalid': showError }"
-      :placeholder="field.placeholder || (field.template ? '{{variable}}' : '')"
-      :value="stringValue"
-      @input="emitString($event.target.value)"
-      @blur="touched = true"
-    >
+    <template v-else>
+      <input
+        type="text"
+        class="form-control form-control-sm"
+        :class="{ 'is-invalid': showError }"
+        :placeholder="field.placeholder || (field.template ? '{{variable}}' : '')"
+        :list="(field.suggestions || []).length ? suggestionsId : undefined"
+        :value="stringValue"
+        @input="emitString($event.target.value)"
+        @blur="touched = true"
+      >
+      <datalist
+        v-if="(field.suggestions || []).length"
+        :id="suggestionsId"
+      >
+        <option
+          v-for="opt in field.suggestions"
+          :key="opt"
+          :value="opt"
+        />
+      </datalist>
+    </template>
 
+    <div
+      v-if="field.widget === 'enum' && selectedOptionLabel && !compact"
+      class="form-text small"
+    >
+      {{ selectedOptionLabel }}
+    </div>
     <div
       v-if="field.help && !compact && !showError && !jsonError"
       class="form-text small"
@@ -255,6 +295,13 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+const suggestionsId = `rcf-suggestions-${props.field.key}-${Math.random().toString(36).slice(2, 8)}`
+
+const selectedOptionLabel = computed(() => {
+  const labels = props.field.optionLabels || {}
+  return typeof props.modelValue === 'string' ? labels[props.modelValue] || '' : ''
+})
 
 const touched = ref(false)
 const jsonError = ref('')

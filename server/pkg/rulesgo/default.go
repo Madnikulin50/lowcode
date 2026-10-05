@@ -26,6 +26,11 @@ type DefaultConfig struct {
 	// automation/service.ResolveCorrelation. Left nil, the node reports
 	// "not_configured" instead of failing.
 	ResolveCorrelation func(ctx context.Context, key string, input map[string]interface{}) error
+
+	// WorkflowExec backs the workflow node - normally
+	// automation/service.ExecWorkflowByRef. Left nil, the node reports
+	// "not_configured" instead of failing.
+	WorkflowExec WorkflowExecFunc
 }
 
 func DefaultRegistry(cfg *DefaultConfig) *Registry {
@@ -56,7 +61,11 @@ func DefaultRegistry(cfg *DefaultConfig) *Registry {
 	r.Register("ai", &aiExecutor{call: aiCall})
 	r.Register("ai.operation", &aiOperationExecutor{call: aiCall})
 
-	r.Register("workflow", &wfExecutor{})
+	var workflowExec WorkflowExecFunc
+	if cfg != nil {
+		workflowExec = cfg.WorkflowExec
+	}
+	r.Register("workflow", &wfExecutor{exec: workflowExec})
 	r.Register("fork", &forkExecutor{})
 	var detachStart DetachStartFunc
 	if cfg != nil {

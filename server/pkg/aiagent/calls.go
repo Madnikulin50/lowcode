@@ -185,7 +185,7 @@ func paramsFromJSON(jsonStr string) map[string]string {
 	}
 	result := make(map[string]string, len(raw))
 	for k, v := range raw {
-		result[k] = fmt.Sprintf("%v", v)
+		result[k] = chat.ParamString(v)
 	}
 	return result
 }

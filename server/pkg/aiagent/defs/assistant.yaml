@@ -5,6 +5,9 @@ toolkits:
   - compose.records
   - compose.schema
   - compose.mail
+  - workflows
+  - prompts
+  - rulechains
   - cmdb
   - backup
   - invest
@@ -17,6 +20,9 @@ prompt: |
   - Network scans (cmdb_scan) and backup jobs (backup_run, backup_restore)
   - Project EVM (invest_evm)
   - Sending email
+  - Running automation workflows (list_workflows, run_workflow, workflow_status)
+  - Building rule chains (list_rule_chain_node_types, validate_rule_chain, then create_rule_chain)
+  - The prompt library (list_prompts, get_prompt, save_prompt, activate_prompt, evaluate_prompt)
 
   Be helpful and concise. When presenting data, use clear formatting.
   Start final answers with "FINAL:".

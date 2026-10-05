@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"github.com/madnikulin50/lowcode/server/pkg/rulesgo"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -17,6 +19,39 @@ var (
 
 func SetRuleEngine(engine *rulesgo.EngineWithPersistence) {
 	RuleEngine = engine
+}
+
+var (
+	ruleChainCatalogMu sync.RWMutex
+	ruleChainCatalog   func() []rulesgo.NodeSchema
+)
+
+// SetRuleChainCatalog supplies the node catalog the chain tools validate
+// against. It is injected because the catalog lives in compose/rest, which
+// depends on this package.
+func SetRuleChainCatalog(fn func() []rulesgo.NodeSchema) {
+	ruleChainCatalogMu.Lock()
+	ruleChainCatalog = fn
+	ruleChainCatalogMu.Unlock()
+}
+
+func currentRuleChainCatalog() []rulesgo.NodeSchema {
+	ruleChainCatalogMu.RLock()
+	fn := ruleChainCatalog
+	ruleChainCatalogMu.RUnlock()
+	if fn == nil {
+		return nil
+	}
+	return fn()
+}
+
+// chainPromptCheck lets the validator confirm that "@prompt:..." references
+// in a chain point at real prompts.
+func chainPromptCheck(ctx context.Context) func(string) error {
+	return func(ref string) error {
+		_, _, err := aiagent.ResolvePrompt(ctx, ref)
+		return err
+	}
 }
 
 func SetOnChainMissing(fn func(ctx context.Context, chainID string)) {
@@ -39,8 +74,20 @@ func initRules(ctx context.Context, s *server.MCPServer) {
 		mcp.WithDescription("List all available rule chains"),
 	), handleListRuleChains)
 
+	s.AddTool(mcp.NewTool("rulechain_node_types",
+		mcp.WithDescription("List the node types a rule chain can use, with each one's settings (which are required, allowed values). Call this before writing a chain: do not invent node types or settings."),
+	), handleRuleChainNodeTypes)
+
+	s.AddTool(mcp.NewTool("validate_rule_chain",
+		mcp.WithDescription("Check a rule chain against the node catalog without saving it. Returns the problems to fix (errors block saving) and warnings."),
+		mcp.WithString("name", mcp.Description("Rule chain name")),
+		mcp.WithString("nodes", mcp.Description("JSON array of nodes: {id, type, config}"), mcp.Required()),
+		mcp.WithString("edges", mcp.Description("JSON array of edges: {from, to, condition}")),
+		mcp.WithString("entryNode", mcp.Description("Entry point node ID (default: the first node)")),
+	), handleValidateRuleChain)
+
 	s.AddTool(mcp.NewTool("create_rule_chain",
-		mcp.WithDescription("Create a new rule chain"),
+		mcp.WithDescription("Create a new rule chain. It is checked first (see validate_rule_chain): a chain with errors is not saved, and the problems are returned."),
 		mcp.WithString("name", mcp.Description("Rule chain name"), mcp.Required()),
 		mcp.WithString("description", mcp.Description("Rule chain description")),
 		mcp.WithString("nodes", mcp.Description("JSON array of nodes with id, type, config")),
@@ -188,15 +235,71 @@ func handleCreateRuleChain(ctx context.Context, request mcp.CallToolRequest) (*m
 		chain.EntryNode = nodes[0].ID
 	}
 
+	// Without the node catalog nothing can be vouched for; keep working as
+	// before rather than refusing every chain.
+	var issues []rulesgo.ChainIssue
+	validated := false
+	if catalog := currentRuleChainCatalog(); len(catalog) > 0 {
+		validated = true
+		issues = rulesgo.ValidateChain(chain, catalog, rulesgo.ValidateOptions{PromptExists: chainPromptCheck(ctx)})
+	}
+	if rulesgo.HasErrors(issues) {
+		return jsonResult(map[string]interface{}{
+			"created": false,
+			"reason":  "the chain has errors - fix them and try again (nothing was saved)",
+			"issues":  issues,
+		}), nil
+	}
+
 	RuleEngine.RegisterChain(chain)
 
-	return jsonResult(map[string]interface{}{
+	result := map[string]interface{}{
 		"chainID":   chainID,
 		"name":      name,
 		"nodeCount": len(nodes),
 		"edgeCount": len(edges),
 		"created":   true,
-	}), nil
+	}
+	if len(issues) > 0 {
+		result["warnings"] = issues
+	}
+	if !validated {
+		result["note"] = "the node catalog is not available, so the chain was not checked"
+	}
+	return jsonResult(result), nil
+}
+
+func handleRuleChainNodeTypes(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	catalog := currentRuleChainCatalog()
+	if len(catalog) == 0 {
+		return textResult("Node catalog not available"), nil
+	}
+	return textResult(rulesgo.DescribeNodeTypes(catalog)), nil
+}
+
+func handleValidateRuleChain(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ctx = withAuth(ctx)
+	args := argsMap(request)
+
+	name := getString(args, "name")
+	if name == "" {
+		name = "validation"
+	}
+	chain, err := rulesgo.ChainFromParts(name, "", getString(args, "nodes"), getString(args, "edges"), getString(args, "entryNode"))
+	if err != nil {
+		return textResult(err.Error()), nil
+	}
+
+	catalog := currentRuleChainCatalog()
+	if len(catalog) == 0 {
+		return textResult("Node catalog not available"), nil
+	}
+
+	issues := rulesgo.ValidateChain(chain, catalog, rulesgo.ValidateOptions{PromptExists: chainPromptCheck(ctx)})
+	if len(issues) == 0 {
+		return jsonResult(map[string]interface{}{"valid": true, "issues": []rulesgo.ChainIssue{}, "note": "nothing was saved"}), nil
+	}
+	return jsonResult(map[string]interface{}{"valid": !rulesgo.HasErrors(issues), "issues": issues, "note": "nothing was saved"}), nil
 }
 
 func handleRuleChainResource(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {

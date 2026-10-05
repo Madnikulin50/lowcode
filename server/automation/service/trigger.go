@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/madnikulin50/lowcode/server/pkg/wfevent"
 	"reflect"
 	"sync"
 
@@ -699,6 +700,9 @@ func validateWorkflowTriggers(wf *types.Workflow, tt ...*types.Trigger) (wis typ
 			cmpEvent.ComposeOnTimestamp(),
 		}
 	)
+
+	// anomaly findings and risk assessments are raised by background jobs
+	requireRunAs = append(requireRunAs, wfevent.RequireRunAs()...)
 
 	for i, t := range tt {
 		if !t.Enabled || t.DeletedAt != nil {

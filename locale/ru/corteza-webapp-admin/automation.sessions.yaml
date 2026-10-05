@@ -1,4 +1,13 @@
 editor:
+  aiSteps:
+    title: Шаги ИИ
+    step: Шаг
+    tokens: токенов
+    attempts: попытки
+    tools: Инструменты
+    rejected: Отклонённые ответы
+    prompt: Запрос
+    response: Ответ
   info:
     completedAt: Completed at
     createdAt: Время создания

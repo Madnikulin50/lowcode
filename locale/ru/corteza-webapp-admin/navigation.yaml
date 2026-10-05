@@ -55,6 +55,7 @@ automation:
     sessions: Sessions
     workflows: Процессы
     ruleChains: Цепочки правил
+    prompts: Промпты
 
 federation:
   group: Federation

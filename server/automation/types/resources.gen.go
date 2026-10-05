@@ -7,8 +7,10 @@ package types
 //
 
 const (
-	WorkflowResourceType  = "corteza::automation:workflow"
-	SessionResourceType   = "corteza::automation:session"
-	TriggerResourceType   = "corteza::automation:trigger"
-	ComponentResourceType = "corteza::automation"
+	WorkflowResourceType      = "corteza::automation:workflow"
+	SessionResourceType       = "corteza::automation:session"
+	StateResourceType         = "corteza::automation:state"
+	PromptVersionResourceType = "corteza::automation:prompt_version"
+	TriggerResourceType       = "corteza::automation:trigger"
+	ComponentResourceType     = "corteza::automation"
 )

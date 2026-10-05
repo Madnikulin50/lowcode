@@ -10,5 +10,6 @@
 | [deploy.md](deploy.md) | Стенды `docker-conf/test9` и `test11`: агенты, apply namespace, MinIO, Ollama |
 | [agents.md](agents.md) | Руководство разработчика агентов: SDK, sync/async, Compose apply, палитра rule chains |
 | [dal.md](dal.md) | Новые объекты: модули Compose, таблицы DAL, кодоген, чтение и запись |
+| [ai-guard.md](ai-guard.md) | AI guard: таргетированные проверки после правок ИИ — режимы, baseline, периодический CI |
 
 Продуктовые руководства пользователя и интегратора живут в `manual/` (Antora). Этот каталог — инженерное описание текущего кода репозитория.

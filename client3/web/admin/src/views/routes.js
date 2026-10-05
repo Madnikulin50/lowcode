@@ -45,6 +45,8 @@ import AutomationWorkflowEditor from './Automation/Workflow/Editor.vue'
 import AutomationSessionList from './Automation/Session/List.vue'
 import AutomationSessionEditor from './Automation/Session/Editor.vue'
 import RuleChainIndex from './Automation/RuleChain/Index.vue'
+import AutomationPromptsList from './Automation/Prompts/List.vue'
+import AutomationPromptsEditor from './Automation/Prompts/Editor.vue'
 import FederationNodesList from './Federation/Nodes/List.vue'
 import FederationNodesEditor from './Federation/Nodes/Editor.vue'
 
@@ -93,6 +95,8 @@ const lookup = {
   'Automation/Session/List': AutomationSessionList,
   'Automation/Session/Editor': AutomationSessionEditor,
   'Automation/RuleChain/Index': RuleChainIndex,
+  'Automation/Prompts/List': AutomationPromptsList,
+  'Automation/Prompts/Editor': AutomationPromptsEditor,
   'Federation/Nodes/List': FederationNodesList,
   'Federation/Nodes/Editor': FederationNodesEditor,
 }
@@ -196,6 +200,7 @@ export default [
         children: [
           combo('automation', 'workflow'),
           r('automation.ruleChain', 'rulechain', 'Automation/RuleChain/Index'),
+          combo('automation', 'prompts', { pkey: 'handle', cmpDir: 'Automation/Prompts' }),
           r('automation.scripts', 'scripts', 'Automation/Scripts/Index'),
           combo('automation', 'session'),
           r('automation.permissions', 'permissions', 'Automation/Permissions/Index'),

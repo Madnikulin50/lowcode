@@ -61,6 +61,21 @@ func SelfToken(cortezaAPI string) string {
 	return ""
 }
 
+// EnrollToken always performs a fresh self-enrollment with
+// AGENT_SHARED_SECRET (ignoring the TOKEN env var, which may hold the very
+// token that just expired). Use it to refresh a token mid-run.
+func EnrollToken(cortezaAPI string) (string, error) {
+	secret := strings.TrimSpace(os.Getenv("AGENT_SHARED_SECRET"))
+	if secret == "" {
+		return "", fmt.Errorf("AGENT_SHARED_SECRET is not set")
+	}
+	token, _, err := fetchEnrollToken(strings.TrimRight(cortezaAPI, "/")+"/agents/enroll", secret)
+	if err == nil && token == "" {
+		err = fmt.Errorf("enroll returned an empty token")
+	}
+	return token, err
+}
+
 // fetchEnrollToken returns (token, retry, err). retry is true when the
 // failure looks transient (connection refused, 5xx — server not ready
 // yet) and worth retrying; false for a definitive rejection (bad secret),

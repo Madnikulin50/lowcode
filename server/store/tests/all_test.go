@@ -38,8 +38,14 @@ func testAllGenerated(t *testing.T, s store.Storer) {
 	t.Run("authSession", func(t *testing.T) {
 		testAuthSessions(t, s)
 	})
+	t.Run("automationPromptVersion", func(t *testing.T) {
+		testAutomationPromptVersions(t, s)
+	})
 	t.Run("automationSession", func(t *testing.T) {
 		testAutomationSessions(t, s)
+	})
+	t.Run("automationState", func(t *testing.T) {
+		testAutomationStates(t, s)
 	})
 	t.Run("automationTrigger", func(t *testing.T) {
 		testAutomationTriggers(t, s)

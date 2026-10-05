@@ -11,6 +11,7 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
+	automationModels "github.com/madnikulin50/lowcode/server/automation/model"
 	"github.com/madnikulin50/lowcode/server/compose/model"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	discovery "github.com/madnikulin50/lowcode/server/discovery/types"
@@ -60,6 +61,7 @@ var (
 	fixesPost = []func(context.Context, *Store) error{
 		fix_2024_09_05_addRelResourceRoleMembershipColumn,
 		fix_2024_09_05_addUserGroupReferenceToUser,
+		fix_2026_10_00_extendAutomationPromptVersionsForSkills,
 	}
 )
 
@@ -1328,5 +1330,33 @@ func count(ctx context.Context, s *Store, table string, ee ...goqu.Expression) (
 		panic(err)
 	}
 
+	return
+}
+
+// Skills live in the prompt library: a version gets a kind, the toolkits it
+// requires and the files it ships with. The table already has rows, so kind
+// defaults to empty (a plain prompt) and the JSON columns take the model's
+// default.
+func fix_2026_10_00_extendAutomationPromptVersionsForSkills(ctx context.Context, s *Store) (err error) {
+	const table = "automation_prompt_versions"
+
+	err = addColumn(ctx, s, table, &dal.Attribute{
+		Ident: "Kind",
+		Type:  &dal.TypeText{Length: 16, HasDefault: true, DefaultValue: ""},
+		Store: &dal.CodecAlias{Ident: "kind"},
+	})
+	if err != nil {
+		return
+	}
+
+	for _, ident := range []string{"Requires", "Resources"} {
+		attr := automationModels.PromptVersion.Attributes.FindByIdent(ident)
+		if attr == nil {
+			return fmt.Errorf("automation prompt version model has no %s attribute", ident)
+		}
+		if err = addColumn(ctx, s, table, attr); err != nil {
+			return
+		}
+	}
 	return
 }

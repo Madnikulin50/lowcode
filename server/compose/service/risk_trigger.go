@@ -52,7 +52,7 @@ func reassessMatchingBindings(ctx context.Context, ev eventbus.Event) {
 		if ns := re.Namespace(); ns != nil && ns.ID != 0 && binding.NamespaceID != 0 && ns.ID != binding.NamespaceID {
 			continue
 		}
-		if err := reassessOne(binding, rec); err != nil {
+		if err := reassessOne(ctx, binding, rec); err != nil {
 			log.Printf("[risk] auto-recalc binding %d record %d: %v", binding.ID, rec.ID, err)
 		}
 	}
@@ -63,7 +63,7 @@ func reassessMatchingBindings(ctx context.Context, ev eventbus.Event) {
 // record's own field values via the binding's FieldMap instead of a request
 // body — the "recalc on every record change" half of AutoRecalc, the manual
 // "recalc on demand" half being that REST endpoint.
-func reassessOne(binding *riskengine.RiskSubjectBinding, rec *types.Record) error {
+func reassessOne(ctx context.Context, binding *riskengine.RiskSubjectBinding, rec *types.Record) error {
 	model, ok := riskstore.GetModel(binding.ModelID)
 	if !ok {
 		return nil // binding points at a model that no longer exists; nothing to do
@@ -84,7 +84,7 @@ func reassessOne(binding *riskengine.RiskSubjectBinding, rec *types.Record) erro
 	assessment.BindingID = binding.ID
 	assessment.SubjectRecordID = rec.ID
 
-	riskstore.SaveAssessment(assessment)
+	SaveRiskAssessment(ctx, binding, assessment)
 	return nil
 }
 

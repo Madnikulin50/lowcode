@@ -1,5 +1,7 @@
 package rest
 
+import "github.com/madnikulin50/lowcode/server/pkg/chat"
+
 type nodeTypeDef struct {
 	Type         string          `json:"type"`
 	Label        string          `json:"label"`
@@ -8,19 +10,25 @@ type nodeTypeDef struct {
 }
 
 type nodeTypeField struct {
-	Key         string              `json:"key"`
-	Widget      string              `json:"widget"`
-	Label       string              `json:"label"`
-	Help        string              `json:"help,omitempty"`
-	Required    bool                `json:"required,omitempty"`
-	Template    bool                `json:"template,omitempty"`
-	Placeholder string              `json:"placeholder,omitempty"`
-	Default     interface{}         `json:"default,omitempty"`
-	Options     []string            `json:"options,omitempty"`
-	Rows        int                 `json:"rows,omitempty"`
-	Lang        string              `json:"lang,omitempty"`
-	VisibleIf   map[string][]string `json:"visibleIf,omitempty"`
-	ItemFields  []nodeTypeField     `json:"itemFields,omitempty"`
+	Key         string      `json:"key"`
+	Widget      string      `json:"widget"`
+	Label       string      `json:"label"`
+	Help        string      `json:"help,omitempty"`
+	Required    bool        `json:"required,omitempty"`
+	Template    bool        `json:"template,omitempty"`
+	Placeholder string      `json:"placeholder,omitempty"`
+	Default     interface{} `json:"default,omitempty"`
+	Options     []string    `json:"options,omitempty"`
+	// OptionLabels gives an option a human description, shown next to it
+	OptionLabels map[string]string `json:"optionLabels,omitempty"`
+	// Suggestions are offered for a free-text field without restricting it
+	Suggestions []string `json:"suggestions,omitempty"`
+	// ValueOptions turns the value side of a keymap into a choice
+	ValueOptions []string            `json:"valueOptions,omitempty"`
+	Rows         int                 `json:"rows,omitempty"`
+	Lang         string              `json:"lang,omitempty"`
+	VisibleIf    map[string][]string `json:"visibleIf,omitempty"`
+	ItemFields   []nodeTypeField     `json:"itemFields,omitempty"`
 }
 
 func nf(key, widget, label string, extra ...func(*nodeTypeField)) nodeTypeField {
@@ -74,7 +82,7 @@ func nodeTypes() []nodeTypeDef {
 	}
 	merge(agentNodeTypes())
 	merge(fetchLiveAgentNodeTypes())
-	return out
+	return enrichAINodes(out, liveAgentChoices(), chat.ModelChoices())
 }
 
 func builtinNodeTypes() []nodeTypeDef {
@@ -326,10 +334,12 @@ func builtinNodeTypes() []nodeTypeDef {
 		{
 			Type:        "workflow",
 			Label:       "Trigger Workflow",
-			Description: "Trigger a workflow",
+			Description: "Run an automation workflow (BPMN / AI steps) and return its results - the workflow's output variables are available under \"results\"",
 			ConfigFields: []nodeTypeField{
-				nf("workflowID", "string", "Workflow ID", req),
-				nf("payload", "textarea", "Payload", rows(4), help("JSON payload passed to the workflow")),
+				nf("workflowID", "string", "Workflow ID or handle", req, tmpl),
+				nf("payload", "textarea", "Payload", rows(4), tmpl, help("JSON object used as the workflow input")),
+				nf("input", "keymap", "Input variables", help("Named value → template, merged over the payload")),
+				nf("async", "bool", "Don't wait", help("Start the workflow and continue immediately; useful for long-running workflows with approval or delay steps")),
 			},
 		},
 		{

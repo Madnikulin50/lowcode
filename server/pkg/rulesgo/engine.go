@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"log"
 	"strings"
 	"time"
@@ -74,6 +75,9 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 		Input:     input,
 	}
 
+	// every AI node of this run draws on one budget
+	ctx = aiagent.ContextWithBudget(ctx, chainAIBudget(chain))
+
 	result := &ChainResult{
 		ChainID: chainID,
 		Output:  make(map[string]interface{}),
@@ -116,6 +120,7 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 			start := time.Now()
 			nr, err := e.runForeach(ctx, node, nodeMap, edgeMap, bodyIDs, ec)
 			elapsed := time.Since(start)
+			nr.DurationMs = elapsed.Milliseconds()
 			result.Nodes = append(result.Nodes, nr)
 			if err != nil {
 				result.Error = fmt.Sprintf("node %s (foreach) failed: %v", node.ID, err)
@@ -128,16 +133,19 @@ func (e *Engine) Run(ctx context.Context, chainID string, input map[string]inter
 			continue
 		}
 
+		nodeCtx, sink := withTraceSink(ctx)
 		start := time.Now()
-		output, err := e.registry.Execute(ctx, node.Type, *node, ec)
+		output, err := e.registry.Execute(nodeCtx, node.Type, *node, ec)
 		elapsed := time.Since(start)
 
 		nextIDs := nextNodeIDs(edgeMap[currentID], ec)
 		nodeResult := NodeResult{
-			NodeID: node.ID,
-			Type:   node.Type,
-			Output: output,
-			Next:   nextIDs,
+			NodeID:     node.ID,
+			Type:       node.Type,
+			Output:     output,
+			Next:       nextIDs,
+			DurationMs: elapsed.Milliseconds(),
+			Trace:      sink.get(),
 		}
 
 		if err != nil {
@@ -302,4 +310,67 @@ func (e *Engine) DeleteChain(chainID string) {
 			log.Printf("[rulesgo] delete persist %s: %v", chainID, err)
 		}
 	}
+}
+
+// ExecuteNode runs one node on its own, outside any chain, against the given
+// sample input - the "test this node" action of the chain editor. Nothing is
+// persisted and no chain state is touched.
+//
+// input is available both as chain input and as variables, so templates such
+// as {{name}} resolve the way they would early in a real run. The returned
+// NodeResult carries the node's output, trace, duration and, if it failed,
+// its error; the error return is reserved for a node that cannot be run at
+// all (unknown type).
+func (e *Engine) ExecuteNode(ctx context.Context, node ChainNode, input map[string]interface{}) (*NodeResult, error) {
+	if !e.registry.Has(node.Type) {
+		return nil, fmt.Errorf("unknown node type: %s", node.Type)
+	}
+
+	ec := &ExecutionContext{
+		Variables: make(map[string]interface{}, len(input)),
+		Results:   make(map[string]interface{}),
+		Input:     input,
+	}
+	for k, v := range input {
+		ec.Variables[k] = v
+	}
+
+	nodeCtx, sink := withTraceSink(ctx)
+	start := time.Now()
+	output, err := e.registry.Execute(nodeCtx, node.Type, node, ec)
+
+	res := &NodeResult{
+		NodeID:     node.ID,
+		Type:       node.Type,
+		Output:     output,
+		DurationMs: time.Since(start).Milliseconds(),
+		Trace:      sink.get(),
+	}
+	if err != nil {
+		res.Error = err.Error()
+	}
+	return res, nil
+}
+
+// chainAIBudget reads the run's AI limits from the chain's config:
+//
+//	{"aiBudget": {"maxTokens": 20000, "maxLLMCalls": 10}}
+//
+// A chain without them gets the platform default, if any.
+func chainAIBudget(chain *Chain) *aiagent.Budget {
+	var cfg struct {
+		AIBudget *struct {
+			MaxTokens   int `json:"maxTokens"`
+			MaxLLMCalls int `json:"maxLLMCalls"`
+		} `json:"aiBudget"`
+	}
+	if len(chain.Config) > 0 {
+		_ = json.Unmarshal(chain.Config, &cfg)
+	}
+	if cfg.AIBudget != nil {
+		if b := aiagent.NewBudget(cfg.AIBudget.MaxTokens, cfg.AIBudget.MaxLLMCalls); b != nil {
+			return b
+		}
+	}
+	return aiagent.BudgetFromEnv()
 }

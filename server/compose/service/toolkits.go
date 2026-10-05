@@ -34,6 +34,21 @@ func RegisterComposeToolKits(cat *aiagent.Catalog) {
 		Tools:       chatVisualizeTools(),
 	})
 	cat.Register(aiagent.ToolKit{
+		Name:        "workflows",
+		Description: "List, run and follow automation workflows (AI, approval and integration processes)",
+		Tools:       chatWorkflowToolDefs(),
+	})
+	cat.Register(aiagent.ToolKit{
+		Name:        "rulechains",
+		Description: "Build rule chains: node types, checking a draft, saving it",
+		Tools:       chatRuleChainToolDefs(),
+	})
+	cat.Register(aiagent.ToolKit{
+		Name:        "prompts",
+		Description: "The prompt library: versioned prompts for AI steps, with test cases",
+		Tools:       chatPromptToolDefs(),
+	})
+	cat.Register(aiagent.ToolKit{
 		Name:        "risk",
 		Description: "Suggest risk factors and explain risk model assessments",
 		Tools:       chatRiskToolDefs(),

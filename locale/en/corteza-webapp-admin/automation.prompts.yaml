@@ -1,0 +1,51 @@
+title: Prompt library
+active: active
+makeActive: Make this the active version
+text: Prompt
+textHint: For rule chain nodes it may contain variables written in double curly braces. Workflow steps pass data in separately.
+cases: Test cases
+casesHint: A JSON list of examples this prompt is checked against. Each has a name, inputs, and either expect (fields the answer must have) or contains (phrases it must mention).
+casesNotArray: Test cases must be a JSON list
+note: Why this version
+noteHint: e.g. tighter wording for the urgency scale
+activateOnSave: Make it the active version
+save: Save as a new version
+list:
+  title: Prompts
+  new: New prompt
+  single: prompt
+  plural: prompts
+  empty: No prompts yet. A prompt is a named instruction that AI workflow steps and rule chain nodes use as @prompt:<name>.
+  loading: Loading prompts
+  delete: Delete
+  filterForm:
+    query:
+      placeholder: Filter prompts by name or description
+  columns:
+    handle: Name
+    description: Description
+    active: Active
+    versions: Versions
+    cases: Test cases
+    updatedAt: Updated
+editor:
+  new: New prompt
+  title:
+    create: Create prompt
+    edit: Edit prompt
+  info:
+    title: Basic information
+    handle: Name *
+    invalid-handle: Lowercase letters, digits, underscores, hyphens and dots; must start with a letter (up to 64 characters)
+    description: What it is for
+    versions: Versions
+    delete: Delete
+eval:
+  title: Check against test cases
+  hint: Runs the test cases on the real model and counts the answers that match. Choose several versions to compare them on the same cases. This takes a while.
+  versions: Versions
+  run: Run
+  stop: Stop
+  running: running...
+  response: Answer
+  tokens: tokens

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"reflect"
 	"sync"
 
@@ -535,6 +536,32 @@ func (svc *workflow) Load(ctx context.Context) error {
 	}
 
 	return svc.triggers.registerWorkflows(ctx, set...)
+}
+
+// aiBudgetFor builds the AI budget for one new session of a workflow: its own
+// limits if it has any, else the platform default, else none.
+func (svc *workflow) aiBudgetFor(workflowID uint64) *aiagent.Budget {
+	svc.muxCache.RLock()
+	item := svc.cache[workflowID]
+	svc.muxCache.RUnlock()
+
+	if item != nil && item.wf != nil && item.wf.Meta != nil && item.wf.Meta.AIBudget != nil {
+		if b := aiagent.NewBudget(item.wf.Meta.AIBudget.MaxTokens, item.wf.Meta.AIBudget.MaxLLMCalls); b != nil {
+			return b
+		}
+	}
+	return aiagent.BudgetFromEnv()
+}
+
+// graphOf returns the cached exec graph of an executable workflow, or nil
+func (svc *workflow) graphOf(workflowID uint64) *wfexec.Graph {
+	svc.muxCache.RLock()
+	defer svc.muxCache.RUnlock()
+
+	if item := svc.cache[workflowID]; item != nil {
+		return item.g
+	}
+	return nil
 }
 
 // updateCache

@@ -43,10 +43,10 @@ jobs:
       - name: "Setup YARN"
         run: npm install -g yarn @vue/cli-service
       - name: "Install dependencies"
-        working-directory: lib/${{ matrix.lib }}
+        working-directory: client3/lib/${{ matrix.lib }}
         run: yarn install
       - name: "Run all tests"
-        working-directory: lib/${{ matrix.lib }}
+        working-directory: client3/lib/${{ matrix.lib }}
         run: yarn test:unit
 
   client-web-test:
@@ -59,7 +59,7 @@ jobs:
       - uses: actions/setup-node@v3
         with: { node-version: "${{ env.NODE_VERSION }}" }
       - name: "Setup YARN"
-        working-directory: client/web/${{ matrix.app }}
+        working-directory: client3/web/${{ matrix.app }}
         run: npm install -g yarn @vue/cli-service
       - name: "Cache"
         uses: actions/cache@v3
@@ -69,10 +69,10 @@ jobs:
           key: ${{ runner.OS }}-node-${{ hashFiles('**/yarn.lock') }}
           restore-keys: ${{ runner.OS }}-node-
       - name: "Dependencies"
-        working-directory: client/web/${{ matrix.app }}
+        working-directory: client3/web/${{ matrix.app }}
         run: make dep
       - name: "Tests"
-        working-directory: client/web/${{ matrix.app }}
+        working-directory: client3/web/${{ matrix.app }}
         run: make test
 
   server-test:

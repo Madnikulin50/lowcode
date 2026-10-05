@@ -67,8 +67,14 @@ type (
 		// optional authSession filter function called after the generated function
 		AuthSession func(*Store, systemType.AuthSessionFilter) ([]goqu.Expression, systemType.AuthSessionFilter, error)
 
+		// optional automationPromptVersion filter function called after the generated function
+		AutomationPromptVersion func(*Store, automationType.PromptVersionFilter) ([]goqu.Expression, automationType.PromptVersionFilter, error)
+
 		// optional automationSession filter function called after the generated function
 		AutomationSession func(*Store, automationType.SessionFilter) ([]goqu.Expression, automationType.SessionFilter, error)
+
+		// optional automationState filter function called after the generated function
+		AutomationState func(*Store, automationType.StateFilter) ([]goqu.Expression, automationType.StateFilter, error)
 
 		// optional automationTrigger filter function called after the generated function
 		AutomationTrigger func(*Store, automationType.TriggerFilter) ([]goqu.Expression, automationType.TriggerFilter, error)
@@ -484,6 +490,26 @@ func AuthSessionFilter(d drivers.Dialect, f systemType.AuthSessionFilter) (ee []
 	return ee, f, err
 }
 
+// AutomationPromptVersionFilter returns logical expressions
+//
+// This function is called from Store.QueryAutomationPromptVersions() and can be extended
+// by setting Store.Filters.AutomationPromptVersion. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AutomationPromptVersionFilter(d drivers.Dialect, f automationType.PromptVersionFilter) (ee []goqu.Expression, _ automationType.PromptVersionFilter, err error) {
+
+	if ss := trimStringSlice(f.PromptVersionID); len(ss) > 0 {
+		ee = append(ee, goqu.C("id").In(ss))
+	}
+
+	if val := strings.TrimSpace(f.Handle); len(val) > 0 {
+		ee = append(ee, goqu.C("handle").Eq(f.Handle))
+	}
+
+	return ee, f, err
+}
+
 // AutomationSessionFilter returns logical expressions
 //
 // This function is called from Store.QueryAutomationSessions() and can be extended
@@ -518,6 +544,30 @@ func AutomationSessionFilter(d drivers.Dialect, f automationType.SessionFilter) 
 
 	if ss := trimStringSlice(f.CreatedBy); len(ss) > 0 {
 		ee = append(ee, goqu.C("created_by").In(ss))
+	}
+
+	return ee, f, err
+}
+
+// AutomationStateFilter returns logical expressions
+//
+// This function is called from Store.QueryAutomationStates() and can be extended
+// by setting Store.Filters.AutomationState. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AutomationStateFilter(d drivers.Dialect, f automationType.StateFilter) (ee []goqu.Expression, _ automationType.StateFilter, err error) {
+
+	if ss := trimStringSlice(f.StateID); len(ss) > 0 {
+		ee = append(ee, goqu.C("id").In(ss))
+	}
+
+	if ss := trimStringSlice(f.SessionID); len(ss) > 0 {
+		ee = append(ee, goqu.C("session_id").In(ss))
+	}
+
+	if ss := trimStringSlice(f.WorkflowID); len(ss) > 0 {
+		ee = append(ee, goqu.C("workflow_id").In(ss))
 	}
 
 	return ee, f, err

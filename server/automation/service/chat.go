@@ -57,10 +57,12 @@ func WorkflowChat() *workflowChat {
 		},
 	}
 
-	return &workflowChat{
+	wc := &workflowChat{
 		client: c,
 		tools:  tools,
 	}
+	wc.tools = append(wc.tools, wc.aiAuthoringTools()...)
+	return wc
 }
 
 func (c *workflowChat) buildMessages(ask *WorkflowChatPromptArguments, useTools bool) []*schema.Message {
@@ -80,7 +82,7 @@ func (c *workflowChat) buildMessages(ask *WorkflowChatPromptArguments, useTools 
 	if !hasSystem {
 		sys := "You are an AI assistant."
 		if useTools {
-			sys = "You are an AI assistant. You can call tools by outputting XML like this:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\nAlways ask the user to confirm before creating anything. For listing/viewing tools, call them immediately without asking for confirmation."
+			sys = "You are an AI assistant. You can call tools by outputting XML like this:\n<tool name=\"tool_name\">\n<param name=\"param1\">value1</param>\n</tool>\n\nAlways ask the user to confirm before creating anything. For listing/viewing tools, call them immediately without asking for confirmation." + aiAuthoringSystemPrompt
 		}
 		msgs = append([]*schema.Message{
 			schema.SystemMessage(sys),

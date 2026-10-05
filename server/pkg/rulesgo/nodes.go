@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"io"
 	"net/http"
 	"strconv"
@@ -357,6 +358,21 @@ type AIOperationResult struct {
 	Error         string
 	ConfirmNeeded bool
 	ConfirmCalls  []string
+
+	// What the call cost, for the node's trace (see aiagent.CallTrace)
+	Model            string
+	LLMCalls         int
+	PromptTokens     int
+	CompletionTokens int
+	Tools            []string
+}
+
+// addTo folds the call into a trace; res may be nil when the call itself failed.
+func (r *AIOperationResult) addTo(t *aiagent.CallTrace) {
+	if r == nil {
+		return
+	}
+	t.AddUsage(r.Model, r.LLMCalls, r.PromptTokens, r.CompletionTokens, r.Tools, r.Output)
 }
 
 type aiConfig struct {
@@ -378,21 +394,37 @@ type aiExecutor struct {
 }
 
 func (n *aiExecutor) Execute(ctx context.Context, node ChainNode, ec *ExecutionContext) (map[string]interface{}, error) {
+	out, trace, err := n.execute(ctx, node, ec)
+	if trace != nil {
+		recordTrace(ctx, trace.Map())
+	}
+	return out, err
+}
+
+// execute does the node's work and also returns the trace of the AI call, so
+// the caller can report it however the call ended.
+func (n *aiExecutor) execute(ctx context.Context, node ChainNode, ec *ExecutionContext) (map[string]interface{}, *aiagent.CallTrace, error) {
 	cfg, err := ParseNodeConfig[aiConfig](node.Config)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	prompt := resolveTemplateValue(cfg.Prompt, ec)
+	// a library prompt ("@prompt:handle[@n]") is fetched first, so that
+	// {{variables}} inside it are filled like in an inline prompt
+	rawPrompt, promptRef, err := aiagent.ResolvePrompt(ctx, cfg.Prompt)
+	if err != nil {
+		return nil, nil, err
+	}
+	prompt := resolveTemplateValue(rawPrompt, ec)
 	agent := resolveTemplateValue(cfg.Agent, ec)
 	model := resolveTemplateValue(cfg.Model, ec)
 
 	if prompt == "" {
-		return nil, fmt.Errorf("prompt is required for AI node")
+		return nil, nil, fmt.Errorf("prompt is required for AI node")
 	}
 
 	if n.call == nil {
-		return map[string]interface{}{"agent": agent, "status": "not_configured"}, nil
+		return map[string]interface{}{"agent": agent, "status": "not_configured"}, nil, nil
 	}
 
 	callCtx := ctx
@@ -402,7 +434,22 @@ func (n *aiExecutor) Execute(ctx context.Context, node ChainNode, ec *ExecutionC
 		defer cancel()
 	}
 
-	res, err := n.call(callCtx, agent, prompt, model, cfg.AllowMutating)
+	var (
+		started = time.Now()
+		trace   = &aiagent.CallTrace{Agent: agent, Model: model, PromptRef: promptRef}
+	)
+	trace.SetPrompt(prompt)
+
+	budget := aiagent.BudgetFromContext(ctx)
+	var res *AIOperationResult
+	err = budget.Check()
+	if err == nil {
+		res, err = n.call(callCtx, agent, prompt, model, cfg.AllowMutating)
+		if res != nil {
+			budget.Charge(res.LLMCalls, res.PromptTokens+res.CompletionTokens)
+		}
+	}
+	res.addTo(trace)
 	if err == nil && res.ConfirmNeeded {
 		err = fmt.Errorf("AI node blocked: agent attempted a mutating action requiring confirmation (%s) - set allowMutating:true on this node to permit it", strings.Join(res.ConfirmCalls, ", "))
 	} else if err != nil {
@@ -412,36 +459,17 @@ func (n *aiExecutor) Execute(ctx context.Context, node ChainNode, ec *ExecutionC
 			err = fmt.Errorf("AI call failed: %w", err)
 		}
 	}
+	trace.Finish(started, err)
 	if err != nil {
 		if !cfg.Optional {
-			return nil, err
+			return nil, trace, err
 		}
 		ec.Set("ai_response", "")
-		return map[string]interface{}{"agent": agent, "response": "", "status": "failed", "error": err.Error()}, nil
+		return map[string]interface{}{"agent": agent, "response": "", "status": "failed", "error": err.Error()}, trace, nil
 	}
 
 	ec.Set("ai_response", res.Output)
-	return map[string]interface{}{"agent": agent, "response": res.Output}, nil
-}
-
-// --- Workflow Node ---
-
-type wfConfig struct {
-	WorkflowID string `json:"workflowID"`
-	Payload    string `json:"payload"`
-}
-
-type wfExecutor struct{}
-
-func (n *wfExecutor) Execute(ctx context.Context, node ChainNode, ec *ExecutionContext) (map[string]interface{}, error) {
-	cfg, err := ParseNodeConfig[wfConfig](node.Config)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]interface{}{
-		"workflowID": resolveTemplateValue(cfg.WorkflowID, ec),
-		"status":     "not_implemented",
-	}, nil
+	return map[string]interface{}{"agent": agent, "response": res.Output}, trace, nil
 }
 
 // --- Fork Node ---

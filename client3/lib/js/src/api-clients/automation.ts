@@ -3,6 +3,7 @@
 // This is a generated file.
 // See README.md file for update instructions
 
+import { postForEvents, StreamEvent } from './sse'
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 
 interface KV {
@@ -1309,6 +1310,95 @@ export default class Automation {
       data: xml,
       ...extra,
     }).then(result => stdResolve(result))
+  }
+
+  // Tries one AI function with sample arguments against the real model (hand-written)
+  async aiStepTest (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { ref, args } = (a as KV) || {}
+
+    return this.api().request({
+      method: 'post',
+      url: `/ai/functions/${ref}/test`,
+      headers: { 'Content-Type': 'application/json' },
+      data: { args },
+      ...extra,
+    }).then(result => stdResolve(result))
+  }
+
+  // AI steps, streamed (hand-written): `onEvent` gets {status}, {token, reason}
+  // or {attempt} while the model works; resolves with the final event, whose
+  // `result` is what aiStepTest returns.
+  async aiStepTestStream (a: KV, onEvent: (ev: StreamEvent) => void, signal?: AbortSignal): Promise<StreamEvent> {
+    const { ref, args } = (a as KV) || {}
+
+    return postForEvents({
+      url: this.streamURL(`/ai/functions/${ref}/test?stream=1`),
+      headers: this.headers,
+      accessToken: this.accessTokenFn ? this.accessTokenFn() : undefined,
+      body: { args },
+      signal,
+    }, onEvent)
+  }
+
+  // Prompt library (hand-written)
+  async promptList (extra: AxiosRequestConfig = {}): Promise<KV> {
+    return this.api().request({ method: 'get', url: '/prompts/', ...extra }).then(result => stdResolve(result))
+  }
+
+  async promptHistory (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle } = (a as KV) || {}
+    return this.api().request({ method: 'get', url: `/prompts/${encodeURIComponent(String(handle))}`, ...extra }).then(result => stdResolve(result))
+  }
+
+  // version 0 is the active one
+  async promptVersion (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle, version = 0 } = (a as KV) || {}
+    return this.api().request({ method: 'get', url: `/prompts/${encodeURIComponent(String(handle))}/versions/${version}`, ...extra }).then(result => stdResolve(result))
+  }
+
+  async promptSave (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle, text, description, note, activate, cases } = (a as KV) || {}
+    return this.api().request({
+      method: 'post',
+      url: `/prompts/${encodeURIComponent(String(handle))}`,
+      headers: { 'Content-Type': 'application/json' },
+      data: { text, description, note, activate, cases },
+      ...extra,
+    }).then(result => stdResolve(result))
+  }
+
+  async promptActivate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle, version } = (a as KV) || {}
+    return this.api().request({
+      method: 'post',
+      url: `/prompts/${encodeURIComponent(String(handle))}/activate`,
+      headers: { 'Content-Type': 'application/json' },
+      data: { version },
+      ...extra,
+    }).then(result => stdResolve(result))
+  }
+
+  async promptDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle } = (a as KV) || {}
+    return this.api().request({ method: 'delete', url: `/prompts/${encodeURIComponent(String(handle))}`, ...extra }).then(result => stdResolve(result))
+  }
+
+  // Runs a prompt's test cases; `onEvent` gets {version, case} as each case is
+  // judged, the resolved final event has `reports`
+  async promptEvalStream (a: KV, onEvent: (ev: StreamEvent) => void, signal?: AbortSignal): Promise<StreamEvent> {
+    const { handle, versions, agent, model, cases } = (a as KV) || {}
+
+    return postForEvents({
+      url: this.streamURL(`/prompts/${encodeURIComponent(String(handle))}/eval?stream=1`),
+      headers: this.headers,
+      accessToken: this.accessTokenFn ? this.accessTokenFn() : undefined,
+      body: { versions, agent, model, cases },
+      signal,
+    }, onEvent)
+  }
+
+  protected streamURL (path: string): string {
+    return this.baseURL ? `${this.baseURL.replace(/\/+$/, '')}${path}` : path
   }
 
 }

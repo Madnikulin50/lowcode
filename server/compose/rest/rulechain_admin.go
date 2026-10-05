@@ -426,12 +426,17 @@ func parseFlexibleUint64(raw json.RawMessage) uint64 {
 }
 
 func MountRuleChainAdminRoutes(r chi.Router) {
+	// the MCP tools that create chains check them against this catalog
+	handlers.SetRuleChainCatalog(ruleChainSchemas)
+	service.SetRuleChainCatalog(ruleChainSchemas)
+
 	admin := RuleChainAdmin{}
 	r.Route("/admin/rulechain", func(r chi.Router) {
 		r.Get("/", admin.List)
 		r.Post("/", admin.Create)
 		r.Get("/nodes", admin.NodeTypes)
 		r.Get("/stats", admin.Stats)
+		r.Post("/node-test", admin.NodeTest)
 		r.Get("/{chainID}", admin.Get)
 		r.Put("/{chainID}", admin.Update)
 		r.Delete("/{chainID}", admin.Delete)

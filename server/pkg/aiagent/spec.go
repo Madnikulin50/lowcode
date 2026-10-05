@@ -19,9 +19,11 @@ type AgentSpec struct {
 	Prompt      string   `yaml:"prompt,omitempty" json:"prompt,omitempty"`
 	Model       string   `yaml:"model,omitempty" json:"model,omitempty"`
 	Toolkits    []string `yaml:"toolkits,omitempty" json:"toolkits,omitempty"`
-	MaxSteps    int      `yaml:"maxSteps,omitempty" json:"maxSteps,omitempty"`
-	Confirm     bool     `yaml:"confirm,omitempty" json:"confirm,omitempty"`
-	Source      string   `yaml:"-" json:"source,omitempty"`
+	// Skills are the handles of skills the agent may load, "*" for all of them
+	Skills   []string `yaml:"skills,omitempty" json:"skills,omitempty"`
+	MaxSteps int      `yaml:"maxSteps,omitempty" json:"maxSteps,omitempty"`
+	Confirm  bool     `yaml:"confirm,omitempty" json:"confirm,omitempty"`
+	Source   string   `yaml:"-" json:"source,omitempty"`
 }
 
 func (s AgentSpec) IsEnabled() bool {
@@ -36,6 +38,7 @@ func (s AgentSpec) Info() AgentInfo {
 		Handle:      s.Handle,
 		Description: s.Description,
 		Toolkits:    append([]string(nil), s.Toolkits...),
+		Skills:      append([]string(nil), s.Skills...),
 		Model:       s.Model,
 		MaxSteps:    s.MaxSteps,
 		Confirm:     s.Confirm,
@@ -47,6 +50,7 @@ type AgentInfo struct {
 	Handle      string   `json:"handle"`
 	Description string   `json:"description,omitempty"`
 	Toolkits    []string `json:"toolkits,omitempty"`
+	Skills      []string `json:"skills,omitempty"`
 	Model       string   `json:"model,omitempty"`
 	MaxSteps    int      `json:"maxSteps,omitempty"`
 	Confirm     bool     `json:"confirm,omitempty"`
@@ -166,6 +170,7 @@ func NewFromSpec(client *chat.Client, spec AgentSpec) *Agent {
 		SystemPrompt: strings.TrimSpace(spec.Prompt),
 		Model:        resolveSpecModel(spec.Model),
 		Toolkits:     spec.Toolkits,
+		Skills:       spec.Skills,
 		MaxSteps:     spec.MaxSteps,
 		Confirm:      spec.Confirm,
 	})

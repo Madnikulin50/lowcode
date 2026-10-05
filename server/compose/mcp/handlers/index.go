@@ -20,5 +20,8 @@ func Init(ctx context.Context, s *server.MCPServer) {
 		initAIScripts(ctx, s)
 	}
 	initAgents(ctx, s)
+	initWorkflows(ctx, s)
+	initPrompts(ctx, s)
+	initSkills(ctx, s)
 	initGonec(ctx, s)
 }

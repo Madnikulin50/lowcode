@@ -7,6 +7,8 @@ import (
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/madnikulin50/lowcode/server/pkg/cli"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
 	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/mssql"
 	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/mysql"
@@ -25,6 +27,7 @@ var (
 
 func init() {
 	helpers.RecursiveDotEnvLoad()
+	id.Init(cli.Context())
 }
 
 func Test_RDBMS_SQLITE(t *testing.T) {

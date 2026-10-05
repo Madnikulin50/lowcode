@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/madnikulin50/lowcode/server/automation/automation"
 	automationService "github.com/madnikulin50/lowcode/server/automation/service"
 	"github.com/madnikulin50/lowcode/server/compose/mcp/handlers"
 	"github.com/madnikulin50/lowcode/server/compose/service"
@@ -122,26 +123,7 @@ func initBridge() {
 		ExtractExec:            service.NewDocumentExtractExecutor(),
 		KafkaSubscribeStart:    brokerSub.StartKafkaSubscribe,
 		RabbitMQSubscribeStart: brokerSub.StartRabbitMQSubscribe,
-		AICall: func(ctx context.Context, agent, prompt, model string, allowMutating bool) (*rulesgo.AIOperationResult, error) {
-			if handlers.AgentRegistry == nil {
-				return nil, fmt.Errorf("agent registry not available")
-			}
-			res, err := handlers.AgentRegistry.RunAgentConfirmed(ctx, agent, prompt, nil, allowMutating)
-			if err != nil {
-				return nil, err
-			}
-			confirmCalls := make([]string, 0, len(res.ConfirmCalls))
-			for _, c := range res.ConfirmCalls {
-				confirmCalls = append(confirmCalls, c.Name)
-			}
-			return &rulesgo.AIOperationResult{
-				Output:        res.Output,
-				Success:       res.Success,
-				Error:         res.Error,
-				ConfirmNeeded: res.ConfirmNeeded,
-				ConfirmCalls:  confirmCalls,
-			}, nil
-		},
+		AICall:                 ruleChainAICall,
 		ResolveCorrelation: func(ctx context.Context, key string, input map[string]interface{}) error {
 			vars, err := expr.NewVars(input)
 			if err != nil {
@@ -149,6 +131,7 @@ func initBridge() {
 			}
 			return automationService.ResolveCorrelation(ctx, key, vars)
 		},
+		WorkflowExec: automationService.ExecWorkflowByRef,
 		ScriptExec: func(ctx context.Context, code string, ec *rulesgo.ExecutionContext) (map[string]interface{}, error) {
 			input := make(map[string]interface{})
 			for k, v := range ec.Variables {
@@ -165,6 +148,22 @@ func initBridge() {
 			}, nil
 		},
 	}
+	// Knowledge-base search for the workflow aiRagSearch step
+	automation.SetRAGSearch(func(ctx context.Context, ns, query string, topK int) ([]automation.RAGHit, error) {
+		if service.DefaultRAG == nil {
+			return nil, fmt.Errorf("rag service not available")
+		}
+		res, err := service.DefaultRAG.Search(ctx, ns, query, topK)
+		if err != nil {
+			return nil, err
+		}
+		hits := make([]automation.RAGHit, 0, len(res))
+		for _, r := range res {
+			hits = append(hits, automation.RAGHit{Text: r.Chunk.Text, Score: r.Score})
+		}
+		return hits, nil
+	})
+
 	engine := rulesgo.NewEngineWithPersistence(rulesgo.DefaultRegistry(rulesCfg), persist)
 	poller.SetEngine(engine)
 	brokerSub.SetEngine(engine)

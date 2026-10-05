@@ -50,3 +50,20 @@ func TestValidateWorkflowTriggersSubWorkflow(t *testing.T) {
 	req.Len(issues, 1)
 	req.Contains(issues[0].String(), "marked as sub-workflow")
 }
+
+func TestValidateWorkflowTriggersRunAsForBackgroundEvents(t *testing.T) {
+	for _, tc := range []struct{ resource, event string }{
+		{"anomaly:finding", "onCreate"},
+		{"anomaly:finding", "onReopen"},
+		{"risk:assessment", "onAssessed"},
+		{"risk:assessment", "onEscalated"},
+	} {
+		trigger := &types.Trigger{Enabled: true, ResourceType: tc.resource, EventType: tc.event}
+
+		issues := validateWorkflowTriggers(&types.Workflow{}, trigger)
+		require.Len(t, issues, 1, "%s/%s without run-as", tc.resource, tc.event)
+
+		issues = validateWorkflowTriggers(&types.Workflow{RunAs: 7}, trigger)
+		require.Empty(t, issues, "%s/%s with run-as", tc.resource, tc.event)
+	}
+}

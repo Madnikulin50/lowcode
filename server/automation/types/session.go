@@ -173,14 +173,20 @@ func (s *Session) GC() bool {
 
 // WaitResults wait blocks until workflow session is completed or fails (or context is canceled) and returns resuts
 func (s *Session) WaitResults(ctx context.Context) (*expr.Vars, wfexec.SessionStatus, Stacktrace, error) {
-	s.l.RLock()
-	defer s.l.RUnlock()
+	// Do not hold the lock while waiting: the session's state change handler
+	// needs it to store the stacktrace, and the wait ends only when the
+	// session does.
+	err := s.session.WaitUntil(ctx, wfexec.SessionFailed, wfexec.SessionCompleted)
 
-	if err := s.session.WaitUntil(ctx, wfexec.SessionFailed, wfexec.SessionCompleted); err != nil {
-		return nil, -1, s.Stacktrace, err
+	s.l.RLock()
+	stacktrace := s.Stacktrace
+	s.l.RUnlock()
+
+	if err != nil {
+		return nil, -1, stacktrace, err
 	}
 
-	return s.session.Result(), s.session.Status(), s.Stacktrace, nil
+	return s.session.Result(), s.session.Status(), stacktrace, nil
 }
 
 func (s *Session) Apply(ssp SessionStartParams) {
@@ -270,8 +276,8 @@ func (s *Session) hasDuplicate(stepID uint64) bool {
 }
 
 func (s *Session) CopyRuntimeStacktrace() {
-	s.l.RLock()
-	defer s.l.RUnlock()
+	s.l.Lock()
+	defer s.l.Unlock()
 
 	if s.Stacktrace != nil || s.Error != "" {
 		// Save stacktrace when we know we're tracing workflows OR whenever there is an error...

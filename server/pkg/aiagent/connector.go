@@ -162,3 +162,14 @@ func AssistantKitNames() []string {
 	}
 	return []string{"cmdb", "backup", "invest"}
 }
+
+// AssistantSkills are the skills the compose chat assistant may load: the
+// "skills" of the assistant spec ("*" for all of them), none by default.
+func AssistantSkills() []string {
+	for _, s := range EffectiveSpecs() {
+		if s.Handle == "assistant" {
+			return append([]string(nil), s.Skills...)
+		}
+	}
+	return nil
+}

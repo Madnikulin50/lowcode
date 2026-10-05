@@ -57,7 +57,9 @@ type (
 		AuthConfirmedClients
 		AuthOa2tokens
 		AuthSessions
+		AutomationPromptVersions
 		AutomationSessions
+		AutomationStates
 		AutomationTriggers
 		AutomationWorkflows
 		ComposeAttachments
@@ -257,6 +259,18 @@ type (
 		DeleteAuthSessionsByUserID(ctx context.Context, userID uint64) error
 	}
 
+	AutomationPromptVersions interface {
+		SearchAutomationPromptVersions(ctx context.Context, f automationType.PromptVersionFilter) (automationType.PromptVersionSet, automationType.PromptVersionFilter, error)
+		CreateAutomationPromptVersion(ctx context.Context, rr ...*automationType.PromptVersion) error
+		UpdateAutomationPromptVersion(ctx context.Context, rr ...*automationType.PromptVersion) error
+		UpsertAutomationPromptVersion(ctx context.Context, rr ...*automationType.PromptVersion) error
+		DeleteAutomationPromptVersion(ctx context.Context, rr ...*automationType.PromptVersion) error
+
+		DeleteAutomationPromptVersionByID(ctx context.Context, id uint64) error
+		TruncateAutomationPromptVersions(ctx context.Context) error
+		LookupAutomationPromptVersionByID(ctx context.Context, id uint64) (*automationType.PromptVersion, error)
+	}
+
 	AutomationSessions interface {
 		SearchAutomationSessions(ctx context.Context, f automationType.SessionFilter) (automationType.SessionSet, automationType.SessionFilter, error)
 		CreateAutomationSession(ctx context.Context, rr ...*automationType.Session) error
@@ -267,6 +281,18 @@ type (
 		DeleteAutomationSessionByID(ctx context.Context, id uint64) error
 		TruncateAutomationSessions(ctx context.Context) error
 		LookupAutomationSessionByID(ctx context.Context, id uint64) (*automationType.Session, error)
+	}
+
+	AutomationStates interface {
+		SearchAutomationStates(ctx context.Context, f automationType.StateFilter) (automationType.StateSet, automationType.StateFilter, error)
+		CreateAutomationState(ctx context.Context, rr ...*automationType.State) error
+		UpdateAutomationState(ctx context.Context, rr ...*automationType.State) error
+		UpsertAutomationState(ctx context.Context, rr ...*automationType.State) error
+		DeleteAutomationState(ctx context.Context, rr ...*automationType.State) error
+
+		DeleteAutomationStateByID(ctx context.Context, id uint64) error
+		TruncateAutomationStates(ctx context.Context) error
+		LookupAutomationStateByID(ctx context.Context, id uint64) (*automationType.State, error)
 	}
 
 	AutomationTriggers interface {
@@ -1539,6 +1565,62 @@ func DeleteAuthSessionsByUserID(ctx context.Context, s AuthSessions, userID uint
 	return s.DeleteAuthSessionsByUserID(ctx, userID)
 }
 
+// SearchAutomationPromptVersions returns all matching AutomationPromptVersions from store
+//
+// This function is auto-generated
+func SearchAutomationPromptVersions(ctx context.Context, s AutomationPromptVersions, f automationType.PromptVersionFilter) (automationType.PromptVersionSet, automationType.PromptVersionFilter, error) {
+	return s.SearchAutomationPromptVersions(ctx, f)
+}
+
+// CreateAutomationPromptVersion creates one or more AutomationPromptVersions in store
+//
+// This function is auto-generated
+func CreateAutomationPromptVersion(ctx context.Context, s AutomationPromptVersions, rr ...*automationType.PromptVersion) error {
+	return s.CreateAutomationPromptVersion(ctx, rr...)
+}
+
+// UpdateAutomationPromptVersion updates one or more (existing) AutomationPromptVersions in store
+//
+// This function is auto-generated
+func UpdateAutomationPromptVersion(ctx context.Context, s AutomationPromptVersions, rr ...*automationType.PromptVersion) error {
+	return s.UpdateAutomationPromptVersion(ctx, rr...)
+}
+
+// UpsertAutomationPromptVersion creates new or updates existing one or more AutomationPromptVersions in store
+//
+// This function is auto-generated
+func UpsertAutomationPromptVersion(ctx context.Context, s AutomationPromptVersions, rr ...*automationType.PromptVersion) error {
+	return s.UpsertAutomationPromptVersion(ctx, rr...)
+}
+
+// DeleteAutomationPromptVersion deletes one or more AutomationPromptVersions from store
+//
+// This function is auto-generated
+func DeleteAutomationPromptVersion(ctx context.Context, s AutomationPromptVersions, rr ...*automationType.PromptVersion) error {
+	return s.DeleteAutomationPromptVersion(ctx, rr...)
+}
+
+// DeleteAutomationPromptVersionByID deletes one or more AutomationPromptVersions from store
+//
+// This function is auto-generated
+func DeleteAutomationPromptVersionByID(ctx context.Context, s AutomationPromptVersions, id uint64) error {
+	return s.DeleteAutomationPromptVersionByID(ctx, id)
+}
+
+// TruncateAutomationPromptVersions Deletes all AutomationPromptVersions from store
+//
+// This function is auto-generated
+func TruncateAutomationPromptVersions(ctx context.Context, s AutomationPromptVersions) error {
+	return s.TruncateAutomationPromptVersions(ctx)
+}
+
+// LookupAutomationPromptVersionByID searches for a prompt version by ID
+//
+// This function is auto-generated
+func LookupAutomationPromptVersionByID(ctx context.Context, s AutomationPromptVersions, id uint64) (*automationType.PromptVersion, error) {
+	return s.LookupAutomationPromptVersionByID(ctx, id)
+}
+
 // SearchAutomationSessions returns all matching AutomationSessions from store
 //
 // This function is auto-generated
@@ -1595,6 +1677,62 @@ func TruncateAutomationSessions(ctx context.Context, s AutomationSessions) error
 // This function is auto-generated
 func LookupAutomationSessionByID(ctx context.Context, s AutomationSessions, id uint64) (*automationType.Session, error) {
 	return s.LookupAutomationSessionByID(ctx, id)
+}
+
+// SearchAutomationStates returns all matching AutomationStates from store
+//
+// This function is auto-generated
+func SearchAutomationStates(ctx context.Context, s AutomationStates, f automationType.StateFilter) (automationType.StateSet, automationType.StateFilter, error) {
+	return s.SearchAutomationStates(ctx, f)
+}
+
+// CreateAutomationState creates one or more AutomationStates in store
+//
+// This function is auto-generated
+func CreateAutomationState(ctx context.Context, s AutomationStates, rr ...*automationType.State) error {
+	return s.CreateAutomationState(ctx, rr...)
+}
+
+// UpdateAutomationState updates one or more (existing) AutomationStates in store
+//
+// This function is auto-generated
+func UpdateAutomationState(ctx context.Context, s AutomationStates, rr ...*automationType.State) error {
+	return s.UpdateAutomationState(ctx, rr...)
+}
+
+// UpsertAutomationState creates new or updates existing one or more AutomationStates in store
+//
+// This function is auto-generated
+func UpsertAutomationState(ctx context.Context, s AutomationStates, rr ...*automationType.State) error {
+	return s.UpsertAutomationState(ctx, rr...)
+}
+
+// DeleteAutomationState deletes one or more AutomationStates from store
+//
+// This function is auto-generated
+func DeleteAutomationState(ctx context.Context, s AutomationStates, rr ...*automationType.State) error {
+	return s.DeleteAutomationState(ctx, rr...)
+}
+
+// DeleteAutomationStateByID deletes one or more AutomationStates from store
+//
+// This function is auto-generated
+func DeleteAutomationStateByID(ctx context.Context, s AutomationStates, id uint64) error {
+	return s.DeleteAutomationStateByID(ctx, id)
+}
+
+// TruncateAutomationStates Deletes all AutomationStates from store
+//
+// This function is auto-generated
+func TruncateAutomationStates(ctx context.Context, s AutomationStates) error {
+	return s.TruncateAutomationStates(ctx)
+}
+
+// LookupAutomationStateByID searches for suspended state by ID
+//
+// This function is auto-generated
+func LookupAutomationStateByID(ctx context.Context, s AutomationStates, id uint64) (*automationType.State, error) {
+	return s.LookupAutomationStateByID(ctx, id)
 }
 
 // SearchAutomationTriggers returns all matching AutomationTriggers from store

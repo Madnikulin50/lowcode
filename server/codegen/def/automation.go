@@ -88,6 +88,58 @@ var Automation = Component{
 			},
 		}},
 
+		{Handle: "state", Resource: Resource{
+			Model: Model{
+				Ident:      "automation_states",
+				Attributes: AttributesFromStruct(automationtypes.State{}),
+				Indexes: map[string]Index{
+					"primary":    {Attribute: "id"},
+					"session_id": {Attribute: "session_id"},
+					"resume_at":  {Attribute: "resume_at"},
+				},
+			},
+			Features: Features{Labels: boolPtr(false)},
+			Filter: Filter{
+				Struct: map[string]Attribute{
+					"state_id":    {GoType: "[]string", StoreIdent: "id", Ident: "stateID"},
+					"session_id":  {GoType: "[]string"},
+					"workflow_id": {GoType: "[]string"},
+				},
+				ByValue: []string{"state_id", "session_id", "workflow_id"},
+			},
+			Store: &StoreConfig{
+				Ident: "automationState",
+				Lookups: []StoreLookup{
+					{Fields: []string{"id"}, Description: "searches for suspended state by ID"},
+				},
+			},
+		}},
+
+		{Handle: "prompt_version", Resource: Resource{
+			Model: Model{
+				Ident:      "automation_prompt_versions",
+				Attributes: AttributesFromStruct(automationtypes.PromptVersion{}),
+				Indexes: map[string]Index{
+					"primary": {Attribute: "id"},
+					"handle":  {Attribute: "handle"},
+				},
+			},
+			Features: Features{Labels: boolPtr(false)},
+			Filter: Filter{
+				Struct: map[string]Attribute{
+					"prompt_version_id": {GoType: "[]string", StoreIdent: "id", Ident: "promptVersionID"},
+					"handle":            {},
+				},
+				ByValue: []string{"prompt_version_id", "handle"},
+			},
+			Store: &StoreConfig{
+				Ident: "automationPromptVersion",
+				Lookups: []StoreLookup{
+					{Fields: []string{"id"}, Description: "searches for a prompt version by ID"},
+				},
+			},
+		}},
+
 		{Handle: "trigger", Resource: Resource{
 			Model: Model{
 				Ident:      "automation_triggers",

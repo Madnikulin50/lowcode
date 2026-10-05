@@ -53,6 +53,24 @@ function:
     select-function: Select function
     type: Type
     type*: Type*
+    test:
+      button: Проверить шаг
+      title: Проверка шага
+      hint: Выполняет этот шаг один раз на реальной модели с аргументами ниже. Ничего не сохраняется; изменение данных агентом отключено.
+      arguments: Аргументы (JSON)
+      expressions: Эти аргументы заданы выражениями, для проверки нужны примеры значений
+      run: Выполнить
+      results: Результаты
+      trace: Трейс ИИ
+      tokens: токенов
+      attempts: попытки
+      rejected: Отклонённые ответы
+      prompt: Запрос
+      stop: Остановить
+      working: Ожидание ответа модели...
+      warming: Модель загружается...
+      usingTools: Агент использует инструменты...
+      attemptN: Попытка {n} - предыдущий ответ отклонён
   label: Функция
   short: Функция
   tooltip: Execute the chosen predefined function

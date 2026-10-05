@@ -201,6 +201,23 @@ type (
 		CreatedAt  time.Time `db:"created_at"`
 	}
 
+	// auxAutomationPromptVersion is an auxiliary structure used for transporting to/from RDBMS store
+	auxAutomationPromptVersion struct {
+		ID          uint64                        `db:"id"`
+		Handle      string                        `db:"handle"`
+		Version     int                           `db:"version"`
+		Description string                        `db:"description"`
+		Text        string                        `db:"text"`
+		Note        string                        `db:"note"`
+		Active      bool                          `db:"active"`
+		Kind        string                        `db:"kind"`
+		Requires    automationType.PromptRequires `db:"requires"`
+		Resources   automationType.PromptFiles    `db:"resources"`
+		Cases       automationType.PromptCases    `db:"cases"`
+		CreatedAt   time.Time                     `db:"created_at"`
+		CreatedBy   uint64                        `db:"created_by"`
+	}
+
 	// auxAutomationSession is an auxiliary structure used for transporting to/from RDBMS store
 	auxAutomationSession struct {
 		ID           uint64                       `db:"id"`
@@ -217,6 +234,17 @@ type (
 		SuspendedAt  *time.Time                   `db:"suspended_at"`
 		CompletedAt  *time.Time                   `db:"completed_at"`
 		Error        string                       `db:"error"`
+	}
+
+	// auxAutomationState is an auxiliary structure used for transporting to/from RDBMS store
+	auxAutomationState struct {
+		ID         uint64                        `db:"id"`
+		SessionID  uint64                        `db:"session_id"`
+		WorkflowID uint64                        `db:"workflow_id"`
+		Kind       string                        `db:"kind"`
+		ResumeAt   *time.Time                    `db:"resume_at"`
+		CreatedAt  time.Time                     `db:"created_at"`
+		Snapshot   *automationType.StateSnapshot `db:"snapshot"`
 	}
 
 	// auxAutomationTrigger is an auxiliary structure used for transporting to/from RDBMS store
@@ -1396,6 +1424,68 @@ func (aux *auxAuthSession) scan(row scanner) error {
 	)
 }
 
+// encodes AutomationPromptVersion to auxAutomationPromptVersion
+//
+// This function is auto-generated
+func (aux *auxAutomationPromptVersion) encode(res *automationType.PromptVersion) (_ error) {
+	aux.ID = res.ID
+	aux.Handle = res.Handle
+	aux.Version = res.Version
+	aux.Description = res.Description
+	aux.Text = res.Text
+	aux.Note = res.Note
+	aux.Active = res.Active
+	aux.Kind = res.Kind
+	aux.Requires = res.Requires
+	aux.Resources = res.Resources
+	aux.Cases = res.Cases
+	aux.CreatedAt = res.CreatedAt
+	aux.CreatedBy = res.CreatedBy
+	return
+}
+
+// decodes AutomationPromptVersion from auxAutomationPromptVersion
+//
+// This function is auto-generated
+func (aux auxAutomationPromptVersion) decode() (res *automationType.PromptVersion, _ error) {
+	res = new(automationType.PromptVersion)
+	res.ID = aux.ID
+	res.Handle = aux.Handle
+	res.Version = aux.Version
+	res.Description = aux.Description
+	res.Text = aux.Text
+	res.Note = aux.Note
+	res.Active = aux.Active
+	res.Kind = aux.Kind
+	res.Requires = aux.Requires
+	res.Resources = aux.Resources
+	res.Cases = aux.Cases
+	res.CreatedAt = aux.CreatedAt
+	res.CreatedBy = aux.CreatedBy
+	return
+}
+
+// scans row and fills auxAutomationPromptVersion fields
+//
+// This function is auto-generated
+func (aux *auxAutomationPromptVersion) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.Handle,
+		&aux.Version,
+		&aux.Description,
+		&aux.Text,
+		&aux.Note,
+		&aux.Active,
+		&aux.Kind,
+		&aux.Requires,
+		&aux.Resources,
+		&aux.Cases,
+		&aux.CreatedAt,
+		&aux.CreatedBy,
+	)
+}
+
 // encodes AutomationSession to auxAutomationSession
 //
 // This function is auto-generated
@@ -1458,6 +1548,50 @@ func (aux *auxAutomationSession) scan(row scanner) error {
 		&aux.SuspendedAt,
 		&aux.CompletedAt,
 		&aux.Error,
+	)
+}
+
+// encodes AutomationState to auxAutomationState
+//
+// This function is auto-generated
+func (aux *auxAutomationState) encode(res *automationType.State) (_ error) {
+	aux.ID = res.ID
+	aux.SessionID = res.SessionID
+	aux.WorkflowID = res.WorkflowID
+	aux.Kind = res.Kind
+	aux.ResumeAt = res.ResumeAt
+	aux.CreatedAt = res.CreatedAt
+	aux.Snapshot = res.Snapshot
+	return
+}
+
+// decodes AutomationState from auxAutomationState
+//
+// This function is auto-generated
+func (aux auxAutomationState) decode() (res *automationType.State, _ error) {
+	res = new(automationType.State)
+	res.ID = aux.ID
+	res.SessionID = aux.SessionID
+	res.WorkflowID = aux.WorkflowID
+	res.Kind = aux.Kind
+	res.ResumeAt = aux.ResumeAt
+	res.CreatedAt = aux.CreatedAt
+	res.Snapshot = aux.Snapshot
+	return
+}
+
+// scans row and fills auxAutomationState fields
+//
+// This function is auto-generated
+func (aux *auxAutomationState) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.SessionID,
+		&aux.WorkflowID,
+		&aux.Kind,
+		&aux.ResumeAt,
+		&aux.CreatedAt,
+		&aux.Snapshot,
 	)
 }
 

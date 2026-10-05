@@ -1,4 +1,5 @@
-import { Step, Block, FilterDefinition } from '../../reporter'
+import { Block } from '../../reporter'
+import type { Step, FilterDefinition } from '../../reporter'
 import { Apply, CortezaID, ISO8601Date, NoID } from '../../cast'
 import { IsOf } from '../../guards'
 

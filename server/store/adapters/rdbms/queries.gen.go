@@ -1357,6 +1357,126 @@ var (
 		}
 	}
 
+	// automationPromptVersionTable represents automationPromptVersions store table
+	//
+	// This value is auto-generated
+	automationPromptVersionTable = goqu.T("automation_prompt_versions")
+
+	// automationPromptVersionSelectQuery assembles select query for fetching automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"handle",
+			"version",
+			"description",
+			"text",
+			"note",
+			"active",
+			"kind",
+			"requires",
+			"resources",
+			"cases",
+			"created_at",
+			"created_by",
+		).From(automationPromptVersionTable)
+	}
+
+	// automationPromptVersionInsertQuery assembles query inserting automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionInsertQuery = func(d goqu.DialectWrapper, res *automationType.PromptVersion) *goqu.InsertDataset {
+		return d.Insert(automationPromptVersionTable).
+			Rows(goqu.Record{
+				"id":          res.ID,
+				"handle":      res.Handle,
+				"version":     res.Version,
+				"description": res.Description,
+				"text":        res.Text,
+				"note":        res.Note,
+				"active":      res.Active,
+				"kind":        res.Kind,
+				"requires":    res.Requires,
+				"resources":   res.Resources,
+				"cases":       res.Cases,
+				"created_at":  res.CreatedAt,
+				"created_by":  res.CreatedBy,
+			})
+	}
+
+	// automationPromptVersionUpsertQuery assembles (insert+on-conflict) query for replacing automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionUpsertQuery = func(d goqu.DialectWrapper, res *automationType.PromptVersion) *goqu.InsertDataset {
+		var target = `,id`
+
+		return automationPromptVersionInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"handle":      res.Handle,
+						"version":     res.Version,
+						"description": res.Description,
+						"text":        res.Text,
+						"note":        res.Note,
+						"active":      res.Active,
+						"kind":        res.Kind,
+						"requires":    res.Requires,
+						"resources":   res.Resources,
+						"cases":       res.Cases,
+						"created_at":  res.CreatedAt,
+						"created_by":  res.CreatedBy,
+					},
+				),
+			)
+	}
+
+	// automationPromptVersionUpdateQuery assembles query for updating automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionUpdateQuery = func(d goqu.DialectWrapper, res *automationType.PromptVersion) *goqu.UpdateDataset {
+		return d.Update(automationPromptVersionTable).
+			Set(goqu.Record{
+				"handle":      res.Handle,
+				"version":     res.Version,
+				"description": res.Description,
+				"text":        res.Text,
+				"note":        res.Note,
+				"active":      res.Active,
+				"kind":        res.Kind,
+				"requires":    res.Requires,
+				"resources":   res.Resources,
+				"cases":       res.Cases,
+				"created_at":  res.CreatedAt,
+				"created_by":  res.CreatedBy,
+			}).
+			Where(automationPromptVersionPrimaryKeys(res))
+	}
+
+	// automationPromptVersionDeleteQuery assembles delete query for removing automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(automationPromptVersionTable).Where(ee...)
+	}
+
+	// automationPromptVersionDeleteQuery assembles delete query for removing automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(automationPromptVersionTable)
+	}
+
+	// automationPromptVersionPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	automationPromptVersionPrimaryKeys = func(res *automationType.PromptVersion) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
 	// automationSessionTable represents automationSessions store table
 	//
 	// This value is auto-generated
@@ -1476,6 +1596,102 @@ var (
 	//
 	// This function is auto-generated
 	automationSessionPrimaryKeys = func(res *automationType.Session) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// automationStateTable represents automationStates store table
+	//
+	// This value is auto-generated
+	automationStateTable = goqu.T("automation_states")
+
+	// automationStateSelectQuery assembles select query for fetching automationStates
+	//
+	// This function is auto-generated
+	automationStateSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"session_id",
+			"workflow_id",
+			"kind",
+			"resume_at",
+			"created_at",
+			"snapshot",
+		).From(automationStateTable)
+	}
+
+	// automationStateInsertQuery assembles query inserting automationStates
+	//
+	// This function is auto-generated
+	automationStateInsertQuery = func(d goqu.DialectWrapper, res *automationType.State) *goqu.InsertDataset {
+		return d.Insert(automationStateTable).
+			Rows(goqu.Record{
+				"id":          res.ID,
+				"session_id":  res.SessionID,
+				"workflow_id": res.WorkflowID,
+				"kind":        res.Kind,
+				"resume_at":   res.ResumeAt,
+				"created_at":  res.CreatedAt,
+				"snapshot":    res.Snapshot,
+			})
+	}
+
+	// automationStateUpsertQuery assembles (insert+on-conflict) query for replacing automationStates
+	//
+	// This function is auto-generated
+	automationStateUpsertQuery = func(d goqu.DialectWrapper, res *automationType.State) *goqu.InsertDataset {
+		var target = `,id`
+
+		return automationStateInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"session_id":  res.SessionID,
+						"workflow_id": res.WorkflowID,
+						"kind":        res.Kind,
+						"resume_at":   res.ResumeAt,
+						"created_at":  res.CreatedAt,
+						"snapshot":    res.Snapshot,
+					},
+				),
+			)
+	}
+
+	// automationStateUpdateQuery assembles query for updating automationStates
+	//
+	// This function is auto-generated
+	automationStateUpdateQuery = func(d goqu.DialectWrapper, res *automationType.State) *goqu.UpdateDataset {
+		return d.Update(automationStateTable).
+			Set(goqu.Record{
+				"session_id":  res.SessionID,
+				"workflow_id": res.WorkflowID,
+				"kind":        res.Kind,
+				"resume_at":   res.ResumeAt,
+				"created_at":  res.CreatedAt,
+				"snapshot":    res.Snapshot,
+			}).
+			Where(automationStatePrimaryKeys(res))
+	}
+
+	// automationStateDeleteQuery assembles delete query for removing automationStates
+	//
+	// This function is auto-generated
+	automationStateDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(automationStateTable).Where(ee...)
+	}
+
+	// automationStateDeleteQuery assembles delete query for removing automationStates
+	//
+	// This function is auto-generated
+	automationStateTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(automationStateTable)
+	}
+
+	// automationStatePrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	automationStatePrimaryKeys = func(res *automationType.State) goqu.Ex {
 		return goqu.Ex{
 			"id": res.ID,
 		}

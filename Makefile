@@ -1,4 +1,5 @@
-.PHONY: dev test lint fresh audit drelease ddebug dpush drelease-agents ddebug-agents
+.PHONY: dev test lint fresh audit drelease ddebug dpush drelease-agents ddebug-agents \
+        verify verify.hygiene verify.staged verify.ci verify.full verify.watch verify.baseline
 
 VERSION     ?= 2026.09.20
 DOCKER_USER ?= madnikulin50
@@ -64,6 +65,35 @@ dpush:
 
 drelease-agents:
 	$(MAKE) -C $(CURDIR)/agents drelease VERSION=$(VERSION) DOCKER_USER=$(DOCKER_USER)
+
+# --- AI guard -----------------------------------------------------------------
+# Быстрая таргетированная проверка после правок ИИ (см. docs/ai-guard.md).
+# Блокируют только НОВЫЕ проблемы: сборка server/cmd/corteza, go vet и go test
+# изменённых пакетов, vite build затронутых webapp, тесты lib. Известные
+# падения репозитория вынесены в scripts/ai-guard-baseline.txt.
+
+INTERVAL ?= 5
+
+verify:            ## проверить изменённые файлы (staged + unstaged + untracked)
+	@scripts/verify-ai.sh --changed
+
+verify.hygiene:    ## только гигиена дерева: маркеры конфликтов, .only, .orig/.rej
+	@scripts/verify-ai.sh --hygiene
+
+verify.staged:     ## проверить только проиндексированное (git pre-commit)
+	@scripts/verify-ai.sh --staged
+
+verify.ci:         ## проверить изменения относительно merge-base с origin/HEAD
+	@scripts/verify-ai.sh --ci
+
+verify.full:       ## полная сборка, тесты и адвайзори-проверки всего дерева
+	@scripts/verify-ai.sh --full
+
+verify.watch:      ## периодически повторять verify (INTERVAL=5 по умолчанию)
+	@scripts/verify-ai.sh --watch=$(INTERVAL)
+
+verify.baseline:   ## принять текущие падения как известные (обновить baseline)
+	@scripts/verify-ai.sh --changed --update-baseline
 
 ddebug-agents:
 	$(MAKE) -C $(CURDIR)/agents ddebug VERSION=$(VERSION)

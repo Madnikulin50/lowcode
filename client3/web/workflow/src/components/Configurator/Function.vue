@@ -33,7 +33,7 @@
             <tr v-for="(a, index) in args" :key="index"
               :class="a._showDetails ? 'border-thick' : 'border-thick-transparent'"
               @click="a._showDetails = !a._showDetails">
-              <td class="text-truncate pointer">
+              <td class="text-truncate pointer" :title="a.description || undefined">
                 <var>{{ a.target }}{{ a.required ? '*' : '' }}</var>
                 <samp v-if="!isWhileIterator"> ({{ a.type }})</samp>
               </td>
@@ -52,6 +52,11 @@
         <div class="arrow-up"></div>
         <div class="card bg-light">
           <div class="card-body px-4 pb-3">
+            <div v-if="a.label || a.description" class="mb-3">
+              <strong v-if="a.label">{{ a.label }}</strong>
+              <p v-if="a.description" class="small text-muted mb-0">{{ a.description }}</p>
+            </div>
+
             <div v-if="(paramTypes[functionRef] && paramTypes[functionRef][a.target] || []).length > 1" class="mb-3">
               <label class="text-primary form-label">{{ t('steps.function.configurator.type') }}</label>
               <c-input-select v-model="a.type" :options="(paramTypes[functionRef] && paramTypes[functionRef][a.target] || [])"
@@ -75,6 +80,9 @@
                   :options="a.input.properties.options" :get-option-key="getOptionTypeKey" label="text"
                   :filter="varFilter" :reduce="a => a.value"
                   :placeholder="t('steps.function.configurator.option-select')" :clearable="false"
+                  @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
+                <textarea v-else-if="a.input && a.input.type === 'textarea'" v-model="a.value" class="form-control"
+                  :rows="(a.input.properties && a.input.properties.rows) || 5" spellcheck="false"
                   @input="window.dispatchEvent(new CustomEvent('change-detected'))" />
                 <div v-else-if="a.type === 'Boolean'" class="form-check">
                   <input class="form-check-input-v3" type="checkbox" v-model="a.value" true-value="true" false-value="false"
@@ -142,10 +150,15 @@
     </div>
 
     <Teleport to="#sidebar-footer">
+      <button v-if="canTestStep" class="btn btn-outline-primary align-top me-2" @click="openStepTest">
+        {{ t('steps.function.configurator.test.button') }}
+      </button>
       <button v-if="expressionResults" class="btn btn-primary align-top border-0 ms-auto" @click="addResult()">
         {{ t('steps.function.configurator.add-result') }}
       </button>
     </Teleport>
+
+    <AIStepTest v-if="canTestStep" ref="stepTest" :function-ref="functionRef" :args="args" />
 
     <div class="modal fade" id="expression-editor-function" tabindex="-1">
       <div class="modal-dialog modal-xl">
@@ -174,6 +187,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'corteza-lib/vue/dist'
 import ExpressionTable from '../ExpressionTable.vue'
 import ExpressionEditor from '../ExpressionEditor.vue'
+import AIStepTest from './AIStepTest.vue'
 import { objectSearchMaker, stringSearchMaker } from '../../lib/filter'
 import { getDocumentationURL } from '../../lib/version'
 
@@ -194,6 +208,7 @@ const processing = ref(true)
 const showFunctionList = ref(true)
 const expressionResults = ref(false)
 const functionRef = ref(undefined)
+const stepTest = ref(null)
 
 const functions = ref([])
 const args = ref([])
@@ -211,6 +226,16 @@ const currentExpressionValue = computed({
 const functionTypes = computed(() => functions.value.map(({ ref, meta, disabled = false }) => ({ value: ref, text: meta.short, disabled })))
 
 const functionDescription = computed(() => (functions.value.find(({ ref }) => ref === functionRef.value) || { meta: {} }).meta.description)
+
+// AI functions that only read and think can be tried on their own (the
+// server refuses the others - see automation/rest/ai_step.go)
+const testableAIFunctions = ['aiAsk', 'aiExtract', 'aiClassify', 'aiRagSearch']
+const canTestStep = computed(() => testableAIFunctions.includes(functionRef.value))
+
+function openStepTest () {
+  if (stepTest.value) stepTest.value.prepare()
+  new bootstrap.Modal(document.getElementById('ai-step-test-modal')).show()
+}
 
 const isWhileIterator = computed(() => props.item.config && props.item.config.kind === 'iterator' && functionRef.value === 'loopDo')
 
@@ -290,6 +315,8 @@ function setParams(fName, immediate = false) {
         value: arg.value || input.default || null,
         expr: arg.expr || arg.source || null,
         required: param.required || false,
+        label: (param.meta || {}).label || '',
+        description: (param.meta || {}).description || '',
         input,
         _showDetails: false,
       }

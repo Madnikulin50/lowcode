@@ -52,6 +52,83 @@
         </div>
       </div>
 
+      <div
+        v-if="testable"
+        v-show="tab === 'form'"
+        class="border rounded p-2 mt-3 bg-light"
+        data-test="node-test"
+      >
+        <label class="form-label small fw-bold text-muted mb-1">
+          {{ $t('rulechain.nodeTest.title', 'Try this node') }}
+        </label>
+        <textarea
+          v-model="testInput"
+          rows="3"
+          class="form-control form-control-sm font-monospace mb-2"
+          spellcheck="false"
+          :placeholder="$t('rulechain.nodeTest.inputPlaceholder', 'Sample input as JSON - its fields fill the variables used in the prompt')"
+        />
+        <button
+          v-if="testRunning"
+          type="button"
+          class="btn btn-sm btn-outline-danger me-1"
+          @click="stopNodeTest"
+        >
+          {{ $t('rulechain.nodeTest.stop', 'Stop') }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary"
+          :disabled="testRunning"
+          @click="runNodeTest"
+        >
+          <span
+            v-if="testRunning"
+            class="spinner-border spinner-border-sm me-1"
+          />
+          {{ $t('rulechain.nodeTest.run', 'Run with the real model') }}
+        </button>
+        <span class="small text-muted ms-2">
+          {{ $t('rulechain.nodeTest.hint', 'Nothing is saved; data changes by the agent are switched off.') }}
+        </span>
+
+        <div
+          v-if="testRunning || testLive"
+          class="border rounded bg-white p-2 mt-2 small"
+        >
+          <div class="text-muted mb-1">
+            {{ testProgress }}
+          </div>
+          <pre
+            v-if="testLive"
+            class="mb-0"
+            style="max-height: 20vh; overflow: auto; white-space: pre-wrap;"
+          >{{ testLive }}</pre>
+        </div>
+
+        <div
+          v-if="testError"
+          class="alert alert-danger py-1 small mt-2 mb-0"
+        >
+          {{ testError }}
+        </div>
+
+        <template v-if="testResult">
+          <div
+            v-if="testResult.error"
+            class="alert alert-danger py-1 small mt-2 mb-0"
+          >
+            {{ testResult.error }}
+          </div>
+          <RuleChainAiTrace :trace="testResult.trace" />
+          <pre
+            v-if="testResult.output"
+            class="bg-white border rounded p-2 mt-2 mb-0 small"
+            style="max-height: 20vh; overflow: auto; white-space: pre-wrap;"
+          >{{ JSON.stringify(testResult.output, null, 2) }}</pre>
+        </template>
+      </div>
+
       <div v-show="tab === 'json'">
         <textarea
           v-model="jsonText"
@@ -74,7 +151,9 @@
 
 <script setup>
 import { reactive, ref, watch, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import RuleChainConfigField from './RuleChainConfigField.vue'
+import RuleChainAiTrace from './RuleChainAiTrace.vue'
 import {
   parseConfigText,
   stringifyConfig,
@@ -84,6 +163,8 @@ import {
   fieldsFromNodeType,
   resolveFields,
 } from './rulechainConfig'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: String, default: '{}' },
@@ -95,6 +176,77 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+// the AI nodes can be tried on their own (server: POST /admin/rulechain/node-test)
+const testable = computed(() => props.nodeType === 'ai' || props.nodeType === 'ai.operation')
+const testInput = ref('{}')
+const testRunning = ref(false)
+const testResult = ref(null)
+const testError = ref('')
+const testLive = ref('')
+const testStatus = ref('')
+const testAttempt = ref(0)
+let testController = null
+
+const testProgress = computed(() => {
+  if (testStatus.value === 'warming') return t('rulechain.nodeTest.warming', 'The model is loading...')
+  if (testStatus.value === 'using-tools') return t('rulechain.nodeTest.usingTools', 'The agent is using tools...')
+  if (testAttempt.value > 1) return t('rulechain.nodeTest.attemptN', { n: testAttempt.value })
+  return t('rulechain.nodeTest.working', 'Waiting for the model...')
+})
+
+function stopNodeTest () {
+  if (testController) testController.abort()
+}
+
+async function runNodeTest () {
+  testError.value = ''
+  testResult.value = null
+
+  let input
+  try {
+    input = JSON.parse(testInput.value || '{}')
+  } catch (e) {
+    testError.value = t('rulechain.test.input.invalid', 'Input must be valid JSON')
+    return
+  }
+
+  const parsed = parseConfigText(jsonText.value)
+  if (!parsed.ok) {
+    testError.value = `${t('rulechain.edit.nodes.config.invalidJson')}: ${parsed.error}`
+    return
+  }
+
+  testLive.value = ''
+  testStatus.value = ''
+  testAttempt.value = 0
+  testController = new AbortController()
+  testRunning.value = true
+  try {
+    const last = await window.__composeAPI.ruleChainNodeTestStream({
+      type: props.nodeType,
+      config: { ...config, ...serializeConfig(config, fields.value) },
+      input,
+    }, (ev) => {
+      if (ev.status) testStatus.value = ev.status
+      if (ev.attempt) {
+        // a new try starts from a blank page: the last answer was rejected
+        testAttempt.value = ev.attempt
+        if (ev.attempt > 1) testLive.value = ''
+      }
+      if (ev.token) testLive.value += ev.token
+    }, testController.signal)
+    testResult.value = last.result
+  } catch (e) {
+    // stopping is the user's own doing, not a failure
+    if (e && e.name !== 'AbortError') {
+      testError.value = (e.response && e.response.data && e.response.data.error && e.response.data.error.message) || String(e.message || e)
+    }
+  } finally {
+    testRunning.value = false
+    testController = null
+  }
+}
 
 const tab = ref('form')
 const config = reactive({})

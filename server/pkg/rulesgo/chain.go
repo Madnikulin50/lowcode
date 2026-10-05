@@ -46,6 +46,15 @@ type NodeResult struct {
 	Output map[string]interface{} `json:"output"`
 	Next   []string               `json:"next"`
 	Error  string                 `json:"error,omitempty"`
+
+	// DurationMs is how long the node took to execute.
+	DurationMs int64 `json:"durationMs,omitempty"`
+
+	// Trace is what a node reports about how it did its work (today: the AI
+	// nodes' prompt, response, model and token use - see aiagent.CallTrace).
+	// It is kept apart from Output so it survives a node that fails, which
+	// returns no output at all.
+	Trace map[string]interface{} `json:"trace,omitempty"`
 }
 
 type ExecutionContext struct {

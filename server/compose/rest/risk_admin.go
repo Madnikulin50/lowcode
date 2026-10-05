@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
 	"github.com/madnikulin50/lowcode/server/pkg/riskengine"
 	"github.com/madnikulin50/lowcode/server/pkg/riskstore"
@@ -591,7 +592,7 @@ func (a RiskAdmin) Assess(w http.ResponseWriter, r *http.Request) {
 	assessment.BindingID = bindingID
 	assessment.SubjectRecordID = payload.SubjectRecordID
 
-	riskstore.SaveAssessment(assessment)
+	service.SaveRiskAssessment(r.Context(), binding, assessment)
 	api.Send(w, r, map[string]interface{}{"created": true, "assessment": assessment})
 }
 

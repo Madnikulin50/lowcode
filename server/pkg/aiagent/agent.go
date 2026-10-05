@@ -17,6 +17,7 @@ type AgentConfig struct {
 	Model        string
 	Tools        []chat.ToolDef
 	Toolkits     []string
+	Skills       []string // handles the agent may load; "*" for all
 	MaxSteps     int
 	Confirm      bool
 	Validator    func(result *AgentResult) error
@@ -36,6 +37,24 @@ type AgentResult struct {
 	ConfirmNeeded bool        `json:"confirmNeeded,omitempty"`
 	ConfirmCalls  []Call      `json:"confirmCalls,omitempty"`
 	Err           error       `json:"-"`
+
+	// What the run cost, for observability: the model that answered, how many
+	// LLM turns it took and, when the model reports usage, the tokens spent.
+	Model            string `json:"model,omitempty"`
+	LLMCalls         int    `json:"llmCalls,omitempty"`
+	PromptTokens     int    `json:"promptTokens,omitempty"`
+	CompletionTokens int    `json:"completionTokens,omitempty"`
+
+	// Skills loaded during the run, as "handle@version"
+	Skills []string `json:"skills,omitempty"`
+}
+
+func (r *AgentResult) addTurn(usage *schema.TokenUsage) {
+	r.LLMCalls++
+	if usage != nil {
+		r.PromptTokens += usage.PromptTokens
+		r.CompletionTokens += usage.CompletionTokens
+	}
 }
 
 type AgentStep struct {
@@ -97,9 +116,16 @@ func (a *Agent) RunConfirmed(ctx context.Context, input string, contextData map[
 		}
 	}()
 
-	cl := a.clientForRun()
-	systemPrompt := a.buildSystemPrompt(cl, contextData)
+	cl := a.clientForRun(ctx)
 	tools := a.resolveTools()
+
+	// skills: the agent gets a catalog and the means to load from it; a skill
+	// the caller chose is loaded up front
+	skillRun, preloaded, tools := a.startSkills(ctx, tools)
+	if skillRun != nil {
+		ctx = ContextWithSkillRun(ctx, skillRun)
+	}
+	systemPrompt := a.buildSystemPrompt(cl, contextData, tools, skillRun, preloaded)
 	opt := Options{
 		Client:       cl,
 		Messages:     []*schema.Message{schema.SystemMessage(systemPrompt), schema.UserMessage(input)},
@@ -110,18 +136,62 @@ func (a *Agent) RunConfirmed(ctx context.Context, input string, contextData map[
 		Validator:    a.cfg.Validator,
 		NeedsConfirm: NeedsConfirmFromToolDefs(tools),
 		Confirmed:    confirmed,
+		Skills:       skillRun,
+	}
+	if stream := streamFromContext(ctx); stream != nil {
+		// someone is watching: generate as a stream, without the tool-call XML
+		opt.Stream = stream
+		opt.HideToolXML = true
 	}
 	result = Run(ctx, opt)
+	if result != nil {
+		result.Skills = skillRun.Loaded()
+	}
 	return result
 }
 
-func (a *Agent) clientForRun() ChatModel {
+// startSkills sets up skills for a run: the catalog the agent may use, the
+// tools to load from it, and the skill the caller picked, if any. Returns nil
+// when the run has no skills at all.
+func (a *Agent) startSkills(ctx context.Context, tools []chat.ToolDef) (*SkillRun, string, []chat.ToolDef) {
+	chosen := SkillFromContext(ctx)
+	if len(a.cfg.Skills) == 0 && chosen == "" {
+		return nil, "", tools
+	}
+
+	run := NewSkillRun(SkillsFor(ctx, a.cfg.Skills))
+	var preloaded string
+	if chosen != "" {
+		text, extra, err := run.Preload(ctx, chosen, tools)
+		if err != nil {
+			preloaded = fmt.Sprintf("(the skill %q could not be loaded: %v)", chosen, err)
+		} else {
+			preloaded = text
+			tools = Flatten(ToolKit{Name: "_base", Tools: tools}, ToolKit{Name: "_skill", Tools: extra})
+		}
+	}
+
+	if len(run.catalog) > 0 {
+		var current []chat.ToolDef
+		current = tools
+		meta := SkillTools(run, func() []chat.ToolDef { return current })
+		tools = Flatten(ToolKit{Name: "_base", Tools: tools}, ToolKit{Name: "_skills", Tools: meta})
+		current = tools
+	}
+	return run, preloaded, tools
+}
+
+func (a *Agent) clientForRun(ctx context.Context) ChatModel {
 	// a.cfg.Model may be a literal Ollama model name (agent config a user
 	// typed directly) or a role alias like "mcp.agent" (what every built-in
 	// spec under defs/*.yaml uses) - ResolveModel tells the two apart and
 	// only resolves the latter, so a call never hits a model literally
 	// named after the role (see ResolveModel's doc comment).
 	want := chat.ResolveModel(a.cfg.Model)
+	if override := modelFromContext(ctx); override != "" {
+		// a step or node asked for a specific model for this call only
+		want = chat.ResolveModel(override)
+	}
 	if a.client != nil && a.client.Model() == want {
 		return a.client
 	}
@@ -146,9 +216,32 @@ func (a *Agent) resolveTools() []chat.ToolDef {
 	return Flatten(ToolKit{Name: "_cfg", Tools: a.cfg.Tools}, ToolKit{Name: "_kit", Tools: resolved})
 }
 
-func (a *Agent) buildSystemPrompt(cl ChatModel, contextData map[string]interface{}) string {
+// ExecApproved runs tool calls a human has approved - typically the
+// ConfirmCalls an earlier RunConfirmed(.., false) turn proposed and then
+// stopped on. Only tools this agent may use are executable, so an approval
+// payload that was tampered with in transit cannot reach arbitrary tools.
+func (a *Agent) ExecApproved(ctx context.Context, calls []Call) (string, error) {
+	tools := a.approvableTools(ctx, a.resolveTools())
+	allowed := make(map[string]struct{}, len(tools))
+	for _, t := range tools {
+		allowed[t.Name] = struct{}{}
+	}
+	for _, c := range calls {
+		if _, ok := allowed[c.Name]; !ok {
+			return "", fmt.Errorf("tool %q is not available to agent %q", c.Name, a.Name())
+		}
+	}
+	return ExecCalls(ctx, calls, tools, nil), nil
+}
+
+func (a *Agent) buildSystemPrompt(cl ChatModel, contextData map[string]interface{}, tools []chat.ToolDef, skills *SkillRun, preloaded string) string {
 	prompt := a.cfg.SystemPrompt
-	tools := a.resolveTools()
+	if cat := skills.CatalogPrompt(); cat != "" {
+		prompt += "\n\n" + cat
+	}
+	if preloaded != "" {
+		prompt += "\n\n## Skill to follow\n" + preloaded
+	}
 	useTools := cl != nil && cl.IsToolsSupported() && len(tools) > 0
 
 	if useTools {

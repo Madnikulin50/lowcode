@@ -82,6 +82,18 @@ type (
 		// list as one of the sub-workflows, when set to true
 		// there should be no enabled triggers on this workflow
 		SubWorkflow bool `json:"subWorkflow,omitempty"`
+
+		// Limits what one session of this workflow may spend on AI steps
+		AIBudget *AIBudget `json:"aiBudget,omitempty"`
+	}
+
+	// AIBudget caps the model use of a single workflow session; every AI step
+	// of the session draws on it. Zero means no limit on that count; a workflow
+	// without a budget gets the platform default (AI_MAX_TOKENS_PER_RUN,
+	// AI_MAX_LLM_CALLS_PER_RUN), if any.
+	AIBudget struct {
+		MaxTokens   int `json:"maxTokens,omitempty"`
+		MaxLLMCalls int `json:"maxLLMCalls,omitempty"`
 	}
 
 	WorkflowIssue struct {

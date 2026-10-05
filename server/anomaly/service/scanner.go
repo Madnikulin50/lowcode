@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -14,6 +15,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/errors"
 	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
 	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/wfevent"
 	"github.com/madnikulin50/lowcode/server/store"
 )
 
@@ -231,7 +233,7 @@ func (svc *scanner) upsertFinding(ctx context.Context, rule *types.Rule, rec *co
 
 	existing, err := store.LookupAnomalyFindingByRuleIDRecordID(ctx, svc.store, rule.ID, rec.ID)
 	if errors.IsNotFound(err) {
-		return store.CreateAnomalyFinding(ctx, svc.store, &types.Finding{
+		finding := &types.Finding{
 			ID:          id.Next(),
 			NamespaceID: rule.NamespaceID,
 			ModuleID:    rule.ModuleID,
@@ -243,7 +245,12 @@ func (svc *scanner) upsertFinding(ctx context.Context, rule *types.Rule, rec *co
 			Explanation: explanation,
 			CreatedAt:   now,
 			UpdatedAt:   &now,
-		})
+		}
+		if err := store.CreateAnomalyFinding(ctx, svc.store, finding); err != nil {
+			return err
+		}
+		emitFinding(ctx, wfevent.OnCreate, finding, rule)
+		return nil
 	} else if err != nil {
 		return err
 	}
@@ -251,10 +258,43 @@ func (svc *scanner) upsertFinding(ctx context.Context, rule *types.Rule, rec *co
 	// Re-flagging an already-resolved/dismissed finding re-opens it: the
 	// value is still anomalous now, so a stale "resolved" status would
 	// hide an active problem from the Anomaly Center.
+	reopened := existing.Status != types.StatusNew
 	existing.Score = v.Score
 	existing.Severity = v.Severity
 	existing.Status = types.StatusNew
 	existing.Explanation = explanation
 	existing.UpdatedAt = &now
-	return store.UpdateAnomalyFinding(ctx, svc.store, existing)
+	if err := store.UpdateAnomalyFinding(ctx, svc.store, existing); err != nil {
+		return err
+	}
+	if reopened {
+		emitFinding(ctx, wfevent.OnReopen, existing, rule)
+	}
+	return nil
+}
+
+// emitFinding lets workflows react to a finding (explain it with an AI step,
+// open a ticket, ask someone to approve a block, ...). Triggered workflows
+// run asynchronously and must not hold up the scan.
+func emitFinding(ctx context.Context, eventType string, f *types.Finding, rule *types.Rule) {
+	wfevent.Emit(ctx, wfevent.New(wfevent.ResourceAnomalyFinding, eventType, map[string]map[string]interface{}{
+		wfevent.PropFinding: {
+			"findingID":   strconv.FormatUint(f.ID, 10),
+			"namespaceID": strconv.FormatUint(f.NamespaceID, 10),
+			"moduleID":    strconv.FormatUint(f.ModuleID, 10),
+			"recordID":    strconv.FormatUint(f.RecordID, 10),
+			"ruleID":      strconv.FormatUint(f.RuleID, 10),
+			"score":       f.Score,
+			"severity":    f.Severity,
+			"status":      f.Status,
+			"explanation": map[string]interface{}(f.Explanation),
+		},
+		wfevent.PropRule: {
+			"ruleID":    strconv.FormatUint(rule.ID, 10),
+			"moduleID":  strconv.FormatUint(rule.ModuleID, 10),
+			"field":     rule.Field,
+			"detector":  rule.Detector,
+			"threshold": rule.Threshold,
+		},
+	}))
 }

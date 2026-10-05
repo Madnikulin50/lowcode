@@ -120,6 +120,45 @@
                         </option>
                       </select>
                     </div>
+
+                    <div class="mb-3">
+                      <label class="form-label text-primary">
+                        {{ $t('rulechain.edit.aiBudget.label', 'AI budget per run') }}
+                      </label>
+                      <div class="form-text mb-2">
+                        {{ $t('rulechain.edit.aiBudget.description', 'Stops the AI nodes of one run once they have used this much of the model. Leave empty for no limit. Models that do not report token use can only be limited by the number of calls.') }}
+                      </div>
+                      <div class="row g-2">
+                        <div class="col-6">
+                          <label
+                            class="form-label small mb-1"
+                            for="chain-ai-calls"
+                          >{{ $t('rulechain.edit.aiBudget.calls', 'Model calls') }}</label>
+                          <input
+                            id="chain-ai-calls"
+                            v-model.number="form.aiCalls"
+                            type="number"
+                            min="0"
+                            class="form-control"
+                            :placeholder="$t('rulechain.edit.aiBudget.unlimited', 'No limit')"
+                          >
+                        </div>
+                        <div class="col-6">
+                          <label
+                            class="form-label small mb-1"
+                            for="chain-ai-tokens"
+                          >{{ $t('rulechain.edit.aiBudget.tokens', 'Tokens') }}</label>
+                          <input
+                            id="chain-ai-tokens"
+                            v-model.number="form.aiTokens"
+                            type="number"
+                            min="0"
+                            class="form-control"
+                            :placeholder="$t('rulechain.edit.aiBudget.unlimited', 'No limit')"
+                          >
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -379,6 +418,19 @@
               :placeholder="$t('rulechain.test.input.placeholder')"
             />
 
+            <div
+              v-for="node in testAiNodes"
+              :key="node.nodeID"
+              class="mb-3"
+            >
+              <strong class="small">{{ node.nodeID }}</strong>
+              <span
+                v-if="node.durationMs !== undefined"
+                class="badge bg-light text-muted border ms-1"
+              >{{ node.durationMs }} ms</span>
+              <RuleChainAiTrace :trace="node.trace" />
+            </div>
+
             <label class="form-label text-primary">
               {{ $t('rulechain.test.output.label') }}
             </label>
@@ -572,6 +624,11 @@
                       />
                       <strong class="small">{{ node.nodeID }}</strong>
                       <span class="badge bg-light text-dark border">{{ node.type }}</span>
+                      <span
+                        v-if="node.durationMs !== undefined"
+                        class="badge bg-light text-muted border ms-auto"
+                        :title="$t('rulechain.runs.duration')"
+                      >{{ node.durationMs }} ms</span>
                     </div>
                     <div
                       v-if="node.error"
@@ -579,9 +636,10 @@
                     >
                       {{ node.error }}
                     </div>
+                    <RuleChainAiTrace :trace="node.trace" />
                     <pre
                       v-if="node.output"
-                      class="bg-light border rounded p-2 mb-0 small"
+                      class="bg-light border rounded p-2 mt-1 mb-0 small"
                       style="max-height: 20vh; overflow: auto; white-space: pre-wrap;"
                     >{{ JSON.stringify(node.output, null, 2) }}</pre>
                   </div>
@@ -622,6 +680,7 @@ import { composables } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
 import RuleChainGraph from 'corteza-webapp-compose/src/components/Admin/RuleChains/RuleChainGraph'
 import RuleChainNodeConfigEditor from 'corteza-webapp-compose/src/components/Admin/RuleChains/RuleChainNodeConfigEditor'
+import RuleChainAiTrace from 'corteza-webapp-compose/src/components/Admin/RuleChains/RuleChainAiTrace'
 
 const { useToast } = composables
 const { t } = useI18n()
@@ -656,6 +715,11 @@ const form = reactive({
   entryNode: '',
   nodes: [],
   edges: [],
+  // chain-level settings: the AI budget is edited here, anything else a chain
+  // has in its config is kept as it was
+  aiCalls: '',
+  aiTokens: '',
+  extraConfig: {},
 })
 
 const isGraphMode = ref(false)
@@ -672,6 +736,10 @@ const testModalEl = ref(null)
 const testModal = ref(undefined)
 const testInput = ref('')
 const testResult = ref('')
+const testResultData = ref(null)
+
+// AI nodes of the last test run, with what each one asked, got and cost
+const testAiNodes = computed(() => ((testResultData.value && testResultData.value.nodes) || []).filter(n => n.trace))
 const testRunning = ref(false)
 
 const runsModalEl = ref(null)
@@ -723,6 +791,9 @@ function fetchChain () {
     form.entryNode = ''
     form.nodes = []
     form.edges = []
+    form.aiCalls = ''
+    form.aiTokens = ''
+    form.extraConfig = {}
     return
   }
   loading.value = true
@@ -731,6 +802,10 @@ function fetchChain () {
       form.name = chain.name || ''
       form.description = chain.description || ''
       form.entryNode = chain.entryNode || ''
+      const { aiBudget = {}, ...rest } = chainConfig(chain.config)
+      form.aiCalls = aiBudget.maxLLMCalls || ''
+      form.aiTokens = aiBudget.maxTokens || ''
+      form.extraConfig = rest
       form.nodes = (chain.nodes || []).map((n) => ({
         id: n.id,
         type: n.type || '',
@@ -746,6 +821,31 @@ function fetchChain () {
     })
     .catch(toastErrorHandler(t('rulechain.notification.loadFailed')))
     .finally(() => { loading.value = false })
+}
+
+// a chain's own config as an object, whether the server sent it parsed or as text
+function chainConfig (config) {
+  if (!config) return {}
+  if (typeof config === 'string') {
+    try {
+      return JSON.parse(config) || {}
+    } catch (e) {
+      return {}
+    }
+  }
+  return typeof config === 'object' ? { ...config } : {}
+}
+
+// the chain's config as it should be saved: what it had, plus the AI budget
+function buildChainConfig () {
+  const config = { ...form.extraConfig }
+  const budget = {}
+  const calls = Math.floor(Number(form.aiCalls))
+  const tokens = Math.floor(Number(form.aiTokens))
+  if (Number.isFinite(calls) && calls > 0) budget.maxLLMCalls = calls
+  if (Number.isFinite(tokens) && tokens > 0) budget.maxTokens = tokens
+  if (Object.keys(budget).length) config.aiBudget = budget
+  return config
 }
 
 function formatConfig (config) {
@@ -806,6 +906,9 @@ function buildPayload () {
     entryNode: form.entryNode,
     nodes,
     edges,
+    // sent even when empty on an existing chain, so that clearing the budget
+    // clears it
+    config: buildChainConfig(),
   }
 }
 
@@ -912,8 +1015,10 @@ async function runTest () {
 
   testRunning.value = true
   testResult.value = ''
+  testResultData.value = null
   $ComposeAPI.ruleChainTest({ chainID, input })
     .then((result) => {
+      testResultData.value = result
       testResult.value = JSON.stringify(result, null, 2)
     })
     .catch((e) => {

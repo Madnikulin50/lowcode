@@ -2,6 +2,7 @@
   <div class="container pt-2 pb-3">
     <c-content-header :title="$t('automation.sessions.editor.title')" />
     <c-session-editor-info :session="session" :user="user" :processing="info.processing" @cancel="cancelSession()" />
+    <c-session-ai-steps :stacktrace="session.stacktrace" />
   </div>
 </template>
 <script setup>
@@ -10,6 +11,7 @@ import { ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { system } from 'corteza-lib/js/dist'
 import CSessionEditorInfo from '../../../components/Session/CSessionEditorInfo.vue'
+import CSessionAiSteps from '../../../components/Session/CSessionAiSteps.vue'
 const props = defineProps({ sessionID: { type: String, required: false, default: undefined } })
 const { t } = useI18n()
 const session = ref({})

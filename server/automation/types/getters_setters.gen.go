@@ -150,6 +150,118 @@ func (r *Session) SetValue(name string, pos uint, value any) (err error) {
 	return nil
 }
 
+func (r State) GetID() uint64 { return r.ID }
+
+func (r *State) GetValue(name string, pos uint) (any, error) {
+	if r == nil {
+		return nil, nil
+	}
+
+	switch name {
+	case "createdAt", "CreatedAt":
+		return r.CreatedAt, nil
+	case "id", "ID":
+		return r.ID, nil
+	case "kind", "Kind":
+		return r.Kind, nil
+	case "resumeAt", "ResumeAt":
+		return r.ResumeAt, nil
+	case "sessionID", "SessionID":
+		return r.SessionID, nil
+	case "workflowID", "WorkflowID":
+		return r.WorkflowID, nil
+
+	}
+	return nil, nil
+}
+
+func (r *State) SetValue(name string, pos uint, value any) (err error) {
+	if r == nil {
+		r = &State{}
+	}
+
+	switch name {
+	case "createdAt", "CreatedAt":
+		return cast2.Time(value, &r.CreatedAt)
+	case "id", "ID":
+		return cast2.Uint64(value, &r.ID)
+	case "kind", "Kind":
+		return cast2.String(value, &r.Kind)
+	case "resumeAt", "ResumeAt":
+		return cast2.TimePtr(value, &r.ResumeAt)
+	case "sessionID", "SessionID":
+		return cast2.Uint64(value, &r.SessionID)
+	case "workflowID", "WorkflowID":
+		return cast2.Uint64(value, &r.WorkflowID)
+
+	}
+	return nil
+}
+
+func (r PromptVersion) GetID() uint64 { return r.ID }
+
+func (r *PromptVersion) GetValue(name string, pos uint) (any, error) {
+	if r == nil {
+		return nil, nil
+	}
+
+	switch name {
+	case "active", "Active":
+		return r.Active, nil
+	case "createdAt", "CreatedAt":
+		return r.CreatedAt, nil
+	case "createdBy", "CreatedBy":
+		return r.CreatedBy, nil
+	case "description", "Description":
+		return r.Description, nil
+	case "handle", "Handle":
+		return r.Handle, nil
+	case "id", "ID":
+		return r.ID, nil
+	case "kind", "Kind":
+		return r.Kind, nil
+	case "note", "Note":
+		return r.Note, nil
+	case "text", "Text":
+		return r.Text, nil
+	case "version", "Version":
+		return r.Version, nil
+
+	}
+	return nil, nil
+}
+
+func (r *PromptVersion) SetValue(name string, pos uint, value any) (err error) {
+	if r == nil {
+		r = &PromptVersion{}
+	}
+
+	switch name {
+	case "active", "Active":
+		return cast2.Bool(value, &r.Active)
+	case "createdAt", "CreatedAt":
+		return cast2.Time(value, &r.CreatedAt)
+	case "createdBy", "CreatedBy":
+		return cast2.Uint64(value, &r.CreatedBy)
+	case "description", "Description":
+		return cast2.String(value, &r.Description)
+	case "handle", "Handle":
+		return cast2.String(value, &r.Handle)
+	case "id", "ID":
+		return cast2.Uint64(value, &r.ID)
+	case "kind", "Kind":
+		return cast2.String(value, &r.Kind)
+	case "note", "Note":
+		return cast2.String(value, &r.Note)
+	case "text", "Text":
+		return cast2.String(value, &r.Text)
+	case "version", "Version":
+		return cast2.Int(value, &r.Version)
+
+	}
+	return nil
+}
+
 func (r Trigger) GetID() uint64 { return r.ID }
 
 func (r *Trigger) GetValue(name string, pos uint) (any, error) {

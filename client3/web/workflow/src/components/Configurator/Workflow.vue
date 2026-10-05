@@ -145,6 +145,43 @@
                   </div>
 
                   <div class="mb-3">
+                    <label class="form-label text-primary">{{ t('ai-budget.label') }}</label>
+                    <div class="form-text mb-2">{{ t('ai-budget.description') }}</div>
+                    <div class="row g-2">
+                      <div class="col-6">
+                        <label
+                          class="form-label small mb-1"
+                          for="wf-ai-calls"
+                        >{{ t('ai-budget.calls') }}</label>
+                        <input
+                          id="wf-ai-calls"
+                          v-model.number="budgetCalls"
+                          class="form-control"
+                          data-test-id="input-ai-budget-calls"
+                          type="number"
+                          min="0"
+                          :placeholder="t('ai-budget.unlimited')"
+                        >
+                      </div>
+                      <div class="col-6">
+                        <label
+                          class="form-label small mb-1"
+                          for="wf-ai-tokens"
+                        >{{ t('ai-budget.tokens') }}</label>
+                        <input
+                          id="wf-ai-tokens"
+                          v-model.number="budgetTokens"
+                          class="form-control"
+                          data-test-id="input-ai-budget-tokens"
+                          type="number"
+                          min="0"
+                          :placeholder="t('ai-budget.unlimited')"
+                        >
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
                     <div class="form-text mb-2">{{ t('sub-workflow.description') }}</div>
                     <div class="form-check">
                       <input
@@ -280,6 +317,36 @@ const emit = defineEmits(['save', 'delete', 'undelete', 'import', 'update:show']
 const visible = computed(() => props.show)
 const activeTab = ref('general')
 const localWorkflow = ref(null)
+
+// Limits on what one run of the workflow may spend on AI steps. An empty box
+// is "no limit"; with both empty the workflow has no budget of its own (the
+// platform default, if any, applies). Stored in meta.aiBudget.
+function budgetField (key) {
+  return computed({
+    get: () => {
+      const v = localWorkflow.value?.meta?.aiBudget?.[key]
+      return v ? v : ''
+    },
+    set: (value) => {
+      const meta = localWorkflow.value.meta
+      const budget = { ...(meta.aiBudget || {}) }
+      const n = Number(value)
+      if (value === '' || value === null || !Number.isFinite(n) || n <= 0) {
+        delete budget[key]
+      } else {
+        budget[key] = Math.floor(n)
+      }
+
+      if (Object.keys(budget).length) {
+        meta.aiBudget = budget
+      } else {
+        delete meta.aiBudget
+      }
+    },
+  })
+}
+const budgetCalls = budgetField('maxLLMCalls')
+const budgetTokens = budgetField('maxTokens')
 
 const nameState = computed(() => {
   return localWorkflow.value?.meta?.name ? null : false

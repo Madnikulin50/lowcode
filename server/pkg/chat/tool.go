@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cloudwego/eino/components/tool"
@@ -38,11 +39,7 @@ func (a *toolAdapter) Info(_ context.Context) (*schema.ToolInfo, error) {
 	params := make(map[string]*schema.ParameterInfo)
 
 	for _, p := range a.def.Params {
-		params[p.Name] = &schema.ParameterInfo{
-			Desc:     p.Description,
-			Type:     schema.String,
-			Required: p.Required,
-		}
+		params[p.Name] = paramInfo(p)
 	}
 
 	return &schema.ToolInfo{
@@ -60,7 +57,7 @@ func (a *toolAdapter) InvokableRun(ctx context.Context, argumentsInJSON string, 
 			return "", fmt.Errorf("failed to parse tool arguments: %w", err)
 		}
 		for k, v := range raw {
-			params[k] = fmt.Sprintf("%v", v)
+			params[k] = ParamString(v)
 		}
 	}
 	return a.def.Handler(ctx, params), nil
@@ -76,16 +73,75 @@ func ToEinoTools(defs []ToolDef) []tool.BaseTool {
 	return tools
 }
 
+// ParamDef.Type values. A handler always receives its parameters as text, so
+// the type decides what the model is told to send, not what the handler gets:
+// a number arrives as "42", a boolean as "true", an array or object as JSON.
+// "json" has always meant "text that contains JSON" and stays a string.
+const (
+	ParamTypeString  = "string"
+	ParamTypeJSON    = "json"
+	ParamTypeNumber  = "number"
+	ParamTypeInteger = "integer"
+	ParamTypeBoolean = "boolean"
+	ParamTypeArray   = "array"   // of strings
+	ParamTypeObject  = "object"  // free-form
+	ParamTypeObjects = "objects" // array of free-form objects
+)
+
+func paramInfo(p ParamDef) *schema.ParameterInfo {
+	info := &schema.ParameterInfo{Desc: p.Description, Type: schema.String, Required: p.Required}
+
+	switch p.Type {
+	case ParamTypeNumber:
+		info.Type = schema.Number
+	case ParamTypeInteger:
+		info.Type = schema.Integer
+	case ParamTypeBoolean:
+		info.Type = schema.Boolean
+	case ParamTypeArray:
+		info.Type = schema.Array
+		info.ElemInfo = &schema.ParameterInfo{Type: schema.String}
+	case ParamTypeObject:
+		info.Type = schema.Object
+	case ParamTypeObjects:
+		info.Type = schema.Array
+		info.ElemInfo = &schema.ParameterInfo{Type: schema.Object}
+	}
+	return info
+}
+
+// ParamString renders a decoded JSON argument as the text a ToolDef handler
+// expects. Plain `%v` would turn an object into Go syntax ("map[a:1]") and a
+// whole number into "1e+06"; here composites become JSON and numbers stay
+// numbers.
+func ParamString(v any) string {
+	switch x := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return x
+	case bool:
+		return strconv.FormatBool(x)
+	case float64:
+		return strconv.FormatFloat(x, 'f', -1, 64)
+	case json.Number:
+		return x.String()
+	case []any, map[string]any:
+		b, err := json.Marshal(x)
+		if err != nil {
+			return fmt.Sprintf("%v", x)
+		}
+		return string(b)
+	}
+	return fmt.Sprintf("%v", v)
+}
+
 func ToToolInfos(defs []ToolDef) ([]*schema.ToolInfo, error) {
 	infos := make([]*schema.ToolInfo, len(defs))
 	for i, d := range defs {
 		params := make(map[string]*schema.ParameterInfo)
 		for _, p := range d.Params {
-			params[p.Name] = &schema.ParameterInfo{
-				Desc:     p.Description,
-				Type:     schema.String,
-				Required: p.Required,
-			}
+			params[p.Name] = paramInfo(p)
 		}
 		infos[i] = &schema.ToolInfo{
 			Name:        d.Name,
@@ -122,7 +178,11 @@ func ToolSystemPrompt(tools []ToolDef) string {
 				if p.Required {
 					req = " (required)"
 				}
-				fmt.Fprintf(b, "   - %s%s: %s\n", p.Name, req, p.Description)
+				typ := ""
+				if p.Type != "" && p.Type != ParamTypeString {
+					typ = " [" + p.Type + "]"
+				}
+				fmt.Fprintf(b, "   - %s%s%s: %s\n", p.Name, typ, req, p.Description)
 			}
 		}
 		b.WriteString("\n")

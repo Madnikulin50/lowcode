@@ -24,6 +24,12 @@ func (r *Registry) Register(nodeType string, executor NodeExecutor) {
 	r.nodes[nodeType] = executor
 }
 
+// Has reports whether a node type is registered.
+func (r *Registry) Has(nodeType string) bool {
+	_, ok := r.nodes[nodeType]
+	return ok
+}
+
 func (r *Registry) Execute(ctx context.Context, nodeType string, node ChainNode, ec *ExecutionContext) (out map[string]interface{}, err error) {
 	executor, ok := r.nodes[nodeType]
 	if !ok {

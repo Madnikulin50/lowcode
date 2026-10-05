@@ -106,7 +106,23 @@ func main() {
 		if *token == "" {
 			log.Fatal("--token (or TOKEN env, AGENT_SHARED_SECRET, or --token-file) is required (or pass --fixtures=<dir> to run standalone, see fixtures/README.md)")
 		}
-		compose = NewComposeClient(*api, *token, mintTokenViaNode)
+		// Prefer re-enrolling via AGENT_SHARED_SECRET (works anywhere the
+		// agent can reach the server); fall back to the node dev helper.
+		remint := mintTokenViaNode
+		if strings.TrimSpace(os.Getenv("AGENT_SHARED_SECRET")) != "" {
+			if root, err := rootOrigin(*api); err == nil {
+				remint = func() (string, error) {
+					if t, err := sdk.EnrollToken(root); err == nil {
+						return t, nil
+					} else if t2, err2 := mintTokenViaNode(); err2 == nil {
+						return t2, nil
+					} else {
+						return "", fmt.Errorf("enroll: %v; node: %v", err, err2)
+					}
+				}
+			}
+		}
+		compose = NewComposeClient(*api, *token, remint)
 	}
 	raster = NewRasterizer(*cacheDir)
 	if cc, ok := compose.(*ComposeClient); ok {

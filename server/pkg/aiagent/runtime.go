@@ -47,6 +47,9 @@ type Options struct {
 	// Temperature overrides the model's sampling temperature for this run
 	// (nil keeps the model/provider default).
 	Temperature *float32
+	// Skills is the run's skills state (see AttachSkills); the loop adds the
+	// tools a loaded skill brings. Nil: no skills.
+	Skills *SkillRun
 }
 
 func AgentContinue(_ string, toolResult string, _ []Call) ContinueHint {
@@ -60,7 +63,17 @@ func wantTools(opt Options) bool {
 }
 
 func Run(ctx context.Context, opt Options) *AgentResult {
-	return run(ctx, opt, copyMessages(opt.Messages), wantTools(opt), "")
+	return withSkills(ctx, opt, run(ctx, opt, copyMessages(opt.Messages), wantTools(opt), ""))
+}
+
+// withSkills notes the skills the run loaded on its result
+func withSkills(ctx context.Context, opt Options, res *AgentResult) *AgentResult {
+	if res != nil {
+		if loaded := skillsOf(ctx, opt).Loaded(); len(loaded) > 0 {
+			res.Skills = loaded
+		}
+	}
+	return res
 }
 
 // ContinueFromTools executes already-decided calls (after user confirm) and
@@ -81,7 +94,7 @@ func ContinueFromTools(ctx context.Context, opt Options, calls []Call) *AgentRes
 	}
 	msgs := appendToolTurn(opt.Messages, "", hint)
 	bind := wantTools(opt) && !hint.DisableTools
-	out := run(ctx, opt, msgs, bind, hint.StreamPrefix)
+	out := withSkills(ctx, opt, run(ctx, opt, msgs, bind, hint.StreamPrefix))
 	out.Steps = append(result.Steps, out.Steps...)
 	if out.Duration == "" {
 		out.Duration = time.Since(start).String()
@@ -98,12 +111,15 @@ func ContinueAfterResult(ctx context.Context, opt Options, toolResult string) *A
 	}
 	msgs := appendToolTurn(opt.Messages, "", hint)
 	bind := wantTools(opt) && !hint.DisableTools
-	return run(ctx, opt, msgs, bind, hint.StreamPrefix)
+	return withSkills(ctx, opt, run(ctx, opt, msgs, bind, hint.StreamPrefix))
 }
 
 func run(ctx context.Context, opt Options, messages []*schema.Message, bindTools bool, prefix string) *AgentResult {
 	start := time.Now()
 	result := &AgentResult{Steps: make([]AgentStep, 0)}
+	if opt.Client != nil {
+		result.Model = opt.Client.Model()
+	}
 	empty := opt.EmptyAnswer
 	if empty == "" {
 		empty = "Модель не сгенерировала ответ."
@@ -160,6 +176,7 @@ func run(ctx context.Context, opt Options, messages []*schema.Message, bindTools
 			return result
 		}
 
+		result.addTurn(turn.usage)
 		agentStep.Output = turn.raw
 		calls := []Call(nil)
 		if xmlOK {
@@ -182,6 +199,11 @@ func run(ctx context.Context, opt Options, messages []*schema.Message, bindTools
 			agentStep.Tools = toChatToolCalls(calls)
 			agentStep.Duration = time.Since(stepStart).String()
 			result.Steps = append(result.Steps, agentStep)
+
+			// a skill loaded by this turn brings its tools from the next one
+			if extra := skillsOf(ctx, opt).Drain(); len(extra) > 0 {
+				opt = withExtraTools(opt, extra)
+			}
 
 			hint := continueHint(opt, turn.raw, toolResult, calls)
 			if err := emitPrefix(opt, hint.StreamPrefix); err != nil {
@@ -253,6 +275,9 @@ type llmTurn struct {
 	visible   string
 	reasoning string
 	native    []schema.ToolCall
+
+	// usage is what the model reported for this turn; nil when it reports none
+	usage *schema.TokenUsage
 }
 
 func generateTurn(ctx context.Context, opt Options, messages []*schema.Message, opts []model.Option) (llmTurn, error) {
@@ -261,7 +286,7 @@ func generateTurn(ctx context.Context, opt Options, messages []*schema.Message, 
 		if err != nil {
 			return llmTurn{}, err
 		}
-		raw, reasoning, native, err := pumpStream(ctx, sr, opt.Stream, opt.HideToolXML)
+		raw, reasoning, native, usage, err := pumpStream(ctx, sr, opt.Stream, opt.HideToolXML)
 		if err != nil {
 			return llmTurn{}, err
 		}
@@ -269,7 +294,7 @@ func generateTurn(ctx context.Context, opt Options, messages []*schema.Message, 
 		if opt.HideToolXML {
 			visible = hideToolXML(raw)
 		}
-		return llmTurn{raw: raw, visible: visible, reasoning: reasoning, native: native}, nil
+		return llmTurn{raw: raw, visible: visible, reasoning: reasoning, native: native, usage: usage}, nil
 	}
 
 	msg, err := opt.Client.Generate(ctx, messages, opts...)
@@ -283,21 +308,25 @@ func generateTurn(ctx context.Context, opt Options, messages []*schema.Message, 
 	if raw == "" && msg.ReasoningContent != "" {
 		raw = msg.ReasoningContent
 	}
-	return llmTurn{raw: raw, visible: raw, reasoning: msg.ReasoningContent, native: msg.ToolCalls}, nil
+	turn := llmTurn{raw: raw, visible: raw, reasoning: msg.ReasoningContent, native: msg.ToolCalls}
+	if msg.ResponseMeta != nil {
+		turn.usage = msg.ResponseMeta.Usage
+	}
+	return turn, nil
 }
 
-func pumpStream(ctx context.Context, streamReader *schema.StreamReader[*schema.Message], stream chat.StreamFunc, hideXML bool) (fullContent, fullReasoning string, toolCalls []schema.ToolCall, err error) {
+func pumpStream(ctx context.Context, streamReader *schema.StreamReader[*schema.Message], stream chat.StreamFunc, hideXML bool) (fullContent, fullReasoning string, toolCalls []schema.ToolCall, usage *schema.TokenUsage, err error) {
 	defer streamReader.Close()
 	for {
 		select {
 		case <-ctx.Done():
-			return fullContent, fullReasoning, toolCalls, ctx.Err()
+			return fullContent, fullReasoning, toolCalls, usage, ctx.Err()
 		default:
 		}
 		chunk, recvErr := streamReader.Recv()
 		if recvErr != nil {
 			if recvErr == io.EOF {
-				return fullContent, fullReasoning, toolCalls, nil
+				return fullContent, fullReasoning, toolCalls, usage, nil
 			}
 			if chat.IsTimeout(recvErr) {
 				note := "Превышено время ожидания ответа модели."
@@ -307,10 +336,13 @@ func pumpStream(ctx context.Context, streamReader *schema.StreamReader[*schema.M
 					_ = stream(note, "", false)
 					fullContent = note
 				}
-				return fullContent, fullReasoning, toolCalls, nil
+				return fullContent, fullReasoning, toolCalls, usage, nil
 			}
 			_ = stream("⚠ Error: "+recvErr.Error(), "", false)
-			return fullContent, fullReasoning, toolCalls, recvErr
+			return fullContent, fullReasoning, toolCalls, usage, recvErr
+		}
+		if chunk.ResponseMeta != nil && chunk.ResponseMeta.Usage != nil {
+			usage = chunk.ResponseMeta.Usage
 		}
 		if chunk.Content != "" {
 			fullContent += chunk.Content
@@ -327,14 +359,14 @@ func pumpStream(ctx context.Context, streamReader *schema.StreamReader[*schema.M
 			}
 			if emit != "" {
 				if err := stream(emit, "", false); err != nil {
-					return fullContent, fullReasoning, toolCalls, err
+					return fullContent, fullReasoning, toolCalls, usage, err
 				}
 			}
 		}
 		if chunk.ReasoningContent != "" {
 			fullReasoning += chunk.ReasoningContent
 			if err := stream("", chunk.ReasoningContent, false); err != nil {
-				return fullContent, fullReasoning, toolCalls, err
+				return fullContent, fullReasoning, toolCalls, usage, err
 			}
 		}
 		if len(chunk.ToolCalls) > 0 {

@@ -2,7 +2,11 @@ package service
 
 import (
 	"context"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 
 	"github.com/madnikulin50/lowcode/server/automation/automation"
 	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
@@ -97,6 +101,15 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 	DefaultTrigger = Trigger(DefaultLogger.Named("trigger"), c.Workflow)
 	DefaultWorkflowChat = WorkflowChat()
 
+	DefaultPrompts = PromptLibrary(DefaultStore, DefaultAccessControl)
+	aiagent.SetPromptResolver(DefaultPrompts.resolve)
+
+	// skills: the library (database) first, then files from AI_SKILLS_DIR
+	aiagent.SetSkillSource(aiagent.SkillSourceDB, skillSource{lib: DefaultPrompts})
+	if dir := strings.TrimSpace(os.Getenv("AI_SKILLS_DIR")); dir != "" {
+		aiagent.SetSkillSource(aiagent.SkillSourceFile, aiagent.DirSkillSource{Dir: dir})
+	}
+
 	DefaultWorkflow.triggers = DefaultTrigger
 
 	Registry().AddTypes(
@@ -123,6 +136,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 
 	automation.HttpRequestHandler(Registry())
 	automation.LogHandler(Registry())
+	automation.AiHandler(Registry())
 	automation.QueueHandler(Registry())
 	automation.JsenvHandler(Registry())
 	automation.Oauth2Handler(Registry())
@@ -137,6 +151,14 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 func Activate(ctx context.Context) (err error) {
 	if err = DefaultWorkflow.Load(ctx); err != nil {
 		return
+	}
+
+	// sessions that were waiting on a delay or an approval when the server
+	// last stopped; needs the workflows loaded above
+	if err = DefaultSession.resumeAll(ctx); err != nil {
+		// not fatal: the server is useful without them
+		DefaultLogger.Error("could not resume suspended workflow sessions", zap.Error(err))
+		err = nil
 	}
 
 	return

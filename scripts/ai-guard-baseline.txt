@@ -1,0 +1,71 @@
+# AI guard baseline - известные проблемы, не считаются регрессией.
+test ./compose/service TestRecord_boolFieldPermissionIssueKBR
+test ./store/adapters/rdbms Test_buildCursorCond
+test ./store/adapters/rdbms Test_timestampStats
+vet automation/automation/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/automation/automation.EmailMessage contains sync.RWMutex
+vet automation/automation/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/automation/automation.EmailMessage contains sync.RWMutex
+vet automation/service/session_actions.gen.go: recordAction passes lock by value: github.com/madnikulin50/lowcode/server/automation/service.session contains sync.RWMutex
+vet automation/service/workflow_step_args.go: assignment copies lock value to *val: github.com/madnikulin50/lowcode/server/pkg/expr.Vars contains sync.RWMutex
+vet automation/types/getters_setters.gen.go: GetID passes lock by value: github.com/madnikulin50/lowcode/server/automation/types.Session contains sync.RWMutex
+vet pkg/expr/expr_type_comparators.go: compareToBoolean passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Boolean contains sync.RWMutex
+vet pkg/expr/expr_type_comparators.go: compareToDateTime passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.DateTime contains sync.RWMutex
+vet pkg/expr/expr_type_comparators.go: compareToDuration passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Duration contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: call of compareToBoolean copies lock value: github.com/madnikulin50/lowcode/server/pkg/expr.Boolean contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: call of compareToDateTime copies lock value: github.com/madnikulin50/lowcode/server/pkg/expr.DateTime contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: call of compareToDuration copies lock value: github.com/madnikulin50/lowcode/server/pkg/expr.Duration contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Any contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Array contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Boolean contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Bytes contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.DateTime contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Duration contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Float contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Handle contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.HttpRequest contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.ID contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Integer contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.KV contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.KVV contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.LabelValue contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Meta contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Reader contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.String contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.UnsignedInteger contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Url contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Cast passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Vars contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Compare passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Boolean contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Compare passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.DateTime contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Compare passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Duration contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Compare passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Float contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Compare passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Handle contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Compare passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.ID contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Compare passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Integer contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Compare passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.String contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Compare passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.UnsignedInteger contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Any contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Array contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Boolean contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Bytes contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.DateTime contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Duration contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Float contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Handle contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.HttpRequest contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.ID contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Integer contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.KV contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.KVV contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.LabelValue contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Meta contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Reader contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.String contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.UnsignedInteger contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Url contains sync.RWMutex
+vet pkg/expr/expr_types.gen.go: Type passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Vars contains sync.RWMutex
+vet pkg/expr/expr_types.go: Has passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Array contains sync.RWMutex
+vet pkg/expr/expr_types.go: IsEmpty passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.DateTime contains sync.RWMutex
+vet pkg/expr/expr_types.go: MarshalJSON passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Array contains sync.RWMutex
+vet pkg/expr/expr_types.go: MarshalJSON passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.ID contains sync.RWMutex
+vet pkg/expr/expr_types.go: SelectGVal passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Array contains sync.RWMutex
+vet pkg/expr/expr_types.go: Select passes lock by value: github.com/madnikulin50/lowcode/server/pkg/expr.Array contains sync.RWMutex
+# Обновление: make verify.baseline  (или scripts/verify-ai.sh --update-baseline)
