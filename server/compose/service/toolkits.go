@@ -49,6 +49,11 @@ func RegisterComposeToolKits(cat *aiagent.Catalog) {
 		Tools:       chatPromptToolDefs(),
 	})
 	cat.Register(aiagent.ToolKit{
+		Name:        "skills",
+		Description: "The skill library: versioned instructions that agents load on demand",
+		Tools:       chatSkillToolDefs(),
+	})
+	cat.Register(aiagent.ToolKit{
 		Name:        "risk",
 		Description: "Suggest risk factors and explain risk model assessments",
 		Tools:       chatRiskToolDefs(),

@@ -52,5 +52,6 @@ func ruleChainAICall(ctx context.Context, agent, prompt, model string, allowMuta
 		PromptTokens:     res.PromptTokens,
 		CompletionTokens: res.CompletionTokens,
 		Tools:            tools,
+		Skills:           res.Skills,
 	}, nil
 }

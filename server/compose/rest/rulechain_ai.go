@@ -41,9 +41,19 @@ func liveAgentChoices() []agentChoice {
 	return out
 }
 
+// liveSkillHandles lists the skills that exist right now, for the Skill field
+func liveSkillHandles() []string {
+	skills := aiagent.ListSkills(context.Background())
+	out := make([]string, 0, len(skills))
+	for _, s := range skills {
+		out = append(out, s.Handle)
+	}
+	return out
+}
+
 // enrichAINodes fills the AI nodes' fields with live data and adds the
 // settings the runtime supports but the static catalog never exposed.
-func enrichAINodes(defs []nodeTypeDef, agents []agentChoice, models []string) []nodeTypeDef {
+func enrichAINodes(defs []nodeTypeDef, agents []agentChoice, models []string, skills ...string) []nodeTypeDef {
 	handles := make([]string, 0, len(agents))
 	labels := make(map[string]string, len(agents))
 	for _, a := range agents {
@@ -71,6 +81,9 @@ func enrichAINodes(defs []nodeTypeDef, agents []agentChoice, models []string) []
 			case "model":
 				fields[j].Suggestions = models
 				fields[j].Help = "Optional. A model name, or a role (rulesgo.ai, mcp.agent). Empty: the agent's own model"
+			case "skill":
+				// free text still works: "handle@3" pins a version
+				fields[j].Suggestions = skills
 			case "outputSchema":
 				fields[j].ValueOptions = []string{"string", "number", "boolean", "array", "object"}
 			}

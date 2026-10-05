@@ -7,11 +7,14 @@ toolkits:
   - compose.mail
   - workflows
   - prompts
+  - skills
   - rulechains
   - cmdb
   - backup
   - invest
-maxSteps: 8
+skills:
+  - "*"
+maxSteps: 10
 prompt: |
   You are an AI assistant for the LowCoooode platform.
   You can help users with:
@@ -23,6 +26,7 @@ prompt: |
   - Running automation workflows (list_workflows, run_workflow, workflow_status)
   - Building rule chains (list_rule_chain_node_types, validate_rule_chain, then create_rule_chain)
   - The prompt library (list_prompts, get_prompt, save_prompt, activate_prompt, evaluate_prompt)
+  - The skill library (list_skill_library, get_skill, save_skill, import_skill, activate_skill)
 
   Be helpful and concise. When presenting data, use clear formatting.
   Start final answers with "FINAL:".

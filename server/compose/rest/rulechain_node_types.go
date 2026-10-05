@@ -82,7 +82,7 @@ func nodeTypes() []nodeTypeDef {
 	}
 	merge(agentNodeTypes())
 	merge(fetchLiveAgentNodeTypes())
-	return enrichAINodes(out, liveAgentChoices(), chat.ModelChoices())
+	return enrichAINodes(out, liveAgentChoices(), chat.ModelChoices(), liveSkillHandles()...)
 }
 
 func builtinNodeTypes() []nodeTypeDef {
@@ -296,6 +296,7 @@ func builtinNodeTypes() []nodeTypeDef {
 				nf("agent", "enum", "Agent", req, opts("crud-agent", "assistant")),
 				nf("prompt", "textarea", "Prompt", req, tmpl, rows(6), help("Supports {{variable}} templates")),
 				nf("model", "string", "Model", help("Default: qwen3:8b / CHAT_MODEL")),
+				nf("skill", "string", "Skill", help("A skill for the agent to follow: its handle, or handle@3 for a fixed version")),
 				nf("maxTokens", "number", "Max tokens"),
 				nf("allowMutating", "bool", "Allow mutating actions", help("Off by default: a create/update/delete tool call the agent attempts is blocked instead of executed unconfirmed")),
 			},
@@ -308,6 +309,7 @@ func builtinNodeTypes() []nodeTypeDef {
 				nf("agent", "enum", "Agent", req, opts("crud-agent", "assistant")),
 				nf("prompt", "textarea", "Instruction", req, tmpl, rows(6), help("What the agent should do with the inputs below")),
 				nf("model", "string", "Model", help("Default: qwen3:8b / CHAT_MODEL")),
+				nf("skill", "string", "Skill", help("A skill for the agent to follow: its handle, or handle@3 for a fixed version")),
 				nf("inputs", "keymap", "Input parameters", help("Named values passed to the agent, e.g. {\"customerName\": \"{{name}}\"}")),
 				nf("outputSchema", "keymap", "Output schema", help("Required response fields → type (string/number/boolean/array/object), e.g. {\"risk\": \"number\"}")),
 				nf("allowMutating", "bool", "Allow mutating actions", help("Off by default: a create/update/delete tool call the agent attempts is blocked instead of executed unconfirmed")),

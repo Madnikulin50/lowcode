@@ -365,6 +365,7 @@ type AIOperationResult struct {
 	PromptTokens     int
 	CompletionTokens int
 	Tools            []string
+	Skills           []string
 }
 
 // addTo folds the call into a trace; res may be nil when the call itself failed.
@@ -373,12 +374,18 @@ func (r *AIOperationResult) addTo(t *aiagent.CallTrace) {
 		return
 	}
 	t.AddUsage(r.Model, r.LLMCalls, r.PromptTokens, r.CompletionTokens, r.Tools, r.Output)
+	for _, ref := range r.Skills {
+		t.AddSkill(ref)
+	}
 }
 
 type aiConfig struct {
-	Agent         string `json:"agent"`
-	Prompt        string `json:"prompt"`
-	Model         string `json:"model,omitempty"`
+	Agent  string `json:"agent"`
+	Prompt string `json:"prompt"`
+	Model  string `json:"model,omitempty"`
+	// Skill is a skill the agent follows for this node: a handle, or
+	// handle@version for a fixed one
+	Skill         string `json:"skill,omitempty"`
 	MaxTokens     int    `json:"maxTokens,omitempty"`
 	AllowMutating bool   `json:"allowMutating,omitempty"`
 	// Timeout caps the AI call, in seconds (0 = no own limit).
@@ -418,6 +425,7 @@ func (n *aiExecutor) execute(ctx context.Context, node ChainNode, ec *ExecutionC
 	prompt := resolveTemplateValue(rawPrompt, ec)
 	agent := resolveTemplateValue(cfg.Agent, ec)
 	model := resolveTemplateValue(cfg.Model, ec)
+	skill := resolveTemplateValue(cfg.Skill, ec)
 
 	if prompt == "" {
 		return nil, nil, fmt.Errorf("prompt is required for AI node")
@@ -427,10 +435,10 @@ func (n *aiExecutor) execute(ctx context.Context, node ChainNode, ec *ExecutionC
 		return map[string]interface{}{"agent": agent, "status": "not_configured"}, nil, nil
 	}
 
-	callCtx := ctx
+	callCtx := aiagent.ContextWithSkill(ctx, skill)
 	if cfg.Timeout > 0 {
 		var cancel context.CancelFunc
-		callCtx, cancel = context.WithTimeout(ctx, time.Duration(cfg.Timeout)*time.Second)
+		callCtx, cancel = context.WithTimeout(callCtx, time.Duration(cfg.Timeout)*time.Second)
 		defer cancel()
 	}
 

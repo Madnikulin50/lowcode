@@ -21,6 +21,8 @@ type AIOperationConfig struct {
 	Agent  string `json:"agent"`
 	Prompt string `json:"prompt"` // base instruction; inputs/outputSchema are appended to it
 	Model  string `json:"model,omitempty"`
+	// Skill: a skill for the agent to follow, "handle" or "handle@version"
+	Skill string `json:"skill,omitempty"`
 
 	// Inputs: named parameter -> template value. Rendered into the prompt as
 	// a JSON block instead of the caller having to interpolate a single
@@ -61,6 +63,7 @@ func (n *aiOperationExecutor) execute(ctx context.Context, node ChainNode, ec *E
 	cfg.Agent = resolveTemplateValue(cfg.Agent, ec)
 	cfg.Prompt = resolveTemplateValue(rawPrompt, ec)
 	cfg.Model = resolveTemplateValue(cfg.Model, ec)
+	cfg.Skill = resolveTemplateValue(cfg.Skill, ec)
 
 	if cfg.Agent == "" {
 		return nil, nil, fmt.Errorf("ai.operation: agent is required")
@@ -87,6 +90,7 @@ func (n *aiOperationExecutor) execute(ctx context.Context, node ChainNode, ec *E
 		Prompt:        cfg.Prompt,
 		PromptRef:     promptRef,
 		Model:         cfg.Model,
+		Skill:         cfg.Skill,
 		Inputs:        inputs,
 		OutputSchema:  cfg.OutputSchema,
 		AllowMutating: cfg.AllowMutating,
@@ -123,6 +127,7 @@ func (n *aiOperationExecutor) runner() aiagent.Runner {
 			LLMCalls:         res.LLMCalls,
 			PromptTokens:     res.PromptTokens,
 			CompletionTokens: res.CompletionTokens,
+			Skills:           res.Skills,
 		}
 		for _, name := range res.ConfirmCalls {
 			out.ConfirmCalls = append(out.ConfirmCalls, aiagent.Call{Name: name})

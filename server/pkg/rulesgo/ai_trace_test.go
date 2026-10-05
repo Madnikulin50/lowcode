@@ -415,3 +415,26 @@ func TestChainAIBudget_EnvDefault(t *testing.T) {
 		t.Fatalf("calls=%d success=%v", calls, res.Success)
 	}
 }
+
+func TestAINodes_PassTheSkillAndTraceIt(t *testing.T) {
+	for nodeType, config := range map[string]string{
+		"ai":           `{"agent":"assistant","prompt":"estimate","skill":"estimate@2"}`,
+		"ai.operation": `{"agent":"assistant","prompt":"estimate","skill":"estimate@2","outputSchema":{"total":"number"}}`,
+	} {
+		var seen string
+		res := runAIChain(t, nodeType, config,
+			func(ctx context.Context, _, _, _ string, _ bool) (*AIOperationResult, error) {
+				seen = aiagent.SkillFromContext(ctx)
+				return &AIOperationResult{Output: `{"total": 3}`, Success: true, Skills: []string{"estimate@2"}}, nil
+			})
+
+		if seen != "estimate@2" {
+			t.Errorf("%s: skill on the call context = %q", nodeType, seen)
+		}
+		tr := res.Nodes[0].Trace
+		skills, _ := tr["skills"].([]interface{})
+		if len(skills) != 1 || skills[0] != "estimate@2" {
+			t.Errorf("%s: trace skills = %v", nodeType, tr["skills"])
+		}
+	}
+}
