@@ -1,0 +1,57 @@
+title: Skill library
+active: active
+makeActive: Make this the active version
+text: Instructions
+textHint: What the agent should do when it uses this skill, in markdown - steps, rules, the form of the answer. An agent sees only the description until it loads the skill.
+requires: Toolkits it needs
+requiresHint: Tools of these toolkits become available to the agent once it loads the skill. Tools that change data still ask for confirmation.
+noKits: No toolkits found
+resources: Files
+resourcesHint: Reference material the agent reads when the instructions call for it - price lists, norms, templates. Text only. The agent is told the file names, not their content.
+filePath: path/name.txt
+addFile: Add a file
+uploadFile: Upload files
+removeFile: Remove
+tooManyFiles: A skill can have at most {max} files
+badPath: '"{path}" is not a valid file path: use a relative path inside the skill, other than SKILL.md'
+duplicatePath: '"{path}" is listed twice'
+fileTooBig: '"{path}" is longer than {max} KB'
+filesTooBig: The files of a skill together are longer than {max} KB
+note: Why this version
+noteHint: e.g. added the fire safety checks
+activateOnSave: Make it the active version
+save: Save as a new version
+export: Export (SKILL.md)
+list:
+  title: Skills
+  new: New skill
+  import: Import SKILL.md or zip
+  single: skill
+  plural: skills
+  empty: No skills yet. A skill is a named set of instructions an agent loads when a task calls for it. Write one here or import a SKILL.md.
+  loading: Loading skills
+  delete: Delete
+  filterForm:
+    query:
+      placeholder: Filter skills by name or description
+  columns:
+    handle: Name
+    description: When to use it
+    active: Active
+    versions: Versions
+    files: Files
+    updatedAt: Updated
+editor:
+  new: New skill
+  title:
+    create: Create skill
+    edit: Edit skill
+  info:
+    title: Basic information
+    handle: Name *
+    handleHint: Agents load the skill by this name
+    invalid-handle: Lowercase letters, digits, underscores, hyphens and dots; must start with a letter (up to 64 characters)
+    description: When to use it
+    descriptionHint: Agents choose skills by this sentence, so say what tasks it is for.
+    versions: Versions
+    delete: Delete
