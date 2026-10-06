@@ -26,6 +26,8 @@ selector:
       description: Searchable table of module records
     record:
       description: Fields of the current record
+    relatedRecords:
+      description: Child records from other modules that refer to this record
     recordOrganizer:
       description: Kanban-style grouping and ordering
     recordRevisions:
@@ -992,6 +994,32 @@ recordList:
         label: Not empty count
       uniqueCount:
         label: Unique count
+relatedRecords:
+  label: Related records
+  notConfigured: No related records are set up. Add the modules whose records refer to this one.
+  saveFirst: Save the record to see the records that refer to it.
+  nothing: No related records yet.
+  recordPageOnly: 'This block works on a record page only: it shows the records that refer to the record of the page.'
+  missing: module or field no longer exists
+  moveUp: Move up
+  moveDown: Move down
+  remove: Remove
+  add:
+    label: Add related records
+    placeholder: Choose a module and the field that refers to this record
+    none: No other module has a record field that refers to this module
+    button: Add
+    footnote: Every module with a Record field that points to the module of this page can be added. A module with two such fields gives two entries.
+  title:
+    label: Section title
+  perPage: Records per page
+  expanded: Open when the page loads
+  hideAddButton: Hide the add button
+  columns: Columns
+  columnsFootnote: With no columns chosen, all the fields of the module are shown.
+  showCounts: Show the number of records in each section
+  hideEmpty: Hide sections with no records
+  hideEmptyFootnote: A hidden section cannot be used to add the first record; turn this off if records are added here.
 recordOrganizer:
   onRecordClick: Record display mode
   openInSameTab: Open in the same tab

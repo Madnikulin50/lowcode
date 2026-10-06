@@ -460,6 +460,21 @@ func (b *PageBlock) setOptionValue(path []string, pos uint, value any) (err erro
 
 		metric["moduleID"] = cast.ToString(value)
 
+	case "relations":
+		// RelatedRecords: one module reference per relation
+		if len(path) < 2 {
+			return
+		}
+		rels, _ := b.Options["relations"].([]any)
+		i := cast.ToInt(path[1])
+		if i < 0 || i >= len(rels) {
+			return
+		}
+		if rel, ok := rels[i].(map[string]any); ok {
+			rel["moduleID"] = cast.ToString(value)
+			delete(rel, "module")
+		}
+
 	case "minValue":
 		setProgressValue("minValue")
 

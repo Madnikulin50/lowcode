@@ -303,6 +303,22 @@ func (n *composePage) Encode(ctx context.Context, pl *payload) (err error) {
 			b.Options["chartID"] = strconv.FormatUint(chrID, 10)
 			delete(b.Options, "chart")
 
+		case "RelatedRecords":
+			rr, _ := b.Options["relations"].([]interface{})
+			for _, rel := range rr {
+				ropts, _ := rel.(map[string]interface{})
+				id := ss(ropts, "module", "moduleID")
+				if id == "" {
+					continue
+				}
+				mID := getModID(id)
+				if mID <= 0 {
+					return resource.ComposeModuleErrUnresolved(resource.MakeIdentifiers(id))
+				}
+				ropts["moduleID"] = strconv.FormatUint(mID, 10)
+				delete(ropts, "module")
+			}
+
 		case "Metric":
 			mm, _ := b.Options["metrics"].([]interface{})
 			for _, m := range mm {

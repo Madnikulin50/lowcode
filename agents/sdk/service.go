@@ -22,11 +22,12 @@ type alias struct {
 }
 
 type Service struct {
-	cfg      Config
-	comps    []Component
-	backend  Backend
-	compose  *Client
-	callback *Callback
+	cfg       Config
+	comps     []Component
+	backend   Backend
+	compose   *Client
+	callback  *Callback
+	skills    []Skill
 	aliases   []alias
 	syncOps   map[string]bool
 	extraAPI  func(chi.Router)
@@ -107,6 +108,7 @@ func (s *Service) Meta() Meta {
 		PublicURL:    s.cfg.PublicURL,
 		Components:   comps,
 		Capabilities: CapabilitiesOf(s.comps),
+		Skills:       s.skillInfos(),
 	}
 }
 
@@ -128,6 +130,7 @@ func (s *Service) Router() chi.Router {
 func (s *Service) mountAPI(r chi.Router) {
 	r.Get("/health", s.healthHTTP)
 	r.Get("/meta", s.metaHTTP)
+	r.Get("/skills/{handle}", s.skillHTTP)
 	r.Post("/register", s.registerHTTP)
 	r.Post("/jobs", s.startJobHTTP)
 	r.Get("/jobs", s.listJobsHTTP)

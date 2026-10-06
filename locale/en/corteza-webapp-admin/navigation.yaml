@@ -56,6 +56,7 @@ automation:
     workflows: Workflows
     ruleChains: Rule chains
     prompts: Prompts
+    skills: Skills
 
 federation:
   group: Federation

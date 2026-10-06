@@ -194,6 +194,15 @@
       </g>
     </g>
 
+    <!-- Related records: sections of child records -->
+    <g v-else-if="kind === 'RelatedRecords'">
+      <g v-for="(sec, i) in 3" :key="'rel'+i" :transform="`translate(22 ${44 + i*40})`">
+        <rect width="276" height="32" rx="5" fill="#f8f9fc" stroke="#e3e6f0" />
+        <rect x="10" y="12" width="70" height="7" rx="1" fill="#5a5c69" />
+        <rect x="244" y="9" width="22" height="14" rx="7" fill="#6c757d" />
+      </g>
+    </g>
+
     <!-- Revisions -->
     <g v-else-if="kind === 'RecordRevisions'">
       <line x1="40" y1="56" x2="40" y2="156" stroke="#d1d3e2" stroke-width="2" />

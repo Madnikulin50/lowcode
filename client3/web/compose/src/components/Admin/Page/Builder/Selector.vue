@@ -159,6 +159,7 @@ const catalog = [
   { kind: 'RecordList', category: 'data', icon: ['fas', 'table'], recordPageOnly: false, block: new compose.PageBlockRecordList() },
   { kind: 'Record', category: 'data', icon: ['far', 'file-alt'], recordPageOnly: true, block: new compose.PageBlockRecord() },
   { kind: 'RecordOrganizer', category: 'data', icon: ['fas', 'columns'], recordPageOnly: false, block: new compose.PageBlockRecordOrganizer() },
+  { kind: 'RelatedRecords', category: 'data', icon: ['fas', 'sitemap'], recordPageOnly: true, block: new compose.PageBlockRelatedRecords() },
   { kind: 'RecordRevisions', category: 'data', icon: ['far', 'clock'], recordPageOnly: true, block: new compose.PageBlockRecordRevisions() },
   { kind: 'Comment', category: 'data', icon: ['fas', 'comments'], recordPageOnly: false, block: new compose.PageBlockComment() },
   { kind: 'Chart', category: 'visualize', icon: ['fas', 'chart-pie'], recordPageOnly: false, block: new compose.PageBlockChart() },

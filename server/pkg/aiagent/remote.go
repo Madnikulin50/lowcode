@@ -40,6 +40,8 @@ type RemoteService struct {
 	Token        string
 	Components   []RemoteComponent
 	HasJobStatus bool
+	// Skills the agent publishes (see remote_skills.go)
+	Skills []SkillInfo
 }
 
 func DefaultAgentURL(service string) string {
@@ -141,6 +143,7 @@ type remoteMetaJSON struct {
 			Required bool   `json:"required"`
 		} `json:"configFields"`
 	} `json:"components"`
+	Skills []SkillInfo `json:"skills"`
 }
 
 func FetchRemoteMeta(ctx context.Context, baseURL, token string) (RemoteService, error) {
@@ -192,6 +195,7 @@ func FetchRemoteMeta(ctx context.Context, baseURL, token string) (RemoteService,
 		}
 		svc.Components = append(svc.Components, comp)
 	}
+	svc.Skills = meta.Skills
 	return svc, nil
 }
 
@@ -435,6 +439,7 @@ func (c *Catalog) refreshRemotes(ctx context.Context, force bool) {
 		seen[handle] = struct{}{}
 		if !conn.IsEnabled() {
 			c.Unregister(handle)
+			setRemoteSkills(handle, RemoteService{})
 			continue
 		}
 		base, err := ValidConnectorURL(conn.URL)
@@ -459,6 +464,7 @@ func (c *Catalog) refreshRemotes(ctx context.Context, force bool) {
 		svc.Token = conn.Token
 		svc.HasJobStatus = true
 		c.Register(RemoteKit(svc))
+		setRemoteSkills(handle, svc)
 	}
 	for _, name := range c.Names() {
 		k, ok := c.Get(name)
@@ -467,6 +473,7 @@ func (c *Catalog) refreshRemotes(ctx context.Context, force bool) {
 		}
 		if _, keep := seen[name]; !keep {
 			c.Unregister(name)
+			setRemoteSkills(name, RemoteService{})
 		}
 	}
 }

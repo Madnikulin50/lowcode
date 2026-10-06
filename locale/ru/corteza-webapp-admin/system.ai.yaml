@@ -57,6 +57,9 @@ editor:
     maxSteps: Шагов
     enabled: Вкл
     toolkits: Toolkits
+    skills: Skills
+    allSkills: Все skills
+    skillsHelp: 'Skills, которые агент может подгружать по требованию: он видит названия и когда они применимы, а инструкции загружает, только если задача их требует.'
     confirm: Спрашивать подтверждение (create/delete/restore/prune)
     confirmHelp: У MCP agent_call нет шага «да» — для агентов из MCP и цепочек правил оставляйте выключенным.
     prompt: Системный промпт

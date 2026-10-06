@@ -2,7 +2,7 @@ import { i18n } from 'corteza-lib/vue/dist'
 
 export default (app) => i18n(app, 'admin',
   'admin', 'dashboard', 'general', 'navigation', 'notification', 'notifications', 'permissions',
-  'automation.prompts', 'automation.scripts', 'automation.sessions', 'automation.workflows',
+  'automation.prompts', 'automation.skills', 'automation.scripts', 'automation.sessions', 'automation.workflows',
   'compose.automation', 'compose.settings',
   'federation.nodes',
   'system.actionlog', 'system.apigw', 'system.applications', 'system.authclients',

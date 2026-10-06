@@ -217,11 +217,17 @@ func (c *composePageBlock) MarshalYAML() (interface{}, error) {
 
 	case "Calendar":
 		ff, _ := opt["feeds"].([]interface{})
-		for i, f := range ff {
+		n := 0
+		for _, f := range ff {
 			feed, _ := f.(map[string]interface{})
 			fOpts, _ := (feed["options"]).(map[string]interface{})
-			fOpts["module"] = c.refMod[i]
+			// the references were collected for the feeds that name a module
+			if !namesModule(fOpts) || n >= len(c.refMod) {
+				continue
+			}
+			fOpts["module"] = c.refMod[n]
 			delete(fOpts, "moduleID")
+			n++
 		}
 		break
 
@@ -240,12 +246,33 @@ func (c *composePageBlock) MarshalYAML() (interface{}, error) {
 		}
 		break
 
+	case "RelatedRecords":
+		// the references were collected for the relations that name a module, in order
+		rr, _ := opt["relations"].([]interface{})
+		n := 0
+		for _, r := range rr {
+			rel, _ := r.(map[string]interface{})
+			if !namesModule(rel) || n >= len(c.refMod) {
+				continue
+			}
+			rel["module"] = c.refMod[n]
+			delete(rel, "moduleID")
+			n++
+		}
+		break
+
 	case "Metric":
 		mm, _ := opt["metrics"].([]interface{})
-		for i, m := range mm {
+		n := 0
+		for _, m := range mm {
 			mops, _ := m.(map[string]interface{})
-			mops["module"] = c.refMod[i]
+			// the references were collected for the metrics that name a module
+			if !namesModule(mops) || n >= len(c.refMod) {
+				continue
+			}
+			mops["module"] = c.refMod[n]
 			delete(mops, "moduleID")
+			n++
 		}
 		break
 
@@ -297,4 +324,19 @@ func (c *composePageBlock) cleanupModuleFields(opt map[string]interface{}) {
 	}
 
 	opt["fields"] = retFF
+}
+
+// namesModule: the options of a block's item (a feed, a metric, a relation)
+// refer to a module - the same test that decides whether a reference to one was
+// collected for it (see resource.ComposePage), so the references can be matched
+// to the items in order.
+func namesModule(opt map[string]interface{}) bool {
+	// the first key that is present decides, as when the references are collected
+	for _, k := range []string{"module", "moduleID"} {
+		if v, has := opt[k]; has {
+			id, _ := v.(string)
+			return id != "" && id != "0"
+		}
+	}
+	return false
 }

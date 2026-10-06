@@ -56,6 +56,7 @@ automation:
     workflows: Процессы
     ruleChains: Цепочки правил
     prompts: Промпты
+    skills: Skills
 
 federation:
   group: Federation

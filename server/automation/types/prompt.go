@@ -3,6 +3,7 @@ package types
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
@@ -96,10 +97,27 @@ const (
 // plain prompt (rows saved before skills existed have none).
 func (v *PromptVersion) IsSkill() bool { return v.Kind == PromptKindSkill }
 
-func (vv *PromptRequires) Scan(src any) error          { return sql.ParseJSON(src, vv) }
+// scanJSONList reads a JSON list column. A column added to a table that
+// already has rows holds the JSON "default" of the model, an empty object - read
+// that as an empty list rather than failing every query that touches the row.
+func scanJSONList(src any, dest any) error {
+	switch v := src.(type) {
+	case []byte:
+		if strings.TrimSpace(string(v)) == "{}" {
+			return nil
+		}
+	case string:
+		if strings.TrimSpace(v) == "{}" {
+			return nil
+		}
+	}
+	return sql.ParseJSON(src, dest)
+}
+
+func (vv *PromptRequires) Scan(src any) error          { return scanJSONList(src, vv) }
 func (vv PromptRequires) Value() (driver.Value, error) { return json.Marshal(vv) }
-func (vv *PromptFiles) Scan(src any) error             { return sql.ParseJSON(src, vv) }
+func (vv *PromptFiles) Scan(src any) error             { return scanJSONList(src, vv) }
 func (vv PromptFiles) Value() (driver.Value, error)    { return json.Marshal(vv) }
 
-func (vv *PromptCases) Scan(src any) error          { return sql.ParseJSON(src, vv) }
+func (vv *PromptCases) Scan(src any) error          { return scanJSONList(src, vv) }
 func (vv PromptCases) Value() (driver.Value, error) { return json.Marshal(vv) }

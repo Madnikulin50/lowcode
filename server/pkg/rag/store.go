@@ -77,16 +77,33 @@ func (s *Store) Close() error {
 }
 
 func (s *Store) PutDocument(doc Document) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		return putDocumentTx(tx, doc)
+	})
+}
+
+func putDocumentTx(tx *bolt.Tx, doc Document) error {
 	data, err := json.Marshal(doc)
 	if err != nil {
 		return err
 	}
+	nsb, err := tx.Bucket(bucketDocuments).CreateBucketIfNotExists([]byte(doc.Namespace))
+	if err != nil {
+		return err
+	}
+	return nsb.Put([]byte(doc.ID), data)
+}
+
+// PutDocumentWithChunks stores the chunks and then the document in a single
+// transaction, so a failure leaves nothing behind.
+func (s *Store) PutDocumentWithChunks(doc Document, chunks []Chunk) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		nsb, err := tx.Bucket(bucketDocuments).CreateBucketIfNotExists([]byte(doc.Namespace))
-		if err != nil {
-			return err
+		for _, c := range chunks {
+			if err := putChunkTx(tx, doc.Namespace, c); err != nil {
+				return err
+			}
 		}
-		return nsb.Put([]byte(doc.ID), data)
+		return putDocumentTx(tx, doc)
 	})
 }
 
@@ -155,26 +172,30 @@ func (s *Store) DeleteDocument(namespace, id string) error {
 }
 
 func (s *Store) PutChunk(namespace string, chunk Chunk) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		return putChunkTx(tx, namespace, chunk)
+	})
+}
+
+func putChunkTx(tx *bolt.Tx, namespace string, chunk Chunk) error {
 	embData := floatsToBytes(chunk.Embedding)
 	chunkData, err := json.Marshal(chunk)
 	if err != nil {
 		return err
 	}
-	return s.db.Update(func(tx *bolt.Tx) error {
-		chb, err := tx.Bucket(bucketChunks).CreateBucketIfNotExists([]byte(namespace))
-		if err != nil {
-			return err
-		}
-		key := []byte(chunk.DocID + ":" + chunk.ID)
-		if err := chb.Put(key, chunkData); err != nil {
-			return err
-		}
-		vecb, err := tx.Bucket(bucketVectors).CreateBucketIfNotExists([]byte(namespace))
-		if err != nil {
-			return err
-		}
-		return vecb.Put(key, embData)
-	})
+	chb, err := tx.Bucket(bucketChunks).CreateBucketIfNotExists([]byte(namespace))
+	if err != nil {
+		return err
+	}
+	key := []byte(chunk.DocID + ":" + chunk.ID)
+	if err := chb.Put(key, chunkData); err != nil {
+		return err
+	}
+	vecb, err := tx.Bucket(bucketVectors).CreateBucketIfNotExists([]byte(namespace))
+	if err != nil {
+		return err
+	}
+	return vecb.Put(key, embData)
 }
 
 func (s *Store) GetChunks(namespace, docID string) ([]Chunk, error) {

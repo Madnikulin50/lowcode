@@ -34,26 +34,26 @@ func (s *RAGService) Ingest(ctx context.Context, namespaceID string, filename st
 		CreatedAt: time.Now().Unix(),
 	}
 
-	if err := s.store.PutDocument(doc); err != nil {
-		return nil, fmt.Errorf("ingest put doc: %w", err)
-	}
-
-	chunks := rag.ChunkText(parsed.Text, 512, 64)
-	for i, chunk := range chunks {
-		emb, err := s.embedder.Embed(chunk)
+	// Embed everything first and write chunks and document in one
+	// transaction, so a failed upload leaves no half-ingested document.
+	texts := rag.ChunkText(parsed.Text, 512, 64)
+	chunks := make([]rag.Chunk, 0, len(texts))
+	for i, text := range texts {
+		emb, err := s.embedder.Embed(text)
 		if err != nil {
 			return nil, fmt.Errorf("ingest embed chunk %d: %w", i, err)
 		}
-		c := rag.Chunk{
+		chunks = append(chunks, rag.Chunk{
 			ID:         fmt.Sprintf("%s:%d", id, i),
 			DocID:      id,
-			Text:       chunk,
+			Text:       text,
 			Embedding:  emb,
 			ChunkIndex: i,
-		}
-		if err := s.store.PutChunk(namespaceID, c); err != nil {
-			return nil, fmt.Errorf("ingest put chunk %d: %w", i, err)
-		}
+		})
+	}
+
+	if err := s.store.PutDocumentWithChunks(doc, chunks); err != nil {
+		return nil, fmt.Errorf("ingest store: %w", err)
 	}
 
 	return &doc, nil

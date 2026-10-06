@@ -509,6 +509,7 @@ func agentSpecsFromSettings(entries []types.AIAgentEntry) []aiagent.AgentSpec {
 			Prompt:      e.Prompt,
 			Model:       e.Model,
 			Toolkits:    append([]string(nil), e.Toolkits...),
+			Skills:      append([]string(nil), e.Skills...),
 			MaxSteps:    e.MaxSteps,
 			Confirm:     e.Confirm,
 			Source:      "settings",

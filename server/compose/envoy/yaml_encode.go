@@ -165,7 +165,10 @@ func (e YamlEncoder) encodePageBlockC(ctx context.Context, p envoyx.EncodeParams
 			feed, _ := f.(map[string]interface{})
 			fOpts, _ := (feed["options"]).(map[string]interface{})
 
-			modRef := n.References[fmt.Sprintf("Blocks.%d.Options.feeds.%d.ModuleID", index, i)]
+			modRef, has := n.References[fmt.Sprintf("Blocks.%d.Options.feeds.%d.ModuleID", index, i)]
+			if !has {
+				continue
+			}
 			fOpts["module"] = safeParentIdentifier(tt, n, modRef)
 			delete(fOpts, "moduleID")
 		}
@@ -186,10 +189,27 @@ func (e YamlEncoder) encodePageBlockC(ctx context.Context, p envoyx.EncodeParams
 		}
 		break
 
+	case "RelatedRecords":
+		rr, _ := b.Options["relations"].([]interface{})
+		for i, r := range rr {
+			rel, _ := r.(map[string]interface{})
+			if _, has := n.References[fmt.Sprintf("Blocks.%d.Options.relations.%d.ModuleID", index, i)]; !has {
+				continue
+			}
+
+			modRef := n.References[fmt.Sprintf("Blocks.%d.Options.relations.%d.ModuleID", index, i)]
+			rel["module"] = safeParentIdentifier(tt, n, modRef)
+			delete(rel, "moduleID")
+		}
+		break
+
 	case "Metric":
 		mm, _ := b.Options["metrics"].([]interface{})
 		for i, m := range mm {
-			modRef := n.References[fmt.Sprintf("Blocks.%d.Options.metrics.%d.ModuleID", index, i)]
+			modRef, has := n.References[fmt.Sprintf("Blocks.%d.Options.metrics.%d.ModuleID", index, i)]
+			if !has {
+				continue
+			}
 
 			mops, _ := m.(map[string]interface{})
 			mops["module"] = safeParentIdentifier(tt, n, modRef)

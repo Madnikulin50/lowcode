@@ -101,6 +101,18 @@ func NewComposePage(pg *types.Page, nsRef, modRef, parentRef *Ref) *ComposePage 
 				}
 			}
 
+		case "RelatedRecords":
+			rr, _ := b.Options["relations"].([]interface{})
+			for _, rel := range rr {
+				ropts, _ := rel.(map[string]interface{})
+				ref = r.pbRelatedRecords(ropts)
+				if ref != nil {
+					r.addRef(ref)
+					r.BlockRefs[i] = append(r.BlockRefs[i], ref)
+					r.ModRefs = append(r.ModRefs, ref)
+				}
+			}
+
 		case "Metric":
 			mm, _ := b.Options["metrics"].([]interface{})
 			for _, m := range mm {
@@ -319,6 +331,16 @@ func (r *ComposePage) pbChart(opt map[string]interface{}) (out *Ref) {
 	}
 
 	return MakeRef(types.ChartResourceType, MakeIdentifiers(id)).Constraint(r.RefNs)
+}
+
+// pbRelatedRecords: a relation of a RelatedRecords block refers to a module
+func (r *ComposePage) pbRelatedRecords(opt map[string]interface{}) (out *Ref) {
+	id := r.optString(opt, "module", "moduleID")
+	if id == "" || id == "0" {
+		return
+	}
+
+	return MakeRef(types.ModuleResourceType, MakeIdentifiers(id)).Constraint(r.RefNs)
 }
 
 func (r *ComposePage) pbCalendar(opt map[string]interface{}) (out *Ref) {

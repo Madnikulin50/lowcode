@@ -167,6 +167,7 @@ async function main () {
     fields: [
       recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
       fileField('file', 'Файл'),
+      textArea('extracted_text', 'Извлечённый текст'),
       field('recognized_name', 'Распознанное наименование', 'String'),
       field('recognized_number', 'Распознанный номер', 'String'),
       field('recognized_version', 'Распознанная версия', 'String'),
@@ -336,7 +337,7 @@ async function main () {
       ['object', 'file', 'recognized_name', 'matched_registry', 'match_status']),
     card('Файл ИД', 'id_file', m.id_files, 33, [
       'object', 'file', 'recognized_name', 'recognized_number', 'recognized_version',
-      'matched_registry', 'match_status', 'uploaded_at',
+      'matched_registry', 'match_status', 'uploaded_at', 'extracted_text',
     ], { recognized_name: 'title', match_status: 'badge' }),
 
     listPage('Проверки комплектности ИД', 'id_check_runs', 34, 'fas clipboard-check', m.id_check_runs,

@@ -18,7 +18,10 @@ func ChunkText(text string, chunkSize, overlap int) []string {
 		overlap = defaultChunkOverlap
 	}
 
-	paragraphs := splitParagraphs(text)
+	var paragraphs []string
+	for _, p := range splitParagraphs(text) {
+		paragraphs = append(paragraphs, splitOversized(p, chunkSize)...)
+	}
 	var chunks []string
 	var current strings.Builder
 
@@ -170,4 +173,39 @@ func isAbbreviation(s string) bool {
 		}
 	}
 	return false
+}
+
+// splitOversized breaks a piece longer than max runes (a table row, a
+// sentence-less dump, one huge line) on word boundaries, hard-cutting words
+// that are themselves longer than max, so no chunk can exceed the embedding
+// model's context length.
+func splitOversized(text string, max int) []string {
+	if len([]rune(text)) <= max {
+		return []string{text}
+	}
+	var out []string
+	var cur []rune
+	flush := func() {
+		if len(cur) > 0 {
+			out = append(out, string(cur))
+			cur = nil
+		}
+	}
+	for _, w := range strings.Fields(text) {
+		wr := []rune(w)
+		for len(wr) > max {
+			flush()
+			out = append(out, string(wr[:max]))
+			wr = wr[max:]
+		}
+		if len(cur) > 0 && len(cur)+1+len(wr) > max {
+			flush()
+		}
+		if len(cur) > 0 {
+			cur = append(cur, ' ')
+		}
+		cur = append(cur, wr...)
+	}
+	flush()
+	return out
 }

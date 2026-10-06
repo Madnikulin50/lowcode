@@ -1,6 +1,7 @@
 package aiagent
 
 import (
+	"context"
 	"embed"
 	"io/fs"
 	"os"
@@ -97,7 +98,12 @@ func CatalogPayload() map[string]interface{} {
 		c.Token = ""
 		safe = append(safe, c)
 	}
+	skills := make([]SkillInfo, 0)
+	for _, sk := range ListSkills(context.Background()) {
+		skills = append(skills, sk.Info())
+	}
 	return map[string]interface{}{
+		"skills":     skills,
 		"builtins":   BuiltinSpecs(),
 		"files":      fileSpecs(),
 		"toolkits":   DefaultCatalog().Names(),

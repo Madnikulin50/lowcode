@@ -39,6 +39,11 @@
                   :key="kit"
                   class="badge text-bg-light text-muted me-1"
                 >{{ kit }}</span>
+                <span
+                  v-for="skill in row.skills"
+                  :key="'s-' + skill"
+                  class="badge text-bg-info text-white me-1"
+                >{{ skill === '*' ? t('agents.allSkills') : skill }}</span>
               </td>
               <td>
                 <span class="badge" :class="sourceBadge(row)">{{ sourceLabel(row) }}</span>
@@ -173,6 +178,37 @@
               </div>
             </div>
             <div class="col-12">
+              <label class="form-label">{{ t('agents.skills') }}</label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check">
+                  <input
+                    id="sk-all"
+                    class="form-check-input"
+                    type="checkbox"
+                    :checked="allSkills(modal.data)"
+                    @change="toggleAllSkills(modal.data)"
+                  >
+                  <label class="form-check-label" for="sk-all">{{ t('agents.allSkills') }}</label>
+                </div>
+                <div
+                  v-for="skill in skillOptions"
+                  v-show="!allSkills(modal.data)"
+                  :key="skill"
+                  class="form-check"
+                >
+                  <input
+                    :id="'sk-' + skill"
+                    class="form-check-input"
+                    type="checkbox"
+                    :checked="modal.data.skills.includes(skill)"
+                    @change="toggleSkill(modal.data, skill)"
+                  >
+                  <label class="form-check-label" :for="'sk-' + skill">{{ skill }}</label>
+                </div>
+              </div>
+              <div class="form-text">{{ t('agents.skillsHelp') }}</div>
+            </div>
+            <div class="col-12">
               <label class="form-label">{{ t('agents.prompt') }}</label>
               <textarea
                 v-model="modal.data.prompt"
@@ -229,6 +265,7 @@ const builtins = ref([])
 const files = ref([])
 const overlay = ref([])
 const kitOptions = ref([...FALLBACK_KITS])
+const skillOptions = ref([])
 const loading = ref(false)
 const saving = ref(false)
 const loadError = ref('')
@@ -258,6 +295,7 @@ function emptyAgent () {
     prompt: '',
     model: 'mcp.agent',
     toolkits: ['compose.records'],
+    skills: [],
     maxSteps: 8,
     confirm: false,
   }
@@ -277,6 +315,7 @@ function normalizeAgent (e) {
     prompt: e?.prompt || '',
     model: e?.model || 'mcp.agent',
     toolkits: Array.isArray(e?.toolkits) ? e.toolkits.map(kitName).filter(Boolean) : [],
+    skills: Array.isArray(e?.skills) ? e.skills.filter(Boolean) : [],
     maxSteps: Number(e?.maxSteps) > 0 ? Number(e.maxSteps) : 8,
     confirm: !!e?.confirm,
   }
@@ -361,6 +400,7 @@ async function loadCatalog () {
     if (c?.handle) names.add(c.handle)
   }
   kitOptions.value = [...names]
+  skillOptions.value = (Array.isArray(res.skills) ? res.skills : []).map(k => k && k.handle).filter(Boolean)
 }
 
 async function loadOverlay () {
@@ -405,6 +445,23 @@ function toggleKit (row, kit) {
     row.toolkits.splice(i, 1)
   } else {
     row.toolkits.push(kit)
+  }
+}
+
+function allSkills (row) {
+  return row.skills.includes('*')
+}
+
+function toggleAllSkills (row) {
+  row.skills = allSkills(row) ? [] : ['*']
+}
+
+function toggleSkill (row, skill) {
+  const i = row.skills.indexOf(skill)
+  if (i >= 0) {
+    row.skills.splice(i, 1)
+  } else {
+    row.skills.push(skill)
   }
 }
 

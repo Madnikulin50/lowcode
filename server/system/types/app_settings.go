@@ -457,8 +457,10 @@ type (
 		Prompt      string   `json:"prompt,omitempty"`
 		Model       string   `json:"model,omitempty"`
 		Toolkits    []string `json:"toolkits,omitempty"`
-		MaxSteps    int      `json:"maxSteps,omitempty"`
-		Confirm     bool     `json:"confirm,omitempty"`
+		// Skills the agent may load, by handle; "*" for all of them
+		Skills   []string `json:"skills,omitempty"`
+		MaxSteps int      `json:"maxSteps,omitempty"`
+		Confirm  bool     `json:"confirm,omitempty"`
 	}
 
 	AIToolkitEntry struct {

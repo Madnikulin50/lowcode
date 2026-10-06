@@ -11,7 +11,6 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
-	automationModels "github.com/madnikulin50/lowcode/server/automation/model"
 	"github.com/madnikulin50/lowcode/server/compose/model"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	discovery "github.com/madnikulin50/lowcode/server/discovery/types"
@@ -1335,8 +1334,7 @@ func count(ctx context.Context, s *Store, table string, ee ...goqu.Expression) (
 
 // Skills live in the prompt library: a version gets a kind, the toolkits it
 // requires and the files it ships with. The table already has rows, so kind
-// defaults to empty (a plain prompt) and the JSON columns take the model's
-// default.
+// defaults to empty (a plain prompt) and the JSON columns to an empty list.
 func fix_2026_10_00_extendAutomationPromptVersionsForSkills(ctx context.Context, s *Store) (err error) {
 	const table = "automation_prompt_versions"
 
@@ -1349,12 +1347,14 @@ func fix_2026_10_00_extendAutomationPromptVersionsForSkills(ctx context.Context,
 		return
 	}
 
+	// existing rows get an empty list, not the model's "{}" default
 	for _, ident := range []string{"Requires", "Resources"} {
-		attr := automationModels.PromptVersion.Attributes.FindByIdent(ident)
-		if attr == nil {
-			return fmt.Errorf("automation prompt version model has no %s attribute", ident)
-		}
-		if err = addColumn(ctx, s, table, attr); err != nil {
+		err = addColumn(ctx, s, table, &dal.Attribute{
+			Ident: ident,
+			Type:  &dal.TypeJSON{DefaultValue: "[]"},
+			Store: &dal.CodecAlias{Ident: strings.ToLower(ident)},
+		})
+		if err != nil {
 			return
 		}
 	}

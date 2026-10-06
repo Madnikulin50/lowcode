@@ -1383,6 +1383,85 @@ export default class Automation {
     return this.api().request({ method: 'delete', url: `/prompts/${encodeURIComponent(String(handle))}`, ...extra }).then(result => stdResolve(result))
   }
 
+  // Skill library (hand-written): skills live next to prompts, same versioning
+  async skillList (extra: AxiosRequestConfig = {}): Promise<KV> {
+    return this.api().request({ method: 'get', url: '/skills/', ...extra }).then(result => stdResolve(result))
+  }
+
+  async skillHistory (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle } = (a as KV) || {}
+    return this.api().request({ method: 'get', url: `/skills/${encodeURIComponent(String(handle))}`, ...extra }).then(result => stdResolve(result))
+  }
+
+  // version 0 is the active one; the answer has `skill` with its files' content
+  async skillVersion (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle, version = 0 } = (a as KV) || {}
+    return this.api().request({ method: 'get', url: `/skills/${encodeURIComponent(String(handle))}/versions/${version}`, ...extra }).then(result => stdResolve(result))
+  }
+
+  // requires: toolkit names; resources: [{path, content}]. Omit either to keep
+  // the previous version's, send [] to clear it
+  async skillSave (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle, text, description, note, activate, requires, resources } = (a as KV) || {}
+    return this.api().request({
+      method: 'post',
+      url: `/skills/${encodeURIComponent(String(handle))}`,
+      headers: { 'Content-Type': 'application/json' },
+      data: { text, description, note, activate, requires, resources },
+      ...extra,
+    }).then(result => stdResolve(result))
+  }
+
+  async skillActivate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle, version } = (a as KV) || {}
+    return this.api().request({
+      method: 'post',
+      url: `/skills/${encodeURIComponent(String(handle))}/activate`,
+      headers: { 'Content-Type': 'application/json' },
+      data: { version },
+      ...extra,
+    }).then(result => stdResolve(result))
+  }
+
+  async skillDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle } = (a as KV) || {}
+    return this.api().request({ method: 'delete', url: `/skills/${encodeURIComponent(String(handle))}`, ...extra }).then(result => stdResolve(result))
+  }
+
+  // `content` is a SKILL.md (string) or a zip (ArrayBuffer / Blob); handle
+  // overrides the name in the header
+  async skillImport (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { content, handle, note, activate } = (a as KV) || {}
+    const params: KV = {}
+    if (handle) params.handle = handle
+    if (note) params.note = note
+    if (activate) params.activate = '1'
+    return this.api().request({
+      method: 'post',
+      url: '/skills/import',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      params,
+      data: content,
+      transformRequest: [(data: unknown) => data],
+      ...extra,
+    }).then(result => stdResolve(result))
+  }
+
+  // SKILL.md, or a zip when the skill has files (or zip is true), as a Blob
+  async skillExport (a: KV, extra: AxiosRequestConfig = {}): Promise<Blob> {
+    const { handle, version, zip } = (a as KV) || {}
+    const params: KV = {}
+    if (version) params.version = version
+    if (zip) params.zip = '1'
+    return this.api().request({
+      method: 'get',
+      url: `/skills/${encodeURIComponent(String(handle))}/export`,
+      params,
+      responseType: 'blob',
+      ...extra,
+    }).then(result => result.data as Blob)
+  }
+
   // Runs a prompt's test cases; `onEvent` gets {version, case} as each case is
   // judged, the resolved final event has `reports`
   async promptEvalStream (a: KV, onEvent: (ev: StreamEvent) => void, signal?: AbortSignal): Promise<StreamEvent> {

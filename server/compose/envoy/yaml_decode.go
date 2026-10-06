@@ -198,6 +198,9 @@ func (d *auxYamlDoc) unmarshalPageBlocksNode(r *types.Page, n *yaml.Node) (refs 
 		case "Calendar":
 			refs = envoyx.MergeRefs(refs, getPageBlockCalendarRefs(b, index))
 
+		case "RelatedRecords":
+			refs = envoyx.MergeRefs(refs, getPageBlockRelatedRecordsRefs(b, index))
+
 		case "Metric":
 			refs = envoyx.MergeRefs(refs, getPageBlockMetricRefs(b, index))
 
@@ -254,10 +257,35 @@ func getPageBlockCalendarRefs(b types.PageBlock, index int) (refs map[string]env
 
 		id := optString(opt, "module", "moduleID")
 		if id == "" || id == "0" {
-			return
+			// this feed has no module; the ones after it still do
+			continue
 		}
 
 		refs[fmt.Sprintf("Blocks.%d.Options.feeds.%d.ModuleID", index, j)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(id),
+		}
+	}
+
+	return
+}
+
+// getPageBlockRelatedRecordsRefs: every relation of a RelatedRecords block
+// refers to the module whose records it lists. The reference is keyed by the
+// relation's position, so a relation without a module does not shift the rest.
+func getPageBlockRelatedRecordsRefs(b types.PageBlock, index int) (refs map[string]envoyx.Ref) {
+	refs = make(map[string]envoyx.Ref)
+
+	rr, _ := b.Options["relations"].([]interface{})
+	for j, r := range rr {
+		rel, _ := r.(map[string]interface{})
+
+		id := optString(rel, "module", "moduleID")
+		if id == "" || id == "0" {
+			continue
+		}
+
+		refs[fmt.Sprintf("Blocks.%d.Options.relations.%d.ModuleID", index, j)] = envoyx.Ref{
 			ResourceType: types.ModuleResourceType,
 			Identifiers:  envoyx.MakeIdentifiers(id),
 		}
@@ -275,7 +303,8 @@ func getPageBlockMetricRefs(b types.PageBlock, index int) (refs map[string]envoy
 
 		id := optString(mops, "module", "moduleID")
 		if id == "" || id == "0" {
-			return
+			// this metric has no module; the ones after it still do
+			continue
 		}
 
 		refs[fmt.Sprintf("Blocks.%d.Options.metrics.%d.ModuleID", index, j)] = envoyx.Ref{

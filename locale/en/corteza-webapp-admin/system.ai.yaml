@@ -57,6 +57,9 @@ editor:
     maxSteps: Max steps
     enabled: On
     toolkits: Toolkits
+    skills: Skills
+    allSkills: All skills
+    skillsHelp: 'Skills the agent may load on demand: it sees their names and when they apply, and loads the instructions only when a task needs them.'
     confirm: Ask for confirmation (create/delete/restore/prune)
     confirmHelp: MCP agent_call has no “yes” step — leave this off for agents invoked from MCP or rule chains.
     prompt: System prompt

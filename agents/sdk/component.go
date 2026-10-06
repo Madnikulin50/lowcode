@@ -55,6 +55,7 @@ type Meta struct {
 	PublicURL    string       `json:"publicUrl,omitempty"`
 	Components   []Descriptor `json:"components"`
 	Capabilities []string     `json:"capabilities"`
+	Skills       []SkillInfo  `json:"skills,omitempty"`
 }
 
 // Component is the RuleGo-style unit: Type/New/Init/OnMsg/Destroy.
@@ -72,11 +73,11 @@ type Desc struct {
 	D Descriptor
 }
 
-func (d Desc) Descriptor() Descriptor          { return d.D }
-func (d Desc) New() Component                  { return d }
-func (d Desc) Init(map[string]any) error       { return nil }
-func (d Desc) OnMsg(JobCtx) error              { return errUseBackend }
-func (d Desc) Destroy()                        {}
+func (d Desc) Descriptor() Descriptor    { return d.D }
+func (d Desc) New() Component            { return d }
+func (d Desc) Init(map[string]any) error { return nil }
+func (d Desc) OnMsg(JobCtx) error        { return errUseBackend }
+func (d Desc) Destroy()                  {}
 
 type JobCtx interface {
 	Job() *Job
