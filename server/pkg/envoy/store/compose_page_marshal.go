@@ -303,6 +303,35 @@ func (n *composePage) Encode(ctx context.Context, pl *payload) (err error) {
 			b.Options["chartID"] = strconv.FormatUint(chrID, 10)
 			delete(b.Options, "chart")
 
+		case "RecordGraph":
+			mm, _ := b.Options["excludeModules"].([]interface{})
+			for i, m := range mm {
+				id, _ := m.(string)
+				if id == "" || id == "0" {
+					continue
+				}
+				mID := getModID(id)
+				if mID <= 0 {
+					return resource.ComposeModuleErrUnresolved(resource.MakeIdentifiers(id))
+				}
+				mm[i] = strconv.FormatUint(mID, 10)
+			}
+
+			ll, _ := b.Options["labels"].([]interface{})
+			for _, l := range ll {
+				lopts, _ := l.(map[string]interface{})
+				id := ss(lopts, "module", "moduleID")
+				if id == "" {
+					continue
+				}
+				mID := getModID(id)
+				if mID <= 0 {
+					return resource.ComposeModuleErrUnresolved(resource.MakeIdentifiers(id))
+				}
+				lopts["moduleID"] = strconv.FormatUint(mID, 10)
+				delete(lopts, "module")
+			}
+
 		case "RelatedRecords":
 			rr, _ := b.Options["relations"].([]interface{})
 			for _, rel := range rr {

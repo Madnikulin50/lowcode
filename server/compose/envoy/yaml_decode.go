@@ -201,6 +201,9 @@ func (d *auxYamlDoc) unmarshalPageBlocksNode(r *types.Page, n *yaml.Node) (refs 
 		case "RelatedRecords":
 			refs = envoyx.MergeRefs(refs, getPageBlockRelatedRecordsRefs(b, index))
 
+		case "RecordGraph":
+			refs = envoyx.MergeRefs(refs, getPageBlockRecordGraphRefs(b, index))
+
 		case "Metric":
 			refs = envoyx.MergeRefs(refs, getPageBlockMetricRefs(b, index))
 
@@ -262,6 +265,43 @@ func getPageBlockCalendarRefs(b types.PageBlock, index int) (refs map[string]env
 		}
 
 		refs[fmt.Sprintf("Blocks.%d.Options.feeds.%d.ModuleID", index, j)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(id),
+		}
+	}
+
+	return
+}
+
+// getPageBlockRecordGraphRefs: the modules a RecordGraph block leaves out are a
+// list of ids (or handles); each one is a reference, keyed by its position.
+func getPageBlockRecordGraphRefs(b types.PageBlock, index int) (refs map[string]envoyx.Ref) {
+	refs = make(map[string]envoyx.Ref)
+
+	mm, _ := b.Options["excludeModules"].([]interface{})
+	for j, m := range mm {
+		id, _ := m.(string)
+		if id == "" || id == "0" {
+			continue
+		}
+
+		refs[fmt.Sprintf("Blocks.%d.Options.excludeModules.%d.ModuleID", index, j)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(id),
+		}
+	}
+
+	// the name templates are kept per module
+	ll, _ := b.Options["labels"].([]interface{})
+	for j, l := range ll {
+		label, _ := l.(map[string]interface{})
+
+		id := optString(label, "module", "moduleID")
+		if id == "" || id == "0" {
+			continue
+		}
+
+		refs[fmt.Sprintf("Blocks.%d.Options.labels.%d.ModuleID", index, j)] = envoyx.Ref{
 			ResourceType: types.ModuleResourceType,
 			Identifiers:  envoyx.MakeIdentifiers(id),
 		}

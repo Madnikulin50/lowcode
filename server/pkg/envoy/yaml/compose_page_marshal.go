@@ -246,6 +246,32 @@ func (c *composePageBlock) MarshalYAML() (interface{}, error) {
 		}
 		break
 
+	case "RecordGraph":
+		// the references were collected for the modules that are named, in order
+		mm, _ := opt["excludeModules"].([]interface{})
+		n := 0
+		for i, m := range mm {
+			id, _ := m.(string)
+			if id == "" || id == "0" || n >= len(c.refMod) {
+				continue
+			}
+			mm[i] = c.refMod[n]
+			n++
+		}
+
+		// then the name templates, in the same order the references were collected
+		ll, _ := opt["labels"].([]interface{})
+		for _, l := range ll {
+			label, _ := l.(map[string]interface{})
+			if !namesModule(label) || n >= len(c.refMod) {
+				continue
+			}
+			label["module"] = c.refMod[n]
+			delete(label, "moduleID")
+			n++
+		}
+		break
+
 	case "RelatedRecords":
 		// the references were collected for the relations that name a module, in order
 		rr, _ := opt["relations"].([]interface{})

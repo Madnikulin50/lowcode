@@ -1,5 +1,8 @@
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
+  faCompressAlt,
+  faCrosshairs,
+  faLockOpen,
   faAlignCenter,
   faAlignJustify,
   faAlignLeft,
@@ -224,6 +227,9 @@ import {
 } from '@fortawesome/free-regular-svg-icons'
 
 library.add(
+  faCompressAlt,
+  faCrosshairs,
+  faLockOpen,
   faSlidersH,
   faProjectDiagram,
   faSort,

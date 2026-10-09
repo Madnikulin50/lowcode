@@ -26,6 +26,8 @@ selector:
       description: Searchable table of module records
     record:
       description: Fields of the current record
+    recordGraph:
+      description: Graph of the records related to this one, opened by clicking
     relatedRecords:
       description: Child records from other modules that refer to this record
     recordOrganizer:
@@ -994,6 +996,76 @@ recordList:
         label: Not empty count
       uniqueCount:
         label: Unique count
+recordGraph:
+  label: Related records graph
+  saveFirst: Save the record to see the records related to it.
+  loading: Loading related records...
+  nothing: This record has no related records.
+  more: more
+  truncated: '{{n}} records are not shown (node limit)'
+  recordPageOnly: 'This block works on a record page only: it draws the records related to the record of the page.'
+  hint:
+    expand: Click to select and load its related records
+    open: Click to select, double-click to open the record
+    more: Click to load more
+    cluster: Click to show the records
+  depth:
+    label: Levels loaded at first
+    '0': Only the record (open nodes by clicking)
+    '1': The record and its direct relations
+    '2': Two levels around the record
+    footnote: Click a node to load its relations.
+  maxNodes:
+    label: Nodes at most
+    footnote: More records are left out.
+  perModuleLimit:
+    label: Records of one module per node
+    footnote: A full list gets a "more" node.
+  showParents: Show the records this record refers to
+  showChildren: Show the records that refer to this record
+  showLegend: Show the legend
+  exclude:
+    label: Leave out modules
+    none: No related modules
+    footnote: Records of these modules are not drawn.
+  labels:
+    label: Names of records on the graph
+    footnote: How the records of a module are called on the graph. Write the fields in double curly braces. Without a template the name is guessed from the fields.
+    example: Example
+  open: Open record
+  expand: Show relations
+  close: Close
+  displayOption:
+    label: Opening a record
+    sameTab: Open in the same tab
+    newTab: Open in a new tab
+    modal: Open in a modal
+    doNothing: Do not open records
+    footnote: Click a node to select it and see its relations; the panel of the selected record has the open button, a double click opens it at once.
+  toolbar:
+    search: Find a record
+    layout: Layout
+    fit: Fit to the window
+    relayout: Lay out again
+    freeze: Keep nodes in place
+    unfreeze: Let nodes move
+    collapse: Collapse all
+    png: Save as an image
+    fullscreen: Full screen
+    exitFullscreen: Leave full screen
+  layout:
+    label: Layout
+    force: Free (force)
+    radial: Rings around the record
+    layers: Layers
+    footnote: Rings and layers put the record in the middle; the free layout lets nodes find their own place.
+  clusterFrom:
+    label: Group from
+    footnote: 'A list of that many records or more is one node that a click opens. 0: never.'
+  showToolbar: Show the toolbar
+  statusField:
+    label: Colour the ring by
+    none: (none)
 relatedRecords:
   label: Related records
   notConfigured: No related records are set up. Add the modules whose records refer to this one.

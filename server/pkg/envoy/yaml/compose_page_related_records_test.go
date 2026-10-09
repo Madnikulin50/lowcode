@@ -68,3 +68,45 @@ func TestComposePageBlock_MetricsAndFeedsWithoutModuleDoNotShiftTheRest(t *testi
 	ff := c.res.Options["feeds"].([]interface{})
 	req.Equal("events", ff[1].(map[string]interface{})["options"].(map[string]interface{})["module"])
 }
+
+func TestComposePageBlock_RecordGraphWritesModuleHandles(t *testing.T) {
+	req := require.New(t)
+
+	c := &composePageBlock{
+		res: &types.PageBlock{Kind: "RecordGraph", Options: map[string]interface{}{
+			"excludeModules": []interface{}{"111", "0", "333"},
+		}},
+		refMod: []string{"positions_voisr", "files_id"},
+	}
+
+	_, err := c.MarshalYAML()
+	req.NoError(err)
+	req.Equal([]interface{}{"positions_voisr", "0", "files_id"}, c.res.Options["excludeModules"])
+}
+
+func TestComposePageBlock_RecordGraphWritesLabelModuleHandles(t *testing.T) {
+	req := require.New(t)
+
+	c := &composePageBlock{
+		res: &types.PageBlock{Kind: "RecordGraph", Options: map[string]interface{}{
+			"excludeModules": []interface{}{"111"},
+			"labels": []interface{}{
+				map[string]interface{}{"moduleID": "222", "template": "{{a}}"},
+				map[string]interface{}{"moduleID": "0", "template": "{{b}}"},
+				map[string]interface{}{"moduleID": "333", "template": "{{c}}"},
+			},
+		}},
+		// in the order the references were collected: the excluded module, then the labels
+		refMod: []string{"voisr", "files", "orders"},
+	}
+
+	_, err := c.MarshalYAML()
+	req.NoError(err)
+	req.Equal([]interface{}{"voisr"}, c.res.Options["excludeModules"])
+
+	ll := c.res.Options["labels"].([]interface{})
+	req.Equal("files", ll[0].(map[string]interface{})["module"])
+	req.Equal("0", ll[1].(map[string]interface{})["moduleID"])
+	req.Equal("orders", ll[2].(map[string]interface{})["module"])
+	req.Equal("{{c}}", ll[2].(map[string]interface{})["template"])
+}

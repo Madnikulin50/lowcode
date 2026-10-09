@@ -162,6 +162,7 @@ const catalog = [
   { kind: 'RelatedRecords', category: 'data', icon: ['fas', 'sitemap'], recordPageOnly: true, block: new compose.PageBlockRelatedRecords() },
   { kind: 'RecordRevisions', category: 'data', icon: ['far', 'clock'], recordPageOnly: true, block: new compose.PageBlockRecordRevisions() },
   { kind: 'Comment', category: 'data', icon: ['fas', 'comments'], recordPageOnly: false, block: new compose.PageBlockComment() },
+  { kind: 'RecordGraph', category: 'visualize', icon: ['fas', 'project-diagram'], recordPageOnly: true, block: new compose.PageBlockRecordGraph() },
   { kind: 'Chart', category: 'visualize', icon: ['fas', 'chart-pie'], recordPageOnly: false, block: new compose.PageBlockChart() },
   { kind: 'Metric', category: 'visualize', icon: ['fas', 'chart-bar'], recordPageOnly: false, block: new compose.PageBlockMetric() },
   { kind: 'Progress', category: 'visualize', icon: ['fas', 'tasks'], recordPageOnly: false, block: new compose.PageBlockProgress() },

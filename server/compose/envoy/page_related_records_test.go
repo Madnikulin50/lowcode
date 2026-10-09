@@ -150,3 +150,108 @@ func TestPageBlockExport_ItemWithoutModuleIsLeftAlone(t *testing.T) {
 	req.NotContains(mm[0], "module")
 	req.Equal("orders_mod", mm[1].(map[string]interface{})["module"])
 }
+
+func recordGraphPage() *types.Page {
+	return &types.Page{Blocks: types.PageBlocks{
+		{Kind: "Content"},
+		{Kind: "RecordGraph", Options: map[string]interface{}{
+			"depth":          float64(1),
+			"excludeModules": []interface{}{"111", "0", "files_id", ""},
+		}},
+	}}
+}
+
+func TestRecordGraph_ReferencesTheExcludedModules(t *testing.T) {
+	req := require.New(t)
+
+	refs := decodePageRefs(recordGraphPage())
+	req.Len(refs, 2)
+
+	req.Equal(types.ModuleResourceType, refs["Blocks.1.Options.excludeModules.0.ModuleID"].ResourceType)
+	req.Equal("111", refs["Blocks.1.Options.excludeModules.0.ModuleID"].Identifiers.FriendlyIdentifier())
+	// ids and handles both: the empty and "0" ones are skipped without moving the others
+	req.Equal("files_id", refs["Blocks.1.Options.excludeModules.2.ModuleID"].Identifiers.FriendlyIdentifier())
+	req.NotContains(refs, "Blocks.1.Options.excludeModules.1.ModuleID")
+}
+
+func TestRecordGraph_ExportsTheExcludedModulesByHandle(t *testing.T) {
+	req := require.New(t)
+
+	pg := recordGraphPage()
+	node := &envoyx.Node{References: decodePageRefs(pg)}
+
+	out, err := YamlEncoder{}.encodePageBlockC(context.Background(), envoyx.EncodeParams{},
+		fakeTree{handles: map[string]string{"111": "positions_voisr"}}, node, pg, 1, pg.Blocks[1])
+	req.NoError(err)
+
+	b := out.(types.PageBlock)
+	mm := b.Options["excludeModules"].([]interface{})
+	req.Equal("positions_voisr", mm[0])
+	req.Equal("0", mm[1], "no reference: left as it was")
+	req.Equal("files_id", mm[2], "a handle with nothing to resolve stays a handle")
+	req.Equal(float64(1), b.Options["depth"])
+}
+
+func TestRecordGraph_ImportSetsTheNewModuleIDs(t *testing.T) {
+	req := require.New(t)
+
+	pg := recordGraphPage()
+	req.NoError(pg.SetValue("Blocks.1.Options.excludeModules.0.ModuleID", 0, uint64(9001)))
+	req.NoError(pg.SetValue("Blocks.1.Options.excludeModules.2.ModuleID", 0, uint64(9003)))
+
+	mm := pg.Blocks[1].Options["excludeModules"].([]interface{})
+	req.Equal([]interface{}{"9001", "0", "9003", ""}, mm)
+
+	// a path that does not exist is not a crash
+	req.NoError(pg.SetValue("Blocks.1.Options.excludeModules.9.ModuleID", 0, uint64(1)))
+	req.NoError(pg.SetValue("Blocks.1.Options.excludeModules", 0, uint64(1)))
+}
+
+func recordGraphLabelsPage() *types.Page {
+	return &types.Page{Blocks: types.PageBlocks{{Kind: "RecordGraph", Options: map[string]interface{}{
+		"excludeModules": []interface{}{"111"},
+		"labels": []interface{}{
+			map[string]interface{}{"moduleID": "222", "template": "{{position_number}} · {{work_name}}"},
+			map[string]interface{}{"moduleID": "0", "template": "{{x}}"},
+			map[string]interface{}{"module": "files_id", "template": "{{recognized_name}}"},
+		},
+	}}}}
+}
+
+func TestRecordGraph_NameTemplatesReferenceTheirModules(t *testing.T) {
+	req := require.New(t)
+
+	refs := decodePageRefs(recordGraphLabelsPage())
+	req.Len(refs, 3)
+	req.Equal("111", refs["Blocks.0.Options.excludeModules.0.ModuleID"].Identifiers.FriendlyIdentifier())
+	req.Equal("222", refs["Blocks.0.Options.labels.0.ModuleID"].Identifiers.FriendlyIdentifier())
+	req.Equal("files_id", refs["Blocks.0.Options.labels.2.ModuleID"].Identifiers.FriendlyIdentifier())
+	req.NotContains(refs, "Blocks.0.Options.labels.1.ModuleID")
+}
+
+func TestRecordGraph_NameTemplatesExportByHandleAndImportByID(t *testing.T) {
+	req := require.New(t)
+
+	pg := recordGraphLabelsPage()
+	node := &envoyx.Node{References: decodePageRefs(pg)}
+
+	out, err := YamlEncoder{}.encodePageBlockC(context.Background(), envoyx.EncodeParams{},
+		fakeTree{handles: map[string]string{"222": "positions_voisr"}}, node, pg, 0, pg.Blocks[0])
+	req.NoError(err)
+
+	ll := out.(types.PageBlock).Options["labels"].([]interface{})
+	first := ll[0].(map[string]interface{})
+	req.Equal("positions_voisr", first["module"])
+	req.NotContains(first, "moduleID")
+	req.Equal("{{position_number}} · {{work_name}}", first["template"], "the template itself is not touched")
+	req.Equal("0", ll[1].(map[string]interface{})["moduleID"])
+
+	// and back: the new ids go into the items, the templates stay
+	req.NoError(pg.SetValue("Blocks.0.Options.labels.0.ModuleID", 0, uint64(9002)))
+	req.NoError(pg.SetValue("Blocks.0.Options.labels.2.ModuleID", 0, uint64(9004)))
+	back := pg.Blocks[0].Options["labels"].([]interface{})
+	req.Equal("9002", back[0].(map[string]interface{})["moduleID"])
+	req.Equal("{{position_number}} · {{work_name}}", back[0].(map[string]interface{})["template"])
+	req.Equal("9004", back[2].(map[string]interface{})["moduleID"])
+	req.NotContains(back[2], "module")
+}

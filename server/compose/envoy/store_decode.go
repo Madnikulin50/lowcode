@@ -215,6 +215,9 @@ func decodePageRefs(p *types.Page) (refs map[string]envoyx.Ref) {
 		case "RelatedRecords":
 			refs = envoyx.MergeRefs(refs, getPageBlockRelatedRecordsRefs(b, index))
 
+		case "RecordGraph":
+			refs = envoyx.MergeRefs(refs, getPageBlockRecordGraphRefs(b, index))
+
 		case "Metric":
 			refs = envoyx.MergeRefs(refs, getPageBlockMetricRefs(b, index))
 

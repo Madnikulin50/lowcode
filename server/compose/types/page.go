@@ -460,12 +460,23 @@ func (b *PageBlock) setOptionValue(path []string, pos uint, value any) (err erro
 
 		metric["moduleID"] = cast.ToString(value)
 
-	case "relations":
-		// RelatedRecords: one module reference per relation
+	case "excludeModules":
+		// RecordGraph: a list of modules, one reference per element
 		if len(path) < 2 {
 			return
 		}
-		rels, _ := b.Options["relations"].([]any)
+		mm, _ := b.Options["excludeModules"].([]any)
+		i := cast.ToInt(path[1])
+		if i >= 0 && i < len(mm) {
+			mm[i] = cast.ToString(value)
+		}
+
+	case "relations", "labels":
+		// RelatedRecords relations and RecordGraph labels: one module reference per item
+		if len(path) < 2 {
+			return
+		}
+		rels, _ := b.Options[path[0]].([]any)
 		i := cast.ToInt(path[1])
 		if i < 0 || i >= len(rels) {
 			return

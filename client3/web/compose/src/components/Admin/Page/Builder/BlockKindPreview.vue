@@ -194,6 +194,21 @@
       </g>
     </g>
 
+    <!-- Record graph: nodes of several modules joined by edges -->
+    <g v-else-if="kind === 'RecordGraph'">
+      <line x1="160" y1="96" x2="84" y2="62" stroke="#adb5bd" stroke-width="2" />
+      <line x1="160" y1="96" x2="236" y2="62" stroke="#adb5bd" stroke-width="2" />
+      <line x1="160" y1="96" x2="100" y2="146" stroke="#adb5bd" stroke-width="2" />
+      <line x1="160" y1="96" x2="224" y2="144" stroke="#adb5bd" stroke-width="2" />
+      <line x1="236" y1="62" x2="278" y2="104" stroke="#adb5bd" stroke-width="2" />
+      <circle cx="160" cy="96" r="18" fill="#0d6efd" />
+      <circle cx="84" cy="62" r="12" fill="#198754" />
+      <circle cx="236" cy="62" r="12" fill="#fd7e14" />
+      <circle cx="100" cy="146" r="12" fill="#6f42c1" />
+      <circle cx="224" cy="144" r="12" fill="#198754" />
+      <circle cx="278" cy="104" r="9" fill="#fd7e14" />
+    </g>
+
     <!-- Related records: sections of child records -->
     <g v-else-if="kind === 'RelatedRecords'">
       <g v-for="(sec, i) in 3" :key="'rel'+i" :transform="`translate(22 ${44 + i*40})`">

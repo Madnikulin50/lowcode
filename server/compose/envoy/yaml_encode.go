@@ -189,6 +189,28 @@ func (e YamlEncoder) encodePageBlockC(ctx context.Context, p envoyx.EncodeParams
 		}
 		break
 
+	case "RecordGraph":
+		mm, _ := b.Options["excludeModules"].([]interface{})
+		for i := range mm {
+			modRef, has := n.References[fmt.Sprintf("Blocks.%d.Options.excludeModules.%d.ModuleID", index, i)]
+			if !has {
+				continue
+			}
+			mm[i] = safeParentIdentifier(tt, n, modRef)
+		}
+
+		ll, _ := b.Options["labels"].([]interface{})
+		for i, l := range ll {
+			label, _ := l.(map[string]interface{})
+			modRef, has := n.References[fmt.Sprintf("Blocks.%d.Options.labels.%d.ModuleID", index, i)]
+			if !has {
+				continue
+			}
+			label["module"] = safeParentIdentifier(tt, n, modRef)
+			delete(label, "moduleID")
+		}
+		break
+
 	case "RelatedRecords":
 		rr, _ := b.Options["relations"].([]interface{})
 		for i, r := range rr {
