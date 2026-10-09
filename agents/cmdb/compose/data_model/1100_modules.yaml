@@ -1,0 +1,227 @@
+namespace: cmdb
+modules:
+  networks:
+    name: Networks
+    fields:
+      name:
+        label: Name
+        kind: String
+        required: true
+      cidr:
+        label: CIDR
+        kind: String
+        required: true
+      description:
+        label: Description
+        kind: String
+      enabled:
+        label: Enabled
+        kind: Bool
+      last_scan:
+        label: Last Scan
+        kind: DateTime
+      notes:
+        label: Notes
+        kind: String
+
+  devices:
+    name: Devices
+    fields:
+      ip_address:
+        label: IP Address
+        kind: String
+        required: true
+      mac_address:
+        label: MAC Address
+        kind: String
+      hostname:
+        label: Hostname
+        kind: String
+      vendor:
+        label: Vendor
+        kind: String
+      device_type:
+        label: Device Type
+        kind: Select
+        options:
+          options:
+            - router
+            - switch
+            - server
+            - workstation
+            - printer
+            - camera
+            - firewall
+            - iot
+            - unknown
+      os:
+        label: Operating System
+        kind: String
+      domain:
+        label: Domain
+        kind: String
+      open_ports:
+        label: Open Ports
+        kind: String
+        options:
+          displayType: json
+          jsonLayout: chips
+          jsonTemplate: '{{port}}/{{proto}} {{service}}'
+          jsonFields: port,proto,service
+          jsonVariantField: port
+      services:
+        label: Services (JSON)
+        kind: String
+      shares:
+        label: Shares
+        kind: String
+      vulnerabilities:
+        label: Vulnerabilities (JSON)
+        kind: String
+      last_seen:
+        label: Last Seen
+        kind: DateTime
+      status:
+        label: Status
+        kind: Select
+        options:
+          options:
+            - online
+            - offline
+            - unknown
+      criticality:
+        label: Criticality
+        kind: Select
+        options:
+          options:
+            - low
+            - medium
+            - high
+            - critical
+      notes:
+        label: Notes
+        kind: String
+
+  services:
+    name: Services
+    fields:
+      device:
+        label: Device
+        kind: Record
+        options:
+          module: devices
+          labelField: hostname
+          queryFields:
+            - hostname
+            - ip_address
+      port:
+        label: Port
+        kind: Number
+      proto:
+        label: Protocol
+        kind: Select
+        options:
+          options:
+            - tcp
+            - udp
+      service:
+        label: Service
+        kind: String
+      version:
+        label: Version
+        kind: String
+      banner:
+        label: Banner
+        kind: String
+
+  vulnerabilities:
+    name: Vulnerabilities
+    fields:
+      device:
+        label: Device
+        kind: Record
+        options:
+          module: devices
+          labelField: hostname
+          queryFields:
+            - hostname
+            - ip_address
+      name:
+        label: Name
+        kind: String
+        required: true
+      severity:
+        label: Severity
+        kind: Select
+        options:
+          options:
+            - CRITICAL
+            - HIGH
+            - MEDIUM
+            - LOW
+            - INFO
+      cve:
+        label: CVE
+        kind: String
+      description:
+        label: Description
+        kind: String
+      remediation:
+        label: Remediation
+        kind: String
+      status:
+        label: Status
+        kind: Select
+        options:
+          options:
+            - open
+            - acknowledged
+            - fixed
+            - false_positive
+      detected_at:
+        label: Detected At
+        kind: DateTime
+
+  scans:
+    name: Scans
+    fields:
+      target:
+        label: Target
+        kind: String
+        required: true
+      network:
+        label: Network
+        kind: Record
+        options:
+          module: networks
+          labelField: name
+          queryFields:
+            - name
+            - cidr
+      status:
+        label: Status
+        kind: Select
+        options:
+          options:
+            - pending
+            - running
+            - completed
+            - failed
+      progress:
+        label: Progress
+        kind: Number
+      found:
+        label: Found
+        kind: Number
+      started_at:
+        label: Started At
+        kind: DateTime
+      finished_at:
+        label: Finished At
+        kind: DateTime
+      scanning_ip:
+        label: Scanning IP
+        kind: String
+      error:
+        label: Error
+        kind: String

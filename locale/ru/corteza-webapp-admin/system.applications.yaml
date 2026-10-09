@@ -4,7 +4,7 @@ editor:
     createdBy: Создал
     delete: Delete
     deletedAt: Время удаления
-    enabled: Enabled
+    enabled: Включено
     id: ID
     name: Имя *
     title: Basic information
@@ -24,7 +24,7 @@ editor:
       label: Logo
       description: Logo used in the application selector
       placeholder: Choose a logo or drop it here...
-      reset: Reset
+      reset: Сбросить
     name:
       description: Name used in the application selector
       label: Имя
@@ -37,14 +37,14 @@ list:
   columns:
     actions: ""
     createdAt: Создано
-    enabled: Enabled
+    enabled: Включено
     name: Имя
     appListName: App selector name
     state: State
   export: Экспорт
   rows:
     filters:
-      deleted: Deleted
+      deleted: Удаленные
   filterForm:
     deleted:
       label: deleted applications
@@ -53,10 +53,10 @@ list:
     exclusive:
       label: Only
     inclusive:
-      label: Including
+      label: Включая
     query:
-      label: Filter applications list
-      placeholder: Filter applications by name
+      label: Фильтр applications list
+      placeholder: Фильтр applications by name
   loading: Loading applications
   new: New Приложение
   permissions: Права доступа

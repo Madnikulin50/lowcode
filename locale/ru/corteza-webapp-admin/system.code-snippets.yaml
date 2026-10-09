@@ -4,10 +4,10 @@ editor:
   code-snippets:
     add: Add Code Snippet
     empty: No snippets yet
-    enabled: Enabled
+    enabled: Включено
     table-headers:
       name: Имя
-      enabled: Enabled
+      enabled: Включено
       script: Code
     form:
       title: Add Code Snippet

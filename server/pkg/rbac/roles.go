@@ -1,8 +1,8 @@
 package rbac
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/slice"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/slice"
 	"go.uber.org/zap"
 )
 

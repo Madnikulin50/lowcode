@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/es/reindex"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/es/reindex"
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"go.uber.org/zap"

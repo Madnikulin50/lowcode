@@ -1,0 +1,21 @@
+action: Действие
+actor: Субъект
+appListName: Название в списке приложений
+consumer: Потребитель
+createdAt: Создано
+description: Описание
+email: Email
+enabled: Включено
+handle: Дескриптор
+level: Уровень
+meta:
+  name: Название
+  short: Краткое название
+name: Название
+queue: Очередь
+requestOrigin: Источник
+resource: Ресурс
+sessionID: ID сессии
+state: Состояние
+timestamp: Время
+workflowID: ID процесса

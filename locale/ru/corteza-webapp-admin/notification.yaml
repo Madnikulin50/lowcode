@@ -175,7 +175,7 @@ gateway:
     error: Route update failed
   filter:
     fetch:
-      error: Filter fetch failed
+      error: Фильтр fetch failed
     update:
       success: Фильтры updated
       error: Фильтры update failed
@@ -193,21 +193,21 @@ gateway:
       error: Requests purge failed
 workflow:
   fetch:
-    error: Workflow fetch failed
+    error: Процесс fetch failed
   trigger:
     error: Trigger fetch failed
   create:
-    success: Workflow created
-    error: Workflow create failed
+    success: Процесс created
+    error: Процесс create failed
   update:
-    success: Workflow updated
-    error: Workflow update failed
+    success: Процесс updated
+    error: Процесс update failed
   delete:
-    success: Workflow deleted
-    error: Workflow delete failed
+    success: Процесс deleted
+    error: Процесс delete failed
   undelete:
-    success: Workflow restored
-    error: Workflow restore failed
+    success: Процесс restored
+    error: Процесс restore failed
 session:
   fetch:
     error: Session fetch failed
@@ -244,20 +244,20 @@ federation:
     error: Handshake failed
 sensitivityLevel:
   create:
-    success: Sensitivity level created
-    error: Sensitivity level create failed
+    success: Уровень чувствительности created
+    error: Уровень чувствительности create failed
   delete:
-    success: Sensitivity level deleted
-    error: Sensitivity level delete failed
+    success: Уровень чувствительности deleted
+    error: Уровень чувствительности delete failed
   fetch:
-    success: Sensitivity level fetched
-    error: Sensitivity level fetch failed
+    success: Уровень чувствительности fetched
+    error: Уровень чувствительности fetch failed
   undelete:
-    success: Sensitivity level restored
-    error: Sensitivity level restore failed
+    success: Уровень чувствительности restored
+    error: Уровень чувствительности restore failed
   update:
-    success: Sensitivity level updated
-    error: Sensitivity level update failed
+    success: Уровень чувствительности updated
+    error: Уровень чувствительности update failed
 settings:
   system:
     fetch:

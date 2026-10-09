@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/store"
 )
 
 func testResourceTranslations(t *testing.T, s store.Reports) {

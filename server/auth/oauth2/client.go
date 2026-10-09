@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cortezaproject/corteza/server/pkg/handle"
-	"github.com/cortezaproject/corteza/server/store"
-	systemService "github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/models"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemService "github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/spf13/cast"
 )
 

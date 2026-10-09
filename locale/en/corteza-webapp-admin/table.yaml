@@ -1,0 +1,8 @@
+header:
+  enabled: Enabled
+  provider: Provider
+  info: Issuer, client ID
+oidc:
+  add: Add OIDC provider
+saml:
+  title: SAML

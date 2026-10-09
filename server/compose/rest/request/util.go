@@ -40,5 +40,5 @@ func parseMapStringInterface(ss []string) (map[string]interface{}, error) {
 
 	out := make(map[string]interface{})
 
-	return out, json.Unmarshal([]byte(ss[0]), out)
+	return out, json.Unmarshal([]byte(ss[0]), &out)
 }

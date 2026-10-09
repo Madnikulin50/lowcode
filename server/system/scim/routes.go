@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/system/service"
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/system/service"
 	"go.uber.org/zap"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 	"github.com/tidwall/btree"
 )
 
@@ -165,6 +165,20 @@ func (xs *aggregate) More(limit uint, v ValueGetter) (err error) {
 
 func (s *aggregate) Err() error { return s.err }
 
+func (s *aggregate) resultType(name string) Type {
+	for _, a := range s.groupDefs {
+		if a.Identifier == name {
+			return a.Type
+		}
+	}
+	for _, a := range s.aggregateDefs {
+		if a.Identifier == name {
+			return a.Type
+		}
+	}
+	return nil
+}
+
 func (s *aggregate) Scan(dst ValueSetter) (err error) {
 	if s.i < 0 {
 		return fmt.Errorf("@todo err not initialized; next first")
@@ -175,6 +189,16 @@ func (s *aggregate) Scan(dst ValueSetter) (err error) {
 		for i := uint(0); i < cc; i++ {
 			// omitting err here since it won't happen
 			v, _ = s.scanRow.GetValue(name, i)
+			str, ok := v.(string)
+			if ok {
+				t := s.resultType(name)
+				if t != nil {
+					q, err := t.FromString(str)
+					if err == nil {
+						v = q
+					}
+				}
+			}
 			err = dst.SetValue(name, i, v)
 			if err != nil {
 				return err
@@ -263,11 +287,21 @@ func (xs *aggregate) pullEntireSource(ctx context.Context) (err error) {
 		if err != nil {
 			return
 		}
+		if xs.rowTester != nil {
+			needKeep, err := xs.keep(ctx, r)
+			if err == nil && !needKeep {
+				continue
+			}
+		}
 
 		// Get the key for this row
 		// @todo we probably can reuse the key or at least cache keys and avoid re-computation.
 		//       My fairly hacky attempt boosted performance by ~20%
-		err = xs.keyWalker(ctx, r, xs.addToGroup)
+		row := r
+		if xs.rowTester != nil {
+			row = r.DeepCopy()
+		}
+		err = xs.keyWalker(ctx, row, xs.addToGroup)
 		if err != nil {
 			return
 		}
@@ -401,7 +435,9 @@ func (s *aggregate) sortGroups() {
 				va = ga.key[x]
 			} else {
 				x := inKeys(s.def.OutAttributes, o.Column)
-				va = ga.agg.aggregates[x]
+				if x > -1 {
+					va = ga.agg.aggregates[x]
+				}
 			}
 
 			x = inKeys(s.def.Group, o.Column)
@@ -409,7 +445,9 @@ func (s *aggregate) sortGroups() {
 				vb = gb.key[x]
 			} else {
 				x := inKeys(s.def.OutAttributes, o.Column)
-				vb = gb.agg.aggregates[x]
+				if x > -1 {
+					vb = gb.agg.aggregates[x]
+				}
 			}
 
 			cmp := compareValues(va, vb)
@@ -566,6 +604,9 @@ func makeExprRunners(kk ...*ql.ASTNode) (out []*runnerGval, err error) {
 	out = make([]*runnerGval, len(kk))
 
 	for i, k := range kk {
+		if k == nil {
+			continue
+		}
 		out[i], err = newRunnerGvalParsed(k)
 		if err != nil {
 			return
@@ -578,6 +619,11 @@ func makeExprRunners(kk ...*ql.ASTNode) (out []*runnerGval, err error) {
 func makeGroupKey(ctx context.Context, runners []*runnerGval, vals any) (gk groupKey, err error) {
 	gk = make(groupKey, len(runners))
 	for i, r := range runners {
+		if r == nil {
+			// Dummy group (no dimensions): makeExprRunners leaves a nil slot.
+			gk[i] = nil
+			continue
+		}
 		v, err := r.Eval(ctx, vals)
 		if err != nil {
 			return nil, err

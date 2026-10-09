@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	sysTypes "github.com/cortezaproject/corteza/server/system/types"
-	"github.com/cortezaproject/corteza/server/tests/helpers"
+	"github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	sysTypes "github.com/madnikulin50/lowcode/server/system/types"
+	"github.com/madnikulin50/lowcode/server/tests/helpers"
 	"github.com/stretchr/testify/require"
 )
 

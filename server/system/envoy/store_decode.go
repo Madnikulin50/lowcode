@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 func (d StoreDecoder) extendDecoder(ctx context.Context, s store.Storer, dl dal.FullService, _ envoyx.DecodeParams, rt string, nodes map[string]*envoyx.Node, f envoyx.ResourceFilter) (out envoyx.NodeSet, err error) {

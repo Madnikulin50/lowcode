@@ -1,7 +1,7 @@
 package locale
 
 // /////////////////////////////////////////////////////////////////////////////
-// This helps us import translations into corteza-server as a module
+// This helps us import translations into the lowcode server as a module
 // dependency
 
 import (

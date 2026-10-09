@@ -7,52 +7,54 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 	"github.com/modern-go/reflect2"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"github.com/spf13/cast"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-
 )
 
 type (
 	Page struct {
-		ID     uint64 `json:"pageID,string"`
-		SelfID uint64 `json:"selfID,string"`
+		ID     uint64 `json:"pageID,string" schema:"col=id,dal=id,unique"`
+		SelfID uint64 `json:"selfID,string" schema:"col=self_id,dal=ref:corteza::compose:page,sortable"`
 
-		NamespaceID uint64 `json:"namespaceID,string"`
+		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
 
-		ModuleID uint64 `json:"moduleID,string"`
+		ModuleID uint64 `json:"moduleID,string" schema:"col=module_id,store=rel_module,dal=ref:corteza::compose:module"`
 
-		Handle string `json:"handle"`
+		Handle string `json:"handle" schema:"col=handle,dal=text:64,unique,ignoreCase"`
 
-		Config PageConfig `json:"config"`
-		Blocks PageBlocks `json:"blocks"`
+		Config PageConfig `json:"config" schema:"col=config,dal=json:empty,omit"`
+		Blocks PageBlocks `json:"blocks" schema:"col=blocks,dal=json:empty,omit"`
 
-		Meta PageMeta `json:"meta"`
+		Meta PageMeta `json:"meta" schema:"col=meta,dal=json:empty,omit"`
 
-		Children PageSet `json:"children,omitempty"`
+		Children PageSet `json:"children,omitempty" schema:"col=children,nostore,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
-		Visible bool `json:"visible"`
-		Weight  int  `json:"weight"`
+		Visible bool `json:"visible" schema:"col=visible,dal=bool:true"`
+		Weight  int  `json:"weight" schema:"col=weight,dal=number:default0,sortable"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
-
-		// Warning: value of this field is now handled via resource-translation facility
-		//          struct field is kept for the convenience for now since it allows us
-		//          easy encoding/decoding of the outgoing/incoming values
-		Title string `json:"title"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 
 		// Warning: value of this field is now handled via resource-translation facility
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
-		Description string `json:"description"`
+		Title string `json:"title" schema:"col=title,dal,sortable"`
+
+		// Per-page default prompt for the AI chat/Ask feature.
+		Prompt string `json:"prompt,omitempty" schema:"col=prompt,dal,sortable"`
+
+		// Warning: value of this field is now handled via resource-translation facility
+		//          struct field is kept for the convenience for now since it allows us
+		//          easy encoding/decoding of the outgoing/incoming values
+		Description string `json:"description" schema:"col=description,dal"`
 	}
 
 	PageBlocks []PageBlock
@@ -75,11 +77,14 @@ type (
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
 		Description string `json:"description,omitempty"`
+
+		Prompt string `json:"prompt,omitempty"`
 	}
 
 	PageMeta struct {
-		AllowPersonalLayouts bool `json:"allowPersonalLayouts"`
-		Notifications map[string]any `json:"notifications,omitempty"`
+		AllowPersonalLayouts bool             `json:"allowPersonalLayouts"`
+		Notifications        map[string]any   `json:"notifications,omitempty"`
+		Scenarios            []map[string]any `json:"scenarios,omitempty"`
 	}
 
 	PageBlockStyle struct {
@@ -89,12 +94,17 @@ type (
 	}
 
 	PageConfig struct {
+		// Optional markdown help shown to users in the page header.
+		// Warning: value of this field is now handled via resource-translation facility
+		Help string `json:"help,omitempty"`
+
 		// How page is presented in the navigation
 		NavItem struct {
 			// Expanded menu
 			Expanded bool            `json:"expanded"`
 			Icon     *PageConfigIcon `json:"icon,omitempty"`
 		} `json:"navItem"`
+		Prompt string `json:"prompt,omitempty"`
 	}
 
 	PageConfigIcon struct {
@@ -139,7 +149,7 @@ type (
 		Title       string   `json:"title"`
 		Query       string   `json:"query"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		Deleted filter.State `json:"deleted"`
@@ -183,6 +193,7 @@ func (p *Page) decodeTranslations(tt locale.ResourceTranslationIndex) {
 		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDTitle.Path)); aux != nil {
 			p.Blocks[i].Title = aux.Msg
 		}
+
 		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDDescription.Path)); aux != nil {
 			p.Blocks[i].Description = aux.Msg
 		}
@@ -201,6 +212,10 @@ func (p *Page) decodeTranslations(tt locale.ResourceTranslationIndex) {
 			if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDContentBody.Path)); aux != nil {
 				block.Options["body"] = aux.Msg
 			}
+		case "Metric":
+
+			bb, _ := block.Options["metrics"].([]interface{})
+			p.decodeMetrics(tt, bb, blockID)
 		}
 	}
 }
@@ -208,8 +223,8 @@ func (p *Page) decodeTranslations(tt locale.ResourceTranslationIndex) {
 func (p *Page) decodeRecordListButtons(tt locale.ResourceTranslationIndex, bb []interface{}, blockID uint64) {
 	var aux *locale.ResourceTranslation
 
-	for j, auxBtn := range bb {
-		btn := auxBtn.(map[string]interface{})
+	for j, metric := range bb {
+		btn := metric.(map[string]interface{})
 
 		buttonID := uint64(0)
 		if aux, ok := btn["buttonID"]; ok {
@@ -224,6 +239,37 @@ func (p *Page) decodeRecordListButtons(tt locale.ResourceTranslationIndex, bb []
 
 		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDButtonButtonIDLabel.Path)); aux != nil {
 			btn["label"] = aux.Msg
+		}
+	}
+}
+
+func (p *Page) decodeMetrics(tt locale.ResourceTranslationIndex, bb []interface{}, blockID uint64) {
+	var aux *locale.ResourceTranslation
+
+	for j, auxBtn := range bb {
+		btn := auxBtn.(map[string]interface{})
+
+		metricID := uint64(0)
+		if aux, ok := btn["metricID"]; ok {
+			metricID = cast.ToUint64(aux)
+		} else {
+			metricID = uint64(j)
+		}
+		metricID = locale.ContentID(metricID, j)
+
+		rpl := strings.NewReplacer(
+			"{{blockID}}", strconv.FormatUint(blockID, 10),
+			"{{metricID}}", strconv.FormatUint(metricID, 10),
+		)
+
+		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDMetricsMetricIDLabel.Path)); aux != nil {
+			btn["label"] = aux.Msg
+		}
+		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDMetricsMetricIDPrefix.Path)); aux != nil {
+			btn["prefix"] = aux.Msg
+		}
+		if aux = tt.FindByKey(rpl.Replace(LocaleKeyPagePageBlockBlockIDMetricsMetricIDSuffix.Path)); aux != nil {
+			btn["suffix"] = aux.Msg
 		}
 	}
 }
@@ -261,6 +307,10 @@ func (p *Page) encodeTranslations() (out locale.ResourceTranslationSet) {
 			bb, _ := block.Options["buttons"].([]interface{})
 			out = append(out, p.encodeRecordListButtons(bb, blockID)...)
 
+		case "Metric":
+			bb, _ := block.Options["metrics"].([]interface{})
+			out = append(out, p.encodeMetrics(bb, blockID)...)
+
 		case "RecordList":
 			bb, _ := block.Options["selectionButtons"].([]interface{})
 			out = append(out, p.encodeRecordListButtons(bb, blockID)...)
@@ -279,6 +329,36 @@ func (p *Page) encodeTranslations() (out locale.ResourceTranslationSet) {
 }
 
 func (p *Page) encodeRecordListButtons(bb []interface{}, blockID uint64) (out locale.ResourceTranslationSet) {
+	for j, auxBtn := range bb {
+		btn := auxBtn.(map[string]interface{})
+
+		if _, ok := btn["label"]; !ok {
+			continue
+		}
+
+		buttonID := uint64(0)
+		if aux, ok := btn["buttonID"]; ok {
+			buttonID = cast.ToUint64(aux)
+		}
+		buttonID = locale.ContentID(buttonID, j)
+
+		rpl := strings.NewReplacer(
+			"{{blockID}}", strconv.FormatUint(blockID, 10),
+			"{{buttonID}}", strconv.FormatUint(buttonID, 10),
+		)
+
+		out = append(out, &locale.ResourceTranslation{
+			Resource: p.ResourceTranslation(),
+			Key:      rpl.Replace(LocaleKeyPagePageBlockBlockIDButtonButtonIDLabel.Path),
+			Msg:      btn["label"].(string),
+		})
+
+	}
+
+	return
+}
+
+func (p *Page) encodeMetrics(bb []interface{}, blockID uint64) (out locale.ResourceTranslationSet) {
 	for j, auxBtn := range bb {
 		btn := auxBtn.(map[string]interface{})
 
@@ -379,6 +459,32 @@ func (b *PageBlock) setOptionValue(path []string, pos uint, value any) (err erro
 		metric := (b.Options["metrics"].([]any))[cast.ToInt(path[1])].(map[string]any)
 
 		metric["moduleID"] = cast.ToString(value)
+
+	case "excludeModules":
+		// RecordGraph: a list of modules, one reference per element
+		if len(path) < 2 {
+			return
+		}
+		mm, _ := b.Options["excludeModules"].([]any)
+		i := cast.ToInt(path[1])
+		if i >= 0 && i < len(mm) {
+			mm[i] = cast.ToString(value)
+		}
+
+	case "relations", "labels":
+		// RelatedRecords relations and RecordGraph labels: one module reference per item
+		if len(path) < 2 {
+			return
+		}
+		rels, _ := b.Options[path[0]].([]any)
+		i := cast.ToInt(path[1])
+		if i < 0 || i >= len(rels) {
+			return
+		}
+		if rel, ok := rels[i].(map[string]any); ok {
+			rel["moduleID"] = cast.ToString(value)
+			delete(rel, "module")
+		}
 
 	case "minValue":
 		setProgressValue("minValue")

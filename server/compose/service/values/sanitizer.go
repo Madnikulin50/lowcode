@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/xss"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/xss"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/compose/types"
 )
 
 type (
@@ -180,6 +180,7 @@ func sDatetime(v interface{}, onlyDate, onlyTime bool) string {
 		inputFormats = []string{
 			datetimeIntenralFormatTime,
 			"15:04",
+			"15:04:05",
 			"15:04:05Z07:00",
 			"15:04:05 MST",
 			"15:04:05 -0700",
@@ -227,6 +228,18 @@ func sDatetime(v interface{}, onlyDate, onlyTime bool) string {
 			"Monday, 02-Jan-06",
 			"Mon, 02 Jan 2006",
 			"2006/_1/_2",
+			"02/01/2006",
+			"02.01.2006",
+			"02.01.2006 15:04:05",
+			"02.01.2006 15:04",
+			"02.01.06",
+			"02.01.06 15:04:05",
+			"02.01.06 15:04",
+			"15:04",
+			"15:04:05",
+			"_2/_1/2006",
+			"2/1/2006",
+			"_2._1.2006",
 		}
 	}
 

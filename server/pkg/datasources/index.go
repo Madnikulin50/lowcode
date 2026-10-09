@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type Run struct {
@@ -60,7 +60,7 @@ func Runs(pr ModelFinder, steps types.ReportStepSet, defs FrameDefinitionSet) (o
 		out = append(out, aux)
 
 		// Prepare next definition batch including the current one
-		auxDefs = make(FrameDefinitionSet, 0)
+		//auxDefs = make(FrameDefinitionSet, 0)
 		auxDefs = append(auxDefs, def)
 	}
 
@@ -98,8 +98,8 @@ func makeRun(pr ModelFinder, ss types.ReportStepSet, defs FrameDefinitionSet) (o
 		return
 	}
 
-	out.Defs = defs
-	out.Pipeline = pp.Slice(defs[0].Source)
+	out.Defs = FrameDefinitionSet{defs[len(defs)-1]}
+	out.Pipeline = pp.Slice(defs[len(defs)-1].Source)
 	return
 }
 
@@ -115,21 +115,21 @@ func makePipeline(mf ModelFinder, ss types.ReportStepSet, defs FrameDefinitionSe
 			pp = append(pp, aux)
 
 		case step.Aggregate != nil:
-			aux, err := convStepAggregate(*step.Aggregate, defs.FilterBySource(step.Aggregate.Name))
+			aux, err := convStepAggregate(*step.Aggregate, pp, defs.FilterBySource(step.Aggregate.Name))
 			if err != nil {
 				return nil, err
 			}
 			pp = append(pp, aux)
 
 		case step.Join != nil:
-			aux, err := convStepJoin(*step.Join, defs.FilterBySource(step.Join.Name))
+			aux, err := convStepJoin(*step.Join, pp, defs.FilterBySource(step.Join.Name))
 			if err != nil {
 				return nil, err
 			}
 			pp = append(pp, aux)
 
 		case step.Link != nil:
-			aux, err := convStepLink(*step.Link, defs.FilterBySource(step.Link.Name))
+			aux, err := convStepLink(*step.Link, pp, defs.FilterBySource(step.Link.Name))
 			if err != nil {
 				return nil, err
 			}

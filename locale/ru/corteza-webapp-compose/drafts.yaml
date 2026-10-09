@@ -1,6 +1,6 @@
-title: Drafts
-single: Draft
-plural: Drafts
+title: Черновики
+single: Черновик
+plural: Черновики
 empty: No drafts found
 saved: Draft has been saved
 deleted: Draft has been deleted
@@ -15,5 +15,5 @@ viewRecord: Просмотр Record
 deleteAllDrafts: Удалить all drafts
 newestFirst: Сначала новые
 oldestFirst: Сначала старые
-count_one: "{{count}} draft"
-count_other: "{{count}} drafts"
+count_one: "{{count}} черновик"
+count_other: "{{count}} черновиков"

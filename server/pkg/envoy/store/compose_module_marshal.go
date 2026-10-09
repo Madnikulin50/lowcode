@@ -5,14 +5,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/compose/service"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/revisions"
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/revisions"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
-	"github.com/cortezaproject/corteza/server/store"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 func NewComposeModuleFromResource(res *resource.ComposeModule, cfg *EncoderConfig) resourceState {
@@ -312,11 +312,14 @@ func (n *composeModule) Encode(ctx context.Context, pl *payload) (err error) {
 
 	// @note code copied from the service/module.go
 
-	// Set base constraints
+	// Set base constraints only for attributes the model actually has
 	if model.Ident == "compose_record" {
-		model.Constraints = map[string][]any{
-			"moduleID":    {res.ID},
-			"namespaceID": {res.NamespaceID},
+		model.Constraints = map[string][]any{}
+		if model.HasAttribute("moduleID") {
+			model.Constraints["moduleID"] = []any{res.ID}
+		}
+		if model.HasAttribute("namespaceID") {
+			model.Constraints["namespaceID"] = []any{res.NamespaceID}
 		}
 	}
 

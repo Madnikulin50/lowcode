@@ -10,7 +10,7 @@ defaultActionSeverity: notice
 defaultErrorSeverity: alert
 
 import:
-  - github.com/cortezaproject/corteza/server/system/types
+  - github.com/madnikulin50/lowcode/server/system/types
 
 props:
   - name: email
@@ -214,7 +214,7 @@ errors:
     log: "rate limit exceeded for {{user}}"
 
   - error: maxUserLimitReached
-    message: "you have reached your user limit, contact your Corteza administrator"
+    message: "you have reached your user limit, contact your LowCoooode administrator"
     severity: warning
 
   - error: disabledSendUserInviteEmail

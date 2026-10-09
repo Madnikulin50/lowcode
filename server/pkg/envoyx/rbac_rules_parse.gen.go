@@ -1,17 +1,17 @@
 package envoyx
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
 	"fmt"
-	automationTypes "github.com/cortezaproject/corteza/server/automation/types"
-	composeTypes "github.com/cortezaproject/corteza/server/compose/types"
-	federationTypes "github.com/cortezaproject/corteza/server/federation/types"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	automationTypes "github.com/madnikulin50/lowcode/server/automation/types"
+	composeTypes "github.com/madnikulin50/lowcode/server/compose/types"
+	federationTypes "github.com/madnikulin50/lowcode/server/federation/types"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"strings"
 )
 

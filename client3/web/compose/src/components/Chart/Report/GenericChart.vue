@@ -1,0 +1,1610 @@
+<template>
+  <report-edit
+    :report="editReport"
+    :modules="modules"
+    @update:report="v => editReport = v"
+  >
+    <template #dimension-options-options="{ dimension, isTemporal }">
+      <div class="form-check">
+        <input
+          v-if="isTemporal && !['WEEK', 'QUARTER'].includes(dimension.modifier)"
+          v-model="dimension.timeLabels"
+          class="form-check-input"
+          type="checkbox"
+          :id="`timeLabels-${dimension.dimensionID}`"
+        />
+        <label
+          v-if="isTemporal && !['WEEK', 'QUARTER'].includes(dimension.modifier)"
+          class="form-check-label"
+          :for="`timeLabels-${dimension.dimensionID}`"
+        >
+          {{ $t('edit.dimension.timeLabels') }}
+        </label>
+      </div>
+    </template>
+
+    <template #dimension-options="{ dimension }">
+      <div class="row">
+        <div class="col-12 col-lg-6">
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.dimension.rotate.label') }}
+            </label>
+            <input
+              v-model="dimension.rotateLabel"
+              type="number"
+              class="form-control form-control-sm"
+            />
+            <div class="form-text">
+              {{ $t('edit.dimension.rotate.description') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #y-axis="{ report }">
+      <div class="px-3">
+        <h5 class="mb-3">
+          {{ $t('edit.yAxis.label') }}
+        </h5>
+
+        <div class="row">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.yAxis.labelLabel') }}
+              </label>
+              <div class="input-group input-group-sm">
+                <input
+                  v-model="report.yAxis.label"
+                  class="form-control form-control-sm"
+                />
+                <span class="input-group-text">
+                  <chart-translator
+                    :field="report.yAxis.label"
+                    :chart="chart"
+                    :disabled="isNew"
+                    highlight-key="yAxis.label"
+                    @update:field="v => report.yAxis.label = v"
+                  />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.yAxis.labelPosition.label') }}
+              </label>
+              <select
+                v-model="report.yAxis.labelPosition"
+                class="form-select form-control form-select-sm"
+              >
+                <option
+                  v-for="opt in axisLabelPositions"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.text }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.yAxis.minLabel') }}
+              </label>
+              <input
+                v-model="report.yAxis.min"
+                type="number"
+                class="form-control form-control-sm"
+                :placeholder="$t('edit.yAxis.minPlaceholder')"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.yAxis.maxLabel') }}
+              </label>
+              <input
+                v-model="report.yAxis.max"
+                type="number"
+                class="form-control form-control-sm"
+                :placeholder="$t('edit.yAxis.maxPlaceholder')"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-2">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.yAxis.rotate.label') }}
+              </label>
+              <input
+                v-model="report.yAxis.rotateLabel"
+                type="number"
+                class="form-control form-control-sm"
+              />
+              <div class="form-text">
+                {{ $t('edit.yAxis.rotate.description') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="mb-3 mb-0">
+              <label class="form-label text-primary">
+                {{ $t('edit.yAxis.options.label') }}
+              </label>
+              <div class="form-check">
+                <input
+                  v-model="report.yAxis.axisType"
+                  class="form-check-input"
+                  type="checkbox"
+                  true-value="logarithmic"
+                  false-value="linear"
+                  :id="`axisType-${report.moduleID}`"
+                />
+                <label
+                  class="form-check-label"
+                  :for="`axisType-${report.moduleID}`"
+                >
+                  {{ $t('edit.yAxis.logarithmicScale') }}
+                </label>
+              </div>
+
+              <div class="form-check">
+                <input
+                  v-model="report.yAxis.axisPosition"
+                  class="form-check-input"
+                  type="checkbox"
+                  true-value="right"
+                  false-value="left"
+                  :id="`axisPosition-${report.moduleID}`"
+                />
+                <label
+                  class="form-check-label"
+                  :for="`axisPosition-${report.moduleID}`"
+                >
+                  {{ $t('edit.yAxis.axisOnRight') }}
+                </label>
+              </div>
+
+              <div class="form-check">
+                <input
+                  v-model="report.yAxis.beginAtZero"
+                  class="form-check-input"
+                  type="checkbox"
+                  :id="`beginAtZero-${report.moduleID}`"
+                />
+                <label
+                  class="form-check-label"
+                  :for="`beginAtZero-${report.moduleID}`"
+                >
+                  {{ $t('edit.yAxis.axisScaleFromZero') }}
+                </label>
+              </div>
+
+              <div class="form-check">
+                <input
+                  v-model="report.yAxis.horizontal"
+                  class="form-check-input"
+                  type="checkbox"
+                  :id="`horizontal-${report.moduleID}`"
+                />
+                <label
+                  class="form-check-label"
+                  :for="`horizontal-${report.moduleID}`"
+                >
+                  {{ $t('edit.yAxis.horizontal.label') }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row">
+          <div class="col-12 col-md-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.formatting.prefix.label') }}
+              </label>
+              <input
+                v-model="report.yAxis.formatting.prefix"
+                class="form-control form-control-sm"
+                :placeholder="$t('edit.formatting.prefix.placeholder')"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.formatting.suffix.label') }}
+              </label>
+              <input
+                v-model="report.yAxis.formatting.suffix"
+                class="form-control form-control-sm"
+                :placeholder="$t('edit.formatting.suffix.placeholder')"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.formatting.presetFormats.label') }}
+              </label>
+              <select
+                v-model="report.yAxis.formatting.presetFormat"
+                class="form-select form-control form-select-sm"
+              >
+                <option
+                  v-for="opt in formatOptions"
+                  :key="opt.value"
+                  :value="opt.value"
+                >
+                  {{ opt.text }}
+                </option>
+              </select>
+              <div
+                v-if="report.yAxis.formatting.presetFormat"
+                class="form-text"
+                style="white-space: pre-line;"
+              >
+                {{ $t(`edit.formatting.presetFormats.description.${report.yAxis.formatting.presetFormat}`) }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.formatting.format.label') }}
+              </label>
+              <input
+                v-model="report.yAxis.formatting.format"
+                class="form-control form-control-sm"
+                :disabled="report.yAxis.formatting.presetFormat !== 'custom'"
+                :placeholder="$t('edit.formatting.format.placeholder')"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #metric-options="{ metric }">
+      <div class="row">
+        <div class="col-12 col-lg-6">
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.labelLabel') }}
+            </label>
+            <div class="input-group input-group-sm">
+              <input
+                v-model="metric.label"
+                class="form-control form-control-sm"
+              />
+              <span class="input-group-text">
+                <chart-translator
+                  :field="metric.label"
+                  :chart="chart"
+                  :disabled="isNew"
+                  :highlight-key="`metrics.${metric.metricID}.label`"
+                  @update:field="v => metric.label = v"
+                />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.output.label') }}
+            </label>
+            <c-input-select
+              v-model="metric.type"
+              :options="chartTypes"
+              label="text"
+              :reduce="option => option.value"
+              :get-option-key="option => option.text"
+              :placeholder="$t('edit.metric.output.placeholder')"
+              @input="value => chartTypeChanged(metric)"
+            />
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.fx.label') }}
+            </label>
+            <textarea
+              v-model="metric.fx"
+              class="form-control"
+              placeholder="n"
+            ></textarea>
+            <div class="form-text">
+              {{ $t('edit.metric.fx.description') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.options.label') }}
+            </label>
+            <div class="form-check">
+              <input
+                v-model="metric.fixTooltips"
+                class="form-check-input"
+                type="checkbox"
+                :id="`fixtooltips-${metric.metricID}`"
+              />
+              <label
+                class="form-check-label"
+                :for="`fixtooltips-${metric.metricID}`"
+              >
+                {{ $t('edit.metric.fixTooltips') }}
+              </label>
+            </div>
+
+            <div
+              v-if="metric.fixTooltips && ['bar', 'line', 'scatter'].includes(metric.type)"
+              class="mt-2 mb-2"
+            >
+              <label class="form-label text-primary">
+                {{ $t('edit.metric.valueLabelPosition.label') }}
+              </label>
+              <select
+                v-model="metric.valueLabelPosition"
+                class="form-select form-control"
+              >
+                <option value="top">{{ $t('edit.metric.valueLabelPosition.top') }}</option>
+                <option value="inside">{{ $t('edit.metric.valueLabelPosition.inside') }}</option>
+              </select>
+            </div>
+
+            <div class="form-check">
+              <input
+                v-if="hasRelativeDisplay(metric)"
+                v-model="metric.relativeValue"
+                class="form-check-input"
+                type="checkbox"
+                :id="`relative-${metric.metricID}`"
+              />
+              <label
+                v-if="hasRelativeDisplay(metric)"
+                class="form-check-label"
+                :for="`relative-${metric.metricID}`"
+              >
+                {{ $t('edit.metric.relative') }}
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input
+                v-if="metric.type === 'pie'"
+                v-model="metric.rose"
+                class="form-check-input"
+                type="checkbox"
+                :id="`rose-${metric.metricID}`"
+              />
+              <label
+                v-if="metric.type === 'pie'"
+                class="form-check-label"
+                :for="`rose-${metric.metricID}`"
+              >
+                {{ $t('edit.metric.rose') }}
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input
+                v-if="metric.type === 'line'"
+                v-model="metric.fill"
+                class="form-check-input"
+                type="checkbox"
+                :id="`fill-${metric.metricID}`"
+              />
+              <label
+                v-if="metric.type === 'line'"
+                class="form-check-label"
+                :for="`fill-${metric.metricID}`"
+              >
+                {{ $t('edit.metric.fillArea') }}
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input
+                v-if="metric.type === 'line'"
+                v-model="metric.showSymbol"
+                class="form-check-input"
+                type="checkbox"
+                :id="`showsymbol-${metric.metricID}`"
+              />
+              <label
+                v-if="metric.type === 'line'"
+                class="form-check-label"
+                :for="`showsymbol-${metric.metricID}`"
+              >
+                {{ $t('edit.metric.showSymbol') }}
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input
+                v-if="isStackableType(metric.type)"
+                v-model="metric.stacked"
+                class="form-check-input"
+                type="checkbox"
+                :id="`stacked-${metric.metricID}`"
+                @change="onStackedToggle(metric)"
+              />
+              <label
+                v-if="isStackableType(metric.type)"
+                class="form-check-label"
+                :for="`stacked-${metric.metricID}`"
+              >
+                {{ $t('edit.metric.stacked') }}
+              </label>
+            </div>
+          </div>
+
+          <div
+            v-if="metric.type === 'line'"
+            class="mb-3"
+          >
+            <label class="form-label text-primary pr-2">
+              {{ $t('edit.metric.lineStyle.label') }}
+            </label>
+            <div class="btn-group" data-bs-toggle="buttons">
+              <label
+                v-for="opt in lineStyleOptions"
+                :key="opt.value"
+                class="btn btn-outline-primary btn-sm"
+                :class="{ active: getLineStyle(metric) === opt.value }"
+              >
+                <input
+                  type="radio"
+                  class="btn-check"
+                  name="lineStyle"
+                  autocomplete="off"
+                  :value="opt.value"
+                  :checked="getLineStyle(metric) === opt.value"
+                  @change="setLineStyle($event, metric)"
+                />
+                {{ opt.text }}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="isStackableType(metric.type) && stackByFields.length"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.stackBy.label') }}
+            </label>
+            <select
+              v-model="metric.stackBy"
+              class="form-select form-select-sm"
+              @change="onStackByChange(metric)"
+            >
+              <option value="">
+                {{ $t('edit.metric.stackBy.placeholder') }}
+              </option>
+              <option
+                v-for="f in stackByFields"
+                :key="f.value"
+                :value="f.value"
+              >
+                {{ f.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="!hasRelativeDisplay(metric)"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.stack.label') }}
+            </label>
+            <input
+              v-model="metric.stack"
+              class="form-control form-control-sm"
+            />
+            <div class="form-text">
+              {{ $t('edit.metric.stack.description') }}
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'scatter'"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.symbol.label') }}
+            </label>
+            <select
+              v-model="metric.symbol"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="opt in scatterSymbolOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'map'"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.mapType.label') }}
+            </label>
+            <select
+              v-model="metric.mapType"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="opt in mapTypeOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'calendar'"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.calendarType.label') }}
+            </label>
+            <select
+              v-model="metric.calendarType"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="opt in calendarTypeOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'gantt'"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.gantt.startField') }}
+            </label>
+            <select
+              v-model="metric.startField"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="f in dateTimeFields"
+                :key="f.value"
+                :value="f.value"
+              >
+                {{ f.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'gantt'"
+          class="col-12 col-lg-6"
+        >
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.metric.gantt.endField') }}
+            </label>
+            <select
+              v-model="metric.endField"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="f in dateTimeFields"
+                :key="f.value"
+                :value="f.value"
+              >
+                {{ f.text }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div
+          v-if="metric.type === 'gantt'"
+          class="col-12"
+        >
+          <small class="text-muted">
+            {{ $t('edit.metric.gantt.hint') }}
+          </small>
+        </div>
+
+        <div
+          v-if="metric.type === 'boxplot'"
+          class="col-12"
+        >
+          <small class="text-muted">
+            {{ $t('edit.metric.boxplot.hint') }}
+          </small>
+        </div>
+
+        <div
+          v-if="metric.type === 'candlestick'"
+          class="col-12"
+        >
+          <small class="text-muted">
+            {{ $t('edit.metric.candlestick.hint') }}
+          </small>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row">
+        <div class="col-12 col-md-6">
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.formatting.prefix.label') }}
+            </label>
+            <input
+              v-model="metric.formatting.prefix"
+              class="form-control form-control-sm"
+              :placeholder="$t('edit.formatting.prefix.placeholder')"
+            />
+          </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.formatting.suffix.label') }}
+            </label>
+            <input
+              v-model="metric.formatting.suffix"
+              class="form-control form-control-sm"
+              :placeholder="$t('edit.formatting.suffix.placeholder')"
+            />
+          </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.formatting.presetFormats.label') }}
+            </label>
+            <select
+              v-model="metric.formatting.presetFormat"
+              class="form-select form-control form-select-sm"
+            >
+              <option
+                v-for="opt in formatOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.text }}
+              </option>
+            </select>
+            <div
+              v-if="metric.formatting.presetFormat"
+              class="form-text"
+              style="white-space: pre-line;"
+            >
+              {{ $t(`edit.formatting.presetFormats.description.${metric.formatting.presetFormat}`) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="mb-3">
+            <label class="form-label text-primary">
+              {{ $t('edit.formatting.format.label') }}
+            </label>
+            <input
+              v-model="metric.formatting.format"
+              class="form-control form-control-sm"
+              :disabled="metric.formatting.presetFormat !== 'custom'"
+              :placeholder="$t('edit.formatting.format.placeholder')"
+            />
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #additional-config="{ hasAxis, report }">
+      <hr>
+      <div class="px-3">
+        <h5 class="d-flex mb-3">
+          {{ $t('edit.additionalConfig.tooltip.label') }}
+          <c-hint
+            :tooltip="$t('edit.additionalConfig.tooltip.formatting.disclaimer')"
+            icon-class="text-warning"
+          />
+        </h5>
+
+        <div class="row">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.additionalConfig.tooltip.formatting.label') }}
+              </label>
+              <input
+                v-model="report.tooltip.formatting"
+                class="form-control form-control-sm"
+                :placeholder="$t('edit.additionalConfig.tooltip.formatting.placeholder')"
+              />
+              <div class="form-text">
+                {{ $t('edit.additionalConfig.tooltip.formatting.description') }}
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="!hasAxis"
+            class="col-12 col-lg-6"
+          >
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.additionalConfig.tooltip.labelNextToChart') }}
+              </label>
+              <c-input-checkbox
+                v-model="report.tooltip.labelsNextToPartition"
+                switch
+                :labels="checkboxLabel"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="px-3 mb-2">
+        <h5 class="mb-3">
+          {{ $t('edit.additionalConfig.offset.label') }}
+        </h5>
+
+        <div class="row">
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.additionalConfig.offset.default') }}
+              </label>
+              <c-input-checkbox
+                v-model="report.offset.isDefault"
+                switch
+                :labels="checkboxLabel"
+                class="mb-3"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="!report.offset.isDefault"
+          class="row"
+        >
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.additionalConfig.offset.position.top') }}
+              </label>
+              <input
+                v-model="report.offset.top"
+                class="form-control form-control-sm"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.additionalConfig.offset.position.right') }}
+              </label>
+              <input
+                v-model="report.offset.right"
+                class="form-control form-control-sm"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.additionalConfig.offset.position.bottom') }}
+              </label>
+              <input
+                v-model="report.offset.bottom"
+                class="form-control form-control-sm"
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="mb-3">
+              <label class="form-label text-primary">
+                {{ $t('edit.additionalConfig.offset.position.left') }}
+              </label>
+              <input
+                v-model="report.offset.left"
+                class="form-control form-control-sm"
+              />
+            </div>
+          </div>
+
+          <div class="col-12">
+            <small class="text-muted">
+              {{ $t('edit.additionalConfig.offset.valueRange') }}
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <template v-if="hasAxis">
+        <hr>
+
+        <div class="px-3">
+          <h5 class="mb-3">
+            {{ $t('edit.additionalConfig.anomaly.label') }}
+          </h5>
+
+          <div class="row">
+            <div class="col-12 col-lg-6">
+              <div class="mb-3">
+                <label class="form-label text-primary">
+                  {{ $t('edit.additionalConfig.anomaly.enable') }}
+                </label>
+                <c-input-checkbox
+                  v-model="report.anomaly.enabled"
+                  switch
+                  :labels="checkboxLabel"
+                />
+              </div>
+            </div>
+          </div>
+
+          <template v-if="report.anomaly.enabled">
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.anomaly.method') }}
+                  </label>
+                  <select
+                    v-model="report.anomaly.method"
+                    class="form-select form-control form-select-sm"
+                  >
+                    <option
+                      v-for="opt in anomalyMethods"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.anomaly.threshold') }}
+                  </label>
+                  <input
+                    v-model="report.anomaly.threshold"
+                    type="number"
+                    step="0.1"
+                    class="form-control form-control-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="report.anomaly.method === 'fixed'"
+              class="row"
+            >
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.anomaly.min') }}
+                  </label>
+                  <input
+                    v-model="report.anomaly.min"
+                    type="number"
+                    class="form-control form-control-sm"
+                  />
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.anomaly.max') }}
+                  </label>
+                  <input
+                    v-model="report.anomaly.max"
+                    type="number"
+                    class="form-control form-control-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.anomaly.color') }}
+                  </label>
+                  <c-input-color-picker
+                    v-model="report.anomaly.color"
+                    :show-text="false"
+                    :translations="colorPickerTranslations"
+                    :theme-settings="themeSettings"
+                  />
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <template v-if="supportsCompare">
+        <hr>
+
+        <div class="px-3">
+          <h5 class="mb-3">
+            {{ $t('edit.additionalConfig.compare.label') }}
+          </h5>
+
+          <div class="row">
+            <div class="col-12 col-lg-6">
+              <div class="mb-3">
+                <label class="form-label text-primary">
+                  {{ $t('edit.additionalConfig.compare.enable') }}
+                </label>
+                <c-input-checkbox
+                  v-model="compareEnabled"
+                  switch
+                  :labels="checkboxLabel"
+                />
+              </div>
+            </div>
+          </div>
+
+          <template v-if="report.compare.enabled">
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.dateField') }}
+                  </label>
+                  <select
+                    v-model="report.compare.dateField"
+                    class="form-select form-control form-select-sm"
+                  >
+                    <option
+                      v-for="f in dateTimeFields"
+                      :key="f.value"
+                      :value="f.value"
+                    >
+                      {{ f.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.granularity') }}
+                  </label>
+                  <select
+                    v-model="report.compare.granularity"
+                    class="form-select form-control form-select-sm"
+                  >
+                    <option
+                      v-for="opt in compareGranularities"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.mode') }}
+                  </label>
+                  <select
+                    v-model="report.compare.mode"
+                    class="form-select form-control form-select-sm"
+                  >
+                    <option
+                      v-for="opt in compareModes"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.currentLabel') }}
+                  </label>
+                  <input
+                    v-model="report.compare.currentLabel"
+                    class="form-control form-control-sm"
+                    :placeholder="$t('edit.additionalConfig.compare.currentLabelPlaceholder')"
+                  />
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.compare.previousLabel') }}
+                  </label>
+                  <input
+                    v-model="report.compare.previousLabel"
+                    class="form-control form-control-sm"
+                    :placeholder="$t('edit.additionalConfig.compare.previousLabelPlaceholder')"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <small class="text-muted d-block mb-2">
+              {{ $t('edit.additionalConfig.compare.footnote') }}
+            </small>
+          </template>
+        </div>
+      </template>
+
+      <template v-if="isForecastable && !report.compare.enabled">
+        <hr>
+
+        <div class="px-3">
+          <h5 class="mb-3">
+            {{ $t('edit.additionalConfig.forecast.label') }}
+          </h5>
+
+          <div class="row">
+            <div class="col-12 col-lg-6">
+              <div class="mb-3">
+                <label class="form-label text-primary">
+                  {{ $t('edit.additionalConfig.forecast.enable') }}
+                </label>
+                <c-input-checkbox
+                  v-model="report.forecast.enabled"
+                  switch
+                  :labels="checkboxLabel"
+                />
+              </div>
+            </div>
+          </div>
+
+          <template v-if="report.forecast.enabled">
+            <div
+              v-if="!forecastDimensionReady"
+              class="alert alert-warning py-2 px-3 mb-3"
+            >
+              {{ $t('edit.additionalConfig.forecast.needsTimeLabels') }}
+            </div>
+
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.forecast.method') }}
+                  </label>
+                  <select
+                    v-model="report.forecast.method"
+                    class="form-select form-control form-select-sm"
+                  >
+                    <option
+                      v-for="opt in forecastMethods"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.text }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.forecast.periods') }}
+                  </label>
+                  <input
+                    v-model.number="report.forecast.periods"
+                    type="number"
+                    min="1"
+                    max="24"
+                    class="form-control form-control-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.forecast.color') }}
+                  </label>
+                  <c-input-color-picker
+                    v-model="report.forecast.color"
+                    :show-text="false"
+                    :translations="colorPickerTranslations"
+                    :theme-settings="themeSettings"
+                  />
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-6">
+                <div class="mb-3">
+                  <label class="form-label text-primary">
+                    {{ $t('edit.additionalConfig.forecast.scenarios') }}
+                  </label>
+                  <c-input-checkbox
+                    v-model="report.forecast.scenarios"
+                    switch
+                    :labels="checkboxLabel"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <template v-if="report.forecast.scenarios">
+              <div class="row">
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label class="form-label text-primary">
+                      {{ $t('edit.additionalConfig.forecast.scenarioStyle') }}
+                    </label>
+                    <select
+                      v-model="report.forecast.scenarioStyle"
+                      class="form-select form-control form-select-sm"
+                    >
+                      <option
+                        v-for="opt in forecastScenarioStyles"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >
+                        {{ opt.text }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label class="form-label text-primary">
+                      {{ $t('edit.additionalConfig.forecast.deviation') }}
+                    </label>
+                    <select
+                      v-model="report.forecast.deviation"
+                      class="form-select form-control form-select-sm"
+                    >
+                      <option
+                        v-for="opt in forecastDeviations"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >
+                        {{ opt.text }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="report.forecast.deviation === 'manual'"
+                class="row"
+              >
+                <div class="col-12 col-lg-6">
+                  <div class="mb-3">
+                    <label class="form-label text-primary">
+                      {{ $t('edit.additionalConfig.forecast.deviationPct') }}
+                    </label>
+                    <div class="input-group input-group-sm">
+                      <input
+                        v-model.number="report.forecast.deviationPct"
+                        type="number"
+                        min="0"
+                        max="100"
+                        class="form-control form-control-sm"
+                      />
+                      <span class="input-group-text">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <small class="text-muted d-block mb-2">
+              {{ $t('edit.additionalConfig.forecast.footnote') }}
+            </small>
+          </template>
+        </div>
+      </template>
+    </template>
+  </report-edit>
+</template>
+
+<script setup>
+import { computed, ref, watch, onBeforeUnmount, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { compose } from 'corteza-lib/js/dist'
+import { components } from 'corteza-lib/vue/dist'
+import ReportEdit from './ReportEdit.vue'
+import ChartTranslator from 'corteza-webapp-compose/src/components/Chart/ChartTranslator.vue'
+
+defineOptions({ i18nOptions: { namespaces: 'chart' } })
+
+const { CInputColorPicker } = components
+const { t } = useI18n()
+const $Settings = inject('$Settings')
+
+const themeSettings = computed(() => $Settings.get('ui.studio.themes', []))
+
+const colorPickerTranslations = computed(() => ({
+  modalTitle: t('colorScheme.pickAColor'),
+  light: t('themes.labels.light'),
+  dark: t('themes.labels.dark'),
+  cancelBtnLabel: t('label.cancel'),
+  saveBtnLabel: t('label.saveAndClose'),
+}))
+
+const ignoredCharts = ['funnel', 'gauge', 'radar']
+
+const props = defineProps({
+  report: { type: Object, required: false, default: undefined },
+  modules: { type: Array, required: true },
+  chart: { type: Object, default: () => ({}) },
+})
+
+const emit = defineEmits(['update:report'])
+
+const editReport = computed({
+  get: () => props.report,
+  set: (v) => emit('update:report', v),
+})
+
+const isNew = computed(() => props.chart?.chartID === compose.NoID)
+
+const checkboxLabel = ref({
+  on: t('label.yes'),
+  off: t('label.no'),
+})
+
+const formatOptions = ref([
+  { value: 'custom', text: t('edit.formatting.presetFormats.options.custom') },
+  { value: 'accounting', text: t('edit.formatting.presetFormats.options.accounting') },
+])
+
+const chartTypes = ref(
+  Object.values(compose.chartUtil.ChartType)
+    .filter(v => !ignoredCharts.includes(v))
+    .map(value => ({ value, text: t(`edit.metric.output.${value}`) }))
+)
+
+const legendPositions = ref([
+  { value: 'top', text: t('edit.metric.legend.top') },
+  { value: 'left', text: t('edit.metric.legend.left') },
+  { value: 'bottom', text: t('edit.metric.legend.bottom') },
+  { value: 'right', text: t('edit.metric.legend.right') },
+])
+
+const axisLabelPositions = ref([
+  { value: 'end', text: t('edit.yAxis.labelPosition.top') },
+  { value: 'center', text: t('edit.yAxis.labelPosition.center') },
+  { value: 'start', text: t('edit.yAxis.labelPosition.bottom') },
+])
+
+const tensionSteps = ref([
+  { text: t('edit.metric.lineTension.straight'), value: 0.0 },
+  { text: t('edit.metric.lineTension.slight'), value: 0.2 },
+  { text: t('edit.metric.lineTension.medium'), value: 0.4 },
+  { text: t('edit.metric.lineTension.curvy'), value: 0.6 },
+])
+
+const lineStyleOptions = ref([
+  { value: '', text: t('edit.metric.lineStyle.default') },
+  { value: 'smooth', text: t('edit.metric.lineStyle.smooth') },
+  { value: 'step', text: t('edit.metric.lineStyle.step') },
+])
+
+const scatterSymbolOptions = ref([
+  { value: 'circle', text: t('edit.metric.symbol.circle') },
+  { value: 'triangle', text: t('edit.metric.symbol.triangle') },
+  { value: 'diamond', text: t('edit.metric.symbol.diamond') },
+  { value: 'pin', text: t('edit.metric.symbol.pin') },
+  { value: 'arrow', text: t('edit.metric.symbol.arrow') },
+  { value: 'rect', text: t('edit.metric.symbol.rect') },
+  { value: 'roundRect', text: t('edit.metric.symbol.roundRect') },
+])
+
+const mapTypeOptions = ref([
+  { value: 'world', text: t('edit.metric.mapType.options.world') },
+  { value: 'china', text: t('edit.metric.mapType.options.china') },
+])
+
+const calendarTypeOptions = ref([
+  { value: 'heatmap', text: t('edit.metric.calendarType.options.heatmap') },
+  { value: 'scatter', text: t('edit.metric.calendarType.options.scatter') },
+  { value: 'effectScatter', text: t('edit.metric.calendarType.options.effectScatter') },
+])
+
+const anomalyMethods = ref([
+  { value: 'zscore', text: t('edit.additionalConfig.anomaly.methodZscore') },
+  { value: 'iqr', text: t('edit.additionalConfig.anomaly.methodIqr') },
+  { value: 'fixed', text: t('edit.additionalConfig.anomaly.methodFixed') },
+  { value: 'pct_change', text: t('edit.additionalConfig.anomaly.methodPctChange') },
+])
+
+const compareEnabled = computed({
+  get: () => !!editReport.value?.compare?.enabled,
+  set (v) {
+    if (!editReport.value) return
+    editReport.value = {
+      ...editReport.value,
+      compare: {
+        dateField: '',
+        granularity: 'month',
+        mode: 'previous-period',
+        currentLabel: '',
+        previousLabel: '',
+        ...(editReport.value.compare || {}),
+        enabled: !!v,
+      },
+    }
+  },
+})
+
+const supportsCompare = computed(() => editReport.value?.metrics?.some(({ type }) => ['bar', 'line'].includes(type)))
+
+const compareGranularities = ref([
+  { value: 'week', text: t('edit.additionalConfig.compare.granularityOptions.week') },
+  { value: 'month', text: t('edit.additionalConfig.compare.granularityOptions.month') },
+  { value: 'quarter', text: t('edit.additionalConfig.compare.granularityOptions.quarter') },
+  { value: 'year', text: t('edit.additionalConfig.compare.granularityOptions.year') },
+])
+
+const compareModes = ref([
+  { value: 'previous-period', text: t('edit.additionalConfig.compare.modeOptions.previousPeriod') },
+  { value: 'year-over-year', text: t('edit.additionalConfig.compare.modeOptions.yearOverYear') },
+])
+
+// Forecast only makes sense on a line series drawn against a genuinely
+// temporal x-axis — extrapolating a categorical one (e.g. "region") would
+// be meaningless. The dimension-level check happens where the data is
+// actually built (Chart.applyForecast); this just gates the panel itself.
+const isForecastable = computed(() => editReport.value?.metrics?.some(({ type }) => type === 'line'))
+
+// Forecast only extends a genuinely temporal x-axis (see Chart.applyForecast
+// in corteza-lib) — silently does nothing otherwise. Surfaced here so
+// enabling the checkbox without also turning on the dimension's "time
+// labels" doesn't look like the feature is broken.
+const forecastDimensionReady = computed(() => !!editReport.value?.dimensions?.[0]?.timeLabels)
+
+const forecastMethods = ref([
+  { value: 'linear', text: t('edit.additionalConfig.forecast.methodLinear') },
+  { value: 'moving-average', text: t('edit.additionalConfig.forecast.methodMovingAverage') },
+  { value: 'exp-smoothing', text: t('edit.additionalConfig.forecast.methodExpSmoothing') },
+])
+
+const forecastScenarioStyles = ref([
+  { value: 'lines', text: t('edit.additionalConfig.forecast.scenarioStyleLines') },
+  { value: 'band', text: t('edit.additionalConfig.forecast.scenarioStyleBand') },
+])
+
+const forecastDeviations = ref([
+  { value: 'auto', text: t('edit.additionalConfig.forecast.deviationAuto') },
+  { value: 'manual', text: t('edit.additionalConfig.forecast.deviationManual') },
+])
+
+const module = computed(() => {
+  const mid = editReport.value?.moduleID
+  if (!mid || !Array.isArray(props.modules)) return undefined
+  return props.modules.find(m => m.moduleID === mid)
+})
+
+const dateTimeFields = computed(() => {
+  if (!module.value) return []
+  const fromModule = module.value.fields
+    .filter(f => f.kind === 'DateTime')
+    .map(f => ({ value: f.name, text: f.label || f.name }))
+  const system = (module.value.systemFields?.() || [])
+    .filter(f => f.kind === 'DateTime' || ['createdAt', 'updatedAt'].includes(f.name))
+    .map(f => ({ value: f.name, text: f.label || f.name }))
+  return [...fromModule, ...system]
+})
+
+const stackByFields = computed(() => {
+  if (!module.value) return []
+  return module.value.fields
+    .filter(f => f.name !== 'count')
+    .map(f => ({ value: f.name, text: f.label || f.name }))
+})
+
+watch(() => props.report, (r) => {
+  if (r) {
+    if (!r.anomaly) {
+      r.anomaly = {
+        enabled: false,
+        method: 'zscore',
+        threshold: 2,
+        min: undefined,
+        max: undefined,
+        color: '',
+      }
+    }
+
+    if (!r.compare) {
+      r.compare = {
+        enabled: false,
+        dateField: '',
+        granularity: 'month',
+        mode: 'previous-period',
+        currentLabel: '',
+        previousLabel: '',
+      }
+    }
+
+    if (!r.forecast) {
+      r.forecast = {
+        enabled: false,
+        method: 'linear',
+        periods: 6,
+        scenarios: false,
+        scenarioStyle: 'lines',
+        deviation: 'auto',
+        deviationPct: 10,
+        color: '',
+      }
+    }
+
+    // Line charts show data points by default; value labels default above the bar
+    r.metrics?.forEach((m) => {
+      if (m.type === 'line' && m.showSymbol === undefined) {
+        m.showSymbol = true
+      }
+      if (m.valueLabelPosition === undefined) {
+        m.valueLabelPosition = 'top'
+      }
+      if (m.type === 'gantt') {
+        if (!m.startField) m.startField = 'start_date_planned'
+        if (!m.endField) m.endField = 'end_date_planned'
+      }
+      if (isStackableType(m.type) && m.stacked === true && !m.stack) {
+        m.stack = 'total'
+      }
+    })
+  }
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  chartTypes.value = []
+  legendPositions.value = []
+  axisLabelPositions.value = []
+  tensionSteps.value = []
+  lineStyleOptions.value = []
+  scatterSymbolOptions.value = []
+  mapTypeOptions.value = []
+})
+
+function hasRelativeDisplay (metric) {
+  return compose.chartUtil.hasRelativeDisplay(metric)
+}
+
+function isStackableType (type) {
+  return ['line', 'bar'].includes(type)
+}
+
+function getLineStyle (metric) {
+  if (metric.smooth) return 'smooth'
+  else if (metric.step) return 'step'
+  return ''
+}
+
+function setLineStyle (style, metric) {
+  metric.smooth = style === 'smooth'
+  metric.step = style === 'step'
+}
+
+function onStackedToggle (metric) {
+  if (metric.stacked) {
+    if (!metric.stack) {
+      metric.stack = 'total'
+    }
+  } else if (metric.stack === 'total') {
+    metric.stack = undefined
+  }
+}
+
+function onStackByChange (metric) {
+  if (metric.stackBy && !metric.stacked) {
+    metric.stacked = true
+    metric.stack = 'total'
+  }
+}
+
+function chartTypeChanged (metric) {
+  metric.relativeValue = false
+  if (metric.type === 'line' && metric.showSymbol === undefined) {
+    metric.showSymbol = true
+  }
+  if (!isStackableType(metric.type)) {
+    metric.stackBy = undefined
+  }
+  if (metric.type === 'gantt') {
+    if (!metric.field) metric.field = 'count'
+    const fields = dateTimeFields.value.map(f => f.value)
+    if (!metric.startField) {
+      metric.startField = fields.find(n => n === 'start_date_planned') || fields[0]
+    }
+    if (!metric.endField) {
+      metric.endField = fields.find(n => n === 'end_date_planned') || fields.find(n => n !== metric.startField) || fields[0]
+    }
+  }
+}
+</script>

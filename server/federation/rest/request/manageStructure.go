@@ -8,9 +8,9 @@ package request
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/federation/types"
-	"github.com/cortezaproject/corteza/server/pkg/payload"
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/federation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/payload"
 	"io"
 	"mime/multipart"
 	"net/http"

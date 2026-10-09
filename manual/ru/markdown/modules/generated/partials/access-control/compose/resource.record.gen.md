@@ -1,0 +1,38 @@
+# record
+
+[cols="1s,5a,5a"]
+|===
+| Operation| Description | Default
+
+
+| [#rbac-record-read]#[rbac-record-read,read](#rbac-record-read,read)#
+| read
+| Deny
+
+
+| [#rbac-record-update]#[rbac-record-update,update](#rbac-record-update,update)#
+| update
+| Deny
+
+
+| [#rbac-record-delete]#[rbac-record-delete,delete](#rbac-record-delete,delete)#
+| delete
+| Deny
+
+
+| [#rbac-record-undelete]#[rbac-record-undelete,undelete](#rbac-record-undelete,undelete)#
+| undelete
+| Deny
+
+
+| [#rbac-record-owner.manage]#[rbac-record-owner.manage,owner.manage](#rbac-record-owner.manage,owner.manage)#
+| owner.manage
+| Deny
+
+
+| [#rbac-record-revisions.search]#[rbac-record-revisions.search,revisions.search](#rbac-record-revisions.search,revisions.search)#
+| revisions.search
+| Deny
+
+
+|===

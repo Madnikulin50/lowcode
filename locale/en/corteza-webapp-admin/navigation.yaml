@@ -1,4 +1,22 @@
 dashboard: Dashboard
+openApiDocs: Open in new tab
+search: Search
+noResults: No matching pages
+
+help:
+  documentation: Documentation
+  userDocs: User guide
+  apiDocs: API reference
+  architecture: Architecture
+  feedback: Send feedback
+  forum: Help
+  version: "Version:"
+
+groups:
+  userManagement: User management
+  access: Access
+  platform: Platform
+  integrations: Integrations
 
 system:
   group: System
@@ -11,6 +29,8 @@ system:
     authclients: Auth Clients
     connections: Connections
     code-snippets: Code Snippets
+    ai: AI
+    apidocs: API docs
     sensitivityLevel: Sensitivity Levels
     permissions: Permissions
     queues: Messaging Queues
@@ -34,6 +54,9 @@ automation:
     scripts: Corredor Scripts
     sessions: Sessions
     workflows: Workflows
+    ruleChains: Rule chains
+    prompts: Prompts
+    skills: Skills
 
 federation:
   group: Federation

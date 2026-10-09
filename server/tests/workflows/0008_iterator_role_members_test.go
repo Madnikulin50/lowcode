@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	autTypes "github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/wfexec"
-	"github.com/cortezaproject/corteza/server/system/automation"
+	autTypes "github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/wfexec"
+	"github.com/madnikulin50/lowcode/server/system/automation"
 	"github.com/stretchr/testify/require"
 )
 

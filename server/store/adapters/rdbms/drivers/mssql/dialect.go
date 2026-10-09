@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ddl"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ql"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ql"
 	"github.com/spf13/cast"
 
-	"github.com/cortezaproject/corteza/server/pkg/cast2"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/dialect/sqlserver"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/doug-martin/goqu/v9/sqlgen"
+	"github.com/madnikulin50/lowcode/server/pkg/cast2"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers"
 )
 
 type (
@@ -350,6 +350,12 @@ func (d mssqlDialect) ExprHandler(n *ql.ASTNode, args ...exp.Expression) (expr e
 	switch ref := strings.ToLower(n.Ref); ref {
 	case "concat":
 		return exp.NewLiteralExpression("?"+strings.Repeat(" || ?", len(args)-1), cast2.Anys(args...)...), nil
+
+	case "eq":
+		return drivers.OpHandlerEq(d, n, args...)
+
+	case "ne":
+		return drivers.OpHandlerNe(d, n, args...)
 
 	case "in":
 		return drivers.OpHandlerIn(d, n, args...)

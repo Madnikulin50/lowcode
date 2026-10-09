@@ -8,15 +8,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
 
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
-	"github.com/cortezaproject/corteza/server/pkg/label"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/renderer"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
+	"github.com/madnikulin50/lowcode/server/pkg/label"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/renderer"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

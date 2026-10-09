@@ -1,4 +1,5 @@
 list:
+  empty: No actions
   columns:
     action: Action
     actor: User

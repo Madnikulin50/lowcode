@@ -1,9 +1,12 @@
 appMenu: Меню
 help:
   documentation: Документация
+  userDocs: Документация пользователя
+  apiDocs: Документация API
+  architecture: Архитектура
   feedback: Send feedback
   forum: Справка
-  version: 'Version:'
+  version: 'Версия:'
 userSettings:
   changePassword: Изменить пароль
   loggedInAs: Войти как {{user}}

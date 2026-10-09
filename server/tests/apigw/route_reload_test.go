@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/tests/helpers"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/tests/helpers"
 )
 
 func Test_route_reload(t *testing.T) {

@@ -3,6 +3,7 @@ package dal
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 type (
@@ -56,6 +57,26 @@ type (
 	}
 )
 
+func (pp Pipeline) findStepByName(steps *map[string]PipelineStep, name string) PipelineStep {
+	p := (*steps)[name]
+	if p != nil {
+		return p
+	}
+	for k, v := range *steps {
+		if k == name {
+			return v
+		}
+		parts := strings.Split(k, "/")
+		if len(parts) != 2 {
+			continue
+		}
+		if parts[1] == name {
+			return v
+		}
+	}
+	return nil
+}
+
 // LinkSteps links related steps into a tree structure
 //
 // @todo make it return a new slice and not mutate the original
@@ -63,6 +84,9 @@ func (pp Pipeline) LinkSteps() (err error) {
 	// map steps by identifiers
 	steps := make(map[string]PipelineStep)
 	for _, s := range pp {
+		if s == nil {
+			return fmt.Errorf("nil argument for step")
+		}
 		steps[s.Identifier()] = s
 	}
 
@@ -71,29 +95,29 @@ func (pp Pipeline) LinkSteps() (err error) {
 		for _, s := range pp {
 			switch rs := s.(type) {
 			case *Aggregate:
-				rs.rel = steps[rs.RelSource]
+				rs.rel = pp.findStepByName(&steps, rs.RelSource)
 				if rs.rel == nil {
 					return fmt.Errorf("aggregate: missing source relation %s", rs.RelSource)
 				}
 
 			case *Join:
-				rs.relLeft = steps[rs.RelLeft]
-				rs.relRight = steps[rs.RelRight]
+				rs.relLeft = pp.findStepByName(&steps, rs.RelLeft)
+				rs.relRight = pp.findStepByName(&steps, rs.RelRight)
 				if rs.relLeft == nil {
-					return fmt.Errorf("join: missing left relation %s", rs.relLeft)
+					return fmt.Errorf("join: missing left relation %s for %v", rs.relLeft, rs.Identifier())
 				}
 				if rs.relRight == nil {
-					return fmt.Errorf("join: missing right relation %s", rs.relRight)
+					return fmt.Errorf("join: missing right relation %s for %v", rs.relRight, rs.Identifier())
 				}
 
 			case *Link:
-				rs.relLeft = steps[rs.RelLeft]
-				rs.relRight = steps[rs.RelRight]
+				rs.relLeft = pp.findStepByName(&steps, rs.RelLeft)
+				rs.relRight = pp.findStepByName(&steps, rs.RelRight)
 				if rs.relLeft == nil {
-					return fmt.Errorf("link: missing left relation %s", rs.relLeft)
+					return fmt.Errorf("link: missing left relation %s for %v", rs.relLeft, rs.Identifier())
 				}
 				if rs.relRight == nil {
-					return fmt.Errorf("link: missing right relation %s", rs.relRight)
+					return fmt.Errorf("link: missing right relation %s for %v", rs.relRight, rs.Identifier())
 				}
 			}
 		}
@@ -138,6 +162,49 @@ func (pp Pipeline) Slice(ident string) (out Pipeline) {
 	}
 
 	return pp.slice(r)
+}
+
+func (pp Pipeline) FullNameFromShort(shortName string) string {
+	if len(pp) == 0 {
+		return shortName
+	}
+	for _, s := range pp[0].Attributes() {
+		for _, src := range s {
+			if src.Identifier() == shortName {
+				return src.Identifier()
+			}
+		}
+	}
+	for _, s := range pp[0].Attributes() {
+		for _, src := range s {
+			id := src.Identifier()
+			li := strings.LastIndex(id, ".")
+			if li != -1 {
+				id = id[li+1:]
+				if id == shortName {
+					return src.Identifier()
+				}
+			}
+		}
+	}
+	return shortName
+}
+
+func (pp Pipeline) TypeForAttribute(shortName string) Type {
+	if len(pp) == 0 {
+		return nil
+	}
+	for i := len(pp) - 1; i >= 0; i-- {
+		for _, s := range pp[i].Attributes() {
+			for _, src := range s {
+				if src.Identifier() == shortName {
+					return src.Properties().Type
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // slice is the recursive counterpart for the Slice method

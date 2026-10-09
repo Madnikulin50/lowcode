@@ -1,0 +1,347 @@
+# Definition of the ai* workflow functions. ai_handler.gen.go mirrors it
+# (generated in the same shape as the other *_handler.gen.go files).
+labels:
+  ai: step
+params:
+  prompt:
+    required: true
+    types:
+    - wf: String
+  agent:
+    types:
+    - wf: String
+  model:
+    types:
+    - wf: String
+  skill:
+    types:
+    - wf: String
+  inputs:
+    types:
+    - wf: KV
+  allowMutating:
+    types:
+    - wf: Boolean
+  maxRetries:
+    types:
+    - wf: Integer
+  timeoutSec:
+    types:
+    - wf: Integer
+  deferConfirm:
+    types:
+    - wf: Boolean
+functions:
+  ask:
+    meta:
+      short: AI - ask a question, get free text
+    labels:
+      ai: step
+    params:
+      prompt:
+        required: true
+        types:
+        - wf: String
+        meta:
+          label: Prompt
+          description: 'What to ask the model. Build it from earlier steps with an expression, e.g. "Summarise:
+            " + ticket.description'
+          visual:
+            input:
+              type: textarea
+              properties:
+                rows: 6
+      agent:
+        types:
+        - wf: String
+        meta:
+          label: Agent
+          description: 'Which agent runs the step. Empty: a plain assistant with no tools'
+      model:
+        types:
+        - wf: String
+        meta:
+          label: Model
+          description: 'Model for this step only (a model name, or a role such as rulesgo.ai). Empty:
+            the agent''s own model'
+      skill:
+        types:
+        - wf: String
+        meta:
+          label: Skill
+          description: 'A skill the agent follows for this step: its handle, or handle@3 for a fixed version.
+            Its instructions go into the prompt and the tools it needs become available'
+      inputs:
+        types:
+        - wf: KV
+        meta:
+          label: Inputs
+          description: 'Named values added to the prompt as JSON, e.g. {"customer": customer.name}'
+      allowMutating:
+        types:
+        - wf: Boolean
+        meta:
+          label: Allow data changes
+          description: 'Off by default: if the agent tries to create, update or delete something the step
+            stops instead of doing it'
+      timeoutSec:
+        types:
+        - wf: Integer
+        meta:
+          label: Timeout (seconds)
+          description: Give up on the model after this long (default 300)
+      deferConfirm:
+        types:
+        - wf: Boolean
+        meta:
+          label: Ask before data changes
+          description: Instead of failing, hand the proposed changes to the workflow (needsApproval, pendingCalls)
+            so an approval step can decide, then run them with AI run calls
+    results:
+      text:
+        wf: String
+      needsApproval:
+        wf: Boolean
+      pendingCalls:
+        wf: String
+      summary:
+        wf: String
+      trace:
+        wf: Vars
+        go: '*expr.Vars'
+  extract:
+    meta:
+      short: AI - extract structured data (validated JSON)
+    labels:
+      ai: step
+    params:
+      prompt:
+        required: true
+        types:
+        - wf: String
+        meta:
+          label: Prompt
+          description: 'What to ask the model. Build it from earlier steps with an expression, e.g. "Summarise:
+            " + ticket.description'
+          visual:
+            input:
+              type: textarea
+              properties:
+                rows: 6
+      outputSchema:
+        required: true
+        types:
+        - wf: KV
+        meta:
+          label: Output fields
+          description: 'Field name to type (string, number, boolean, array, object), e.g. {"risk": "number",
+            "reason": "string"}'
+      agent:
+        types:
+        - wf: String
+        meta:
+          label: Agent
+          description: 'Which agent runs the step. Empty: a plain assistant with no tools'
+      model:
+        types:
+        - wf: String
+        meta:
+          label: Model
+          description: 'Model for this step only (a model name, or a role such as rulesgo.ai). Empty:
+            the agent''s own model'
+      skill:
+        types:
+        - wf: String
+        meta:
+          label: Skill
+          description: 'A skill the agent follows for this step: its handle, or handle@3 for a fixed version.
+            Its instructions go into the prompt and the tools it needs become available'
+      inputs:
+        types:
+        - wf: KV
+        meta:
+          label: Inputs
+          description: 'Named values added to the prompt as JSON, e.g. {"customer": customer.name}'
+      allowMutating:
+        types:
+        - wf: Boolean
+        meta:
+          label: Allow data changes
+          description: 'Off by default: if the agent tries to create, update or delete something the step
+            stops instead of doing it'
+      maxRetries:
+        types:
+        - wf: Integer
+        meta:
+          label: Max retries
+          description: Ask again this many times when the answer is not valid JSON of the right shape
+            (default 1)
+      timeoutSec:
+        types:
+        - wf: Integer
+        meta:
+          label: Timeout (seconds)
+          description: Give up on the model after this long (default 300)
+    results:
+      result:
+        wf: Vars
+        go: '*expr.Vars'
+      trace:
+        wf: Vars
+        go: '*expr.Vars'
+  classify:
+    meta:
+      short: AI - classify text into one of the given labels
+    labels:
+      ai: step
+    params:
+      text:
+        required: true
+        types:
+        - wf: String
+        meta:
+          label: Text
+          description: The text to classify
+          visual:
+            input:
+              type: textarea
+              properties:
+                rows: 4
+      labels:
+        required: true
+        types:
+        - wf: String
+        meta:
+          label: Labels
+          description: The allowed answers, separated by commas or new lines
+      instruction:
+        types:
+        - wf: String
+        meta:
+          label: Instruction
+          description: How to decide (optional), e.g. which label means what
+          visual:
+            input:
+              type: textarea
+              properties:
+                rows: 3
+      model:
+        types:
+        - wf: String
+        meta:
+          label: Model
+          description: 'Model for this step only (a model name, or a role such as rulesgo.ai). Empty:
+            the agent''s own model'
+      skill:
+        types:
+        - wf: String
+        meta:
+          label: Skill
+          description: 'A skill the agent follows for this step: its handle, or handle@3 for a fixed version.
+            Its instructions go into the prompt and the tools it needs become available'
+      maxRetries:
+        types:
+        - wf: Integer
+        meta:
+          label: Max retries
+          description: Ask again this many times when the answer is not valid JSON of the right shape
+            (default 1)
+      timeoutSec:
+        types:
+        - wf: Integer
+        meta:
+          label: Timeout (seconds)
+          description: Give up on the model after this long (default 300)
+    results:
+      label:
+        wf: String
+      confidence:
+        wf: Float
+      reason:
+        wf: String
+      trace:
+        wf: Vars
+        go: '*expr.Vars'
+  tool:
+    meta:
+      short: AI - call a platform tool directly (no LLM)
+    labels:
+      ai: step
+    params:
+      tool:
+        required: true
+        types:
+        - wf: String
+        meta:
+          label: Tool
+          description: Name of the platform tool to call, e.g. cmdb_scan, backup_run, search_records
+      params:
+        types:
+        - wf: KV
+        meta:
+          label: Tool parameters
+          description: Parameter name to value, as the tool expects them
+      allowMutating:
+        types:
+        - wf: Boolean
+        meta:
+          label: Allow data changes
+          description: 'Off by default: if the agent tries to create, update or delete something the step
+            stops instead of doing it'
+    results:
+      result:
+        wf: String
+  ragSearch:
+    meta:
+      short: AI - search the knowledge base (RAG)
+    labels:
+      ai: step
+    params:
+      namespace:
+        required: true
+        types:
+        - wf: String
+        meta:
+          label: Namespace
+          description: ID of the namespace whose knowledge base to search
+      query:
+        required: true
+        types:
+        - wf: String
+        meta:
+          label: Query
+          description: What to look for
+      topK:
+        types:
+        - wf: Integer
+        meta:
+          label: How many passages
+          description: Number of passages to return (default 5)
+    results:
+      text:
+        wf: String
+      count:
+        wf: Integer
+  runCalls:
+    meta:
+      short: AI - run tool calls a human approved
+    labels:
+      ai: step
+    params:
+      agent:
+        required: true
+        types:
+        - wf: String
+        meta:
+          label: Agent
+          description: 'Which agent runs the step. Empty: a plain assistant with no tools'
+      calls:
+        required: true
+        types:
+        - wf: String
+        meta:
+          label: Calls
+          description: The pendingCalls value produced by AI ask, after a human approved it
+    results:
+      result:
+        wf: String

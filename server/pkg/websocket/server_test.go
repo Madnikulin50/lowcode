@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
 	"github.com/modern-go/reflect2"
 )
 
@@ -66,17 +66,16 @@ func Expression(ctx context.Context, m *types.Module, r *types.Record, old *type
 		}
 
 		expr := f.Expressions.ValueExpr
-
+		var tmp any
 		eval, err := exprParser.NewEvaluable(expr)
 		if err != nil {
 			rve.Push(makeInvalidExprErr(f, expr, err))
-			return
-		}
-
-		tmp, err := eval(ctx, scope)
-		if err != nil {
-			rve.Push(makeExprEvalErr(f, expr, err))
-			return
+			tmp = 0
+		} else {
+			tmp, err = eval(ctx, scope)
+			if err != nil {
+				tmp = 0
+			}
 		}
 
 		var strings []string

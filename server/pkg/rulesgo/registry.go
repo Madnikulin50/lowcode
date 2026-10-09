@@ -1,0 +1,62 @@
+package rulesgo
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+)
+
+type NodeExecutor interface {
+	Execute(ctx context.Context, node ChainNode, ec *ExecutionContext) (map[string]interface{}, error)
+}
+
+type Registry struct {
+	nodes map[string]NodeExecutor
+}
+
+func NewRegistry() *Registry {
+	return &Registry{
+		nodes: make(map[string]NodeExecutor),
+	}
+}
+
+func (r *Registry) Register(nodeType string, executor NodeExecutor) {
+	r.nodes[nodeType] = executor
+}
+
+// Has reports whether a node type is registered.
+func (r *Registry) Has(nodeType string) bool {
+	_, ok := r.nodes[nodeType]
+	return ok
+}
+
+func (r *Registry) Execute(ctx context.Context, nodeType string, node ChainNode, ec *ExecutionContext) (out map[string]interface{}, err error) {
+	executor, ok := r.nodes[nodeType]
+	if !ok {
+		return nil, fmt.Errorf("unknown node type: %s", nodeType)
+	}
+	// A panicking node (e.g. a third-party parser choking on a file) must
+	// fail just that node, so the run is still recorded in the run log
+	// instead of unwinding the whole chain silently.
+	defer func() {
+		if p := recover(); p != nil {
+			out, err = nil, fmt.Errorf("node panicked: %v", p)
+		}
+	}()
+	return executor.Execute(ctx, node, ec)
+}
+
+func (r *Registry) Get(nodeType string) (NodeExecutor, bool) {
+	executor, ok := r.nodes[nodeType]
+	return executor, ok
+}
+
+func ParseNodeConfig[T any](raw json.RawMessage) (T, error) {
+	var cfg T
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &cfg); err != nil {
+			return cfg, fmt.Errorf("failed to parse node config: %w", err)
+		}
+	}
+	return cfg, nil
+}

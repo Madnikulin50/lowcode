@@ -1,7 +1,7 @@
 editor:
   info:
     add: Add
-    api: Allow client access to Corteza API on behalf of user
+    api: Allow client access to LowCoooode API on behalf of user
     choose-date: Choose a date
     createdAt: Время создания
     createdBy: Создал
@@ -9,7 +9,7 @@ editor:
     deletedAt: Время удаления
     enabled:
       disabledFootnote: Unable to disable the default client
-      label: Enabled
+      label: Включено
     expiresAt:
       description: If not defined the client has no expiration date
       label: Expires at
@@ -47,8 +47,8 @@ editor:
     title: Basic information
     tooltip:
       regenerate-secret: Regenerate secret
-      reset-value: Reset value
-      show-client-secret: Show client secret
+      reset-value: Сбросить value
+      show-client-secret: Показывать client secret
       hide-client-secret: Hide client secret
       copy-access-token: Copy access token
       copy-cURL: Copy cURL
@@ -65,7 +65,7 @@ editor:
     cUrl: Example cURL
     accessToken: Access token
     generateAccessToken: Generate access token
-    discovery: Allow client access to Corteza Discovery API on behalf of user
+    discovery: Allow client access to LowCoooode Discovery API on behalf of user
     openid: Allow client to use OIDC and verify the user's identity
   new: New Auth Client
   permissions: Права доступа
@@ -76,14 +76,14 @@ list:
   columns:
     actions: ""
     createdAt: Создано
-    enabled: Enabled
+    enabled: Включено
     handle: Дескриптор
     meta:
       name: Имя
     state: State
   rows:
     filters:
-      deleted: Deleted
+      deleted: Удаленные
   filterForm:
     deleted:
       label: deleted clients
@@ -92,10 +92,10 @@ list:
     exclusive:
       label: Only
     inclusive:
-      label: Including
+      label: Включая
     query:
-      label: Filter clients list
-      placeholder: Filter clients
+      label: Фильтр clients list
+      placeholder: Фильтр clients
   loading: Loading clients
   new: New Auth Client
   permissions: Права доступа

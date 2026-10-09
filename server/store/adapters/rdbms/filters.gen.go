@@ -1,23 +1,24 @@
 package rdbms
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	automationType "github.com/cortezaproject/corteza/server/automation/types"
-	composeType "github.com/cortezaproject/corteza/server/compose/types"
-	discoveryType "github.com/cortezaproject/corteza/server/discovery/types"
-	federationType "github.com/cortezaproject/corteza/server/federation/types"
-	actionlogType "github.com/cortezaproject/corteza/server/pkg/actionlog"
-	flagType "github.com/cortezaproject/corteza/server/pkg/flag/types"
-	labelsType "github.com/cortezaproject/corteza/server/pkg/label/types"
-	rbacType "github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers"
-	systemType "github.com/cortezaproject/corteza/server/system/types"
 	"github.com/doug-martin/goqu/v9"
+	anomalyType "github.com/madnikulin50/lowcode/server/anomaly/types"
+	automationType "github.com/madnikulin50/lowcode/server/automation/types"
+	composeType "github.com/madnikulin50/lowcode/server/compose/types"
+	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
+	federationType "github.com/madnikulin50/lowcode/server/federation/types"
+	actionlogType "github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	flagType "github.com/madnikulin50/lowcode/server/pkg/flag/types"
+	labelsType "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	rbacType "github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers"
+	systemType "github.com/madnikulin50/lowcode/server/system/types"
 	"strings"
 )
 
@@ -32,6 +33,15 @@ type (
 
 		// optional actionlog filter function called after the generated function
 		Actionlog func(*Store, actionlogType.Filter) ([]goqu.Expression, actionlogType.Filter, error)
+
+		// optional anomalyBaseline filter function called after the generated function
+		AnomalyBaseline func(*Store, anomalyType.BaselineFilter) ([]goqu.Expression, anomalyType.BaselineFilter, error)
+
+		// optional anomalyFinding filter function called after the generated function
+		AnomalyFinding func(*Store, anomalyType.FindingFilter) ([]goqu.Expression, anomalyType.FindingFilter, error)
+
+		// optional anomalyRule filter function called after the generated function
+		AnomalyRule func(*Store, anomalyType.RuleFilter) ([]goqu.Expression, anomalyType.RuleFilter, error)
 
 		// optional apigwFilter filter function called after the generated function
 		ApigwFilter func(*Store, systemType.ApigwFilterFilter) ([]goqu.Expression, systemType.ApigwFilterFilter, error)
@@ -57,8 +67,14 @@ type (
 		// optional authSession filter function called after the generated function
 		AuthSession func(*Store, systemType.AuthSessionFilter) ([]goqu.Expression, systemType.AuthSessionFilter, error)
 
+		// optional automationPromptVersion filter function called after the generated function
+		AutomationPromptVersion func(*Store, automationType.PromptVersionFilter) ([]goqu.Expression, automationType.PromptVersionFilter, error)
+
 		// optional automationSession filter function called after the generated function
 		AutomationSession func(*Store, automationType.SessionFilter) ([]goqu.Expression, automationType.SessionFilter, error)
+
+		// optional automationState filter function called after the generated function
+		AutomationState func(*Store, automationType.StateFilter) ([]goqu.Expression, automationType.StateFilter, error)
 
 		// optional automationTrigger filter function called after the generated function
 		AutomationTrigger func(*Store, automationType.TriggerFilter) ([]goqu.Expression, automationType.TriggerFilter, error)
@@ -193,6 +209,100 @@ func ActionlogFilter(d drivers.Dialect, f actionlogType.Filter) (ee []goqu.Expre
 
 	if len(f.ActorID) > 0 {
 		ee = append(ee, goqu.C("actor_id").In(f.ActorID))
+	}
+
+	return ee, f, err
+}
+
+// AnomalyBaselineFilter returns logical expressions
+//
+// This function is called from Store.QueryAnomalyBaselines() and can be extended
+// by setting Store.Filters.AnomalyBaseline. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AnomalyBaselineFilter(d drivers.Dialect, f anomalyType.BaselineFilter) (ee []goqu.Expression, _ anomalyType.BaselineFilter, err error) {
+
+	if f.NamespaceID > 0 {
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
+	}
+
+	if f.ModuleID > 0 {
+		ee = append(ee, goqu.C("rel_module").Eq(f.ModuleID))
+	}
+
+	if f.RuleID > 0 {
+		ee = append(ee, goqu.C("rel_rule").Eq(f.RuleID))
+	}
+
+	if val := strings.TrimSpace(f.Field); len(val) > 0 {
+		ee = append(ee, goqu.C("field").Eq(f.Field))
+	}
+
+	return ee, f, err
+}
+
+// AnomalyFindingFilter returns logical expressions
+//
+// This function is called from Store.QueryAnomalyFindings() and can be extended
+// by setting Store.Filters.AnomalyFinding. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AnomalyFindingFilter(d drivers.Dialect, f anomalyType.FindingFilter) (ee []goqu.Expression, _ anomalyType.FindingFilter, err error) {
+
+	if f.NamespaceID > 0 {
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
+	}
+
+	if f.ModuleID > 0 {
+		ee = append(ee, goqu.C("rel_module").Eq(f.ModuleID))
+	}
+
+	if f.RecordID > 0 {
+		ee = append(ee, goqu.C("rel_record").Eq(f.RecordID))
+	}
+
+	if val := strings.TrimSpace(f.Status); len(val) > 0 {
+		ee = append(ee, goqu.C("status").Eq(f.Status))
+	}
+
+	if val := strings.TrimSpace(f.Severity); len(val) > 0 {
+		ee = append(ee, goqu.C("severity").Eq(f.Severity))
+	}
+
+	return ee, f, err
+}
+
+// AnomalyRuleFilter returns logical expressions
+//
+// This function is called from Store.QueryAnomalyRules() and can be extended
+// by setting Store.Filters.AnomalyRule. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AnomalyRuleFilter(d drivers.Dialect, f anomalyType.RuleFilter) (ee []goqu.Expression, _ anomalyType.RuleFilter, err error) {
+
+	if expr := stateNilComparison(d, "deleted_at", f.Deleted); expr != nil {
+		ee = append(ee, expr)
+	}
+
+	if f.NamespaceID > 0 {
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
+	}
+
+	if f.ModuleID > 0 {
+		ee = append(ee, goqu.C("rel_module").Eq(f.ModuleID))
+	}
+
+	if f.Enabled {
+		ee = append(ee, goqu.C("enabled").IsTrue())
+	}
+
+	if f.Query != "" {
+		ee = append(ee, goqu.Or(
+			goqu.C("field").ILike("%"+f.Query+"%"),
+		))
 	}
 
 	return ee, f, err
@@ -358,7 +468,7 @@ func AuthConfirmedClientFilter(d drivers.Dialect, f systemType.AuthConfirmedClie
 func AuthOa2tokenFilter(d drivers.Dialect, f systemType.AuthOa2tokenFilter) (ee []goqu.Expression, _ systemType.AuthOa2tokenFilter, err error) {
 
 	if f.UserID > 0 {
-		ee = append(ee, goqu.C("user_id").Eq(f.UserID))
+		ee = append(ee, goqu.C("rel_user").Eq(f.UserID))
 	}
 
 	return ee, f, err
@@ -375,6 +485,26 @@ func AuthSessionFilter(d drivers.Dialect, f systemType.AuthSessionFilter) (ee []
 
 	if f.UserID > 0 {
 		ee = append(ee, goqu.C("rel_user").Eq(f.UserID))
+	}
+
+	return ee, f, err
+}
+
+// AutomationPromptVersionFilter returns logical expressions
+//
+// This function is called from Store.QueryAutomationPromptVersions() and can be extended
+// by setting Store.Filters.AutomationPromptVersion. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AutomationPromptVersionFilter(d drivers.Dialect, f automationType.PromptVersionFilter) (ee []goqu.Expression, _ automationType.PromptVersionFilter, err error) {
+
+	if ss := trimStringSlice(f.PromptVersionID); len(ss) > 0 {
+		ee = append(ee, goqu.C("id").In(ss))
+	}
+
+	if val := strings.TrimSpace(f.Handle); len(val) > 0 {
+		ee = append(ee, goqu.C("handle").Eq(f.Handle))
 	}
 
 	return ee, f, err
@@ -414,6 +544,30 @@ func AutomationSessionFilter(d drivers.Dialect, f automationType.SessionFilter) 
 
 	if ss := trimStringSlice(f.CreatedBy); len(ss) > 0 {
 		ee = append(ee, goqu.C("created_by").In(ss))
+	}
+
+	return ee, f, err
+}
+
+// AutomationStateFilter returns logical expressions
+//
+// This function is called from Store.QueryAutomationStates() and can be extended
+// by setting Store.Filters.AutomationState. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AutomationStateFilter(d drivers.Dialect, f automationType.StateFilter) (ee []goqu.Expression, _ automationType.StateFilter, err error) {
+
+	if ss := trimStringSlice(f.StateID); len(ss) > 0 {
+		ee = append(ee, goqu.C("id").In(ss))
+	}
+
+	if ss := trimStringSlice(f.SessionID); len(ss) > 0 {
+		ee = append(ee, goqu.C("session_id").In(ss))
+	}
+
+	if ss := trimStringSlice(f.WorkflowID); len(ss) > 0 {
+		ee = append(ee, goqu.C("workflow_id").In(ss))
 	}
 
 	return ee, f, err
@@ -511,7 +665,7 @@ func ComposeAttachmentFilter(d drivers.Dialect, f composeType.AttachmentFilter) 
 	}
 
 	if f.NamespaceID > 0 {
-		ee = append(ee, goqu.C("namespace_id").Eq(f.NamespaceID))
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
 	}
 
 	return ee, f, err

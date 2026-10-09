@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
 )
 
 type (
@@ -149,7 +149,8 @@ func SetGlobal(n *Service) {
 // Global gets the global envoy service
 func Global() *Service {
 	if global == nil {
-		panic("global service not defined")
+		svc := New()
+		SetGlobal(svc)
 	}
 
 	return global

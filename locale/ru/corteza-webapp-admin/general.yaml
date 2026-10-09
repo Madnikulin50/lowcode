@@ -1,7 +1,7 @@
 label:
-  add: Add
+  add: Добавить
   general:
-    yes: Yes
+    yes: Да
     no: Нет
   template:
     single: Template
@@ -37,8 +37,8 @@ label:
     single: Session
     plural: Sessions
   workflow:
-    single: Workflow
-    plural: Workflows
+    single: Процесс
+    plural: Процессы
   plus-add: + Add
   clear: Clear
   all: Все
@@ -52,16 +52,16 @@ label:
   refresh: Refresh
   loadMore: Load more
   loading: Загрузка...
-  saveAndClose: Сохранить and close
-  cancel: Cancel
+  saveAndClose: Сохранить и закрыть
+  cancel: Отменить
   submit: Подтвердить
   delete: Delete
   undelete: Undelete
   fileTypeNotAllowed: File type not allowed
   uploading: Uploading
-  dropFiles: Click or drop files here to upload
+  dropFiles: Кликните или перенесите файл
 editor:
-  unsavedChanges:  Unsaved changes will be lost. Do you wish to leave the page?
+  unsavedChanges:  Несохраненные изменения will be lost. Do you wish to leave the page?
 resourceList:
   pagination:
     recordsPerPage: На страницу
@@ -72,4 +72,4 @@ themes:
 extendSession:
   labels:
     extend: Extend Session
-    warning: You will be logged out in {{ countdownTime }} seconds
+    warning: You will be logged out in {{ countdownTime }} секунд

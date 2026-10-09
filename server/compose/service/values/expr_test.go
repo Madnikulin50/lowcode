@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/stretchr/testify/require"
 )
 

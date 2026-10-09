@@ -1,17 +1,23 @@
 automation: Автоматизация
 chart: Диаграммы
+documents: Документация
 configuration: Конфигурация
-editPage: Изменить Page
+editPage: Изменить страницу
 help:
   documentation: Документация
+  userDocs: Документация пользователя
+  apiDocs: Документация API
+  architecture: Архитектура
   feedback: Send feedback
   forum: Справка
-  version: "Version:"
+  version: "Версия:"
 module: Модули
 more: Еще
 namespace: Пространства
 noPageTitle: Не указан заголовок страницы
 page: Страницы
+rulechains: Цепочки правил
+workflows: Процессы
 appMenu: Меню
 userSettings:
   changePassword: Изменить пароль
@@ -28,11 +34,11 @@ search:
   select: select
   close: close
   notFoundNamespace: Пространство not found
-  notFoundPage: Page not found
+  notFoundPage: Станицы не найдены
   recordRedirectError: Error navigating to record
   untitledRecord: Untitled Record
   recentSearches: Recent Searches
-  clearHistory: Clear
+  clearHistory: Очистить
 
   openInNewTab: Open in new tab
   numberOfResults_one: "{{count}} record"

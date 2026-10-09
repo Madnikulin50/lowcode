@@ -3,15 +3,16 @@ list:
     name: Имя
     updatedAt: Обновлено
   filter:
-    absoluteTime: Show absolute time
+    absoluteTime: Показывать absolute time
     incScriptsWithErrors: Errors ({{ count }})
     incScriptsWithIterator: Iterator ({{ count }})
     incScriptsWithSecurity: Security ({{ count }})
     incScriptsWithTriggers: Triggers ({{ count }})
-    searchQuery: Search query
+    searchQuery: Фильтр поиска
   flags:
     iterator: Iterator
     security: Security
     triggers: Triggers
   labelMissing: <label missing>
+  empty: Нет скриптов
   title: Corredor Scripts

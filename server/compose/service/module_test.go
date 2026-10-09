@@ -5,17 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers/sqlite"
-	sysService "github.com/cortezaproject/corteza/server/system/service"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/sqlite"
+	sysService "github.com/madnikulin50/lowcode/server/system/service"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -318,4 +318,32 @@ func TestModuleToModel(t *testing.T) {
 	model, err = ModuleToModel(nil, m, "ident-from-conn-config")
 	req.NoError(err)
 	req.Equal("explicit-ident", model.Ident)
+}
+
+func TestModuleToModelSystemFieldEncoding(t *testing.T) {
+	req := require.New(t)
+	mod := &types.Module{ID: 1, NamespaceID: 2, Handle: "h"}
+
+	t.Run("empty encoding strategy keeps namespaceID", func(t *testing.T) {
+		mod.Config.DAL.Ident = "compose_record"
+		mod.Config.DAL.SystemFieldEncoding.NamespaceID = &types.EncodingStrategy{}
+		model, err := ModuleToModel(nil, mod, "compose_record")
+		req.NoError(err)
+		req.True(model.HasAttribute("namespaceID"), "empty {} must not omit namespaceID")
+		cc := modelBaseConstraints(model, mod)
+		req.Equal([]any{uint64(2)}, cc["namespaceID"])
+	})
+
+	t.Run("omit true drops namespaceID from model and constraints", func(t *testing.T) {
+		mod.Config.DAL.Ident = "compose_record"
+		mod.Config.DAL.SystemFieldEncoding.NamespaceID = &types.EncodingStrategy{Omit: true}
+		model, err := ModuleToModel(nil, mod, "compose_record")
+		req.NoError(err)
+		req.False(model.HasAttribute("namespaceID"))
+		req.True(model.HasAttribute("moduleID"))
+		cc := modelBaseConstraints(model, mod)
+		_, hasNS := cc["namespaceID"]
+		req.False(hasNS)
+		req.Equal([]any{uint64(1)}, cc["moduleID"])
+	})
 }

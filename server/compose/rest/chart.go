@@ -3,11 +3,11 @@ package rest
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/compose/rest/request"
-	"github.com/cortezaproject/corteza/server/compose/service"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/compose/rest/request"
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 )
 
 type (
@@ -76,8 +76,8 @@ func (ctrl Chart) List(ctx context.Context, r *request.ChartList) (interface{}, 
 		return nil, err
 	}
 
-	set, filter, err := ctrl.chart.Find(ctx, f)
-	return ctrl.makeFilterPayload(ctx, set, filter, err)
+	set, flt, err := ctrl.chart.Find(ctx, f)
+	return ctrl.makeFilterPayload(ctx, set, flt, err)
 }
 
 func (ctrl Chart) Create(ctx context.Context, r *request.ChartCreate) (interface{}, error) {

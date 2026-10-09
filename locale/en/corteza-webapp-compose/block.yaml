@@ -3,8 +3,166 @@ selector:
     placeholder: Blocks from other layouts
   tooltip:
     clone:
-      ref: Clone with references
-      noRef: Clone without references
+      ref: Add as a linked copy (stays in sync with the original)
+      noRef: Duplicate as an independent block
+  searchPlaceholder: Search by name or description
+  recordPageOnly: Record page
+  recordPageOnlyHint: Available only on record pages
+  disabledHere: This block cannot be added here
+  empty: No block types match your search
+  reuse:
+    title: Reuse a block from another layout
+    clone: Duplicate
+    reference: Link
+  categories:
+    all: All
+    data: Data
+    visualize: Charts & maps
+    content: Content
+    layout: Layout
+    automation: Automation
+  types:
+    recordList:
+      description: Searchable table of module records
+    record:
+      description: Fields of the current record
+    recordGraph:
+      description: Graph of the records related to this one, opened by clicking
+    relatedRecords:
+      description: Child records from other modules that refer to this record
+    recordOrganizer:
+      description: Kanban-style grouping and ordering
+    recordRevisions:
+      description: History of changes to the record
+    comment:
+      description: Discussion thread on related records
+    chart:
+      description: Charts from module aggregations
+    metric:
+      description: KPI numbers from record reports
+    progress:
+      description: Progress bar against a target
+    calendar:
+      description: Events from records or reminders
+    geometry:
+      description: Map with record locations
+    report:
+      description: Embedded reporter scenario
+    content:
+      description: Formatted text
+    document:
+      description: Markdown or PDF from the namespace documentation
+    file:
+      description: File gallery or attachments
+    iFrame:
+      description: Embedded web page
+    tabs:
+      description: Several blocks behind tab headers
+    navigation:
+      description: Links to pages and external URLs
+    automation:
+      description: Buttons that run workflows and scripts
+    ruleChain:
+      description: Interactive rule-chain diagram
+    aiChat:
+      description: Ask the AI assistant about this page
+    risk:
+      description: A record's risk assessment or a portfolio summary
+    imageSearch:
+      description: Search images by the record's own field values
+    anomaly:
+      description: Anomaly detection stats and findings
+anomaly:
+  label: Anomaly
+  allModules: All modules
+  allSeverities: All severities
+  allStatuses: All statuses
+  noFindings: No anomalies found.
+  nothingToShow: Nothing to show - enable the summary or the list in block settings.
+  module: Module
+  field: Field
+  severity: Severity
+  status: Status
+  resolve: Resolve
+  openCenter: Open Anomaly Center
+  severityLow: Low
+  severityMedium: Medium
+  severityHigh: High
+  statusNew: New
+  statusAcknowledged: Acknowledged
+  statusResolved: Resolved
+  statusFalsePositive: False positive
+  configurator:
+    module: Module
+    showSummary: Show summary tiles
+    showList: Show findings list
+    limit: Rows in list
+risk:
+  label: Risk
+imageSearch:
+  label: Image search
+ruleChain:
+  label: Rule chain
+  reloadOnSuccess: Reload page on successful completion
+  running: Running…
+  success: Rule chain completed successfully
+  error: Execution failed
+  resultTitle: Result
+aiChat:
+  label: AI assistant
+  title: AI Chat
+  greeting: How can I help?
+  stopped: Stopped
+  close: Close
+  collapse: Collapse
+  expand: Expand
+  copy: Copy
+  edit: Edit
+  retry: Retry
+  newChat:
+    label: New chat
+  model:
+    label: Model
+  warmup:
+    inProgress: Warming up the selected model…
+    short: Warming up
+  tools:
+    invoked: Tools used
+    enabled: Tools enabled
+    disabled: Tools disabled
+  status:
+    thinking: Thinking…
+    warming: Warming up…
+    usingTools: Using tools…
+    writing: Writing…
+  promptXml:
+    label: Show prompt
+  reasoning:
+    label: Reasoning
+  chart:
+    error: Could not render chart
+  confirm:
+    title: Confirm action
+    execute: Run
+    cancel: Cancel
+  export:
+    label: Export
+    markdown: Markdown
+    pdf: PDF
+    docx: Word (.docx)
+  attach:
+    label: Attach file
+    remove: Remove attachment
+  sendMessage:
+    placeholder: Type a message…
+    stop: Stop
+    button: Send
+    hint: "Enter to send, Shift+Enter for a new line"
+  empty:
+    suggestions:
+      capabilities: What can you do?
+      modules: Tell me about the modules on this page
+      page: Summarize this page
 automation:
   addPlaceholderLabel: Add placeholder (dummy button)
   availableScriptsAndWorkflow: Available scripts and workflows ({{count}})
@@ -121,6 +279,13 @@ chart:
   searchPlaceholder: Type here to search all charts in this namespace
   openInBuilder: Open in chart builder
   openChartList: Open chart list
+  dataTable:
+    title: Show data as table
+    empty: No data to display
+    modal:
+      title: Chart data
+  countUnavailable: Count unavailable
+  countUnavailableHint: Could not count records in time
   filter:
     modal:
       title: Chart Filter
@@ -136,6 +301,11 @@ chart:
         and: Join filters with AND
         or: Join filters with OR
         overwrite: Overwrite original filter
+document:
+  label: Document
+  pick: Document
+  empty: Select a document
+  noFile: PDF is not uploaded yet
 content:
   ok: Ok
   label: Content
@@ -153,6 +323,9 @@ file:
 general:
   descriptionLabel: Description
   descriptionPlaceholder: Block description
+  helpLabel: Block help
+  helpPlaceholder: What this block is for and how to use it
+  helpDescription: Shown when the user clicks the help button on the block (same place as the AI button).
   headerStyle: Block header style (color)
   magnifyLabel: Block Magnification
   customID:
@@ -211,6 +384,7 @@ general:
     refresh: Refresh block
     magnify: Magnify block
     and: And
+    configurator: Configurator
   module: Module
   style:
     danger: Danger variant
@@ -222,6 +396,7 @@ general:
   title: Add new block
   titleLabel: Title
   titlePlaceholder: Block title
+  pageHelpHint: Page help is edited on the page form (pencil) or with the Help button in the builder. This tab is only the block title and description.
   tooltip:
     dragAndDrop: Drag and drop to change order
     translations: Field translations
@@ -235,17 +410,90 @@ iframe:
 metric:
   metricDrillDown: Metric drill down
   defaultMetricLabel: Unnamed metric
+  likeRecordList: Display like a record
+  emptyPlaceholder: "—"
+  countUnavailable: Count unavailable
+  countUnavailableHint: Could not count records in time
+  appearance:
+    label: Appearance
+    density: Density
+    densityOptions:
+      comfortable: Comfortable
+      compact: Compact
+    hideEmptyMetrics: Hide empty metrics
+    showEmptyPlaceholder: Show placeholder for empty values
+    showEmptyPlaceholderDescription: Displays an em dash when a metric has no value
+    role: Metric role
+    roleDescription: Visual role — matches Record field roles for a consistent page layout
+    roleOptions:
+      default: Default
+      title: Title
+      badge: Badge
+      meta: Meta
+      hero: Hero
+      balloon: Display as balloon
+      topK: Display as balloon
+    balloonFullWidth: Stretch balloon to full width
+    balloonFullWidthDescription: When off, balloon width scales with the value relative to other balloons
+    sections: Sections
+    sectionsDescription: Group default-role metrics under section headings
+    addSection: Add section
+    sectionTitle: Title
+    sectionTitlePlaceholder: Section title
+    sectionMetrics: Metrics
+    sectionMetricsPlaceholder: Select metrics
+    itemsPerRow:
+      label: Metrics per row
+      description: How many metric cards to show in one row
+      one: One per row
+      two: Two per row
+      four: Four per row
+      auto: Auto wrap
   drillDown:
     label: Drill down
     description: If a record list is selected, it will be used to display the drill down data. If no record list is selected, the drill down data will be shown in a modal.
     openInModal: Open in modal
   edit:
+    basicsLabel: Basics
     bucketLabel: Bucket size
     bucketPlaceholder: Select a bucket size
     dateFormat: Date format
     dimensionFieldLabel: Field
     dimensionFieldPlaceholder: Dimension field
+    dimensionFieldFootnote: Prefer a field that already holds a readable name (e.g. store or category name) — grouping by an ID field shows raw ID values as labels
     dimensionLabel: Dimension
+    topNLabel: Max rows
+    topNPlaceholder: All
+    sortDirectionLabel: Sort by
+    sortDirectionOptions:
+      valueDesc: Value, high to low
+      valueAsc: Value, low to high
+      labelAsc: Label, A–Z
+      labelDesc: Label, Z–A
+    compareValuesLabel: Compare two values
+    compareValue1Placeholder: First value
+    compareValue2Placeholder: Second value
+    compareValuesFootnote: Enter the exact field values to compare, e.g. store names. Leave both empty to show a full breakdown instead.
+    periodCompare:
+      label: Period comparison
+      enable: Compare to a previous period
+      dateFieldLabel: Date field
+      dateFieldPlaceholder: Select a date field
+      granularityLabel: Period
+      granularityOptions:
+        day: Day
+        week: Week
+        month: Month
+        quarter: Quarter
+        year: Year
+      modeLabel: Compare against
+      modeOptions:
+        previousPeriod: Previous period
+        yearOverYear: Same period last year
+      trendPositiveLabel: An increase means
+      trendPositiveOptions:
+        increase: Good (green)
+        decrease: Bad (red)
     filterLabel: Filter
     filterFootnote: Simplified SQL condition (WHERE ...) syntax is supported. Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
     transformFootnote: Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available). Make sure to wrap the variables with quotes ("")
@@ -256,6 +504,8 @@ metric:
     metricLabel: Metric
     metricFieldSelect: Select field
     metricSelectAggregate: Select aggregation operation
+    expressionFieldLabel: Equation expression
+    expressionPlaceholder: count(id) / A
     metricAggregateLabel: Aggregation operation
     moduleLabel: Module
     modulePlaceholder: Pick a module
@@ -275,6 +525,21 @@ metric:
     transformFunctionLabel: Transform value
   editStyle:
     backgroundColor: Background color
+    thresholds:
+      label: Text color thresholds
+      description: Choose which color to use when the value is equal to or greater than the threshold
+      valuePlaceholder: Threshold
+      icon: Icon
+      icons:
+        none: No icon
+        arrowUp: Arrow up
+        arrowDown: Arrow down
+        arrowRight: Arrow right
+        alert: Alert
+        alertCircle: Alert circle
+    balloonThresholds:
+      label: Balloon color by value
+      description: Balloon fill color and icon when the value is equal to or greater than the threshold (highest matching threshold wins)
     color: Text color
     colorPicker: Choose a color
     fontSize: Font size in pixels
@@ -307,6 +572,34 @@ record:
     default: Default
     noWrap: No wrap
     wrap: Wrap
+  emptyPlaceholder: "—"
+  appearance:
+    label: Appearance
+    density: Density
+    densityOptions:
+      comfortable: Comfortable
+      compact: Compact
+    hideEmptyFields: Hide empty fields
+    showEmptyPlaceholder: Show placeholder for empty values
+    showEmptyPlaceholderDescription: Displays an em dash when a field has no value
+    fieldRoles: Field roles
+    fieldRolesDescription: Assign visual roles. Title and subtitle appear in the header; badges and meta are highlighted separately.
+    field: Field
+    role: Role
+    roleOptions:
+      default: Default
+      title: Title
+      subtitle: Subtitle
+      badge: Badge
+      meta: Meta
+      body: Full width
+    sections: Sections
+    sectionsDescription: Group body fields under section headings. Fields not listed remain below.
+    addSection: Add section
+    sectionTitle: Title
+    sectionTitlePlaceholder: Section title
+    sectionFields: Fields
+    sectionFieldsPlaceholder: Select fields
   preview:
     blockNoRecord: Cannot render this block without a record
     fieldsFromModule: Single record block, displaying fields ({{0}}) from module {{1}}
@@ -334,6 +627,10 @@ record:
 recordList:
   noModule: No module selected
   addRecord: Add
+  chrome:
+    more: More actions
+    search: Search
+    filters: Filters
   cancelSelection: Cancel
   customFilter: Custom filter
   prefilter:
@@ -540,10 +837,13 @@ recordList:
   moduleFootnote: Modules without a {{0}} can only be used in a record list as an inline editor
   moduleFieldsFootnote: If no fields are selected, the default fields will be shown
   noRecords: There are no records matching your request
+  empty:
+    title: Nothing to show
   pagination:
     next: Next
     prev: Previous
     showing: "{{from}} - {{to}} of {{count}} records"
+    unknownTotal: "{{from}} - {{to}} of ∞"
     single_one: One record
     single_other: "{{count}} records"
     recordsPerPage: Per page
@@ -628,6 +928,24 @@ recordList:
     addRecordOptions: On add record click
     textStyles: Text Styles
     configureWrappedFields: Select fields that will be wrapped
+  appearance:
+    label: Appearance
+    compactRows: Compact rows
+    compactChrome: Compact toolbar
+    alignNumbers: Right-align numbers
+    stickyHeader: Sticky header
+    showRowSignal: Severity signal column
+    rowValueTooltip: Row tooltip with field values
+    signalField: Signal field
+    rowHighlightField: Row highlight field
+    groupByField: Group by field
+    sparklineField: Sparkline field
+    sparklineMax: Sparkline max value
+    displayMode: Display mode
+    displayModeOptions:
+      table: Table
+      cards: Cards
+      responsive: Table on desktop, cards on mobile
   recordPage: record page
   refField:
     footnote: Field that links records with the parent record
@@ -678,6 +996,102 @@ recordList:
         label: Not empty count
       uniqueCount:
         label: Unique count
+recordGraph:
+  label: Related records graph
+  saveFirst: Save the record to see the records related to it.
+  loading: Loading related records...
+  nothing: This record has no related records.
+  more: more
+  truncated: '{{n}} records are not shown (node limit)'
+  recordPageOnly: 'This block works on a record page only: it draws the records related to the record of the page.'
+  hint:
+    expand: Click to select and load its related records
+    open: Click to select, double-click to open the record
+    more: Click to load more
+    cluster: Click to show the records
+  depth:
+    label: Levels loaded at first
+    '0': Only the record (open nodes by clicking)
+    '1': The record and its direct relations
+    '2': Two levels around the record
+    footnote: Click a node to load its relations.
+  maxNodes:
+    label: Nodes at most
+    footnote: More records are left out.
+  perModuleLimit:
+    label: Records of one module per node
+    footnote: A full list gets a "more" node.
+  showParents: Show the records this record refers to
+  showChildren: Show the records that refer to this record
+  showLegend: Show the legend
+  exclude:
+    label: Leave out modules
+    none: No related modules
+    footnote: Records of these modules are not drawn.
+  labels:
+    label: Names of records on the graph
+    footnote: How the records of a module are called on the graph. Write the fields in double curly braces. Without a template the name is guessed from the fields.
+    example: Example
+  open: Open record
+  expand: Show relations
+  close: Close
+  displayOption:
+    label: Opening a record
+    sameTab: Open in the same tab
+    newTab: Open in a new tab
+    modal: Open in a modal
+    doNothing: Do not open records
+    footnote: Click a node to select it and see its relations; the panel of the selected record has the open button, a double click opens it at once.
+  toolbar:
+    search: Find a record
+    layout: Layout
+    fit: Fit to the window
+    relayout: Lay out again
+    freeze: Keep nodes in place
+    unfreeze: Let nodes move
+    collapse: Collapse all
+    png: Save as an image
+    fullscreen: Full screen
+    exitFullscreen: Leave full screen
+  layout:
+    label: Layout
+    force: Free (force)
+    radial: Rings around the record
+    layers: Layers
+    footnote: Rings and layers put the record in the middle; the free layout lets nodes find their own place.
+  clusterFrom:
+    label: Group from
+    footnote: 'A list of that many records or more is one node that a click opens. 0: never.'
+  showToolbar: Show the toolbar
+  statusField:
+    label: Colour the ring by
+    none: (none)
+relatedRecords:
+  label: Related records
+  notConfigured: No related records are set up. Add the modules whose records refer to this one.
+  saveFirst: Save the record to see the records that refer to it.
+  nothing: No related records yet.
+  recordPageOnly: 'This block works on a record page only: it shows the records that refer to the record of the page.'
+  missing: module or field no longer exists
+  moveUp: Move up
+  moveDown: Move down
+  remove: Remove
+  add:
+    label: Add related records
+    placeholder: Choose a module and the field that refers to this record
+    none: No other module has a record field that refers to this module
+    button: Add
+    footnote: Every module with a Record field that points to the module of this page can be added. A module with two such fields gives two entries.
+  title:
+    label: Section title
+  perPage: Records per page
+  expanded: Open when the page loads
+  hideAddButton: Hide the add button
+  columns: Columns
+  columnsFootnote: With no columns chosen, all the fields of the module are shown.
+  showCounts: Show the number of records in each section
+  hideEmpty: Hide sections with no records
+  hideEmptyFootnote: A hidden section cannot be used to add the first record; turn this off if records are added here.
 recordOrganizer:
   onRecordClick: Record display mode
   openInSameTab: Open in the same tab
@@ -765,7 +1179,7 @@ socialFeed:
     socialFeed: Twitterblo feed
   twitterProfileField: Field that contains Twitter Profile URL for a record
   twitterProfileLabel: Twitter Profile URL for list pages i.e (https://twitter.com/bloomberg)
-selectBlockFootnote: Some types might be disabled for non-record pages
+selectBlockFootnote: Blocks marked “Record page” are available only when this page is bound to a module
 field:
   noPermission: No permission to read field value
   selector:
@@ -897,6 +1311,8 @@ progress:
     label: Field
     select: Select field
   label: Progress bar
+  countUnavailable: Count unavailable
+  countUnavailableHint: Could not count records in time
   module:
     select: Select module
     label: Module
@@ -1025,3 +1441,38 @@ tabs:
 
 noConfiguration: Block not configured correctly
 interpolationFootnote: Variables like {{0}}, {{1}}, {{2}} and {{3}} are evaluated (when available)
+
+ai:
+  askAboutMetrics: Ask what AI thinking about metrics
+  askAboutRecord: Ask what AI thinking about record
+  tab:
+    title: AI
+  hideBrainButton:
+    label: Hide AI button on block
+  hideHelpButton:
+    label: Hide help button on block
+  prompt:
+    label: Default Prompt
+    placeholder: Enter default prompt
+  chat:
+    startPrompt:
+      label: Opening prompt
+      placeholder: Ask the assistant about this page…
+      description: Shown in the composer when the chat is empty. Visitors can still type their own message.
+    model:
+      label: Default model
+      placeholder: Server default
+      description: Initial model for this chat block. Visitors can still switch models while chatting.
+
+
+error:
+  timeout: Request timed out
+variables:
+  edit:
+    nameLabel: Name
+    namePlaceholder: Variable name
+    nameFootnote: Use in page blocks as
+    labelLabel: Label
+    labelPlaceholder: Display label for this variable
+    kindLabel: Type
+    defaultValueLabel: Default value

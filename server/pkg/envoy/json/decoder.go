@@ -7,9 +7,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/envoy"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
 )
 
 type (

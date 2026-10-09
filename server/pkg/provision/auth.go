@@ -7,19 +7,19 @@ import (
 	"regexp"
 	"strings"
 
-	internalAuth "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/mail"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/system/service"
+	internalAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/mail"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/system/service"
 	"go.uber.org/zap"
 
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/rand"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/rand"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 var (
@@ -62,7 +62,7 @@ func emailSettings(ctx context.Context, s store.Storer) error {
 }
 
 // addAuthSuperUsers assigns BYPASS roles to users from AUTH_PROVISION_SUPER_USER value
-// When in Production, Corteza should stop and report an error.
+// When in Production, lowcode should stop and report an error.
 func addAuthSuperUsers(ctx context.Context, log *zap.Logger, s store.Storer, authOpt options.AuthOpt) (err error) {
 	log.Info("provision start")
 	defer log.Info("provision end")
@@ -268,7 +268,7 @@ func defaultAuthClient(ctx context.Context, log *zap.Logger, s store.Storer, aut
 		ID:     id.Next(),
 		Handle: authOpt.DefaultClient,
 		Meta: &types.AuthClientMeta{
-			Name: "Corteza Web Applications",
+			Name: "LowCoooode Web Applications",
 		},
 		ValidGrant: "authorization_code",
 		RedirectURI: func() string {

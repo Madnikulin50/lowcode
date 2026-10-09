@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cortezaproject/corteza/server/pkg/corredor"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/madnikulin50/lowcode/server/pkg/corredor"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
 
 	"github.com/go-chi/chi/v5"
 )

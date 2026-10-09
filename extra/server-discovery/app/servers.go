@@ -3,8 +3,8 @@ package app
 import (
 	"strings"
 
-	searcherRest "github.com/cortezaproject/corteza/extra/server-discovery/searcher/rest"
-	"github.com/cortezaproject/corteza/server/pkg/options"
+	searcherRest "github.com/madnikulin50/lowcode/extra/server-discovery/searcher/rest"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )

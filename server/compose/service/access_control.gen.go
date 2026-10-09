@@ -1,20 +1,20 @@
 package service
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
 	"context"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	internalAuth "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/store"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	internalAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/spf13/cast"
 	"strings"
 )

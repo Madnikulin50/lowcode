@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cortezaproject/corteza/server/auth/request"
-	internalAuth "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/payload"
 	"github.com/go-oauth2/oauth2/v4/server"
+	"github.com/madnikulin50/lowcode/server/auth/request"
+	internalAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/payload"
 )
 
 func NewUserAuthorizer(sm *request.SessionManager, loginURL, clientAuthURL string) server.UserAuthorizationHandler {

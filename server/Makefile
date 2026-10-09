@@ -1,4 +1,4 @@
-.PHONY: pack build help qa critic vet codegen provision docs build auth webapp
+.PHONY: pack build help qa critic vet codegen provision docs docs.pack build auth webapp
 
 include Makefile.inc
 
@@ -17,7 +17,7 @@ RELEASE_NAME           = $(BUILD_NAME).tar.gz
 RELEASE_EXTRA_FILES   ?= README.md LICENSE CONTRIBUTING.md .env.example
 RELEASE_PKEY          ?= .upload-rsa
 
-LDFLAGS_VERSION        = -X github.com/cortezaproject/corteza/server/pkg/version.Version=$(BUILD_VERSION)
+LDFLAGS_VERSION        = -X github.com/madnikulin50/lowcode/server/pkg/version.Version=$(BUILD_VERSION)
 LDFLAGS_EXTRA         ?=
 LDFLAGS                = -ldflags "$(LDFLAGS_VERSION) $(LDFLAGS_EXTRA)"
 
@@ -80,7 +80,7 @@ help:
 
 build: $(BUILD_DEST_DIR)/$(BUILD_BIN_NAME)
 
-$(BUILD_DEST_DIR)/$(BUILD_BIN_NAME):
+$(BUILD_DEST_DIR)/$(BUILD_BIN_NAME): docs.pack
 		@ mkdir -p $(BUILD_DEST_DIR)
 		GOOS=$(BUILD_OS) GOARCH=$(BUILD_ARCH) $(GO) build $(LDFLAGS) -o $@ cmd/corteza/main.go
 
@@ -133,21 +133,32 @@ watch.test.%: $(FSWATCH)
 
 watch.test: watch.test.unit
 
-# See codegen/README.md for details
 codegen:
 	@ make -C codegen all
 
-cue.fmt: $(CUE)
-	$(CUE) fmt -v codegen/*.cue
-	$(CUE) fmt -v codegen/schema/*.cue
+# Regenerates server files and fails if the result doesn't match what's
+# committed - catches codegen/def (or a hand-written struct's schema tags)
+# drifting out of sync with the checked-in .gen.go files. Meant for CI.
+codegen.check:
+	@ $(MAKE) --directory=codegen server
+	@ git diff --exit-code -- \
+		federation/types federation/model \
+		automation/types automation/model \
+		compose/types compose/model \
+		system/types system/model \
+		anomaly/types anomaly/model \
+		store/interfaces.gen.go \
+		store/adapters/rdbms/aux_types.gen.go \
+		store/adapters/rdbms/queries.gen.go \
+		store/adapters/rdbms/filters.gen.go \
+		|| (echo "Generated code is out of date - run 'make codegen' (or 'make -C codegen server') and commit the result." && exit 1)
 
-	$(CUE) fmt -v app/*.cue
-	$(CUE) fmt -v app/options/*.cue
+docs:
+	python3 docs/convert.py
+	python3 docs/pack.py
 
-	$(CUE) fmt system/*.cue
-	$(CUE) fmt compose/*.cue
-	$(CUE) fmt automation/*.cue
-	$(CUE) fmt federation/*.cue
+docs.pack:
+	python3 docs/pack.py
 
 codegen-legacy: $(CODEGEN)
 	@ $(CODEGEN) -v

@@ -1,50 +1,59 @@
 package types
 
 import (
+	"crypto/sha1"
 	"database/sql/driver"
+	"encoding/hex"
 	"encoding/json"
+	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
 	"github.com/jmoiron/sqlx/types"
-
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
+	"github.com/spf13/cast"
 )
 
 type (
 	Module struct {
-		ID     uint64 `json:"moduleID,string"`
-		Handle string `json:"handle"`
+		ID     uint64 `json:"moduleID,string" schema:"col=id,dal=id,unique"`
+		Handle string `json:"handle" schema:"col=handle,dal=text:64,unique,ignoreCase"`
 
 		// collection of configurations for various subsystems that
 		// use this module and how it affects their behaviour
-		Config ModuleConfig `json:"config"`
+		Config ModuleConfig `json:"config" schema:"col=config,dal=json:empty,omit"`
 
 		// @todo should be removed and placed into a separate subsystem
 		//       mostly because we want to allow client apps to store
 		//       application configs away from the module config
 		//       using separate access-control
-		Meta types.JSONText `json:"meta"`
+		//
+		// schema: the store's aux struct represents this as the store
+		// package's own "rawJson" type, not types.JSONText - hence the
+		// goType= override (see codegen/def/reflectattr.go).
+		Meta types.JSONText `json:"meta" schema:"col=meta,goType=rawJson,dal=json:empty,omit"`
 
-		Fields ModuleFieldSet `json:"fields"`
+		Fields ModuleFieldSet `json:"fields" schema:"col=fields,nostore,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		Issues []dal.Issue `json:"issues,omitempty"`
 
-		NamespaceID uint64 `json:"namespaceID,string"`
+		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 
 		// Warning: value of this field is now handled via resource-translation facility
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
-		Name string `json:"name"`
+		Name string `json:"name" schema:"col=name,dal,sortable"`
 	}
 
 	ModuleConfig struct {
@@ -63,6 +72,30 @@ type (
 		RecordDeDup ModuleConfigRecordDeDup `json:"recordDeDup"`
 
 		Datasource ModuleConfigDataSource `json:"dataSource"`
+
+		Etl ModuleConfigETL `json:"etl"`
+
+		Connector ModuleConfigConnector `json:"connector"`
+	}
+
+	ModuleConfigETL struct {
+		Enabled        bool              `json:"enabled"`
+		SourceType     string            `json:"sourceType"`
+		Format         string            `json:"format"`
+		RestURL        string            `json:"restUrl"`
+		RestMethod     string            `json:"restMethod"`
+		RestHeaders    map[string]string `json:"restHeaders"`
+		RestBody       string            `json:"restBody"`
+		MCPServerID    string            `json:"mcpServerId"`
+		MCPTool        string            `json:"mcpTool"`
+		MCPParams      map[string]any    `json:"mcpParams"`
+		SMBHost        string            `json:"smbHost"`
+		SMBPort        int               `json:"smbPort"`
+		SMBShare       string            `json:"smbShare"`
+		SMBPath        string            `json:"smbPath"`
+		SMBUser        string            `json:"smbUser"`
+		SMBPass        string            `json:"smbPass"`
+		SMBFilePattern string            `json:"smbFilePattern"`
 	}
 
 	ModuleConfigDAL struct {
@@ -75,7 +108,32 @@ type (
 		Ident string `json:"ident"`
 
 		SystemFieldEncoding SystemFieldEncoding `json:"systemFieldEncoding"`
+
+		// Indexes an admin has declared on this module's fields. Converted to
+		// dal.Model.Indexes in ModuleToModel(), which is where the usual
+		// module-save -> schema-diff -> DalSchemaAlterations review/apply
+		// flow (see pkg/dal.Model.Diff) picks up additions/removals — same
+		// path already used for field changes, nothing index-specific needed
+		// there.
+		Indexes ModuleConfigDALIndexSet `json:"indexes,omitempty"`
 	}
+
+	// ModuleConfigDALIndex is the admin-facing shape for one index: which
+	// field(s) (by their Compose field name), and whether it's unique. Kept
+	// deliberately narrower than dal.Index (no per-field sort/nulls/
+	// modifiers, no partial-index predicate) — ModuleToModel fills those in
+	// with plain-ascending defaults. Extend here first if a future UI needs
+	// more control, then thread it through to dal.Index in ModuleToModel.
+	ModuleConfigDALIndex struct {
+		// Ident is stable and derived from Fields (see DeriveIdent) so the
+		// same declaration always diffs to the same alteration — never set
+		// this by hand from the UI.
+		Ident  string   `json:"ident"`
+		Fields []string `json:"fields"`
+		Unique bool     `json:"unique"`
+	}
+
+	ModuleConfigDALIndexSet []ModuleConfigDALIndex
 
 	ModuleConfigRecordRevisions struct {
 		// enable or disable revisions
@@ -149,6 +207,16 @@ func (m Module) HasIssues() bool {
 	return len(m.Issues) > 0
 }
 
+func (m Module) CanSoftDelete() bool {
+	// Encoding strategy may be unset (nil) — that means the default strategy
+	// is used (system field/column present), so soft delete is supported.
+	if m.Config.DAL.SystemFieldEncoding.DeletedAt != nil && m.Config.DAL.SystemFieldEncoding.DeletedAt.Omit {
+		return false
+	}
+	return true
+
+}
+
 // We won't worry about fields at this point
 func (m *Module) decodeTranslations(tt locale.ResourceTranslationIndex) {
 	return
@@ -171,6 +239,20 @@ func (m *Module) ModelRef() dal.ModelRef {
 	}
 }
 
+func (c *Module) setValue(name string, pos uint, value any) (err error) {
+	pp := strings.Split(name, ".")
+
+	switch pp[0] {
+	case "Config":
+		if pp[1] == "Datasource" {
+			step := c.Config.Datasource.Items[cast.ToInt(pp[2])].Step
+			return step.SetValue(pp[3], 0, value)
+		}
+	}
+
+	return
+}
+
 // FindByHandle finds module by it's handle
 func (set ModuleSet) FindByHandle(handle string) *Module {
 	for i := range set {
@@ -180,6 +262,34 @@ func (set ModuleSet) FindByHandle(handle string) *Module {
 	}
 
 	return nil
+}
+
+// DeriveIdent (re)computes Ident from Fields/Unique, deterministically —
+// the same declaration always resolves to the same DB index name, so saving
+// the module again (or re-importing it) diffs to "nothing changed" instead
+// of piling up duplicate indexes under fresh random names.
+//
+// Call this whenever Fields or Unique changes, before the index reaches
+// ModuleToModel(); the admin-facing UI should treat Ident as derived, not
+// editable.
+func (i *ModuleConfigDALIndex) DeriveIdent() {
+	prefix := "idx"
+	if i.Unique {
+		prefix = "uq"
+	}
+
+	ident := prefix + "_" + strings.Join(i.Fields, "_")
+
+	// Stay clear of typical DB identifier length limits (Postgres 63,
+	// MySQL 64) for wide composite indexes; a short content hash keeps the
+	// truncated name unique instead of colliding with another long one.
+	const maxLen = 60
+	if len(ident) > maxLen {
+		sum := sha1.Sum([]byte(ident))
+		ident = ident[:maxLen-9] + "_" + hex.EncodeToString(sum[:4])
+	}
+
+	i.Ident = ident
 }
 
 func (c *ModuleConfig) Scan(src any) error { return sql.ParseJSON(src, c) }
@@ -198,4 +308,57 @@ func ParseModuleConfig(ss []string) (m ModuleConfig, err error) {
 
 	err = json.Unmarshal([]byte(ss[0]), &m)
 	return
+}
+
+func (m *Module) UpdateReportsSteps(ss systemTypes.ReportStepSet) (res systemTypes.ReportStepSet) {
+	if len(ss) == 0 {
+		return ss
+	}
+	if len(m.Fields) == 0 {
+		return systemTypes.ReportStepSet{}
+	}
+	for _, f := range m.Fields {
+		if len(f.Expressions.ValueExpr) == 0 {
+			continue
+		}
+		attr := systemTypes.ReportAggregateColumn{
+			Def:   &systemTypes.ReportFilterExpr{ASTNode: &ql.ASTNode{Raw: f.Expressions.ValueExpr}},
+			Name:  f.Name,
+			Label: f.Label,
+		}
+		step := ss[len(ss)-1]
+
+		if step.Aggregate != nil {
+			step.Aggregate.Columns = append(step.Aggregate.Columns, &attr)
+		} else {
+			cols := systemTypes.ReportAggregateColumnSet{}
+			keys := systemTypes.ReportAggregateColumnSet{}
+			for _, f := range m.Fields {
+				def := systemTypes.ReportFilterExpr{ASTNode: &ql.ASTNode{Symbol: f.Name}}
+				if len(f.Expressions.ValueExpr) != 0 {
+					def = systemTypes.ReportFilterExpr{ASTNode: &ql.ASTNode{Raw: f.Expressions.ValueExpr}}
+				}
+				attr := systemTypes.ReportAggregateColumn{
+					Def:   &def,
+					Name:  f.Name,
+					Label: f.Label,
+				}
+				if len(f.Expressions.ValueExpr) != 0 {
+					cols = append(cols, &attr)
+				} else {
+					keys = append(keys, &attr)
+				}
+			}
+			s := systemTypes.ReportStep{}
+			s.Aggregate = &systemTypes.ReportStepAggregate{
+				Name:    "calc",
+				Source:  step.Name(),
+				Columns: cols,
+				Keys:    keys,
+			}
+			ss = append(ss, &s)
+			break
+		}
+	}
+	return ss
 }

@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	a "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers/sqlite"
-	"github.com/cortezaproject/corteza/server/system/types"
+	a "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/sqlite"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -251,6 +251,48 @@ func Test_processAvatarInitials(t *testing.T) {
 			},
 			expectedInitial: "K",
 		},
+		{
+			name: "Test with russian name (two words)",
+			user: &types.User{
+				Name: "Иван Петров",
+			},
+			expectedInitial: "ИП",
+		},
+		{
+			name: "Test with russian full name (three words)",
+			user: &types.User{
+				Name: "Иванов Иван Иванович",
+			},
+			expectedInitial: "ИИИ",
+		},
+		{
+			name: "Test with one russian name",
+			user: &types.User{
+				Name: "Иванов",
+			},
+			expectedInitial: "ИВ",
+		},
+		{
+			name: "Test with russian handle",
+			user: &types.User{
+				Handle: "иван_петров",
+			},
+			expectedInitial: "ИП",
+		},
+		{
+			name: "Test with russian email",
+			user: &types.User{
+				Email: "иван@example.com",
+			},
+			expectedInitial: "И",
+		},
+		{
+			name: "Test with maxim-style initials",
+			user: &types.User{
+				Name: "Максим Николаев",
+			},
+			expectedInitial: "МН",
+		},
 	}
 
 	// Run test cases
@@ -260,6 +302,18 @@ func Test_processAvatarInitials(t *testing.T) {
 			assert.Equal(t, tc.expectedInitial, initial)
 		})
 	}
+}
+
+func TestMaybeRefreshAvatarInitialsNilSafe(t *testing.T) {
+	req := require.New(t)
+	svc := user{settings: &types.AppSettings{}}
+	svc.settings.Auth.Internal.ProfileAvatar.Enabled = true
+
+	req.NotPanics(func() {
+		svc.maybeRefreshAvatarInitials(context.Background(), nil)
+		svc.maybeRefreshAvatarInitials(context.Background(), &types.User{Name: "Максим Николаев"})
+		svc.maybeRefreshAvatarInitials(context.Background(), &types.User{Name: "Максим Николаев", Meta: nil})
+	})
 }
 
 func (uu u) LookupUserByHandle(ctx context.Context, handle string) (*types.User, error) {

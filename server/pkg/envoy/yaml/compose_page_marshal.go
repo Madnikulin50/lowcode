@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	automationTypes "github.com/cortezaproject/corteza/server/automation/types"
-	composeTypes "github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/envoy"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
+	automationTypes "github.com/madnikulin50/lowcode/server/automation/types"
+	composeTypes "github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
 )
 
 func composePageFromResource(r *resource.ComposePage, cfg *EncoderConfig) *composePage {
@@ -217,11 +217,17 @@ func (c *composePageBlock) MarshalYAML() (interface{}, error) {
 
 	case "Calendar":
 		ff, _ := opt["feeds"].([]interface{})
-		for i, f := range ff {
+		n := 0
+		for _, f := range ff {
 			feed, _ := f.(map[string]interface{})
 			fOpts, _ := (feed["options"]).(map[string]interface{})
-			fOpts["module"] = c.refMod[i]
+			// the references were collected for the feeds that name a module
+			if !namesModule(fOpts) || n >= len(c.refMod) {
+				continue
+			}
+			fOpts["module"] = c.refMod[n]
 			delete(fOpts, "moduleID")
+			n++
 		}
 		break
 
@@ -240,12 +246,59 @@ func (c *composePageBlock) MarshalYAML() (interface{}, error) {
 		}
 		break
 
+	case "RecordGraph":
+		// the references were collected for the modules that are named, in order
+		mm, _ := opt["excludeModules"].([]interface{})
+		n := 0
+		for i, m := range mm {
+			id, _ := m.(string)
+			if id == "" || id == "0" || n >= len(c.refMod) {
+				continue
+			}
+			mm[i] = c.refMod[n]
+			n++
+		}
+
+		// then the name templates, in the same order the references were collected
+		ll, _ := opt["labels"].([]interface{})
+		for _, l := range ll {
+			label, _ := l.(map[string]interface{})
+			if !namesModule(label) || n >= len(c.refMod) {
+				continue
+			}
+			label["module"] = c.refMod[n]
+			delete(label, "moduleID")
+			n++
+		}
+		break
+
+	case "RelatedRecords":
+		// the references were collected for the relations that name a module, in order
+		rr, _ := opt["relations"].([]interface{})
+		n := 0
+		for _, r := range rr {
+			rel, _ := r.(map[string]interface{})
+			if !namesModule(rel) || n >= len(c.refMod) {
+				continue
+			}
+			rel["module"] = c.refMod[n]
+			delete(rel, "moduleID")
+			n++
+		}
+		break
+
 	case "Metric":
 		mm, _ := opt["metrics"].([]interface{})
-		for i, m := range mm {
+		n := 0
+		for _, m := range mm {
 			mops, _ := m.(map[string]interface{})
-			mops["module"] = c.refMod[i]
+			// the references were collected for the metrics that name a module
+			if !namesModule(mops) || n >= len(c.refMod) {
+				continue
+			}
+			mops["module"] = c.refMod[n]
 			delete(mops, "moduleID")
+			n++
 		}
 		break
 
@@ -297,4 +350,19 @@ func (c *composePageBlock) cleanupModuleFields(opt map[string]interface{}) {
 	}
 
 	opt["fields"] = retFF
+}
+
+// namesModule: the options of a block's item (a feed, a metric, a relation)
+// refer to a module - the same test that decides whether a reference to one was
+// collected for it (see resource.ComposePage), so the references can be matched
+// to the items in order.
+func namesModule(opt map[string]interface{}) bool {
+	// the first key that is present decides, as when the references are collected
+	for _, k := range []string{"module", "moduleID"} {
+		if v, has := opt[k]; has {
+			id, _ := v.(string)
+			return id != "" && id != "0"
+		}
+	}
+	return false
 }

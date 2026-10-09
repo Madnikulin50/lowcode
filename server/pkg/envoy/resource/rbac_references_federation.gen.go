@@ -7,7 +7,7 @@ package resource
 //
 
 import (
-	"github.com/cortezaproject/corteza/server/federation/types"
+	"github.com/madnikulin50/lowcode/server/federation/types"
 )
 
 // FederationNodeRbacReferences generates RBAC references

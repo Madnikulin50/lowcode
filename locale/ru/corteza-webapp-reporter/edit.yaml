@@ -5,7 +5,7 @@ name: Имя
 name-with-star: 'Имя*'
 new-report: New Отчет
 permissions: Права доступа
-unsavedChanges: Unsaved changes will be lost. Do you wish to leave the page?
+unsavedChanges: Несохраненные изменения will be lost. Do you wish to leave the page?
 report:
   create: Create Отчет
   builder: Отчет Builder

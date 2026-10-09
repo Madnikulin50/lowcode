@@ -1,0 +1,27 @@
+title: Multi-factor authentication
+emailOTP:
+  enabled-label: Enable email OTP (one-time password sent to email)
+  enabled:
+    text: Email OTP verification is currently <strong>enabled</strong> for all users
+  disabled:
+    text: Email OTP verification is currently <strong>disabled</strong> for all users
+  enable:
+    label: Enable
+  disable:
+    label: Disable
+  enforced: Require all users to use email OTP
+  expires:
+    label: Valid for
+    description: How long will OTP be valid before it expires
+TOTP:
+  enabled-label: Enable TOTP (time-based one-time password via mobile app)
+  enabled:
+    text: TOTP verification is currently <strong>enabled</strong> for all users
+  disabled:
+    text: TOTP verification is currently <strong>disabled</strong> for all users
+  remove:
+    label: Remove
+  enforced: Require all users to use TOTP
+  issuer:
+    label: Issuer
+    description: Issuer name will be sent to authenticator app when user configures it

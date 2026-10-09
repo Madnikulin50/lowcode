@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/go-oauth2/oauth2/v4"
 	oauth2errors "github.com/go-oauth2/oauth2/v4/errors"
 	oauth2models "github.com/go-oauth2/oauth2/v4/models"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

@@ -11,7 +11,7 @@
   [![DockerHub Downloads Card](https://img.shields.io/docker/pulls/cortezaproject/corteza?style=for-the-badge)](https://img.shields.io/docker/pulls/cortezaproject/corteza?style=for-the-badge)
   [![Latest Version Card](https://img.shields.io/github/v/release/cortezaproject/corteza?label=stable%20version&style=for-the-badge)](https://img.shields.io/github/v/release/cortezaproject/corteza?label=stable%20version&style=for-the-badge)
 
-  [![Go Report Card](https://goreportcard.com/badge/github.com/cortezaproject/corteza?style=for-the-badge)](https://goreportcard.com/report/github.com/cortezaproject/corteza?style=for-the-badge)
+  [![Go Report Card](https://goreportcard.com/badge/github.com/madnikulin50/lowcode?style=for-the-badge)](https://goreportcard.com/report/github.com/madnikulin50/lowcode?style=for-the-badge)
   [![CodeCov Report Card](https://img.shields.io/codecov/c/github/cortezaproject/corteza-server?style=for-the-badge)](https://img.shields.io/codecov/c/github/cortezaproject/corteza-server?style=for-the-badge)
 
   [![Community](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fforum.cortezaproject.org%2F&style=for-the-badge)](https://img.shields.io/discourse/topics?server=https%3A%2F%2Fforum.cortezaproject.org%2F&style=for-the-badge)

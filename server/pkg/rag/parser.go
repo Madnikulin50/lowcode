@@ -1,0 +1,296 @@
+package rag
+
+import (
+	"archive/zip"
+	"bytes"
+	"context"
+	"encoding/xml"
+	"fmt"
+	"io"
+	"os/exec"
+	"regexp"
+	"strings"
+	"time"
+
+	"github.com/ledongthuc/pdf"
+)
+
+type ParsedDocument struct {
+	Text     string
+	Title    string
+	Kind     string
+	Partial  bool
+	NeedsOCR bool
+}
+
+const DefaultExtractMaxChars = 64000
+
+func ParseDocument(data []byte, filename, mimetype string) (*ParsedDocument, error) {
+	kind := DetectKind(filename, mimetype)
+	var (
+		doc *ParsedDocument
+		err error
+	)
+	switch kind {
+	case "txt":
+		doc, err = parseText(data)
+	case "html":
+		doc, err = parseHTML(data)
+	case "docx":
+		doc, err = parseDocx(data)
+	case "pdf":
+		doc, err = parsePDF(data)
+	case "xlsx":
+		doc, err = parseXLSX(data)
+	case "dxf":
+		doc, err = parseDXF(data)
+	case "ifc":
+		doc, err = parseIFC(data)
+	case "ifczip":
+		doc, err = parseIFCZip(data)
+	case "bimx":
+		doc, err = parseBIMX(data)
+	case "dwg":
+		doc, err = parseDWG(data, filename)
+	case "pln", "pla":
+		doc, err = parseArchiCAD(data, kind)
+	default:
+		if looksBinary(data) {
+			doc, err = harvestDocument(data, kind, true)
+		} else {
+			doc, err = parseText(data)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	if doc == nil {
+		doc = &ParsedDocument{}
+	}
+	if doc.Kind == "" {
+		doc.Kind = kind
+		if doc.Kind == "" {
+			doc.Kind = "text"
+		}
+	}
+	doc.Text = SanitizeExtractedText(doc.Text)
+	return doc, nil
+}
+
+func parseText(data []byte) (*ParsedDocument, error) {
+	text := string(data)
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+	title := extractTitle(text)
+	return &ParsedDocument{Text: text, Title: title, Kind: "txt"}, nil
+}
+
+var htmlTagRe = regexp.MustCompile(`<[^>]*>`)
+var htmlScriptRe = regexp.MustCompile(`(?s)<script[^>]*>.*?</script>`)
+var htmlStyleRe = regexp.MustCompile(`(?s)<style[^>]*>.*?</style>`)
+var htmlTitleRe = regexp.MustCompile(`(?i)<title[^>]*>(.*?)</title>`)
+var multSpaceRe = regexp.MustCompile(`\n{3,}`)
+
+func parseHTML(data []byte) (*ParsedDocument, error) {
+	text := string(data)
+	title := ""
+	if m := htmlTitleRe.FindStringSubmatch(text); len(m) > 1 {
+		title = strings.TrimSpace(m[1])
+	}
+	text = htmlScriptRe.ReplaceAllString(text, "")
+	text = htmlStyleRe.ReplaceAllString(text, "")
+	text = htmlTagRe.ReplaceAllString(text, " ")
+	text = decodeHTMLEntities(text)
+	text = multSpaceRe.ReplaceAllString(text, "\n\n")
+	text = strings.TrimSpace(text)
+	return &ParsedDocument{Text: text, Title: title, Kind: "html"}, nil
+}
+
+func decodeHTMLEntities(s string) string {
+	repl := strings.NewReplacer(
+		"&nbsp;", " ",
+		"&amp;", "&",
+		"&lt;", "<",
+		"&gt;", ">",
+		"&quot;", "\"",
+		"&apos;", "'",
+		"&#39;", "'",
+		"&mdash;", "—",
+		"&ndash;", "–",
+		"&hellip;", "…",
+	)
+	return repl.Replace(s)
+}
+
+type docxDocument struct {
+	Body docxBody `xml:"body"`
+}
+
+type docxBody struct {
+	Paragraphs []docxParagraph `xml:"p"`
+}
+
+type docxParagraph struct {
+	Runs []docxRun `xml:"r"`
+}
+
+type docxRun struct {
+	Text string `xml:"t"`
+}
+
+func parseDocx(data []byte) (*ParsedDocument, error) {
+	reader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return nil, fmt.Errorf("parse docx: %w", err)
+	}
+	var docXML []byte
+	for _, f := range reader.File {
+		if f.Name == "word/document.xml" {
+			rc, err := f.Open()
+			if err != nil {
+				return nil, fmt.Errorf("parse docx: open document.xml: %w", err)
+			}
+			docXML, err = io.ReadAll(rc)
+			rc.Close()
+			if err != nil {
+				return nil, fmt.Errorf("parse docx: read document.xml: %w", err)
+			}
+			break
+		}
+	}
+	if docXML == nil {
+		return nil, fmt.Errorf("parse docx: word/document.xml not found")
+	}
+	text := ""
+	var doc docxDocument
+	if err := xml.Unmarshal(docXML, &doc); err == nil {
+		var paragraphs []string
+		for _, p := range doc.Body.Paragraphs {
+			var line strings.Builder
+			for _, r := range p.Runs {
+				line.WriteString(r.Text)
+			}
+			if s := strings.TrimSpace(line.String()); s != "" {
+				paragraphs = append(paragraphs, s)
+			}
+		}
+		text = strings.Join(paragraphs, "\n")
+	}
+	if strings.TrimSpace(text) == "" {
+		text = extractDocxTextSimple(docXML)
+	}
+	title := extractTitle(text)
+	return &ParsedDocument{Text: text, Title: title, Kind: "docx"}, nil
+}
+
+var docxTextRe = regexp.MustCompile(`<w:t[^>]*>([^<]*)</w:t>`)
+
+func extractDocxTextSimple(xmlData []byte) string {
+	var parts []string
+	matches := docxTextRe.FindAllSubmatch(xmlData, -1)
+	for _, m := range matches {
+		if len(m) > 1 {
+			parts = append(parts, string(m[1]))
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// pdftotextTimeout bounds the external extractor so a pathological file
+// cannot stall the caller (rule chains, RAG ingest) indefinitely.
+const pdftotextTimeout = 2 * time.Minute
+
+func parsePDF(data []byte) (*ParsedDocument, error) {
+	// Prefer poppler's pdftotext when installed: it handles PNG predictors,
+	// CID fonts and Cyrillic far better than the pure-Go reader below.
+	if text, err := pdftotext(data); err == nil {
+		return newPDFDocument(text, false), nil
+	}
+	return parsePDFGo(data)
+}
+
+func pdftotext(data []byte) (string, error) {
+	bin, err := exec.LookPath("pdftotext")
+	if err != nil {
+		return "", err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), pdftotextTimeout)
+	defer cancel()
+	var out, stderr bytes.Buffer
+	cmd := exec.CommandContext(ctx, bin, "-enc", "UTF-8", "-q", "-", "-")
+	cmd.Stdin = bytes.NewReader(data)
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("pdftotext: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	// Form feeds separate pages.
+	return strings.ReplaceAll(out.String(), "\f", "\n"), nil
+}
+
+func parsePDFGo(data []byte) (*ParsedDocument, error) {
+	reader := bytes.NewReader(data)
+	size := reader.Size()
+	pdfReader, err := pdf.NewReader(reader, size)
+	if err != nil {
+		return nil, fmt.Errorf("parse pdf: %w", err)
+	}
+	var (
+		text    strings.Builder
+		skipped int
+	)
+	for i := 1; i <= pdfReader.NumPage(); i++ {
+		if !appendPDFPageText(&text, pdfReader, i) {
+			skipped++
+		}
+	}
+	doc := newPDFDocument(text.String(), skipped > 0)
+	return doc, nil
+}
+
+// appendPDFPageText extracts one page; the pdf library panics on some
+// encodings (e.g. unsupported stream predictors), so a bad page is skipped
+// rather than aborting the whole document.
+func appendPDFPageText(text *strings.Builder, r *pdf.Reader, i int) (ok bool) {
+	defer func() {
+		if recover() != nil {
+			ok = false
+		}
+	}()
+	page := r.Page(i)
+	if page.V.IsNull() {
+		return true
+	}
+	content := page.Content()
+	var b strings.Builder
+	for _, t := range content.Text {
+		b.WriteString(t.S)
+		b.WriteString(" ")
+	}
+	text.WriteString(b.String())
+	text.WriteString("\n")
+	return true
+}
+
+func newPDFDocument(text string, partial bool) *ParsedDocument {
+	result := strings.TrimSpace(strings.ReplaceAll(text, "\x00", ""))
+	doc := &ParsedDocument{Text: result, Title: extractTitle(result), Kind: "pdf", Partial: partial}
+	if result == "" {
+		doc.NeedsOCR = true
+		doc.Partial = true
+	}
+	return doc
+}
+
+var titleRe = regexp.MustCompile(`(?m)^(.{1,100})$`)
+
+func extractTitle(text string) string {
+	lines := strings.Split(text, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if len(line) > 5 && len(line) <= 100 {
+			return line
+		}
+	}
+	return ""
+}

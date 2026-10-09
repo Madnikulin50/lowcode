@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"context"
 
-	. "github.com/cortezaproject/corteza/server/pkg/expr"
+	. "github.com/madnikulin50/lowcode/server/pkg/expr"
 )
 
 type (

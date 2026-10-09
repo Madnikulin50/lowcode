@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql/driver"
 	"encoding/json"
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
-	"github.com/cortezaproject/corteza/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
 )
 
 type (

@@ -3,13 +3,13 @@ package rest
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/compose/rest/request"
-	"github.com/cortezaproject/corteza/server/compose/service"
-	"github.com/cortezaproject/corteza/server/compose/service/event"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/corredor"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/compose/rest/request"
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/compose/service/event"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/corredor"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 )
 
 type (
@@ -192,8 +192,8 @@ func (ctrl Module) makePayload(ctx context.Context, m *types.Module, err error) 
 		CanUpdateModule: ctrl.ac.CanUpdateModule(ctx, m),
 		CanDeleteModule: ctrl.ac.CanDeleteModule(ctx, m),
 
-		CanCreateRecord:      ctrl.ac.CanCreateRecordOnModule(ctx, m),
-		CanCreateOwnedRecord: ctrl.ac.CanCreateOwnedRecordOnModule(ctx, m),
+		CanCreateRecord:      m.Config.Type != "datasource" && m.Config.Type != "connector" && ctrl.ac.CanCreateRecordOnModule(ctx, m),
+		CanCreateOwnedRecord: m.Config.Type != "datasource" && m.Config.Type != "connector" && ctrl.ac.CanCreateOwnedRecordOnModule(ctx, m),
 	}, nil
 }
 

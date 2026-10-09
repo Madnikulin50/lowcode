@@ -6,27 +6,32 @@ import (
 	"strconv"
 	"time"
 
-	automationService "github.com/cortezaproject/corteza/server/automation/service"
-	"github.com/cortezaproject/corteza/server/compose/automation"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	discoveryService "github.com/cortezaproject/corteza/server/discovery/service"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/corredor"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/healthcheck"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/objstore"
-	"github.com/cortezaproject/corteza/server/pkg/objstore/minio"
-	"github.com/cortezaproject/corteza/server/pkg/objstore/plain"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
-	systemService "github.com/cortezaproject/corteza/server/system/service"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	automationService "github.com/madnikulin50/lowcode/server/automation/service"
+	"github.com/madnikulin50/lowcode/server/compose/automation"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	discoveryService "github.com/madnikulin50/lowcode/server/discovery/service"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
+	"github.com/madnikulin50/lowcode/server/pkg/chat"
+	"github.com/madnikulin50/lowcode/server/pkg/corredor"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/healthcheck"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore/dbblob"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore/minio"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore/plain"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemService "github.com/madnikulin50/lowcode/server/system/service"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
+
+	"github.com/madnikulin50/lowcode/server/pkg/rag"
 )
 
 type (
@@ -44,6 +49,8 @@ type (
 		Discovery        options.DiscoveryOpt
 		Storage          options.ObjectStoreOpt
 		Limit            options.LimitOpt
+		ImageSearch      options.ImageSearchOpt
+		Cache            options.CacheOpt
 		UserFinder       userFinder
 		SchemaAltManager schemaAltManager
 	}
@@ -55,7 +62,19 @@ type (
 )
 
 var (
+	// DefaultObjectStore is kept for backward compat / anything that just
+	// wants "the" store — it's an alias for DefaultObjectStores[DefaultObjectStoreLegacyDriver].
 	DefaultObjectStore objstore.Store
+
+	// DefaultObjectStores holds every configured attachment storage backend,
+	// keyed by driver name ("plain", "minio", "db") — see attachment.go's
+	// per-field/per-attachment resolver.
+	DefaultObjectStores map[string]objstore.Store
+
+	// DefaultObjectStoreLegacyDriver is whichever single backend ("plain" or
+	// "minio") was configured before per-field storage selection existed —
+	// the fallback for attachments with no recorded Meta.StorageDriver.
+	DefaultObjectStoreLegacyDriver string
 
 	// DefaultStore is an interface to storage backend(s)
 	// ng (next-gen) is a temporary prefix
@@ -75,11 +94,16 @@ var (
 	DefaultModule              ModuleService
 	DefaultChart               *chart
 	DefaultPage                *page
+	DefaultChat                *chatService
 	DefaultPageLayout          *pageLayout
 	DefaultAttachment          AttachmentService
 	DefaultNotification        *notification
 	DefaultResourceTranslation ResourceTranslationsManagerService
 	DefaultDataPrivacy         DataPrivacyService
+	DefaultImageSearch         ImageSearchService
+	DefaultETL                 ETLService
+	DefaultRAG                 *RAGService
+	DefaultPagesRAG            *PagesRAGService
 
 	// wrapper around time.Now() that will aid service testing
 	now = func() *time.Time {
@@ -150,10 +174,13 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 			bucket string
 		)
 		const svcPath = "compose"
+
+		DefaultObjectStores = make(map[string]objstore.Store, 3)
+
 		if opt.MinioEndpoint != "" {
 			bucket = minio.GetBucket(opt.MinioBucket, svcPath)
 
-			DefaultObjectStore, err = minio.New(bucket, opt.MinioPathPrefix, svcPath, minio.Options{
+			DefaultObjectStores["minio"], err = minio.New(bucket, opt.MinioPathPrefix, svcPath, minio.Options{
 				Endpoint:        opt.MinioEndpoint,
 				Secure:          opt.MinioSecure,
 				Strict:          opt.MinioStrict,
@@ -167,19 +194,38 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 				zap.String("bucket", bucket),
 				zap.String("endpoint", opt.MinioEndpoint),
 				zap.Error(err))
+
+			DefaultObjectStoreLegacyDriver = "minio"
 		} else {
 			path := opt.Path + "/" + svcPath
-			DefaultObjectStore, err = plain.New(path)
+			DefaultObjectStores["plain"], err = plain.New(path)
 			log.Info("initializing store",
 				zap.String("path", path),
 				zap.Error(err))
 
+			DefaultObjectStoreLegacyDriver = "plain"
 		}
-
-		hcd.Add(objstore.Healthcheck(DefaultObjectStore), "ObjectStore/Compose")
 
 		if err != nil {
 			return err
+		}
+
+		// "db" — file content stored directly in the database — is always
+		// available (see pkg/objstore/dbblob), regardless of which of the
+		// two legacy drivers above is configured; it needs no separate
+		// endpoint/path, just the main DB connection string.
+		if opt.DSN != "" {
+			DefaultObjectStores["db"], err = dbblob.New(opt.DSN, svcPath)
+			log.Info("initializing db-backed store", zap.Error(err))
+			if err != nil {
+				return err
+			}
+		}
+
+		DefaultObjectStore = DefaultObjectStores[DefaultObjectStoreLegacyDriver]
+
+		for name, s := range DefaultObjectStores {
+			hcd.Add(objstore.Healthcheck(s), "ObjectStore/Compose/"+name)
 		}
 	}
 
@@ -187,13 +233,28 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	DefaultModule = Module(c.SchemaAltManager)
 
 	DefaultImportSession = ImportSession()
-	DefaultRecord = Record(RecordOptions{LimitRecords: c.Limit.RecordCountPerModule})
+	DefaultRecord = Record(RecordOptions{LimitRecords: c.Limit.RecordCountPerModule, ReportCacheTTL: c.Cache.ReportTTL})
 	DefaultPage = Page()
 	DefaultPageLayout = PageLayout()
 	DefaultChart = Chart()
+	DefaultChat = Chat()
+	RegisterComposeToolKits(aiagent.DefaultCatalog())
+	aiagent.DefaultCatalog().StartRemoteDiscovery()
 	DefaultNotification = Notification(c.UserFinder)
-	DefaultAttachment = Attachment(DefaultObjectStore, dal.Service())
+	DefaultAttachment = Attachment(DefaultObjectStores, DefaultObjectStoreLegacyDriver, dal.Service())
 	DefaultDataPrivacy = DataPrivacy()
+	DefaultImageSearch = ImageSearch(c.ImageSearch.Enabled)
+	DefaultETL = ETL()
+
+	ragStore, err := rag.NewStore("data/rag.db")
+	if err != nil {
+		panic(fmt.Errorf("rag store: %w", err))
+	}
+	ollamaHost := chat.EffectiveOllamaURL()
+	DefaultRAG = NewRAGService(ragStore, rag.NewEmbedder(ollamaHost, "nomic-embed-text"))
+
+	DefaultPagesRAG = NewPagesRAGService(ragStore, rag.NewEmbedder(ollamaHost, "nomic-embed-text"), log, DefaultPage, DefaultNamespace, DefaultRecord, DefaultResourceTranslation)
+	DefaultPagesRAG.StartDailyCrawl(ctx)
 
 	RegisterIteratorProviders()
 
@@ -211,6 +272,8 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 		DefaultModule,
 		DefaultRecord,
 	)
+
+	automationService.Registry().AddFunctions(LoopIncidentApply(), RunRuleChainFunction())
 
 	automation.ModulesHandler(
 		automationService.Registry(),
@@ -298,6 +361,13 @@ func RegisterIteratorProviders() {
 	)
 }
 
+// sameInstant compares timestamps at second precision in UTC.
+// JS Date only has milliseconds and Date.toISOString() is always UTC, while
+// Postgres timestamptz and Go time.Time may carry microseconds and a location.
+func sameInstant(a, b time.Time) bool {
+	return a.UTC().Truncate(time.Second).Equal(b.UTC().Truncate(time.Second))
+}
+
 // Data is stale when new date does not match updatedAt or createdAt (before first update)
 func isStale(new *time.Time, updatedAt *time.Time, createdAt time.Time) bool {
 	if new == nil {
@@ -306,10 +376,10 @@ func isStale(new *time.Time, updatedAt *time.Time, createdAt time.Time) bool {
 	}
 
 	if updatedAt != nil {
-		return !new.Equal(*updatedAt)
+		return !sameInstant(*new, *updatedAt)
 	}
 
-	return new.Equal(createdAt)
+	return !sameInstant(*new, createdAt)
 }
 
 // trim1st removes 1st param and returns only error

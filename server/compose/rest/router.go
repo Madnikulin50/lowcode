@@ -3,8 +3,8 @@ package rest
 import (
 	"github.com/go-chi/chi/v5"
 
-	"github.com/cortezaproject/corteza/server/compose/rest/handlers"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/compose/rest/handlers"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
 )
 
 func MountRoutes() func(r chi.Router) {
@@ -12,6 +12,7 @@ func MountRoutes() func(r chi.Router) {
 		var (
 			namespace    = Namespace{}.New()
 			module       = Module{}.New()
+			chat         = Chat{}.New()
 			record       = Record{}.New()
 			page         = Page{}.New()
 			pageIcon     = Icon{}.New()
@@ -21,6 +22,8 @@ func MountRoutes() func(r chi.Router) {
 			attachment   = Attachment{}.New()
 			automation   = Automation{}.New()
 			dataPrivacy  = DataPrivacy{}.New()
+			imageSearch  = ImageSearch{}.New()
+			rag          = RAG{}.New()
 		)
 
 		// Initialize handlers & controllers.
@@ -36,6 +39,7 @@ func MountRoutes() func(r chi.Router) {
 			handlers.NewPermissions(Permissions{}.New()).MountRoutes(r)
 			handlers.NewNamespace(namespace).MountRoutes(r)
 			handlers.NewPage(page).MountRoutes(r)
+			handlers.NewChat(chat).MountRoutes(r)
 			handlers.NewIcon(pageIcon).MountRoutes(r)
 			handlers.NewPageLayout(pageLayout).MountRoutes(r)
 			handlers.NewAutomation(automation).MountRoutes(r)
@@ -44,6 +48,19 @@ func MountRoutes() func(r chi.Router) {
 			handlers.NewChart(chart).MountRoutes(r)
 			handlers.NewNotification(notification).MountRoutes(r)
 			handlers.NewDataPrivacy(dataPrivacy).MountRoutes(r)
+			handlers.NewImageSearch(imageSearch).MountRoutes(r)
+			handlers.NewETL(ETL{}.New()).MountRoutes(r)
+			handlers.NewConnector(Connector{}.New()).MountRoutes(r)
+			handlers.NewDatasource(Datasource{}.New()).MountRoutes(r)
+			MountDocumentRoutes(r)
+			MountRuleChainRoutes(r)
+			MountRuleChainAdminRoutes(r)
+			MountRiskAdminRoutes(r)
+			MountPageBlockTriggerRoutes(r)
+			MountStockReorderRoutes(r)
+			MountMCPHTTPBridge(r)
+			MountHealthRoutes(r)
+			rag.MountRoutes(r)
 		})
 	}
 }

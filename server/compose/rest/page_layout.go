@@ -3,12 +3,12 @@ package rest
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/compose/rest/request"
-	"github.com/cortezaproject/corteza/server/compose/service"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/payload"
+	"github.com/madnikulin50/lowcode/server/compose/rest/request"
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/payload"
 )
 
 type (

@@ -13,3 +13,4 @@ types:
   WorkflowStep: {}
   Session: {}
   State: {}
+  PromptVersion: {}

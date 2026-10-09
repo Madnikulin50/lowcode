@@ -8,29 +8,29 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/compose/dalutils"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/compose/dalutils"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
 	"github.com/modern-go/reflect2"
 	"go.uber.org/zap"
 
-	"github.com/cortezaproject/corteza/server/pkg/revisions"
+	"github.com/madnikulin50/lowcode/server/pkg/revisions"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 
-	"github.com/cortezaproject/corteza/server/compose/service/event"
-	"github.com/cortezaproject/corteza/server/compose/service/values"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
-	"github.com/cortezaproject/corteza/server/pkg/label"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/slice"
-	"github.com/cortezaproject/corteza/server/store"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/compose/service/event"
+	"github.com/madnikulin50/lowcode/server/compose/service/values"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
+	"github.com/madnikulin50/lowcode/server/pkg/label"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/slice"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
@@ -612,7 +612,7 @@ func (svc module) updater(ctx context.Context, namespaceID, moduleID uint64, act
 		}
 
 		if err = updateTranslations(ctx, svc.ac, svc.locale, tt...); err != nil {
-			return
+			logger.Default().Warn("error updating translations", zap.Error(err))
 		}
 
 		if changes&moduleLabelsChanged > 0 {
@@ -700,6 +700,7 @@ func (svc module) uniqueCheck(ctx context.Context, m *types.Module) (err error) 
 
 func (svc module) handleUpdate(ctx context.Context, upd *types.Module) moduleUpdateHandler {
 	return func(ctx context.Context, ns *types.Namespace, res *types.Module) (changes moduleChanges, err error) {
+
 		if isStale(upd.UpdatedAt, res.UpdatedAt, res.CreatedAt) {
 			return moduleUnchanged, ModuleErrStaleData()
 		}
@@ -1152,7 +1153,12 @@ func modulesForNamespace(ns *types.Namespace, mm types.ModuleSet) (out types.Mod
 }
 
 // Replaces all given connections
-func DalModelReplace(ctx context.Context, s store.Storer, am schemaAltManager, dmm dalModelManager, ns *types.Namespace, modules ...*types.Module) (err error) {
+func DalModelReplace(ctx context.Context,
+	s store.Storer,
+	am schemaAltManager,
+	dmm dalModelManager,
+	ns *types.Namespace,
+	modules ...*types.Module) (err error) {
 	var (
 		models      dal.ModelSet
 		currentAlts []*dal.Alteration
@@ -1231,6 +1237,10 @@ func ModulesToModelSet(dmm dalModelManager, ns *types.Namespace, mm ...*types.Mo
 
 		// Convert all modules to models
 		for _, mod := range modules {
+			if mod.Config.Type == "connector" {
+				continue
+			}
+
 			if conn == nil {
 				// construct a simplified model w/o attributes, connection
 				// this will allow us to manage model's issues within
@@ -1239,6 +1249,9 @@ func ModulesToModelSet(dmm dalModelManager, ns *types.Namespace, mm ...*types.Mo
 					Label:      mod.Handle,
 					Resource:   mod.RbacResource(),
 					ResourceID: mod.ID,
+				}
+				if mod.Config.Type == "dbref" || mod.Config.Type == "connector" {
+					model.Static = true
 				}
 
 				out = append(out, model)
@@ -1291,13 +1304,15 @@ func ModulesToModelSet(dmm dalModelManager, ns *types.Namespace, mm ...*types.Mo
 
 func modelBaseConstraints(model *dal.Model, mod *types.Module) (out map[string][]any) {
 
-	// If we're writting to the default table apply additional constraints
-	// @todo there should be more logic here, but for now this is what we had
-	//       elsewhere.
+	// Shared compose_record table needs module/namespace isolation.
+	// Skip attributes omitted via SystemFieldEncoding (empty {} is not omit).
 	if model.Ident == recordTable {
-		out = map[string][]any{
-			recordFieldModuleID:    {mod.ID},
-			recordFieldNamespaceID: {mod.NamespaceID},
+		out = map[string][]any{}
+		if model.HasAttribute(recordFieldModuleID) {
+			out[recordFieldModuleID] = []any{mod.ID}
+		}
+		if model.HasAttribute(recordFieldNamespaceID) {
+			out[recordFieldNamespaceID] = []any{mod.NamespaceID}
 		}
 	}
 
@@ -1318,6 +1333,14 @@ func ModuleToModel(ns *types.Namespace, mod *types.Module, inhIdent string) (mod
 		ResourceID:         mod.ID,
 		ResourceType:       types.ModuleResourceType,
 		SensitivityLevelID: mod.Config.Privacy.SensitivityLevelID,
+	}
+
+	if mod.Config.Type == "connector" {
+		return nil, nil
+	}
+
+	if mod.Config.Type == "dbref" {
+		model.Static = true
 	}
 
 	userDefinedFieldIdents := make(map[string]bool)
@@ -1371,6 +1394,57 @@ func ModuleToModel(ns *types.Namespace, mod *types.Module, inhIdent string) (mod
 		}
 	}
 
+	model.Indexes, err = moduleConfigDALIndexesToIndexes(mod.Config.DAL.Indexes, model.Attributes)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// moduleConfigDALIndexesToIndexes converts the admin-facing index
+// declarations on a module into dal.Index, resolving each field name
+// against the module's already-built attribute set.
+//
+// Fields backed by AttributeCodecRecordValueSetJSON are rejected: several
+// Compose fields can share one JSON column there, so "indexing" one by its
+// field ident would really index the whole shared blob, not the field —
+// the admin UI is expected to only offer indexing for fields that map to
+// their own real column (external/native modules with a plain/alias
+// codec), but this guard is what actually keeps a stale or hand-edited
+// config from producing a misleading index.
+func moduleConfigDALIndexesToIndexes(dd types.ModuleConfigDALIndexSet, aa dal.AttributeSet) (out dal.IndexSet, err error) {
+	byIdent := make(map[string]*dal.Attribute, len(aa))
+	for _, a := range aa {
+		byIdent[a.Ident] = a
+	}
+
+	for _, d := range dd {
+		d.DeriveIdent()
+
+		fields := make([]*dal.IndexField, 0, len(d.Fields))
+		for _, fieldIdent := range d.Fields {
+			attr, ok := byIdent[fieldIdent]
+			if !ok {
+				return nil, fmt.Errorf("cannot index unknown field %q", fieldIdent)
+			}
+			if attr.Store != nil && attr.Store.Type() == dal.AttributeCodecRecordValueSetJSON {
+				return nil, fmt.Errorf("cannot index field %q: stored as part of a shared JSON column, not its own column", fieldIdent)
+			}
+
+			fields = append(fields, &dal.IndexField{
+				AttributeIdent: fieldIdent,
+				Sort:           dal.IndexFieldSortAsc,
+			})
+		}
+
+		out = append(out, &dal.Index{
+			Ident:  d.Ident,
+			Unique: d.Unique,
+			Fields: fields,
+		})
+	}
+
 	return
 }
 
@@ -1409,6 +1483,8 @@ func moduleSystemFieldsToAttributes(mod *types.Module) (out dal.AttributeSet, er
 		// with failsafe on CodecAlias
 		mfc = func(defStoreIdent string, es *types.EncodingStrategy) dal.Codec {
 			switch {
+			case es != nil && es.Omit:
+				return nil
 			case es != nil && es.EncodingStrategyAlias != nil:
 				return &dal.CodecAlias{
 					Ident: es.EncodingStrategyAlias.Ident,
@@ -1417,10 +1493,8 @@ func moduleSystemFieldsToAttributes(mod *types.Module) (out dal.AttributeSet, er
 				return &dal.CodecRecordValueSetJSON{
 					Ident: es.EncodingStrategyJSON.Ident,
 				}
-			case es != nil:
-				// assuming omit!
-				return nil
 			default:
+				// nil strategy, empty {}, or omit:false → default column
 				return &dal.CodecAlias{
 					Ident: defStoreIdent,
 				}
@@ -1437,6 +1511,10 @@ func moduleSystemFieldsToAttributes(mod *types.Module) (out dal.AttributeSet, er
 			return
 		}
 	)
+
+	if mod.Config.Type == "dbref" {
+		return nil, err
+	}
 
 	aa := filterSkippedAttribtues(
 		dal.PrimaryAttribute(sysID, mfc(colSysID, sysEnc.ID)),

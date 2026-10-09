@@ -10,42 +10,43 @@ import (
 	"strings"
 	"time"
 
-	authService "github.com/cortezaproject/corteza/server/auth"
-	"github.com/cortezaproject/corteza/server/auth/saml"
-	authSettings "github.com/cortezaproject/corteza/server/auth/settings"
-	autService "github.com/cortezaproject/corteza/server/automation/service"
-	cmpService "github.com/cortezaproject/corteza/server/compose/service"
-	cmpEvent "github.com/cortezaproject/corteza/server/compose/service/event"
-	discoveryService "github.com/cortezaproject/corteza/server/discovery/service"
-	fedService "github.com/cortezaproject/corteza/server/federation/service"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/apigw"
-	apigwTypes "github.com/cortezaproject/corteza/server/pkg/apigw/types"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/corredor"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/healthcheck"
-	"github.com/cortezaproject/corteza/server/pkg/http"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/mail"
-	"github.com/cortezaproject/corteza/server/pkg/messagebus"
-	"github.com/cortezaproject/corteza/server/pkg/monitor"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/provision"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/pkg/scheduler"
-	"github.com/cortezaproject/corteza/server/pkg/sentry"
-	"github.com/cortezaproject/corteza/server/pkg/valuestore"
-	"github.com/cortezaproject/corteza/server/pkg/version"
-	"github.com/cortezaproject/corteza/server/pkg/websocket"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/service"
-	sysService "github.com/cortezaproject/corteza/server/system/service"
-	sysEvent "github.com/cortezaproject/corteza/server/system/service/event"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/lestrrat-go/jwx/jwt"
+	anomalyService "github.com/madnikulin50/lowcode/server/anomaly/service"
+	authService "github.com/madnikulin50/lowcode/server/auth"
+	"github.com/madnikulin50/lowcode/server/auth/saml"
+	authSettings "github.com/madnikulin50/lowcode/server/auth/settings"
+	autService "github.com/madnikulin50/lowcode/server/automation/service"
+	cmpService "github.com/madnikulin50/lowcode/server/compose/service"
+	cmpEvent "github.com/madnikulin50/lowcode/server/compose/service/event"
+	discoveryService "github.com/madnikulin50/lowcode/server/discovery/service"
+	fedService "github.com/madnikulin50/lowcode/server/federation/service"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw"
+	apigwTypes "github.com/madnikulin50/lowcode/server/pkg/apigw/types"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/corredor"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/healthcheck"
+	"github.com/madnikulin50/lowcode/server/pkg/http"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/mail"
+	"github.com/madnikulin50/lowcode/server/pkg/messagebus"
+	"github.com/madnikulin50/lowcode/server/pkg/monitor"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/provision"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/pkg/scheduler"
+	"github.com/madnikulin50/lowcode/server/pkg/sentry"
+	"github.com/madnikulin50/lowcode/server/pkg/valuestore"
+	"github.com/madnikulin50/lowcode/server/pkg/version"
+	"github.com/madnikulin50/lowcode/server/pkg/websocket"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	sysService "github.com/madnikulin50/lowcode/server/system/service"
+	sysEvent "github.com/madnikulin50/lowcode/server/system/service/event"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 	gomail "gopkg.in/mail.v2"
 )
@@ -103,7 +104,7 @@ func (app *CortezaApp) Setup() (err error) {
 
 		if app.Opt.Auth.SessionLifetime < time.Hour {
 			log.Warn("AUTH_SESSION_LIFETIME is set to less then an hour, this might not be what you want." +
-				"When user logs-in without 'remember-me',  AUTH_SESSION_LIFETIME is used to set a maximum time before session is expired if user does not interacts with Corteza. " +
+				"When user logs-in without 'remember-me',  AUTH_SESSION_LIFETIME is used to set a maximum time before session is expired if user does not interacts with LowCoooode. " +
 				"Recommended session lifetime value is between one hour (default) and a day")
 		}
 
@@ -417,6 +418,7 @@ func (app *CortezaApp) InitServices(ctx context.Context) (err error) {
 		Discovery:        app.Opt.Discovery,
 		Storage:          app.Opt.ObjStore,
 		Limit:            app.Opt.Limit,
+		ImageSearch:      app.Opt.ImageSearch,
 		UserFinder:       sysService.DefaultUser,
 		SchemaAltManager: sysService.DefaultDalSchemaAlteration,
 	})
@@ -454,6 +456,10 @@ func (app *CortezaApp) InitServices(ctx context.Context) (err error) {
 		if err != nil {
 			return fmt.Errorf("could not initialize federation services: %w", err)
 		}
+	}
+
+	if err = anomalyService.Initialize(ctx, app.Log, app.Store); err != nil {
+		return fmt.Errorf("could not initialize anomaly services: %w", err)
 	}
 
 	// Initializing discovery
@@ -507,6 +513,8 @@ func (app *CortezaApp) Activate(ctx context.Context) (err error) {
 	if app.Opt.Federation.Enabled {
 		fedService.Watchers(ctx)
 	}
+
+	anomalyService.Watch(ctx)
 
 	monitor.Watcher(ctx)
 
@@ -573,6 +581,19 @@ func (app *CortezaApp) Activate(ctx context.Context) (err error) {
 	if err = sysService.DefaultStylesheet.GenerateCSS(sysService.CurrentSettings, app.Opt.Webapp.ScssDirPath, app.Log); err != nil {
 		return fmt.Errorf("could not generate css for webapps: %w", err)
 	}
+
+	// re-generate CSS whenever LowCoooode branding settings (themes, custom CSS) are saved,
+	// instead of only at boot
+	sysService.DefaultSettings.Register("ui.studio", func(ctx context.Context, current interface{}, set types.SettingValueSet) {
+		appSettings, is := current.(*types.AppSettings)
+		if !is {
+			return
+		}
+
+		if err := sysService.DefaultStylesheet.GenerateCSS(appSettings, app.Opt.Webapp.ScssDirPath, app.Log); err != nil {
+			app.Log.Error("could not regenerate css for webapps", zap.Error(err))
+		}
+	})
 
 	// messagebus reloader and consumer listeners
 	if app.Opt.Messagebus.Enabled {

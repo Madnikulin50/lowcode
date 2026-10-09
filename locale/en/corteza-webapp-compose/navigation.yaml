@@ -1,9 +1,13 @@
 automation: Automation
 chart: Charts
+documents: Documentation
 configuration: Configuration
 editPage: Edit Page
 help:
   documentation: Documentation
+  userDocs: User guide
+  apiDocs: API reference
+  architecture: Architecture
   feedback: Send feedback
   forum: Help
   version: "Version:"
@@ -12,6 +16,8 @@ more: More
 namespace: Namespaces
 noPageTitle: No page title
 page: Pages
+rulechains: Rule chains
+workflows: Workflows
 appMenu: Menu
 userSettings:
   changePassword: Change password

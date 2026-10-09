@@ -6,10 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/auth/external"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/auth/external"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 )
 

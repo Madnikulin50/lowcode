@@ -1,10 +1,10 @@
 editor:
   generate:
-    body: '{{ userLabel }} is sending you an invitation for Corteza Federated Network. To start sharing data between organizations, go to the admin panel of your Corteza application, click on “Federation” and select “Pair Federation Network” on top right corner. Copy the link below and await confirmation from another administrator.'
+    body: '{{ userLabel }} is sending you an invitation for LowCoooode Federated Network. To start sharing data between organizations, go to the admin panel of your LowCoooode application, click on “Federation” and select “Pair Federation Network” on top right corner. Copy the link below and await confirmation from another administrator.'
     description: To add your organization to a federated network send an email invite or share the link below with an administrator of another organization.
     hello: Hello,
     invitation: Invitation to Federated Network
-    kindRegards: Kind regards, Corteza team.
+    kindRegards: Kind regards, LowCoooode team.
     notGenerated: Link not generated
     sendEmail: Send Почтовый адрес
     subject: 'Subject:'
@@ -15,9 +15,9 @@ editor:
     delete: Delete
     deletedAt: Время удаления
     email: Admin Почтовый адрес
-    enabled: Enabled
+    enabled: Включено
     name: Server name *
-    status: Status
+    status: Статус
     tags:
       label: Tags
       placeholder: +Add
@@ -32,20 +32,20 @@ list:
   columns:
     actions: ""
     createdAt: Создано
-    enabled: Enabled
+    enabled: Включено
     name: Имя
-    status: Status
+    status: Статус
     tags: ""
   filterForm:
     query:
-      label: Filter servers list
-      placeholder: Filter servers by name
+      label: Фильтр servers list
+      placeholder: Фильтр servers by name
   loading: Loading federated nodes
   new: New Federated Node
   pair:
     confirm: Confirm
     label: Pair Federated Node
-    networkEstablished: Federated network will be established after the final confirmation from the administrator of another Corteza Federation Node.
+    networkEstablished: Federated network will be established after the final confirmation from the administrator of another LowCoooode Federation Node.
     note: 'Note:'
     status:
       confirmPending:

@@ -49,6 +49,12 @@ kind:
           label: Enable Webcam Capture
           footnote: Use the webcam to capture a picture and upload it
       mimetypesLabel: File type allow list
+      storageDriverLabel: Storage location
+      storageDriverFootnote: Where uploaded file content is actually saved
+      storageDriverDefault: System default
+      storageDriverDb: Database
+      storageDriverPlain: Local disk
+      storageDriverMinio: S3 (Minio)
       modeFootnote: How files are represented in page blocks
       modeLabel: View mode
       showName: Hide file name

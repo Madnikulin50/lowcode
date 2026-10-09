@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	automationTypes "github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/y7s"
+	automationTypes "github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/y7s"
 	"github.com/modern-go/reflect2"
 	"gopkg.in/yaml.v3"
 )
@@ -17,6 +17,115 @@ const (
 )
 
 func (d *auxYamlDoc) unmarshalYAML(k string, n *yaml.Node) (out envoyx.NodeSet, err error) { return }
+
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceItemStepLoadDefinitionNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	refs = map[string]envoyx.Ref{}
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+		switch strings.ToLower(k.Value) {
+		case "module", "mod", "moduleid", "module_id":
+			var auxi any
+			y7s.DecodeScalar(v, "moduleID", &auxi)
+			refs[fmt.Sprintf("Config.Datasource.%d.ModuleID", index)] = envoyx.Ref{
+				ResourceType: types.ModuleResourceType,
+				Identifiers:  envoyx.MakeIdentifiers(auxi),
+			}
+		case "namespave", "ns", "namespaceid", "namespace_id":
+			var auxi any
+			y7s.DecodeScalar(v, "namespaceID", &auxi)
+			refs[fmt.Sprintf("Config.Datasource.%d.NamespaceID", index)] = envoyx.Ref{
+				ResourceType: types.NamespaceResourceType,
+				Identifiers:  envoyx.MakeIdentifiers(auxi),
+			}
+		}
+		return nil
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceItemStepLoadNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+
+		if k.Value != "definition" {
+			return nil
+		}
+		refs, idents, err = d.unmarshalModuleConfigDatasourceItemStepLoadDefinitionNode(r, v, index)
+		return err
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceItemStepNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+
+		if k.Value != "load" {
+			return nil
+		}
+		refs, idents, err = d.unmarshalModuleConfigDatasourceItemStepLoadNode(r, v, index)
+		return err
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceItemNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+
+		if k.Value != "step" {
+			return nil
+		}
+		refs, idents, err = d.unmarshalModuleConfigDatasourceItemStepNode(r, v, index)
+		return err
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigDatasourceNode(r *types.Module, n *yaml.Node, index int) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+
+		if k.Value != "items" {
+			return nil
+		}
+		if y7s.IsSeq(v) {
+			var (
+				auxRefs   = make(map[string]envoyx.Ref)
+				auxIdents envoyx.Identifiers
+				i         = -1
+			)
+			err = y7s.EachSeq(v, func(c *yaml.Node) error {
+				i++
+
+				auxRefs, auxIdents, err = d.unmarshalModuleConfigDatasourceItemNode(r, c, i)
+				refs = envoyx.MergeRefs(refs, auxRefs)
+				idents = idents.Merge(auxIdents)
+				return err
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			refs, idents, err = d.unmarshalModuleConfigDatasourceItemNode(r, v, 0)
+			return err
+		}
+
+		return nil
+	})
+	return
+}
+
+func (d *auxYamlDoc) unmarshalModuleConfigNode(r *types.Module, n *yaml.Node) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
+	if r.Config.Type != "datasource" {
+		return
+	}
+	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
+		if k.Value != "datasource" {
+			return nil
+		}
+
+		refs, idents, err = d.unmarshalModuleConfigDatasourceNode(r, v, 0)
+		return nil
+	})
+
+	return
+}
 
 func (d *auxYamlDoc) unmarshalChartConfigNode(r *types.Chart, n *yaml.Node) (refs map[string]envoyx.Ref, idents envoyx.Identifiers, err error) {
 	err = y7s.EachMap(n, func(k, v *yaml.Node) error {
@@ -89,6 +198,12 @@ func (d *auxYamlDoc) unmarshalPageBlocksNode(r *types.Page, n *yaml.Node) (refs 
 		case "Calendar":
 			refs = envoyx.MergeRefs(refs, getPageBlockCalendarRefs(b, index))
 
+		case "RelatedRecords":
+			refs = envoyx.MergeRefs(refs, getPageBlockRelatedRecordsRefs(b, index))
+
+		case "RecordGraph":
+			refs = envoyx.MergeRefs(refs, getPageBlockRecordGraphRefs(b, index))
+
 		case "Metric":
 			refs = envoyx.MergeRefs(refs, getPageBlockMetricRefs(b, index))
 
@@ -145,10 +260,72 @@ func getPageBlockCalendarRefs(b types.PageBlock, index int) (refs map[string]env
 
 		id := optString(opt, "module", "moduleID")
 		if id == "" || id == "0" {
-			return
+			// this feed has no module; the ones after it still do
+			continue
 		}
 
 		refs[fmt.Sprintf("Blocks.%d.Options.feeds.%d.ModuleID", index, j)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(id),
+		}
+	}
+
+	return
+}
+
+// getPageBlockRecordGraphRefs: the modules a RecordGraph block leaves out are a
+// list of ids (or handles); each one is a reference, keyed by its position.
+func getPageBlockRecordGraphRefs(b types.PageBlock, index int) (refs map[string]envoyx.Ref) {
+	refs = make(map[string]envoyx.Ref)
+
+	mm, _ := b.Options["excludeModules"].([]interface{})
+	for j, m := range mm {
+		id, _ := m.(string)
+		if id == "" || id == "0" {
+			continue
+		}
+
+		refs[fmt.Sprintf("Blocks.%d.Options.excludeModules.%d.ModuleID", index, j)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(id),
+		}
+	}
+
+	// the name templates are kept per module
+	ll, _ := b.Options["labels"].([]interface{})
+	for j, l := range ll {
+		label, _ := l.(map[string]interface{})
+
+		id := optString(label, "module", "moduleID")
+		if id == "" || id == "0" {
+			continue
+		}
+
+		refs[fmt.Sprintf("Blocks.%d.Options.labels.%d.ModuleID", index, j)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(id),
+		}
+	}
+
+	return
+}
+
+// getPageBlockRelatedRecordsRefs: every relation of a RelatedRecords block
+// refers to the module whose records it lists. The reference is keyed by the
+// relation's position, so a relation without a module does not shift the rest.
+func getPageBlockRelatedRecordsRefs(b types.PageBlock, index int) (refs map[string]envoyx.Ref) {
+	refs = make(map[string]envoyx.Ref)
+
+	rr, _ := b.Options["relations"].([]interface{})
+	for j, r := range rr {
+		rel, _ := r.(map[string]interface{})
+
+		id := optString(rel, "module", "moduleID")
+		if id == "" || id == "0" {
+			continue
+		}
+
+		refs[fmt.Sprintf("Blocks.%d.Options.relations.%d.ModuleID", index, j)] = envoyx.Ref{
 			ResourceType: types.ModuleResourceType,
 			Identifiers:  envoyx.MakeIdentifiers(id),
 		}
@@ -166,7 +343,8 @@ func getPageBlockMetricRefs(b types.PageBlock, index int) (refs map[string]envoy
 
 		id := optString(mops, "module", "moduleID")
 		if id == "" || id == "0" {
-			return
+			// this metric has no module; the ones after it still do
+			continue
 		}
 
 		refs[fmt.Sprintf("Blocks.%d.Options.metrics.%d.ModuleID", index, j)] = envoyx.Ref{

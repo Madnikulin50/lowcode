@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"golang.org/x/text/language"
 
 	"github.com/go-chi/jwtauth"
@@ -21,14 +21,14 @@ import (
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/spf13/cast"
 
-	"github.com/cortezaproject/corteza/server/auth/request"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/payload"
-	systemService "github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
 	oauth2def "github.com/go-oauth2/oauth2/v4"
+	"github.com/madnikulin50/lowcode/server/auth/request"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/payload"
+	systemService "github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 )
 
@@ -220,6 +220,10 @@ func (h *AuthHandlers) oauth2Info(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, ok := claims["roles"]; !ok || claims["roles"] == nil {
+		claims["roles"] = []string{}
+	}
+
 	_ = json.NewEncoder(w).Encode(claims)
 }
 
@@ -409,7 +413,7 @@ func (h *AuthHandlers) handleTokenRequest(req *request.AuthReq, client *types.Au
 			}
 		}
 
-		if sessionUserExists && req.AuthUser.User.ID == cast.ToUint64(userID) {
+		if sessionUserExists && user != nil && req.AuthUser.User.ID == cast.ToUint64(userID) {
 			req.AuthUser.User = user
 			req.AuthUser.Save(req.Session)
 		}
@@ -418,26 +422,32 @@ func (h *AuthHandlers) handleTokenRequest(req *request.AuthReq, client *types.Au
 		return fmt.Errorf("unsupported oauth2 grant type: %v", gt)
 	}
 
+	if user == nil {
+		return h.tokenError(w, fmt.Errorf("could not generate token: user not found"))
+	}
+	if user.Meta == nil {
+		user.Meta = &types.UserMeta{}
+	}
+
+	roles := user.Roles()
+	if client.Security != nil {
+		roles = auth.ApplyRoleSecurity(
+			payload.ParseUint64s(client.Security.PermittedRoles),
+			payload.ParseUint64s(client.Security.ProhibitedRoles),
+			payload.ParseUint64s(client.Security.ForcedRoles),
+			roles...,
+		)
+	}
+
 	var (
 		signed []byte
 		scope  = strings.Split(ti.GetScope(), " ")
 	)
 
-	// Here set roles to signed
 	signed, err = auth.TokenIssuer.Sign(
 		auth.WithAccessToken(ti.GetAccess()),
 		auth.WithIdentity(user),
 		func(tr *auth.TokenRequest) error {
-			// Calculate user's roles
-			roles := user.Roles()
-			if client.Security != nil {
-				roles = auth.ApplyRoleSecurity(
-					payload.ParseUint64s(client.Security.PermittedRoles),
-					payload.ParseUint64s(client.Security.ProhibitedRoles),
-					payload.ParseUint64s(client.Security.ForcedRoles),
-					roles...,
-				)
-			}
 			tr.Roles = roles
 			return nil
 		},
@@ -449,13 +459,16 @@ func (h *AuthHandlers) handleTokenRequest(req *request.AuthReq, client *types.Au
 		return h.tokenError(w, err)
 	}
 
-	// modify token info with signed JWT
-	// this will be sent back to the user
 	ti.SetAccess(string(signed))
 
 	response := h.OAuth2.GetTokenData(ti)
 
-	// include user's avatarID
+	roleIDs := make([]string, len(roles))
+	for i, id := range roles {
+		roleIDs[i] = strconv.FormatUint(id, 10)
+	}
+	response["roles"] = roleIDs
+
 	if user.Meta.AvatarID != 0 {
 		response["avatarID"] = strconv.FormatUint(user.Meta.AvatarID, 10)
 	}

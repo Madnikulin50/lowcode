@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 )
 
 type (
@@ -117,6 +117,17 @@ func (def *Aggregate) dryrun(ctx context.Context) (err error) {
 	return
 }
 
+func isSystemField(field string) bool {
+	switch field {
+	case "deletedAt", "createdAt":
+		return true
+	}
+	if strings.HasPrefix(field, "dimension_") {
+		return true
+	}
+	return false
+}
+
 func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, err error) {
 	exec = &aggregate{
 		source: src,
@@ -131,15 +142,20 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	}
 
 	// Collect attributes from the underlaying step in case own are not provided
+	//
+	// Excludes self: if def got clobbered into def.rel (see
+	// pipelineClobberSteps / collectAttributesExcluding), it must still see
+	// rel's raw, pre-aggregation columns here — not its own not-yet-computed
+	// Group/OutAttributes — to validate its own expressions against.
 	if len(def.SourceAttributes) == 0 {
-		def.SourceAttributes = collectAttributes(def.rel)
+		def.SourceAttributes = collectAttributesExcluding(def.rel, def)
 	}
 
 	// Index source attributes for group/aggregate definition validation
 	srcAttrs := indexAttrs(def.SourceAttributes...)
 	pp := newQlParser(func(ident ql.Ident) (_ ql.Ident, err error) {
 		if _, ok := srcAttrs[ident.Value]; !ok {
-			return ident, fmt.Errorf("unknown attribute %s", ident.Value)
+			return ident, fmt.Errorf("unknown attribute %s for aggregate %v", ident.Value, def.Ident)
 		}
 		return ident, nil
 	})
@@ -158,7 +174,7 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 					return true, a, nil
 				}
 				if _, ok := srcAttrs[a.Symbol]; !ok {
-					return false, nil, fmt.Errorf("unknown attribute %s", a.Symbol)
+					return false, nil, fmt.Errorf("unknown attribute %s for aggregate %v", a.Symbol, def.Ident)
 				}
 
 				return true, a, nil
@@ -173,9 +189,15 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	// Convert & validate group definitions
 	// - groups
 	outAttrs := make(map[string]bool, len(def.Group)+len(def.OutAttributes))
+
 	for i, attr := range def.Group {
+		name := attr.RawExpr
 		attr, err = prepAttr(attr)
 		if err != nil {
+			if isSystemField(name) {
+				continue
+			}
+			err = fmt.Errorf("prepare aggregate %v when group: %w", def.Ident, err)
 			return
 		}
 
@@ -185,12 +207,26 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 		exec.groupDefs = append(exec.groupDefs, attr)
 		outAttrs[idtf] = true
 	}
+	if len(exec.groupDefs) == 0 {
+		idtf := ""
+
+		exec.groupDefs = append(exec.groupDefs, AggregateAttr{
+			RawExpr: "",
+			Type: &TypeNumber{HasDefault: true,
+				DefaultValue: 0,
+				Precision:    -1, Scale: -1,
+			},
+		})
+		outAttrs[idtf] = true
+	}
+
 	// - aggregates
 	for i, attr := range def.OutAttributes {
 		// @todo change when needed; currently, all aggregates are numbers
 		attr.Type = &TypeNumber{}
 		attr, err = prepAttr(attr)
 		if err != nil {
+			err = fmt.Errorf("prepare aggregate %v on output: %w", def.Ident, err)
 			return
 		}
 
@@ -207,10 +243,10 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 		return
 	}*/
 
-	if len(def.OutAttributes) == 0 {
+	/*if len(def.OutAttributes) == 0 {
 		err = fmt.Errorf("no output attributes specified")
 		return
-	}
+	}*/
 
 	if len(def.SourceAttributes) == 0 {
 		err = fmt.Errorf("no source attributes specified")
@@ -220,8 +256,11 @@ func (def *Aggregate) init(ctx context.Context, src Iterator) (exec *aggregate, 
 	// order
 	for _, s := range def.filter.OrderBy() {
 		if _, ok := outAttrs[s.Column]; !ok {
-			err = fmt.Errorf("order by attribute %s does not exist", s.Column)
-			return
+			if isSystemField(s.Column) {
+				continue
+			}
+			err = fmt.Errorf("prepare aggregate %v on sort: %w", def.Ident, err)
+			continue
 		}
 	}
 
@@ -283,7 +322,17 @@ func (def *Aggregate) determineAttrType(base AggregateAttr, ss []AttributeMappin
 	return
 }
 
+// IsDummyGroup is true for the placeholder group injected when there are no
+// dimensions (scalar COUNT/SUM). RDBMS SQL omits it from SELECT; scan buffers
+// must omit it too or Scan fails with a column-count mismatch.
+func (a AggregateAttr) IsDummyGroup() bool {
+	return a.Identifier == "" && strings.TrimSpace(a.RawExpr) == "" && a.Expression == nil && !a.MultiValue
+}
+
 func (a AggregateAttr) toSimpleAttr() SimpleAttr {
+	if a.Type == nil {
+		fmt.Printf("null attribute type for %v\n", a.Label)
+	}
 	return SimpleAttr{
 		Ident: a.Identifier,
 		Props: MapProperties{

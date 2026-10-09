@@ -1,15 +1,12 @@
 package tests
 
-// This file is auto-generated.
-//
-// Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated from {{ .Source }}
+// Formerly generated from CUE; now maintained by hand.
 //
 
 import (
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/store"
 )
 
 func testAllGenerated(t *testing.T, s store.Storer) {
@@ -41,8 +38,14 @@ func testAllGenerated(t *testing.T, s store.Storer) {
 	t.Run("authSession", func(t *testing.T) {
 		testAuthSessions(t, s)
 	})
+	t.Run("automationPromptVersion", func(t *testing.T) {
+		testAutomationPromptVersions(t, s)
+	})
 	t.Run("automationSession", func(t *testing.T) {
 		testAutomationSessions(t, s)
+	})
+	t.Run("automationState", func(t *testing.T) {
+		testAutomationStates(t, s)
 	})
 	t.Run("automationTrigger", func(t *testing.T) {
 		testAutomationTriggers(t, s)

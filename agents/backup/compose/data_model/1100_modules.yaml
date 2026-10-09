@@ -1,0 +1,96 @@
+namespace: backup
+modules:
+  agents:
+    name: Агенты
+    fields:
+      name: { label: Имя, kind: String, required: true }
+      url: { label: URL, kind: String }
+      hostname: { label: Hostname, kind: String }
+      capabilities: { label: Возможности, kind: String }
+      last_seen: { label: Последний контакт, kind: DateTime }
+      status: { label: Статус, kind: Select, options: { options: [online, offline] } }
+  credentials:
+    name: Секреты
+    fields:
+      name: { label: Имя, kind: String, required: true }
+      handle: { label: Handle секрета, kind: String, required: true }
+      kind: { label: Тип, kind: Select, options: { options: [smb, postgres, mysql, s3, restic] } }
+      username: { label: Username, kind: String }
+      extra: { label: Extra JSON, kind: String }
+  sources:
+    name: Источники
+    fields:
+      name: { label: Название, kind: String, required: true }
+      type: { label: Тип, kind: Select, required: true, options: { options: [fs, smb, database, s3] } }
+      agent: { label: Агент, kind: Record, options: { module: agents } }
+      credential: { label: Учётные данные, kind: Record, options: { module: credentials } }
+      path: { label: Путь / UNC, kind: String }
+      host: { label: Хост / S3 endpoint, kind: String }
+      share: { label: SMB share, kind: String }
+      smb_path: { label: Путь внутри шары, kind: String }
+      db_engine: { label: СУБД, kind: Select, options: { options: [postgres, mysql] } }
+      db_name: { label: Имя БД, kind: String }
+      db_port: { label: Порт БД, kind: Number }
+      s3_bucket: { label: S3 bucket, kind: String }
+      s3_prefix: { label: S3 prefix, kind: String }
+      s3_region: { label: S3 region, kind: String }
+      s3_secure: { label: S3 HTTPS, kind: Bool }
+      enabled: { label: Включён, kind: Bool }
+      notes: { label: Заметки, kind: String }
+  policies:
+    name: Политики
+    fields:
+      name: { label: Название, kind: String, required: true }
+      source: { label: Источник, kind: Record, options: { module: sources } }
+      cron: { label: Cron, kind: String, required: true }
+      retention_days: { label: Хранить дней, kind: Number }
+      incremental: { label: Инкремент, kind: Bool }
+      dest_prefix: { label: Prefix MinIO, kind: String }
+      compression: { label: Сжатие, kind: Select, options: { options: [gzip, none] } }
+      enabled: { label: Включена, kind: Bool }
+      last_run: { label: Последний запуск, kind: DateTime }
+      notes: { label: Заметки, kind: String }
+  jobs:
+    name: Джобы
+    fields:
+      policy: { label: Политика, kind: Record, options: { module: policies } }
+      source: { label: Источник, kind: Record, options: { module: sources } }
+      status: { label: Статус, kind: Select, options: { options: [pending, running, completed, failed] } }
+      progress: { label: Прогресс, kind: Number }
+      bytes_read: { label: Прочитано, kind: Number }
+      bytes_written: { label: Записано, kind: Number }
+      files_count: { label: Файлов, kind: Number }
+      kind: { label: Вид, kind: Select, options: { options: [full, incremental, restore, prune] } }
+      engine: { label: Движок, kind: String }
+      error: { label: Ошибка, kind: String }
+      message: { label: Сообщение, kind: String }
+      started_at: { label: Начало, kind: DateTime }
+      finished_at: { label: Конец, kind: DateTime }
+  snapshots:
+    name: Снапшоты
+    fields:
+      job: { label: Джоб, kind: Record, options: { module: jobs } }
+      source: { label: Источник, kind: Record, options: { module: sources } }
+      policy: { label: Политика, kind: Record, options: { module: policies } }
+      s3_bucket: { label: Bucket, kind: String }
+      s3_key: { label: Ключ, kind: String }
+      size_bytes: { label: Размер, kind: Number }
+      checksum: { label: SHA-256, kind: String }
+      files_count: { label: Файлов, kind: Number }
+      kind: { label: Вид, kind: Select, options: { options: [full, incremental] } }
+      engine: { label: Движок, kind: String }
+      restic_id: { label: Restic snapshot, kind: String }
+      expires_at: { label: Истекает, kind: DateTime }
+      restorable: { label: Можно восстановить, kind: Bool }
+      verified: { label: Проверен, kind: Bool }
+  restores:
+    name: Восстановления
+    fields:
+      snapshot: { label: Снапшот, kind: Record, options: { module: snapshots } }
+      dest_type: { label: Куда, kind: Select, options: { options: [original, path, download] } }
+      dest_path: { label: Путь, kind: String }
+      status: { label: Статус, kind: Select, options: { options: [pending, running, completed, failed] } }
+      progress: { label: Прогресс, kind: Number }
+      error: { label: Ошибка, kind: String }
+      started_at: { label: Начало, kind: DateTime }
+      finished_at: { label: Конец, kind: DateTime }

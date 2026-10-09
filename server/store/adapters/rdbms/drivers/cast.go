@@ -1,8 +1,8 @@
 package drivers
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/dal"
 	"github.com/doug-martin/goqu/v9/exp"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
 )
 
 var (

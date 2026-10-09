@@ -14,4 +14,5 @@ list:
     security: Security
     triggers: Triggers
   labelMissing: <label missing>
+  empty: No scripts
   title: Corredor Scripts

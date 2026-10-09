@@ -2,7 +2,7 @@ package types
 
 import (
 	"encoding/json"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -263,4 +263,31 @@ func Test_ChartConfigReportWalkers(t *testing.T) {
 			req.Equal(dID+sID, m["label"])
 		})
 	})
+}
+
+func TestChartConfig_preservesCompare(t *testing.T) {
+	req := require.New(t)
+	in := ChartConfig{
+		Reports: []*ChartConfigReport{{
+			Compare: map[string]interface{}{
+				"enabled":       true,
+				"dateField":     "createdAt",
+				"granularity":   "month",
+				"mode":          "previous-period",
+				"currentLabel":  "Текущий",
+				"previousLabel": "Прошлый",
+			},
+		}},
+	}
+
+	raw, err := json.Marshal(in)
+	req.NoError(err)
+	req.Contains(string(raw), `"compare"`)
+
+	var out ChartConfig
+	req.NoError(json.Unmarshal(raw, &out))
+	req.NotNil(out.Reports[0].Compare)
+	req.Equal(true, out.Reports[0].Compare["enabled"])
+	req.Equal("createdAt", out.Reports[0].Compare["dateField"])
+	req.Equal("month", out.Reports[0].Compare["granularity"])
 }

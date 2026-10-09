@@ -25,6 +25,9 @@ general:
     handle: Unique identifier (a - z, 0 - 9, underscore, dash)
     invalid-handle-characters: Should be at least 2 characters long. Can contain only letters, numbers, underscores and dots. Must end with letter or number
 edit:
+  nav:
+    axesLegend: Axes & Legend
+    advanced: Advanced
   animation:
     label: Animation
     enabled: Animation enabled
@@ -94,9 +97,18 @@ edit:
     fx:
       description: n - current dataset value, m - previous dataset value
       label: Post processing function
+    stacked: Stacked
+    showSymbol: Show symbols
+    valueLabelPosition:
+      label: Label position
+      top: Outside
+      inside: Inside
     stack:
       label: Stack
       description: Metrics with same value will be stacked
+    stackBy:
+      label: Stack by
+      placeholder: None
     lineStyle:
       label: Line style
       default: Default
@@ -217,10 +229,62 @@ edit:
         bottom: Bottom
         left: Left
       valueRange: Values can be set as pixels 20 or as percentages 20%
+    anomaly:
+      label: Anomaly Detection
+      enable: Enable anomaly detection
+      method: Method
+      threshold: Threshold
+      min: Min value
+      max: Max value
+      color: Highlight color
+      methodZscore: Z-Score
+      methodIqr: IQR
+      methodFixed: Fixed range
+      methodPctChange: Percent change
+    compare:
+      label: Period comparison
+      enable: Compare to a previous period
+      dateField: Date field
+      granularity: Period
+      granularityOptions:
+        week: Week
+        month: Month
+        quarter: Quarter
+        year: Year
+      mode: Compare against
+      modeOptions:
+        previousPeriod: Previous period
+        yearOverYear: Same period last year
+      currentLabel: Current period label
+      currentLabelPlaceholder: Current period
+      previousLabel: Previous period label
+      previousLabelPlaceholder: Previous period
+      footnote: Replaces this report's own dimension with a day-of-period x-axis, so the current and previous period line up for comparison. Available for bar and line charts only.
+    forecast:
+      label: Forecast
+      enable: Show a forecast
+      method: Method
+      methodLinear: Linear trend
+      methodMovingAverage: Moving average
+      methodExpSmoothing: Exponential smoothing
+      periods: Periods to project
+      color: Forecast color
+      scenarios: Show optimistic/pessimistic scenarios
+      scenarioStyle: Scenario display
+      scenarioStyleLines: Three dashed lines
+      scenarioStyleBand: Shaded band
+      deviation: Scenario spread
+      deviationAuto: Automatic (based on historical volatility)
+      deviationManual: Manual percentage
+      deviationPct: Deviation
+      needsTimeLabels: 'This dimension does not have "time labels" enabled, so the forecast has nothing temporal to project — enable it in the dimension''s options above.'
+      footnote: Projects the line forward past the last data point, drawn dashed in a secondary color. Only available for line charts with a temporal x-axis, and not combined with period comparison.
   toolbox:
     label: Tools
     saveAsImage:
       label: Show "Save as Image" button
+    showDataTable:
+      label: Show data table
     timeline:
       label: Timeline
       options:
@@ -250,6 +314,13 @@ import: 'Import chart(s):'
 newLabel: 'Create a new chart:'
 name: Chart name *
 handle: Handle
+description:
+  label: Description
+  placeholder: Short description shown on the chart block
+help:
+  label: Help
+  description: Optional Markdown shown when users open the help icon
+  placeholder: Explain what this chart shows
 generalSettings: General settings
 notification:
   loadFailed: Could not load chart

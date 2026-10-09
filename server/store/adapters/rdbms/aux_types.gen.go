@@ -1,22 +1,23 @@
 package rdbms
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	automationType "github.com/cortezaproject/corteza/server/automation/types"
-	composeType "github.com/cortezaproject/corteza/server/compose/types"
-	discoveryType "github.com/cortezaproject/corteza/server/discovery/types"
-	federationType "github.com/cortezaproject/corteza/server/federation/types"
-	actionlogType "github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	flagType "github.com/cortezaproject/corteza/server/pkg/flag/types"
-	labelsType "github.com/cortezaproject/corteza/server/pkg/label/types"
-	rbacType "github.com/cortezaproject/corteza/server/pkg/rbac"
-	systemType "github.com/cortezaproject/corteza/server/system/types"
+	anomalyType "github.com/madnikulin50/lowcode/server/anomaly/types"
+	automationType "github.com/madnikulin50/lowcode/server/automation/types"
+	composeType "github.com/madnikulin50/lowcode/server/compose/types"
+	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
+	federationType "github.com/madnikulin50/lowcode/server/federation/types"
+	actionlogType "github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	flagType "github.com/madnikulin50/lowcode/server/pkg/flag/types"
+	labelsType "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	rbacType "github.com/madnikulin50/lowcode/server/pkg/rbac"
+	systemType "github.com/madnikulin50/lowcode/server/system/types"
 	"time"
 )
 
@@ -36,6 +37,52 @@ type (
 		Severity      actionlogType.Severity `db:"severity"`
 		Description   string                 `db:"description"`
 		Meta          actionlogType.Meta     `db:"meta"`
+	}
+
+	// auxAnomalyBaseline is an auxiliary structure used for transporting to/from RDBMS store
+	auxAnomalyBaseline struct {
+		ID          uint64                    `db:"id"`
+		NamespaceID uint64                    `db:"rel_namespace"`
+		ModuleID    uint64                    `db:"rel_module"`
+		RuleID      uint64                    `db:"rel_rule"`
+		Field       string                    `db:"field"`
+		Count       uint64                    `db:"count"`
+		State       anomalyType.BaselineState `db:"state"`
+		UpdatedAt   *time.Time                `db:"updated_at"`
+	}
+
+	// auxAnomalyFinding is an auxiliary structure used for transporting to/from RDBMS store
+	auxAnomalyFinding struct {
+		ID          uint64                         `db:"id"`
+		NamespaceID uint64                         `db:"rel_namespace"`
+		ModuleID    uint64                         `db:"rel_module"`
+		RecordID    uint64                         `db:"rel_record"`
+		RuleID      uint64                         `db:"rel_rule"`
+		Score       float64                        `db:"score"`
+		Severity    string                         `db:"severity"`
+		Status      string                         `db:"status"`
+		Explanation anomalyType.FindingExplanation `db:"explanation"`
+		CreatedAt   time.Time                      `db:"created_at"`
+		UpdatedAt   *time.Time                     `db:"updated_at"`
+	}
+
+	// auxAnomalyRule is an auxiliary structure used for transporting to/from RDBMS store
+	auxAnomalyRule struct {
+		ID            uint64                         `db:"id"`
+		NamespaceID   uint64                         `db:"rel_namespace"`
+		ModuleID      uint64                         `db:"rel_module"`
+		Field         string                         `db:"field"`
+		Detector      string                         `db:"detector"`
+		Threshold     float64                        `db:"threshold"`
+		Enabled       bool                           `db:"enabled"`
+		Params        anomalyType.FindingExplanation `db:"params"`
+		LastScannedAt *time.Time                     `db:"last_scanned_at"`
+		CreatedAt     time.Time                      `db:"created_at"`
+		CreatedBy     uint64                         `db:"created_by"`
+		UpdatedAt     *time.Time                     `db:"updated_at"`
+		UpdatedBy     uint64                         `db:"updated_by"`
+		DeletedAt     *time.Time                     `db:"deleted_at"`
+		DeletedBy     uint64                         `db:"deleted_by"`
 	}
 
 	// auxApigwFilter is an auxiliary structure used for transporting to/from RDBMS store
@@ -154,6 +201,23 @@ type (
 		CreatedAt  time.Time `db:"created_at"`
 	}
 
+	// auxAutomationPromptVersion is an auxiliary structure used for transporting to/from RDBMS store
+	auxAutomationPromptVersion struct {
+		ID          uint64                        `db:"id"`
+		Handle      string                        `db:"handle"`
+		Version     int                           `db:"version"`
+		Description string                        `db:"description"`
+		Text        string                        `db:"text"`
+		Note        string                        `db:"note"`
+		Active      bool                          `db:"active"`
+		Kind        string                        `db:"kind"`
+		Requires    automationType.PromptRequires `db:"requires"`
+		Resources   automationType.PromptFiles    `db:"resources"`
+		Cases       automationType.PromptCases    `db:"cases"`
+		CreatedAt   time.Time                     `db:"created_at"`
+		CreatedBy   uint64                        `db:"created_by"`
+	}
+
 	// auxAutomationSession is an auxiliary structure used for transporting to/from RDBMS store
 	auxAutomationSession struct {
 		ID           uint64                       `db:"id"`
@@ -164,31 +228,42 @@ type (
 		Input        *expr.Vars                   `db:"input"`
 		Output       *expr.Vars                   `db:"output"`
 		Stacktrace   automationType.Stacktrace    `db:"stacktrace"`
-		CreatedBy    uint64                       `db:"created_by"`
 		CreatedAt    time.Time                    `db:"created_at"`
+		CreatedBy    uint64                       `db:"created_by"`
 		PurgeAt      *time.Time                   `db:"purge_at"`
 		SuspendedAt  *time.Time                   `db:"suspended_at"`
 		CompletedAt  *time.Time                   `db:"completed_at"`
 		Error        string                       `db:"error"`
 	}
 
+	// auxAutomationState is an auxiliary structure used for transporting to/from RDBMS store
+	auxAutomationState struct {
+		ID         uint64                        `db:"id"`
+		SessionID  uint64                        `db:"session_id"`
+		WorkflowID uint64                        `db:"workflow_id"`
+		Kind       string                        `db:"kind"`
+		ResumeAt   *time.Time                    `db:"resume_at"`
+		CreatedAt  time.Time                     `db:"created_at"`
+		Snapshot   *automationType.StateSnapshot `db:"snapshot"`
+	}
+
 	// auxAutomationTrigger is an auxiliary structure used for transporting to/from RDBMS store
 	auxAutomationTrigger struct {
 		ID           uint64                              `db:"id"`
+		Enabled      bool                                `db:"enabled"`
 		WorkflowID   uint64                              `db:"workflow_id"`
 		StepID       uint64                              `db:"step_id"`
-		Enabled      bool                                `db:"enabled"`
-		Meta         *automationType.TriggerMeta         `db:"meta"`
 		ResourceType string                              `db:"resource_type"`
 		EventType    string                              `db:"event_type"`
 		Constraints  automationType.TriggerConstraintSet `db:"constraints"`
 		Input        *expr.Vars                          `db:"input"`
+		Meta         *automationType.TriggerMeta         `db:"meta"`
 		OwnedBy      uint64                              `db:"owned_by"`
 		CreatedAt    time.Time                           `db:"created_at"`
-		UpdatedAt    *time.Time                          `db:"updated_at"`
-		DeletedAt    *time.Time                          `db:"deleted_at"`
 		CreatedBy    uint64                              `db:"created_by"`
+		UpdatedAt    *time.Time                          `db:"updated_at"`
 		UpdatedBy    uint64                              `db:"updated_by"`
+		DeletedAt    *time.Time                          `db:"deleted_at"`
 		DeletedBy    uint64                              `db:"deleted_by"`
 	}
 
@@ -207,23 +282,23 @@ type (
 		RunAs        uint64                          `db:"run_as"`
 		OwnedBy      uint64                          `db:"owned_by"`
 		CreatedAt    time.Time                       `db:"created_at"`
-		UpdatedAt    *time.Time                      `db:"updated_at"`
-		DeletedAt    *time.Time                      `db:"deleted_at"`
 		CreatedBy    uint64                          `db:"created_by"`
+		UpdatedAt    *time.Time                      `db:"updated_at"`
 		UpdatedBy    uint64                          `db:"updated_by"`
+		DeletedAt    *time.Time                      `db:"deleted_at"`
 		DeletedBy    uint64                          `db:"deleted_by"`
 	}
 
 	// auxComposeAttachment is an auxiliary structure used for transporting to/from RDBMS store
 	auxComposeAttachment struct {
 		ID          uint64                     `db:"id"`
-		NamespaceID uint64                     `db:"namespace_id"`
 		OwnerID     uint64                     `db:"owner_id"`
 		Kind        string                     `db:"kind"`
 		Url         string                     `db:"url"`
 		PreviewUrl  string                     `db:"preview_url"`
 		Name        string                     `db:"name"`
 		Meta        composeType.AttachmentMeta `db:"meta"`
+		NamespaceID uint64                     `db:"namespace_id"`
 		CreatedAt   time.Time                  `db:"created_at"`
 		UpdatedAt   *time.Time                 `db:"updated_at"`
 		DeletedAt   *time.Time                 `db:"deleted_at"`
@@ -233,9 +308,9 @@ type (
 	auxComposeChart struct {
 		ID          uint64                  `db:"id"`
 		Handle      string                  `db:"handle"`
-		NamespaceID uint64                  `db:"namespace_id"`
 		Name        string                  `db:"name"`
 		Config      composeType.ChartConfig `db:"config"`
+		NamespaceID uint64                  `db:"namespace_id"`
 		CreatedAt   time.Time               `db:"created_at"`
 		UpdatedAt   *time.Time              `db:"updated_at"`
 		DeletedAt   *time.Time              `db:"deleted_at"`
@@ -244,14 +319,14 @@ type (
 	// auxComposeModule is an auxiliary structure used for transporting to/from RDBMS store
 	auxComposeModule struct {
 		ID          uint64                   `db:"id"`
-		NamespaceID uint64                   `db:"namespace_id"`
 		Handle      string                   `db:"handle"`
-		Name        string                   `db:"name"`
-		Meta        rawJson                  `db:"meta"`
 		Config      composeType.ModuleConfig `db:"config"`
+		Meta        rawJson                  `db:"meta"`
+		NamespaceID uint64                   `db:"namespace_id"`
 		CreatedAt   time.Time                `db:"created_at"`
 		UpdatedAt   *time.Time               `db:"updated_at"`
 		DeletedAt   *time.Time               `db:"deleted_at"`
+		Name        string                   `db:"name"`
 	}
 
 	// auxComposeModuleField is an auxiliary structure used for transporting to/from RDBMS store
@@ -260,9 +335,8 @@ type (
 		ModuleID     uint64                         `db:"module_id"`
 		Place        int                            `db:"place"`
 		Kind         string                         `db:"kind"`
-		Options      composeType.ModuleFieldOptions `db:"options"`
 		Name         string                         `db:"name"`
-		Label        string                         `db:"label"`
+		Options      composeType.ModuleFieldOptions `db:"options"`
 		Config       composeType.ModuleFieldConfig  `db:"config"`
 		Required     bool                           `db:"required"`
 		Multi        bool                           `db:"multi"`
@@ -271,6 +345,7 @@ type (
 		CreatedAt    time.Time                      `db:"created_at"`
 		UpdatedAt    *time.Time                     `db:"updated_at"`
 		DeletedAt    *time.Time                     `db:"deleted_at"`
+		Label        string                         `db:"label"`
 	}
 
 	// auxComposeNamespace is an auxiliary structure used for transporting to/from RDBMS store
@@ -279,38 +354,39 @@ type (
 		Slug      string                    `db:"slug"`
 		Enabled   bool                      `db:"enabled"`
 		Meta      composeType.NamespaceMeta `db:"meta"`
-		Name      string                    `db:"name"`
 		CreatedAt time.Time                 `db:"created_at"`
 		UpdatedAt *time.Time                `db:"updated_at"`
 		DeletedAt *time.Time                `db:"deleted_at"`
+		Name      string                    `db:"name"`
 	}
 
 	// auxComposePage is an auxiliary structure used for transporting to/from RDBMS store
 	auxComposePage struct {
 		ID          uint64                 `db:"id"`
-		Title       string                 `db:"title"`
-		Handle      string                 `db:"handle"`
 		SelfID      uint64                 `db:"self_id"`
-		ModuleID    uint64                 `db:"module_id"`
 		NamespaceID uint64                 `db:"namespace_id"`
-		Meta        composeType.PageMeta   `db:"meta"`
+		ModuleID    uint64                 `db:"module_id"`
+		Handle      string                 `db:"handle"`
 		Config      composeType.PageConfig `db:"config"`
 		Blocks      composeType.PageBlocks `db:"blocks"`
+		Meta        composeType.PageMeta   `db:"meta"`
 		Visible     bool                   `db:"visible"`
 		Weight      int                    `db:"weight"`
-		Description string                 `db:"description"`
 		CreatedAt   time.Time              `db:"created_at"`
 		UpdatedAt   *time.Time             `db:"updated_at"`
 		DeletedAt   *time.Time             `db:"deleted_at"`
+		Title       string                 `db:"title"`
+		Prompt      string                 `db:"prompt"`
+		Description string                 `db:"description"`
 	}
 
 	// auxComposePageLayout is an auxiliary structure used for transporting to/from RDBMS store
 	auxComposePageLayout struct {
 		ID          uint64                       `db:"id"`
-		Handle      string                       `db:"handle"`
+		NamespaceID uint64                       `db:"namespace_id"`
 		PageID      uint64                       `db:"page_id"`
 		ParentID    uint64                       `db:"parent_id"`
-		NamespaceID uint64                       `db:"namespace_id"`
+		Handle      string                       `db:"handle"`
 		Weight      int                          `db:"weight"`
 		Meta        composeType.PageLayoutMeta   `db:"meta"`
 		Config      composeType.PageLayoutConfig `db:"config"`
@@ -422,17 +498,17 @@ type (
 	// auxFederationExposedModule is an auxiliary structure used for transporting to/from RDBMS store
 	auxFederationExposedModule struct {
 		ID                 uint64                        `db:"id"`
-		Handle             string                        `db:"handle"`
-		Name               string                        `db:"name"`
 		NodeID             uint64                        `db:"node_id"`
 		ComposeModuleID    uint64                        `db:"compose_module_id"`
 		ComposeNamespaceID uint64                        `db:"compose_namespace_id"`
+		Handle             string                        `db:"handle"`
+		Name               string                        `db:"name"`
 		Fields             federationType.ModuleFieldSet `db:"fields"`
 		CreatedAt          time.Time                     `db:"created_at"`
-		UpdatedAt          *time.Time                    `db:"updated_at"`
-		DeletedAt          *time.Time                    `db:"deleted_at"`
 		CreatedBy          uint64                        `db:"created_by"`
+		UpdatedAt          *time.Time                    `db:"updated_at"`
 		UpdatedBy          uint64                        `db:"updated_by"`
+		DeletedAt          *time.Time                    `db:"deleted_at"`
 		DeletedBy          uint64                        `db:"deleted_by"`
 	}
 
@@ -448,18 +524,18 @@ type (
 	// auxFederationNode is an auxiliary structure used for transporting to/from RDBMS store
 	auxFederationNode struct {
 		ID           uint64     `db:"id"`
-		SharedNodeID uint64     `db:"shared_node_id"`
 		Name         string     `db:"name"`
-		BaseURL      string     `db:"base_url"`
 		Status       string     `db:"status"`
+		BaseURL      string     `db:"base_url"`
 		Contact      string     `db:"contact"`
+		SharedNodeID uint64     `db:"shared_node_id"`
 		PairToken    string     `db:"pair_token"`
 		AuthToken    string     `db:"auth_token"`
 		CreatedAt    time.Time  `db:"created_at"`
-		UpdatedAt    *time.Time `db:"updated_at"`
-		DeletedAt    *time.Time `db:"deleted_at"`
 		CreatedBy    uint64     `db:"created_by"`
+		UpdatedAt    *time.Time `db:"updated_at"`
 		UpdatedBy    uint64     `db:"updated_by"`
+		DeletedAt    *time.Time `db:"deleted_at"`
 		DeletedBy    uint64     `db:"deleted_by"`
 	}
 
@@ -467,24 +543,24 @@ type (
 	auxFederationNodeSync struct {
 		NodeID       uint64    `db:"rel_node"`
 		ModuleID     uint64    `db:"rel_module"`
-		SyncType     string    `db:"sync_type"`
 		SyncStatus   string    `db:"sync_status"`
+		SyncType     string    `db:"sync_type"`
 		TimeOfAction time.Time `db:"time_of_action"`
 	}
 
 	// auxFederationSharedModule is an auxiliary structure used for transporting to/from RDBMS store
 	auxFederationSharedModule struct {
 		ID                         uint64                        `db:"id"`
-		Handle                     string                        `db:"handle"`
 		NodeID                     uint64                        `db:"node_id"`
+		Handle                     string                        `db:"handle"`
 		Name                       string                        `db:"name"`
 		ExternalFederationModuleID uint64                        `db:"external_federation_module_id"`
 		Fields                     federationType.ModuleFieldSet `db:"fields"`
 		CreatedAt                  time.Time                     `db:"created_at"`
-		UpdatedAt                  *time.Time                    `db:"updated_at"`
-		DeletedAt                  *time.Time                    `db:"deleted_at"`
 		CreatedBy                  uint64                        `db:"created_by"`
+		UpdatedAt                  *time.Time                    `db:"updated_at"`
 		UpdatedBy                  uint64                        `db:"updated_by"`
+		DeletedAt                  *time.Time                    `db:"deleted_at"`
 		DeletedBy                  uint64                        `db:"deleted_by"`
 	}
 
@@ -738,6 +814,177 @@ func (aux *auxActionlog) scan(row scanner) error {
 		&aux.Severity,
 		&aux.Description,
 		&aux.Meta,
+	)
+}
+
+// encodes AnomalyBaseline to auxAnomalyBaseline
+//
+// This function is auto-generated
+func (aux *auxAnomalyBaseline) encode(res *anomalyType.Baseline) (_ error) {
+	aux.ID = res.ID
+	aux.NamespaceID = res.NamespaceID
+	aux.ModuleID = res.ModuleID
+	aux.RuleID = res.RuleID
+	aux.Field = res.Field
+	aux.Count = res.Count
+	aux.State = res.State
+	aux.UpdatedAt = res.UpdatedAt
+	return
+}
+
+// decodes AnomalyBaseline from auxAnomalyBaseline
+//
+// This function is auto-generated
+func (aux auxAnomalyBaseline) decode() (res *anomalyType.Baseline, _ error) {
+	res = new(anomalyType.Baseline)
+	res.ID = aux.ID
+	res.NamespaceID = aux.NamespaceID
+	res.ModuleID = aux.ModuleID
+	res.RuleID = aux.RuleID
+	res.Field = aux.Field
+	res.Count = aux.Count
+	res.State = aux.State
+	res.UpdatedAt = aux.UpdatedAt
+	return
+}
+
+// scans row and fills auxAnomalyBaseline fields
+//
+// This function is auto-generated
+func (aux *auxAnomalyBaseline) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.NamespaceID,
+		&aux.ModuleID,
+		&aux.RuleID,
+		&aux.Field,
+		&aux.Count,
+		&aux.State,
+		&aux.UpdatedAt,
+	)
+}
+
+// encodes AnomalyFinding to auxAnomalyFinding
+//
+// This function is auto-generated
+func (aux *auxAnomalyFinding) encode(res *anomalyType.Finding) (_ error) {
+	aux.ID = res.ID
+	aux.NamespaceID = res.NamespaceID
+	aux.ModuleID = res.ModuleID
+	aux.RecordID = res.RecordID
+	aux.RuleID = res.RuleID
+	aux.Score = res.Score
+	aux.Severity = res.Severity
+	aux.Status = res.Status
+	aux.Explanation = res.Explanation
+	aux.CreatedAt = res.CreatedAt
+	aux.UpdatedAt = res.UpdatedAt
+	return
+}
+
+// decodes AnomalyFinding from auxAnomalyFinding
+//
+// This function is auto-generated
+func (aux auxAnomalyFinding) decode() (res *anomalyType.Finding, _ error) {
+	res = new(anomalyType.Finding)
+	res.ID = aux.ID
+	res.NamespaceID = aux.NamespaceID
+	res.ModuleID = aux.ModuleID
+	res.RecordID = aux.RecordID
+	res.RuleID = aux.RuleID
+	res.Score = aux.Score
+	res.Severity = aux.Severity
+	res.Status = aux.Status
+	res.Explanation = aux.Explanation
+	res.CreatedAt = aux.CreatedAt
+	res.UpdatedAt = aux.UpdatedAt
+	return
+}
+
+// scans row and fills auxAnomalyFinding fields
+//
+// This function is auto-generated
+func (aux *auxAnomalyFinding) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.NamespaceID,
+		&aux.ModuleID,
+		&aux.RecordID,
+		&aux.RuleID,
+		&aux.Score,
+		&aux.Severity,
+		&aux.Status,
+		&aux.Explanation,
+		&aux.CreatedAt,
+		&aux.UpdatedAt,
+	)
+}
+
+// encodes AnomalyRule to auxAnomalyRule
+//
+// This function is auto-generated
+func (aux *auxAnomalyRule) encode(res *anomalyType.Rule) (_ error) {
+	aux.ID = res.ID
+	aux.NamespaceID = res.NamespaceID
+	aux.ModuleID = res.ModuleID
+	aux.Field = res.Field
+	aux.Detector = res.Detector
+	aux.Threshold = res.Threshold
+	aux.Enabled = res.Enabled
+	aux.Params = res.Params
+	aux.LastScannedAt = res.LastScannedAt
+	aux.CreatedAt = res.CreatedAt
+	aux.CreatedBy = res.CreatedBy
+	aux.UpdatedAt = res.UpdatedAt
+	aux.UpdatedBy = res.UpdatedBy
+	aux.DeletedAt = res.DeletedAt
+	aux.DeletedBy = res.DeletedBy
+	return
+}
+
+// decodes AnomalyRule from auxAnomalyRule
+//
+// This function is auto-generated
+func (aux auxAnomalyRule) decode() (res *anomalyType.Rule, _ error) {
+	res = new(anomalyType.Rule)
+	res.ID = aux.ID
+	res.NamespaceID = aux.NamespaceID
+	res.ModuleID = aux.ModuleID
+	res.Field = aux.Field
+	res.Detector = aux.Detector
+	res.Threshold = aux.Threshold
+	res.Enabled = aux.Enabled
+	res.Params = aux.Params
+	res.LastScannedAt = aux.LastScannedAt
+	res.CreatedAt = aux.CreatedAt
+	res.CreatedBy = aux.CreatedBy
+	res.UpdatedAt = aux.UpdatedAt
+	res.UpdatedBy = aux.UpdatedBy
+	res.DeletedAt = aux.DeletedAt
+	res.DeletedBy = aux.DeletedBy
+	return
+}
+
+// scans row and fills auxAnomalyRule fields
+//
+// This function is auto-generated
+func (aux *auxAnomalyRule) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.NamespaceID,
+		&aux.ModuleID,
+		&aux.Field,
+		&aux.Detector,
+		&aux.Threshold,
+		&aux.Enabled,
+		&aux.Params,
+		&aux.LastScannedAt,
+		&aux.CreatedAt,
+		&aux.CreatedBy,
+		&aux.UpdatedAt,
+		&aux.UpdatedBy,
+		&aux.DeletedAt,
+		&aux.DeletedBy,
 	)
 }
 
@@ -1177,6 +1424,68 @@ func (aux *auxAuthSession) scan(row scanner) error {
 	)
 }
 
+// encodes AutomationPromptVersion to auxAutomationPromptVersion
+//
+// This function is auto-generated
+func (aux *auxAutomationPromptVersion) encode(res *automationType.PromptVersion) (_ error) {
+	aux.ID = res.ID
+	aux.Handle = res.Handle
+	aux.Version = res.Version
+	aux.Description = res.Description
+	aux.Text = res.Text
+	aux.Note = res.Note
+	aux.Active = res.Active
+	aux.Kind = res.Kind
+	aux.Requires = res.Requires
+	aux.Resources = res.Resources
+	aux.Cases = res.Cases
+	aux.CreatedAt = res.CreatedAt
+	aux.CreatedBy = res.CreatedBy
+	return
+}
+
+// decodes AutomationPromptVersion from auxAutomationPromptVersion
+//
+// This function is auto-generated
+func (aux auxAutomationPromptVersion) decode() (res *automationType.PromptVersion, _ error) {
+	res = new(automationType.PromptVersion)
+	res.ID = aux.ID
+	res.Handle = aux.Handle
+	res.Version = aux.Version
+	res.Description = aux.Description
+	res.Text = aux.Text
+	res.Note = aux.Note
+	res.Active = aux.Active
+	res.Kind = aux.Kind
+	res.Requires = aux.Requires
+	res.Resources = aux.Resources
+	res.Cases = aux.Cases
+	res.CreatedAt = aux.CreatedAt
+	res.CreatedBy = aux.CreatedBy
+	return
+}
+
+// scans row and fills auxAutomationPromptVersion fields
+//
+// This function is auto-generated
+func (aux *auxAutomationPromptVersion) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.Handle,
+		&aux.Version,
+		&aux.Description,
+		&aux.Text,
+		&aux.Note,
+		&aux.Active,
+		&aux.Kind,
+		&aux.Requires,
+		&aux.Resources,
+		&aux.Cases,
+		&aux.CreatedAt,
+		&aux.CreatedBy,
+	)
+}
+
 // encodes AutomationSession to auxAutomationSession
 //
 // This function is auto-generated
@@ -1189,8 +1498,8 @@ func (aux *auxAutomationSession) encode(res *automationType.Session) (_ error) {
 	aux.Input = res.Input
 	aux.Output = res.Output
 	aux.Stacktrace = res.Stacktrace
-	aux.CreatedBy = res.CreatedBy
 	aux.CreatedAt = res.CreatedAt
+	aux.CreatedBy = res.CreatedBy
 	aux.PurgeAt = res.PurgeAt
 	aux.SuspendedAt = res.SuspendedAt
 	aux.CompletedAt = res.CompletedAt
@@ -1211,8 +1520,8 @@ func (aux auxAutomationSession) decode() (res *automationType.Session, _ error) 
 	res.Input = aux.Input
 	res.Output = aux.Output
 	res.Stacktrace = aux.Stacktrace
-	res.CreatedBy = aux.CreatedBy
 	res.CreatedAt = aux.CreatedAt
+	res.CreatedBy = aux.CreatedBy
 	res.PurgeAt = aux.PurgeAt
 	res.SuspendedAt = aux.SuspendedAt
 	res.CompletedAt = aux.CompletedAt
@@ -1233,12 +1542,56 @@ func (aux *auxAutomationSession) scan(row scanner) error {
 		&aux.Input,
 		&aux.Output,
 		&aux.Stacktrace,
-		&aux.CreatedBy,
 		&aux.CreatedAt,
+		&aux.CreatedBy,
 		&aux.PurgeAt,
 		&aux.SuspendedAt,
 		&aux.CompletedAt,
 		&aux.Error,
+	)
+}
+
+// encodes AutomationState to auxAutomationState
+//
+// This function is auto-generated
+func (aux *auxAutomationState) encode(res *automationType.State) (_ error) {
+	aux.ID = res.ID
+	aux.SessionID = res.SessionID
+	aux.WorkflowID = res.WorkflowID
+	aux.Kind = res.Kind
+	aux.ResumeAt = res.ResumeAt
+	aux.CreatedAt = res.CreatedAt
+	aux.Snapshot = res.Snapshot
+	return
+}
+
+// decodes AutomationState from auxAutomationState
+//
+// This function is auto-generated
+func (aux auxAutomationState) decode() (res *automationType.State, _ error) {
+	res = new(automationType.State)
+	res.ID = aux.ID
+	res.SessionID = aux.SessionID
+	res.WorkflowID = aux.WorkflowID
+	res.Kind = aux.Kind
+	res.ResumeAt = aux.ResumeAt
+	res.CreatedAt = aux.CreatedAt
+	res.Snapshot = aux.Snapshot
+	return
+}
+
+// scans row and fills auxAutomationState fields
+//
+// This function is auto-generated
+func (aux *auxAutomationState) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.SessionID,
+		&aux.WorkflowID,
+		&aux.Kind,
+		&aux.ResumeAt,
+		&aux.CreatedAt,
+		&aux.Snapshot,
 	)
 }
 
@@ -1247,20 +1600,20 @@ func (aux *auxAutomationSession) scan(row scanner) error {
 // This function is auto-generated
 func (aux *auxAutomationTrigger) encode(res *automationType.Trigger) (_ error) {
 	aux.ID = res.ID
+	aux.Enabled = res.Enabled
 	aux.WorkflowID = res.WorkflowID
 	aux.StepID = res.StepID
-	aux.Enabled = res.Enabled
-	aux.Meta = res.Meta
 	aux.ResourceType = res.ResourceType
 	aux.EventType = res.EventType
 	aux.Constraints = res.Constraints
 	aux.Input = res.Input
+	aux.Meta = res.Meta
 	aux.OwnedBy = res.OwnedBy
 	aux.CreatedAt = res.CreatedAt
-	aux.UpdatedAt = res.UpdatedAt
-	aux.DeletedAt = res.DeletedAt
 	aux.CreatedBy = res.CreatedBy
+	aux.UpdatedAt = res.UpdatedAt
 	aux.UpdatedBy = res.UpdatedBy
+	aux.DeletedAt = res.DeletedAt
 	aux.DeletedBy = res.DeletedBy
 	return
 }
@@ -1271,20 +1624,20 @@ func (aux *auxAutomationTrigger) encode(res *automationType.Trigger) (_ error) {
 func (aux auxAutomationTrigger) decode() (res *automationType.Trigger, _ error) {
 	res = new(automationType.Trigger)
 	res.ID = aux.ID
+	res.Enabled = aux.Enabled
 	res.WorkflowID = aux.WorkflowID
 	res.StepID = aux.StepID
-	res.Enabled = aux.Enabled
-	res.Meta = aux.Meta
 	res.ResourceType = aux.ResourceType
 	res.EventType = aux.EventType
 	res.Constraints = aux.Constraints
 	res.Input = aux.Input
+	res.Meta = aux.Meta
 	res.OwnedBy = aux.OwnedBy
 	res.CreatedAt = aux.CreatedAt
-	res.UpdatedAt = aux.UpdatedAt
-	res.DeletedAt = aux.DeletedAt
 	res.CreatedBy = aux.CreatedBy
+	res.UpdatedAt = aux.UpdatedAt
 	res.UpdatedBy = aux.UpdatedBy
+	res.DeletedAt = aux.DeletedAt
 	res.DeletedBy = aux.DeletedBy
 	return
 }
@@ -1295,20 +1648,20 @@ func (aux auxAutomationTrigger) decode() (res *automationType.Trigger, _ error) 
 func (aux *auxAutomationTrigger) scan(row scanner) error {
 	return row.Scan(
 		&aux.ID,
+		&aux.Enabled,
 		&aux.WorkflowID,
 		&aux.StepID,
-		&aux.Enabled,
-		&aux.Meta,
 		&aux.ResourceType,
 		&aux.EventType,
 		&aux.Constraints,
 		&aux.Input,
+		&aux.Meta,
 		&aux.OwnedBy,
 		&aux.CreatedAt,
-		&aux.UpdatedAt,
-		&aux.DeletedAt,
 		&aux.CreatedBy,
+		&aux.UpdatedAt,
 		&aux.UpdatedBy,
+		&aux.DeletedAt,
 		&aux.DeletedBy,
 	)
 }
@@ -1330,10 +1683,10 @@ func (aux *auxAutomationWorkflow) encode(res *automationType.Workflow) (_ error)
 	aux.RunAs = res.RunAs
 	aux.OwnedBy = res.OwnedBy
 	aux.CreatedAt = res.CreatedAt
-	aux.UpdatedAt = res.UpdatedAt
-	aux.DeletedAt = res.DeletedAt
 	aux.CreatedBy = res.CreatedBy
+	aux.UpdatedAt = res.UpdatedAt
 	aux.UpdatedBy = res.UpdatedBy
+	aux.DeletedAt = res.DeletedAt
 	aux.DeletedBy = res.DeletedBy
 	return
 }
@@ -1356,10 +1709,10 @@ func (aux auxAutomationWorkflow) decode() (res *automationType.Workflow, _ error
 	res.RunAs = aux.RunAs
 	res.OwnedBy = aux.OwnedBy
 	res.CreatedAt = aux.CreatedAt
-	res.UpdatedAt = aux.UpdatedAt
-	res.DeletedAt = aux.DeletedAt
 	res.CreatedBy = aux.CreatedBy
+	res.UpdatedAt = aux.UpdatedAt
 	res.UpdatedBy = aux.UpdatedBy
+	res.DeletedAt = aux.DeletedAt
 	res.DeletedBy = aux.DeletedBy
 	return
 }
@@ -1382,10 +1735,10 @@ func (aux *auxAutomationWorkflow) scan(row scanner) error {
 		&aux.RunAs,
 		&aux.OwnedBy,
 		&aux.CreatedAt,
-		&aux.UpdatedAt,
-		&aux.DeletedAt,
 		&aux.CreatedBy,
+		&aux.UpdatedAt,
 		&aux.UpdatedBy,
+		&aux.DeletedAt,
 		&aux.DeletedBy,
 	)
 }
@@ -1395,13 +1748,13 @@ func (aux *auxAutomationWorkflow) scan(row scanner) error {
 // This function is auto-generated
 func (aux *auxComposeAttachment) encode(res *composeType.Attachment) (_ error) {
 	aux.ID = res.ID
-	aux.NamespaceID = res.NamespaceID
 	aux.OwnerID = res.OwnerID
 	aux.Kind = res.Kind
 	aux.Url = res.Url
 	aux.PreviewUrl = res.PreviewUrl
 	aux.Name = res.Name
 	aux.Meta = res.Meta
+	aux.NamespaceID = res.NamespaceID
 	aux.CreatedAt = res.CreatedAt
 	aux.UpdatedAt = res.UpdatedAt
 	aux.DeletedAt = res.DeletedAt
@@ -1414,13 +1767,13 @@ func (aux *auxComposeAttachment) encode(res *composeType.Attachment) (_ error) {
 func (aux auxComposeAttachment) decode() (res *composeType.Attachment, _ error) {
 	res = new(composeType.Attachment)
 	res.ID = aux.ID
-	res.NamespaceID = aux.NamespaceID
 	res.OwnerID = aux.OwnerID
 	res.Kind = aux.Kind
 	res.Url = aux.Url
 	res.PreviewUrl = aux.PreviewUrl
 	res.Name = aux.Name
 	res.Meta = aux.Meta
+	res.NamespaceID = aux.NamespaceID
 	res.CreatedAt = aux.CreatedAt
 	res.UpdatedAt = aux.UpdatedAt
 	res.DeletedAt = aux.DeletedAt
@@ -1433,13 +1786,13 @@ func (aux auxComposeAttachment) decode() (res *composeType.Attachment, _ error) 
 func (aux *auxComposeAttachment) scan(row scanner) error {
 	return row.Scan(
 		&aux.ID,
-		&aux.NamespaceID,
 		&aux.OwnerID,
 		&aux.Kind,
 		&aux.Url,
 		&aux.PreviewUrl,
 		&aux.Name,
 		&aux.Meta,
+		&aux.NamespaceID,
 		&aux.CreatedAt,
 		&aux.UpdatedAt,
 		&aux.DeletedAt,
@@ -1452,9 +1805,9 @@ func (aux *auxComposeAttachment) scan(row scanner) error {
 func (aux *auxComposeChart) encode(res *composeType.Chart) (_ error) {
 	aux.ID = res.ID
 	aux.Handle = res.Handle
-	aux.NamespaceID = res.NamespaceID
 	aux.Name = res.Name
 	aux.Config = res.Config
+	aux.NamespaceID = res.NamespaceID
 	aux.CreatedAt = res.CreatedAt
 	aux.UpdatedAt = res.UpdatedAt
 	aux.DeletedAt = res.DeletedAt
@@ -1468,9 +1821,9 @@ func (aux auxComposeChart) decode() (res *composeType.Chart, _ error) {
 	res = new(composeType.Chart)
 	res.ID = aux.ID
 	res.Handle = aux.Handle
-	res.NamespaceID = aux.NamespaceID
 	res.Name = aux.Name
 	res.Config = aux.Config
+	res.NamespaceID = aux.NamespaceID
 	res.CreatedAt = aux.CreatedAt
 	res.UpdatedAt = aux.UpdatedAt
 	res.DeletedAt = aux.DeletedAt
@@ -1484,9 +1837,9 @@ func (aux *auxComposeChart) scan(row scanner) error {
 	return row.Scan(
 		&aux.ID,
 		&aux.Handle,
-		&aux.NamespaceID,
 		&aux.Name,
 		&aux.Config,
+		&aux.NamespaceID,
 		&aux.CreatedAt,
 		&aux.UpdatedAt,
 		&aux.DeletedAt,
@@ -1498,14 +1851,14 @@ func (aux *auxComposeChart) scan(row scanner) error {
 // This function is auto-generated
 func (aux *auxComposeModule) encode(res *composeType.Module) (_ error) {
 	aux.ID = res.ID
-	aux.NamespaceID = res.NamespaceID
 	aux.Handle = res.Handle
-	aux.Name = res.Name
-	aux.Meta = res.Meta
 	aux.Config = res.Config
+	aux.Meta = res.Meta
+	aux.NamespaceID = res.NamespaceID
 	aux.CreatedAt = res.CreatedAt
 	aux.UpdatedAt = res.UpdatedAt
 	aux.DeletedAt = res.DeletedAt
+	aux.Name = res.Name
 	return
 }
 
@@ -1515,14 +1868,14 @@ func (aux *auxComposeModule) encode(res *composeType.Module) (_ error) {
 func (aux auxComposeModule) decode() (res *composeType.Module, _ error) {
 	res = new(composeType.Module)
 	res.ID = aux.ID
-	res.NamespaceID = aux.NamespaceID
 	res.Handle = aux.Handle
-	res.Name = aux.Name
-	res.Meta = aux.Meta
 	res.Config = aux.Config
+	res.Meta = aux.Meta
+	res.NamespaceID = aux.NamespaceID
 	res.CreatedAt = aux.CreatedAt
 	res.UpdatedAt = aux.UpdatedAt
 	res.DeletedAt = aux.DeletedAt
+	res.Name = aux.Name
 	return
 }
 
@@ -1532,14 +1885,14 @@ func (aux auxComposeModule) decode() (res *composeType.Module, _ error) {
 func (aux *auxComposeModule) scan(row scanner) error {
 	return row.Scan(
 		&aux.ID,
-		&aux.NamespaceID,
 		&aux.Handle,
-		&aux.Name,
-		&aux.Meta,
 		&aux.Config,
+		&aux.Meta,
+		&aux.NamespaceID,
 		&aux.CreatedAt,
 		&aux.UpdatedAt,
 		&aux.DeletedAt,
+		&aux.Name,
 	)
 }
 
@@ -1551,9 +1904,8 @@ func (aux *auxComposeModuleField) encode(res *composeType.ModuleField) (_ error)
 	aux.ModuleID = res.ModuleID
 	aux.Place = res.Place
 	aux.Kind = res.Kind
-	aux.Options = res.Options
 	aux.Name = res.Name
-	aux.Label = res.Label
+	aux.Options = res.Options
 	aux.Config = res.Config
 	aux.Required = res.Required
 	aux.Multi = res.Multi
@@ -1562,6 +1914,7 @@ func (aux *auxComposeModuleField) encode(res *composeType.ModuleField) (_ error)
 	aux.CreatedAt = res.CreatedAt
 	aux.UpdatedAt = res.UpdatedAt
 	aux.DeletedAt = res.DeletedAt
+	aux.Label = res.Label
 	return
 }
 
@@ -1574,9 +1927,8 @@ func (aux auxComposeModuleField) decode() (res *composeType.ModuleField, _ error
 	res.ModuleID = aux.ModuleID
 	res.Place = aux.Place
 	res.Kind = aux.Kind
-	res.Options = aux.Options
 	res.Name = aux.Name
-	res.Label = aux.Label
+	res.Options = aux.Options
 	res.Config = aux.Config
 	res.Required = aux.Required
 	res.Multi = aux.Multi
@@ -1585,6 +1937,7 @@ func (aux auxComposeModuleField) decode() (res *composeType.ModuleField, _ error
 	res.CreatedAt = aux.CreatedAt
 	res.UpdatedAt = aux.UpdatedAt
 	res.DeletedAt = aux.DeletedAt
+	res.Label = aux.Label
 	return
 }
 
@@ -1597,9 +1950,8 @@ func (aux *auxComposeModuleField) scan(row scanner) error {
 		&aux.ModuleID,
 		&aux.Place,
 		&aux.Kind,
-		&aux.Options,
 		&aux.Name,
-		&aux.Label,
+		&aux.Options,
 		&aux.Config,
 		&aux.Required,
 		&aux.Multi,
@@ -1608,6 +1960,7 @@ func (aux *auxComposeModuleField) scan(row scanner) error {
 		&aux.CreatedAt,
 		&aux.UpdatedAt,
 		&aux.DeletedAt,
+		&aux.Label,
 	)
 }
 
@@ -1619,10 +1972,10 @@ func (aux *auxComposeNamespace) encode(res *composeType.Namespace) (_ error) {
 	aux.Slug = res.Slug
 	aux.Enabled = res.Enabled
 	aux.Meta = res.Meta
-	aux.Name = res.Name
 	aux.CreatedAt = res.CreatedAt
 	aux.UpdatedAt = res.UpdatedAt
 	aux.DeletedAt = res.DeletedAt
+	aux.Name = res.Name
 	return
 }
 
@@ -1635,10 +1988,10 @@ func (aux auxComposeNamespace) decode() (res *composeType.Namespace, _ error) {
 	res.Slug = aux.Slug
 	res.Enabled = aux.Enabled
 	res.Meta = aux.Meta
-	res.Name = aux.Name
 	res.CreatedAt = aux.CreatedAt
 	res.UpdatedAt = aux.UpdatedAt
 	res.DeletedAt = aux.DeletedAt
+	res.Name = aux.Name
 	return
 }
 
@@ -1651,10 +2004,10 @@ func (aux *auxComposeNamespace) scan(row scanner) error {
 		&aux.Slug,
 		&aux.Enabled,
 		&aux.Meta,
-		&aux.Name,
 		&aux.CreatedAt,
 		&aux.UpdatedAt,
 		&aux.DeletedAt,
+		&aux.Name,
 	)
 }
 
@@ -1663,20 +2016,21 @@ func (aux *auxComposeNamespace) scan(row scanner) error {
 // This function is auto-generated
 func (aux *auxComposePage) encode(res *composeType.Page) (_ error) {
 	aux.ID = res.ID
-	aux.Title = res.Title
-	aux.Handle = res.Handle
 	aux.SelfID = res.SelfID
-	aux.ModuleID = res.ModuleID
 	aux.NamespaceID = res.NamespaceID
-	aux.Meta = res.Meta
+	aux.ModuleID = res.ModuleID
+	aux.Handle = res.Handle
 	aux.Config = res.Config
 	aux.Blocks = res.Blocks
+	aux.Meta = res.Meta
 	aux.Visible = res.Visible
 	aux.Weight = res.Weight
-	aux.Description = res.Description
 	aux.CreatedAt = res.CreatedAt
 	aux.UpdatedAt = res.UpdatedAt
 	aux.DeletedAt = res.DeletedAt
+	aux.Title = res.Title
+	aux.Prompt = res.Prompt
+	aux.Description = res.Description
 	return
 }
 
@@ -1686,20 +2040,21 @@ func (aux *auxComposePage) encode(res *composeType.Page) (_ error) {
 func (aux auxComposePage) decode() (res *composeType.Page, _ error) {
 	res = new(composeType.Page)
 	res.ID = aux.ID
-	res.Title = aux.Title
-	res.Handle = aux.Handle
 	res.SelfID = aux.SelfID
-	res.ModuleID = aux.ModuleID
 	res.NamespaceID = aux.NamespaceID
-	res.Meta = aux.Meta
+	res.ModuleID = aux.ModuleID
+	res.Handle = aux.Handle
 	res.Config = aux.Config
 	res.Blocks = aux.Blocks
+	res.Meta = aux.Meta
 	res.Visible = aux.Visible
 	res.Weight = aux.Weight
-	res.Description = aux.Description
 	res.CreatedAt = aux.CreatedAt
 	res.UpdatedAt = aux.UpdatedAt
 	res.DeletedAt = aux.DeletedAt
+	res.Title = aux.Title
+	res.Prompt = aux.Prompt
+	res.Description = aux.Description
 	return
 }
 
@@ -1709,20 +2064,21 @@ func (aux auxComposePage) decode() (res *composeType.Page, _ error) {
 func (aux *auxComposePage) scan(row scanner) error {
 	return row.Scan(
 		&aux.ID,
-		&aux.Title,
-		&aux.Handle,
 		&aux.SelfID,
-		&aux.ModuleID,
 		&aux.NamespaceID,
-		&aux.Meta,
+		&aux.ModuleID,
+		&aux.Handle,
 		&aux.Config,
 		&aux.Blocks,
+		&aux.Meta,
 		&aux.Visible,
 		&aux.Weight,
-		&aux.Description,
 		&aux.CreatedAt,
 		&aux.UpdatedAt,
 		&aux.DeletedAt,
+		&aux.Title,
+		&aux.Prompt,
+		&aux.Description,
 	)
 }
 
@@ -1731,10 +2087,10 @@ func (aux *auxComposePage) scan(row scanner) error {
 // This function is auto-generated
 func (aux *auxComposePageLayout) encode(res *composeType.PageLayout) (_ error) {
 	aux.ID = res.ID
-	aux.Handle = res.Handle
+	aux.NamespaceID = res.NamespaceID
 	aux.PageID = res.PageID
 	aux.ParentID = res.ParentID
-	aux.NamespaceID = res.NamespaceID
+	aux.Handle = res.Handle
 	aux.Weight = res.Weight
 	aux.Meta = res.Meta
 	aux.Config = res.Config
@@ -1752,10 +2108,10 @@ func (aux *auxComposePageLayout) encode(res *composeType.PageLayout) (_ error) {
 func (aux auxComposePageLayout) decode() (res *composeType.PageLayout, _ error) {
 	res = new(composeType.PageLayout)
 	res.ID = aux.ID
-	res.Handle = aux.Handle
+	res.NamespaceID = aux.NamespaceID
 	res.PageID = aux.PageID
 	res.ParentID = aux.ParentID
-	res.NamespaceID = aux.NamespaceID
+	res.Handle = aux.Handle
 	res.Weight = aux.Weight
 	res.Meta = aux.Meta
 	res.Config = aux.Config
@@ -1773,10 +2129,10 @@ func (aux auxComposePageLayout) decode() (res *composeType.PageLayout, _ error) 
 func (aux *auxComposePageLayout) scan(row scanner) error {
 	return row.Scan(
 		&aux.ID,
-		&aux.Handle,
+		&aux.NamespaceID,
 		&aux.PageID,
 		&aux.ParentID,
-		&aux.NamespaceID,
+		&aux.Handle,
 		&aux.Weight,
 		&aux.Meta,
 		&aux.Config,
@@ -2153,17 +2509,17 @@ func (aux *auxDataPrivacyRequestComment) scan(row scanner) error {
 // This function is auto-generated
 func (aux *auxFederationExposedModule) encode(res *federationType.ExposedModule) (_ error) {
 	aux.ID = res.ID
-	aux.Handle = res.Handle
-	aux.Name = res.Name
 	aux.NodeID = res.NodeID
 	aux.ComposeModuleID = res.ComposeModuleID
 	aux.ComposeNamespaceID = res.ComposeNamespaceID
+	aux.Handle = res.Handle
+	aux.Name = res.Name
 	aux.Fields = res.Fields
 	aux.CreatedAt = res.CreatedAt
-	aux.UpdatedAt = res.UpdatedAt
-	aux.DeletedAt = res.DeletedAt
 	aux.CreatedBy = res.CreatedBy
+	aux.UpdatedAt = res.UpdatedAt
 	aux.UpdatedBy = res.UpdatedBy
+	aux.DeletedAt = res.DeletedAt
 	aux.DeletedBy = res.DeletedBy
 	return
 }
@@ -2174,17 +2530,17 @@ func (aux *auxFederationExposedModule) encode(res *federationType.ExposedModule)
 func (aux auxFederationExposedModule) decode() (res *federationType.ExposedModule, _ error) {
 	res = new(federationType.ExposedModule)
 	res.ID = aux.ID
-	res.Handle = aux.Handle
-	res.Name = aux.Name
 	res.NodeID = aux.NodeID
 	res.ComposeModuleID = aux.ComposeModuleID
 	res.ComposeNamespaceID = aux.ComposeNamespaceID
+	res.Handle = aux.Handle
+	res.Name = aux.Name
 	res.Fields = aux.Fields
 	res.CreatedAt = aux.CreatedAt
-	res.UpdatedAt = aux.UpdatedAt
-	res.DeletedAt = aux.DeletedAt
 	res.CreatedBy = aux.CreatedBy
+	res.UpdatedAt = aux.UpdatedAt
 	res.UpdatedBy = aux.UpdatedBy
+	res.DeletedAt = aux.DeletedAt
 	res.DeletedBy = aux.DeletedBy
 	return
 }
@@ -2195,17 +2551,17 @@ func (aux auxFederationExposedModule) decode() (res *federationType.ExposedModul
 func (aux *auxFederationExposedModule) scan(row scanner) error {
 	return row.Scan(
 		&aux.ID,
-		&aux.Handle,
-		&aux.Name,
 		&aux.NodeID,
 		&aux.ComposeModuleID,
 		&aux.ComposeNamespaceID,
+		&aux.Handle,
+		&aux.Name,
 		&aux.Fields,
 		&aux.CreatedAt,
-		&aux.UpdatedAt,
-		&aux.DeletedAt,
 		&aux.CreatedBy,
+		&aux.UpdatedAt,
 		&aux.UpdatedBy,
+		&aux.DeletedAt,
 		&aux.DeletedBy,
 	)
 }
@@ -2253,18 +2609,18 @@ func (aux *auxFederationModuleMapping) scan(row scanner) error {
 // This function is auto-generated
 func (aux *auxFederationNode) encode(res *federationType.Node) (_ error) {
 	aux.ID = res.ID
-	aux.SharedNodeID = res.SharedNodeID
 	aux.Name = res.Name
-	aux.BaseURL = res.BaseURL
 	aux.Status = res.Status
+	aux.BaseURL = res.BaseURL
 	aux.Contact = res.Contact
+	aux.SharedNodeID = res.SharedNodeID
 	aux.PairToken = res.PairToken
 	aux.AuthToken = res.AuthToken
 	aux.CreatedAt = res.CreatedAt
-	aux.UpdatedAt = res.UpdatedAt
-	aux.DeletedAt = res.DeletedAt
 	aux.CreatedBy = res.CreatedBy
+	aux.UpdatedAt = res.UpdatedAt
 	aux.UpdatedBy = res.UpdatedBy
+	aux.DeletedAt = res.DeletedAt
 	aux.DeletedBy = res.DeletedBy
 	return
 }
@@ -2275,18 +2631,18 @@ func (aux *auxFederationNode) encode(res *federationType.Node) (_ error) {
 func (aux auxFederationNode) decode() (res *federationType.Node, _ error) {
 	res = new(federationType.Node)
 	res.ID = aux.ID
-	res.SharedNodeID = aux.SharedNodeID
 	res.Name = aux.Name
-	res.BaseURL = aux.BaseURL
 	res.Status = aux.Status
+	res.BaseURL = aux.BaseURL
 	res.Contact = aux.Contact
+	res.SharedNodeID = aux.SharedNodeID
 	res.PairToken = aux.PairToken
 	res.AuthToken = aux.AuthToken
 	res.CreatedAt = aux.CreatedAt
-	res.UpdatedAt = aux.UpdatedAt
-	res.DeletedAt = aux.DeletedAt
 	res.CreatedBy = aux.CreatedBy
+	res.UpdatedAt = aux.UpdatedAt
 	res.UpdatedBy = aux.UpdatedBy
+	res.DeletedAt = aux.DeletedAt
 	res.DeletedBy = aux.DeletedBy
 	return
 }
@@ -2297,18 +2653,18 @@ func (aux auxFederationNode) decode() (res *federationType.Node, _ error) {
 func (aux *auxFederationNode) scan(row scanner) error {
 	return row.Scan(
 		&aux.ID,
-		&aux.SharedNodeID,
 		&aux.Name,
-		&aux.BaseURL,
 		&aux.Status,
+		&aux.BaseURL,
 		&aux.Contact,
+		&aux.SharedNodeID,
 		&aux.PairToken,
 		&aux.AuthToken,
 		&aux.CreatedAt,
-		&aux.UpdatedAt,
-		&aux.DeletedAt,
 		&aux.CreatedBy,
+		&aux.UpdatedAt,
 		&aux.UpdatedBy,
+		&aux.DeletedAt,
 		&aux.DeletedBy,
 	)
 }
@@ -2319,8 +2675,8 @@ func (aux *auxFederationNode) scan(row scanner) error {
 func (aux *auxFederationNodeSync) encode(res *federationType.NodeSync) (_ error) {
 	aux.NodeID = res.NodeID
 	aux.ModuleID = res.ModuleID
-	aux.SyncType = res.SyncType
 	aux.SyncStatus = res.SyncStatus
+	aux.SyncType = res.SyncType
 	aux.TimeOfAction = res.TimeOfAction
 	return
 }
@@ -2332,8 +2688,8 @@ func (aux auxFederationNodeSync) decode() (res *federationType.NodeSync, _ error
 	res = new(federationType.NodeSync)
 	res.NodeID = aux.NodeID
 	res.ModuleID = aux.ModuleID
-	res.SyncType = aux.SyncType
 	res.SyncStatus = aux.SyncStatus
+	res.SyncType = aux.SyncType
 	res.TimeOfAction = aux.TimeOfAction
 	return
 }
@@ -2345,8 +2701,8 @@ func (aux *auxFederationNodeSync) scan(row scanner) error {
 	return row.Scan(
 		&aux.NodeID,
 		&aux.ModuleID,
-		&aux.SyncType,
 		&aux.SyncStatus,
+		&aux.SyncType,
 		&aux.TimeOfAction,
 	)
 }
@@ -2356,16 +2712,16 @@ func (aux *auxFederationNodeSync) scan(row scanner) error {
 // This function is auto-generated
 func (aux *auxFederationSharedModule) encode(res *federationType.SharedModule) (_ error) {
 	aux.ID = res.ID
-	aux.Handle = res.Handle
 	aux.NodeID = res.NodeID
+	aux.Handle = res.Handle
 	aux.Name = res.Name
 	aux.ExternalFederationModuleID = res.ExternalFederationModuleID
 	aux.Fields = res.Fields
 	aux.CreatedAt = res.CreatedAt
-	aux.UpdatedAt = res.UpdatedAt
-	aux.DeletedAt = res.DeletedAt
 	aux.CreatedBy = res.CreatedBy
+	aux.UpdatedAt = res.UpdatedAt
 	aux.UpdatedBy = res.UpdatedBy
+	aux.DeletedAt = res.DeletedAt
 	aux.DeletedBy = res.DeletedBy
 	return
 }
@@ -2376,16 +2732,16 @@ func (aux *auxFederationSharedModule) encode(res *federationType.SharedModule) (
 func (aux auxFederationSharedModule) decode() (res *federationType.SharedModule, _ error) {
 	res = new(federationType.SharedModule)
 	res.ID = aux.ID
-	res.Handle = aux.Handle
 	res.NodeID = aux.NodeID
+	res.Handle = aux.Handle
 	res.Name = aux.Name
 	res.ExternalFederationModuleID = aux.ExternalFederationModuleID
 	res.Fields = aux.Fields
 	res.CreatedAt = aux.CreatedAt
-	res.UpdatedAt = aux.UpdatedAt
-	res.DeletedAt = aux.DeletedAt
 	res.CreatedBy = aux.CreatedBy
+	res.UpdatedAt = aux.UpdatedAt
 	res.UpdatedBy = aux.UpdatedBy
+	res.DeletedAt = aux.DeletedAt
 	res.DeletedBy = aux.DeletedBy
 	return
 }
@@ -2396,16 +2752,16 @@ func (aux auxFederationSharedModule) decode() (res *federationType.SharedModule,
 func (aux *auxFederationSharedModule) scan(row scanner) error {
 	return row.Scan(
 		&aux.ID,
-		&aux.Handle,
 		&aux.NodeID,
+		&aux.Handle,
 		&aux.Name,
 		&aux.ExternalFederationModuleID,
 		&aux.Fields,
 		&aux.CreatedAt,
-		&aux.UpdatedAt,
-		&aux.DeletedAt,
 		&aux.CreatedBy,
+		&aux.UpdatedAt,
 		&aux.UpdatedBy,
+		&aux.DeletedAt,
 		&aux.DeletedBy,
 	)
 }

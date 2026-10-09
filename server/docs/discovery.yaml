@@ -1,0 +1,212 @@
+# Generated from discovery/rest.yaml by docs/convert.py. Do not edit by hand.
+openapi: 3.0.0
+info:
+  title: Lowcode Discovery API
+  description: Lowcode discovery REST API. Generated from discovery/rest.yaml.
+  version: '2026.9'
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+- url: /api
+  description: Lowcode API
+paths:
+  /discovery/mappings/:
+    get:
+      tags:
+      - Index mappings
+      summary: List of all
+      operationId: mappings.list
+      responses:
+        '200':
+          description: OK
+  /discovery/resources/system/users:
+    get:
+      tags:
+      - Resources
+      summary: Resource
+      operationId: resources.systemUsers
+      responses:
+        '200':
+          description: OK
+      parameters:
+      - in: query
+        name: limit
+        description: Limit
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: pageCursor
+        description: Page cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: userID
+        description: User ID
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: deleted
+        description: Exclude (0
+        required: false
+        schema:
+          type: string
+  /discovery/resources/compose/namespaces:
+    get:
+      tags:
+      - Resources
+      summary: Resource
+      operationId: resources.composeNamespaces
+      responses:
+        '200':
+          description: OK
+      parameters:
+      - in: query
+        name: limit
+        description: Limit
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: pageCursor
+        description: Page cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: namespaceID
+        description: Namespace ID
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: deleted
+        description: Exclude (0
+        required: false
+        schema:
+          type: string
+  /discovery/resources/compose/namespaces/{namespaceID}/modules:
+    get:
+      tags:
+      - Resources
+      summary: Resource
+      operationId: resources.composeModules
+      responses:
+        '200':
+          description: OK
+      parameters:
+      - in: query
+        name: limit
+        description: Limit
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: pageCursor
+        description: Page cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: moduleID
+        description: Module ID
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: deleted
+        description: Exclude (0
+        required: false
+        schema:
+          type: string
+      - in: path
+        name: namespaceID
+        description: Namespace ID
+        required: true
+        schema:
+          type: string
+  /discovery/resources/compose/namespaces/{namespaceID}/modules/{moduleID}/records:
+    get:
+      tags:
+      - Resources
+      summary: Resource
+      operationId: resources.composeRecords
+      responses:
+        '200':
+          description: OK
+      parameters:
+      - in: query
+        name: limit
+        description: Limit
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: pageCursor
+        description: Page cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: recordID
+        description: Record ID
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: deleted
+        description: Exclude (0
+        required: false
+        schema:
+          type: string
+      - in: path
+        name: namespaceID
+        description: Namespace ID
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: moduleID
+        description: Module ID
+        required: true
+        schema:
+          type: string
+  /discovery/feed/:
+    get:
+      tags:
+      - Change feed
+      summary: List of resource changes that should be indexed
+      operationId: feed.changes
+      responses:
+        '200':
+          description: OK
+      parameters:
+      - in: query
+        name: limit
+        description: Limit
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: pageCursor
+        description: Page cursor
+        required: false
+        schema:
+          type: string
+      - in: query
+        name: from
+        description: From timestamp
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: to
+        description: To timestamp
+        required: false
+        schema:
+          type: string
+          format: date-time

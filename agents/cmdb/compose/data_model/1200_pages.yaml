@@ -1,0 +1,241 @@
+namespace: cmdb
+pages:
+  dashboard:
+    title: Dashboard
+    handle: dashboard
+    blocks:
+    - title: At a glance
+      kind: Metric
+      xywh: [0, 0, 48, 16]
+    - title: Scan
+      kind: RuleChain
+      xywh: [0, 16, 16, 12]
+      options:
+        chain: cmdb-trigger-scan
+    - title: Hygiene
+      kind: RuleChain
+      xywh: [16, 16, 16, 12]
+      options:
+        chain: cmdb-stale-devices
+    - title: Running scans
+      kind: Progress
+      xywh: [32, 16, 16, 12]
+    - title: Devices by type
+      kind: Chart
+      xywh: [0, 28, 16, 20]
+      options:
+        chart: devices-by-type
+    - title: Devices by status
+      kind: Chart
+      xywh: [16, 28, 16, 20]
+      options:
+        chart: devices-by-status
+    - title: Vulnerabilities by severity
+      kind: Chart
+      xywh: [32, 28, 16, 20]
+      options:
+        chart: vulns-by-severity
+    - title: Open vulnerabilities
+      kind: RecordList
+      xywh: [0, 48, 24, 22]
+      options:
+        module: vulnerabilities
+        fields: [name, severity, cve, status]
+    - title: Recent scans
+      kind: RecordList
+      xywh: [24, 48, 24, 22]
+      options:
+        module: scans
+        fields: [target, status, found, started_at]
+    - title: Recently seen devices
+      kind: RecordList
+      xywh: [0, 70, 48, 20]
+      options:
+        module: devices
+        fields: [ip_address, hostname, device_type, status, last_seen]
+
+  devices:
+    title: Devices
+    handle: devices
+    blocks:
+    - title: Inventory
+      kind: Metric
+      xywh: [0, 0, 48, 12]
+    - title: Devices
+      kind: RecordList
+      xywh: [0, 12, 48, 42]
+      options:
+        module: devices
+        fields: [ip_address, hostname, device_type, vendor, os, status, last_seen]
+    pages:
+      device:
+        title: Device
+        handle: device
+        module: devices
+        blocks:
+        - title: Device
+          kind: Record
+          xywh: [0, 0, 32, 30]
+        - title: This host
+          kind: Metric
+          xywh: [32, 0, 16, 16]
+        - title: Actions
+          kind: RuleChain
+          xywh: [32, 16, 16, 14]
+          options:
+            chain: cmdb-flag-insecure-ports
+        - title: Services
+          kind: RecordList
+          xywh: [0, 30, 24, 22]
+          options:
+            module: services
+        - title: Vulnerabilities
+          kind: RecordList
+          xywh: [24, 30, 24, 22]
+          options:
+            module: vulnerabilities
+
+  networks:
+    title: Networks
+    handle: networks
+    blocks:
+    - title: Networks
+      kind: RecordList
+      xywh: [0, 0, 48, 50]
+      options:
+        module: networks
+        fields: [name, cidr, enabled, last_scan]
+    pages:
+      network:
+        title: Network
+        handle: network
+        module: networks
+        blocks:
+        - title: Network
+          kind: Record
+          xywh: [0, 0, 32, 22]
+        - title: Scan
+          kind: RuleChain
+          xywh: [32, 0, 16, 12]
+          options:
+            chain: cmdb-trigger-scan
+        - title: History
+          kind: Metric
+          xywh: [32, 12, 16, 10]
+        - title: Scans
+          kind: RecordList
+          xywh: [0, 22, 48, 24]
+          options:
+            module: scans
+
+  vulnerabilities:
+    title: Vulnerabilities
+    handle: vulnerabilities
+    blocks:
+    - title: Open
+      kind: RecordOrganizer
+      xywh: [0, 0, 12, 28]
+    - title: Acknowledged
+      kind: RecordOrganizer
+      xywh: [12, 0, 12, 28]
+    - title: Fixed
+      kind: RecordOrganizer
+      xywh: [24, 0, 12, 28]
+    - title: False positive
+      kind: RecordOrganizer
+      xywh: [36, 0, 12, 28]
+    - title: All findings
+      kind: RecordList
+      xywh: [0, 28, 48, 28]
+      options:
+        module: vulnerabilities
+        fields: [name, device, severity, cve, status, detected_at]
+    pages:
+      vulnerability:
+        title: Vulnerability
+        handle: vulnerability
+        module: vulnerabilities
+        blocks:
+        - title: Finding
+          kind: Record
+          xywh: [0, 0, 32, 30]
+        - title: Alert
+          kind: RuleChain
+          xywh: [32, 0, 16, 10]
+          options:
+            chain: cmdb-high-vuln-alert
+        - title: Triage
+          kind: RuleChain
+          xywh: [32, 10, 16, 10]
+          options:
+            chain: cmdb-ack-finding
+        - title: Close
+          kind: RuleChain
+          xywh: [32, 20, 16, 10]
+          options:
+            chain: cmdb-close-finding
+
+  services:
+    title: Services
+    handle: services
+    blocks:
+    - title: Services
+      kind: RecordList
+      xywh: [0, 0, 48, 50]
+      options:
+        module: services
+        fields: [device, port, proto, service, version]
+    pages:
+      service:
+        title: Service
+        handle: service
+        module: services
+        blocks:
+        - title: Service
+          kind: Record
+          xywh: [0, 0, 32, 22]
+        - title: Actions
+          kind: RuleChain
+          xywh: [32, 0, 16, 14]
+          options:
+            chain: cmdb-insecure-service
+
+  scans:
+    title: Scans
+    handle: scans
+    blocks:
+    - title: Activity
+      kind: Metric
+      xywh: [0, 0, 20, 12]
+    - title: Start scan
+      kind: RuleChain
+      xywh: [20, 0, 16, 12]
+      options:
+        chain: cmdb-trigger-scan
+        label: Start scan
+        context:
+          cidr: auto
+    - title: In flight
+      kind: Progress
+      xywh: [36, 0, 12, 12]
+    - title: Scans
+      kind: RecordList
+      xywh: [0, 12, 48, 40]
+      options:
+        module: scans
+        fields: [target, network, status, progress, found, started_at]
+    pages:
+      scan:
+        title: Scan
+        handle: scan
+        module: scans
+        blocks:
+        - title: Scan
+          kind: Record
+          xywh: [0, 0, 32, 26]
+        - title: Progress
+          kind: Progress
+          xywh: [32, 0, 16, 14]
+        - title: Found
+          kind: Metric
+          xywh: [32, 14, 16, 12]

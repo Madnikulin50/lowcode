@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sentry"
 	"github.com/jmoiron/sqlx"
+	"github.com/madnikulin50/lowcode/server/pkg/sentry"
 	"go.uber.org/zap"
 )
 

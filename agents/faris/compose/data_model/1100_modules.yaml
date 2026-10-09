@@ -1,0 +1,23 @@
+namespace: faris
+modules:
+  subsidiaries:
+    name: Subsidiaries
+    fields: [name, code, industry, erp_company_code, city, notes]
+  spend_categories:
+    name: Spend categories
+    fields: [name, code, description]
+  erp_vendors:
+    name: ERP vendor master
+    fields: [vendor_code, legal_name, cr_number, vat_number, city, country, erp_status, last_sync, source_system]
+  erp_budgets:
+    name: ERP budgets
+    fields: [subsidiary, subsidiary_code, category, cost_center, annual_budget, committed, remaining, fiscal_year, currency]
+  vendors:
+    name: Vendors
+    fields: [legal_name, trade_name, subsidiary, category, cr_number, vat_number, documents, status, erp_vendor]
+  purchase_requests:
+    name: Purchase requests
+    fields: [title, pr_number, subsidiary, item, quantity, estimated_value, vendor, category, budget_remaining, status]
+  approval_log:
+    name: Approval log
+    fields: [subject, object_type, step, decision, actor, decided_at]

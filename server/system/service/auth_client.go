@@ -3,16 +3,16 @@ package service
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/label"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/rand"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/service/event"
-	"github.com/cortezaproject/corteza/server/system/types"
 	oauth2def "github.com/go-oauth2/oauth2/v4"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/label"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/rand"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/service/event"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

@@ -1,5 +1,11 @@
 package dal
 
+import (
+	"strconv"
+
+	"github.com/madnikulin50/lowcode/server/pkg/cast2"
+)
+
 type (
 	AttributeType string
 
@@ -7,6 +13,7 @@ type (
 	Type interface {
 		Type() AttributeType
 		IsNullable() bool
+		FromString(str string) (val any, err error)
 	}
 
 	// TypeID handles ID (uint64) coding
@@ -187,6 +194,56 @@ func (t TypeGeometry) IsNullable() bool  { return t.Nullable }
 func (t TypeJSON) IsNullable() bool      { return t.Nullable }
 func (t TypeBlob) IsNullable() bool      { return t.Nullable }
 func (t TypeUUID) IsNullable() bool      { return t.Nullable }
+
+func (t TypeID) FromString(str string) (val any, err error) {
+	return cast2.ToInt64E(str)
+}
+func (t TypeRef) FromString(str string) (val any, err error) {
+	return cast2.ToInt64E(str)
+}
+func (t TypeTimestamp) FromString(str string) (val any, err error) {
+	return str, nil
+}
+func (t TypeTime) FromString(str string) (val any, err error) {
+	return str, nil
+}
+func (t TypeDate) FromString(str string) (val any, err error) {
+	return str, nil
+}
+func (t TypeNumber) FromString(str string) (val any, err error) {
+	v, err := strconv.ParseInt(str, 0, 0)
+	if err == nil {
+		return v, nil
+	}
+	v2, err := strconv.ParseFloat(str, 64)
+	if err == nil {
+		return int64(v2), nil
+	}
+	return str, nil
+}
+func (t TypeText) FromString(str string) (val any, err error) {
+	return str, nil
+}
+func (t TypeBoolean) FromString(str string) (val any, err error) {
+	return str, nil
+}
+func (t TypeEnum) FromString(str string) (val any, err error) {
+	return str, nil
+}
+
+func (t TypeGeometry) FromString(str string) (val any, err error) {
+	return str, nil
+}
+
+func (t TypeJSON) FromString(str string) (val any, err error) {
+	return str, nil
+}
+func (t TypeBlob) FromString(str string) (val any, err error) {
+	return str, nil
+}
+func (t TypeUUID) FromString(str string) (val any, err error) {
+	return str, nil
+}
 
 func (t TypeID) Type() AttributeType        { return AttributeTypeID }
 func (t TypeRef) Type() AttributeType       { return AttributeTypeRef }

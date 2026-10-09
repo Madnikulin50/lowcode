@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/revisions"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/revisions"
 )
 
 type (
@@ -26,6 +26,9 @@ type (
 //
 // Since we're using revisions model resource type needs to be altered.
 func (svc *recordRevisions) modelRef(mod *types.Module) (mf dal.ModelRef) {
+	if mod == nil {
+		return
+	}
 	mf = mod.ModelRef()
 
 	// removing resource ID from model filter

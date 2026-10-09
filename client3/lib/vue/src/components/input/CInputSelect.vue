@@ -1,0 +1,451 @@
+<template>
+  <vue-select
+    v-bind="$attrs"
+    ref="vueSelectRef"
+    v-model="_value"
+    data-test-id="select"
+    :clearable="clearable"
+    :options="safeOptions"
+    :searchable="searchable"
+    :disabled="disabled"
+    :selectable="selectable"
+    :multiple="multiple"
+    :loading="loading"
+    :label="label"
+    :get-option-label="resolveOptionLabel"
+    :calculate-position="calculateDropdownPosition"
+    :append-to-body="appendToBody"
+    class="bg-white rounded"
+    :class="sizeClass"
+    @search="onSearch"
+  >
+    <template
+      v-for="name in forwardedSlotNames"
+      :key="name"
+      #[name]="data"
+    >
+      <slot
+        :name="name"
+        v-bind="data"
+      />
+    </template>
+
+    <template
+      v-if="badge"
+      #option="option"
+    >
+      <span
+        class="badge rounded-pill"
+        :style="getOptionStyle(option)"
+      >
+        {{ optionText(option) }}
+      </span>
+    </template>
+
+    <template
+      v-if="!multiple && badge"
+      #selected-option="option"
+    >
+      <span
+        class="badge rounded-pill"
+        :style="getOptionStyle(option)"
+      >
+        {{ optionText(option) }}
+      </span>
+    </template>
+
+    <template
+      v-if="multiple && badge"
+      #selected-option-container="{ option, deselect }"
+    >
+      <span
+        class="d-flex align-items-center badge rounded-pill mx-1 mt-1 w-auto"
+        :style="getOptionStyle(option)"
+      >
+        {{ optionText(option) }}
+
+        <font-awesome-icon
+          :icon="['fas', 'times']"
+          class="pointer ms-2"
+          @click="deselect(option)"
+        />
+      </span>
+    </template>
+  </vue-select>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, useSlots } from 'vue'
+import VueSelect from 'vue-select'
+import { createPopper } from '@popperjs/core'
+import 'vue-select/dist/vue-select.css'
+
+defineOptions({ inheritAttrs: false })
+
+interface Option {
+  text?: string
+  label?: string
+  value?: unknown
+  disabled?: boolean
+  style?: Record<string, string>
+  optStyle?: Record<string, string>
+  option?: Option
+  [key: string]: unknown
+}
+
+interface DropdownList extends HTMLElement {
+  style: CSSStyleDeclaration
+}
+
+interface VueSelectInstance {
+  $el: HTMLElement
+  $refs: {
+    toggle: HTMLElement
+  }
+}
+
+interface Props {
+  modelValue?: string | unknown[] | Record<string, unknown>
+  options?: Option[]
+  clearable?: boolean
+  searchable?: boolean
+  appendToBody?: boolean
+  defaultValue?: string | unknown[] | Record<string, unknown>
+  size?: string
+  disabled?: boolean
+  selectable?: (option: Option) => boolean
+  multiple?: boolean
+  loading?: boolean
+  badge?: boolean
+  label?: string
+  getOptionLabel?: (option: Option) => string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: () => '',
+  options: () => [],
+  clearable: true,
+  searchable: true,
+  appendToBody: true,
+  defaultValue: () => '',
+  size: 'md',
+  disabled: false,
+  selectable: (o: Option) => !o.disabled,
+  multiple: false,
+  loading: false,
+  badge: false,
+  label: 'label',
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: unknown]
+  search: [query: string, loading: (v: boolean) => void]
+}>()
+
+const vueSelectRef = ref<VueSelectInstance | null>(null)
+VueSelect
+const query = ref('')
+const slots = useSlots()
+
+const forwardedSlotNames = computed(() => {
+  const skip = new Set<string>()
+  if (props.badge) {
+    skip.add('option')
+    skip.add('selected-option')
+    skip.add('selected-option-container')
+  }
+  return Object.keys(slots).filter(name => !skip.has(name))
+})
+
+function slotOption (payload: Option = {}): Option {
+  if (payload.option && typeof payload.option === 'object') return payload.option
+  return payload
+}
+
+function optionText (payload: Option = {}): string {
+  const o = slotOption(payload)
+  const text = o.text ?? o.label ?? o.value
+  return text == null ? '' : String(text)
+}
+
+function resolveOptionLabel (o: Option): string {
+  if (typeof props.getOptionLabel === 'function') return props.getOptionLabel(o)
+  if (o == null) return ''
+  if (typeof o !== 'object') return String(o)
+  const keyed = o[props.label]
+  const text = keyed ?? o.text ?? o.label ?? o.value
+  return text == null ? '' : String(text)
+}
+
+// vue-select 4 spreads each option into a Vue 3 slot. A `style` key is treated
+// as CSS, so invest badge options (style: { backgroundColor, textColor }) never
+// render as labels. Keep visual metadata on optStyle instead.
+const safeOptions = computed(() =>
+  (props.options || []).map((o) => {
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return o
+    if (!('style' in o)) return o
+    const { style, ...rest } = o
+    return {
+      ...rest,
+      optStyle: (o.optStyle && typeof o.optStyle === 'object') ? o.optStyle : style,
+    }
+  })
+)
+
+const _value = computed({
+  get () {
+    const fallbackValue = props.multiple ? [] : ''
+    return props.defaultValue && props.modelValue === props.defaultValue ? fallbackValue : props.modelValue
+  },
+  set (v: unknown) {
+    emit('update:modelValue', !v ? props.defaultValue : v)
+  },
+})
+
+const sizeClass = computed(() =>
+  props.size === 'sm' ? 'c-input-sm' : props.size === 'lg' ? 'c-input-lg' : ''
+)
+
+function calculateDropdownPosition (
+  dropdownList: DropdownList,
+  component: VueSelectInstance,
+  { width }: { width: string }
+) {
+  dropdownList.style.width = width
+  const popper = createPopper(component.$refs.toggle, dropdownList, {
+    placement: 'bottom',
+    modifiers: [
+      {
+        name: 'offset',
+        options: {
+          offset: [0, -1],
+        },
+      },
+      {
+        name: 'toggleClass',
+        enabled: true,
+        phase: 'write',
+        fn ({ state }) {
+          component.$el.classList.toggle('drop-up', state.placement === 'top')
+        },
+      },
+    ],
+  })
+  return () => popper.destroy()
+}
+
+function onSearch (q: string, loading: (v: boolean) => void) {
+  if (q !== query.value) {
+    query.value = q
+  }
+  emit('search', q, loading)
+}
+
+function getOptionStyle (payload: Option = {}) {
+  const o = slotOption(payload)
+  const raw = (o.optStyle && typeof o.optStyle === 'object')
+    ? o.optStyle
+    : (o.style && typeof o.style === 'object' && !Array.isArray(o.style) ? o.style : {})
+  const style: Record<string, string> = { ...(raw as Record<string, string>) }
+  if (props.badge) {
+    style.fontSize = '0.9rem'
+    style.color = toCssColor(style.textColor, 'var(--dark, var(--black, #212529))')
+    style.backgroundColor = toCssColor(style.backgroundColor, 'var(--extra-light, #E4E9EF)')
+  }
+  return style
+}
+
+function toCssColor (val: string | undefined, fallback: string) {
+  if (!val) return fallback
+  const v = String(val).trim()
+  if (!v) return fallback
+  if (v[0] === '#' || v.startsWith('rgb') || v.startsWith('hsl') || v.startsWith('var(')) return v
+  if (v === 'dark') return 'var(--dark, var(--black, #212529))'
+  return `var(--${v})`
+}
+</script>
+
+<style lang="scss">
+:root {
+  --vs-dropdown-bg: var(--white);
+  --vs-dropdown-option--active-bg: var(--light);
+  --vs-state-disabled-color: var(--secondary);
+  --vs-state-disabled-bg: var(--light);
+  --vs-colors--light: var(--black);
+  --vs-colors--dark: var(--black);
+  --vs-dropdown-option-color: var(--black);
+  --vs-dropdown-option--active-color: var(--black);
+  --vs-selected-bg: var(--extra-light);
+  --vs-search-input-color: var(--secondary);
+  --vs-search-input-bg: var(--white);
+}
+
+.v-select {
+  min-width: auto;
+  position: relative;
+  -ms-flex: 1 1 auto;
+  flex: 1 1 auto;
+  margin-bottom: 0;
+  font-size: .9rem !important;
+  font-family: var(--font-regular);
+
+  .vs__selected-options {
+    width: 0;
+    padding: 0;
+  }
+
+  .vs__selected {
+    display: flex;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    overflow: hidden;
+    border: 0;
+    color: var(--black);
+  }
+
+  .vs__search {
+    font-size: .9rem;
+    border: 0;
+    padding: 0 2px;
+    padding-top: 0.375rem;
+    margin: 0;
+  }
+
+  &:not(.vs--open):not(.vs--loading) .vs__selected + .vs__search {
+    width: 0;
+    margin: 0;
+    border: none;
+    padding: 0;
+    height: 0;
+  }
+
+  .vs__dropdown-toggle {
+    min-height: calc(1.5em + 0.75rem + 4px);
+    padding: 0.375rem calc(0.75rem - 2px);
+    padding-top: 0 !important;
+    border-width: 2px;
+    border-color: var(--extra-light);
+
+    .vs__selected {
+      margin-top: 0.375rem;
+    }
+
+    .vs__actions {
+      padding-top: 0.375rem;
+      padding-right: 0;
+    }
+  }
+
+  .vs__clear,
+  .vs__open-indicator {
+    fill: var(--black);
+    display: inline-flex;
+  }
+
+  .vs__clear {
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    cursor: pointer;
+    margin-right: 8px
+  }
+
+  &.vs--single {
+    .vs__selected {
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+}
+
+.vs--open {
+  .vs__dropdown-toggle {
+    border-color: var(--primary);
+    border-radius: 0.25rem !important;
+  }
+}
+
+.input-group > .v-select:not(:last-child) {
+  .vs__dropdown-toggle {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+.vs__spinner {
+  border: .7em solid var(--dark);
+  border-left-color: var(--white);
+}
+
+.vs__spinner, .vs__spinner::after {
+  width: 4em;
+  height: 4em;
+}
+
+.vs__dropdown-menu {
+  z-index: 1100;
+
+  .vs__dropdown-option {
+    &.vs__dropdown-option--selected {
+      background: var(--vs-dropdown-option--active-bg);
+      color: var(--vs-dropdown-option--active-color);
+    }
+
+    &.vs__dropdown-option--disabled {
+      cursor: var(--vs-state-disabled-cursor) !important;
+      opacity: 0.5;
+    }
+
+    &:active {
+      color: var(--white);
+      background-color: var(--primary);
+    }
+  }
+}
+
+.c-input-sm {
+  font-size: 0.7875rem !important;
+
+  .vs__search {
+    font-size: 0.7875rem;
+    padding-top: 0.25rem;
+  }
+
+  .vs__dropdown-toggle {
+    min-height: calc(1.5em + 0.5rem + 4px);
+    padding: 0.25rem calc(0.5rem - 2px);
+    border-radius: 0.2rem;
+
+    .vs__selected {
+      margin-top: 0.25rem;
+    }
+
+    .vs__actions {
+      padding-top: 0.25rem;
+    }
+  }
+}
+.c-input-lg {
+  font-size: 1.125rem !important;
+
+  .vs__search {
+    font-size: 1.125rem;
+    padding-top: .5rem;
+  }
+
+  .vs__dropdown-toggle {
+    min-height: calc(1.5em + 1rem + 4px);
+    padding: .5rem calc(1rem - 2px);
+    border-radius: 0.3rem;
+
+    .vs__selected {
+      margin-top: .5rem;
+    }
+
+    .vs__actions {
+      padding-top: .5rem;
+    }
+  }
+}
+</style>

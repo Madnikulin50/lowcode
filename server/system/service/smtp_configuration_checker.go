@@ -8,10 +8,10 @@ import (
 	"io/ioutil"
 	"strings"
 
-	intAuth "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/mail"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/system/types"
+	intAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/mail"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	gomail "gopkg.in/mail.v2"
 )
 
@@ -102,7 +102,7 @@ func (svc smtpConfigurationChecker) smtpSend(ctx context.Context, recipients []s
 	// if we cannot find an email template
 	if err != nil {
 		ntf.SetHeader("Subject", "SMTP Configuration check")
-		ntf.SetBody("text/html", "<h2 style=\"color: #61AFFF;text-align: center;\">SMTP configurations check passed</h2>")
+		ntf.SetBody("text/html", "<h2 style=\"color: #4e73df;text-align: center;\">SMTP configurations check passed</h2>")
 
 		err = mail.Send(ntf)
 

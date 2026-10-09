@@ -1,13 +1,13 @@
 package types
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/cast2"
+	"github.com/madnikulin50/lowcode/server/pkg/cast2"
 )
 
 func (r Attachment) GetID() uint64 { return r.ID }
@@ -177,6 +177,9 @@ func (r *Module) SetValue(name string, pos uint, value any) (err error) {
 	case "updatedAt", "UpdatedAt":
 		return cast2.TimePtr(value, &r.UpdatedAt)
 
+	default:
+		return r.setValue(name, pos, value)
+
 	}
 	return nil
 }
@@ -326,6 +329,8 @@ func (r *Page) GetValue(name string, pos uint) (any, error) {
 		return r.ModuleID, nil
 	case "namespaceID", "NamespaceID":
 		return r.NamespaceID, nil
+	case "prompt", "Prompt":
+		return r.Prompt, nil
 	case "selfID", "SelfID":
 		return r.SelfID, nil
 	case "title", "Title":
@@ -361,6 +366,8 @@ func (r *Page) SetValue(name string, pos uint, value any) (err error) {
 		return cast2.Uint64(value, &r.ModuleID)
 	case "namespaceID", "NamespaceID":
 		return cast2.Uint64(value, &r.NamespaceID)
+	case "prompt", "Prompt":
+		return cast2.String(value, &r.Prompt)
 	case "selfID", "SelfID":
 		return cast2.Uint64(value, &r.SelfID)
 	case "title", "Title":

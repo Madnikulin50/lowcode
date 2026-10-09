@@ -7,19 +7,20 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/assets"
-	automationRest "github.com/cortezaproject/corteza/server/automation/rest"
-	composeRest "github.com/cortezaproject/corteza/server/compose/rest"
-	discoveryRest "github.com/cortezaproject/corteza/server/discovery/rest"
-	"github.com/cortezaproject/corteza/server/docs"
-	federationRest "github.com/cortezaproject/corteza/server/federation/rest"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/webapp"
-	systemRest "github.com/cortezaproject/corteza/server/system/rest"
-	"github.com/cortezaproject/corteza/server/system/scim"
-	"github.com/cortezaproject/corteza/server/system/service"
 	"github.com/go-chi/chi/v5"
+	anomalyRest "github.com/madnikulin50/lowcode/server/anomaly/rest"
+	"github.com/madnikulin50/lowcode/server/assets"
+	automationRest "github.com/madnikulin50/lowcode/server/automation/rest"
+	composeRest "github.com/madnikulin50/lowcode/server/compose/rest"
+	discoveryRest "github.com/madnikulin50/lowcode/server/discovery/rest"
+	"github.com/madnikulin50/lowcode/server/docs"
+	federationRest "github.com/madnikulin50/lowcode/server/federation/rest"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/webapp"
+	systemRest "github.com/madnikulin50/lowcode/server/system/rest"
+	"github.com/madnikulin50/lowcode/server/system/scim"
+	"github.com/madnikulin50/lowcode/server/system/service"
 	"go.uber.org/zap"
 )
 
@@ -62,6 +63,25 @@ func (app *CortezaApp) mountHttpRoutes(r chi.Router) {
 
 				_, _ = fmt.Fprint(w, stylesheet)
 			})
+			r.Get(options.CleanBase(ho.WebappBaseUrl, "custom.css"), func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Content-Type", "text/css")
+				//DB_DSN=postgres://postgres:Zse45rdx@127.0.0.1:5432/test3?sslmode\=disable
+				stylesheet := service.FetchCSS()
+
+				_, _ = fmt.Fprint(w, stylesheet)
+			})
+
+			/*r.Get(options.CleanBase(ho.BaseUrl, "config.js"), func(w http.ResponseWriter, r *http.Request) {
+
+				// Assure the content-type
+				// The presence of the X-Content-Type-Options: nosniff header breaks web applications
+				w.Header().Add("Content-Type", "text/javascript")
+
+				const line = "window.%s = '%s';\n"
+				_, _ = fmt.Fprintf(w, line, "CortezaAPI", options.CleanBase(ho.ApiBaseUrl, ho.ApiBaseUrl, "api"))
+				_, _ = fmt.Fprintf(w, line, "CortezaAuth", options.CleanBase(ho.ApiBaseUrl, ho.ApiBaseUrl, "auth"))
+			})*/
+
 			app.Log.Info("client web applications disabled")
 			return
 		}
@@ -78,6 +98,9 @@ func (app *CortezaApp) mountHttpRoutes(r chi.Router) {
 
 	// Auth server
 	app.AuthService.MountHttpRoutes(ho.BaseUrl, r)
+
+	// Optional agent self-enrollment (AGENT_SHARED_SECRET) — see agent_enroll.go
+	app.mountAgentEnroll(r, ho.BaseUrl)
 
 	func() {
 		if !ho.ApiEnabled {
@@ -96,6 +119,7 @@ func (app *CortezaApp) mountHttpRoutes(r chi.Router) {
 			r.Route("/system", systemRest.MountRoutes())
 			r.Route("/automation", automationRest.MountRoutes())
 			r.Route("/compose", composeRest.MountRoutes())
+			r.Group(anomalyRest.MountRoutes())
 			r.Route("/websocket", app.WsServer.MountRoutes)
 
 			if app.Opt.Discovery.Enabled {
@@ -106,14 +130,19 @@ func (app *CortezaApp) mountHttpRoutes(r chi.Router) {
 				r.Route("/federation", federationRest.MountRoutes(app.Opt.Limit))
 			}
 
-			var fullpathDocs = options.CleanBase(ho.BaseUrl, ho.ApiBaseUrl, "docs")
-			app.Log.Info(
-				"API docs enabled",
-				zap.String("baseUrl", fullpathDocs),
-			)
-
-			r.Handle("/docs", http.RedirectHandler(fullpathDocs+"/", http.StatusPermanentRedirect))
-			r.Handle("/docs*", http.StripPrefix(fullpathDocs, http.FileServer(docs.GetFS())))
+			mountEmbedded := func(name string, fsys http.FileSystem) {
+				full := options.CleanBase(ho.BaseUrl, ho.ApiBaseUrl, name)
+				app.Log.Info(
+					"embedded docs enabled",
+					zap.String("name", name),
+					zap.String("baseUrl", full),
+				)
+				r.Handle("/"+name, http.RedirectHandler(full+"/", http.StatusPermanentRedirect))
+				r.Handle("/"+name+"*", http.StripPrefix(full, http.FileServer(fsys)))
+			}
+			mountEmbedded("docs", docs.GetFS())
+			mountEmbedded("manual", docs.ManualFS())
+			mountEmbedded("architecture", docs.ArchitectureFS())
 
 			var fullpathGateway = options.CleanBase(ho.BaseUrl, ho.ApiBaseUrl, "gateway")
 			r.Handle("/gateway*", http.StripPrefix(fullpathGateway, app.ApigwService))

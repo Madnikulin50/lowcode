@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/service"
 	"github.com/spf13/cobra"
 )
 

@@ -2,7 +2,9 @@ package dal
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/madnikulin50/lowcode/server/pkg/cast2"
 	"github.com/spf13/cast"
 )
 
@@ -41,11 +43,40 @@ func newRelIndex(t Type, track ...string) (out *relIndex, err error) {
 	return out, out.initHashmaps()
 }
 
+var dateFormats = []string{
+	"2006-01-02",
+	"2006-01-02T15:04:05Z",
+	"2006-01-02T15:04:05",
+}
+
+var timeFormats = []string{
+	"15:04:05",
+	"2006-01-02T15:04:05Z",
+	"2006-01-02T15:04:05",
+}
+
 // Add adds a new row to the index under the specified key
 func (ri *relIndex) Add(k any, r *Row) {
 	switch ri.keyType.(type) {
 	case TypeNumber, *TypeNumber:
-		ri.addInt(cast.ToInt64(k), r)
+		id, _ := cast2.ToInt64E(k)
+		ri.addInt(id, r)
+		return
+	case TypeDate, *TypeDate:
+		tm, ok := k.(time.Time)
+		if !ok {
+			str, ok := k.(string)
+			if ok {
+				for _, dt := range dateFormats {
+					var err error
+					tm, err = time.Parse(dt, str)
+					if err == nil {
+						break
+					}
+				}
+			}
+		}
+		ri.addInt(tm.Unix(), r)
 		return
 
 	case TypeText, *TypeText:
@@ -65,14 +96,31 @@ func (ri *relIndex) Add(k any, r *Row) {
 func (ri *relIndex) Get(k any) (out *relIndexBuffer, ok bool) {
 	switch ri.keyType.(type) {
 	case TypeNumber, *TypeNumber:
-		return ri.getInt(cast.ToInt64(k))
+		id, _ := cast2.ToInt64E(k)
+		return ri.getInt(id)
+	case TypeDate, *TypeDate:
+		tm, _ := k.(time.Time)
+		if !ok {
+			str, ok := k.(string)
+			if ok {
+				for _, dt := range dateFormats {
+					var err error
+					tm, err = time.Parse(dt, str)
+					if err == nil {
+						break
+					}
+				}
+			}
+		}
+		return ri.getInt(tm.Unix())
 
 	case TypeText, *TypeText:
 		return ri.getString(cast.ToString(k))
 
 	case TypeID, *TypeID,
 		TypeRef, *TypeRef:
-		return ri.getID(cast.ToUint64(k))
+		id, _ := cast2.ToInt64E(k)
+		return ri.getID(uint64(id))
 	}
 
 	// @note this is validated when initializing
@@ -93,6 +141,9 @@ func (ri *relIndex) initHashmaps() (err error) {
 
 	case TypeText, *TypeText:
 		ri.strings = make(map[string]*relIndexBuffer, 512)
+		return
+	case TypeDate, *TypeDate:
+		ri.ints = make(map[int64]*relIndexBuffer, 512)
 		return
 
 	case TypeID, *TypeID,

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/label/types"
 )
 
 func TestChanged(t *testing.T) {

@@ -1,17 +1,20 @@
-# Corteza API documentation
+= Lowcode REST API documentation
 
-WARNING: Work in progress
+OpenAPI 3 definitions in this directory are generated from `server/{system,compose,automation,federation,discovery}/rest.yaml`.
 
-This is the first step in migration towards full OpenAPI standards support.
+== Regenerate
 
-## Current state (`2021.3.x` and later)
-We're experimenting with first step toward conversion to OpenAPI 3.0 YAML files for API
-definition. There is a converter available in https://github.com/cortezaproject/openapi3-converter[cortezaproject/openapi3-converter]
-that takes those custom YAML files and converts them to OpenAPI format.
+[source,shell]
+----
+make docs
+----
 
-## Goal (target: end of 2021)
-Generate HTTP handlers and all auxiliary code and documentation from YAML files in OpenAPI 3.0 format
+The command runs `docs/convert.py` and rewrites `*.yaml`, then `docs/pack.py`.
 
-## Original/starting state (pre `2020.9`; deprecated):
-Home-brew API definition format in JSON, still available under `api/*/spec.json`.
-This is still needed for controller/request/handler codegens. Documentation generators are disabled.
+`pack.py` copies the user manual (`manual/ru/tools/docserver/html`) and renders architecture pages from `docs/*.md` into this package. `go:embed` in `serve.go` puts all three into the server binary:
+
+* `/api/docs/` — this directory's OpenAPI files and `index.html`
+* `/api/manual/` — user manual
+* `/api/architecture/` — architecture pages
+
+When web applications are disabled and the API stays on `/`, the same trees are served at `/docs/`, `/manual/` and `/architecture/`.

@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
 	"net/http"
 )
 

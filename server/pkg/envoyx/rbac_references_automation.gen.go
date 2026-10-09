@@ -1,13 +1,13 @@
 package envoyx
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	"github.com/cortezaproject/corteza/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/automation/types"
 )
 
 // AutomationWorkflowRbacReferences generates RBAC references

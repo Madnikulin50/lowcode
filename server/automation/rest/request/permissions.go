@@ -13,9 +13,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/payload"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/pkg/payload"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
 )
 
 // dummy vars to prevent

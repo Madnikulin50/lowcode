@@ -7,9 +7,9 @@ package automation
 
 import (
 	"context"
-	atypes "github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/wfexec"
+	atypes "github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/wfexec"
 	"io"
 	"net/http"
 	"net/url"

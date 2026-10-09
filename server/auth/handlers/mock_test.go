@@ -8,16 +8,16 @@ import (
 	"net/http/httptest"
 	"net/url"
 
-	"github.com/cortezaproject/corteza/server/auth/request"
-	"github.com/cortezaproject/corteza/server/auth/settings"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/gorilla/sessions"
+	"github.com/madnikulin50/lowcode/server/auth/request"
+	"github.com/madnikulin50/lowcode/server/auth/settings"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

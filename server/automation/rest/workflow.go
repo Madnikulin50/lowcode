@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/automation/rest/request"
-	"github.com/cortezaproject/corteza/server/automation/service"
-	"github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/compose/automation"
-	cmpService "github.com/cortezaproject/corteza/server/compose/service"
-	cmpTypes "github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/automation/rest/request"
+	"github.com/madnikulin50/lowcode/server/automation/service"
+	"github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/compose/automation"
+	cmpService "github.com/madnikulin50/lowcode/server/compose/service"
+	cmpTypes "github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 )
 
 type (

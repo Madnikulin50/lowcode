@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="go build github.com/madnikulin50/lowcode/server/cmd/codegen" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+    <module name="lowcode" />
+    <working_directory value="$PROJECT_DIR$/server" />
+    <kind value="PACKAGE" />
+    <package value="github.com/madnikulin50/lowcode/server/cmd/codegen" />
+    <directory value="$PROJECT_DIR$" />
+    <auto_managed_config_id value="$PROJECT_DIR$/server/cmd/codegen" />
+    <method v="2" />
+  </configuration>
+</component>

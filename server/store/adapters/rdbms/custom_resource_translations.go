@@ -3,8 +3,8 @@ package rdbms
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"golang.org/x/text/language"
 )
 

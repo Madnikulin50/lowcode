@@ -4,6 +4,7 @@ manageNamespaces: Manage namespaces
 module: Modules
 noResults: No results
 page: Pages
+documents: Documentation
 pickNamespace: Select a namespace
 publicPages: Public pages
 editNamespace: Edit namespace

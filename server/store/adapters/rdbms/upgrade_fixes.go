@@ -9,18 +9,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/compose/model"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	discovery "github.com/cortezaproject/corteza/server/discovery/types"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelsType "github.com/cortezaproject/corteza/server/pkg/label/types"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ddl"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
+	"github.com/madnikulin50/lowcode/server/compose/model"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	discovery "github.com/madnikulin50/lowcode/server/discovery/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelsType "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
 )
@@ -48,7 +48,7 @@ var (
 		fix_2022_09_00_addMissingNodeIdOnFederationMapping,
 		fix_2023_03_00_migrateComposeModuleConfigForRecordDeDup,
 		fix_2022_09_07_changePostgresIdColumnsDatatype,
-		fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings,
+		//fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings,
 		fix_2023_03_00_migrateComposePageMeta,
 		fix_2024_09_03_dropFederationNodeSyncPrimaryKey,
 		fix_2024_09_03_renameFederationNodeSyncNodeID,
@@ -60,6 +60,7 @@ var (
 	fixesPost = []func(context.Context, *Store) error{
 		fix_2024_09_05_addRelResourceRoleMembershipColumn,
 		fix_2024_09_05_addUserGroupReferenceToUser,
+		fix_2026_10_00_extendAutomationPromptVersionsForSkills,
 	}
 )
 
@@ -76,7 +77,7 @@ func fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings(ctx context.Cont
 			Privacy         interface{} `json:"privacy"`
 			RecordRevisions interface{} `json:"recordRevisions"`
 			RecordDeDup     interface{} `json:"recordDeDup"`
-			DataSource      interface{} `json:"dataSource"`
+			DataSource      interface{} `json:"datasource"`
 		}
 
 		result struct {
@@ -1328,5 +1329,34 @@ func count(ctx context.Context, s *Store, table string, ee ...goqu.Expression) (
 		panic(err)
 	}
 
+	return
+}
+
+// Skills live in the prompt library: a version gets a kind, the toolkits it
+// requires and the files it ships with. The table already has rows, so kind
+// defaults to empty (a plain prompt) and the JSON columns to an empty list.
+func fix_2026_10_00_extendAutomationPromptVersionsForSkills(ctx context.Context, s *Store) (err error) {
+	const table = "automation_prompt_versions"
+
+	err = addColumn(ctx, s, table, &dal.Attribute{
+		Ident: "Kind",
+		Type:  &dal.TypeText{Length: 16, HasDefault: true, DefaultValue: ""},
+		Store: &dal.CodecAlias{Ident: "kind"},
+	})
+	if err != nil {
+		return
+	}
+
+	// existing rows get an empty list, not the model's "{}" default
+	for _, ident := range []string{"Requires", "Resources"} {
+		err = addColumn(ctx, s, table, &dal.Attribute{
+			Ident: ident,
+			Type:  &dal.TypeJSON{DefaultValue: "[]"},
+			Store: &dal.CodecAlias{Ident: strings.ToLower(ident)},
+		})
+		if err != nil {
+			return
+		}
+	}
 	return
 }

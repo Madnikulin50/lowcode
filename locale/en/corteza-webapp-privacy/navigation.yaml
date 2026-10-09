@@ -1,6 +1,9 @@
 appMenu: Menu
 help:
   documentation: Documentation
+  userDocs: User guide
+  apiDocs: API reference
+  architecture: Architecture
   feedback: Send feedback
   forum: Help
   version: 'Version:'

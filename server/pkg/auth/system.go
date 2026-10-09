@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 const (
@@ -81,6 +81,14 @@ func ProvisionUser() *types.User {
 
 // ServiceUser returns clone of system service user
 func ServiceUser() *types.User {
+	return serviceUser.Clone()
+}
+
+// ServiceUserOrNil is ServiceUser without panicking when system users are not loaded yet.
+func ServiceUserOrNil() *types.User {
+	if serviceUser == nil {
+		return nil
+	}
 	return serviceUser.Clone()
 }
 

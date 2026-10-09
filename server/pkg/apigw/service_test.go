@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/pkg/apigw/registry"
-	"github.com/cortezaproject/corteza/server/pkg/apigw/types"
-	st "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/registry"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/types"
+	st "github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )

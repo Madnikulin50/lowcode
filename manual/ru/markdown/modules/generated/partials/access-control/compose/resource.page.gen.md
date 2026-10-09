@@ -1,0 +1,33 @@
+# page
+
+[cols="1s,5a,5a"]
+|===
+| Operation| Description | Default
+
+
+| [#rbac-page-read]#[rbac-page-read,read](#rbac-page-read,read)#
+| read
+| Deny
+
+
+| [#rbac-page-update]#[rbac-page-update,update](#rbac-page-update,update)#
+| update
+| Deny
+
+
+| [#rbac-page-delete]#[rbac-page-delete,delete](#rbac-page-delete,delete)#
+| delete
+| Deny
+
+
+| [#rbac-page-page-layout.create]#[rbac-page-page-layout.create,page-layout.create](#rbac-page-page-layout.create,page-layout.create)#
+| Create page layout on namespace
+| Deny
+
+
+| [#rbac-page-page-layouts.search]#[rbac-page-page-layouts.search,page-layouts.search](#rbac-page-page-layouts.search,page-layouts.search)#
+| List, search or filter page layouts on namespace
+| Deny
+
+
+|===

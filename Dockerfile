@@ -1,21 +1,30 @@
 # build-stage
 FROM alpine:3 as build-stage
 
-# use docker build --build-arg VERSION=2021.9.0 .
-ARG VERSION=2026.1.0
-ARG SASS_VERSION=1.69.5
+
+ARG SASS_VERSION=1.99.0
+RUN apk update && apk add --no-cache file
+
+
+ARG SASS_URL=https://github.com/sass/dart-sass/releases/download/1.69.5/dart-sass-${SASS_VERSION}-linux-x64.tar.gz
+
+WORKDIR /tmp
+COPY ./dart-sass-${SASS_VERSION}-linux-x64.tar.gz ./
+RUN ls ./
+
+RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
+
+ARG VERSION=2026.09.20
+
 ARG SERVER_VERSION=${VERSION}
 ARG WEBAPP_VERSION=${VERSION}
-ARG SASS_URL=https://github.com/sass/dart-sass/releases/download/${SASS_VERSION}/dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
 RUN mkdir /pnp/
-ADD ./server/dist/lowcode-server--linux-amd64 /pnp/
-
-RUN apk update && apk add --no-cache file
-RUN apk add curl
-
+ADD ./server/dist/lowcode-server-${VERSION}-linux-amd64 /pnp/lowcode-server--linux-amd64
 
 WORKDIR /pnp
+RUN mkdir /pnp/provision
+ADD ./server/provision /pnp/provision/
 
 RUN rm -rf /pnp/webapp
 
@@ -27,25 +36,33 @@ RUN mkdir /pnp/webapp/privacy
 RUN mkdir /pnp/webapp/reporter
 RUN mkdir /pnp/webapp/workflow
 
-ADD ./client/web/one/dist /pnp/webapp/
-ADD ./client/web/admin/dist /pnp/webapp/admin
-ADD ./client/web/compose/dist /pnp/webapp/compose
-ADD ./client/web/discovery/dist /pnp/webapp/discovery
-ADD ./client/web/privacy/dist /pnp/webapp/privacy
-ADD ./client/web/reporter/dist /pnp/webapp/reporter
-ADD ./client/web/workflow/dist /pnp/webapp/workflow
+ADD ./client3/web/one/dist /pnp/webapp/
+ADD ./client3/web/admin/dist /pnp/webapp/admin
+ADD ./client3/web/compose/dist /pnp/webapp/compose
+ADD ./client3/web/discovery/dist /pnp/webapp/discovery
+ADD ./client3/web/privacy/dist /pnp/webapp/privacy
+ADD ./client3/web/reporter/dist /pnp/webapp/reporter
+ADD ./client3/web/workflow/dist /pnp/webapp/workflow
+
+RUN test -s /pnp/webapp/compose/index.html || (echo "ERROR: compose webapp index.html is missing or empty" && exit 1)
 
 
-#RUN rm -rf /pnp/webapp
+# libredwg-stage: builds dwg2dxf (DWG -> DXF conversion) from source, since
+# no distro package exists for Ubuntu 22.04. Pinned to the 0.14 release tag.
+FROM ubuntu:22.04 as libredwg-stage
 
-#RUN file "/tmp/webapp/$(basename $PNP_WEBAPP_PATH)" | grep -q 'gzip' && \
-#    mkdir /pnp/webapp && tar zxvf "/tmp/webapp/$(basename $PNP_WEBAPP_PATH)" -C /pnp/webapp || \
-#    cp -a "/tmp/webapp" /pnp/webapp
+RUN apt-get -y update && apt-get -y install \
+    build-essential autoconf automake libtool pkg-config \
+    git ca-certificates texinfo python3 \
+ && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /tmp
+WORKDIR /src
+RUN git clone --branch 0.14 --depth 1 https://github.com/LibreDWG/libredwg.git .
+RUN ./autogen.sh
+RUN ./configure --disable-bindings --disable-static --without-libintl-prefix --without-libiconv-prefix
+RUN make -j"$(nproc)"
+RUN make DESTDIR=/out install
 
-RUN curl -sOL $SASS_URL
-RUN tar -xzf dart-sass-${SASS_VERSION}-linux-x64.tar.gz
 
 # deploy-stage
 FROM ubuntu:22.04 as deploy-stage
@@ -55,6 +72,10 @@ RUN apt-get -y update \
     ca-certificates \
     curl \
  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=libredwg-stage /out/usr/local/bin/dwg2dxf /usr/local/bin/dwg2dxf
+COPY --from=libredwg-stage /out/usr/local/lib/libredwg.so.0.0.14 /usr/local/lib/libredwg.so.0
+RUN ldconfig
 
 ENV STORAGE_PATH="/data"
 ENV CORREDOR_ADDR="corredor:80"

@@ -3,23 +3,24 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"reflect"
 	"sync"
 
-	"github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	intAuth "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/label"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/pkg/wfexec"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	intAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/label"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/pkg/wfexec"
+	"github.com/madnikulin50/lowcode/server/store"
 	"go.uber.org/zap"
 )
 
@@ -535,6 +536,32 @@ func (svc *workflow) Load(ctx context.Context) error {
 	}
 
 	return svc.triggers.registerWorkflows(ctx, set...)
+}
+
+// aiBudgetFor builds the AI budget for one new session of a workflow: its own
+// limits if it has any, else the platform default, else none.
+func (svc *workflow) aiBudgetFor(workflowID uint64) *aiagent.Budget {
+	svc.muxCache.RLock()
+	item := svc.cache[workflowID]
+	svc.muxCache.RUnlock()
+
+	if item != nil && item.wf != nil && item.wf.Meta != nil && item.wf.Meta.AIBudget != nil {
+		if b := aiagent.NewBudget(item.wf.Meta.AIBudget.MaxTokens, item.wf.Meta.AIBudget.MaxLLMCalls); b != nil {
+			return b
+		}
+	}
+	return aiagent.BudgetFromEnv()
+}
+
+// graphOf returns the cached exec graph of an executable workflow, or nil
+func (svc *workflow) graphOf(workflowID uint64) *wfexec.Graph {
+	svc.muxCache.RLock()
+	defer svc.muxCache.RUnlock()
+
+	if item := svc.cache[workflowID]; item != nil {
+		return item.g
+	}
+	return nil
 }
 
 // updateCache

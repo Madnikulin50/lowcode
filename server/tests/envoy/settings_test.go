@@ -6,11 +6,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/stretchr/testify/require"
 )
 

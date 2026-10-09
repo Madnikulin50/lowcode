@@ -1,0 +1,5538 @@
+/* eslint-disable padded-blocks */
+
+// This is a generated file.
+// See README.md file for update instructions
+
+import { postForEvents, StreamEvent } from './sse'
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+
+interface KV {
+  [header: string]: unknown;
+}
+
+interface Headers {
+  [header: string]: string;
+}
+
+interface Ctor {
+  baseURL?: string;
+  accessTokenFn?: () => string | undefined;
+  headers?: Headers;
+}
+
+interface CortezaResponse {
+  error?: string;
+  response?: unknown;
+}
+
+interface ExtraConfig {
+  headers?: Headers;
+}
+
+function stdResolve (response: AxiosResponse<CortezaResponse>): KV|Promise<never> {
+  if (response.data.error) {
+    return Promise.reject(response.data.error)
+  } else {
+    return response.data.response as KV
+  }
+}
+
+export default class Compose {
+  protected baseURL?: string;
+  protected accessTokenFn?: () => (string | undefined);
+  protected headers: Headers = {};
+
+  constructor ({ baseURL, headers, accessTokenFn }: Ctor) {
+    this.baseURL = baseURL
+    this.accessTokenFn = accessTokenFn
+    this.headers = {
+      /**
+       * All we send is JSON
+       */
+      'Content-Type': 'application/json',
+    }
+
+    this.setHeaders(headers)
+  }
+
+  setAccessTokenFn (fn: () => string | undefined): Compose {
+    this.accessTokenFn = fn
+    return this
+  }
+
+  setHeaders (headers?: Headers): Compose {
+    if (typeof headers === 'object') {
+      this.headers = headers
+    }
+
+    return this
+  }
+
+  setHeader (name: string, value: string | undefined): Compose {
+    if (value === undefined) {
+      delete this.headers[name]
+    } else {
+      this.headers[name] = value
+    }
+
+    return this
+  }
+
+  api (): AxiosInstance {
+    const headers = { ...this.headers }
+    const accessToken = this.accessTokenFn ? this.accessTokenFn() : undefined
+    if (accessToken) {
+      headers.Authorization = 'Bearer ' + accessToken
+    }
+
+    return axios.create({
+      withCredentials: true,
+      baseURL: this.baseURL,
+      headers,
+    })
+  }
+
+  // List namespaces
+  async namespaceList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      query,
+      slug,
+      limit,
+      incTotal,
+      labels,
+      pageCursor,
+      sort,
+    } = (a as KV) || {}
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.namespaceListEndpoint(),
+    }
+    cfg.params = {
+      query,
+      slug,
+      limit,
+      incTotal,
+      labels,
+      pageCursor,
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceListEndpoint (): string {
+    return '/namespace/'
+  }
+
+  // Create namespace
+  async namespaceCreate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      name,
+      labels,
+      slug,
+      enabled,
+      meta,
+    } = (a as KV) || {}
+    if (!name) {
+      throw Error('field name is empty')
+    }
+    if (!meta) {
+      throw Error('field meta is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.namespaceCreateEndpoint(),
+    }
+    cfg.data = {
+      name,
+      labels,
+      slug,
+      enabled,
+      meta,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceCreateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceCreate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceCreateEndpoint (): string {
+    return '/namespace/'
+  }
+
+  // Read namespace
+  async namespaceRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.namespaceReadEndpoint({
+        namespaceID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceRead(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceReadEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}`
+  }
+
+  // Update namespace
+  async namespaceUpdate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      name,
+      slug,
+      enabled,
+      meta,
+      labels,
+      updatedAt,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!name) {
+      throw Error('field name is empty')
+    }
+    if (!meta) {
+      throw Error('field meta is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.namespaceUpdateEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.data = {
+      name,
+      slug,
+      enabled,
+      meta,
+      labels,
+      updatedAt,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceUpdateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceUpdate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceUpdateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}`
+  }
+
+  // Delete namespace
+  async namespaceDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.namespaceDeleteEndpoint({
+        namespaceID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceDeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}`
+  }
+
+  // Upload namespace assets
+  async namespaceUpload (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      upload,
+    } = (a as KV) || {}
+    if (!upload) {
+      throw Error('field upload is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.namespaceUploadEndpoint(),
+    }
+    cfg.data = {
+      upload,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceUploadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceUpload(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceUploadEndpoint (): string {
+    return '/namespace/upload'
+  }
+
+  // Clone compose namespace
+  async namespaceClone (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      name,
+      slug,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!name) {
+      throw Error('field name is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.namespaceCloneEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.data = {
+      name,
+      slug,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceCloneCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceClone(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceCloneEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/clone`
+  }
+
+  // Export compose namespace
+  async namespaceExport (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      filename,
+      ext,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!filename) {
+      throw Error('field filename is empty')
+    }
+    if (!ext) {
+      throw Error('field ext is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.namespaceExportEndpoint({
+        namespaceID, filename, ext,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceExportCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceExport(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceExportEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      filename,
+      ext,
+    } = a || {}
+    return `/namespace/${namespaceID}/export/${filename}.zip`
+  }
+
+  // Initiate namespace import session
+  async namespaceImportInit (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      upload,
+    } = (a as KV) || {}
+    if (!upload) {
+      throw Error('field upload is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.namespaceImportInitEndpoint(),
+    }
+    cfg.data = {
+      upload,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceImportInitCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceImportInit(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceImportInitEndpoint (): string {
+    return '/namespace/import'
+  }
+
+  // Run namespace import
+  async namespaceImportRun (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      sessionID,
+      name,
+      slug,
+      connectionID,
+      importData,
+    } = (a as KV) || {}
+    if (!sessionID) {
+      throw Error('field sessionID is empty')
+    }
+    if (!name) {
+      throw Error('field name is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.namespaceImportRunEndpoint({
+        sessionID,
+      }),
+    }
+    cfg.data = {
+      name,
+      slug,
+        connectionID,
+        importData,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceImportRunCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceImportRun(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceImportRunEndpoint (a: KV): string {
+    const {
+      sessionID,
+    } = a || {}
+    return `/namespace/import/${sessionID}`
+  }
+
+  // Fire compose:namespace trigger
+  async namespaceTriggerScript (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      script,
+      args,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!script) {
+      throw Error('field script is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.namespaceTriggerScriptEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.data = {
+      script,
+      args,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceTriggerScriptCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceTriggerScript(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceTriggerScriptEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/trigger`
+  }
+
+  // List translation
+  async namespaceListTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.namespaceListTranslationsEndpoint({
+        namespaceID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceListTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceListTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceListTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/translation`
+  }
+
+  // Update translation
+  async namespaceUpdateTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      translations,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!translations) {
+      throw Error('field translations is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.namespaceUpdateTranslationsEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.data = {
+      translations,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  namespaceUpdateTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.namespaceUpdateTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  namespaceUpdateTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/translation`
+  }
+
+  // List available pages
+  async pageList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      selfID,
+      moduleID,
+      query,
+      handle,
+      labels,
+      limit,
+      pageCursor,
+      sort,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.pageListEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.params = {
+      selfID,
+      moduleID,
+      query,
+      handle,
+      labels,
+      limit,
+      pageCursor,
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageListEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/`
+  }
+
+  // Create page
+  async pageCreate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      selfID,
+      moduleID,
+      title,
+      handle,
+      description,
+      weight,
+      labels,
+      visible,
+      blocks,
+      config,
+      meta,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!title) {
+      throw Error('field title is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.pageCreateEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.data = {
+      selfID,
+      moduleID,
+      title,
+      handle,
+      description,
+      weight,
+      labels,
+      visible,
+      blocks,
+      config,
+      meta,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageCreateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageCreate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageCreateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/`
+  }
+
+  // Get page details
+  async pageRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.pageReadEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageRead(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageReadEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}`
+  }
+
+  // Get page all (non-record) pages, hierarchically
+  async pageTree (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.pageTreeEndpoint({
+        namespaceID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageTreeCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageTree(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageTreeEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/tree`
+  }
+
+  // Update page
+  async pageUpdate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      selfID,
+      moduleID,
+      title,
+      handle,
+      description,
+      weight,
+      labels,
+      visible,
+      blocks,
+      config,
+      meta,
+      updatedAt,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!title) {
+      throw Error('field title is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.pageUpdateEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+    cfg.data = {
+      selfID,
+      moduleID,
+      title,
+      handle,
+      description,
+      weight,
+      labels,
+      visible,
+      blocks,
+      config,
+      meta,
+      updatedAt,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageUpdateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageUpdate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageUpdateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}`
+  }
+
+  // Reorder pages
+  async pageReorder (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      selfID,
+      pageIDs,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!selfID) {
+      throw Error('field selfID is empty')
+    }
+    if (!pageIDs) {
+      throw Error('field pageIDs is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.pageReorderEndpoint({
+        namespaceID, selfID,
+      }),
+    }
+    cfg.data = {
+      pageIDs,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageReorderCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageReorder(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageReorderEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      selfID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${selfID}/reorder`
+  }
+
+  // Delete page
+  async pageDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      strategy,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.pageDeleteEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+    cfg.params = {
+      strategy,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageDeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}`
+  }
+
+  // Uploads attachment to page
+  async pageUpload (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      upload,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!upload) {
+      throw Error('field upload is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.pageUploadEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+    cfg.data = {
+      upload,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageUploadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageUpload(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageUploadEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/attachment`
+  }
+
+  // Fire compose:page trigger
+  async pageTriggerScript (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      script,
+      args,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!script) {
+      throw Error('field script is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.pageTriggerScriptEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+    cfg.data = {
+      script,
+      args,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageTriggerScriptCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageTriggerScript(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageTriggerScriptEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/trigger`
+  }
+
+  // List page translation
+  async pageListTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.pageListTranslationsEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageListTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageListTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageListTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/translation`
+  }
+
+  // Update page translation
+  async pageUpdateTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      translations,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!translations) {
+      throw Error('field translations is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.pageUpdateTranslationsEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+    cfg.data = {
+      translations,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageUpdateTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageUpdateTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageUpdateTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/translation`
+  }
+
+  // Update icon for page
+  async pageUpdateIcon (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      type,
+      source,
+      style,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!type) {
+      throw Error('field type is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.pageUpdateIconEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+    cfg.data = {
+      type,
+      source,
+      style,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageUpdateIconCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageUpdateIcon(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageUpdateIconEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/icon`
+  }
+
+  // List icons
+  async iconList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      limit,
+      incTotal,
+      pageCursor,
+      sort,
+    } = (a as KV) || {}
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.iconListEndpoint(),
+    }
+    cfg.params = {
+      limit,
+      incTotal,
+      pageCursor,
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  iconListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.iconList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  iconListEndpoint (): string {
+    return '/icon/'
+  }
+
+  // Upload icon
+  async iconUpload (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      icon,
+    } = (a as KV) || {}
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.iconUploadEndpoint(),
+    }
+    cfg.data = {
+      icon,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  iconUploadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.iconUpload(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  iconUploadEndpoint (): string {
+    return '/icon/'
+  }
+
+  // Delete icon
+  async iconDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      iconID,
+    } = (a as KV) || {}
+    if (!iconID) {
+      throw Error('field iconID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.iconDeleteEndpoint({
+        iconID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  iconDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.iconDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  iconDeleteEndpoint (a: KV): string {
+    const {
+      iconID,
+    } = a || {}
+    return `/icon/${iconID}`
+  }
+
+  // List available page layouts
+  async pageLayoutListNamespace (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      moduleID,
+      parentID,
+      query,
+      handle,
+      labels,
+      limit,
+      pageCursor,
+      sort,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.pageLayoutListNamespaceEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.params = {
+      pageID,
+      moduleID,
+      parentID,
+      query,
+      handle,
+      labels,
+      limit,
+      pageCursor,
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutListNamespaceCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutListNamespace(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutListNamespaceEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page-layout`
+  }
+
+  // List available page layouts
+  async pageLayoutList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      moduleID,
+      parentID,
+      query,
+      handle,
+      labels,
+      limit,
+      pageCursor,
+      sort,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.pageLayoutListEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+    cfg.params = {
+      moduleID,
+      parentID,
+      query,
+      handle,
+      labels,
+      limit,
+      pageCursor,
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutListEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/layout/`
+  }
+
+  // Create page layout
+  async pageLayoutCreate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      parentID,
+      weight,
+      moduleID,
+      handle,
+      meta,
+      config,
+      blocks,
+      labels,
+      ownedBy,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.pageLayoutCreateEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+    cfg.data = {
+      parentID,
+      weight,
+      moduleID,
+      handle,
+      meta,
+      config,
+      blocks,
+      labels,
+      ownedBy,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutCreateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutCreate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutCreateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/layout/`
+  }
+
+  // Get page details
+  async pageLayoutRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!pageLayoutID) {
+      throw Error('field pageLayoutID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.pageLayoutReadEndpoint({
+        namespaceID, pageID, pageLayoutID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutRead(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutReadEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/layout/${pageLayoutID}`
+  }
+
+  // Update page
+  async pageLayoutUpdate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+      parentID,
+      weight,
+      moduleID,
+      handle,
+      meta,
+      config,
+      blocks,
+      labels,
+      ownedBy,
+      updatedAt,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!pageLayoutID) {
+      throw Error('field pageLayoutID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.pageLayoutUpdateEndpoint({
+        namespaceID, pageID, pageLayoutID,
+      }),
+    }
+    cfg.data = {
+      parentID,
+      weight,
+      moduleID,
+      handle,
+      meta,
+      config,
+      blocks,
+      labels,
+      ownedBy,
+      updatedAt,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutUpdateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutUpdate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutUpdateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/layout/${pageLayoutID}`
+  }
+
+  // Reorder page layouts
+  async pageLayoutReorder (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      pageIDs,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!pageIDs) {
+      throw Error('field pageIDs is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.pageLayoutReorderEndpoint({
+        namespaceID, pageID,
+      }),
+    }
+    cfg.data = {
+      pageIDs,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutReorderCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutReorder(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutReorderEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/layout/reorder`
+  }
+
+  // Delete page layout
+  async pageLayoutDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+      strategy,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!pageLayoutID) {
+      throw Error('field pageLayoutID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.pageLayoutDeleteEndpoint({
+        namespaceID, pageID, pageLayoutID,
+      }),
+    }
+    cfg.params = {
+      strategy,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutDeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/layout/${pageLayoutID}`
+  }
+
+  // Undelete soft deleted Delete page layout
+  async pageLayoutUndelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!pageLayoutID) {
+      throw Error('field pageLayoutID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.pageLayoutUndeleteEndpoint({
+        namespaceID, pageID, pageLayoutID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutUndeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutUndelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutUndeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/layout/${pageLayoutID}/undelete`
+  }
+
+  // List page layout translation
+  async pageLayoutListTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!pageLayoutID) {
+      throw Error('field pageLayoutID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.pageLayoutListTranslationsEndpoint({
+        namespaceID, pageID, pageLayoutID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutListTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutListTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutListTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/layout/${pageLayoutID}/translation`
+  }
+
+  // Update page layout translation
+  async pageLayoutUpdateTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+      translations,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!pageID) {
+      throw Error('field pageID is empty')
+    }
+    if (!pageLayoutID) {
+      throw Error('field pageLayoutID is empty')
+    }
+    if (!translations) {
+      throw Error('field translations is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.pageLayoutUpdateTranslationsEndpoint({
+        namespaceID, pageID, pageLayoutID,
+      }),
+    }
+    cfg.data = {
+      translations,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  pageLayoutUpdateTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.pageLayoutUpdateTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  pageLayoutUpdateTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      pageID,
+      pageLayoutID,
+    } = a || {}
+    return `/namespace/${namespaceID}/page/${pageID}/layout/${pageLayoutID}/translation`
+  }
+
+  // List modules
+  async moduleList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      query,
+      name,
+      handle,
+      limit,
+      incTotal,
+      pageCursor,
+      labels,
+      sort,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.moduleListEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.params = {
+      query,
+      name,
+      handle,
+      limit,
+      incTotal,
+      pageCursor,
+      labels,
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  moduleListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.moduleList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  moduleListEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/`
+  }
+
+  // Create module
+  async moduleCreate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      name,
+      handle,
+      config,
+      meta,
+      fields,
+      labels,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!name) {
+      throw Error('field name is empty')
+    }
+    if (!meta) {
+      throw Error('field meta is empty')
+    }
+    if (!fields) {
+      throw Error('field fields is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.moduleCreateEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.data = {
+      name,
+      handle,
+      config,
+      meta,
+      fields,
+      labels,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  moduleCreateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.moduleCreate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  moduleCreateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/`
+  }
+
+  // Read module
+  async moduleRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.moduleReadEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  moduleReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.moduleRead(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  moduleReadEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}`
+  }
+
+  // Update module
+  async moduleUpdate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      name,
+      handle,
+      config,
+      meta,
+      fields,
+      labels,
+      updatedAt,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!name) {
+      throw Error('field name is empty')
+    }
+    if (!meta) {
+      throw Error('field meta is empty')
+    }
+    if (!fields) {
+      throw Error('field fields is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.moduleUpdateEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      name,
+      handle,
+      config,
+      meta,
+      fields,
+      labels,
+      updatedAt,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  moduleUpdateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.moduleUpdate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  moduleUpdateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}`
+  }
+
+  // Delete module
+  async moduleDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.moduleDeleteEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  moduleDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.moduleDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  moduleDeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}`
+  }
+
+  // Fire compose:module trigger
+  async moduleTriggerScript (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      script,
+      args,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!script) {
+      throw Error('field script is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.moduleTriggerScriptEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      script,
+      args,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  moduleTriggerScriptCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.moduleTriggerScript(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  moduleTriggerScriptEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/trigger`
+  }
+
+  // List moudle translation
+  async moduleListTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.moduleListTranslationsEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  moduleListTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.moduleListTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  moduleListTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/translation`
+  }
+
+  // Update module translation
+  async moduleUpdateTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      translations,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!translations) {
+      throw Error('field translations is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.moduleUpdateTranslationsEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      translations,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  moduleUpdateTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.moduleUpdateTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  moduleUpdateTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/translation`
+  }
+
+  // Generates report from module records
+  async recordReport (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      metrics,
+      dimensions,
+      filter,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.recordReportEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.params = {
+      metrics,
+      dimensions,
+      filter,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordReportCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordReport(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordReportEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/report`
+  }
+
+  // List/read records from module section
+  async recordList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      summaries,
+      query,
+      meta,
+      deleted,
+      limit,
+      incTotal,
+      incPageNavigation,
+      pageCursor,
+      sort,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.recordListEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.params = {
+      summaries,
+      query,
+      meta,
+      deleted,
+      limit,
+      incTotal,
+      incPageNavigation,
+      pageCursor,
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordListEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/`
+  }
+
+  // Initiate record import session
+  async recordImportInit (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      upload,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!upload) {
+      throw Error('field upload is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.recordImportInitEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      upload,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordImportInitCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordImportInit(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordImportInitEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/import`
+  }
+
+  // Run record import
+  async recordImportRun (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      sessionID,
+      fields,
+      onError,
+      multiValueDelimiter,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!sessionID) {
+      throw Error('field sessionID is empty')
+    }
+    if (!fields) {
+      throw Error('field fields is empty')
+    }
+    if (!onError) {
+      throw Error('field onError is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.recordImportRunEndpoint({
+        namespaceID, moduleID, sessionID,
+      }),
+    }
+    cfg.data = {
+      fields,
+      onError,
+      multiValueDelimiter,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordImportRunCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordImportRun(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordImportRunEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      sessionID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/import/${sessionID}`
+  }
+
+  // Get import progress
+  async recordImportProgress (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      sessionID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!sessionID) {
+      throw Error('field sessionID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.recordImportProgressEndpoint({
+        namespaceID, moduleID, sessionID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordImportProgressCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordImportProgress(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordImportProgressEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      sessionID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/import/${sessionID}`
+  }
+
+  // Exports records that match
+  async recordExport (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      filename,
+      ext,
+      filter,
+      fields,
+      timezone,
+      multiValueDelimiter,
+      wrapMultiValue,
+      resolveRefs,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!ext) {
+      throw Error('field ext is empty')
+    }
+    if (!fields) {
+      throw Error('field fields is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.recordExportEndpoint({
+        namespaceID, moduleID, filename, ext,
+      }),
+    }
+    cfg.params = {
+      filter,
+      fields,
+      timezone,
+      multiValueDelimiter,
+      wrapMultiValue,
+      resolveRefs,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordExportCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordExport(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordExportEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      filename,
+      ext,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/export${filename}.${ext}`
+  }
+
+  // Executes server-side procedure over one or more module records
+  async recordExec (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      procedure,
+      args,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!procedure) {
+      throw Error('field procedure is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.recordExecEndpoint({
+        namespaceID, moduleID, procedure,
+      }),
+    }
+    cfg.data = {
+      args,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordExecCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordExec(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordExecEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      procedure,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/exec/${procedure}`
+  }
+
+  // Create record in module section
+  async recordCreate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      values,
+      ownedBy,
+      records,
+      meta,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.recordCreateEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      values,
+      ownedBy,
+      records,
+      meta,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordCreateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordCreate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordCreateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/`
+  }
+
+  // Read records by ID from module section
+  async recordRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!recordID) {
+      throw Error('field recordID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.recordReadEndpoint({
+        namespaceID, moduleID, recordID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordRead(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordReadEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}`
+  }
+
+  // Update records in module section
+  async recordUpdate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+      values,
+      ownedBy,
+      meta,
+      records,
+      updatedAt,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!recordID) {
+      throw Error('field recordID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.recordUpdateEndpoint({
+        namespaceID, moduleID, recordID,
+      }),
+    }
+    cfg.data = {
+      values,
+      ownedBy,
+      meta,
+      records,
+      updatedAt,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordUpdateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordUpdate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordUpdateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}`
+  }
+
+  // Partially update record values
+  async recordPatch (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      values,
+      query,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.recordPatchEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      values,
+      query,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordPatchCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordPatch(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordPatchEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/`
+  }
+
+  // Delete record row from module section
+  async recordBulkDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      truncate,
+      query,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.recordBulkDeleteEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      truncate,
+      query,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordBulkDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordBulkDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordBulkDeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/`
+  }
+
+  // Delete record row from module section
+  async recordDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!recordID) {
+      throw Error('field recordID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.recordDeleteEndpoint({
+        namespaceID, moduleID, recordID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordDeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}`
+  }
+
+  // Undelete soft-deleted record from module section
+  async recordUndelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!recordID) {
+      throw Error('field recordID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.recordUndeleteEndpoint({
+        namespaceID, moduleID, recordID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordUndeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordUndelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordUndeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}/undelete`
+  }
+
+  // Undelete soft-deleted records from module section
+  async recordBulkUndelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      query,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.recordBulkUndeleteEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      query,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordBulkUndeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordBulkUndelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordBulkUndeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/undelete`
+  }
+
+  // Uploads attachment and validates it against record field requirements
+  async recordUpload (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+      fieldName,
+      upload,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!fieldName) {
+      throw Error('field fieldName is empty')
+    }
+    if (!upload) {
+      throw Error('field upload is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.recordUploadEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      recordID,
+      fieldName,
+      upload,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordUploadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordUpload(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordUploadEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/attachment`
+  }
+
+  // Fire compose:record trigger
+  async recordTriggerScript (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+      script,
+      values,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!recordID) {
+      throw Error('field recordID is empty')
+    }
+    if (!script) {
+      throw Error('field script is empty')
+    }
+    if (!values) {
+      throw Error('field values is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.recordTriggerScriptEndpoint({
+        namespaceID, moduleID, recordID,
+      }),
+    }
+    cfg.data = {
+      script,
+      values,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordTriggerScriptCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordTriggerScript(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordTriggerScriptEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}/trigger`
+  }
+
+  // Fire compose:record trigger
+  async recordTriggerScriptOnList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      script,
+      args,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!script) {
+      throw Error('field script is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.recordTriggerScriptOnListEndpoint({
+        namespaceID, moduleID,
+      }),
+    }
+    cfg.data = {
+      script,
+      args,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordTriggerScriptOnListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordTriggerScriptOnList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordTriggerScriptOnListEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/trigger`
+  }
+
+  // List record revisions
+  async recordRevisions (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+      sort,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!recordID) {
+      throw Error('field recordID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.recordRevisionsEndpoint({
+        namespaceID, moduleID, recordID,
+      }),
+    }
+    cfg.params = {
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordRevisionsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.recordRevisions(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  recordRevisionsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}/revisions`
+  }
+
+  // List records for data privacy
+  async dataPrivacyRecordList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      sensitivityLevelID,
+      connectionID,
+    } = (a as KV) || {}
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.dataPrivacyRecordListEndpoint(),
+    }
+    cfg.params = {
+      sensitivityLevelID,
+      connectionID,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  dataPrivacyRecordListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.dataPrivacyRecordList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  dataPrivacyRecordListEndpoint (): string {
+    return '/data-privacy/record'
+  }
+
+  // List modules
+  async dataPrivacyModuleList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      connectionID,
+      limit,
+      pageCursor,
+      sort,
+    } = (a as KV) || {}
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.dataPrivacyModuleListEndpoint(),
+    }
+    cfg.params = {
+      connectionID,
+      limit,
+      pageCursor,
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  dataPrivacyModuleListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.dataPrivacyModuleList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  dataPrivacyModuleListEndpoint (): string {
+    return '/data-privacy/module'
+  }
+
+  // List/read charts
+  async chartList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      query,
+      handle,
+      labels,
+      limit,
+      incTotal,
+      pageCursor,
+      sort,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.chartListEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.params = {
+      query,
+      handle,
+      labels,
+      limit,
+      incTotal,
+      pageCursor,
+      sort,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  chartListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.chartList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  chartListEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/chart/`
+  }
+
+  // List/read charts
+  async chartCreate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      config,
+      name,
+      handle,
+      labels,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!config) {
+      throw Error('field config is empty')
+    }
+    if (!name) {
+      throw Error('field name is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.chartCreateEndpoint({
+        namespaceID,
+      }),
+    }
+    cfg.data = {
+      config,
+      name,
+      handle,
+      labels,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  chartCreateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.chartCreate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  chartCreateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/chart/`
+  }
+
+  // Read charts by ID
+  async chartRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      chartID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!chartID) {
+      throw Error('field chartID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.chartReadEndpoint({
+        namespaceID, chartID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  chartReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.chartRead(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  chartReadEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      chartID,
+    } = a || {}
+    return `/namespace/${namespaceID}/chart/${chartID}`
+  }
+
+  // Add/update charts
+  async chartUpdate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      chartID,
+      config,
+      name,
+      handle,
+      labels,
+      updatedAt,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!chartID) {
+      throw Error('field chartID is empty')
+    }
+    if (!config) {
+      throw Error('field config is empty')
+    }
+    if (!name) {
+      throw Error('field name is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.chartUpdateEndpoint({
+        namespaceID, chartID,
+      }),
+    }
+    cfg.data = {
+      config,
+      name,
+      handle,
+      labels,
+      updatedAt,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  chartUpdateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.chartUpdate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  chartUpdateEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      chartID,
+    } = a || {}
+    return `/namespace/${namespaceID}/chart/${chartID}`
+  }
+
+  // Delete chart
+  async chartDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      chartID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!chartID) {
+      throw Error('field chartID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.chartDeleteEndpoint({
+        namespaceID, chartID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  chartDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.chartDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  chartDeleteEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      chartID,
+    } = a || {}
+    return `/namespace/${namespaceID}/chart/${chartID}`
+  }
+
+  // List chart translation
+  async chartListTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      chartID,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!chartID) {
+      throw Error('field chartID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.chartListTranslationsEndpoint({
+        namespaceID, chartID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  chartListTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.chartListTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  chartListTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      chartID,
+    } = a || {}
+    return `/namespace/${namespaceID}/chart/${chartID}/translation`
+  }
+
+  // Update chart translation
+  async chartUpdateTranslations (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      chartID,
+      translations,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!chartID) {
+      throw Error('field chartID is empty')
+    }
+    if (!translations) {
+      throw Error('field translations is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.chartUpdateTranslationsEndpoint({
+        namespaceID, chartID,
+      }),
+    }
+    cfg.data = {
+      translations,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  chartUpdateTranslationsCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.chartUpdateTranslations(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  chartUpdateTranslationsEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      chartID,
+    } = a || {}
+    return `/namespace/${namespaceID}/chart/${chartID}/translation`
+  }
+
+  // Send email from the Compose
+  async notificationEmailSend (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      to,
+      cc,
+      replyTo,
+      subject,
+      content,
+      remoteAttachments,
+    } = (a as KV) || {}
+    if (!to) {
+      throw Error('field to is empty')
+    }
+    if (!content) {
+      throw Error('field content is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.notificationEmailSendEndpoint(),
+    }
+    cfg.data = {
+      to,
+      cc,
+      replyTo,
+      subject,
+      content,
+      remoteAttachments,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  notificationEmailSendCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.notificationEmailSend(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  notificationEmailSendEndpoint (): string {
+    return '/notification/email'
+  }
+
+  // List, filter all page attachments
+  async attachmentList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      kind,
+      namespaceID,
+      sign,
+      userID,
+      pageID,
+      moduleID,
+      recordID,
+      fieldName,
+      limit,
+      pageCursor,
+    } = (a as KV) || {}
+    if (!kind) {
+      throw Error('field kind is empty')
+    }
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.attachmentListEndpoint({
+        kind, namespaceID,
+      }),
+    }
+    cfg.params = {
+      sign,
+      userID,
+      pageID,
+      moduleID,
+      recordID,
+      fieldName,
+      limit,
+      pageCursor,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  attachmentListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.attachmentList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  attachmentListEndpoint (a: KV): string {
+    const {
+      kind,
+      namespaceID,
+    } = a || {}
+    return `/namespace/${namespaceID}/attachment/${kind}/`
+  }
+
+  // Attachment details
+  async attachmentRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      kind,
+      namespaceID,
+      attachmentID,
+      sign,
+      userID,
+    } = (a as KV) || {}
+    if (!kind) {
+      throw Error('field kind is empty')
+    }
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!attachmentID) {
+      throw Error('field attachmentID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.attachmentReadEndpoint({
+        kind, namespaceID, attachmentID,
+      }),
+    }
+    cfg.params = {
+      sign,
+      userID,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  attachmentReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.attachmentRead(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  attachmentReadEndpoint (a: KV): string {
+    const {
+      kind,
+      namespaceID,
+      attachmentID,
+    } = a || {}
+    return `/namespace/${namespaceID}/attachment/${kind}/${attachmentID}`
+  }
+
+  // Delete attachment
+  async attachmentDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      kind,
+      namespaceID,
+      attachmentID,
+      sign,
+      userID,
+    } = (a as KV) || {}
+    if (!kind) {
+      throw Error('field kind is empty')
+    }
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!attachmentID) {
+      throw Error('field attachmentID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.attachmentDeleteEndpoint({
+        kind, namespaceID, attachmentID,
+      }),
+    }
+    cfg.params = {
+      sign,
+      userID,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  attachmentDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.attachmentDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  attachmentDeleteEndpoint (a: KV): string {
+    const {
+      kind,
+      namespaceID,
+      attachmentID,
+    } = a || {}
+    return `/namespace/${namespaceID}/attachment/${kind}/${attachmentID}`
+  }
+
+  // Serves attached file
+  async attachmentOriginal (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      kind,
+      namespaceID,
+      attachmentID,
+      name,
+      sign,
+      userID,
+      download,
+    } = (a as KV) || {}
+    if (!kind) {
+      throw Error('field kind is empty')
+    }
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!attachmentID) {
+      throw Error('field attachmentID is empty')
+    }
+    if (!name) {
+      throw Error('field name is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.attachmentOriginalEndpoint({
+        kind, namespaceID, attachmentID, name,
+      }),
+    }
+    cfg.params = {
+      sign,
+      userID,
+      download,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  attachmentOriginalCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.attachmentOriginal(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  attachmentOriginalEndpoint (a: KV): string {
+    const {
+      kind,
+      namespaceID,
+      attachmentID,
+      name,
+    } = a || {}
+    return `/namespace/${namespaceID}/attachment/${kind}/${attachmentID}/original/${name}`
+  }
+
+  // Serves preview of an attached file
+  async attachmentPreview (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      kind,
+      namespaceID,
+      attachmentID,
+      ext,
+      sign,
+      userID,
+    } = (a as KV) || {}
+    if (!kind) {
+      throw Error('field kind is empty')
+    }
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!attachmentID) {
+      throw Error('field attachmentID is empty')
+    }
+    if (!ext) {
+      throw Error('field ext is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.attachmentPreviewEndpoint({
+        kind, namespaceID, attachmentID, ext,
+      }),
+    }
+    cfg.params = {
+      sign,
+      userID,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  attachmentPreviewCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.attachmentPreview(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  attachmentPreviewEndpoint (a: KV): string {
+    const {
+      kind,
+      namespaceID,
+      attachmentID,
+      ext,
+    } = a || {}
+    return `/namespace/${namespaceID}/attachment/${kind}/${attachmentID}/preview.${ext}`
+  }
+
+  // Retrieve defined permissions
+  async permissionsList (extra: AxiosRequestConfig = {}): Promise<KV> {
+
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.permissionsListEndpoint(),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  permissionsListCancellable (extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.permissionsList(options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  permissionsListEndpoint (): string {
+    return '/permissions/'
+  }
+
+  // Effective rules for current user
+  async permissionsEffective (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      resource,
+    } = (a as KV) || {}
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.permissionsEffectiveEndpoint(),
+    }
+    cfg.params = {
+      resource,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  permissionsEffectiveCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.permissionsEffective(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  permissionsEffectiveEndpoint (): string {
+    return '/permissions/effective'
+  }
+
+  // Evaluate rules for given user/role combo
+  async permissionsTrace (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      resource,
+      userID,
+      roleID,
+    } = (a as KV) || {}
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.permissionsTraceEndpoint(),
+    }
+    cfg.params = {
+      resource,
+      userID,
+      roleID,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  permissionsTraceCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.permissionsTrace(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  permissionsTraceEndpoint (): string {
+    return '/permissions/trace'
+  }
+
+  // Retrieve role permissions
+  async permissionsRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      roleID,
+      resource,
+    } = (a as KV) || {}
+    if (!roleID) {
+      throw Error('field roleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.permissionsReadEndpoint({
+        roleID,
+      }),
+    }
+    cfg.params = {
+      resource,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  permissionsReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.permissionsRead(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  permissionsReadEndpoint (a: KV): string {
+    const {
+      roleID,
+    } = a || {}
+    return `/permissions/${roleID}/rules`
+  }
+
+  // Remove all defined role permissions
+  async permissionsDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      roleID,
+    } = (a as KV) || {}
+    if (!roleID) {
+      throw Error('field roleID is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'delete',
+      url: this.permissionsDeleteEndpoint({
+        roleID,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  permissionsDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.permissionsDelete(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  permissionsDeleteEndpoint (a: KV): string {
+    const {
+      roleID,
+    } = a || {}
+    return `/permissions/${roleID}/rules`
+  }
+
+  // Update permission settings
+  async permissionsUpdate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      roleID,
+      rules,
+    } = (a as KV) || {}
+    if (!roleID) {
+      throw Error('field roleID is empty')
+    }
+    if (!rules) {
+      throw Error('field rules is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'patch',
+      url: this.permissionsUpdateEndpoint({
+        roleID,
+      }),
+    }
+    cfg.data = {
+      rules,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  permissionsUpdateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.permissionsUpdate(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  permissionsUpdateEndpoint (a: KV): string {
+    const {
+      roleID,
+    } = a || {}
+    return `/permissions/${roleID}/rules`
+  }
+
+  // List all available automation scripts for compose resources
+  async automationList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      resourceTypePrefixes,
+      resourceTypes,
+      eventTypes,
+      excludeInvalid,
+      excludeClientScripts,
+      excludeServerScripts,
+    } = (a as KV) || {}
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.automationListEndpoint(),
+    }
+    cfg.params = {
+      resourceTypePrefixes,
+      resourceTypes,
+      eventTypes,
+      excludeInvalid,
+      excludeClientScripts,
+      excludeServerScripts,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  automationListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.automationList(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  automationListEndpoint (): string {
+    return '/automation/'
+  }
+
+  // Serves client scripts bundle
+  async automationBundle (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      bundle,
+      type,
+      ext,
+    } = (a as KV) || {}
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.automationBundleEndpoint({
+        bundle, type, ext,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  automationBundleCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.automationBundle(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  automationBundleEndpoint (a: KV): string {
+    const {
+      bundle,
+      type,
+      ext,
+    } = a || {}
+    return `/automation/${bundle}-${type}.${ext}`
+  }
+
+  // Triggers execution of a specific script on a system service level
+  async automationTriggerScript (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      script,
+      args,
+    } = (a as KV) || {}
+    if (!script) {
+      throw Error('field script is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.automationTriggerScriptEndpoint(),
+    }
+    cfg.data = {
+      script,
+      args,
+    }
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  automationTriggerScriptCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+    const cancelTokenSource = axios.CancelToken.source();
+    const options = {...extra, cancelToken: cancelTokenSource.token }
+
+    return {
+      response: () => this.automationTriggerScript(a, options),
+      cancel: () => {
+        cancelTokenSource.cancel();
+      },
+    }
+  }
+
+  automationTriggerScriptEndpoint (): string {
+    return '/automation/trigger'
+  }
+
+
+    async pageAiPrompt (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            selfID,
+            moduleID,
+            pageID,
+            prompt,
+            meta,
+            messages,
+            files,
+            model,
+            temperature,
+            wantConfidence,
+        } = (a as KV) || {}
+
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.pageAiPromptEndpoint({
+                namespaceID,
+                pageID
+            }),
+        }
+        cfg.data = {
+            selfID,
+            moduleID,
+            namespaceID,
+            meta,
+            prompt,
+            pageID,
+            messages,
+            files,
+            model,
+            temperature,
+            wantConfidence,
+        }
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    async pageAiPromptStream (a: KV, onToken: (token: { token: any; reason: any; status?: string }) => void): Promise<void> {
+        const {
+            namespaceID,
+            selfID,
+            moduleID,
+            pageID,
+            chatID,
+            prompt,
+            meta,
+            messages,
+            files,
+            model,
+            temperature,
+            wantConfidence,
+            signal,
+        } = (a as KV) || {}
+
+        const endpoint = this.pageAiPromptEndpoint({ namespaceID, pageID }) + '/stream'
+        const url = this.baseURL ? `${this.baseURL.replace(/\/+$/, '')}${endpoint}` : endpoint
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        }
+        const accessToken = this.accessTokenFn ? this.accessTokenFn() : undefined
+        if (accessToken) {
+            headers['Authorization'] = 'Bearer ' + accessToken
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers,
+            credentials: 'include',
+            signal: signal as AbortSignal | null,
+            body: JSON.stringify({
+                selfID,
+                moduleID,
+                namespaceID,
+                chatID,
+                meta,
+                prompt,
+                pageID,
+                messages,
+                files,
+                model,
+                temperature,
+                wantConfidence,
+            }),
+        })
+
+        if (!response.ok) {
+            const text = await response.text()
+            throw new Error(text || `HTTP ${response.status}`)
+        }
+
+        const reader = response.body!.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() || ''
+
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue
+                    const data = JSON.parse(line.slice(6))
+                    if (data.error) {
+                        throw new Error(data.error)
+                    }
+                    if (data.status || data.token || data.reason) {
+                        onToken( {
+                            token: data.token || '',
+                            reason: data.reason || '',
+                            status: data.status || '',
+                        })
+                    }
+                    if (data.done) return
+            }
+        }
+    }
+
+    pageAiPromptCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.pageCreate(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    pageAiPromptEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            pageID,
+        } = a || {}
+        if (!pageID) {
+            return `/namespace/${namespaceID}/prompt`
+        }
+        return `/namespace/${namespaceID}/page/${pageID}/prompt`
+    }
+
+    // List available AI models
+    async pageAiModels (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'get',
+            url: '/chat/models',
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    // Discover all Ollama chat models (ignores admin catalog filter)
+    async pageAiDiscoverModels (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'get',
+            url: '/chat/models/discover',
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    // Preload AI model into memory
+    async pageAiWarmUp (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            model,
+        } = (a as KV) || {}
+
+        const cfg: AxiosRequestConfig = {
+            timeout: 10 * 60 * 1000, // cold model load can take several minutes
+            ...extra,
+            method: 'post',
+            url: '/chat/warmup',
+        }
+        cfg.data = {
+            model,
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    // List ETL jobs
+    async etlList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            moduleID,
+            query,
+            limit,
+            pageCursor,
+            sort,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'get',
+            url: this.etlListEndpoint({
+                namespaceID,
+            }),
+        }
+        cfg.params = {
+            moduleID,
+            query,
+            limit,
+            pageCursor,
+            sort,
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlListCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlList(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlListEndpoint (a: KV): string {
+        const {
+            namespaceID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl`
+    }
+
+    // Create ETL job
+    async etlCreate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            moduleID,
+            name,
+            enabled,
+            schedule,
+            source,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!name) {
+            throw Error('field name is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.etlCreateEndpoint({
+                namespaceID,
+            }),
+        }
+        cfg.data = {
+            moduleID,
+            name,
+            enabled,
+            schedule,
+            source,
+        }
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlCreateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlCreate(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlCreateEndpoint (a: KV): string {
+        const {
+            namespaceID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl`
+    }
+
+    // Read ETL job
+    async etlRead (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            etlID,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!etlID) {
+            throw Error('field etlID is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'get',
+            url: this.etlReadEndpoint({
+                namespaceID, etlID,
+            }),
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlReadCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlRead(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlReadEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            etlID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl/${etlID}`
+    }
+
+    // Update ETL job
+    async etlUpdate (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            etlID,
+            name,
+            enabled,
+            schedule,
+            source,
+            updatedAt,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!etlID) {
+            throw Error('field etlID is empty')
+        }
+        if (!name) {
+            throw Error('field name is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'put',
+            url: this.etlUpdateEndpoint({
+                namespaceID, etlID,
+            }),
+        }
+        cfg.data = {
+            name,
+            enabled,
+            schedule,
+            source,
+            updatedAt,
+        }
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlUpdateCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlUpdate(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlUpdateEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            etlID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl/${etlID}`
+    }
+
+    // Delete ETL job
+    async etlDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            etlID,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!etlID) {
+            throw Error('field etlID is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'delete',
+            url: this.etlDeleteEndpoint({
+                namespaceID, etlID,
+            }),
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlDeleteCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlDelete(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlDeleteEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            etlID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl/${etlID}`
+    }
+
+    // Run ETL job
+    async etlRun (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            namespaceID,
+            etlID,
+        } = (a as KV) || {}
+        if (!namespaceID) {
+            throw Error('field namespaceID is empty')
+        }
+        if (!etlID) {
+            throw Error('field etlID is empty')
+        }
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.etlRunEndpoint({
+                namespaceID, etlID,
+            }),
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    etlRunCancellable (a: KV, extra: AxiosRequestConfig = {}): { response: (a: KV, extra?: AxiosRequestConfig) => Promise<KV>; cancel: () => void; } {
+        const cancelTokenSource = axios.CancelToken.source();
+        const options = {...extra, cancelToken: cancelTokenSource.token }
+
+        return {
+            response: () => this.etlRun(a, options),
+            cancel: () => {
+                cancelTokenSource.cancel();
+            },
+        }
+    }
+
+    etlRunEndpoint (a: KV): string {
+        const {
+            namespaceID,
+            etlID,
+        } = a || {}
+        return `/namespace/${namespaceID}/etl/${etlID}/run`
+    }
+
+    async connectorTest (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.connectorTestEndpoint(),
+            data: a,
+            headers: { 'Content-Type': 'application/json' },
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    connectorTestEndpoint (): string {
+        return `/connector/test`
+    }
+
+    async datasourcePreview (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const cfg: AxiosRequestConfig = {
+            ...extra,
+            method: 'post',
+            url: this.datasourcePreviewEndpoint(),
+            data: a,
+            headers: { 'Content-Type': 'application/json' },
+        }
+
+        return this.api().request(cfg).then(result => stdResolve(result))
+    }
+
+    datasourcePreviewEndpoint (): string {
+        return `/datasource/preview`
+    }
+
+    async ragDocumentList (a: KV): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: this.ragDocumentsEndpoint(a),
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
+
+    async ragDocumentUpload (a: KV): Promise<KV> {
+        const { namespaceID, file } = a
+        const fd = new FormData()
+        fd.append('file', file as File)
+        return this.api().request({
+            method: 'post',
+            url: this.ragDocumentsEndpoint({ namespaceID }),
+            data: fd,
+            headers: { 'Content-Type': 'multipart/form-data' },
+        }).then(result => stdResolve(result))
+    }
+
+    async ragDocumentDelete (a: KV): Promise<KV> {
+        return this.api().request({
+            method: 'delete',
+            url: this.ragDocumentEndpoint(a),
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => ({ success: true }))
+    }
+
+    async ragSearch (a: KV): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: this.ragSearchEndpoint(a),
+            data: { query: a.query, topK: a.topK || 3 },
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
+
+    ragDocumentsEndpoint (a: KV): string {
+        return `/namespace/${a.namespaceID}/rag/documents`
+    }
+
+    ragDocumentEndpoint (a: KV): string {
+        return `/namespace/${a.namespaceID}/rag/documents/${a.docID}`
+    }
+
+    ragSearchEndpoint (a: KV): string {
+        return `/namespace/${a.namespaceID}/rag/search`
+    }
+
+    async ragPagesList (): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: '/pages-rag',
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
+
+    async ragPagesReindex (): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/pages-rag/reindex',
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
+
+    async ragPagesReindexProgress (): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: '/pages-rag/reindex/progress',
+            headers: { 'Content-Type': 'application/json' },
+        }).then(result => stdResolve(result))
+    }
+
+    // Rule chains (rules & workflow)
+    async ruleChainList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            limit = 500,
+            offset = 0,
+            namespaceID,
+        } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/admin/rulechain/',
+            params: { limit, offset, namespaceID },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainRead (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/rulechain/${chainID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/rulechain/',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/rulechain/${chainID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/rulechain/${chainID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainTest (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/rulechain/${chainID}/test`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    // Tries one AI node against the real model with a sample input (hand-written)
+    async ruleChainNodeTest (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { type, config, input } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: '/admin/rulechain/node-test',
+            headers: { 'Content-Type': 'application/json' },
+            data: { type, config, input },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    // Same as ruleChainNodeTest, streamed: `onEvent` gets {status}, {token, reason}
+    // or {attempt} while the model works; resolves with the final event, whose
+    // `result` is what ruleChainNodeTest returns (hand-written)
+    async ruleChainNodeTestStream (a: KV, onEvent: (ev: StreamEvent) => void, signal?: AbortSignal): Promise<StreamEvent> {
+        const { type, config, input } = (a as KV) || {}
+        const path = '/admin/rulechain/node-test?stream=1'
+
+        return postForEvents({
+            url: this.baseURL ? `${this.baseURL.replace(/\/+$/, '')}${path}` : path,
+            headers: this.headers,
+            accessToken: this.accessTokenFn ? this.accessTokenFn() : undefined,
+            body: { type, config, input },
+            signal,
+        }, onEvent)
+    }
+
+    async ruleChainNodeTypes (extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: '/admin/rulechain/nodes',
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainStats (extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'get',
+            url: '/admin/rulechain/stats',
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainRuns (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const {
+            chainID,
+            limit = 20,
+            offset = 0,
+            success,
+            triggerType,
+        } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/rulechain/${chainID}/runs`,
+            params: { limit, offset, success, triggerType },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async ruleChainRunGet (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID, runID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/rulechain/${chainID}/runs/${runID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    // Risk engine (factor library, models, subject bindings, assessments & treatments)
+
+    async riskFactorList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { limit = 500, offset = 0, namespaceID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/admin/risk/factors/',
+            params: { limit, offset, namespaceID },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskFactorRead (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { factorID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/factors/${factorID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskFactorCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/risk/factors/',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskFactorUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { factorID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/risk/factors/${factorID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskFactorDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { factorID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/risk/factors/${factorID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { limit = 500, offset = 0, namespaceID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/admin/risk/models/',
+            params: { limit, offset, namespaceID },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelRead (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID, withFactors } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/models/${modelID}`,
+            params: { withFactors },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/risk/models/',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/risk/models/${modelID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/risk/models/${modelID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelTest (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/risk/models/${modelID}/test`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskModelExplain (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { modelID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/risk/models/${modelID}/explain`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskSuggestFactors (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/risk/suggest-factors',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskBindingList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/admin/risk/bindings/',
+            params: { namespaceID },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskBindingCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        return this.api().request({
+            method: 'post',
+            url: '/admin/risk/bindings/',
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskBindingUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/risk/bindings/${bindingID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskBindingDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/risk/bindings/${bindingID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskAssess (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/risk/bindings/${bindingID}/assess`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskAssessmentList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID, subjectRecordID, latestPerSubject } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/bindings/${bindingID}/assessments`,
+            params: { subjectRecordID, latestPerSubject },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskPortfolioSummary (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/bindings/${bindingID}/summary`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskTreatmentList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/admin/risk/bindings/${bindingID}/treatments`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskTreatmentCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { bindingID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/admin/risk/bindings/${bindingID}/treatments`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskTreatmentUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { treatmentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/admin/risk/treatments/${treatmentID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async riskTreatmentDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { treatmentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/admin/risk/treatments/${treatmentID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    // Image search (DuckDuckGo-backed) — returns candidate {title, image,
+    // thumbnail, url, width, height} results; the caller renders <img> tags
+    // pointing at their "image"/"thumbnail" URLs directly, it does not proxy
+    // image bytes through this API.
+
+    async documentList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, query } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/namespace/${namespaceID}/document/`,
+            params: { query },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentRead (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/namespace/${namespaceID}/document/${documentID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentCreate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/namespace/${namespaceID}/document/`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentUpdate (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'put',
+            url: `/namespace/${namespaceID}/document/${documentID}`,
+            headers: { 'Content-Type': 'application/json' },
+            data: a,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentDelete (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'delete',
+            url: `/namespace/${namespaceID}/document/${documentID}`,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentReorder (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentIDs } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'post',
+            url: `/namespace/${namespaceID}/document/reorder`,
+            headers: { 'Content-Type': 'application/json' },
+            data: { documentIDs },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentUpload (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { namespaceID, documentID, file } = (a as KV) || {}
+        const data = new FormData()
+        data.append('file', file as Blob)
+
+        return this.api().request({
+            method: 'post',
+            url: `/namespace/${namespaceID}/document/${documentID}/file`,
+            data,
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+
+    async documentFile (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<Blob> {
+        const { namespaceID, documentID } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: `/namespace/${namespaceID}/document/${documentID}/file`,
+            responseType: 'blob',
+            ...extra,
+        }).then(result => result.data as Blob)
+    }
+
+    async imageSearch (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { q, limit } = (a as KV) || {}
+
+        return this.api().request({
+            method: 'get',
+            url: '/image/search',
+            params: { q, limit },
+            ...extra,
+        }).then(result => stdResolve(result))
+    }
+}

@@ -3,19 +3,20 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
 	"sync"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/sentry"
-	"github.com/cortezaproject/corteza/server/pkg/wfexec"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/sentry"
+	"github.com/madnikulin50/lowcode/server/pkg/wfexec"
+	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/modern-go/reflect2"
 	"go.uber.org/zap"
 )
@@ -35,6 +36,9 @@ type (
 		pool         map[uint64]*types.Session
 		spawnQueue   chan *spawn
 		promptSender promptSender
+
+		// state rows persisted for suspended sessions (see session_persist.go)
+		states stateTracker
 	}
 
 	spawn struct {
@@ -127,26 +131,11 @@ func (svc *session) LookupByID(ctx context.Context, sessionID uint64) (res *type
 	return res, svc.recordAction(ctx, sap, SessionActionLookup, err)
 }
 
+// resumeAll puts sessions that were suspended at shutdown back into the pool.
+// Suspended states are persisted as they happen (see session_persist.go), so
+// there is nothing to flush on shutdown.
 func (svc *session) resumeAll(ctx context.Context) error {
-	// In theory we could resume active/pending/prompt sessions from persistent store
-	// so that they can survive server termination
-
-	// @todo resume active sessions from storage
-	//       load all active sessions from store and load them into the pool
-	//
-	return nil
-}
-
-func (svc *session) suspendAll(ctx context.Context) error {
-	// In theory we could suspend active/pending/prompt sessions to persistent store
-	// so that they can survive server termination
-
-	// @todo suspend active sessions to storage:
-	//       stop watcher queue
-	//       run gc
-	//       stop worker on each session
-	//       flush session to store (like we're doing in the status handler
-	return nil
+	return svc.restoreSuspended(ctx)
 }
 
 // PendingPrompts returns all prompts on all sessions owned by current user
@@ -165,6 +154,22 @@ func (svc *session) PendingPrompts(ctx context.Context) (pp []*wfexec.PendingPro
 	pp = make([]*wfexec.PendingPrompt, 0, len(svc.pool))
 	for _, s := range svc.pool {
 		pp = append(pp, s.PendingPrompts(i.Identity())...)
+	}
+
+	return
+}
+
+// AllPendingPrompts returns every pending prompt on every session in the
+// pool, regardless of owner - see types.Session.AllPendingPrompts. Intended
+// for system-level resolvers, not for anything reachable by an end user
+// (there's no per-owner filtering here).
+func (svc *session) AllPendingPrompts() (pp []*wfexec.PendingPrompt) {
+	svc.mux.RLock()
+	defer svc.mux.RUnlock()
+
+	pp = make([]*wfexec.PendingPrompt, 0, len(svc.pool))
+	for _, s := range svc.pool {
+		pp = append(pp, s.AllPendingPrompts()...)
 	}
 
 	return
@@ -266,8 +271,16 @@ func (svc *session) Resume(sessionID, stateID uint64, i auth.Identifiable, input
 		return err
 	}
 
-	if err = svc.promptSender.Send("workflowSessionResumed", resPrompt, resPrompt.OwnerId); err != nil {
-		svc.log.Error("failed to send prompt resume status to user", zap.Error(err))
+	// the prompt is answered; its persisted state (if it was ever persisted)
+	// must not come back after a restart
+	if svc.states.has(sessionID, stateID) {
+		svc.dropStates(ctx, sessionID, stateID)
+	}
+
+	if svc.promptSender != nil {
+		if err = svc.promptSender.Send("workflowSessionResumed", resPrompt, resPrompt.OwnerId); err != nil {
+			svc.log.Error("failed to send prompt resume status to user", zap.Error(err))
+		}
 	}
 
 	return nil
@@ -354,25 +367,7 @@ func (svc *session) Watch(ctx context.Context) {
 			case s := <-svc.spawnQueue:
 				var execCtx = context.Background()
 
-				opts := []wfexec.SessionOpt{
-					wfexec.SetWorkflowID(s.workflowID),
-					wfexec.SetCallStack(s.callStack...),
-					wfexec.SetHandler(svc.stateChangeHandler(ctx)),
-				}
-
-				if svc.opt.ExecDebug {
-					log := svc.log.
-						Named("exec").
-						With(logger.Uint64("workflowID", s.workflowID)).
-						With(logger.Uint64("runnerID", s.runner.Identity())).
-						With(logger.Uint64s("runnerRoles", s.runner.Roles()))
-
-					opts = append(
-						opts,
-						wfexec.SetLogger(log),
-						wfexec.SetDumpStacktraceOnPanic(true),
-					)
-				}
+				opts := svc.sessionOpts(ctx, s.workflowID, s.callStack, s.runner)
 
 				// Encode runner into execution context
 				// runner is used as identity and for access control
@@ -381,6 +376,11 @@ func (svc *session) Watch(ctx context.Context) {
 				// Encode invoker into execution context
 				// invoker is used
 				execCtx = context.WithValue(execCtx, workflowInvokerCtxKey{}, s.invoker)
+
+				// every AI step of this session draws on one budget
+				if DefaultWorkflow != nil {
+					execCtx = aiagent.ContextWithBudget(execCtx, DefaultWorkflow.aiBudgetFor(s.workflowID))
+				}
 
 				s.session <- wfexec.NewSession(execCtx, s.graph, opts...)
 				// case time for a pool cleanup
@@ -394,11 +394,36 @@ func (svc *session) Watch(ctx context.Context) {
 			}
 		}
 
-		// @todo serialize sessions & suspended states
-		//svc.suspendAll(ctx)
+		// suspended states are persisted as they happen - nothing to flush here
 	}()
 
 	svc.log.Debug("watcher initialized")
+}
+
+// sessionOpts are the options every workflow session is created with, whether
+// freshly spawned or restored after a restart.
+func (svc *session) sessionOpts(ctx context.Context, workflowID uint64, callStack []uint64, runner auth.Identifiable) []wfexec.SessionOpt {
+	opts := []wfexec.SessionOpt{
+		wfexec.SetWorkflowID(workflowID),
+		wfexec.SetCallStack(callStack...),
+		wfexec.SetHandler(svc.stateChangeHandler(ctx)),
+	}
+
+	if svc.opt.ExecDebug {
+		log := svc.log.
+			Named("exec").
+			With(logger.Uint64("workflowID", workflowID)).
+			With(logger.Uint64("runnerID", runner.Identity())).
+			With(logger.Uint64s("runnerRoles", runner.Roles()))
+
+		opts = append(
+			opts,
+			wfexec.SetLogger(log),
+			wfexec.SetDumpStacktraceOnPanic(true),
+		)
+	}
+
+	return opts
 }
 
 // garbage collection for stale sessions
@@ -474,6 +499,9 @@ func (svc *session) stateChangeHandler(ctx context.Context) wfexec.StateChangeHa
 			log.Warn("could not find session to update")
 			return
 		}
+
+		// keep persisted suspended states in line with the live session
+		defer svc.reconcileStates(ctx, ses, s, status)
 
 		ses.FlushCounter++
 

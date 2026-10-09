@@ -1,0 +1,32 @@
+suspended:
+  label: Suspended
+excluded:
+  label: Without
+exclusive:
+  label: Only
+inclusive:
+  label: Including
+deleted:
+  label: Deleted
+archived:
+  label: Archived
+query:
+  label: Filter list
+  placeholder: Filter by name
+handle:
+  label: Filter list
+  placeholder: Filter by handle
+started:
+  label: Started
+prompted:
+  label: Prompted
+failed:
+  label: Failed
+canceled:
+  label: Canceled
+completed:
+  label: Completed
+sessions:
+  label: sessions
+all:
+  label: All

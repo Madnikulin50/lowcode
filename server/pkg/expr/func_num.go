@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/PaesslerAG/gval"
-	"github.com/cortezaproject/corteza/server/pkg/gvalfnc"
+	"github.com/madnikulin50/lowcode/server/pkg/gvalfnc"
 	"github.com/spf13/cast"
 )
 
@@ -27,6 +27,7 @@ func NumericFunctions() []gval.Language {
 		gval.Function("random", random),
 		gval.Function("int", toInt64),
 		gval.Function("float", gvalfnc.CastFloat),
+		gval.Function("anomality", gvalfnc.Anomality),
 	}
 }
 

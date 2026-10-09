@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/PaesslerAG/gval"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/slice"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/slice"
 	"github.com/spf13/cast"
 )
 
@@ -68,7 +68,12 @@ func CastToComposeRecord(val interface{}) (out *types.Record, err error) {
 			return assignToComposeRecord(out, k, v)
 		})
 	}
+	if val == nil {
+		return &types.Record{}, nil
+	}
 	switch val := expr.UntypedValue(val).(type) {
+	case nil:
+		return &types.Record{}, nil
 	case *types.Record:
 		if val == nil {
 			val = &types.Record{}
@@ -488,7 +493,12 @@ func (t *ComposeRecordValues) Assign(val interface{}) error {
 }
 
 func CastToComposeRecordValueErrorSet(val interface{}) (out *types.RecordValueErrorSet, err error) {
+	if val == nil {
+		return nil, nil
+	}
 	switch val := expr.UntypedValue(val).(type) {
+	case nil:
+		return nil, nil
 	case *types.RecordValueErrorSet:
 		return val, nil
 	default:

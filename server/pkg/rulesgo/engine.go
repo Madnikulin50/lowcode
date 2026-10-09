@@ -1,0 +1,376 @@
+package rulesgo
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
+	"log"
+	"strings"
+	"time"
+)
+
+type Engine struct {
+	registry *Registry
+	chains   map[string]*Chain
+	persist  Persistence
+}
+
+func NewEngine(registry *Registry) *Engine {
+	return &Engine{
+		registry: registry,
+		chains:   make(map[string]*Chain),
+	}
+}
+
+func (e *Engine) SetPersistence(p Persistence) {
+	e.persist = p
+}
+
+func (e *Engine) put(chain *Chain) {
+	if chain == nil || chain.ID == "" {
+		return
+	}
+	e.chains[chain.ID] = chain
+}
+
+func (e *Engine) RegisterChain(chain *Chain) {
+	e.put(chain)
+	if e.persist != nil {
+		if err := e.persist.SaveChain(context.Background(), chain); err != nil {
+			log.Printf("[rulesgo] persist %s: %v", chain.ID, err)
+		}
+	}
+}
+
+func (e *Engine) PersistChain(chain *Chain) error {
+	e.put(chain)
+	if e.persist == nil {
+		return nil
+	}
+	return e.persist.SaveChain(context.Background(), chain)
+}
+
+func (e *Engine) Chains() []*Chain {
+	result := make([]*Chain, 0, len(e.chains))
+	for _, c := range e.chains {
+		result = append(result, c)
+	}
+	return result
+}
+
+func (e *Engine) Chain(id string) *Chain {
+	return e.chains[id]
+}
+
+func (e *Engine) Run(ctx context.Context, chainID string, input map[string]interface{}) (*ChainResult, error) {
+	chain := e.chains[chainID]
+	if chain == nil {
+		return nil, fmt.Errorf("chain not found: %s", chainID)
+	}
+
+	ec := &ExecutionContext{
+		Variables: make(map[string]interface{}),
+		Results:   make(map[string]interface{}),
+		Input:     input,
+	}
+
+	// every AI node of this run draws on one budget
+	ctx = aiagent.ContextWithBudget(ctx, chainAIBudget(chain))
+
+	result := &ChainResult{
+		ChainID: chainID,
+		Output:  make(map[string]interface{}),
+	}
+
+	nodeMap := make(map[string]*ChainNode)
+	for i := range chain.Nodes {
+		nodeMap[chain.Nodes[i].ID] = &chain.Nodes[i]
+	}
+
+	edgeMap := make(map[string][]ChainEdge)
+	for _, edge := range chain.Edges {
+		edgeMap[edge.From] = append(edgeMap[edge.From], edge)
+	}
+
+	visited := make(map[string]bool)
+	queue := []string{chain.EntryNode}
+
+	for len(queue) > 0 {
+		currentID := queue[0]
+		queue = queue[1:]
+
+		if visited[currentID] {
+			continue
+		}
+		visited[currentID] = true
+
+		node := nodeMap[currentID]
+		if node == nil {
+			result.Error = fmt.Sprintf("node not found: %s", currentID)
+			result.Success = false
+			break
+		}
+
+		if node.Type == "foreach" {
+			bodyIDs := edgesTo(edgeMap[currentID])
+			if len(bodyIDs) == 0 {
+				bodyIDs = nextNodeIDs(edgeMap[currentID], ec)
+			}
+			start := time.Now()
+			nr, err := e.runForeach(ctx, node, nodeMap, edgeMap, bodyIDs, ec)
+			elapsed := time.Since(start)
+			nr.DurationMs = elapsed.Milliseconds()
+			result.Nodes = append(result.Nodes, nr)
+			if err != nil {
+				result.Error = fmt.Sprintf("node %s (foreach) failed: %v", node.ID, err)
+				result.Success = false
+				log.Printf("[rulesgo] node %s (foreach) FAILED in %v: %v", node.ID, elapsed, err)
+				break
+			}
+			log.Printf("[rulesgo] node %s (foreach) OK in %v items=%v", node.ID, elapsed, nr.Output["count"])
+			markDescendants(currentID, edgeMap, visited)
+			continue
+		}
+
+		nodeCtx, sink := withTraceSink(ctx)
+		start := time.Now()
+		output, err := e.registry.Execute(nodeCtx, node.Type, *node, ec)
+		elapsed := time.Since(start)
+
+		nextIDs := nextNodeIDs(edgeMap[currentID], ec)
+		nodeResult := NodeResult{
+			NodeID:     node.ID,
+			Type:       node.Type,
+			Output:     output,
+			Next:       nextIDs,
+			DurationMs: elapsed.Milliseconds(),
+			Trace:      sink.get(),
+		}
+
+		if err != nil {
+			nodeResult.Error = err.Error()
+			result.Nodes = append(result.Nodes, nodeResult)
+			result.Error = fmt.Sprintf("node %s (%s) failed: %v", node.ID, node.Type, err)
+			result.Success = false
+			log.Printf("[rulesgo] node %s (%s) FAILED in %v: %v", node.ID, node.Type, elapsed, err)
+			break
+		}
+
+		if output != nil {
+			ec.SetResult(node.ID, output)
+			promoteNodeOutput(ec, node.ID, output)
+		}
+
+		log.Printf("[rulesgo] node %s (%s) OK in %v", node.ID, node.Type, elapsed)
+		result.Nodes = append(result.Nodes, nodeResult)
+
+		for _, nid := range nextIDs {
+			if !visited[nid] {
+				queue = append(queue, nid)
+			}
+		}
+	}
+
+	if result.Error == "" {
+		result.Success = true
+	}
+	result.Output = ec.Variables
+
+	return result, nil
+}
+
+// promoteNodeOutput copies HTTP/node results into chain variables so the
+// trigger response `output` contains the payload (wbs, SPI, …), not only
+// the original request context. Envelope wrappers (`response`/`result`/`data`)
+// and nested `project` metrics are flattened so templates like {{spi}} and
+// {{project.spi}} resolve after an HTTP node.
+func promoteNodeOutput(ec *ExecutionContext, nodeID string, output map[string]interface{}) {
+	if ec == nil || output == nil {
+		return
+	}
+	body, ok := output["body"]
+	if !ok {
+		body = output
+	}
+	if nodeID != "" {
+		ec.Set(nodeID, body)
+	}
+	promoteMap(ec, asStringMap(body))
+}
+
+func promoteMap(ec *ExecutionContext, m map[string]interface{}) {
+	if ec == nil || m == nil {
+		return
+	}
+	for _, wrap := range []string{"response", "Response", "result", "data", "Data"} {
+		if inner := asStringMap(m[wrap]); inner != nil {
+			promoteMap(ec, inner)
+		}
+	}
+	if proj := asStringMap(m["project"]); proj == nil {
+		proj = asStringMap(m["Project"])
+		if proj != nil {
+			setIfAbsent(ec, "project", proj)
+		}
+	} else {
+		setIfAbsent(ec, "project", proj)
+	}
+	if proj := asStringMap(ec.Get("project")); proj != nil {
+		for k, v := range proj {
+			setIfAbsent(ec, strings.ToLower(k), v)
+		}
+	}
+	for k, v := range m {
+		if k == "" {
+			continue
+		}
+		setIfAbsent(ec, k, v)
+	}
+}
+
+func setIfAbsent(ec *ExecutionContext, key string, v interface{}) {
+	if ec == nil || key == "" || v == nil {
+		return
+	}
+	if _, exists := ec.Variables[key]; exists {
+		return
+	}
+	// Trigger context lives in Input, not Variables. A CRUD create returns
+	// {recordID: <new row>}; promoting that would shadow the page's source
+	// / policy / snapshot id and the next HTTP node would look up the jobs
+	// row in the wrong module → Compose "not found".
+	if !isEmptyGet(lookupPath(ec.Input, key)) {
+		return
+	}
+	ec.Set(key, v)
+}
+
+func nextNodeIDs(edges []ChainEdge, ec *ExecutionContext) []string {
+	nextIDs := make([]string, 0)
+	for _, edge := range edges {
+		if edge.Condition == "" || ec.GetString(edge.Condition) != "" {
+			nextIDs = append(nextIDs, edge.To)
+		}
+	}
+	if len(nextIDs) == 0 {
+		return edgesTo(edges)
+	}
+	return nextIDs
+}
+
+func edgesTo(edges []ChainEdge) []string {
+	result := make([]string, 0, len(edges))
+	for _, e := range edges {
+		if e.Condition == "" {
+			result = append(result, e.To)
+		}
+	}
+	return result
+}
+
+func markDescendants(from string, edgeMap map[string][]ChainEdge, visited map[string]bool) {
+	for _, to := range edgesTo(edgeMap[from]) {
+		if visited[to] {
+			continue
+		}
+		visited[to] = true
+		markDescendants(to, edgeMap, visited)
+	}
+}
+
+func (e *Engine) ExportChain(chainID string) ([]byte, error) {
+	chain := e.Chain(chainID)
+	if chain == nil {
+		return nil, fmt.Errorf("chain not found: %s", chainID)
+	}
+	data, err := json.MarshalIndent(chain, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (e *Engine) ImportChain(data []byte) (*Chain, error) {
+	var chain Chain
+	if err := json.Unmarshal(data, &chain); err != nil {
+		return nil, fmt.Errorf("invalid chain JSON: %w", err)
+	}
+	if chain.ID == "" {
+		return nil, fmt.Errorf("chain must have an ID")
+	}
+	e.RegisterChain(&chain)
+	return &chain, nil
+}
+
+func (e *Engine) DeleteChain(chainID string) {
+	delete(e.chains, chainID)
+	if e.persist != nil {
+		if err := e.persist.DeleteChain(context.Background(), chainID); err != nil {
+			log.Printf("[rulesgo] delete persist %s: %v", chainID, err)
+		}
+	}
+}
+
+// ExecuteNode runs one node on its own, outside any chain, against the given
+// sample input - the "test this node" action of the chain editor. Nothing is
+// persisted and no chain state is touched.
+//
+// input is available both as chain input and as variables, so templates such
+// as {{name}} resolve the way they would early in a real run. The returned
+// NodeResult carries the node's output, trace, duration and, if it failed,
+// its error; the error return is reserved for a node that cannot be run at
+// all (unknown type).
+func (e *Engine) ExecuteNode(ctx context.Context, node ChainNode, input map[string]interface{}) (*NodeResult, error) {
+	if !e.registry.Has(node.Type) {
+		return nil, fmt.Errorf("unknown node type: %s", node.Type)
+	}
+
+	ec := &ExecutionContext{
+		Variables: make(map[string]interface{}, len(input)),
+		Results:   make(map[string]interface{}),
+		Input:     input,
+	}
+	for k, v := range input {
+		ec.Variables[k] = v
+	}
+
+	nodeCtx, sink := withTraceSink(ctx)
+	start := time.Now()
+	output, err := e.registry.Execute(nodeCtx, node.Type, node, ec)
+
+	res := &NodeResult{
+		NodeID:     node.ID,
+		Type:       node.Type,
+		Output:     output,
+		DurationMs: time.Since(start).Milliseconds(),
+		Trace:      sink.get(),
+	}
+	if err != nil {
+		res.Error = err.Error()
+	}
+	return res, nil
+}
+
+// chainAIBudget reads the run's AI limits from the chain's config:
+//
+//	{"aiBudget": {"maxTokens": 20000, "maxLLMCalls": 10}}
+//
+// A chain without them gets the platform default, if any.
+func chainAIBudget(chain *Chain) *aiagent.Budget {
+	var cfg struct {
+		AIBudget *struct {
+			MaxTokens   int `json:"maxTokens"`
+			MaxLLMCalls int `json:"maxLLMCalls"`
+		} `json:"aiBudget"`
+	}
+	if len(chain.Config) > 0 {
+		_ = json.Unmarshal(chain.Config, &cfg)
+	}
+	if cfg.AIBudget != nil {
+		if b := aiagent.NewBudget(cfg.AIBudget.MaxTokens, cfg.AIBudget.MaxLLMCalls); b != nil {
+			return b
+		}
+	}
+	return aiagent.BudgetFromEnv()
+}

@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/PaesslerAG/gval"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/gvalfnc"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
+	"github.com/PaesslerAG/jsonpath"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/gvalfnc"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 )
 
 type (
@@ -225,6 +226,126 @@ var (
 			},
 			OutType: &TypeNumber{},
 		},
+		"this_month": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_month(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"this_month_prev_year_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_month_prev_year_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_month": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_month(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_month_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_month_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"this_week": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_week(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"anomality": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("anomality(%s, %s, %s)", args[0], args[1], args[2])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_week": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_week(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_week_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_week_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"this_quarter": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_quarter(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_quarter": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_quarter(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_quarter_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_quarter_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"day_of": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("day_of(%s)", args[0])
+			},
+			OutType: &TypeDate{},
+		},
+		"week_of": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("week_of(%s)", args[0])
+			},
+			OutType: &TypeDate{},
+		},
+		"month_of": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("month_of(%s)", args[0])
+			},
+			OutType: &TypeDate{},
+		},
+		"this_year": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("this_year(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_year": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_year(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"prev_year_truncated": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("prev_year_truncated(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"last_30": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("last_30(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"last_180": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("last_180(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
+		"last_365": {
+			Handler: func(args ...string) string {
+				return fmt.Sprintf("last_365(%s)", args[0])
+			},
+			OutType: &TypeBoolean{},
+		},
 		"date_format": {
 			Handler: func(args ...string) string {
 				return fmt.Sprintf("strftime(%s, %s)", args[0], args[1])
@@ -327,8 +448,45 @@ func newRunnerGvalParsed(n *ql.ASTNode) (out *runnerGval, err error) {
 	if err != nil {
 		return
 	}
+	switch expr {
+	case "date":
+		expr = "$[\"date\"]"
+	case "date(date)":
+		expr = "date($[\"date\"])"
+	case "day_of(date)":
+		expr = "day_of($[\"date\"])"
+	case "this_year(date)":
+		expr = "this_year($[\"date\"])"
+	case "prev_year(date)":
+		expr = "prev_year($[\"date\"])"
+	case "prev_year_truncated(date)":
+		expr = "prev_year($[\"date\"])"
+	case "last_30(date)":
+		expr = "last_30($[\"date\"])"
+	case "last_180(date)":
+		expr = "last_180($[\"date\"])"
+	case "last_365(date)":
+		expr = "last_365($[\"date\"])"
+	case "this_week(date)":
+		expr = "this_week($[\"date\"])"
+	case "prev_week(date)":
+		expr = "prev_week($[\"date\"])"
+	case "prev_month(date)":
+		expr = "prev_month($[\"date\"])"
+	case "prev_month_truncated(date)":
+		expr = "prev_month_truncated($[\"date\"])"
+	case "this_quarter(date)":
+		expr = "this_quarter($[\"date\"])"
+	case "prev_quarter(date)":
+		expr = "prev_quarter($[\"date\"])"
+	case "prev_quarter_truncated(date)":
+		expr = "prev_quarter_truncated($[\"date\"])"
+	}
 
 	out.eval, err = newGval(expr)
+	if out.eval == nil {
+		return
+	}
 	return
 }
 
@@ -338,13 +496,12 @@ func newRunnerGvalParsed(n *ql.ASTNode) (out *runnerGval, err error) {
 // used in the pipeline.
 //
 // @note the subset is limited to simplify the (eventual) offloading to the DB.
-//       At some point, more functions will be supported, and the ones which can't
-//       be offloaded will be performed in some exec. step.
+//
+//	At some point, more functions will be supported, and the ones which can't
+//	be offloaded will be performed in some exec. step.
 func newGval(e string) (gval.Evaluable, error) {
-	return gval.Full(
-		// Extra functions we'll need
-		// @note don't bring in all of the expr. pkg functions as we'll need to
-		//       support these on the DB as well
+
+	funcs := []gval.Language{
 		gval.Function("now", gvalfnc.Now),
 		gval.Function("quarter", gvalfnc.Quarter),
 		gval.Function("year", gvalfnc.Year),
@@ -352,13 +509,36 @@ func newGval(e string) (gval.Evaluable, error) {
 		gval.Function("strftime", gvalfnc.StrfTime),
 		gval.Function("date", gvalfnc.Date),
 		gval.Function("day", gvalfnc.Day),
+		gval.Function("day_of", gvalfnc.DayOf),
+		gval.Function("week_of", gvalfnc.WeekOf),
+		gval.Function("month_of", gvalfnc.MonthOf),
+		gval.Function("this_year", gvalfnc.ThisYear),
+		gval.Function("prev_year", gvalfnc.PrevYear),
+		gval.Function("prev_year_truncated", gvalfnc.PrevYearTruncated),
+		gval.Function("last_30", gvalfnc.Last30),
+		gval.Function("last_180", gvalfnc.Last180),
+		gval.Function("last_365", gvalfnc.Last365),
+		gval.Function("this_week", gvalfnc.ThisWeek),
+		gval.Function("prev_week", gvalfnc.PrevWeek),
+		gval.Function("prev_week_truncated", gvalfnc.PrevWeekTruncated),
+		gval.Function("this_month", gvalfnc.ThisMonth),
+		gval.Function("prev_month", gvalfnc.PrevMonth),
+		gval.Function("prev_month_truncated", gvalfnc.PrevMonthTruncated),
+		gval.Function("this_quarter", gvalfnc.ThisQuarter),
+		gval.Function("prev_quarter", gvalfnc.PrevQuarter),
+		gval.Function("prev_quarter_truncated", gvalfnc.PrevQuarterTruncated),
 		gval.Function("isNil", gvalfnc.IsNil),
 		gval.Function("float", gvalfnc.CastFloat),
+		gval.Function("anomality", gvalfnc.Anomality),
 		gval.Function("int", gvalfnc.CastInt),
 		gval.Function("string", gvalfnc.CastString),
 		gval.Function("concat", gvalfnc.ConcatStrings),
 		gval.Function("has", arrHas),
-	).NewEvaluable(e)
+		jsonpath.Language(),
+	}
+	funcs = append(funcs, expr.NumericFunctions()...)
+	return gval.Full(
+		funcs...).NewEvaluable(e)
 }
 
 func newQlParser(onIdent ...ql.IdentHandler) *ql.Parser {
@@ -390,6 +570,9 @@ func (e *runnerGval) Test(ctx context.Context, rows any) (bool, error) {
 }
 
 func (e *runnerGval) Eval(ctx context.Context, rows any) (any, error) {
+	if e == nil {
+		return "", nil
+	}
 	o, err := e.eval(ctx, rows)
 	if err != nil {
 		return nil, err
@@ -428,6 +611,9 @@ func (c converterGval) convert(n *ql.ASTNode) (_ string, err error) {
 			return
 		}
 	}
+	if n.Ref == "" && len(n.Raw) > 0 {
+		return n.Raw, nil
+	}
 
 	return c.refHandler(n, args...)
 }
@@ -444,9 +630,10 @@ func (c converterGval) refHandler(n *ql.ASTNode, args ...string) (out string, er
 // the first argument
 //
 // @todo this is needed because how the ValueGetters returns multi-value fields so
-//       an edge case where a field would have [a] but here, it would be presented
-//       as a.
-//       This would become obsolete when we address the actual issue.
+//
+//	an edge case where a field would have [a] but here, it would be presented
+//	as a.
+//	This would become obsolete when we address the actual issue.
 func arrHas(arr interface{}, vv ...interface{}) (b bool, err error) {
 	arr = expr.UntypedValue(arr)
 
@@ -469,4 +656,19 @@ func arrHas(arr interface{}, vv ...interface{}) (b bool, err error) {
 
 func isMap(v interface{}) bool {
 	return reflect.TypeOf(v).Kind() == reflect.Map
+}
+
+func TypeOfRef(ref string) (res Type) {
+	r := strings.ToLower(ref)
+	tmp := refToGvalExp[r]
+	if tmp == nil || tmp.OutType == nil || tmp.OutTypeUnknown {
+		switch r {
+		case "count", "sum", "min", "max", "avg", "uniquecount", "stddev":
+			res = TypeNumber{}
+			return res
+		}
+
+		return nil
+	}
+	return tmp.OutType
 }

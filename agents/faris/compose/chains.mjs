@@ -1,0 +1,201 @@
+export function buildRuleChains ({ nsID, modules }) {
+  const ns = String(nsID)
+  const vendors = String(modules.vendors)
+  const prs = String(modules.purchase_requests)
+  const log = String(modules.approval_log)
+
+  const upd = (id, name, moduleID, handle, fields, description) => ({
+    id,
+    name,
+    description,
+    entryNode: 'upd',
+    namespaceID: ns,
+    nodes: [{
+      id: 'upd',
+      type: 'crud',
+      label: name,
+      config: {
+        operation: 'update',
+        namespaceID: ns,
+        moduleID,
+        moduleHandle: handle,
+        recordID: '{{recordID}}',
+        fields,
+      },
+    }],
+    edges: [],
+  })
+
+  const logNode = (id, fields) => ({
+    id,
+    type: 'crud',
+    label: 'Write approval log',
+    config: {
+      operation: 'create',
+      namespaceID: ns,
+      moduleID: log,
+      moduleHandle: 'approval_log',
+      fields,
+    },
+  })
+
+  return [
+    {
+      id: 'faris-submit-vendor',
+      name: 'Faris: submit vendor onboarding',
+      description: 'Completeness check (CR + VAT). If both present → submitted; otherwise mark incomplete. Analysts can add a documents step in Admin → Rule chains.',
+      entryNode: 'has_cr',
+      namespaceID: ns,
+      nodes: [
+        { id: 'has_cr', type: 'condition', label: 'CR number filled?', config: { field: 'cr_number', operator: 'notEmpty', value: '' } },
+        { id: 'has_vat', type: 'condition', label: 'VAT number filled?', config: { field: 'vat_number', operator: 'notEmpty', value: '' } },
+        {
+          id: 'submit',
+          type: 'crud',
+          label: 'Mark submitted',
+          config: {
+            operation: 'update',
+            namespaceID: ns,
+            moduleID: vendors,
+            moduleHandle: 'vendors',
+            recordID: '{{recordID}}',
+            fields: { status: 'submitted', submitted_at: '2026-08-25', stalled: '0' },
+          },
+        },
+        logNode('log_submit', {
+          subject: 'Submitted: {{legal_name}}',
+          object_type: 'vendor',
+          vendor: '{{recordID}}',
+          step: 'submit',
+          decision: 'approved',
+          actor: 'Subsidiary requester',
+          decided_at: '2026-08-25',
+          comment: 'Mandatory CR/VAT present.',
+        }),
+      ],
+      edges: [
+        { from: 'has_cr', to: 'has_vat', condition: 'has_cr_result' },
+        { from: 'has_vat', to: 'submit', condition: 'has_vat_result' },
+        { from: 'submit', to: 'log_submit' },
+      ],
+    },
+    upd('faris-vendor-incomplete', 'Faris: mark vendor pack incomplete', vendors, 'vendors',
+      { status: 'incomplete', stalled: '1' },
+      'Request returned to the subsidiary — missing CR, VAT or certificates.'),
+    upd('faris-vendor-procurement', 'Faris: procurement review vendor', vendors, 'vendors',
+      { status: 'procurement_review' },
+      'Central procurement accepts the request into review.'),
+    upd('faris-vendor-compliance', 'Faris: send vendor to compliance', vendors, 'vendors',
+      { status: 'compliance_review' },
+      'Optional ZATCA / sanctions / CR check. Add or remove this step in the chain editor without code.'),
+    upd('faris-vendor-finance', 'Faris: send vendor to finance verify', vendors, 'vendors',
+      { status: 'finance_verify' },
+      'Finance verifies bank IBAN and VAT registration.'),
+    {
+      id: 'faris-vendor-approve',
+      name: 'Faris: approve vendor',
+      description: 'Vendor becomes group-approved and appears on the Approved vendors page.',
+      entryNode: 'upd',
+      namespaceID: ns,
+      nodes: [
+        {
+          id: 'upd',
+          type: 'crud',
+          label: 'Approve vendor',
+          config: {
+            operation: 'update',
+            namespaceID: ns,
+            moduleID: vendors,
+            moduleHandle: 'vendors',
+            recordID: '{{recordID}}',
+            fields: { status: 'approved', approved_at: '2026-08-25', stalled: '0', pack_complete: '1' },
+          },
+        },
+        logNode('log', {
+          subject: 'Approved vendor: {{legal_name}}',
+          object_type: 'vendor',
+          vendor: '{{recordID}}',
+          step: 'finance',
+          decision: 'approved',
+          actor: 'Group finance',
+          decided_at: '2026-08-25',
+          comment: 'Listed as approved vendor for all subsidiaries.',
+        }),
+      ],
+      edges: [{ from: 'upd', to: 'log' }],
+    },
+    upd('faris-vendor-reject', 'Faris: reject vendor', vendors, 'vendors',
+      { status: 'rejected', stalled: '0' },
+      'Reject the onboarding request with a comment on the record.'),
+
+    upd('faris-pr-submit', 'Faris: submit purchase request', prs, 'purchase_requests',
+      { status: 'submitted', submitted_at: '2026-08-25' },
+      'Subsidiary sends the PR to central procurement.'),
+    upd('faris-pr-procurement', 'Faris: procurement review PR', prs, 'purchase_requests',
+      { status: 'finance_approval' },
+      'Procurement reviewed the vendor and item — route to finance for budget.'),
+    {
+      id: 'faris-pr-budget-check',
+      name: 'Faris: check PR against ERP budget',
+      description: 'Compares estimated_value to budget_remaining copied from the ERP budget mirror. Within limit → budget_ok; otherwise the Finance Hold button is used.',
+      entryNode: 'within',
+      namespaceID: ns,
+      nodes: [
+        { id: 'within', type: 'condition', label: 'Value ≤ remaining?', config: { field: 'estimated_value', operator: 'lte', value: '{{budget_remaining}}' } },
+        {
+          id: 'ok',
+          type: 'crud',
+          label: 'Mark within budget',
+          config: {
+            operation: 'update',
+            namespaceID: ns,
+            moduleID: prs,
+            moduleHandle: 'purchase_requests',
+            recordID: '{{recordID}}',
+            fields: { budget_ok: '1', over_budget: '0' },
+          },
+        },
+      ],
+      edges: [{ from: 'within', to: 'ok', condition: 'within_result' }],
+    },
+    {
+      id: 'faris-pr-approve',
+      name: 'Faris: finance approve PR',
+      description: 'Final finance approval when the ERP remaining budget covers the estimate.',
+      entryNode: 'upd',
+      namespaceID: ns,
+      nodes: [
+        {
+          id: 'upd',
+          type: 'crud',
+          label: 'Approve PR',
+          config: {
+            operation: 'update',
+            namespaceID: ns,
+            moduleID: prs,
+            moduleHandle: 'purchase_requests',
+            recordID: '{{recordID}}',
+            fields: { status: 'approved', approved_at: '2026-08-25', stalled: '0', budget_ok: '1' },
+          },
+        },
+        logNode('log', {
+          subject: 'Approved PR: {{title}}',
+          object_type: 'purchase_request',
+          purchase_request: '{{recordID}}',
+          step: 'finance',
+          decision: 'approved',
+          actor: 'Group finance',
+          decided_at: '2026-08-25',
+          comment: 'Budget remaining {{budget_remaining}} SAR.',
+        }),
+      ],
+      edges: [{ from: 'upd', to: 'log' }],
+    },
+    upd('faris-pr-hold', 'Faris: hold PR (over budget)', prs, 'purchase_requests',
+      { status: 'on_hold', stalled: '1', over_budget: '1', budget_ok: '0' },
+      'Finance parks the request — estimated value exceeds mocked ERP remaining budget.'),
+    upd('faris-pr-reject', 'Faris: reject purchase request', prs, 'purchase_requests',
+      { status: 'rejected', stalled: '0' },
+      'Reject the purchase request.'),
+  ]
+}

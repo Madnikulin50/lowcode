@@ -1,22 +1,23 @@
 package envoy
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/pkg/y7s"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/pkg/y7s"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"golang.org/x/text/language"
@@ -585,7 +586,11 @@ func (d *auxYamlDoc) unmarshalExtendedSourceSeq(dctx documentContext, n *yaml.No
 // the yaml node into the corresponding Corteza type & Node
 func (d *auxYamlDoc) unmarshalModuleNode(dctx documentContext, n *yaml.Node, meta ...*yaml.Node) (out envoyx.NodeSet, err error) {
 	var r *types.Module
-
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			fmt.Print("tr")
+		}
+	}()
 	// @todo we're omitting errors because there will be a bunch due to invalid
 	//       resource field types. This might be a bit unstable as other errors may
 	//       also get ignored.
@@ -623,6 +628,25 @@ func (d *auxYamlDoc) unmarshalModuleNode(dctx documentContext, n *yaml.Node, met
 		_ = auxNodeValue
 
 		switch strings.ToLower(k.Value) {
+
+		case "config":
+
+			// Handle custom node decoder
+			//
+			// The decoder may update the passed resource with arbitrary values
+			// as well as provide additional references and identifiers for the node.
+			var (
+				auxRefs   map[string]envoyx.Ref
+				auxIdents envoyx.Identifiers
+			)
+			auxRefs, auxIdents, err = d.unmarshalModuleConfigNode(r, n)
+			if err != nil {
+				return err
+			}
+			refs = envoyx.MergeRefs(refs, auxRefs)
+			ii = ii.Merge(auxIdents)
+
+			break
 
 		case "handle":
 			// Handle identifiers

@@ -3,9 +3,9 @@ package apigw
 import (
 	"net/http"
 
-	"github.com/cortezaproject/corteza/server/pkg/apigw/profiler"
-	"github.com/cortezaproject/corteza/server/pkg/apigw/types"
-	h "github.com/cortezaproject/corteza/server/pkg/http"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/profiler"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/types"
+	h "github.com/madnikulin50/lowcode/server/pkg/http"
 	"go.uber.org/zap"
 )
 

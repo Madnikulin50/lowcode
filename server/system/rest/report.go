@@ -3,12 +3,12 @@ package rest
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/datasources"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/system/rest/request"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/datasources"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/system/rest/request"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
@@ -25,7 +25,7 @@ type (
 		Delete(ctx context.Context, ID uint64) (err error)
 		Undelete(ctx context.Context, ID uint64) (err error)
 		Run(ctx context.Context, ID uint64, dd datasources.FrameDefinitionSet) (rr []*datasources.Frame, err error)
-		Describe(ctx context.Context, src types.ReportDataSourceSet, st types.ReportStepSet, sources ...string) (out []*datasources.FrameDescription, err error)
+		Describe(ctx context.Context, src types.ReportDataSourceSet, st types.ReportStepSet, sources ...string) (out []*datasources.FrameDescription, warnings []error, err error)
 	}
 
 	reportAccessController interface {
@@ -53,7 +53,8 @@ type (
 	}
 
 	reportFramePayload struct {
-		Frames []*datasources.Frame `json:"frames"`
+		Frames   []*datasources.Frame `json:"frames"`
+		Warnings []error              `json:"warnings,omitempty"`
 	}
 )
 
@@ -138,13 +139,13 @@ func (ctrl *Report) Undelete(ctx context.Context, r *request.ReportUndelete) (in
 	return api.OK(), ctrl.report.Undelete(ctx, r.ReportID)
 }
 
-func (ctrl *Report) Describe(ctx context.Context, r *request.ReportDescribe) (interface{}, error) {
+func (ctrl *Report) Describe(ctx context.Context, r *request.ReportDescribe) (interface{}, interface{}, error) {
 	return ctrl.report.Describe(ctx, r.Sources, r.Steps, r.Describe...)
 }
 
 func (ctrl *Report) Run(ctx context.Context, r *request.ReportRun) (interface{}, error) {
 	rr, err := ctrl.report.Run(ctx, r.ReportID, r.Frames)
-	return ctrl.makeReportFramePayload(ctx, rr, err)
+	return ctrl.makeReportFramePayload(ctx, rr, nil, err)
 }
 
 func (ctrl Report) makePayload(ctx context.Context, m *types.Report, err error) (*reportPayload, error) {
@@ -178,12 +179,13 @@ func (ctrl Report) makeFilterPayload(ctx context.Context, nn types.ReportSet, f 
 	return msp, nil
 }
 
-func (ctrl Report) makeReportFramePayload(ctx context.Context, ff []*datasources.Frame, err error) (*reportFramePayload, error) {
+func (ctrl Report) makeReportFramePayload(ctx context.Context, ff []*datasources.Frame, warnings []error, err error) (*reportFramePayload, error) {
 	if err != nil || len(ff) == 0 {
 		return nil, err
 	}
 
 	return &reportFramePayload{
-		Frames: ff,
+		Frames:   ff,
+		Warnings: warnings,
 	}, nil
 }

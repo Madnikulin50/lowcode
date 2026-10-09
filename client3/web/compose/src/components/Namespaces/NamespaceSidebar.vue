@@ -1,0 +1,587 @@
+<template>
+  <div>
+    <portal to="sidebar-header-expanded">
+      <div
+        v-if="!hideNamespaceList"
+        class="ns-sidebar-header"
+      >
+        <div class="d-flex align-items-start gap-2">
+          <div class="flex-grow-1 min-w-0">
+            <div class="d-flex align-items-center gap-1 min-w-0">
+              <div class="ns-name text-truncate" :title="namespace?.name">
+                {{ namespace?.name || $t('sidebar.pickNamespace') }}
+              </div>
+              <c-help-trigger
+                v-if="nsHelp.app.html"
+                v-bind="nsHelp.triggerProps"
+              />
+            </div>
+            <div
+              v-if="namespace?.meta?.subtitle"
+              class="small text-muted text-truncate"
+              :title="namespace.meta.subtitle"
+            >
+              {{ namespace.meta.subtitle }}
+            </div>
+          </div>
+          <button
+            v-if="canManageNamespaces"
+            :title="$t('editNamespace')"
+            data-test-id="button-namespace-edit"
+            :disabled="!canUpdateNamespace"
+            class="btn btn-sm btn-outline-extra-light text-secondary border-0 ns-edit-btn flex-shrink-0"
+            @click="$router.push({ name: 'namespace.edit', params: { namespaceID: namespaceID } })"
+          >
+            <font-awesome-icon :icon="['far', 'edit']" />
+          </button>
+        </div>
+
+        <c-input-select
+          data-test-id="select-namespace"
+          :model-value="namespace"
+          :options="filteredNamespaces"
+          :get-option-label="getNamespaceLabel"
+          :selectable="option => option.namespaceID !== namespace?.namespaceID"
+          :placeholder="$t('sidebar.pickNamespace')"
+          :clearable="false"
+          :autoscroll="false"
+          :append-to-body="false"
+          class="ns-switcher mt-2"
+          @update:modelValue="namespaceSelected"
+        >
+          <template #list-header>
+            <li
+              v-if="showNamespaceListLink"
+              class="border-bottom text-center mb-1"
+            >
+              <router-link
+                :to="{ name: 'namespace.manage' }"
+                data-test-id="button-manage-namespaces"
+                class="d-block my-1 fw-bold text-decoration-none"
+              >
+                {{ $t('manageNamespaces') }}
+              </router-link>
+            </li>
+          </template>
+        </c-input-select>
+      </div>
+      <div
+        v-else-if="namespace"
+        class="ns-sidebar-header"
+      >
+        <div class="ns-name text-truncate" :title="namespace.name">{{ namespace.name }}</div>
+        <div
+          v-if="namespace.meta?.subtitle"
+          class="small text-muted text-truncate"
+          :title="namespace.meta.subtitle"
+        >
+          {{ namespace.meta.subtitle }}
+        </div>
+      </div>
+    </portal>
+
+    <portal to="sidebar-body-expanded">
+      <div
+        v-if="namespace"
+        class="ns-sidebar-body"
+        :class="`sidebar-density-${sidebarDensity}`"
+        style="flex: 1 1 0%; min-height: 0; position: relative;"
+      >
+        <div class="sidebar-scroll overflow-auto position-absolute top-0 start-0 w-100 h-100 pe-2">
+          <div class="sticky-top w-100 py-2 bg-white ns-sticky">
+            <div class="ns-mode-switch btn-group w-100 mb-2" role="group">
+              <button
+                v-if="isAdminPage"
+                data-test-id="button-public"
+                type="button"
+                class="btn btn-sm btn-outline-secondary flex-fill"
+                @click="$router.push({ name: 'pages', params: { slug: namespace.slug || namespace.namespaceID } })"
+              >
+                {{ $t('publicPages') }}
+              </button>
+              <button
+                v-else-if="namespace.canManageNamespace"
+                data-test-id="button-admin"
+                type="button"
+                class="btn btn-sm btn-outline-secondary flex-fill"
+                @click="$router.push({ name: 'admin.modules', params: { slug: namespace.slug || namespace.namespaceID } })"
+              >
+                {{ $t('adminPanel') }}
+              </button>
+            </div>
+
+            <c-input-search
+              v-model.trim="query"
+              :disabled="loading"
+              :placeholder="$t(`searchPlaceholder.${isAdminPage ? 'admin' : 'public'}`)"
+              :autocomplete="'off'"
+            />
+          </div>
+
+          <div v-if="!loading">
+            <c-sidebar-nav-items
+              :items="navItems"
+              :start-expanded="!!query"
+              :density="sidebarDensity"
+              default-route-name="page"
+            />
+
+            <div
+              v-if="!navItems.length"
+              class="ns-empty text-muted text-center mt-4 px-2"
+            >
+              {{ $t('sidebar.noResults', 'No results') }}
+            </div>
+          </div>
+
+          <div
+            v-else
+            class="d-flex align-items-center justify-content-center mt-5"
+          >
+            <span class="spinner-border spinner-border-sm" />
+          </div>
+        </div>
+      </div>
+    </portal>
+  </div>
+</template>
+
+<script setup>
+defineOptions({ i18nOptions: { namespaces: 'sidebar' } })
+import { ref, computed, watch, inject, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { NoID } from 'corteza-lib/js/dist'
+import { components, filter } from 'corteza-lib/vue/dist'
+import { Portal } from 'portal-vue'
+import { useStore } from '../../store'
+import { useHelp } from '../../composables/useHelp'
+import { namespaceHelpDocs } from '../../help/appDocs'
+import { parseFaIcon } from '../../lib/fa-icon'
+const { CSidebarNavItems, CInputSearch } = components
+
+const props = defineProps({
+  namespaces: { type: Array, required: true, default: () => [] },
+})
+
+const route = useRoute()
+const router = useRouter()
+const store = useStore()
+const { t } = useI18n()
+const $Settings = inject('$Settings')
+const $ComposeAPI = window.__composeAPI
+const $AutomationAPI = window.__automationAPI
+const $AnomalyAPI = window.__anomalyAPI
+
+const namespace = ref(undefined)
+const query = ref('')
+
+const nsHelp = useHelp('compose.namespace.edit', computed(() => namespaceHelpDocs(namespace.value)), { includeProduct: false })
+
+const moduleLoading = computed(() => store.module.loading)
+const chartLoading = computed(() => store.chart.loading)
+const pageLoading = computed(() => store.page.loading)
+const modules = computed(() => store.module.set)
+const pages = computed(() => store.page.set)
+const charts = computed(() => store.chart.set)
+const can = computed(() => store.rbac.can)
+
+const ruleChains = ref([])
+const ruleChainsLoading = ref(false)
+const documents = ref([])
+
+const workflows = ref([])
+const workflowsLoading = ref(false)
+
+// Whether this namespace has any anomaly rule at all (any module/field) -
+// gates whether "Anomaly Center" shows up in admin nav (see adminRoutes()).
+const anomalyEnabled = ref(false)
+
+const sidebarSettings = computed(() => $Settings.get('compose.ui.sidebar', {}) || {})
+const sidebarDensity = computed(() => sidebarSettings.value.density === 'compact' ? 'compact' : 'comfortable')
+
+const loading = computed(() => moduleLoading.value || chartLoading.value || pageLoading.value || ruleChainsLoading.value || workflowsLoading.value)
+const hideNamespaceList = computed(() => {
+  const { hideNamespaceList: h } = sidebarSettings.value
+  return h
+})
+const canManageNamespaces = computed(() => {
+  if (can.value('compose/', 'namespace.create') || can.value('compose/', 'grant')) return true
+  return props.namespaces.reduce((acc, ns) => acc || ns.canUpdateNamespace || ns.canDeleteNamespace, false)
+})
+const showNamespaceListLink = computed(() => {
+  const { hideNamespaceListLink: h } = sidebarSettings.value
+  return !h && canManageNamespaces.value
+})
+const isAdminPage = computed(() => route.name.includes('admin.'))
+const publicRoutes = computed(() => pages.value.filter(({ moduleID: mid, visible }) => visible && mid === NoID))
+const filteredPages = computed(() => {
+  if (namespace.value) {
+    const p = [...(isAdminPage.value ? adminRoutes() : publicPageWrap(publicRoutes.value))]
+    if (!query.value) return p
+    return p.filter(({ page: pg }) => !['pages', 'modules', 'charts', 'documents', 'rulechains', 'workflows'].includes(pg.pageID) && filter.Assert(pg, query.value, 'title'))
+  }
+  return []
+})
+const filteredNamespaces = computed(() => props.namespaces.filter(({ enabled }) => enabled))
+const navItems = computed(() => {
+  const current = filteredPages.value
+  const ax = pageIndex(isAdminPage.value ? adminRoutes() : publicPageWrap(pages.value))
+  for (const cp of current) {
+    if (cp.page.selfID && cp.page.selfID !== NoID) {
+      if (!ax[cp.page.selfID]) cp.page.selfID = cp.page.rootSelfID
+    }
+  }
+  const cx = pageIndex(current)
+  for (let i = current.length - 1; i >= 0; i--) {
+    const cp = current[i]
+    if (!isAdminPage.value && !cp.page.visible) {
+      current.splice(i, 1)
+    } else if (cp.page.selfID && cp.page.selfID !== NoID) {
+      let p = cx[cp.page.selfID]
+      if (!p) {
+        if (ax[cp.page.selfID]) {
+          current.splice(i, 1, ax[cp.page.selfID])
+          p = ax[cp.page.selfID]
+          cx[p.page.pageID] = p
+          i++
+        } else {
+          current.splice(i, 0, cp)
+          p = cp
+          cx[p.page.pageID] = p
+        }
+      } else {
+        current.splice(i, 1)
+      }
+      if (cp.page.visible) p.children.unshift(cp)
+    }
+  }
+  const pageItems = current.filter(i => i?.page?.title || i?.page?.name)
+  if (isAdminPage.value) return pageItems
+  return [...pageItems, ...anomalyNav.value, ...documentNav.value]
+})
+const anomalyNav = computed(() => {
+  if (!anomalyEnabled.value) return []
+  const slug = route.params.slug || namespace.value?.slug || namespace.value?.namespaceID
+  if (!slug) return []
+  return [{
+    page: {
+      pageID: 'anomaly',
+      selfID: NoID,
+      name: 'namespace.anomaly',
+      title: t('navigation.anomaly', 'Anomaly Center'),
+      visible: true,
+      icon: ['fas', 'chart-line'],
+    },
+    children: [],
+    params: { slug },
+  }]
+})
+const documentNav = computed(() => {
+  const slug = route.params.slug || namespace.value?.slug || namespace.value?.namespaceID
+  if (!slug) return []
+  const q = query.value.toLowerCase()
+  const children = documents.value
+    .filter(doc => doc.visible)
+    .filter(doc => !q || String(doc.title || '').toLowerCase().includes(q))
+    .map(doc => ({
+      page: {
+        name: 'namespace.document',
+        pageID: `document-${doc.documentID}`,
+        selfID: 'documents',
+        title: doc.title,
+        visible: true,
+        icon: doc.kind === 'pdf' ? ['far', 'file-pdf'] : ['fas', 'file-lines'],
+      },
+      children: [],
+      params: { slug, documentID: doc.documentID },
+    }))
+  if (!children.length) return []
+  return [{
+    page: {
+      pageID: 'documents',
+      selfID: NoID,
+      name: 'namespace.documents',
+      title: t('sidebar.documents'),
+      visible: true,
+      section: true,
+    },
+    children,
+    params: { slug },
+  }]
+})
+const canUpdateNamespace = computed(() => namespace.value ? namespace.value.canUpdateNamespace : false)
+const namespaceID = computed(() => namespace.value ? namespace.value.namespaceID : NoID)
+
+watch(isAdminPage, () => { query.value = '' })
+
+watch(() => route.params.slug, (slug = '') => {
+  query.value = ''
+  namespace.value = store.namespace.getByUrlPart(slug)
+}, { immediate: true })
+
+watch(() => namespace.value?.namespaceID, (nsID) => {
+  if (!nsID) return
+  loadDocuments(nsID)
+  ruleChainsLoading.value = true
+  $ComposeAPI.ruleChainList({ limit: 500, namespaceID: nsID })
+    .then(({ chains }) => { ruleChains.value = chains || [] })
+    .catch(() => { ruleChains.value = [] })
+    .finally(() => { ruleChainsLoading.value = false })
+
+  workflowsLoading.value = true
+  $AutomationAPI.workflowList({ limit: 500, deleted: 0 })
+    .then(({ set }) => { workflows.value = (set || []).map(i => i?.workflow || i) })
+    .catch(() => { workflows.value = [] })
+    .finally(() => { workflowsLoading.value = false })
+
+  $AnomalyAPI?.ruleSearch({ namespaceID: nsID, enabled: true, limit: 1 })
+    .then(({ set }) => { anomalyEnabled.value = !!(set || []).length })
+    .catch(() => { anomalyEnabled.value = false })
+}, { immediate: true })
+
+function loadDocuments (nsID) {
+  $ComposeAPI.documentList({ namespaceID: nsID })
+    .then(({ set }) => { documents.value = set || [] })
+    .catch(() => { documents.value = [] })
+}
+
+function onDocumentsChanged () {
+  if (namespace.value?.namespaceID) loadDocuments(namespace.value.namespaceID)
+}
+
+window.addEventListener('compose-documents-changed', onDocumentsChanged)
+onBeforeUnmount(() => window.removeEventListener('compose-documents-changed', onDocumentsChanged))
+
+function namespaceSelected (ns) {
+  if (!ns) return
+  if (typeof ns === 'string' || typeof ns === 'number') {
+    ns = (props.namespaces || []).find(n => String(n.namespaceID) === String(ns))
+  }
+  if (!ns?.namespaceID) return
+
+  const { namespaceID: nid, canManageNamespace, slug = '' } = ns
+  if (String(nid) === String(namespace.value?.namespaceID)) return
+
+  let { name, params } = route
+  if (!name) name = 'pages'
+  if (name.includes('admin.modules')) name = 'admin.modules'
+  else if (name.includes('admin.pages')) name = 'admin.pages'
+  else if (name.includes('admin.charts')) name = 'admin.charts'
+  else if (name.includes('admin.documents')) name = 'admin.documents'
+  else if (name.includes('admin.rulechains')) name = 'admin.rulechains'
+  else if (name.includes('admin.workflows')) name = 'admin.workflows'
+  else if (name.includes('admin.anomaly')) name = 'admin.anomaly'
+  else if (name.includes('admin.risk.models')) name = 'admin.risk.models'
+  else if (name.includes('admin.risk.factors')) name = 'admin.risk.factors'
+  else if (name.includes('admin.risk.registry')) name = 'admin.risk.registry'
+  else if (name.startsWith('namespace.document')) name = 'namespace.documents'
+  else if (name === 'namespace.anomaly') name = 'namespace.anomaly'
+
+  if (!name.startsWith('namespace.document') && name !== 'namespace.anomaly') {
+    name = !params.pageID && canManageNamespace && !name.includes('namespace.') ? name : 'pages'
+  }
+  router.push({ name, params: { slug: slug || nid } })
+}
+
+function pageIndex (wraps) {
+  const ix = {}
+  for (const w of wraps) ix[w.page.pageID] = w
+  return ix
+}
+
+function moduleIcon (module) {
+  const type = module.config?.type || 'basic'
+  if (type === 'datasource') return ['fas', 'cube']
+  if (type === 'dbref') return ['fas', 'code-branch']
+  return ['fas', 'database']
+}
+
+function moduleWrap (module, pageName) {
+  return {
+    page: { name: pageName, pageID: `module-${module.moduleID}`, selfID: 'modules', rootSelfID: 'modules', title: module.name || module.handle, visible: true, icon: moduleIcon(module) },
+    children: [],
+    params: { moduleID: module.moduleID },
+  }
+}
+
+const chartIconMap = {
+  pie: ['fas', 'chart-pie'],
+  bar: ['fas', 'chart-bar'],
+  line: ['fas', 'chart-line'],
+  doughnut: ['fas', 'chart-pie'],
+  funnel: ['fas', 'filter'],
+  gauge: ['fas', 'gauge'],
+  radar: ['fas', 'compass'],
+  scatter: ['fas', 'chart-line'],
+}
+
+function chartIcon (chart) {
+  const type = chart.config?.reports?.[0]?.metrics?.[0]?.type
+  if (type && chartIconMap[type]) return chartIconMap[type]
+  return chartIconMap.bar
+}
+
+function documentWrap (doc) {
+  return {
+    page: {
+      name: 'admin.documents.edit',
+      pageID: `document-${doc.documentID}`,
+      selfID: 'documents',
+      rootSelfID: 'documents',
+      title: doc.title,
+      visible: true,
+      icon: doc.kind === 'pdf' ? ['far', 'file-pdf'] : ['fas', 'file-lines'],
+    },
+    children: [],
+    params: { documentID: doc.documentID },
+  }
+}
+
+function chartWrap (chart) {
+  const icon = chartIcon(chart)
+  return {
+    page: { name: 'admin.charts.edit', pageID: `chart-${chart.chartID}`, selfID: 'charts', rootSelfID: 'charts', title: chart.name || chart.handle, visible: true, icon },
+    children: [],
+    params: { chartID: chart.chartID },
+  }
+}
+
+function ruleChainWrap (chain) {
+  return {
+    page: {
+      name: 'admin.rulechains.edit',
+      pageID: `rulechain-${chain.id}`,
+      selfID: 'rulechains',
+      rootSelfID: 'rulechains',
+      title: chain.name || chain.id,
+      visible: true,
+      icon: ['fas', 'random'],
+    },
+    children: [],
+    params: { chainID: chain.id },
+  }
+}
+
+function workflowWrap (workflow) {
+  return {
+    page: {
+      name: 'admin.workflows.edit',
+      pageID: `workflow-${workflow.workflowID}`,
+      selfID: 'workflows',
+      rootSelfID: 'workflows',
+      title: workflow.meta?.name || workflow.handle || workflow.workflowID,
+      visible: true,
+      icon: ['fas', 'project-diagram'],
+    },
+    children: [],
+    params: { workflowID: workflow.workflowID },
+  }
+}
+
+function adminRoutes () {
+  const routeName = route.name
+  const pageName = routeName.startsWith('admin.modules.record') ? 'admin.modules.record.list' : 'admin.modules.edit'
+  return [
+    { page: { pageID: 'modules', selfID: NoID, name: 'admin.modules', title: t('navigation.module'), visible: true, section: true }, children: [] },
+    ...modules.value.map((m) => moduleWrap(m, pageName)),
+    { page: { pageID: 'pages', selfID: NoID, name: 'admin.pages', title: t('navigation.page'), visible: true, section: true }, children: [] },
+    ...adminPageWrap(pages.value),
+    ...(anomalyEnabled.value ? [{ page: { pageID: 'anomaly', selfID: NoID, name: 'admin.anomaly', title: t('navigation.anomaly', 'Anomaly Center'), visible: true, section: true, icon: ['fas', 'chart-line'] }, children: [] }] : []),
+    { page: { pageID: 'documents', selfID: NoID, name: 'admin.documents', title: t('navigation.documents'), visible: true, section: true }, children: [] },
+    ...documents.value.map(documentWrap),
+    { page: { pageID: 'charts', selfID: NoID, name: 'admin.charts', title: t('navigation.chart'), visible: true, section: true }, children: [] },
+    ...charts.value.map(chartWrap),
+    { page: { pageID: 'rulechains', selfID: NoID, name: 'admin.rulechains', title: t('navigation.rulechains'), visible: true, section: true }, children: [] },
+    ...ruleChains.value.map(ruleChainWrap),
+    { page: { pageID: 'workflows', selfID: NoID, name: 'admin.workflows', title: t('navigation.workflows'), visible: true, section: true }, children: [] },
+    ...workflows.value.map(workflowWrap),
+    { page: { pageID: 'risk', selfID: NoID, name: 'admin.risk.models', title: t('navigation.riskModels', 'Модели риска'), visible: true, section: true }, children: [] },
+    { page: { pageID: 'risk-factors', selfID: 'risk', rootSelfID: 'risk', name: 'admin.risk.factors', title: t('navigation.riskFactors', 'Библиотека факторов'), visible: true, icon: ['fas', 'list'] }, children: [] },
+    { page: { pageID: 'risk-registry', selfID: 'risk', rootSelfID: 'risk', name: 'admin.risk.registry', title: t('navigation.riskRegistry', 'Реестр рисков'), visible: true, icon: ['fas', 'table-list'] }, children: [] },
+  ]
+}
+
+function publicPageWrap (pages) {
+  return pages.map(({ pageID, selfID, title, visible, config, blocks }) => {
+    const { navItem = {} } = config
+    const { icon: navIcon = {}, expanded = '' } = navItem
+    return { page: { pageID, selfID, title, visible, expanded, icon: resolvePageIcon(navIcon, blocks) }, children: [], params: { pageID } }
+  })
+}
+
+function adminPageWrap (pages) {
+  return pages.map(({ pageID, selfID, title, handle, config, blocks }) => {
+    const { navItem = {} } = config
+    const { icon: navIcon = {} } = navItem
+    const pageName = route.name === 'admin.pages.edit' ? 'admin.pages.edit' : 'admin.pages.builder'
+    return { page: { name: pageName, pageID: `page-${pageID}`, selfID: selfID !== NoID ? `page-${selfID}` : 'pages', rootSelfID: 'pages', title: title || handle, visible: true, icon: resolvePageIcon(navIcon, blocks) }, children: [], params: { pageID } }
+  })
+}
+
+function resolvePageIcon (icon, blocks) {
+  if (icon && icon.type && icon.src) {
+    if (icon.type === 'fontawesome') {
+      return parseFaIcon(icon.src)
+    }
+    if (icon.type === 'attachment') return `${$ComposeAPI.baseURL}${icon.src}`
+    if (icon.type === 'link') return icon.src
+  }
+  if (blocks && blocks.length) {
+    const kinds = new Set(blocks.map(b => b.kind))
+    if (kinds.has('Chart') || kinds.has('Metric')) return ['fas', 'chart-bar']
+    if (kinds.has('RecordList') || kinds.has('Record')) return ['fas', 'database']
+    if (kinds.has('Calendar')) return ['fas', 'calendar-alt']
+    if (kinds.has('SocialFeed')) return ['fas', 'rss']
+    if (kinds.has('Comment')) return ['fas', 'comments']
+    if (kinds.has('Tabs') || kinds.has('Navigation')) return ['fas', 'sitemap']
+    if (kinds.has('Anomaly')) return ['fas', 'triangle-exclamation']
+  }
+  return ['fas', 'file-alt']
+}
+
+function getNamespaceLabel (value) {
+  if (typeof value === 'string') value = filteredNamespaces.value.find(({ namespaceID: nid }) => nid === value) || {}
+  return value.name
+}
+</script>
+
+<style scoped>
+.ns-sidebar-header {
+  margin-top: 0.5rem;
+  padding: 0 0.15rem 0.25rem;
+}
+
+.ns-name {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--bs-body-color, inherit);
+}
+
+.ns-edit-btn {
+  margin-top: -0.15rem;
+}
+
+.ns-switcher {
+  min-width: 0;
+}
+
+.ns-sticky {
+  z-index: 2;
+}
+
+.ns-mode-switch .btn {
+  font-size: 0.8125rem;
+}
+
+.ns-empty {
+  font-size: 0.875rem;
+}
+
+.sidebar-density-compact :deep(.c-input-search),
+.sidebar-density-compact :deep(.form-control) {
+  min-height: 2rem;
+  font-size: 0.8125rem;
+}
+</style>

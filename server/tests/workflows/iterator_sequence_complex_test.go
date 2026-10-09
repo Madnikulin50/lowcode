@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	autTypes "github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/wfexec"
+	autTypes "github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/wfexec"
 	"github.com/spf13/cast"
 	"github.com/stretchr/testify/require"
 )

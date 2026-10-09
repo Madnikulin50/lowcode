@@ -14,32 +14,32 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/app"
-	"github.com/cortezaproject/corteza/server/compose/rest"
-	"github.com/cortezaproject/corteza/server/compose/service"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/api/server"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/cli"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/envoy"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/csv"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/directory"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
-	envoyStore "github.com/cortezaproject/corteza/server/pkg/envoy/store"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/yaml"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/objstore/plain"
-	"github.com/cortezaproject/corteza/server/pkg/rand"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/store"
-	sysTypes "github.com/cortezaproject/corteza/server/system/types"
-	"github.com/cortezaproject/corteza/server/tests/helpers"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/madnikulin50/lowcode/server/app"
+	"github.com/madnikulin50/lowcode/server/compose/rest"
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api/server"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/cli"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/csv"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/directory"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
+	envoyStore "github.com/madnikulin50/lowcode/server/pkg/envoy/store"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/yaml"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore/plain"
+	"github.com/madnikulin50/lowcode/server/pkg/rand"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/store"
+	sysTypes "github.com/madnikulin50/lowcode/server/system/types"
+	"github.com/madnikulin50/lowcode/server/tests/helpers"
 	"github.com/spf13/afero"
 	"github.com/steinfletcher/apitest"
 	"github.com/stretchr/testify/require"
@@ -419,11 +419,22 @@ func namespaceImportInit(t *testing.T, h helper, arch []byte) (uint64, error) {
 }
 
 func namespaceImportRun(ctx context.Context, s store.Storer, t *testing.T, h helper, sessionID uint64, name, slug string) (*types.Namespace, types.ModuleSet, types.PageSet, types.ChartSet) {
+	return namespaceImportRunData(ctx, s, t, h, sessionID, name, slug, false)
+}
+
+func namespaceImportRunData(ctx context.Context, s store.Storer, t *testing.T, h helper, sessionID uint64, name, slug string, importData bool) (*types.Namespace, types.ModuleSet, types.PageSet, types.ChartSet) {
+	body, err := json.Marshal(map[string]any{
+		"name":       name,
+		"slug":       slug,
+		"importData": importData,
+	})
+	h.a.NoError(err)
+
 	h.apiInit().
 		Post(fmt.Sprintf("/namespace/import/%d", sessionID)).
 		Header("Accept", "application/json").
-		FormData("name", name).
-		FormData("slug", slug).
+		ContentType("application/json").
+		Body(string(body)).
 		Expect(h.t).
 		Status(http.StatusOK).
 		Assert(helpers.AssertNoErrors).

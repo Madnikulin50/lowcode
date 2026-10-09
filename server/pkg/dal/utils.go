@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 	"github.com/spf13/cast"
 )
 
@@ -131,6 +131,20 @@ func (r *Row) GetValue(name string, pos uint) (any, error) {
 	return r.values[name][pos], nil
 }
 
+func (r Row) DeepCopy() *Row {
+	row := &Row{
+		counters: make(map[string]uint),
+		values:   make(valueSet),
+	}
+	for key, value := range r.values {
+		row.values[key] = append([]any{}, value...)
+	}
+	for key, value := range r.counters {
+		row.counters[key] = value
+	}
+	return row
+}
+
 func (r *Row) String() string {
 	out := make([]string, 0, 20)
 
@@ -150,10 +164,10 @@ func (r *Row) String() string {
 // 1: a is greater then b
 //
 // Multi value rules:
-// - if a has less items then b, a is less then b (-1)
-// - if a has more items then b, a is more then b (1)
-// - if a and b have the same amount of items; if any of the corresponding values
-//   are different, that outcome is used as the result
+//   - if a has less items then b, a is less then b (-1)
+//   - if a has more items then b, a is more then b (1)
+//   - if a and b have the same amount of items; if any of the corresponding values
+//     are different, that outcome is used as the result
 //
 // This function is used to satisfy sort's less function requirement.
 func compareGetters(a, b ValueGetter, ac, bc map[string]uint, attr string) int {
@@ -195,7 +209,9 @@ func compareGetters(a, b ValueGetter, ac, bc map[string]uint, attr string) int {
 // 1: a is greater then b
 //
 // @note I considered using GVal here but it introduces more overhead then
-//       what I've conjured here.
+//
+//	what I've conjured here.
+//
 // @todo look into using generics or some wrapping types here
 func compareValues(va, vb any) int {
 	// simple/edge cases
@@ -330,7 +346,8 @@ func stateConstraintsToExpression(cc map[string]filter.State) string {
 }
 
 // @todo see if the rest of the "conversion" functions should return a QL node
-//       like the cursor one does.
+//
+//	like the cursor one does.
 func prepareGenericRowTester(f internalFilter) (_ tester, err error) {
 	var (
 		parts    = make([]string, 0, 5)
@@ -436,15 +453,46 @@ func evalCmpResult(cmp int, s *filter.SortExpr) (less, skip bool) {
 	return false, true
 }
 
+func shortAttrFromLong(attrName string) string {
+	ind := strings.LastIndex(attrName, ".")
+	if ind != -1 {
+		return attrName[ind+1:]
+	}
+	return attrName
+}
+func globalAttrFromLong(attrName string) string {
+	ind := strings.LastIndex(attrName, "/")
+	if ind != -1 {
+		return attrName[ind+1:]
+	}
+	return attrName
+}
+
 func indexAttrs(aa ...AttributeMapping) (out map[string]bool) {
 	out = make(map[string]bool, len(aa))
 	indexAttrsInto(out, aa...)
+
 	return
 }
 
 func indexAttrsInto(dst map[string]bool, aa ...AttributeMapping) {
 	for _, a := range aa {
 		dst[a.Identifier()] = true
+		id := a.Identifier()
+		if id != a.Source() {
+			dst[a.Source()] = true
+		}
+		shortAttr := shortAttrFromLong(id)
+		if shortAttr != a.Identifier() {
+			dst[shortAttr] = true
+		}
+		globalAttr := globalAttrFromLong(id)
+		if globalAttr != a.Identifier() {
+			dst[globalAttr] = true
+			shortAttr = globalAttr
+			dst[shortAttr] = true
+		}
+
 	}
 }
 
@@ -465,6 +513,10 @@ func keysFromExpr(nn ...*ql.ASTNode) (out []string, hasConstants bool) {
 		for _, s := range symbols {
 			auxOut[s] = true
 		}
+	}
+
+	if len(nn) == 0 {
+		hasConstants = true
 	}
 
 	for k := range auxOut {

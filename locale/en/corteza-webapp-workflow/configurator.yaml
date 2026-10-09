@@ -29,3 +29,9 @@ delay:
   duration:
     label: Duration
     description: 'Enter duration format (e.g., "5s", "10m", "1h30m") or an expression'
+ai-budget:
+  label: AI budget per run
+  description: Stops the AI steps of one run of this workflow once they have used this much of the model. Leave empty for no limit. Models that do not report token use can only be limited by the number of calls.
+  calls: Model calls
+  tokens: Tokens
+  unlimited: No limit

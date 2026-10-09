@@ -8,14 +8,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/cortezaproject/corteza/server/automation/automation"
-	atypes "github.com/cortezaproject/corteza/server/automation/types"
-	agctx "github.com/cortezaproject/corteza/server/pkg/apigw/ctx"
-	"github.com/cortezaproject/corteza/server/pkg/apigw/types"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	pe "github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/jsenv"
+	"github.com/madnikulin50/lowcode/server/automation/automation"
+	atypes "github.com/madnikulin50/lowcode/server/automation/types"
+	agctx "github.com/madnikulin50/lowcode/server/pkg/apigw/ctx"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/types"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	pe "github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/jsenv"
 	"go.uber.org/zap"
 )
 

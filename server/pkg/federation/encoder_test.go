@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	ct "github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/federation/types"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/options"
+	ct "github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/federation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 	"github.com/stretchr/testify/require"
 )
 

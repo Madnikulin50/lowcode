@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ddl"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/jmoiron/sqlx"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
 	"github.com/modern-go/reflect2"
 	"github.com/spf13/cast"
 )

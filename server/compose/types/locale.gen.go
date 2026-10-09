@@ -1,15 +1,16 @@
 package types
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
 	"strconv"
+
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 )
 
 type (
@@ -33,14 +34,20 @@ const (
 
 var (
 	// @todo can we remove LocaleKey struct for string constant?
+	LocaleKeyChartConfigDescription                         = LocaleKey{Path: "config.description"}
+	LocaleKeyChartConfigHelp                                = LocaleKey{Path: "config.help"}
 	LocaleKeyChartYAxisLabel                                = LocaleKey{Path: "yAxis.label"}
 	LocaleKeyChartMetricsMetricIDLabel                      = LocaleKey{Path: "metrics.{{metricID}}.label"}
+	LocaleKeyChartMetricsMetricIDPrefix                     = LocaleKey{Path: "metrics.{{metricID}}.prefix"}
+	LocaleKeyChartMetricsMetricIDSuffix                     = LocaleKey{Path: "metrics.{{metricID}}.suffix"}
 	LocaleKeyChartDimensionsDimensionIDMetaStepsStepIDLabel = LocaleKey{Path: "dimensions.{{dimensionID}}.meta.steps.{{stepID}}.label"}
 	LocaleKeyModuleName                                     = LocaleKey{Path: "name"}
 	LocaleKeyModuleFieldLabel                               = LocaleKey{Path: "label"}
 	LocaleKeyModuleFieldMetaDescriptionView                 = LocaleKey{Path: "meta.description.view"}
 	LocaleKeyModuleFieldMetaDescriptionEdit                 = LocaleKey{Path: "meta.description.edit"}
 	LocaleKeyModuleFieldMetaHintView                        = LocaleKey{Path: "meta.hint.view"}
+	LocaleKeyModuleFieldMetaPrefix                          = LocaleKey{Path: "meta.prefix"}
+	LocaleKeyModuleFieldMetaSuffix                          = LocaleKey{Path: "meta.suffix"}
 	LocaleKeyModuleFieldMetaHintEdit                        = LocaleKey{Path: "meta.hint.edit"}
 	LocaleKeyModuleFieldExpressionValidatorValidatorIDError = LocaleKey{Path: "expression.validator.{{validatorID}}.error"}
 	LocaleKeyModuleFieldMetaOptionsValueText                = LocaleKey{Path: "meta.options.{{value}}.text"}
@@ -48,10 +55,16 @@ var (
 	LocaleKeyNamespaceName                                  = LocaleKey{Path: "name"}
 	LocaleKeyNamespaceMetaSubtitle                          = LocaleKey{Path: "meta.subtitle"}
 	LocaleKeyNamespaceMetaDescription                       = LocaleKey{Path: "meta.description"}
+	LocaleKeyNamespaceMetaPrompt                            = LocaleKey{Path: "meta.prompt"}
+	LocaleKeyNamespaceMetaHelp                              = LocaleKey{Path: "meta.help"}
 	LocaleKeyPageTitle                                      = LocaleKey{Path: "title"}
 	LocaleKeyPageDescription                                = LocaleKey{Path: "description"}
+	LocaleKeyPageConfigHelp                                 = LocaleKey{Path: "config.help"}
 	LocaleKeyPagePageBlockBlockIDTitle                      = LocaleKey{Path: "pageBlock.{{blockID}}.title"}
 	LocaleKeyPagePageBlockBlockIDDescription                = LocaleKey{Path: "pageBlock.{{blockID}}.description"}
+	LocaleKeyPagePageBlockBlockIDMetricsMetricIDLabel       = LocaleKey{Path: "pageBlock.{{blockID}}.metrics.{{metricID}}.label"}
+	LocaleKeyPagePageBlockBlockIDMetricsMetricIDPrefix      = LocaleKey{Path: "pageBlock.{{blockID}}.metrics.{{metricID}}.prefix"}
+	LocaleKeyPagePageBlockBlockIDMetricsMetricIDSuffix      = LocaleKey{Path: "pageBlock.{{blockID}}.metrics.{{metricID}}.suffix"}
 	LocaleKeyPagePageBlockBlockIDButtonButtonIDLabel        = LocaleKey{Path: "pageBlock.{{blockID}}.button.{{buttonID}}.label"}
 	LocaleKeyPagePageBlockBlockIDContentBody                = LocaleKey{Path: "pageBlock.{{blockID}}.content.body"}
 	LocaleKeyPageLayoutMetaTitle                            = LocaleKey{Path: "meta.title"}
@@ -94,12 +107,33 @@ func ChartResourceTranslationTpl() string {
 }
 
 func (r *Chart) DecodeTranslations(tt locale.ResourceTranslationIndex) {
+	var aux *locale.ResourceTranslation
+
+	if aux = tt.FindByKey(LocaleKeyChartConfigDescription.Path); aux != nil {
+		r.Config.Description = aux.Msg
+	}
+
+	if aux = tt.FindByKey(LocaleKeyChartConfigHelp.Path); aux != nil {
+		r.Config.Help = aux.Msg
+	}
 
 	r.decodeTranslations(tt)
 }
 
 func (r *Chart) EncodeTranslations() (out locale.ResourceTranslationSet) {
 	out = locale.ResourceTranslationSet{}
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyChartConfigDescription.Path,
+		Msg:      locale.SanitizeMessage(r.Config.Description),
+	})
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyChartConfigHelp.Path,
+		Msg:      locale.SanitizeMessage(r.Config.Help),
+	})
 
 	out = append(out, r.encodeTranslations()...)
 
@@ -199,6 +233,8 @@ func (r *ModuleField) DecodeTranslations(tt locale.ResourceTranslationIndex) {
 	r.decodeTranslationsMetaHintView(tt)
 
 	r.decodeTranslationsMetaHintEdit(tt)
+	r.decodeTranslationsMetaPrefix(tt)
+	r.decodeTranslationsMetaSuffix(tt)
 
 	r.decodeTranslationsExpressionValidatorValidatorIDError(tt)
 
@@ -224,6 +260,10 @@ func (r *ModuleField) EncodeTranslations() (out locale.ResourceTranslationSet) {
 	out = append(out, r.encodeTranslationsMetaHintView()...)
 
 	out = append(out, r.encodeTranslationsMetaHintEdit()...)
+
+	out = append(out, r.encodeTranslationsMetaPrefix()...)
+
+	out = append(out, r.encodeTranslationsMetaSuffix()...)
 
 	out = append(out, r.encodeTranslationsExpressionValidatorValidatorIDError()...)
 
@@ -272,8 +312,16 @@ func (r *Namespace) DecodeTranslations(tt locale.ResourceTranslationIndex) {
 		r.Meta.Subtitle = aux.Msg
 	}
 
+	if aux = tt.FindByKey(LocaleKeyNamespaceMetaPrompt.Path); aux != nil {
+		r.Meta.Prompt = aux.Msg
+	}
+
 	if aux = tt.FindByKey(LocaleKeyNamespaceMetaDescription.Path); aux != nil {
 		r.Meta.Description = aux.Msg
+	}
+
+	if aux = tt.FindByKey(LocaleKeyNamespaceMetaHelp.Path); aux != nil {
+		r.Meta.Help = aux.Msg
 	}
 }
 
@@ -294,8 +342,20 @@ func (r *Namespace) EncodeTranslations() (out locale.ResourceTranslationSet) {
 
 	out = append(out, &locale.ResourceTranslation{
 		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyNamespaceMetaPrompt.Path,
+		Msg:      locale.SanitizeMessage(r.Meta.Prompt),
+	})
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
 		Key:      LocaleKeyNamespaceMetaDescription.Path,
 		Msg:      locale.SanitizeMessage(r.Meta.Description),
+	})
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyNamespaceMetaHelp.Path,
+		Msg:      locale.SanitizeMessage(r.Meta.Help),
 	})
 
 	return out
@@ -340,6 +400,10 @@ func (r *Page) DecodeTranslations(tt locale.ResourceTranslationIndex) {
 		r.Description = aux.Msg
 	}
 
+	if aux = tt.FindByKey(LocaleKeyPageConfigHelp.Path); aux != nil {
+		r.Config.Help = aux.Msg
+	}
+
 	r.decodeTranslations(tt)
 }
 
@@ -356,6 +420,12 @@ func (r *Page) EncodeTranslations() (out locale.ResourceTranslationSet) {
 		Resource: r.ResourceTranslation(),
 		Key:      LocaleKeyPageDescription.Path,
 		Msg:      locale.SanitizeMessage(r.Description),
+	})
+
+	out = append(out, &locale.ResourceTranslation{
+		Resource: r.ResourceTranslation(),
+		Key:      LocaleKeyPageConfigHelp.Path,
+		Msg:      locale.SanitizeMessage(r.Config.Help),
 	})
 
 	out = append(out, r.encodeTranslations()...)

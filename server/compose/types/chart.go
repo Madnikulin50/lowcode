@@ -7,35 +7,40 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 	"github.com/spf13/cast"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 )
 
 type (
 	Chart struct {
-		ID     uint64      `json:"chartID,string"`
-		Handle string      `json:"handle"`
-		Name   string      `json:"name"`
-		Config ChartConfig `json:"config"`
+		ID     uint64      `json:"chartID,string" schema:"col=id,dal=id,unique"`
+		Handle string      `json:"handle" schema:"col=handle,dal=text:64,unique,ignoreCase"`
+		Name   string      `json:"name" schema:"col=name,dal,sortable"`
+		Config ChartConfig `json:"config" schema:"col=config,dal,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
-		NamespaceID uint64 `json:"namespaceID,string"`
+		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 	}
 
 	ChartConfig struct {
 		Reports     []*ChartConfigReport   `json:"reports,omitempty"`
 		ColorScheme string                 `json:"colorScheme,omitempty"`
 		NoAnimation bool                   `json:"noAnimation,omitempty"`
+		Gradient    string                 `json:"gradient,omitempty"`
 		Toolbox     map[string]interface{} `json:"toolbox,omitempty"`
+
+		// Warning: values of these fields are now handled via resource-translation facility
+		Description string `json:"description,omitempty"`
+		Help        string `json:"help,omitempty"`
 	}
 
 	ChartConfigReport struct {
@@ -48,6 +53,9 @@ type (
 		Legend     map[string]interface{}   `json:"legend,omitempty"`
 		Tooltip    map[string]interface{}   `json:"tooltip,omitempty"`
 		Offset     map[string]interface{}   `json:"offset,omitempty"`
+		Anomaly    map[string]interface{}   `json:"anomaly,omitempty"`
+		Compare    map[string]interface{}   `json:"compare,omitempty"`
+		Forecast   map[string]interface{}   `json:"forecast,omitempty"`
 		Renderer   struct {
 			Version string `json:"version,omitempty" `
 		} `json:"renderer,omitempty"`
@@ -60,7 +68,7 @@ type (
 		Name        string   `json:"name"`
 		Query       string   `json:"query"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		Deleted filter.State `json:"deleted"`
@@ -99,11 +107,29 @@ func (c Chart) decodeTranslations(tt locale.ResourceTranslationIndex) {
 			mpl := strings.NewReplacer("{{metricID}}", metricID)
 
 			aux = tt.FindByKey(mpl.Replace(LocaleKeyChartMetricsMetricIDLabel.Path))
-			if aux == nil {
-				return
+			if aux != nil {
+				metric["label"] = aux.Msg
+			}
+			aux = tt.FindByKey(mpl.Replace(LocaleKeyChartMetricsMetricIDPrefix.Path))
+			if aux != nil {
+				formatting, ok := metric["formatting"].(map[string]interface{})
+				if ok {
+					formatting["prefix"] = aux.Msg
+					metric["formatting"] = formatting
+				}
+
 			}
 
-			metric["label"] = aux.Msg
+			aux = tt.FindByKey(mpl.Replace(LocaleKeyChartMetricsMetricIDSuffix.Path))
+			if aux != nil {
+				formatting, ok := metric["formatting"].(map[string]interface{})
+				if ok {
+					formatting["suffix"] = aux.Msg
+					metric["formatting"] = formatting
+				}
+
+			}
+
 		})
 
 		// apply translated labels for each dimension/step
@@ -147,6 +173,19 @@ func (c Chart) encodeTranslations() (out locale.ResourceTranslationSet) {
 				Key:      mpl.Replace(LocaleKeyChartMetricsMetricIDLabel.Path),
 				Msg:      cast.ToString(m["label"]),
 			})
+
+			out = append(out, &locale.ResourceTranslation{
+				Resource: c.ResourceTranslation(),
+				Key:      mpl.Replace(LocaleKeyChartMetricsMetricIDPrefix.Path),
+				Msg:      cast.ToString(m["prefix"]),
+			})
+
+			out = append(out, &locale.ResourceTranslation{
+				Resource: c.ResourceTranslation(),
+				Key:      mpl.Replace(LocaleKeyChartMetricsMetricIDSuffix.Path),
+				Msg:      cast.ToString(m["suffix"]),
+			})
+
 		})
 
 		// collect labels from chart config: dimensions/steps

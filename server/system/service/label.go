@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/label/types"
-	"github.com/cortezaproject/corteza/server/store"  
+	"github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/store"
 )
 
 type (
@@ -27,6 +27,6 @@ func (svc labelSvc) List(ctx context.Context, filter types.LabelFilter) (set typ
 	if err != nil {
 		return nil, f, err
 	}
-	
+
 	return set, f, nil
 }

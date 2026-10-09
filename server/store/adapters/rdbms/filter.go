@@ -5,19 +5,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers"
 
-	automationType "github.com/cortezaproject/corteza/server/automation/types"
-	composeType "github.com/cortezaproject/corteza/server/compose/types"
-	discoveryType "github.com/cortezaproject/corteza/server/discovery/types"
-	"github.com/cortezaproject/corteza/server/federation/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelsType "github.com/cortezaproject/corteza/server/pkg/label/types"
-	systemType "github.com/cortezaproject/corteza/server/system/types"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
+	automationType "github.com/madnikulin50/lowcode/server/automation/types"
+	composeType "github.com/madnikulin50/lowcode/server/compose/types"
+	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
+	"github.com/madnikulin50/lowcode/server/federation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelsType "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	systemType "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 func DefaultFilters() (f *extendedFilters) {
@@ -77,11 +77,20 @@ func DefaultFilters() (f *extendedFilters) {
 	}
 
 	f.ComposeAttachment = func(s *Store, f composeType.AttachmentFilter) (ee []goqu.Expression, _ composeType.AttachmentFilter, err error) {
+		// Generated filter uses column "namespace_id"; the store ident is rel_namespace.
+		nsID := f.NamespaceID
+		f.NamespaceID = 0
 		if ee, f, err = ComposeAttachmentFilter(s.Dialect, f); err != nil {
 			return
 		}
+		f.NamespaceID = nsID
+		if nsID > 0 {
+			ee = append(ee, goqu.C("rel_namespace").Eq(nsID))
+		}
 
 		switch f.Kind {
+		case "":
+			// listing by namespace (and generated filters) only
 		case composeType.PageAttachment:
 			// @todo implement filtering by page
 			if f.PageID > 0 {
@@ -91,24 +100,13 @@ func DefaultFilters() (f *extendedFilters) {
 
 		case composeType.IconAttachment:
 
+		case composeType.NamespaceAttachment:
+
 		case composeType.RecordAttachment:
-			panic("@todo pending implementation")
-			// query = query.
-			//	Join("compose_record_value AS v ON (v.ref = a.id)")
-			//
-			// if f.ModuleID > 0 {
-			//	query = query.
-			//		Join("compose_record AS r ON (r.id = v.record_id)").
-			//		Where(squirrel.Eq{"r.module_id": f.ModuleID})
-			// }
-			//
-			// if f.RecordID > 0 {
-			//	query = query.Where(squirrel.Eq{"v.record_id": f.RecordID})
-			// }
-			//
-			// if f.FieldName != "" {
-			//	query = query.Where(squirrel.Eq{"v.name": f.FieldName})
-			// }
+			if f.RecordID > 0 || f.ModuleID > 0 || f.FieldName != "" {
+				err = fmt.Errorf("filtering record attachments by record/module/field not implemented")
+				return
+			}
 
 		default:
 			err = fmt.Errorf("unsupported kind value")

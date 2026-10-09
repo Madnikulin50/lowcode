@@ -5,12 +5,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	internalAuth "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/system/service/event"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	internalAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/system/service/event"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"io"
 	"net/http"
 	"net/url"
@@ -279,7 +279,6 @@ func (svc sink) handleRequest(r *http.Request) (*SinkRequestUrlParams, error) {
 // This is useful to enforce mail processing
 // b) Max-body-size check might be limited via sink params
 // and io.Reader that is passed is limited w/ io.LimitReader
-//
 func (svc *sink) process(srup *SinkRequestUrlParams, w http.ResponseWriter, r *http.Request, body io.Reader) error {
 	var (
 		err         error

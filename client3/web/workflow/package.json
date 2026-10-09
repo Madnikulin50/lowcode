@@ -1,0 +1,37 @@
+{
+  "name": "corteza-webapp-workflow",
+  "version": "2024.9.8",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev-env": "vite --mode development",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-regular-svg-icons": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@popperjs/core": "^2.11.8",
+    "autoprefixer": "^10.5.4",
+    "bootstrap": "^5.3.3",
+    "file-saver": "^2.0.5",
+    "lodash": "^4.17.21",
+    "mxgraph": "^4.2.2",
+    "pinia": "^3.0.2",
+    "portal-vue": "^3.0.0",
+    "rtlcss": "^4.3.0",
+    "v-jsoneditor": "^1.4.5",
+    "vue": "^3.5.13",
+    "vue-i18n": "^10.0.5",
+    "vue-router": "^4.5.0",
+    "vuedraggable": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "sass": "^1.85.1",
+    "vite": "^6.3.1"
+  }
+}

@@ -1,8 +1,10 @@
 package ql
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 )
 
 // Ensure the scanner can scan tokens correctly.
@@ -75,6 +77,8 @@ func TestScanner_ScanComplex(t *testing.T) {
 			[]tokenCode{IDENT, WS, KEYWORD}},
 		{`year(now())-1`,
 			[]tokenCode{IDENT, PARENTHESIS_OPEN, IDENT, PARENTHESIS_OPEN, PARENTHESIS_CLOSE, PARENTHESIS_CLOSE, OPERATOR, LNUMBER}},
+		{`(device = 509925326227505153)`,
+			[]tokenCode{PARENTHESIS_OPEN, IDENT, WS, OPERATOR, WS, LNUMBER, PARENTHESIS_CLOSE}},
 	}
 
 	for _, test := range tests {
@@ -101,5 +105,55 @@ func TestScanner_ScanComplex(t *testing.T) {
 				break
 			}
 		}
+	}
+}
+
+func TestLexerNumberFollowedByParenDoesNotHang(t *testing.T) {
+	done := make(chan error, 1)
+	go func() {
+		s := NewLexer(strings.NewReader("509925326227505153)"))
+		tok := s.Scan()
+		if tok.code != LNUMBER || tok.literal != "509925326227505153" {
+			done <- fmt.Errorf("number token code=%d lit=%q", tok.code, tok.literal)
+			return
+		}
+		tok = s.Scan()
+		if tok.code != PARENTHESIS_CLOSE {
+			done <- fmt.Errorf("paren token code=%d lit=%q", tok.code, tok.literal)
+			return
+		}
+		done <- nil
+	}()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("lexer hung on number followed by ')'")
+	}
+}
+
+func TestParseRecordIDFilterInParens(t *testing.T) {
+	done := make(chan error, 1)
+	go func() {
+		n, err := NewParser().Parse("(device = 509925326227505153)")
+		if err != nil {
+			done <- err
+			return
+		}
+		if n == nil {
+			done <- fmt.Errorf("nil AST")
+			return
+		}
+		done <- nil
+	}()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("parser hung on (device = <id>)")
 	}
 }

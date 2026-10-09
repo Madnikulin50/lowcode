@@ -1,0 +1,4 @@
+types:
+  Rule: {}
+  Baseline: {}
+  Finding: {}

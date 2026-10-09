@@ -1,0 +1,23 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Server RU test" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="lowcode" />
+    <working_directory value="$PROJECT_DIR$/bin" />
+    <parameters value="serve-api" />
+    <envs>
+      <env name="DB_DSN" value="postgres://postgres:Zse45rdx@127.0.0.1:5432/test7?sslmode=disable" />
+      <env name="ENVIRONMENT" value="dev" />
+      <env name="HTTP_ADDR" value=":3333" />
+      <env name="HTTP_API_ENABLED" value="true" />
+      <env name="HTTP_WEBAPP_ENABLED" value="false" />
+      <env name="LOCALE_DEVELOPMENT_MODE" value="true" />
+      <env name="LOCALE_LANGUAGES" value="ru" />
+      <env name="LOG_DEBUG" value="true" />
+      <env name="STORAGE_PATH" value="../data" />
+    </envs>
+    <kind value="FILE" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/server/cmd/corteza/main.go" />
+    <output_directory value="$PROJECT_DIR$/bin" />
+    <method v="2" />
+  </configuration>
+</component>

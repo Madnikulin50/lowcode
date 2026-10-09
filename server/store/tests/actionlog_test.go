@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/store"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/stretchr/testify/require"
 )
 

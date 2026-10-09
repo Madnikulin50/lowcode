@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"sync"
 
-	composeCommands "github.com/cortezaproject/corteza/server/compose/commands"
+	composeCommands "github.com/madnikulin50/lowcode/server/compose/commands"
 
-	authCommands "github.com/cortezaproject/corteza/server/auth/commands"
-	federationCommands "github.com/cortezaproject/corteza/server/federation/commands"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/api/server"
-	"github.com/cortezaproject/corteza/server/pkg/cli"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
-	systemCommands "github.com/cortezaproject/corteza/server/system/commands"
+	authCommands "github.com/madnikulin50/lowcode/server/auth/commands"
+	federationCommands "github.com/madnikulin50/lowcode/server/federation/commands"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/api/server"
+	"github.com/madnikulin50/lowcode/server/pkg/cli"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemCommands "github.com/madnikulin50/lowcode/server/system/commands"
 	"go.uber.org/zap"
 )
 
@@ -110,7 +110,15 @@ func (app *CortezaApp) InitCLI() {
 		return
 	})
 
+	envoyInit := func(ctx context.Context) (svc *envoyx.Service, err error) {
+		err = app.initEnvoy(ctx, app.Log)
+		return envoyx.Global(), err
+	}
 	provisionCmd := cli.ProvisionCommand(func() (err error) {
+		if _, err = envoyInit(ctx); err != nil {
+			return
+		}
+
 		if err = app.Provision(ctx); err != nil {
 			return
 		}
@@ -126,11 +134,6 @@ func (app *CortezaApp) InitCLI() {
 	dalInit := func(ctx context.Context) (dal.FullService, error) {
 		err := app.initDAL(ctx, app.Log)
 		return dal.Service(), err
-	}
-
-	envoyInit := func(ctx context.Context) (svc *envoyx.Service, err error) {
-		err = app.initEnvoy(ctx, app.Log)
-		return envoyx.Global(), err
 	}
 
 	app.Command.AddCommand(

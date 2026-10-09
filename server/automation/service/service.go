@@ -2,17 +2,21 @@ package service
 
 import (
 	"context"
+	"os"
+	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/automation/automation"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/corredor"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/objstore"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
-	sysTypes "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
+
+	"github.com/madnikulin50/lowcode/server/automation/automation"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/corredor"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
+	sysTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 )
 
@@ -47,10 +51,11 @@ var (
 
 	DefaultActionlog actionlog.Recorder
 
-	DefaultUser     userService
-	DefaultWorkflow *workflow
-	DefaultTrigger  *trigger
-	DefaultSession  *session
+	DefaultUser         userService
+	DefaultWorkflow     *workflow
+	DefaultTrigger      *trigger
+	DefaultSession      *session
+	DefaultWorkflowChat *workflowChat
 
 	// wrapper around time.Now() that will aid service testing
 	now = func() *time.Time {
@@ -94,6 +99,16 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 	DefaultSession = Session(DefaultLogger.Named("session"), c.Workflow, ws)
 	DefaultWorkflow = Workflow(DefaultLogger.Named("workflow"), c.Corredor, c.Workflow)
 	DefaultTrigger = Trigger(DefaultLogger.Named("trigger"), c.Workflow)
+	DefaultWorkflowChat = WorkflowChat()
+
+	DefaultPrompts = PromptLibrary(DefaultStore, DefaultAccessControl)
+	aiagent.SetPromptResolver(DefaultPrompts.resolve)
+
+	// skills: the library (database) first, then files from AI_SKILLS_DIR
+	aiagent.SetSkillSource(aiagent.SkillSourceDB, skillSource{lib: DefaultPrompts})
+	if dir := strings.TrimSpace(os.Getenv("AI_SKILLS_DIR")); dir != "" {
+		aiagent.SetSkillSource(aiagent.SkillSourceFile, aiagent.DirSkillSource{Dir: dir})
+	}
 
 	DefaultWorkflow.triggers = DefaultTrigger
 
@@ -121,6 +136,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 
 	automation.HttpRequestHandler(Registry())
 	automation.LogHandler(Registry())
+	automation.AiHandler(Registry())
 	automation.QueueHandler(Registry())
 	automation.JsenvHandler(Registry())
 	automation.Oauth2Handler(Registry())
@@ -135,6 +151,14 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 func Activate(ctx context.Context) (err error) {
 	if err = DefaultWorkflow.Load(ctx); err != nil {
 		return
+	}
+
+	// sessions that were waiting on a delay or an approval when the server
+	// last stopped; needs the workflows loaded above
+	if err = DefaultSession.resumeAll(ctx); err != nil {
+		// not fatal: the server is useful without them
+		DefaultLogger.Error("could not resume suspended workflow sessions", zap.Error(err))
+		err = nil
 	}
 
 	return

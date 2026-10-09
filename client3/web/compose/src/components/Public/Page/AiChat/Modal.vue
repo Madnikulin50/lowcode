@@ -1,0 +1,594 @@
+<template>
+  <div
+    v-show="showModal"
+    class="chat-dock"
+    :class="{ fullscreen }"
+    role="dialog"
+    aria-modal="false"
+    :aria-label="$t('aiChat.title')"
+  >
+    <div class="chat-dock-header">
+      <div class="chat-dock-title-row">
+        <h5 class="chat-dock-title mb-0">{{ $t('aiChat.title') }}</h5>
+        <div class="d-flex align-items-center gap-1 ms-auto">
+          <button
+            type="button"
+            class="btn btn-outline-secondary border-0 btn-sm"
+            :title="$t('aiChat.newChat.label')"
+            @click="onNewChat"
+          >
+            <font-awesome-icon :icon="['fas', 'plus']" />
+          </button>
+          <div class="export-dropdown position-relative">
+            <button
+              type="button"
+              class="btn btn-outline-secondary border-0 btn-sm"
+              :title="$t('aiChat.export.label')"
+              @click.stop="exportOpen = !exportOpen"
+            >
+              <font-awesome-icon :icon="['fas', 'download']" />
+            </button>
+            <div
+              v-if="exportOpen"
+              class="export-menu"
+              @click="exportOpen = false"
+            >
+              <button type="button" class="export-menu-item" @click="runExport('markdown')">
+                {{ $t('aiChat.export.markdown') }}
+              </button>
+              <button type="button" class="export-menu-item" @click="runExport('pdf')">
+                {{ $t('aiChat.export.pdf') }}
+              </button>
+              <button type="button" class="export-menu-item" @click="runExport('docx')">
+                {{ $t('aiChat.export.docx') }}
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn btn-outline-secondary border-0 btn-sm"
+            :title="fullscreen ? $t('aiChat.collapse') : $t('aiChat.expand')"
+            @click="fullscreen = !fullscreen"
+          >
+            <font-awesome-icon :icon="fullscreen ? ['fas', 'compress'] : ['fas', 'expand']" />
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary border-0 btn-sm"
+            :title="$t('aiChat.close')"
+            @click="onHidden"
+          >
+            <font-awesome-icon :icon="['fas', 'times']" />
+          </button>
+        </div>
+      </div>
+      <div class="chat-dock-meta">
+        <span
+          v-if="contextLabel"
+          class="chat-context-chip"
+          :title="contextLabel"
+        >{{ contextLabel }}</span>
+        <select
+          v-model="selectedModel"
+          class="form-select form-select-sm chat-model-select"
+          :title="$t('aiChat.model.label')"
+        >
+          <option v-for="m in modelOptions" :key="m" :value="m">{{ modelLabel(m) }}</option>
+        </select>
+        <div class="chat-temp-control">
+          <button
+            type="button"
+            class="chat-tools-badge chat-temp-btn"
+            :title="$t('aiChat.temperature.title', { value: temperatureLabel })"
+            @click.stop="tempOpen = !tempOpen"
+          >
+            <font-awesome-icon :icon="['fas', 'sliders-h']" size="xs" />
+            <span class="chat-temp-value">{{ temperatureLabel }}</span>
+          </button>
+          <div
+            v-if="tempOpen"
+            class="chat-temp-popover"
+            @click.stop
+          >
+            <div class="chat-temp-popover-label">
+              {{ $t('aiChat.temperature.label') }}: <strong>{{ temperatureLabel }}</strong>
+            </div>
+            <input
+              v-model.number="selectedTemperature"
+              type="range"
+              min="0"
+              max="1.5"
+              step="0.1"
+              class="chat-temp-range"
+            >
+            <div class="chat-temp-popover-hints">
+              <span>{{ $t('aiChat.temperature.precise') }}</span>
+              <span>{{ $t('aiChat.temperature.creative') }}</span>
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="chat-tools-badge chat-confidence-toggle"
+          :class="{ on: confidenceEnabled }"
+          :title="confidenceEnabled ? $t('aiChat.confidence.on') : $t('aiChat.confidence.off')"
+          @click="confidenceEnabled = !confidenceEnabled"
+        >
+          <font-awesome-icon :icon="['fas', 'gauge']" size="xs" />
+        </button>
+        <span
+          class="chat-tools-badge"
+          :class="toolsBadgeClass"
+          :title="toolsTitle"
+          role="img"
+          :aria-label="toolsTitle"
+        >
+          <font-awesome-icon :icon="['fas', 'tools']" />
+        </span>
+        <span
+          v-if="warmingUp"
+          class="d-flex align-items-center gap-1 text-secondary small text-nowrap"
+          :title="$t('aiChat.warmup.inProgress')"
+        >
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+          <span class="d-none d-md-inline">{{ $t('aiChat.warmup.short') }}</span>
+        </span>
+      </div>
+    </div>
+    <div class="chat-dock-body">
+      <Chat
+        ref="chatRef"
+        :start-prompt="startPrompt"
+        :files="attachedFiles"
+        :page="page"
+        :module="module"
+        :namespace="namespace"
+        :magnified="fullscreen"
+        :model="selectedModel"
+        :temperature-override="selectedTemperature"
+        :confidence-override="confidenceEnabled"
+        :active="showModal"
+        :framed="false"
+        :show-tools-badge="false"
+        :show-reset-button="false"
+        :model-tools="modelTools"
+        @tools-state="onToolsState"
+        @export-menu="exportOpen = false"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup>
+defineOptions({ i18nOptions: { namespaces: 'page' } })
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useNsI18n } from 'corteza-lib/vue/dist'
+import Chat from './Chat.vue'
+import { parseModelsPayload, modelToolsEnabled, modelLabel, pickChatModel, readStoredModel, writeStoredModel, readStoredNumber, writeStoredNumber, readStoredBool, writeStoredBool } from './chatTools.js'
+import { usePageStore } from '../../../../store/page'
+import { useModuleStore } from '../../../../store/module'
+import { useNamespaceStore } from '../../../../store/namespace'
+
+const $t = useNsI18n()
+
+const props = defineProps({
+  page: { type: String, required: false, default: '' },
+  module: { type: String, required: false, default: '' },
+  namespace: { type: String, required: false, default: '' },
+})
+
+const showModal = ref(false)
+const startPrompt = ref('')
+const attachedFiles = ref([])
+const fullscreen = ref(false)
+const modelOptions = ref([])
+const modelTools = ref({})
+const selectedModel = ref('')
+
+const DEFAULT_TEMPERATURE = 0.8
+const TEMPERATURE_MIN = 0
+const TEMPERATURE_MAX = 1.5
+function clampTemperature (v) {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return DEFAULT_TEMPERATURE
+  return Math.min(TEMPERATURE_MAX, Math.max(TEMPERATURE_MIN, n))
+}
+const selectedTemperature = ref(clampTemperature(readStoredNumber('aiChat.temperature', DEFAULT_TEMPERATURE)))
+const temperatureLabel = computed(() => selectedTemperature.value.toFixed(1))
+const tempOpen = ref(false)
+const confidenceEnabled = ref(readStoredBool('aiChat.confidence', false))
+
+watch(selectedTemperature, (v) => writeStoredNumber(v, 'aiChat.temperature'))
+watch(confidenceEnabled, (v) => writeStoredBool(v, 'aiChat.confidence'))
+
+const liveToolsEnabled = ref(null)
+const toolsActive = ref(false)
+const warmingUp = ref(false)
+const exportOpen = ref(false)
+const chatRef = ref(null)
+let warmUpSeq = 0
+
+const $ComposeAPI = window.__composeAPI
+const pageStore = usePageStore()
+const moduleStore = useModuleStore()
+const namespaceStore = useNamespaceStore()
+
+const contextLabel = computed(() => {
+  const pageID = String(props.page || '')
+  const moduleID = String(props.module || '')
+  const nsID = String(props.namespace || '')
+  const page = pageStore.getByID(pageID) || pageStore.getByID(props.page)
+  const mod = moduleStore.getByID(moduleID) || moduleStore.getByID(props.module)
+  const ns = namespaceStore.getByID(nsID) || namespaceStore.getByID(props.namespace)
+  const parts = []
+  if (page?.title) parts.push(page.title)
+  else if (mod?.name) parts.push(mod.name)
+  if (ns?.name && parts[0] !== ns.name) parts.push(ns.name)
+  return parts.join(' · ')
+})
+
+const catalogTools = computed(() => modelToolsEnabled(selectedModel.value, modelTools.value))
+const toolsEnabled = computed(() => {
+  if (liveToolsEnabled.value !== null) return liveToolsEnabled.value
+  if (catalogTools.value !== null) return catalogTools.value
+  return false
+})
+const toolsTitle = computed(() => {
+  if (toolsActive.value) return $t('aiChat.tools.invoked')
+  return toolsEnabled.value ? $t('aiChat.tools.enabled') : $t('aiChat.tools.disabled')
+})
+const toolsBadgeClass = computed(() => ({
+  on: toolsEnabled.value && !toolsActive.value,
+  off: !toolsEnabled.value && !toolsActive.value,
+  active: toolsActive.value,
+}))
+
+function onToolsState ({ enabled, active } = {}) {
+  if (enabled === true || enabled === false) {
+    liveToolsEnabled.value = enabled
+  } else {
+    liveToolsEnabled.value = null
+  }
+  toolsActive.value = !!active
+}
+
+function warmUp () {
+  if (!selectedModel.value) return
+  const seq = ++warmUpSeq
+  warmingUp.value = true
+  $ComposeAPI.pageAiWarmUp({ model: selectedModel.value }).catch(() => {}).finally(() => {
+    if (seq === warmUpSeq) {
+      warmingUp.value = false
+    }
+  })
+}
+
+function loadModels () {
+  $ComposeAPI.pageAiModels().then((payload = {}) => {
+    const parsed = parseModelsPayload(payload)
+    const models = parsed.names
+    const serverDefault = parsed.defaultModel || ''
+    modelOptions.value = models
+    modelTools.value = parsed.tools
+    if (!models.length) {
+      selectedModel.value = ''
+      return
+    }
+    const saved = readStoredModel('aiChat.model')
+    selectedModel.value = pickChatModel(models, saved, serverDefault)
+    writeStoredModel(selectedModel.value, 'aiChat.model')
+    warmUp()
+  }).catch(() => {})
+}
+
+watch(selectedModel, (model, prev) => {
+  if (model !== prev && model) {
+    liveToolsEnabled.value = null
+    toolsActive.value = false
+    warmUp()
+    writeStoredModel(model, 'aiChat.model')
+  }
+})
+
+// The click that opens the dock (an "ask AI" button elsewhere on the page)
+// bubbles up to document *after* this handler runs, on the very same click.
+// Without this guard, onDocumentClick's outside-click check would see that
+// click, decide it landed outside .chat-dock, and close the dock right back
+// on the same click that opened it.
+let suppressNextOutsideClick = false
+
+function startChatModal (data) {
+  const { prompt = '', files = [] } = data.detail || {}
+  startPrompt.value = prompt
+  attachedFiles.value = files || []
+  showModal.value = true
+  suppressNextOutsideClick = true
+  warmUp()
+  requestAnimationFrame(() => {
+    suppressNextOutsideClick = false
+    chatRef.value?.applyIncomingPrompt?.(prompt, files)
+    chatRef.value?.focusInput?.()
+  })
+}
+
+function onHidden () {
+  showModal.value = false
+  exportOpen.value = false
+}
+
+function onNewChat () {
+  chatRef.value?.newChat?.()
+}
+
+function runExport (kind) {
+  const chat = chatRef.value
+  if (!chat) return
+  if (kind === 'markdown') chat.exportMarkdown()
+  else if (kind === 'pdf') chat.exportPdf()
+  else if (kind === 'docx') chat.exportDocx()
+}
+
+function onKeydown (e) {
+  if (e.key === 'Escape' && showModal.value) {
+    e.preventDefault()
+    onHidden()
+  }
+}
+
+function onDocumentClick (e) {
+  if (!e.target.closest('.export-dropdown')) {
+    exportOpen.value = false
+  }
+
+  if (!e.target.closest('.chat-temp-control')) {
+    tempOpen.value = false
+  }
+
+  if (showModal.value && !suppressNextOutsideClick && !e.target.closest('.chat-dock')) {
+    onHidden()
+  }
+}
+
+onMounted(() => {
+  const saved = readStoredModel('aiChat.model')
+  if (saved) selectedModel.value = saved
+  loadModels()
+  window.addEventListener('show-chat-modal', startChatModal)
+  document.addEventListener('keydown', onKeydown)
+  document.addEventListener('click', onDocumentClick)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('show-chat-modal', startChatModal)
+  document.removeEventListener('keydown', onKeydown)
+  document.removeEventListener('click', onDocumentClick)
+})
+</script>
+
+<style lang="scss">
+.chat-dock {
+  position: fixed;
+  top: var(--topbar-height, 64px);
+  right: 0;
+  bottom: 0;
+  width: min(100vw, max(440px, 40vw));
+  z-index: 1051;
+  display: flex;
+  flex-direction: column;
+  background: var(--white, #fff);
+  border-left: 1px solid var(--extra-light, #e0e0e0);
+}
+
+.chat-dock.fullscreen {
+  top: 0;
+  width: 100%;
+  left: 0;
+  border-left: none;
+}
+
+.chat-dock-header {
+  flex-shrink: 0;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--extra-light, #e0e0e0);
+  background: var(--white, #fff);
+}
+
+.chat-dock-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  /* .btn-outline-secondary's icon color (#6c757d) is baked into Bootstrap's
+     CSS directly, not a var — it never adapts to the theme, so the new-chat/
+     export/expand/close icons all go low-contrast against a dark dock. */
+  .btn-outline-secondary {
+    color: var(--secondary, #6c757d);
+
+    &:hover:not(:disabled) {
+      color: var(--black, #445);
+      background: var(--extra-light, #f0f0f0);
+    }
+  }
+}
+
+.chat-dock-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.chat-dock-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  min-width: 0;
+}
+
+.chat-context-chip {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--secondary, #667788);
+  background: var(--extra-light, #f3f5f8);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.chat-model-select {
+  width: auto;
+  max-width: 160px;
+  flex-shrink: 0;
+  /* Same fix as Chat.vue's own .chat-model-select — this is a separate
+     scoped rule in a separate SFC, so that fix doesn't reach here. */
+  background-color: var(--white, #fff);
+  color: var(--black, inherit);
+  border-color: var(--extra-light, #ced4da);
+}
+
+.chat-tools-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--secondary, #8a93a0);
+  background: var(--extra-light, #f3f5f8);
+  flex-shrink: 0;
+}
+
+.chat-tools-badge.on {
+  color: var(--success, #198754);
+  background: #d1e7dd;
+}
+
+.chat-tools-badge.off {
+  color: var(--danger, #dc3545);
+  background: #f8d7da;
+}
+
+.chat-tools-badge.off::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.85;
+}
+
+.chat-tools-badge.active {
+  color: #1f4b7a;
+  background: #e8eef6;
+  animation: chat-tools-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes chat-tools-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.chat-temp-control {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chat-temp-btn,
+.chat-confidence-toggle {
+  border: none;
+  cursor: pointer;
+}
+
+.chat-temp-btn {
+  width: auto;
+  padding: 0 8px;
+  gap: 5px;
+}
+
+.chat-temp-value {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chat-temp-popover {
+  position: absolute;
+  /* Anchored to the button's right edge (like .export-menu above) so it
+     opens leftward — left-anchoring pushed a fixed-width popover straight
+     off the right edge of the dock. */
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  width: 190px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px;
+  background: var(--white, #fff);
+  border: 1px solid var(--extra-light, #ddd);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+}
+
+.chat-temp-popover-label {
+  font-size: 12px;
+  color: var(--black, #333);
+  margin-bottom: 6px;
+}
+
+.chat-temp-range {
+  width: 100%;
+}
+
+.chat-temp-popover-hints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--secondary, #8a93a0);
+  margin-top: 2px;
+}
+
+.chat-confidence-toggle.on {
+  color: #1f4b7a;
+  background: #e8eef6;
+}
+
+.chat-dock-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-dock .export-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  min-width: 160px;
+  background: var(--white, #fff);
+  border: 1px solid var(--extra-light, #ddd);
+  border-radius: 6px;
+  z-index: 20;
+  overflow: hidden;
+}
+
+.chat-dock .export-menu-item {
+  display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 14px;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--black, #333);
+}
+
+.chat-dock .export-menu-item:hover {
+  background: var(--extra-light, #f0f0f0);
+}
+</style>

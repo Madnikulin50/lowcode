@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 )
 
 type (
@@ -104,6 +104,10 @@ func (def *Join) iterator(ctx context.Context, left, right Iterator) (out Iterat
 		}
 	}
 
+	if pt == nil {
+		pt = TypeText{}
+	}
+
 	return exec, exec.init(ctx, pt)
 }
 
@@ -181,11 +185,11 @@ func (def *Join) init(ctx context.Context, left, right Iterator) (exec *joinLeft
 	}
 
 	// Generic validation
-	if !leftSrcAttrs[def.On.Left] {
-		return nil, fmt.Errorf("unknown join predicate attribute %s", def.On.Left)
+	if len(def.On.Left) > 0 && !leftSrcAttrs[def.On.Left] {
+		return nil, fmt.Errorf("unknown join left predicate attribute %s", def.On.Left)
 	}
-	if !rightSrcAttrs[def.On.Right] {
-		return nil, fmt.Errorf("unknown join predicate attribute %s", def.On.Right)
+	if len(def.On.Right) > 0 && !rightSrcAttrs[def.On.Right] {
+		return nil, fmt.Errorf("unknown join right predicate attribute %s", def.On.Right)
 	}
 
 	if len(def.OutAttributes) == 0 {
@@ -199,16 +203,19 @@ func (def *Join) init(ctx context.Context, left, right Iterator) (exec *joinLeft
 	}
 
 	if def.On.Left == "" {
-		return nil, fmt.Errorf("no left attribute in the join predicate specified")
-	}
-	if def.On.Right == "" {
+		if def.On.Right != "" {
+			return nil, fmt.Errorf("no left attribute in the join predicate specified")
+		}
+	} else if def.On.Right == "" {
 		return nil, fmt.Errorf("no right attribute in the join predicate specified")
 	}
 
 	// order
 	for _, s := range def.filter.OrderBy() {
 		if _, ok := outAttrs[s.Column]; !ok {
-			return nil, fmt.Errorf("order attribute %s does not exist", s.Column)
+			if !isSystemField(s.Column) {
+				return nil, fmt.Errorf("order attribute %s does not exist", s.Column)
+			}
 		}
 	}
 

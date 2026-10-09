@@ -1,13 +1,13 @@
 package resource
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 func (r *ComposeChart) EncodeTranslations() ([]*ResourceTranslation, error) {

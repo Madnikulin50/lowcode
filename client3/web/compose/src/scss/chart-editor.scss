@@ -1,0 +1,170 @@
+// Shared "chart editor" layout: the quick-jump side nav, section cards and
+// collapsible dimension/metric chips. Used by the Chart editor
+// (views/Admin/Charts/Edit.vue + components/Chart/Report/*) and by several
+// PageBlocks configurators (Metric/Record/RecordList) — those are reached
+// through a different, separately-chunked route, so this can't live inside
+// any single component's <style> block (its CSS would only load once that
+// component's own route/chunk has been visited). Imported once, globally,
+// from main.js instead.
+.chart-editor-nav {
+  width: 168px;
+  flex: 0 0 168px;
+  gap: 2px;
+  padding: 1rem .75rem 1rem 0;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+}
+
+.chart-editor-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: .8125rem;
+  font-weight: 500;
+  color: var(--secondary);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--extra-light);
+  }
+}
+
+.chart-editor-nav-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--bs-border-color);
+  font-size: .6875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.chart-editor-content {
+  min-width: 0;
+  padding: 0 .75rem;
+}
+
+.chart-editor-section {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--bs-border-color);
+
+  &:first-child {
+    padding-top: .75rem;
+  }
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.chart-editor-advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-weight: 600;
+  font-size: .9375rem;
+  color: inherit;
+  cursor: pointer;
+
+  &.is-open .chart-editor-chevron {
+    transform: rotate(90deg);
+  }
+}
+
+.chart-editor-chevron {
+  font-size: .6875rem;
+  color: var(--secondary);
+  transition: transform .15s ease;
+}
+
+.chart-editor-advanced-body {
+  margin-top: 1rem;
+}
+
+.chart-editor-chip {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: var(--white);
+  overflow: hidden;
+
+  &.is-open {
+    border-color: var(--secondary);
+  }
+}
+
+.chart-editor-chip-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.chart-editor-chip-grab {
+  cursor: grab;
+}
+
+.chart-editor-chip-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 2px 7px;
+  border-radius: 5px;
+  flex-shrink: 0;
+
+  &--dimension {
+    background: rgba(13, 148, 136, .12);
+    color: #0d8f80;
+  }
+
+  &--metric {
+    background: rgba(196, 106, 21, .14);
+    color: #b5610f;
+  }
+}
+
+.chart-editor-chip-title {
+  font-weight: 600;
+  font-size: .8125rem;
+}
+
+.chart-editor-chip-sub {
+  font-size: .75rem;
+  color: var(--secondary);
+}
+
+.chart-editor-chip-chevron {
+  font-size: .6875rem;
+  color: var(--secondary);
+  transition: transform .15s ease;
+}
+
+.chart-editor-chip.is-open .chart-editor-chip-chevron {
+  transform: rotate(180deg);
+}
+
+.chart-editor-chip-body {
+  padding: 14px 14px 14px;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+@media (max-width: 991.98px) {
+  .chart-editor-content {
+    padding: 0;
+  }
+}

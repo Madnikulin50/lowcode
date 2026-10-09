@@ -1,0 +1,64 @@
+{
+  "name": "Projects planned",
+  "handle": "projects-planned-gantt",
+  "namespaceID": "495727984893558785",
+  "moduleID": "495727984904110081",
+  "config": {
+    "reports": [
+      {
+        "moduleID": "495727984904110081",
+        "filter": "",
+        "dimensions": [
+          {
+            "field": "project_name",
+            "modifier": "(no grouping / buckets)",
+            "skipMissing": false,
+            "default": "",
+            "conditions": {},
+            "meta": {},
+            "rotateLabel": 0
+          }
+        ],
+        "metrics": [
+          {
+            "field": "count",
+            "type": "gantt",
+            "label": "Plan",
+            "startField": "start_date_planned",
+            "endField": "end_date_planned",
+            "formatting": {}
+          }
+        ],
+        "yAxis": {
+          "axisType": "linear",
+          "axisPosition": "left",
+          "labelPosition": "end",
+          "rotateLabel": 0,
+          "formatting": {}
+        },
+        "tooltip": {},
+        "legend": {
+          "isHidden": true,
+          "isScrollable": true,
+          "orientation": "horizontal",
+          "align": "center",
+          "position": { "isDefault": true }
+        },
+        "offset": {
+          "top": "40",
+          "right": "20",
+          "bottom": "40",
+          "left": "140",
+          "isDefault": false
+        }
+      }
+    ],
+    "colorScheme": "",
+    "noAnimation": false,
+    "toolbox": {
+      "saveAsImage": false,
+      "showDataTable": true,
+      "timeline": ""
+    }
+  }
+}

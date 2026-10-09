@@ -123,6 +123,16 @@ export interface Report {
   tooltip?: Tooltip;
   legend?: Legend;
   offset?: ChartOffset;
+  anomaly?: AnomalyConfig;
+}
+
+export interface AnomalyConfig {
+  enabled: boolean;
+  method: 'zscore' | 'iqr' | 'fixed' | 'pct_change';
+  threshold: number;
+  min?: number;
+  max?: number;
+  color: string;
 }
 
 export interface ChartToolbox {
@@ -313,12 +323,51 @@ export function defFormatData (): FormatData {
   })
 }
 
+export function detectAnomalies(values: number[], cfg: AnomalyConfig): boolean[] {
+  if (!cfg.enabled || !values.length) return values.map(() => false)
+
+  const n = values.length
+  const flags = new Array(n).fill(false)
+
+  if (cfg.method === 'zscore') {
+    const mean = values.reduce((a, b) => a + b, 0) / n
+    const std = Math.sqrt(values.reduce((s, v) => s + (v - mean) ** 2, 0) / n) || 1
+    values.forEach((v, i) => { if (Math.abs(v - mean) / std > cfg.threshold) flags[i] = true })
+  }
+
+  if (cfg.method === 'iqr') {
+    const sorted = [...values].sort((a, b) => a - b)
+    const q1 = sorted[Math.floor(n * 0.25)]
+    const q3 = sorted[Math.floor(n * 0.75)]
+    const iqr = q3 - q1
+    values.forEach((v, i) => { if (v < q1 - 1.5 * iqr || v > q3 + 1.5 * iqr) flags[i] = true })
+  }
+
+  if (cfg.method === 'fixed') {
+    values.forEach((v, i) => {
+      if ((cfg.min != null && v < cfg.min) || (cfg.max != null && v > cfg.max)) flags[i] = true
+    })
+  }
+
+  if (cfg.method === 'pct_change') {
+    values.forEach((v, i) => {
+      if (i === 0) return
+      const prev = values[i - 1]
+      if (prev === 0) { if (v !== 0) flags[i] = true; return }
+      if (Math.abs(v - prev) / prev > cfg.threshold) flags[i] = true
+    })
+  }
+
+  return flags
+}
+
 const chartUtil = {
   dimensionFunctions,
   hasRelativeDisplay,
   aggregateFunctions,
   predefinedFilters,
   ChartType,
+  detectAnomalies,
 }
 
 export {

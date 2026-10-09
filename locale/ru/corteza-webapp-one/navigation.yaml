@@ -4,6 +4,9 @@ chart: Диаграммы
 configuration: Конфигурация
 help:
   documentation: Документация
+  userDocs: Документация пользователя
+  apiDocs: Документация API
+  architecture: Архитектура
   feedback: Send feedback
   forum: Справка
   version: 'Version:'
@@ -28,4 +31,4 @@ themes:
 extendSession:
   labels:
     extend: Extend Session
-    warning: You will be logged out in {{ countdownTime }} seconds
+    warning: You will be logged out in {{ countdownTime }} секунд

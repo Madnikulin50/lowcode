@@ -1,0 +1,32 @@
+.The diagram outlines the node handshake step which exchanges the authentication tokens used to access protected resources.
+[plantuml,node-pair,svg,role=sequence]
+@startuml
+skinparam responseMessageBelowArrow true
+
+actor "Administrator A" as AdministratorA
+participant "Node A" as NodeA
+participant "Node B" as NodeB
+actor "Administrator B" as AdministratorB
+
+AdministratorB->NodeB: Initialize the handshake.
+note over NodeB #FFAAAA
+Initialize node B for the federated network.
+Create a system user, generate authentication
+token, and configure the system.
+end note
+
+NodeB->NodeA: Request the handshake.
+NodeA-->AdministratorA: Notify administrator A.
+note right of AdministratorA #ffffff
+Administrator A must manually
+approve the handshake request.
+end note
+...
+AdministratorA->NodeA: Approve the handshake request.
+note over NodeA #FFAAAA
+Initialize node A for the federated network.
+Create a system user, generate authentication
+token, and configure the system.
+end note
+NodeA->NodeB: Complete the handshake.
+@enduml

@@ -1,7 +1,7 @@
 package ql
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 )
 
 // Aliasing types from the pkg/ql to simplify imports

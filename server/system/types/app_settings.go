@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	oidcProviderPrefix = "openid-connect." // must match const in "github.com/cortezaproject/corteza/server/auth/external" external.go
+	oidcProviderPrefix = "openid-connect." // must match const in "github.com/madnikulin50/lowcode/server/auth/external" external.go
 
 	ExternalProviderUsageIdentity = "identity"
 	ExternalProviderUsageAPI      = "api"
@@ -156,7 +156,7 @@ type (
 					// Require fresh TOTP on every client authorization
 					// Strict bool
 
-					// TOTP issuer, defaults to "Corteza"
+					// TOTP issuer, defaults to "LowCoooode"
 					Issuer string
 				} `kv:"totp"`
 			} `json:"-" kv:"multi-factor"`
@@ -195,6 +195,18 @@ type (
 					HideBack   bool `json:"hideBack"`
 				} `kv:"record-toolbar,final" json:"record-toolbar"`
 			} `kv:"ui" json:"ui"`
+
+			// Attachment storage settings, shared across record/page/icon/
+			// namespace attachments (each of those still has its own
+			// per-kind MaxSize/Mimetypes below).
+			Attachments struct {
+				// DefaultDriver selects the objstore.Store backend used for
+				// new attachments when a module File-field doesn't specify
+				// its own "storageDriver" option: "db" (default — file
+				// content stored in the database), "plain" (disk), or
+				// "minio" (S3-compatible).
+				DefaultDriver string `kv:"default-driver" json:"defaultDriver"`
+			} `kv:"attachments" json:"attachments"`
 
 			// Record related settings
 			Record struct {
@@ -312,6 +324,19 @@ type (
 				GeoSearchProvider string `json:"geoSearchProvider"`
 				GeoSearchApiKey   string `json:"geoSearchApiKey"`
 			} `kv:"location,final" json:"location"`
+
+			// Map tile source (online OSM or local/offline tile URL)
+			Map struct {
+				// online | local — when online and TileURL empty, CMap uses public OSM tiles
+				TileSource string `json:"tileSource"`
+				// Leaflet URL template, e.g. https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+				// or /tiles/{z}/{x}/{y}.png for a local tileserver
+				TileURL string `json:"tileURL"`
+				MinZoom uint   `json:"minZoom"`
+				MaxZoom uint   `json:"maxZoom"`
+				// HTML attribution shown on the map
+				Attribution string `json:"attribution"`
+			} `kv:"map,final" json:"map"`
 		} `kv:"ui" json:"ui"`
 
 		ResourceTranslations struct {
@@ -320,7 +345,7 @@ type (
 			// field labels, descriptions, ...)
 
 			// This is always a subset of all languages available
-			// in Corteza instance (LOCALE_LANGUAGES)
+			// in the instance (LOCALE_LANGUAGES)
 			//
 			// Note: later, we will enable this to contain languages
 			//       that are not part of LOCALE_LANGUAGES
@@ -385,6 +410,64 @@ type (
 				Enabled bool `kv:"enabled" json:"enabled"`
 			} `kv:"compose-records" json:"compose-records"`
 		} `kv:"discovery" json:"discovery"`
+
+		// AI / Ollama model catalog and role defaults (admin-managed)
+		AI AISettings `kv:"ai" json:"ai"`
+	}
+
+	// AISettings controls which Ollama models are available and which role
+	// uses which model by default (compose chat, MCP agents, etc.).
+	AISettings struct {
+		// Master switch for AI features in UIs that respect the catalog.
+		Enabled bool `kv:"enabled" json:"enabled"`
+
+		// Optional Ollama base URL override (empty → OLLAMA_URL → OLLAMA_HOST → localhost).
+		OllamaURL string `kv:"ollama-url" json:"ollamaURL"`
+
+		// Catalog of known models. Empty catalog = no filter (all Ollama chat models).
+		Catalog []AIModelCatalogEntry `kv:"catalog,final" json:"catalog"`
+
+		Roles AIModelRoles `kv:"roles" json:"roles"`
+
+		// Optional named AI agents. Empty = built-in catalog (crud-agent, assistant, …).
+		Agents []AIAgentEntry `kv:"agents,final" json:"agents"`
+
+		// External HTTP toolkits (GET {url}/meta). Empty = env seed (CMDB/BACKUP/INVEST_AGENT_URL).
+		Toolkits []AIToolkitEntry `kv:"toolkits,final" json:"toolkits"`
+	}
+
+	AIModelCatalogEntry struct {
+		Name    string `json:"name"`
+		Enabled bool   `json:"enabled"`
+		Label   string `json:"label,omitempty"`
+		Note    string `json:"note,omitempty"`
+	}
+
+	AIModelRoles struct {
+		ComposeChat    string `kv:"compose-chat" json:"composeChat"`
+		MCPAgent       string `kv:"mcp-agent" json:"mcpAgent"`
+		AutomationChat string `kv:"automation-chat" json:"automationChat"`
+		RulesgoAI      string `kv:"rulesgo-ai" json:"rulesgoAi"`
+	}
+
+	AIAgentEntry struct {
+		Handle      string   `json:"handle"`
+		Enabled     *bool    `json:"enabled,omitempty"`
+		Description string   `json:"description,omitempty"`
+		Prompt      string   `json:"prompt,omitempty"`
+		Model       string   `json:"model,omitempty"`
+		Toolkits    []string `json:"toolkits,omitempty"`
+		// Skills the agent may load, by handle; "*" for all of them
+		Skills   []string `json:"skills,omitempty"`
+		MaxSteps int      `json:"maxSteps,omitempty"`
+		Confirm  bool     `json:"confirm,omitempty"`
+	}
+
+	AIToolkitEntry struct {
+		Handle  string `json:"handle"`
+		URL     string `json:"url"`
+		Enabled *bool  `json:"enabled,omitempty"`
+		Token   string `json:"token,omitempty"`
 	}
 
 	ExternalAuthProviderSet []*ExternalAuthProvider
@@ -502,6 +585,10 @@ func (cs AppSettings) WithDefaults() *AppSettings {
 		cs.UI.MainLogo = "/assets/logo.svg"
 	}
 
+	if len(strings.TrimSpace(cs.Compose.Attachments.DefaultDriver)) == 0 {
+		cs.Compose.Attachments.DefaultDriver = "db"
+	}
+
 	return &cs
 }
 
@@ -579,7 +666,7 @@ func (set *ExternalAuthProviderSet) DecodeKV(kv SettingsKV, prefix string) (err 
 				p.Label = "LinkedIn"
 			case "corteza-iam", "corteza", "corteza-one":
 				// Some legacy provider naming
-				p.Label = "Corteza IAM"
+				p.Label = "LowCoooode IAM"
 			case "crust-iam", "crust", "crust-unify":
 				// Some legacy provider naming
 				p.Label = "Crust IAM"

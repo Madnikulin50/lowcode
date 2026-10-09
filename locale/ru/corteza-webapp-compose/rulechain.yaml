@@ -1,0 +1,129 @@
+label:
+  single: Цепочка правил
+  plural: Цепочки правил
+searchPlaceholder: Поиск цепочек правил
+add: Добавить workflow
+noItems: Цепочки правил не найдены
+columns:
+  name: Название
+  description: Описание
+  nodes: Узлы
+  edges: Связи
+  actions: Действия
+edit:
+  title: Цепочка правил
+  createTitle: Новая цепочка правил
+  generalSettings: Основные настройки
+  name:
+    label: Название
+    placeholder: Название цепочки правил (например «Согласование заявки»)
+  description:
+    label: Описание
+    placeholder: Краткое описание того, что делает эта цепочка
+  aiBudget:
+    label: ИИ-бюджет одного запуска
+    description: Останавливает ИИ-узлы одного запуска, когда они израсходуют столько модели. Пусто - без ограничений. Модели, не сообщающие расход токенов, можно ограничить только числом обращений.
+    calls: Обращения к модели
+    tokens: Токены
+    unlimited: Без ограничений
+  entryNode:
+    label: Точка входа
+    placeholder: Выберите узел, с которого начинается выполнение
+  delete: Удалить цепочку правил
+  nodes:
+    label: Узлы
+    placeholder: Название узла
+    add: Добавить узел
+    delete: Удалить узел
+    type:
+      label: Тип
+      placeholder: Выберите тип узла
+    config:
+      label: Конфигурация
+      placeholder: "{'{}'}"
+      invalid: Конфигурация должна быть корректным JSON
+      form: Форма
+      json: JSON
+      invalidJson: Некорректный JSON
+      required: Обязательное поле
+      noType: Выберите тип узла, чтобы редактировать конфигурацию
+      noFields: У этого типа узла нет полей конфигурации
+      addField: Добавить поле
+      addEntry: Добавить
+      remove: Удалить
+      key: Ключ
+      value: Значение
+  edges:
+    label: Связи
+    placeholder: Подпись связи
+    add: Добавить связь
+    delete: Удалить связь
+    from:
+      label: Из узла
+      placeholder: Выберите узел
+    to:
+      label: В узел
+      placeholder: Выберите узел
+    condition:
+      label: Условие
+      placeholder: Выражение условия
+test:
+  title: Тест цепочки правил
+  run: Запустить тест
+  running: Выполняется...
+  input:
+      label: Входные данные
+      placeholder: "{'{}'}"
+      invalid: Входные данные должны быть корректным JSON
+  output:
+    label: Результат
+  modal:
+    title: Результат теста
+    success: Успешно
+    failed: Ошибка
+runs:
+  title: История запусков
+  refresh: Обновить
+  empty: Запусков пока нет
+  selectHint: Выберите запуск слева, чтобы увидеть трассировку по шагам
+  trace: Трассировка по шагам
+  noTrace: Нет данных по шагам для этого запуска
+  output: Результат
+  columns:
+    trigger: Источник
+    startedAt: Начало
+    duration: Длительность
+  loadFailed: Не удалось загрузить историю запусков
+  detailFailed: Не удалось загрузить трассировку запуска
+notification:
+  created: Цепочка правил создана
+  updated: Цепочка правил обновлена
+  deleted: Цепочка правил удалена
+  createFailed: Не удалось создать цепочку правил
+  updateFailed: Не удалось обновить цепочку правил
+  deleteFailed: Не удалось удалить цепочку правил
+  loadFailed: Не удалось загрузить цепочку правил
+  listFailed: Не удалось загрузить цепочки правил
+  testFailed: Не удалось выполнить тест
+trace:
+  title: Трейс ИИ
+  agent: Агент
+  model: Модель
+  tokens: токенов
+  tokensHint: Токены запроса / ответа
+  attempts: попытки
+  failed: ошибка
+  tools: Инструменты
+  rejected: Отклонённые ответы
+  prompt: Запрос
+  response: Ответ
+nodeTest:
+  title: Проверить этот узел
+  inputPlaceholder: Пример входных данных в JSON - его поля подставляются в переменные запроса
+  run: Выполнить на реальной модели
+  hint: Ничего не сохраняется; изменение данных агентом отключено.
+  stop: Остановить
+  working: Ожидание ответа модели...
+  warming: Модель загружается...
+  usingTools: Агент использует инструменты...
+  attemptN: Попытка {n} - предыдущий ответ отклонён

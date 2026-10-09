@@ -1,0 +1,39 @@
+[annotation,role="data-zoomable"]
+{
+  "image": {
+    "rel": "documentation/annotation-canvas.png",
+    "alias": "annotation-canvas_padding",
+    "w": 1000,
+    "h": 1000
+  },
+  "view": {},
+  "annotations": [{
+    "kind": "box-note",
+    "padding": "xs",
+    "x": 111,
+    "y": 203,
+    "w": 279,
+    "h": 95
+  }, {
+    "kind": "box-note",
+    "padding": "sm",
+    "x": 611,
+    "y": 203,
+    "w": 279,
+    "h": 95
+  }, {
+    "kind": "box-note",
+    "padding": "md",
+    "x": 111,
+    "y": 703,
+    "w": 279,
+    "h": 95
+  }, {
+    "kind": "box-note",
+    "padding": "lg",
+    "x": 611,
+    "y": 703,
+    "w": 279,
+    "h": 95
+  }]
+}

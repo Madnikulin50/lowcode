@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/compose/dalutils"
-	"github.com/cortezaproject/corteza/server/compose/rest/request"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/tests/helpers"
+	"github.com/madnikulin50/lowcode/server/compose/dalutils"
+	"github.com/madnikulin50/lowcode/server/compose/rest/request"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/tests/helpers"
 	"github.com/steinfletcher/apitest"
 )
 

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/http"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/http"
 	"gopkg.in/mail.v2"
 )
 

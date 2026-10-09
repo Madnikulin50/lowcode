@@ -4,15 +4,44 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/y7s"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/y7s"
 	"github.com/modern-go/reflect2"
 	"gopkg.in/yaml.v3"
 )
 
 func (e YamlEncoder) encode(ctx context.Context, base *yaml.Node, p envoyx.EncodeParams, rt string, nodes envoyx.NodeSet, tt envoyx.Traverser) (out *yaml.Node, err error) {
 	return
+}
+
+func (e YamlEncoder) encodeModuleConfigC(ctx context.Context,
+	p envoyx.EncodeParams,
+	tt envoyx.Traverser,
+	n *envoyx.Node, module *types.Module, cfg types.ModuleConfig) (_ any, err error) {
+
+	for i, item := range cfg.Datasource.Items {
+		if item.Step.Load != nil {
+			modRef, ok := n.References[fmt.Sprintf("Config.Datasource.%d.ModuleID", i)]
+			if ok {
+				item.Step.Load.Definition["moduleID"] = safeParentIdentifier(tt, n, modRef)
+			}
+
+			ns, _ := e.encodeRef(p, module.NamespaceID, "NamespaceID", n, tt)
+
+			item.Step.Load.Definition["namespaceID"] = ns
+			cfg.Datasource.Items[i] = item
+		}
+	}
+
+	return y7s.MakeMap(
+		"type", cfg.Type,
+		"datasource", cfg.Datasource,
+		"dal", cfg.DAL,
+		"privacy", cfg.Privacy,
+		"discovery", cfg.Discovery,
+		"recordrevisions", cfg.RecordRevisions,
+		"recorddedup", cfg.RecordDeDup)
 }
 
 func (e YamlEncoder) encodeChartConfigC(ctx context.Context, p envoyx.EncodeParams, tt envoyx.Traverser, n *envoyx.Node, chart *types.Chart, cfg types.ChartConfig) (_ any, err error) {
@@ -136,7 +165,10 @@ func (e YamlEncoder) encodePageBlockC(ctx context.Context, p envoyx.EncodeParams
 			feed, _ := f.(map[string]interface{})
 			fOpts, _ := (feed["options"]).(map[string]interface{})
 
-			modRef := n.References[fmt.Sprintf("Blocks.%d.Options.feeds.%d.ModuleID", index, i)]
+			modRef, has := n.References[fmt.Sprintf("Blocks.%d.Options.feeds.%d.ModuleID", index, i)]
+			if !has {
+				continue
+			}
 			fOpts["module"] = safeParentIdentifier(tt, n, modRef)
 			delete(fOpts, "moduleID")
 		}
@@ -157,10 +189,49 @@ func (e YamlEncoder) encodePageBlockC(ctx context.Context, p envoyx.EncodeParams
 		}
 		break
 
+	case "RecordGraph":
+		mm, _ := b.Options["excludeModules"].([]interface{})
+		for i := range mm {
+			modRef, has := n.References[fmt.Sprintf("Blocks.%d.Options.excludeModules.%d.ModuleID", index, i)]
+			if !has {
+				continue
+			}
+			mm[i] = safeParentIdentifier(tt, n, modRef)
+		}
+
+		ll, _ := b.Options["labels"].([]interface{})
+		for i, l := range ll {
+			label, _ := l.(map[string]interface{})
+			modRef, has := n.References[fmt.Sprintf("Blocks.%d.Options.labels.%d.ModuleID", index, i)]
+			if !has {
+				continue
+			}
+			label["module"] = safeParentIdentifier(tt, n, modRef)
+			delete(label, "moduleID")
+		}
+		break
+
+	case "RelatedRecords":
+		rr, _ := b.Options["relations"].([]interface{})
+		for i, r := range rr {
+			rel, _ := r.(map[string]interface{})
+			if _, has := n.References[fmt.Sprintf("Blocks.%d.Options.relations.%d.ModuleID", index, i)]; !has {
+				continue
+			}
+
+			modRef := n.References[fmt.Sprintf("Blocks.%d.Options.relations.%d.ModuleID", index, i)]
+			rel["module"] = safeParentIdentifier(tt, n, modRef)
+			delete(rel, "moduleID")
+		}
+		break
+
 	case "Metric":
 		mm, _ := b.Options["metrics"].([]interface{})
 		for i, m := range mm {
-			modRef := n.References[fmt.Sprintf("Blocks.%d.Options.metrics.%d.ModuleID", index, i)]
+			modRef, has := n.References[fmt.Sprintf("Blocks.%d.Options.metrics.%d.ModuleID", index, i)]
+			if !has {
+				continue
+			}
 
 			mops, _ := m.(map[string]interface{})
 			mops["module"] = safeParentIdentifier(tt, n, modRef)

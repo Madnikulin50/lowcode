@@ -1,0 +1,10 @@
+import { i18n } from 'corteza-lib/vue/dist'
+
+export default (app) => i18n(app, 'reporter',
+  'general', 'permissions', 'navigation',
+  'builder', 'chart', 'create', 'datasources', 'display-element',
+  'notification', 'notifications',
+  'update', 'report', 'ui', 'scenarios', 'color',
+  'columns', 'tooltip', 'label', 'auth',
+  'refetch', 'list', 'edit', 'sidebar', 'view',
+)

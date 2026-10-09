@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ql"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ql"
 
 	"github.com/stretchr/testify/require"
 )

@@ -1,15 +1,144 @@
 package model
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	"github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
 )
+
+var PromptVersion = &dal.Model{
+	Ident:        "automation_prompt_versions",
+	ResourceType: types.PromptVersionResourceType,
+
+	Attributes: dal.AttributeSet{
+		&dal.Attribute{
+			Ident: "ID",
+			Type:  &dal.TypeID{},
+			Store: &dal.CodecAlias{Ident: "id"},
+		},
+
+		&dal.Attribute{
+			Ident: "Handle", Sortable: true,
+			Type:  &dal.TypeText{Length: 64},
+			Store: &dal.CodecAlias{Ident: "handle"},
+		},
+
+		&dal.Attribute{
+			Ident: "Version", Sortable: true,
+			Type: &dal.TypeNumber{HasDefault: true,
+				DefaultValue: 0,
+				Precision:    -1, Scale: -1, Meta: map[string]interface{}{"rdbms:type": "integer"},
+			},
+			Store: &dal.CodecAlias{Ident: "version"},
+		},
+
+		&dal.Attribute{
+			Ident: "Description",
+			Type:  &dal.TypeText{},
+			Store: &dal.CodecAlias{Ident: "description"},
+		},
+
+		&dal.Attribute{
+			Ident: "Text",
+			Type:  &dal.TypeText{},
+			Store: &dal.CodecAlias{Ident: "text"},
+		},
+
+		&dal.Attribute{
+			Ident: "Note",
+			Type:  &dal.TypeText{},
+			Store: &dal.CodecAlias{Ident: "note"},
+		},
+
+		&dal.Attribute{
+			Ident: "Active", Sortable: true,
+			Type: &dal.TypeBoolean{HasDefault: true,
+				DefaultValue: false,
+			},
+			Store: &dal.CodecAlias{Ident: "active"},
+		},
+
+		&dal.Attribute{
+			Ident: "Kind", Sortable: true,
+			Type:  &dal.TypeText{Length: 16},
+			Store: &dal.CodecAlias{Ident: "kind"},
+		},
+
+		&dal.Attribute{
+			Ident: "Requires",
+			Type: &dal.TypeJSON{
+				DefaultValue: "{}",
+			},
+			Store: &dal.CodecAlias{Ident: "requires"},
+		},
+
+		&dal.Attribute{
+			Ident: "Resources",
+			Type: &dal.TypeJSON{
+				DefaultValue: "{}",
+			},
+			Store: &dal.CodecAlias{Ident: "resources"},
+		},
+
+		&dal.Attribute{
+			Ident: "Cases",
+			Type: &dal.TypeJSON{
+				DefaultValue: "{}",
+			},
+			Store: &dal.CodecAlias{Ident: "cases"},
+		},
+
+		&dal.Attribute{
+			Ident: "CreatedAt", Sortable: true,
+			Type: &dal.TypeTimestamp{
+				DefaultCurrentTimestamp: true, Timezone: true, Precision: -1,
+			},
+			Store: &dal.CodecAlias{Ident: "created_at"},
+		},
+
+		&dal.Attribute{
+			Ident: "CreatedBy",
+			Type: &dal.TypeRef{HasDefault: true,
+				DefaultValue: 0,
+
+				RefAttribute: "id",
+				RefModel: &dal.ModelRef{
+					ResourceType: "corteza::system:user",
+				},
+			},
+			Store: &dal.CodecAlias{Ident: "created_by"},
+		},
+	},
+
+	Indexes: dal.IndexSet{
+		&dal.Index{
+			Ident: "automation_prompt_versions_handle",
+			Type:  "BTREE",
+
+			Fields: []*dal.IndexField{
+				{
+					AttributeIdent: "Handle",
+				},
+			},
+		},
+
+		&dal.Index{
+			Ident: "PRIMARY",
+			Type:  "BTREE",
+
+			Fields: []*dal.IndexField{
+				{
+					AttributeIdent: "ID",
+				},
+			},
+		},
+	},
+}
 
 var Session = &dal.Model{
 	Ident:        "automation_sessions",
@@ -79,6 +208,14 @@ var Session = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "CreatedAt", Sortable: true,
+			Type: &dal.TypeTimestamp{
+				DefaultCurrentTimestamp: true, Timezone: true, Precision: -1,
+			},
+			Store: &dal.CodecAlias{Ident: "created_at"},
+		},
+
+		&dal.Attribute{
 			Ident: "CreatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -89,14 +226,6 @@ var Session = &dal.Model{
 				},
 			},
 			Store: &dal.CodecAlias{Ident: "created_by"},
-		},
-
-		&dal.Attribute{
-			Ident: "CreatedAt", Sortable: true,
-			Type: &dal.TypeTimestamp{
-				DefaultCurrentTimestamp: true, Timezone: true, Precision: -1,
-			},
-			Store: &dal.CodecAlias{Ident: "created_at"},
 		},
 
 		&dal.Attribute{
@@ -204,6 +333,104 @@ var Session = &dal.Model{
 	},
 }
 
+var State = &dal.Model{
+	Ident:        "automation_states",
+	ResourceType: types.StateResourceType,
+
+	Attributes: dal.AttributeSet{
+		&dal.Attribute{
+			Ident: "ID",
+			Type:  &dal.TypeID{},
+			Store: &dal.CodecAlias{Ident: "id"},
+		},
+
+		&dal.Attribute{
+			Ident: "SessionID", Sortable: true,
+			Type: &dal.TypeRef{
+				RefAttribute: "id",
+				RefModel: &dal.ModelRef{
+					ResourceType: "corteza::automation:session",
+				},
+			},
+			Store: &dal.CodecAlias{Ident: "session_id"},
+		},
+
+		&dal.Attribute{
+			Ident: "WorkflowID", Sortable: true,
+			Type: &dal.TypeRef{
+				RefAttribute: "id",
+				RefModel: &dal.ModelRef{
+					ResourceType: "corteza::automation:workflow",
+				},
+			},
+			Store: &dal.CodecAlias{Ident: "workflow_id"},
+		},
+
+		&dal.Attribute{
+			Ident: "Kind", Sortable: true,
+			Type:  &dal.TypeText{Length: 16},
+			Store: &dal.CodecAlias{Ident: "kind"},
+		},
+
+		&dal.Attribute{
+			Ident: "ResumeAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "resume_at"},
+		},
+
+		&dal.Attribute{
+			Ident: "CreatedAt", Sortable: true,
+			Type: &dal.TypeTimestamp{
+				DefaultCurrentTimestamp: true, Timezone: true, Precision: -1,
+			},
+			Store: &dal.CodecAlias{Ident: "created_at"},
+		},
+
+		&dal.Attribute{
+			Ident: "Snapshot",
+			Type: &dal.TypeJSON{
+				DefaultValue: "{}",
+			},
+			Store: &dal.CodecAlias{Ident: "snapshot"},
+		},
+	},
+
+	Indexes: dal.IndexSet{
+		&dal.Index{
+			Ident: "PRIMARY",
+			Type:  "BTREE",
+
+			Fields: []*dal.IndexField{
+				{
+					AttributeIdent: "ID",
+				},
+			},
+		},
+
+		&dal.Index{
+			Ident: "automation_states_resumeAt",
+			Type:  "BTREE",
+
+			Fields: []*dal.IndexField{
+				{
+					AttributeIdent: "ResumeAt",
+				},
+			},
+		},
+
+		&dal.Index{
+			Ident: "automation_states_sessionId",
+			Type:  "BTREE",
+
+			Fields: []*dal.IndexField{
+				{
+					AttributeIdent: "SessionID",
+				},
+			},
+		},
+	},
+}
+
 var Trigger = &dal.Model{
 	Ident:        "automation_triggers",
 	ResourceType: types.TriggerResourceType,
@@ -213,6 +440,14 @@ var Trigger = &dal.Model{
 			Ident: "ID",
 			Type:  &dal.TypeID{},
 			Store: &dal.CodecAlias{Ident: "id"},
+		},
+
+		&dal.Attribute{
+			Ident: "Enabled", Sortable: true,
+			Type: &dal.TypeBoolean{HasDefault: true,
+				DefaultValue: true,
+			},
+			Store: &dal.CodecAlias{Ident: "enabled"},
 		},
 
 		&dal.Attribute{
@@ -230,22 +465,6 @@ var Trigger = &dal.Model{
 			Ident: "StepID",
 			Type:  &dal.TypeID{},
 			Store: &dal.CodecAlias{Ident: "rel_step"},
-		},
-
-		&dal.Attribute{
-			Ident: "Enabled", Sortable: true,
-			Type: &dal.TypeBoolean{HasDefault: true,
-				DefaultValue: true,
-			},
-			Store: &dal.CodecAlias{Ident: "enabled"},
-		},
-
-		&dal.Attribute{
-			Ident: "Meta",
-			Type: &dal.TypeJSON{
-				DefaultValue: "{}",
-			},
-			Store: &dal.CodecAlias{Ident: "meta"},
 		},
 
 		&dal.Attribute{
@@ -277,6 +496,14 @@ var Trigger = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "Meta",
+			Type: &dal.TypeJSON{
+				DefaultValue: "{}",
+			},
+			Store: &dal.CodecAlias{Ident: "meta"},
+		},
+
+		&dal.Attribute{
 			Ident: "OwnedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -298,18 +525,6 @@ var Trigger = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "UpdatedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "updated_at"},
-		},
-
-		&dal.Attribute{
-			Ident: "DeletedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "deleted_at"},
-		},
-
-		&dal.Attribute{
 			Ident: "CreatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -323,6 +538,12 @@ var Trigger = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "UpdatedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "updated_at"},
+		},
+
+		&dal.Attribute{
 			Ident: "UpdatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -333,6 +554,12 @@ var Trigger = &dal.Model{
 				},
 			},
 			Store: &dal.CodecAlias{Ident: "updated_by"},
+		},
+
+		&dal.Attribute{
+			Ident: "DeletedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "deleted_at"},
 		},
 
 		&dal.Attribute{
@@ -480,18 +707,6 @@ var Workflow = &dal.Model{
 		},
 
 		&dal.Attribute{
-			Ident: "UpdatedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "updated_at"},
-		},
-
-		&dal.Attribute{
-			Ident: "DeletedAt", Sortable: true,
-			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
-			Store: &dal.CodecAlias{Ident: "deleted_at"},
-		},
-
-		&dal.Attribute{
 			Ident: "CreatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -505,6 +720,12 @@ var Workflow = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "UpdatedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "updated_at"},
+		},
+
+		&dal.Attribute{
 			Ident: "UpdatedBy",
 			Type: &dal.TypeRef{HasDefault: true,
 				DefaultValue: 0,
@@ -515,6 +736,12 @@ var Workflow = &dal.Model{
 				},
 			},
 			Store: &dal.CodecAlias{Ident: "updated_by"},
+		},
+
+		&dal.Attribute{
+			Ident: "DeletedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "deleted_at"},
 		},
 
 		&dal.Attribute{
@@ -548,7 +775,9 @@ var Workflow = &dal.Model{
 func init() {
 	models = append(
 		models,
+		PromptVersion,
 		Session,
+		State,
 		Trigger,
 		Workflow,
 	)

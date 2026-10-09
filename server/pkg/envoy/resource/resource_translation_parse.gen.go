@@ -1,14 +1,14 @@
 package resource
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
 	"fmt"
-	composeTypes "github.com/cortezaproject/corteza/server/compose/types"
+	composeTypes "github.com/madnikulin50/lowcode/server/compose/types"
 	"strings"
 )
 

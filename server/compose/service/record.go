@@ -5,32 +5,36 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
-	"github.com/cortezaproject/corteza/server/pkg/revisions"
+	"github.com/madnikulin50/lowcode/server/pkg/datasources"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/revisions"
 	"github.com/spf13/cast"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/cache"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 
-	"github.com/cortezaproject/corteza/server/compose/dalutils"
-	"github.com/cortezaproject/corteza/server/compose/service/event"
-	"github.com/cortezaproject/corteza/server/compose/service/values"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/corredor"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/store"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/compose/dalutils"
+	"github.com/madnikulin50/lowcode/server/compose/service/event"
+	"github.com/madnikulin50/lowcode/server/compose/service/values"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/corredor"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 const (
@@ -40,6 +44,14 @@ const (
 )
 
 type (
+	reportCacheKey struct {
+		NamespaceID uint64
+		ModuleID    uint64
+		Metrics     string
+		Dimensions  string
+		Filter      string
+	}
+
 	record struct {
 		dal dalDater
 
@@ -56,6 +68,8 @@ type (
 		opt RecordOptions
 
 		revisions *recordRevisions
+
+		reportCache *cache.Cache[reportCacheKey, []recordReportEntry]
 
 		formatter   recordValuesFormatter
 		sanitizer   recordValuesSanitizer
@@ -159,7 +173,8 @@ type (
 	}
 
 	RecordOptions struct {
-		LimitRecords int
+		LimitRecords   int
+		ReportCacheTTL time.Duration
 	}
 
 	RecordImportSession struct {
@@ -207,6 +222,11 @@ type (
 )
 
 func Record(opts RecordOptions) *record {
+	reportCacheTTL := opts.ReportCacheTTL
+	if reportCacheTTL <= 0 {
+		reportCacheTTL = 5 * time.Minute
+	}
+
 	svc := &record{
 		actionlog: DefaultActionlog,
 		ac:        DefaultAccessControl,
@@ -219,7 +239,8 @@ func Record(opts RecordOptions) *record {
 
 		opt: opts,
 
-		revisions: &recordRevisions{revisions.Service(dal.Service())},
+		revisions:   &recordRevisions{revisions.Service(dal.Service())},
+		reportCache: cache.New[reportCacheKey, []recordReportEntry](reportCacheTTL, reportCacheTTL/2),
 
 		formatter:   values.Formatter(),
 		sanitizer:   values.Sanitizer(),
@@ -231,31 +252,101 @@ func Record(opts RecordOptions) *record {
 	return svc
 }
 
+type recordRefCacheKey struct{}
+
+type recordRefCache struct {
+	mu sync.Mutex
+	ok map[string]bool
+}
+
+func withRecordRefCache(ctx context.Context) context.Context {
+	if _, ok := ctx.Value(recordRefCacheKey{}).(*recordRefCache); ok {
+		return ctx
+	}
+	return context.WithValue(ctx, recordRefCacheKey{}, &recordRefCache{ok: make(map[string]bool)})
+}
+
+func recordRefCacheFrom(ctx context.Context) *recordRefCache {
+	c, _ := ctx.Value(recordRefCacheKey{}).(*recordRefCache)
+	return c
+}
+
+func (c *recordRefCache) get(key string) (bool, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	v, ok := c.ok[key]
+	return v, ok
+}
+
+func (c *recordRefCache) set(key string, exists bool) {
+	c.mu.Lock()
+	c.ok[key] = exists
+	c.mu.Unlock()
+}
+
 func defaultValidator(svc RecordService) recordValuesValidator {
 	// Initialize validator and setup all checkers it needs
 	validator := values.Validator()
 
 	validator.UniqueChecker(func(ctx context.Context, s store.Storer, v *types.RecordValue, f *types.ModuleField, m *types.Module) (uint64, error) {
-		if v.Ref == 0 {
+		if v == nil || f == nil || m == nil || !RecordFieldIdent.MatchString(f.Name) {
 			return 0, nil
 		}
 
-		// @todo re-implement record-value ref lookup through DAL
-		panic("implement me")
+		var query string
+		switch strings.ToLower(f.Kind) {
+		case "record", "user", "file":
+			if v.Ref == 0 {
+				return 0, nil
+			}
+			query = fmt.Sprintf("%s = %d", f.Name, v.Ref)
+		default:
+			return 0, nil
+		}
+
+		d := dal.Service()
+		if d == nil {
+			return 0, nil
+		}
+		set, _, err := dalutils.ComposeRecordsList(ctx, d, m, types.RecordFilter{
+			ModuleID:    m.ID,
+			NamespaceID: m.NamespaceID,
+			Query:       query,
+			Paging:      filter.Paging{Limit: 3},
+		})
+		if err != nil {
+			return 0, err
+		}
+		for _, rec := range set {
+			if rec != nil && rec.ID != v.RecordID {
+				return rec.ID, nil
+			}
+		}
+		return 0, nil
 	})
 
 	validator.RecordRefChecker(func(ctx context.Context, s store.Storer, v *types.RecordValue, f *types.ModuleField, m *types.Module) (bool, error) {
-		if svc == nil && v.Ref == 0 {
+		if svc == nil || v == nil || v.Ref == 0 || f == nil {
 			return false, nil
 		}
 
-		var (
-			referencedModuleID = f.Options.Uint64("moduleID")
+		referencedModuleID := f.Options.Uint64("moduleID")
+		key := fmt.Sprintf("%d:%d:%d", f.NamespaceID, referencedModuleID, v.Ref)
+		if cache := recordRefCacheFrom(ctx); cache != nil {
+			if exists, ok := cache.get(key); ok {
+				return exists, nil
+			}
+		}
 
-			r, _, err = svc.FindByID(ctx, f.NamespaceID, referencedModuleID, v.Ref)
-		)
-
-		return r != nil, err
+		r, _, err := svc.FindByID(ctx, f.NamespaceID, referencedModuleID, v.Ref)
+		if err != nil {
+			return false, err
+		}
+		exists := r != nil
+		if cache := recordRefCacheFrom(ctx); cache != nil {
+			cache.set(key, exists)
+		}
+		return exists, nil
 	})
 
 	validator.UserRefChecker(func(ctx context.Context, s store.Storer, v *types.RecordValue, f *types.ModuleField, m *types.Module) (bool, error) {
@@ -329,9 +420,98 @@ func (svc record) FindByID(ctx context.Context, namespaceID, moduleID, recordID 
 	})
 }
 
+func (svc record) prepareStep(ctx context.Context, r *systemTypes.ReportStep, moduleStack []uint64) (out systemTypes.ReportStepSet, err error) {
+	if r.Load != nil {
+		moduleID, ok := r.Load.Definition["moduleID"].(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse moduleID")
+		}
+		mid, _ := strconv.ParseInt(moduleID, 10, 64)
+
+		namespaceID, ok := r.Load.Definition["namespaceID"].(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse namespaceID")
+		}
+		nid, _ := strconv.ParseInt(namespaceID, 10, 64)
+		loadModel, err := loadModule(ctx, svc.store, uint64(nid), uint64(mid))
+		if err != nil {
+			return nil, fmt.Errorf("failed to find module with id %d: %w", mid, err)
+		}
+
+		for _, m := range moduleStack {
+			if m == uint64(mid) {
+				return nil, fmt.Errorf("failed by recursion load module %v", loadModel.Name)
+			}
+		}
+		if loadModel.Config.Type != "datasource" {
+			return nil, nil
+		}
+
+		ss := loadModel.Config.Datasource.Items.ReportSteps()
+		ss = loadModel.UpdateReportsSteps(ss)
+		if len(ss) == 0 {
+			return nil, fmt.Errorf("no report steps found for %v", loadModel.Name)
+		}
+		for _, s := range ss {
+			s.ResetName(fmt.Sprintf("%v/%v", moduleID, s.Name()))
+			s.SetSourcePrefix(moduleID)
+		}
+		for {
+			changed := false
+			for i, s := range ss {
+				cur, err := svc.prepareStep(ctx, s, append(moduleStack, uint64(mid)))
+				if err != nil {
+					return nil, err
+				}
+				if cur == nil {
+					continue
+				}
+				changed = true
+				last := cur[len(cur)-1]
+				last.ResetName(s.Name())
+				n := make(systemTypes.ReportStepSet, 0)
+				n = append(n, ss[:i]...)
+				suffix := ss[i+1:]
+				n = append(n, cur...)
+
+				if len(suffix) != 0 {
+					n = append(n, suffix...)
+				}
+				ss = n
+				break
+			}
+			if !changed {
+				break
+			}
+		}
+		if len(ss) == 0 {
+			return nil, nil
+		}
+		last := ss[len(ss)-1]
+		last.ResetName(r.Name())
+		return ss, nil
+
+	}
+
+	return nil, nil
+}
+
+func (svc record) enhance(ctx context.Context, ff []*datasources.Frame) (err error) {
+	return nil
+}
+
+func (svc record) invalidateModuleReportCache(moduleID uint64) {
+	svc.reportCache.DeleteBy(func(k reportCacheKey) bool {
+		return k.ModuleID == moduleID
+	})
+}
+
 // Report generates report for a given module using metrics, dimensions and filter
 // @note will eventually be removed in favor of the system report endpoints
 func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metrics, dimensions, f string) (_ any, err error) {
+	if cached, ok := svc.reportCache.Get(reportCacheKey{namespaceID, moduleID, metrics, dimensions, f}); ok {
+		return cached, nil
+	}
 	var (
 		ns     *types.Namespace
 		m      *types.Module
@@ -353,33 +533,369 @@ func (svc record) Report(ctx context.Context, namespaceID, moduleID uint64, metr
 			return RecordErrNotAllowedToSearch()
 		}
 
-		pp, agg, err := recordReportToDalPipeline(m, metrics, dimensions, f)
-		if err != nil {
+		dalCtx, stopDAL := dalutils.BoundRecordSearchContext(ctx)
+		defer stopDAL()
+		ctx = dalCtx
+
+		switch m.Config.Type {
+		case "connector":
+			reportItems, err = svc.connectorReportEntries(ctx, m)
 			return err
-		}
 
-		// Run it
-		iter, err = svc.dal.Run(ctx, pp)
-		if err != nil {
+		case "datasource":
+			var (
+				//aaProps = &reportActionProps{}
+
+				iter dal.Iterator
+				ff   []*datasources.Frame
+				out  = make([]*datasources.Frame, 0, 4)
+			)
+			flt := types.RecordFilter{
+				ModuleID:    m.ID,
+				NamespaceID: m.NamespaceID,
+			}
+			flt.Limit = 1
+			flt.IncTotal = false
+			flt.IncPageNavigation = true
+			err = func() (err error) {
+
+				// Get all of the steps
+				ss := m.Config.Datasource.Items.ReportSteps()
+				if len(ss) == 0 {
+					return fmt.Errorf("no report steps found for %v", m.Name)
+				}
+				ss = m.UpdateReportsSteps(ss)
+
+				for {
+					changed := false
+					for i, s := range ss {
+						cur, err := svc.prepareStep(ctx, s, []uint64{m.ID})
+						if err != nil {
+							return err
+						}
+						if cur == nil {
+							continue
+						}
+						changed = true
+						n := make(systemTypes.ReportStepSet, 0)
+						n = append(n, ss[:i]...)
+						suffix := ss[i+1:]
+						n = append(n, cur...)
+
+						if len(suffix) != 0 {
+							n = append(n, suffix...)
+						}
+						ss = n
+						break
+					}
+					if !changed {
+						break
+					}
+				}
+				//ss = append(ss, r.Blocks.ReportSteps()...)
+				runner := dal.Service()
+				var dd datasources.FrameDefinitionSet
+				if len(dd) == 0 && len(ss) > 0 {
+					lastStep := ss[len(ss)-1]
+					def := datasources.FrameDefinition{Source: lastStep.Name()}
+					def.Columns = datasources.FrameColumnSet{}
+
+					var agg *dal.Aggregate
+
+					agg, err = recordReportToAggPipelineStep(m, metrics, dimensions, f)
+					if err != nil {
+						return
+					}
+
+					for _, f := range agg.Group {
+						col := datasources.FrameColumn{
+							Name:  f.Identifier,
+							Label: f.Identifier,
+						}
+						if f.Type != nil {
+							col.Kind = string(f.Type.Type())
+						}
+
+						def.Columns = append(def.Columns, col)
+					}
+
+					for _, f := range agg.OutAttributes {
+						def.Columns = append(def.Columns, datasources.FrameColumn{
+							Name:  f.Identifier,
+							Label: f.Identifier,
+							Kind:  string(f.Type.Type()),
+						})
+					}
+					for _, f := range m.Fields {
+						if len(f.Expressions.ValueExpr) == 0 {
+							continue
+						}
+						def.Columns = append(def.Columns, datasources.FrameColumn{
+							Name:  f.Name,
+							Label: f.Label,
+							Kind:  f.Kind,
+						})
+						attr := dal.AggregateAttr{
+							RawExpr:    f.Expressions.ValueExpr,
+							Identifier: f.Name,
+							Label:      f.Label,
+							Type:       dal.TypeNumber{},
+						}
+						agg.OutAttributes = append(agg.OutAttributes, attr)
+					}
+
+					dd = append(dd, &def)
+				}
+
+				// Prepare a set of runs for the provided definitions
+				runs, err := datasources.Runs(runner, ss, dd)
+				if err != nil {
+					return
+				}
+
+				// Run the reports and produce the frames
+				// @todo this can be ran in paralel
+				for _, run := range runs {
+					err = func() (err error) {
+						var agg *dal.Aggregate
+
+						agg, err = recordReportToAggPipelineStep(m, metrics, dimensions, f)
+						if err != nil {
+							return
+						}
+						agg.RelSource = run.Pipeline[0].Identifier()
+						run.Pipeline = append(run.Pipeline, agg)
+						iter, err = runner.Run(ctx, run.Pipeline)
+						if err != nil {
+							return
+						}
+						defer iter.Close()
+
+						ff, err = datasources.Frames(ctx, iter, run)
+						if err != nil {
+							return
+						}
+						err = svc.enhance(ctx, ff)
+						if err != nil {
+							return
+						}
+
+						for _, f := range ff {
+							for _, r := range f.Rows {
+								item := recordReportEntry{}
+								for i, c := range f.Columns {
+									item[c.Name] = r[i]
+								}
+								reportItems = append(reportItems, item)
+							}
+
+						}
+						return
+					}()
+
+					if err != nil {
+						return
+					}
+					if len(out) > 1 {
+						break
+					}
+				}
+
+				return nil
+			}()
 			return err
-		}
+		default:
+			// Metric/Progress widgets send empty dimensions (and empty metrics for count).
+			// The DAL aggregate pipeline may pull every matching row into Go; COUNT(*)
+			// with the same filter is equivalent and uses the TypeRef text compare.
+			if strings.TrimSpace(dimensions) == "" && strings.TrimSpace(metrics) == "" {
+				var cnt int
+				cnt, err = dalutils.ComposeRecordsCountWithTimeout(ctx, svc.dal, m, types.RecordFilter{
+					NamespaceID: namespaceID,
+					ModuleID:    moduleID,
+					Query:       f,
+					Deleted:     filter.StateExcluded,
+				})
+				if err != nil {
+					return err
+				}
+				reportItems = []recordReportEntry{{"count": float64(cnt)}}
+				return nil
+			}
 
-		defer iter.Close()
-
-		for iter.Next(ctx) {
-			item := recordReportEntry{}
-			err = iter.Scan(item)
-			recordReportCorrectTypes(agg, item)
+			pp, agg, err := recordReportToDalPipeline(m, metrics, dimensions, f)
 			if err != nil {
 				return err
 			}
 
-			reportItems = append(reportItems, item)
+			// Run it
+			iter, err = svc.dal.Run(ctx, pp)
+			if err != nil {
+				return err
+			}
+
+			defer iter.Close()
+
+			for iter.Next(ctx) {
+				item := recordReportEntry{}
+				err = iter.Scan(item)
+				recordReportCorrectTypes(agg, item)
+				if err != nil {
+					return err
+				}
+
+				reportItems = append(reportItems, item)
+			}
+			return iter.Err()
 		}
-		return iter.Err()
+
 	}()
 
+	if err == nil && !reportCountUnknown(reportItems) {
+		svc.reportCache.Set(reportCacheKey{namespaceID, moduleID, metrics, dimensions, f}, reportItems)
+	}
+
 	return reportItems, svc.recordAction(ctx, aProps, RecordActionReport, err)
+}
+
+// reportCountUnknown is true when COUNT timed out (count == -1). Do not cache
+// that: a later request should retry Postgres instead of serving stale -1.
+func reportCountUnknown(items []recordReportEntry) bool {
+	if len(items) != 1 {
+		return false
+	}
+	v, ok := items[0]["count"]
+	if !ok {
+		return false
+	}
+	switch n := v.(type) {
+	case float64:
+		return n == float64(filter.TotalUnknown)
+	case int:
+		return n == filter.TotalUnknown
+	default:
+		return false
+	}
+}
+
+func (svc record) connectorReportEntries(ctx context.Context, m *types.Module) ([]recordReportEntry, error) {
+	conn := connector(svc.store)
+	set, _, err := conn.Fetch(ctx, m, types.RecordFilter{
+		ModuleID:    m.ID,
+		NamespaceID: m.NamespaceID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	entries := make([]recordReportEntry, len(set))
+	for i, r := range set {
+		entry := make(recordReportEntry, len(r.Values)+1)
+		for _, v := range r.Values {
+			entry[v.Name] = v.Value
+		}
+		entries[i] = entry
+	}
+	return entries, nil
+}
+
+// DatasourcePreview runs the datasource steps from the given (unsaved) config
+// and returns the first `limit` rows as a frame
+func (svc record) DatasourcePreview(ctx context.Context, namespaceID, moduleID uint64, ds types.ModuleConfigDataSource, limit uint) (*datasources.Frame, error) {
+	if limit == 0 {
+		limit = 20
+	}
+
+	ss := ds.Items.ReportSteps()
+	if len(ss) == 0 {
+		return nil, fmt.Errorf("no report steps found")
+	}
+
+	var m *types.Module
+	if moduleID != 0 {
+		if m, _ = loadModule(ctx, svc.store, namespaceID, moduleID); m != nil {
+			ss = m.UpdateReportsSteps(ss)
+		}
+	}
+
+	// Resolve nested datasource load steps (recursion guard on current module)
+	stack := []uint64{moduleID}
+	for {
+		changed := false
+		for i, s := range ss {
+			cur, err := svc.prepareStep(ctx, s, stack)
+			if err != nil {
+				return nil, err
+			}
+			if cur == nil {
+				continue
+			}
+			changed = true
+			last := cur[len(cur)-1]
+			last.ResetName(s.Name())
+			n := make(systemTypes.ReportStepSet, 0)
+			n = append(n, ss[:i]...)
+			suffix := ss[i+1:]
+			n = append(n, cur...)
+			if len(suffix) != 0 {
+				n = append(n, suffix...)
+			}
+			ss = n
+			break
+		}
+		if !changed {
+			break
+		}
+	}
+	if len(ss) == 0 {
+		return nil, fmt.Errorf("no report steps found")
+	}
+
+	runner := dal.Service()
+	lastStep := ss[len(ss)-1]
+	def := datasources.FrameDefinition{Source: lastStep.Name()}
+	def.Columns = datasources.FrameColumnSet{}
+	if m != nil {
+		for _, f := range m.Fields {
+			col := datasources.FrameColumn{
+				Name:  f.Name,
+				Label: f.Name,
+				Kind:  f.Kind,
+			}
+			def.Columns = append(def.Columns, col)
+		}
+	}
+	paging, _ := filter.NewPaging(limit, "")
+	def.Paging = &paging
+	def.Paging.IncTotal = false
+	def.Paging.IncPageNavigation = false
+
+	dd := datasources.FrameDefinitionSet{&def}
+	runs, err := datasources.Runs(runner, ss, dd)
+	if err != nil {
+		return nil, err
+	}
+
+	var out []*datasources.Frame
+	for _, run := range runs {
+		iter, err := runner.Run(ctx, run.Pipeline)
+		if err != nil {
+			return nil, err
+		}
+		defer iter.Close()
+
+		ff, err := datasources.Frames(ctx, iter, run)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, ff...)
+		if len(out) > 1 {
+			break
+		}
+	}
+	if len(out) == 0 {
+		return nil, nil
+	}
+	return out[len(out)-1], nil
 }
 
 func (svc record) Find(ctx context.Context, filter types.RecordFilter) (set types.RecordSet, f types.RecordFilter, err error) {
@@ -409,8 +925,15 @@ func (svc record) Find(ctx context.Context, filter types.RecordFilter) (set type
 
 		filter.Check = ComposeRecordFilterChecker(ctx, svc.ac, m)
 
-		if set, f, err = dalutils.ComposeRecordsList(ctx, svc.dal, m, filter); err != nil {
-			return err
+		if m.Config.Type == "connector" {
+			conn := connector(svc.store)
+			if set, f, err = conn.Fetch(ctx, m, filter); err != nil {
+				return err
+			}
+		} else {
+			if set, f, err = dalutils.ComposeRecordsList(ctx, svc.dal, m, filter); err != nil {
+				return err
+			}
 		}
 
 		_ = set.Walk(func(r *types.Record) error {
@@ -454,8 +977,32 @@ func (svc record) FindN(ctx context.Context, filter types.RecordFilter) (set typ
 
 		filter.Check = ComposeRecordFilterChecker(ctx, svc.ac, m)
 
-		if set, stats, f, err = dalutils.ComposeRecordsListN(ctx, svc.dal, m, filter); err != nil {
-			return err
+		dalCtx, stopDAL := dalutils.BoundRecordSearchContext(ctx)
+		defer stopDAL()
+
+		if m.Config.Type == "connector" {
+			conn := connector(svc.store)
+			if set, f, err = conn.Fetch(dalCtx, m, filter); err != nil {
+				if dalutils.IsSearchTimeout(err) {
+					f = filter
+					f.Total = -1 // TotalUnknown; param name shadows pkg/filter
+					set, stats, err = nil, map[string]types.RecordSummary{}, nil
+				} else {
+					return err
+				}
+			} else {
+				stats = map[string]types.RecordSummary{}
+			}
+		} else {
+			if set, stats, f, err = dalutils.ComposeRecordsListN(dalCtx, svc.dal, m, filter); err != nil {
+				if dalutils.IsSearchTimeout(err) {
+					f = filter
+					f.Total = -1 // TotalUnknown; param name shadows pkg/filter
+					err = nil
+				} else {
+					return err
+				}
+			}
 		}
 
 		_ = set.Walk(func(r *types.Record) error {
@@ -778,6 +1325,14 @@ func (svc record) Bulk(ctx context.Context, skipFailed bool, oo ...*types.Record
 		return nil
 	}()
 
+	if err == nil {
+		for _, p := range oo {
+			if p.Record != nil {
+				svc.invalidateModuleReportCache(p.Record.ModuleID)
+			}
+		}
+	}
+
 	if len(oo) == 1 {
 		// was not really a bulk operation, and we already recorded the action
 		// inside transaction loop
@@ -792,9 +1347,56 @@ func (svc record) Bulk(ctx context.Context, skipFailed bool, oo ...*types.Record
 	}
 }
 
+var (
+	bulkQueryOrSplit  = regexp.MustCompile(`(?i)\s+OR\s+`)
+	bulkQueryRecordID = regexp.MustCompile(`(?i)^\s*recordID\s*=\s*['"]?(\d+)['"]?\s*$`)
+)
+
+// parseRecordIDsFromQuery extracts IDs from a query that is only
+// `recordID='…' OR recordID='…'` (the RecordList selected-rows payload).
+// Returns nil when the query has any other shape so callers fall back to Find.
+func parseRecordIDsFromQuery(q string) []uint64 {
+	q = strings.TrimSpace(q)
+	if q == "" {
+		return nil
+	}
+
+	parts := bulkQueryOrSplit.Split(q, -1)
+	if len(parts) == 0 {
+		return nil
+	}
+
+	ids := make([]uint64, 0, len(parts))
+	seen := make(map[uint64]struct{}, len(parts))
+	for _, p := range parts {
+		m := bulkQueryRecordID.FindStringSubmatch(p)
+		if m == nil {
+			return nil
+		}
+		id, err := strconv.ParseUint(m[1], 10, 64)
+		if err != nil || id == 0 {
+			return nil
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	return ids
+}
+
 // BulkModifyByFilter performs bulk record operations based on the provided filter query.
-// It's able to update, delete or undelete records in a single transaction.
 func (svc record) BulkModifyByFilter(ctx context.Context, f types.RecordFilter, values types.RecordValueSet, operation types.OperationType) (err error) {
+	if ids := parseRecordIDsFromQuery(f.Query); len(ids) > 0 {
+		switch operation {
+		case types.OperationTypeDelete:
+			return svc.DeleteByID(ctx, f.NamespaceID, f.ModuleID, ids...)
+		case types.OperationTypeUndelete:
+			return svc.UndeleteByID(ctx, f.NamespaceID, f.ModuleID, ids...)
+		}
+	}
+
 	var (
 		ns           *types.Namespace
 		m            *types.Module
@@ -811,25 +1413,34 @@ func (svc record) BulkModifyByFilter(ctx context.Context, f types.RecordFilter, 
 		valueError *types.RecordValueErrorSet
 	)
 
-	return store.Tx(ctx, svc.store, func(ctx context.Context, s store.Storer) error {
-		// load both the namespace and module
-		if ns, m, err = loadModuleCombo(ctx, s, f.NamespaceID, f.ModuleID); err != nil {
+	if ns, m, err = loadModuleCombo(ctx, svc.store, f.NamespaceID, f.ModuleID); err != nil {
+		return err
+	}
+
+	aProps.setNamespace(ns)
+	aProps.setModule(m)
+
+	f.Limit = 500
+	f.IncPageNavigation = false
+	f.IncTotal = false
+	f.Summaries = nil
+
+	// Find + DAL updates do not participate in store.Tx. Wrapping them made
+	// SQL/iterator errors look like "failed to complete transaction" and
+	// aborted a tx that never held the record rows.
+	for {
+		records, recordFilter, err = svc.Find(ctx, f)
+		if err != nil {
 			return err
 		}
 
-		aProps.setNamespace(ns)
-		aProps.setModule(m)
-
-		f.Limit = 500
-
-		// performing a batched search for IDs, processing them in batches of 500 for update.
-		for {
-			records, recordFilter, err = svc.Find(ctx, f)
-			if err != nil {
-				return err
-			}
-
-			for _, r = range records {
+		for _, r = range records {
+			err = func() (err error) {
+				defer func() {
+					if p := recover(); p != nil {
+						err = fmt.Errorf("record %s panic: %v", operation, p)
+					}
+				}()
 				aProps.setRecord(r)
 
 				switch operation {
@@ -851,21 +1462,23 @@ func (svc record) BulkModifyByFilter(ctx context.Context, f types.RecordFilter, 
 				}
 
 				_ = svc.recordAction(ctx, aProps, action, err)
-
-				if err != nil {
-					return err
-				}
+				return err
+			}()
+			if err != nil {
+				return err
 			}
-
-			if recordFilter.NextPage == nil {
-				break
-			}
-
-			f.NextPage = recordFilter.NextPage
 		}
 
-		return nil
-	})
+		if recordFilter.NextPage == nil {
+			break
+		}
+
+		f.PageCursor = recordFilter.NextPage
+		f.NextPage = nil
+	}
+
+	svc.invalidateModuleReportCache(f.ModuleID)
+	return nil
 }
 
 // Raw create function that is responsible for value validation, event dispatching
@@ -1136,6 +1749,8 @@ func RecordValueUpdateOpCheck(ctx context.Context, ac recordValueAccessControlle
 }
 
 func RecordPreparer(ctx context.Context, s store.Storer, ss recordValuesSanitizer, vv recordValuesValidator, ff recordValuesFormatter, m *types.Module, new *types.Record) *types.RecordValueErrorSet {
+	ctx = withRecordRefCache(ctx)
+
 	// Before values are processed further and
 	// sent to automation scripts (if any)
 	// we need to make sure it does not get un-sanitized data
@@ -1372,6 +1987,10 @@ func (svc record) Create(ctx context.Context, new *types.Record) (rec *types.Rec
 		return err
 	}()
 
+	if err == nil && rec != nil {
+		svc.invalidateModuleReportCache(rec.ModuleID)
+	}
+
 	return rec, dd, svc.recordAction(ctx, aProps, RecordActionCreate, err)
 }
 
@@ -1438,6 +2057,10 @@ func (svc record) Update(ctx context.Context, upd *types.Record) (rec *types.Rec
 		aProps.setRecord(rec)
 		return err
 	}()
+
+	if err == nil && rec != nil {
+		svc.invalidateModuleReportCache(rec.ModuleID)
+	}
 
 	return rec, dd, svc.recordAction(ctx, aProps, RecordActionUpdate, err)
 }
@@ -1543,7 +2166,7 @@ func (svc record) processDelete(ctx context.Context, del *types.Record, namespac
 
 	{
 		// Calling before-record-delete scripts
-		if err = svc.eventbus.WaitFor(ctx, event.RecordBeforeDelete(nil, del, module, namespace, nil, nil)); err != nil {
+		if err = svc.eventbus.WaitFor(ctx, event.RecordBeforeDelete(del, del, module, namespace, nil, nil)); err != nil {
 			return nil, err
 		}
 	}
@@ -1555,15 +2178,21 @@ func (svc record) processDelete(ctx context.Context, del *types.Record, namespac
 		}
 	}
 
-	if err = dalutils.ComposeRecordSoftDelete(ctx, svc.dal, module, del); err != nil {
-		return nil, err
+	if module.CanSoftDelete() {
+		if err = dalutils.ComposeRecordSoftDelete(ctx, svc.dal, module, del); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = dalutils.ComposeRecordDelete(ctx, svc.dal, module, del); err != nil {
+			return nil, err
+		}
 	}
 
 	// ensure module ref is set before running through records workflows and scripts
 	del.SetModule(module)
 
 	{
-		_ = svc.eventbus.WaitFor(ctx, event.RecordAfterDeleteImmutable(nil, del, module, namespace, nil, nil))
+		_ = svc.eventbus.WaitFor(ctx, event.RecordAfterDeleteImmutable(del, del, module, namespace, nil, nil))
 	}
 
 	return del, nil
@@ -1671,8 +2300,14 @@ func (svc record) DeleteByID(ctx context.Context, namespaceID, moduleID uint64, 
 		return svc.recordAction(ctx, aProps, RecordActionDelete, err)
 	}
 
+	var lastErr error
 	for _, recordID := range recordIDs {
 		err := func() (err error) {
+			defer func() {
+				if p := recover(); p != nil {
+					err = fmt.Errorf("record delete panic (id=%d): %v\n%s", recordID, p, debug.Stack())
+				}
+			}()
 			r, err = svc.delete(ctx, namespaceID, moduleID, recordID)
 			aProps.setRecord(r)
 
@@ -1680,18 +2315,16 @@ func (svc record) DeleteByID(ctx context.Context, namespaceID, moduleID uint64, 
 			return svc.recordAction(ctx, aProps, RecordActionDelete, err)
 		}()
 
-		// We'll not break for failed delete,
-		// if we are deleting records in bulk.
-		if err != nil && !isBulkDelete {
-			return err
+		if err != nil {
+			lastErr = err
+			if !isBulkDelete {
+				return err
+			}
 		}
-
 	}
 
-	// all errors (if any) were recorded
-	// and in case of error for a non-bulk record deletion
-	// error is already returned
-	return nil
+	svc.invalidateModuleReportCache(moduleID)
+	return lastErr
 }
 
 func (svc record) UndeleteByID(ctx context.Context, namespaceID, moduleID uint64, recordIDs ...uint64) (err error) {
@@ -1751,6 +2384,7 @@ func (svc record) UndeleteByID(ctx context.Context, namespaceID, moduleID uint64
 		}
 	}
 
+	svc.invalidateModuleReportCache(moduleID)
 	return nil
 }
 
@@ -2471,31 +3105,76 @@ func loadRecord(ctx context.Context, s store.Storer, namespaceID, moduleID, reco
 	_, _, res, err = loadRecordCombo(ctx, s, dal.Service(), namespaceID, moduleID, recordID)
 	return
 }
+func fieldNameFromDimension(dim string) string {
+	i := strings.Index(dim, "(")
+	if i == -1 {
+		return dim
+	}
+	d := dim[i+1:]
+	i = strings.Index(d, ")")
+	if i == -1 {
+		return dim
+	}
+	return d[:i]
+}
 
-func recordReportToDalPipeline(m *types.Module, metrics, dimensions, f string) (pp dal.Pipeline, _ *dal.Aggregate, err error) {
-	// Map dimension to the aggregate group
-	// @note we only ever used a single dimension so this is ok
-	auxDim := dal.AggregateAttr{
-		Identifier: "dimension_0",
-		RawExpr:    dimensions,
-		Key:        true,
+func recordReportToAggPipelineStep(m *types.Module, metrics, dimensions, f string) (agg *dal.Aggregate, err error) {
+
+	dim := []dal.AggregateAttr{}
+	oo := filter.SortExprSet{}
+
+	// Support up to 2 dimensions (separated with ';' by the client)
+	// @note dimensions expressions may contain commas (eg. DATE_FORMAT(field, '%Y-%m-01'))
+	//       so we can not split on ',' here
+	dims := strings.Split(dimensions, ";")
+	if len(dims) > 2 {
+		dims = dims[:2]
+	}
+	for i, d := range dims {
+		d = strings.TrimSpace(d)
+		if d == "" {
+			continue
+		}
+
+		auxDim := dal.AggregateAttr{
+			Identifier: fmt.Sprintf("dimension_%d", i),
+			RawExpr:    d,
+			Key:        true,
+		}
+		ff := m.Fields.FindByName(fieldNameFromDimension(d))
+		if ff != nil {
+			auxDim.MultiValue = ff.Multi
+			auxDim.Label = ff.Label
+		}
+		if ff != nil || m.Config.Type != "datasource" {
+			dim = append(dim, auxDim)
+			oo = append(oo, &filter.SortExpr{Column: auxDim.Identifier})
+		}
 	}
 
-	ff := m.Fields.FindByName(dimensions)
-	if ff != nil {
-		auxDim.MultiValue = ff.Multi
-		auxDim.Label = ff.Label
+	var colId string
+	for _, f := range m.Fields {
+		if strings.EqualFold(f.Name, "id") {
+			colId = f.Name
+			break
+		}
+	}
+	if colId == "" && len(m.Fields) > 0 {
+		switch m.Config.Type {
+		case "datasource", "dbref":
+			colId = m.Fields[0].Name
+		}
 	}
 
-	dim := []dal.AggregateAttr{auxDim}
-	oo := filter.SortExprSet{{Column: dim[0].Identifier}}
-
+	if colId == "" {
+		colId = "ID"
+	}
 	// Map metrics to the aggregate attrs
 	// - count is always present
 	mms := []dal.AggregateAttr{
 		{
 			Identifier: "count",
-			RawExpr:    "count(ID)",
+			RawExpr:    fmt.Sprintf("count(%v)", colId),
 			Type:       &dal.TypeNumber{},
 		},
 	}
@@ -2520,17 +3199,35 @@ func recordReportToDalPipeline(m *types.Module, metrics, dimensions, f string) (
 		}
 	}
 
-	agg := &dal.Aggregate{
-		Ident:         "agg",
+	agg = &dal.Aggregate{
+		Ident:         "agg for " + m.Name,
 		RelSource:     "ds",
 		Group:         dim,
 		OutAttributes: mms,
-		Filter: filter.Generic(
-			filter.WithOrderBy(oo),
-		),
+	}
+	if len(oo) > 0 || len(f) > 0 {
+		if m.Config.Type != "datasource" {
+			agg.Filter = filter.Generic(
+				filter.WithOrderBy(oo))
+		} else {
+			agg.Filter = filter.Generic(
+				filter.WithOrderBy(oo),
+				filter.WithExpression(f))
+		}
+
 	}
 
-	// Build the pipeline
+	return agg, nil
+}
+
+func recordReportToDalPipeline(m *types.Module, metrics, dimensions, f string) (pp dal.Pipeline, _ *dal.Aggregate, err error) {
+	// Map dimension to the aggregate group
+	// @note we only ever used a single dimension so this is ok
+	agg, err := recordReportToAggPipelineStep(m, metrics, dimensions, f)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	pp = dal.Pipeline{
 		&dal.Datasource{
 			Ident:  "ds",
@@ -2543,6 +3240,8 @@ func recordReportToDalPipeline(m *types.Module, metrics, dimensions, f string) (
 		},
 		agg,
 	}
+
+	// Build the pipeline
 
 	return pp, agg, pp.LinkSteps()
 }
@@ -2570,15 +3269,12 @@ func recordReportCorrectTypes(def *dal.Aggregate, entry recordReportEntry) {
 		switch a.Type.(type) {
 		case *dal.TypeNumber:
 			entry[a.Identifier] = cast.ToFloat64(entry[a.Identifier])
-			return
 
 		case *dal.TypeText:
 			entry[a.Identifier] = cast.ToString(entry[a.Identifier])
-			return
 
 		case *dal.TypeID, *dal.TypeRef:
 			entry[a.Identifier] = cast.ToString(entry[a.Identifier])
-			return
 		}
 	}
 }
@@ -2605,7 +3301,7 @@ func (ri RecordIndex) MarshalJSON() ([]byte, error) {
 			continue
 		}
 
-		// If the index increases for more then 1, the set is complete
+		// If the index increases for more than 1, the set is complete
 		if ri[i]-crt > 1 {
 			rr = append(rr, []int{start, crt})
 			start = ri[i]

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/messagebus/types"
-	"github.com/cortezaproject/corteza/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/messagebus/types"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )

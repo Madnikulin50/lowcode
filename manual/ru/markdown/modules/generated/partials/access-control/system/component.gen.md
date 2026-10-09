@@ -1,0 +1,158 @@
+# System
+
+[cols="1s,5a,5a"]
+|===
+| Operation| Description | Default
+
+
+| [#rbac-system-grant]#[rbac-system-grant,grant](#rbac-system-grant,grant)#
+| Manage system permissions
+| Deny
+
+
+| [#rbac-system-action-log.read]#[rbac-system-action-log.read,action-log.read](#rbac-system-action-log.read,action-log.read)#
+| Access to action log
+| Deny
+
+
+| [#rbac-system-settings.read]#[rbac-system-settings.read,settings.read](#rbac-system-settings.read,settings.read)#
+| Read system settings
+| Deny
+
+
+| [#rbac-system-settings.manage]#[rbac-system-settings.manage,settings.manage](#rbac-system-settings.manage,settings.manage)#
+| Manage system settings
+| Deny
+
+
+| [#rbac-system-auth-client.create]#[rbac-system-auth-client.create,auth-client.create](#rbac-system-auth-client.create,auth-client.create)#
+| Create auth clients
+| Deny
+
+
+| [#rbac-system-auth-clients.search]#[rbac-system-auth-clients.search,auth-clients.search](#rbac-system-auth-clients.search,auth-clients.search)#
+| List, search or filter auth clients
+| Deny
+
+
+| [#rbac-system-role.create]#[rbac-system-role.create,role.create](#rbac-system-role.create,role.create)#
+| Create roles
+| Deny
+
+
+| [#rbac-system-roles.search]#[rbac-system-roles.search,roles.search](#rbac-system-roles.search,roles.search)#
+| List, search or filter roles
+| Deny
+
+
+| [#rbac-system-user.create]#[rbac-system-user.create,user.create](#rbac-system-user.create,user.create)#
+| Create users
+| Deny
+
+
+| [#rbac-system-users.search]#[rbac-system-users.search,users.search](#rbac-system-users.search,users.search)#
+| List, search or filter users
+| Deny
+
+
+| [#rbac-system-dal-connection.create]#[rbac-system-dal-connection.create,dal-connection.create](#rbac-system-dal-connection.create,dal-connection.create)#
+| Create DAL connections
+| Deny
+
+
+| [#rbac-system-dal-connections.search]#[rbac-system-dal-connections.search,dal-connections.search](#rbac-system-dal-connections.search,dal-connections.search)#
+| List, search or filter DAL connections
+| Deny
+
+
+| [#rbac-system-dal-sensitivity-level.manage]#[rbac-system-dal-sensitivity-level.manage,dal-sensitivity-level.manage](#rbac-system-dal-sensitivity-level.manage,dal-sensitivity-level.manage)#
+| Can manage DAL sensitivity levels
+| Deny
+
+
+| [#rbac-system-application.create]#[rbac-system-application.create,application.create](#rbac-system-application.create,application.create)#
+| Create applications
+| Deny
+
+
+| [#rbac-system-applications.search]#[rbac-system-applications.search,applications.search](#rbac-system-applications.search,applications.search)#
+| List, search or filter auth clients
+| Deny
+
+
+| [#rbac-system-application.flag.self]#[rbac-system-application.flag.self,application.flag.self](#rbac-system-application.flag.self,application.flag.self)#
+| Manage private flags for applications
+| Deny
+
+
+| [#rbac-system-application.flag.global]#[rbac-system-application.flag.global,application.flag.global](#rbac-system-application.flag.global,application.flag.global)#
+| Manage global flags for applications
+| Deny
+
+
+| [#rbac-system-template.create]#[rbac-system-template.create,template.create](#rbac-system-template.create,template.create)#
+| Create template
+| Deny
+
+
+| [#rbac-system-templates.search]#[rbac-system-templates.search,templates.search](#rbac-system-templates.search,templates.search)#
+| List, search or filter templates
+| Deny
+
+
+| [#rbac-system-report.create]#[rbac-system-report.create,report.create](#rbac-system-report.create,report.create)#
+| Create report
+| Deny
+
+
+| [#rbac-system-reports.search]#[rbac-system-reports.search,reports.search](#rbac-system-reports.search,reports.search)#
+| List, search or filter reports
+| Deny
+
+
+| [#rbac-system-reminder.assign]#[rbac-system-reminder.assign,reminder.assign](#rbac-system-reminder.assign,reminder.assign)#
+|  Assign reminders
+| Deny
+
+
+| [#rbac-system-queue.create]#[rbac-system-queue.create,queue.create](#rbac-system-queue.create,queue.create)#
+| Create messagebus queues
+| Deny
+
+
+| [#rbac-system-queues.search]#[rbac-system-queues.search,queues.search](#rbac-system-queues.search,queues.search)#
+| List, search or filter messagebus queues
+| Deny
+
+
+| [#rbac-system-apigw-route.create]#[rbac-system-apigw-route.create,apigw-route.create](#rbac-system-apigw-route.create,apigw-route.create)#
+| Create API gateway route
+| Deny
+
+
+| [#rbac-system-apigw-routes.search]#[rbac-system-apigw-routes.search,apigw-routes.search](#rbac-system-apigw-routes.search,apigw-routes.search)#
+| List search or filter API gateway routes
+| Deny
+
+
+| [#rbac-system-resource-translations.manage]#[rbac-system-resource-translations.manage,resource-translations.manage](#rbac-system-resource-translations.manage,resource-translations.manage)#
+| List, search, create, or update resource translations
+| Deny
+
+
+| [#rbac-system-dal-schema-alterations.manage]#[rbac-system-dal-schema-alterations.manage,dal-schema-alterations.manage](#rbac-system-dal-schema-alterations.manage,dal-schema-alterations.manage)#
+| List, search, apply, or dismiss DAL alterations
+| Deny
+
+
+| [#rbac-system-data-privacy-request.create]#[rbac-system-data-privacy-request.create,data-privacy-request.create](#rbac-system-data-privacy-request.create,data-privacy-request.create)#
+| Create data privacy requests
+| Deny
+
+
+| [#rbac-system-data-privacy-requests.search]#[rbac-system-data-privacy-requests.search,data-privacy-requests.search](#rbac-system-data-privacy-requests.search,data-privacy-requests.search)#
+| List, search or filter data privacy requests
+| Deny
+
+
+|===

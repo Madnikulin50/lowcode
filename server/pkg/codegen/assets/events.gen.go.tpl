@@ -10,7 +10,7 @@ import (
 {{- range .Imports }}
   {{ normalizeImport . }}
 {{- end }}
-	"github.com/cortezaproject/corteza/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
 )
 
 // dummy placing to simplify import generation logic

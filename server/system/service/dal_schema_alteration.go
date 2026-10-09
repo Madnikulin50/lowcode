@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	intAuth "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	intAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
-	dalSchemaAlteration struct {
+	DalSchemaAlteration struct {
 		actionlog actionlog.Recorder
 		ac        dalSchemaAlterationAccessController
 		dal       dalAltManager
@@ -35,8 +35,8 @@ type (
 	}
 )
 
-func DalSchemaAlteration(dal dalAltManager) *dalSchemaAlteration {
-	return &dalSchemaAlteration{
+func NewDalSchemaAlteration(dal dalAltManager) *DalSchemaAlteration {
+	return &DalSchemaAlteration{
 		ac:        DefaultAccessControl,
 		store:     DefaultStore,
 		actionlog: DefaultActionlog,
@@ -44,7 +44,7 @@ func DalSchemaAlteration(dal dalAltManager) *dalSchemaAlteration {
 	}
 }
 
-func (svc dalSchemaAlteration) FindByID(ctx context.Context, dalSchemaAlterationID uint64) (a *types.DalSchemaAlteration, err error) {
+func (svc DalSchemaAlteration) FindByID(ctx context.Context, dalSchemaAlterationID uint64) (a *types.DalSchemaAlteration, err error) {
 	var (
 		uaProps = &dalSchemaAlterationActionProps{dalSchemaAlteration: &types.DalSchemaAlteration{ID: dalSchemaAlterationID}}
 	)
@@ -70,7 +70,7 @@ func (svc dalSchemaAlteration) FindByID(ctx context.Context, dalSchemaAlteration
 // Search interacts with backend storage and
 //
 // @todo rename to Search() for consistency
-func (svc dalSchemaAlteration) Search(ctx context.Context, filter types.DalSchemaAlterationFilter) (aa types.DalSchemaAlterationSet, f types.DalSchemaAlterationFilter, err error) {
+func (svc DalSchemaAlteration) Search(ctx context.Context, filter types.DalSchemaAlterationFilter) (aa types.DalSchemaAlterationSet, f types.DalSchemaAlterationFilter, err error) {
 	var (
 		uaProps = &dalSchemaAlterationActionProps{filter: &filter}
 	)
@@ -88,11 +88,11 @@ func (svc dalSchemaAlteration) Search(ctx context.Context, filter types.DalSchem
 }
 
 // ModelAlterations returns all non deleted, non completed, and non dismissed alterations for the given model
-func (svc dalSchemaAlteration) ModelAlterations(ctx context.Context, m *dal.Model) (out []*dal.Alteration, err error) {
+func (svc DalSchemaAlteration) ModelAlterations(ctx context.Context, m *dal.Model) (out []*dal.Alteration, err error) {
 	return svc.modelAlterations(ctx, svc.store, m)
 }
 
-func (svc dalSchemaAlteration) modelAlterations(ctx context.Context, s store.Storer, m *dal.Model) (out []*dal.Alteration, err error) {
+func (svc DalSchemaAlteration) modelAlterations(ctx context.Context, s store.Storer, m *dal.Model) (out []*dal.Alteration, err error) {
 	aux, _, err := store.SearchDalSchemaAlterations(ctx, s, types.DalSchemaAlterationFilter{
 		Resource:     []string{m.Resource},
 		ResourceType: m.ResourceType,
@@ -127,6 +127,10 @@ func (svc dalSchemaAlteration) modelAlterations(ctx context.Context, s store.Sto
 			t.ModelAdd = a.Params.ModelAdd
 		case "modelDelete":
 			t.ModelDelete = a.Params.ModelDelete
+		case "indexAdd":
+			t.IndexAdd = a.Params.IndexAdd
+		case "indexDelete":
+			t.IndexDelete = a.Params.IndexDelete
 		}
 
 		out = append(out, t)
@@ -139,7 +143,7 @@ func (svc dalSchemaAlteration) modelAlterations(ctx context.Context, s store.Sto
 //
 // This function should only be invoked by internal proceses so it doesn't need
 // to check for permissions.
-func (svc dalSchemaAlteration) SetAlterations(ctx context.Context, s store.Storer, m *dal.Model, stale []*dal.Alteration, aa ...*dal.Alteration) (err error) {
+func (svc DalSchemaAlteration) SetAlterations(ctx context.Context, s store.Storer, m *dal.Model, stale []*dal.Alteration, aa ...*dal.Alteration) (err error) {
 	if len(stale)+len(aa) == 0 {
 		return
 	}
@@ -193,7 +197,6 @@ func (svc dalSchemaAlteration) SetAlterations(ctx context.Context, s store.Store
 		case a.AttributeReType != nil:
 			t.Kind = "attributeReType"
 			t.Params.AttributeReType = a.AttributeReType
-
 		case a.AttributeReEncode != nil:
 			t.Kind = "attributeReEncode"
 			t.Params.AttributeReEncode = a.AttributeReEncode
@@ -206,6 +209,14 @@ func (svc dalSchemaAlteration) SetAlterations(ctx context.Context, s store.Store
 			t.Kind = "modelDelete"
 			t.Params.ModelDelete = a.ModelDelete
 
+		case a.IndexAdd != nil:
+			t.Kind = "indexAdd"
+			t.Params.IndexAdd = a.IndexAdd
+
+		case a.IndexDelete != nil:
+			t.Kind = "indexDelete"
+			t.Params.IndexDelete = a.IndexDelete
+
 		default:
 			panic(fmt.Sprintf("unknown alteration type %v", a))
 		}
@@ -216,7 +227,7 @@ func (svc dalSchemaAlteration) SetAlterations(ctx context.Context, s store.Store
 	return store.UpsertDalSchemaAlteration(ctx, svc.store, cvt...)
 }
 
-func (svc dalSchemaAlteration) Apply(ctx context.Context, ids ...uint64) (err error) {
+func (svc DalSchemaAlteration) Apply(ctx context.Context, ids ...uint64) (err error) {
 	var (
 		uaProps = &dalSchemaAlterationActionProps{}
 	)
@@ -272,7 +283,7 @@ func (svc dalSchemaAlteration) Apply(ctx context.Context, ids ...uint64) (err er
 
 }
 
-func (svc dalSchemaAlteration) Dismiss(ctx context.Context, ids ...uint64) (err error) {
+func (svc DalSchemaAlteration) Dismiss(ctx context.Context, ids ...uint64) (err error) {
 	var (
 		uaProps = &dalSchemaAlterationActionProps{}
 	)
@@ -315,7 +326,7 @@ func (svc dalSchemaAlteration) Dismiss(ctx context.Context, ids ...uint64) (err 
 	return svc.recordAction(ctx, uaProps, DalSchemaAlterationActionDismiss, err)
 }
 
-func (svc dalSchemaAlteration) appliableAlterations(aa ...*types.DalSchemaAlteration) (out types.DalSchemaAlterationSet) {
+func (svc DalSchemaAlteration) appliableAlterations(aa ...*types.DalSchemaAlteration) (out types.DalSchemaAlterationSet) {
 	out = make(types.DalSchemaAlterationSet, 0, len(aa))
 
 	altIndex := make(map[uint64]*types.DalSchemaAlteration, len(aa))
@@ -359,7 +370,7 @@ func loadDalSchemaAlteration(ctx context.Context, s store.DalSchemaAlterations, 
 	return
 }
 
-func (svc dalSchemaAlteration) toPkgAlterations(ctx context.Context, aa ...*types.DalSchemaAlteration) (out []*dal.Alteration, err error) {
+func (svc DalSchemaAlteration) toPkgAlterations(ctx context.Context, aa ...*types.DalSchemaAlteration) (out []*dal.Alteration, err error) {
 	out = make([]*dal.Alteration, len(aa))
 	for i, a := range aa {
 		t := &dal.Alteration{
@@ -384,6 +395,10 @@ func (svc dalSchemaAlteration) toPkgAlterations(ctx context.Context, aa ...*type
 			t.ModelAdd = a.Params.ModelAdd
 		case "modelDelete":
 			t.ModelDelete = a.Params.ModelDelete
+		case "indexAdd":
+			t.IndexAdd = a.Params.IndexAdd
+		case "indexDelete":
+			t.IndexDelete = a.Params.IndexDelete
 		}
 
 		out[i] = t
@@ -392,7 +407,7 @@ func (svc dalSchemaAlteration) toPkgAlterations(ctx context.Context, aa ...*type
 	return
 }
 
-func (svc dalSchemaAlteration) reloadAlteredModels(ctx context.Context, s store.Storer, alts types.DalSchemaAlterationSet) (err error) {
+func (svc DalSchemaAlteration) reloadAlteredModels(ctx context.Context, s store.Storer, alts types.DalSchemaAlterationSet) (err error) {
 	// Skip any models whish were already reloaded by some alterations.
 	// These might be mixed up so we'll need to do it like so.
 	processed := make(map[string]bool, 3)
@@ -416,7 +431,7 @@ func (svc dalSchemaAlteration) reloadAlteredModels(ctx context.Context, s store.
 	return
 }
 
-func (svc dalSchemaAlteration) reloadAlteredModel(ctx context.Context, s store.Storer, alt *types.DalSchemaAlteration) (err error) {
+func (svc DalSchemaAlteration) reloadAlteredModel(ctx context.Context, s store.Storer, alt *types.DalSchemaAlteration) (err error) {
 	// Fetch current alterations to see if there are any left over
 	_, f, err := store.SearchDalSchemaAlterations(ctx, s, types.DalSchemaAlterationFilter{
 		Resource:     []string{alt.Resource},

@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/spf13/cast"
 )
 
@@ -59,9 +60,10 @@ type (
 		Ref     string         `json:"ref"`
 		Columns FrameColumnSet `json:"columns"`
 
-		Filter *types.ReportFilterExpr `json:"filter"`
-		Paging *filter.Paging          `json:"paging"`
-		Sort   filter.SortExprSet      `json:"sort"`
+		Filter      *types.ReportFilterExpr            `json:"filter"`
+		LoadFilters map[string]*types.ReportFilterExpr `json:"loadFilters"`
+		Paging      *filter.Paging                     `json:"paging"`
+		Sort        filter.SortExprSet                 `json:"sort"`
 	}
 	FrameDefinitionSet []*FrameDefinition
 )
@@ -142,10 +144,10 @@ func (dd FrameDefinitionSet) FilterBySource(ident string) FrameDefinitionSet {
 }
 
 // Describe returns a set of frame descriptions based on the given pipeline
-func Describe(ctx context.Context, rr dryRunner, ss types.ReportStepSet, sources []string) (out []*FrameDescription, err error) {
+func Describe(ctx context.Context, rr dryRunner, ss types.ReportStepSet, sources []string) (out []*FrameDescription, warnings []error, err error) {
 	// Make a run for the whole thing
 	pp, err := makePipeline(rr, ss, nil)
-	if err != nil {
+	if len(pp) == 0 && err != nil {
 		return
 	}
 
@@ -153,20 +155,24 @@ func Describe(ctx context.Context, rr dryRunner, ss types.ReportStepSet, sources
 	for _, src := range sources {
 		// Use the requested source as root
 		sub := pp.Slice(src)
-		err = rr.Dryrun(ctx, sub)
-		if err != nil {
-			return
-		}
 
 		s := sub[0]
+		if s == nil {
+			return nil, nil, fmt.Errorf("no frame definition found for source %s", src)
+		}
 		aux, err = describePipeline(s, src)
 		if err != nil {
 			return
 		}
 		out = append(out, aux...)
+		err = rr.Dryrun(ctx, sub)
+		if err != nil {
+			warnings = append(warnings, err)
+		}
+
 	}
 
-	return
+	return out, warnings, err
 }
 
 // stepLinkFrames is dedicated for the link step due to it's unique output
@@ -183,8 +189,8 @@ func stepLinkFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame,
 	counters := make(map[bool]uint)
 
 	builders := make(map[bool]*reportFrameBuilder)
-	builders[true] = newReportFrameBuilder(defLeft)
-	builders[false] = newReportFrameBuilder(defRight)
+	builders[true] = newReportFrameBuilder(defLeft, r)
+	builders[false] = newReportFrameBuilder(defRight, r)
 	builders[false].linked(defLink.On.Right, defLink.On.Left, defLink.RelLeft)
 
 	limits := make(map[bool]uint)
@@ -296,9 +302,13 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 	// Init vars to keep track of the progress
 	limit := uint(0)
 	counter := uint(0)
-	builder := newReportFrameBuilder(def)
+	builder := newReportFrameBuilder(def, r)
+	incTotal := false
+	incPageNavigation := false
 	if def.Paging != nil {
 		limit = def.Paging.Limit
+		incTotal = def.Paging.IncTotal
+		incPageNavigation = def.Paging.IncPageNavigation
 	}
 
 	// Helper to determine if we need a next cursor
@@ -310,6 +320,7 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 	for iter.Next(ctx) {
 		if limit > 0 && counter >= limit {
 			nextCursor = true
+			counter++
 			break
 		}
 		row.Reset()
@@ -318,6 +329,7 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 		builder.addRow(row)
 		counter++
 	}
+
 	if err = iter.Err(); err != nil {
 		return
 	}
@@ -330,6 +342,38 @@ func stepFrames(ctx context.Context, iter dal.Iterator, r Run) (ff []*Frame, err
 		builder.frame.Paging.NextPage, err = iter.ForwardCursor(row)
 		if err != nil {
 			return
+		}
+		if incTotal || incPageNavigation {
+			var curPage uint = 1
+			builder.frame.Paging.PageNavigation = []*filter.Page{}
+			pg := &filter.Page{}
+			pg.Page = curPage
+			pg.Count = counter - 1
+			pg.Cursor = nil
+
+			builder.frame.Paging.PageNavigation = append(builder.frame.Paging.PageNavigation, pg)
+			pg = &filter.Page{}
+			curPage++
+			pg.Page = curPage
+			pg.Count = 1
+			pg.Cursor, err = iter.ForwardCursor(row)
+
+			for iter.Next(ctx) {
+				row.Reset()
+				_ = iter.Scan(row)
+				pg.Count++
+				if pg.Count == limit {
+					builder.frame.Paging.PageNavigation = append(builder.frame.Paging.PageNavigation, pg)
+					curPage++
+					pg = &filter.Page{}
+					pg.Page = curPage
+					pg.Count = 1
+					pg.Cursor, err = iter.ForwardCursor(row)
+				}
+				counter++
+			}
+			builder.frame.Paging.PageNavigation = append(builder.frame.Paging.PageNavigation, pg)
+			builder.frame.Paging.Total = int(counter)
 		}
 	}
 
@@ -443,8 +487,7 @@ func mappingToFrameCol(m dal.AttributeMapping) FrameColumn {
 func convStepLoad(pr ModelFinder, step types.ReportStepLoad, defs FrameDefinitionSet) (out *dal.Datasource, err error) {
 	// Validation
 	if len(defs) > 1 {
-		err = fmt.Errorf("cannot convert load step: expecting at most one definition, got %d", len(defs))
-		return
+		defs = FrameDefinitionSet{defs[len(defs)-1]}
 	}
 
 	// Get additional filtering
@@ -480,12 +523,70 @@ func convStepLoad(pr ModelFinder, step types.ReportStepLoad, defs FrameDefinitio
 	}, nil
 }
 
+func TypeForAggAttribute(step types.ReportStepAggregate, shortName string) dal.Type {
+	var result dal.Type
+	for _, key := range step.Keys {
+		if key.Name == shortName {
+			if key.Def.Node() != nil {
+				key.Def.Node().Traverse(func(a *ql.ASTNode) (bool, *ql.ASTNode, error) {
+					if a.Symbol != "" {
+						return false, a, nil
+					}
+
+					if a.Ref != "" {
+						t := dal.TypeOfRef(a.Ref)
+						if t == nil {
+							return true, a, nil
+						}
+
+						if t != nil {
+							result = t
+							return false, a, nil
+						}
+					}
+					return true, a, nil
+				})
+
+			}
+		}
+	}
+	if result != nil {
+		return result
+	}
+	for _, key := range step.Columns {
+		if key.Name == shortName {
+			if key.Def.Node() != nil {
+				key.Def.Node().Traverse(func(a *ql.ASTNode) (bool, *ql.ASTNode, error) {
+					if a.Symbol != "" {
+						return false, a, nil
+					}
+
+					if a.Ref != "" {
+						t := dal.TypeOfRef(a.Ref)
+						if t == nil {
+							return true, a, nil
+						}
+
+						if t != nil {
+							result = t
+							return false, a, nil
+						}
+					}
+					return true, a, nil
+				})
+
+			}
+		}
+	}
+
+	return result
+}
+
 // convStepAggregate converts ReportStepAggregate to dal.Aggregate
-func convStepAggregate(step types.ReportStepAggregate, defs FrameDefinitionSet) (out *dal.Aggregate, err error) {
+func convStepAggregate(step types.ReportStepAggregate, pp dal.Pipeline, defs FrameDefinitionSet) (out *dal.Aggregate, err error) {
 	// Validation
 	if len(defs) > 1 {
-		err = fmt.Errorf("cannot convert aggregate step: expecting at most one definition, got %d", len(defs))
-		return
+		defs = FrameDefinitionSet{defs[len(defs)-1]}
 	}
 
 	// Get additional filtering
@@ -502,20 +603,34 @@ func convStepAggregate(step types.ReportStepAggregate, defs FrameDefinitionSet) 
 
 	ggs := make([]dal.AggregateAttr, 0, len(step.Keys))
 	for _, c := range step.Keys {
+		tp := TypeForAggAttribute(step, c.Name)
+		if tp == nil {
+			tp = pp.TypeForAttribute(c.Name)
+		}
+
 		ggs = append(ggs, dal.AggregateAttr{
 			Key:        true,
 			Identifier: c.Name,
 			Label:      c.Label,
 			Expression: c.Def.Node(),
+			Type:       tp,
 		})
 	}
 
 	vvs := make([]dal.AggregateAttr, 0, len(step.Columns))
 	for _, c := range step.Columns {
+		tp := TypeForAggAttribute(step, c.Name)
+		if tp == nil {
+			tp = pp.TypeForAttribute(c.Name)
+		}
+		if tp == nil {
+			tp = &dal.TypeNumber{}
+		}
 		vvs = append(vvs, dal.AggregateAttr{
 			Identifier: c.Name,
 			Label:      c.Label,
 			Expression: c.Def.Node(),
+			Type:       tp,
 		})
 	}
 

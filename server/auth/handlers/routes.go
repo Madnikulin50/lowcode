@@ -3,12 +3,12 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httprate"
 	"github.com/gorilla/csrf"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 )
 
 func (h *AuthHandlers) MountHttpRoutes(r chi.Router) {

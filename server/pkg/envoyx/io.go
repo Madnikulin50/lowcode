@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/envoyx/csv"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx/json"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx/csv"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx/json"
 )
 
 func (svc *Service) decodeIo(ctx context.Context, p DecodeParams) (nodes NodeSet, providers []Provider, err error) {

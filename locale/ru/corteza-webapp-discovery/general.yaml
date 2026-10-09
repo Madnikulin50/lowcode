@@ -13,7 +13,7 @@ themes:
 extendSession:
   labels:
     extend: Extend Session
-    warning: You will be logged out in {{ countdownTime }} seconds
+    warning: You will be logged out in {{ countdownTime }} секунд
 
 recordID: ID записи
 createdBy: Создано By

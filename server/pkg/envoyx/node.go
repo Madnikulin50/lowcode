@@ -3,7 +3,7 @@ package envoyx
 import (
 	"strconv"
 
-	"github.com/cortezaproject/corteza/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
 	"github.com/spf13/cast"
 )
 

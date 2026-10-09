@@ -53,6 +53,199 @@ func Day(in any) (int, error) {
 	return t.Day(), nil
 }
 
+func DayOf(in any) (time.Time, error) {
+	return Date(in)
+}
+func WeekOf(in any) (time.Time, error) {
+	t, _, err := PrepMod(in, 0)
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()).
+		AddDate(0, 0, -int(t.Weekday())), err
+}
+
+func MonthOf(in any) (time.Time, error) {
+	t, _, err := PrepMod(in, 0)
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location()), err
+}
+
+func ThisWeek(in any) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	ty, tw := t.ISOWeek()
+	ny, nw := time.Now().ISOWeek()
+	return ty == ny && tw == nw, nil
+}
+
+func PrevWeek(in any) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	ty, tw := t.ISOWeek()
+	ny, nw := time.Now().AddDate(0, 0, -7).ISOWeek()
+	return ty == ny && tw == nw, nil
+}
+
+func PrevWeekTruncated(in any) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	ty, tw := t.ISOWeek()
+	ny, nw := time.Now().AddDate(0, 0, -7).ISOWeek()
+	if ty == ny && tw == nw {
+		return t.Weekday() <= time.Now().Weekday(), nil
+	}
+	return false, nil
+}
+
+func ThisYear(in any) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now()
+	return t.Year() == now.Year(), nil
+}
+
+func PrevYear(in any) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now()
+	return t.Year() == now.Year()-1, nil
+}
+func PrevYearTruncated(in any) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now()
+	return t.Year() == now.Year()-1 && t.YearDay() <= now.YearDay(), nil
+}
+
+func PrevMonthTruncated(in any) (bool, error) {
+	p, err := PrevMonth(in)
+	if err != nil {
+		return false, err
+	}
+	if !p {
+		return false, nil
+	}
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now()
+	return t.Day() <= now.Day(), nil
+}
+
+func PrevMonth(in any) (bool, error) {
+	now := time.Now()
+	year := now.Year()
+	month := now.Month() - 1
+	if month == 0 {
+		month = 12
+		year--
+	}
+
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	return t.Month() == month && t.Year() == year, nil
+}
+
+func ThisMonth(in any) (bool, error) {
+	prevMonth := time.Now()
+
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	return t.Month() == prevMonth.Month() && t.Year() == prevMonth.Year(), nil
+}
+
+func _quarter(t time.Time) int {
+	return (int(t.Month())-1)/3 + 1
+}
+
+func ThisQuarter(in any) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now()
+	nq := _quarter(now)
+	tq := _quarter(*t)
+	return nq == tq && t.Year() == now.Year(), nil
+}
+
+func PrevQuarter(in any) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now().AddDate(0, -3, 0)
+	nq := _quarter(now)
+	tq := _quarter(*t)
+	return nq == tq && t.Year() == now.Year(), nil
+}
+
+func DayOfQuarter(t time.Time) int {
+	// 1. Get the starting month of the quarter (Jan, Apr, Jul, Oct)
+	quarterStartMonth := time.Month(((int(t.Month())-1)/3)*3 + 1)
+
+	// 2. Establish the exact start date of this quarter
+	quarterStart := time.Date(t.Year(), quarterStartMonth, 1, 0, 0, 0, 0, t.Location())
+
+	// 3. Measure days between the start date and the target date
+	// Subtraction yields a duration, which we convert to days, adding 1 for a 1-based index
+	days := int(t.Sub(quarterStart).Hours()/24) + 1
+	return days
+}
+
+// LastNDays reports whether the given date falls within the last `days`
+// days up to and including now. Unlike the this_*/prev_* buckets above,
+// it's a rolling window, not aligned to calendar month/week/quarter/year
+// boundaries — so there's no "truncated" variant to pair it with, that
+// distinction only matters for buckets that can be partially elapsed.
+func LastNDays(in any, days int) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now()
+	from := now.AddDate(0, 0, -days)
+	return !t.Before(from) && !t.After(now), nil
+}
+
+func Last30(in any) (bool, error) {
+	return LastNDays(in, 30)
+}
+
+func Last180(in any) (bool, error) {
+	return LastNDays(in, 180)
+}
+
+func Last365(in any) (bool, error) {
+	return LastNDays(in, 365)
+}
+
+func PrevQuarterTruncated(in any) (bool, error) {
+	t, _, err := PrepMod(in, 0)
+	if err != nil {
+		return false, err
+	}
+	now := time.Now().AddDate(0, -3, 0)
+	nq := _quarter(now)
+	tq := _quarter(*t)
+
+	return nq == tq && t.Year() == now.Year() && DayOfQuarter(*t) <= DayOfQuarter(time.Now()), nil
+}
+
 func PrepMod(base interface{}, mod interface{}) (*time.Time, int, error) {
 	var (
 		t *time.Time

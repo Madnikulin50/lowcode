@@ -1,0 +1,57 @@
+title: Библиотека skills
+active: активна
+makeActive: Сделать активной
+text: Инструкции
+textHint: Что агент должен делать, применяя этот skill, в markdown — шаги, правила, форма ответа. Пока агент не загрузил skill, он видит только описание.
+requires: Нужные toolkits
+requiresHint: Инструменты этих toolkits становятся доступны агенту после загрузки skill. Инструменты, меняющие данные, по-прежнему просят подтверждение.
+noKits: Toolkits не найдены
+resources: Файлы
+resourcesHint: Справочные материалы, которые агент читает, когда этого требуют инструкции — прайс-листы, нормативы, шаблоны. Только текст. Агенту сообщаются имена файлов, а не их содержимое.
+filePath: путь/имя.txt
+addFile: Добавить файл
+uploadFile: Загрузить файлы
+removeFile: Удалить
+tooManyFiles: В skill может быть не больше {max} файлов
+badPath: '«{path}» — недопустимый путь: используйте относительный путь внутри skill, не SKILL.md'
+duplicatePath: '«{path}» указан дважды'
+fileTooBig: '«{path}» длиннее {max} КБ'
+filesTooBig: Файлы skill вместе длиннее {max} КБ
+note: Почему эта версия
+noteHint: например, добавлены проверки пожарной безопасности
+activateOnSave: Сделать активной версией
+save: Сохранить как новую версию
+export: Экспорт (SKILL.md)
+list:
+  title: Skills
+  new: Новый skill
+  import: Импорт SKILL.md или zip
+  single: skill
+  plural: skills
+  empty: Skills пока нет. Skill — именованный набор инструкций, который агент загружает, когда этого требует задача. Напишите его здесь или импортируйте SKILL.md.
+  loading: Загрузка skills
+  delete: Удалить
+  filterForm:
+    query:
+      placeholder: Фильтр skills по имени или описанию
+  columns:
+    handle: Имя
+    description: Когда применять
+    active: Активная
+    versions: Версий
+    files: Файлов
+    updatedAt: Обновлён
+editor:
+  new: Новый skill
+  title:
+    create: Создание skill
+    edit: Редактирование skill
+  info:
+    title: Основная информация
+    handle: Имя *
+    handleHint: Агенты загружают skill по этому имени
+    invalid-handle: Строчные буквы, цифры, подчёркивание, дефис и точка; первым должен быть буква (до 64 символов)
+    description: Когда применять
+    descriptionHint: Агенты выбирают skills по этой фразе, поэтому укажите, для каких задач он нужен.
+    versions: Версии
+    delete: Удалить
