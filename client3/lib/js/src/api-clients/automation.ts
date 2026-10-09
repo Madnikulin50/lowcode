@@ -1378,6 +1378,18 @@ export default class Automation {
     }).then(result => stdResolve(result))
   }
 
+  // Drop all but the newest `keep` versions (the active one stays)
+  async promptPrune (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle, keep } = (a as KV) || {}
+    return this.api().request({
+      method: 'post',
+      url: `/prompts/${encodeURIComponent(String(handle))}/prune`,
+      headers: { 'Content-Type': 'application/json' },
+      data: { keep },
+      ...extra,
+    }).then(result => stdResolve(result))
+  }
+
   async promptDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
     const { handle } = (a as KV) || {}
     return this.api().request({ method: 'delete', url: `/prompts/${encodeURIComponent(String(handle))}`, ...extra }).then(result => stdResolve(result))
@@ -1419,6 +1431,17 @@ export default class Automation {
       url: `/skills/${encodeURIComponent(String(handle))}/activate`,
       headers: { 'Content-Type': 'application/json' },
       data: { version },
+      ...extra,
+    }).then(result => stdResolve(result))
+  }
+
+  async skillPrune (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { handle, keep } = (a as KV) || {}
+    return this.api().request({
+      method: 'post',
+      url: `/skills/${encodeURIComponent(String(handle))}/prune`,
+      headers: { 'Content-Type': 'application/json' },
+      data: { keep },
       ...extra,
     }).then(result => stdResolve(result))
   }

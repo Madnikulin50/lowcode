@@ -56,6 +56,9 @@ func testAllGenerated(t *testing.T, s store.Storer) {
 	t.Run("composeAttachment", func(t *testing.T) {
 		testComposeAttachments(t, s)
 	})
+	t.Run("composeResourceVersion", func(t *testing.T) {
+		testComposeResourceVersions(t, s)
+	})
 	t.Run("composeChart", func(t *testing.T) {
 		testComposeCharts(t, s)
 	})

@@ -1131,9 +1131,13 @@ recordRevisions:
       no-record: No record found to display revisions for
       no-revisions: No record revisions found
       disabled-on-module: Record revisions are disabled on this module
+      restore-failed: Failed to restore the record
 
     show-revisions: Show record revisions ({{ revision }})
     show-changes: "{{ count }} change(s)"
+    restore: Restore
+    restore-confirm: "Restore the record to revision {{ revision }}? The result is saved as a new revision."
+    restore-done: "Record restored to revision {{ revision }}"
 
     operations:
       created: Created

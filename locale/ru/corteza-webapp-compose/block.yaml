@@ -1142,9 +1142,13 @@ recordRevisions:
       no-record: No record found to display revisions for
       no-revisions: Ревизии записи не найдено
       disabled-on-module: Ревизии записи отключены для этого модуля
+      restore-failed: Не удалось восстановить запись
 
     show-revisions: Показывать ревизии записей ({{ revision }})
     show-changes: "{{ count }} изменения(-й)"
+    restore: Восстановить
+    restore-confirm: "Вернуть запись к ревизии {{ revision }}? Результат сохранится как новая ревизия."
+    restore-done: "Запись возвращена к ревизии {{ revision }}"
 
     operations:
       created: Создано

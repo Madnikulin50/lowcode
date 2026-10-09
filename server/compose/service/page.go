@@ -324,6 +324,10 @@ func (svc page) Create(ctx context.Context, new *types.Page) (*types.Page, error
 		return err
 	})
 
+	if err == nil {
+		recordResourceVersion(ctx, svc.store, types.ResourceVersionPage, new.NamespaceID, new.ID)
+	}
+
 	return new, svc.recordAction(ctx, aProps, PageActionCreate, err)
 }
 
@@ -337,6 +341,10 @@ func (svc page) Update(ctx context.Context, upd *types.Page) (c *types.Page, err
 		c, err = svc.updater(ctx, svc.store, ns, res, PageActionUpdate, svc.handleUpdate(ctx, upd))
 		return
 	})
+
+	if err == nil && c != nil {
+		recordResourceVersion(ctx, svc.store, types.ResourceVersionPage, c.NamespaceID, c.ID)
+	}
 
 	return
 }

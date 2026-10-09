@@ -99,9 +99,6 @@ func (svc *recordRevisions) softDeleted(ctx context.Context, del *types.Record) 
 	)
 
 	rev = revisions.Make(revisions.SoftDeleted, del.Revision, del.ID, invokerID)
-	if err != nil {
-		return
-	}
 
 	return svc.r.Create(ctx, svc.modelRef(del.GetModule()), rev)
 }
@@ -113,9 +110,6 @@ func (svc *recordRevisions) undeleted(ctx context.Context, undel *types.Record) 
 	)
 
 	rev = revisions.Make(revisions.Undeleted, undel.Revision, undel.ID, invokerID)
-	if err != nil {
-		return
-	}
 
 	return svc.r.Create(ctx, svc.modelRef(undel.GetModule()), rev)
 }
@@ -144,17 +138,31 @@ func (svc *recordRevisions) skippedField(mod *types.Module) []string {
 	return list
 }
 
-// @todo uncomment when supported
-//func (svc *recordRevisions) hardDeleted(ctx context.Context, del *types.Record) (err error) {
-//	var (
-//		invokerID = auth.GetIdentityFromContext(ctx).Identity()
-//		rev       *revisions.Revision
-//	)
-//
-//	rev, err = revisions.Make(revisions.HardDeleted, del.Revision, del.ID, invokerID, nil, nil)
-//	if err != nil {
-//		return
-//	}
-//
-//	return svc.r.Create(ctx, svc.modelRef(del.GetModule()), rev)
-//}
+func (svc *recordRevisions) hardDeleted(ctx context.Context, del *types.Record) (err error) {
+	var (
+		invokerID = auth.GetIdentityFromContext(ctx).Identity()
+		rev       *revisions.Revision
+	)
+
+	rev = revisions.Make(revisions.HardDeleted, del.Revision, del.ID, invokerID)
+	return svc.r.Create(ctx, svc.modelRef(del.GetModule()), rev)
+}
+
+// load returns all revisions of the record
+func (svc *recordRevisions) load(ctx context.Context, rec *types.Record) (out []*revisions.Revision, err error) {
+	iter, err := svc.search(ctx, rec, filter.Sorting{})
+	if err != nil {
+		return
+	}
+	defer iter.Close()
+
+	for iter.Next(ctx) {
+		rev := &revisions.Revision{}
+		if err = iter.Scan(rev); err != nil {
+			return
+		}
+		out = append(out, rev)
+	}
+
+	return out, iter.Err()
+}

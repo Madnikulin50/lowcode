@@ -23,6 +23,15 @@
     </template>
 
     <template #end>
+      <c-version-history
+        v-if="historyKind && historyNamespaceId && historyResourceId"
+        :kind="historyKind"
+        :namespace-id="historyNamespaceId"
+        :resource-id="historyResourceId"
+        :disabled="processing"
+        @restored="$emit('restored')"
+      />
+
       <slot name="delete" />
 
       <c-input-confirm
@@ -84,6 +93,7 @@
 <script setup lang="js">
 import { components } from 'corteza-lib/vue/dist'
 const { CToolbar } = components
+import CVersionHistory from 'corteza-webapp-compose/src/components/Admin/Versions/CVersionHistory.vue'
 
 defineOptions({
   i18nOptions: {
@@ -152,5 +162,21 @@ defineProps({
     type: String,
     default: '',
   },
+  // when set, the toolbar shows the version history of that resource
+  // (kind is page, module or chart); an unsaved resource has no history
+  historyKind: {
+    type: String,
+    default: '',
+  },
+  historyNamespaceId: {
+    type: String,
+    default: '',
+  },
+  historyResourceId: {
+    type: String,
+    default: '',
+  },
 })
+
+defineEmits(['restored'])
 </script>

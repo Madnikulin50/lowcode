@@ -541,6 +541,28 @@ type (
 		// Sort order
 		Sort string
 	}
+
+	RecordRestoreRevision struct {
+		// NamespaceID PATH parameter
+		//
+		// Namespace ID
+		NamespaceID uint64 `json:",string"`
+
+		// ModuleID PATH parameter
+		//
+		// Module ID
+		ModuleID uint64 `json:",string"`
+
+		// RecordID PATH parameter
+		//
+		// ID
+		RecordID uint64 `json:",string"`
+
+		// Revision PATH parameter
+		//
+		// Revision to restore
+		Revision int
+	}
 )
 
 // NewRecordReport request
@@ -2620,6 +2642,77 @@ func (r *RecordRevisions) Fill(req *http.Request) (err error) {
 
 		val = chi.URLParam(req, "recordID")
 		r.RecordID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return err
+}
+
+// NewRecordRestoreRevision request
+func NewRecordRestoreRevision() *RecordRestoreRevision {
+	return &RecordRestoreRevision{}
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordRestoreRevision) Auditable() map[string]interface{} {
+	return map[string]interface{}{
+		"namespaceID": r.NamespaceID,
+		"moduleID":    r.ModuleID,
+		"recordID":    r.RecordID,
+		"revision":    r.Revision,
+	}
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordRestoreRevision) GetNamespaceID() uint64 {
+	return r.NamespaceID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordRestoreRevision) GetModuleID() uint64 {
+	return r.ModuleID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordRestoreRevision) GetRecordID() uint64 {
+	return r.RecordID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordRestoreRevision) GetRevision() int {
+	return r.Revision
+}
+
+// Fill processes request and fills internal variables
+func (r *RecordRestoreRevision) Fill(req *http.Request) (err error) {
+
+	{
+		var val string
+		// path params
+
+		val = chi.URLParam(req, "namespaceID")
+		r.NamespaceID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+		val = chi.URLParam(req, "moduleID")
+		r.ModuleID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+		val = chi.URLParam(req, "recordID")
+		r.RecordID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+		val = chi.URLParam(req, "revision")
+		r.Revision, err = payload.ParseInt(val), nil
 		if err != nil {
 			return err
 		}

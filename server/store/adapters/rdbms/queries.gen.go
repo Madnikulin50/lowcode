@@ -2765,6 +2765,110 @@ var (
 		}
 	}
 
+	// composeResourceVersionTable represents composeResourceVersions store table
+	//
+	// This value is auto-generated
+	composeResourceVersionTable = goqu.T("compose_resource_versions")
+
+	// composeResourceVersionSelectQuery assembles select query for fetching composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_namespace",
+			"resource_type",
+			"resource_id",
+			"version",
+			"snapshot",
+			"note",
+			"created_at",
+			"created_by",
+		).From(composeResourceVersionTable)
+	}
+
+	// composeResourceVersionInsertQuery assembles query inserting composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionInsertQuery = func(d goqu.DialectWrapper, res *composeType.ResourceVersion) *goqu.InsertDataset {
+		return d.Insert(composeResourceVersionTable).
+			Rows(goqu.Record{
+				"id":            res.ID,
+				"rel_namespace": res.NamespaceID,
+				"resource_type": res.ResourceType,
+				"resource_id":   res.ResourceID,
+				"version":       res.Version,
+				"snapshot":      res.Snapshot,
+				"note":          res.Note,
+				"created_at":    res.CreatedAt,
+				"created_by":    res.CreatedBy,
+			})
+	}
+
+	// composeResourceVersionUpsertQuery assembles (insert+on-conflict) query for replacing composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionUpsertQuery = func(d goqu.DialectWrapper, res *composeType.ResourceVersion) *goqu.InsertDataset {
+		var target = `,id`
+
+		return composeResourceVersionInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_namespace": res.NamespaceID,
+						"resource_type": res.ResourceType,
+						"resource_id":   res.ResourceID,
+						"version":       res.Version,
+						"snapshot":      res.Snapshot,
+						"note":          res.Note,
+						"created_at":    res.CreatedAt,
+						"created_by":    res.CreatedBy,
+					},
+				),
+			)
+	}
+
+	// composeResourceVersionUpdateQuery assembles query for updating composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionUpdateQuery = func(d goqu.DialectWrapper, res *composeType.ResourceVersion) *goqu.UpdateDataset {
+		return d.Update(composeResourceVersionTable).
+			Set(goqu.Record{
+				"rel_namespace": res.NamespaceID,
+				"resource_type": res.ResourceType,
+				"resource_id":   res.ResourceID,
+				"version":       res.Version,
+				"snapshot":      res.Snapshot,
+				"note":          res.Note,
+				"created_at":    res.CreatedAt,
+				"created_by":    res.CreatedBy,
+			}).
+			Where(composeResourceVersionPrimaryKeys(res))
+	}
+
+	// composeResourceVersionDeleteQuery assembles delete query for removing composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(composeResourceVersionTable).Where(ee...)
+	}
+
+	// composeResourceVersionDeleteQuery assembles delete query for removing composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(composeResourceVersionTable)
+	}
+
+	// composeResourceVersionPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	composeResourceVersionPrimaryKeys = func(res *composeType.ResourceVersion) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
 	// credentialTable represents credentials store table
 	//
 	// This value is auto-generated

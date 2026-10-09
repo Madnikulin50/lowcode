@@ -25,6 +25,16 @@
       @activate="activate"
       @export="exportSkill"
     />
+
+    <version-tools
+      v-if="handle"
+      ns="automation.skills"
+      kind="skill"
+      :handle="handle"
+      :history="history"
+      :viewing="viewing"
+      @pruned="onPruned"
+    />
   </div>
 </template>
 
@@ -34,6 +44,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import CSkillEditorInfo from '../../../components/Skills/CSkillEditorInfo.vue'
+import VersionTools from '../../../components/Prompts/VersionTools.vue'
 
 const props = defineProps({ handle: { type: String, required: false, default: undefined } })
 
@@ -147,6 +158,15 @@ async function onSubmit () {
     info.error = message(e)
   } finally {
     info.processing = false
+  }
+}
+
+// the version on screen may be among the deleted ones: go back to the live one
+async function onPruned () {
+  await loadHistory()
+  if (!history.value.some(v => v.version === viewing.value)) {
+    const active = history.value.find(v => v.active) || history.value[history.value.length - 1]
+    if (active) await view(active.version)
   }
 }
 

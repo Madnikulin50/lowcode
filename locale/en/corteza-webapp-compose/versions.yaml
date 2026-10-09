@@ -1,0 +1,23 @@
+title: Version history
+open: History
+empty: No saved versions yet
+version: Version
+saved: Saved
+note: Note
+current: current
+loading: Loading…
+compare: Changes against the previous version
+firstVersion: This is the first saved version
+noChanges: No changes against the previous version
+added: added
+removed: removed
+changed: changed
+restore: Restore
+restoreConfirm:
+  page: Restore the page (and its layouts) to version {{ version }}? The result is saved as a new version.
+  module: Restore the module to version {{ version }}? Fields that did not exist in that version will be removed. The result is saved as a new version.
+  chart: Restore the chart to version {{ version }}? The result is saved as a new version.
+restored: Restored to version {{ version }}
+restoreFailed: Failed to restore the version
+loadFailed: Failed to load the version history
+close: Close

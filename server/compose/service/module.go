@@ -421,11 +421,19 @@ func (svc module) Create(ctx context.Context, new *types.Module) (*types.Module,
 		return nil
 	})
 
+	if err == nil {
+		recordResourceVersion(ctx, svc.store, types.ResourceVersionModule, new.NamespaceID, new.ID)
+	}
+
 	return new, svc.recordAction(ctx, aProps, ModuleActionCreate, err)
 }
 
 func (svc module) Update(ctx context.Context, upd *types.Module) (c *types.Module, err error) {
-	return svc.updater(ctx, upd.NamespaceID, upd.ID, ModuleActionUpdate, svc.handleUpdate(ctx, upd))
+	if c, err = svc.updater(ctx, upd.NamespaceID, upd.ID, ModuleActionUpdate, svc.handleUpdate(ctx, upd)); err == nil && c != nil {
+		recordResourceVersion(ctx, svc.store, types.ResourceVersionModule, c.NamespaceID, c.ID)
+	}
+
+	return
 }
 
 func (svc module) DeleteByID(ctx context.Context, namespaceID, moduleID uint64) error {

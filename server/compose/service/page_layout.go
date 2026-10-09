@@ -245,6 +245,10 @@ func (svc pageLayout) Create(ctx context.Context, new *types.PageLayout) (*types
 		return err
 	})
 
+	if err == nil {
+		recordResourceVersion(ctx, svc.store, types.ResourceVersionPage, new.NamespaceID, new.PageID)
+	}
+
 	return new, svc.recordAction(ctx, aProps, PageLayoutActionCreate, err)
 }
 
@@ -286,6 +290,10 @@ func (svc pageLayout) Update(ctx context.Context, upd *types.PageLayout) (c *typ
 		c, err = svc.updater(ctx, svc.store, ns, pg, res, PageLayoutActionUpdate, svc.handleUpdate(ctx, upd))
 		return
 	})
+
+	if err == nil && c != nil {
+		recordResourceVersion(ctx, svc.store, types.ResourceVersionPage, c.NamespaceID, c.PageID)
+	}
 
 	return
 }

@@ -1310,6 +1310,14 @@ endpoints:
        - { type: uint64, name: recordID, required: true, title: ID }
       get:
        - { type: string, name: sort, required: false, title: Sort order }
+  - name: restoreRevision
+    method: POST
+    title: Restore record to a revision
+    path: "/{recordID}/revisions/{revision}/restore"
+    parameters:
+      path:
+       - { type: uint64, name: recordID, required: true, title: ID }
+       - { type: int, name: revision, required: true, title: Revision to restore }
 
 - title: Data Privacy
   entrypoint: dataPrivacy

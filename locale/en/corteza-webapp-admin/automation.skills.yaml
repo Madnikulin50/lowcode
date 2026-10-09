@@ -55,3 +55,11 @@ editor:
     descriptionHint: Agents choose skills by this sentence, so say what tasks it is for.
     versions: Versions
     delete: Delete
+versionTools:
+  compare: "Compare v{{ version }} with the previous version"
+  hideCompare: "Hide comparison"
+  keep: "Keep newest"
+  prune: "Delete older versions"
+  pruneConfirm: "Delete all versions except the newest {{ keep }} and the active one? Steps pinned to a deleted version (@…@N) will stop working."
+  pruned: "Deleted versions: {{ count }}"
+  noChanges: "v{{ version }} has no changes against v{{ previous }}"

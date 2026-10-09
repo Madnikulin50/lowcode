@@ -69,6 +69,7 @@ type (
 		ComposeNamespaces
 		ComposePages
 		ComposePageLayouts
+		ComposeResourceVersions
 		Credentials
 		DalConnections
 		DalSchemaAlterations
@@ -413,6 +414,18 @@ type (
 		LookupComposePageLayoutByNamespaceIDPageIDHandle(ctx context.Context, namespaceID uint64, pageID uint64, handle string) (*composeType.PageLayout, error)
 		LookupComposePageLayoutByID(ctx context.Context, id uint64) (*composeType.PageLayout, error)
 		ReorderComposePageLayouts(ctx context.Context, namespace_id uint64, page_id uint64, page_layout_ids []uint64) error
+	}
+
+	ComposeResourceVersions interface {
+		SearchComposeResourceVersions(ctx context.Context, f composeType.ResourceVersionFilter) (composeType.ResourceVersionSet, composeType.ResourceVersionFilter, error)
+		CreateComposeResourceVersion(ctx context.Context, rr ...*composeType.ResourceVersion) error
+		UpdateComposeResourceVersion(ctx context.Context, rr ...*composeType.ResourceVersion) error
+		UpsertComposeResourceVersion(ctx context.Context, rr ...*composeType.ResourceVersion) error
+		DeleteComposeResourceVersion(ctx context.Context, rr ...*composeType.ResourceVersion) error
+
+		DeleteComposeResourceVersionByID(ctx context.Context, id uint64) error
+		TruncateComposeResourceVersions(ctx context.Context) error
+		LookupComposeResourceVersionByID(ctx context.Context, id uint64) (*composeType.ResourceVersion, error)
 	}
 
 	Credentials interface {
@@ -2337,6 +2350,62 @@ func LookupComposePageLayoutByID(ctx context.Context, s ComposePageLayouts, id u
 // This function is auto-generated
 func ReorderComposePageLayouts(ctx context.Context, s ComposePageLayouts, namespace_id uint64, page_id uint64, page_layout_ids []uint64) error {
 	return s.ReorderComposePageLayouts(ctx, namespace_id, page_id, page_layout_ids)
+}
+
+// SearchComposeResourceVersions returns all matching ComposeResourceVersions from store
+//
+// This function is auto-generated
+func SearchComposeResourceVersions(ctx context.Context, s ComposeResourceVersions, f composeType.ResourceVersionFilter) (composeType.ResourceVersionSet, composeType.ResourceVersionFilter, error) {
+	return s.SearchComposeResourceVersions(ctx, f)
+}
+
+// CreateComposeResourceVersion creates one or more ComposeResourceVersions in store
+//
+// This function is auto-generated
+func CreateComposeResourceVersion(ctx context.Context, s ComposeResourceVersions, rr ...*composeType.ResourceVersion) error {
+	return s.CreateComposeResourceVersion(ctx, rr...)
+}
+
+// UpdateComposeResourceVersion updates one or more (existing) ComposeResourceVersions in store
+//
+// This function is auto-generated
+func UpdateComposeResourceVersion(ctx context.Context, s ComposeResourceVersions, rr ...*composeType.ResourceVersion) error {
+	return s.UpdateComposeResourceVersion(ctx, rr...)
+}
+
+// UpsertComposeResourceVersion creates new or updates existing one or more ComposeResourceVersions in store
+//
+// This function is auto-generated
+func UpsertComposeResourceVersion(ctx context.Context, s ComposeResourceVersions, rr ...*composeType.ResourceVersion) error {
+	return s.UpsertComposeResourceVersion(ctx, rr...)
+}
+
+// DeleteComposeResourceVersion deletes one or more ComposeResourceVersions from store
+//
+// This function is auto-generated
+func DeleteComposeResourceVersion(ctx context.Context, s ComposeResourceVersions, rr ...*composeType.ResourceVersion) error {
+	return s.DeleteComposeResourceVersion(ctx, rr...)
+}
+
+// DeleteComposeResourceVersionByID deletes one or more ComposeResourceVersions from store
+//
+// This function is auto-generated
+func DeleteComposeResourceVersionByID(ctx context.Context, s ComposeResourceVersions, id uint64) error {
+	return s.DeleteComposeResourceVersionByID(ctx, id)
+}
+
+// TruncateComposeResourceVersions Deletes all ComposeResourceVersions from store
+//
+// This function is auto-generated
+func TruncateComposeResourceVersions(ctx context.Context, s ComposeResourceVersions) error {
+	return s.TruncateComposeResourceVersions(ctx)
+}
+
+// LookupComposeResourceVersionByID searches for a compose resource version by ID
+//
+// This function is auto-generated
+func LookupComposeResourceVersionByID(ctx context.Context, s ComposeResourceVersions, id uint64) (*composeType.ResourceVersion, error) {
+	return s.LookupComposeResourceVersionByID(ctx, id)
 }
 
 // SearchCredentials returns all matching Credentials from store

@@ -138,6 +138,7 @@ type (
 		FindN(ctx context.Context, filter types.RecordFilter) (set types.RecordSet, stats map[string]types.RecordSummary, f types.RecordFilter, err error)
 		SearchSensitive(ctx context.Context) (set []types.SensitiveRecordSet, err error)
 		SearchRevisions(ctx context.Context, namespaceID, moduleID, recordID uint64, sorting filter.Sorting) (dal.Iterator, error)
+		RestoreRevision(ctx context.Context, namespaceID, moduleID, recordID uint64, revision int) (*types.Record, *types.RecordValueErrorSet, error)
 		RecordExport(context.Context, types.RecordFilter) error
 		RecordImport(context.Context, error) error
 
@@ -1153,6 +1154,87 @@ func (svc record) SearchRevisions(ctx context.Context, namespaceID, moduleID, re
 	}()
 
 	return iter, svc.recordAction(ctx, aProps, RecordActionSearchRevisions, err)
+}
+
+// RestoreRevision sets the record back to the values it had at the given
+// revision. The result is saved as a regular update, so it gets a new
+// revision, goes through permission checks and fires the update events.
+func (svc record) RestoreRevision(ctx context.Context, namespaceID, moduleID, recordID uint64, revision int) (rec *types.Record, dd *types.RecordValueErrorSet, err error) {
+	var (
+		aProps = &recordActionProps{record: &types.Record{NamespaceID: namespaceID, ModuleID: moduleID, ID: recordID}}
+
+		old *types.Record
+		mod *types.Module
+		ns  *types.Namespace
+	)
+
+	err = func() (err error) {
+		ns, mod, old, err = loadRecordCombo(ctx, svc.store, svc.dal, namespaceID, moduleID, recordID)
+		if err != nil {
+			return
+		}
+
+		aProps.setModule(mod)
+		aProps.setNamespace(ns)
+		aProps.setRecord(old)
+
+		if !mod.Config.RecordRevisions.Enabled {
+			return RecordErrRevisionsDisabledOnModule()
+		}
+
+		if !svc.ac.CanSearchRevisionsOnRecord(ctx, old) {
+			return RecordErrNotAllowedToSearchRevisions()
+		}
+
+		if old.DeletedAt != nil {
+			return errors.InvalidData("record is deleted; undelete it before restoring a revision")
+		}
+
+		revs, err := svc.revisions.load(ctx, old)
+		if err != nil {
+			return
+		}
+
+		current := make(map[string][]string)
+		for _, v := range old.Values {
+			if v.DeletedAt != nil && !v.DeletedAt.IsZero() {
+				continue
+			}
+			current[v.Name] = append(current[v.Name], v.Value)
+		}
+
+		target, ok := revisions.Rollback(current, revs, revision)
+		if !ok {
+			return errors.NotFound("revision %d of the record is not in the history or is the current one", revision)
+		}
+
+		upd := &types.Record{
+			ID:          old.ID,
+			NamespaceID: old.NamespaceID,
+			ModuleID:    old.ModuleID,
+			OwnedBy:     old.OwnedBy,
+		}
+		upd.SetModule(mod)
+
+		for _, f := range mod.Fields {
+			for place, val := range target[f.Name] {
+				upd.Values = append(upd.Values, &types.RecordValue{Name: f.Name, Value: val, Place: uint(place)})
+			}
+		}
+
+		rec, dd, err = svc.Update(ctx, upd)
+		if err == nil && dd != nil && !dd.IsValid() {
+			err = dd
+		}
+
+		return
+	}()
+
+	if err != nil {
+		return nil, dd, svc.recordAction(ctx, aProps, RecordActionUpdate, err)
+	}
+
+	return rec, dd, nil
 }
 
 func (svc record) RecordImport(ctx context.Context, err error) error {
@@ -2172,8 +2254,15 @@ func (svc record) processDelete(ctx context.Context, del *types.Record, namespac
 	}
 
 	if module.Config.RecordRevisions.Enabled {
-		// Prepare record revision for update
-		if err = svc.revisions.softDeleted(ctx, del); err != nil {
+		// Prepare record revision for delete; without soft-delete support
+		// the record is gone for good
+		if module.CanSoftDelete() {
+			err = svc.revisions.softDeleted(ctx, del)
+		} else {
+			err = svc.revisions.hardDeleted(ctx, del)
+		}
+
+		if err != nil {
 			return
 		}
 	}

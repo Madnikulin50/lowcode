@@ -1263,6 +1263,20 @@ func (ctrl *Record) TriggerScriptOnList(ctx context.Context, r *request.RecordTr
 	return api.OK(), err
 }
 
+func (ctrl *Record) RestoreRevision(ctx context.Context, r *request.RecordRestoreRevision) (interface{}, error) {
+	m, err := ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID)
+	if err != nil {
+		return nil, err
+	}
+
+	rec, dd, err := ctrl.record.RestoreRevision(ctx, r.NamespaceID, r.ModuleID, r.RecordID, r.Revision)
+	if rve := types.IsRecordValueErrorSet(err); rve != nil {
+		return ctrl.handleValidationError(rve), nil
+	}
+
+	return ctrl.makePayload(ctx, m, rec, dd, err)
+}
+
 func (ctrl *Record) Revisions(ctx context.Context, r *request.RecordRevisions) (interface{}, error) {
 	var (
 		makeRev = func() dal.ValueSetter { return &revisions.Revision{} }

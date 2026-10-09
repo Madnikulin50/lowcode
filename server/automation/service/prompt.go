@@ -441,6 +441,48 @@ func (lib *promptLibrary) Delete(ctx context.Context, handle string) error {
 	})
 }
 
+// Prune drops the oldest versions, keeping the newest `keep` and always the
+// active one. It returns how many were removed. A step pinned to a removed
+// version ("@prompt:x@3") fails until the reference is changed.
+func (lib *promptLibrary) Prune(ctx context.Context, handle string, keep int) (int, error) {
+	if err := lib.canWrite(ctx); err != nil {
+		return 0, err
+	}
+	if keep < 1 {
+		return 0, errors.InvalidData("keep at least one version")
+	}
+
+	lib.mux.Lock()
+	defer lib.mux.Unlock()
+
+	removed := 0
+	err := store.Tx(ctx, lib.store, func(ctx context.Context, s store.Storer) error {
+		vv, err := lib.versions(ctx, s, handle)
+		if err != nil {
+			return err
+		}
+		if len(vv) == 0 {
+			return errors.NotFound("%s %q does not exist", lib.noun(), handle)
+		}
+
+		newest := append(types.PromptVersionSet(nil), vv...)
+		sort.Slice(newest, func(i, j int) bool { return newest[i].Version > newest[j].Version })
+
+		for i, v := range newest {
+			if i < keep || v.Active {
+				continue
+			}
+			if err := store.DeleteAutomationPromptVersionByID(ctx, s, v.ID); err != nil {
+				return err
+			}
+			removed++
+		}
+		return nil
+	})
+
+	return removed, err
+}
+
 func (lib *promptLibrary) other() string {
 	if lib.isSkills() {
 		return "prompt"

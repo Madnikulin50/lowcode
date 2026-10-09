@@ -213,6 +213,16 @@ func ActivateSkill(ctx context.Context, handle string, version int) (*SkillBrief
 	return &b, nil
 }
 
+// PruneSkill drops all but the newest `keep` versions of a skill (the active
+// one is always kept) and returns how many were removed.
+func PruneSkill(ctx context.Context, handle string, keep int) (int, error) {
+	lib, err := skillLib()
+	if err != nil {
+		return 0, err
+	}
+	return lib.Prune(ctx, handle, keep)
+}
+
 func DeleteSkill(ctx context.Context, handle string) error {
 	lib, err := skillLib()
 	if err != nil {

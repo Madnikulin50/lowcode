@@ -359,3 +359,39 @@ func TestPromptLibrary_Eval_ReportsEachCaseAsItIsJudged(t *testing.T) {
 	req.NoError(err)
 	req.Equal([]seen{{1, "one"}, {1, "two"}}, order)
 }
+
+func TestPromptLibrary_Prune(t *testing.T) {
+	lib, ctx := newPromptLib(t, fakePromptAC{true, true})
+	req := require.New(t)
+
+	for i := 1; i <= 5; i++ {
+		_, err := lib.Save(ctx, SavePrompt{Handle: "triage", Text: "v" + string(rune('0'+i))})
+		req.NoError(err)
+	}
+	// v1 is live; roll the active one back so pruning must spare an old version
+	removed, err := lib.Prune(ctx, "triage", 2)
+	req.NoError(err)
+	req.Equal(2, removed, "v2 and v3 go; v4, v5 are the newest two and v1 is active")
+
+	hist, err := lib.History(ctx, "triage")
+	req.NoError(err)
+	var kept []int
+	for _, v := range hist {
+		kept = append(kept, v.Version)
+	}
+	req.Equal([]int{1, 4, 5}, kept)
+
+	// nothing more to drop
+	removed, err = lib.Prune(ctx, "triage", 2)
+	req.NoError(err)
+	req.Zero(removed)
+
+	_, err = lib.Prune(ctx, "triage", 0)
+	req.Error(err)
+	_, err = lib.Prune(ctx, "nope", 2)
+	req.Error(err)
+
+	ro, _ := newPromptLib(t, fakePromptAC{true, false})
+	_, err = ro.Prune(ctx, "triage", 2)
+	req.Error(err, "needs write access")
+}

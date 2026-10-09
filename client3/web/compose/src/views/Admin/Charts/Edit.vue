@@ -477,6 +477,10 @@
         :hide-save="hideSave"
         :hide-clone="!isEdit"
         :disable-save="disableSave"
+        history-kind="chart"
+        :history-namespace-id="isEdit ? namespace.namespaceID : ''"
+        :history-resource-id="isEdit ? chart.chartID : ''"
+        @restored="reloadAfterRestore"
         @delete="handleDelete()"
         @save="handleSave()"
         @clone="handleClone()"
@@ -654,6 +658,11 @@ const hideDelete = computed(() => !isEdit.value || !chart.value.canDeleteChart |
 const hideSave = computed(() => isEdit.value && !chart.value.canUpdateChart)
 
 const isEdit = computed(() => chart.value && chart.value.chartID !== NoID)
+
+// a restored version replaces what is on screen; reload to show it
+function reloadAfterRestore () {
+  window.location.reload()
+}
 
 const hasAxis = computed(() => reports.value.some(({ metrics = [] }) => metrics.some(m => ['bar', 'line', 'scatter', 'waterfall', 'boxplot', 'candlestick', 'heatmap', 'parallel'].includes(m.type))))
 

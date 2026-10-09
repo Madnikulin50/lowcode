@@ -114,6 +114,22 @@ func (Prompts) Activate(w http.ResponseWriter, r *http.Request) {
 	api.Send(w, r, p)
 }
 
+// Prune drops all but the newest `keep` versions; the active one stays.
+func (Prompts) Prune(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Keep int `json:"keep"`
+	}
+	if !readJSON(w, r, &in) {
+		return
+	}
+	removed, err := service.PrunePrompt(r.Context(), chi.URLParam(r, "handle"), in.Keep)
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+	api.Send(w, r, map[string]interface{}{"removed": removed})
+}
+
 func (Prompts) Delete(w http.ResponseWriter, r *http.Request) {
 	if err := service.DeletePrompt(r.Context(), chi.URLParam(r, "handle")); err != nil {
 		api.Send(w, r, err)
@@ -188,6 +204,7 @@ func MountPromptRoutes(r chi.Router) {
 		r.Post("/{handle}", p.Save)
 		r.Post("/{handle}/activate", p.Activate)
 		r.Post("/{handle}/eval", p.Eval)
+		r.Post("/{handle}/prune", p.Prune)
 		r.Delete("/{handle}", p.Delete)
 	})
 }

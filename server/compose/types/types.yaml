@@ -1,4 +1,5 @@
 types:
+  ResourceVersion: {}
   Namespace:
     labelResourceType: compose:namespace
   Attachment: {}

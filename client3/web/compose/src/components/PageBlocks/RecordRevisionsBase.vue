@@ -27,7 +27,10 @@
               <td>
                 <FieldViewer value-only :field="mockRevisionModule.findField('timestamp')" :record="rev" :module="mockRevisionModule" :namespace="namespace" />
               </td>
-              <td>
+              <td class="text-nowrap text-end">
+                <button v-if="canRestore(rev)" class="btn btn-outline-extra-light border-0 text-primary" :disabled="isProcessing" @click="restore(rev)">
+                  {{ $t('restore') }}
+                </button>
                 <button v-if="rev.meta.changes.length > 0" class="btn btn-outline-extra-light d-flex align-items-center m-0 border-0 text-primary ms-auto" @click="toggleDetails(idx)">
                   {{ $t('show-changes', { count: rev.meta.changes.length }) }}
                   <font-awesome-icon :icon="expandedRows[idx] ? 'chevron-up' : 'chevron-down'" class="ms-2" />
@@ -75,11 +78,13 @@ defineOptions({ i18nOptions: { namespaces: 'block', keyPrefix: 'recordRevisions.
 import { ref, computed, watch, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compose, NoID } from 'corteza-lib/js/dist'
+import { composables } from 'corteza-lib/vue/dist'
 import { usePageBlockBase } from './usePageBlockBase'
 import Wrap from './Wrap/index.js'
 import FieldViewer from 'corteza-webapp-compose/src/components/ModuleFields/Viewer'
 
 const { t: $t } = useI18n({ useScope: 'global' })
+const { toastErrorHandler, toastSuccess } = composables.useToast()
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },
@@ -160,6 +165,37 @@ async function loadRevisions() {
       })
     })
   }).finally(() => { setTimeout(() => { processing.value = false }, 300) })
+}
+
+// only value-carrying revisions older than the current one can be restored
+function canRestore(rev) {
+  const op = rev.values.operation
+  return props.editable === false &&
+    props.record?.recordID && props.record.recordID !== NoID &&
+    !props.record.deletedAt &&
+    (op === 'created' || op === 'updated') &&
+    Number(rev.values.revision) < Number(props.record.revision)
+}
+
+async function restore(rev) {
+  const revision = Number(rev.values.revision)
+  if (!window.confirm($t('restore-confirm', { revision }))) return
+
+  processing.value = true
+  try {
+    await window.__composeAPI.recordRestoreRevision({
+      namespaceID: props.namespace.namespaceID,
+      moduleID: props.module.moduleID,
+      recordID: props.record.recordID,
+      revision,
+    })
+    toastSuccess($t('restore-done', { revision }))
+    window.dispatchEvent(new CustomEvent('refetch-records', { detail: { stayOnPage: true } }))
+  } catch (e) {
+    toastErrorHandler($t('errors.restore-failed'))(e)
+  } finally {
+    processing.value = false
+  }
 }
 
 function refresh() { loadedRevisions.value = true; loadRevisions() }

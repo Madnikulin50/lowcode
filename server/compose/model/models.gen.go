@@ -1193,6 +1193,112 @@ var RecordRevision = &dal.Model{
 	},
 }
 
+var ResourceVersion = &dal.Model{
+	Ident:        "compose_resource_versions",
+	ResourceType: types.ResourceVersionResourceType,
+
+	Attributes: dal.AttributeSet{
+		&dal.Attribute{
+			Ident: "ID",
+			Type:  &dal.TypeID{},
+			Store: &dal.CodecAlias{Ident: "id"},
+		},
+
+		&dal.Attribute{
+			Ident: "NamespaceID",
+			Type: &dal.TypeRef{
+				RefAttribute: "id",
+				RefModel: &dal.ModelRef{
+					ResourceType: "corteza::compose:namespace",
+				},
+			},
+			Store: &dal.CodecAlias{Ident: "rel_namespace"},
+		},
+
+		&dal.Attribute{
+			Ident: "ResourceType", Sortable: true,
+			Type:  &dal.TypeText{Length: 16},
+			Store: &dal.CodecAlias{Ident: "resource_type"},
+		},
+
+		&dal.Attribute{
+			Ident: "ResourceID",
+			Type:  &dal.TypeID{},
+			Store: &dal.CodecAlias{Ident: "resource_id"},
+		},
+
+		&dal.Attribute{
+			Ident: "Version", Sortable: true,
+			Type: &dal.TypeNumber{HasDefault: true,
+				DefaultValue: 0,
+				Precision:    -1, Scale: -1, Meta: map[string]interface{}{"rdbms:type": "integer"},
+			},
+			Store: &dal.CodecAlias{Ident: "version"},
+		},
+
+		&dal.Attribute{
+			Ident: "Snapshot",
+			Type:  &dal.TypeText{},
+			Store: &dal.CodecAlias{Ident: "snapshot"},
+		},
+
+		&dal.Attribute{
+			Ident: "Note",
+			Type:  &dal.TypeText{},
+			Store: &dal.CodecAlias{Ident: "note"},
+		},
+
+		&dal.Attribute{
+			Ident: "CreatedAt", Sortable: true,
+			Type: &dal.TypeTimestamp{
+				DefaultCurrentTimestamp: true, Timezone: true, Precision: -1,
+			},
+			Store: &dal.CodecAlias{Ident: "created_at"},
+		},
+
+		&dal.Attribute{
+			Ident: "CreatedBy",
+			Type: &dal.TypeRef{HasDefault: true,
+				DefaultValue: 0,
+
+				RefAttribute: "id",
+				RefModel: &dal.ModelRef{
+					ResourceType: "corteza::system:user",
+				},
+			},
+			Store: &dal.CodecAlias{Ident: "created_by"},
+		},
+	},
+
+	Indexes: dal.IndexSet{
+		&dal.Index{
+			Ident: "PRIMARY",
+			Type:  "BTREE",
+
+			Fields: []*dal.IndexField{
+				{
+					AttributeIdent: "ID",
+				},
+			},
+		},
+
+		&dal.Index{
+			Ident: "compose_resource_versions_resource",
+			Type:  "BTREE",
+
+			Fields: []*dal.IndexField{
+				{
+					AttributeIdent: "ResourceType",
+				},
+
+				{
+					AttributeIdent: "ResourceID",
+				},
+			},
+		},
+	},
+}
+
 func init() {
 	models = append(
 		models,
@@ -1205,5 +1311,6 @@ func init() {
 		PageLayout,
 		Record,
 		RecordRevision,
+		ResourceVersion,
 	)
 }

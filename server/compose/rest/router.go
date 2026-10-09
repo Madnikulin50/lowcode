@@ -57,6 +57,7 @@ func MountRoutes() func(r chi.Router) {
 			MountRuleChainAdminRoutes(r)
 			MountRiskAdminRoutes(r)
 			MountPageBlockTriggerRoutes(r)
+			MountResourceVersionRoutes(r)
 			MountStockReorderRoutes(r)
 			MountMCPHTTPBridge(r)
 			MountHealthRoutes(r)

@@ -160,6 +160,16 @@ func ActivatePrompt(ctx context.Context, handle string, version int) (*PromptBri
 	return &b, nil
 }
 
+// PrunePrompt drops all but the newest `keep` versions of a prompt (the active
+// one is always kept) and returns how many were removed.
+func PrunePrompt(ctx context.Context, handle string, keep int) (int, error) {
+	lib, err := promptLib()
+	if err != nil {
+		return 0, err
+	}
+	return lib.Prune(ctx, handle, keep)
+}
+
 func DeletePrompt(ctx context.Context, handle string) error {
 	lib, err := promptLib()
 	if err != nil {

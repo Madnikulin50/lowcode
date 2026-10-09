@@ -100,6 +100,22 @@ func (Skills) Activate(w http.ResponseWriter, r *http.Request) {
 	api.Send(w, r, s)
 }
 
+// Prune drops all but the newest `keep` versions; the active one stays.
+func (Skills) Prune(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Keep int `json:"keep"`
+	}
+	if !readJSON(w, r, &in) {
+		return
+	}
+	removed, err := service.PruneSkill(r.Context(), chi.URLParam(r, "handle"), in.Keep)
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+	api.Send(w, r, map[string]interface{}{"removed": removed})
+}
+
 func (Skills) Delete(w http.ResponseWriter, r *http.Request) {
 	if err := service.DeleteSkill(r.Context(), chi.URLParam(r, "handle")); err != nil {
 		api.Send(w, r, err)
@@ -170,6 +186,7 @@ func MountSkillRoutes(r chi.Router) {
 		r.Get("/{handle}/export", s.Export)
 		r.Post("/{handle}", s.Save)
 		r.Post("/{handle}/activate", s.Activate)
+		r.Post("/{handle}/prune", s.Prune)
 		r.Delete("/{handle}", s.Delete)
 	})
 }

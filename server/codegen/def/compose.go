@@ -363,6 +363,35 @@ var Compose = Component{
 			// (that only checks for model.attributes, not store).
 		}},
 
+		{Handle: "resource-version", Resource: Resource{
+			Parents: []ParentRef{{Handle: "namespace"}},
+			Model: Model{
+				OmitGetterSetter: true,
+				Ident:            "compose_resource_versions",
+				Attributes:       AttributesFromStruct(composetypes.ResourceVersion{}),
+				Indexes: map[string]Index{
+					"primary":  {Attribute: "id"},
+					"resource": {Fields: []IndexField{{Attribute: "resource_type"}, {Attribute: "resource_id"}}},
+				},
+			},
+			Features: Features{Labels: boolPtr(false)},
+			Filter: Filter{
+				Struct: map[string]Attribute{
+					"version_id":    {GoType: "[]uint64", Ident: "versionID", StoreIdent: "id"},
+					"namespace_id":  {},
+					"resource_type": {},
+					"resource_id":   {},
+				},
+				ByValue: []string{"version_id", "namespace_id", "resource_type", "resource_id"},
+			},
+			Store: &StoreConfig{
+				Ident: "composeResourceVersion",
+				Lookups: []StoreLookup{
+					{Fields: []string{"id"}, Description: "searches for a compose resource version by ID"},
+				},
+			},
+		}},
+
 		{Handle: "record-revision", Resource: Resource{
 			Model: Model{
 				OmitGetterSetter: true,

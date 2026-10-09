@@ -397,6 +397,19 @@ type (
 		DeletedAt   *time.Time                   `db:"deleted_at"`
 	}
 
+	// auxComposeResourceVersion is an auxiliary structure used for transporting to/from RDBMS store
+	auxComposeResourceVersion struct {
+		ID           uint64    `db:"id"`
+		NamespaceID  uint64    `db:"namespace_id"`
+		ResourceType string    `db:"resource_type"`
+		ResourceID   uint64    `db:"resource_id"`
+		Version      int       `db:"version"`
+		Snapshot     string    `db:"snapshot"`
+		Note         string    `db:"note"`
+		CreatedAt    time.Time `db:"created_at"`
+		CreatedBy    uint64    `db:"created_by"`
+	}
+
 	// auxCredential is an auxiliary structure used for transporting to/from RDBMS store
 	auxCredential struct {
 		ID          uint64     `db:"id"`
@@ -2141,6 +2154,56 @@ func (aux *auxComposePageLayout) scan(row scanner) error {
 		&aux.CreatedAt,
 		&aux.UpdatedAt,
 		&aux.DeletedAt,
+	)
+}
+
+// encodes ComposeResourceVersion to auxComposeResourceVersion
+//
+// This function is auto-generated
+func (aux *auxComposeResourceVersion) encode(res *composeType.ResourceVersion) (_ error) {
+	aux.ID = res.ID
+	aux.NamespaceID = res.NamespaceID
+	aux.ResourceType = res.ResourceType
+	aux.ResourceID = res.ResourceID
+	aux.Version = res.Version
+	aux.Snapshot = res.Snapshot
+	aux.Note = res.Note
+	aux.CreatedAt = res.CreatedAt
+	aux.CreatedBy = res.CreatedBy
+	return
+}
+
+// decodes ComposeResourceVersion from auxComposeResourceVersion
+//
+// This function is auto-generated
+func (aux auxComposeResourceVersion) decode() (res *composeType.ResourceVersion, _ error) {
+	res = new(composeType.ResourceVersion)
+	res.ID = aux.ID
+	res.NamespaceID = aux.NamespaceID
+	res.ResourceType = aux.ResourceType
+	res.ResourceID = aux.ResourceID
+	res.Version = aux.Version
+	res.Snapshot = aux.Snapshot
+	res.Note = aux.Note
+	res.CreatedAt = aux.CreatedAt
+	res.CreatedBy = aux.CreatedBy
+	return
+}
+
+// scans row and fills auxComposeResourceVersion fields
+//
+// This function is auto-generated
+func (aux *auxComposeResourceVersion) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.NamespaceID,
+		&aux.ResourceType,
+		&aux.ResourceID,
+		&aux.Version,
+		&aux.Snapshot,
+		&aux.Note,
+		&aux.CreatedAt,
+		&aux.CreatedBy,
 	)
 }
 

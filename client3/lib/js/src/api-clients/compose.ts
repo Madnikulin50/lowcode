@@ -3346,6 +3346,100 @@ export default class Compose {
     return `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}/revisions`
   }
 
+  // Restore record to a revision
+  async recordRestoreRevision (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+      revision,
+    } = (a as KV) || {}
+    if (!namespaceID) {
+      throw Error('field namespaceID is empty')
+    }
+    if (!moduleID) {
+      throw Error('field moduleID is empty')
+    }
+    if (!recordID) {
+      throw Error('field recordID is empty')
+    }
+    if (!revision) {
+      throw Error('field revision is empty')
+    }
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: this.recordRestoreRevisionEndpoint({
+        namespaceID, moduleID, recordID, revision,
+      }),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  recordRestoreRevisionEndpoint (a: KV): string {
+    const {
+      namespaceID,
+      moduleID,
+      recordID,
+      revision,
+    } = a || {}
+    return `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}/revisions/${revision}/restore`
+  }
+
+  // ---- Version history of pages, modules and charts (hand-written; the
+  // endpoints are in server/compose/rest/resource_versions.go, not in rest.yaml)
+
+  resourceVersionsEndpoint (a: KV): string {
+    const { namespaceID, kind, resourceID } = a || {}
+    return `/namespace/${namespaceID}/${kind}/${resourceID}/versions`
+  }
+
+  private resourceVersionArgs (a: KV): { namespaceID: string; kind: string; resourceID: string } {
+    const { namespaceID, kind, resourceID } = (a as { namespaceID?: string; kind?: string; resourceID?: string }) || {}
+    if (!namespaceID) throw Error('field namespaceID is empty')
+    if (!kind || !['page', 'module', 'chart'].includes(kind)) throw Error('field kind must be page, module or chart')
+    if (!resourceID) throw Error('field resourceID is empty')
+    return { namespaceID, kind, resourceID }
+  }
+
+  // List versions of a page, module or chart (newest first, without snapshots)
+  async resourceVersions (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: this.resourceVersionsEndpoint(this.resourceVersionArgs(a)),
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  // One version with its snapshot
+  async resourceVersion (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const args = this.resourceVersionArgs(a)
+    if (!a.version) throw Error('field version is empty')
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'get',
+      url: `${this.resourceVersionsEndpoint(args)}/${a.version}`,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
+  // Apply a version to the resource (saved as a new version)
+  async resourceVersionRestore (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const args = this.resourceVersionArgs(a)
+    if (!a.version) throw Error('field version is empty')
+    const cfg: AxiosRequestConfig = {
+      ...extra,
+      method: 'post',
+      url: `${this.resourceVersionsEndpoint(args)}/${a.version}/restore`,
+    }
+
+    return this.api().request(cfg).then(result => stdResolve(result))
+  }
+
   // List records for data privacy
   async dataPrivacyRecordList (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
     const {

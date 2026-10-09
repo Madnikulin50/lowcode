@@ -729,6 +729,10 @@
         :hide-clone="!isEdit"
         :hide-save="hideSave"
         :disable-save="disableSave"
+        history-kind="module"
+        :history-namespace-id="isEdit ? namespace.namespaceID : ''"
+        :history-resource-id="isEdit ? module.moduleID : ''"
+        @restored="reloadAfterRestore"
         @delete="handleDelete"
         @save="handleSave()"
         @clone="handleClone"
@@ -901,6 +905,11 @@ const disableSave = computed(() => !module.value || [fieldsValid.value, nameStat
 const hideSave = computed(() => isEdit.value && module.value && !module.value.canUpdateModule)
 
 const isEdit = computed(() => module.value && module.value.moduleID !== NoID)
+
+// a restored version replaces what is on screen; reload to show it
+function reloadAfterRestore () {
+  window.location.reload()
+}
 
 const allRecords = computed(() => ({ name: 'admin.modules.record.list', params: { moduleID: props.moduleID } }))
 

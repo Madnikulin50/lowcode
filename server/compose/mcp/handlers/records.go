@@ -9,6 +9,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/revisions"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -64,6 +65,72 @@ func initModuleRecords(ctx context.Context, s *server.MCPServer) {
 			mcp.WithString("namespaceID", mcp.Description("Namespace ID"), mcp.Required()),
 			mcp.WithString("recordID", mcp.Description("Record ID"), mcp.Required()),
 		), makeDeleteRecordHandler(m.NamespaceID, m.ID))
+
+		if m.Config.RecordRevisions.Enabled {
+			s.AddTool(mcp.NewTool("module_"+recordID+"_record_revisions",
+				mcp.WithDescription(fmt.Sprintf("List revisions (change history, newest first) of a record in module '%s'", m.Name)),
+				mcp.WithString("namespaceID", mcp.Description("Namespace ID"), mcp.Required()),
+				mcp.WithString("recordID", mcp.Description("Record ID"), mcp.Required()),
+			), makeRecordRevisionsHandler(m.NamespaceID, m.ID))
+
+			s.AddTool(mcp.NewTool("module_"+recordID+"_restore_record",
+				mcp.WithDescription(fmt.Sprintf("Restore a record in module '%s' to the values it had at a revision; saved as a new revision", m.Name)),
+				mcp.WithString("namespaceID", mcp.Description("Namespace ID"), mcp.Required()),
+				mcp.WithString("recordID", mcp.Description("Record ID"), mcp.Required()),
+				mcp.WithString("revision", mcp.Description("Revision number to restore (see the record_revisions tool)"), mcp.Required()),
+			), makeRestoreRecordHandler(m.NamespaceID, m.ID))
+		}
+	}
+}
+
+func makeRecordRevisionsHandler(nsID, modID uint64) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		ctx = withAuth(ctx)
+		recordID := parseUint64(argsMap(request), "recordID")
+
+		iter, err := service.DefaultRecord.SearchRevisions(ctx, nsID, modID, recordID, filter.Sorting{})
+		if err != nil {
+			return errorResult(err), nil
+		}
+		defer iter.Close()
+
+		var out []*revisions.Revision
+		for iter.Next(ctx) {
+			rev := &revisions.Revision{}
+			if err = iter.Scan(rev); err != nil {
+				return errorResult(err), nil
+			}
+			out = append(out, rev)
+		}
+		if err = iter.Err(); err != nil {
+			return errorResult(err), nil
+		}
+		if len(out) == 0 {
+			return textResult("No revisions found"), nil
+		}
+		return jsonResult(out), nil
+	}
+}
+
+func makeRestoreRecordHandler(nsID, modID uint64) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		ctx = withAuth(ctx)
+		args := argsMap(request)
+		recordID := parseUint64(args, "recordID")
+		revision := int(parseUint64(args, "revision"))
+
+		restored, errs, err := service.DefaultRecord.RestoreRevision(ctx, nsID, modID, recordID, revision)
+		if err != nil {
+			return errorResult(err), nil
+		}
+		if errs != nil && len(errs.Set) > 0 {
+			var msgs []string
+			for _, e := range errs.Set {
+				msgs = append(msgs, fmt.Sprintf("%s: %s", e.Kind, e.Message))
+			}
+			return textResult("Validation errors: " + strings.Join(msgs, "; ")), nil
+		}
+		return jsonResult(restored), nil
 	}
 }
 

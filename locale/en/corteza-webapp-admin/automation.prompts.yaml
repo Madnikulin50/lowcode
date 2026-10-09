@@ -49,3 +49,11 @@ eval:
   running: running...
   response: Answer
   tokens: tokens
+versionTools:
+  compare: "Compare v{{ version }} with the previous version"
+  hideCompare: "Hide comparison"
+  keep: "Keep newest"
+  prune: "Delete older versions"
+  pruneConfirm: "Delete all versions except the newest {{ keep }} and the active one? Steps pinned to a deleted version (@…@N) will stop working."
+  pruned: "Deleted versions: {{ count }}"
+  noChanges: "v{{ version }} has no changes against v{{ previous }}"

@@ -103,6 +103,9 @@ type (
 		// optional composePageLayout filter function called after the generated function
 		ComposePageLayout func(*Store, composeType.PageLayoutFilter) ([]goqu.Expression, composeType.PageLayoutFilter, error)
 
+		// optional composeResourceVersion filter function called after the generated function
+		ComposeResourceVersion func(*Store, composeType.ResourceVersionFilter) ([]goqu.Expression, composeType.ResourceVersionFilter, error)
+
 		// optional credential filter function called after the generated function
 		Credential func(*Store, systemType.CredentialFilter) ([]goqu.Expression, systemType.CredentialFilter, error)
 
@@ -893,6 +896,34 @@ func ComposePageLayoutFilter(d drivers.Dialect, f composeType.PageLayoutFilter) 
 		ee = append(ee, goqu.Or(
 			goqu.C("handle").ILike("%"+f.Query+"%"),
 		))
+	}
+
+	return ee, f, err
+}
+
+// ComposeResourceVersionFilter returns logical expressions
+//
+// This function is called from Store.QueryComposeResourceVersions() and can be extended
+// by setting Store.Filters.ComposeResourceVersion. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func ComposeResourceVersionFilter(d drivers.Dialect, f composeType.ResourceVersionFilter) (ee []goqu.Expression, _ composeType.ResourceVersionFilter, err error) {
+
+	if len(f.VersionID) > 0 {
+		ee = append(ee, goqu.C("id").In(f.VersionID))
+	}
+
+	if f.NamespaceID > 0 {
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
+	}
+
+	if val := strings.TrimSpace(f.ResourceType); len(val) > 0 {
+		ee = append(ee, goqu.C("resource_type").Eq(f.ResourceType))
+	}
+
+	if f.ResourceID > 0 {
+		ee = append(ee, goqu.C("resource_id").Eq(f.ResourceID))
 	}
 
 	return ee, f, err

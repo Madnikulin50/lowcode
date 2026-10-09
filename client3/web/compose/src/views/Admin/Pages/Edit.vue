@@ -1237,6 +1237,10 @@
         :hide-clone="hideClone"
         :hide-save="hideSave"
         :disable-save="disableSave"
+        history-kind="page"
+        :history-namespace-id="page.pageID && page.pageID !== NoID ? namespace.namespaceID : ''"
+        :history-resource-id="page.pageID && page.pageID !== NoID ? page.pageID : ''"
+        @restored="reloadAfterRestore"
         :processing="processing"
         :processing-save="processingSave"
         :processing-save-and-close="processingSaveAndClose"
@@ -1337,6 +1341,11 @@ const processingClone = ref(false)
 const processingDelete = ref(false)
 const loading = ref(false)
 const page = ref(new compose.Page())
+
+// a restored version replaces what is on screen; reload to show it
+function reloadAfterRestore () {
+  window.location.reload()
+}
 const initialPageState = ref(new compose.Page())
 const showIconModal = ref(false)
 const attachments = ref([])
