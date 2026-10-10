@@ -1969,6 +1969,102 @@ var (
 		}
 	}
 
+	// automationWorkflowVersionTable represents automationWorkflowVersions store table
+	//
+	// This value is auto-generated
+	automationWorkflowVersionTable = goqu.T("automation_workflow_versions")
+
+	// automationWorkflowVersionSelectQuery assembles select query for fetching automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"workflow_id",
+			"version",
+			"snapshot",
+			"note",
+			"created_at",
+			"created_by",
+		).From(automationWorkflowVersionTable)
+	}
+
+	// automationWorkflowVersionInsertQuery assembles query inserting automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionInsertQuery = func(d goqu.DialectWrapper, res *automationType.WorkflowVersion) *goqu.InsertDataset {
+		return d.Insert(automationWorkflowVersionTable).
+			Rows(goqu.Record{
+				"id":          res.ID,
+				"workflow_id": res.WorkflowID,
+				"version":     res.Version,
+				"snapshot":    res.Snapshot,
+				"note":        res.Note,
+				"created_at":  res.CreatedAt,
+				"created_by":  res.CreatedBy,
+			})
+	}
+
+	// automationWorkflowVersionUpsertQuery assembles (insert+on-conflict) query for replacing automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionUpsertQuery = func(d goqu.DialectWrapper, res *automationType.WorkflowVersion) *goqu.InsertDataset {
+		var target = `,id`
+
+		return automationWorkflowVersionInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"workflow_id": res.WorkflowID,
+						"version":     res.Version,
+						"snapshot":    res.Snapshot,
+						"note":        res.Note,
+						"created_at":  res.CreatedAt,
+						"created_by":  res.CreatedBy,
+					},
+				),
+			)
+	}
+
+	// automationWorkflowVersionUpdateQuery assembles query for updating automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionUpdateQuery = func(d goqu.DialectWrapper, res *automationType.WorkflowVersion) *goqu.UpdateDataset {
+		return d.Update(automationWorkflowVersionTable).
+			Set(goqu.Record{
+				"workflow_id": res.WorkflowID,
+				"version":     res.Version,
+				"snapshot":    res.Snapshot,
+				"note":        res.Note,
+				"created_at":  res.CreatedAt,
+				"created_by":  res.CreatedBy,
+			}).
+			Where(automationWorkflowVersionPrimaryKeys(res))
+	}
+
+	// automationWorkflowVersionDeleteQuery assembles delete query for removing automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(automationWorkflowVersionTable).Where(ee...)
+	}
+
+	// automationWorkflowVersionDeleteQuery assembles delete query for removing automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(automationWorkflowVersionTable)
+	}
+
+	// automationWorkflowVersionPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	automationWorkflowVersionPrimaryKeys = func(res *automationType.WorkflowVersion) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
 	// composeAttachmentTable represents composeAttachments store table
 	//
 	// This value is auto-generated
@@ -1987,6 +2083,8 @@ var (
 			"name",
 			"meta",
 			"rel_namespace",
+			"version_group",
+			"version",
 			"created_at",
 			"updated_at",
 			"deleted_at",
@@ -2007,6 +2105,8 @@ var (
 				"name":          res.Name,
 				"meta":          res.Meta,
 				"rel_namespace": res.NamespaceID,
+				"version_group": res.VersionGroup,
+				"version":       res.Version,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
@@ -2030,6 +2130,8 @@ var (
 						"name":          res.Name,
 						"meta":          res.Meta,
 						"rel_namespace": res.NamespaceID,
+						"version_group": res.VersionGroup,
+						"version":       res.Version,
 						"created_at":    res.CreatedAt,
 						"updated_at":    res.UpdatedAt,
 						"deleted_at":    res.DeletedAt,
@@ -2051,6 +2153,8 @@ var (
 				"name":          res.Name,
 				"meta":          res.Meta,
 				"rel_namespace": res.NamespaceID,
+				"version_group": res.VersionGroup,
+				"version":       res.Version,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
@@ -2760,6 +2864,110 @@ var (
 	//
 	// This function is auto-generated
 	composePageLayoutPrimaryKeys = func(res *composeType.PageLayout) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// composeRecordDraftTable represents composeRecordDrafts store table
+	//
+	// This value is auto-generated
+	composeRecordDraftTable = goqu.T("compose_record_drafts")
+
+	// composeRecordDraftSelectQuery assembles select query for fetching composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_user",
+			"change_id",
+			"rel_namespace",
+			"module_id",
+			"record_id",
+			"payload",
+			"created_at",
+			"updated_at",
+		).From(composeRecordDraftTable)
+	}
+
+	// composeRecordDraftInsertQuery assembles query inserting composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftInsertQuery = func(d goqu.DialectWrapper, res *composeType.RecordDraft) *goqu.InsertDataset {
+		return d.Insert(composeRecordDraftTable).
+			Rows(goqu.Record{
+				"id":            res.ID,
+				"rel_user":      res.UserID,
+				"change_id":     res.ChangeID,
+				"rel_namespace": res.NamespaceID,
+				"module_id":     res.ModuleID,
+				"record_id":     res.RecordID,
+				"payload":       res.Payload,
+				"created_at":    res.CreatedAt,
+				"updated_at":    res.UpdatedAt,
+			})
+	}
+
+	// composeRecordDraftUpsertQuery assembles (insert+on-conflict) query for replacing composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftUpsertQuery = func(d goqu.DialectWrapper, res *composeType.RecordDraft) *goqu.InsertDataset {
+		var target = `,id`
+
+		return composeRecordDraftInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_user":      res.UserID,
+						"change_id":     res.ChangeID,
+						"rel_namespace": res.NamespaceID,
+						"module_id":     res.ModuleID,
+						"record_id":     res.RecordID,
+						"payload":       res.Payload,
+						"created_at":    res.CreatedAt,
+						"updated_at":    res.UpdatedAt,
+					},
+				),
+			)
+	}
+
+	// composeRecordDraftUpdateQuery assembles query for updating composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftUpdateQuery = func(d goqu.DialectWrapper, res *composeType.RecordDraft) *goqu.UpdateDataset {
+		return d.Update(composeRecordDraftTable).
+			Set(goqu.Record{
+				"rel_user":      res.UserID,
+				"change_id":     res.ChangeID,
+				"rel_namespace": res.NamespaceID,
+				"module_id":     res.ModuleID,
+				"record_id":     res.RecordID,
+				"payload":       res.Payload,
+				"created_at":    res.CreatedAt,
+				"updated_at":    res.UpdatedAt,
+			}).
+			Where(composeRecordDraftPrimaryKeys(res))
+	}
+
+	// composeRecordDraftDeleteQuery assembles delete query for removing composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(composeRecordDraftTable).Where(ee...)
+	}
+
+	// composeRecordDraftDeleteQuery assembles delete query for removing composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(composeRecordDraftTable)
+	}
+
+	// composeRecordDraftPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	composeRecordDraftPrimaryKeys = func(res *composeType.RecordDraft) goqu.Ex {
 		return goqu.Ex{
 			"id": res.ID,
 		}

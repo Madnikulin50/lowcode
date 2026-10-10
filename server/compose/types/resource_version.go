@@ -49,4 +49,8 @@ const (
 	ResourceVersionPage   = "page"
 	ResourceVersionModule = "module"
 	ResourceVersionChart  = "chart"
+
+	// rule chains are kept here too: the resource ID is the chain's row ID and
+	// the namespace is the chain's (0 when it has none)
+	ResourceVersionRuleChain = "rulechain"
 )

@@ -37,6 +37,10 @@ interface FileOptions extends Options {
   enableDownload?: boolean;
   multiDelimiter: string;
   enableWebcam?: boolean
+  // Every file of the field can get new versions (kept as a history).
+  versioning?: boolean
+  // How many versions of a file are kept; 0 = all of them.
+  maxVersions?: number
 }
 
 const defaults = (): Readonly<FileOptions> => Object.freeze({
@@ -60,6 +64,8 @@ const defaults = (): Readonly<FileOptions> => Object.freeze({
   multiDelimiter: '\n',
   enableWebcam: false,
   storageDriver: '',
+  versioning: false,
+  maxVersions: 0,
 })
 
 export class ModuleFieldFile extends ModuleField {
@@ -76,8 +82,8 @@ export class ModuleFieldFile extends ModuleField {
     if (!o) return
     super.applyOptions(o)
 
-    Apply(this.options, o, Number, 'maxSize')
-    Apply(this.options, o, Boolean, 'allowImages', 'allowDocuments', 'inline', 'hideFileName', 'clickToView', 'enableDownload', 'enableWebcam')
+    Apply(this.options, o, Number, 'maxSize', 'maxVersions')
+    Apply(this.options, o, Boolean, 'allowImages', 'allowDocuments', 'inline', 'hideFileName', 'clickToView', 'enableDownload', 'enableWebcam', 'versioning')
     Apply(this.options, o, String, 'mimetypes', 'height', 'width', 'maxHeight', 'maxWidth', 'borderRadius', 'margin', 'backgroundColor')
 
     // Legacy

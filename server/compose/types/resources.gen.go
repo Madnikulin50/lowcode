@@ -16,6 +16,7 @@ const (
 	PageLayoutResourceType      = "corteza::compose:page-layout"
 	RecordResourceType          = "corteza::compose:record"
 	ResourceVersionResourceType = "corteza::compose:resource-version"
+	RecordDraftResourceType     = "corteza::compose:record-draft"
 	RecordRevisionResourceType  = "corteza::compose:record-revision"
 	ComponentResourceType       = "corteza::compose"
 )

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -44,6 +45,12 @@ func initPrompts(ctx context.Context, s *server.MCPServer) {
 		mcp.WithString("handle", mcp.Description("Prompt handle"), mcp.Required()),
 		mcp.WithNumber("version", mcp.Description("Version number"), mcp.Required()),
 	), handlePromptActivate)
+
+	s.AddTool(mcp.NewTool("prompt_prune",
+		mcp.WithDescription("Delete the oldest versions of a prompt, keeping the newest N and the active one. A step pinned to a deleted version (@prompt:x@3) stops working."),
+		mcp.WithString("handle", mcp.Description("Prompt handle"), mcp.Required()),
+		mcp.WithNumber("keep", mcp.Description("How many of the newest versions to keep (at least 1)"), mcp.Required()),
+	), handlePromptPrune)
 
 	s.AddTool(mcp.NewTool("prompt_delete",
 		mcp.WithDescription("Delete a prompt with all its versions. Steps that refer to it will fail until it is saved again."),
@@ -128,6 +135,17 @@ func handlePromptActivate(ctx context.Context, request mcp.CallToolRequest) (*mc
 		return errorResult(err), nil
 	}
 	return jsonResult(p), nil
+}
+
+func handlePromptPrune(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ctx = withAuth(ctx)
+	args := argsMap(request)
+
+	removed, err := automationService.PrunePrompt(ctx, strings.TrimSpace(getString(args, "handle")), getInt(args, "keep"))
+	if err != nil {
+		return errorResult(err), nil
+	}
+	return textResult(fmt.Sprintf("Deleted versions: %d", removed)), nil
 }
 
 func handlePromptDelete(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {

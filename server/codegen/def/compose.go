@@ -23,14 +23,15 @@ var Compose = Component{
 			Features: Features{Labels: boolPtr(false)},
 			Filter: Filter{
 				Struct: map[string]Attribute{
-					"kind":         {},
-					"namespace_id": {},
-					"page_id":      {GoType: "uint64", Ident: "pageID"},
-					"record_id":    {GoType: "uint64", Ident: "recordID"},
-					"module_id":    {GoType: "uint64", Ident: "moduleID"},
-					"field_name":   {},
+					"kind":          {},
+					"namespace_id":  {},
+					"page_id":       {GoType: "uint64", Ident: "pageID"},
+					"record_id":     {GoType: "uint64", Ident: "recordID"},
+					"module_id":     {GoType: "uint64", Ident: "moduleID"},
+					"field_name":    {},
+					"version_group": {GoType: "uint64", Ident: "versionGroup"},
 				},
-				ByValue: []string{"kind", "namespace_id"},
+				ByValue: []string{"kind", "namespace_id", "version_group"},
 			},
 			// attachment.cue defines no rbac block -> excluded from
 			// rbac/types_rbac generation.
@@ -388,6 +389,36 @@ var Compose = Component{
 				Ident: "composeResourceVersion",
 				Lookups: []StoreLookup{
 					{Fields: []string{"id"}, Description: "searches for a compose resource version by ID"},
+				},
+			},
+		}},
+
+		{Handle: "record-draft", Resource: Resource{
+			Parents: []ParentRef{{Handle: "namespace"}},
+			Model: Model{
+				OmitGetterSetter: true,
+				Ident:            "compose_record_drafts",
+				Attributes:       AttributesFromStruct(composetypes.RecordDraft{}),
+				Indexes: map[string]Index{
+					"primary": {Attribute: "id"},
+					"author":  {Fields: []IndexField{{Attribute: "user_id"}, {Attribute: "change_id"}}},
+				},
+			},
+			Features: Features{Labels: boolPtr(false)},
+			Filter: Filter{
+				Struct: map[string]Attribute{
+					"user_id":      {GoType: "uint64", Ident: "userID"},
+					"change_id":    {},
+					"namespace_id": {},
+					"module_id":    {GoType: "uint64", Ident: "moduleID"},
+					"record_id":    {GoType: "uint64", Ident: "recordID"},
+				},
+				ByValue: []string{"user_id", "change_id", "namespace_id", "module_id", "record_id"},
+			},
+			Store: &StoreConfig{
+				Ident: "composeRecordDraft",
+				Lookups: []StoreLookup{
+					{Fields: []string{"id"}, Description: "searches for a record draft by ID"},
 				},
 			},
 		}},

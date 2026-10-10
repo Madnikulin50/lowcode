@@ -127,9 +127,17 @@ func (p *RuleChainDBPersist) upsert(ctx context.Context, chain *rulesgo.Chain) e
 		if row.NamespaceID == 0 {
 			row.NamespaceID = existing.NamespaceID
 		}
-		return rdbms.UpdateRuleChain(ctx, rs, row)
+		if err = rdbms.UpdateRuleChain(ctx, rs, row); err != nil {
+			return err
+		}
+		recordResourceVersion(ctx, DefaultStore, types.ResourceVersionRuleChain, row.NamespaceID, row.ID)
+		return nil
 	}
 	row.ID = id.Next()
 	row.CreatedAt = time.Now().UTC()
-	return rdbms.CreateRuleChain(ctx, rs, row)
+	if err = rdbms.CreateRuleChain(ctx, rs, row); err != nil {
+		return err
+	}
+	recordResourceVersion(ctx, DefaultStore, types.ResourceVersionRuleChain, row.NamespaceID, row.ID)
+	return nil
 }

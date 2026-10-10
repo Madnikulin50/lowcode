@@ -61,6 +61,7 @@ var (
 		fix_2024_09_05_addRelResourceRoleMembershipColumn,
 		fix_2024_09_05_addUserGroupReferenceToUser,
 		fix_2026_10_00_extendAutomationPromptVersionsForSkills,
+		fix_2026_10_01_extendComposeAttachmentsForVersions,
 	}
 )
 
@@ -1359,4 +1360,28 @@ func fix_2026_10_00_extendAutomationPromptVersionsForSkills(ctx context.Context,
 		}
 	}
 	return
+}
+
+// File versioning: attachments of a file that has versions share a version
+// group and are numbered. The table already has rows; both columns default to
+// 0, which means "not versioned".
+func fix_2026_10_01_extendComposeAttachmentsForVersions(ctx context.Context, s *Store) (err error) {
+	const table = "compose_attachment"
+
+	err = addColumn(ctx, s, table, &dal.Attribute{
+		Ident: "VersionGroup",
+		// an ID column cannot be added with a default (no dialect writes one),
+		// so existing rows get 0 through a bigint number column
+		Type:  &dal.TypeNumber{HasDefault: true, DefaultValue: 0, Precision: -1, Scale: -1, Meta: map[string]interface{}{"rdbms:type": "bigint"}},
+		Store: &dal.CodecAlias{Ident: "version_group"},
+	})
+	if err != nil {
+		return
+	}
+
+	return addColumn(ctx, s, table, &dal.Attribute{
+		Ident: "Version",
+		Type:  &dal.TypeNumber{HasDefault: true, DefaultValue: 0, Precision: -1, Scale: -1, Meta: map[string]interface{}{"rdbms:type": "integer"}},
+		Store: &dal.CodecAlias{Ident: "version"},
+	})
 }

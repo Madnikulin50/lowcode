@@ -8,6 +8,19 @@
     :preview-options="options"
     style="min-width: 15rem;"
   />
+  <div
+    v-if="versioned"
+    class="mt-1 d-flex flex-column gap-1"
+  >
+    <FileVersions
+      v-for="id in versionedIDs"
+      :key="id"
+      :namespace="namespace"
+      :field="field"
+      :record="record"
+      :attachment-id="id"
+    />
+  </div>
 </template>
 
 <script setup>
@@ -15,6 +28,7 @@ import { computed } from 'vue'
 import { useViewerBase } from './useViewerBase'
 import { compose } from 'corteza-lib/js/dist'
 import ListLoader from 'corteza-webapp-compose/src/components/Public/Page/Attachment/ListLoader'
+import FileVersions from '../FileVersions.vue'
 
 const props = defineProps({
   namespace: { type: compose.Namespace, required: true },
@@ -42,4 +56,8 @@ function attachmentIDs (raw) {
 }
 
 const attachmentSet = computed(() => attachmentIDs(value.value))
+
+// the history is read-only here; it needs a saved record
+const versionedIDs = computed(() => attachmentSet.value.filter(v => typeof v === 'string'))
+const versioned = computed(() => !!props.field.options.versioning && !props.valueOnly && !!props.record?.recordID && props.record.recordID !== '0' && versionedIDs.value.length > 0)
 </script>

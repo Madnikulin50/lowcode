@@ -262,6 +262,58 @@ func (r *PromptVersion) SetValue(name string, pos uint, value any) (err error) {
 	return nil
 }
 
+func (r WorkflowVersion) GetID() uint64 { return r.ID }
+
+func (r *WorkflowVersion) GetValue(name string, pos uint) (any, error) {
+	if r == nil {
+		return nil, nil
+	}
+
+	switch name {
+	case "createdAt", "CreatedAt":
+		return r.CreatedAt, nil
+	case "createdBy", "CreatedBy":
+		return r.CreatedBy, nil
+	case "id", "ID":
+		return r.ID, nil
+	case "note", "Note":
+		return r.Note, nil
+	case "snapshot", "Snapshot":
+		return r.Snapshot, nil
+	case "version", "Version":
+		return r.Version, nil
+	case "workflowID", "WorkflowID":
+		return r.WorkflowID, nil
+
+	}
+	return nil, nil
+}
+
+func (r *WorkflowVersion) SetValue(name string, pos uint, value any) (err error) {
+	if r == nil {
+		r = &WorkflowVersion{}
+	}
+
+	switch name {
+	case "createdAt", "CreatedAt":
+		return cast2.Time(value, &r.CreatedAt)
+	case "createdBy", "CreatedBy":
+		return cast2.Uint64(value, &r.CreatedBy)
+	case "id", "ID":
+		return cast2.Uint64(value, &r.ID)
+	case "note", "Note":
+		return cast2.String(value, &r.Note)
+	case "snapshot", "Snapshot":
+		return cast2.String(value, &r.Snapshot)
+	case "version", "Version":
+		return cast2.Int(value, &r.Version)
+	case "workflowID", "WorkflowID":
+		return cast2.Uint64(value, &r.WorkflowID)
+
+	}
+	return nil
+}
+
 func (r Trigger) GetID() uint64 { return r.ID }
 
 func (r *Trigger) GetValue(name string, pos uint) (any, error) {

@@ -158,6 +158,13 @@
             @submit="saveWorkflow()"
           />
 
+          <workflow-versions
+            v-if="workflow.workflowID"
+            :workflow-id="workflow.workflowID"
+            :unsaved-changes="changeDetected"
+            @restored="reloadAfterRestore"
+          />
+
           <div class="d-flex align-items-center bg-white border border-secondary py-2 px-3 ms-auto gap-1 rounded" style="z-index: 1;">
             {{ getZoomPercent }}
             <button
@@ -405,6 +412,7 @@ import { getConstraintNameLabel } from '../lib/constraint'
 import { camelToTitle } from '../lib/string'
 import Configurator from '../components/Configurator'
 import WorkflowConfigurator from '../components/Configurator/Workflow'
+import WorkflowVersions from '../components/WorkflowVersions.vue'
 import Help from '../components/Help'
 import VueJsonEditor from 'v-jsoneditor'
 import { NoID } from 'corteza-lib/js/dist'
@@ -412,6 +420,11 @@ import { components } from 'corteza-lib/vue/dist'
 import { useLabelsStore } from '../store'
 
 const { t } = useI18n()
+
+// a restored version replaces the definition on screen; reload to show it
+function reloadAfterRestore () {
+  window.location.reload()
+}
 const labelsStore = useLabelsStore()
 const $AutomationAPI = inject('automationAPI', {})
 const $ComposeAPI = inject('composeAPI', {})

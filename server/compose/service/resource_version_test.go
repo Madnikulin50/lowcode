@@ -6,6 +6,7 @@ import (
 
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms"
 	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/sqlite"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -89,5 +90,33 @@ func TestResourceVersions(t *testing.T) {
 
 	t.Run("unknown resource type", func(t *testing.T) {
 		req.Error(saveResourceVersion(ctx, s, "widget", ns.ID, ch.ID, ""))
+	})
+
+	t.Run("rule chain versions", func(t *testing.T) {
+		rs := rdbmsStore(s)
+		req.NotNil(rs)
+
+		rc := &types.RuleChain{ID: nextID(), Handle: "rc_test", Name: "First", EntryNode: "n1",
+			Nodes: []byte(`[{"id":"n1","type":"condition"}]`), Edges: []byte(`[]`), CreatedAt: *now()}
+		req.NoError(rdbms.CreateRuleChain(ctx, rs, rc))
+
+		req.NoError(saveResourceVersion(ctx, s, types.ResourceVersionRuleChain, 0, rc.ID, ""))
+		rc.Name = "Second"
+		req.NoError(rdbms.UpdateRuleChain(ctx, rs, rc))
+		req.NoError(saveResourceVersion(ctx, s, types.ResourceVersionRuleChain, 0, rc.ID, ""))
+
+		set, _, err := store.SearchComposeResourceVersions(ctx, s, types.ResourceVersionFilter{
+			ResourceType: types.ResourceVersionRuleChain, ResourceID: rc.ID,
+		})
+		req.NoError(err)
+		req.Len(set, 2)
+
+		svc := resourceVersion{store: s}
+		v, err := svc.Get(ctx, 0, types.ResourceVersionRuleChain, rc.ID, 1)
+		req.NoError(err)
+		req.Contains(v.Snapshot, `"First"`)
+
+		_, err = svc.Restore(ctx, 0, types.ResourceVersionRuleChain, rc.ID, 1)
+		req.Error(err, "restored through the rule chain endpoint")
 	})
 }

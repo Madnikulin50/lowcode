@@ -499,6 +499,74 @@ func AttachmentErrNotFound(mm ...*attachmentActionProps) *errors.Error {
 	return e
 }
 
+// AttachmentErrVersioningDisabled returns "compose:attachment.versioningDisabled" as *errors.Error
+//
+// This function is auto-generated.
+func AttachmentErrVersioningDisabled(mm ...*attachmentActionProps) *errors.Error {
+	var p = &attachmentActionProps{}
+	if len(mm) > 0 {
+		p = mm[0]
+	}
+
+	var e = errors.New(
+		errors.KindInternal,
+
+		p.Format("versioning is not enabled for this field", nil),
+
+		errors.Meta("type", "versioningDisabled"),
+		errors.Meta("resource", "compose:attachment"),
+
+		// action log entry; no formatting, it will be applied inside recordAction fn.
+		errors.Meta(attachmentLogMetaKey{}, "could not add a version; versioning is disabled on the field"),
+		errors.Meta(attachmentPropsMetaKey{}, p),
+
+		// translation namespace & key
+		errors.Meta(locale.ErrorMetaNamespace{}, "compose"),
+		errors.Meta(locale.ErrorMetaKey{}, "attachment.errors.versioningDisabled"),
+
+		errors.StackSkip(1),
+	)
+
+	if len(mm) > 0 {
+	}
+
+	return e
+}
+
+// AttachmentErrNotAFileOfTheField returns "compose:attachment.notAFileOfTheField" as *errors.Error
+//
+// This function is auto-generated.
+func AttachmentErrNotAFileOfTheField(mm ...*attachmentActionProps) *errors.Error {
+	var p = &attachmentActionProps{}
+	if len(mm) > 0 {
+		p = mm[0]
+	}
+
+	var e = errors.New(
+		errors.KindInternal,
+
+		p.Format("the file is not a value of this field of the record", nil),
+
+		errors.Meta("type", "notAFileOfTheField"),
+		errors.Meta("resource", "compose:attachment"),
+
+		// action log entry; no formatting, it will be applied inside recordAction fn.
+		errors.Meta(attachmentLogMetaKey{}, "could not use the file; it is not a value of the record field"),
+		errors.Meta(attachmentPropsMetaKey{}, p),
+
+		// translation namespace & key
+		errors.Meta(locale.ErrorMetaNamespace{}, "compose"),
+		errors.Meta(locale.ErrorMetaKey{}, "attachment.errors.notAFileOfTheField"),
+
+		errors.StackSkip(1),
+	)
+
+	if len(mm) > 0 {
+	}
+
+	return e
+}
+
 // AttachmentErrNamespaceNotFound returns "compose:attachment.namespaceNotFound" as *errors.Error
 //
 // This function is auto-generated.

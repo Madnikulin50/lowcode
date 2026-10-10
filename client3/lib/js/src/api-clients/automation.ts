@@ -1390,6 +1390,28 @@ export default class Automation {
     }).then(result => stdResolve(result))
   }
 
+  // Version history of a workflow (hand-written): { set }, one version with its
+  // snapshot, and restore (saves the restored definition as a new version)
+  async workflowVersions (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { workflowID } = (a as KV) || {}
+    if (!workflowID) throw Error('field workflowID is empty')
+    return this.api().request({ method: 'get', url: `/workflows/${workflowID}/versions`, ...extra }).then(result => stdResolve(result))
+  }
+
+  async workflowVersion (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { workflowID, version } = (a as KV) || {}
+    if (!workflowID) throw Error('field workflowID is empty')
+    if (!version) throw Error('field version is empty')
+    return this.api().request({ method: 'get', url: `/workflows/${workflowID}/versions/${version}`, ...extra }).then(result => stdResolve(result))
+  }
+
+  async workflowVersionRestore (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { workflowID, version } = (a as KV) || {}
+    if (!workflowID) throw Error('field workflowID is empty')
+    if (!version) throw Error('field version is empty')
+    return this.api().request({ method: 'post', url: `/workflows/${workflowID}/versions/${version}/restore`, ...extra }).then(result => stdResolve(result))
+  }
+
   async promptDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
     const { handle } = (a as KV) || {}
     return this.api().request({ method: 'delete', url: `/prompts/${encodeURIComponent(String(handle))}`, ...extra }).then(result => stdResolve(result))

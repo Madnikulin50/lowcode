@@ -43,6 +43,13 @@
                   <font-awesome-icon :icon="['fas', 'list']" class="me-1" />
                   {{ $t('rulechain.runs.title') }}
                 </button>
+                <c-version-history
+                  v-if="isEdit"
+                  kind="rulechain"
+                  compact
+                  :adapter="versionAdapter"
+                  @restored="reloadAfterRestore"
+                />
                 <div class="d-flex ms-auto gap-2">
                   <button
                     v-if="!isGraphMode"
@@ -678,6 +685,7 @@ import { Modal } from 'bootstrap'
 import { NoID } from 'corteza-lib/js/dist'
 import { composables } from 'corteza-lib/vue/dist'
 import EditorToolbar from 'corteza-webapp-compose/src/components/Admin/EditorToolbar'
+import CVersionHistory from 'corteza-webapp-compose/src/components/Admin/Versions/CVersionHistory.vue'
 import RuleChainGraph from 'corteza-webapp-compose/src/components/Admin/RuleChains/RuleChainGraph'
 import RuleChainNodeConfigEditor from 'corteza-webapp-compose/src/components/Admin/RuleChains/RuleChainNodeConfigEditor'
 import RuleChainAiTrace from 'corteza-webapp-compose/src/components/Admin/RuleChains/RuleChainAiTrace'
@@ -702,6 +710,18 @@ const props = defineProps({
 })
 
 const isEdit = computed(() => props.chainID && props.chainID !== NoID)
+
+// version history of the chain (see components/Admin/Versions/CVersionHistory.vue)
+const versionAdapter = {
+  list: () => $ComposeAPI.ruleChainVersions({ chainID: props.chainID }),
+  get: version => $ComposeAPI.ruleChainVersion({ chainID: props.chainID, version }),
+  restore: version => $ComposeAPI.ruleChainVersionRestore({ chainID: props.chainID, version }),
+}
+
+// a restored version replaces what is on screen; reload to show it
+function reloadAfterRestore () {
+  window.location.reload()
+}
 
 const loading = ref(false)
 const processing = ref(false)

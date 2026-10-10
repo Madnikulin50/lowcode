@@ -38,6 +38,10 @@ func (r *Attachment) GetValue(name string, pos uint) (any, error) {
 		return r.UpdatedAt, nil
 	case "url", "Url":
 		return r.Url, nil
+	case "version", "Version":
+		return r.Version, nil
+	case "versionGroup", "VersionGroup":
+		return r.VersionGroup, nil
 
 	}
 	return nil, nil
@@ -69,6 +73,10 @@ func (r *Attachment) SetValue(name string, pos uint, value any) (err error) {
 		return cast2.TimePtr(value, &r.UpdatedAt)
 	case "url", "Url":
 		return cast2.String(value, &r.Url)
+	case "version", "Version":
+		return cast2.Int(value, &r.Version)
+	case "versionGroup", "VersionGroup":
+		return cast2.Uint64(value, &r.VersionGroup)
 
 	}
 	return nil

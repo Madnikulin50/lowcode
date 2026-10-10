@@ -51,11 +51,12 @@ var (
 
 	DefaultActionlog actionlog.Recorder
 
-	DefaultUser         userService
-	DefaultWorkflow     *workflow
-	DefaultTrigger      *trigger
-	DefaultSession      *session
-	DefaultWorkflowChat *workflowChat
+	DefaultUser             userService
+	DefaultWorkflow         *workflow
+	DefaultWorkflowVersions *workflowVersion
+	DefaultTrigger          *trigger
+	DefaultSession          *session
+	DefaultWorkflowChat     *workflowChat
 
 	// wrapper around time.Now() that will aid service testing
 	now = func() *time.Time {
@@ -102,6 +103,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 	DefaultWorkflowChat = WorkflowChat()
 
 	DefaultPrompts = PromptLibrary(DefaultStore, DefaultAccessControl)
+	DefaultWorkflowVersions = WorkflowVersion(DefaultStore, DefaultAccessControl)
 	aiagent.SetPromptResolver(DefaultPrompts.resolve)
 
 	// skills: the library (database) first, then files from AI_SKILLS_DIR

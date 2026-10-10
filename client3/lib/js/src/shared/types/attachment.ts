@@ -20,6 +20,10 @@ export class Attachment {
   public download = '';
   public meta: Meta = {};
 
+  // set when the file has versions (see the versioning option of File fields)
+  public version = 0;
+  public versionGroup = NoID;
+
   public createdAt?: Date = undefined;
   public updatedAt?: Date = undefined;
   public deletedAt?: Date = undefined;
@@ -30,7 +34,8 @@ export class Attachment {
   }
 
   apply (i?: PartialAttachment): void {
-    Apply(this, i, CortezaID, 'attachmentID', 'ownerID')
+    Apply(this, i, CortezaID, 'attachmentID', 'ownerID', 'versionGroup')
+    Apply(this, i, Number, 'version')
     Apply(this, i, String, 'name', 'url', 'previewUrl')
 
     if (IsOf(i, 'meta')) {

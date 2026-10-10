@@ -756,6 +756,53 @@ func (ctrl *Record) Upload(ctx context.Context, r *request.RecordUpload) (interf
 	return makeAttachmentPayload(ctx, a, err)
 }
 
+func (ctrl *Record) UploadVersion(ctx context.Context, r *request.RecordUploadVersion) (interface{}, error) {
+	file, err := r.Upload.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	a, err := ctrl.attachment.CreateRecordAttachmentVersion(
+		ctx,
+		r.NamespaceID,
+		r.Upload.Filename,
+		r.Upload.Size,
+		file,
+		r.ModuleID,
+		r.RecordID,
+		r.FieldName,
+		r.AttachmentID,
+	)
+
+	return makeAttachmentPayload(ctx, a, err)
+}
+
+func (ctrl *Record) AttachmentVersions(ctx context.Context, r *request.RecordAttachmentVersions) (interface{}, error) {
+	vv, err := ctrl.attachment.ListVersions(ctx, r.NamespaceID, r.ModuleID, r.RecordID, r.FieldName, r.AttachmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	out := struct {
+		Set     []*attachmentPayload `json:"set"`
+		Current []string             `json:"current"`
+	}{
+		Set:     make([]*attachmentPayload, len(vv.Set)),
+		Current: make([]string, len(vv.Current)),
+	}
+
+	for i, a := range vv.Set {
+		out.Set[i], _ = makeAttachmentPayload(ctx, a, nil)
+	}
+	for i, id := range vv.Current {
+		out.Current[i] = strconv.FormatUint(id, 10)
+	}
+
+	return out, nil
+}
+
 func (ctrl *Record) ImportInit(ctx context.Context, r *request.RecordImportInit) (interface{}, error) {
 	if _, err := ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
 		return nil, err

@@ -21,6 +21,13 @@ type (
 
 		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
 
+		// Versioning of files in File fields that have it enabled: all
+		// versions of one file share VersionGroup (the ID of the first one)
+		// and are numbered from 1 in Version. Both are 0 for a file that
+		// has no versions.
+		VersionGroup uint64 `json:"versionGroup,string,omitempty" schema:"col=version_group,dal=id"`
+		Version      int    `json:"version,omitempty" schema:"col=version,dal=number:default0,sortable"`
+
 		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
 		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
 		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
@@ -35,6 +42,9 @@ type (
 		ModuleID    uint64 `json:"moduleID,string,omitempty"`
 		FieldName   string `json:"fieldName,omitempty"`
 		Filter      string `json:"filter"`
+
+		// VersionGroup selects the versions of one file
+		VersionGroup uint64 `json:"versionGroup,string,omitempty"`
 
 		Deleted filter.State `json:"deleted"`
 

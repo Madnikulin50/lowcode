@@ -40,6 +40,22 @@
       mode="list"
       class="mt-3"
     />
+    <div
+      v-if="versioned"
+      class="mt-2 d-flex flex-column gap-1"
+    >
+      <FileVersions
+        v-for="id in attachmentSet"
+        :key="id"
+        :namespace="namespace"
+        :field="field"
+        :record="record"
+        :attachment-id="id"
+        :accept="mimetypes.join(',')"
+        editable
+        @replace="replaceAttachment"
+      />
+    </div>
     <FieldErrors :errors="errors" />
     </div>
   </div>
@@ -54,6 +70,8 @@ import CUploader from 'corteza-lib/vue/src/components/uploader/CUploader.vue'
 import ListLoader from 'corteza-webapp-compose/src/components/Public/Page/Attachment/ListLoader'
 import { NoID } from 'corteza-lib/js/dist'
 import FieldErrors from '../errors'
+import FileVersions from '../FileVersions.vue'
+import { replaceValue } from 'corteza-webapp-compose/src/lib/file-versions'
 
 const props = defineProps({
   namespace: { type: Object, required: true },
@@ -154,6 +172,13 @@ function appendAttachment (payload = {}) {
   } else {
     value.value = attachmentID
   }
+}
+
+// versions need a saved record: the server checks the file against it
+const versioned = computed(() => !!props.field.options.versioning && props.record && props.record.recordID !== NoID && attachmentSet.value.length > 0)
+
+function replaceAttachment ({ from, to }) {
+  attachmentSet.value = replaceValue(attachmentSet.value, from, to)
 }
 
 function uploadWebcamImage (file) {

@@ -11,6 +11,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
 	"github.com/madnikulin50/lowcode/server/pkg/id"
 	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms"
 	"go.uber.org/zap"
 )
 
@@ -160,6 +161,17 @@ func takeSnapshot(ctx context.Context, s store.Storer, resourceType string, name
 			return nil, err
 		}
 		return json.Marshal(c)
+
+	case types.ResourceVersionRuleChain:
+		rs := rdbmsStore(s)
+		if rs == nil {
+			return nil, errors.Internal("rule chain store not ready")
+		}
+		rc, err := rdbms.LookupRuleChainByID(ctx, rs, resourceID)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(rc)
 	}
 
 	return nil, errors.InvalidData("unknown resource type %q", resourceType)
@@ -204,11 +216,52 @@ func (svc resourceVersion) authorize(ctx context.Context, namespaceID uint64, re
 			return ChartErrNotAllowedToRead()
 		}
 
+	case types.ResourceVersionRuleChain:
+		// rule chains have no permissions of their own: the caller is already
+		// authenticated by the router, as for the rule chain admin API
+		rs := rdbmsStore(svc.store)
+		if rs == nil {
+			return errors.Internal("rule chain store not ready")
+		}
+		if _, err := rdbms.LookupRuleChainByID(ctx, rs, resourceID); err != nil {
+			return err
+		}
+
 	default:
 		return errors.InvalidData("unknown resource type %q", resourceType)
 	}
 
 	return nil
+}
+
+// RuleChainVersionRef finds the row of a rule chain by its handle (the "id" the
+// engine and the API use): the pair to pass as namespace and resource ID.
+func RuleChainVersionRef(ctx context.Context, handle string) (namespaceID, resourceID uint64, err error) {
+	rs := rdbmsStore(DefaultStore)
+	if rs == nil {
+		return 0, 0, errors.Internal("rule chain store not ready")
+	}
+	rc, err := rdbms.LookupRuleChainByHandle(ctx, rs, handle)
+	if err != nil {
+		return 0, 0, err
+	}
+	return rc.NamespaceID, rc.ID, nil
+}
+
+// RuleChainFromVersion decodes the snapshot of a rule chain version. Applying
+// it to the running engine is up to the caller (the engine lives in the REST
+// layer), which then persists the chain, saving a new version.
+func RuleChainFromVersion(ctx context.Context, namespaceID, resourceID uint64, version int) (*types.RuleChain, error) {
+	v, err := DefaultResourceVersion.Get(ctx, namespaceID, types.ResourceVersionRuleChain, resourceID, version)
+	if err != nil {
+		return nil, err
+	}
+
+	rc := &types.RuleChain{}
+	if err = json.Unmarshal([]byte(v.Snapshot), rc); err != nil {
+		return nil, fmt.Errorf("version %d has a damaged snapshot: %v", version, err)
+	}
+	return rc, nil
 }
 
 // List returns the versions of a resource, newest first, without snapshots
@@ -268,6 +321,10 @@ func (svc resourceVersion) Restore(ctx context.Context, namespaceID uint64, reso
 	v, err := svc.Get(ctx, namespaceID, resourceType, resourceID, version)
 	if err != nil {
 		return nil, err
+	}
+
+	if resourceType == types.ResourceVersionRuleChain {
+		return nil, errors.InvalidData("a rule chain is restored through the rule chain endpoint")
 	}
 
 	switch resourceType {

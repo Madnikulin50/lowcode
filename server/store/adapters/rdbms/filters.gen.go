@@ -82,6 +82,9 @@ type (
 		// optional automationWorkflow filter function called after the generated function
 		AutomationWorkflow func(*Store, automationType.WorkflowFilter) ([]goqu.Expression, automationType.WorkflowFilter, error)
 
+		// optional automationWorkflowVersion filter function called after the generated function
+		AutomationWorkflowVersion func(*Store, automationType.WorkflowVersionFilter) ([]goqu.Expression, automationType.WorkflowVersionFilter, error)
+
 		// optional composeAttachment filter function called after the generated function
 		ComposeAttachment func(*Store, composeType.AttachmentFilter) ([]goqu.Expression, composeType.AttachmentFilter, error)
 
@@ -102,6 +105,9 @@ type (
 
 		// optional composePageLayout filter function called after the generated function
 		ComposePageLayout func(*Store, composeType.PageLayoutFilter) ([]goqu.Expression, composeType.PageLayoutFilter, error)
+
+		// optional composeRecordDraft filter function called after the generated function
+		ComposeRecordDraft func(*Store, composeType.RecordDraftFilter) ([]goqu.Expression, composeType.RecordDraftFilter, error)
 
 		// optional composeResourceVersion filter function called after the generated function
 		ComposeResourceVersion func(*Store, composeType.ResourceVersionFilter) ([]goqu.Expression, composeType.ResourceVersionFilter, error)
@@ -654,6 +660,26 @@ func AutomationWorkflowFilter(d drivers.Dialect, f automationType.WorkflowFilter
 	return ee, f, err
 }
 
+// AutomationWorkflowVersionFilter returns logical expressions
+//
+// This function is called from Store.QueryAutomationWorkflowVersions() and can be extended
+// by setting Store.Filters.AutomationWorkflowVersion. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func AutomationWorkflowVersionFilter(d drivers.Dialect, f automationType.WorkflowVersionFilter) (ee []goqu.Expression, _ automationType.WorkflowVersionFilter, err error) {
+
+	if len(f.VersionID) > 0 {
+		ee = append(ee, goqu.C("id").In(f.VersionID))
+	}
+
+	if f.WorkflowID > 0 {
+		ee = append(ee, goqu.C("workflow_id").Eq(f.WorkflowID))
+	}
+
+	return ee, f, err
+}
+
 // ComposeAttachmentFilter returns logical expressions
 //
 // This function is called from Store.QueryComposeAttachments() and can be extended
@@ -669,6 +695,10 @@ func ComposeAttachmentFilter(d drivers.Dialect, f composeType.AttachmentFilter) 
 
 	if f.NamespaceID > 0 {
 		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
+	}
+
+	if f.VersionGroup > 0 {
+		ee = append(ee, goqu.C("version_group").Eq(f.VersionGroup))
 	}
 
 	return ee, f, err
@@ -896,6 +926,38 @@ func ComposePageLayoutFilter(d drivers.Dialect, f composeType.PageLayoutFilter) 
 		ee = append(ee, goqu.Or(
 			goqu.C("handle").ILike("%"+f.Query+"%"),
 		))
+	}
+
+	return ee, f, err
+}
+
+// ComposeRecordDraftFilter returns logical expressions
+//
+// This function is called from Store.QueryComposeRecordDrafts() and can be extended
+// by setting Store.Filters.ComposeRecordDraft. Extension is called after all expressions
+// are generated and can choose to ignore or alter them.
+//
+// This function is auto-generated
+func ComposeRecordDraftFilter(d drivers.Dialect, f composeType.RecordDraftFilter) (ee []goqu.Expression, _ composeType.RecordDraftFilter, err error) {
+
+	if f.UserID > 0 {
+		ee = append(ee, goqu.C("rel_user").Eq(f.UserID))
+	}
+
+	if val := strings.TrimSpace(f.ChangeID); len(val) > 0 {
+		ee = append(ee, goqu.C("change_id").Eq(f.ChangeID))
+	}
+
+	if f.NamespaceID > 0 {
+		ee = append(ee, goqu.C("rel_namespace").Eq(f.NamespaceID))
+	}
+
+	if f.ModuleID > 0 {
+		ee = append(ee, goqu.C("module_id").Eq(f.ModuleID))
+	}
+
+	if f.RecordID > 0 {
+		ee = append(ee, goqu.C("record_id").Eq(f.RecordID))
 	}
 
 	return ee, f, err

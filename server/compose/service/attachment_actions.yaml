@@ -57,6 +57,14 @@ errors:
     message: "attachment not found"
     severity: warning
 
+  - error: versioningDisabled
+    message: "versioning is not enabled for this field"
+    log: "could not add a version; versioning is disabled on the field"
+
+  - error: notAFileOfTheField
+    message: "the file is not a value of this field of the record"
+    log: "could not use the file; it is not a value of the record field"
+
   - error: namespaceNotFound
     message: "namespace not found"
     severity: warning

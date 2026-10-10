@@ -45,6 +45,8 @@
 ** [Compose Configuration](modules/integrator-guide/compose-configuration/index.md)
 *** [Page Layouts](modules/integrator-guide/compose-configuration/page-layouts.md)
 *** [Record Revisions](modules/integrator-guide/compose-configuration/record-revisions.md)
+*** [Resource versions](modules/integrator-guide/compose-configuration/resource-versions.md)
+*** [Record Drafts](modules/integrator-guide/compose-configuration/record-drafts.md)
 *** [Record Storage](modules/integrator-guide/compose-configuration/record-storage.md)
 *** [Record Modal](modules/integrator-guide/compose-configuration/record-modal.md)
 *** [Import Export](modules/integrator-guide/compose-configuration/import-export.md)

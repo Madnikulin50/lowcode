@@ -425,6 +425,99 @@ func parseFlexibleUint64(raw json.RawMessage) uint64 {
 	return 0
 }
 
+// Versions lists the saved versions of a chain, newest first
+func (a RuleChainAdmin) Versions(w http.ResponseWriter, r *http.Request) {
+	ns, id, err := service.RuleChainVersionRef(r.Context(), chi.URLParam(r, "chainID"))
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+
+	set, err := service.DefaultResourceVersion.List(r.Context(), ns, types.ResourceVersionRuleChain, id)
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+
+	api.Send(w, r, map[string]interface{}{"set": set})
+}
+
+// Version returns one version with its snapshot
+func (a RuleChainAdmin) Version(w http.ResponseWriter, r *http.Request) {
+	ns, id, err := service.RuleChainVersionRef(r.Context(), chi.URLParam(r, "chainID"))
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+
+	version, err := strconv.Atoi(chi.URLParam(r, "version"))
+	if err != nil {
+		api.Send(w, r, fmt.Errorf("invalid version"))
+		return
+	}
+
+	v, err := service.DefaultResourceVersion.Get(r.Context(), ns, types.ResourceVersionRuleChain, id, version)
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+
+	api.Send(w, r, v)
+}
+
+// RestoreVersion puts a saved version back as the chain; saving it makes it
+// the newest version
+func (a RuleChainAdmin) RestoreVersion(w http.ResponseWriter, r *http.Request) {
+	chainID := chi.URLParam(r, "chainID")
+
+	engine := handlers.RuleEngine
+	if engine == nil {
+		api.Send(w, r, fmt.Errorf("engine not initialized"))
+		return
+	}
+	if engine.Chain(chainID) == nil {
+		api.Send(w, r, fmt.Errorf("chain not found"))
+		return
+	}
+
+	ns, id, err := service.RuleChainVersionRef(r.Context(), chainID)
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+
+	version, err := strconv.Atoi(chi.URLParam(r, "version"))
+	if err != nil {
+		api.Send(w, r, fmt.Errorf("invalid version"))
+		return
+	}
+
+	rc, err := service.RuleChainFromVersion(r.Context(), ns, id, version)
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+
+	chain, err := rc.ToEngine()
+	if err != nil {
+		api.Send(w, r, err)
+		return
+	}
+	chain.ID = chainID
+
+	engine.RegisterChain(chain)
+	if err = engine.PersistChain(chain); err != nil {
+		api.Send(w, r, fmt.Errorf("persist failed: %w", err))
+		return
+	}
+
+	api.Send(w, r, map[string]interface{}{
+		"restored": version,
+		"chainID":  chainID,
+		"chain":    chain,
+	})
+}
+
 func MountRuleChainAdminRoutes(r chi.Router) {
 	// the MCP tools that create chains check them against this catalog
 	handlers.SetRuleChainCatalog(ruleChainSchemas)
@@ -441,6 +534,9 @@ func MountRuleChainAdminRoutes(r chi.Router) {
 		r.Put("/{chainID}", admin.Update)
 		r.Delete("/{chainID}", admin.Delete)
 		r.Post("/{chainID}/test", admin.Test)
+		r.Get("/{chainID}/versions", admin.Versions)
+		r.Get("/{chainID}/versions/{version}", admin.Version)
+		r.Post("/{chainID}/versions/{version}/restore", admin.RestoreVersion)
 		r.Get("/{chainID}/runs", admin.ListRuns)
 		r.Get("/{chainID}/runs/{runID}", admin.GetRun)
 	})

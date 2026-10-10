@@ -24,6 +24,7 @@ func MountRoutes() func(r chi.Router) {
 			MountBPMNRoutes(r)
 			MountAIStepRoutes(r)
 			MountPromptRoutes(r)
+			MountWorkflowVersionRoutes(r)
 			MountSkillRoutes(r)
 		})
 	}

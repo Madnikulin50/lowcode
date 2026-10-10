@@ -267,6 +267,10 @@ func (svc *workflow) Create(ctx context.Context, new *types.Workflow) (wf *types
 		return
 	})
 
+	if err == nil {
+		recordWorkflowVersion(ctx, svc.store, wf)
+	}
+
 	return wf, svc.recordAction(ctx, wap, WorkflowActionCreate, err)
 }
 
@@ -376,6 +380,12 @@ func (svc *workflow) updater(ctx context.Context, workflowID uint64, action func
 
 		return
 	})
+
+	// a change of the definition is a new version; a delete or an undelete
+	// is not (the definition stays as it was)
+	if err == nil && res != nil && res.DeletedAt == nil && changes&workflowChanged > 0 {
+		recordWorkflowVersion(ctx, svc.store, res)
+	}
 
 	return res, svc.recordAction(ctx, aProps, action, err)
 }

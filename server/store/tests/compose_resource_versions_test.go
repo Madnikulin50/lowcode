@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	automationTypes "github.com/madnikulin50/lowcode/server/automation/types"
 	"testing"
 
 	"github.com/madnikulin50/lowcode/server/compose/types"
@@ -72,6 +73,36 @@ func testComposeResourceVersions(t *testing.T, s store.ComposeResourceVersions) 
 		req.NoError(s.DeleteComposeResourceVersionByID(ctx, v.ID))
 
 		_, err := s.LookupComposeResourceVersionByID(ctx, v.ID)
+		req.ErrorIs(err, store.ErrNotFound)
+	})
+}
+
+func testAutomationWorkflowVersions(t *testing.T, s store.AutomationWorkflowVersions) {
+	var ctx = context.Background()
+
+	t.Run("search by workflow and lookup", func(t *testing.T) {
+		req := require.New(t)
+		req.NoError(s.TruncateAutomationWorkflowVersions(ctx))
+
+		mk := func(wf uint64, v int) *automationTypes.WorkflowVersion {
+			return &automationTypes.WorkflowVersion{ID: id.Next(), WorkflowID: wf, Version: v, Snapshot: `{"steps":[]}`, CreatedAt: *now()}
+		}
+		first := mk(5, 1)
+		for _, v := range []*automationTypes.WorkflowVersion{first, mk(5, 2), mk(6, 1)} {
+			req.NoError(s.CreateAutomationWorkflowVersion(ctx, v))
+		}
+
+		set, _, err := s.SearchAutomationWorkflowVersions(ctx, automationTypes.WorkflowVersionFilter{WorkflowID: 5})
+		req.NoError(err)
+		req.Len(set, 2)
+
+		got, err := s.LookupAutomationWorkflowVersionByID(ctx, first.ID)
+		req.NoError(err)
+		req.Equal(`{"steps":[]}`, got.Snapshot)
+		req.Equal(uint64(5), got.WorkflowID)
+
+		req.NoError(s.DeleteAutomationWorkflowVersionByID(ctx, first.ID))
+		_, err = s.LookupAutomationWorkflowVersionByID(ctx, first.ID)
 		req.ErrorIs(err, store.ErrNotFound)
 	})
 }

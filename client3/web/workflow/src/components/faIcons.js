@@ -1,5 +1,6 @@
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
+  faClock,
   faCheck,
   faCheckDouble,
   faTimes,
@@ -66,6 +67,7 @@ import {
 } from '@fortawesome/free-regular-svg-icons'
 
 library.add(
+  faClock,
   faEdit,
   faTrashAlt,
   faCheck,

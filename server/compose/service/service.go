@@ -94,6 +94,7 @@ var (
 	DefaultModule              ModuleService
 	DefaultChart               *chart
 	DefaultResourceVersion     ResourceVersionService
+	DefaultRecordDraft         RecordDraftService
 	DefaultPage                *page
 	DefaultChat                *chatService
 	DefaultPageLayout          *pageLayout
@@ -239,6 +240,7 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, c Config) 
 	DefaultPageLayout = PageLayout()
 	DefaultChart = Chart()
 	DefaultResourceVersion = ResourceVersion()
+	DefaultRecordDraft = RecordDraft()
 	DefaultChat = Chat()
 	RegisterComposeToolKits(aiagent.DefaultCatalog())
 	aiagent.DefaultCatalog().StartRemoteDiscovery()

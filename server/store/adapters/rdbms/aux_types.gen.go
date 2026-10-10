@@ -289,19 +289,32 @@ type (
 		DeletedBy    uint64                          `db:"deleted_by"`
 	}
 
+	// auxAutomationWorkflowVersion is an auxiliary structure used for transporting to/from RDBMS store
+	auxAutomationWorkflowVersion struct {
+		ID         uint64    `db:"id"`
+		WorkflowID uint64    `db:"workflow_id"`
+		Version    int       `db:"version"`
+		Snapshot   string    `db:"snapshot"`
+		Note       string    `db:"note"`
+		CreatedAt  time.Time `db:"created_at"`
+		CreatedBy  uint64    `db:"created_by"`
+	}
+
 	// auxComposeAttachment is an auxiliary structure used for transporting to/from RDBMS store
 	auxComposeAttachment struct {
-		ID          uint64                     `db:"id"`
-		OwnerID     uint64                     `db:"owner_id"`
-		Kind        string                     `db:"kind"`
-		Url         string                     `db:"url"`
-		PreviewUrl  string                     `db:"preview_url"`
-		Name        string                     `db:"name"`
-		Meta        composeType.AttachmentMeta `db:"meta"`
-		NamespaceID uint64                     `db:"namespace_id"`
-		CreatedAt   time.Time                  `db:"created_at"`
-		UpdatedAt   *time.Time                 `db:"updated_at"`
-		DeletedAt   *time.Time                 `db:"deleted_at"`
+		ID           uint64                     `db:"id"`
+		OwnerID      uint64                     `db:"owner_id"`
+		Kind         string                     `db:"kind"`
+		Url          string                     `db:"url"`
+		PreviewUrl   string                     `db:"preview_url"`
+		Name         string                     `db:"name"`
+		Meta         composeType.AttachmentMeta `db:"meta"`
+		NamespaceID  uint64                     `db:"namespace_id"`
+		VersionGroup uint64                     `db:"version_group"`
+		Version      int                        `db:"version"`
+		CreatedAt    time.Time                  `db:"created_at"`
+		UpdatedAt    *time.Time                 `db:"updated_at"`
+		DeletedAt    *time.Time                 `db:"deleted_at"`
 	}
 
 	// auxComposeChart is an auxiliary structure used for transporting to/from RDBMS store
@@ -395,6 +408,19 @@ type (
 		CreatedAt   time.Time                    `db:"created_at"`
 		UpdatedAt   *time.Time                   `db:"updated_at"`
 		DeletedAt   *time.Time                   `db:"deleted_at"`
+	}
+
+	// auxComposeRecordDraft is an auxiliary structure used for transporting to/from RDBMS store
+	auxComposeRecordDraft struct {
+		ID          uint64     `db:"id"`
+		UserID      uint64     `db:"user_id"`
+		ChangeID    string     `db:"change_id"`
+		NamespaceID uint64     `db:"namespace_id"`
+		ModuleID    uint64     `db:"module_id"`
+		RecordID    uint64     `db:"record_id"`
+		Payload     string     `db:"payload"`
+		CreatedAt   time.Time  `db:"created_at"`
+		UpdatedAt   *time.Time `db:"updated_at"`
 	}
 
 	// auxComposeResourceVersion is an auxiliary structure used for transporting to/from RDBMS store
@@ -1756,6 +1782,50 @@ func (aux *auxAutomationWorkflow) scan(row scanner) error {
 	)
 }
 
+// encodes AutomationWorkflowVersion to auxAutomationWorkflowVersion
+//
+// This function is auto-generated
+func (aux *auxAutomationWorkflowVersion) encode(res *automationType.WorkflowVersion) (_ error) {
+	aux.ID = res.ID
+	aux.WorkflowID = res.WorkflowID
+	aux.Version = res.Version
+	aux.Snapshot = res.Snapshot
+	aux.Note = res.Note
+	aux.CreatedAt = res.CreatedAt
+	aux.CreatedBy = res.CreatedBy
+	return
+}
+
+// decodes AutomationWorkflowVersion from auxAutomationWorkflowVersion
+//
+// This function is auto-generated
+func (aux auxAutomationWorkflowVersion) decode() (res *automationType.WorkflowVersion, _ error) {
+	res = new(automationType.WorkflowVersion)
+	res.ID = aux.ID
+	res.WorkflowID = aux.WorkflowID
+	res.Version = aux.Version
+	res.Snapshot = aux.Snapshot
+	res.Note = aux.Note
+	res.CreatedAt = aux.CreatedAt
+	res.CreatedBy = aux.CreatedBy
+	return
+}
+
+// scans row and fills auxAutomationWorkflowVersion fields
+//
+// This function is auto-generated
+func (aux *auxAutomationWorkflowVersion) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.WorkflowID,
+		&aux.Version,
+		&aux.Snapshot,
+		&aux.Note,
+		&aux.CreatedAt,
+		&aux.CreatedBy,
+	)
+}
+
 // encodes ComposeAttachment to auxComposeAttachment
 //
 // This function is auto-generated
@@ -1768,6 +1838,8 @@ func (aux *auxComposeAttachment) encode(res *composeType.Attachment) (_ error) {
 	aux.Name = res.Name
 	aux.Meta = res.Meta
 	aux.NamespaceID = res.NamespaceID
+	aux.VersionGroup = res.VersionGroup
+	aux.Version = res.Version
 	aux.CreatedAt = res.CreatedAt
 	aux.UpdatedAt = res.UpdatedAt
 	aux.DeletedAt = res.DeletedAt
@@ -1787,6 +1859,8 @@ func (aux auxComposeAttachment) decode() (res *composeType.Attachment, _ error) 
 	res.Name = aux.Name
 	res.Meta = aux.Meta
 	res.NamespaceID = aux.NamespaceID
+	res.VersionGroup = aux.VersionGroup
+	res.Version = aux.Version
 	res.CreatedAt = aux.CreatedAt
 	res.UpdatedAt = aux.UpdatedAt
 	res.DeletedAt = aux.DeletedAt
@@ -1806,6 +1880,8 @@ func (aux *auxComposeAttachment) scan(row scanner) error {
 		&aux.Name,
 		&aux.Meta,
 		&aux.NamespaceID,
+		&aux.VersionGroup,
+		&aux.Version,
 		&aux.CreatedAt,
 		&aux.UpdatedAt,
 		&aux.DeletedAt,
@@ -2154,6 +2230,56 @@ func (aux *auxComposePageLayout) scan(row scanner) error {
 		&aux.CreatedAt,
 		&aux.UpdatedAt,
 		&aux.DeletedAt,
+	)
+}
+
+// encodes ComposeRecordDraft to auxComposeRecordDraft
+//
+// This function is auto-generated
+func (aux *auxComposeRecordDraft) encode(res *composeType.RecordDraft) (_ error) {
+	aux.ID = res.ID
+	aux.UserID = res.UserID
+	aux.ChangeID = res.ChangeID
+	aux.NamespaceID = res.NamespaceID
+	aux.ModuleID = res.ModuleID
+	aux.RecordID = res.RecordID
+	aux.Payload = res.Payload
+	aux.CreatedAt = res.CreatedAt
+	aux.UpdatedAt = res.UpdatedAt
+	return
+}
+
+// decodes ComposeRecordDraft from auxComposeRecordDraft
+//
+// This function is auto-generated
+func (aux auxComposeRecordDraft) decode() (res *composeType.RecordDraft, _ error) {
+	res = new(composeType.RecordDraft)
+	res.ID = aux.ID
+	res.UserID = aux.UserID
+	res.ChangeID = aux.ChangeID
+	res.NamespaceID = aux.NamespaceID
+	res.ModuleID = aux.ModuleID
+	res.RecordID = aux.RecordID
+	res.Payload = aux.Payload
+	res.CreatedAt = aux.CreatedAt
+	res.UpdatedAt = aux.UpdatedAt
+	return
+}
+
+// scans row and fills auxComposeRecordDraft fields
+//
+// This function is auto-generated
+func (aux *auxComposeRecordDraft) scan(row scanner) error {
+	return row.Scan(
+		&aux.ID,
+		&aux.UserID,
+		&aux.ChangeID,
+		&aux.NamespaceID,
+		&aux.ModuleID,
+		&aux.RecordID,
+		&aux.Payload,
+		&aux.CreatedAt,
+		&aux.UpdatedAt,
 	)
 }
 

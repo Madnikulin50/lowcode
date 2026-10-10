@@ -77,6 +77,21 @@ var Attachment = &dal.Model{
 		},
 
 		&dal.Attribute{
+			Ident: "VersionGroup",
+			Type:  &dal.TypeID{},
+			Store: &dal.CodecAlias{Ident: "version_group"},
+		},
+
+		&dal.Attribute{
+			Ident: "Version", Sortable: true,
+			Type: &dal.TypeNumber{HasDefault: true,
+				DefaultValue: 0,
+				Precision:    -1, Scale: -1, Meta: map[string]interface{}{"rdbms:type": "integer"},
+			},
+			Store: &dal.CodecAlias{Ident: "version"},
+		},
+
+		&dal.Attribute{
 			Ident: "CreatedAt", Sortable: true,
 			Type: &dal.TypeTimestamp{
 				DefaultCurrentTimestamp: true, Timezone: true, Precision: -1,
@@ -1116,6 +1131,109 @@ var Record = &dal.Model{
 	},
 }
 
+var RecordDraft = &dal.Model{
+	Ident:        "compose_record_drafts",
+	ResourceType: types.RecordDraftResourceType,
+
+	Attributes: dal.AttributeSet{
+		&dal.Attribute{
+			Ident: "ID",
+			Type:  &dal.TypeID{},
+			Store: &dal.CodecAlias{Ident: "id"},
+		},
+
+		&dal.Attribute{
+			Ident: "UserID",
+			Type: &dal.TypeRef{HasDefault: true,
+				DefaultValue: 0,
+
+				RefAttribute: "id",
+				RefModel: &dal.ModelRef{
+					ResourceType: "corteza::system:user",
+				},
+			},
+			Store: &dal.CodecAlias{Ident: "rel_user"},
+		},
+
+		&dal.Attribute{
+			Ident: "ChangeID",
+			Type:  &dal.TypeText{Length: 64},
+			Store: &dal.CodecAlias{Ident: "change_id"},
+		},
+
+		&dal.Attribute{
+			Ident: "NamespaceID",
+			Type: &dal.TypeRef{
+				RefAttribute: "id",
+				RefModel: &dal.ModelRef{
+					ResourceType: "corteza::compose:namespace",
+				},
+			},
+			Store: &dal.CodecAlias{Ident: "rel_namespace"},
+		},
+
+		&dal.Attribute{
+			Ident: "ModuleID",
+			Type:  &dal.TypeID{},
+			Store: &dal.CodecAlias{Ident: "module_id"},
+		},
+
+		&dal.Attribute{
+			Ident: "RecordID",
+			Type:  &dal.TypeID{},
+			Store: &dal.CodecAlias{Ident: "record_id"},
+		},
+
+		&dal.Attribute{
+			Ident: "Payload",
+			Type:  &dal.TypeText{},
+			Store: &dal.CodecAlias{Ident: "payload"},
+		},
+
+		&dal.Attribute{
+			Ident: "CreatedAt", Sortable: true,
+			Type: &dal.TypeTimestamp{
+				DefaultCurrentTimestamp: true, Timezone: true, Precision: -1,
+			},
+			Store: &dal.CodecAlias{Ident: "created_at"},
+		},
+
+		&dal.Attribute{
+			Ident: "UpdatedAt", Sortable: true,
+			Type:  &dal.TypeTimestamp{Nullable: true, Timezone: true, Precision: -1},
+			Store: &dal.CodecAlias{Ident: "updated_at"},
+		},
+	},
+
+	Indexes: dal.IndexSet{
+		&dal.Index{
+			Ident: "compose_record_drafts_author",
+			Type:  "BTREE",
+
+			Fields: []*dal.IndexField{
+				{
+					AttributeIdent: "UserID",
+				},
+
+				{
+					AttributeIdent: "ChangeID",
+				},
+			},
+		},
+
+		&dal.Index{
+			Ident: "PRIMARY",
+			Type:  "BTREE",
+
+			Fields: []*dal.IndexField{
+				{
+					AttributeIdent: "ID",
+				},
+			},
+		},
+	},
+}
+
 var RecordRevision = &dal.Model{
 	Ident:        "compose_record_revisions",
 	ResourceType: types.RecordRevisionResourceType,
@@ -1310,6 +1428,7 @@ func init() {
 		Page,
 		PageLayout,
 		Record,
+		RecordDraft,
 		RecordRevision,
 		ResourceVersion,
 	)

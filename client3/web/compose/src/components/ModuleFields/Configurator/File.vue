@@ -25,6 +25,19 @@
     </div>
 
     <div class="mb-3 mt-2">
+      <div class="form-text">{{ t('kind.file.view.versioning.footnote') }}</div>
+      <div class="form-check">
+        <input id="versioning" v-model="f.options.versioning" type="checkbox" class="form-check-input" data-test-id="checkbox-file-versioning" />
+        <label class="form-check-label" for="versioning">{{ t('kind.file.view.versioning.label') }}</label>
+      </div>
+      <div v-if="f.options.versioning" class="mt-2">
+        <label class="form-label text-primary">{{ t('kind.file.view.versioning.maxVersionsLabel') }}</label>
+        <div class="form-text">{{ t('kind.file.view.versioning.maxVersionsFootnote') }}</div>
+        <input v-model.number="f.options.maxVersions" type="number" min="0" class="form-control form-control-sm" data-test-id="input-file-max-versions" />
+      </div>
+    </div>
+
+    <div class="mb-3 mt-2">
       <div class="form-text">{{ t('kind.file.view.webcam.enable.footnote') }}</div>
       <div class="form-check">
         <input id="enableWebcam" v-model="f.options.enableWebcam" type="checkbox" class="form-check-input" />

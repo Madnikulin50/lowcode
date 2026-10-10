@@ -8,6 +8,7 @@ import (
 	"io"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/disintegration/imaging"
@@ -73,6 +74,8 @@ type (
 		CreatePageAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, pageID uint64) (*types.Attachment, error)
 		CreateIconAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
 		CreateRecordAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string) (*types.Attachment, error)
+		CreateRecordAttachmentVersion(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string, attachmentID uint64) (*types.Attachment, error)
+		ListVersions(ctx context.Context, namespaceID, moduleID, recordID uint64, fieldName string, attachmentID uint64) (*AttachmentVersions, error)
 		CreateNamespaceAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
 		CreateDocumentAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
 		CreateImported(ctx context.Context, namespaceID uint64, kind, name string, meta types.AttachmentMeta, original io.ReadSeeker, originalSize int64, preview io.ReadSeeker) (*types.Attachment, error)
@@ -428,10 +431,29 @@ func (svc attachment) verifySizeAndMimetype(fh io.ReadSeeker, filename string, s
 }
 
 func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string) (att *types.Attachment, err error) {
+	return svc.createRecordAttachment(ctx, namespaceID, name, size, fh, moduleID, recordID, fieldName, 0)
+}
+
+// CreateRecordAttachmentVersion uploads a new version of a file that is one of
+// the values of a File field with versioning enabled. The file keeps its place
+// in the version chain; making the new version the field's value is up to the
+// caller (the record is saved with the new attachment ID).
+func (svc attachment) CreateRecordAttachmentVersion(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string, attachmentID uint64) (att *types.Attachment, err error) {
+	if attachmentID == 0 {
+		return nil, AttachmentErrNotFound()
+	}
+	return svc.createRecordAttachment(ctx, namespaceID, name, size, fh, moduleID, recordID, fieldName, attachmentID)
+}
+
+func (svc attachment) createRecordAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string, versionOf uint64) (att *types.Attachment, err error) {
 	var (
 		ns *types.Namespace
 		m  *types.Module
 		r  *types.Record
+
+		// files dropped by the version limit; their bytes are removed once
+		// the transaction is through
+		dropped types.AttachmentSet
 
 		aProps = &attachmentActionProps{
 			namespace: &types.Namespace{ID: namespaceID},
@@ -524,10 +546,246 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 			Meta:        types.AttachmentMeta{StorageDriver: fieldStorageDriver},
 		}
 
+		if versionOf > 0 {
+			if dropped, err = svc.prepareVersion(ctx, s, m, r, fieldName, versionOf, att); err != nil {
+				return err
+			}
+		}
+
 		return svc.create(ctx, s, name, size, fh, att)
 	})
 
+	if err == nil {
+		svc.removeFiles(dropped)
+	}
+
 	return att, svc.recordAction(ctx, aProps, AttachmentActionCreate, err)
+}
+
+// prepareVersion links a new attachment into the version chain of the file
+// versionOf and applies the version limit of the field.
+//
+// The file must be one of the values of the field in the (existing) record
+// and the field must have versioning enabled. A file that has no versions yet
+// becomes version 1. Versions beyond the field's "maxVersions" option are
+// deleted, oldest first, but never one the record currently points to.
+// Returns the deleted attachments so the caller can remove their bytes.
+func (svc attachment) prepareVersion(ctx context.Context, s store.Storer, m *types.Module, r *types.Record, fieldName string, versionOf uint64, att *types.Attachment) (dropped types.AttachmentSet, err error) {
+	f := m.Fields.FindByName(fieldName)
+	if f == nil || !f.Options.Bool("versioning") {
+		return nil, AttachmentErrVersioningDisabled()
+	}
+
+	if r == nil {
+		return nil, AttachmentErrNotAllowedToUpdateRecord()
+	}
+
+	base, err := store.LookupComposeAttachmentByID(ctx, s, versionOf)
+	if errors.IsNotFound(err) {
+		return nil, AttachmentErrNotFound()
+	} else if err != nil {
+		return nil, err
+	}
+
+	current, err := svc.currentFiles(ctx, s, r, fieldName, base)
+	if err != nil {
+		return nil, err
+	}
+
+	if !current.belongs {
+		return nil, AttachmentErrNotAFileOfTheField()
+	}
+
+	group := base.VersionGroup
+	if group == 0 {
+		// the first version: start the chain with the existing file
+		group = base.ID
+		base.VersionGroup, base.Version = group, 1
+		if err = store.UpdateComposeAttachment(ctx, s, base); err != nil {
+			return nil, err
+		}
+	}
+
+	chain, _, err := store.SearchComposeAttachments(ctx, s, types.AttachmentFilter{VersionGroup: group})
+	if err != nil {
+		return nil, err
+	}
+
+	next := 0
+	for _, v := range chain {
+		if v.Version > next {
+			next = v.Version
+		}
+	}
+
+	att.VersionGroup, att.Version = group, next+1
+
+	// the version being added counts towards the limit
+	if limit := int(f.Options.Int64("maxVersions")); limit > 0 {
+		sort.Slice(chain, func(i, j int) bool { return chain[i].Version < chain[j].Version })
+
+		for len(chain)+1 > limit {
+			idx := -1
+			for i, v := range chain {
+				if !current.ids[v.ID] {
+					idx = i
+					break
+				}
+			}
+			if idx < 0 {
+				break
+			}
+
+			if err = store.DeleteComposeAttachmentByID(ctx, s, chain[idx].ID); err != nil {
+				return nil, err
+			}
+			dropped = append(dropped, chain[idx])
+			chain = append(chain[:idx], chain[idx+1:]...)
+		}
+	}
+
+	return dropped, nil
+}
+
+// fieldFiles tells which attachments a record holds in a field
+type fieldFiles struct {
+	// ids of the attachments that are values of the field
+	ids map[uint64]bool
+
+	// belongs: the file asked about is one of the values or another version
+	// of one of them
+	belongs bool
+}
+
+func (svc attachment) currentFiles(ctx context.Context, s store.Storer, r *types.Record, fieldName string, file *types.Attachment) (out fieldFiles, err error) {
+	out.ids = make(map[uint64]bool)
+
+	for _, v := range r.Values {
+		if v.Name != fieldName || v.Ref == 0 || (v.DeletedAt != nil && !v.DeletedAt.IsZero()) {
+			continue
+		}
+
+		out.ids[v.Ref] = true
+
+		if v.Ref == file.ID {
+			out.belongs = true
+			continue
+		}
+
+		if file.VersionGroup == 0 {
+			continue
+		}
+
+		var other *types.Attachment
+		if other, err = store.LookupComposeAttachmentByID(ctx, s, v.Ref); errors.IsNotFound(err) {
+			err = nil
+			continue
+		} else if err != nil {
+			return
+		}
+
+		if other.VersionGroup == file.VersionGroup {
+			out.belongs = true
+		}
+	}
+
+	return
+}
+
+// removeFiles deletes the stored bytes (original and preview) of attachments
+// whose rows are already gone. Failures are only ignored: a leftover file
+// costs space but must not fail the upload that triggered the cleanup.
+func (svc attachment) removeFiles(set types.AttachmentSet) {
+	for _, a := range set {
+		objects := svc.storeFor(svc.driverForExistingAttachment(a))
+		if objects == nil {
+			continue
+		}
+
+		for _, name := range []string{a.Url, a.PreviewUrl} {
+			if name != "" {
+				_ = objects.Remove(name)
+			}
+		}
+	}
+}
+
+// AttachmentVersions are the versions of one file of a record
+type AttachmentVersions struct {
+	// Set holds the versions, newest first
+	Set types.AttachmentSet
+
+	// Current: IDs the record's field points to
+	Current []uint64
+}
+
+// ListVersions returns the versions of a file in a File field of a record,
+// newest first. The caller needs read access to the record, and the file has
+// to belong to the field of that record (an ID alone gives no access).
+func (svc attachment) ListVersions(ctx context.Context, namespaceID, moduleID, recordID uint64, fieldName string, attachmentID uint64) (out *AttachmentVersions, err error) {
+	var (
+		aProps = &attachmentActionProps{
+			namespace: &types.Namespace{ID: namespaceID},
+			module:    &types.Module{ID: moduleID},
+			record:    &types.Record{ID: recordID},
+		}
+	)
+
+	err = func() (err error) {
+		ns, m, err := loadModuleCombo(ctx, svc.store, namespaceID, moduleID)
+		if err != nil {
+			return err
+		}
+		aProps.setNamespace(ns)
+		aProps.setModule(m)
+
+		f := m.Fields.FindByName(fieldName)
+		if f == nil || f.Kind != "File" {
+			return AttachmentErrInvalidModuleField().Apply(errors.Meta("fieldName", fieldName))
+		}
+
+		r, err := dalutils.ComposeRecordsFind(ctx, svc.dal, m, recordID)
+		if err != nil {
+			return err
+		}
+		aProps.setRecord(r)
+
+		if !svc.ac.CanReadRecord(ctx, r) {
+			return AttachmentErrNotAllowedToReadRecord()
+		}
+
+		base, err := store.LookupComposeAttachmentByID(ctx, svc.store, attachmentID)
+		if errors.IsNotFound(err) {
+			return AttachmentErrNotFound()
+		} else if err != nil {
+			return err
+		}
+
+		current, err := svc.currentFiles(ctx, svc.store, r, fieldName, base)
+		if err != nil {
+			return err
+		}
+		if !current.belongs {
+			return AttachmentErrNotAFileOfTheField()
+		}
+
+		out = &AttachmentVersions{Set: types.AttachmentSet{base}}
+		if base.VersionGroup > 0 {
+			if out.Set, _, err = store.SearchComposeAttachments(ctx, svc.store, types.AttachmentFilter{VersionGroup: base.VersionGroup}); err != nil {
+				return err
+			}
+		}
+		sort.Slice(out.Set, func(i, j int) bool { return out.Set[i].Version > out.Set[j].Version })
+
+		for id := range current.ids {
+			out.Current = append(out.Current, id)
+		}
+		sort.Slice(out.Current, func(i, j int) bool { return out.Current[i] < out.Current[j] })
+
+		return nil
+	}()
+
+	return out, svc.recordAction(ctx, aProps, AttachmentActionLookup, err)
 }
 
 func (svc attachment) CreateNamespaceAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (att *types.Attachment, err error) {

@@ -471,6 +471,65 @@ type (
 		Upload *multipart.FileHeader
 	}
 
+	RecordUploadVersion struct {
+		// NamespaceID PATH parameter
+		//
+		// Namespace ID
+		NamespaceID uint64 `json:",string"`
+
+		// ModuleID PATH parameter
+		//
+		// Module ID
+		ModuleID uint64 `json:",string"`
+
+		// AttachmentID PATH parameter
+		//
+		// File the new version is of
+		AttachmentID uint64 `json:",string"`
+
+		// RecordID POST parameter
+		//
+		// Record ID
+		RecordID uint64 `json:",string"`
+
+		// FieldName POST parameter
+		//
+		// Field name
+		FieldName string
+
+		// Upload POST parameter
+		//
+		// File to upload
+		Upload *multipart.FileHeader
+	}
+
+	RecordAttachmentVersions struct {
+		// NamespaceID PATH parameter
+		//
+		// Namespace ID
+		NamespaceID uint64 `json:",string"`
+
+		// ModuleID PATH parameter
+		//
+		// Module ID
+		ModuleID uint64 `json:",string"`
+
+		// RecordID PATH parameter
+		//
+		// Record ID
+		RecordID uint64 `json:",string"`
+
+		// AttachmentID PATH parameter
+		//
+		// Any version of the file
+		AttachmentID uint64 `json:",string"`
+
+		// FieldName GET parameter
+		//
+		// Field name
+		FieldName string
+	}
+
 	RecordTriggerScript struct {
 		// NamespaceID PATH parameter
 		//
@@ -2319,6 +2378,235 @@ func (r *RecordUpload) Fill(req *http.Request) (err error) {
 
 		val = chi.URLParam(req, "moduleID")
 		r.ModuleID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return err
+}
+
+// NewRecordUploadVersion request
+func NewRecordUploadVersion() *RecordUploadVersion {
+	return &RecordUploadVersion{}
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordUploadVersion) Auditable() map[string]interface{} {
+	return map[string]interface{}{
+		"namespaceID":  r.NamespaceID,
+		"moduleID":     r.ModuleID,
+		"attachmentID": r.AttachmentID,
+		"recordID":     r.RecordID,
+		"fieldName":    r.FieldName,
+		"upload":       r.Upload,
+	}
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordUploadVersion) GetNamespaceID() uint64 {
+	return r.NamespaceID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordUploadVersion) GetModuleID() uint64 {
+	return r.ModuleID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordUploadVersion) GetAttachmentID() uint64 {
+	return r.AttachmentID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordUploadVersion) GetRecordID() uint64 {
+	return r.RecordID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordUploadVersion) GetFieldName() string {
+	return r.FieldName
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordUploadVersion) GetUpload() *multipart.FileHeader {
+	return r.Upload
+}
+
+// Fill processes request and fills internal variables
+func (r *RecordUploadVersion) Fill(req *http.Request) (err error) {
+
+	if strings.HasPrefix(strings.ToLower(req.Header.Get("content-type")), "application/json") {
+		err = json.NewDecoder(req.Body).Decode(r)
+
+		switch {
+		case err == io.EOF:
+			err = nil
+		case err != nil:
+			return fmt.Errorf("error parsing http request body: %w", err)
+		}
+	}
+
+	{
+		// Caching 32MB to memory, the rest to disk
+		if err = req.ParseMultipartForm(32 << 20); err != nil && err != http.ErrNotMultipart {
+			return err
+		} else if err == nil {
+			// Multipart params
+
+			if val, ok := req.MultipartForm.Value["recordID"]; ok && len(val) > 0 {
+				r.RecordID, err = payload.ParseUint64(val[0]), nil
+				if err != nil {
+					return err
+				}
+			}
+
+			if val, ok := req.MultipartForm.Value["fieldName"]; ok && len(val) > 0 {
+				r.FieldName, err = val[0], nil
+				if err != nil {
+					return err
+				}
+			}
+
+			// Ignoring upload as its handled in the POST params section
+		}
+	}
+
+	{
+		if err = req.ParseForm(); err != nil {
+			return err
+		}
+
+		// POST params
+
+		if val, ok := req.Form["recordID"]; ok && len(val) > 0 {
+			r.RecordID, err = payload.ParseUint64(val[0]), nil
+			if err != nil {
+				return err
+			}
+		}
+
+		if val, ok := req.Form["fieldName"]; ok && len(val) > 0 {
+			r.FieldName, err = val[0], nil
+			if err != nil {
+				return err
+			}
+		}
+
+		if _, r.Upload, err = req.FormFile("upload"); err != nil {
+			return fmt.Errorf("error processing uploaded file: %w", err)
+		}
+
+	}
+
+	{
+		var val string
+		// path params
+
+		val = chi.URLParam(req, "namespaceID")
+		r.NamespaceID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+		val = chi.URLParam(req, "moduleID")
+		r.ModuleID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+		val = chi.URLParam(req, "attachmentID")
+		r.AttachmentID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return err
+}
+
+// NewRecordAttachmentVersions request
+func NewRecordAttachmentVersions() *RecordAttachmentVersions {
+	return &RecordAttachmentVersions{}
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordAttachmentVersions) Auditable() map[string]interface{} {
+	return map[string]interface{}{
+		"namespaceID":  r.NamespaceID,
+		"moduleID":     r.ModuleID,
+		"recordID":     r.RecordID,
+		"attachmentID": r.AttachmentID,
+		"fieldName":    r.FieldName,
+	}
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordAttachmentVersions) GetNamespaceID() uint64 {
+	return r.NamespaceID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordAttachmentVersions) GetModuleID() uint64 {
+	return r.ModuleID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordAttachmentVersions) GetRecordID() uint64 {
+	return r.RecordID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordAttachmentVersions) GetAttachmentID() uint64 {
+	return r.AttachmentID
+}
+
+// Auditable returns all auditable/loggable parameters
+func (r RecordAttachmentVersions) GetFieldName() string {
+	return r.FieldName
+}
+
+// Fill processes request and fills internal variables
+func (r *RecordAttachmentVersions) Fill(req *http.Request) (err error) {
+
+	{
+		// GET params
+		tmp := req.URL.Query()
+
+		if val, ok := tmp["fieldName"]; ok && len(val) > 0 {
+			r.FieldName, err = val[0], nil
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	{
+		var val string
+		// path params
+
+		val = chi.URLParam(req, "namespaceID")
+		r.NamespaceID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+		val = chi.URLParam(req, "moduleID")
+		r.ModuleID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+		val = chi.URLParam(req, "recordID")
+		r.RecordID, err = payload.ParseUint64(val), nil
+		if err != nil {
+			return err
+		}
+
+		val = chi.URLParam(req, "attachmentID")
+		r.AttachmentID, err = payload.ParseUint64(val), nil
 		if err != nil {
 			return err
 		}

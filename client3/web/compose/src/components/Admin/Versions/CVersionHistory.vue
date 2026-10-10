@@ -2,7 +2,8 @@
   <span>
     <button
       data-test-id="button-version-history"
-      class="btn btn-outline-secondary btn-lg text-nowrap"
+      class="btn btn-outline-secondary text-nowrap"
+      :class="{ 'btn-lg': !compact }"
       type="button"
       :disabled="disabled"
       @click="show"
@@ -174,11 +175,19 @@ import { composables } from 'corteza-lib/vue/dist'
 import { diff, parseSnapshot } from 'corteza-webapp-compose/src/lib/json-diff'
 
 const props = defineProps({
-  // page, module or chart
+  // page, module, chart, rulechain or workflow (picks the confirmation text)
   kind: { type: String, required: true },
   namespaceId: { type: String, default: '' },
   resourceId: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
+
+  // for resources that are not served by the compose version API:
+  // { list(), get(version), restore(version) } returning what the API returns
+  // ({ set }, a version with its snapshot, anything)
+  adapter: { type: Object, default: undefined },
+
+  // a regular size button (for headers) instead of the large toolbar one
+  compact: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['restored'])
@@ -201,6 +210,12 @@ let modal
 
 const ids = () => ({ namespaceID: props.namespaceId, kind: props.kind, resourceID: props.resourceId })
 
+const api = () => props.adapter || {
+  list: () => window.__composeAPI.resourceVersions(ids()),
+  get: version => window.__composeAPI.resourceVersion({ ...ids(), version }),
+  restore: version => window.__composeAPI.resourceVersionRestore({ ...ids(), version }),
+}
+
 // the newest version is what is saved now: nothing to restore
 const canRestore = computed(() => versions.value.length > 0 && selected.value && selected.value.version !== versions.value[0].version)
 
@@ -220,7 +235,7 @@ async function show () {
   loading.value = true
   selected.value = null
   try {
-    const { set } = await window.__composeAPI.resourceVersions(ids())
+    const { set } = await api().list()
     versions.value = set || []
     if (versions.value.length) await select(versions.value[0])
   } catch (e) {
@@ -243,8 +258,8 @@ async function select (v) {
   try {
     const before = versions.value.find(o => o.version === v.version - 1)
     const [cur, prev] = await Promise.all([
-      window.__composeAPI.resourceVersion({ ...ids(), version: v.version }),
-      before ? window.__composeAPI.resourceVersion({ ...ids(), version: before.version }) : Promise.resolve(null),
+      api().get(v.version),
+      before ? api().get(before.version) : Promise.resolve(null),
     ])
 
     previous.value = prev
@@ -262,7 +277,7 @@ async function restore () {
 
   restoring.value = true
   try {
-    await window.__composeAPI.resourceVersionRestore({ ...ids(), version })
+    await api().restore(version)
     toastSuccess($t('restored', { version }))
     hide()
     emit('restored', version)

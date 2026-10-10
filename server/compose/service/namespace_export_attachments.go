@@ -42,6 +42,17 @@ type (
 		Meta     types.AttachmentMeta `json:"meta"`
 		Original string               `json:"original"`
 		Preview  string               `json:"preview,omitempty"`
+
+		// File versions: the group is the ID (in the exporting installation)
+		// of the first version of the file
+		VersionGroup uint64 `json:"versionGroup,string,omitempty"`
+		Version      int    `json:"version,omitempty"`
+	}
+
+	// importedVersionLink is where an imported attachment sits in a version chain
+	importedVersionLink struct {
+		Group   uint64
+		Version int
 	}
 )
 
@@ -124,6 +135,9 @@ func packOneAttachment(zw *zip.Writer, att *types.Attachment) (namespaceAttachme
 		Name:     att.Name,
 		Meta:     att.Meta,
 		Original: origPath,
+
+		VersionGroup: att.VersionGroup,
+		Version:      att.Version,
 	}
 
 	if att.PreviewUrl != "" {
@@ -335,6 +349,8 @@ func UnpackNamespaceAttachments(ctx context.Context, zr *zip.Reader, ns *types.N
 		return nil, err
 	}
 
+	var imported []namespaceAttachmentEntry
+
 	for _, entry := range manifest.Attachments {
 		if !includeRecordFiles && entry.Kind == types.RecordAttachment {
 			continue
@@ -372,9 +388,59 @@ func UnpackNamespaceAttachments(ctx context.Context, zr *zip.Reader, ns *types.N
 			return nil, err
 		}
 		idMap[entry.ID] = created.ID
+		imported = append(imported, entry)
+	}
+
+	// attachments get new IDs on import, so the version chains are relinked
+	for newID, link := range importedVersionLinks(imported, idMap) {
+		att, err := store.LookupComposeAttachmentByID(ctx, DefaultStore, newID)
+		if err != nil {
+			return nil, err
+		}
+		att.VersionGroup, att.Version = link.Group, link.Version
+		if err = store.UpdateComposeAttachment(ctx, DefaultStore, att); err != nil {
+			return nil, err
+		}
 	}
 
 	return idMap, nil
+}
+
+// importedVersionLinks maps new attachment IDs to their place in the version
+// chain. The group is the new ID of the first version of the file; when that
+// one was not imported (e.g. it was missing in the archive) the oldest
+// imported version stands in for it. Entries without versions are left out.
+func importedVersionLinks(entries []namespaceAttachmentEntry, idMap map[uint64]uint64) map[uint64]importedVersionLink {
+	// oldest imported version of each group
+	oldest := map[uint64]namespaceAttachmentEntry{}
+	for _, e := range entries {
+		if e.VersionGroup == 0 || e.Version == 0 {
+			continue
+		}
+		if cur, ok := oldest[e.VersionGroup]; !ok || e.Version < cur.Version {
+			oldest[e.VersionGroup] = e
+		}
+	}
+
+	out := make(map[uint64]importedVersionLink)
+	for _, e := range entries {
+		newID := idMap[e.ID]
+		if newID == 0 || e.VersionGroup == 0 || e.Version == 0 {
+			continue
+		}
+
+		group := idMap[e.VersionGroup]
+		if group == 0 {
+			group = idMap[oldest[e.VersionGroup].ID]
+		}
+		if group == 0 {
+			continue
+		}
+
+		out[newID] = importedVersionLink{Group: group, Version: e.Version}
+	}
+
+	return out
 }
 
 func zipFileByName(zr *zip.Reader, name string) *zip.File {

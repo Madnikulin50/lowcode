@@ -140,6 +140,31 @@ var Automation = Component{
 			},
 		}},
 
+		{Handle: "workflow_version", Resource: Resource{
+			Model: Model{
+				Ident:      "automation_workflow_versions",
+				Attributes: AttributesFromStruct(automationtypes.WorkflowVersion{}),
+				Indexes: map[string]Index{
+					"primary":  {Attribute: "id"},
+					"workflow": {Attribute: "workflow_id"},
+				},
+			},
+			Features: Features{Labels: boolPtr(false)},
+			Filter: Filter{
+				Struct: map[string]Attribute{
+					"version_id":  {GoType: "[]uint64", Ident: "versionID", StoreIdent: "id"},
+					"workflow_id": {GoType: "uint64", Ident: "workflowID"},
+				},
+				ByValue: []string{"version_id", "workflow_id"},
+			},
+			Store: &StoreConfig{
+				Ident: "automationWorkflowVersion",
+				Lookups: []StoreLookup{
+					{Fields: []string{"id"}, Description: "searches for a workflow version by ID"},
+				},
+			},
+		}},
+
 		{Handle: "trigger", Resource: Resource{
 			Model: Model{
 				Ident:      "automation_triggers",

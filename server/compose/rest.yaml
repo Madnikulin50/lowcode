@@ -1268,6 +1268,36 @@ endpoints:
         type: "*multipart.FileHeader"
         required: true
         title: File to upload
+  - name: uploadVersion
+    path: "/attachment/{attachmentID}/version"
+    method: POST
+    title: Uploads a new version of a file of a record (the field must have versioning enabled)
+    parameters:
+      path:
+      - { type: uint64, name: attachmentID, required: true, title: File the new version is of }
+      post:
+      - name: recordID
+        type: uint64
+        required: true
+        title: Record ID
+      - name: fieldName
+        type: string
+        required: true
+        title: Field name
+      - name: upload
+        type: "*multipart.FileHeader"
+        required: true
+        title: File to upload
+  - name: attachmentVersions
+    path: "/{recordID}/attachment/{attachmentID}/versions"
+    method: GET
+    title: List versions of a file of a record
+    parameters:
+      path:
+      - { type: uint64, name: recordID, required: true, title: Record ID }
+      - { type: uint64, name: attachmentID, required: true, title: Any version of the file }
+      get:
+      - { type: string, name: fieldName, required: true, title: Field name }
   - name: triggerScript
     method: POST
     title: Fire compose:record trigger

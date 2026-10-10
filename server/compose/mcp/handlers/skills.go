@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	automationService "github.com/madnikulin50/lowcode/server/automation/service"
@@ -47,6 +48,12 @@ func initSkills(ctx context.Context, s *server.MCPServer) {
 		mcp.WithString("handle", mcp.Description("Skill handle"), mcp.Required()),
 		mcp.WithNumber("version", mcp.Description("Version number"), mcp.Required()),
 	), handleSkillActivate)
+
+	s.AddTool(mcp.NewTool("skill_prune",
+		mcp.WithDescription("Delete the oldest versions of a skill, keeping the newest N and the active one"),
+		mcp.WithString("handle", mcp.Description("Skill handle"), mcp.Required()),
+		mcp.WithNumber("keep", mcp.Description("How many of the newest versions to keep (at least 1)"), mcp.Required()),
+	), handleSkillPrune)
 
 	s.AddTool(mcp.NewTool("skill_delete",
 		mcp.WithDescription("Delete a skill with all its versions"),
@@ -150,6 +157,17 @@ func handleSkillActivate(ctx context.Context, request mcp.CallToolRequest) (*mcp
 		return errorResult(err), nil
 	}
 	return jsonResult(s), nil
+}
+
+func handleSkillPrune(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	ctx = withAuth(ctx)
+	args := argsMap(request)
+
+	removed, err := automationService.PruneSkill(ctx, strings.TrimSpace(getString(args, "handle")), getInt(args, "keep"))
+	if err != nil {
+		return errorResult(err), nil
+	}
+	return textResult(fmt.Sprintf("Deleted versions: %d", removed)), nil
 }
 
 func handleSkillDelete(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {

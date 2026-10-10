@@ -1,0 +1,17 @@
+open: History
+title: Workflow version history
+empty: No saved versions yet
+version: Version
+current: current
+compare: Changes against the previous version
+firstVersion: This is the first saved version
+noChanges: No changes against the previous version
+added: added
+removed: removed
+changed: changed
+restore: Restore
+restoreConfirm: "Restore the workflow to version {{ version }}? Steps and settings are replaced; triggers, the enabled state and the run-as user stay as they are. The result is saved as a new version."
+unsavedWarning: Changes in the editor that are not saved will be lost.
+restored: "Restored to version {{ version }}"
+restoreFailed: Failed to restore the version
+loadFailed: Failed to load the version history

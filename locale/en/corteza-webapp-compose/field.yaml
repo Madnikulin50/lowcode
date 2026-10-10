@@ -48,6 +48,11 @@ kind:
         enable:
           label: Enable Webcam Capture
           footnote: Use the webcam to capture a picture and upload it
+      versioning:
+        label: "Keep versions of files"
+        footnote: "Each file gets a New version button and a history; older versions can be downloaded and made current."
+        maxVersionsLabel: "Versions to keep"
+        maxVersionsFootnote: "When there are more, the oldest are deleted with their content (the one in use is never deleted). 0 keeps all."
       mimetypesLabel: File type allow list
       storageDriverLabel: Storage location
       storageDriverFootnote: Where uploaded file content is actually saved
@@ -73,6 +78,16 @@ kind:
       px: px
       clickToView: Click to view file
       description: 'Add unit after value to set it. For example: 50px or 50%'
+    versions:
+      upload: "New version"
+      history: "History"
+      title: "File versions"
+      current: "current"
+      download: "Download"
+      makeCurrent: "Make current"
+      uploaded: "Version {{ version }} uploaded; save the record to keep it"
+      uploadFailed: "Failed to upload the version"
+      loadFailed: "Failed to load the file versions"
   number:
     exampleFormat: Format
     exampleInput: Input

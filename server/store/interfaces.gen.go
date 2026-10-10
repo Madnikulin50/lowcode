@@ -62,6 +62,7 @@ type (
 		AutomationStates
 		AutomationTriggers
 		AutomationWorkflows
+		AutomationWorkflowVersions
 		ComposeAttachments
 		ComposeCharts
 		ComposeModules
@@ -69,6 +70,7 @@ type (
 		ComposeNamespaces
 		ComposePages
 		ComposePageLayouts
+		ComposeRecordDrafts
 		ComposeResourceVersions
 		Credentials
 		DalConnections
@@ -321,6 +323,18 @@ type (
 		LookupAutomationWorkflowByHandle(ctx context.Context, handle string) (*automationType.Workflow, error)
 	}
 
+	AutomationWorkflowVersions interface {
+		SearchAutomationWorkflowVersions(ctx context.Context, f automationType.WorkflowVersionFilter) (automationType.WorkflowVersionSet, automationType.WorkflowVersionFilter, error)
+		CreateAutomationWorkflowVersion(ctx context.Context, rr ...*automationType.WorkflowVersion) error
+		UpdateAutomationWorkflowVersion(ctx context.Context, rr ...*automationType.WorkflowVersion) error
+		UpsertAutomationWorkflowVersion(ctx context.Context, rr ...*automationType.WorkflowVersion) error
+		DeleteAutomationWorkflowVersion(ctx context.Context, rr ...*automationType.WorkflowVersion) error
+
+		DeleteAutomationWorkflowVersionByID(ctx context.Context, id uint64) error
+		TruncateAutomationWorkflowVersions(ctx context.Context) error
+		LookupAutomationWorkflowVersionByID(ctx context.Context, id uint64) (*automationType.WorkflowVersion, error)
+	}
+
 	ComposeAttachments interface {
 		SearchComposeAttachments(ctx context.Context, f composeType.AttachmentFilter) (composeType.AttachmentSet, composeType.AttachmentFilter, error)
 		CreateComposeAttachment(ctx context.Context, rr ...*composeType.Attachment) error
@@ -414,6 +428,18 @@ type (
 		LookupComposePageLayoutByNamespaceIDPageIDHandle(ctx context.Context, namespaceID uint64, pageID uint64, handle string) (*composeType.PageLayout, error)
 		LookupComposePageLayoutByID(ctx context.Context, id uint64) (*composeType.PageLayout, error)
 		ReorderComposePageLayouts(ctx context.Context, namespace_id uint64, page_id uint64, page_layout_ids []uint64) error
+	}
+
+	ComposeRecordDrafts interface {
+		SearchComposeRecordDrafts(ctx context.Context, f composeType.RecordDraftFilter) (composeType.RecordDraftSet, composeType.RecordDraftFilter, error)
+		CreateComposeRecordDraft(ctx context.Context, rr ...*composeType.RecordDraft) error
+		UpdateComposeRecordDraft(ctx context.Context, rr ...*composeType.RecordDraft) error
+		UpsertComposeRecordDraft(ctx context.Context, rr ...*composeType.RecordDraft) error
+		DeleteComposeRecordDraft(ctx context.Context, rr ...*composeType.RecordDraft) error
+
+		DeleteComposeRecordDraftByID(ctx context.Context, id uint64) error
+		TruncateComposeRecordDrafts(ctx context.Context) error
+		LookupComposeRecordDraftByID(ctx context.Context, id uint64) (*composeType.RecordDraft, error)
 	}
 
 	ComposeResourceVersions interface {
@@ -1873,6 +1899,62 @@ func LookupAutomationWorkflowByHandle(ctx context.Context, s AutomationWorkflows
 	return s.LookupAutomationWorkflowByHandle(ctx, handle)
 }
 
+// SearchAutomationWorkflowVersions returns all matching AutomationWorkflowVersions from store
+//
+// This function is auto-generated
+func SearchAutomationWorkflowVersions(ctx context.Context, s AutomationWorkflowVersions, f automationType.WorkflowVersionFilter) (automationType.WorkflowVersionSet, automationType.WorkflowVersionFilter, error) {
+	return s.SearchAutomationWorkflowVersions(ctx, f)
+}
+
+// CreateAutomationWorkflowVersion creates one or more AutomationWorkflowVersions in store
+//
+// This function is auto-generated
+func CreateAutomationWorkflowVersion(ctx context.Context, s AutomationWorkflowVersions, rr ...*automationType.WorkflowVersion) error {
+	return s.CreateAutomationWorkflowVersion(ctx, rr...)
+}
+
+// UpdateAutomationWorkflowVersion updates one or more (existing) AutomationWorkflowVersions in store
+//
+// This function is auto-generated
+func UpdateAutomationWorkflowVersion(ctx context.Context, s AutomationWorkflowVersions, rr ...*automationType.WorkflowVersion) error {
+	return s.UpdateAutomationWorkflowVersion(ctx, rr...)
+}
+
+// UpsertAutomationWorkflowVersion creates new or updates existing one or more AutomationWorkflowVersions in store
+//
+// This function is auto-generated
+func UpsertAutomationWorkflowVersion(ctx context.Context, s AutomationWorkflowVersions, rr ...*automationType.WorkflowVersion) error {
+	return s.UpsertAutomationWorkflowVersion(ctx, rr...)
+}
+
+// DeleteAutomationWorkflowVersion deletes one or more AutomationWorkflowVersions from store
+//
+// This function is auto-generated
+func DeleteAutomationWorkflowVersion(ctx context.Context, s AutomationWorkflowVersions, rr ...*automationType.WorkflowVersion) error {
+	return s.DeleteAutomationWorkflowVersion(ctx, rr...)
+}
+
+// DeleteAutomationWorkflowVersionByID deletes one or more AutomationWorkflowVersions from store
+//
+// This function is auto-generated
+func DeleteAutomationWorkflowVersionByID(ctx context.Context, s AutomationWorkflowVersions, id uint64) error {
+	return s.DeleteAutomationWorkflowVersionByID(ctx, id)
+}
+
+// TruncateAutomationWorkflowVersions Deletes all AutomationWorkflowVersions from store
+//
+// This function is auto-generated
+func TruncateAutomationWorkflowVersions(ctx context.Context, s AutomationWorkflowVersions) error {
+	return s.TruncateAutomationWorkflowVersions(ctx)
+}
+
+// LookupAutomationWorkflowVersionByID searches for a workflow version by ID
+//
+// This function is auto-generated
+func LookupAutomationWorkflowVersionByID(ctx context.Context, s AutomationWorkflowVersions, id uint64) (*automationType.WorkflowVersion, error) {
+	return s.LookupAutomationWorkflowVersionByID(ctx, id)
+}
+
 // SearchComposeAttachments returns all matching ComposeAttachments from store
 //
 // This function is auto-generated
@@ -2350,6 +2432,62 @@ func LookupComposePageLayoutByID(ctx context.Context, s ComposePageLayouts, id u
 // This function is auto-generated
 func ReorderComposePageLayouts(ctx context.Context, s ComposePageLayouts, namespace_id uint64, page_id uint64, page_layout_ids []uint64) error {
 	return s.ReorderComposePageLayouts(ctx, namespace_id, page_id, page_layout_ids)
+}
+
+// SearchComposeRecordDrafts returns all matching ComposeRecordDrafts from store
+//
+// This function is auto-generated
+func SearchComposeRecordDrafts(ctx context.Context, s ComposeRecordDrafts, f composeType.RecordDraftFilter) (composeType.RecordDraftSet, composeType.RecordDraftFilter, error) {
+	return s.SearchComposeRecordDrafts(ctx, f)
+}
+
+// CreateComposeRecordDraft creates one or more ComposeRecordDrafts in store
+//
+// This function is auto-generated
+func CreateComposeRecordDraft(ctx context.Context, s ComposeRecordDrafts, rr ...*composeType.RecordDraft) error {
+	return s.CreateComposeRecordDraft(ctx, rr...)
+}
+
+// UpdateComposeRecordDraft updates one or more (existing) ComposeRecordDrafts in store
+//
+// This function is auto-generated
+func UpdateComposeRecordDraft(ctx context.Context, s ComposeRecordDrafts, rr ...*composeType.RecordDraft) error {
+	return s.UpdateComposeRecordDraft(ctx, rr...)
+}
+
+// UpsertComposeRecordDraft creates new or updates existing one or more ComposeRecordDrafts in store
+//
+// This function is auto-generated
+func UpsertComposeRecordDraft(ctx context.Context, s ComposeRecordDrafts, rr ...*composeType.RecordDraft) error {
+	return s.UpsertComposeRecordDraft(ctx, rr...)
+}
+
+// DeleteComposeRecordDraft deletes one or more ComposeRecordDrafts from store
+//
+// This function is auto-generated
+func DeleteComposeRecordDraft(ctx context.Context, s ComposeRecordDrafts, rr ...*composeType.RecordDraft) error {
+	return s.DeleteComposeRecordDraft(ctx, rr...)
+}
+
+// DeleteComposeRecordDraftByID deletes one or more ComposeRecordDrafts from store
+//
+// This function is auto-generated
+func DeleteComposeRecordDraftByID(ctx context.Context, s ComposeRecordDrafts, id uint64) error {
+	return s.DeleteComposeRecordDraftByID(ctx, id)
+}
+
+// TruncateComposeRecordDrafts Deletes all ComposeRecordDrafts from store
+//
+// This function is auto-generated
+func TruncateComposeRecordDrafts(ctx context.Context, s ComposeRecordDrafts) error {
+	return s.TruncateComposeRecordDrafts(ctx)
+}
+
+// LookupComposeRecordDraftByID searches for a record draft by ID
+//
+// This function is auto-generated
+func LookupComposeRecordDraftByID(ctx context.Context, s ComposeRecordDrafts, id uint64) (*composeType.RecordDraft, error) {
+	return s.LookupComposeRecordDraftByID(ctx, id)
 }
 
 // SearchComposeResourceVersions returns all matching ComposeResourceVersions from store

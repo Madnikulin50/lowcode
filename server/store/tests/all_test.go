@@ -41,6 +41,9 @@ func testAllGenerated(t *testing.T, s store.Storer) {
 	t.Run("automationPromptVersion", func(t *testing.T) {
 		testAutomationPromptVersions(t, s)
 	})
+	t.Run("automationWorkflowVersion", func(t *testing.T) {
+		testAutomationWorkflowVersions(t, s)
+	})
 	t.Run("automationSession", func(t *testing.T) {
 		testAutomationSessions(t, s)
 	})

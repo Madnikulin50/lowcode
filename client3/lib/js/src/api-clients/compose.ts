@@ -3387,6 +3387,87 @@ export default class Compose {
     return `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}/revisions/${revision}/restore`
   }
 
+  // ---- Record drafts kept on the server (hand-written; compose/rest/record_drafts.go).
+  // Drafts are private to the signed-in user. `payload` is any JSON (the client's
+  // draft); the list is { set: [{ changeID, namespaceID, moduleID, recordID, updatedAt, payload }] }.
+
+  async recordDraftList (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { namespaceID, moduleID, recordID } = (a as KV) || {}
+    return this.api().request({
+      ...extra,
+      method: 'get',
+      url: '/record-drafts',
+      params: { namespaceID, moduleID, recordID },
+    }).then(result => stdResolve(result))
+  }
+
+  async recordDraftSave (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { changeID, namespaceID, moduleID, recordID = '0', payload } = (a as KV) || {}
+    if (!changeID) throw Error('field changeID is empty')
+    if (!namespaceID) throw Error('field namespaceID is empty')
+    if (!moduleID) throw Error('field moduleID is empty')
+    return this.api().request({
+      ...extra,
+      method: 'put',
+      url: `/record-drafts/${encodeURIComponent(String(changeID))}`,
+      headers: { 'Content-Type': 'application/json' },
+      data: { namespaceID, moduleID, recordID, payload },
+    }).then(result => stdResolve(result))
+  }
+
+  async recordDraftDelete (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { changeID } = (a as KV) || {}
+    if (!changeID) throw Error('field changeID is empty')
+    return this.api().request({ ...extra, method: 'delete', url: `/record-drafts/${encodeURIComponent(String(changeID))}` }).then(result => stdResolve(result))
+  }
+
+  async recordDraftClear (extra: AxiosRequestConfig = {}): Promise<KV> {
+    return this.api().request({ ...extra, method: 'delete', url: '/record-drafts' }).then(result => stdResolve(result))
+  }
+
+  // ---- File versions (hand-written; endpoints in compose/rest.yaml, record section)
+
+  // Upload a new version of a file of a File field that has versioning on.
+  // `file` is a File/Blob; resolves with the new attachment.
+  async recordAttachmentVersionUpload (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { namespaceID, moduleID, attachmentID, recordID, fieldName, file } = (a as KV) || {}
+    if (!namespaceID) throw Error('field namespaceID is empty')
+    if (!moduleID) throw Error('field moduleID is empty')
+    if (!attachmentID) throw Error('field attachmentID is empty')
+    if (!recordID) throw Error('field recordID is empty')
+    if (!fieldName) throw Error('field fieldName is empty')
+    if (!file) throw Error('field file is empty')
+
+    const data = new FormData()
+    data.append('recordID', String(recordID))
+    data.append('fieldName', String(fieldName))
+    data.append('upload', file as Blob, (file as File).name)
+
+    return this.api().request({
+      ...extra,
+      method: 'post',
+      url: `/namespace/${namespaceID}/module/${moduleID}/record/attachment/${attachmentID}/version`,
+      data,
+    }).then(result => stdResolve(result))
+  }
+
+  // Versions (newest first) of a file of a record: { set: Attachment[], current: string[] }
+  async recordAttachmentVersions (a: KV, extra: AxiosRequestConfig = {}): Promise<KV> {
+    const { namespaceID, moduleID, recordID, attachmentID, fieldName } = (a as KV) || {}
+    if (!namespaceID) throw Error('field namespaceID is empty')
+    if (!moduleID) throw Error('field moduleID is empty')
+    if (!recordID) throw Error('field recordID is empty')
+    if (!attachmentID) throw Error('field attachmentID is empty')
+    if (!fieldName) throw Error('field fieldName is empty')
+
+    return this.api().request({
+      ...extra,
+      method: 'get',
+      url: `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}/attachment/${attachmentID}/versions`,
+      params: { fieldName },
+    }).then(result => stdResolve(result))
+  }
+
   // ---- Version history of pages, modules and charts (hand-written; the
   // endpoints are in server/compose/rest/resource_versions.go, not in rest.yaml)
 
@@ -5186,6 +5267,28 @@ export default class Compose {
             data: a,
             ...extra,
         }).then(result => stdResolve(result))
+    }
+
+    // Version history of a rule chain (hand-written): { set: [...] }, one version
+    // with its snapshot, and restore (saves the restored chain as a new version)
+    async ruleChainVersions (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID } = (a as KV) || {}
+        if (!chainID) throw Error('field chainID is empty')
+        return this.api().request({ method: 'get', url: `/admin/rulechain/${encodeURIComponent(String(chainID))}/versions`, ...extra }).then(result => stdResolve(result))
+    }
+
+    async ruleChainVersion (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID, version } = (a as KV) || {}
+        if (!chainID) throw Error('field chainID is empty')
+        if (!version) throw Error('field version is empty')
+        return this.api().request({ method: 'get', url: `/admin/rulechain/${encodeURIComponent(String(chainID))}/versions/${version}`, ...extra }).then(result => stdResolve(result))
+    }
+
+    async ruleChainVersionRestore (a: KV = {}, extra: AxiosRequestConfig = {}): Promise<KV> {
+        const { chainID, version } = (a as KV) || {}
+        if (!chainID) throw Error('field chainID is empty')
+        if (!version) throw Error('field version is empty')
+        return this.api().request({ method: 'post', url: `/admin/rulechain/${encodeURIComponent(String(chainID))}/versions/${version}/restore`, ...extra }).then(result => stdResolve(result))
     }
 
     // Tries one AI node against the real model with a sample input (hand-written)
