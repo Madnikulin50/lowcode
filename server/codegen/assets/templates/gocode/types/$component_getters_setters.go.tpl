@@ -48,7 +48,8 @@ func (r *{{.expIdent}}) GetValue(name string, pos uint) (any, error) {
 		return r.getValue(name, pos)
 	{{end}}
 	}
-	return nil, nil
+{{ if not .model.defaultGetter }}	return nil, nil
+{{ end -}}
 }
 
 func (r *{{.expIdent}}) SetValue(name string, pos uint, value any) (err error) {
@@ -73,7 +74,8 @@ func (r *{{.expIdent}}) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 	{{end}}
 	}
-	return nil
+{{ if not .model.defaultSetter }}	return nil
+{{ end -}}
 }
 
 {{ end }}

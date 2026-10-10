@@ -573,6 +573,10 @@ record:
     noWrap: No wrap
     wrap: Wrap
   emptyPlaceholder: "—"
+  readOnly:
+    label: Read-only fields
+    description: Display all fields as read-only, even when the record is being edited
+    column: Read-only
   appearance:
     label: Appearance
     density: Density

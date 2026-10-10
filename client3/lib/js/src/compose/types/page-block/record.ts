@@ -41,6 +41,10 @@ interface Options {
   fieldRoles: { [fieldName: string]: RecordFieldRole };
   /** Named field groups for the record body */
   sections: RecordSection[];
+  /** Show all fields read-only, even when the record is being edited */
+  readOnly: boolean;
+  /** Names of fields shown read-only while the record is being edited */
+  readOnlyFields: string[];
 }
 
 const defaults: Readonly<Options> = Object.freeze({
@@ -63,6 +67,8 @@ const defaults: Readonly<Options> = Object.freeze({
   showEmptyPlaceholder: true,
   fieldRoles: {},
   sections: [],
+  readOnly: false,
+  readOnlyFields: [],
 })
 
 export class PageBlockRecord extends PageBlock {
@@ -72,6 +78,7 @@ export class PageBlockRecord extends PageBlock {
     ...defaults,
     fieldRoles: {},
     sections: [],
+    readOnlyFields: [],
     viewStyle: {},
   }
 
@@ -84,7 +91,7 @@ export class PageBlockRecord extends PageBlock {
     if (!o) return
 
     Apply(this.options, o, String, 'magnifyOption', 'recordSelectorDisplayOption', 'recordSelectorAddRecordDisplayOption', 'referenceField', 'referenceModuleID', 'recordFieldLayoutOption', 'density')
-    Apply(this.options, o, Boolean, 'recordSelectorShowAddRecordButton', 'inlineRecordEditEnabled', 'horizontalFieldLayoutEnabled', 'inlineRecordEditAllowAddField', 'clearConditionalFieldsOnHide', 'hideEmptyFields', 'showEmptyPlaceholder')
+    Apply(this.options, o, Boolean, 'recordSelectorShowAddRecordButton', 'inlineRecordEditEnabled', 'horizontalFieldLayoutEnabled', 'inlineRecordEditAllowAddField', 'clearConditionalFieldsOnHide', 'hideEmptyFields', 'showEmptyPlaceholder', 'readOnly')
 
     if (o.fields) {
       this.options.fields = o.fields
@@ -100,6 +107,10 @@ export class PageBlockRecord extends PageBlock {
 
     if (o.fieldRoles && typeof o.fieldRoles === 'object') {
       this.options.fieldRoles = { ...o.fieldRoles }
+    }
+
+    if (Array.isArray(o.readOnlyFields)) {
+      this.options.readOnlyFields = o.readOnlyFields.map(String)
     }
 
     if (Array.isArray(o.sections)) {

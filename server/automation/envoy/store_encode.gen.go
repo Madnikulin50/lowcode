@@ -53,8 +53,6 @@ func (e StoreEncoder) Prepare(ctx context.Context, p envoyx.EncodeParams, rt str
 	default:
 		return e.prepare(ctx, p, s, rt, nn)
 	}
-
-	return
 }
 
 // Encode encodes the given Corteza resources into the primary store

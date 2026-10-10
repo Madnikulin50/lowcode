@@ -124,7 +124,7 @@ function GetComponent({ block, mode = defaultMode }) {
 
   const { kind } = block
   for (mode of uniq([capitalize(mode), defaultMode])) {
-    if (mode === 'Editor' && block.options.referenceField && block.options.referenceModuleID) {
+    if (mode === 'Editor' && (block.options.readOnly || (block.options.referenceField && block.options.referenceModuleID))) {
       mode = 'Base'
     }
 

@@ -105,7 +105,10 @@ const fieldWidth = computed(() => {
 const horizontal = computed(() => props.block.options.horizontalFieldLayoutEnabled && props.block.options.recordFieldLayoutOption !== 'noWrap')
 
 function canDisplay(field) { return field?.canReadRecordValue !== false }
-function isFieldEditable(field) { return field?.canUpdateRecordValue !== false }
+function isFieldEditable(field) {
+  if (options.value.readOnly || (options.value.readOnlyFields || []).includes(field?.name)) return false
+  return field?.canUpdateRecordValue !== false
+}
 
 const onFieldChange = debounce(function(field) {
   window.dispatchEvent(new CustomEvent('record-field-change', { detail: { fieldName: field.name } }))

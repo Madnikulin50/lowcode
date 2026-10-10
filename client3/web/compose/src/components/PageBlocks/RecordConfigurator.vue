@@ -41,6 +41,13 @@
       </div>
       <div class="col-12 col-lg-6">
         <div class="mb-3">
+          <label class="form-label text-primary">{{ $t('record.readOnly.label') }}</label>
+          <small class="text-muted d-block mb-1">{{ $t('record.readOnly.description') }}</small>
+          <c-input-checkbox v-model="options.readOnly" switch :labels="checkboxLabel" />
+        </div>
+      </div>
+      <div class="col-12 col-lg-6">
+        <div class="mb-3">
           <label class="form-label text-primary">{{ $t('record.horizontalFormLayout') }}</label>
           <c-input-checkbox v-model="options.horizontalFieldLayoutEnabled" switch :disabled="options.recordFieldLayoutOption === 'noWrap'" :labels="checkboxLabel" />
         </div>
@@ -119,6 +126,7 @@
             <tr>
               <th class="text-primary">{{ $t('record.appearance.field') }}</th>
               <th class="text-primary" style="width: 14rem;">{{ $t('record.appearance.role') }}</th>
+              <th class="text-primary text-center" style="width: 8rem;">{{ $t('record.readOnly.column') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -141,6 +149,18 @@
                     {{ opt.text }}
                   </option>
                 </select>
+              </td>
+              <td class="text-center">
+                <div class="form-check form-switch d-flex justify-content-center mb-0">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    role="switch"
+                    :checked="options.readOnly || options.readOnlyFields.includes(field.name)"
+                    :disabled="options.readOnly"
+                    @change="setFieldReadOnly(field.name, $event.target.checked)"
+                  >
+                </div>
               </td>
             </tr>
           </tbody>
@@ -317,6 +337,8 @@ const options = computed(() => {
   const o = props.block.options
   if (!o.fieldRoles || typeof o.fieldRoles !== 'object') o.fieldRoles = {}
   if (!Array.isArray(o.sections)) o.sections = []
+  if (!Array.isArray(o.readOnlyFields)) o.readOnlyFields = []
+  if (o.readOnly === undefined) o.readOnly = false
   if (!o.density) o.density = 'comfortable'
   if (o.hideEmptyFields === undefined) o.hideEmptyFields = false
   if (o.showEmptyPlaceholder === undefined) o.showEmptyPlaceholder = true
@@ -407,6 +429,11 @@ function processVisibilityAutoCompleteParams ({ module: mod } = {}) {
 
 function fieldRole (name) {
   return options.value.fieldRoles?.[name] || 'default'
+}
+
+function setFieldReadOnly (name, value) {
+  const rest = options.value.readOnlyFields.filter(n => n !== name)
+  options.value.readOnlyFields = value ? [...rest, name] : rest
 }
 
 function setFieldRole (name, role) {

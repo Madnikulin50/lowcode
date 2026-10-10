@@ -134,7 +134,6 @@ func (r *Chart) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r Module) GetID() uint64 { return r.ID }
@@ -189,7 +188,6 @@ func (r *Module) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r ModuleField) GetID() uint64 { return r.ID }
@@ -260,7 +258,6 @@ func (r *ModuleField) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r Namespace) GetID() uint64 { return r.ID }
@@ -391,7 +388,6 @@ func (r *Page) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r PageLayout) GetID() uint64 { return r.ID }
@@ -427,7 +423,6 @@ func (r *PageLayout) GetValue(name string, pos uint) (any, error) {
 		return r.getValue(name, pos)
 
 	}
-	return nil, nil
 }
 
 func (r *PageLayout) SetValue(name string, pos uint, value any) (err error) {
@@ -461,7 +456,6 @@ func (r *PageLayout) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r Record) GetID() uint64 { return r.ID }
@@ -501,7 +495,6 @@ func (r *Record) GetValue(name string, pos uint) (any, error) {
 		return r.getValue(name, pos)
 
 	}
-	return nil, nil
 }
 
 func (r *Record) SetValue(name string, pos uint, value any) (err error) {
@@ -539,5 +532,4 @@ func (r *Record) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }

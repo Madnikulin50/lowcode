@@ -606,7 +606,6 @@ func (r *ResourceTranslation) SetValue(name string, pos uint, value any) (err er
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r Role) GetID() uint64 { return r.ID }

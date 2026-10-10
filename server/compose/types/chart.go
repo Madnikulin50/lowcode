@@ -174,18 +174,24 @@ func (c Chart) encodeTranslations() (out locale.ResourceTranslationSet) {
 				Msg:      cast.ToString(m["label"]),
 			})
 
+			// Prefix/suffix live under the metric's "formatting" map (see
+			// decodeTranslations); without it there is nothing to translate.
+			formatting, ok := m["formatting"].(map[string]interface{})
+			if !ok {
+				return
+			}
+
 			out = append(out, &locale.ResourceTranslation{
 				Resource: c.ResourceTranslation(),
 				Key:      mpl.Replace(LocaleKeyChartMetricsMetricIDPrefix.Path),
-				Msg:      cast.ToString(m["prefix"]),
+				Msg:      cast.ToString(formatting["prefix"]),
 			})
 
 			out = append(out, &locale.ResourceTranslation{
 				Resource: c.ResourceTranslation(),
 				Key:      mpl.Replace(LocaleKeyChartMetricsMetricIDSuffix.Path),
-				Msg:      cast.ToString(m["suffix"]),
+				Msg:      cast.ToString(formatting["suffix"]),
 			})
-
 		})
 
 		// collect labels from chart config: dimensions/steps
