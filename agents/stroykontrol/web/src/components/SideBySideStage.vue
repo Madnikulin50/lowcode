@@ -1,20 +1,20 @@
 <script setup>
-import { computed } from 'vue'
+import HlImage from './HlImage.vue'
 
-const props = defineProps({ pdUrl: String, rdUrl: String, pdLabel: String, rdLabel: String, zoomPct: Number })
-
-const imgStyle = computed(() => props.zoomPct === 100 ? {} : { maxWidth: 'none', width: props.zoomPct + '%' })
+defineProps({ pdUrl: String, rdUrl: String, pdLabel: String, rdLabel: String, zoomPct: Number, hlPd: Array, hlRd: Array })
 </script>
 
 <template>
   <div class="stage side-by-side">
     <div class="col">
       <div class="label">{{ pdLabel }}</div>
-      <img :src="pdUrl" alt="ПД" :style="imgStyle" />
+      <HlImage v-if="pdUrl" :src="pdUrl" alt="ПД" :zoom-pct="zoomPct" :box="hlPd" />
+      <div v-else class="empty">Нет страницы</div>
     </div>
     <div class="col">
       <div class="label">{{ rdLabel }}</div>
-      <img :src="rdUrl" alt="РД" :style="imgStyle" />
+      <HlImage v-if="rdUrl" :src="rdUrl" alt="РД" :zoom-pct="zoomPct" :box="hlRd" />
+      <div v-else class="empty">Нет страницы</div>
     </div>
   </div>
 </template>

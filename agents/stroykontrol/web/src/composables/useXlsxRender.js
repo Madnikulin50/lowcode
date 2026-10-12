@@ -169,8 +169,8 @@ function drawPage (title, rows, colCount, widths) {
   return canvas
 }
 
-async function parseXlsx (qs, side) {
-  const res = await fetch(`api/file?${qs}&side=${side}`)
+async function parseXlsx (qs, sel) {
+  const res = await fetch(`api/file?${qs}&${sel}`)
   if (!res.ok) throw new Error('не удалось получить файл (' + res.status + ')')
   const zip = await JSZip.loadAsync(await res.arrayBuffer())
 
@@ -220,8 +220,8 @@ function drawSheets (sheets) {
   return { images, texts }
 }
 
-export async function renderXlsxPages (qs, side) {
-  const sheets = await parseXlsx(qs, side)
+export async function renderXlsxPages (qs, sel) {
+  const sheets = await parseXlsx(qs, sel)
   return { ...drawSheets(sheets), sheets }
 }
 

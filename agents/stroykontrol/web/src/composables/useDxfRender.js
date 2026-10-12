@@ -169,8 +169,8 @@ export function drawDxfPage (entities, layerColors) {
   return canvas
 }
 
-export async function renderDxfPages (qs, side) {
-  const res = await fetch(`api/file?${qs}&side=${side}`)
+export async function renderDxfPages (qs, sel) {
+  const res = await fetch(`api/file?${qs}&${sel}`)
   if (!res.ok) throw new Error('не удалось получить файл (' + res.status + ')')
   const src = await res.text()
   const { entities, layerColors } = parseDxfEntities(src)

@@ -1,10 +1,10 @@
 <script setup>
-// Ported from the original vanilla-JS buildViewer().
+// Page viewer for the chosen ПД and РД documents.
 import { computed } from 'vue'
 import { ZOOM_LEVELS, MODE_META } from '../constants.js'
 import { pageSrc } from '../composables/useComparison.js'
 import ModeTabs from './ModeTabs.vue'
-import Pager from './Pager.vue'
+import DocPager from './DocPager.vue'
 import ZoomControls from './ZoomControls.vue'
 import SideBySideStage from './SideBySideStage.vue'
 import OverlayStage from './OverlayStage.vue'
@@ -12,21 +12,25 @@ import DiffStage from './DiffStage.vue'
 import TextDiffView from './TextDiffView.vue'
 
 const props = defineProps({
-  pdPages: Object,
-  rdPages: Object,
-  comparison: Object,
+  pdDocs: Array,
+  rdDocs: Array,
+  pdInfo: Object,
+  rdInfo: Object,
   qs: String,
   viewer: Object,
-  pageCount: Number,
   expandFold: Function,
 })
 
 const hintKey = computed(() => (props.viewer.mode === 'diff' && props.viewer.diffColorized) ? 'diffColorized' : props.viewer.mode)
 const zoomPct = computed(() => ZOOM_LEVELS[props.viewer.zoomIdx])
-const pdUrl = computed(() => pageSrc(props.qs, props.pdPages, 'pd', props.viewer.page))
-const rdUrl = computed(() => pageSrc(props.qs, props.rdPages, 'rd', props.viewer.page))
-const pdLabel = computed(() => props.comparison?.pdFileName ? 'ПД — ' + props.comparison.pdFileName : 'ПД')
-const rdLabel = computed(() => props.comparison?.rdFileName ? 'РД — ' + props.comparison.rdFileName : 'РД')
+const pdCount = computed(() => props.pdInfo?.pageCount || 0)
+const rdCount = computed(() => props.rdInfo?.pageCount || 0)
+const pdUrl = computed(() => props.viewer.pdPage <= pdCount.value ? pageSrc(props.qs, props.pdInfo, props.viewer.pdDoc, props.viewer.pdPage) : '')
+const rdUrl = computed(() => props.viewer.rdPage <= rdCount.value ? pageSrc(props.qs, props.rdInfo, props.viewer.rdDoc, props.viewer.rdPage) : '')
+const nameOf = (docs, id, fallback) => docs.find(d => d.id === id)?.name || fallback
+const pdLabel = computed(() => 'ПД — ' + nameOf(props.pdDocs, props.viewer.pdDoc, '') + ` (стр. ${props.viewer.pdPage})`)
+const rdLabel = computed(() => 'РД — ' + nameOf(props.rdDocs, props.viewer.rdDoc, '') + ` (стр. ${props.viewer.rdPage})`)
+const foldBase = computed(() => `${props.viewer.pdDoc}:${props.viewer.pdPage}|${props.viewer.rdDoc}:${props.viewer.rdPage}`)
 </script>
 
 <template>
@@ -35,13 +39,24 @@ const rdLabel = computed(() => props.comparison?.rdFileName ? 'РД — ' + prop
     <div class="mode-hint">{{ MODE_META[hintKey].hint }}</div>
 
     <div class="toolbar-row">
-      <Pager :viewer="viewer" :page-count="pageCount" />
+      <div class="doc-pagers">
+        <DocPager label="ПД" :docs="pdDocs" v-model:doc-id="viewer.pdDoc" v-model:page="viewer.pdPage" :page-count="pdCount" />
+        <DocPager label="РД" :docs="rdDocs" v-model:doc-id="viewer.rdDoc" v-model:page="viewer.rdPage" :page-count="rdCount" />
+      </div>
       <ZoomControls v-if="viewer.mode !== 'text'" :viewer="viewer" />
     </div>
 
-    <SideBySideStage v-if="viewer.mode === 'side'" :pd-url="pdUrl" :rd-url="rdUrl" :pd-label="pdLabel" :rd-label="rdLabel" :zoom-pct="zoomPct" />
+    <SideBySideStage
+      v-if="viewer.mode === 'side'"
+      :pd-url="pdUrl" :rd-url="rdUrl" :pd-label="pdLabel" :rd-label="rdLabel" :zoom-pct="zoomPct"
+      :hl-pd="viewer.hlPd" :hl-rd="viewer.hlRd"
+    />
     <OverlayStage v-else-if="viewer.mode === 'overlay'" :pd-url="pdUrl" :rd-url="rdUrl" :zoom-pct="zoomPct" :viewer="viewer" />
     <DiffStage v-else-if="viewer.mode === 'diff'" :pd-url="pdUrl" :rd-url="rdUrl" :zoom-pct="zoomPct" :viewer="viewer" />
-    <TextDiffView v-else-if="viewer.mode === 'text'" :pd-pages="pdPages" :rd-pages="rdPages" :page="viewer.page" :fold-state="viewer.foldState" :expand-fold="expandFold" />
+    <TextDiffView
+      v-else-if="viewer.mode === 'text'"
+      :pd-info="pdInfo" :rd-info="rdInfo" :pd-page="viewer.pdPage" :rd-page="viewer.rdPage"
+      :fold-base="foldBase" :fold-state="viewer.foldState" :expand-fold="expandFold"
+    />
   </div>
 </template>

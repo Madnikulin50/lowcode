@@ -7,7 +7,18 @@ import { ZOOM_LEVELS } from '../constants.js'
 export function useViewerState () {
   const state = reactive({
     mode: 'side',
-    page: 1,
+    // The comparison can hold a package of files per stage: each side shows
+    // one document at its own page (ПД page N is not РД page N once volumes
+    // are matched across files).
+    pdDoc: '',
+    rdDoc: '',
+    pdPage: 1,
+    rdPage: 1,
+    // Boxes (page fractions) of the discrepancy being looked at, drawn on
+    // the page images in the side-by-side mode.
+    activeId: '',
+    hlPd: null,
+    hlRd: null,
     zoomIdx: ZOOM_LEVELS.indexOf(100),
     diffColorized: false, // "Авто-разница" sub-option: gray (mix-blend difference) vs red/green
 
@@ -31,9 +42,9 @@ export function useViewerState () {
     foldState: {},
   })
 
-  function clampPage (pageCount) {
-    if (state.page > pageCount) state.page = pageCount
-    if (state.page < 1) state.page = 1
+  function clampPages (pdCount, rdCount) {
+    state.pdPage = Math.min(Math.max(state.pdPage, 1), Math.max(pdCount, 1))
+    state.rdPage = Math.min(Math.max(state.rdPage, 1), Math.max(rdCount, 1))
   }
 
   function zoomLevel () {
@@ -44,5 +55,5 @@ export function useViewerState () {
     state.foldState[key] = true
   }
 
-  return { state, clampPage, zoomLevel, expandFold }
+  return { state, clampPages, zoomLevel, expandFold }
 }

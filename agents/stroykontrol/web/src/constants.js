@@ -37,3 +37,17 @@ export const DXF_DEFAULT_STROKE = '#2a2a2a'
 
 // Unchanged lines kept visible around each change, like `git diff -U3`.
 export const DIFF_CONTEXT = 3
+
+export const KIND_LABEL = {
+  text: 'текст', table_row: 'таблица', param: 'ключевой параметр', drawing: 'чертёж', vor: 'ВОР / спецификация',
+  not_released: 'не выпущено', scope_diff: 'вне объёма',
+}
+export const REVIEW_LABEL = { new: 'новое', confirmed: 'подтверждено', rejected: 'отклонено' }
+export const REMARK_STATUS_LABEL = { draft: 'Черновик', issued: 'Выдано', closed: 'Закрыто' }
+export const ITER_LABEL = { new: 'новое', persisting: 'не устранено', resolved: 'устранено' }
+export const VERDICT_LABEL = {
+  still_differs: 'расхождение сохраняется',
+  resolved: 'устранено в этой итерации',
+  no_match: 'связанных расхождений не найдено',
+}
+export const EXPERT_STATUS_LABEL = { open: 'Открыто', closed: 'Закрыто', disputed: 'Оспорено' }

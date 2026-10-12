@@ -13,15 +13,17 @@ import { DIFF_CONTEXT } from '../constants.js'
 import DiffLine from './DiffLine.vue'
 
 const props = defineProps({
-  pdPages: Object,
-  rdPages: Object,
-  page: Number,
+  pdInfo: Object,
+  rdInfo: Object,
+  pdPage: Number,
+  rdPage: Number,
+  foldBase: String,
   foldState: Object,
   expandFold: Function,
 })
 
-const pdText = computed(() => pageText(props.pdPages, props.page))
-const rdText = computed(() => pageText(props.rdPages, props.page))
+const pdText = computed(() => pageText(props.pdInfo, props.pdPage))
+const rdText = computed(() => pageText(props.rdInfo, props.rdPage))
 const isEmpty = computed(() => !pdText.value && !rdText.value)
 
 const blocks = computed(() => {
@@ -49,7 +51,7 @@ const displayBlocks = computed(() => blocks.value.map((block, blockIdx) => {
   const isLast = blockIdx === blocks.value.length - 1
   const headN = isFirst ? 0 : DIFF_CONTEXT
   const tailN = isLast ? 0 : DIFF_CONTEXT
-  const key = props.page + ':' + blockIdx
+  const key = props.foldBase + '#' + blockIdx
   const expanded = !!props.foldState[key]
   const hiddenCount = block.lines.length - headN - tailN
   const folded = !expanded && hiddenCount > 0

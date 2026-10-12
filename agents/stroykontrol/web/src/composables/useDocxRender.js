@@ -33,8 +33,8 @@ export function linesFromElement (root) {
   return lines
 }
 
-export async function renderDocxPages (qs, side) {
-  const res = await fetch(`api/file?${qs}&side=${side}`)
+export async function renderDocxPages (qs, sel) {
+  const res = await fetch(`api/file?${qs}&${sel}`)
   if (!res.ok) throw new Error('не удалось получить файл (' + res.status + ')')
   const blob = await res.blob()
 
