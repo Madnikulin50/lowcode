@@ -23,6 +23,21 @@ func Test_requestReadMultiple(t *testing.T) {
 	req.Equal(tt, must(io.ReadAll(rs.Body)))
 }
 
+// The gateway builds this copy before the proxy processer forwards the
+// original request; the original body must still be there.
+func Test_requestKeepsOriginalBody(t *testing.T) {
+	var req = require.New(t)
+	const payload = `{"status":"confirmed"}`
+	r, _ := h.NewRequest("POST", "/foo", strings.NewReader(payload))
+	r.Header.Set("Content-Type", "application/json")
+
+	rs, err := NewRequest(r)
+
+	req.NoError(err)
+	req.Equal(payload, must(io.ReadAll(rs.Body)))
+	req.Equal(payload, must(io.ReadAll(r.Body)))
+}
+
 func Test_requestReadMultipleNoBody(t *testing.T) {
 	var req = require.New(t)
 	r, _ := h.NewRequest("POST", "/foo", h.NoBody)

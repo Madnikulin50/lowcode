@@ -64,7 +64,21 @@ func NewRequest(r *http.Request) (rr *Request, err error) {
 		}
 	} else {
 		// @todo support for others when needed?
-		rr.Body, err = NewBufferedReader(r.Body)
+		var body []byte
+		if r.Body != nil {
+			body, err = io.ReadAll(r.Body)
+			if err != nil {
+				return
+			}
+			r.Body.Close()
+		}
+
+		// Restore the body: a gateway processer (e.g. proxy) forwards the
+		// original request after this copy was taken, and without this it
+		// would send the declared Content-Length with an empty body.
+		r.Body = io.NopCloser(bytes.NewReader(body))
+
+		rr.Body, err = NewBufferedReader(bytes.NewReader(body))
 		if err != nil {
 			return
 		}
