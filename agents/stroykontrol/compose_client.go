@@ -10,6 +10,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/madnikulin50/lowcode/agents/stroykontrol/cmp"
+	"github.com/madnikulin50/lowcode/agents/stroykontrol/idcheck"
 )
 
 // ComposeClient talks to the Lowcode/Corteza Compose REST API on the agent's
@@ -306,14 +309,22 @@ func (c *ComposeClient) Comparison(ns, recordID string) (*comparisonRecord, erro
 	if err != nil {
 		return nil, err
 	}
-	return &comparisonRecord{
+	out := &comparisonRecord{
 		Title:             rec.val("title"),
 		Status:            rec.val("status"),
 		SimilarityPercent: rec.val("similarity_percent"),
 		Comment:           rec.val("comment"),
-		PdFileID:          rec.val("pd_file"),
-		RdFileID:          rec.val("rd_file"),
-	}, nil
+		ParentID:          rec.val("parent_comparison"),
+		IterationNo:       rec.val("iteration_no"),
+	}
+	if out.ParentID != "" && out.ParentID != recordID {
+		if p, err := c.getRecord(ns, comparisonModule, out.ParentID); err == nil {
+			out.ParentTitle = p.val("title")
+		}
+	} else {
+		out.ParentID = ""
+	}
+	return out, nil
 }
 
 func (c *ComposeClient) Discrepancies(ns, recordID string) ([]discrepancyRecord, error) {
@@ -324,19 +335,31 @@ func (c *ComposeClient) Discrepancies(ns, recordID string) ([]discrepancyRecord,
 	out := make([]discrepancyRecord, 0, len(recs))
 	for _, d := range recs {
 		out = append(out, discrepancyRecord{
+			ID:          d.RecordID,
 			Type:        d.val("discrepancy_type"),
 			Severity:    d.val("severity"),
 			Description: d.val("description"),
 			PageNumber:  d.val("page_number"),
+			Kind:        d.val("kind"),
+			Status:      d.val("status"),
+			DocRef:      d.val("doc_ref"),
+			DocTarget:   d.val("doc_target"),
+			PageRef:     d.val("page_pd"),
+			PageTarget:  d.val("page_rd"),
+			BboxRef:     d.val("bbox_pd"),
+			BboxTarget:  d.val("bbox_rd"),
+			Anchor:      d.val("anchor_text"),
+			Evidence:    d.val("evidence"),
+			Fingerprint: d.val("fingerprint"),
+			IterState:   d.val("iter_state"),
 		})
 	}
 	return out, nil
 }
 
-// AttachmentName is a best-effort lookup: the header shows it if available,
-// but falls back to the plain "ПД"/"РД" label client-side if this fails —
-// it's a label, not something worth failing the whole request over.
-func (c *ComposeClient) AttachmentName(ns, attachmentID string) string {
+// attachmentName is a best-effort label lookup: the UI falls back to a plain
+// "ПД"/"РД" label if this fails — it is a label, not worth failing a request.
+func (c *ComposeClient) attachmentName(ns, attachmentID string) string {
 	if attachmentID == "" {
 		return ""
 	}
@@ -348,23 +371,183 @@ func (c *ComposeClient) AttachmentName(ns, attachmentID string) string {
 	return att.Name
 }
 
-// FetchFile downloads the pd_file/rd_file attachment for a comparison record.
-func (c *ComposeClient) FetchFile(ns, recordID, side string) (data []byte, mimetype string, err error) {
-	field := "pd_file"
-	if side == "rd" {
-		field = "rd_file"
-	} else if side != "pd" {
-		return nil, "", fmt.Errorf("side must be 'pd' or 'rd'")
+const (
+	legacyPD = "legacy:pd"
+	legacyRD = "legacy:rd"
+)
+
+// Documents lists the package of a comparison (cmp_documents records) and,
+// for comparisons created before packs existed, the single pd_file/rd_file.
+func (c *ComposeClient) Documents(ns, recordID string) ([]documentRecord, error) {
+	var out []documentRecord
+	cmpRec, err := c.getRecord(ns, comparisonModule, recordID)
+	if err != nil {
+		return nil, err
 	}
-	rec, err := c.getRecord(ns, comparisonModule, recordID)
+	if id := cmpRec.val("pd_file"); id != "" {
+		out = append(out, documentRecord{ID: legacyPD, Side: cmp.SideRef, Name: c.attachmentName(ns, id)})
+	}
+	recs, err := c.searchRecords(ns, cmp.ModDocuments, fmt.Sprintf("comparison = '%s'", recordID))
+	if err != nil {
+		log.Printf("cmp_documents lookup failed: %v", err)
+		recs = nil
+	}
+	// a later iteration inherits the reference set (ПД) of the previous one
+	hasRef := false
+	for _, d := range recs {
+		hasRef = hasRef || (d.val("side") == cmp.SideRef && d.val("file") != "")
+	}
+	if !hasRef {
+		for _, anc := range cmp.Ancestors(composeBackend{c}, ns, recordID)[1:] {
+			ar, err := c.searchRecords(ns, cmp.ModDocuments, fmt.Sprintf("comparison = '%s'", anc))
+			if err != nil {
+				continue
+			}
+			var inherited []record
+			for _, d := range ar {
+				if d.val("side") == cmp.SideRef && d.val("file") != "" {
+					inherited = append(inherited, d)
+				}
+			}
+			if len(inherited) > 0 {
+				recs = append(inherited, recs...)
+				break
+			}
+		}
+	}
+	for _, d := range recs {
+		att := d.val("file")
+		if att == "" {
+			continue
+		}
+		side := d.val("side")
+		if side != cmp.SideRef {
+			side = cmp.SideTarget
+		}
+		out = append(out, documentRecord{
+			ID: d.RecordID, Side: side, Name: c.attachmentName(ns, att),
+			VolumeCode: d.val("volume_code"), VolumeTitle: d.val("volume_title"), Pages: d.val("pages"),
+		})
+	}
+	if id := cmpRec.val("rd_file"); id != "" {
+		out = append(out, documentRecord{ID: legacyRD, Side: cmp.SideTarget, Name: c.attachmentName(ns, id)})
+	}
+	return out, nil
+}
+
+// FetchDocument downloads one document. A package document is looked up by
+// its record and must belong to recordID, so the endpoint cannot be used to
+// read arbitrary attachments of the namespace.
+func (c *ComposeClient) FetchDocument(ns, recordID, docID string) ([]byte, string, error) {
+	field := ""
+	switch docID {
+	case legacyPD:
+		field = "pd_file"
+	case legacyRD:
+		field = "rd_file"
+	}
+	if field != "" {
+		rec, err := c.getRecord(ns, comparisonModule, recordID)
+		if err != nil {
+			return nil, "", err
+		}
+		attID := rec.val(field)
+		if attID == "" {
+			return nil, "", fmt.Errorf("record has no %s attachment", field)
+		}
+		return c.downloadOriginal(ns, attID)
+	}
+	d, err := c.getRecord(ns, cmp.ModDocuments, docID)
 	if err != nil {
 		return nil, "", err
 	}
-	attID := rec.val(field)
+	if !c.inChain(ns, recordID, d.val("comparison")) {
+		return nil, "", fmt.Errorf("document %s does not belong to comparison %s", docID, recordID)
+	}
+	attID := d.val("file")
 	if attID == "" {
-		return nil, "", fmt.Errorf("record has no %s attachment", field)
+		return nil, "", fmt.Errorf("document %s has no file", docID)
 	}
 	return c.downloadOriginal(ns, attID)
+}
+
+// inChain reports whether owner is the comparison or one of its previous
+// iterations (whose reference documents it inherits).
+func (c *ComposeClient) inChain(ns, recordID, owner string) bool {
+	for _, id := range cmp.Ancestors(composeBackend{c}, ns, recordID) {
+		if id == owner {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *ComposeClient) SetDiscrepancyStatus(ns, recordID, discrepancyID, status string) error {
+	d, err := c.getRecord(ns, discrepancyModule, discrepancyID)
+	if err != nil {
+		return err
+	}
+	if d.val("comparison") != recordID {
+		return fmt.Errorf("discrepancy %s does not belong to comparison %s", discrepancyID, recordID)
+	}
+	return composeBackend{c}.Update(ns, discrepancyModule, discrepancyID, idcheck.V("status", status))
+}
+
+func remarkFromRecord(r record) cmp.Remark {
+	var ids []string
+	for _, v := range r.Values {
+		if v.Name == "discrepancies" && v.Value != nil {
+			ids = append(ids, fmt.Sprintf("%v", v.Value))
+		}
+	}
+	return cmp.Remark{
+		ID: r.RecordID, DiscrepancyIDs: ids,
+		DocumentRef: r.val("document_ref"), Sheet: r.val("sheet"),
+		WhatDiverges: r.val("what_diverges"), MustAlign: r.val("must_align"),
+		DraftText: r.val("draft_text"), FinalText: r.val("final_text"), Status: r.val("status"),
+	}
+}
+
+func (c *ComposeClient) Remarks(ns, recordID string) ([]cmp.Remark, error) {
+	recs, err := c.searchRecords(ns, cmp.ModRemarks, fmt.Sprintf("comparison = '%s'", recordID))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]cmp.Remark, 0, len(recs))
+	for _, r := range recs {
+		out = append(out, remarkFromRecord(r))
+	}
+	return out, nil
+}
+
+func (c *ComposeClient) SaveRemark(ns, recordID string, r cmp.Remark) (cmp.Remark, error) {
+	v := idcheck.V(
+		"comparison", recordID,
+		"document_ref", r.DocumentRef, "sheet", r.Sheet,
+		"what_diverges", r.WhatDiverges, "must_align", r.MustAlign,
+		"draft_text", r.DraftText, "final_text", r.FinalText, "status", r.Status,
+	)
+	if len(r.DiscrepancyIDs) > 0 {
+		v["discrepancies"] = r.DiscrepancyIDs
+	}
+	b := composeBackend{c}
+	if r.ID == "" {
+		id, err := b.Create(ns, cmp.ModRemarks, v)
+		if err != nil {
+			return r, err
+		}
+		r.ID = id
+		return r, nil
+	}
+	existing, err := c.getRecord(ns, cmp.ModRemarks, r.ID)
+	if err != nil {
+		return r, err
+	}
+	if existing.val("comparison") != recordID {
+		return r, fmt.Errorf("remark %s does not belong to comparison %s", r.ID, recordID)
+	}
+	// Update overlays non-empty values only: a field cannot be blanked from the UI.
+	return r, b.Update(ns, cmp.ModRemarks, r.ID, v)
 }
 
 func truncate(b []byte, n int) string {
@@ -372,4 +555,39 @@ func truncate(b []byte, n int) string {
 		return string(b)
 	}
 	return string(b[:n]) + "..."
+}
+
+func (c *ComposeClient) Expertise(ns, recordID string) ([]expertiseRecord, error) {
+	recs, err := c.searchRecords(ns, cmp.ModExpertise, fmt.Sprintf("comparison = '%s'", recordID))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]expertiseRecord, 0, len(recs))
+	for _, r := range recs {
+		e := expertiseRecord{
+			ID: r.RecordID, Number: r.val("number"), Text: r.val("text"), Answer: r.val("answer"),
+			Location: r.val("location"), Source: r.val("source_file"), Verdict: r.val("verdict"),
+			Score: r.val("match_score"), Note: r.val("match_note"), Status: r.val("status"),
+			ClaimMismatch: r.val("claim_mismatch") != "",
+		}
+		for _, v := range r.Values {
+			if v.Name == "matched_discrepancies" && v.Value != nil {
+				e.Findings = append(e.Findings, fmt.Sprintf("%v", v.Value))
+			}
+		}
+		out = append(out, e)
+	}
+	sortExpertise(out)
+	return out, nil
+}
+
+func (c *ComposeClient) SetExpertiseStatus(ns, recordID, remarkID, status string) error {
+	r, err := c.getRecord(ns, cmp.ModExpertise, remarkID)
+	if err != nil {
+		return err
+	}
+	if r.val("comparison") != recordID {
+		return fmt.Errorf("remark %s does not belong to comparison %s", remarkID, recordID)
+	}
+	return composeBackend{c}.Update(ns, cmp.ModExpertise, remarkID, idcheck.V("status", status))
 }

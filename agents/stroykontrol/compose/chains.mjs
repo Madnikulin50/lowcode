@@ -5,6 +5,9 @@
  * whose factor weights are plain JSON — tune det vs ai influence right in the
  * chain, no code change needed.
  *
+ * (The ПД/РД comparison is the exception: it runs in the Go agent, see
+ * compareChain below. The other two chains still use this skeleton.)
+ *
  * Shared skeleton per task: [prep nodes] → det (script) → ai → ai_parse
  * (script, parses the ai JSON reply) → combine (score.weighted) → finalize
  * (script, writes everything back via runtime.mcp.*).
@@ -28,14 +31,6 @@ function scriptNode (id, label, code) {
 // 10+ minutes) must not block the deterministic result from being written.
 function aiNode (id, label, prompt, { timeout = 180, optional = true } = {}) {
   return { id, type: 'ai', label, config: { agent: 'assistant', prompt, timeout, optional } }
-}
-
-function conditionNode (id, label, field, operator, value) {
-  return { id, type: 'condition', label, config: { field, operator, value } }
-}
-
-function extractNode (id, label, attachmentField, outText, maxChars = 60000) {
-  return { id, type: 'document.extract', label, config: { attachmentField, maxChars, outText } }
 }
 
 function crudUpdateNode (id, label, ns, moduleID, moduleHandle, fields) {
@@ -107,93 +102,23 @@ function edge (from, to, condition) {
 
 // ---------------------------------------------------------------------------
 // Chain 1 — ТЗ №1: сравнение ПД и РД
+//
+// The comparison itself is done by the stroykontrol agent (Go, package cmp):
+// page-aware text extraction with positions, volume detection by the title
+// block, volume matching, line/table diff, key-parameter checks, image diff
+// of drawing pages. It is deterministic — no LLM decides whether something
+// differs — and it writes status, metrics and discrepancies (with page and
+// bbox of each finding) into the namespace itself. The chain only starts it:
+//   · button on the card «Сравнить документы» (any package of files), and
+//   · the trigger below — a quick run when pd_file/rd_file are uploaded.
+// No afterUpdate loop: the trigger fires only when the file IDs change.
 // ---------------------------------------------------------------------------
-function compareChain (ns, m, weights) {
-  const detCode = `
-function normLine (s) { return String(s || '').toLowerCase().replace(/\\s+/g, ' ').trim(); }
-function toLines (s) {
-  return String(s || '')
-    .split(/\\n+|(?<=[.!?])\\s+/)
-    .map(normLine)
-    .filter(function (l) { return l.length > 2; });
-}
-var a = toLines(pd_text);
-var b = toLines(rd_text);
-var bagA = {}, bagB = {};
-a.forEach(function (l) { bagA[l] = (bagA[l] || 0) + 1; });
-b.forEach(function (l) { bagB[l] = (bagB[l] || 0) + 1; });
-var common = 0;
-Object.keys(bagA).forEach(function (l) { if (bagB[l]) common += Math.min(bagA[l], bagB[l]); });
-var total = Math.max(a.length, b.length, 1);
-var detScore = Math.round((common / total) * 1000) / 10;
-
-var bB = Object.assign({}, bagB);
-var missing = [];
-a.forEach(function (l) { if (bB[l] > 0) { bB[l]--; } else { missing.push(l); } });
-var bA = Object.assign({}, bagA);
-var extra = [];
-b.forEach(function (l) { if (bA[l] > 0) { bA[l]--; } else { extra.push(l); } });
-
-var discrepancies = [];
-var MAX_DET = 200;
-missing.slice(0, MAX_DET).forEach(function (l) { discrepancies.push({ source: 'det', type: 'content', severity: 'medium', description: 'Есть в ПД, нет в РД: ' + l.slice(0, 220) }); });
-extra.slice(0, MAX_DET).forEach(function (l) { discrepancies.push({ source: 'det', type: 'content', severity: 'medium', description: 'Есть в РД, нет в ПД: ' + l.slice(0, 220) }); });
-if (missing.length > MAX_DET || extra.length > MAX_DET) {
-  discrepancies.push({ source: 'det', type: 'content', severity: 'low', description: 'Показаны первые ' + MAX_DET + ' из ' + missing.length + ' (ПД) и ' + extra.length + ' (РД) расхождений' });
-}
-
-return {
-  det_score: detScore,
-  det_lines_pd: a.length,
-  det_lines_rd: b.length,
-  det_missing_count: missing.length,
-  det_extra_count: extra.length,
-  det_discrepancies: discrepancies,
-  pd_text_short: String(pd_text || '').slice(0, 4000),
-  rd_text_short: String(rd_text || '').slice(0, 4000),
-};
-`.trim()
-
-  const finalizeCode = `
-var detOut = (det && det.output) || {};
-var aiOut = (ai_parse && ai_parse.output) || {};
-var discrepancies = (detOut.det_discrepancies || []).concat(aiOut.ai_discrepancies || []);
-var errors = [];
-
-// Re-runs replace the previous result instead of piling up duplicates.
-var prev = runtime.mcp.searchRecords(namespaceID, '${m.pd_rd_discrepancies}', "comparison = '" + recordID + "'", 1000) || [];
-prev.forEach(function (r) {
-  var del = runtime.mcp.deleteRecord(namespaceID, '${m.pd_rd_discrepancies}', r.recordID);
-  if (del && del.error) errors.push('deleteRecord discrepancy: ' + del.error);
-});
-
-var upd = runtime.mcp.updateRecord(namespaceID, '${m.pd_rd_comparisons}', recordID, {
-  status: 'done',
-  similarity_percent: final_score,
-  matching_pages: Math.max((detOut.det_lines_pd || 0) - (detOut.det_missing_count || 0), 0),
-  differing_pages: (detOut.det_missing_count || 0) + (detOut.det_extra_count || 0),
-  comment: 'Агент: ' + final_score + '% схожести. ' + (aiOut.ai_notes || ''),
-});
-if (upd && upd.error) errors.push('updateRecord: ' + upd.error);
-
-discrepancies.forEach(function (d) {
-  var created = runtime.mcp.createRecord(namespaceID, '${m.pd_rd_discrepancies}', {
-    comparison: recordID,
-    discrepancy_type: d.type,
-    severity: d.severity,
-    description: (d.source === 'ai' ? '[ИИ] ' : '[детерм.] ') + d.description,
-  });
-  if (created && created.error) errors.push('createRecord discrepancy: ' + created.error);
-});
-
-return { final_score: final_score, discrepancy_count: discrepancies.length, errors: errors };
-`.trim()
-
+function compareChain (ns, m, agentURL) {
   return {
     id: 'stroykontrol-compare-pd-rd',
     name: 'Стройконтроль: сравнить ПД/РД',
-    description: 'Агент сравнивает pd_file и rd_file: детерминированный диф текста + вердикт LLM, вес каждого — в узле combine.',
-    entryNode: 'cond_pd',
+    description: 'Отправляет комплект документов сравнения (ПД — эталон, РД) агенту stroykontrol. Агент определяет тома, сопоставляет их, находит расхождения с привязкой к листу и области и записывает результат в пространство.',
+    entryNode: 'run',
     namespaceID: ns,
     config: {
       triggers: [{
@@ -204,29 +129,42 @@ return { final_score: final_score, discrepancy_count: discrepancies.length, erro
         fileField: 'pd_file,rd_file',
       }],
     },
-    nodes: [
-      conditionNode('cond_pd', 'Есть файл ПД', 'pd_file', 'notEmpty'),
-      conditionNode('cond_rd', 'Есть файл РД', 'rd_file', 'notEmpty'),
-      crudUpdateNode('mark_processing', 'Статус: обрабатывается', ns, m.pd_rd_comparisons, 'pd_rd_comparisons', { status: 'processing' }),
-      extractNode('extract_pd', 'Извлечь текст ПД', 'pd_file', 'pd_text'),
-      extractNode('extract_rd', 'Извлечь текст РД', 'rd_file', 'rd_text'),
-      scriptNode('det', 'Детерминированное сравнение', detCode),
-      aiNode('ai', 'Агент: сравнить ПД/РД', 'Ты эксперт производственно-технического отдела. Сравни текст проектной документации (ПД) и рабочей документации (РД) одного объекта. Дай процент схожести 0-100 и до 5 содержательных расхождений (не форматирование). Ответь СТРОГО JSON без markdown: {"score": <0-100>, "notes": "<1-3 предложения по-русски>", "discrepancies": [{"type": "content|numbering|missing_page|extra_page|drawing", "severity": "low|medium|high", "description": "..."}]}\n\nПД:\n{{det.output.pd_text_short}}\n\nРД:\n{{det.output.rd_text_short}}'),
-      scriptNode('ai_parse', 'Разбор ответа агента', aiParseCode('det')),
-      scoreNode('combine', 'Итоговый вердикт', weights.map(([field, weight]) => ({ field, weight, max: 100 })), 'final_score'),
-      scriptNode('finalize', 'Записать результат', finalizeCode),
-    ],
-    edges: [
-      edge('cond_pd', 'cond_rd', 'cond_pd_result'),
-      edge('cond_rd', 'mark_processing', 'cond_rd_result'),
-      edge('mark_processing', 'extract_pd'),
-      edge('extract_pd', 'extract_rd'),
-      edge('extract_rd', 'det'),
-      edge('det', 'ai'),
-      edge('ai', 'ai_parse'),
-      edge('ai_parse', 'combine'),
-      edge('combine', 'finalize'),
-    ],
+    nodes: [{
+      id: 'run',
+      type: 'http',
+      label: 'Агент: поставить сравнение в очередь',
+      config: {
+        method: 'POST',
+        url: `${agentURL}/api/cmp/run?recordID={{recordID}}&namespaceID={{namespaceID}}`,
+        timeout: 30,
+      },
+    }],
+    edges: [],
+  }
+}
+
+// Expertise remarks: the agent reads the Excel attached to the comparison
+// (field remarks_file) and matches the remarks with the findings. Manual
+// button only — no trigger.
+function importRemarksChain (ns, agentURL) {
+  return {
+    id: 'stroykontrol-import-remarks',
+    name: 'Стройконтроль: загрузить замечания экспертизы',
+    description: 'Агент читает Excel замечаний экспертизы (и ответов проектировщика), приложенный к сравнению, и сопоставляет замечания с найденными расхождениями.',
+    entryNode: 'run',
+    namespaceID: ns,
+    config: { triggers: [] },
+    nodes: [{
+      id: 'run',
+      type: 'http',
+      label: 'Агент: загрузить и сопоставить замечания',
+      config: {
+        method: 'POST',
+        url: `${agentURL}/api/expertise/import?recordID={{recordID}}&namespaceID={{namespaceID}}`,
+        timeout: 60,
+      },
+    }],
+    edges: [],
   }
 }
 
@@ -438,18 +376,19 @@ return { status: status, final_score: final_score, error: (created && created.er
 }
 
 /**
+ * @param agentURL where the stroykontrol agent listens, as seen from the server
  * @param weights per-chain [detWeight, aiWeight] pairs (0..1, need not sum to 1 —
  *   score.weighted normalizes). Tune directly here, or edit the deployed
  *   chain's `combine` node `factors[].weight` in place.
  */
-export function buildRuleChains ({ nsID, modules, weights = {} }) {
+export function buildRuleChains ({ nsID, modules, weights = {}, agentURL = 'http://localhost:8092' }) {
   const w = {
-    compare: weights.compare || [0.5, 0.5],
     checkId: weights.checkId || [0.6, 0.4],
     checkVoisr: weights.checkVoisr || [0.7, 0.3],
   }
   return [
-    compareChain(nsID, modules, [['det.output.det_score', w.compare[0]], ['ai_parse.output.ai_score', w.compare[1]]]),
+    compareChain(nsID, modules, agentURL),
+    importRemarksChain(nsID, agentURL),
     checkIdChain(nsID, modules, [['det.output.det_score', w.checkId[0]], ['ai_parse.output.ai_score', w.checkId[1]]]),
     checkVoisrChain(nsID, modules, [['det.output.det_score', w.checkVoisr[0]], ['ai_parse.output.ai_score', w.checkVoisr[1]]]),
   ]

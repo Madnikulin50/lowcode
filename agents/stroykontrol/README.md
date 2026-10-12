@@ -123,6 +123,126 @@ scripts, not for a long-running service. For real use, give this agent its
 own dedicated API token/service account rather than a token shared with
 interactive dev scripts.
 
+## Сравнение комплектов (ПД — эталон, РД)
+
+The comparison is a **package** of PDFs per stage: one file, several files, a
+pack against a pack or against a single file. Files are rows of the Compose
+module `cmp_documents` (side `ref`/`target`); the old `pd_file`/`rd_file`
+fields of a comparison keep working as a one-file package.
+
+The engine is the Go package [`cmp/`](cmp) — deterministic, no LLM decides
+whether something differs. The rule chain `stroykontrol-compare-pd-rd` only
+starts it (`POST /api/cmp/run?recordID=&namespaceID=`, an `http` node, like
+`idcheck`); the agent writes status, metrics, discrepancies and detected
+volumes back into the namespace itself.
+
+1. **Extract** (`cmp/extract.go`): `pdftotext -bbox` → words with positions →
+   visual rows with a box in page fractions. Every sheet is classified:
+   - *title block* rows (основная надпись, margin stamps, signature rows) are recognised
+     **by their content** (Изм. Кол.уч. / Стадия Лист Листов / Взам. инв. / Проверил …), not
+     by position alone — body text near the page bottom stays content; on drawing sheets
+     the bottom-right corner counts as title block too;
+   - *cover / front matter* (title page, approval sheet, contents register, first 6
+     sheets) is skipped: dates, signatures and edition marks change by nature;
+   - *drawing sheets* (A2+ or mostly scattered short labels, or no text layer) are never
+     text-diffed — their scattered labels are noise.
+2. **Volumes** (`cmp/volume.go`): **one file is one volume** unless its title block
+   shows ≥2 different шифры (strict shape: digit, ≥2 letters, ≥2 parts, read from the
+   title block's own row, ≥2 sheets each; shorter stretches are absorbed). A manual code on a
+   `cmp_documents` row (`detected_by = manual`) overrides the detection.
+3. **Matching** (`cmp/match.go`): one volume against one volume is paired as given (a
+   file against its next edition needs no content overlap); otherwise volumes are paired
+   by shared content (+ шифр / series), so a ПД volume may match several РД volumes, and
+   a РД volume may cover only part of a ПД volume (*fragment*). Unpaired ПД volume →
+   `not_released`, unpaired РД volume → `scope_diff`; both informational (`low`).
+4. **Diff** (`cmp/diff.go`, `compare.go`): patience line diff over the whole volume
+   (page shifts do not misalign it), similar lines are paired as an *edit*.
+   Changed numbers → `high`, rewording → `medium`, a numbering-only change →
+   `low`. A ПД line missing from РД is `medium` (not reported for fragments);
+   extra РД lines are `low` (more detailed РД is normal). With no reference text
+   (drawings-only volume) no text findings are made.
+5. **Key parameters** (`cmp/params.go`): concrete grade, water/frost resistance,
+   rebar class are extracted by regex; a conflicting value is `high`.
+6. **Drawings** (`cmp/raster.go`): drawing sheets are compared as images only when
+   both sides have the same number of them with the same proportions (regions become
+   boxes); otherwise one informational finding asks for a visual check. No OCR yet.
+7. **Similarity**: full pairs — Dice over lines (2·equal/(ПД+РД)); fragment pairs —
+   share of РД lines confirmed by ПД. Unknown (empty in Compose) when there was no
+   text to compare, never a fake 0/100. The comment lists coverage and drawing counts.
+
+Every finding carries `kind`, the documents/pages/regions on both sides, the
+fragment it is anchored to, an `evidence` JSON (what the conclusion rests on)
+and a `fingerprint`; the reviewer's decision (`new/confirmed/rejected`) is kept
+across re-runs by fingerprint. Remark cards (`remark_cards`) are filled from
+selected findings by a template; the local model (`--remark-model`,
+`REMARK_MODEL`) only drafts wording when the specialist asks for it.
+
+### Iterations (before/after corrections)
+
+A comparison may point to a previous one (`parent_comparison`, `iteration_no`): the same
+pair re-checked after the designer's corrections. The ПД (reference) set is **inherited**
+from the nearest previous iteration that has one — only the corrected РД is uploaded.
+After a run every finding has an `iter_state` (`cmp/iteration.go`, matched by fingerprint,
+which is built from the compared fragments and survives re-pagination):
+
+- `persisting` — still there, **keeps the reviewer's decision**;
+- `new` — not in the previous iteration;
+- `resolved` — was there, gone now (recreated in the new comparison, struck through in the
+  viewer). Findings the reviewer had rejected as false alarms are never reported as "fixed".
+
+The comparison comment and the viewer header show «устранено / не устранено / новых».
+
+### OCR of scans
+
+Sheets with no text layer and not larger than A2 are recognized with tesseract
+(`cmp/ocr.go`, `--tesseract`, `--ocr-lang`; pages are rendered at 200 dpi and cached per
+page; at most 40 per file). Recognized sheets are compared like text pages, but findings
+that rest on them are capped at «средняя», marked «[по распознанному тексту скана]» and carry
+the rule `…+ocr`. A recognized sheet with fewer than 20 words, or scattered labels, stays a
+drawing.
+
+### ВОР and specifications
+
+`cmp/vor.go`, `cmp/vor_compare.go`. Tables are read from word positions: the header names
+the columns (Наименование / Ед. изм. / Кол-во), every number in the quantity column is a
+position (numbers split by a thousands space are joined), its name is the text of the name
+column nearest to it. The kind (ВОР / specification) comes from the sheet's title; following
+sheets inherit it. Pages read as tables are compared as tables, not line by line.
+
+- **Between stages** — positions are paired by name + unit; a changed quantity is
+  `high` (>10 %), `medium` (>3 %) or `low`; a fivefold jump is never `high` (more likely two
+  different positions or a misread cell). Positions with no counterpart are information only
+  (bills are aggregated in one stage and split in the other).
+- **Inside a volume** — the bill against its own specification: a position found in both must
+  agree; if the specification splits it over several lines their **sum** is compared; a bill
+  position with no specification counterpart is not a mismatch (works vs materials).
+
+Limits: only sheets that carry the column header (or follow a titled sheet) are read;
+tables whose layout differs per sheet fall back to the line diff; no aggregation between
+volumes.
+
+### Expertise remarks (Excel)
+
+Attach the expert's Excel (and, if it comes separately, the designer's answers) to the
+comparison's `remarks_file` and press «Загрузить и сопоставить»
+(`POST /api/expertise/import`, chain `stroykontrol-import-remarks`). `cmp/expertise.go`
+finds the columns by their headings (number, remark, answer, section/sheet), joins wrapped
+rows, merges the two files by number, then **matches every remark with the comparison's
+findings** by shared words and, more strongly, shared codes and values (a pile mark, a
+pier number, a size). The verdict describes the current state of the documents:
+
+- `still_differs` — the difference the remark is about is still there; if the designer's
+  answer claims a correction («учтено», «откорректировано»…) it is flagged
+  «ответ ≠ документы»;
+- `resolved` — it was there and is gone in this iteration;
+- `no_match` — no related finding (not a ПД/РД difference, or not visible to the engine).
+
+Matching is deterministic and explains itself (which tokens matched). The specialist's own
+status (open / closed / disputed) is kept across re-imports. In `--fixtures` mode a case's
+`remarks*.xlsx` is read on every request.
+
+Not done: aggregation of ВОР across volumes; estimates.
+
 ## UI
 
 The header shows the real attachment names (not just "ПД"/"РД"), a status

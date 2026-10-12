@@ -19,7 +19,7 @@ import {
   field, recordRel, fileField, dateField, moneyField, numberField, boolSwitch,
   selectOptions, block, recordList, recordBlock, metricBlock, metricItem,
   pageIcon, withBlockIDs, mintToken, detectBase, apiFactory, ensureNamespace,
-  ensureModule, ensurePage, withRevisions, ensureRuleChain, ruleChain,
+  ensureModule, ensurePage, withRevisions, ensureRuleChain, ruleChain, setOf,
 } from './helpers.mjs'
 import { buildRuleChains } from './chains.mjs'
 
@@ -50,6 +50,56 @@ const SEVERITY = [
   ['low', 'Низкая', { backgroundColor: 'light', textColor: 'dark' }],
   ['medium', 'Средняя', { backgroundColor: 'warning', textColor: 'dark' }],
   ['high', 'Высокая', { backgroundColor: 'danger', textColor: 'white' }],
+]
+
+const CMP_SIDE = [
+  ['ref', 'ПД (стадия П, эталон)', { backgroundColor: 'primary', textColor: 'white' }],
+  ['target', 'РД (стадия Р/РД)', { backgroundColor: 'info', textColor: 'white' }],
+]
+
+const DETECTED_BY = [
+  ['auto', 'Автоматически'],
+  ['manual', 'Вручную'],
+]
+
+const DISCREPANCY_KIND = [
+  ['text', 'Текст'],
+  ['table_row', 'Строка таблицы'],
+  ['param', 'Ключевой параметр'],
+  ['drawing', 'Чертёж'],
+  ['vor', 'ВОР / спецификация'],
+  ['not_released', 'Не выпущено (РД)'],
+  ['scope_diff', 'Вне объёма (ПД)'],
+]
+
+const ITER_STATE = [
+  ['new', 'Новое', { backgroundColor: 'warning', textColor: 'dark' }],
+  ['persisting', 'Не устранено', { backgroundColor: 'danger', textColor: 'white' }],
+  ['resolved', 'Устранено', { backgroundColor: 'success', textColor: 'white' }],
+]
+
+const EXPERT_VERDICT = [
+  ['still_differs', 'Расхождение сохраняется', { backgroundColor: 'danger', textColor: 'white' }],
+  ['resolved', 'Устранено в этой итерации', { backgroundColor: 'success', textColor: 'white' }],
+  ['no_match', 'Связанных расхождений не найдено', { backgroundColor: 'light', textColor: 'dark' }],
+]
+
+const EXPERT_STATUS = [
+  ['open', 'Открыто', { backgroundColor: 'warning', textColor: 'dark' }],
+  ['closed', 'Закрыто', { backgroundColor: 'success', textColor: 'white' }],
+  ['disputed', 'Оспорено', { backgroundColor: 'secondary', textColor: 'white' }],
+]
+
+const REVIEW_STATUS = [
+  ['new', 'Новое', { backgroundColor: 'light', textColor: 'dark' }],
+  ['confirmed', 'Подтверждено', { backgroundColor: 'danger', textColor: 'white' }],
+  ['rejected', 'Отклонено', { backgroundColor: 'secondary', textColor: 'white' }],
+]
+
+const REMARK_STATUS = [
+  ['draft', 'Черновик', { backgroundColor: 'light', textColor: 'dark' }],
+  ['issued', 'Выдано', { backgroundColor: 'warning', textColor: 'dark' }],
+  ['closed', 'Закрыто', { backgroundColor: 'success', textColor: 'white' }],
 ]
 
 const DOC_TYPE_ID = [
@@ -115,24 +165,62 @@ async function main () {
   })
 
   // ---- ТЗ №1: Сравнение ПД и РД ----
+  // the module refers to itself (parent_comparison): its own ID is needed for the field
+  const existingCmp = setOf(await api('GET', `/namespace/${nsID}/module/?handle=pd_rd_comparisons&limit=5`)).find(x => x.handle === 'pd_rd_comparisons' && !x.deletedAt)
+  const comparisonFields = (selfID) => [
+    field('title', 'Название', 'String', { required: true }),
+    recordRel('object', 'Объект', m.objects, 'name', ['name', 'code']),
+    fileField('pd_file', 'Файл ПД'),
+    fileField('rd_file', 'Файл РД'),
+    field('status', 'Статус', 'Select', { options: selectOptions(COMPARISON_STATUS) }),
+    numberField('similarity_percent', 'Схожесть, %', { precision: 1, max: 100, suffix: '%' }),
+    numberField('total_pages_pd', 'Страниц в ПД', { precision: 0 }),
+    numberField('total_pages_rd', 'Страниц в РД', { precision: 0 }),
+    numberField('matching_pages', 'Совпадающих страниц', { precision: 0 }),
+    numberField('differing_pages', 'Различающихся страниц', { precision: 0 }),
+    fileField('report_file', 'Отчёт о сравнении'),
+    textArea('comment', 'Комментарий'),
+    // итерации: повторная проверка той же пары после исправлений
+    numberField('iteration_no', 'Итерация', { precision: 0 }),
+    // замечания экспертизы: Excel с замечаниями и (отдельным файлом) с ответами проектировщика
+    fileField('remarks_file', 'Замечания экспертизы (Excel)', { multi: true, images: false }),
+    ...(selfID ? [recordRel('parent_comparison', 'Предыдущая итерация', selfID, 'title', ['title'])] : []),
+  ]
   m.pd_rd_comparisons = await ensureModule(api, nsID, {
     name: 'Сравнения ПД/РД',
     handle: 'pd_rd_comparisons',
-    fields: [
-      field('title', 'Название', 'String', { required: true }),
-      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code']),
-      fileField('pd_file', 'Файл ПД'),
-      fileField('rd_file', 'Файл РД'),
-      field('status', 'Статус', 'Select', { options: selectOptions(COMPARISON_STATUS) }),
-      numberField('similarity_percent', 'Схожесть, %', { precision: 1, max: 100, suffix: '%' }),
-      numberField('total_pages_pd', 'Страниц в ПД', { precision: 0 }),
-      numberField('total_pages_rd', 'Страниц в РД', { precision: 0 }),
-      numberField('matching_pages', 'Совпадающих страниц', { precision: 0 }),
-      numberField('differing_pages', 'Различающихся страниц', { precision: 0 }),
-      fileField('report_file', 'Отчёт о сравнении'),
-      textArea('comment', 'Комментарий'),
-    ],
+    fields: comparisonFields(existingCmp?.moduleID),
     config: withRevisions(),
+  })
+  if (!existingCmp) {
+    // a brand-new module only now has an ID to point parent_comparison at
+    await ensureModule(api, nsID, {
+      name: 'Сравнения ПД/РД',
+      handle: 'pd_rd_comparisons',
+      fields: comparisonFields(m.pd_rd_comparisons),
+      config: withRevisions(),
+    })
+  }
+
+  // Комплект документов сравнения: любое число PDF с каждой стороны
+  // (один PDF на стадию, пачка против пачки, пачка против одного файла).
+  // Том/шифр определяются агентом по основной надписи; поля можно поправить
+  // вручную (detected_by = manual — агент их больше не перезаписывает).
+  m.cmp_documents = await ensureModule(api, nsID, {
+    name: 'Документы сравнения',
+    handle: 'cmp_documents',
+    fields: [
+      recordRel('comparison', 'Сравнение', m.pd_rd_comparisons, 'title', ['title'], true),
+      field('side', 'Стадия', 'Select', { required: true, options: selectOptions(CMP_SIDE) }),
+      fileField('file', 'Файл PDF', { documents: true, images: false, mimetypes: 'application/pdf' }),
+      field('doc_version', 'Версия (изм.)', 'String'),
+      field('volume_code', 'Шифр тома', 'String'),
+      field('volume_title', 'Наименование тома', 'String'),
+      field('object_name', 'Объект/сооружение', 'String'),
+      numberField('pages', 'Страниц', { precision: 0 }),
+      boolSwitch('released', 'Выпущен'),
+      field('detected_by', 'Определено', 'Select', { options: selectOptions(DETECTED_BY) }),
+    ],
   })
 
   m.pd_rd_discrepancies = await ensureModule(api, nsID, {
@@ -144,6 +232,54 @@ async function main () {
       field('discrepancy_type', 'Тип расхождения', 'Select', { options: selectOptions(DISCREPANCY_TYPE) }),
       field('severity', 'Критичность', 'Select', { options: selectOptions(SEVERITY) }),
       textArea('description', 'Описание'),
+      field('kind', 'Вид', 'Select', { options: selectOptions(DISCREPANCY_KIND) }),
+      field('status', 'Решение', 'Select', { options: selectOptions(REVIEW_STATUS) }),
+      field('doc_ref', 'Документ ПД (ID)', 'String'),
+      field('doc_target', 'Документ РД (ID)', 'String'),
+      numberField('page_pd', 'Страница в ПД', { precision: 0 }),
+      numberField('page_rd', 'Страница в РД', { precision: 0 }),
+      field('bbox_pd', 'Область в ПД', 'String'),
+      field('bbox_rd', 'Область в РД', 'String'),
+      textArea('anchor_text', 'Фрагмент'),
+      textArea('evidence', 'Обоснование (JSON)'),
+      field('fingerprint', 'Отпечаток', 'String'),
+      field('iter_state', 'Итерация', 'Select', { options: selectOptions(ITER_STATE) }),
+    ],
+  })
+
+  m.remark_cards = await ensureModule(api, nsID, {
+    name: 'Карточки замечаний',
+    handle: 'remark_cards',
+    fields: [
+      recordRel('comparison', 'Сравнение', m.pd_rd_comparisons, 'title', ['title'], true),
+      recordRel('discrepancies', 'Расхождения', m.pd_rd_discrepancies, 'description', ['description'], false, { multi: true }),
+      field('document_ref', 'Документы', 'String'),
+      field('sheet', 'Листы', 'String'),
+      textArea('what_diverges', 'В чём расхождение'),
+      textArea('must_align', 'Что требуется'),
+      textArea('draft_text', 'Черновик формулировки (ИИ)'),
+      textArea('final_text', 'Текст замечания'),
+      field('status', 'Статус', 'Select', { options: selectOptions(REMARK_STATUS) }),
+    ],
+  })
+
+  // Замечания экспертизы, прочитанные агентом из Excel и сопоставленные с расхождениями
+  m.expertise_remarks = await ensureModule(api, nsID, {
+    name: 'Замечания экспертизы',
+    handle: 'expertise_remarks',
+    fields: [
+      recordRel('comparison', 'Сравнение', m.pd_rd_comparisons, 'title', ['title'], true),
+      field('number', 'Номер', 'String'),
+      field('location', 'Раздел, лист', 'String'),
+      textArea('text', 'Замечание'),
+      textArea('answer', 'Ответ проектировщика'),
+      field('verdict', 'Итог сопоставления', 'Select', { options: selectOptions(EXPERT_VERDICT) }),
+      numberField('match_score', 'Уверенность, %', { precision: 0 }),
+      textArea('match_note', 'Пояснение'),
+      recordRel('matched_discrepancies', 'Связанные расхождения', m.pd_rd_discrepancies, 'description', ['description'], false, { multi: true }),
+      field('claim_mismatch', 'Ответ ≠ документы', 'String'),
+      field('status', 'Статус', 'Select', { options: selectOptions(EXPERT_STATUS) }),
+      field('source_file', 'Файл-источник', 'String'),
     ],
   })
 
@@ -292,13 +428,19 @@ async function main () {
     }),
 
     listPage('Сравнения ПД/РД', 'pd_rd_comparisons', 20, 'fas file-invoice', m.pd_rd_comparisons,
-      ['title', 'object', 'pd_file', 'rd_file', 'status', 'similarity_percent', 'differing_pages']),
+      ['title', 'object', 'iteration_no', 'pd_file', 'rd_file', 'status', 'similarity_percent', 'differing_pages']),
     card('Сравнение ПД/РД', 'pd_rd_comparison', m.pd_rd_comparisons, 21, [
-      'title', 'object', 'status', 'pd_file', 'rd_file', 'similarity_percent',
+      'title', 'object', 'iteration_no', 'parent_comparison', 'status', 'pd_file', 'rd_file', 'remarks_file', 'similarity_percent',
       'total_pages_pd', 'total_pages_rd', 'matching_pages', 'differing_pages', 'report_file', 'comment',
     ], { title: 'title', object: 'meta', status: 'badge', comment: 'body' }, {
       extraBlocks: [
-        ruleChain('Сравнить документы', [0, 28, 48, 8], {
+        // pd_file/rd_file above stay for the simple one-file-per-stage case;
+        // for packs (several PDFs per stage) add rows here. The agent takes
+        // both into account.
+        recordList('Комплект документов (ПД — эталон, РД — проверяемая)', [0, 28, 48, 14], m.cmp_documents,
+          ['side', 'file', 'doc_version', 'volume_code', 'volume_title', 'pages', 'detected_by'],
+          { prefilter: 'comparison = ${recordID}', refField: 'comparison', presort: 'side ASC, createdAt ASC', perPage: 20 }),
+        ruleChain('Сравнить документы', [0, 42, 48, 8], {
           chainID: 'stroykontrol-compare-pd-rd', label: 'Сравнить документы (агент)', variant: 'primary', icon: 'code-compare',
         }),
         // Visual comparison viewer — a standalone agent (agents/stroykontrol),
@@ -313,19 +455,46 @@ async function main () {
         // page-layout JSON itself never needs editing again per
         // dev/staging/prod; only the gateway route's `location` filter param
         // does (see create_apigw_proxy.mjs's AGENT_URL).
-        block('IFrame', 'Просмотр сравнения (агент)', [0, 36, 48, 44], {
+        block('IFrame', 'Просмотр сравнения (агент)', [0, 50, 48, 56], {
           src: '/gateway/agents/stroykontrol/?recordID=${recordID}&namespaceID=${namespaceID}',
           srcField: '',
           displayAsImage: false,
         }),
+        recordList('Карточки замечаний', [0, 106, 48, 20], m.remark_cards,
+          ['document_ref', 'sheet', 'what_diverges', 'final_text', 'status'],
+          { prefilter: 'comparison = ${recordID}', presort: 'createdAt DESC', perPage: 20, hideAddButton: true }),
+        ruleChain('Замечания экспертизы', [0, 126, 48, 6], {
+          chainID: 'stroykontrol-import-remarks', label: 'Загрузить и сопоставить замечания экспертизы', variant: 'outline-primary', icon: 'comments',
+        }),
+        recordList('Замечания экспертизы', [0, 132, 48, 22], m.expertise_remarks,
+          ['number', 'location', 'text', 'verdict', 'status'],
+          { prefilter: 'comparison = ${recordID}', presort: 'number ASC', perPage: 50, hideAddButton: true }),
       ],
     }),
 
+    listPage('Документы сравнения', 'cmp_documents', 24, 'fas file-pdf', m.cmp_documents,
+      ['comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'pages', 'detected_by']),
+    card('Документ сравнения', 'cmp_document', m.cmp_documents, 25,
+      ['comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'object_name', 'pages', 'released', 'detected_by'],
+      { file: 'title', side: 'badge' }),
+
     listPage('Расхождения ПД/РД', 'pd_rd_discrepancies', 22, 'fas triangle-exclamation', m.pd_rd_discrepancies,
-      ['comparison', 'page_number', 'discrepancy_type', 'severity']),
+      ['comparison', 'severity', 'kind', 'status', 'iter_state', 'page_pd', 'page_rd', 'description']),
     card('Расхождение ПД/РД', 'pd_rd_discrepancy', m.pd_rd_discrepancies, 23,
-      ['comparison', 'page_number', 'discrepancy_type', 'severity', 'description'],
-      { discrepancy_type: 'title', severity: 'badge', description: 'body' }),
+      ['comparison', 'severity', 'kind', 'status', 'page_pd', 'page_rd', 'description', 'anchor_text', 'evidence'],
+      { discrepancy_type: 'title', severity: 'badge', status: 'badge', description: 'body' }),
+
+    listPage('Замечания экспертизы', 'expertise_remarks', 28, 'fas comments', m.expertise_remarks,
+      ['comparison', 'number', 'location', 'text', 'verdict', 'status']),
+    card('Замечание экспертизы', 'expertise_remark', m.expertise_remarks, 29,
+      ['comparison', 'number', 'location', 'text', 'answer', 'verdict', 'match_score', 'match_note', 'claim_mismatch', 'status', 'source_file'],
+      { number: 'title', verdict: 'badge', status: 'badge', text: 'body' }),
+
+    listPage('Карточки замечаний', 'remark_cards', 26, 'fas clipboard-list', m.remark_cards,
+      ['comparison', 'document_ref', 'sheet', 'final_text', 'status']),
+    card('Карточка замечания', 'remark_card', m.remark_cards, 27,
+      ['comparison', 'document_ref', 'sheet', 'what_diverges', 'must_align', 'draft_text', 'final_text', 'status'],
+      { document_ref: 'title', status: 'badge', what_diverges: 'body' }),
 
     listPage('Реестр ИД', 'id_registry', 30, 'fas list-check', m.id_registry,
       ['object', 'doc_name', 'doc_number', 'doc_version', 'doc_type', 'is_required']),
@@ -376,7 +545,7 @@ async function main () {
   }
 
   // ---- Rule chains: агент (script det + ai LLM, вес — в узле combine) ----
-  for (const chain of buildRuleChains({ nsID, modules: m })) {
+  for (const chain of buildRuleChains({ nsID, modules: m, agentURL: (process.env.STROYKONTROL_AGENT_URL || 'http://localhost:8092').replace(/\/$/, '') })) {
     await ensureRuleChain(api, chain)
   }
 

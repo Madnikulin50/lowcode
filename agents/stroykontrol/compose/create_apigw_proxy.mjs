@@ -14,6 +14,11 @@ import { mintToken, detectBase, apiFactory } from './helpers.mjs'
 const AGENT_URL = (process.env.AGENT_URL || 'http://localhost:8092').replace(/\/$/, '')
 const ENDPOINT = '/agents/stroykontrol/*'
 
+// GET serves the viewer and its data; POST is what the viewer writes with
+// (review decisions, remark cards, «Запустить сравнение»). A gateway route is
+// per method, so each needs its own route + proxy filter.
+const METHODS = ['GET', 'POST']
+
 async function main () {
   const token = await mintToken()
   const composeBase = await detectBase(token)
@@ -21,24 +26,31 @@ async function main () {
   console.log('system base:', systemBase, '-> proxying', ENDPOINT, 'to', AGENT_URL)
   const api = apiFactory(systemBase, token)
 
-  const route = await api('POST', '/apigw/route', {
-    endpoint: ENDPOINT,
-    method: 'GET',
-    enabled: true,
-    group: '0',
-    meta: { debug: false, async: false, description: 'Proxy to stroykontrol-web agent' },
-  })
-  console.log('created route', route.routeID, route.endpoint)
+  const existing = (await api('GET', '/apigw/route/?limit=200')).set || []
+  for (const method of METHODS) {
+    if (existing.some(r => r.endpoint === ENDPOINT && r.method === method && !r.deletedAt)) {
+      console.log('route exists:', method, ENDPOINT)
+      continue
+    }
+    const route = await api('POST', '/apigw/route', {
+      endpoint: ENDPOINT,
+      method,
+      enabled: true,
+      group: '0',
+      meta: { debug: false, async: false, description: 'Proxy to stroykontrol-web agent' },
+    })
+    console.log('created route', method, route.routeID, route.endpoint)
 
-  const filter = await api('PUT', '/apigw/filter', {
-    routeID: route.routeID,
-    weight: '0',
-    kind: 'processer',
-    ref: 'proxy',
-    enabled: true,
-    params: { location: AGENT_URL, auth: { type: 'noop', params: {} } },
-  })
-  console.log('created filter', filter.filterID, JSON.stringify(filter.params))
+    const filter = await api('PUT', '/apigw/filter', {
+      routeID: route.routeID,
+      weight: '0',
+      kind: 'processer',
+      ref: 'proxy',
+      enabled: true,
+      params: { location: AGENT_URL, auth: { type: 'noop', params: {} } },
+    })
+    console.log('created filter', filter.filterID, JSON.stringify(filter.params))
+  }
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

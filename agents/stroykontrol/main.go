@@ -30,6 +30,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/madnikulin50/lowcode/agents/sdk"
+	"github.com/madnikulin50/lowcode/agents/stroykontrol/cmp"
 	"github.com/madnikulin50/lowcode/agents/stroykontrol/idcheck"
 )
 
@@ -63,6 +64,7 @@ func main() {
 	maxAttached := flag.Int("max-attached", 6, "Attached quality-document pages per act sent to the vision model (-1 = all)")
 	classifyPages := flag.Bool("classify-pages", false, "Without tesseract, classify every scanned page with the vision model (slow on CPU; default uses layout rules)")
 	external := flag.Bool("external", true, "Check legal entities in ЕГРЮЛ (egrul.nalog.ru) and specialists in НРС (nrs.nostroy.ru)")
+	remarkModel := flag.String("remark-model", envOr("REMARK_MODEL", "qwen3:latest"), "Ollama text model that drafts remark-card wording on request (empty disables the button)")
 	staticDir := flag.String("static", "", "Serve the frontend from this directory instead of the embedded web/dist — point at web/dist while running `npx vite build --watch` to see frontend changes without rebuilding this binary")
 	dumpNorms := flag.Bool("dump-norms", false, "Print the built-in regulatory documents catalog (idcheck.DefaultNorms) as JSON and exit — used by compose_id/apply_id.mjs to seed «Нормативные документы»")
 	flag.Parse()
@@ -125,6 +127,17 @@ func main() {
 		compose = NewComposeClient(*api, *token, remint)
 	}
 	raster = NewRasterizer(*cacheDir)
+	cmpCacheDir = *cacheDir
+	cmpOCR = cmp.NewOCR(*tesseractBin, *ocrLang, *cacheDir)
+	if !cmpOCR.Enabled() {
+		log.Printf("cmp: tesseract (%s) not found — scanned pages of ПД/РД are compared as images only", *tesseractBin)
+	}
+	suggester = cmp.NewSuggester(*ollamaURL, *remarkModel)
+	if fx, ok := compose.(*FixtureStore); ok {
+		fx.analyze = func(in []cmp.Input) (*cmp.Result, error) {
+			return cmp.AnalyzeWith(in, cmpCacheDir, cmp.AnalyzeOptions{Rasterize: rasterPage, OCR: cmpOCR})
+		}
+	}
 	if cc, ok := compose.(*ComposeClient); ok {
 		ocr := idcheck.NewTesseract(*tesseractBin, *ocrLang)
 		if !ocr.Available() {
@@ -135,6 +148,8 @@ func main() {
 			ext = idcheck.NewExternal()
 		}
 		idBackend, idCacheDir = composeBackend{cc}, *idcheckCache
+		cmpRunner = cmp.NewRunner(composeBackend{cc}, cmpCacheDir, rasterPage)
+		cmpRunner.OCR = cmpOCR
 		idRunner = idcheck.NewRunner(idBackend, &idcheck.Extractor{
 			CacheDir:      *idcheckCache,
 			DPI:           150,
@@ -158,6 +173,16 @@ func main() {
 		r.Get("/page", handlePage)
 		r.Get("/file", handleFile)
 		r.Get("/text", handleText)
+		r.Post("/cmp/run", handleCmpRun)
+		r.Get("/cmp/run", handleCmpRun)
+		r.Get("/cmp/status", handleCmpStatus)
+		r.Post("/discrepancy/status", handleDiscrepancyStatus)
+		r.Post("/expertise/import", handleExpertiseImport)
+		r.Get("/expertise/import", handleExpertiseImport)
+		r.Post("/expertise/status", handleExpertiseStatus)
+		r.Post("/remark", handleRemarkCreate)
+		r.Post("/remark/save", handleRemarkSave)
+		r.Post("/remark/suggest", handleRemarkSuggest)
 		r.Post("/idcheck/run", handleIDCheckRun)
 		r.Get("/idcheck/run", handleIDCheckRun)
 		r.Get("/idcheck/status", handleIDCheckStatus)
@@ -249,24 +274,46 @@ func writeErr(w http.ResponseWriter, status int, err error) {
 	writeJSON(w, status, map[string]string{"error": err.Error()})
 }
 
-type discrepancyOut struct {
-	Type        string `json:"type"`
-	Severity    string `json:"severity"`
-	Description string `json:"description"`
-	PageNumber  string `json:"pageNumber"`
+type comparisonOut struct {
+	RecordID          string              `json:"recordID"`
+	Title             string              `json:"title"`
+	Status            string              `json:"status"`
+	SimilarityPercent string              `json:"similarityPercent"`
+	Comment           string              `json:"comment"`
+	Running           string              `json:"running"`
+	Iteration         *iterationOut       `json:"iteration,omitempty"`
+	Documents         []documentRecord    `json:"documents"`
+	Discrepancies     []discrepancyRecord `json:"discrepancies"`
+	Remarks           []cmp.Remark        `json:"remarks"`
+	Expertise         []expertiseRecord   `json:"expertise"`
 }
 
-type comparisonOut struct {
-	RecordID          string           `json:"recordID"`
-	Title             string           `json:"title"`
-	Status            string           `json:"status"`
-	SimilarityPercent string           `json:"similarityPercent"`
-	Comment           string           `json:"comment"`
-	HasPdFile         bool             `json:"hasPdFile"`
-	HasRdFile         bool             `json:"hasRdFile"`
-	PdFileName        string           `json:"pdFileName"`
-	RdFileName        string           `json:"rdFileName"`
-	Discrepancies     []discrepancyOut `json:"discrepancies"`
+// iterationOut summarizes a re-check of the same pair after corrections.
+type iterationOut struct {
+	No          string `json:"no"`
+	ParentID    string `json:"parentID"`
+	ParentTitle string `json:"parentTitle"`
+	Resolved    int    `json:"resolved"`
+	Persisting  int    `json:"persisting"`
+	New         int    `json:"new"`
+}
+
+func iterationSummary(rec *comparisonRecord, discs []discrepancyRecord) *iterationOut {
+	if rec.ParentID == "" {
+		return nil
+	}
+	it := &iterationOut{No: rec.IterationNo, ParentID: rec.ParentID, ParentTitle: rec.ParentTitle}
+	for _, d := range discs {
+		switch d.IterState {
+		case "resolved":
+			it.Resolved++
+		case "persisting":
+			it.Persisting++
+		case "new":
+			it.New++
+		}
+	}
+	return it
 }
 
 func handleComparison(w http.ResponseWriter, r *http.Request) {
@@ -282,11 +329,26 @@ func handleComparison(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadGateway, err)
 		return
 	}
-
 	discs, err := compose.Discrepancies(ns, recordID)
 	if err != nil {
 		log.Printf("discrepancies lookup failed: %v", err)
 		discs = nil
+	}
+	docs, err := compose.Documents(ns, recordID)
+	if err != nil {
+		log.Printf("documents lookup failed: %v", err)
+		docs = nil
+	}
+	remarks, err := compose.Remarks(ns, recordID)
+	if err != nil {
+		log.Printf("remarks lookup failed: %v", err)
+		remarks = nil
+	}
+
+	expertise, err := compose.Expertise(ns, recordID)
+	if err != nil {
+		log.Printf("expertise remarks lookup failed: %v", err)
+		expertise = nil
 	}
 
 	out := comparisonOut{
@@ -295,27 +357,41 @@ func handleComparison(w http.ResponseWriter, r *http.Request) {
 		Status:            rec.Status,
 		SimilarityPercent: rec.SimilarityPercent,
 		Comment:           rec.Comment,
-		HasPdFile:         rec.PdFileID != "",
-		HasRdFile:         rec.RdFileID != "",
-		PdFileName:        compose.AttachmentName(ns, rec.PdFileID),
-		RdFileName:        compose.AttachmentName(ns, rec.RdFileID),
-		Discrepancies:     make([]discrepancyOut, 0, len(discs)),
+		Documents:         docs,
+		Discrepancies:     discs,
+		Remarks:           remarks,
+		Expertise:         expertise,
 	}
-	for _, d := range discs {
-		out.Discrepancies = append(out.Discrepancies, discrepancyOut{
-			Type:        d.Type,
-			Severity:    d.Severity,
-			Description: d.Description,
-			PageNumber:  d.PageNumber,
-		})
+	if out.Expertise == nil {
+		out.Expertise = []expertiseRecord{}
+	}
+	if out.Documents == nil {
+		out.Documents = []documentRecord{}
+	}
+	if out.Discrepancies == nil {
+		out.Discrepancies = []discrepancyRecord{}
+	}
+	if out.Remarks == nil {
+		out.Remarks = []cmp.Remark{}
+	}
+	out.Iteration = iterationSummary(rec, discs)
+	if cmpRunner != nil {
+		out.Running = cmpRunner.Status(recordID)
 	}
 	writeJSON(w, http.StatusOK, out)
 }
 
-// fetchSideFile downloads the pd/rd file for a comparison record via
-// whichever store backend is active (live Compose or local fixtures).
-func fetchSideFile(ns, recordID, side string) (data []byte, mimetype string, err error) {
-	return compose.FetchFile(ns, recordID, side)
+// fetchDoc downloads the document a request names (?doc=, or legacy ?side=).
+func fetchDoc(r *http.Request) (data []byte, mimetype string, status int, err error) {
+	ns, recordID, doc, err := resolveDoc(r)
+	if err != nil {
+		return nil, "", http.StatusBadRequest, err
+	}
+	data, mimetype, err = compose.FetchDocument(ns, recordID, doc)
+	if err != nil {
+		return nil, "", http.StatusBadGateway, err
+	}
+	return data, mimetype, http.StatusOK, nil
 }
 
 // pagesOut.Kind tells the viewer how to get page images for a side:
@@ -340,17 +416,9 @@ type pagesOut struct {
 }
 
 func handlePages(w http.ResponseWriter, r *http.Request) {
-	ns := nsFromQuery(r)
-	recordID := r.URL.Query().Get("recordID")
-	side := r.URL.Query().Get("side")
-	if ns == "" || recordID == "" {
-		writeErr(w, http.StatusBadRequest, fmt.Errorf("recordID and namespaceID are required"))
-		return
-	}
-
-	data, mimetype, err := fetchSideFile(ns, recordID, side)
+	data, mimetype, status, err := fetchDoc(r)
 	if err != nil {
-		writeErr(w, http.StatusBadGateway, err)
+		writeErr(w, status, err)
 		return
 	}
 	switch {
@@ -376,16 +444,9 @@ func handlePages(w http.ResponseWriter, r *http.Request) {
 // can render it itself (currently: DOCX via docx-preview, client-side —
 // there's no server-side page-image conversion without LibreOffice).
 func handleFile(w http.ResponseWriter, r *http.Request) {
-	ns := nsFromQuery(r)
-	recordID := r.URL.Query().Get("recordID")
-	side := r.URL.Query().Get("side")
-	if ns == "" || recordID == "" {
-		writeErr(w, http.StatusBadRequest, fmt.Errorf("recordID and namespaceID are required"))
-		return
-	}
-	data, mimetype, err := fetchSideFile(ns, recordID, side)
+	data, mimetype, status, err := fetchDoc(r)
 	if err != nil {
-		writeErr(w, http.StatusBadGateway, err)
+		writeErr(w, status, err)
 		return
 	}
 	if mimetype == "" {
@@ -406,17 +467,9 @@ type textOut struct {
 // needed). Callers should treat a non-PDF side as "no server text" rather
 // than an error — the client only calls this for kind=="pdf".
 func handleText(w http.ResponseWriter, r *http.Request) {
-	ns := nsFromQuery(r)
-	recordID := r.URL.Query().Get("recordID")
-	side := r.URL.Query().Get("side")
-	if ns == "" || recordID == "" {
-		writeErr(w, http.StatusBadRequest, fmt.Errorf("recordID and namespaceID are required"))
-		return
-	}
-
-	data, mimetype, err := fetchSideFile(ns, recordID, side)
+	data, mimetype, status, err := fetchDoc(r)
 	if err != nil {
-		writeErr(w, http.StatusBadGateway, err)
+		writeErr(w, status, err)
 		return
 	}
 	if !IsPDF(mimetype, data) {
@@ -432,19 +485,14 @@ func handleText(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlePage(w http.ResponseWriter, r *http.Request) {
-	ns := nsFromQuery(r)
-	recordID := r.URL.Query().Get("recordID")
-	side := r.URL.Query().Get("side")
-	pageStr := r.URL.Query().Get("n")
-	page, _ := strconv.Atoi(pageStr)
-	if ns == "" || recordID == "" || page < 1 {
-		writeErr(w, http.StatusBadRequest, fmt.Errorf("recordID, namespaceID and n (>=1) are required"))
+	page, _ := strconv.Atoi(r.URL.Query().Get("n"))
+	if page < 1 {
+		writeErr(w, http.StatusBadRequest, fmt.Errorf("n (>=1) is required"))
 		return
 	}
-
-	data, mimetype, err := fetchSideFile(ns, recordID, side)
+	data, mimetype, status, err := fetchDoc(r)
 	if err != nil {
-		writeErr(w, http.StatusBadGateway, err)
+		writeErr(w, status, err)
 		return
 	}
 	if !IsPDF(mimetype, data) {
