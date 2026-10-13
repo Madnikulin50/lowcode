@@ -49,7 +49,7 @@ func (s server) WaitFor(ctx context.Context) {
 			w.WriteHeader(http.StatusPreconditionFailed)
 			w.Write([]byte("waiting for services..."))
 		})
-		_ = http.Serve(listener, router)
+		_ = (&http.Server{Handler: router, ReadHeaderTimeout: 10 * time.Second}).Serve(listener)
 	}()
 
 	if opt.Delay > 0 {

@@ -209,7 +209,7 @@ func (h *AuthHandlers) oauth2Info(w http.ResponseWriter, r *http.Request) {
 			code = http.StatusForbidden
 			data["error"] = err.Error()
 		} else {
-			data, code, header = h.OAuth2.GetErrorData(err)
+			data, code, header = h.OAuth2.GetErrorData(r.Context(), err)
 		}
 
 		_ = header.Write(w)
@@ -502,7 +502,7 @@ func (h *AuthHandlers) handleTokenRequest(req *request.AuthReq, client *types.Au
 }
 
 func (h *AuthHandlers) tokenError(w http.ResponseWriter, err error) error {
-	data, statusCode, header := h.OAuth2.GetErrorData(err)
+	data, statusCode, header := h.OAuth2.GetErrorData(context.Background(), err)
 	return writeResponse(w, data, header, statusCode)
 }
 

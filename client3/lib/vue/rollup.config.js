@@ -80,6 +80,8 @@ export default {
     }),
     typescript({
       typescript: ts,
+      // explicit: the default `+(|x)` extglob no longer matches with picomatch >= 2.3.2
+      include: ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts'],
       tsconfig: './tsconfig.json',
       sourceMap: true,
       check: false,

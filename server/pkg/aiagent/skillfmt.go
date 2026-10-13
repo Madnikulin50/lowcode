@@ -336,6 +336,10 @@ func readSkillDir(dir string) (SkillDoc, error) {
 		if d.IsDir() || strings.HasPrefix(d.Name(), ".") {
 			return nil
 		}
+		// symlinks and devices could point outside the skill directory
+		if !d.Type().IsRegular() {
+			return nil
+		}
 		rel, _ := filepath.Rel(dir, p)
 		rel = filepath.ToSlash(rel)
 		if rel == SkillFileName {

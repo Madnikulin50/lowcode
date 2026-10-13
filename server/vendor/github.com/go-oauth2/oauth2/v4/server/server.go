@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
-	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
 )
+
+var warnPublicClientsOnce sync.Once
 
 // NewDefaultServer create a default authorization server
 func NewDefaultServer(manager oauth2.Manager) *Server {
@@ -25,14 +28,16 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 		Manager: manager,
 	}
 
-	// default handler
+	// default handlers
 	srv.ClientInfoHandler = ClientBasicHandler
+	srv.RefreshTokenResolveHandler = RefreshTokenFormResolveHandler
+	srv.AccessTokenResolveHandler = AccessTokenDefaultResolveHandler
 
 	srv.UserAuthorizationHandler = func(w http.ResponseWriter, r *http.Request) (string, error) {
 		return "", errors.ErrAccessDenied
 	}
 
-	srv.PasswordAuthorizationHandler = func(ctx context.Context, username, password string) (string, error) {
+	srv.PasswordAuthorizationHandler = func(ctx context.Context, clientID, username, password string) (string, error) {
 		return "", errors.ErrAccessDenied
 	}
 	return srv
@@ -56,11 +61,13 @@ type Server struct {
 	AccessTokenExpHandler        AccessTokenExpHandler
 	AuthorizeScopeHandler        AuthorizeScopeHandler
 	ResponseTokenHandler         ResponseTokenHandler
+	RefreshTokenResolveHandler   RefreshTokenResolveHandler
+	AccessTokenResolveHandler    AccessTokenResolveHandler
 }
 
 func (s *Server) handleError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
 	if fn := s.PreRedirectErrorHandler; fn != nil {
-		return fn(w, req, err)
+		return fn(req.Request.Context(), w, req, err)
 	}
 
 	return s.redirectError(w, req, err)
@@ -71,7 +78,7 @@ func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err
 		return err
 	}
 
-	data, _, _ := s.GetErrorData(err)
+	data, _, _ := s.GetErrorData(req.Request.Context(), err)
 	return s.redirect(w, req, data)
 }
 
@@ -86,8 +93,8 @@ func (s *Server) redirect(w http.ResponseWriter, req *AuthorizeRequest, data map
 	return nil
 }
 
-func (s *Server) tokenError(w http.ResponseWriter, err error) error {
-	data, statusCode, header := s.GetErrorData(err)
+func (s *Server) tokenError(ctx context.Context, w http.ResponseWriter, err error) error {
+	data, statusCode, header := s.GetErrorData(ctx, err)
 	return s.token(w, data, header, statusCode)
 }
 
@@ -357,7 +364,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 			return "", nil, errors.ErrInvalidRequest
 		}
 
-		userID, err := s.PasswordAuthorizationHandler(r.Context(), username, password)
+		userID, err := s.PasswordAuthorizationHandler(r.Context(), clientID, username, password)
 		if err != nil {
 			return "", nil, err
 		} else if userID == "" {
@@ -367,11 +374,17 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 	case oauth2.ClientCredentials:
 		tgr.Scope = r.FormValue("scope")
 	case oauth2.Refreshing:
-		tgr.Refresh = r.FormValue("refresh_token")
+		tgr.Refresh, err = s.RefreshTokenResolveHandler(r)
 		tgr.Scope = r.FormValue("scope")
-		if tgr.Refresh == "" {
+		if err != nil {
+			return "", nil, err
+		}
+	case oauth2.JWTBearer:
+		tgr.Assertion = r.FormValue("assertion")
+		if tgr.Assertion == "" {
 			return "", nil, errors.ErrInvalidRequest
 		}
+		tgr.Scope = r.FormValue("scope")
 	}
 	return gt, tgr, nil
 }
@@ -390,7 +403,7 @@ func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo,
 	error) {
 	if allowed := s.CheckGrantType(gt); !allowed {
-		return nil, errors.ErrUnauthorizedClient
+		return nil, errors.ErrUnsupportedGrantType
 	}
 
 	if fn := s.ClientAuthorizedHandler; fn != nil {
@@ -469,9 +482,66 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 			return nil, err
 		}
 		return ti, nil
+	case oauth2.JWTBearer:
+		return s.handleIDJAGGrant(ctx, tgr)
 	}
 
 	return nil, errors.ErrUnsupportedGrantType
+}
+
+func (s *Server) handleIDJAGGrant(ctx context.Context, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
+	cfg := s.Config
+	if cfg.IDJAGIssuerKeyResolver == nil || len(cfg.TrustedIDJAGIssuers) == 0 || cfg.IDJAGAudience == "" {
+		return nil, errors.ErrServerError
+	}
+
+	cli, err := s.Manager.GetClient(ctx, tgr.ClientID)
+	if err != nil {
+		return nil, errors.ErrInvalidClient
+	}
+	if cli.IsPublic() && !cfg.IDJAGAllowPublicClients {
+		return nil, errors.ErrUnauthorizedClient
+	}
+	if cfg.IDJAGAllowPublicClients {
+		warnPublicClientsOnce.Do(func() {
+			log.Println("[WARNING] IDJAGAllowPublicClients is enabled — public clients may use the JWT Bearer grant; do not use in production")
+		})
+	}
+
+	assertion := tgr.Assertion
+	claims, err := validateIDJAGAssertion(ctx, cfg, tgr.ClientID, assertion)
+	if err != nil {
+		return nil, err
+	}
+
+	grant := IDJAGGrant{
+		Scope:                claims.Scope,
+		Resource:             claims.Resource,
+		AuthorizationDetails: claims.AuthorizationDetails,
+	}
+	// Request scope takes priority over assertion scope (RFC 6749 §3.3).
+	if tgr.Scope != "" {
+		grant.Scope = tgr.Scope
+	}
+
+	if cfg.IDJAGAuthorizationHandler != nil {
+		req := IDJAGRequest{
+			Scope:                grant.Scope,
+			Resource:             claims.Resource,
+			AuthorizationDetails: claims.AuthorizationDetails,
+		}
+		grant, err = cfg.IDJAGAuthorizationHandler(ctx, *claims, req)
+		if err != nil {
+			return nil, err
+		}
+		if grant.Scope == "" && len(grant.Resource) == 0 && len(grant.AuthorizationDetails) == 0 {
+			return nil, errors.ErrInvalidScope
+		}
+	}
+
+	tgr.UserID = claims.Subject
+	tgr.Scope = grant.Scope
+	return s.Manager.GenerateAccessToken(ctx, oauth2.JWTBearer, tgr)
 }
 
 // GetTokenData token data
@@ -508,19 +578,19 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) erro
 
 	gt, tgr, err := s.ValidationTokenRequest(r)
 	if err != nil {
-		return s.tokenError(w, err)
+		return s.tokenError(ctx, w, err)
 	}
 
 	ti, err := s.GetAccessToken(ctx, gt, tgr)
 	if err != nil {
-		return s.tokenError(w, err)
+		return s.tokenError(ctx, w, err)
 	}
 
 	return s.token(w, s.GetTokenData(ti), nil)
 }
 
 // GetErrorData get error response data
-func (s *Server) GetErrorData(err error) (map[string]interface{}, int, http.Header) {
+func (s *Server) GetErrorData(ctx context.Context, err error) (map[string]interface{}, int, http.Header) {
 	var re errors.Response
 	if v, ok := errors.Descriptions[err]; ok {
 		re.Error = err
@@ -528,7 +598,7 @@ func (s *Server) GetErrorData(err error) (map[string]interface{}, int, http.Head
 		re.StatusCode = errors.StatusCodes[err]
 	} else {
 		if fn := s.InternalErrorHandler; fn != nil {
-			if v := fn(err); v != nil {
+			if v := fn(ctx, err); v != nil {
 				re = *v
 			}
 		}
@@ -541,7 +611,7 @@ func (s *Server) GetErrorData(err error) (map[string]interface{}, int, http.Head
 	}
 
 	if fn := s.ResponseErrorHandler; fn != nil {
-		fn(&re)
+		fn(ctx, &re)
 	}
 
 	data := make(map[string]interface{})
@@ -569,27 +639,12 @@ func (s *Server) GetErrorData(err error) (map[string]interface{}, int, http.Head
 	return data, statusCode, re.Header
 }
 
-// BearerAuth parse bearer token
-func (s *Server) BearerAuth(r *http.Request) (string, bool) {
-	auth := r.Header.Get("Authorization")
-	prefix := "Bearer "
-	token := ""
-
-	if auth != "" && strings.HasPrefix(auth, prefix) {
-		token = auth[len(prefix):]
-	} else {
-		token = r.FormValue("access_token")
-	}
-
-	return token, token != ""
-}
-
 // ValidationBearerToken validation the bearer tokens
 // https://tools.ietf.org/html/rfc6750
 func (s *Server) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
 	ctx := r.Context()
 
-	accessToken, ok := s.BearerAuth(r)
+	accessToken, ok := s.AccessTokenResolveHandler(r)
 	if !ok {
 		return nil, errors.ErrInvalidAccessToken
 	}

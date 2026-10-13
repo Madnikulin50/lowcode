@@ -103,7 +103,8 @@ func serveIndex(opt options.HttpServerOpt, indexHTML []byte, serve http.Handler)
 		requestedFile := path.Join(
 			// could be relative path
 			opt.WebappBaseDir,
-			strings.TrimPrefix(r.URL.Path, opt.BaseUrl),
+			// rooted + cleaned so "../" can not climb out of the webapp dir
+			path.Clean("/"+strings.TrimPrefix(r.URL.Path, opt.BaseUrl)),
 		)
 
 		f, err := os.Stat(requestedFile)

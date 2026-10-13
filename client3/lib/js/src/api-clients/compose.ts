@@ -3397,7 +3397,7 @@ export default class Compose {
       ...extra,
       method: 'get',
       url: '/record-drafts',
-      params: { namespaceID, moduleID, recordID },
+      params: { namespaceID, moduleID, recordID } as KV,
     }).then(result => stdResolve(result))
   }
 
@@ -3464,7 +3464,7 @@ export default class Compose {
       ...extra,
       method: 'get',
       url: `/namespace/${namespaceID}/module/${moduleID}/record/${recordID}/attachment/${attachmentID}/versions`,
-      params: { fieldName },
+      params: { fieldName } as KV,
     }).then(result => stdResolve(result))
   }
 

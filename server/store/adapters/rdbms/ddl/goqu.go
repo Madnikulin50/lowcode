@@ -16,7 +16,7 @@ func SQLExpression(e exp.LiteralExpression) exp.SQLExpression {
 }
 
 func (e *sqlExpression) ToSQL() (string, []any, error) { return e.Literal(), e.Args(), nil }
-func (e *sqlExpression) IsPrepared() bool              { return e.IsPrepared() }
+func (e *sqlExpression) IsPrepared() bool              { return false }
 
 var (
 	_ exp.SQLExpression = &sqlExpression{}

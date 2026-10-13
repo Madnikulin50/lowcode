@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"go/parser"
+	"go/token"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -69,6 +72,10 @@ func (e *Engine) Run(ctx context.Context, code string) *Result {
 	mainFile := filepath.Join(tmpDir, "main.go")
 
 	program := wrapAsMain(formatted)
+	if err := e.checkImports(program); err != nil {
+		result.Error = err.Error()
+		return result
+	}
 	if err := os.WriteFile(mainFile, []byte(program), 0644); err != nil {
 		result.Error = fmt.Sprintf("failed to write file: %v", err)
 		return result
@@ -168,6 +175,9 @@ func (e *Engine) Validate(ctx context.Context, code string) error {
 
 	mainFile := filepath.Join(tmpDir, "main.go")
 	program := wrapAsMain(code)
+	if err := e.checkImports(program); err != nil {
+		return err
+	}
 	os.WriteFile(mainFile, []byte(program), 0644)
 
 	buildCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -212,6 +222,40 @@ func main() {
 `
 	}
 	return code
+}
+
+// checkImports rejects Go source that imports packages outside the allowed
+// set. The string blacklist in Sanitize is trivially bypassable, so we parse
+// the imports and enforce Engine.imports before compiling. This is what keeps
+// os, net, net/http, syscall, unsafe, etc. out of executed programs.
+func (e *Engine) checkImports(src string) error {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "main.go", src, parser.ImportsOnly)
+	if err != nil {
+		return fmt.Errorf("parse imports: %w", err)
+	}
+	for _, imp := range f.Imports {
+		path, err := strconv.Unquote(imp.Path.Value)
+		if err != nil {
+			path = imp.Path.Value
+		}
+		if !e.importAllowed(path) {
+			return fmt.Errorf("import %q is not allowed", path)
+		}
+	}
+	return nil
+}
+
+func (e *Engine) importAllowed(path string) bool {
+	if path == "C" {
+		return false
+	}
+	for _, p := range e.imports {
+		if path == p || strings.HasPrefix(path, p+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 func Sanitize(code string) string {

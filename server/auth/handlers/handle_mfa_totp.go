@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	crand "crypto/rand"
 	"encoding/base32"
 	"fmt"
-	"math/rand"
 	"net/url"
 
 	"github.com/madnikulin50/lowcode/server/auth/request"
@@ -37,7 +37,9 @@ func (h *AuthHandlers) mfaTotpConfigForm(req *request.AuthReq) (err error) {
 		// there's no explicit request to change it
 		secret = s.(string)
 	} else {
-		rand.Read(rawSecret[:])
+		if _, err = crand.Read(rawSecret[:]); err != nil {
+			return err
+		}
 		secret = base32.StdEncoding.EncodeToString(rawSecret[:])
 		req.Session.Values[totpSecretKey] = secret
 	}

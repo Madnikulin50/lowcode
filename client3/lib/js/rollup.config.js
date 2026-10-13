@@ -34,6 +34,8 @@ export default {
   plugins: [
     typescript({
       typescript: ts,
+      // explicit: the default `+(|x)` extglob no longer matches with picomatch >= 2.3.2
+      include: ['**/*.ts', '**/*.tsx', '**/*.cts', '**/*.mts'],
     }),
 
     nodeResolve({

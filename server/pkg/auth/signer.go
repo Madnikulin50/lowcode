@@ -2,7 +2,7 @@ package auth
 
 import (
 	"crypto/hmac"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 )
@@ -14,7 +14,7 @@ type (
 )
 
 const (
-	hmacSumStringLength = 40
+	hmacSumStringLength = 64
 )
 
 var (
@@ -33,7 +33,7 @@ func HmacSigner(secret string) *hmacSigner {
 }
 
 func (s hmacSigner) Sign(userID uint64, pp ...interface{}) string {
-	h := hmac.New(sha1.New, s.secret)
+	h := hmac.New(sha256.New, s.secret)
 	fmt.Fprintf(h, "%d ", userID)
 
 	for _, part := range pp {

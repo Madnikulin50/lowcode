@@ -35,20 +35,20 @@ func sentryMiddleware() func(http.Handler) http.Handler {
 }
 
 func panicRecovery(ctx context.Context, w http.ResponseWriter) {
-	if err := recover(); err != nil {
+	if rec := recover(); rec != nil {
 
 		if _, has := os.LookupEnv("LOG_DEBUG"); has {
 			println("================================================================================")
-			fmt.Printf("%v\n", err)
+			fmt.Printf("%v\n", rec)
 			println("--------------------------------------------------------------------------------")
 			debug.PrintStack()
 			println("================================================================================")
 		} else {
 			log := logger.ContextValue(ctx)
-			if err, ok := err.(error); ok {
+			if err, ok := rec.(error); ok {
 				log = log.With(zap.Error(err))
 			} else {
-				log = log.With(zap.Any("recover-value", err))
+				log = log.With(zap.Any("recover-value", rec))
 			}
 			log.Debug("crashed on http request", zap.ByteString("stack", debug.Stack()))
 		}
@@ -61,7 +61,12 @@ func panicRecovery(ctx context.Context, w http.ResponseWriter) {
 			return
 		}
 
-		msg := fmt.Sprint(err)
+		// the panic value can carry internals (paths, SQL, ...): details go to the log,
+		// the client gets them only when debugging is explicitly on
+		msg := "internal server error"
+		if _, has := os.LookupEnv("LOG_DEBUG"); has {
+			msg = fmt.Sprint(rec)
+		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"error": map[string]string{"message": msg},
 		})

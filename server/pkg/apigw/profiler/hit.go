@@ -45,7 +45,7 @@ func (s Hits) Filter(fn func(k string, v *Hit) bool) Hits {
 }
 
 func (h Hits) Len() int {
-	return h.Len()
+	return len(h)
 }
 
 func (h Hits) Less(i, j int) bool {
