@@ -1,8 +1,9 @@
 # Проверка ИД (АОСР) — Compose namespace + агент idcheck
 
 Проверка первичной исполнительной документации (АОСР/АООК) против реестра
-передачи ИД, формы КС-2 и нормативных требований. Пространство
-`stroykontrol-id` хранит данные и показывает результаты; вся проверка — в
+передачи ИД, формы КС-2 и нормативных требований. Данные и результаты хранит
+пространство `stroykontrol` (раньше — отдельное `stroykontrol-id`, объединено без
+потери данных, см. [../compose/README.md](../compose/README.md)); вся проверка — в
 Go-агенте `agents/stroykontrol` (пакет [`idcheck/`](../idcheck)).
 
 ## Быстрый старт
@@ -10,9 +11,9 @@ Go-агенте `agents/stroykontrol` (пакет [`idcheck/`](../idcheck)).
 ```bash
 cd agents/stroykontrol
 go build -o bin/stroykontrol-web .
-node compose_id/apply_id.mjs          # пространство, модули, страницы, rule chain, сид нормативки
+node compose/apply.mjs                # пространство, модули, страницы, rule chain, сид нормативки
 ./run.sh                               # агент на :8092 (POST /api/idcheck/run)
-node compose_id/import_package.mjs "$HOME/Загрузки/Пример ПД и РД/ИД, реестр, КС-2" --only=/2.14.1.9/ --run
+node compose_id/import_package.mjs "$HOME/Загрузки/Пример ПД и РД/ИД, реестр, КС-2" --object=<ID объекта> --only=/2.14.1.9/ --run
 ```
 
 Дальше — карточка пакета: кнопка **«Запустить проверку ИД»** (rule chain
@@ -22,9 +23,9 @@ node compose_id/import_package.mjs "$HOME/Загрузки/Пример ПД и 
 
 | Переменная / флаг | По умолчанию | |
 |---|---|---|
-| `IDCHECK_AGENT_URL` (apply_id.mjs, import_package.mjs) | `http://localhost:8092` | куда rule chain шлёт пакет |
+| `STROYKONTROL_AGENT_URL` (apply.mjs) / `IDCHECK_AGENT_URL` (import_package.mjs) | `http://localhost:8092` | куда rule chain шлёт пакет |
 | `--ollama` / `OLLAMA_URL` | `http://localhost:11434` | Ollama |
-| `--vision-model` / `IDCHECK_VISION_MODEL` | `qwen3.5` | мультимодальная модель; пусто — без распознавания сканов |
+| `--vision-model` / `IDCHECK_VISION_MODEL` | `deepseek-r1` | мультимодальная модель; пусто — без распознавания сканов |
 | `--tesseract`, `--ocr-lang` | `tesseract`, `rus` | OCR страниц для классификации и подсказки модели; если не установлен — правила раскладки (стр. 1–2 акт, первая альбомная — схема, остальное — вложения) |
 | `--classify-pages` | `false` | без tesseract классифицировать каждую страницу моделью (~45 с/стр на CPU) |
 | `--max-attached` | `6` | сколько страниц вложений (сертификаты, протоколы…) на акт отдавать модели, `-1` — все |
@@ -88,7 +89,7 @@ API Gateway `/gateway/agents/stroykontrol/*` → агент):
 
 ## Ограничения
 
-- **Скорость.** Замер на CPU (16 ядер, без GPU), qwen3.5 9.7B: стр. 1–2
+- **Скорость.** Замер на CPU (16 ядер, без GPU), deepseek-r1 9.7B: стр. 1–2
   акта — ~17 мин, схема — ~5 мин, страница вложения — ~5–6 мин; акт целиком
   (акт + схема + 6 вложений) ≈ 50 мин, полный пакет из 44 актов — ~1.5 суток.
   Для реальной работы нужен GPU-хост Ollama (`--ollama=`); на CPU — ночной

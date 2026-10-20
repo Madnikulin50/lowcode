@@ -28,9 +28,10 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'preview' } })
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { components } from 'corteza-lib/vue/dist'
+import { registerAssistantDocument, parseAttachmentURL } from 'corteza-webapp-compose/src/composables/useAssistantContext'
 
 const { CPreviewLightbox } = components
 const { t: $t } = useI18n({ useScope: 'global' })
@@ -40,6 +41,19 @@ const attachment = ref(undefined)
 const show = computed({
   get: () => !!attachment.value,
   set: (val) => { if (!val) attachment.value = undefined },
+})
+
+// while a file is open in the lightbox the assistant can be asked about it
+let unregister = () => {}
+watch(attachment, (a) => {
+  unregister()
+  unregister = () => {}
+  if (!a) return
+  const type = ((a.meta || {}).original || (a.meta || {}).preview || {}).mimetype || ''
+  const p = parseAttachmentURL(a.src) || parseAttachmentURL(a.download)
+  if (p && (type === 'application/pdf' || type.startsWith('image/'))) {
+    unregister = registerAssistantDocument({ source: 'attachment', id: p.id, namespaceID: p.namespaceID, name: a.name })
+  }
 })
 
 const attachmentMime = computed(() => {
@@ -96,6 +110,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  unregister()
   destroyEvents()
   setDefaultValues()
 })

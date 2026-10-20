@@ -7,6 +7,8 @@ package cmp
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"unicode"
 )
 
 // Sides of a comparison.
@@ -15,15 +17,56 @@ const (
 	SideTarget = "target" // стадия Р/РД
 )
 
+// Modes of a comparison: stage against stage (ПД → РД) or two versions of one stage (до → после).
+const (
+	ModeStages   = "stages"
+	ModeVersions = "versions"
+)
+
+// SideNames are the names of the two sides in the mode ("ПД"/"РД" or "До"/"После").
+func SideNames(mode string) (ref, target string) {
+	if mode == ModeVersions {
+		return "До", "После"
+	}
+	return "ПД", "РД"
+}
+
+// Relabel rewrites the stage names in a text for the mode: in "versions" the words
+// "ПД" and "РД" stand for the earlier and the later version.
+func Relabel(s, mode string) string {
+	if mode != ModeVersions || s == "" {
+		return s
+	}
+	rs := []rune(s)
+	var b strings.Builder
+	isWord := func(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) }
+	for i := 0; i < len(rs); {
+		if i+1 < len(rs) && (rs[i] == 'П' || rs[i] == 'Р') && rs[i+1] == 'Д' && (i == 0 || !isWord(rs[i-1])) && (i+2 >= len(rs) || !isWord(rs[i+2])) {
+			if rs[i] == 'П' {
+				b.WriteString("До")
+			} else {
+				b.WriteString("После")
+			}
+			i += 2
+			continue
+		}
+		b.WriteRune(rs[i])
+		i++
+	}
+	return b.String()
+}
+
 // Finding kinds.
 const (
-	KindText       = "text"
-	KindTableRow   = "table_row"
-	KindParam      = "param"
-	KindDrawing    = "drawing"
-	KindVOR        = "vor" // bill of quantities / specification consistency
-	KindNotRelease = "not_released"
-	KindScopeDiff  = "scope_diff"
+	KindText        = "text"
+	KindTableRow    = "table_row"
+	KindParam       = "param"
+	KindDrawing     = "drawing"
+	KindVOR         = "vor" // bill of quantities / specification consistency
+	KindNotRelease  = "not_released"
+	KindScopeDiff   = "scope_diff"
+	KindFormat      = "format"       // formatting checks inside one stage (numbering, contents, шифр)
+	KindCrossVolume = "cross_volume" // a parameter named differently in two volumes of one stage
 )
 
 // Box is a rectangle in page fractions (0..1, origin top-left).
@@ -174,6 +217,7 @@ type PairInfo struct {
 	Ref      VolumeInfo
 	Targets  []VolumeInfo
 	Fragment bool
+	Manual   bool // the pair was made by hand (ManualPair)
 	Score    float64
 }
 
@@ -200,6 +244,11 @@ type Result struct {
 	Findings []Finding
 	Volumes  map[string][]VolumeInfo // docID → volumes
 	Pairs    []PairInfo
-	Stats    Stats
-	Notes    []string
+	// RefOnly / TargetOnly are the volumes left without a counterpart
+	RefOnly    []VolumeInfo
+	TargetOnly []VolumeInfo
+	// Params is the table of key parameters per volume and element (the base of the cross-volume check)
+	Params []ParamRow
+	Stats  Stats
+	Notes  []string
 }

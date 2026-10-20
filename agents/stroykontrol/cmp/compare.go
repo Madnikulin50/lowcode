@@ -12,8 +12,12 @@ import (
 
 // Options tunes Compare.
 type Options struct {
-	Imager      Imager // optional: enables raster comparison of pages with no text layer
-	MaxFindings int    // 0 → 400
+	Imager      Imager       // optional: enables raster comparison of pages with no text layer
+	MaxFindings int          // 0 → 400
+	Mode        string       // ModeStages (default) | ModeVersions: how the sides are named in the texts
+	Pairing     []ManualPair // pairs made by hand: they are compared as told, the rest is matched automatically
+	NoFormat    bool         // skip the formatting checks of each side (numbering, contents, шифр, duplicates)
+	NoCross     bool         // skip the consistency checks between the volumes of one side
 }
 
 const (
@@ -77,18 +81,49 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 	}
 	res.Stats.RefPages = collect(refDocs, SideRef, &refVols)
 	res.Stats.TargetPages = collect(tgtDocs, SideTarget, &tgtVols)
+	// formatting checks run on the volumes as found, before manual slicing changes them
+	var formatFs []Finding
+	if !opt.NoFormat {
+		formatFs = append(formatFindings(refDocs, refVols, SideRef), formatFindings(tgtDocs, tgtVols, SideTarget)...)
+	}
+	if !opt.NoCross {
+		fr, rr := crossVolume(refDocs, refVols, SideRef)
+		ft, rt := crossVolume(tgtDocs, tgtVols, SideTarget)
+		formatFs = append(formatFs, append(fr, ft...)...)
+		res.Params = append(rr, rt...)
+	}
 
 	docByID := map[string]*Document{}
 	for _, d := range append(append([]*Document{}, refDocs...), tgtDocs...) {
 		docByID[d.ID] = d
 	}
 
+	side := map[string]string{}
+	for _, d := range refDocs {
+		side[d.ID] = SideRef
+	}
+	for _, d := range tgtDocs {
+		side[d.ID] = SideTarget
+	}
+	var forced []*Pair
+	if len(opt.Pairing) > 0 {
+		var notes []string
+		forced, refVols, tgtVols, notes = applyPairing(opt.Pairing, docByID, side, refVols, tgtVols)
+		res.Notes = append(res.Notes, notes...)
+	}
 	m := Match(refVols, tgtVols)
+	m.Pairs = append(forced, m.Pairs...)
+	for _, v := range m.RefOnly {
+		res.RefOnly = append(res.RefOnly, volInfo(v))
+	}
+	for _, v := range m.TargetOnly {
+		res.TargetOnly = append(res.TargetOnly, volInfo(v))
+	}
 	differing := map[string]bool{} // "docID:page" of reference pages with findings
-	var findings []Finding
+	findings := formatFs
 
 	for _, p := range m.Pairs {
-		pi := PairInfo{Ref: volInfo(p.Ref), Fragment: p.Fragment, Score: p.Score}
+		pi := PairInfo{Ref: volInfo(p.Ref), Fragment: p.Fragment, Manual: p.Manual, Score: p.Score}
 		for _, t := range p.Targets {
 			pi.Targets = append(pi.Targets, volInfo(t))
 		}
@@ -149,6 +184,9 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 		res.Notes = append(res.Notes, fmt.Sprintf("Показаны первые %d из %d расхождений (по убыванию критичности).", opt.MaxFindings, len(findings)))
 		findings = findings[:opt.MaxFindings]
 	}
+	for i := range findings {
+		findings[i].Description = Relabel(findings[i].Description, opt.Mode)
+	}
 	res.Findings = findings
 
 	res.Stats.DifferingPages = len(differing)
@@ -167,6 +205,9 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 	}
 	res.Notes = append(res.Notes, fmt.Sprintf("Томов ПД: %d, томов РД: %d, сопоставлено: %d; ПД без пары: %d, РД без пары: %d.",
 		len(refVols), len(tgtVols), len(m.Pairs), len(m.RefOnly), len(m.TargetOnly)))
+	for i := range res.Notes {
+		res.Notes[i] = Relabel(res.Notes[i], opt.Mode)
+	}
 	return res
 }
 

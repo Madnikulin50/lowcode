@@ -1,7 +1,7 @@
 <script setup>
 // Page viewer for the chosen ПД and РД documents.
 import { computed } from 'vue'
-import { ZOOM_LEVELS, MODE_META } from '../constants.js'
+import { ZOOM_LEVELS, MODE_META, names, nm } from '../constants.js'
 import { pageSrc } from '../composables/useComparison.js'
 import ModeTabs from './ModeTabs.vue'
 import DocPager from './DocPager.vue'
@@ -28,20 +28,23 @@ const rdCount = computed(() => props.rdInfo?.pageCount || 0)
 const pdUrl = computed(() => props.viewer.pdPage <= pdCount.value ? pageSrc(props.qs, props.pdInfo, props.viewer.pdDoc, props.viewer.pdPage) : '')
 const rdUrl = computed(() => props.viewer.rdPage <= rdCount.value ? pageSrc(props.qs, props.rdInfo, props.viewer.rdDoc, props.viewer.rdPage) : '')
 const nameOf = (docs, id, fallback) => docs.find(d => d.id === id)?.name || fallback
-const pdLabel = computed(() => 'ПД — ' + nameOf(props.pdDocs, props.viewer.pdDoc, '') + ` (стр. ${props.viewer.pdPage})`)
-const rdLabel = computed(() => 'РД — ' + nameOf(props.rdDocs, props.viewer.rdDoc, '') + ` (стр. ${props.viewer.rdPage})`)
+const pdLabel = computed(() => names.ref + ' — ' + nameOf(props.pdDocs, props.viewer.pdDoc, '') + ` (стр. ${props.viewer.pdPage})`)
+const rdLabel = computed(() => names.target + ' — ' + nameOf(props.rdDocs, props.viewer.rdDoc, '') + ` (стр. ${props.viewer.rdPage})`)
 const foldBase = computed(() => `${props.viewer.pdDoc}:${props.viewer.pdPage}|${props.viewer.rdDoc}:${props.viewer.rdPage}`)
+const emit = defineEmits(['assistant'])
+// a link to the viewer of one document: the same file, the page on screen, back to this comparison
+const docHref = (doc, page) => `?view=doc&source=comparison_doc&${props.qs}&id=${encodeURIComponent(doc || '')}&page=${page || 1}`
 </script>
 
 <template>
   <div>
-    <ModeTabs :viewer="viewer" />
-    <div class="mode-hint">{{ MODE_META[hintKey].hint }}</div>
+    <ModeTabs :viewer="viewer" @assistant="emit('assistant')" />
+    <div class="mode-hint">{{ nm(MODE_META[hintKey].hint) }}</div>
 
     <div class="toolbar-row">
       <div class="doc-pagers">
-        <DocPager label="ПД" :docs="pdDocs" v-model:doc-id="viewer.pdDoc" v-model:page="viewer.pdPage" :page-count="pdCount" />
-        <DocPager label="РД" :docs="rdDocs" v-model:doc-id="viewer.rdDoc" v-model:page="viewer.rdPage" :page-count="rdCount" />
+        <DocPager :open-href="docHref(viewer.pdDoc, viewer.pdPage)" :label="names.ref" :docs="pdDocs" v-model:doc-id="viewer.pdDoc" v-model:page="viewer.pdPage" :page-count="pdCount" />
+        <DocPager :open-href="docHref(viewer.rdDoc, viewer.rdPage)" :label="names.target" :docs="rdDocs" v-model:doc-id="viewer.rdDoc" v-model:page="viewer.rdPage" :page-count="rdCount" />
       </div>
       <ZoomControls v-if="viewer.mode !== 'text'" :viewer="viewer" />
     </div>

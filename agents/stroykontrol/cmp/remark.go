@@ -91,28 +91,54 @@ func (s *Suggester) Enabled() bool { return s != nil && s.Model != "" }
 const suggestSystem = `Ты помощник специалиста производственно-технического отдела. Сформулируй текст замечания по результатам сравнения проектной (ПД, эталон) и рабочей (РД) документации.
 Правила: используй ТОЛЬКО факты из данных; не оценивай качество проектных решений и не предлагай улучшений; не выдумывай номера листов и значения; пиши по-русски, официально и кратко (до 6 предложений); укажи, в каком документе и на каком листе расхождение, в чём оно состоит и что требуется (привести в соответствие или пояснить).`
 
-// Suggest returns a draft wording for the card.
-func (s *Suggester) Suggest(ctx context.Context, r Remark) (string, error) {
+// chat sends one system+user exchange to the model and returns the text of the answer. With
+// jsonMode the model is asked for a JSON object.
+func (s *Suggester) chat(ctx context.Context, system, user string, jsonMode bool, temperature float64) (string, error) {
+	return s.chatMessages(ctx, system, []Msg{{Role: "user", Content: user}}, jsonMode, temperature)
+}
+
+// Msg is one message of a conversation with the model.
+type Msg struct {
+	Role    string   `json:"role"` // user | assistant
+	Content string   `json:"content"`
+	Images  []string `json:"images,omitempty"` // base64 pictures attached to a user message (multimodal models)
+}
+
+// chatMessages sends a conversation (after the system prompt) and returns the model's next message.
+func (s *Suggester) chatMessages(ctx context.Context, system string, msgs []Msg, jsonMode bool, temperature float64) (string, error) {
 	if !s.Enabled() {
 		return "", fmt.Errorf("модель для формулировок не настроена")
 	}
-	user := fmt.Sprintf("Документы: %s\nЛисты: %s\nРасхождения:\n%s\nТребуется: %s", r.DocumentRef, r.Sheet, r.WhatDiverges, r.MustAlign)
-	body, _ := json.Marshal(map[string]any{
-		"model":   s.Model,
-		"stream":  false,
-		"think":   false,
-		"options": map[string]any{"temperature": 0.2, "num_ctx": 8192},
-		"messages": []map[string]string{
-			{"role": "system", "content": suggestSystem},
-			{"role": "user", "content": user},
-		},
-	})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.URL+"/api/chat", bytes.NewReader(body))
+	messages := []map[string]any{{"role": "system", "content": system}}
+	numCtx := 8192
+	for _, m := range msgs {
+		mm := map[string]any{"role": m.Role, "content": m.Content}
+		if len(m.Images) > 0 {
+			mm["images"] = m.Images
+			numCtx = 16384 // a page picture costs a lot of context
+		}
+		messages = append(messages, mm)
+	}
+	if len([]rune(system)) > 9000 {
+		numCtx = 16384
+	}
+	req := map[string]any{
+		"model":    s.Model,
+		"stream":   false,
+		"think":    false,
+		"options":  map[string]any{"temperature": temperature, "num_ctx": numCtx},
+		"messages": messages,
+	}
+	if jsonMode {
+		req["format"] = "json"
+	}
+	body, _ := json.Marshal(req)
+	hreq, err := http.NewRequestWithContext(ctx, http.MethodPost, s.URL+"/api/chat", bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := s.http.Do(req)
+	hreq.Header.Set("Content-Type", "application/json")
+	resp, err := s.http.Do(hreq)
 	if err != nil {
 		return "", err
 	}
@@ -137,6 +163,12 @@ func (s *Suggester) Suggest(ctx context.Context, r Remark) (string, error) {
 		return "", fmt.Errorf("модель вернула пустой ответ")
 	}
 	return text, nil
+}
+
+// Suggest returns a draft wording for the card.
+func (s *Suggester) Suggest(ctx context.Context, r Remark) (string, error) {
+	user := fmt.Sprintf("Документы: %s\nЛисты: %s\nРасхождения:\n%s\nТребуется: %s", r.DocumentRef, r.Sheet, r.WhatDiverges, r.MustAlign)
+	return s.chat(ctx, suggestSystem, user, false, 0.2)
 }
 
 func truncate(s string, n int) string {

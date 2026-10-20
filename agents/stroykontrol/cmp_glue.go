@@ -7,7 +7,6 @@ import (
 	"image/jpeg"
 	"net/http"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -285,60 +284,9 @@ func handleRemarkSuggest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, saved)
 }
 
-// sortExpertise orders remarks by number, numerically when they are numbers.
-func sortExpertise(l []expertiseRecord) {
-	sort.SliceStable(l, func(i, j int) bool {
-		a, ea := strconv.Atoi(l[i].Number)
-		b, eb := strconv.Atoi(l[j].Number)
-		if ea == nil && eb == nil {
-			return a < b
-		}
-		return l[i].Number < l[j].Number
-	})
-}
-
-var validExpertiseStatuses = map[string]bool{"open": true, "closed": true, "disputed": true}
-
-func handleExpertiseStatus(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		NamespaceID string `json:"namespaceID"`
-		RecordID    string `json:"recordID"`
-		ID          string `json:"id"`
-		Status      string `json:"status"`
+func jsonUnmarshal(s string, v any) error {
+	if s == "" {
+		return nil
 	}
-	if err := decodeJSON(r, &body); err != nil {
-		writeErr(w, http.StatusBadRequest, err)
-		return
-	}
-	ns := firstNonEmpty(body.NamespaceID, defaultNamespaceID)
-	if ns == "" || body.RecordID == "" || body.ID == "" || !validExpertiseStatuses[body.Status] {
-		writeErr(w, http.StatusBadRequest, fmt.Errorf("recordID, id and status (open|closed|disputed) are required"))
-		return
-	}
-	if err := compose.SetExpertiseStatus(ns, body.RecordID, body.ID, body.Status); err != nil {
-		writeErr(w, http.StatusBadGateway, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]string{"id": body.ID, "status": body.Status})
-}
-
-// handleExpertiseImport reads the Excel tables attached to the comparison
-// and matches the remarks with its findings. Called by the viewer and by the
-// rule chain "stroykontrol-import-remarks".
-func handleExpertiseImport(w http.ResponseWriter, r *http.Request) {
-	if cmpRunner == nil {
-		writeJSON(w, http.StatusOK, map[string]any{"note": "in --fixtures mode remarks are read from remarks*.xlsx of the case on every request"})
-		return
-	}
-	ns, rec := nsFromQuery(r), strings.TrimSpace(r.URL.Query().Get("recordID"))
-	if ns == "" || rec == "" {
-		writeErr(w, http.StatusBadRequest, fmt.Errorf("recordID and namespaceID are required"))
-		return
-	}
-	sum, err := cmpRunner.ImportRemarks(r.Context(), ns, rec)
-	if err != nil {
-		writeErr(w, http.StatusUnprocessableEntity, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, sum)
+	return json.Unmarshal([]byte(s), v)
 }

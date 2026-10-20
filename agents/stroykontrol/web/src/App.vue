@@ -1,17 +1,21 @@
 <script setup>
 // Root of the comparison viewer: the package header, the page viewer for the
 // chosen ПД/РД documents, the findings list and the remark cards.
-import { computed, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
+import { names } from './constants.js'
 import { useComparison } from './composables/useComparison.js'
 import { useViewerState } from './composables/useViewerState.js'
 import { parseBox } from './utils.js'
 import ComparisonHeader from './components/ComparisonHeader.vue'
+import PairingPanel from './components/PairingPanel.vue'
+import AssistantPanel from './components/AssistantPanel.vue'
 import Viewer from './components/Viewer.vue'
 import DiscrepancyList from './components/DiscrepancyList.vue'
 import RemarkCards from './components/RemarkCards.vue'
 import ExpertisePanel from './components/ExpertisePanel.vue'
+import IssuePanel from './components/IssuePanel.vue'
 
-const { state: cmp, qs, recordID, documents, loadPair, run, setStatus, createRemark, saveRemark, suggestRemark, importExpertise, setExpertiseStatus } = useComparison()
+const { state: cmp, qs, recordID, namespaceID, documents, loadPair, run, setStatus, setStatusMany, registerIssue, createRemark, saveRemark, suggestRemark } = useComparison()
 const { state: viewer, clampPages, expandFold } = useViewerState()
 
 const pdDocs = computed(() => documents('ref'))
@@ -22,7 +26,13 @@ const canView = computed(() => !!(pdInfo.value?.supported && rdInfo.value?.suppo
 const unsupportedReason = computed(() => {
   if (!pdDocs.value.length || !rdDocs.value.length) return 'Загрузите хотя бы один файл ПД и один файл РД.'
   if (!pdInfo.value || !rdInfo.value) return 'Загрузка страниц…'
-  return 'Один из выбранных файлов не удалось отобразить постранично, показан только список расхождений ниже.'
+  const bad = []
+  for (const [label, info, doc] of [[names.ref, pdInfo.value, viewer.pdDoc], [names.target, rdInfo.value, viewer.rdDoc]]) {
+    if (info.error) bad.push(`${label} — ${docName(doc)}: ${info.error}`)
+    else if (!info.supported) bad.push(`${label} — ${docName(doc)}: этот тип файла (${info.kind}) нельзя показать постранично.`)
+    else if (!info.pageCount) bad.push(`${label} — ${docName(doc)}: в файле нет страниц для показа.`)
+  }
+  return bad.length ? bad.join('\n') : 'Один из выбранных файлов не удалось отобразить постранично, показан только список расхождений ниже.'
 })
 
 // default selection: the first file of each stage
@@ -60,6 +70,52 @@ function jump (d, scroll = true) {
   })
 }
 
+// What the assistant is asked about: the sheets on screen and, if one is selected, the finding.
+const assistScopes = [
+  { key: 'both', label: 'Оба открытых листа' },
+  { key: 'ref', label: 'Только эталон' },
+  { key: 'target', label: 'Только проверяемый' },
+  { key: 'finding', label: 'Только выбранная находка' },
+]
+const docName = id => (cmp.comparison?.documents || []).find(d => d.id === id)?.name || id
+const assistChips = computed(() => {
+  const out = []
+  if (viewer.pdDoc) out.push(`${names.ref}: ${docName(viewer.pdDoc)}, стр. ${viewer.pdPage}`)
+  if (viewer.rdDoc) out.push(`${names.target}: ${docName(viewer.rdDoc)}, стр. ${viewer.rdPage}`)
+  return out
+})
+const activeLabel = computed(() => {
+  const d = (cmp.comparison?.discrepancies || []).find(x => x.id === viewer.activeId)
+  const t = d ? (d.description || '') : ''
+  return t.length > 60 ? t.slice(0, 60) + '…' : t
+})
+const assistant = ref(null)
+function openAssistant () {
+  assistant.value?.openAndFocus()
+  nextTick(() => document.querySelector('.assistant')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+}
+function assistContext (scope) {
+  return {
+    source: 'comparison', recordID, scope, discrepancyID: viewer.activeId || '',
+    ref: { doc: viewer.pdDoc, page: viewer.pdPage }, target: { doc: viewer.rdDoc, page: viewer.rdPage },
+  }
+}
+
+// The dialog sends the user to a sheet it named; a note it wrote can go into the remark card.
+function gotoSheet (j) {
+  if (j.side === 'ref') { viewer.pdDoc = j.doc; viewer.pdPage = j.page } else { viewer.rdDoc = j.doc; viewer.rdPage = j.page }
+  viewer.hlPd = null
+  viewer.hlRd = null
+  nextTick(() => {
+    const target = document.querySelector('.stage, .text-diff')
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
+}
+async function textToRemark ({ id, text }) {
+  const card = await createRemark([id])
+  if (card) await saveRemark({ ...card, draftText: text })
+}
+
 // Open on the most serious finding instead of two unrelated first files of a package.
 let focused = false
 watch(() => cmp.comparison?.discrepancies, (list) => {
@@ -76,25 +132,39 @@ watch(() => cmp.comparison?.discrepancies, (list) => {
     <template v-if="cmp.loading">Загрузка…</template>
     <div v-else-if="cmp.error" class="err">{{ cmp.error }}</div>
     <template v-else>
-      <ComparisonHeader :comparison="cmp.comparison" :record-id="recordID" :busy="cmp.busy" @run="run" />
+      <ComparisonHeader :comparison="cmp.comparison" :record-id="recordID" :qs="qs" :busy="cmp.busy" @run="run" />
 
       <Viewer
         v-if="canView"
         :pd-docs="pdDocs" :rd-docs="rdDocs" :pd-info="pdInfo" :rd-info="rdInfo"
-        :qs="qs" :viewer="viewer" :expand-fold="expandFold"
+        :qs="qs" :viewer="viewer" :expand-fold="expandFold" @assistant="openAssistant"
       />
       <div v-else class="unsupported">
-        <div>Визуальное постраничное сравнение доступно для PDF, DOCX, XLSX и DXF.</div>
-        <div>{{ unsupportedReason }}</div>
+        <div><b>Страницы не показаны.</b> Визуальное постраничное сравнение доступно для PDF, DOCX, XLSX и DXF.</div>
+        <div class="unsupported-why">{{ unsupportedReason }}</div>
+        <div>Список расхождений ниже работает; файл можно скачать или открыть в «↗ документ».</div>
       </div>
+
+      <PairingPanel :qs="qs" :record-id="recordID" :namespace-id="namespaceID" :running="cmp.comparison.running" :status="cmp.comparison.status" @apply="run" />
+
+      <AssistantPanel
+        ref="assistant"
+        :namespace-id="namespaceID" :get-context="assistContext" :chips="assistChips" :scopes="assistScopes" default-scope="both"
+        :active-id="activeId" :active-label="activeLabel" title="Ассистент по документу"
+        @goto="gotoSheet" @to-remark="textToRemark"
+      />
 
       <DiscrepancyList
         :list="cmp.comparison.discrepancies" :documents="cmp.comparison.documents" :busy="cmp.busy" :active-id="activeId" :error="cmp.actionError"
-        @jump="jump" @status="setStatus" @remark="createRemark"
+        @jump="jump" @status="setStatus" @status-many="setStatusMany" @remark="createRemark"
+      />
+      <IssuePanel
+        :issue="cmp.issue" :result="cmp.issueResult" :busy="cmp.busy" :qs="qs" :namespace-id="namespaceID" :discrepancies="cmp.comparison.discrepancies"
+        @register="registerIssue" @confirm-many="(ids) => setStatusMany(ids, 'confirmed')"
       />
       <ExpertisePanel
-        :list="cmp.comparison.expertise" :discrepancies="cmp.comparison.discrepancies" :busy="cmp.busy"
-        @import="importExpertise" @status="setExpertiseStatus" @jump="jump"
+        :list="cmp.comparison.expertise" :discrepancies="cmp.comparison.discrepancies" :object-id="cmp.comparison.objectID" :namespace-id="namespaceID"
+        @jump="jump"
       />
       <RemarkCards :remarks="cmp.comparison.remarks" :busy="cmp.busy" @save="saveRemark" @suggest="suggestRemark" />
     </template>

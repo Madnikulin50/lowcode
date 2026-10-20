@@ -3,6 +3,7 @@ import { ICONS, MODE_META } from '../constants.js'
 import Icon from './Icon.vue'
 
 defineProps({ viewer: Object })
+const emit = defineEmits(['assistant'])
 
 const PRIMARY_MODES = ['side', 'overlay', 'diff']
 </script>
@@ -16,5 +17,7 @@ const PRIMARY_MODES = ['side', 'overlay', 'diff']
     <button :class="{ active: viewer.mode === 'text' }" @click="viewer.mode = 'text'">
       <Icon :svg="ICONS.text" />{{ MODE_META.text.label }}
     </button>
+    <span class="mode-sep"></span>
+    <button class="assistant-btn" title="Спросить ассистента об открытых листах" @click="emit('assistant')">✦ Ассистент</button>
   </div>
 </template>

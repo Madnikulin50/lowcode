@@ -1,7 +1,7 @@
 # stroykontrol-web — agent-hosted comparison viewer
 
 > Также хостит **проверку ИД (АОСР ↔ реестр ↔ КС-2)** — пакет
-> [`idcheck/`](idcheck), пространство `stroykontrol-id`, эндпоинт
+> [`idcheck/`](idcheck), пространство `stroykontrol` (бывшее `stroykontrol-id`, объединено), эндпоинт
 > `POST /api/idcheck/run`. См. [compose_id/README.md](compose_id/README.md).
 
 Standalone service (like `agents/cmdb`'s `web/`) that owns the **visual**
@@ -221,27 +221,76 @@ Limits: only sheets that carry the column header (or follow a titled sheet) are 
 tables whose layout differs per sheet fall back to the line diff; no aggregation between
 volumes.
 
-### Expertise remarks (Excel)
+### List of remarks made from a comparison
 
-Attach the expert's Excel (and, if it comes separately, the designer's answers) to the
-comparison's `remarks_file` and press «Загрузить и сопоставить»
-(`POST /api/expertise/import`, chain `stroykontrol-import-remarks`). `cmp/expertise.go`
-finds the columns by their headings (number, remark, answer, section/sheet), joins wrapped
-rows, merges the two files by number, then **matches every remark with the comparison's
-findings** by shared words and, more strongly, shared codes and values (a pile mark, a
-pier number, a size). The verdict describes the current state of the documents:
+`cmp/issue.go`, `issue_registry.go`, `issue_export.go`. The specialist confirms findings (✓ in the
+viewer; «Подтвердить все выше «низкой»» does it in bulk). From the **confirmed** ones — not rejected,
+not information about unreleased volumes or out-of-scope ones — the viewer's «Список замечаний»
+builds one remark per *sheet pair* (ПД sheet + РД sheet): a numbered list of the findings, «Ссылка на
+материалы» (files and sheets of both stages), the section (volume), the basis (stage П is the standard),
+criticality (`critical` when a high finding is among them). The same list goes three ways:
 
-- `still_differs` — the difference the remark is about is still there; if the designer's
-  answer claims a correction («учтено», «откорректировано»…) it is flagged
-  «ответ ≠ документы»;
-- `resolved` — it was there and is gone in this iteration;
-- `no_match` — no related finding (not a ПД/РД difference, or not visible to the engine).
+- **into the registry** of the object's remarks (`POST /api/issue/register`, button/chain
+  `stroykontrol-issue-remarks`): numbers `ПТО-<batch>.<n>` (one batch per comparison), status «Ответ не
+  предоставлен», `origin = comparison`, linked to the findings and the documents. The sheet pair is the
+  remark's key, so pressing it again **updates** the remarks and never duplicates them, keeping the
+  specialist's status, assignee and notes; when a later iteration of the comparison has fixed every
+  finding of a sheet the remark is **closed** (history entry), when the difference comes back it is
+  **reopened**. These remarks are left alone by an export import and by the document check;
+- **Excel** (`GET /api/issue/export?format=xlsx`) with the headings of an expertise export — it reads
+  back through the same importer, so the designer's answers can come in on the same format;
+- **Word** (`format=docx`): a letter with a table of the remarks (№, references, remark, criticality).
 
-Matching is deterministic and explains itself (which tokens matched). The specialist's own
-status (open / closed / disputed) is kept across re-imports. In `--fixtures` mode a case's
-`remarks*.xlsx` is read on every request.
+### Expertise remarks: workflow
+
+The remarks of an expertise live in the **registry of the object** (module `expertise_remarks`),
+not in a comparison. The input is the expertise system's export («Выгрузка данных»: remark,
+references to volumes, section, basis, answer, rejection reason, previous answer and reason,
+НД, expert, criticality, proposals, iterations, last change, status, №), attached to the
+object (`objects.remarks_file`); the agent reads it by its headings (`cmp/expertise_export.go`;
+any other table with a remark column goes through the generic parser).
+
+The cycle the registry follows: remark → designer's answer → the expertise accepts
+(«Устранено») or rejects with a reason → the remark comes back, iteration + 1, the export
+carrying the previous answer and reason.
+
+- **Import** (`POST /api/expertise/import?objectID=`, button/chain `stroykontrol-import-remarks`,
+  `Runner.ImportObjectRemarks`): remarks are matched by their number (a repeated number gets
+  `#2`, a missing one a hash of the text); an export that was imported before is skipped.
+  Every import writes a **journal** record (`expertise_imports`: new, changed, status changes,
+  returned, dropped out + the list) and, per remark, **history** (`expertise_remark_history`):
+  the previous iteration is built from the export's «предыдущий ответ / причина», then one entry
+  per change of answer, iteration or status. Remarks missing from a later export are flagged, not deleted.
+- **One status, edited by hand** (Ответ не предоставлен / Устраняется заявителем / Требуется
+  рассмотрение ответа / Устранено): an import overwrites it **only when the expertise's own
+  status changed since the previous export** (its decision is newer); the overwrite is logged and
+  lands in the history. Assignee, due date and a note are the specialist's own (`cmp/expertise_workflow.go`).
+- **Check against the documents**: «Ссылка на материалы» is read into volumes (`ПЗ5.1`, `ТКР5.4.1`,
+  sheet, page) and linked to the loaded documents of the object's comparisons by шифр
+  (`ТКР5.1` ~ `100720-1/П-3-ТКР5-1`). A remark whose volumes are loaded is matched to the
+  findings of those documents (shared words, and more strongly codes/values) — `still_differs`
+  (a difference remains; if the answer claims a correction: «ответ ≠ документы»), `resolved`
+  (fixed in an iteration), `no_match`; volumes that are not loaded give `no_documents`.
+  `POST /api/expertise/check` repeats it after more documents were compared.
+- **Workbench** — `?view=remarks&objectID=` (embedded in the object card): KPIs by status,
+  filters (status, criticality, expert, НД, section, assignee, iteration, check result, overdue),
+  the remark with the answer next to the previous one (changed words highlighted), the history,
+  quick status / assignee / due date / note, the journal. The comparison viewer lists the remarks that concern
+  that comparison and links to the workbench. In `--fixtures` mode a case's `remarks*.xlsx` is the registry.
 
 Not done: aggregation of ВОР across volumes; estimates.
+
+### Report, versions, manual pairing, formatting and cross-volume checks, AI reading, dialog
+
+- **Automatic statement of volumes** — «Предложить ведомость томов» in the object overview (`POST /api/volumes/suggest`, `cmp/volumes_auto.go`): volumes named in the contents tables of the documents («Состав проектной документации», «Содержание», «Перечень томов»; the volume itself, its parts and stationing are not proposed) and, for a stage with no statement, the volumes of its earliest set. Proposals are `object_volumes` rows with `proposed = yes`: they do not count for completeness until accepted (`POST /api/volumes/resolve`: accept / reject / accept all); a confirmed row is never deleted by a reject. On the sample documents explicit contents tables rarely list volumes, so the earliest set is the usual source.
+- **Report** — `GET /api/report/export?recordID=&namespaceID=&format=xlsx|docx` (`cmp/report.go`): summary, findings per document pair (severity, decision, iteration, number of the remark they went into), a separate block for «not released / out of scope», formatting checks and the table of key parameters. A reference for the specialist, not the list of remarks (that is «List of remarks made from a comparison»).
+- **Versions of one stage** — comparison field `kind` = `versions`: the same engine, but the sides are «До»/«После» everywhere (viewer, texts of findings, remarks, report, label «ПД v1 → ПД v2»). `cmp.SideNames`, `cmp.Relabel`.
+- **Manual pairing** — comparison field `pairing` (JSON `[{ref:{doc,from,to}, targets:[…]}]`, edited in the viewer panel «Сопоставление»; `GET/POST /api/pairing`). The listed page ranges are compared as told, the rest of the volumes is matched automatically; the result of the last run is kept in `pairs_json` (`cmp/pairing.go`).
+- **Formatting checks** (`cmp/format.go`, kind `format`, switch off with `Options.NoFormat`): sheet numbering in the title block (a restart from 1 is a new document, not an error), «стр. N» references of the contents, a шифр of the same project but another volume, identical sheets. Low severity, always «к проверке».
+- **Cross-volume consistency** (`cmp/crossvol.go`, kind `cross_volume`, `Options.NoCross`): the same parameter (concrete grade, W, F, rebar class) for the same structural element named differently in two volumes of one side; parameters without an element only go to the table of parameters. Low severity — it may well be two different elements.
+- **AI reading of an expertise remark** — `POST /api/remarks/ai` (`cmp/remark_ai.go`): the model sees the remark, the designer's answer and the fragments of the linked volumes that share the most with them, and says fixed / partial / not fixed / unclear. Every quotation is checked against the fragment text, a firm verdict without a valid quotation becomes «unclear». Writes only `ai_verdict`, `ai_note`, `ai_at`; the working status is never changed. Model: `--remark-model` / `REMARK_MODEL`.
+- **Assistant for any document** — `POST /api/assist` (`assist.go`, `cmp/dialog.go`, panel `AssistantPanel.vue`): questions about the sheet that is on screen. Sources: a comparison (`source=comparison`: the open ПД/РД sheets and the selected finding), a Compose attachment (`attachment`), a Compose document (`document`), a file of a set (`cmp_document`), a file of a comparison (`comparison_doc` + `recordID`: opened from the «↗ документ» link next to each pager of the comparison viewer on the page on screen, with «← к сравнению» back), an ИД act (`act`). The model gets the text of the sheet (title block included) and, for a drawing or a scan (almost no text layer) or on request, the picture of the page (`--vision-model`, `deepseek-r15` by default; if it is missing or fails the answer is made from the text and says so) together with the method of the `read-drawings` skill (`AI_SKILLS_DIR` or `./skills`). `GET /api/assist/doc` and `GET /api/assist/page` serve the standalone viewer `?view=doc&source=…&id=…&namespaceID=…&page=` that Compose opens from the ✦ next to a file name and from the floating «Ассистент» button (client3: `useAssistantContext.js`, `AssistantLauncher.vue`; registered by the attachment lightbox, file links and the PDF view of Docs). In the agent the panel sits under the comparison viewer («✦ Ассистент» in the mode bar), under the ИД viewer and in the document viewer; the remarks workbench and the object overview link to it from every volume. Markdown documents of Compose have no file and are not covered. The question is started as a job (`"async": true` → `{jobID}`) and the answer is collected from `GET /api/assist/result?job=`, because a local model needs minutes while the API gateway waits 30 s for one request (setting `apigw.proxy.outbound-timeout`, not stored by default); the AI reading of remarks works the same way (background, progress in `X-AI-Status` / `X-AI-Error` of the board). Answers are facts-only, nothing is changed, the specialist decides.
+- **Dialog** — `POST /api/dialog` (`cmp/dialog.go`, panel «Диалог о расхождениях»): the model gets the facts (selected finding, neighbours, the text around it, expertise remarks), no opinions about design decisions; sheet markers `[[ПД:12]]` in its answer become «go to the sheet» buttons only for sheets named in the facts.
 
 ## UI
 
@@ -280,6 +329,7 @@ viewer. Fixed to always seed `page_number: 1`, the only page that's real.
 | `GET /api/page?recordID=&namespaceID=&side=pd\|rd&n=` | One PDF page as JPEG (PDF only) |
 | `GET /api/file?recordID=&namespaceID=&side=pd\|rd` | Raw attachment bytes with its Content-Type (used by the browser to render DOCX client-side) |
 | `GET /api/text?recordID=&namespaceID=&side=pd\|rd` | `{pages: [...]}` — per-page extracted text, PDF only (via `pdftotext -layout`, cached); DOCX text comes from the client's own render, no call needed |
+| `GET /api/report/export` · `GET/POST /api/pairing` · `POST /api/dialog` · `POST /api/remarks/ai` · `GET /api/sets/overview`, `POST /api/sets/check` | See the sections above and «Документы объекта» in [compose/README.md](compose/README.md) |
 | `GET /*` | The viewer UI (Vue 3 + Vite app in `web/`, built to `web/dist` and embedded) |
 
 ## Wired into Compose

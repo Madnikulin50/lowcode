@@ -2,10 +2,12 @@
  * Создаёт «Пакет проверки» из папки комплекта ИД и загружает файлы:
  *   <папка>/Реестр ИД/*.xlsx|pdf, <папка>/КС/*.xlsx|pdf, <папка>/АОСР/**\/*.pdf
  *
- *   node import_package.mjs "<папка>" [--only=2.14.1.9] [--title="…"] [--run]
+ *   node import_package.mjs "<папка>" [--object=<ID записи объекта>] [--only=2.14.1.9] [--title="…"] [--run]
  *
  * --only   — загрузить только акты, в пути которых есть подстрока (для
  *            быстрой проверки на подмножестве, CPU-распознавание медленное);
+ * --object — объект, к которому относится пакет (поле «Объект»; пакет появится на вкладке
+ *            «Исполнительная документация» объекта);
  * --run    — сразу поставить пакет в очередь агента (IDCHECK_AGENT_URL).
  */
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
@@ -43,7 +45,7 @@ const fileOf = p => {
 }
 
 async function main () {
-  const applied = JSON.parse(readFileSync(join(HERE, 'applied_id.json'), 'utf8'))
+  const applied = JSON.parse(readFileSync(join(HERE, '..', 'compose', 'applied.json'), 'utf8'))
   const nsID = applied.namespaceID
   const modID = applied.modules.packages
   const token = await mintToken()
@@ -61,11 +63,13 @@ async function main () {
   const ksNum = (basename(ksX || '').match(/№\s*([^_ ]+_?[^_ ]*)/) || [])[1] || ''
 
   const title = opt('title') || `ИД ${basename(regX || dir).replace(/\.xlsx$/, '')}${only ? ` (${only})` : ''}`
+  const objectRef = opt('object') ? [{ name: 'object_ref', value: opt('object') }] : []
   const rec = await api('POST', `/namespace/${nsID}/module/${modID}/record/`, {
     values: [
       { name: 'title', value: title },
       { name: 'ks2_number', value: ksNum.replace(/_/g, '/') },
       { name: 'status', value: 'new' },
+      ...objectRef,
     ],
   })
   const recordID = rec.recordID
@@ -75,6 +79,7 @@ async function main () {
     { name: 'title', value: title },
     { name: 'ks2_number', value: ksNum.replace(/_/g, '/') },
     { name: 'status', value: 'new' },
+    ...objectRef,
   ]
   const up = async (fieldName, path) => {
     if (!path || !existsSync(path)) return
@@ -96,7 +101,7 @@ async function main () {
     const res = await fetch(`${AGENT_URL}/api/idcheck/run?packageID=${recordID}&namespaceID=${nsID}`, { method: 'POST' })
     console.log('queued:', res.status, await res.text())
   }
-  console.log(`open: /compose/ns/stroykontrol-id/pages/${applied.pages.package}/record/${recordID}`)
+  console.log(`open: /compose/ns/stroykontrol/pages/${applied.pages.package}/record/${recordID}`)
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

@@ -24,11 +24,26 @@ type store interface {
 	SetDiscrepancyStatus(ns, recordID, discrepancyID, status string) error
 	// Remarks lists the remark cards of a comparison.
 	Remarks(ns, recordID string) ([]cmp.Remark, error)
-	// Expertise lists the imported expertise remarks of a comparison with
-	// their matches to the findings.
-	Expertise(ns, recordID string) ([]expertiseRecord, error)
-	// SetExpertiseStatus records the specialist's own status of a remark (open|closed|disputed).
-	SetExpertiseStatus(ns, recordID, remarkID, status string) error
+	// Expertise lists the remarks of the comparison's object that concern
+	// this comparison (linked to its documents or matched to its findings).
+	Expertise(ns, comparisonID string) ([]remarkRecord, error)
+	// Board returns the object's registry of expertise remarks.
+	Board(ns, objectID string) (*boardOut, error)
+	// RemarkHistory returns the iterations/changes of one remark, oldest first.
+	RemarkHistory(ns, objectID, remarkID string) ([]remarkHistoryRecord, error)
+	// UpdateRemark applies the specialist's changes (status, assignee, due date, note).
+	UpdateRemark(ns, objectID, remarkID string, p remarkPatch) (*remarkRecord, error)
+	// RegisterIssued puts the list made from the comparison into the registry of
+	// the object's remarks (creating, updating, closing).
+	RegisterIssued(ns, comparisonID string, in cmp.IssueInput, res cmp.IssueResult) (*cmp.IssueRegistered, error)
+	// IssuedNumbers maps the group keys of the comparison's registered remarks to their numbers.
+	IssuedNumbers(ns, comparisonID string) (map[string]string, error)
+	// ObjectName is the name of the object ("" if unknown).
+	ObjectName(ns, objectID string) string
+	// Pairing returns the documents of the comparison, its manual pairing and the pairs the last run made.
+	Pairing(ns, recordID string) (*pairingOut, error)
+	// SetPairing stores the manual pairing (the next run uses it).
+	SetPairing(ns, recordID string, p []cmp.ManualPair) error
 	// SaveRemark creates (ID == "") or updates a remark card.
 	SaveRemark(ns, recordID string, r cmp.Remark) (cmp.Remark, error)
 }
@@ -42,6 +57,9 @@ type comparisonRecord struct {
 	ParentID    string
 	ParentTitle string
 	IterationNo string
+	ObjectID    string // the object (project) the comparison belongs to
+	SetsLabel   string // which versions of the document sets are compared: "ПД v2 ↔ РД v1"
+	Kind        string // cmp.ModeStages | cmp.ModeVersions
 }
 
 type documentRecord struct {
@@ -77,19 +95,90 @@ type discrepancyRecord struct {
 	IterState string `json:"iterState,omitempty"`
 }
 
-// expertiseRecord is an expertise remark (замечание экспертизы) with the
-// designer's answer and what the engine found for it in the documents.
-type expertiseRecord struct {
-	ID            string   `json:"id"`
-	Number        string   `json:"number"`
-	Text          string   `json:"text"`
-	Answer        string   `json:"answer"`
-	Location      string   `json:"location"`
-	Source        string   `json:"source"`
-	Verdict       string   `json:"verdict"` // still_differs | resolved | no_match
-	Score         string   `json:"score"`
-	Note          string   `json:"note"`
-	Status        string   `json:"status"` // open | closed | disputed
-	Findings      []string `json:"findings"`
-	ClaimMismatch bool     `json:"claimMismatch"`
+// remarkRecord is a remark of the expertise as the registry holds it.
+type remarkRecord struct {
+	ID               string          `json:"id"`
+	Key              string          `json:"key"`
+	Number           string          `json:"number"`
+	Batch            string          `json:"batch"`
+	Text             string          `json:"text"`
+	Refs             string          `json:"refs"`
+	VolumeRefs       []cmp.VolumeRef `json:"volumeRefs"`
+	Section          string          `json:"section"`
+	Basis            string          `json:"basis"`
+	Answer           string          `json:"answer"`
+	RejectReason     string          `json:"rejectReason"`
+	PrevAnswer       string          `json:"prevAnswer"`
+	PrevRejectReason string          `json:"prevRejectReason"`
+	Discipline       string          `json:"discipline"`
+	Expert           string          `json:"expert"`
+	Criticality      string          `json:"criticality"`
+	Proposals        string          `json:"proposals"`
+	Expected         string          `json:"expected"`
+	Iterations       int             `json:"iterations"`
+	ChangedAt        string          `json:"changedAt"`
+	SourceStatus     string          `json:"sourceStatus"`
+	Status           string          `json:"status"` // the working status
+	Assignee         string          `json:"assignee"`
+	DueDate          string          `json:"dueDate"`
+	Note             string          `json:"note"`
+	Verdict          string          `json:"verdict"`
+	Score            string          `json:"score"`
+	MatchNote        string          `json:"matchNote"`
+	ClaimMismatch    bool            `json:"claimMismatch"`
+	Findings         []string        `json:"findings"`  // matched discrepancies
+	Documents        []string        `json:"documents"` // linked cmp_documents
+	Archived         bool            `json:"archived"`
+	Origin           string          `json:"origin"` // "comparison": a remark made from a ПД/РД comparison
+	// AI reading of the remark by the fragments of its volumes (never changes the working status)
+	AIVerdict string `json:"aiVerdict"`
+	AINote    string `json:"aiNote"`
+	AIAt      string `json:"aiAt"`
+}
+
+type remarkHistoryRecord struct {
+	Iteration    int    `json:"iteration"`
+	Answer       string `json:"answer"`
+	RejectReason string `json:"rejectReason"`
+	Status       string `json:"status"`
+	SourceStatus string `json:"sourceStatus"`
+	At           string `json:"at"`
+	Author       string `json:"author"`
+	Source       string `json:"source"`
+}
+
+type importRecord struct {
+	ID            string `json:"id"`
+	File          string `json:"file"`
+	At            string `json:"at"`
+	Total         int    `json:"total"`
+	New           int    `json:"new"`
+	Changed       int    `json:"changed"`
+	StatusChanges int    `json:"statusChanges"`
+	Reopened      int    `json:"reopened"`
+	Archived      int    `json:"archived"`
+	Details       string `json:"details"`
+}
+
+type boardComparison struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
+// boardOut is everything the remarks workbench shows for an object.
+type boardOut struct {
+	ObjectID    string            `json:"objectID"`
+	ObjectName  string            `json:"objectName"`
+	Remarks     []remarkRecord    `json:"remarks"`
+	Imports     []importRecord    `json:"imports"`
+	Comparisons []boardComparison `json:"comparisons"`
+	Documents   map[string]string `json:"documents"` // linked document ID → name
+}
+
+// remarkPatch is what the specialist may change by hand; nil = leave.
+type remarkPatch struct {
+	Status   *string `json:"status"`
+	Assignee *string `json:"assignee"`
+	DueDate  *string `json:"dueDate"`
+	Note     *string `json:"note"`
 }

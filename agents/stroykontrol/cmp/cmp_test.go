@@ -617,3 +617,14 @@ func TestOCRResultIsCachedAndReadBack(t *testing.T) {
 		}
 	}
 }
+
+func TestRelabelVersions(t *testing.T) {
+	in := "Изменён текст: «a» (ПД, стр. 3) → «b» (РД, стр. 5); ПДФ и РДУ не трогаем, ПД2 тоже"
+	want := "Изменён текст: «a» (До, стр. 3) → «b» (После, стр. 5); ПДФ и РДУ не трогаем, ПД2 тоже"
+	if got := Relabel(in, ModeVersions); got != want {
+		t.Fatalf("\n got %q\nwant %q", got, want)
+	}
+	if Relabel(in, ModeStages) != in || Relabel(in, "") != in {
+		t.Fatal("stage names stay in the default mode")
+	}
+}

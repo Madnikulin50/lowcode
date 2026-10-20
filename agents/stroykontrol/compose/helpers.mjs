@@ -703,7 +703,10 @@ export async function ensureChart (api, nsID, def) {
   return existing.chartID
 }
 
-export async function ensurePage (api, nsID, def) {
+export async function ensurePage (api, nsID, rawDef) {
+  // `parent`/`group` are the provisioning script's own keys; `tabbedBlockIDs` are blocks that
+  // live only inside a Tabs block (they are in page.blocks but not in the layout)
+  const { parent, group, tabbedBlockIDs = [], ...def } = rawDef
   const list = setOf(await api('GET', `/namespace/${nsID}/page/?handle=${encodeURIComponent(def.handle)}&limit=200`))
   const existing = list.find(p => p.handle === def.handle && !p.deletedAt)
   let page
@@ -722,7 +725,7 @@ export async function ensurePage (api, nsID, def) {
   const layoutBody = {
     handle: 'primary',
     meta: { title: def.title },
-    blocks: layoutBlocks(def.blocks),
+    blocks: layoutBlocks(def.blocks.filter(b => !tabbedBlockIDs.includes(b.blockID))),
     config: {
       visibility: { expression: '', roles: [] },
       buttons: {

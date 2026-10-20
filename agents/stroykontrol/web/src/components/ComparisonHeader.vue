@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 import { STATUS_LABEL, STATUS_CLASS, STATUS_ICON } from '../constants.js'
 import Icon from './Icon.vue'
+import { names, nm } from '../constants.js'
 
-const props = defineProps({ comparison: Object, recordId: String, busy: Boolean })
+const props = defineProps({ comparison: Object, recordId: String, busy: Boolean, qs: String })
 const emit = defineEmits(['run'])
 
 const running = computed(() => !!props.comparison.running || props.comparison.status === 'processing')
@@ -13,6 +14,7 @@ const pct = computed(() => Math.max(0, Math.min(100, Number(props.comparison.sim
 const barColor = computed(() => pct.value >= 80 ? 'var(--ok)' : pct.value >= 50 ? 'var(--warn)' : 'var(--bad)')
 const refDocs = computed(() => props.comparison.documents.filter(d => d.side === 'ref'))
 const targetDocs = computed(() => props.comparison.documents.filter(d => d.side === 'target'))
+const reportHref = (format) => `api/report/export?${props.qs}&format=${format}`
 const vol = (d) => [d.volumeCode, d.volumeTitle].filter(Boolean).join(' — ')
 </script>
 
@@ -24,7 +26,14 @@ const vol = (d) => [d.volumeCode, d.volumeTitle].filter(Boolean).join(' — ')
       {{ STATUS_LABEL[comparison.status] || comparison.status || '—' }}
       <template v-if="comparison.running">· {{ comparison.running }}</template>
     </span>
-    <button class="run" :disabled="busy || running" title="Сравнить все загруженные файлы ПД с файлами РД" @click="emit('run')">Запустить сравнение</button>
+    <button class="run" :disabled="busy || running" :title="nm('Сравнить все загруженные файлы ПД с файлами РД')" @click="emit('run')">Запустить сравнение</button>
+    <span v-if="qs" class="report-links" title="Сводка и все расхождения по томам и листам (справка, не список замечаний)">
+      Отчёт: <a :href="reportHref('xlsx')" download>Excel</a> · <a :href="reportHref('docx')" download>Word</a>
+    </span>
+  </div>
+
+  <div v-if="comparison.setsLabel" class="iteration sets-label">
+    <b>Сравниваются версии комплектов:</b> <span class="chip ok">{{ comparison.setsLabel }}</span>
   </div>
 
   <div v-if="comparison.iteration" class="iteration">
@@ -37,12 +46,12 @@ const vol = (d) => [d.volumeCode, d.volumeTitle].filter(Boolean).join(' — ')
 
   <div v-if="refDocs.length || targetDocs.length" class="pack">
     <div class="pack-side">
-      <span class="pack-h">ПД (эталон)</span>
+      <span class="pack-h">{{ names.ref }} (эталон)</span>
       <div v-for="d in refDocs" :key="d.id" class="pack-doc"><b>{{ d.name || d.id }}</b><span v-if="vol(d)"> · {{ vol(d) }}</span><span v-if="d.pages"> · {{ d.pages }} стр.</span></div>
       <div v-if="!refDocs.length" class="pack-none">файлы не загружены</div>
     </div>
     <div class="pack-side">
-      <span class="pack-h">РД</span>
+      <span class="pack-h">{{ names.target }}</span>
       <div v-for="d in targetDocs" :key="d.id" class="pack-doc"><b>{{ d.name || d.id }}</b><span v-if="vol(d)"> · {{ vol(d) }}</span><span v-if="d.pages"> · {{ d.pages }} стр.</span></div>
       <div v-if="!targetDocs.length" class="pack-none">файлы не загружены</div>
     </div>

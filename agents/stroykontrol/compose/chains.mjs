@@ -143,14 +143,15 @@ function compareChain (ns, m, agentURL) {
   }
 }
 
-// Expertise remarks: the agent reads the Excel attached to the comparison
-// (field remarks_file) and matches the remarks with the findings. Manual
-// button only — no trigger.
+// Expertise remarks: the agent reads the Excel exports attached to the object
+// (field remarks_file), updates the object's registry of remarks (history of
+// iterations, import journal) and checks the answers against the documents.
+// Manual button on the object card — no trigger.
 function importRemarksChain (ns, agentURL) {
   return {
     id: 'stroykontrol-import-remarks',
-    name: 'Стройконтроль: загрузить замечания экспертизы',
-    description: 'Агент читает Excel замечаний экспертизы (и ответов проектировщика), приложенный к сравнению, и сопоставляет замечания с найденными расхождениями.',
+    name: 'Стройконтроль: загрузить выгрузку замечаний экспертизы',
+    description: 'Агент читает Excel-выгрузки замечаний, приложенные к объекту, обновляет реестр замечаний (новые, ответы, итерации, статусы), ведёт историю и журнал выгрузок и проверяет ответы по документам объекта.',
     entryNode: 'run',
     namespaceID: ns,
     config: { triggers: [] },
@@ -160,7 +161,32 @@ function importRemarksChain (ns, agentURL) {
       label: 'Агент: загрузить и сопоставить замечания',
       config: {
         method: 'POST',
-        url: `${agentURL}/api/expertise/import?recordID={{recordID}}&namespaceID={{namespaceID}}`,
+        url: `${agentURL}/api/expertise/import?objectID={{recordID}}&namespaceID={{namespaceID}}`,
+        timeout: 120,
+      },
+    }],
+    edges: [],
+  }
+}
+
+// Remarks made from a comparison: the confirmed findings, one remark per sheet,
+// go into the registry of the object's remarks (numbers ПТО-<batch>.<n>).
+// Manual button on the comparison card; the Excel/Word list is in the viewer.
+function issueRemarksChain (ns, agentURL) {
+  return {
+    id: 'stroykontrol-issue-remarks',
+    name: 'Стройконтроль: сформировать замечания по сравнению',
+    description: 'Агент собирает подтверждённые специалистом находки сравнения ПД/РД в замечания (одно на лист) и вносит их в реестр замечаний объекта; устранённые расхождения закрывают замечания.',
+    entryNode: 'run',
+    namespaceID: ns,
+    config: { triggers: [] },
+    nodes: [{
+      id: 'run',
+      type: 'http',
+      label: 'Агент: сформировать замечания',
+      config: {
+        method: 'POST',
+        url: `${agentURL}/api/issue/register?recordID={{recordID}}&namespaceID={{namespaceID}}`,
         timeout: 60,
       },
     }],
@@ -381,6 +407,52 @@ return { status: status, final_score: final_score, error: (created && created.er
  *   score.weighted normalizes). Tune directly here, or edit the deployed
  *   chain's `combine` node `factors[].weight` in place.
  */
+function checkSetsChain (ns, agentURL) {
+  return {
+    id: 'stroykontrol-check-sets',
+    name: 'Стройконтроль: проверить комплектность комплектов объекта',
+    description: 'Агент читает ещё не прочитанные файлы комплектов (ПД/РД) объекта, определяет тома, сверяет их с ведомостью состава и записывает комплектность в комплекты; у сравнений обновляет подпись «ПД v2 ↔ РД v1».',
+    entryNode: 'run',
+    namespaceID: ns,
+    config: { triggers: [] },
+    nodes: [{
+      id: 'run',
+      type: 'http',
+      label: 'Агент: проверить комплектность',
+      config: {
+        method: 'POST',
+        url: `${agentURL}/api/sets/check?objectID={{recordID}}&namespaceID={{namespaceID}}`,
+        timeout: 300,
+      },
+    }],
+    edges: [],
+  }
+}
+
+// Проверка ИД: кнопка на карточке пакета. Без триггера на afterUpdate: агент сам пишет
+// прогресс в запись пакета, автозапуск по обновлению зациклился бы.
+function idRunChain (ns, agentURL) {
+  return {
+    id: 'stroykontrol-id-run',
+    name: 'Проверка ИД: запустить проверку пакета',
+    description: 'Отправляет пакет (реестр, КС-2, акты) агенту stroykontrol (idcheck). Агент выполняет проверки 1–8 и записывает акты, замечания и сводку в пространство.',
+    entryNode: 'run',
+    namespaceID: ns,
+    config: { triggers: [] },
+    nodes: [{
+      id: 'run',
+      type: 'http',
+      label: 'Агент: поставить пакет в очередь',
+      config: {
+        method: 'POST',
+        url: `${agentURL}/api/idcheck/run?packageID={{recordID}}&namespaceID={{namespaceID}}`,
+        timeout: 30,
+      },
+    }],
+    edges: [],
+  }
+}
+
 export function buildRuleChains ({ nsID, modules, weights = {}, agentURL = 'http://localhost:8092' }) {
   const w = {
     checkId: weights.checkId || [0.6, 0.4],
@@ -389,6 +461,9 @@ export function buildRuleChains ({ nsID, modules, weights = {}, agentURL = 'http
   return [
     compareChain(nsID, modules, agentURL),
     importRemarksChain(nsID, agentURL),
+    issueRemarksChain(nsID, agentURL),
+    checkSetsChain(nsID, agentURL),
+    idRunChain(nsID, agentURL),
     checkIdChain(nsID, modules, [['det.output.det_score', w.checkId[0]], ['ai_parse.output.ai_score', w.checkId[1]]]),
     checkVoisrChain(nsID, modules, [['det.output.det_score', w.checkVoisr[0]], ['ai_parse.output.ai_score', w.checkVoisr[1]]]),
   ]

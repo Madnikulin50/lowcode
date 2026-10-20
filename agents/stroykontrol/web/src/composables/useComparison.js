@@ -3,7 +3,10 @@
 // page info of whichever documents are selected, and polls while the agent
 // is still comparing. The comparison may hold a whole package of files per
 // stage; pages are loaded per document, on demand.
-import { reactive, onMounted, onUnmounted } from 'vue'
+import { errText } from '../utils.js'
+import { reactive, onMounted, onUnmounted, watch } from 'vue'
+import { setMode } from '../constants.js'
+import { friendlyReason } from './usePageImage.js'
 import { renderDocxPages } from './useDocxRender.js'
 import { renderDxfPages } from './useDxfRender.js'
 import { renderXlsxPages, alignXlsxSides } from './useXlsxRender.js'
@@ -20,14 +23,14 @@ export const emptyPages = () => ({ supported: false, kind: 'other', pageCount: 0
 async function getJSON (url) {
   const res = await fetch(url)
   const data = await res.json().catch(() => ({}))
-  if (!res.ok || data.error) throw new Error(data.error || res.statusText)
+  if (!res.ok || data.error) throw new Error(errText(data.error, res.status) || res.statusText)
   return data
 }
 
 async function postJSON (url, body) {
   const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   const data = await res.json().catch(() => ({}))
-  if (!res.ok || data.error) throw new Error(data.error || res.statusText)
+  if (!res.ok || data.error) throw new Error(errText(data.error, res.status) || res.statusText)
   return data
 }
 
@@ -63,8 +66,13 @@ export function useComparison () {
     comparison: null,
     docs: {}, // documentID → page info (loaded lazily)
     busy: false, // a status/remark request is in flight
+    issue: null, // the list of remarks made from the confirmed findings
+    issueResult: null,
     actionError: '',
   })
+
+  // the sides are called ПД/РД or До/После depending on the kind of comparison
+  watch(() => state.comparison && state.comparison.kind, k => setMode(k), { immediate: true })
 
   let pollTimer = null
 
@@ -77,7 +85,8 @@ export function useComparison () {
     try {
       info = await getJSON(`api/pages?${qs}&${docSel(id)}`)
     } catch (e) {
-      info = emptyPages()
+      // keep the reason: the viewer says in words why the file has no pictures
+      info = { ...emptyPages(), error: friendlyReason(/HTTP 5|5\d\d/.test(String(e.message)) ? 500 : 0, e.message) }
       state.docs[id] = info
       return info
     }
@@ -165,6 +174,7 @@ export function useComparison () {
     }
     state.loading = false
     schedulePoll()
+    loadIssue()
   }
 
   async function act (fn) {
@@ -193,6 +203,32 @@ export function useComparison () {
     await postJSON('api/discrepancy/status', { ...base(), id, status })
     const d = state.comparison.discrepancies.find(x => x.id === id)
     if (d) d.status = status
+    await loadIssue()
+  })
+
+  // many findings at once (e.g. confirm everything above "low")
+  const setStatusMany = (ids, status) => act(async () => {
+    for (const id of ids) {
+      await postJSON('api/discrepancy/status', { ...base(), id, status })
+      const d = state.comparison.discrepancies.find(x => x.id === id)
+      if (d) d.status = status
+    }
+    await loadIssue()
+  })
+
+  // The list of remarks made from the confirmed findings (one remark per sheet).
+  async function loadIssue () {
+    try {
+      state.issue = await getJSON(`api/issue/preview?${qs}`)
+    } catch (e) {
+      state.issue = null
+    }
+  }
+
+  // Puts the list into the registry of the object's remarks.
+  const registerIssue = () => act(async () => {
+    state.issueResult = await postJSON(`api/issue/register?${qs}`, {})
+    await loadIssue()
   })
 
   const createRemark = (discrepancyIDs) => act(async () => {
@@ -215,22 +251,8 @@ export function useComparison () {
     return saved
   })
 
-  // Reads the Excel of expertise remarks attached to the comparison and matches
-  // the remarks with the findings (agent side), then reloads the list.
-  const importExpertise = () => act(async () => {
-    const sum = await postJSON(`api/expertise/import?${qs}`, {})
-    await refresh()
-    return sum
-  })
-
-  const setExpertiseStatus = (id, status) => act(async () => {
-    await postJSON('api/expertise/status', { ...base(), id, status })
-    const e = state.comparison.expertise.find(x => x.id === id)
-    if (e) e.status = status
-  })
-
   onMounted(start)
   onUnmounted(() => clearTimeout(pollTimer))
 
-  return { state, qs, recordID, documents, loadPair, run, setStatus, createRemark, saveRemark, suggestRemark, importExpertise, setExpertiseStatus }
+  return { state, qs, recordID, namespaceID, documents, loadPair, run, setStatus, setStatusMany, loadIssue, registerIssue, createRemark, saveRemark, suggestRemark }
 }

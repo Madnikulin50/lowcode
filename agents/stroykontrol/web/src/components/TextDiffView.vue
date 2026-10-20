@@ -9,7 +9,7 @@
 import { computed } from 'vue'
 import { pageText } from '../composables/useComparison.js'
 import { textLines, diffSeq, wordDiffSpans, buildBlocks } from '../composables/useTextDiff.js'
-import { DIFF_CONTEXT } from '../constants.js'
+import { DIFF_CONTEXT, names, nm } from '../constants.js'
 import DiffLine from './DiffLine.vue'
 
 const props = defineProps({
@@ -70,8 +70,8 @@ const displayBlocks = computed(() => blocks.value.map((block, blockIdx) => {
 <template>
   <div>
     <div class="text-legend">
-      <span><span class="swatch del"></span>только в ПД</span>
-      <span><span class="swatch add"></span>только в РД</span>
+      <span><span class="swatch del"></span>{{ nm('только в ПД') }}</span>
+      <span><span class="swatch add"></span>{{ nm('только в РД') }}</span>
     </div>
 
     <div v-if="isEmpty" class="empty">На этой странице нет извлечённого текста ни в одном из файлов.</div>

@@ -1,4 +1,5 @@
 <script setup>
+import { names, nm } from '../constants.js'
 const props = defineProps({ viewer: Object })
 const emit = defineEmits(['align'])
 
@@ -18,14 +19,14 @@ function resetManual () {
 
 <template>
   <div class="fit-row">
-    <span>Подгонка РД под ПД:</span>
+    <span>{{ nm('Подгонка РД под ПД:') }}</span>
     <div class="switch">
       <button v-for="[key, label] in FIT_MODES" :key="key" :class="{ active: viewer.fitMode === key }" @click="viewer.fitMode = key">{{ label }}</button>
     </div>
   </div>
 
   <div class="fit-row">
-    <span>Выровнять края РД:</span>
+    <span>{{ nm('Выровнять края РД:') }}</span>
     <div class="switch">
       <button v-for="[h, label] in H_ALIGN" :key="h" @click="emit('align', h, null)">{{ label }}</button>
     </div>

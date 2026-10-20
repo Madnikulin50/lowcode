@@ -251,67 +251,131 @@ func TestIterationInheritsReferenceDocuments(t *testing.T) {
 	}
 }
 
-func TestImportRemarksMatchesAndKeepsManualStatus(t *testing.T) {
+func objectWithComparison(t *testing.T, f *fakeBackend, r *Runner) (object, comparison string) {
+	t.Helper()
+	object = f.put(ModObjects, idcheck.V("name", "Объект"))
+	comparison = f.put(ModComparisons, idcheck.V("title", "v1", "status", "new", "object", object))
+	addPackage(f, comparison, "pack-1")
+	if err := r.Run(context.Background(), "ns", comparison); err != nil {
+		t.Fatal(err)
+	}
+	return
+}
+
+func remarksByKey(f *fakeBackend) map[string]idcheck.Record {
+	out := map[string]idcheck.Record{}
+	for _, x := range f.recs[ModExpertise] {
+		out[x.Get("remark_key")] = x
+	}
+	return out
+}
+
+func TestImportObjectRemarksWorkflow(t *testing.T) {
 	skipWithoutPoppler(t)
 	f := newFake()
 	r := &Runner{Backend: f, CacheDir: t.TempDir(), current: map[string]string{}}
-	c := f.put(ModComparisons, idcheck.V("title", "v1", "status", "new"))
-	addPackage(f, c, "pack-1")
-	if err := r.Run(context.Background(), "ns", c); err != nil {
-		t.Fatal(err)
-	}
-	f.files["zam.xlsx"] = xlsxBytes(t, "Замечания", [][]string{
-		{"№", "Замечание", "Ответ проектировщика"},
-		{"1", "Глубина заложения фундамента 2,6 м не соответствует стадии П (2,4 м)", "Откорректировано в соответствии со стадией П."},
-		{"2", "Количество свай марки С15-35Т6 опоры №17п больше, чем в проекте", "Учтено."},
-	})
-	if _, err := r.ImportRemarks(context.Background(), "ns", c); err == nil {
-		t.Fatal("an import without an attached file must say so")
-	}
-	rec := f.recs[ModComparisons][c]
-	rec.Values["remarks_file"] = []string{"zam.xlsx"}
+	object, comparison := objectWithComparison(t, f, r)
+	_ = comparison
 
-	sum, err := r.ImportRemarks(context.Background(), "ns", c)
+	f.files["101"] = xlsxBytes(t, "Выгрузка данных", [][]string{
+		exportHeader,
+		exportRow("30.1", "Глубина заложения фундамента 2,6 м не соответствует стадии П (2,4 м)", "Том 3, 2024-15-ГП – КЖ", "Откорректировано в соответствии со стадией П", "", "", "", "Требуется рассмотрение ответа", "1"),
+		exportRow("30.2", "Не представлено обоснование по технологии", "Том 5, 2024-15-ГП – ЭС9", "", "", "", "", "Ответ не предоставлен", "1"),
+		exportRow("30.3", "Класс бетона не указан", "", "Принято", "Нет изменений в документации", "Принято ранее", "Нет изменений", "Устраняется заявителем", "2"),
+		exportRow("30.4", "Старое замечание", "", "Ответ", "", "", "", "Устранено", "1"),
+	})
+	f.recs[ModObjects][object].Values["remarks_file"] = []string{"101"}
+
+	sum, err := r.ImportObjectRemarks(context.Background(), "ns", object, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if sum.Remarks != 2 || sum.StillDiffers != 1 || sum.NoMatch != 1 || sum.ClaimMismatch != 1 {
+	if sum.Files != 1 || sum.Remarks != 4 || sum.New != 4 || sum.Skipped != 0 {
 		t.Fatalf("summary: %+v", sum)
 	}
-	byNum := map[string]idcheck.Record{}
-	for _, x := range f.recs[ModExpertise] {
-		byNum[x.Get("number")] = x
+	got := remarksByKey(f)
+	r1, r2, r3 := got["30.1"], got["30.2"], got["30.3"]
+	if r1.Get("status") != RemarkAnswerRev || r1.Get("source_status") != "Требуется рассмотрение ответа" || r1.Get("batch") != "30" || r1.Get("iterations") != "1" {
+		t.Errorf("remark 1: %+v", r1.Values)
 	}
-	d1 := byNum["1"]
-	if d1.Get("verdict") != VerdictStillDiffers || d1.Get("status") != "open" || d1.Get("claim_mismatch") == "" || len(d1.Values["matched_discrepancies"]) == 0 {
-		t.Fatalf("remark 1: %+v", d1.Values)
+	// history: remark 3 is on its second iteration → previous + current; the others just current
+	hist := map[string][]idcheck.Record{}
+	for _, h := range f.recs[ModRemarkHistory] {
+		hist[h.Get("remark")] = append(hist[h.Get("remark")], h)
 	}
-	linked := f.recs[ModDiscrepancies][d1.Values["matched_discrepancies"][0]]
-	if !strings.Contains(linked.Get("description"), "Глубина заложения") {
-		t.Errorf("remark 1 is linked to the wrong finding: %v", linked.Values)
+	if len(hist[r3.ID]) != 2 || len(hist[r1.ID]) != 1 {
+		t.Errorf("history sizes: r3=%d r1=%d", len(hist[r3.ID]), len(hist[r1.ID]))
 	}
-	if byNum["2"].Get("verdict") != VerdictNoMatch {
-		t.Errorf("remark 2: %+v", byNum["2"].Values)
+	// the check against documents: КЖ is a loaded volume (the ПД), the depth difference is still there
+	if r1.Get("verdict") != VerdictStillDiffers || r1.Get("claim_mismatch") == "" || len(r1.Values["linked_documents"]) == 0 || len(r1.Values["matched_discrepancies"]) == 0 {
+		t.Errorf("remark 1 must be linked to the ПД volume and its depth finding: %+v", r1.Values)
+	}
+	if r2.Get("verdict") != VerdictNoDocument {
+		t.Errorf("a volume that is not loaded: %+v", r2.Values)
+	}
+	// the journal
+	var journal []idcheck.Record
+	for _, j := range f.recs[ModExpertImports] {
+		journal = append(journal, j)
+	}
+	if len(journal) != 1 || journal[0].Get("total") != "4" || journal[0].Get("new_count") != "4" || journal[0].Get("attachment") != "101" {
+		t.Fatalf("journal: %+v", journal)
 	}
 
-	// the specialist closes remark 2; a re-import (file now has only remark 1 + a new one) keeps that and prunes the dropped
-	_ = f.Update("ns", ModExpertise, byNum["2"].ID, idcheck.V("status", "closed"))
-	f.files["zam.xlsx"] = xlsxBytes(t, "Замечания", [][]string{
-		{"№", "Замечание", "Ответ проектировщика"},
-		{"2", "Количество свай марки С15-35Т6 опоры №17п больше, чем в проекте", "Учтено."},
-		{"3", "Толщина стен подвала не соответствует стадии П", ""},
+	// the same export again: nothing to do
+	sum, err = r.ImportObjectRemarks(context.Background(), "ns", object, false)
+	if err != nil || sum.Files != 0 || sum.Skipped != 1 || len(f.recs[ModExpertImports]) != 1 || len(f.recs[ModRemarkHistory]) != 4+1 {
+		t.Fatalf("an export is imported once: %+v %v (history %d)", sum, err, len(f.recs[ModRemarkHistory]))
+	}
+
+	// the specialist sets a status by hand, assigns the remark
+	_ = f.Update("ns", ModExpertise, r1.ID, idcheck.V("status", RemarkBeingFix, "assignee", "Петров"))
+	_ = f.Update("ns", ModExpertise, r3.ID, idcheck.V("status", RemarkResolved))
+
+	// the next export: remark 1 unchanged, remark 2 answered, remark 3 changed on the expertise's side, 30.4 dropped, a new one added
+	f.files["102"] = xlsxBytes(t, "Выгрузка данных", [][]string{
+		exportHeader,
+		exportRow("30.1", "Глубина заложения фундамента 2,6 м не соответствует стадии П (2,4 м)", "Том 3, 2024-15-ГП – КЖ", "Откорректировано в соответствии со стадией П", "", "", "", "Требуется рассмотрение ответа", "1"),
+		exportRow("30.2", "Не представлено обоснование по технологии", "Том 5, 2024-15-ГП – ЭС9", "Обоснование добавлено", "", "", "", "Требуется рассмотрение ответа", "1"),
+		exportRow("30.3", "Класс бетона не указан", "", "Принято", "Снова нет изменений", "Принято ранее", "Нет изменений", "Ответ не предоставлен", "3"),
+		exportRow("31.1", "Новое замечание", "", "", "", "", "", "Ответ не предоставлен", "1"),
 	})
-	if _, err := r.ImportRemarks(context.Background(), "ns", c); err != nil {
+	f.recs[ModObjects][object].Values["remarks_file"] = []string{"101", "102"}
+	sum, err = r.ImportObjectRemarks(context.Background(), "ns", object, false)
+	if err != nil {
 		t.Fatal(err)
 	}
-	byNum = map[string]idcheck.Record{}
-	for _, x := range f.recs[ModExpertise] {
-		byNum[x.Get("number")] = x
+	if sum.Files != 1 || sum.New != 1 || sum.Archived != 1 || sum.StatusChanges < 1 {
+		t.Fatalf("second export: %+v", sum)
 	}
-	if len(byNum) != 2 || byNum["2"].Get("status") != "closed" || byNum["1"].ID != "" {
-		t.Errorf("re-import: %+v", byNum)
+	got = remarksByKey(f)
+	if got["30.1"].Get("status") != RemarkBeingFix || got["30.1"].Get("assignee") != "Петров" {
+		t.Errorf("the hand-made status and assignee survive an unchanged remark: %+v", got["30.1"].Values)
 	}
-	if byNum["3"].Get("status") != "open" {
-		t.Errorf("new remark: %+v", byNum["3"].Values)
+	if got["30.3"].Get("status") != RemarkAwaiting || got["30.3"].Get("iterations") != "3" {
+		t.Errorf("the expertise sent remark 3 back: %+v", got["30.3"].Values)
+	}
+	if got["30.2"].Get("answer") != "Обоснование добавлено" || got["30.2"].Get("status") != RemarkAnswerRev {
+		t.Errorf("remark 2 was answered: %+v", got["30.2"].Values)
+	}
+	if got["30.4"].Get("archived") == "" || got["31.1"].Get("status") != RemarkAwaiting {
+		t.Errorf("archived / new: %+v %+v", got["30.4"].Values, got["31.1"].Values)
+	}
+	n := 0
+	for _, h := range f.recs[ModRemarkHistory] {
+		if h.Get("remark") == got["30.3"].ID {
+			n++
+		}
+	}
+	if n != 3 {
+		t.Errorf("remark 3 has previous + current + the new iteration, got %d entries", n)
+	}
+	// forced re-import of the last export changes nothing
+	before := len(f.recs[ModRemarkHistory])
+	if _, err := r.ImportObjectRemarks(context.Background(), "ns", object, true); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.recs[ModRemarkHistory]) != before {
+		t.Errorf("a re-import of the same export must not add history: %d → %d", before, len(f.recs[ModRemarkHistory]))
 	}
 }

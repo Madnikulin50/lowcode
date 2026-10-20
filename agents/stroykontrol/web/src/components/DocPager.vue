@@ -9,6 +9,7 @@ const props = defineProps({
   docId: String,
   page: Number,
   pageCount: Number,
+  openHref: String, // the single-document viewer (with the assistant) on the file and page on screen
 })
 const emit = defineEmits(['update:docId', 'update:page'])
 
@@ -27,6 +28,7 @@ const volume = computed(() => {
     </select>
     <b v-else-if="docs.length === 1" class="dp-name">{{ docs[0].name || docs[0].id }}</b>
     <span v-else class="dp-none">нет файлов</span>
+    <a v-if="openHref && docId" class="dp-open" :href="openHref" target="_blank" title="Открыть этот файл в отдельном просмотре документа (на этой странице) с ассистентом">↗ документ</a>
     <span v-if="volume" class="dp-volume" :title="volume">{{ volume }}</span>
     <span class="pager">
       <button :disabled="page <= 1" @click="emit('update:page', page - 1)">‹</button>

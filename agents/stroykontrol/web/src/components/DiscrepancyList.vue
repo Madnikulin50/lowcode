@@ -3,12 +3,12 @@
 // several and turn them into a remark card. A click on a row opens the
 // pages and highlights the region in the viewer.
 import { computed, reactive } from 'vue'
-import { SEV_ORDER, SEV_LABEL, TYPE_LABEL, KIND_LABEL, REVIEW_LABEL, ITER_LABEL } from '../constants.js'
+import { SEV_ORDER, SEV_LABEL, TYPE_LABEL, KIND_LABEL, REVIEW_LABEL, ITER_LABEL, names } from '../constants.js'
 import { splitSource } from '../composables/useTextDiff.js'
 import { parseEvidence } from '../utils.js'
 
 const props = defineProps({ list: Array, documents: Array, busy: Boolean, activeId: String, error: String })
-const emit = defineEmits(['jump', 'status', 'remark'])
+const emit = defineEmits(['jump', 'status', 'status-many', 'remark'])
 
 const INFO_KINDS = ['not_released', 'scope_diff']
 const filter = reactive({ severity: '', status: '', kind: '', iter: '', hideInfo: false })
@@ -51,8 +51,8 @@ const rows = computed(() => {
         info: INFO_KINDS.includes(d.kind),
         status: d.status || 'new',
         iterState: d.iterState || '',
-        pd: d.pageRef ? `ПД стр. ${d.pageRef}` : '',
-        rd: d.pageTarget ? `РД стр. ${d.pageTarget}` : '',
+        pd: d.pageRef ? `${names.ref} стр. ${d.pageRef}` : '',
+        rd: d.pageTarget ? `${names.target} стр. ${d.pageTarget}` : '',
         pdTitle: docName(d.docRef),
         rdTitle: docName(d.docTarget),
         legacyPage: legacyPage ? `стр. ${legacyPage}` : '',
@@ -62,6 +62,9 @@ const rows = computed(() => {
     })
 })
 
+// everything above "low" that nobody has decided on yet
+const confirmable = computed(() => props.list.filter(d => (d.status || 'new') === 'new' && d.severity !== 'low' && !INFO_KINDS.includes(d.kind) && d.id).map(d => d.id))
+function confirmAll () { emit('status-many', confirmable.value, 'confirmed') }
 function toggle (set, id) { if (set.has(id)) set.delete(id); else set.add(id) }
 function makeCard () {
   emit('remark', [...selected])
@@ -103,6 +106,7 @@ function makeCard () {
         </select>
         <label class="chk"><input type="checkbox" v-model="filter.hideInfo" /> скрыть «не выпущено / вне объёма»</label>
         <span class="grow"></span>
+        <button class="small" :disabled="busy || !confirmable.length" title="Подтвердить все нерешённые расхождения выше «низкой» критичности: по подтверждённым формируются замечания" @click="confirmAll">Подтвердить все выше «низкой» ({{ confirmable.length }})</button>
         <button class="primary" :disabled="busy || !selected.size" @click="makeCard">Создать карточку замечания ({{ selected.size }})</button>
       </div>
 
@@ -128,10 +132,10 @@ function makeCard () {
           <span :class="row.hasText ? '' : 'disc-fallback'">{{ row.text }}</span>
           <div v-if="row.evidence" class="ev-toggle" @click.stop="toggle(open, row.d.id)">{{ open.has(row.d.id) ? '▾' : '▸' }} на основании чего</div>
           <div v-if="row.evidence && open.has(row.d.id)" class="evidence" @click.stop>
-            <div v-if="row.evidence.ref"><b>ПД:</b> {{ row.evidence.ref }}</div>
-            <div v-if="row.evidence.target"><b>РД:</b> {{ row.evidence.target }}</div>
-            <div v-if="row.evidence.volumeRef"><b>Том ПД:</b> {{ row.evidence.volumeRef }}</div>
-            <div v-if="row.evidence.volumeTarget"><b>Том(а) РД:</b> {{ row.evidence.volumeTarget }}</div>
+            <div v-if="row.evidence.ref"><b>{{ names.ref }}:</b> {{ row.evidence.ref }}</div>
+            <div v-if="row.evidence.target"><b>{{ names.target }}:</b> {{ row.evidence.target }}</div>
+            <div v-if="row.evidence.volumeRef"><b>Том «{{ names.ref }}»:</b> {{ row.evidence.volumeRef }}</div>
+            <div v-if="row.evidence.volumeTarget"><b>Том(а) «{{ names.target }}»:</b> {{ row.evidence.volumeTarget }}</div>
             <div v-if="row.evidence.rule" class="rule">правило: {{ row.evidence.rule }}</div>
           </div>
         </div>

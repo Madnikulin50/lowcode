@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/madnikulin50/lowcode/agents/stroykontrol/cmp"
 )
@@ -29,12 +30,14 @@ import (
 // fixtures/README.md.
 type FixtureStore struct {
 	dir     string
-	analyze func([]cmp.Input) (*cmp.Result, error)
+	analyze func([]cmp.Input, string, []cmp.ManualPair) (*cmp.Result, error) // inputs, mode, manual pairing
 
 	mu       sync.Mutex
 	computed map[string]*cmp.Result
-	status   map[string]string // discrepancy id → status
+	pairing  map[string][]cmp.ManualPair // caseID → manual pairing (kept in memory)
+	status   map[string]string           // discrepancy id → status
 	remarks  map[string][]cmp.Remark
+	boards   map[string]*fxBoard
 	nextID   int
 }
 
@@ -46,7 +49,7 @@ func NewFixtureStore(dir string) (*FixtureStore, error) {
 	if !info.IsDir() {
 		return nil, fmt.Errorf("fixtures dir %q is not a directory", dir)
 	}
-	return &FixtureStore{dir: dir, computed: map[string]*cmp.Result{}, status: map[string]string{}, remarks: map[string][]cmp.Remark{}}, nil
+	return &FixtureStore{dir: dir, computed: map[string]*cmp.Result{}, pairing: map[string][]cmp.ManualPair{}, status: map[string]string{}, remarks: map[string][]cmp.Remark{}, boards: map[string]*fxBoard{}}, nil
 }
 
 // caseDir resolves a caseID to its directory, filepath.Base'd so a
@@ -97,6 +100,7 @@ type fixtureMeta struct {
 	SimilarityPercent string `json:"similarityPercent"`
 	Comment           string `json:"comment"`
 	Parent            string `json:"parent"` // caseID of the previous iteration
+	Kind              string `json:"kind"`   // "versions": two versions of one stage (files named pd-* are the earlier one)
 }
 
 func (f *FixtureStore) checkCase(recordID string) (string, error) {
@@ -125,7 +129,14 @@ func (f *FixtureStore) analysis(recordID, dir string) *cmp.Result {
 		}
 		inputs = append(inputs, cmp.Input{ID: d.ID, Name: d.Name, Side: d.Side, Data: data})
 	}
-	res, err := f.analyze(inputs)
+	mode := cmp.ModeStages
+	if b, err := os.ReadFile(filepath.Join(dir, "meta.json")); err == nil {
+		var m fixtureMeta
+		if json.Unmarshal(b, &m) == nil {
+			mode = modeOf(m.Kind)
+		}
+	}
+	res, err := f.analyze(inputs, mode, f.pairing[recordID])
 	if err != nil {
 		res = nil
 	}
@@ -150,7 +161,7 @@ func (f *FixtureStore) Comparison(_, recordID string) (*comparisonRecord, error)
 	default:
 		return nil, err
 	}
-	rec := &comparisonRecord{Title: meta.Title, Status: meta.Status, SimilarityPercent: meta.SimilarityPercent, Comment: meta.Comment}
+	rec := &comparisonRecord{Title: meta.Title, Status: meta.Status, SimilarityPercent: meta.SimilarityPercent, Comment: meta.Comment, ObjectID: recordID, Kind: modeOf(meta.Kind)}
 	if meta.Parent != "" {
 		rec.ParentID = meta.Parent
 		rec.IterationNo = strconv.Itoa(f.iterationNo(meta.Parent) + 1)
@@ -352,66 +363,115 @@ func (f *FixtureStore) iterate(recordID string, res *cmp.Result, cur []discrepan
 	return cur
 }
 
-func (f *FixtureStore) Expertise(_, recordID string) ([]expertiseRecord, error) {
+// RegisterIssued: in --fixtures mode the registry is the case's in-memory board.
+func (f *FixtureStore) RegisterIssued(_, caseID string, in cmp.IssueInput, res cmp.IssueResult) (*cmp.IssueRegistered, error) {
+	b, err := f.loadBoard(caseID)
+	if err != nil {
+		return nil, err
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := &cmp.IssueRegistered{}
+	byGroup := map[string]*fxRemark{}
+	maxIdx := 0
+	for _, r := range b.remarks {
+		if r.rec.Origin == cmp.OriginComparison {
+			byGroup[r.rec.Key] = r
+			var bt, idx int
+			if _, err := fmt.Sscanf(strings.TrimPrefix(r.rec.Number, "ПТО-"), "%d.%d", &bt, &idx); err == nil && idx > maxIdx {
+				maxIdx = idx
+			}
+		}
+	}
+	now := fmtTime(time.Now().UTC())
+	note := "сформировано по сравнению «" + in.ComparisonTitle + "»"
+	for _, is := range res.Active {
+		docs := []string{}
+		for _, d := range is.DocIDs {
+			docs = append(docs, d)
+		}
+		if ex, ok := byGroup[is.GroupKey]; ok {
+			if ex.rec.Status == cmp.RemarkResolved {
+				ex.rec.Status = cmp.RemarkAwaiting
+				ex.history = append(ex.history, remarkHistoryRecord{Iteration: 1, Status: cmp.RemarkAwaiting, At: now, Author: "агент", Source: "возвращено: расхождение снова есть"})
+				out.Reopened++
+			}
+			ex.rec.Text, ex.rec.Refs, ex.rec.Section, ex.rec.Criticality = is.Text, is.Refs, is.Section, is.Criticality
+			ex.rec.Findings, ex.rec.Documents = nonNil(is.FindingIDs), nonNil(docs)
+			out.Updated++
+			continue
+		}
+		maxIdx++
+		number := fmt.Sprintf("ПТО-1.%d", maxIdx)
+		rr := remarkRecord{ID: "ex-" + is.GroupKey, Key: is.GroupKey, Number: number, Batch: "ПТО-1", Text: is.Text, Refs: is.Refs, Section: is.Section, Basis: is.Basis,
+			Criticality: is.Criticality, Iterations: 1, ChangedAt: now, SourceStatus: cmp.RemarkStatusLabels[cmp.RemarkAwaiting], Status: cmp.RemarkAwaiting,
+			Verdict: cmp.VerdictStillDiffers, MatchNote: note, Findings: nonNil(is.FindingIDs), Documents: nonNil(docs), VolumeRefs: []cmp.VolumeRef{}, Origin: cmp.OriginComparison}
+		b.remarks[rr.ID] = &fxRemark{rec: rr, history: []remarkHistoryRecord{{Iteration: 1, Status: cmp.RemarkAwaiting, At: now, Author: "агент", Source: note}}}
+		out.Created++
+		out.Numbers = append(out.Numbers, number)
+	}
+	for _, is := range res.Fixed {
+		if ex, ok := byGroup[is.GroupKey]; ok && ex.rec.Status != cmp.RemarkResolved {
+			ex.rec.Status = cmp.RemarkResolved
+			ex.history = append(ex.history, remarkHistoryRecord{Iteration: 1, Status: cmp.RemarkResolved, At: now, Author: "агент", Source: "устранено: расхождений в сравнении больше нет"})
+			out.Closed++
+		}
+	}
+	return out, nil
+}
+
+func (f *FixtureStore) IssuedNumbers(_, caseID string) (map[string]string, error) {
+	b, err := f.loadBoard(caseID)
+	if err != nil {
+		return nil, err
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := map[string]string{}
+	for _, r := range b.remarks {
+		if r.rec.Origin == cmp.OriginComparison {
+			out[r.rec.Key] = r.rec.Number
+		}
+	}
+	return out, nil
+}
+
+func (f *FixtureStore) ObjectName(_, objectID string) string {
+	if c, err := f.Comparison("", objectID); err == nil {
+		return c.Title
+	}
+	return ""
+}
+
+// Pairing implements store: the documents, the manual pairing and what the last comparison paired.
+func (f *FixtureStore) Pairing(ns, recordID string) (*pairingOut, error) {
 	dir, err := f.checkCase(recordID)
 	if err != nil {
 		return nil, err
 	}
-	files, _ := filepath.Glob(filepath.Join(dir, "remarks*.xlsx"))
-	if len(files) == 0 {
-		return []expertiseRecord{}, nil
-	}
-	sort.Strings(files)
-	var lists [][]cmp.Expert
-	for _, p := range files {
-		data, err := os.ReadFile(p)
-		if err != nil {
-			return nil, err
-		}
-		l, err := cmp.ParseExpertise(data, filepath.Base(p))
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", filepath.Base(p), err)
-		}
-		lists = append(lists, l)
-	}
-	experts := cmp.MergeExperts(lists...)
-	discs, err := f.Discrepancies("", recordID)
+	docs, err := f.Documents(ns, recordID)
 	if err != nil {
 		return nil, err
 	}
-	cands := make([]cmp.Candidate, 0, len(discs))
-	for _, d := range discs {
-		var ev cmp.Evidence
-		_ = json.Unmarshal([]byte(d.Evidence), &ev)
-		text := strings.TrimPrefix(strings.TrimPrefix(d.Description, "[детерм.] "), "[ИИ] ")
-		cands = append(cands, cmp.Candidate{ID: d.ID, Text: text + " " + d.Anchor + " " + ev.Ref + " " + ev.Target, IterState: d.IterState, Severity: d.Severity})
-	}
-	matches := cmp.MatchRemarks(experts, cands)
-	out := make([]expertiseRecord, 0, len(experts))
+	out := &pairingOut{Documents: docs, Pairing: []cmp.ManualPair{}}
 	f.mu.Lock()
-	defer f.mu.Unlock()
-	for i, e := range experts {
-		m := matches[i]
-		st := "open"
-		if s, ok := f.status[recordID+"/remark/"+e.Number]; ok {
-			st = s
-		}
-		out = append(out, expertiseRecord{
-			ID: "ex-" + e.Number, Number: e.Number, Text: e.Text, Answer: e.Answer, Location: firstNonEmpty(e.Where, e.Section),
-			Source: e.Source, Verdict: m.Verdict, Score: strconv.FormatFloat(100*m.Score, 'f', 0, 64), Note: m.Note, Status: st,
-			Findings: m.FindingIDs, ClaimMismatch: m.ClaimMissing,
-		})
+	out.Pairing = append(out.Pairing, f.pairing[recordID]...)
+	f.mu.Unlock()
+	if res := f.analysis(recordID, dir); res != nil {
+		st := res.State()
+		out.State = &st
 	}
-	sortExpertise(out)
 	return out, nil
 }
 
-func (f *FixtureStore) SetExpertiseStatus(_, recordID, remarkID, status string) error {
+// SetPairing implements store: the comparison is recomputed on the next request.
+func (f *FixtureStore) SetPairing(_, recordID string, p []cmp.ManualPair) error {
 	if _, err := f.checkCase(recordID); err != nil {
 		return err
 	}
 	f.mu.Lock()
-	f.status[recordID+"/remark/"+strings.TrimPrefix(remarkID, "ex-")] = status
-	f.mu.Unlock()
+	defer f.mu.Unlock()
+	f.pairing[recordID] = p
+	delete(f.computed, recordID)
 	return nil
 }

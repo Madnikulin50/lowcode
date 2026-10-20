@@ -24,6 +24,8 @@
 </template>
 
 <script setup>
+// two root nodes (the list and the version history): attributes cannot be inherited, and `module` etc. are not needed here
+defineOptions({ inheritAttrs: false })
 import { computed } from 'vue'
 import { useViewerBase } from './useViewerBase'
 import { compose } from 'corteza-lib/js/dist'

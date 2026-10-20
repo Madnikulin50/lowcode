@@ -28,6 +28,21 @@ export const MODE_META = {
   text: { label: 'Текст', hint: 'Построчное сравнение, как git diff: «−» красным — строка только в ПД, «+» зелёным — только в РД.' },
 }
 
+// How the two sides are called: ПД/РД in a stage comparison, До/После when two versions
+// of one stage are compared (comparison.kind === 'versions'). Reactive: set once the comparison is loaded.
+import { reactive } from 'vue'
+export const names = reactive({ ref: 'ПД', target: 'РД', versions: false })
+export function setMode (kind) {
+  names.versions = kind === 'versions'
+  names.ref = names.versions ? 'До' : 'ПД'
+  names.target = names.versions ? 'После' : 'РД'
+}
+// nm rewrites the standalone words «ПД» / «РД» of a text for the current mode
+export function nm (s) {
+  if (!names.versions || !s) return s
+  return s.replace(/(^|[^\p{L}\p{N}])ПД(?![\p{L}\p{N}])/gu, `$1${names.ref}`).replace(/(^|[^\p{L}\p{N}])РД(?![\p{L}\p{N}])/gu, `$1${names.target}`)
+}
+
 export const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200]
 
 // DXF ACI (AutoCAD Color Index) palette — only the indices filegen.mjs's
@@ -40,7 +55,7 @@ export const DIFF_CONTEXT = 3
 
 export const KIND_LABEL = {
   text: 'текст', table_row: 'таблица', param: 'ключевой параметр', drawing: 'чертёж', vor: 'ВОР / спецификация',
-  not_released: 'не выпущено', scope_diff: 'вне объёма',
+  not_released: 'не выпущено', scope_diff: 'вне объёма', format: 'оформление', cross_volume: 'между томами',
 }
 export const REVIEW_LABEL = { new: 'новое', confirmed: 'подтверждено', rejected: 'отклонено' }
 export const REMARK_STATUS_LABEL = { draft: 'Черновик', issued: 'Выдано', closed: 'Закрыто' }

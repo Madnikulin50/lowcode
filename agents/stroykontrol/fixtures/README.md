@@ -44,6 +44,7 @@ Cases:
 | `pack-1-v2` | iteration 2 of `pack-1` (`meta.json`: `parent`): depth and concrete fixed, quantity left, a new slip |
 | `pack-scan` | ПД as text vs РД as a scan (needs tesseract) |
 | `pack-vor` | ВОР + specification: a +12 % change, an internal ВОР/specification mismatch, aggregated reinforcement (consistent), a new position |
+| `versions-1` | `meta.json` has `"kind":"versions"`: two versions of one КЖ volume (`pd-*` is the earlier one) — sides are named «До»/«После» |
 | `pack-2` | one ПД volume with two structures vs a more detailed РД for the first only — must produce no finding above «низкая» |
 
 `pack-1` and `pack-1-v2` also ship `remarks.xlsx` (expertise remarks with answers; `go run fixtures/gen_remarks.go`).

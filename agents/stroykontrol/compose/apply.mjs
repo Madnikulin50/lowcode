@@ -17,11 +17,12 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import {
   field, recordRel, fileField, dateField, moneyField, numberField, boolSwitch,
-  selectOptions, block, recordList, recordBlock, metricBlock, metricItem,
-  pageIcon, withBlockIDs, mintToken, detectBase, apiFactory, ensureNamespace,
-  ensureModule, ensurePage, withRevisions, ensureRuleChain, ruleChain, setOf,
+  selectOptions, mintToken, detectBase, apiFactory, ensureNamespace,
+  ensureModule, ensurePage, parentPages, withRevisions, ensureRuleChain, setOf,
 } from './helpers.mjs'
 import { buildRuleChains } from './chains.mjs'
+import { buildPages } from './pages.mjs'
+import { defineIdModules, seedNorms } from './modules_id.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -57,6 +58,35 @@ const CMP_SIDE = [
   ['target', 'РД (стадия Р/РД)', { backgroundColor: 'info', textColor: 'white' }],
 ]
 
+const COMPARISON_KIND = [
+  ['stages', 'ПД → РД (стадии)'],
+  ['versions', 'Версии: до → после'],
+]
+
+const VOLUME_SOURCE = [
+  ['manual', 'Вручную'],
+  ['contents', 'Из содержания документов'],
+  ['set', 'Из первого комплекта'],
+]
+
+// стадия комплекта: те же коды, что у документов сравнения (ref = ПД, target = РД)
+const SET_STAGE = [
+  ['ref', 'ПД', { backgroundColor: 'primary', textColor: 'white' }],
+  ['target', 'РД', { backgroundColor: 'info', textColor: 'white' }],
+]
+
+const SET_STATUS = [
+  ['draft', 'Черновик', { backgroundColor: 'light', textColor: 'dark' }],
+  ['accepted', 'Принят', { backgroundColor: 'success', textColor: 'white' }],
+  ['superseded', 'Заменён новой версией', { backgroundColor: 'secondary', textColor: 'white' }],
+]
+
+// рабочие данные / демо: демо скрыты из рабочих списков и метрик (см. pages.mjs, REAL)
+const DATA_KIND = [
+  ['real', 'Рабочие данные'],
+  ['demo', 'Демо'],
+]
+
 const DETECTED_BY = [
   ['auto', 'Автоматически'],
   ['manual', 'Вручную'],
@@ -70,6 +100,8 @@ const DISCREPANCY_KIND = [
   ['vor', 'ВОР / спецификация'],
   ['not_released', 'Не выпущено (РД)'],
   ['scope_diff', 'Вне объёма (ПД)'],
+  ['format', 'Оформление'],
+  ['cross_volume', 'Согласованность между томами'],
 ]
 
 const ITER_STATE = [
@@ -82,12 +114,32 @@ const EXPERT_VERDICT = [
   ['still_differs', 'Расхождение сохраняется', { backgroundColor: 'danger', textColor: 'white' }],
   ['resolved', 'Устранено в этой итерации', { backgroundColor: 'success', textColor: 'white' }],
   ['no_match', 'Связанных расхождений не найдено', { backgroundColor: 'light', textColor: 'dark' }],
+  ['no_documents', 'Тома не загружены', { backgroundColor: 'secondary', textColor: 'white' }],
 ]
 
-const EXPERT_STATUS = [
-  ['open', 'Открыто', { backgroundColor: 'warning', textColor: 'dark' }],
-  ['closed', 'Закрыто', { backgroundColor: 'success', textColor: 'white' }],
-  ['disputed', 'Оспорено', { backgroundColor: 'secondary', textColor: 'white' }],
+// Единственный рабочий статус замечания: формулировки — как в выгрузке экспертизы.
+const REMARK_WORKFLOW = [
+  ['awaiting_answer', 'Ответ не предоставлен', { backgroundColor: 'secondary', textColor: 'white' }],
+  ['being_fixed', 'Устраняется заявителем', { backgroundColor: 'warning', textColor: 'dark' }],
+  ['answer_review', 'Требуется рассмотрение ответа', { backgroundColor: 'info', textColor: 'white' }],
+  ['resolved', 'Устранено', { backgroundColor: 'success', textColor: 'white' }],
+]
+
+const REMARK_ORIGIN = [
+  ['expertise', 'Выгрузка экспертизы'],
+  ['comparison', 'Сформировано по сравнению'],
+]
+
+const AI_VERDICT = [
+  ['fixed', 'ИИ: устранено', { backgroundColor: 'success', textColor: 'white' }],
+  ['partial', 'ИИ: частично', { backgroundColor: 'warning', textColor: 'dark' }],
+  ['not_fixed', 'ИИ: не устранено', { backgroundColor: 'danger', textColor: 'white' }],
+  ['unclear', 'ИИ: судить нельзя', { backgroundColor: 'light', textColor: 'dark' }],
+]
+
+const CRITICALITY = [
+  ['critical', 'Критичное', { backgroundColor: 'danger', textColor: 'white' }],
+  ['noncritical', 'Некритичное', { backgroundColor: 'light', textColor: 'dark' }],
 ]
 
 const REVIEW_STATUS = [
@@ -129,6 +181,8 @@ const VOISR_CHECK_STATUS = [
   ['not_found', 'Смета не найдена', { backgroundColor: 'secondary', textColor: 'white' }],
 ]
 
+const dataKind = () => field('data_kind', 'Тип данных', 'Select', { options: selectOptions(DATA_KIND) })
+
 function textArea (name, label, extra = {}) {
   return field(name, label, 'String', { ...extra, options: { multiLine: true, ...(extra.options || {}) } })
 }
@@ -161,6 +215,48 @@ async function main () {
       field('code', 'Код объекта', 'String'),
       field('status', 'Статус', 'Select', { options: selectOptions(OBJECT_STATUS) }),
       textArea('notes', 'Примечания'),
+      // выгрузки замечаний экспертизы (Excel): агент читает их и ведёт реестр замечаний объекта
+      fileField('remarks_file', 'Выгрузки замечаний экспертизы (Excel)', { multi: true, images: false }),
+      dataKind(),
+    ],
+  })
+
+  // ---- Комплекты документов объекта: ПД / РД по версиям + ведомость состава томов ----
+  // Документы (cmp_documents) принадлежат комплекту; сравнение ссылается на два комплекта —
+  // так всегда видно, что у объекта есть, насколько полно и какая версия с какой сравнивается.
+  m.document_sets = await ensureModule(api, nsID, {
+    name: 'Комплекты документов',
+    handle: 'document_sets',
+    fields: [
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      field('stage', 'Стадия', 'Select', { required: true, options: selectOptions(SET_STAGE) }),
+      field('version', 'Версия', 'String', { required: true }),
+      dateField('issued_at', 'Дата выпуска', { onlyDate: true }),
+      field('status', 'Статус', 'Select', { options: selectOptions(SET_STATUS) }),
+      textArea('comment', 'Комментарий'),
+      // считает агент по ведомости томов («Проверить комплектность»)
+      numberField('volumes_total', 'Томов по ведомости', { precision: 0 }),
+      numberField('volumes_present', 'Томов в комплекте', { precision: 0 }),
+      numberField('completeness_pct', 'Комплектность, %', { precision: 0, max: 100, suffix: '%' }),
+      textArea('completeness_note', 'Что не хватает / лишнее'),
+      dataKind(),
+    ],
+  })
+
+  m.object_volumes = await ensureModule(api, nsID, {
+    name: 'Ведомость состава томов',
+    handle: 'object_volumes',
+    fields: [
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      field('stage', 'Стадия', 'Select', { options: selectOptions(SET_STAGE) }),
+      field('volume_code', 'Шифр тома', 'String', { required: true }),
+      field('title', 'Наименование', 'String'),
+      boolSwitch('required', 'Обязателен'),
+      // автоматическая ведомость: агент предлагает строки (proposed), человек принимает или отклоняет;
+      // на комплектность влияют только принятые
+      field('source', 'Источник', 'Select', { options: selectOptions(VOLUME_SOURCE) }),
+      boolSwitch('proposed', 'Предложено агентом (не принято)'),
+      field('evidence', 'Откуда взято', 'String'),
     ],
   })
 
@@ -180,10 +276,17 @@ async function main () {
     numberField('differing_pages', 'Различающихся страниц', { precision: 0 }),
     fileField('report_file', 'Отчёт о сравнении'),
     textArea('comment', 'Комментарий'),
+    // какая версия комплекта с какой сравнивается
+    field('kind', 'Вид сравнения', 'Select', { options: selectOptions(COMPARISON_KIND) }),
+    recordRel('set_pd', 'Эталон: комплект ПД (или версия «до»)', m.document_sets, 'version', ['version', 'comment']),
+    recordRel('set_rd', 'Проверяемый: комплект РД (или версия «после»)', m.document_sets, 'version', ['version', 'comment']),
+    field('sets_label', 'Версии комплектов', 'String'),
+    // ручное сопоставление томов и фрагментов (JSON, правится в просмотрщике) и результат последнего сопоставления
+    textArea('pairing', 'Ручное сопоставление (JSON)'),
+    textArea('pairs_json', 'Сопоставление томов (JSON)'),
+    dataKind(),
     // итерации: повторная проверка той же пары после исправлений
     numberField('iteration_no', 'Итерация', { precision: 0 }),
-    // замечания экспертизы: Excel с замечаниями и (отдельным файлом) с ответами проектировщика
-    fileField('remarks_file', 'Замечания экспертизы (Excel)', { multi: true, images: false }),
     ...(selfID ? [recordRel('parent_comparison', 'Предыдущая итерация', selfID, 'title', ['title'])] : []),
   ]
   m.pd_rd_comparisons = await ensureModule(api, nsID, {
@@ -210,7 +313,8 @@ async function main () {
     name: 'Документы сравнения',
     handle: 'cmp_documents',
     fields: [
-      recordRel('comparison', 'Сравнение', m.pd_rd_comparisons, 'title', ['title'], true),
+      recordRel('set', 'Комплект', m.document_sets, 'version', ['version', 'stage']),
+      recordRel('comparison', 'Сравнение (если файл приложен прямо к нему)', m.pd_rd_comparisons, 'title', ['title']),
       field('side', 'Стадия', 'Select', { required: true, options: selectOptions(CMP_SIDE) }),
       fileField('file', 'Файл PDF', { documents: true, images: false, mimetypes: 'application/pdf' }),
       field('doc_version', 'Версия (изм.)', 'String'),
@@ -244,6 +348,7 @@ async function main () {
       textArea('evidence', 'Обоснование (JSON)'),
       field('fingerprint', 'Отпечаток', 'String'),
       field('iter_state', 'Итерация', 'Select', { options: selectOptions(ITER_STATE) }),
+      dataKind(),
     ],
   })
 
@@ -263,23 +368,89 @@ async function main () {
     ],
   })
 
-  // Замечания экспертизы, прочитанные агентом из Excel и сопоставленные с расхождениями
+  // Реестр замечаний экспертизы по объекту: агент ведёт его по выгрузкам Excel,
+  // хранит историю итераций и проверяет ответы по загруженным документам.
   m.expertise_remarks = await ensureModule(api, nsID, {
     name: 'Замечания экспертизы',
     handle: 'expertise_remarks',
     fields: [
-      recordRel('comparison', 'Сравнение', m.pd_rd_comparisons, 'title', ['title'], true),
-      field('number', 'Номер', 'String'),
-      field('location', 'Раздел, лист', 'String'),
-      textArea('text', 'Замечание'),
-      textArea('answer', 'Ответ проектировщика'),
-      field('verdict', 'Итог сопоставления', 'Select', { options: selectOptions(EXPERT_VERDICT) }),
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      field('remark_key', 'Ключ в объекте', 'String'),
+      field('number', '№ замечания', 'String'),
+      field('batch', 'Письмо', 'String'),
+      textArea('text', 'Вывод о несоответствии'),
+      textArea('refs_text', 'Ссылка на материалы'),
+      textArea('volume_refs', 'Тома (JSON)'),
+      field('section', 'Раздел документации', 'String'),
+      textArea('basis', 'Основание'),
+      textArea('answer', 'Ответ на замечание'),
+      textArea('reject_reason', 'Причина отклонения'),
+      textArea('prev_answer', 'Предыдущий ответ'),
+      textArea('prev_reject_reason', 'Предыдущая причина отклонения'),
+      field('discipline', 'НД', 'String'),
+      field('expert', 'Эксперт-соисполнитель', 'String'),
+      field('criticality', 'Критичность', 'Select', { options: selectOptions(CRITICALITY) }),
+      textArea('proposals', 'Предложения по отработке'),
+      textArea('expected_result', 'Ожидаемый результат'),
+      numberField('iterations', 'Итераций', { precision: 0 }),
+      dateField('source_changed_at', 'Изменено в экспертизе', { onlyDate: false }),
+      field('source_status', 'Статус в выгрузке', 'String'),
+      // единственный рабочий статус: правится вручную, выгрузка меняет его, только если решение изменилось на стороне экспертизы
+      field('status', 'Статус', 'Select', { options: selectOptions(REMARK_WORKFLOW) }),
+      field('assignee', 'Ответственный', 'String'),
+      dateField('due_date', 'Срок', { onlyDate: true }),
+      textArea('pto_note', 'Заметка ПТО'),
+      field('verdict', 'Проверка по документам', 'Select', { options: selectOptions(EXPERT_VERDICT) }),
       numberField('match_score', 'Уверенность, %', { precision: 0 }),
-      textArea('match_note', 'Пояснение'),
-      recordRel('matched_discrepancies', 'Связанные расхождения', m.pd_rd_discrepancies, 'description', ['description'], false, { multi: true }),
+      textArea('match_note', 'Пояснение проверки'),
       field('claim_mismatch', 'Ответ ≠ документы', 'String'),
-      field('status', 'Статус', 'Select', { options: selectOptions(EXPERT_STATUS) }),
+      recordRel('matched_discrepancies', 'Связанные расхождения', m.pd_rd_discrepancies, 'description', ['description'], false, { multi: true }),
+      recordRel('linked_documents', 'Связанные тома', m.cmp_documents, 'volume_code', ['volume_code', 'volume_title'], false, { multi: true }),
+      // разбор ИИ по фрагментам связанных томов: подсказка, рабочий статус не меняет
+      field('ai_verdict', 'Разбор ИИ', 'Select', { options: selectOptions(AI_VERDICT) }),
+      textArea('ai_note', 'Пояснение ИИ (с цитатами)'),
+      dateField('ai_at', 'Разбор ИИ: когда', { onlyDate: false }),
+      field('archived', 'Нет в последней выгрузке', 'String'),
       field('source_file', 'Файл-источник', 'String'),
+      // замечания, сформированные по сравнению ПД/РД (подтверждённые находки одного листа)
+      field('origin', 'Происхождение', 'Select', { options: selectOptions(REMARK_ORIGIN) }),
+      recordRel('source_comparison', 'Сравнение', m.pd_rd_comparisons, 'title', ['title']),
+      field('group_key', 'Ключ листа', 'String'),
+      dataKind(),
+    ],
+  })
+
+  m.expertise_remark_history = await ensureModule(api, nsID, {
+    name: 'История замечаний',
+    handle: 'expertise_remark_history',
+    fields: [
+      recordRel('remark', 'Замечание', m.expertise_remarks, 'number', ['number', 'text'], true),
+      numberField('iteration', 'Итерация', { precision: 0 }),
+      textArea('answer', 'Ответ'),
+      textArea('reject_reason', 'Причина отклонения'),
+      field('status', 'Статус', 'Select', { options: selectOptions(REMARK_WORKFLOW) }),
+      field('source_status', 'Статус в выгрузке', 'String'),
+      dateField('at', 'Когда', { onlyDate: false }),
+      field('author', 'Кто', 'String'),
+      field('source', 'Источник', 'String'),
+    ],
+  })
+
+  m.expertise_imports = await ensureModule(api, nsID, {
+    name: 'Журнал выгрузок замечаний',
+    handle: 'expertise_imports',
+    fields: [
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      field('file', 'Файл', 'String'),
+      field('attachment', 'Вложение (ID)', 'String'),
+      dateField('imported_at', 'Загружено', { onlyDate: false }),
+      numberField('total', 'Замечаний', { precision: 0 }),
+      numberField('new_count', 'Новых', { precision: 0 }),
+      numberField('changed_count', 'Изменено', { precision: 0 }),
+      numberField('status_changes', 'Смен статуса', { precision: 0 }),
+      numberField('reopened', 'Возвращено', { precision: 0 }),
+      numberField('archived_count', 'Исчезло из выгрузки', { precision: 0 }),
+      textArea('details', 'Что изменилось'),
     ],
   })
 
@@ -369,188 +540,49 @@ async function main () {
       numberField('amount_diff_percent', 'Разница, %', { precision: 1, suffix: '%' }),
       field('status', 'Статус', 'Select', { options: selectOptions(VOISR_CHECK_STATUS) }),
       textArea('note', 'Примечание'),
+      dataKind(),
     ],
   })
 
+  // ---- Проверка исполнительной документации (бывшее пространство «Проверка ИД (АОСР)») ----
+  await defineIdModules(api, nsID, m, { objectsModuleID: m.objects, dataKind })
+
   console.log('modules', m)
 
-  // ---- Pages ----
-  function listPage (title, handle, weight, icon, moduleID, fields) {
-    return {
-      title,
-      handle,
-      visible: true,
-      weight,
-      config: pageIcon(icon),
-      blocks: withBlockIDs([recordList(title, [0, 0, 48, 40], moduleID, fields)]),
-    }
-  }
-
-  function card (title, handle, moduleID, weight, fields, fieldRoles = {}, extra = {}) {
-    const blocks = [recordBlock(title, [0, 0, 48, 28], fields, { fieldRoles })]
-    if (extra.extraBlocks) blocks.push(...extra.extraBlocks)
-    return {
-      title,
-      handle,
-      moduleID: String(moduleID),
-      visible: false,
-      weight,
-      config: pageIcon('fas file-lines'),
-      blocks: withBlockIDs(blocks),
-    }
-  }
-
-  const pages = [
-    {
-      title: 'Дашборд',
-      handle: 'dashboard',
-      visible: true,
-      weight: 0,
-      config: pageIcon('fas gauge-high'),
-      blocks: withBlockIDs([
-        metricBlock('Сводка', [0, 0, 48, 14], [
-          metricItem('Объекты', m.objects, "status = 'active'", { color: '#2e59d9' }),
-          metricItem('Сравнения ПД/РД в работе', m.pd_rd_comparisons, "status = 'new' OR status = 'processing'", { color: '#f6c23e' }),
-          metricItem('Открытые расхождения ПД/РД', m.pd_rd_discrepancies, '', { color: '#e74a3b' }),
-          metricItem('Проверки ИД с недостачами', m.id_check_runs, "overall_status = 'fail'", { color: '#e74a3b' }),
-          metricItem('Расхождения ВОИСР', m.voisr_check_results, "status = 'mismatch'", { color: '#e74a3b' }),
-        ]),
-      ]),
-    },
-
-    listPage('Объекты', 'objects', 10, 'fas industry', m.objects, ['name', 'address', 'code', 'status']),
-    card('Объект', 'object', m.objects, 11, ['name', 'address', 'code', 'status', 'notes'], {
-      name: 'title', code: 'subtitle', status: 'badge', notes: 'body',
-    }, {
-      extraBlocks: [ruleChain('Проверить комплектность ИД', [0, 28, 48, 8], {
-        chainID: 'stroykontrol-check-id', label: 'Проверить комплектность ИД', variant: 'primary', icon: 'clipboard-check',
-      })],
-    }),
-
-    listPage('Сравнения ПД/РД', 'pd_rd_comparisons', 20, 'fas file-invoice', m.pd_rd_comparisons,
-      ['title', 'object', 'iteration_no', 'pd_file', 'rd_file', 'status', 'similarity_percent', 'differing_pages']),
-    card('Сравнение ПД/РД', 'pd_rd_comparison', m.pd_rd_comparisons, 21, [
-      'title', 'object', 'iteration_no', 'parent_comparison', 'status', 'pd_file', 'rd_file', 'remarks_file', 'similarity_percent',
-      'total_pages_pd', 'total_pages_rd', 'matching_pages', 'differing_pages', 'report_file', 'comment',
-    ], { title: 'title', object: 'meta', status: 'badge', comment: 'body' }, {
-      extraBlocks: [
-        // pd_file/rd_file above stay for the simple one-file-per-stage case;
-        // for packs (several PDFs per stage) add rows here. The agent takes
-        // both into account.
-        recordList('Комплект документов (ПД — эталон, РД — проверяемая)', [0, 28, 48, 14], m.cmp_documents,
-          ['side', 'file', 'doc_version', 'volume_code', 'volume_title', 'pages', 'detected_by'],
-          { prefilter: 'comparison = ${recordID}', refField: 'comparison', presort: 'side ASC, createdAt ASC', perPage: 20 }),
-        ruleChain('Сравнить документы', [0, 42, 48, 8], {
-          chainID: 'stroykontrol-compare-pd-rd', label: 'Сравнить документы (агент)', variant: 'primary', icon: 'code-compare',
-        }),
-        // Visual comparison viewer — a standalone agent (agents/stroykontrol),
-        // not the lowcode platform itself; embedded via the IFrame block.
-        // See client3/web/compose/src/components/PageBlocks/IFrameBase.vue.
-        //
-        // Relative path, not an absolute host:port: IFrameBase.vue already
-        // prepends window.CortezaAPI to any src that doesn't start with
-        // "http" (IFrameBase.vue:82), and /gateway/agents/stroykontrol/* is
-        // an API Gateway route (create_apigw_proxy.mjs) reverse-proxying to
-        // wherever the agent actually runs in *this* environment — so the
-        // page-layout JSON itself never needs editing again per
-        // dev/staging/prod; only the gateway route's `location` filter param
-        // does (see create_apigw_proxy.mjs's AGENT_URL).
-        block('IFrame', 'Просмотр сравнения (агент)', [0, 50, 48, 56], {
-          src: '/gateway/agents/stroykontrol/?recordID=${recordID}&namespaceID=${namespaceID}',
-          srcField: '',
-          displayAsImage: false,
-        }),
-        recordList('Карточки замечаний', [0, 106, 48, 20], m.remark_cards,
-          ['document_ref', 'sheet', 'what_diverges', 'final_text', 'status'],
-          { prefilter: 'comparison = ${recordID}', presort: 'createdAt DESC', perPage: 20, hideAddButton: true }),
-        ruleChain('Замечания экспертизы', [0, 126, 48, 6], {
-          chainID: 'stroykontrol-import-remarks', label: 'Загрузить и сопоставить замечания экспертизы', variant: 'outline-primary', icon: 'comments',
-        }),
-        recordList('Замечания экспертизы', [0, 132, 48, 22], m.expertise_remarks,
-          ['number', 'location', 'text', 'verdict', 'status'],
-          { prefilter: 'comparison = ${recordID}', presort: 'number ASC', perPage: 50, hideAddButton: true }),
-      ],
-    }),
-
-    listPage('Документы сравнения', 'cmp_documents', 24, 'fas file-pdf', m.cmp_documents,
-      ['comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'pages', 'detected_by']),
-    card('Документ сравнения', 'cmp_document', m.cmp_documents, 25,
-      ['comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'object_name', 'pages', 'released', 'detected_by'],
-      { file: 'title', side: 'badge' }),
-
-    listPage('Расхождения ПД/РД', 'pd_rd_discrepancies', 22, 'fas triangle-exclamation', m.pd_rd_discrepancies,
-      ['comparison', 'severity', 'kind', 'status', 'iter_state', 'page_pd', 'page_rd', 'description']),
-    card('Расхождение ПД/РД', 'pd_rd_discrepancy', m.pd_rd_discrepancies, 23,
-      ['comparison', 'severity', 'kind', 'status', 'page_pd', 'page_rd', 'description', 'anchor_text', 'evidence'],
-      { discrepancy_type: 'title', severity: 'badge', status: 'badge', description: 'body' }),
-
-    listPage('Замечания экспертизы', 'expertise_remarks', 28, 'fas comments', m.expertise_remarks,
-      ['comparison', 'number', 'location', 'text', 'verdict', 'status']),
-    card('Замечание экспертизы', 'expertise_remark', m.expertise_remarks, 29,
-      ['comparison', 'number', 'location', 'text', 'answer', 'verdict', 'match_score', 'match_note', 'claim_mismatch', 'status', 'source_file'],
-      { number: 'title', verdict: 'badge', status: 'badge', text: 'body' }),
-
-    listPage('Карточки замечаний', 'remark_cards', 26, 'fas clipboard-list', m.remark_cards,
-      ['comparison', 'document_ref', 'sheet', 'final_text', 'status']),
-    card('Карточка замечания', 'remark_card', m.remark_cards, 27,
-      ['comparison', 'document_ref', 'sheet', 'what_diverges', 'must_align', 'draft_text', 'final_text', 'status'],
-      { document_ref: 'title', status: 'badge', what_diverges: 'body' }),
-
-    listPage('Реестр ИД', 'id_registry', 30, 'fas list-check', m.id_registry,
-      ['object', 'doc_name', 'doc_number', 'doc_version', 'doc_type', 'is_required']),
-    card('Позиция реестра ИД', 'id_registry_item', m.id_registry, 31,
-      ['object', 'doc_name', 'doc_number', 'doc_version', 'doc_type', 'is_required'],
-      { doc_name: 'title', doc_number: 'subtitle', doc_type: 'badge' }),
-
-    listPage('Файлы ИД', 'id_files', 32, 'fas file-arrow-up', m.id_files,
-      ['object', 'file', 'recognized_name', 'matched_registry', 'match_status']),
-    card('Файл ИД', 'id_file', m.id_files, 33, [
-      'object', 'file', 'recognized_name', 'recognized_number', 'recognized_version',
-      'matched_registry', 'match_status', 'uploaded_at', 'extracted_text',
-    ], { recognized_name: 'title', match_status: 'badge' }),
-
-    listPage('Проверки комплектности ИД', 'id_check_runs', 34, 'fas clipboard-check', m.id_check_runs,
-      ['object', 'run_date', 'total_registry_docs', 'uploaded_docs', 'missing_docs', 'mismatched_docs', 'overall_status']),
-    card('Проверка комплектности ИД', 'id_check_run', m.id_check_runs, 35, [
-      'object', 'run_date', 'total_registry_docs', 'uploaded_docs', 'missing_docs',
-      'mismatched_docs', 'overall_status', 'report_file',
-    ], { object: 'title', overall_status: 'badge' }),
-
-    listPage('Позиции смет', 'smeta_items', 40, 'fas file-invoice-dollar', m.smeta_items,
-      ['object', 'smeta_number', 'item_number', 'work_name', 'volume', 'unit', 'total_amount']),
-    card('Позиция сметы', 'smeta_item', m.smeta_items, 41,
-      ['object', 'smeta_number', 'item_number', 'work_name', 'unit', 'volume', 'unit_price', 'total_amount'],
-      { work_name: 'title', smeta_number: 'subtitle' }),
-
-    listPage('Позиции ВОИСР', 'voisr_items', 42, 'fas table-list', m.voisr_items,
-      ['object', 'position_number', 'work_name', 'smeta_ref', 'volume', 'amount']),
-    card('Позиция ВОИСР', 'voisr_item', m.voisr_items, 43,
-      ['object', 'position_number', 'work_name', 'smeta_ref', 'volume', 'amount'],
-      { work_name: 'title', position_number: 'subtitle' }, {
-        extraBlocks: [ruleChain('Проверить ВОИСР', [0, 20, 48, 8], {
-          chainID: 'stroykontrol-check-voisr', label: 'Проверить со сметой (агент)', variant: 'primary', icon: 'scale-balanced',
-        })],
-      }),
-
-    listPage('Результаты проверки ВОИСР', 'voisr_check_results', 44, 'fas scale-balanced', m.voisr_check_results,
-      ['voisr_item', 'smeta_volume', 'smeta_amount', 'volume_diff', 'amount_diff', 'amount_diff_percent', 'status']),
-    card('Результат проверки ВОИСР', 'voisr_check_result', m.voisr_check_results, 45, [
-      'voisr_item', 'smeta_volume', 'smeta_amount', 'volume_diff', 'amount_diff', 'amount_diff_percent', 'status', 'note',
-    ], { voisr_item: 'title', status: 'badge', note: 'body' }),
-  ]
-
+  // ---- Pages: меню «от объекта», карточка объекта — рабочее место с вкладками ----
+  const { defs, parentOf } = buildPages(m)
   const pageIDs = {}
-  for (const def of pages) {
-    pageIDs[def.handle] = await ensurePage(api, nsID, def)
+  for (const def of defs) {
+    // группы создаются раньше детей (порядок в defs), у детей группа — selfID
+    const withParent = def.parent && pageIDs[def.parent] ? { ...def, selfID: String(pageIDs[def.parent]) } : def
+    pageIDs[def.handle] = await ensurePage(api, nsID, withParent)
   }
+  // карточка записи — дочерняя страница своего списка (в меню не видна)
+  await parentPages(api, nsID, pageIDs, parentOf)
+  await hideStalePages(api, nsID, pageIDs)
 
   // ---- Rule chains: агент (script det + ai LLM, вес — в узле combine) ----
   for (const chain of buildRuleChains({ nsID, modules: m, agentURL: (process.env.STROYKONTROL_AGENT_URL || 'http://localhost:8092').replace(/\/$/, '') })) {
     await ensureRuleChain(api, chain)
   }
 
+  await seedNorms(api, nsID, m.norm_docs)
+
   writeFileSync(join(HERE, 'applied.json'), JSON.stringify({ namespaceID: nsID, modules: m, pages: pageIDs }, null, 2))
-  console.log('done. open /ns/stroykontrol (Дашборд)')
+  console.log('done. open /ns/stroykontrol (Главная)')
+}
+
+// Страницы, которых больше нет в схеме (прежнее меню), не удаляем, а прячем из меню и
+// переносим в корень: данные и ссылки остаются, но интерфейс не засоряется.
+async function hideStalePages (api, nsID, pageIDs) {
+  const keep = new Set(Object.values(pageIDs).map(String))
+  const all = setOf(await api('GET', `/namespace/${nsID}/page/?limit=500`))
+  for (const p of all) {
+    if (p.deletedAt || keep.has(String(p.pageID)) || !p.visible) continue
+    const rec = await api('GET', `/namespace/${nsID}/page/${p.pageID}`)
+    await api('POST', `/namespace/${nsID}/page/${p.pageID}`, { ...rec, visible: false, updatedAt: rec.updatedAt })
+    console.log('hidden stale page', p.handle)
+  }
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

@@ -108,3 +108,54 @@ func TestMatchRemarksToFindings(t *testing.T) {
 		}
 	}
 }
+
+var exportHeader = []string{"Вывод о несоответствии", "Ссылка на материалы", "Раздел документации", "Основание", "Ответ на замечание", "Причина отклонения",
+	"Предыдущий ответ на замечание", "Предыдущая причина отклонения", "НД", "Эксперт-соисполнитель", "Критичность",
+	"Предложения по отработке замечаний", "Описание ожидаемого результата", "Итераций", "Дата последнего изменения", "Статус", "№ замечания"}
+
+func exportRow(num, text, refs, answer, rejected, prev, prevRej, status, iter string) []string {
+	return []string{text, refs, "Раздел 3. Конструктивные решения", "СП 63.13330", answer, rejected, prev, prevRej, "КР", "Иванов И.И.", "Некритичное", "", "", iter, "30.09.2024 15:17", status, num}
+}
+
+func TestParseExportReadsTheExpertiseFormat(t *testing.T) {
+	data := xlsxBytes(t, "Выгрузка данных", [][]string{
+		exportHeader,
+		exportRow("30.1", "Глубина заложения фундамента 2,6 м не соответствует стадии П.\nОбосновать.", "Том 3, 28/12-22-ГП-599 – КЖ1.13;\r\nТом 4, 28/12-22-ГП-599 – АР5", "Принято, откорректировано", "", "", "", "Устранено", "1"),
+		exportRow("30.2", "Класс бетона не указан", "", "", "Не приведено в соответствие", "Принято", "Нет изменений", "Ответ не предоставлен", "3"),
+		exportRow("", "Замечание без номера", "", "", "", "", "", "Требуется рассмотрение ответа", "1"),
+		exportRow("", "Замечание без номера", "", "", "", "", "", "Требуется рассмотрение ответа", "1"),
+		exportRow("30.2", "Повторный номер", "", "", "", "", "", "Устраняется заявителем", "1"),
+	})
+	rows, err := ParseExport(data, "v.xlsx")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 5 {
+		t.Fatalf("5 rows, got %d", len(rows))
+	}
+	r := rows[0]
+	if r.Key != "30.1" || r.Batch != "30" || r.Status != RemarkResolved || r.Iterations != 1 || r.Criticality != "noncritical" || r.Expert == "" ||
+		!strings.Contains(r.Text, "Обосновать") || r.ChangedAt.IsZero() || r.Source != "v.xlsx" {
+		t.Errorf("row 1: %+v", r)
+	}
+	if rows[1].Iterations != 3 || rows[1].PrevAnswer != "Принято" || rows[1].PrevRejectReason != "Нет изменений" || rows[1].RejectReason == "" || rows[1].Status != RemarkAwaiting {
+		t.Errorf("row 2 keeps the previous iteration: %+v", rows[1])
+	}
+	keys := map[string]bool{}
+	for _, x := range rows {
+		if keys[x.Key] {
+			t.Errorf("duplicate key %q", x.Key)
+		}
+		keys[x.Key] = true
+	}
+	if !strings.HasPrefix(rows[2].Key, "без номера: ") || rows[3].Key == rows[2].Key || rows[4].Key != "30.2#2" {
+		t.Errorf("keys of remarks without a number or with a repeated one: %q %q %q", rows[2].Key, rows[3].Key, rows[4].Key)
+	}
+	if got := ParseVolumeRefs(rows[0].Refs); len(got) != 2 || got[0].Code != "КЖ1.13" {
+		t.Errorf("refs: %+v", got)
+	}
+	// any other table is not this format
+	if _, err := ParseExport(xlsxBytes(t, "x", [][]string{{"№", "Замечание"}, {"1", "текст"}}), "x.xlsx"); err != ErrNotExport {
+		t.Errorf("want ErrNotExport, got %v", err)
+	}
+}

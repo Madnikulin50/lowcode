@@ -1,4 +1,5 @@
 <script setup>
+import { errText } from '../utils.js'
 // In-place findings viewer for the «Проверка ИД (АОСР)» namespace: the
 // findings list on the left, and on the right the place each finding refers
 // to — the scanned act page with the spot boxed, the registry row, or the
@@ -9,6 +10,7 @@ import FindingsPanel from './FindingsPanel.vue'
 import ActStage from './ActStage.vue'
 import RegistryTable from './RegistryTable.vue'
 import PositionsTable from './PositionsTable.vue'
+import AssistantPanel from '../components/AssistantPanel.vue'
 import { SEV_LABEL, STATUS_LABEL } from './labels.js'
 
 const params = new URLSearchParams(location.search)
@@ -34,7 +36,7 @@ async function load (quiet = false) {
   try {
     const res = await fetch(`api/idcheck/view?${qs}`)
     const data = await res.json().catch(() => ({}))
-    if (!res.ok || data.error) throw new Error(data.error || res.statusText)
+    if (!res.ok || data.error) throw new Error(errText(data.error, res.status) || res.statusText)
     state.view = data
     state.error = ''
     if (!state.actID) {
@@ -127,6 +129,13 @@ function onKey (e) {
 onMounted(() => window.addEventListener('keydown', onKey))
 onUnmounted(() => window.removeEventListener('keydown', onKey))
 
+// The assistant is asked about the act page on screen.
+const assistContext = () => (state.actID && state.mode === 'act' ? { source: 'act', id: state.actID, page: state.page } : null)
+const assistChips = computed(() => {
+  const a = act.value
+  return a && state.mode === 'act' ? [`Акт ${a.fileName || a.file_name || a.number || state.actID}, стр. ${state.page}`] : []
+})
+
 watch(() => state.actID, () => {
   if (selected.value?.actID !== state.actID) state.page = 1
 })
@@ -187,6 +196,11 @@ watch(() => state.actID, () => {
           />
         </section>
       </div>
+      <AssistantPanel
+        :namespace-id="ns" :get-context="assistContext" :chips="assistChips" title="Ассистент по акту"
+        hint="спросить модель о странице акта на экране · текст акта и изображение страницы"
+        :quick="[{ label: 'Что на этой странице?', text: 'Что показано на открытой странице акта? Назови тип страницы и основные реквизиты.' }, { label: 'Проверить реквизиты', text: 'Выпиши с открытой страницы номер и дату акта, виды работ, шифр РД, материалы и нормативные документы; отметь то, что нечитаемо.' }]"
+      />
     </template>
   </div>
 </template>

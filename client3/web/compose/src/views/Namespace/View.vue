@@ -25,6 +25,7 @@
     </div>
 
     <attachment-modal />
+    <assistant-launcher />
   </div>
 </template>
 
@@ -40,6 +41,7 @@ import { usePageStore } from '../../store/page'
 import { usePageLayoutStore } from '../../store/page-layout'
 import { composables } from 'corteza-lib/vue/dist'
 import AttachmentModal from 'corteza-webapp-compose/src/components/Public/Page/Attachment/Modal'
+import AssistantLauncher from 'corteza-webapp-compose/src/components/Public/Page/Attachment/AssistantLauncher'
 
 const { t } = useI18n()
 const router = useRouter()

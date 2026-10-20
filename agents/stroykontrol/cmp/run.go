@@ -52,6 +52,10 @@ type AnalyzeOptions struct {
 	Rasterize func(data []byte, page int) (image.Image, error)
 	// OCR recognizes scanned pages (no text layer).
 	OCR *OCR
+	// Mode is ModeStages (ПД → РД, default) or ModeVersions (two versions of one stage)
+	Mode string
+	// Pairing is the manual pairing of volumes and page ranges
+	Pairing []ManualPair
 }
 
 // Analyze extracts every PDF input and compares the target set against the
@@ -90,9 +94,12 @@ func AnalyzeWith(inputs []Input, cacheDir string, o AnalyzeOptions) (*Result, er
 		}
 	}
 	if len(refs) == 0 || len(tgts) == 0 {
+		if o.Mode == ModeVersions {
+			return nil, fmt.Errorf("нужен хотя бы один PDF-файл версии «до» и один — версии «после» (сейчас: %d и %d)", len(refs), len(tgts))
+		}
 		return nil, fmt.Errorf("нужен хотя бы один PDF-файл ПД и один PDF-файл РД (сейчас ПД: %d, РД: %d)", len(refs), len(tgts))
 	}
-	opt := Options{}
+	opt := Options{Mode: o.Mode, Pairing: o.Pairing}
 	if o.Rasterize != nil {
 		opt.Imager = func(docID string, page int) (image.Image, error) { return o.Rasterize(data[docID], page) }
 	}
@@ -116,6 +123,8 @@ type Runner struct {
 	CacheDir  string
 	Rasterize func(data []byte, page int) (image.Image, error)
 	OCR       *OCR
+	// LLM drafts wordings and reads ambiguous expertise remarks (optional)
+	LLM *Suggester
 
 	mu      sync.Mutex
 	queue   chan job
@@ -223,6 +232,36 @@ func ListDocs(b Backend, ns, comparisonID string) ([]docRef, error) {
 			Code:   rec.Get("volume_code"), Title: rec.Get("volume_title"), Persist: true,
 		})
 	}
+	cmpRec, err := b.GetRecord(ns, ModComparisons, comparisonID)
+	if err != nil {
+		return nil, err
+	}
+	// files of the document sets the comparison points at (ПД set, РД set)
+	have := map[string]bool{}
+	for _, d := range out {
+		have[d.ID] = true
+	}
+	for _, f := range []struct{ field, side string }{{"set_pd", SideRef}, {"set_rd", SideTarget}} {
+		setID := cmpRec.Get(f.field)
+		if setID == "" {
+			continue
+		}
+		recs, err := b.Search(ns, ModDocuments, fmt.Sprintf("set = '%s'", setID))
+		if err != nil {
+			return nil, err
+		}
+		for _, rec := range recs {
+			if rec.Get("file") == "" || have[rec.ID] {
+				continue
+			}
+			have[rec.ID] = true
+			out = append(out, docRef{
+				ID: rec.ID, Side: f.side, Attachment: rec.Get("file"),
+				Manual: rec.Get("detected_by") == "manual" && rec.Get("volume_code") != "",
+				Code:   rec.Get("volume_code"), Title: rec.Get("volume_title"), Persist: true,
+			})
+		}
+	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	// a later iteration normally brings only the corrected РД: the reference
 	// set (ПД) is inherited from the nearest previous iteration that has one
@@ -249,10 +288,6 @@ func ListDocs(b Backend, ns, comparisonID string) ([]docRef, error) {
 			}
 		}
 	}
-	cmpRec, err := b.GetRecord(ns, ModComparisons, comparisonID)
-	if err != nil {
-		return nil, err
-	}
 	if id := cmpRec.Get("pd_file"); id != "" {
 		out = append([]docRef{{ID: "legacy:pd", Side: SideRef, Attachment: id}}, out...)
 	}
@@ -273,6 +308,17 @@ func (r *Runner) Run(ctx context.Context, ns, id string) error {
 	if err != nil {
 		return err
 	}
+	cmpMode := ModeStages
+	var pairing []ManualPair
+	if rec, err := b.GetRecord(ns, ModComparisons, id); err == nil {
+		if rec.Get("kind") == ModeVersions {
+			cmpMode = ModeVersions
+		}
+		var perr error
+		if pairing, perr = ParsePairing(rec.Get("pairing")); perr != nil {
+			return b.Update(ns, ModComparisons, id, idcheck.V("status", "new", "comment", perr.Error()))
+		}
+	}
 	var inputs []Input
 	for _, d := range docs {
 		data, name, err := b.Download(ns, d.Attachment)
@@ -287,7 +333,7 @@ func (r *Runner) Run(ctx context.Context, ns, id string) error {
 	}
 
 	r.setStatus(id, "сравнение")
-	res, err := AnalyzeWith(inputs, r.CacheDir, AnalyzeOptions{Rasterize: r.Rasterize, OCR: r.OCR})
+	res, err := AnalyzeWith(inputs, r.CacheDir, AnalyzeOptions{Rasterize: r.Rasterize, OCR: r.OCR, Mode: cmpMode, Pairing: pairing})
 	if err != nil {
 		// not an infrastructure failure: tell the user what is missing
 		return b.Update(ns, ModComparisons, id, idcheck.V("status", "new", "comment", err.Error()))
@@ -297,7 +343,16 @@ func (r *Runner) Run(ctx context.Context, ns, id string) error {
 	if err := r.persistDocuments(ns, docs, inputs, res); err != nil {
 		return err
 	}
-	return r.persistResult(ns, id, res)
+	if err := r.persistResult(ns, id, res); err != nil {
+		return err
+	}
+	// keep the completeness of the object's sets and the "ПД v2 ↔ РД v1" label of the pair current
+	if rec, err := b.GetRecord(ns, ModComparisons, id); err == nil && rec.Get("object") != "" {
+		if _, err := r.CheckSets(ctx, ns, rec.Get("object")); err != nil {
+			log.Printf("cmp: sets check of object %s: %v", rec.Get("object"), err)
+		}
+	}
+	return nil
 }
 
 func (r *Runner) persistDocuments(ns string, docs []docRef, inputs []Input, res *Result) error {
@@ -398,8 +453,15 @@ func (r *Runner) persistResult(ns, id string, res *Result) error {
 	if err != nil {
 		return err
 	}
+	kind := ""
+	if c, err := b.GetRecord(ns, ModComparisons, id); err == nil {
+		kind = c.Get("data_kind") // demo comparisons keep their findings out of the working lists
+	}
 	for _, f := range res.Findings {
 		v := discrepancyValues(id, f)
+		if kind != "" {
+			v["data_kind"] = []string{kind}
+		}
 		st := status[f.Fingerprint]
 		if st == "" {
 			st = StatusNew
@@ -419,6 +481,9 @@ func (r *Runner) persistResult(ns, id string, res *Result) error {
 		}
 		v["comparison"] = []string{id}
 		v["iter_state"] = []string{IterResolved}
+		if kind != "" {
+			v["data_kind"] = []string{kind}
+		}
 		if _, err := b.Create(ns, ModDiscrepancies, v); err != nil {
 			return err
 		}
@@ -458,6 +523,7 @@ func (r *Runner) persistResult(ns, id string, res *Result) error {
 	// Update overlays values: an explicit empty value (idcheck.V drops it)
 	// removes a stale percentage left by an earlier run
 	upd["similarity_percent"] = []string{sim}
+	upd["pairs_json"] = []string{res.StateJSON()}
 	return b.Update(ns, ModComparisons, id, upd)
 }
 

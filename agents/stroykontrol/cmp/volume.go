@@ -9,7 +9,7 @@ import (
 
 // A шифр looks like "2024-15-КЖ1", "ПД-123/2024-АР", "01-24-ПЗ.1": groups of
 // letters/digits joined by - . / with at least one digit and one letter.
-var codeRe = regexp.MustCompile(`[0-9A-Za-zА-Яа-я]{1,8}(?:[-./][0-9A-Za-zА-Яа-я]{1,8}){1,5}`)
+var codeRe = regexp.MustCompile(`[0-9A-Za-zА-Яа-я]{1,8}(?:[-./][0-9A-Za-zА-Яа-я]{1,8}){1,8}`)
 
 // latinFold folds Latin look-alikes onto Cyrillic so "KЖ1" and "КЖ1" match.
 var latinFold = strings.NewReplacer(

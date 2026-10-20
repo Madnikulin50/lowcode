@@ -7,6 +7,7 @@ type Pair struct {
 	Ref      *Volume
 	Targets  []*Volume
 	Fragment bool    // the targets cover only part of the reference volume
+	Manual   bool    // made by hand, not by matching
 	Score    float64 // best match score
 }
 

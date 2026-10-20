@@ -11,5 +11,8 @@
 | [agents.md](agents.md) | Руководство разработчика агентов: SDK, sync/async, Compose apply, палитра rule chains |
 | [dal.md](dal.md) | Новые объекты: модули Compose, таблицы DAL, кодоген, чтение и запись |
 | [ai-guard.md](ai-guard.md) | AI guard: таргетированные проверки после правок ИИ — режимы, baseline, периодический CI |
+| [security/threat-model.md](security/threat-model.md) | Модель угроз: активы, границы доверия, нарушители, каталог угроз STRIDE/AI, план снижения риска |
+| [security/attack-surface.md](security/attack-surface.md) | Поверхность атаки: порты, маршруты, каналы ввода, выполнение кода, цепочка поставки |
+| [security/kii-categorization.md](security/kii-categorization.md) | Категорирование КИИ: методика, рабочий лист оператора, профиль безопасной конфигурации, финальный чеклист |
 
 Продуктовые руководства пользователя и интегратора живут в `manual/` (Antora). Этот каталог — инженерное описание текущего кода репозитория.

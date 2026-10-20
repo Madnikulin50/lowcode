@@ -1,8 +1,16 @@
 <script setup>
 // A page image with an optional highlighted region (page fractions).
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { probeImage } from '../composables/usePageImage.js'
+import PageMissing from './PageMissing.vue'
 
 const props = defineProps({ src: String, alt: String, zoomPct: { type: Number, default: 100 }, box: Array })
+
+const reason = ref('')
+const attempt = ref(0)
+watch(() => props.src, () => { reason.value = ''; attempt.value = 0 })
+const shownSrc = computed(() => attempt.value ? props.src + (props.src.includes('?') ? '&' : '?') + 'retry=' + attempt.value : props.src)
+async function onError () { reason.value = await probeImage(props.src) }
 
 const wrapStyle = computed(() => props.zoomPct === 100
   ? { position: 'relative', display: 'inline-block', maxWidth: '100%' }
@@ -22,8 +30,9 @@ const boxStyle = computed(() => {
 </script>
 
 <template>
-  <div :style="wrapStyle">
-    <img :src="src" :alt="alt" class="hl-img" />
+  <PageMissing v-if="reason" :label="alt" :reason="reason" retry @retry="reason = ''; attempt++" />
+  <div v-else :style="wrapStyle">
+    <img :src="shownSrc" :alt="alt" class="hl-img" @error="onError" />
     <div v-if="boxStyle" class="hl-box" :style="boxStyle"></div>
   </div>
 </template>

@@ -30,8 +30,9 @@ type ComposeClient struct {
 	// short-lived (~2h) and the agent otherwise holds it for its whole
 	// process lifetime (see README's "Token stability" section). Optional;
 	// nil disables auto-refresh and preserves the old fail-hard behaviour.
-	remint   func() (string, error)
-	remintMu sync.Mutex
+	remint    func() (string, error)
+	remintMu  sync.Mutex
+	remintErr error // why the last refresh failed, shown to the user with the expired-token error
 
 	moduleIDsMu sync.Mutex
 	moduleIDs   map[string]string // "namespaceID/handle" -> numeric moduleID
@@ -91,8 +92,10 @@ func (c *ComposeClient) refreshToken(failedToken string) bool {
 	tok, err := c.remint()
 	if err != nil || tok == "" {
 		log.Printf("token refresh failed: %v", err)
+		c.remintErr = err
 		return false
 	}
+	c.remintErr = nil
 	c.setToken(tok)
 	return true
 }
@@ -142,8 +145,12 @@ type apiError struct {
 func (c *ComposeClient) get(path string, out interface{}) error {
 	tok := c.getToken()
 	err := c.doGet(path, tok, out)
-	if isExpiredToken(err) && c.refreshToken(tok) {
-		err = c.doGet(path, c.getToken(), out)
+	if isExpiredToken(err) {
+		if c.refreshToken(tok) {
+			err = c.doGet(path, c.getToken(), out)
+		} else if c.remintErr != nil {
+			err = fmt.Errorf("%w — токен не удалось обновить автоматически: %v. Перезапустите агент или выполните ./mint-token.sh", err, c.remintErr)
+		}
 	}
 	return err
 }
@@ -316,6 +323,9 @@ func (c *ComposeClient) Comparison(ns, recordID string) (*comparisonRecord, erro
 		Comment:           rec.val("comment"),
 		ParentID:          rec.val("parent_comparison"),
 		IterationNo:       rec.val("iteration_no"),
+		ObjectID:          rec.val("object"),
+		SetsLabel:         rec.val("sets_label"),
+		Kind:              modeOf(rec.val("kind")),
 	}
 	if out.ParentID != "" && out.ParentID != recordID {
 		if p, err := c.getRecord(ns, comparisonModule, out.ParentID); err == nil {
@@ -557,37 +567,126 @@ func truncate(b []byte, n int) string {
 	return string(b[:n]) + "..."
 }
 
-func (c *ComposeClient) Expertise(ns, recordID string) ([]expertiseRecord, error) {
-	recs, err := c.searchRecords(ns, cmp.ModExpertise, fmt.Sprintf("comparison = '%s'", recordID))
+func (c *ComposeClient) RegisterIssued(ns, comparisonID string, in cmp.IssueInput, res cmp.IssueResult) (*cmp.IssueRegistered, error) {
+	rec, err := c.getRecord(ns, comparisonModule, comparisonID)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]expertiseRecord, 0, len(recs))
-	for _, r := range recs {
-		e := expertiseRecord{
-			ID: r.RecordID, Number: r.val("number"), Text: r.val("text"), Answer: r.val("answer"),
-			Location: r.val("location"), Source: r.val("source_file"), Verdict: r.val("verdict"),
-			Score: r.val("match_score"), Note: r.val("match_note"), Status: r.val("status"),
-			ClaimMismatch: r.val("claim_mismatch") != "",
-		}
-		for _, v := range r.Values {
-			if v.Name == "matched_discrepancies" && v.Value != nil {
-				e.Findings = append(e.Findings, fmt.Sprintf("%v", v.Value))
-			}
-		}
-		out = append(out, e)
+	return cmp.IssueToRegistry(composeBackend{c}, ns, rec.val("object"), in, res)
+}
+
+func (c *ComposeClient) IssuedNumbers(ns, comparisonID string) (map[string]string, error) {
+	rec, err := c.getRecord(ns, comparisonModule, comparisonID)
+	if err != nil {
+		return nil, err
 	}
-	sortExpertise(out)
+	out := map[string]string{}
+	if rec.val("object") == "" {
+		return out, nil
+	}
+	recs, err := composeBackend{c}.Search(ns, cmp.ModExpertise, fmt.Sprintf("object = '%s'", rec.val("object")))
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range recs {
+		if r.Get("origin") == cmp.OriginComparison && r.Get("source_comparison") == comparisonID {
+			out[r.Get("group_key")] = r.Get("number")
+		}
+	}
 	return out, nil
 }
 
-func (c *ComposeClient) SetExpertiseStatus(ns, recordID, remarkID, status string) error {
-	r, err := c.getRecord(ns, cmp.ModExpertise, remarkID)
+func (c *ComposeClient) ObjectName(ns, objectID string) string {
+	if objectID == "" {
+		return ""
+	}
+	if o, err := c.getRecord(ns, cmp.ModObjects, objectID); err == nil {
+		return o.val("name")
+	}
+	return ""
+}
+
+// PageID is the ID of the page with the handle in the namespace ("" if there is none); the
+// viewers use it to link to record cards in the Compose UI.
+func (c *ComposeClient) PageID(ns, handle string) string {
+	key := "page:" + ns + "/" + handle
+	c.moduleIDsMu.Lock()
+	if id, ok := c.moduleIDs[key]; ok {
+		c.moduleIDsMu.Unlock()
+		return id
+	}
+	c.moduleIDsMu.Unlock()
+	var out struct {
+		Set []struct {
+			PageID string `json:"pageID"`
+			Handle string `json:"handle"`
+		} `json:"set"`
+	}
+	if err := c.get(fmt.Sprintf("/namespace/%s/page/?handle=%s&limit=20", ns, url.QueryEscape(handle)), &out); err != nil {
+		return ""
+	}
+	for _, p := range out.Set {
+		if p.Handle == handle {
+			c.moduleIDsMu.Lock()
+			c.moduleIDs[key] = p.PageID
+			c.moduleIDsMu.Unlock()
+			return p.PageID
+		}
+	}
+	return ""
+}
+
+// modeOf maps the "kind" field of a comparison to a cmp mode.
+func modeOf(kind string) string {
+	if kind == cmp.ModeVersions {
+		return cmp.ModeVersions
+	}
+	return cmp.ModeStages
+}
+
+// Pairing implements store.
+func (c *ComposeClient) Pairing(ns, recordID string) (*pairingOut, error) {
+	rec, err := c.getRecord(ns, comparisonModule, recordID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if r.val("comparison") != recordID {
-		return fmt.Errorf("remark %s does not belong to comparison %s", remarkID, recordID)
+	docs, err := c.Documents(ns, recordID)
+	if err != nil {
+		return nil, err
 	}
-	return composeBackend{c}.Update(ns, cmp.ModExpertise, remarkID, idcheck.V("status", status))
+	p, err := cmp.ParsePairing(rec.val("pairing"))
+	if err != nil {
+		return nil, err
+	}
+	out := &pairingOut{Documents: docs, Pairing: p}
+	if out.Pairing == nil {
+		out.Pairing = []cmp.ManualPair{}
+	}
+	if raw := rec.val("pairs_json"); raw != "" {
+		var st cmp.PairsState
+		if json.Unmarshal([]byte(raw), &st) == nil {
+			out.State = &st
+		}
+	}
+	return out, nil
+}
+
+// SetPairing implements store.
+func (c *ComposeClient) SetPairing(ns, recordID string, p []cmp.ManualPair) error {
+	v := idcheck.V("pairing", cmp.PairingJSON(p))
+	if len(p) == 0 {
+		v["pairing"] = []string{""} // an explicit empty value clears the stored one
+	}
+	return composeBackend{c}.Update(ns, comparisonModule, recordID, v)
+}
+
+// downloadDocument returns the file of a Compose document (the Docs section).
+func (c *ComposeClient) downloadDocument(ns, documentID string) ([]byte, string, error) {
+	u := fmt.Sprintf("%s/namespace/%s/document/%s/file", c.base, ns, documentID)
+	tok := c.getToken()
+	data, mimetype, err := c.doDownload(u, documentID, tok)
+	if isExpiredToken(err) && c.refreshToken(tok) {
+		data, mimetype, err = c.doDownload(u, documentID, c.getToken())
+	}
+	return data, mimetype, err
 }

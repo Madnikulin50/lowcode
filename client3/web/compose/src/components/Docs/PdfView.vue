@@ -23,6 +23,7 @@
 
 <script setup>
 import { inject, onBeforeUnmount, ref, watch } from 'vue'
+import { registerAssistantDocument } from '../../composables/useAssistantContext'
 
 const props = defineProps({
   namespaceID: { type: String, required: true },
@@ -35,9 +36,18 @@ const src = ref('')
 const loading = ref(false)
 const error = ref('')
 
+let unregisterAssistant = () => {}
+watch(() => [props.namespaceID, props.documentID], () => {
+  unregisterAssistant()
+  unregisterAssistant = registerAssistantDocument({ source: 'document', id: props.documentID, namespaceID: props.namespaceID, name: props.title })
+}, { immediate: true })
+
 watch(() => [props.namespaceID, props.documentID], load, { immediate: true })
 
-onBeforeUnmount(revoke)
+onBeforeUnmount(() => {
+  unregisterAssistant()
+  revoke()
+})
 
 async function load () {
   revoke()

@@ -23,6 +23,8 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -44,6 +46,8 @@ var (
 	idRunner           *idcheck.Runner
 	idBackend          idcheck.Backend
 	idCacheDir         string
+	assistVision       *cmp.Suggester // multimodal model for pictures of sheets (--vision-model)
+	assistSkillsDir    string
 	comparisonModule   = "pd_rd_comparisons"
 	discrepancyModule  = "pd_rd_discrepancies"
 )
@@ -57,14 +61,14 @@ func main() {
 	cacheDir := flag.String("cache", "var/stroykontrol-raster-cache", "Directory for rasterized page cache")
 	fixtures := flag.String("fixtures", "", "Run standalone against a local fixtures directory instead of a live Compose instance (see fixtures/README.md) — skips --api/--token/--namespace entirely")
 	ollamaURL := flag.String("ollama", envOr("OLLAMA_URL", "http://localhost:11434"), "Ollama base URL for the ИД check vision model")
-	visionModel := flag.String("vision-model", envOr("IDCHECK_VISION_MODEL", "qwen3.5"), "Multimodal Ollama model used to read scanned acts (empty disables scan recognition)")
+	visionModel := flag.String("vision-model", envOr("IDCHECK_VISION_MODEL", "deepseek-v2"), "Multimodal Ollama model used to read scanned acts (empty disables scan recognition)")
 	tesseractBin := flag.String("tesseract", "tesseract", "tesseract binary for OCR of scanned acts (optional: without it pages are classified by the vision model)")
 	ocrLang := flag.String("ocr-lang", "rus", "tesseract language")
 	idcheckCache := flag.String("idcheck-cache", "var/idcheck-cache", "Directory for ИД check page images / OCR / model reply cache")
 	maxAttached := flag.Int("max-attached", 6, "Attached quality-document pages per act sent to the vision model (-1 = all)")
 	classifyPages := flag.Bool("classify-pages", false, "Without tesseract, classify every scanned page with the vision model (slow on CPU; default uses layout rules)")
 	external := flag.Bool("external", true, "Check legal entities in ЕГРЮЛ (egrul.nalog.ru) and specialists in НРС (nrs.nostroy.ru)")
-	remarkModel := flag.String("remark-model", envOr("REMARK_MODEL", "qwen3:latest"), "Ollama text model that drafts remark-card wording on request (empty disables the button)")
+	remarkModel := flag.String("remark-model", envOr("REMARK_MODEL", "deepseek-v2:latest"), "Ollama text model that drafts remark-card wording on request (empty disables the button)")
 	staticDir := flag.String("static", "", "Serve the frontend from this directory instead of the embedded web/dist — point at web/dist while running `npx vite build --watch` to see frontend changes without rebuilding this binary")
 	dumpNorms := flag.Bool("dump-norms", false, "Print the built-in regulatory documents catalog (idcheck.DefaultNorms) as JSON and exit — used by compose_id/apply_id.mjs to seed «Нормативные документы»")
 	flag.Parse()
@@ -124,7 +128,9 @@ func main() {
 				}
 			}
 		}
-		compose = NewComposeClient(*api, *token, remint)
+		cc := NewComposeClient(*api, *token, nil)
+		cc.remint = withTokenFileFallback(remint, *tokenFile, cc.getToken)
+		compose = cc
 	}
 	raster = NewRasterizer(*cacheDir)
 	cmpCacheDir = *cacheDir
@@ -133,9 +139,12 @@ func main() {
 		log.Printf("cmp: tesseract (%s) not found — scanned pages of ПД/РД are compared as images only", *tesseractBin)
 	}
 	suggester = cmp.NewSuggester(*ollamaURL, *remarkModel)
+	// the assistant looks at page pictures with the same multimodal model that reads scanned acts
+	assistVision = cmp.NewSuggester(*ollamaURL, *visionModel)
+	assistSkillsDir = firstNonEmpty(os.Getenv("AI_SKILLS_DIR"), "skills")
 	if fx, ok := compose.(*FixtureStore); ok {
-		fx.analyze = func(in []cmp.Input) (*cmp.Result, error) {
-			return cmp.AnalyzeWith(in, cmpCacheDir, cmp.AnalyzeOptions{Rasterize: rasterPage, OCR: cmpOCR})
+		fx.analyze = func(in []cmp.Input, mode string, pairing []cmp.ManualPair) (*cmp.Result, error) {
+			return cmp.AnalyzeWith(in, cmpCacheDir, cmp.AnalyzeOptions{Rasterize: rasterPage, OCR: cmpOCR, Mode: mode, Pairing: pairing})
 		}
 	}
 	if cc, ok := compose.(*ComposeClient); ok {
@@ -150,6 +159,7 @@ func main() {
 		idBackend, idCacheDir = composeBackend{cc}, *idcheckCache
 		cmpRunner = cmp.NewRunner(composeBackend{cc}, cmpCacheDir, rasterPage)
 		cmpRunner.OCR = cmpOCR
+		cmpRunner.LLM = suggester
 		idRunner = idcheck.NewRunner(idBackend, &idcheck.Extractor{
 			CacheDir:      *idcheckCache,
 			DPI:           150,
@@ -179,10 +189,31 @@ func main() {
 		r.Post("/discrepancy/status", handleDiscrepancyStatus)
 		r.Post("/expertise/import", handleExpertiseImport)
 		r.Get("/expertise/import", handleExpertiseImport)
-		r.Post("/expertise/status", handleExpertiseStatus)
+		r.Post("/expertise/check", handleExpertiseCheck)
+		r.Get("/sets/overview", handleSetsOverview)
+		r.Post("/sets/check", handleSetsCheck)
+		r.Get("/sets/check", handleSetsCheck)
+		r.Post("/volumes/suggest", handleVolumesSuggest)
+		r.Post("/volumes/resolve", handleVolumesResolve)
+		r.Get("/remarks/board", handleRemarksBoard)
+		r.Get("/remarks/history", handleRemarkHistory)
+		r.Post("/remarks/update", handleRemarkUpdate)
+		r.Post("/remarks/ai", handleRemarkAI)
+		r.Get("/issue/preview", handleIssuePreview)
+		r.Post("/issue/register", handleIssueRegister)
+		r.Get("/issue/register", handleIssueRegister)
+		r.Get("/issue/export", handleIssueExport)
+		r.Get("/report/export", handleReportExport)
+		r.Get("/pairing", handlePairingGet)
+		r.Post("/pairing", handlePairingSet)
 		r.Post("/remark", handleRemarkCreate)
 		r.Post("/remark/save", handleRemarkSave)
 		r.Post("/remark/suggest", handleRemarkSuggest)
+		r.Post("/dialog", handleDialog)
+		r.Post("/assist", handleAssist)
+		r.Get("/assist/result", handleAssistResult)
+		r.Get("/assist/doc", handleAssistDoc)
+		r.Get("/assist/page", handleAssistPage)
 		r.Post("/idcheck/run", handleIDCheckRun)
 		r.Get("/idcheck/run", handleIDCheckRun)
 		r.Get("/idcheck/status", handleIDCheckStatus)
@@ -238,10 +269,58 @@ func rootOrigin(apiURL string) (string, error) {
 // requires node + DB/auth access on this host, same as the scripts it
 // mirrors, so it's a no-op-on-failure dev convenience, not a real refresh
 // mechanism for a deployment with a dedicated service token.
+// findNode locates node even when the agent runs from an IDE: a non-login shell has no nvm on PATH.
+func findNode() (string, error) {
+	if p, err := exec.LookPath("node"); err == nil {
+		return p, nil
+	}
+	var cands []string
+	if home, err := os.UserHomeDir(); err == nil {
+		matches, _ := filepath.Glob(filepath.Join(home, ".nvm", "versions", "node", "*", "bin", "node"))
+		sort.Strings(matches)
+		for i := len(matches) - 1; i >= 0; i-- { // newest version first
+			cands = append(cands, matches[i])
+		}
+	}
+	cands = append(cands, "/usr/local/bin/node", "/usr/bin/node", "/snap/bin/node")
+	for _, c := range cands {
+		if st, err := os.Stat(c); err == nil && !st.IsDir() {
+			return c, nil
+		}
+	}
+	return "", fmt.Errorf("node не найден ни в PATH, ни в ~/.nvm (нужен для обновления токена: compose/helpers.mjs)")
+}
+
+// agentDir is the directory that holds compose/helpers.mjs (the agent's own folder).
+func agentDir() (string, error) {
+	var cands []string
+	if wd, err := os.Getwd(); err == nil {
+		cands = append(cands, wd)
+	}
+	if exe, err := os.Executable(); err == nil {
+		cands = append(cands, filepath.Dir(exe), filepath.Dir(filepath.Dir(exe)))
+	}
+	for _, d := range cands {
+		if _, err := os.Stat(filepath.Join(d, "compose", "helpers.mjs")); err == nil {
+			return d, nil
+		}
+	}
+	return "", fmt.Errorf("не найден compose/helpers.mjs: запустите агент из каталога agents/stroykontrol")
+}
+
 func mintTokenViaNode() (string, error) {
-	cmd := exec.Command("node", "-e",
+	node, err := findNode()
+	if err != nil {
+		return "", err
+	}
+	dir, err := agentDir()
+	if err != nil {
+		return "", err
+	}
+	cmd := exec.Command(node, "-e",
 		"import('./compose/helpers.mjs').then(h=>h.mintToken()).then(t=>process.stdout.write(t))",
 	)
+	cmd.Dir = dir
 	// mintToken() returns $TOKEN as-is when set — and the agent itself is
 	// usually started with TOKEN=…, so the child would hand back the very
 	// token that just expired. Drop it to force a real re-mint.
@@ -252,9 +331,35 @@ func mintTokenViaNode() (string, error) {
 	}
 	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("mint token via node: %w", err)
+		msg := ""
+		if ee, ok := err.(*exec.ExitError); ok {
+			msg = strings.TrimSpace(string(ee.Stderr))
+		}
+		return "", fmt.Errorf("mint token via node: %w %s", err, trimTo(msg, 200))
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// withTokenFileFallback tries remint and, when it fails, takes a fresher token from --token-file
+// (an IDE "before launch" step or a person may have refreshed it) — as long as it is not the expired one.
+func withTokenFileFallback(remint func() (string, error), file string, current func() string) func() (string, error) {
+	return func() (string, error) {
+		t, err := remint()
+		if err == nil && t != "" {
+			return t, nil
+		}
+		if file != "" {
+			if b, rerr := os.ReadFile(file); rerr == nil {
+				if ft := strings.TrimSpace(string(b)); ft != "" && ft != current() {
+					return ft, nil
+				}
+			}
+		}
+		if err == nil {
+			err = fmt.Errorf("пустой токен")
+		}
+		return "", err
+	}
 }
 
 func nsFromQuery(r *http.Request) string {
@@ -281,11 +386,16 @@ type comparisonOut struct {
 	SimilarityPercent string              `json:"similarityPercent"`
 	Comment           string              `json:"comment"`
 	Running           string              `json:"running"`
+	SetsLabel         string              `json:"setsLabel,omitempty"` // "ПД v2 ↔ РД v1"
+	Kind              string              `json:"kind"`                // stages | versions
+	RefName           string              `json:"refName"`             // "ПД" | "До"
+	TargetName        string              `json:"targetName"`          // "РД" | "После"
 	Iteration         *iterationOut       `json:"iteration,omitempty"`
+	ObjectID          string              `json:"objectID"`
 	Documents         []documentRecord    `json:"documents"`
 	Discrepancies     []discrepancyRecord `json:"discrepancies"`
 	Remarks           []cmp.Remark        `json:"remarks"`
-	Expertise         []expertiseRecord   `json:"expertise"`
+	Expertise         []remarkRecord      `json:"expertise"`
 }
 
 // iterationOut summarizes a re-check of the same pair after corrections.
@@ -361,9 +471,13 @@ func handleComparison(w http.ResponseWriter, r *http.Request) {
 		Discrepancies:     discs,
 		Remarks:           remarks,
 		Expertise:         expertise,
+		ObjectID:          rec.ObjectID,
+		SetsLabel:         rec.SetsLabel,
+		Kind:              modeOf(rec.Kind),
 	}
+	out.RefName, out.TargetName = cmp.SideNames(out.Kind)
 	if out.Expertise == nil {
-		out.Expertise = []expertiseRecord{}
+		out.Expertise = []remarkRecord{}
 	}
 	if out.Documents == nil {
 		out.Documents = []documentRecord{}
