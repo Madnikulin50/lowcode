@@ -176,7 +176,7 @@ func TestBillAgainstSpecificationInsideAVolume(t *testing.T) {
 		{"Гидроизоляция обмазочная стен", "м2", "45"},  // disagrees
 		{"Бетон B25 фундаментной плиты", "м3", "12,5"}, // agrees
 	}, true)
-	v := buildVolume(docOf("d", SideTarget, bill, spec), 0, "X-1-КЖ", "T", 1, 2, "d")
+	v := buildVolume(docOf("d", SideTarget, bill, spec), 0, "X-1-КЖ", "T", 1, 2, "d", true)
 	got := internalConsistency(v, true)
 	if len(got) != 1 || !strings.Contains(got[0].Description, "Гидроизоляция") || got[0].Severity != "medium" || got[0].TargetDoc != "d" || got[0].PageTarget != 1 {
 		t.Fatalf("only the waterproofing disagrees (aggregated reinforcement is fine): %+v", got)

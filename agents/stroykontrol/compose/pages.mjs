@@ -136,6 +136,12 @@ export function buildPages (m) {
         ['title', 'sets_label', 'iteration_no', 'status', 'similarity_percent', 'differing_pages'],
         { prefilter: 'object = ${recordID}', refField: 'object', presort: 'createdAt DESC', perPage: 20 }),
     },
+    {
+      title: 'Пакеты исправления',
+      block: recordList('Пакеты исправления объекта', [0, 0, 48, 90], m.correction_packages,
+        ['title', 'iteration_no', 'n_documents', 'n_remarks', 'resolved', 'persisting', 'new_findings', 'runs', 'last_run'],
+        { prefilter: 'object = ${recordID}', refField: 'object', presort: 'iteration_no DESC', perPage: 20, hideAddButton: true }),
+    },
     { title: 'Замечания экспертизы', block: iframe('Рабочее место замечаний экспертизы', [0, 0, 48, 90], 'view=remarks&objectID=${recordID}') },
     {
       title: 'Исполнительная документация',
@@ -193,6 +199,15 @@ export function buildPages (m) {
       { prefilter: 'comparison = ${recordID}', presort: 'createdAt DESC', perPage: 20, hideAddButton: true }),
   ]))
 
+  add(listPage('Пакеты исправления', 'correction_packages', 24.5, 'fas box-open', m.correction_packages,
+    ['title', 'object', 'iteration_no', 'n_documents', 'n_remarks', 'resolved', 'persisting', 'new_findings', 'runs', 'last_run'], { ...P, hideAddButton: true, prefilter: REAL, presort: 'last_run DESC' }),
+  card('Пакет исправления', 'correction_package', m.correction_packages, 24.6,
+    ['title', 'object', 'comparison', 'parent_comparison', 'iteration_no', 'n_documents', 'n_remarks', 'resolved', 'persisting', 'new_findings', 'runs', 'last_run', 'history_json'],
+    { title: 'title', history_json: 'body' }, [
+      recordList('Исправленные документы', [0, 28, 48, 14], m.cmp_documents,
+        ['file', 'volume_code', 'volume_title', 'change_no', 'pages'], { prefilter: 'comparison = ${record.values.comparison}', presort: 'createdAt ASC', perPage: 20, hideAddButton: true }),
+    ], 'fas box-open'))
+
   add(listPage('Расхождения ПД/РД', 'pd_rd_discrepancies', 25, 'fas triangle-exclamation', m.pd_rd_discrepancies,
     ['comparison', 'severity', 'kind', 'status', 'iter_state', 'page_pd', 'page_rd', 'description'], { ...P, prefilter: REAL }),
   card('Расхождение ПД/РД', 'pd_rd_discrepancy', m.pd_rd_discrepancies, 26,
@@ -204,11 +219,11 @@ export function buildPages (m) {
     { ...P, hideAddButton: true, perPage: 50, prefilter: REAL }),
   card('Замечание экспертизы', 'expertise_remark', m.expertise_remarks, 28, [
     'object', 'number', 'origin', 'source_comparison', 'criticality', 'status', 'assignee', 'due_date', 'discipline', 'expert', 'section', 'iterations', 'source_status',
-    'text', 'refs_text', 'basis', 'answer', 'reject_reason', 'prev_answer', 'prev_reject_reason', 'proposals', 'expected_result', 'pto_note',
-    'verdict', 'match_score', 'match_note', 'claim_mismatch', 'linked_documents', 'matched_discrepancies', 'ai_verdict', 'ai_note', 'ai_at',
+    'text', 'refs_text', 'basis', 'answer', 'reject_reason', 'prev_answer', 'prev_reject_reason', 'proposals', 'expected_result', 'pto_note', 'estimate_h',
+    'verdict', 'match_score', 'match_note', 'claim_mismatch', 'linked_documents', 'matched_discrepancies', 'ai_verdict', 'ai_note', 'ai_at', 'outcome_final', 'outcome_decision', 'outcome_comment', 'outcome_by', 'outcome_at',
   ], { number: 'title', status: 'badge', criticality: 'badge', text: 'body' }, [
     recordList('История итераций', [0, 28, 48, 24], m.expertise_remark_history,
-      ['at', 'iteration', 'status', 'answer', 'reject_reason', 'source', 'author'],
+      ['at', 'iteration', 'kind', 'status', 'source', 'note', 'answer', 'reject_reason', 'author'],
       { prefilter: 'remark = ${recordID}', presort: 'at ASC', perPage: 20, hideAddButton: true }),
   ]))
 
@@ -227,6 +242,12 @@ export function buildPages (m) {
   card('Результат проверки ВОИСР', 'voisr_check_result', m.voisr_check_results, 33,
     ['voisr_item', 'smeta_volume', 'smeta_amount', 'volume_diff', 'amount_diff', 'amount_diff_percent', 'status', 'note'],
     { voisr_item: 'title', status: 'badge', note: 'body' }))
+
+  // ---- Отчёты ----
+  defs.push({
+    title: 'Отчёты', handle: 'reports', visible: true, weight: 35, config: pageIcon('fas file-export'),
+    blocks: withBlockIDs([iframe('Выгрузки по объектам и сравнениям', [0, 0, 48, 90], 'view=reports')]),
+  })
 
   // ---- Справочники ----
   defs.push(group('Справочники', 'refs', 40, 'fas book', 'Нормативные документы, юрлица, специалисты и ведомости состава томов.'))
@@ -252,12 +273,14 @@ export function buildPages (m) {
   add(listPage('Демо-данные (объекты)', 'demo_objects', 61, 'fas flask', m.objects,
     ['name', 'code', 'address', 'status', 'data_kind'], { ...S, prefilter: "data_kind = 'demo'" }))
   add(listPage('Документы сравнений', 'cmp_documents', 62, 'fas file-pdf', m.cmp_documents,
-    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'pages', 'detected_by'], S),
+    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'change_no', 'pages', 'detected_by'], S),
   card('Документ', 'cmp_document', m.cmp_documents, 63,
-    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'object_name', 'pages', 'released', 'detected_by'],
+    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'change_no', 'object_name', 'structure_object', 'subsection', 'part', 'book', 'pages', 'file_hash', 'released', 'detected_by'],
     { file: 'title', side: 'badge' }))
   add(listPage('Журнал выгрузок замечаний', 'expertise_imports', 64, 'fas clock-rotate-left', m.expertise_imports,
     ['object', 'imported_at', 'file', 'total', 'new_count', 'changed_count', 'status_changes', 'reopened', 'archived_count'], { ...S, hideAddButton: true }))
+  add(listPage('Срезы реестра замечаний', 'expertise_snapshots', 64.5, 'fas chart-line', m.expertise_snapshots,
+    ['object', 'day', 'total', 'overdue', 'n_awaiting_answer', 'n_being_fixed', 'n_answer_review', 'n_rework', 'n_resolved'], { ...S, hideAddButton: true }))
   add(listPage('Карточки замечаний (по сравнению)', 'remark_cards', 65, 'fas clipboard-list', m.remark_cards,
     ['comparison', 'document_ref', 'sheet', 'final_text', 'status'], S),
   card('Карточка замечания', 'remark_card', m.remark_cards, 66,

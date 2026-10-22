@@ -2,6 +2,7 @@ package cmp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -152,6 +153,22 @@ func TestRunWritesResultAndKeepsDecisions(t *testing.T) {
 	d2, _ := findDesc(f.discrepancies(c), "Глубина заложения")
 	if d2.Get("status") != StatusConfirmed {
 		t.Errorf("decision lost on re-run: %v", d2.Values)
+	}
+	// a request for a clarification keeps its comment across a re-run (ТЗ 3.2.7)
+	_ = f.Update("ns", ModDiscrepancies, d2.ID, idcheck.V("status", StatusClarify, "reviewer_comment", "уточнить у ГИПа, какая глубина верна"))
+	if err := r.Run(context.Background(), "ns", c); err != nil {
+		t.Fatal(err)
+	}
+	d3, _ := findDesc(f.discrepancies(c), "Глубина заложения")
+	if d3.Get("status") != StatusClarify || d3.Get("reviewer_comment") != "уточнить у ГИПа, какая глубина верна" {
+		t.Errorf("clarify decision or its comment lost on re-run: %v", d3.Values)
+	}
+	_ = f.Update("ns", ModDiscrepancies, d3.ID, idcheck.V("status", StatusConfirmed))
+	// the version of every uploaded file is its content hash; the sheet numbers are kept for the sheet → page links
+	for _, dr := range f.recs[ModDocuments] {
+		if dr.Get("file") != "" && dr.Get("file_hash") == "" {
+			t.Errorf("a document row must carry the hash of its file: %+v", dr.Values)
+		}
 	}
 	// volume info lands on the document rows
 	var coded bool
@@ -313,6 +330,22 @@ func TestImportObjectRemarksWorkflow(t *testing.T) {
 	if r2.Get("verdict") != VerdictNoDocument {
 		t.Errorf("a volume that is not loaded: %+v", r2.Values)
 	}
+	// where the remark leads: the volume it names and the region of the finding it was matched to (ТЗ 3.5)
+	var links []RemarkLocation
+	if err := json.Unmarshal([]byte(r1.Get("links_json")), &links); err != nil {
+		t.Fatalf("links_json: %v (%q)", err, r1.Get("links_json"))
+	}
+	var place, found bool
+	for _, l := range links {
+		place = place || l.Kind == LocPlace && l.DocID != ""
+		found = found || l.Kind == LocFinding && l.FindingID != "" && (l.RefBox != "" || l.TargetBox != "")
+	}
+	if !place || !found {
+		t.Errorf("remark 1 must lead to its volume and to the region of its finding: %+v", links)
+	}
+	if r2.Get("links_json") != "" {
+		t.Errorf("a volume that is not loaded leads nowhere: %q", r2.Get("links_json"))
+	}
 	// the journal
 	var journal []idcheck.Record
 	for _, j := range f.recs[ModExpertImports] {
@@ -377,5 +410,74 @@ func TestImportObjectRemarksWorkflow(t *testing.T) {
 	}
 	if len(f.recs[ModRemarkHistory]) != before {
 		t.Errorf("a re-import of the same export must not add history: %d → %d", before, len(f.recs[ModRemarkHistory]))
+	}
+}
+
+func TestCorrectionPackageOfAnIteration(t *testing.T) {
+	skipWithoutPoppler(t)
+	f := newFake()
+	r := &Runner{Backend: f, CacheDir: t.TempDir(), current: map[string]string{}}
+	object, v1 := objectWithComparison(t, f, r)
+	if n := len(f.recs[ModCorrection]); n != 0 {
+		t.Fatalf("the first comparison corrects nothing: %d packages", n)
+	}
+	f.files["101"] = xlsxBytes(t, "Выгрузка данных", [][]string{
+		exportHeader,
+		exportRow("30.1", "Глубина заложения фундамента 2,6 м не соответствует стадии П (2,4 м)", "Том 3, 2024-15-ГП – КЖ", "Откорректировано в соответствии со стадией П", "", "", "", "Устраняется заявителем", "1"),
+	})
+	f.recs[ModObjects][object].Values["remarks_file"] = []string{"101"}
+	if _, err := r.ImportObjectRemarks(context.Background(), "ns", object, false); err != nil {
+		t.Fatal(err)
+	}
+	remark := remarksByKey(f)["30.1"]
+
+	v2 := f.put(ModComparisons, idcheck.V("title", "v2", "status", "new", "object", object, "parent_comparison", v1))
+	addPackage(f, v2, "pack-1-v2")
+	if err := r.Run(context.Background(), "ns", v2); err != nil {
+		t.Fatal(err)
+	}
+	pk := f.recs[ModCorrection]
+	if len(pk) != 1 {
+		t.Fatalf("one package for the iteration: %d", len(pk))
+	}
+	var p idcheck.Record
+	for _, x := range pk {
+		p = x
+	}
+	if p.Get("comparison") != v2 || p.Get("object") != object || p.Get("iteration_no") != "2" || p.Get("runs") != "1" || p.Get("parent_comparison") != v1 {
+		t.Errorf("package: %+v", p.Values)
+	}
+	if p.Get("n_documents") == "0" || p.Get("n_documents") == "" || len(p.Values["documents"]) == 0 {
+		t.Errorf("the corrected files are the package: %+v", p.Values)
+	}
+	if p.Get("resolved") == "" || p.Get("resolved") == "0" {
+		t.Errorf("the depth was corrected in v2: %+v", p.Values)
+	}
+	linked := false
+	for _, id := range p.Values["remarks"] {
+		linked = linked || id == remark.ID
+	}
+	if !linked {
+		t.Errorf("the remark about the depth belongs to the package: %+v (remark %s)", p.Values["remarks"], remark.ID)
+	}
+	// the corrected edition fixed the difference and the designer answered: the remark waits for the specialist (ТЗ 3.7.3)
+	if got := f.recs[ModExpertise][remark.ID].Get("status"); got != RemarkAnswerRev {
+		t.Errorf("the remark must be handed over to the control by the new edition: %s", got)
+	}
+	// the same iteration again: the package is refreshed, not doubled, and keeps its history
+	if err := r.Run(context.Background(), "ns", v2); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.recs[ModCorrection]) != 1 {
+		t.Fatalf("a package per iteration: %d", len(f.recs[ModCorrection]))
+	}
+	for _, x := range f.recs[ModCorrection] {
+		var hist []PackageRun
+		if err := json.Unmarshal([]byte(x.Get("history_json")), &hist); err != nil || len(hist) != 2 || x.Get("runs") != "2" {
+			t.Errorf("history of the checks: %v %s", err, x.Get("history_json"))
+		}
+		if PackageSummary(x) == "" {
+			t.Error("summary")
+		}
 	}
 }

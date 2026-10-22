@@ -2,9 +2,12 @@ export const STATUS_LABEL = {
   awaiting_answer: 'Ответ не предоставлен',
   being_fixed: 'Устраняется заявителем',
   answer_review: 'Требуется рассмотрение ответа',
+  rework: 'Возвращено на доработку',
   resolved: 'Устранено',
 }
-export const STATUS_ORDER = ['awaiting_answer', 'being_fixed', 'answer_review', 'resolved']
+export const STATUS_ORDER = ['awaiting_answer', 'being_fixed', 'answer_review', 'rework', 'resolved']
+// эти смены статуса нужно объяснить (ТЗ 3.7.4): комментарий обязателен
+export const STATUS_NEEDS_REASON = ['resolved', 'rework']
 export const CRIT_LABEL = { critical: 'Критичное', noncritical: 'Некритичное' }
 export const VERDICT_LABEL = {
   still_differs: 'расхождение сохраняется',
@@ -19,6 +22,17 @@ export const AI_LABEL = {
   not_fixed: 'ИИ: не устранено',
   unclear: 'ИИ: судить нельзя',
 }
+
+// Результат проверки устранения (ТЗ 3.4.6): четыре значения; вывод системы и решение специалиста хранятся раздельно
+export const OUTCOME_LABEL = {
+  fixed: 'Устранено',
+  partial: 'Частично устранено',
+  not_fixed: 'Не устранено',
+  check: 'Требует проверки',
+}
+export const OUTCOME_ORDER = ['fixed', 'partial', 'not_fixed', 'check']
+// итоговое значение: решение специалиста, иначе вывод системы
+export const finalOutcome = (r) => r.outcomeFinal || r.outcome
 
 export function fmtDate (s) {
   if (!s) return ''

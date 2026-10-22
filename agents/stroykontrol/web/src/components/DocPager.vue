@@ -9,6 +9,7 @@ const props = defineProps({
   docId: String,
   page: Number,
   pageCount: Number,
+  sheetNo: Object, // PDF page → the sheet number of its title block
   openHref: String, // the single-document viewer (with the assistant) on the file and page on screen
 })
 const emit = defineEmits(['update:docId', 'update:page'])
@@ -32,7 +33,7 @@ const volume = computed(() => {
     <span v-if="volume" class="dp-volume" :title="volume">{{ volume }}</span>
     <span class="pager">
       <button :disabled="page <= 1" @click="emit('update:page', page - 1)">‹</button>
-      <span>стр. {{ page }} / {{ pageCount || '—' }}</span>
+      <span>стр. {{ page }} / {{ pageCount || '—' }}<template v-if="sheetNo && sheetNo[page]"> · лист {{ sheetNo[page] }}</template></span>
       <button :disabled="page >= pageCount" @click="emit('update:page', page + 1)">›</button>
     </span>
   </div>

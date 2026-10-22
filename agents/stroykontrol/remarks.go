@@ -27,11 +27,18 @@ func remarkFromIDRecord(r idcheck.Record) remarkRecord {
 		PrevAnswer: r.Get("prev_answer"), PrevRejectReason: r.Get("prev_reject_reason"), Discipline: r.Get("discipline"),
 		Expert: r.Get("expert"), Criticality: r.Get("criticality"), Proposals: r.Get("proposals"), Expected: r.Get("expected_result"),
 		Iterations: it, ChangedAt: r.Get("source_changed_at"), SourceStatus: r.Get("source_status"), Status: r.Get("status"),
-		Assignee: r.Get("assignee"), DueDate: r.Get("due_date"), Note: r.Get("pto_note"), Verdict: r.Get("verdict"),
+		Assignee: r.Get("assignee"), DueDate: r.Get("due_date"), Note: r.Get("pto_note"), EstimateH: r.Get("estimate_h"), Verdict: r.Get("verdict"),
 		Score: r.Get("match_score"), MatchNote: r.Get("match_note"), ClaimMismatch: r.Get("claim_mismatch") != "",
 		Archived: r.Get("archived") != "", Origin: r.Get("origin"),
 		AIVerdict: r.Get("ai_verdict"), AINote: r.Get("ai_note"), AIAt: r.Get("ai_at"),
+		OutcomeDecision: r.Get("outcome_decision"), OutcomeFinal: r.Get("outcome_final"), OutcomeComment: r.Get("outcome_comment"),
+		OutcomeBy: r.Get("outcome_by"), OutcomeAt: r.Get("outcome_at"),
 		Findings: nonEmpty(r.Values["matched_discrepancies"]), Documents: nonEmpty(r.Values["linked_documents"]),
+	}
+	rec.fillOutcome()
+	_ = json.Unmarshal([]byte(r.Get("links_json")), &rec.Links)
+	if rec.Links == nil {
+		rec.Links = []cmp.RemarkLocation{}
 	}
 	_ = json.Unmarshal([]byte(r.Get("volume_refs")), &rec.VolumeRefs)
 	if rec.VolumeRefs == nil {
@@ -118,6 +125,10 @@ func (c *ComposeClient) Board(ns, objectID string) (*boardOut, error) {
 			out.Comparisons = append(out.Comparisons, boardComparison{ID: cp.ID, Title: cp.Get("title")})
 		}
 	}
+	out.Dynamics = []cmp.StatusSnapshot{}
+	if dyn, err := cmp.Dynamics(b, ns, objectID); err == nil { // a namespace without the module has no dynamics yet
+		out.Dynamics = dyn
+	}
 	return out, nil
 }
 
@@ -137,7 +148,7 @@ func (c *ComposeClient) RemarkHistory(ns, objectID, remarkID string) ([]remarkHi
 	for _, h := range recs {
 		it, _ := strconv.Atoi(h.Get("iteration"))
 		out = append(out, remarkHistoryRecord{Iteration: it, Answer: h.Get("answer"), RejectReason: h.Get("reject_reason"), Status: h.Get("status"),
-			SourceStatus: h.Get("source_status"), At: h.Get("at"), Author: h.Get("author"), Source: h.Get("source")})
+			SourceStatus: h.Get("source_status"), At: h.Get("at"), Author: h.Get("author"), Source: h.Get("source"), Note: h.Get("note"), Kind: h.Get("kind")})
 	}
 	sort.SliceStable(out, func(i, j int) bool {
 		if out[i].At != out[j].At {
@@ -146,6 +157,13 @@ func (c *ComposeClient) RemarkHistory(ns, objectID, remarkID string) ([]remarkHi
 		return out[i].Iteration < out[j].Iteration
 	})
 	return out, nil
+}
+
+func valOr(p *string, def string) string {
+	if p != nil {
+		return *p
+	}
+	return def
 }
 
 func validDate(s string) bool {
@@ -166,11 +184,22 @@ func (c *ComposeClient) UpdateRemark(ns, objectID, remarkID string, p remarkPatc
 		return nil, fmt.Errorf("remark %s does not belong to object %s", remarkID, objectID)
 	}
 	v := idcheck.Values{}
+	statusComment := ""
+	if p.StatusComment != nil {
+		statusComment = strings.TrimSpace(*p.StatusComment)
+	}
 	if p.Status != nil {
-		if _, ok := cmp.RemarkStatusLabels[*p.Status]; !ok {
-			return nil, fmt.Errorf("unknown status %q", *p.Status)
+		if err := cmp.CheckStatusChange(cur.val("status"), *p.Status, statusComment); err != nil {
+			return nil, err
 		}
 		v["status"] = []string{*p.Status}
+	}
+	if p.EstimateH != nil {
+		est, err := cmp.ParseEstimate(*p.EstimateH)
+		if err != nil {
+			return nil, err
+		}
+		v["estimate_h"] = []string{est}
 	}
 	if p.Assignee != nil {
 		v["assignee"] = []string{strings.TrimSpace(*p.Assignee)}
@@ -184,12 +213,62 @@ func (c *ComposeClient) UpdateRemark(ns, objectID, remarkID string, p remarkPatc
 	if p.Note != nil {
 		v["pto_note"] = []string{*p.Note}
 	}
+	now := time.Now().UTC().Format("2006-01-02T15:04:05Z")
+	var decisionHistory *idcheck.Values
+	if p.OutcomeFinal != nil || p.OutcomeComment != nil {
+		raw, err := b.GetRecord(ns, cmp.ModExpertise, remarkID)
+		if err != nil {
+			return nil, err
+		}
+		cur := remarkFromIDRecord(*raw)
+		final, comment := cur.OutcomeFinal, cur.OutcomeComment
+		if p.OutcomeFinal != nil {
+			final = *p.OutcomeFinal
+		}
+		if p.OutcomeComment != nil {
+			comment = strings.TrimSpace(*p.OutcomeComment)
+		}
+		kind, err := cmp.ResolveDecision(cur.Outcome, final, comment)
+		if err != nil {
+			return nil, err
+		}
+		v["outcome_final"] = []string{final}
+		v["outcome_decision"] = []string{kind}
+		v["outcome_comment"] = []string{comment}
+		if final == "" {
+			v["outcome_by"], v["outcome_at"] = []string{""}, []string{""}
+		} else {
+			v["outcome_by"], v["outcome_at"] = []string{"специалист ПТО"}, []string{now}
+			hv := idcheck.V("remark", remarkID, "source", "решение по проверке: "+cmp.OutcomeLabels[final], "author", "специалист ПТО",
+				"note", comment, "status", cur.Status, "source_status", cur.SourceStatus, "kind", cmp.HistDecision)
+			it := max(cur.Iterations, 1)
+			hv["iteration"] = []string{strconv.Itoa(it)}
+			hv["at"] = []string{now}
+			decisionHistory = &hv
+		}
+	}
 	if err := b.Update(ns, cmp.ModExpertise, remarkID, v); err != nil {
 		return nil, err
 	}
+	if decisionHistory != nil {
+		if _, err := b.Create(ns, cmp.ModRemarkHistory, *decisionHistory); err != nil {
+			return nil, err
+		}
+	}
+	// assignments, due dates and notes are history too
+	for _, wc := range cmp.WorkChanges(cur.val("assignee"), cur.val("due_date"), cur.val("pto_note"), p.Assignee, p.DueDate, p.Note) {
+		hv := idcheck.V("remark", remarkID, "status", firstNonEmpty(valOr(p.Status, cur.val("status"))), "source", wc.Source, "author", "специалист ПТО",
+			"note", wc.Note, "kind", wc.Kind, "source_status", cur.val("source_status"))
+		it, _ := strconv.Atoi(cur.val("iterations"))
+		hv["iteration"] = []string{strconv.Itoa(max(it, 1))}
+		hv["at"] = []string{now}
+		if _, err := b.Create(ns, cmp.ModRemarkHistory, hv); err != nil {
+			return nil, err
+		}
+	}
 	if p.Status != nil && *p.Status != cur.val("status") {
 		it, _ := strconv.Atoi(cur.val("iterations"))
-		hv := idcheck.V("remark", remarkID, "status", *p.Status, "source", "вручную", "author", "специалист ПТО",
+		hv := idcheck.V("remark", remarkID, "status", *p.Status, "source", "вручную", "author", "специалист ПТО", "note", statusComment, "kind", cmp.HistStatus,
 			"source_status", cur.val("source_status"), "answer", cur.val("answer"), "reject_reason", cur.val("reject_reason"))
 		hv["iteration"] = []string{strconv.Itoa(max(it, 1))}
 		hv["at"] = []string{time.Now().UTC().Format("2006-01-02T15:04:05Z")}
@@ -325,9 +404,13 @@ func handleRemarkUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	out, err := compose.UpdateRemark(ns, body.ObjectID, body.ID, body.remarkPatch)
+	if err == nil && cmpRunner != nil && (body.Status != nil || body.DueDate != nil) {
+		_, _ = cmp.RecordSnapshot(cmpRunner.Backend, ns, body.ObjectID, time.Now()) // best effort: the dynamics
+	}
 	if err != nil {
 		code := http.StatusBadGateway
-		if strings.Contains(err.Error(), "unknown status") || strings.Contains(err.Error(), "dueDate") {
+		if strings.Contains(err.Error(), "unknown status") || strings.Contains(err.Error(), "dueDate") ||
+			strings.Contains(err.Error(), "outcome") || strings.Contains(err.Error(), "statusComment") || strings.Contains(err.Error(), "estimateH") {
 			code = http.StatusBadRequest
 		}
 		writeErr(w, code, err)

@@ -215,13 +215,20 @@ func ExtractPagesOCR(ctx context.Context, docID string, data []byte, cacheDir st
 			return pages, recognized, skipped, werr
 		}
 		if len(ws) < ocrMinWords || conf < ocrMinConf || wordLikeShare(ws) < ocrMinWordLike {
-			continue // a blank, graphic or badly recognized sheet: stays a drawing page
+			// a blank, graphic or badly recognized sheet: stays a drawing page; a sheet with many words that
+			// were not trusted is said so, a sheet with a few labels is just a drawing
+			if len(ws) >= ocrMinWords {
+				pages[i].OCRReject, pages[i].OCRConf = true, conf
+			}
+			continue
 		}
 		np := buildPage(docID, p.Number, p.W, p.H, ws)
 		if np.Drawing {
 			continue // recognized labels of a drawing are not text to compare
 		}
 		np.OCR = true
+		np.OCRConf = conf
+		np.Raster = true
 		for j := range np.Lines {
 			np.Lines[j].OCR = true
 		}

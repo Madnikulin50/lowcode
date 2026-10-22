@@ -121,6 +121,10 @@ let focused = false
 watch(() => cmp.comparison?.discrepancies, (list) => {
   if (focused || !list?.length) return
   focused = true
+  // a link from a remark (?findingID=): open that finding's sheets and mark its region
+  const wanted = new URLSearchParams(location.search).get('findingID')
+  const linked = wanted && list.find(d => d.id === wanted)
+  if (linked) { jump(linked); return }
   const first = list.slice().sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.severity] ?? 9) - ({ high: 0, medium: 1, low: 2 }[b.severity] ?? 9))
     .find(d => d.docRef && d.docTarget)
   if (first) jump(first, false)

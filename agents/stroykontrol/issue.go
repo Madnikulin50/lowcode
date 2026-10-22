@@ -33,7 +33,7 @@ func issueInputFor(ns, recordID string) (cmp.IssueInput, *comparisonRecord, erro
 	for _, d := range discs {
 		in.Findings = append(in.Findings, cmp.FindingIn{
 			ID: d.ID, Kind: d.Kind, Severity: d.Severity, Description: d.Description, Anchor: d.Anchor, Status: firstNonEmpty(d.Status, cmp.StatusNew),
-			IterState: d.IterState, DocRef: d.DocRef, DocTarget: d.DocTarget, PageRef: d.PageRef, PageTarget: d.PageTarget, PageNumber: d.PageNumber, Evidence: d.Evidence,
+			IterState: d.IterState, DocRef: d.DocRef, DocTarget: d.DocTarget, PageRef: d.PageRef, PageTarget: d.PageTarget, PageNumber: d.PageNumber, BoxRef: d.BboxRef, BoxTarget: d.BboxTarget, Evidence: d.Evidence,
 		})
 	}
 	return in, rec, nil

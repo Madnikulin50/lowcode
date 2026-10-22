@@ -109,6 +109,8 @@ func KindLabel(kind string) string {
 		return "Оформление"
 	case KindCrossVolume:
 		return "Между томами"
+	case KindElement:
+		return "Марки элементов"
 	}
 	return kind
 }
@@ -131,6 +133,8 @@ func DecisionLabel(s string) string {
 		return "Подтверждено"
 	case StatusRejected:
 		return "Отклонено"
+	case StatusClarify:
+		return "Требует уточнения"
 	}
 	return "К проверке"
 }

@@ -43,8 +43,10 @@ export function useViewerState () {
   })
 
   function clampPages (pdCount, rdCount) {
-    state.pdPage = Math.min(Math.max(state.pdPage, 1), Math.max(pdCount, 1))
-    state.rdPage = Math.min(Math.max(state.rdPage, 1), Math.max(rdCount, 1))
+    // An unknown count (the document is still loading after a jump to another
+    // file) must not reset the page that was just chosen.
+    if (pdCount > 0) state.pdPage = Math.min(Math.max(state.pdPage, 1), pdCount)
+    if (rdCount > 0) state.rdPage = Math.min(Math.max(state.rdPage, 1), rdCount)
   }
 
   function zoomLevel () {

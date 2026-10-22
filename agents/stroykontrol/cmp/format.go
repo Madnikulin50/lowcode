@@ -68,6 +68,10 @@ func FormatChecks(d *Document, v *Volume, side string) []Finding {
 	out = append(out, checkVolumeCode(d, v, side)...)
 	out = append(out, checkDuplicates(d, v, side)...)
 	out = append(out, checkContents(d, v, side)...)
+	out = append(out, checkReferences(d, v, side)...)
+	out = append(out, checkDeclaredAppendices(d, v, side)...)
+	out = append(out, checkEmptySections(d, v, side)...)
+	out = append(out, checkDrawingList(d, v, side)...)
 	return out
 }
 
@@ -205,11 +209,16 @@ func contentWords(s string) []string {
 	return out
 }
 
-// checkContents: the «Содержание тома» refers to sheets as "стр. N" — every reference must lead to
-// a page of the file, and the section named must be on a text page it points to.
-func checkContents(d *Document, v *Volume, side string) []Finding {
-	// the contents page: within the first pages of the volume, with the heading "Содержание тома"
-	head := 0
+// contentsEntry is one line of the «Содержание тома»: the text and the page it points to.
+type contentsEntry struct {
+	text string
+	page int
+}
+
+// contentsOf finds the contents page of a volume (within its first pages, headed «Содержание тома»)
+// and reads its entries ("наименование … стр. N"). head is 0 when there is no contents page or it
+// has too few entries to be read.
+func contentsOf(d *Document, v *Volume) (head int, entries []contentsEntry) {
 	for pn := v.FirstPage; pn <= v.LastPage && pn <= len(d.Pages) && pn < v.FirstPage+6; pn++ {
 		for _, l := range d.Pages[pn-1].Lines {
 			if !l.Stamp && contentsHeadRe.MatchString(l.Key) && len([]rune(l.Text)) < 40 {
@@ -221,13 +230,8 @@ func checkContents(d *Document, v *Volume, side string) []Finding {
 		}
 	}
 	if head == 0 {
-		return nil
+		return 0, nil
 	}
-	type entry struct {
-		text string
-		page int
-	}
-	var entries []entry
 	var pending []string
 	for _, l := range d.Pages[head-1].Lines {
 		if l.Stamp || skipLine(l.Key) {
@@ -238,7 +242,7 @@ func checkContents(d *Document, v *Volume, side string) []Finding {
 			text := strings.TrimSpace(strings.Join(append(pending, m[1]), " "))
 			pending = nil
 			if n > 0 {
-				entries = append(entries, entry{text, n})
+				entries = append(entries, contentsEntry{text, n})
 			}
 			continue
 		}
@@ -252,6 +256,16 @@ func checkContents(d *Document, v *Volume, side string) []Finding {
 		}
 	}
 	if len(entries) < 3 {
+		return 0, nil
+	}
+	return head, entries
+}
+
+// checkContents: the «Содержание тома» refers to sheets as "стр. N" — every reference must lead to
+// a page of the file, and the section named must be on a text page it points to.
+func checkContents(d *Document, v *Volume, side string) []Finding {
+	head, entries := contentsOf(d, v)
+	if head == 0 {
 		return nil
 	}
 	var out []Finding

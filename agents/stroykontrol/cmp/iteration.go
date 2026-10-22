@@ -11,7 +11,7 @@ const (
 // Prior is a finding of the previous iteration as it is stored.
 type Prior struct {
 	Fingerprint string
-	Status      string // the reviewer's decision: new | confirmed | rejected
+	Status      string // the reviewer's decision: new | confirmed | rejected | clarify
 	Values      Values // the stored record, to re-create a resolved finding
 }
 

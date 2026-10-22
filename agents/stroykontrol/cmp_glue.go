@@ -116,7 +116,7 @@ func handleCmpStatus(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"recordID": rec, "status": st})
 }
 
-var validStatuses = map[string]bool{cmp.StatusNew: true, cmp.StatusConfirmed: true, cmp.StatusRejected: true}
+var validStatuses = map[string]bool{cmp.StatusNew: true, cmp.StatusConfirmed: true, cmp.StatusRejected: true, cmp.StatusClarify: true}
 
 func handleDiscrepancyStatus(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -124,6 +124,7 @@ func handleDiscrepancyStatus(w http.ResponseWriter, r *http.Request) {
 		RecordID    string `json:"recordID"`
 		ID          string `json:"id"`
 		Status      string `json:"status"`
+		Comment     string `json:"comment"`
 	}
 	if err := decodeJSON(r, &body); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
@@ -131,14 +132,19 @@ func handleDiscrepancyStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	ns := firstNonEmpty(body.NamespaceID, defaultNamespaceID)
 	if ns == "" || body.RecordID == "" || body.ID == "" || !validStatuses[body.Status] {
-		writeErr(w, http.StatusBadRequest, fmt.Errorf("recordID, id and status (new|confirmed|rejected) are required"))
+		writeErr(w, http.StatusBadRequest, fmt.Errorf("recordID, id and status (new|confirmed|rejected|clarify) are required"))
 		return
 	}
-	if err := compose.SetDiscrepancyStatus(ns, body.RecordID, body.ID, body.Status); err != nil {
+	body.Comment = strings.TrimSpace(body.Comment)
+	if body.Status == cmp.StatusClarify && body.Comment == "" {
+		writeErr(w, http.StatusBadRequest, fmt.Errorf("comment is required: say what has to be clarified"))
+		return
+	}
+	if err := compose.SetDiscrepancyStatus(ns, body.RecordID, body.ID, body.Status, body.Comment); err != nil {
 		writeErr(w, http.StatusBadGateway, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"id": body.ID, "status": body.Status})
+	writeJSON(w, http.StatusOK, map[string]string{"id": body.ID, "status": body.Status, "comment": body.Comment})
 }
 
 // handleRemarkCreate drafts a remark card from the selected discrepancies,

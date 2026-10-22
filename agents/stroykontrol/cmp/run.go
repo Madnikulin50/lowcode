@@ -34,6 +34,9 @@ const (
 	StatusNew       = "new"
 	StatusConfirmed = "confirmed"
 	StatusRejected  = "rejected"
+	// StatusClarify: the specialist cannot decide and asks for a clarification (ТЗ 3.2.7); needs a comment.
+	// The finding stays open, is not a remark and keeps the decision across re-runs and iterations.
+	StatusClarify = "clarify"
 )
 
 // Input is one source file of a comparison.
@@ -56,6 +59,8 @@ type AnalyzeOptions struct {
 	Mode string
 	// Pairing is the manual pairing of volumes and page ranges
 	Pairing []ManualPair
+	// Exclude are the areas of pages left out of the comparison
+	Exclude []Region
 }
 
 // Analyze extracts every PDF input and compares the target set against the
@@ -99,7 +104,7 @@ func AnalyzeWith(inputs []Input, cacheDir string, o AnalyzeOptions) (*Result, er
 		}
 		return nil, fmt.Errorf("нужен хотя бы один PDF-файл ПД и один PDF-файл РД (сейчас ПД: %d, РД: %d)", len(refs), len(tgts))
 	}
-	opt := Options{Mode: o.Mode, Pairing: o.Pairing}
+	opt := Options{Mode: o.Mode, Pairing: o.Pairing, Exclude: o.Exclude}
 	if o.Rasterize != nil {
 		opt.Imager = func(docID string, page int) (image.Image, error) { return o.Rasterize(data[docID], page) }
 	}
@@ -310,12 +315,16 @@ func (r *Runner) Run(ctx context.Context, ns, id string) error {
 	}
 	cmpMode := ModeStages
 	var pairing []ManualPair
+	var exclude []Region
 	if rec, err := b.GetRecord(ns, ModComparisons, id); err == nil {
 		if rec.Get("kind") == ModeVersions {
 			cmpMode = ModeVersions
 		}
 		var perr error
 		if pairing, perr = ParsePairing(rec.Get("pairing")); perr != nil {
+			return b.Update(ns, ModComparisons, id, idcheck.V("status", "new", "comment", perr.Error()))
+		}
+		if exclude, perr = ParseRegions(rec.Get("excluded_regions")); perr != nil {
 			return b.Update(ns, ModComparisons, id, idcheck.V("status", "new", "comment", perr.Error()))
 		}
 	}
@@ -333,7 +342,7 @@ func (r *Runner) Run(ctx context.Context, ns, id string) error {
 	}
 
 	r.setStatus(id, "сравнение")
-	res, err := AnalyzeWith(inputs, r.CacheDir, AnalyzeOptions{Rasterize: r.Rasterize, OCR: r.OCR, Mode: cmpMode, Pairing: pairing})
+	res, err := AnalyzeWith(inputs, r.CacheDir, AnalyzeOptions{Rasterize: r.Rasterize, OCR: r.OCR, Mode: cmpMode, Pairing: pairing, Exclude: exclude})
 	if err != nil {
 		// not an infrastructure failure: tell the user what is missing
 		return b.Update(ns, ModComparisons, id, idcheck.V("status", "new", "comment", err.Error()))
@@ -351,6 +360,10 @@ func (r *Runner) Run(ctx context.Context, ns, id string) error {
 		if _, err := r.CheckSets(ctx, ns, rec.Get("object")); err != nil {
 			log.Printf("cmp: sets check of object %s: %v", rec.Get("object"), err)
 		}
+	}
+	// an iteration is the corrected edition: it becomes a correction package and the remarks it concerns are re-checked
+	if err := r.RecordCorrectionPackage(ctx, ns, id); err != nil {
+		log.Printf("cmp: correction package of %s: %v", id, err)
 	}
 	return nil
 }
@@ -370,6 +383,17 @@ func (r *Runner) persistDocuments(ns string, docs []docRef, inputs []Input, res 
 		}
 		vs := res.Volumes[d.ID]
 		v := idcheck.V("pages", strconv.Itoa(pages[d.ID]))
+		v["sheet_map"] = []string{FormatSheetMap(res.Sheets[d.ID])}
+		if !d.Manual {
+			existing, _ := r.Backend.GetRecord(ns, ModDocuments, d.ID)
+			for _, in := range inputs {
+				if in.ID == d.ID {
+					for k, x := range EditionValues(existing, hashKey(in.Data), vs) {
+						v[k] = x
+					}
+				}
+			}
+		}
 		if !d.Manual && len(vs) > 0 {
 			var codes, titles []string
 			for _, x := range vs {
@@ -436,10 +460,13 @@ func (r *Runner) persistResult(ns, id string, res *Result) error {
 		return err
 	}
 	// carry the reviewer's decisions over to findings that are still there
-	status := map[string]string{}
+	status, comments := map[string]string{}, map[string]string{}
 	for _, o := range old {
 		if fp, st := o.Get("fingerprint"), o.Get("status"); fp != "" && st != "" && st != StatusNew {
 			status[fp] = st
+			if c := o.Get("reviewer_comment"); c != "" {
+				comments[fp] = c
+			}
 		}
 	}
 	for _, o := range old {
@@ -449,7 +476,7 @@ func (r *Runner) persistResult(ns, id string, res *Result) error {
 	}
 
 	// a later iteration of the same pair: what the corrections fixed, what is still open
-	state, resolved, iterNo, err := r.iteration(ns, id, res, status)
+	state, resolved, iterNo, err := r.iteration(ns, id, res, status, comments)
 	if err != nil {
 		return err
 	}
@@ -467,6 +494,9 @@ func (r *Runner) persistResult(ns, id string, res *Result) error {
 			st = StatusNew
 		}
 		v["status"] = []string{st}
+		if c := comments[f.Fingerprint]; c != "" && st != StatusNew {
+			v["reviewer_comment"] = []string{c}
+		}
 		if s := state[f.Fingerprint]; s != "" {
 			v["iter_state"] = []string{s}
 		}
@@ -529,7 +559,7 @@ func (r *Runner) persistResult(ns, id string, res *Result) error {
 
 // iteration compares the findings with those of the comparison's parent
 // (the previous iteration). iterNo is 0 when there is no parent.
-func (r *Runner) iteration(ns, id string, res *Result, status map[string]string) (state map[string]string, resolved []Prior, iterNo int, err error) {
+func (r *Runner) iteration(ns, id string, res *Result, status, comments map[string]string) (state map[string]string, resolved []Prior, iterNo int, err error) {
 	b := r.Backend
 	rec, err := b.GetRecord(ns, ModComparisons, id)
 	if err != nil {
@@ -558,6 +588,9 @@ func (r *Runner) iteration(ns, id string, res *Result, status map[string]string)
 			continue // closed in the parent already
 		}
 		prior = append(prior, Prior{Fingerprint: p.Get("fingerprint"), Status: p.Get("status"), Values: p.Values})
+		if fp, c := p.Get("fingerprint"), p.Get("reviewer_comment"); fp != "" && c != "" && comments[fp] == "" {
+			comments[fp] = c
+		}
 	}
 	st, inherited, resolved := Carry(prior, res.Findings)
 	for fp, s := range inherited {

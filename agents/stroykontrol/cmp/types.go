@@ -62,7 +62,8 @@ const (
 	KindTableRow    = "table_row"
 	KindParam       = "param"
 	KindDrawing     = "drawing"
-	KindVOR         = "vor" // bill of quantities / specification consistency
+	KindElement     = "element" // марки проектных элементов: пропали, появились
+	KindVOR         = "vor"     // bill of quantities / specification consistency
 	KindNotRelease  = "not_released"
 	KindScopeDiff   = "scope_diff"
 	KindFormat      = "format"       // formatting checks inside one stage (numbering, contents, шифр)
@@ -135,6 +136,13 @@ type Page struct {
 	Cover bool
 	// OCR: the text comes from recognition of a scan.
 	OCR bool
+	// OCRConf is tesseract's mean word confidence (0..100) of a recognized page; OCRReject: the page
+	// had no text layer and was read, but not trusted (too few words, low confidence, symbols instead
+	// of words), so it stays a drawing page. Both are set in memory by ExtractPagesOCR.
+	OCRConf   float64
+	OCRReject bool
+	// Raster: a page that carries a full-size image (a scan or a raster drawing), not only vector text.
+	Raster bool
 	// Words with their boxes, kept for table pages (not for drawing sheets).
 	Words []Word `json:",omitempty"`
 }
@@ -172,6 +180,12 @@ type Volume struct {
 	Lines     []Line // compared lines (title block, cover and drawing sheets excluded)
 	Drawings  []int  // page numbers of drawing sheets (compared as images)
 	Items     []Item // positions of the ВОР and specification tables (compared as tables)
+	// Edition: the change number of the volume (0 — the original edition) and where it was read from;
+	// the part, book and subsection the title pages name
+	Change       int
+	ChangeSource string
+	Part, Book   string
+	Subsection   string
 }
 
 // Evidence is the explanation attached to a finding: which fragments the
@@ -210,6 +224,10 @@ type VolumeInfo struct {
 	Title string
 	From  int
 	To    int
+	// the edition and the classification read from the title pages (see edition.go)
+	Change     int
+	Part, Book string
+	Subsection string
 }
 
 // PairInfo says which volumes were compared with which.
@@ -243,7 +261,9 @@ type Stats struct {
 type Result struct {
 	Findings []Finding
 	Volumes  map[string][]VolumeInfo // docID → volumes
-	Pairs    []PairInfo
+	// Sheets: docID → PDF page → the sheet number printed in the title block (only the pages where it was read)
+	Sheets map[string]map[int]int
+	Pairs  []PairInfo
 	// RefOnly / TargetOnly are the volumes left without a counterpart
 	RefOnly    []VolumeInfo
 	TargetOnly []VolumeInfo

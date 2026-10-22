@@ -18,6 +18,8 @@ type Options struct {
 	Pairing     []ManualPair // pairs made by hand: they are compared as told, the rest is matched automatically
 	NoFormat    bool         // skip the formatting checks of each side (numbering, contents, шифр, duplicates)
 	NoCross     bool         // skip the consistency checks between the volumes of one side
+	NoElements  bool         // skip the comparison of the marks of design elements (and the check of the specification against the drawings)
+	Exclude     []Region     // areas of pages left out of the comparison (text inside them is not compared, drawing differences there are not reported)
 }
 
 const (
@@ -42,7 +44,8 @@ func fingerprint(parts ...string) string {
 }
 
 func volInfo(v *Volume) VolumeInfo {
-	return VolumeInfo{DocID: v.DocID, Index: v.Index, Code: v.RawCode, Title: v.Title, From: v.FirstPage, To: v.LastPage}
+	return VolumeInfo{DocID: v.DocID, Index: v.Index, Code: v.RawCode, Title: v.Title, From: v.FirstPage, To: v.LastPage,
+		Change: v.Change, Part: v.Part, Book: v.Book, Subsection: v.Subsection}
 }
 
 func volLabel(v *Volume) string {
@@ -65,13 +68,20 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 	if opt.MaxFindings <= 0 {
 		opt.MaxFindings = 400
 	}
-	res := &Result{Volumes: map[string][]VolumeInfo{}}
+	res := &Result{Volumes: map[string][]VolumeInfo{}, Sheets: map[string]map[int]int{}}
+	if len(opt.Exclude) > 0 {
+		var nr, nt int
+		refDocs, nr = withoutRegions(refDocs, SideRef, opt.Exclude)
+		tgtDocs, nt = withoutRegions(tgtDocs, SideTarget, opt.Exclude)
+		res.Notes = append(res.Notes, fmt.Sprintf("Исключаемых областей: %d; из сравнения убрано строк текста: %d (ПД %d, РД %d).", len(opt.Exclude), nr+nt, nr, nt))
+	}
 
 	var refVols, tgtVols []*Volume
 	collect := func(docs []*Document, side string, dst *[]*Volume) int {
 		pages := 0
 		for _, d := range docs {
 			pages += len(d.Pages)
+			res.Sheets[d.ID] = SheetMap(d.Pages)
 			for _, v := range DetectVolumes(d) {
 				*dst = append(*dst, v)
 				res.Volumes[d.ID] = append(res.Volumes[d.ID], volInfo(v))
@@ -79,6 +89,7 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 		}
 		return pages
 	}
+	res.Notes = append(res.Notes, scanNotes(append(append([]*Document{}, refDocs...), tgtDocs...))...)
 	res.Stats.RefPages = collect(refDocs, SideRef, &refVols)
 	res.Stats.TargetPages = collect(tgtDocs, SideTarget, &tgtVols)
 	// formatting checks run on the volumes as found, before manual slicing changes them
@@ -90,6 +101,10 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 		fr, rr := crossVolume(refDocs, refVols, SideRef)
 		ft, rt := crossVolume(tgtDocs, tgtVols, SideTarget)
 		formatFs = append(formatFs, append(fr, ft...)...)
+		if !opt.NoElements {
+			formatFs = append(formatFs, specDrawingFindings(refDocs, refVols, SideRef)...)
+			formatFs = append(formatFs, specDrawingFindings(tgtDocs, tgtVols, SideTarget)...)
+		}
 		res.Params = append(rr, rt...)
 	}
 
@@ -111,8 +126,18 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 		forced, refVols, tgtVols, notes = applyPairing(opt.Pairing, docByID, side, refVols, tgtVols)
 		res.Notes = append(res.Notes, notes...)
 	}
+	// an older edition of a volume that is there again with a higher change number is not compared
+	var dropRef, dropTgt []*Volume
+	refVols, dropRef = supersede(refVols)
+	tgtVols, dropTgt = supersede(tgtVols)
+	for _, n := range []string{supersededNote(SideRef, dropRef), supersededNote(SideTarget, dropTgt)} {
+		if n != "" {
+			res.Notes = append(res.Notes, n)
+		}
+	}
 	m := Match(refVols, tgtVols)
 	m.Pairs = append(forced, m.Pairs...)
+	res.Notes = append(res.Notes, editionNotes(m.Pairs, opt.Mode)...)
 	for _, v := range m.RefOnly {
 		res.RefOnly = append(res.RefOnly, volInfo(v))
 	}
@@ -132,7 +157,10 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 
 		fs := comparePair(p, &res.Stats)
 		fs = append(fs, tableFindings(p, &res.Stats)...)
-		fs = append(fs, compareDrawings(p, docByID, opt.Imager, &res.Stats)...)
+		fs = append(fs, compareDrawings(p, docByID, opt.Imager, &res.Stats, opt.Exclude)...)
+		if !opt.NoElements {
+			fs = append(fs, elementFindings(p, docByID)...)
+		}
 		for _, f := range fs {
 			if f.PageRef > 0 {
 				differing[fmt.Sprintf("%s:%d", f.RefDoc, f.PageRef)] = true
@@ -162,11 +190,20 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 
 	for i := range findings {
 		if f := &findings[i]; f.OCR {
-			// recognized text can carry misreadings: never "high", and say why
+			// recognized text can carry misreadings: never "high", and say why; the weaker the recognition
+			// of the page, the less the finding is worth
+			conf := ocrConfOf(docByID, f)
 			if f.Severity == "high" {
 				f.Severity = "medium"
 			}
-			f.Description += " [по распознанному тексту скана]"
+			if conf > 0 && conf < ocrWeakConf {
+				f.Severity = "low"
+			}
+			if conf > 0 {
+				f.Description += fmt.Sprintf(" [по распознанному тексту скана, достоверность %.0f %%]", conf)
+			} else {
+				f.Description += " [по распознанному тексту скана]"
+			}
 			f.Evidence.Rule += "+ocr"
 		}
 		if findings[i].Fingerprint == "" {
@@ -444,7 +481,7 @@ func aspect(s sheet) float64 {
 // this is done only when both sides have the same number of drawing sheets
 // of the same proportions; otherwise one informational finding asks for a
 // visual check — a wrong pairing would produce nothing but noise.
-func compareDrawings(p *Pair, docs map[string]*Document, img Imager, st *Stats) []Finding {
+func compareDrawings(p *Pair, docs map[string]*Document, img Imager, st *Stats, skip []Region) []Finding {
 	refSheets := drawingSheets([]*Volume{p.Ref}, docs)
 	tgtSheets := drawingSheets(p.Targets, docs)
 	st.DrawingRef += len(refSheets)
@@ -468,54 +505,250 @@ func compareDrawings(p *Pair, docs map[string]*Document, img Imager, st *Stats) 
 		}
 		return []Finding{f}
 	}
-	if len(refSheets) != len(tgtSheets) {
+	pairs, onlyRef, onlyTgt, by := pairSheets(refSheets, tgtSheets)
+	if pairs == nil && img != nil {
+		// no numbers to go by and a different count of sheets: a sheet is looked for by what is drawn on it
+		pairs, onlyRef, onlyTgt = pairByContent(refSheets, tgtSheets, img)
+		by = " (листы сопоставлены по содержимому)"
+	}
+	if pairs == nil {
 		return visual("число листов различается, автоматическое сопоставление недоступно")
 	}
-	if img == nil {
-		return visual("сравнение изображений недоступно")
-	}
 	var out []Finding
-	n := len(refSheets)
+	if len(onlyRef)+len(onlyTgt) > 0 {
+		basis := "по номерам листов в основных надписях"
+		if strings.Contains(by, "содержимому") {
+			basis = "по содержимому (чертежи не похожи ни на один лист другой стороны)"
+		}
+		out = append(out, visual(fmt.Sprintf("%s не нашлось пары: только в ПД — %s; только в РД — %s", basis, sheetNos(onlyRef), sheetNos(onlyTgt)))...)
+	}
+	if img == nil {
+		return append(out, visual("сравнение изображений недоступно")...)
+	}
+	n := len(pairs)
 	if n > maxDrawingPairs {
 		n = maxDrawingPairs
 	}
 	skipped := 0
+	mismatch := ""
 	for i := 0; i < n; i++ {
-		rs, ts := refSheets[i], tgtSheets[i]
-		ra, ta := aspect(rs), aspect(ts)
-		if ra == 0 || ta == 0 || math.Abs(ra-ta)/ra > 0.05 {
-			skipped++
-			continue
-		}
+		rs, ts := pairs[i][0], pairs[i][1]
 		ia, err1 := img(rs.doc.ID, rs.page)
 		ib, err2 := img(ts.doc.ID, ts.page)
-		if err1 != nil || err2 != nil {
+		if err1 != nil || err2 != nil || ia == nil || ib == nil {
 			continue
 		}
-		boxes := DiffImages(ia, ib)
-		if len(boxes) > 3 {
-			boxes = boxes[:3]
+		// the sheets are compared after their contents are aligned (a shifted frame, another scale or paper do not count)
+		onA, onB, aligned := AlignedDiff(ia, ib)
+		ra, ta := aspect(rs), aspect(ts)
+		if !aligned && (ra == 0 || ta == 0 || math.Abs(ra-ta)/ra > 0.05) {
+			skipped++
+			if mismatch == "" {
+				rp, tp := rs.doc.Pages[rs.page-1], ts.doc.Pages[ts.page-1]
+				mismatch = fmt.Sprintf(" (например, стр. %d ПД — %s, стр. %d РД — %s)", rs.page, SheetFormat(rp.W, rp.H), ts.page, SheetFormat(tp.W, tp.H))
+			}
+			continue
 		}
-		for k, b := range boxes {
-			b := b
+		type regionPair struct{ a, b Box }
+		var regions []regionPair
+		for k := range onA {
+			a, b := onA[k], onB[k]
+			if len(skip) > 0 && (excluded(skip, SideRef, rs.doc.ID, rs.page, a) || excluded(skip, SideTarget, ts.doc.ID, ts.page, b)) {
+				continue // an excluded area of either sheet
+			}
+			regions = append(regions, regionPair{a, b})
+		}
+		if len(regions) > 3 {
+			regions = regions[:3]
+		}
+		rule := "raster-diff"
+		how := ""
+		if aligned {
+			rule, how = "raster-diff+aligned", " (листы сравнены после совмещения по содержимому)"
+		}
+		for k, rg := range regions {
+			ba, bb := rg.a, rg.b
 			sev := "low"
-			if (b.X1-b.X0)*(b.Y1-b.Y0) >= 0.01 {
+			if (ba.X1-ba.X0)*(ba.Y1-ba.Y0) >= 0.01 {
 				sev = "medium"
 			}
 			out = append(out, Finding{
 				Kind: KindDrawing, Type: "drawing", Severity: sev,
-				Description: fmt.Sprintf("Чертёж: область отличается между ПД (стр. %d) и РД (стр. %d).", rs.page, ts.page),
+				Description: fmt.Sprintf("Чертёж: область отличается между ПД (стр. %d) и РД (стр. %d)%s%s.", rs.page, ts.page, by, how),
 				RefDoc:      rs.doc.ID, TargetDoc: ts.doc.ID, PageRef: rs.page, PageTarget: ts.page,
-				BoxRef: &b, BoxTarget: &b,
-				Evidence:    Evidence{VolumeRef: label, Rule: "raster-diff"},
-				Fingerprint: fingerprint(KindDrawing, p.Ref.Code, fmt.Sprint(i), fmt.Sprint(k), b.String()),
+				BoxRef: &ba, BoxTarget: &bb,
+				Evidence:    Evidence{VolumeRef: label, Rule: rule},
+				Fingerprint: fingerprint(KindDrawing, p.Ref.Code, fmt.Sprint(i), fmt.Sprint(k), ba.String()),
 			})
 		}
 	}
-	if skipped > 0 || len(refSheets) > n {
-		out = append(out, visual(fmt.Sprintf("часть листов не сопоставлена (разные пропорции: %d, сверх лимита %d: %d)", skipped, maxDrawingPairs, len(refSheets)-n))...)
+	if skipped > 0 || len(pairs) > n {
+		out = append(out, visual(fmt.Sprintf("часть листов не сопоставлена (разные пропорции: %d%s, сверх лимита %d: %d)", skipped, mismatch, maxDrawingPairs, len(pairs)-n))...)
 	}
 	return out
+}
+
+// sheetNo is the sheet number of a drawing sheet from its title block (0: not read).
+func sheetNo(s sheet) int {
+	if s.page < 1 || s.page > len(s.doc.Pages) {
+		return 0
+	}
+	no, _ := sheetNumber(s.doc.Pages[s.page-1])
+	return no
+}
+
+func sheetNos(ss []sheet) string {
+	if len(ss) == 0 {
+		return "нет"
+	}
+	var parts []string
+	for i, s := range ss {
+		if i == 8 {
+			parts = append(parts, fmt.Sprintf("… (всего %d)", len(ss)))
+			break
+		}
+		if no := sheetNo(s); no > 0 {
+			parts = append(parts, fmt.Sprintf("лист %d (стр. %d)", no, s.page))
+		} else {
+			parts = append(parts, fmt.Sprintf("стр. %d", s.page))
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
+// contentPairMax: how different two sheets may be (share of the grid) and still be taken for the same sheet.
+const contentPairMax = 0.30
+
+// maxContentPairs bounds the sheet pairs tried by their content (every sheet against every sheet).
+const maxContentPairs = 2500
+
+// pairByContent pairs sheets by how alike their drawings are once aligned: the best pair first, a sheet
+// in one pair only. Sheets with no sufficiently alike sheet on the other side stay unpaired. nil when
+// there are too many sheets to try.
+func pairByContent(refs, tgts []sheet, img Imager) (pairs [][2]sheet, onlyRef, onlyTgt []sheet) {
+	if len(refs) == 0 || len(tgts) == 0 || len(refs)*len(tgts) > maxContentPairs {
+		return nil, nil, nil
+	}
+	// every picture is read once and only its signature is kept: a drawing sheet is a very large image
+	sig := func(s sheet) SheetSig {
+		im, err := img(s.doc.ID, s.page)
+		if err != nil || im == nil {
+			return SheetSig{}
+		}
+		return SignatureOf(im)
+	}
+	ri, ti := make([]SheetSig, len(refs)), make([]SheetSig, len(tgts))
+	for i, s := range refs {
+		ri[i] = sig(s)
+	}
+	for j, s := range tgts {
+		ti[j] = sig(s)
+	}
+	type cand struct {
+		i, j  int
+		score float64
+	}
+	var cands []cand
+	for i := range refs {
+		for j := range tgts {
+			if sc := ri[i].Change(ti[j]); sc <= contentPairMax {
+				cands = append(cands, cand{i, j, sc})
+			}
+		}
+	}
+	sort.SliceStable(cands, func(a, b int) bool { return cands[a].score < cands[b].score })
+	usedR, usedT := map[int]bool{}, map[int]bool{}
+	for _, c := range cands {
+		if usedR[c.i] || usedT[c.j] {
+			continue
+		}
+		usedR[c.i], usedT[c.j] = true, true
+		pairs = append(pairs, [2]sheet{refs[c.i], tgts[c.j]})
+	}
+	if len(pairs) == 0 {
+		return nil, nil, nil
+	}
+	sort.SliceStable(pairs, func(a, b int) bool { return pairs[a][0].page < pairs[b][0].page })
+	for i, s := range refs {
+		if !usedR[i] {
+			onlyRef = append(onlyRef, s)
+		}
+	}
+	for j, s := range tgts {
+		if !usedT[j] {
+			onlyTgt = append(onlyTgt, s)
+		}
+	}
+	return pairs, onlyRef, onlyTgt
+}
+
+// pairSheets pairs the drawing sheets of two volumes: by the sheet numbers of the title blocks when
+// most sheets on both sides have a readable and unique one (a sheet that was inserted, removed or moved
+// keeps its pair), otherwise by position when both sides have the same number of sheets. nil pairs
+// means that no pairing is possible. by says what the pairs rest on, for the text of a finding.
+func pairSheets(refs, tgts []sheet) (pairs [][2]sheet, onlyRef, onlyTgt []sheet, by string) {
+	numbered := func(ss []sheet) (map[int]sheet, int, bool) {
+		m := map[int]sheet{}
+		read := 0
+		for _, s := range ss {
+			no := sheetNo(s)
+			if no == 0 {
+				continue
+			}
+			read++
+			if _, dup := m[no]; dup {
+				return nil, 0, false // the numbers restart inside the volume: they do not identify a sheet
+			}
+			m[no] = s
+		}
+		return m, read, true
+	}
+	rm, rn, rok := numbered(refs)
+	tm, tn, tok := numbered(tgts)
+	if rok && tok && len(refs) > 0 && len(tgts) > 0 && float64(rn) >= 0.6*float64(len(refs)) && float64(tn) >= 0.6*float64(len(tgts)) {
+		for _, r := range refs {
+			no := sheetNo(r)
+			if t, ok := tm[no]; ok && no > 0 {
+				pairs = append(pairs, [2]sheet{r, t})
+			} else {
+				onlyRef = append(onlyRef, r)
+			}
+		}
+		for _, t := range tgts {
+			if no := sheetNo(t); no == 0 || rm[no].doc == nil {
+				onlyTgt = append(onlyTgt, t)
+			}
+		}
+		if len(pairs) > 0 {
+			return pairs, onlyRef, onlyTgt, " (листы сопоставлены по номерам в основных надписях)"
+		}
+		pairs, onlyRef, onlyTgt = nil, nil, nil
+	}
+	if len(refs) == len(tgts) && len(refs) > 0 {
+		for i := range refs {
+			pairs = append(pairs, [2]sheet{refs[i], tgts[i]})
+		}
+		return pairs, nil, nil, ""
+	}
+	return nil, nil, nil, ""
+}
+
+// ocrConfOf is the lowest recognition confidence of the pages a finding stands on (0: not known).
+func ocrConfOf(docs map[string]*Document, f *Finding) float64 {
+	conf := 0.0
+	for _, at := range []struct {
+		doc  string
+		page int
+	}{{f.RefDoc, f.PageRef}, {f.TargetDoc, f.PageTarget}} {
+		d := docs[at.doc]
+		if d == nil || at.page < 1 || at.page > len(d.Pages) {
+			continue
+		}
+		if c := d.Pages[at.page-1].OCRConf; c > 0 && (conf == 0 || c < conf) {
+			conf = c
+		}
+	}
+	return conf
 }
 
 func allCovered(d paramDiff, covered map[string]bool) bool {

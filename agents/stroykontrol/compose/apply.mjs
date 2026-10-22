@@ -102,6 +102,7 @@ const DISCREPANCY_KIND = [
   ['scope_diff', 'Вне объёма (ПД)'],
   ['format', 'Оформление'],
   ['cross_volume', 'Согласованность между томами'],
+  ['element', 'Марки элементов'],
 ]
 
 const ITER_STATE = [
@@ -122,7 +123,20 @@ const REMARK_WORKFLOW = [
   ['awaiting_answer', 'Ответ не предоставлен', { backgroundColor: 'secondary', textColor: 'white' }],
   ['being_fixed', 'Устраняется заявителем', { backgroundColor: 'warning', textColor: 'dark' }],
   ['answer_review', 'Требуется рассмотрение ответа', { backgroundColor: 'info', textColor: 'white' }],
+  ['rework', 'Возвращено на доработку', { backgroundColor: 'danger', textColor: 'white' }],
   ['resolved', 'Устранено', { backgroundColor: 'success', textColor: 'white' }],
+]
+
+// результат проверки устранения замечания (ТЗ 3.4.6): итог решения специалиста; вывод системы считается агентом
+const OUTCOME = [
+  ['fixed', 'Устранено', { backgroundColor: 'success', textColor: 'white' }],
+  ['partial', 'Частично устранено', { backgroundColor: 'warning', textColor: 'dark' }],
+  ['not_fixed', 'Не устранено', { backgroundColor: 'danger', textColor: 'white' }],
+  ['check', 'Требует проверки', { backgroundColor: 'secondary', textColor: 'white' }],
+]
+const OUTCOME_DECISION = [
+  ['confirmed', 'Вывод системы подтверждён'],
+  ['changed', 'Результат изменён специалистом'],
 ]
 
 const REMARK_ORIGIN = [
@@ -146,6 +160,7 @@ const REVIEW_STATUS = [
   ['new', 'Новое', { backgroundColor: 'light', textColor: 'dark' }],
   ['confirmed', 'Подтверждено', { backgroundColor: 'danger', textColor: 'white' }],
   ['rejected', 'Отклонено', { backgroundColor: 'secondary', textColor: 'white' }],
+  ['clarify', 'Требует уточнения', { backgroundColor: 'warning', textColor: 'dark' }],
 ]
 
 const REMARK_STATUS = [
@@ -283,6 +298,8 @@ async function main () {
     field('sets_label', 'Версии комплектов', 'String'),
     // ручное сопоставление томов и фрагментов (JSON, правится в просмотрщике) и результат последнего сопоставления
     textArea('pairing', 'Ручное сопоставление (JSON)'),
+    // области листов, исключённые из сравнения (JSON: сторона, файл, страница, рамка в долях страницы); исходные файлы не меняются
+    textArea('excluded_regions', 'Исключаемые области (JSON)'),
     textArea('pairs_json', 'Сопоставление томов (JSON)'),
     dataKind(),
     // итерации: повторная проверка той же пары после исправлений
@@ -322,6 +339,16 @@ async function main () {
       field('volume_title', 'Наименование тома', 'String'),
       field('object_name', 'Объект/сооружение', 'String'),
       numberField('pages', 'Страниц', { precision: 0 }),
+      // номера листов по основной надписи: «страница:лист,…» (считает агент; по ним замечание «лист N» открывается на нужной странице)
+      field('sheet_map', 'Листы по основной надписи', 'String'),
+      // редакция и классификация: агент читает номер изменения («Изм. 2») с титульного листа или из имени файла,
+      // часть/книгу/подраздел — с титульных листов; значения, введённые вручную, не перезаписываются, пока файл тот же
+      numberField('change_no', 'Номер изменения (редакция)', { precision: 0 }),
+      field('structure_object', 'Сооружение / участок', 'String'),
+      field('subsection', 'Подраздел', 'String'),
+      field('part', 'Часть', 'String'),
+      field('book', 'Книга', 'String'),
+      field('file_hash', 'Хэш файла (версия загруженного PDF)', 'String'),
       boolSwitch('released', 'Выпущен'),
       field('detected_by', 'Определено', 'Select', { options: selectOptions(DETECTED_BY) }),
     ],
@@ -338,6 +365,7 @@ async function main () {
       textArea('description', 'Описание'),
       field('kind', 'Вид', 'Select', { options: selectOptions(DISCREPANCY_KIND) }),
       field('status', 'Решение', 'Select', { options: selectOptions(REVIEW_STATUS) }),
+      textArea('reviewer_comment', 'Комментарий к решению'),
       field('doc_ref', 'Документ ПД (ID)', 'String'),
       field('doc_target', 'Документ РД (ID)', 'String'),
       numberField('page_pd', 'Страница в ПД', { precision: 0 }),
@@ -381,6 +409,8 @@ async function main () {
       textArea('text', 'Вывод о несоответствии'),
       textArea('refs_text', 'Ссылка на материалы'),
       textArea('volume_refs', 'Тома (JSON)'),
+      // куда ведёт замечание: места по ссылке на материалы и области сопоставленных находок (JSON, считает агент)
+      textArea('links_json', 'Места в документах (JSON)'),
       field('section', 'Раздел документации', 'String'),
       textArea('basis', 'Основание'),
       textArea('answer', 'Ответ на замечание'),
@@ -400,6 +430,7 @@ async function main () {
       field('assignee', 'Ответственный', 'String'),
       dateField('due_date', 'Срок', { onlyDate: true }),
       textArea('pto_note', 'Заметка ПТО'),
+      numberField('estimate_h', 'Оценка трудоёмкости, ч', { precision: 1 }),
       field('verdict', 'Проверка по документам', 'Select', { options: selectOptions(EXPERT_VERDICT) }),
       numberField('match_score', 'Уверенность, %', { precision: 0 }),
       textArea('match_note', 'Пояснение проверки'),
@@ -410,6 +441,12 @@ async function main () {
       field('ai_verdict', 'Разбор ИИ', 'Select', { options: selectOptions(AI_VERDICT) }),
       textArea('ai_note', 'Пояснение ИИ (с цитатами)'),
       dateField('ai_at', 'Разбор ИИ: когда', { onlyDate: false }),
+      // решение специалиста по результату проверки (вывод системы — ИИ и проверка по документам — рабочий статус не меняет)
+      field('outcome_final', 'Результат проверки (решение специалиста)', 'Select', { options: selectOptions(OUTCOME) }),
+      field('outcome_decision', 'Решение по результату', 'Select', { options: selectOptions(OUTCOME_DECISION) }),
+      textArea('outcome_comment', 'Комментарий к решению'),
+      field('outcome_by', 'Решение: кто', 'String'),
+      dateField('outcome_at', 'Решение: когда', { onlyDate: false }),
       field('archived', 'Нет в последней выгрузке', 'String'),
       field('source_file', 'Файл-источник', 'String'),
       // замечания, сформированные по сравнению ПД/РД (подтверждённые находки одного листа)
@@ -433,6 +470,26 @@ async function main () {
       dateField('at', 'Когда', { onlyDate: false }),
       field('author', 'Кто', 'String'),
       field('source', 'Источник', 'String'),
+      textArea('note', 'Комментарий'),
+      // вид записи: import | status | assignee | due | note | decision | auto | comparison
+      field('kind', 'Вид', 'String'),
+    ],
+  })
+
+  // срезы реестра замечаний по дням: динамика устранения (ТЗ 3.9.4); пишет агент, одна запись на объект и день
+  m.expertise_snapshots = await ensureModule(api, nsID, {
+    name: 'Срезы реестра замечаний',
+    handle: 'expertise_snapshots',
+    fields: [
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      field('day', 'День', 'String'),
+      numberField('total', 'Всего', { precision: 0 }),
+      numberField('overdue', 'Просрочено', { precision: 0 }),
+      numberField('n_awaiting_answer', 'Ответ не предоставлен', { precision: 0 }),
+      numberField('n_being_fixed', 'Устраняется заявителем', { precision: 0 }),
+      numberField('n_answer_review', 'Требуется рассмотрение ответа', { precision: 0 }),
+      numberField('n_rework', 'Возвращено на доработку', { precision: 0 }),
+      numberField('n_resolved', 'Устранено', { precision: 0 }),
     ],
   })
 
@@ -451,6 +508,31 @@ async function main () {
       numberField('reopened', 'Возвращено', { precision: 0 }),
       numberField('archived_count', 'Исчезло из выгрузки', { precision: 0 }),
       textArea('details', 'Что изменилось'),
+    ],
+  })
+
+  // пакет исправления: исправленная редакция, загруженная в новую итерацию сравнения, с замечаниями, к которым она относится,
+  // и результатом проверки; по записи на каждый прогон хранится в history_json (пишет агент)
+  m.correction_packages = await ensureModule(api, nsID, {
+    name: 'Пакеты исправления',
+    handle: 'correction_packages',
+    fields: [
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      recordRel('comparison', 'Сравнение (итерация)', m.pd_rd_comparisons, 'title', ['title'], true),
+      recordRel('parent_comparison', 'Предыдущая итерация', m.pd_rd_comparisons, 'title', ['title']),
+      field('title', 'Название', 'String'),
+      numberField('iteration_no', 'Итерация', { precision: 0 }),
+      recordRel('documents', 'Исправленные документы', m.cmp_documents, 'volume_code', ['volume_code', 'volume_title'], false, { multi: true }),
+      recordRel('remarks', 'Замечания', m.expertise_remarks, 'number', ['number', 'text'], false, { multi: true }),
+      numberField('n_documents', 'Документов', { precision: 0 }),
+      numberField('n_remarks', 'Замечаний', { precision: 0 }),
+      numberField('resolved', 'Устранено', { precision: 0 }),
+      numberField('persisting', 'Осталось', { precision: 0 }),
+      numberField('new_findings', 'Новых', { precision: 0 }),
+      numberField('runs', 'Проверок', { precision: 0 }),
+      dateField('last_run', 'Последняя проверка', { onlyDate: false }),
+      textArea('history_json', 'История проверок (JSON)'),
+      dataKind(),
     ],
   })
 

@@ -43,8 +43,8 @@ const docHref = (doc, page) => `?view=doc&source=comparison_doc&${props.qs}&id=$
 
     <div class="toolbar-row">
       <div class="doc-pagers">
-        <DocPager :open-href="docHref(viewer.pdDoc, viewer.pdPage)" :label="names.ref" :docs="pdDocs" v-model:doc-id="viewer.pdDoc" v-model:page="viewer.pdPage" :page-count="pdCount" />
-        <DocPager :open-href="docHref(viewer.rdDoc, viewer.rdPage)" :label="names.target" :docs="rdDocs" v-model:doc-id="viewer.rdDoc" v-model:page="viewer.rdPage" :page-count="rdCount" />
+        <DocPager :open-href="docHref(viewer.pdDoc, viewer.pdPage)" :label="names.ref" :docs="pdDocs" v-model:doc-id="viewer.pdDoc" v-model:page="viewer.pdPage" :page-count="pdCount" :sheet-no="pdInfo?.sheetNo" />
+        <DocPager :open-href="docHref(viewer.rdDoc, viewer.rdPage)" :label="names.target" :docs="rdDocs" v-model:doc-id="viewer.rdDoc" v-model:page="viewer.rdPage" :page-count="rdCount" :sheet-no="rdInfo?.sheetNo" />
       </div>
       <ZoomControls v-if="viewer.mode !== 'text'" :viewer="viewer" />
     </div>

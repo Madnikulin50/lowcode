@@ -87,13 +87,12 @@ func TestProposeFromTheEarliestSetAndAcceptReject(t *testing.T) {
 	}
 	var accept, reject string
 	for _, p := range od.Proposals {
+		// the proposals come in no fixed order: accept КЖ1 (the one volume set v2 has), reject АР
 		switch p.Code {
-		case "КЖ1", "АР":
-			if accept == "" {
-				accept = p.ID
-			} else {
-				reject = p.ID
-			}
+		case "КЖ1":
+			accept = p.ID
+		case "АР":
+			reject = p.ID
 		}
 	}
 	acc, rej, err := r.ResolveVolumes("ns", obj, []string{accept}, []string{reject}, false)

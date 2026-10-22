@@ -118,6 +118,10 @@ export function useComparison () {
       }
     }
     state.docs[id] = info
+    // the sheet numbers of the title blocks ("лист N" next to the page): read apart, the viewer does not wait for them
+    if (info.kind === 'pdf') {
+      getJSON(`api/sheets?${qs}&${docSel(id)}`).then((r) => { if (state.docs[id]) state.docs[id].sheetNo = r.sheets || {} }).catch(() => {})
+    }
     return info
   }
 
@@ -199,10 +203,10 @@ export function useComparison () {
     schedulePoll()
   })
 
-  const setStatus = (id, status) => act(async () => {
-    await postJSON('api/discrepancy/status', { ...base(), id, status })
+  const setStatus = (id, status, comment = '') => act(async () => {
+    await postJSON('api/discrepancy/status', { ...base(), id, status, comment })
     const d = state.comparison.discrepancies.find(x => x.id === id)
-    if (d) d.status = status
+    if (d) { d.status = status; d.comment = comment }
     await loadIssue()
   })
 

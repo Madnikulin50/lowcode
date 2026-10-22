@@ -195,3 +195,26 @@ func TestSetDocWithoutCodesSerializesAnEmptyList(t *testing.T) {
 		t.Fatalf("the viewer reads .length of every list, null breaks it: %s", b)
 	}
 }
+
+func TestSetFlagsATitleThatDiffersFromTheStatement(t *testing.T) {
+	f := newFake()
+	obj := f.put(ModObjects, idcheck.V("name", "Объект"))
+	set := f.put(ModSets, idcheck.V("object", obj, "stage", SideRef, "version", "v1", "issued_at", "2024-01-10", "status", SetAccepted))
+	doc := func(code, title string) {
+		f.put(ModDocuments, idcheck.V("set", set, "file", code+".pdf", "volume_code", code, "volume_title", title, "pages", "5", "side", SideRef))
+	}
+	doc("КЖ1", "Фундаментная плита. Конструктивные решения")
+	doc("АР", "Схема планировочной организации земельного участка")
+	doc("ПЗ", "")
+	for _, v := range [][2]string{{"КЖ1", "Конструктивные решения фундаментов"}, {"АР", "Архитектурные решения"}, {"ПЗ", "Пояснительная записка"}} {
+		f.put(ModVolumes, idcheck.V("object", obj, "volume_code", v[0], "title", v[1]))
+	}
+	od, err := LoadObjectDocs(f, "ns", obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := od.Sets[0]
+	if len(s.Renamed) != 1 || !strings.HasPrefix(s.Renamed[0], "АР:") || !strings.Contains(s.Note, "наименование не совпадает") {
+		t.Fatalf("only АР has a title with no word in common (КЖ1 shares «конструктивные», ПЗ has no title): %+v\n%s", s.Renamed, s.Note)
+	}
+}

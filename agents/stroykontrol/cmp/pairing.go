@@ -64,6 +64,11 @@ type VolumeInfoJSON struct {
 	Title string `json:"title"`
 	From  int    `json:"from"`
 	To    int    `json:"to"`
+	// the edition (change number, 0 — the original) and the classification read from the title pages
+	Change     int    `json:"change,omitempty"`
+	Part       string `json:"part,omitempty"`
+	Book       string `json:"book,omitempty"`
+	Subsection string `json:"subsection,omitempty"`
 }
 
 // PairInfoJSON is PairInfo in the wire form.
@@ -76,7 +81,7 @@ type PairInfoJSON struct {
 }
 
 func volJSON(v VolumeInfo) VolumeInfoJSON {
-	return VolumeInfoJSON{Doc: v.DocID, Index: v.Index, Code: v.Code, Title: v.Title, From: v.From, To: v.To}
+	return VolumeInfoJSON{Doc: v.DocID, Index: v.Index, Code: v.Code, Title: v.Title, From: v.From, To: v.To, Change: v.Change, Part: v.Part, Book: v.Book, Subsection: v.Subsection}
 }
 
 func volsJSON(vs []VolumeInfo) []VolumeInfoJSON {
@@ -149,7 +154,7 @@ func sliceVolume(d *Document, s Slice, idx int) (*Volume, string) {
 		title = base
 	}
 	title = fmt.Sprintf("%s, стр. %d–%d", title, from, to)
-	return buildVolume(d, idx, "", title, from, to, base), ""
+	return buildVolume(d, idx, "", title, from, to, base, from == 1 && to == n), ""
 }
 
 // applyPairing makes the manual pairs and leaves the rest of the volumes to automatic matching: a
@@ -209,7 +214,9 @@ func applyPairing(manual []ManualPair, docs map[string]*Document, side map[strin
 					out = append(out, v)
 					continue
 				}
-				out = append(out, buildVolume(d, v.Index, v.RawCode, v.Title, r.from, r.to, strings.TrimSuffix(d.Name, ".pdf")))
+				nv := buildVolume(d, v.Index, v.RawCode, v.Title, r.from, r.to, strings.TrimSuffix(d.Name, ".pdf"), false)
+				nv.Change, nv.ChangeSource = v.Change, v.ChangeSource // a piece of a volume is of the same edition
+				out = append(out, nv)
 			}
 		}
 		sort.SliceStable(out, func(i, j int) bool {

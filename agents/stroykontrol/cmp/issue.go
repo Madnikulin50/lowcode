@@ -27,6 +27,8 @@ type FindingIn struct {
 	PageRef     string
 	PageTarget  string
 	PageNumber  string
+	BoxRef      string // region on the reference page, "x0,y0,x1,y1" in page fractions
+	BoxTarget   string
 	Evidence    string // JSON of Evidence
 }
 

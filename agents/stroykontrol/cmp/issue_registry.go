@@ -49,6 +49,19 @@ func issuedValues(objectID string, in IssueInput, is Issued) idcheck.Values {
 	)
 	v["matched_discrepancies"] = is.FindingIDs
 	v["linked_documents"] = nonBlank(is.DocIDs)
+	// the places of the findings: the viewer opens the sheets and marks the regions (ТЗ 3.5.3)
+	byID := map[string]FindingIn{}
+	for _, f := range in.Findings {
+		byID[f.ID] = f
+	}
+	var at []FoundAt
+	for _, id := range is.FindingIDs {
+		if f, ok := byID[id]; ok {
+			at = append(at, FoundAt{ID: f.ID, Comparison: in.ComparisonID, Text: cleanDescription(f.Description),
+				RefDoc: f.DocRef, TargetDoc: f.DocTarget, RefPage: atoi(f.PageRef), TargetPage: atoi(f.PageTarget), RefBox: f.BoxRef, TargetBox: f.BoxTarget})
+		}
+	}
+	v["links_json"] = []string{LocationsJSON(LocateRemark(nil, nil, at))}
 	return v
 }
 
@@ -66,7 +79,7 @@ func nonBlank(in []string) []string {
 }
 
 func issueSnapshot(remarkID, status, note string) idcheck.Values {
-	v := idcheck.V("remark", remarkID, "status", status, "source", note, "author", "агент")
+	v := idcheck.V("remark", remarkID, "status", status, "source", note, "author", "агент", "kind", HistComparison)
 	v["iteration"] = []string{"1"}
 	v["at"] = []string{dateValue(time.Now().UTC())}
 	return v
@@ -166,5 +179,6 @@ func IssueToRegistry(b Backend, ns, objectID string, in IssueInput, res IssueRes
 		out.Closed++
 	}
 	sort.Strings(out.Numbers)
+	_, _ = RecordSnapshot(b, ns, objectID, time.Now()) // best effort: the dynamics must not fail the registration
 	return out, nil
 }

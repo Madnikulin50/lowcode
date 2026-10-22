@@ -67,7 +67,7 @@ func remarkValues(object string, e ExportRow, refs []VolumeRef, st string) idche
 
 func snapshotValues(remarkID string, s Snapshot) idcheck.Values {
 	v := idcheck.V("remark", remarkID, "answer", s.Answer, "reject_reason", s.RejectReason, "status", s.Status,
-		"source_status", s.SourceStatus, "source", s.Source, "author", "агент")
+		"source_status", s.SourceStatus, "source", s.Source, "author", "агент", "kind", firstNonEmpty(s.Kind, HistImport))
 	v["iteration"] = []string{strconv.Itoa(s.Iteration)}
 	v["at"] = []string{dateValue(s.At)}
 	return v
@@ -337,8 +337,16 @@ func (r *Runner) CheckObjectRemarks(ctx context.Context, ns, objectID string) (i
 	if err != nil {
 		return 0, err
 	}
+	// a comparison that a later iteration continues is superseded: its findings are the earlier state of
+	// the same pair, and the later iteration says what became of them (fixed, still there)
+	superseded := map[string]bool{}
+	for _, c := range comps {
+		if p := c.Get("parent_comparison"); p != "" {
+			superseded[p] = true
+		}
+	}
 	var docs []DocLabel
-	var findings []idcheck.Record
+	var docRecs, findings []idcheck.Record
 	for _, c := range comps {
 		ds, err := b.Search(ns, ModDocuments, fmt.Sprintf("comparison = '%s'", c.ID))
 		if err != nil {
@@ -346,6 +354,10 @@ func (r *Runner) CheckObjectRemarks(ctx context.Context, ns, objectID string) (i
 		}
 		for _, d := range ds {
 			docs = append(docs, DocLabel{ID: d.ID, Codes: d.Get("volume_code"), Title: d.Get("volume_title")})
+			docRecs = append(docRecs, d)
+		}
+		if superseded[c.ID] {
+			continue
 		}
 		fs, err := b.Search(ns, ModDiscrepancies, fmt.Sprintf("comparison = '%s'", c.ID))
 		if err != nil {
@@ -354,6 +366,15 @@ func (r *Runner) CheckObjectRemarks(ctx context.Context, ns, objectID string) (i
 		findings = append(findings, fs...)
 	}
 	cands := CandidatesFrom(findings)
+	locDocs := locDocsFrom(docRecs, func(string) string { return "" })
+	foundAt := map[string]FoundAt{} // finding ID → its places
+	for _, f := range findings {
+		foundAt[f.ID] = FoundAt{
+			ID: f.ID, Comparison: f.Get("comparison"), Text: strings.TrimPrefix(strings.TrimPrefix(f.Get("description"), "[детерм.] "), "[ИИ] "),
+			RefDoc: f.Get("doc_ref"), TargetDoc: f.Get("doc_target"), RefPage: atoi(f.Get("page_pd")), TargetPage: atoi(f.Get("page_rd")),
+			RefBox: f.Get("bbox_pd"), TargetBox: f.Get("bbox_rd"),
+		}
+	}
 	docOf := map[string][2]string{} // finding ID → its documents
 	for _, f := range findings {
 		docOf[f.ID] = [2]string{f.Get("doc_ref"), f.Get("doc_target")}
@@ -379,18 +400,42 @@ func (r *Runner) CheckObjectRemarks(ctx context.Context, ns, objectID string) (i
 		if len(linkedIDs) == 0 {
 			v["linked_documents"] = []string{""}
 		}
+		// where the remark leads: the places its references name and the regions of the findings it was matched to
+		var matched []FoundAt
+		for _, id := range m.FindingIDs {
+			if f, ok := foundAt[id]; ok {
+				matched = append(matched, f)
+			}
+		}
+		links := LocationsJSON(LocateRemark(refs, locDocs, matched))
+		v["links_json"] = []string{links}
 		v["claim_mismatch"] = []string{""}
 		if m.ClaimMissing {
 			v["claim_mismatch"] = []string{"да"}
 		}
-		if rem.Get("verdict") == m.Verdict && rem.Get("match_note") == m.Note && strings.Join(rem.Values["matched_discrepancies"], ",") == strings.Join(m.FindingIDs, ",") &&
+		// a new edition fixed the difference and the designer has answered: to the quality control (ТЗ 3.7.3)
+		handedTo, handover := AutoHandover(rem.Get("status"), rem.Get("answer"), rem.Get("verdict"), m.Verdict)
+		if handover {
+			v["status"] = []string{handedTo}
+		}
+		if rem.Get("verdict") == m.Verdict && rem.Get("match_note") == m.Note && rem.Get("links_json") == links && strings.Join(rem.Values["matched_discrepancies"], ",") == strings.Join(m.FindingIDs, ",") &&
 			strings.Join(rem.Values["linked_documents"], ",") == strings.Join(linkedIDs, ",") {
 			continue
 		}
 		if err := b.Update(ns, ModExpertise, rem.ID, v); err != nil {
 			return written, err
 		}
+		if handover {
+			it, _ := strconv.Atoi(rem.Get("iterations"))
+			if _, err := b.Create(ns, ModRemarkHistory, snapshotValues(rem.ID, Snapshot{
+				Iteration: max(it, 1), Answer: rem.Get("answer"), RejectReason: rem.Get("reject_reason"), Status: handedTo,
+				SourceStatus: rem.Get("source_status"), At: time.Now().UTC(), Source: "автопередача на контроль: новая редакция загружена, расхождение устранено", Kind: HistAuto,
+			})); err != nil {
+				return written, err
+			}
+		}
 		written++
 	}
+	_, _ = RecordSnapshot(b, ns, objectID, time.Now()) // best effort: the dynamics must not fail the check
 	return written, nil
 }

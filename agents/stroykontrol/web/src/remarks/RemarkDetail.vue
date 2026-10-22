@@ -4,28 +4,48 @@
 // iterations and the specialist's own fields.
 import { ref, watch, computed } from 'vue'
 import { wordDiffSpans } from '../composables/useTextDiff.js'
-import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, fmtDate } from './labels.js'
+import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, OUTCOME_LABEL, OUTCOME_ORDER, STATUS_NEEDS_REASON, fmtDate } from './labels.js'
 
 const props = defineProps({ remark: Object, board: Object, history: Array, busy: Boolean, assignees: Array })
 const emit = defineEmits(['update', 'close', 'ai'])
 
-const form = ref({ status: '', assignee: '', dueDate: '', note: '' })
+const form = ref({ status: '', statusComment: '', assignee: '', dueDate: '', note: '', estimateH: '' })
 watch(() => props.remark, (r) => {
-  form.value = { status: r.status, assignee: r.assignee || '', dueDate: (r.dueDate || '').slice(0, 10), note: r.note || '' }
+  form.value = { status: r.status, statusComment: '', assignee: r.assignee || '', dueDate: (r.dueDate || '').slice(0, 10), note: r.note || '', estimateH: r.estimateH || '' }
 }, { immediate: true })
 
 const dirty = computed(() => {
   const r = props.remark
-  return form.value.status !== r.status || form.value.assignee !== (r.assignee || '') || form.value.dueDate !== (r.dueDate || '').slice(0, 10) || form.value.note !== (r.note || '')
+  return form.value.status !== r.status || form.value.assignee !== (r.assignee || '') || form.value.dueDate !== (r.dueDate || '').slice(0, 10) || form.value.note !== (r.note || '') ||
+    form.value.estimateH !== (r.estimateH || '')
 })
+// «Устранено» и «Возвращено на доработку» нужно объяснить: без комментария не сохраняется
+const needsReason = computed(() => form.value.status !== props.remark.status && STATUS_NEEDS_REASON.includes(form.value.status))
+const reasonMissing = computed(() => needsReason.value && !form.value.statusComment.trim())
 function save () {
   const r = props.remark
   const patch = {}
-  if (form.value.status !== r.status) patch.status = form.value.status
+  if (form.value.status !== r.status) { patch.status = form.value.status; patch.statusComment = form.value.statusComment.trim() }
+  if (form.value.estimateH !== (r.estimateH || '')) patch.estimateH = form.value.estimateH
   if (form.value.assignee !== (r.assignee || '')) patch.assignee = form.value.assignee
   if (form.value.dueDate !== (r.dueDate || '').slice(0, 10)) patch.dueDate = form.value.dueDate
   if (form.value.note !== (r.note || '')) patch.note = form.value.note
   emit('update', r.id, patch)
+}
+
+// Результат проверки (ТЗ 3.4.6): вывод системы и решение специалиста — раздельно
+const outcome = ref({ final: '', comment: '' })
+watch(() => props.remark, (r) => {
+  outcome.value = { final: r.outcomeFinal || r.outcome, comment: r.outcomeComment || '' }
+}, { immediate: true })
+const outcomeChanged = computed(() => outcome.value.final !== props.remark.outcome)
+const outcomeDirty = computed(() => outcome.value.final !== (props.remark.outcomeFinal || '') || outcome.value.comment !== (props.remark.outcomeComment || ''))
+const outcomeInvalid = computed(() => outcomeChanged.value && !outcome.value.comment.trim())
+function saveOutcome () {
+  emit('update', props.remark.id, { outcomeFinal: outcome.value.final, outcomeComment: outcome.value.comment.trim() })
+}
+function clearOutcome () {
+  emit('update', props.remark.id, { outcomeFinal: '', outcomeComment: '' })
 }
 
 // answer now vs the previous answer
@@ -35,6 +55,22 @@ const answerDiff = computed(() => {
   return wordDiffSpans(r.prevAnswer, r.answer)
 })
 const docName = (id) => props.board.documents[id] || id
+
+// Where the remark leads (ТЗ 3.5): the places its references name and the regions of the findings it was
+// matched to. Source = the original edition (ПД), corrected = the corrected one (РД).
+const ns = () => encodeURIComponent(props.board.namespaceID || '')
+const places = computed(() => (props.remark.links || []).filter(l => l.kind === 'place'))
+const found = computed(() => (props.remark.links || []).filter(l => l.kind === 'finding'))
+const SIDE_LABEL = { ref: 'исходная редакция', target: 'исправленная редакция' }
+const placeHref = (l) => l.comparison
+  ? `?view=doc&source=comparison_doc&recordID=${encodeURIComponent(l.comparison)}&namespaceID=${ns()}&id=${encodeURIComponent(l.docID)}&page=${l.page || 1}`
+  : `?view=doc&source=cmp_document&id=${encodeURIComponent(l.docID)}&namespaceID=${ns()}&page=${l.page || 1}`
+const findingHref = (l) => `?recordID=${encodeURIComponent(l.comparison)}&namespaceID=${ns()}&findingID=${encodeURIComponent(l.findingID)}`
+const sideHref = (l, side) => {
+  const doc = side === 'ref' ? l.refDoc : l.targetDoc
+  const page = side === 'ref' ? l.refPage : l.targetPage
+  return doc ? `?view=doc&source=comparison_doc&recordID=${encodeURIComponent(l.comparison)}&namespaceID=${ns()}&id=${encodeURIComponent(doc)}&page=${page || 1}` : ''
+}
 const linkedSet = computed(() => new Set(props.remark.documents))
 </script>
 
@@ -69,6 +105,24 @@ const linkedSet = computed(() => new Set(props.remark.documents))
       <div v-if="remark.documents.length" class="rm-docs">
         Загружены: <span v-for="id in remark.documents" :key="id" class="tag doc">{{ docName(id) }}
           <a :href="`?view=doc&source=cmp_document&id=${encodeURIComponent(id)}&namespaceID=${encodeURIComponent(board.namespaceID || '')}`" target="_blank" title="Открыть том с ассистентом">✦</a></span>
+      </div>
+    </div>
+
+    <div v-if="places.length || found.length" class="rm-block rm-links">
+      <div class="rm-h">Где в документах</div>
+      <div v-for="(l, i) in places" :key="'p' + i" class="rm-link">
+        <span class="tag">{{ SIDE_LABEL[l.side] || 'документ' }}</span>
+        <a :href="placeHref(l)" target="_blank" title="Открыть том на этой странице">{{ l.doc || docName(l.docID) }}</a>
+        <span v-if="l.page">, стр. {{ l.page }}</span><span v-if="l.sheet"> (лист {{ l.sheet }})</span>
+        <span v-if="l.note" class="muted"> — {{ l.note }}</span>
+      </div>
+      <div v-for="(l, i) in found" :key="'f' + i" class="rm-link">
+        <span class="tag">находка сравнения</span>
+        <a :href="findingHref(l)" target="_blank" title="Открыть сравнение на этой находке с выделенной областью">{{ l.text || 'расхождение' }}</a>
+        <span class="rm-link-sides">
+          <a v-if="sideHref(l, 'ref')" :href="sideHref(l, 'ref')" target="_blank">исходный фрагмент (стр. {{ l.refPage || 1 }})</a>
+          <a v-if="sideHref(l, 'target')" :href="sideHref(l, 'target')" target="_blank">исправленный фрагмент (стр. {{ l.targetPage || 1 }})</a>
+        </span>
       </div>
     </div>
 
@@ -125,6 +179,30 @@ const linkedSet = computed(() => new Set(props.remark.documents))
       <div v-else class="muted">Не запускался. Нужны привязанные тома (кнопка «Проверить по документам») и модель (REMARK_MODEL).</div>
     </div>
 
+    <div class="rm-block rm-outcome">
+      <div class="rm-h">Результат проверки устранения</div>
+      <div class="rm-oc-grid">
+        <div><div class="muted">Статус экспертизы (выгрузка)</div><div>{{ remark.sourceStatus || '—' }}</div></div>
+        <div><div class="muted">Статус выполнения</div><div>{{ STATUS_LABEL[remark.status] || remark.status }}</div></div>
+        <div><div class="muted">Вывод системы</div><span class="tag" :class="'oc-' + remark.outcome">{{ OUTCOME_LABEL[remark.outcome] }}</span></div>
+        <div>
+          <div class="muted">Решение специалиста</div>
+          <span v-if="remark.outcomeFinal" class="tag" :class="'oc-' + remark.outcomeFinal">{{ OUTCOME_LABEL[remark.outcomeFinal] }}</span>
+          <span v-else class="muted">не принято</span>
+          <div v-if="remark.outcomeFinal" class="muted">{{ remark.outcomeDecision === 'confirmed' ? 'подтверждён вывод системы' : 'изменено специалистом' }} · {{ remark.outcomeBy }} · {{ fmtDate(remark.outcomeAt) }}</div>
+        </div>
+      </div>
+      <div class="rm-form">
+        <label>Результат
+          <select v-model="outcome.final"><option v-for="k in OUTCOME_ORDER" :key="k" :value="k">{{ OUTCOME_LABEL[k] }}</option></select>
+        </label>
+      </div>
+      <textarea v-model="outcome.comment" rows="2" :placeholder="outcomeChanged ? 'Комментарий обязателен: почему результат отличается от вывода системы' : 'Комментарий (необязательно)'"></textarea>
+      <button class="primary" :disabled="busy || !outcomeDirty || outcomeInvalid" @click="saveOutcome">{{ outcomeChanged ? 'Изменить результат' : 'Подтвердить вывод системы' }}</button>
+      <button v-if="remark.outcomeFinal" class="small" :disabled="busy" @click="clearOutcome">Снять решение</button>
+      <div class="muted">Вывод системы получается из проверки по документам и разбора ИИ; статус экспертизы и статус выполнения он не меняет.</div>
+    </div>
+
     <div class="rm-block rm-work">
       <div class="rm-h">Работа</div>
       <div class="rm-form">
@@ -138,9 +216,11 @@ const linkedSet = computed(() => new Set(props.remark.documents))
           <datalist id="assignees"><option v-for="a in assignees" :key="a" :value="a"></option></datalist>
         </label>
         <label>Срок <input v-model="form.dueDate" type="date" /></label>
+        <label>Оценка, ч <input v-model="form.estimateH" type="number" min="0" step="0.5" style="width:80px" /></label>
       </div>
+      <textarea v-if="needsReason" v-model="form.statusComment" rows="2" :placeholder="form.status === 'rework' ? 'Что не так и что исправить (обязательно)' : 'Чем подтверждено устранение (обязательно)'"></textarea>
       <textarea v-model="form.note" rows="2" placeholder="Заметка ПТО"></textarea>
-      <button class="primary" :disabled="busy || !dirty" @click="save">Сохранить</button>
+      <button class="primary" :disabled="busy || !dirty || reasonMissing" @click="save">Сохранить</button>
     </div>
 
     <div class="rm-block">
@@ -155,6 +235,7 @@ const linkedSet = computed(() => new Set(props.remark.documents))
         </div>
         <div v-if="h.answer" class="rm-text">{{ h.answer }}</div>
         <div v-if="h.rejectReason" class="rm-reject"><b>Причина отклонения:</b> {{ h.rejectReason }}</div>
+        <div v-if="h.note" class="rm-text muted"><b>Комментарий:</b> {{ h.note }}</div>
       </div>
     </div>
   </div>

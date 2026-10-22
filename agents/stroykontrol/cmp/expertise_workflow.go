@@ -2,6 +2,7 @@ package cmp
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -38,6 +39,7 @@ type Snapshot struct {
 	SourceStatus string
 	At           time.Time
 	Source       string
+	Kind         string // one of the Hist* kinds; "" = import
 }
 
 // Change is one line of the journal of an import.
@@ -153,4 +155,132 @@ func JournalText(ch []Change, limit int) string {
 		fmt.Fprintf(&b, "%s — %s: %s\n", c.Key, label[c.Kind], c.Detail)
 	}
 	return strings.TrimSpace(b.String())
+}
+
+// CheckStatusChange validates a hand-made change of the working status. Confirming a
+// remark as resolved or sending it back to the designer must be explained (ТЗ 3.7.4): the
+// comment is required and goes to the history. Other changes need none.
+func CheckStatusChange(from, to, comment string) error {
+	if _, ok := RemarkStatusLabels[to]; !ok {
+		return fmt.Errorf("unknown status %q", to)
+	}
+	if to == from {
+		return nil
+	}
+	if (to == RemarkResolved || to == RemarkRework) && strings.TrimSpace(comment) == "" {
+		return fmt.Errorf("statusComment is required to set the status «%s»", RemarkStatusLabels[to])
+	}
+	return nil
+}
+
+// ParseEstimate reads the labour estimate of a remark in hours ("" clears it).
+func ParseEstimate(s string) (string, error) {
+	s = strings.TrimSpace(strings.ReplaceAll(s, ",", "."))
+	if s == "" {
+		return "", nil
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil || f < 0 || f > 10000 {
+		return "", fmt.Errorf("estimateH must be a number of hours from 0 to 10000")
+	}
+	return strconv.FormatFloat(f, 'f', -1, 64), nil
+}
+
+// AutoHandover decides whether a remark goes to the quality control by itself (ТЗ 3.7.3): the
+// designer has answered, a new edition was loaded and compared, and the difference the remark is
+// about is gone (the check against the documents turned «resolved» just now). The remark then
+// waits for the specialist's review; the final «Устранено» is never set automatically.
+func AutoHandover(status, answer, oldVerdict, newVerdict string) (string, bool) {
+	if newVerdict != VerdictResolved || oldVerdict == VerdictResolved || strings.TrimSpace(answer) == "" {
+		return status, false
+	}
+	switch status {
+	case RemarkAwaiting, RemarkBeingFix, RemarkRework:
+		return RemarkAnswerRev, true
+	}
+	return status, false
+}
+
+// StatusSnapshot is the picture of an object's remarks at a day: how many are in each
+// working status, how many are overdue. A series of them is the dynamics of the corrections (ТЗ 3.9.4).
+type StatusSnapshot struct {
+	Date     string         `json:"date"` // YYYY-MM-DD
+	Total    int            `json:"total"`
+	ByStatus map[string]int `json:"byStatus"`
+	Overdue  int            `json:"overdue"`
+}
+
+// StatusRow is what a snapshot needs of one remark.
+type StatusRow struct {
+	Status  string
+	DueDate string // YYYY-MM-DD…, may be empty
+}
+
+// CountStatuses builds the snapshot of the given (live, not archived) remarks at the day.
+func CountStatuses(rows []StatusRow, day string) StatusSnapshot {
+	s := StatusSnapshot{Date: day, ByStatus: map[string]int{}}
+	for _, code := range RemarkStatusOrder {
+		s.ByStatus[code] = 0
+	}
+	for _, r := range rows {
+		code := r.Status
+		if _, ok := RemarkStatusLabels[code]; !ok {
+			code = RemarkAwaiting
+		}
+		s.ByStatus[code]++
+		s.Total++
+		if code != RemarkResolved && len(r.DueDate) >= 10 && r.DueDate[:10] < day {
+			s.Overdue++
+		}
+	}
+	return s
+}
+
+// Kinds of an entry of the history of a remark.
+const (
+	HistImport     = "import"     // a state read from an export of the expertise
+	HistStatus     = "status"     // the working status changed by hand
+	HistAssignee   = "assignee"   // the remark was assigned (or the assignment was taken back)
+	HistDue        = "due"        // the due date was set or changed
+	HistNote       = "note"       // the specialist's note
+	HistDecision   = "decision"   // the decision on the result of the check
+	HistAuto       = "auto"       // a change the agent made (handover to the control, closing by a comparison)
+	HistComparison = "comparison" // the remark was made from a comparison
+)
+
+// WorkChange is one entry the specialist's own fields (assignee, due date, note) add to the history.
+type WorkChange struct {
+	Kind, Source, Note string
+}
+
+// WorkChanges lists what a hand-made update changed in the assignee, the due date and the note: each
+// change is a history entry, so that the history tells who was given the remark, when it was due and
+// what was said about it (ТЗ 3.6.3). Unchanged values and nil (not sent) make no entry.
+func WorkChanges(oldAssignee, oldDue, oldNote string, assignee, due, note *string) []WorkChange {
+	var out []WorkChange
+	if assignee != nil && strings.TrimSpace(*assignee) != strings.TrimSpace(oldAssignee) {
+		a := strings.TrimSpace(*assignee)
+		if a == "" {
+			out = append(out, WorkChange{HistAssignee, "назначение снято", "был: " + strings.TrimSpace(oldAssignee)})
+		} else {
+			out = append(out, WorkChange{HistAssignee, "назначен: " + a, ""})
+		}
+	}
+	short := func(s string) string {
+		if len(s) >= 10 {
+			return s[:10]
+		}
+		return s
+	}
+	if due != nil && short(*due) != short(oldDue) {
+		if *due == "" {
+			out = append(out, WorkChange{HistDue, "срок снят", ""})
+		} else {
+			out = append(out, WorkChange{HistDue, "срок: " + short(*due), ""})
+		}
+	}
+	if note != nil && strings.TrimSpace(*note) != strings.TrimSpace(oldNote) {
+		out = append(out, WorkChange{HistNote, "заметка ПТО", strings.TrimSpace(*note)})
+	}
+	return out
 }

@@ -30,12 +30,14 @@ import (
 // fixtures/README.md.
 type FixtureStore struct {
 	dir     string
-	analyze func([]cmp.Input, string, []cmp.ManualPair) (*cmp.Result, error) // inputs, mode, manual pairing
+	analyze func([]cmp.Input, string, []cmp.ManualPair, []cmp.Region) (*cmp.Result, error) // inputs, mode, manual pairing, excluded areas
 
 	mu       sync.Mutex
 	computed map[string]*cmp.Result
 	pairing  map[string][]cmp.ManualPair // caseID → manual pairing (kept in memory)
+	excluded map[string][]cmp.Region     // caseID → areas left out of the comparison (kept in memory)
 	status   map[string]string           // discrepancy id → status
+	comment  map[string]string           // discrepancy id → the reviewer's comment
 	remarks  map[string][]cmp.Remark
 	boards   map[string]*fxBoard
 	nextID   int
@@ -49,7 +51,7 @@ func NewFixtureStore(dir string) (*FixtureStore, error) {
 	if !info.IsDir() {
 		return nil, fmt.Errorf("fixtures dir %q is not a directory", dir)
 	}
-	return &FixtureStore{dir: dir, computed: map[string]*cmp.Result{}, pairing: map[string][]cmp.ManualPair{}, status: map[string]string{}, remarks: map[string][]cmp.Remark{}, boards: map[string]*fxBoard{}}, nil
+	return &FixtureStore{dir: dir, computed: map[string]*cmp.Result{}, pairing: map[string][]cmp.ManualPair{}, excluded: map[string][]cmp.Region{}, status: map[string]string{}, comment: map[string]string{}, remarks: map[string][]cmp.Remark{}, boards: map[string]*fxBoard{}}, nil
 }
 
 // caseDir resolves a caseID to its directory, filepath.Base'd so a
@@ -136,7 +138,7 @@ func (f *FixtureStore) analysis(recordID, dir string) *cmp.Result {
 			mode = modeOf(m.Kind)
 		}
 	}
-	res, err := f.analyze(inputs, mode, f.pairing[recordID])
+	res, err := f.analyze(inputs, mode, f.pairing[recordID], f.excluded[recordID])
 	if err != nil {
 		res = nil
 	}
@@ -211,6 +213,7 @@ func (f *FixtureStore) Discrepancies(_, recordID string) ([]discrepancyRecord, e
 	for i := range out {
 		if st, ok := f.status[recordID+"/"+out[i].ID]; ok {
 			out[i].Status = st
+			out[i].Comment = f.comment[recordID+"/"+out[i].ID]
 		}
 		if out[i].Status == "" {
 			out[i].Status = cmp.StatusNew
@@ -273,12 +276,13 @@ func (f *FixtureStore) FetchDocument(_, recordID, docID string) ([]byte, string,
 	return data, mimetypeFor(path), nil
 }
 
-func (f *FixtureStore) SetDiscrepancyStatus(_, recordID, discrepancyID, status string) error {
+func (f *FixtureStore) SetDiscrepancyStatus(_, recordID, discrepancyID, status, comment string) error {
 	if _, err := f.checkCase(recordID); err != nil {
 		return err
 	}
 	f.mu.Lock()
 	f.status[recordID+"/"+discrepancyID] = status
+	f.comment[recordID+"/"+discrepancyID] = comment
 	f.mu.Unlock()
 	return nil
 }
@@ -385,6 +389,24 @@ func (f *FixtureStore) RegisterIssued(_, caseID string, in cmp.IssueInput, res c
 	}
 	now := fmtTime(time.Now().UTC())
 	note := "сформировано по сравнению «" + in.ComparisonTitle + "»"
+	findingAt := func(ids []string) []cmp.RemarkLocation {
+		byID := map[string]cmp.FindingIn{}
+		for _, x := range in.Findings {
+			byID[x.ID] = x
+		}
+		var at []cmp.FoundAt
+		for _, id := range ids {
+			if x, ok := byID[id]; ok {
+				pp, _ := strconv.Atoi(x.PageRef)
+				tp, _ := strconv.Atoi(x.PageTarget)
+				at = append(at, cmp.FoundAt{ID: x.ID, Comparison: in.ComparisonID, Text: x.Description, RefDoc: x.DocRef, TargetDoc: x.DocTarget, RefPage: pp, TargetPage: tp, RefBox: x.BoxRef, TargetBox: x.BoxTarget})
+			}
+		}
+		if len(at) == 0 {
+			return []cmp.RemarkLocation{}
+		}
+		return cmp.LocateRemark(nil, nil, at)
+	}
 	for _, is := range res.Active {
 		docs := []string{}
 		for _, d := range is.DocIDs {
@@ -398,6 +420,7 @@ func (f *FixtureStore) RegisterIssued(_, caseID string, in cmp.IssueInput, res c
 			}
 			ex.rec.Text, ex.rec.Refs, ex.rec.Section, ex.rec.Criticality = is.Text, is.Refs, is.Section, is.Criticality
 			ex.rec.Findings, ex.rec.Documents = nonNil(is.FindingIDs), nonNil(docs)
+			ex.rec.Links = findingAt(is.FindingIDs)
 			out.Updated++
 			continue
 		}
@@ -405,7 +428,7 @@ func (f *FixtureStore) RegisterIssued(_, caseID string, in cmp.IssueInput, res c
 		number := fmt.Sprintf("ПТО-1.%d", maxIdx)
 		rr := remarkRecord{ID: "ex-" + is.GroupKey, Key: is.GroupKey, Number: number, Batch: "ПТО-1", Text: is.Text, Refs: is.Refs, Section: is.Section, Basis: is.Basis,
 			Criticality: is.Criticality, Iterations: 1, ChangedAt: now, SourceStatus: cmp.RemarkStatusLabels[cmp.RemarkAwaiting], Status: cmp.RemarkAwaiting,
-			Verdict: cmp.VerdictStillDiffers, MatchNote: note, Findings: nonNil(is.FindingIDs), Documents: nonNil(docs), VolumeRefs: []cmp.VolumeRef{}, Origin: cmp.OriginComparison}
+			Verdict: cmp.VerdictStillDiffers, MatchNote: note, Findings: nonNil(is.FindingIDs), Documents: nonNil(docs), VolumeRefs: []cmp.VolumeRef{}, Origin: cmp.OriginComparison, Links: findingAt(is.FindingIDs)}
 		b.remarks[rr.ID] = &fxRemark{rec: rr, history: []remarkHistoryRecord{{Iteration: 1, Status: cmp.RemarkAwaiting, At: now, Author: "агент", Source: note}}}
 		out.Created++
 		out.Numbers = append(out.Numbers, number)
@@ -453,9 +476,10 @@ func (f *FixtureStore) Pairing(ns, recordID string) (*pairingOut, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := &pairingOut{Documents: docs, Pairing: []cmp.ManualPair{}}
+	out := &pairingOut{Documents: docs, Pairing: []cmp.ManualPair{}, Excluded: []cmp.Region{}}
 	f.mu.Lock()
 	out.Pairing = append(out.Pairing, f.pairing[recordID]...)
+	out.Excluded = append(out.Excluded, f.excluded[recordID]...)
 	f.mu.Unlock()
 	if res := f.analysis(recordID, dir); res != nil {
 		st := res.State()
@@ -472,6 +496,45 @@ func (f *FixtureStore) SetPairing(_, recordID string, p []cmp.ManualPair) error 
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.pairing[recordID] = p
+	delete(f.computed, recordID)
+	return nil
+}
+
+// ReportIndex implements store: every case directory is an object with one comparison.
+func (f *FixtureStore) ReportIndex(string) ([]reportObject, error) {
+	entries, err := os.ReadDir(f.dir)
+	if err != nil {
+		return nil, err
+	}
+	out := []reportObject{}
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		c, err := f.Comparison("", e.Name())
+		if err != nil {
+			continue
+		}
+		ro := reportObject{ID: e.Name(), Name: c.Title, Comparisons: []reportComparison{{ID: e.Name(), Title: c.Title, Kind: c.Kind, Status: c.Status}}}
+		if b, err := f.loadBoard(e.Name()); err == nil {
+			f.mu.Lock()
+			ro.Remarks = len(b.remarks)
+			f.mu.Unlock()
+		}
+		out = append(out, ro)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out, nil
+}
+
+// SetExclusions implements store: the comparison is recomputed on the next request.
+func (f *FixtureStore) SetExclusions(_, recordID string, r []cmp.Region) error {
+	if _, err := f.checkCase(recordID); err != nil {
+		return err
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.excluded[recordID] = r
 	delete(f.computed, recordID)
 	return nil
 }

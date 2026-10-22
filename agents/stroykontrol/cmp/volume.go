@@ -153,7 +153,7 @@ func DetectVolumes(d *Document) []*Volume {
 		return nil
 	}
 	if d.ManualCode != "" {
-		return []*Volume{buildVolume(d, 0, d.ManualCode, d.ManualTitle, 1, len(d.Pages), nameBase)}
+		return []*Volume{buildVolume(d, 0, d.ManualCode, d.ManualTitle, 1, len(d.Pages), nameBase, true)}
 	}
 
 	raw := make([]string, len(d.Pages))
@@ -227,17 +227,19 @@ func DetectVolumes(d *Document) []*Volume {
 		if code == "" {
 			code = coverCode(d)
 		}
-		vols = append(vols, buildVolume(d, len(vols), code, "", r.from+1, r.to+1, nameBase))
+		vols = append(vols, buildVolume(d, len(vols), code, "", r.from+1, r.to+1, nameBase, len(runs) == 1))
 	}
 	return vols
 }
 
-func buildVolume(d *Document, idx int, rawCode, title string, from, to int, nameBase string) *Volume {
+func buildVolume(d *Document, idx int, rawCode, title string, from, to int, nameBase string, single bool) *Volume {
 	v := &Volume{
 		DocID: d.ID, DocName: d.Name, Side: d.Side, Index: idx,
 		Code: NormCode(rawCode), RawCode: rawCode, Title: title,
 		FirstPage: from, LastPage: to,
 	}
+	v.Change, v.ChangeSource = DetectChange(d, from, to, single)
+	v.Part, v.Book, v.Subsection = DetectClass(d, from, to)
 	if v.Title == "" {
 		v.Title = pageTitle(d.Pages[from-1])
 	}

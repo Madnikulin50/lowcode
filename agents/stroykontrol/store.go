@@ -20,8 +20,9 @@ type store interface {
 	// the comparison. docID comes from Documents(); implementations must
 	// refuse documents that do not belong to recordID.
 	FetchDocument(ns, recordID, docID string) (data []byte, mimetype string, err error)
-	// SetDiscrepancyStatus records the reviewer's decision (new|confirmed|rejected).
-	SetDiscrepancyStatus(ns, recordID, discrepancyID, status string) error
+	// SetDiscrepancyStatus records the reviewer's decision (new|confirmed|rejected|clarify) with a comment
+	// (required for clarify).
+	SetDiscrepancyStatus(ns, recordID, discrepancyID, status, comment string) error
 	// Remarks lists the remark cards of a comparison.
 	Remarks(ns, recordID string) ([]cmp.Remark, error)
 	// Expertise lists the remarks of the comparison's object that concern
@@ -38,12 +39,16 @@ type store interface {
 	RegisterIssued(ns, comparisonID string, in cmp.IssueInput, res cmp.IssueResult) (*cmp.IssueRegistered, error)
 	// IssuedNumbers maps the group keys of the comparison's registered remarks to their numbers.
 	IssuedNumbers(ns, comparisonID string) (map[string]string, error)
+	// ReportIndex lists the objects with their comparisons and the number of their remarks: what the «Отчёты» page offers to export.
+	ReportIndex(ns string) ([]reportObject, error)
 	// ObjectName is the name of the object ("" if unknown).
 	ObjectName(ns, objectID string) string
 	// Pairing returns the documents of the comparison, its manual pairing and the pairs the last run made.
 	Pairing(ns, recordID string) (*pairingOut, error)
 	// SetPairing stores the manual pairing (the next run uses it).
 	SetPairing(ns, recordID string, p []cmp.ManualPair) error
+	// SetExclusions stores the areas of pages left out of the comparison (the next run uses them).
+	SetExclusions(ns, recordID string, r []cmp.Region) error
 	// SaveRemark creates (ID == "") or updates a remark card.
 	SaveRemark(ns, recordID string, r cmp.Remark) (cmp.Remark, error)
 }
@@ -82,6 +87,7 @@ type discrepancyRecord struct {
 	PageNumber  string `json:"pageNumber"`
 	Kind        string `json:"kind,omitempty"`
 	Status      string `json:"status,omitempty"`
+	Comment     string `json:"comment,omitempty"` // the reviewer's comment to the decision
 	DocRef      string `json:"docRef,omitempty"`
 	DocTarget   string `json:"docTarget,omitempty"`
 	PageRef     string `json:"pageRef,omitempty"`
@@ -122,6 +128,7 @@ type remarkRecord struct {
 	Assignee         string          `json:"assignee"`
 	DueDate          string          `json:"dueDate"`
 	Note             string          `json:"note"`
+	EstimateH        string          `json:"estimateH"` // labour estimate, hours
 	Verdict          string          `json:"verdict"`
 	Score            string          `json:"score"`
 	MatchNote        string          `json:"matchNote"`
@@ -134,7 +141,21 @@ type remarkRecord struct {
 	AIVerdict string `json:"aiVerdict"`
 	AINote    string `json:"aiNote"`
 	AIAt      string `json:"aiAt"`
+	// Result of the check in the four values of ТЗ 3.4.6 (derived from Verdict and AIVerdict) and
+	// the specialist's decision on it; neither changes the working status.
+	// Where the remark leads: the volumes/sheets/pages its references name and the regions of the findings it was matched to
+	Links []cmp.RemarkLocation `json:"links"`
+
+	Outcome         string `json:"outcome"`
+	OutcomeDecision string `json:"outcomeDecision"` // confirmed / changed / ""
+	OutcomeFinal    string `json:"outcomeFinal"`
+	OutcomeComment  string `json:"outcomeComment"`
+	OutcomeBy       string `json:"outcomeBy"`
+	OutcomeAt       string `json:"outcomeAt"`
 }
+
+// fillOutcome computes the system outcome of a remark.
+func (r *remarkRecord) fillOutcome() { r.Outcome = cmp.CheckOutcome(r.Verdict, r.AIVerdict) }
 
 type remarkHistoryRecord struct {
 	Iteration    int    `json:"iteration"`
@@ -145,6 +166,8 @@ type remarkHistoryRecord struct {
 	At           string `json:"at"`
 	Author       string `json:"author"`
 	Source       string `json:"source"`
+	Note         string `json:"note,omitempty"`
+	Kind         string `json:"kind,omitempty"` // cmp.Hist*: what kind of entry it is
 }
 
 type importRecord struct {
@@ -173,6 +196,8 @@ type boardOut struct {
 	Imports     []importRecord    `json:"imports"`
 	Comparisons []boardComparison `json:"comparisons"`
 	Documents   map[string]string `json:"documents"` // linked document ID → name
+	// Dynamics are the daily snapshots of the registry by working status (ТЗ 3.9.4), oldest first.
+	Dynamics []cmp.StatusSnapshot `json:"dynamics"`
 }
 
 // remarkPatch is what the specialist may change by hand; nil = leave.
@@ -181,4 +206,31 @@ type remarkPatch struct {
 	Assignee *string `json:"assignee"`
 	DueDate  *string `json:"dueDate"`
 	Note     *string `json:"note"`
+	// The reason of a status change; required for «Устранено» and «Возвращено на доработку» (ТЗ 3.7.4),
+	// goes to the history.
+	StatusComment *string `json:"statusComment"`
+	// The labour estimate in hours ("" clears it).
+	EstimateH *string `json:"estimateH"`
+	// The specialist's decision on the check result: a final outcome (one of cmp.OutcomeLabels, "" clears)
+	// with a comment, which is required when the outcome differs from the system's.
+	OutcomeFinal   *string `json:"outcomeFinal"`
+	OutcomeComment *string `json:"outcomeComment"`
+}
+
+// reportObject is an object as the «Отчёты» page shows it.
+type reportObject struct {
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Code        string             `json:"code,omitempty"`
+	Remarks     int                `json:"remarks"`  // live remarks of the registry
+	Packages    int                `json:"packages"` // correction packages
+	Comparisons []reportComparison `json:"comparisons"`
+}
+
+type reportComparison struct {
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Kind      string `json:"kind,omitempty"`
+	Iteration string `json:"iteration,omitempty"`
+	Status    string `json:"status"`
 }

@@ -9,11 +9,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/madnikulin50/lowcode/agents/stroykontrol/cmp"
+	"github.com/xuri/excelize/v2"
 )
 
 func setupFixtures(t *testing.T) {
@@ -26,8 +28,8 @@ func setupFixtures(t *testing.T) {
 		t.Skip(err)
 	}
 	raster = NewRasterizer(t.TempDir())
-	fx.analyze = func(in []cmp.Input, mode string, pairing []cmp.ManualPair) (*cmp.Result, error) {
-		return cmp.AnalyzeWith(in, t.TempDir(), cmp.AnalyzeOptions{Rasterize: rasterPage, OCR: cmp.NewOCR("tesseract", "rus", t.TempDir()), Mode: mode, Pairing: pairing})
+	fx.analyze = func(in []cmp.Input, mode string, pairing []cmp.ManualPair, excluded []cmp.Region) (*cmp.Result, error) {
+		return cmp.AnalyzeWith(in, t.TempDir(), cmp.AnalyzeOptions{Rasterize: rasterPage, OCR: cmp.NewOCR("tesseract", "rus", t.TempDir()), Mode: mode, Pairing: pairing, Exclude: excluded})
 	}
 	compose = fx
 	defaultNamespaceID = "x"
@@ -99,6 +101,20 @@ func TestPackComparisonEndToEnd(t *testing.T) {
 		t.Error("path traversal through doc id")
 	}
 
+	// review: a request for a clarification needs a comment and keeps it
+	if w := post(handleDiscrepancyStatus, "/api/discrepancy/status", map[string]string{"recordID": "pack-1", "id": depth.ID, "status": "clarify"}); w.Code != 400 {
+		t.Errorf("clarify without a comment accepted: %d", w.Code)
+	}
+	if w := post(handleDiscrepancyStatus, "/api/discrepancy/status", map[string]string{"recordID": "pack-1", "id": depth.ID, "status": "clarify", "comment": "уточнить глубину у ГИПа"}); w.Code != 200 {
+		t.Fatalf("clarify: %d %s", w.Code, w.Body)
+	}
+	w = get(handleComparison, "/api/comparison?recordID=pack-1&namespaceID=x")
+	_ = json.Unmarshal(w.Body.Bytes(), &out)
+	for _, d := range out.Discrepancies {
+		if d.ID == depth.ID && (d.Status != cmp.StatusClarify || d.Comment != "уточнить глубину у ГИПа") {
+			t.Errorf("clarify not kept with its comment: %+v", d)
+		}
+	}
 	// review: confirm one finding, status sticks
 	if w := post(handleDiscrepancyStatus, "/api/discrepancy/status", map[string]string{"recordID": "pack-1", "id": depth.ID, "status": "confirmed"}); w.Code != 200 {
 		t.Fatalf("status: %d %s", w.Code, w.Body)
@@ -262,6 +278,18 @@ func TestExpertiseRemarksInFixtures(t *testing.T) {
 	if v1["30.5"].Verdict != "no_documents" {
 		t.Errorf("remark 5 names a volume that is not loaded: %+v", v1["30.5"])
 	}
+	// ТЗ 3.5: a remark leads to the volume it names and to the region of the finding it was matched to
+	var place, region bool
+	for _, l := range v1["30.1"].Links {
+		place = place || l.Kind == cmp.LocPlace && l.DocID != ""
+		region = region || l.Kind == cmp.LocFinding && l.FindingID != "" && l.Comparison == "pack-1" && (l.RefBox != "" || l.TargetBox != "") && l.RefPage > 0
+	}
+	if !place || !region {
+		t.Errorf("remark 1 must lead to its volume and to its finding's region: %+v", v1["30.1"].Links)
+	}
+	if v1["30.5"].Links == nil || len(v1["30.5"].Links) != 0 {
+		t.Errorf("a volume that is not loaded leads nowhere, and the list is empty, not null: %+v", v1["30.5"].Links)
+	}
 	// iteration 2: depth and concrete grade were really fixed; the quantity was not, although "resolved"
 	v2, _ := board("pack-1-v2")
 	if v2["30.1"].Verdict != "resolved" || v2["30.3"].Verdict != "resolved" || v2["30.2"].Verdict != "still_differs" || !v2["30.2"].ClaimMismatch {
@@ -277,26 +305,87 @@ func TestExpertiseRemarksInFixtures(t *testing.T) {
 	}
 
 	// the specialist works the remark: status, assignee, due date, note
-	upd := map[string]any{"objectID": "pack-1", "id": v1["30.1"].ID, "status": "resolved", "assignee": "Петров", "dueDate": "2026-11-01", "note": "проверено по ПД"}
+	upd := map[string]any{"objectID": "pack-1", "id": v1["30.1"].ID, "status": "resolved", "statusComment": "сверено с листом 12", "estimateH": "2,5", "assignee": "Петров", "dueDate": "2026-11-01", "note": "проверено по ПД"}
 	if w := post(handleRemarkUpdate, "/api/remarks/update", upd); w.Code != 200 {
 		t.Fatalf("update: %d %s", w.Code, w.Body)
 	}
 	v1, _ = board("pack-1")
-	if e := v1["30.1"]; e.Status != "resolved" || e.Assignee != "Петров" || e.DueDate != "2026-11-01" || e.Note == "" {
+	if e := v1["30.1"]; e.Status != "resolved" || e.Assignee != "Петров" || e.DueDate != "2026-11-01" || e.Note == "" || e.EstimateH != "2.5" {
 		t.Errorf("update not kept: %+v", e)
 	}
 	w = get(handleRemarkHistory, "/api/remarks/history?objectID=pack-1&namespaceID=x&remarkID="+v1["30.1"].ID)
 	_ = json.Unmarshal(w.Body.Bytes(), &hist)
-	if len(hist) < 2 || hist[len(hist)-1].Source != "вручную" || hist[len(hist)-1].Status != "resolved" {
+	manual := remarkHistoryRecord{}
+	for _, h := range hist {
+		if h.Source == "вручную" {
+			manual = h
+		}
+	}
+	if len(hist) < 2 || manual.Status != "resolved" || manual.Note != "сверено с листом 12" {
 		t.Errorf("a manual status change is a history entry: %+v", hist)
+	}
+	openID := ""
+	for _, e := range v1 {
+		if e.Status != "resolved" {
+			openID = e.ID
+		}
+	}
+	if openID == "" {
+		t.Fatal("a remark that is not resolved yet is needed")
+	}
+	// ТЗ 3.6.3: the assignment, the due date and the note are entries of the history too
+	kinds := map[string]remarkHistoryRecord{}
+	for _, h := range hist {
+		kinds[h.Kind] = h
+	}
+	if kinds[cmp.HistAssignee].Source != "назначен: Петров" || kinds[cmp.HistDue].Source != "срок: 2026-11-01" || kinds[cmp.HistNote].Note != "проверено по ПД" || kinds[cmp.HistStatus].Note != "сверено с листом 12" {
+		t.Errorf("history kinds: %+v", kinds)
+	}
+	upd2 := map[string]any{"objectID": "pack-1", "id": v1["30.1"].ID, "assignee": "Петров", "dueDate": "2026-11-01"}
+	before := len(hist)
+	if w := post(handleRemarkUpdate, "/api/remarks/update", upd2); w.Code != 200 {
+		t.Fatalf("update: %d %s", w.Code, w.Body)
+	}
+	w = get(handleRemarkHistory, "/api/remarks/history?objectID=pack-1&namespaceID=x&remarkID="+v1["30.1"].ID)
+	_ = json.Unmarshal(w.Body.Bytes(), &hist)
+	if len(hist) != before {
+		t.Errorf("an update that changes nothing is no history: %d → %d", before, len(hist))
 	}
 	for _, bad := range []map[string]any{
 		{"objectID": "pack-1", "id": v1["30.1"].ID, "status": "bogus"},
 		{"objectID": "pack-1", "id": v1["30.1"].ID, "dueDate": "01.11.2026"},
+		{"objectID": "pack-1", "id": v1["30.1"].ID, "estimateH": "много"},
+		{"objectID": "pack-1", "id": openID, "status": "rework"},                          // sending back needs a reason
+		{"objectID": "pack-1", "id": openID, "status": "resolved", "statusComment": "  "}, // so does confirming
 	} {
 		if w := post(handleRemarkUpdate, "/api/remarks/update", bad); w.Code != 400 {
 			t.Errorf("invalid update accepted: %v → %d", bad, w.Code)
 		}
+	}
+
+	// ТЗ 3.4.6: the result is one of four values derived from the check; the specialist's decision is kept apart
+	v1, _ = board("pack-1")
+	if v1["30.1"].Outcome != cmp.OutcomeNotFixed || v1["30.5"].Outcome != cmp.OutcomeCheck {
+		t.Errorf("outcomes: 1=%s 5=%s", v1["30.1"].Outcome, v1["30.5"].Outcome)
+	}
+	id1 := v1["30.1"].ID
+	if w := post(handleRemarkUpdate, "/api/remarks/update", map[string]any{"objectID": "pack-1", "id": id1, "outcomeFinal": cmp.OutcomeFixed}); w.Code != 400 {
+		t.Errorf("a changed outcome without a comment must be rejected: %d", w.Code)
+	}
+	if w := post(handleRemarkUpdate, "/api/remarks/update", map[string]any{"objectID": "pack-1", "id": id1, "outcomeFinal": cmp.OutcomeFixed, "outcomeComment": "осталось только в ПЗ"}); w.Code != 200 {
+		t.Fatalf("decision: %d %s", w.Code, w.Body)
+	}
+	v1, _ = board("pack-1")
+	if e := v1["30.1"]; e.OutcomeDecision != cmp.DecisionChanged || e.OutcomeFinal != cmp.OutcomeFixed || e.Outcome != cmp.OutcomeNotFixed || e.Status != "resolved" {
+		t.Errorf("decision not kept apart from the system outcome: %+v", e)
+	}
+	w = get(handleRemarkHistory, "/api/remarks/history?objectID=pack-1&namespaceID=x&remarkID="+id1)
+	_ = json.Unmarshal(w.Body.Bytes(), &hist)
+	if last := hist[len(hist)-1]; !strings.HasPrefix(last.Source, "решение по проверке") || last.Note != "осталось только в ПЗ" {
+		t.Errorf("a decision is a history entry: %+v", last)
+	}
+	if w := post(handleRemarkUpdate, "/api/remarks/update", map[string]any{"objectID": "pack-1", "id": id1, "outcomeFinal": cmp.OutcomeNotFixed}); w.Code != 200 {
+		t.Errorf("confirming the system outcome needs no comment (the old comment may stay): %d", w.Code)
 	}
 	// the comparison viewer shows the remarks that concern it
 	var cmpOut comparisonOut
@@ -744,5 +833,194 @@ func TestAssistAsyncAnswerIsCollectedByPolling(t *testing.T) {
 		return o
 	}(); st["status"] != "error" {
 		t.Fatalf("an unknown job is an error the client can show: %v", st)
+	}
+}
+
+func TestSheetsEndpointReadsTitleBlocks(t *testing.T) {
+	setupFixtures(t)
+	w := get(handleSheets, "/api/sheets?recordID=pack-1&namespaceID=x&doc=pd-package.pdf")
+	if w.Code != 200 {
+		t.Fatalf("sheets: %d %s", w.Code, w.Body)
+	}
+	var out struct {
+		Sheets map[string]int `json:"sheets"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil || out.Sheets == nil {
+		t.Fatalf("the answer is an object even when no number was read: %v %s", err, w.Body)
+	}
+	for pg, sh := range out.Sheets {
+		if pg == "" || sh <= 0 {
+			t.Errorf("page %q → sheet %d", pg, sh)
+		}
+	}
+	if w := get(handleSheets, "/api/sheets?recordID=pack-1&namespaceID=x&doc=../pack-2/pd-is.pdf"); w.Code == 200 {
+		t.Error("path traversal through doc id")
+	}
+}
+
+func TestExcludedRegionsLeaveAFindingOut(t *testing.T) {
+	setupFixtures(t)
+	findings := func() []discrepancyRecord {
+		var out struct {
+			Discrepancies []discrepancyRecord `json:"discrepancies"`
+		}
+		w := get(handleComparison, "/api/comparison?recordID=pack-1&namespaceID=x")
+		if w.Code != 200 {
+			t.Fatalf("%d %s", w.Code, w.Body)
+		}
+		_ = json.Unmarshal(w.Body.Bytes(), &out)
+		return out.Discrepancies
+	}
+	var depth discrepancyRecord
+	for _, d := range findings() {
+		if strings.Contains(d.Description, "Глубина заложения") {
+			depth = d
+		}
+	}
+	if depth.ID == "" || depth.BboxRef == "" || depth.DocRef == "" {
+		t.Fatalf("the depth finding with its region is needed: %+v", depth)
+	}
+	box := cmp.ParseBox(depth.BboxRef)
+	page, _ := strconv.Atoi(depth.PageRef)
+	region := cmp.Region{Side: cmp.SideRef, Doc: depth.DocRef, Page: page, Box: fmt.Sprintf("%.3f,%.3f,%.3f,%.3f", box.X0-0.01, box.Y0-0.005, box.X1+0.01, box.Y1+0.005)}
+	// a broken region is refused
+	if w := post(handleExclusionsSet, "/api/exclusions", map[string]any{"recordID": "pack-1", "namespaceID": "x", "excluded": []cmp.Region{{Box: "0.9,0.9,0.1,0.1"}}}); w.Code != 400 {
+		t.Fatalf("want 400, got %d", w.Code)
+	}
+	// both sides: the text of both is out of the comparison
+	both := region
+	both.Side, both.Doc = "both", "" // every file of both sides, that page
+	if w := post(handleExclusionsSet, "/api/exclusions", map[string]any{"recordID": "pack-1", "namespaceID": "x", "excluded": []cmp.Region{both}}); w.Code != 200 {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+	for _, d := range findings() {
+		if strings.Contains(d.Description, "Глубина заложения") {
+			t.Errorf("the finding in the excluded area must be gone: %+v", d)
+		}
+	}
+	var out pairingOut
+	w := get(handlePairingGet, "/api/pairing?recordID=pack-1&namespaceID=x")
+	_ = json.Unmarshal(w.Body.Bytes(), &out)
+	if len(out.Excluded) != 1 || out.Excluded[0].Page != page {
+		t.Errorf("the panel gets the regions back: %+v", out.Excluded)
+	}
+	// clearing brings it back
+	if w := post(handleExclusionsSet, "/api/exclusions", map[string]any{"recordID": "pack-1", "namespaceID": "x", "excluded": []cmp.Region{}}); w.Code != 200 {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+	var back bool
+	for _, d := range findings() {
+		back = back || strings.Contains(d.Description, "Глубина заложения")
+	}
+	if !back {
+		t.Error("without the region the finding is back")
+	}
+}
+
+func TestRegistryExportHoldsWhatTheFiltersSelect(t *testing.T) {
+	setupFixtures(t)
+	if _, err := os.Stat("fixtures/pack-1/remarks.xlsx"); err != nil {
+		t.Skip("run: go run fixtures/gen_remarks.go")
+	}
+	open := func(query string) *excelize.File {
+		w := get(handleRemarksExport, "/api/remarks/export?objectID=pack-1&namespaceID=x&format=xlsx"+query)
+		if w.Code != 200 {
+			t.Fatalf("%s: %d %s", query, w.Code, w.Body)
+		}
+		if !strings.Contains(w.Header().Get("Content-Disposition"), "UTF-8''") {
+			t.Errorf("disposition: %q", w.Header().Get("Content-Disposition"))
+		}
+		f, err := excelize.OpenReader(bytes.NewReader(w.Body.Bytes()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return f
+	}
+	rows := func(f *excelize.File, sheet string) [][]string {
+		r, err := f.GetRows(sheet)
+		if err != nil {
+			t.Fatalf("%s: %v", sheet, err)
+		}
+		return r
+	}
+	f := open("")
+	for _, sheet := range []string{"Сводка", "Реестр", "История итераций", "Проверка устранения", "Динамика"} {
+		if i, _ := f.GetSheetIndex(sheet); i < 0 {
+			t.Errorf("sheet %q is missing: %v", sheet, f.GetSheetList())
+		}
+	}
+	reg := rows(f, "Реестр")
+	if len(reg) != 1+5 {
+		t.Fatalf("a header and the 5 remarks of the case: %d rows", len(reg))
+	}
+	head := map[string]int{}
+	for i, h := range reg[0] {
+		head[h] = i
+	}
+	for _, h := range []string{"Статус экспертизы (выгрузка)", "Статус выполнения", "Результат проверки (система)", "Результат проверки (специалист)", "Где в документах", "Итерация"} {
+		if _, ok := head[h]; !ok {
+			t.Errorf("column %q is missing: %v", h, reg[0])
+		}
+	}
+	if hist := rows(f, "История итераций"); len(hist) < 1+5 {
+		t.Errorf("history of every remark: %d rows", len(hist))
+	}
+	// a status filter: what is exported is what the workbench shows with that filter
+	resolved := 0
+	var b boardOut
+	_ = json.Unmarshal(get(handleRemarksBoard, "/api/remarks/board?objectID=pack-1&namespaceID=x").Body.Bytes(), &b)
+	for _, r := range b.Remarks {
+		if r.Status == "resolved" {
+			resolved++
+		}
+	}
+	if got := rows(open("&status=resolved"), "Реестр"); len(got) != 1+resolved {
+		t.Errorf("status=resolved: %d rows, %d remarks", len(got)-1, resolved)
+	}
+	filtered := open("&status=resolved&assignee=—")
+	if sum := rows(filtered, "Сводка"); !strings.Contains(fmt.Sprint(sum), "статус: Устранено") || !strings.Contains(fmt.Sprint(sum), "ответственный: —") {
+		t.Errorf("the summary says how the rows were selected: %v", sum)
+	}
+	// a period with nothing in it, and a period around the export's own date
+	if got := rows(open("&from=2099-01-01"), "Реестр"); len(got) != 1 {
+		t.Errorf("nothing was active in 2099: %d rows", len(got)-1)
+	}
+	if got := rows(open("&from=2024-11-01&to=2024-11-30"), "Реестр"); len(got) < 2 {
+		t.Errorf("the export of November 2024 changed the remarks: %d rows", len(got)-1)
+	}
+	for _, bad := range []string{"&status=bogus", "&from=01.11.2024", "&from=2025-02-01&to=2025-01-01", "&iter=x", "&format=pdf"} {
+		w := get(handleRemarksExport, "/api/remarks/export?objectID=pack-1&namespaceID=x"+bad)
+		if w.Code != 400 {
+			t.Errorf("%s accepted: %d", bad, w.Code)
+		}
+	}
+}
+
+func TestReportIndexListsObjectsAndTheirExports(t *testing.T) {
+	setupFixtures(t)
+	w := get(handleReportIndex, "/api/reports/index?namespaceID=x")
+	if w.Code != 200 {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+	var out struct {
+		Objects []reportObject `json:"objects"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	var pack reportObject
+	for _, o := range out.Objects {
+		if o.ID == "pack-1" {
+			pack = o
+		}
+	}
+	if pack.ID == "" || len(pack.Comparisons) != 1 || pack.Comparisons[0].ID != "pack-1" || pack.Name == "" {
+		t.Fatalf("pack-1 with its comparison: %+v", out.Objects)
+	}
+	if _, err := os.Stat("fixtures/pack-1/remarks.xlsx"); err == nil && pack.Remarks != 5 {
+		t.Errorf("the registry of pack-1 holds 5 remarks: %d", pack.Remarks)
+	}
+	if w := get(handleReportIndex, "/api/reports/index"); w.Code != 200 && w.Code != 400 {
+		t.Errorf("without a namespace: %d", w.Code)
 	}
 }

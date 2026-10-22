@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -352,6 +353,7 @@ func (c *ComposeClient) Discrepancies(ns, recordID string) ([]discrepancyRecord,
 			PageNumber:  d.val("page_number"),
 			Kind:        d.val("kind"),
 			Status:      d.val("status"),
+			Comment:     d.val("reviewer_comment"),
 			DocRef:      d.val("doc_ref"),
 			DocTarget:   d.val("doc_target"),
 			PageRef:     d.val("page_pd"),
@@ -492,7 +494,7 @@ func (c *ComposeClient) inChain(ns, recordID, owner string) bool {
 	return false
 }
 
-func (c *ComposeClient) SetDiscrepancyStatus(ns, recordID, discrepancyID, status string) error {
+func (c *ComposeClient) SetDiscrepancyStatus(ns, recordID, discrepancyID, status, comment string) error {
 	d, err := c.getRecord(ns, discrepancyModule, discrepancyID)
 	if err != nil {
 		return err
@@ -500,7 +502,7 @@ func (c *ComposeClient) SetDiscrepancyStatus(ns, recordID, discrepancyID, status
 	if d.val("comparison") != recordID {
 		return fmt.Errorf("discrepancy %s does not belong to comparison %s", discrepancyID, recordID)
 	}
-	return composeBackend{c}.Update(ns, discrepancyModule, discrepancyID, idcheck.V("status", status))
+	return composeBackend{c}.Update(ns, discrepancyModule, discrepancyID, idcheck.V("status", status, "reviewer_comment", comment))
 }
 
 func remarkFromRecord(r record) cmp.Remark {
@@ -662,6 +664,12 @@ func (c *ComposeClient) Pairing(ns, recordID string) (*pairingOut, error) {
 	if out.Pairing == nil {
 		out.Pairing = []cmp.ManualPair{}
 	}
+	if out.Excluded, err = cmp.ParseRegions(rec.val("excluded_regions")); err != nil {
+		return nil, err
+	}
+	if out.Excluded == nil {
+		out.Excluded = []cmp.Region{}
+	}
 	if raw := rec.val("pairs_json"); raw != "" {
 		var st cmp.PairsState
 		if json.Unmarshal([]byte(raw), &st) == nil {
@@ -676,6 +684,62 @@ func (c *ComposeClient) SetPairing(ns, recordID string, p []cmp.ManualPair) erro
 	v := idcheck.V("pairing", cmp.PairingJSON(p))
 	if len(p) == 0 {
 		v["pairing"] = []string{""} // an explicit empty value clears the stored one
+	}
+	return composeBackend{c}.Update(ns, comparisonModule, recordID, v)
+}
+
+// ReportIndex implements store: the working objects with their comparisons and the size of their registries.
+func (c *ComposeClient) ReportIndex(ns string) ([]reportObject, error) {
+	b := composeBackend{c}
+	objs, err := b.Search(ns, cmp.ModObjects, "")
+	if err != nil {
+		return nil, err
+	}
+	byID := map[string]*reportObject{}
+	var out []*reportObject
+	for _, o := range objs {
+		if o.Get("data_kind") == "demo" {
+			continue
+		}
+		ro := &reportObject{ID: o.ID, Name: o.Get("name"), Code: o.Get("code"), Comparisons: []reportComparison{}}
+		byID[o.ID] = ro
+		out = append(out, ro)
+	}
+	if comps, err := b.Search(ns, cmp.ModComparisons, ""); err == nil {
+		for _, cp := range comps {
+			if ro := byID[cp.Get("object")]; ro != nil {
+				ro.Comparisons = append(ro.Comparisons, reportComparison{ID: cp.ID, Title: cp.Get("title"), Kind: cp.Get("kind"), Iteration: cp.Get("iteration_no"), Status: cp.Get("status")})
+			}
+		}
+	}
+	if rems, err := b.Search(ns, cmp.ModExpertise, ""); err == nil {
+		for _, rm := range rems {
+			if ro := byID[rm.Get("object")]; ro != nil && rm.Get("archived") == "" {
+				ro.Remarks++
+			}
+		}
+	}
+	if pk, err := b.Search(ns, cmp.ModCorrection, ""); err == nil {
+		for _, p := range pk {
+			if ro := byID[p.Get("object")]; ro != nil {
+				ro.Packages++
+			}
+		}
+	}
+	res := make([]reportObject, 0, len(out))
+	for _, ro := range out {
+		sort.Slice(ro.Comparisons, func(i, j int) bool { return ro.Comparisons[i].Title < ro.Comparisons[j].Title })
+		res = append(res, *ro)
+	}
+	sort.Slice(res, func(i, j int) bool { return res[i].Name < res[j].Name })
+	return res, nil
+}
+
+// SetExclusions implements store.
+func (c *ComposeClient) SetExclusions(ns, recordID string, r []cmp.Region) error {
+	v := idcheck.V("excluded_regions", cmp.RegionsJSON(r))
+	if len(r) == 0 {
+		v["excluded_regions"] = []string{""} // an explicit empty value clears the stored one
 	}
 	return composeBackend{c}.Update(ns, comparisonModule, recordID, v)
 }

@@ -63,8 +63,11 @@ type SetInfo struct {
 	Missing    []string `json:"missing"`
 	Extra      []string `json:"extra"`
 	Duplicates []string `json:"duplicates"`
-	Unparsed   int      `json:"unparsed"`
-	Note       string   `json:"note"`
+	// Renamed: volumes the set has under the right шифр but with a title that shares no words with the
+	// title of the statement of volumes (ТЗ 3.2.5)
+	Renamed  []string `json:"renamed"`
+	Unparsed int      `json:"unparsed"`
+	Note     string   `json:"note"`
 }
 
 // Label is "ПД v2" / "РД v1".
@@ -198,7 +201,7 @@ func LoadObjectDocs(b Backend, ns, objectID string) (*ObjectDocs, error) {
 
 	for _, s := range sets {
 		si := SetInfo{ID: s.ID, Stage: s.Get("stage"), Version: s.Get("version"), Status: s.Get("status"), IssuedAt: s.Get("issued_at"), Comment: s.Get("comment"),
-			Docs: []SetDoc{}, Missing: []string{}, Extra: []string{}, Duplicates: []string{}}
+			Docs: []SetDoc{}, Missing: []string{}, Extra: []string{}, Duplicates: []string{}, Renamed: []string{}}
 		if si.Stage != SideRef {
 			si.Stage = SideTarget
 		}
@@ -382,6 +385,9 @@ func completeness(s *SetInfo, expected []expectedVolume) {
 		}
 		if hit {
 			s.Present++
+			if r := renamedAgainst(s, e); r != "" {
+				s.Renamed = append(s.Renamed, r)
+			}
 		} else {
 			s.Missing = append(s.Missing, e.code)
 		}
@@ -395,6 +401,47 @@ func completeness(s *SetInfo, expected []expectedVolume) {
 		s.Pct = s.Present * 100 / s.Total
 	}
 	s.Note = setNote(s)
+}
+
+// stems are the content words of a title cut to their stems (the endings differ: «свайного» / «свайное»).
+func stems(title string) map[string]bool {
+	out := map[string]bool{}
+	for _, w := range contentWords(title) {
+		if r := []rune(w); len(r) > 6 {
+			w = string(r[:len(r)-2])
+		}
+		out[w] = true
+	}
+	return out
+}
+
+// renamedAgainst compares the title the statement of volumes gives a volume with the title in the
+// file's own title block. Judged only when the file is that one volume, both titles have content
+// words and not one of them is shared — a different wording alone is not a mismatch.
+func renamedAgainst(s *SetInfo, e expectedVolume) string {
+	if e.title == "" {
+		return ""
+	}
+	want := stems(e.title)
+	if len(want) == 0 {
+		return ""
+	}
+	for _, d := range s.Docs {
+		if !d.Parsed || len(d.Codes) != 1 || d.Title == "" || !volumesMatch(d.Codes[0], e.code) {
+			continue
+		}
+		have := stems(d.Title)
+		if len(have) == 0 {
+			continue
+		}
+		for w := range have {
+			if want[w] {
+				return ""
+			}
+		}
+		return fmt.Sprintf("%s: в ведомости «%s», в документе «%s»", e.code, trunc(e.title, 60), trunc(d.Title, 60))
+	}
+	return ""
 }
 
 func setNote(s *SetInfo) string {
@@ -416,6 +463,9 @@ func setNote(s *SetInfo) string {
 	}
 	if len(s.Duplicates) > 0 {
 		parts = append(parts, "дубли: "+strings.Join(s.Duplicates, ", "))
+	}
+	if len(s.Renamed) > 0 {
+		parts = append(parts, "наименование не совпадает с ведомостью — "+strings.Join(s.Renamed, "; "))
 	}
 	if s.Unparsed > 0 {
 		parts = append(parts, fmt.Sprintf("не прочитано файлов: %d", s.Unparsed))
@@ -609,6 +659,14 @@ func (r *Runner) readSetDocs(ctx context.Context, ns, objectID string) error {
 			doc := &Document{ID: d.ID, Name: name, Pages: pages}
 			vs := DetectVolumes(doc)
 			v := idcheck.V("pages", strconv.Itoa(len(pages)), "detected_by", "auto")
+			v["sheet_map"] = []string{FormatSheetMap(SheetMap(pages))}
+			var infos []VolumeInfo
+			for _, x := range vs {
+				infos = append(infos, volInfo(x))
+			}
+			for k, x := range EditionValues(&d, hashKey(data), infos) {
+				v[k] = x
+			}
 			var codes, titles []string
 			for _, x := range vs {
 				if x.Code != "" {

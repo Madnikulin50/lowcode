@@ -143,8 +143,8 @@ func main() {
 	assistVision = cmp.NewSuggester(*ollamaURL, *visionModel)
 	assistSkillsDir = firstNonEmpty(os.Getenv("AI_SKILLS_DIR"), "skills")
 	if fx, ok := compose.(*FixtureStore); ok {
-		fx.analyze = func(in []cmp.Input, mode string, pairing []cmp.ManualPair) (*cmp.Result, error) {
-			return cmp.AnalyzeWith(in, cmpCacheDir, cmp.AnalyzeOptions{Rasterize: rasterPage, OCR: cmpOCR, Mode: mode, Pairing: pairing})
+		fx.analyze = func(in []cmp.Input, mode string, pairing []cmp.ManualPair, excluded []cmp.Region) (*cmp.Result, error) {
+			return cmp.AnalyzeWith(in, cmpCacheDir, cmp.AnalyzeOptions{Rasterize: rasterPage, OCR: cmpOCR, Mode: mode, Pairing: pairing, Exclude: excluded})
 		}
 	}
 	if cc, ok := compose.(*ComposeClient); ok {
@@ -180,6 +180,7 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/comparison", handleComparison)
 		r.Get("/pages", handlePages)
+		r.Get("/sheets", handleSheets)
 		r.Get("/page", handlePage)
 		r.Get("/file", handleFile)
 		r.Get("/text", handleText)
@@ -197,6 +198,8 @@ func main() {
 		r.Post("/volumes/resolve", handleVolumesResolve)
 		r.Get("/remarks/board", handleRemarksBoard)
 		r.Get("/remarks/history", handleRemarkHistory)
+		r.Get("/remarks/export", handleRemarksExport)
+		r.Get("/reports/index", handleReportIndex)
 		r.Post("/remarks/update", handleRemarkUpdate)
 		r.Post("/remarks/ai", handleRemarkAI)
 		r.Get("/issue/preview", handleIssuePreview)
@@ -206,6 +209,7 @@ func main() {
 		r.Get("/report/export", handleReportExport)
 		r.Get("/pairing", handlePairingGet)
 		r.Post("/pairing", handlePairingSet)
+		r.Post("/exclusions", handleExclusionsSet)
 		r.Post("/remark", handleRemarkCreate)
 		r.Post("/remark/save", handleRemarkSave)
 		r.Post("/remark/suggest", handleRemarkSuggest)
@@ -552,6 +556,29 @@ func handlePages(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeJSON(w, http.StatusOK, pagesOut{Supported: false, Kind: "other"})
 	}
+}
+
+// handleSheets serves the sheet numbers read from the title blocks of a PDF: {"sheets": {"<page>": <sheet>}}.
+// Asked for apart from /api/pages: reading the title blocks needs the text layer with positions, which
+// is cached by the file's content but takes seconds the first time.
+func handleSheets(w http.ResponseWriter, r *http.Request) {
+	data, mimetype, status, err := fetchDoc(r)
+	if err != nil {
+		writeErr(w, status, err)
+		return
+	}
+	out := map[string]int{}
+	if IsPDF(mimetype, data) {
+		pages, err := cmp.ExtractPages("sheets", data, cmpCacheDir)
+		if err != nil {
+			writeErr(w, http.StatusUnprocessableEntity, err)
+			return
+		}
+		for pg, sh := range cmp.SheetMap(pages) {
+			out[strconv.Itoa(pg)] = sh
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"sheets": out})
 }
 
 // handleFile streams the raw pd_file/rd_file attachment bytes so the browser

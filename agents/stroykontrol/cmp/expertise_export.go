@@ -21,6 +21,9 @@ const (
 	RemarkBeingFix  = "being_fixed"     // Устраняется заявителем
 	RemarkAnswerRev = "answer_review"   // Требуется рассмотрение ответа
 	RemarkResolved  = "resolved"        // Устранено
+	// RemarkRework is the registry's own status (not in the expertise's wording): the specialist sent
+	// the correction back to the designer. An import never sets it.
+	RemarkRework = "rework" // Возвращено на доработку
 )
 
 // RemarkStatusLabels maps a status code to its label.
@@ -29,7 +32,11 @@ var RemarkStatusLabels = map[string]string{
 	RemarkBeingFix:  "Устраняется заявителем",
 	RemarkAnswerRev: "Требуется рассмотрение ответа",
 	RemarkResolved:  "Устранено",
+	RemarkRework:    "Возвращено на доработку",
 }
+
+// RemarkStatusOrder is the order the statuses are shown in.
+var RemarkStatusOrder = []string{RemarkAwaiting, RemarkBeingFix, RemarkAnswerRev, RemarkRework, RemarkResolved}
 
 // StatusCode turns the status text of an export into a code ("" if unknown).
 func StatusCode(src string) string {

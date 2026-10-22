@@ -55,9 +55,9 @@ export const DIFF_CONTEXT = 3
 
 export const KIND_LABEL = {
   text: 'текст', table_row: 'таблица', param: 'ключевой параметр', drawing: 'чертёж', vor: 'ВОР / спецификация',
-  not_released: 'не выпущено', scope_diff: 'вне объёма', format: 'оформление', cross_volume: 'между томами',
+  not_released: 'не выпущено', scope_diff: 'вне объёма', format: 'оформление', cross_volume: 'между томами', element: 'марки элементов',
 }
-export const REVIEW_LABEL = { new: 'новое', confirmed: 'подтверждено', rejected: 'отклонено' }
+export const REVIEW_LABEL = { new: 'новое', confirmed: 'подтверждено', rejected: 'отклонено', clarify: 'требует уточнения' }
 export const REMARK_STATUS_LABEL = { draft: 'Черновик', issued: 'Выдано', closed: 'Закрыто' }
 export const ITER_LABEL = { new: 'новое', persisting: 'не устранено', resolved: 'устранено' }
 export const VERDICT_LABEL = {

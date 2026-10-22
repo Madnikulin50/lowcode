@@ -60,13 +60,21 @@ func (f *FixtureStore) loadBoard(caseID string) (*fxBoard, error) {
 		}
 		docs, _ := f.Documents("", caseID)
 		var labels []cmp.DocLabel
+		var locDocs []cmp.LocDoc
 		for _, d := range docs {
 			labels = append(labels, cmp.DocLabel{ID: d.ID, Codes: d.VolumeCode, Title: d.VolumeTitle})
+			pg, _ := strconv.Atoi(d.Pages)
+			locDocs = append(locDocs, cmp.LocDoc{ID: d.ID, Name: strings.TrimSpace(d.VolumeCode + " " + d.VolumeTitle), Side: d.Side, Codes: d.VolumeCode, Title: d.VolumeTitle, Pages: pg, Comparison: caseID})
 			board.docs[d.ID] = strings.TrimSpace(d.VolumeCode + " " + d.VolumeTitle)
 		}
 		var cands []cmp.Candidate
 		docOf := map[string][2]string{}
+		foundAt := map[string]cmp.FoundAt{}
 		for _, d := range discs {
+			pp, _ := strconv.Atoi(d.PageRef)
+			tp, _ := strconv.Atoi(d.PageTarget)
+			foundAt[d.ID] = cmp.FoundAt{ID: d.ID, Comparison: caseID, Text: strings.TrimPrefix(strings.TrimPrefix(d.Description, "[детерм.] "), "[ИИ] "),
+				RefDoc: d.DocRef, TargetDoc: d.DocTarget, RefPage: pp, TargetPage: tp, RefBox: d.BboxRef, TargetBox: d.BboxTarget}
 			var ev cmp.Evidence
 			_ = jsonUnmarshal(d.Evidence, &ev)
 			text := strings.TrimPrefix(strings.TrimPrefix(d.Description, "[детерм.] "), "[ИИ] ")
@@ -105,6 +113,17 @@ func (f *FixtureStore) loadBoard(caseID string) (*fxBoard, error) {
 				}
 				if rr.VolumeRefs == nil {
 					rr.VolumeRefs = []cmp.VolumeRef{}
+				}
+				rr.fillOutcome()
+				var matched []cmp.FoundAt
+				for _, id := range m.FindingIDs {
+					if f, ok := foundAt[id]; ok {
+						matched = append(matched, f)
+					}
+				}
+				rr.Links = cmp.LocateRemark(refs, locDocs, matched)
+				if rr.Links == nil {
+					rr.Links = []cmp.RemarkLocation{}
 				}
 				fr := &fxRemark{rec: rr}
 				for _, s := range rec.History {
@@ -149,6 +168,14 @@ func (f *FixtureStore) Board(_, caseID string) (*boardOut, error) {
 	}
 	f.mu.Unlock()
 	sortRemarks(out.Remarks)
+	// no store behind the fixtures: the dynamics is the one point of today
+	rows := make([]cmp.StatusRow, 0, len(out.Remarks))
+	for _, r := range out.Remarks {
+		if !r.Archived {
+			rows = append(rows, cmp.StatusRow{Status: r.Status, DueDate: r.DueDate})
+		}
+	}
+	out.Dynamics = []cmp.StatusSnapshot{cmp.CountStatuses(rows, time.Now().UTC().Format("2006-01-02"))}
 	return out, nil
 }
 
@@ -177,18 +204,55 @@ func (f *FixtureStore) UpdateRemark(_, caseID, remarkID string, p remarkPatch) (
 	if !ok {
 		return nil, fmt.Errorf("remark %s not found", remarkID)
 	}
+	statusComment := ""
+	if p.StatusComment != nil {
+		statusComment = strings.TrimSpace(*p.StatusComment)
+	}
 	if p.Status != nil {
-		if _, ok := cmp.RemarkStatusLabels[*p.Status]; !ok {
-			return nil, fmt.Errorf("unknown status %q", *p.Status)
+		if err := cmp.CheckStatusChange(r.rec.Status, *p.Status, statusComment); err != nil {
+			return nil, err
 		}
+	}
+	if p.EstimateH != nil {
+		est, err := cmp.ParseEstimate(*p.EstimateH)
+		if err != nil {
+			return nil, err
+		}
+		r.rec.EstimateH = est
 	}
 	if p.DueDate != nil && !validDate(*p.DueDate) {
 		return nil, fmt.Errorf("dueDate must be YYYY-MM-DD")
 	}
+	if p.OutcomeFinal != nil || p.OutcomeComment != nil {
+		final, comment := r.rec.OutcomeFinal, r.rec.OutcomeComment
+		if p.OutcomeFinal != nil {
+			final = *p.OutcomeFinal
+		}
+		if p.OutcomeComment != nil {
+			comment = strings.TrimSpace(*p.OutcomeComment)
+		}
+		kind, err := cmp.ResolveDecision(r.rec.Outcome, final, comment)
+		if err != nil {
+			return nil, err
+		}
+		now := fmtTime(time.Now().UTC())
+		r.rec.OutcomeFinal, r.rec.OutcomeDecision, r.rec.OutcomeComment = final, kind, comment
+		if final == "" {
+			r.rec.OutcomeBy, r.rec.OutcomeAt = "", ""
+		} else {
+			r.rec.OutcomeBy, r.rec.OutcomeAt = "специалист ПТО", now
+			r.history = append(r.history, remarkHistoryRecord{Iteration: max(r.rec.Iterations, 1), Status: r.rec.Status, SourceStatus: r.rec.SourceStatus,
+				At: now, Author: "специалист ПТО", Source: "решение по проверке: " + cmp.OutcomeLabels[final], Note: comment, Kind: cmp.HistDecision})
+		}
+	}
 	if p.Status != nil && *p.Status != r.rec.Status {
 		r.history = append(r.history, remarkHistoryRecord{Iteration: max(r.rec.Iterations, 1), Answer: r.rec.Answer, RejectReason: r.rec.RejectReason,
-			Status: *p.Status, SourceStatus: r.rec.SourceStatus, At: fmtTime(time.Now().UTC()), Author: "специалист ПТО", Source: "вручную"})
+			Status: *p.Status, SourceStatus: r.rec.SourceStatus, At: fmtTime(time.Now().UTC()), Author: "специалист ПТО", Source: "вручную", Note: statusComment, Kind: cmp.HistStatus})
 		r.rec.Status = *p.Status
+	}
+	for _, wc := range cmp.WorkChanges(r.rec.Assignee, r.rec.DueDate, r.rec.Note, p.Assignee, p.DueDate, p.Note) {
+		r.history = append(r.history, remarkHistoryRecord{Iteration: max(r.rec.Iterations, 1), Status: valOr(p.Status, r.rec.Status), SourceStatus: r.rec.SourceStatus,
+			At: fmtTime(time.Now().UTC()), Author: "специалист ПТО", Source: wc.Source, Note: wc.Note, Kind: wc.Kind})
 	}
 	if p.Assignee != nil {
 		r.rec.Assignee = strings.TrimSpace(*p.Assignee)

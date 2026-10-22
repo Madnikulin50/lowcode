@@ -4,7 +4,8 @@ import { errText } from '../utils.js'
 // quick work on a remark (status, assignee, due date), history, import journal.
 import { ref, reactive, computed, onMounted } from 'vue'
 import RemarkDetail from './RemarkDetail.vue'
-import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, fmtDate, isOverdue } from './labels.js'
+import RemarkDynamics from './RemarkDynamics.vue'
+import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, OUTCOME_LABEL, finalOutcome, fmtDate, isOverdue } from './labels.js'
 
 const params = new URLSearchParams(location.search)
 const objectID = params.get('objectID') || ''
@@ -15,7 +16,9 @@ const state = reactive({ loading: true, error: '', board: null, busy: false, act
 const selectedID = ref('')
 const history = ref(null)
 const showJournal = ref(false)
-const filter = reactive({ q: '', status: '', crit: '', expert: '', discipline: '', section: '', assignee: '', iter: '', verdict: '', claim: false, overdue: false, archived: false })
+const showDynamics = ref(false)
+const period = reactive({ from: '', to: '' })
+const filter = reactive({ q: '', status: '', crit: '', expert: '', discipline: '', section: '', assignee: '', iter: '', verdict: '', outcome: '', claim: false, overdue: false, archived: false })
 
 async function api (url, body) {
   const res = await fetch(url, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined)
@@ -87,6 +90,21 @@ const checkNow = () => act(async () => {
   await load()
 })
 
+// Excel export of the registry with the filters on screen (and the period): what is exported is what is shown
+const exportHref = computed(() => {
+  const q = new URLSearchParams({ objectID, namespaceID, format: 'xlsx' })
+  const f = filter
+  if (f.status) q.set('status', f.status)
+  for (const k of ['crit', 'expert', 'discipline', 'section', 'assignee', 'iter', 'verdict', 'outcome']) if (f[k]) q.set(k, f[k])
+  if (f.q.trim()) q.set('q', f.q.trim())
+  if (f.overdue) q.set('overdue', '1')
+  if (f.claim) q.set('claim', '1')
+  if (f.archived) q.set('archived', '1')
+  if (period.from) q.set('from', period.from)
+  if (period.to) q.set('to', period.to)
+  return `api/remarks/export?${q}`
+})
+
 const remarks = computed(() => state.board ? state.board.remarks : [])
 const uniq = (key) => [...new Set(remarks.value.map(r => r[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'ru'))
 const experts = computed(() => uniq('expert'))
@@ -119,6 +137,7 @@ const rows = computed(() => {
     (!filter.assignee || (filter.assignee === '—' ? !r.assignee : r.assignee === filter.assignee)) &&
     (!filter.iter || r.iterations >= Number(filter.iter)) &&
     (!filter.verdict || r.verdict === filter.verdict) &&
+    (!filter.outcome || finalOutcome(r) === filter.outcome) &&
     (!filter.claim || r.claimMismatch) &&
     (!filter.overdue || isOverdue(r)) &&
     (!q || (r.text + ' ' + r.answer + ' ' + r.number + ' ' + r.refs).toLowerCase().includes(q)),
@@ -141,7 +160,9 @@ async function update (id, patch) {
 }
 
 function resetFilters () {
-  Object.assign(filter, { q: '', status: '', crit: '', expert: '', discipline: '', section: '', assignee: '', iter: '', verdict: '', claim: false, overdue: false, archived: false })
+  Object.assign(filter, { q: '', status: '', crit: '', expert: '', discipline: '', section: '', assignee: '', iter: '', verdict: '', outcome: '', claim: false, overdue: false, archived: false })
+  period.from = ''
+  period.to = ''
 }
 const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s || '')
 </script>
@@ -157,10 +178,13 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
         <button class="small" :disabled="state.busy" title="Прочитать новые выгрузки, приложенные к объекту" @click="importNow(false)">Загрузить выгрузку</button>
         <button class="small" :disabled="state.busy" title="Заново связать замечания с загруженными томами и проверить ответы" @click="checkNow">Проверить по документам</button>
         <button class="small" :disabled="state.busy" title="Модель прочитает отобранные замечания и фрагменты их томов (не более 25 за раз)" @click="aiMany">ИИ-разбор отобранных</button>
+        <button class="small" title="Сколько замечаний в каком статусе по дням" @click="showDynamics = !showDynamics">Динамика</button>
         <button class="small" @click="showJournal = !showJournal">Журнал выгрузок ({{ state.board.imports.length }})</button>
       </div>
       <div v-if="state.actionError" class="err action-err">{{ state.actionError }}</div>
       <div v-if="state.notice" class="comment">{{ state.notice }}</div>
+
+      <RemarkDynamics v-if="showDynamics" :dynamics="state.board.dynamics || []" />
 
       <div v-if="showJournal" class="rm-journal">
         <div v-if="!state.board.imports.length" class="empty">Выгрузок ещё не загружали: приложите Excel к объекту и нажмите «Загрузить выгрузку».</div>
@@ -194,7 +218,10 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
         <select v-model="filter.assignee"><option value="">любой ответственный</option><option value="—">не назначен</option><option v-for="e in assignees" :key="e" :value="e">{{ e }}</option></select>
         <select v-model="filter.iter"><option value="">любая итерация</option><option value="2">итерация ≥ 2</option><option value="3">итерация ≥ 3</option></select>
         <select v-model="filter.verdict"><option value="">любая проверка</option><option v-for="(l, k) in VERDICT_LABEL" :key="k" :value="k">{{ l }}</option></select>
+        <select v-model="filter.outcome"><option value="">любой результат</option><option v-for="(l, k) in OUTCOME_LABEL" :key="k" :value="k">{{ l }}</option></select>
         <label class="chk"><input v-model="filter.archived" type="checkbox" /> и пропавшие из выгрузки</label>
+        <label class="chk" title="Замечания, по которым что-то менялось в этот период (выгрузка экспертизы или запись истории)">период с <input v-model="period.from" type="date" /> по <input v-model="period.to" type="date" /></label>
+        <a class="small-link" :href="exportHref" title="Реестр, история итераций, проверка устранения и динамика — с теми фильтрами, что выбраны">⬇ Excel</a>
         <button class="small" @click="resetFilters">Сбросить</button>
         <span class="muted">показано {{ rows.length }} из {{ live.length }}</span>
       </div>
@@ -202,7 +229,7 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
       <div class="rm-layout" :class="{ split: selected }">
         <div class="rm-table-wrap">
           <table class="rm-table">
-            <thead><tr><th>№</th><th></th><th>Статус</th><th>НД</th><th>Эксперт</th><th>Ит.</th><th>Проверка</th><th>Ответственный</th><th>Срок</th><th>Замечание</th></tr></thead>
+            <thead><tr><th>№</th><th></th><th>Статус</th><th>НД</th><th>Эксперт</th><th>Ит.</th><th>Проверка</th><th>Результат</th><th>Ответственный</th><th>Срок</th><th>Замечание</th></tr></thead>
             <tbody>
               <tr v-for="r in rows" :key="r.id" :class="{ active: r.id === selectedID, archived: r.archived }" @click="select(r)">
                 <td class="num">{{ r.number || '—' }}</td>
@@ -212,11 +239,12 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
                 <td class="nowrap">{{ r.expert }}</td>
                 <td>{{ r.iterations }}</td>
                 <td><span v-if="r.verdict" class="tag" :class="'ev-' + r.verdict" :title="r.matchNote">{{ VERDICT_LABEL[r.verdict] }}</span><span v-if="r.claimMismatch" class="tag ev-claim">≠</span><span v-if="r.aiVerdict" class="tag" :class="'ai-' + r.aiVerdict" :title="AI_LABEL[r.aiVerdict]">ИИ</span></td>
+                <td><span class="tag" :class="'oc-' + finalOutcome(r)" :title="r.outcomeFinal ? 'Решение специалиста' : 'Вывод системы'">{{ OUTCOME_LABEL[finalOutcome(r)] }}</span></td>
                 <td class="nowrap">{{ r.assignee }}</td>
                 <td class="nowrap" :class="{ overdue: isOverdue(r) }">{{ fmtDate(r.dueDate) }}</td>
                 <td class="txt">{{ clip(r.text) }}</td>
               </tr>
-              <tr v-if="!rows.length"><td colspan="10" class="empty">Нет замечаний под выбранный фильтр.</td></tr>
+              <tr v-if="!rows.length"><td colspan="11" class="empty">Нет замечаний под выбранный фильтр.</td></tr>
             </tbody>
           </table>
         </div>

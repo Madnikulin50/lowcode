@@ -2,7 +2,7 @@
 // Findings of the comparison: filter, review (confirm / reject), pick
 // several and turn them into a remark card. A click on a row opens the
 // pages and highlights the region in the viewer.
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { SEV_ORDER, SEV_LABEL, TYPE_LABEL, KIND_LABEL, REVIEW_LABEL, ITER_LABEL, names } from '../constants.js'
 import { splitSource } from '../composables/useTextDiff.js'
 import { parseEvidence } from '../utils.js'
@@ -23,7 +23,7 @@ const counts = computed(() => {
   return c
 })
 const reviewCounts = computed(() => {
-  const c = { new: 0, confirmed: 0, rejected: 0 }
+  const c = { new: 0, confirmed: 0, rejected: 0, clarify: 0 }
   for (const d of props.list) c[d.status || 'new'] = (c[d.status || 'new'] || 0) + 1
   return c
 })
@@ -64,6 +64,18 @@ const rows = computed(() => {
 
 // everything above "low" that nobody has decided on yet
 const confirmable = computed(() => props.list.filter(d => (d.status || 'new') === 'new' && d.severity !== 'low' && !INFO_KINDS.includes(d.kind) && d.id).map(d => d.id))
+// «Уточнить»: the specialist cannot decide; the comment says what has to be clarified (required)
+const clarifying = ref('')
+const clarifyText = ref('')
+function startClarify (row) {
+  clarifying.value = row.d.id
+  clarifyText.value = row.d.comment || ''
+}
+function sendClarify (id) {
+  if (!clarifyText.value.trim()) return
+  emit('status', id, 'clarify', clarifyText.value.trim())
+  clarifying.value = ''
+}
 function confirmAll () { emit('status-many', confirmable.value, 'confirmed') }
 function toggle (set, id) { if (set.has(id)) set.delete(id); else set.add(id) }
 function makeCard () {
@@ -85,6 +97,7 @@ function makeCard () {
         </template>
         <span class="chip">подтверждено: {{ reviewCounts.confirmed }}</span>
         <span class="chip">отклонено: {{ reviewCounts.rejected }}</span>
+        <span v-if="reviewCounts.clarify" class="chip">требует уточнения: {{ reviewCounts.clarify }}</span>
       </div>
 
       <div class="disc-filters">
@@ -130,6 +143,12 @@ function makeCard () {
             <span v-if="row.status !== 'new'" class="tag" :class="'st-' + row.status">{{ REVIEW_LABEL[row.status] }}</span>
           </div>
           <span :class="row.hasText ? '' : 'disc-fallback'">{{ row.text }}</span>
+          <div v-if="row.status === 'clarify' && row.d.comment" class="clarify-note" @click.stop><b>Уточнить:</b> {{ row.d.comment }}</div>
+          <div v-if="clarifying === row.d.id" class="clarify-form" @click.stop>
+            <textarea v-model="clarifyText" rows="2" placeholder="Что нужно уточнить (обязательно)"></textarea>
+            <button class="primary" :disabled="busy || !clarifyText.trim()" @click="sendClarify(row.d.id)">Отправить на уточнение</button>
+            <button class="small" @click="clarifying = ''">Отмена</button>
+          </div>
           <div v-if="row.evidence" class="ev-toggle" @click.stop="toggle(open, row.d.id)">{{ open.has(row.d.id) ? '▾' : '▸' }} на основании чего</div>
           <div v-if="row.evidence && open.has(row.d.id)" class="evidence" @click.stop>
             <div v-if="row.evidence.ref"><b>{{ names.ref }}:</b> {{ row.evidence.ref }}</div>
@@ -142,6 +161,7 @@ function makeCard () {
         <div v-if="row.d.id" class="review" @click.stop>
           <button :class="{ on: row.status === 'confirmed' }" :disabled="busy" title="Подтвердить расхождение" @click="emit('status', row.d.id, row.status === 'confirmed' ? 'new' : 'confirmed')">✓</button>
           <button :class="{ on: row.status === 'rejected' }" :disabled="busy" title="Отклонить (ложное срабатывание)" @click="emit('status', row.d.id, row.status === 'rejected' ? 'new' : 'rejected')">✗</button>
+          <button :class="{ on: row.status === 'clarify' }" :disabled="busy" title="Требует уточнения (нужен комментарий)" @click="row.status === 'clarify' ? emit('status', row.d.id, 'new') : startClarify(row)">?</button>
         </div>
       </div>
     </template>

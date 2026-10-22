@@ -47,7 +47,7 @@ func ExtractPages(docID string, data []byte, cacheDir string) ([]Page, error) {
 	key := hashKey(data)
 	cachePath := ""
 	if cacheDir != "" {
-		cachePath = filepath.Join(cacheDir, "cmp6-"+key+".json")
+		cachePath = filepath.Join(cacheDir, "cmp7-"+key+".json")
 		if b, err := os.ReadFile(cachePath); err == nil {
 			var pages []Page
 			if json.Unmarshal(b, &pages) == nil {
@@ -74,6 +74,7 @@ func ExtractPages(docID string, data []byte, cacheDir string) ([]Page, error) {
 		return nil, fmt.Errorf("pdftotext -bbox: %w (%s)", err, msg)
 	}
 	pages := ParseBBox(docID, string(out))
+	markRaster(pages, in)
 	if cachePath != "" {
 		if err := os.MkdirAll(cacheDir, 0o755); err == nil {
 			if b, err := json.Marshal(pages); err == nil {
