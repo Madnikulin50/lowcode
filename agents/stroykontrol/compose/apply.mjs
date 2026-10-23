@@ -103,6 +103,7 @@ const DISCREPANCY_KIND = [
   ['format', 'Оформление'],
   ['cross_volume', 'Согласованность между томами'],
   ['element', 'Марки элементов'],
+  ['change_reg', 'Регистрация изменений'],
 ]
 
 const ITER_STATE = [
@@ -119,6 +120,25 @@ const EXPERT_VERDICT = [
 ]
 
 // Единственный рабочий статус замечания: формулировки — как в выгрузке экспертизы.
+const NOTIFY_EVENT = [
+  ['assigned', 'Назначение'],
+  ['status', 'Смена статуса'],
+  ['due_soon', 'Срок приближается'],
+  ['overdue', 'Срок нарушен'],
+]
+
+const NOTIFY_ROLE = [
+  ['assignee', 'Исполнитель'],
+  ['manager', 'Руководитель проекта'],
+]
+
+const NOTIFY_DELIVERY = [
+  ['none', 'Только лента'],
+  ['pending', 'К отправке'],
+  ['sent', 'Отправлено'],
+  ['failed', 'Ошибка'],
+]
+
 const REMARK_WORKFLOW = [
   ['awaiting_answer', 'Ответ не предоставлен', { backgroundColor: 'secondary', textColor: 'white' }],
   ['being_fixed', 'Устраняется заявителем', { backgroundColor: 'warning', textColor: 'dark' }],
@@ -149,6 +169,13 @@ const AI_VERDICT = [
   ['partial', 'ИИ: частично', { backgroundColor: 'warning', textColor: 'dark' }],
   ['not_fixed', 'ИИ: не устранено', { backgroundColor: 'danger', textColor: 'white' }],
   ['unclear', 'ИИ: судить нельзя', { backgroundColor: 'light', textColor: 'dark' }],
+]
+
+// наличие материалов, заявленных в ответе проектировщика (ТЗ 3.4.9): только есть / нет, без оценки содержания
+const MATERIALS_STATE = [
+  ['ok', 'Материалы найдены', { backgroundColor: 'success', textColor: 'white' }],
+  ['missing', 'Материалы не найдены', { backgroundColor: 'danger', textColor: 'white' }],
+  ['unloaded', 'Тома не загружены', { backgroundColor: 'secondary', textColor: 'white' }],
 ]
 
 const CRITICALITY = [
@@ -341,6 +368,8 @@ async function main () {
       numberField('pages', 'Страниц', { precision: 0 }),
       // номера листов по основной надписи: «страница:лист,…» (считает агент; по ним замечание «лист N» открывается на нужной странице)
       field('sheet_map', 'Листы по основной надписи', 'String'),
+      // приложения и документы (расчёты, записки, письма…) с их страницами: здесь ищутся материалы, заявленные в ответах (JSON, считает агент)
+      textArea('headings_json', 'Приложения и документы в файле (JSON)'),
       // редакция и классификация: агент читает номер изменения («Изм. 2») с титульного листа или из имени файла,
       // часть/книгу/подраздел — с титульных листов; значения, введённые вручную, не перезаписываются, пока файл тот же
       numberField('change_no', 'Номер изменения (редакция)', { precision: 0 }),
@@ -411,6 +440,13 @@ async function main () {
       textArea('volume_refs', 'Тома (JSON)'),
       // куда ведёт замечание: места по ссылке на материалы и области сопоставленных находок (JSON, считает агент)
       textArea('links_json', 'Места в документах (JSON)'),
+      // требования замечания: список, каждое с проверкой по документам, разбором ИИ, результатом и решением специалиста (JSON, ведёт агент)
+      textArea('requirements_json', 'Требования замечания (JSON)'),
+      // материалы, заявленные в ответе (тома, листы, приложения, расчёты…), и найдены ли они (JSON, считает агент; ТЗ 3.4.9)
+      textArea('materials_json', 'Заявленные материалы (JSON)'),
+      field('materials_state', 'Заявленные материалы', 'Select', { options: selectOptions(MATERIALS_STATE) }),
+      // ответы, расчёты, записки, приложения, пришедшие отдельными файлами: среди них агент тоже ищет заявленное
+      fileField('materials_files', 'Обосновывающие материалы', { multi: true, images: false }),
       field('section', 'Раздел документации', 'String'),
       textArea('basis', 'Основание'),
       textArea('answer', 'Ответ на замечание'),
@@ -493,6 +529,42 @@ async function main () {
     ],
   })
 
+  // уведомления участников (ТЗ 3.7.5): справочник получателей и лента; события находит и пишет агент
+  m.notify_recipients = await ensureModule(api, nsID, {
+    name: 'Получатели уведомлений',
+    handle: 'notify_recipients',
+    fields: [
+      field('name', 'ФИО (как в поле «Ответственный»)', 'String', { required: true }),
+      field('email', 'E-mail', 'String'),
+      field('role', 'Роль', 'Select', { options: selectOptions(NOTIFY_ROLE) }),
+      recordRel('object', 'Объект (пусто — все)', m.objects, 'name', ['name', 'code']),
+      field('events', 'События (пусто — по роли)', 'Select', { multi: true, options: selectOptions(NOTIFY_EVENT) }),
+      boolSwitch('active', 'Активен'),
+    ],
+  })
+
+  m.notifications = await ensureModule(api, nsID, {
+    name: 'Уведомления',
+    handle: 'notifications',
+    fields: [
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      recordRel('remark', 'Замечание', m.expertise_remarks, 'number', ['number', 'text']),
+      field('number', '№ замечания', 'String'),
+      field('event', 'Событие', 'Select', { options: selectOptions(NOTIFY_EVENT) }),
+      field('recipient', 'Получатель', 'String'),
+      field('email', 'E-mail', 'String'),
+      field('title', 'Тема', 'String'),
+      textArea('text', 'Текст'),
+      field('key', 'Ключ (повтор не отправляется)', 'String'),
+      dateField('created_at', 'Создано', { onlyDate: false }),
+      boolSwitch('read', 'Прочитано'),
+      field('delivery', 'Доставка', 'Select', { options: selectOptions(NOTIFY_DELIVERY) }),
+      dateField('delivered_at', 'Отправлено', { onlyDate: false }),
+      numberField('tries', 'Попыток', { precision: 0 }),
+      field('error', 'Ошибка доставки', 'String'),
+    ],
+  })
+
   m.expertise_imports = await ensureModule(api, nsID, {
     name: 'Журнал выгрузок замечаний',
     handle: 'expertise_imports',
@@ -532,6 +604,8 @@ async function main () {
       numberField('runs', 'Проверок', { precision: 0 }),
       dateField('last_run', 'Последняя проверка', { onlyDate: false }),
       textArea('history_json', 'История проверок (JSON)'),
+      // ответы, расчёты, пояснительные записки, приложения пакета отдельными файлами (ТЗ 3.4.11)
+      fileField('materials_files', 'Обосновывающие материалы', { multi: true, images: false }),
       dataKind(),
     ],
   })

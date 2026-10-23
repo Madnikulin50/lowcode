@@ -35,6 +35,15 @@ func remarkFromIDRecord(r idcheck.Record) remarkRecord {
 		OutcomeBy: r.Get("outcome_by"), OutcomeAt: r.Get("outcome_at"),
 		Findings: nonEmpty(r.Values["matched_discrepancies"]), Documents: nonEmpty(r.Values["linked_documents"]),
 	}
+	set, _ := cmp.ParseRequirementSet(r.Get("requirements_json"))
+	rec.Requirements, rec.RequirementsStale = set.Items, set.Stale
+	if rec.Requirements == nil {
+		rec.Requirements = []cmp.Requirement{}
+	}
+	rec.Materials, rec.MaterialsState = cmp.ParseMaterialsJSON(r.Get("materials_json")), r.Get("materials_state")
+	if rec.Materials == nil {
+		rec.Materials = []cmp.Material{}
+	}
 	rec.fillOutcome()
 	_ = json.Unmarshal([]byte(r.Get("links_json")), &rec.Links)
 	if rec.Links == nil {
@@ -284,6 +293,43 @@ func (c *ComposeClient) UpdateRemark(ns, objectID, remarkID string, p remarkPatc
 	return &out, nil
 }
 
+// SaveRequirements implements store.
+func (c *ComposeClient) SaveRequirements(ns, objectID, remarkID string, in []cmp.RequirementInput) (*remarkRecord, error) {
+	b := composeBackend{c}
+	cur, err := c.getRecord(ns, cmp.ModExpertise, remarkID)
+	if err != nil {
+		return nil, err
+	}
+	if cur.val("object") != objectID {
+		return nil, fmt.Errorf("remark %s does not belong to object %s", remarkID, objectID)
+	}
+	old, _ := cmp.ParseRequirementSet(cur.val("requirements_json"))
+	now := time.Now().UTC().Format("2006-01-02T15:04:05Z")
+	set, err := cmp.ApplyRequirementEdit(old, cur.val("text"), in, "специалист ПТО", now)
+	if err != nil {
+		return nil, err
+	}
+	if err := b.Update(ns, cmp.ModExpertise, remarkID, idcheck.V("requirements_json", set.JSON())); err != nil {
+		return nil, err
+	}
+	it, _ := strconv.Atoi(cur.val("iterations"))
+	for _, wc := range cmp.RequirementChanges(old, set) {
+		hv := idcheck.V("remark", remarkID, "status", cur.val("status"), "source", wc.Source, "author", "специалист ПТО", "note", wc.Note, "kind", wc.Kind,
+			"source_status", cur.val("source_status"))
+		hv["iteration"] = []string{strconv.Itoa(max(it, 1))}
+		hv["at"] = []string{now}
+		if _, err := b.Create(ns, cmp.ModRemarkHistory, hv); err != nil {
+			return nil, err
+		}
+	}
+	rec, err := b.GetRecord(ns, cmp.ModExpertise, remarkID)
+	if err != nil {
+		return nil, err
+	}
+	out := remarkFromIDRecord(*rec)
+	return &out, nil
+}
+
 // Expertise: the remarks of the comparison's object that concern this
 // comparison — linked to one of its documents or matched to one of its findings.
 func (c *ComposeClient) Expertise(ns, comparisonID string) ([]remarkRecord, error) {
@@ -407,6 +453,9 @@ func handleRemarkUpdate(w http.ResponseWriter, r *http.Request) {
 	if err == nil && cmpRunner != nil && (body.Status != nil || body.DueDate != nil) {
 		_, _ = cmp.RecordSnapshot(cmpRunner.Backend, ns, body.ObjectID, time.Now()) // best effort: the dynamics
 	}
+	if err == nil && (body.Status != nil || body.Assignee != nil || body.DueDate != nil) {
+		notif.soon(ns, body.ObjectID) // the assignee hears of it now, not at the next pass
+	}
 	if err != nil {
 		code := http.StatusBadGateway
 		if strings.Contains(err.Error(), "unknown status") || strings.Contains(err.Error(), "dueDate") ||
@@ -415,6 +464,43 @@ func handleRemarkUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 		writeErr(w, code, err)
 		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// handleRemarkRequirements — POST /api/remarks/requirements: the specialist's list of the requirements of a remark
+// (with the decisions on them). The check then runs again, so that the new and edited requirements get their results.
+func handleRemarkRequirements(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		NamespaceID  string                 `json:"namespaceID"`
+		ObjectID     string                 `json:"objectID"`
+		ID           string                 `json:"id"`
+		Requirements []cmp.RequirementInput `json:"requirements"`
+	}
+	if err := decodeJSON(r, &body); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	ns := firstNonEmpty(body.NamespaceID, defaultNamespaceID)
+	if ns == "" || body.ObjectID == "" || body.ID == "" {
+		writeErr(w, http.StatusBadRequest, fmt.Errorf("objectID and id are required"))
+		return
+	}
+	out, err := compose.SaveRequirements(ns, body.ObjectID, body.ID, body.Requirements)
+	if err != nil {
+		code := http.StatusBadGateway
+		if strings.Contains(err.Error(), "requirements") || strings.Contains(err.Error(), "outcome") {
+			code = http.StatusBadRequest
+		}
+		writeErr(w, code, err)
+		return
+	}
+	if cmpRunner != nil { // the results of the new and edited requirements
+		if _, err := cmpRunner.CheckObjectRemarks(r.Context(), ns, body.ObjectID); err == nil {
+			if again, err := compose.UpdateRemark(ns, body.ObjectID, body.ID, remarkPatch{}); err == nil {
+				out = again
+			}
+		}
 	}
 	writeJSON(w, http.StatusOK, out)
 }

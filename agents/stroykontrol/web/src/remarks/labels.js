@@ -30,6 +30,10 @@ export const OUTCOME_LABEL = {
   not_fixed: 'Не устранено',
   check: 'Требует проверки',
 }
+// материалы, заявленные в ответе проектировщика (ТЗ 3.4.9): только наличие
+export const MAT_STATE_LABEL = { found: 'есть', missing: 'нет в документе', not_found: 'не найдено', no_document: 'том не загружен' }
+export const MATERIALS_LABEL = { ok: 'все найдены', missing: 'не найдены', unloaded: 'тома не загружены' }
+export const MAT_KIND_LABEL = { volume: 'том / лист', appendix: 'приложение', document: 'документ' }
 export const OUTCOME_ORDER = ['fixed', 'partial', 'not_fixed', 'check']
 // итоговое значение: решение специалиста, иначе вывод системы
 export const finalOutcome = (r) => r.outcomeFinal || r.outcome

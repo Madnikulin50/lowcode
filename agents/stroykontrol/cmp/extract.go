@@ -212,14 +212,16 @@ var (
 	// signature rows of the title block (names and dates change with every edition)
 	roleRe = regexp.MustCompile(`проверил|разраб\.|н\.? ?контр|\bгип\b|кгип|рук\.? ?гр|нач\.? ?отд|гл\.? ?(инженер|специалист)`)
 	// title page, approval sheet, contents register — front matter, not design content
-	coverRe = regexp.MustCompile(`согласовано|утверждаю|рабочая документация|проектная документация|общество с ограниченной|содержание тома|состав тома|ведомость ссылочных|ведомость рабочих чертежей`)
+	// a change row of the title block (ГОСТ Р 21.101): "1 - Зам. 15-24 01.24", "2 3 Изм. 27-24"
+	changeRowRe = regexp.MustCompile(`^(\d{1,2})\s+(?:-\s+|\d{1,3}\s+)?(зам|нов|изм|аннул)\.?(?:\s|$)`)
+	coverRe     = regexp.MustCompile(`согласовано|утверждаю|рабочая документация|проектная документация|общество с ограниченной|содержание тома|состав тома|ведомость ссылочных|ведомость рабочих чертежей`)
 )
 
 // isStampRow: on text pages a row is title block only if it carries title-
 // block words (body text near the page bottom is content); on drawing
 // sheets the bottom-right corner is the title block by position as well.
 func isStampRow(drawing bool, l Line) bool {
-	if stampRe.MatchString(l.Key) || (roleRe.MatchString(l.Key) && l.Box.Y0 > 0.75) {
+	if stampRe.MatchString(l.Key) || ((roleRe.MatchString(l.Key) || changeRowRe.MatchString(l.Key)) && l.Box.Y0 > 0.75) {
 		return true
 	}
 	return drawing && inTitleBlock(l.Box)

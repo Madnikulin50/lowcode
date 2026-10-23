@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -479,5 +481,148 @@ func TestCorrectionPackageOfAnIteration(t *testing.T) {
 		if PackageSummary(x) == "" {
 			t.Error("summary")
 		}
+	}
+}
+
+func TestEachRequirementOfARemarkIsCheckedOnItsOwn(t *testing.T) {
+	skipWithoutPoppler(t)
+	f := newFake()
+	r := &Runner{Backend: f, CacheDir: t.TempDir(), current: map[string]string{}}
+	object, _ := objectWithComparison(t, f, r)
+	f.files["101"] = xlsxBytes(t, "Выгрузка данных", [][]string{
+		exportHeader,
+		exportRow("30.1", "1) Глубина заложения фундамента 2,6 м не соответствует стадии П (2,4 м). 2) Представить обоснование по технологии производства работ.", "Том 3, 2024-15-ГП – КЖ", "Откорректировано", "", "", "", "Устраняется заявителем", "1"),
+		exportRow("30.2", "Класс бетона не указан", "Том 3, 2024-15-ГП – КЖ", "", "", "", "", "Ответ не предоставлен", "1"),
+	})
+	f.recs[ModObjects][object].Values["remarks_file"] = []string{"101"}
+	if _, err := r.ImportObjectRemarks(context.Background(), "ns", object, false); err != nil {
+		t.Fatal(err)
+	}
+	rem := remarksByKey(f)["30.1"]
+	set, err := ParseRequirementSet(rem.Get("requirements_json"))
+	if err != nil || len(set.Items) != 2 || set.For != TextHash(rem.Get("text")) || set.Manual {
+		t.Fatalf("two requirements: %v %+v", err, set)
+	}
+	if set.Items[0].Verdict != VerdictStillDiffers || len(set.Items[0].FindingIDs) == 0 || set.Items[0].Outcome != OutcomeNotFixed {
+		t.Errorf("the first requirement is about the depth that is still different: %+v", set.Items[0])
+	}
+	if set.Items[1].Verdict == VerdictStillDiffers || set.Items[1].Outcome == OutcomeNotFixed {
+		t.Errorf("the second one (technology) has nothing to do with the depth finding: %+v", set.Items[1])
+	}
+	one, _ := ParseRequirementSet(remarksByKey(f)["30.2"].Get("requirements_json"))
+	if len(one.Items) != 1 {
+		t.Errorf("a remark with nothing to split is one requirement: %+v", one)
+	}
+	// a hand-made list is kept when the check runs again
+	set.Manual = true
+	set.Items[1].Text = "Представить обоснование технологии работ и ППР"
+	if err := f.Update("ns", ModExpertise, rem.ID, idcheck.V("requirements_json", set.JSON())); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.CheckObjectRemarks(context.Background(), "ns", object); err != nil {
+		t.Fatal(err)
+	}
+	kept, _ := ParseRequirementSet(f.recs[ModExpertise][rem.ID].Get("requirements_json"))
+	if len(kept.Items) != 2 || kept.Items[1].Text != "Представить обоснование технологии работ и ППР" || !kept.Manual || kept.Stale {
+		t.Errorf("the specialist's list stays while the remark's text is the same: %+v", kept)
+	}
+}
+
+func TestTheModelReadsEveryRequirementOfARemark(t *testing.T) {
+	skipWithoutPoppler(t)
+	var calls []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		var body struct {
+			Messages []Msg `json:"messages"`
+		}
+		_ = json.NewDecoder(req.Body).Decode(&body)
+		calls = append(calls, body.Messages[len(body.Messages)-1].Content)
+		out, _ := json.Marshal(map[string]any{"message": map[string]string{"content": `{"verdict":"unclear","explanation":"по фрагментам судить нельзя","cited":[]}`}})
+		_, _ = w.Write(out)
+	}))
+	defer srv.Close()
+	f := newFake()
+	r := &Runner{Backend: f, CacheDir: t.TempDir(), current: map[string]string{}, LLM: NewSuggester(srv.URL, "m")}
+	object, _ := objectWithComparison(t, f, r)
+	f.files["101"] = xlsxBytes(t, "Выгрузка данных", [][]string{
+		exportHeader,
+		exportRow("30.1", "1) Глубина заложения фундамента 2,6 м не соответствует стадии П (2,4 м). 2) Представить обоснование по технологии производства работ.", "Том 3, 2024-15-ГП – КЖ", "Откорректировано", "", "", "", "Устраняется заявителем", "1"),
+	})
+	f.recs[ModObjects][object].Values["remarks_file"] = []string{"101"}
+	if _, err := r.ImportObjectRemarks(context.Background(), "ns", object, false); err != nil {
+		t.Fatal(err)
+	}
+	rem := remarksByKey(f)["30.1"]
+	if _, err := r.AnalyzeRemarkAI(context.Background(), "ns", rem.ID); err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 3 {
+		t.Fatalf("one reading of the remark and one of each requirement: %d calls", len(calls))
+	}
+	if !strings.Contains(calls[1], "Представить") && !strings.Contains(calls[2], "Представить") || strings.Contains(calls[1], "технологии") && strings.Contains(calls[2], "технологии") {
+		t.Errorf("each reading is about its own requirement:\n%s\n%s", calls[1], calls[2])
+	}
+	set, _ := ParseRequirementSet(f.recs[ModExpertise][rem.ID].Get("requirements_json"))
+	for _, q := range set.Items {
+		if q.AIVerdict != AIUnclear || q.AINote == "" {
+			t.Errorf("the reading is kept on the requirement: %+v", q)
+		}
+	}
+	if got := f.recs[ModExpertise][rem.ID].Get("status"); got != RemarkBeingFix {
+		t.Errorf("the model never changes the working status: %s", got)
+	}
+}
+
+func TestMaterialsDeclaredInAnAnswerAreLookedFor(t *testing.T) {
+	skipWithoutPoppler(t)
+	f := newFake()
+	r := &Runner{Backend: f, CacheDir: t.TempDir(), current: map[string]string{}}
+	object, _ := objectWithComparison(t, f, r)
+	f.files["101"] = xlsxBytes(t, "Выгрузка данных", [][]string{
+		exportHeader,
+		exportRow("30.1", "Глубина заложения фундамента 2,6 м не соответствует стадии П (2,4 м)", "Том 3, 2024-15-ГП – КЖ",
+			"Исправлено на листе 1 тома КЖ1. Расчёт осадок приложен. Письмо № 7 прилагается.", "", "", "", "Требуется рассмотрение ответа", "1"),
+		exportRow("30.2", "Класс бетона не указан", "Том 3, 2024-15-ГП – КЖ", "Принято", "", "", "", "Ответ не предоставлен", "1"),
+	})
+	f.recs[ModObjects][object].Values["remarks_file"] = []string{"101"}
+	if _, err := r.ImportObjectRemarks(context.Background(), "ns", object, false); err != nil {
+		t.Fatal(err)
+	}
+	rem := remarksByKey(f)["30.1"]
+	ms := ParseMaterialsJSON(rem.Get("materials_json"))
+	if len(ms) != 3 || rem.Get("materials_state") != MaterialsMissing {
+		t.Fatalf("volume, calculation, letter; nothing attached yet: %s %s", rem.Get("materials_state"), rem.Get("materials_json"))
+	}
+	if ms[0].Kind != MatVolume || ms[0].State != MatFound || ms[0].DocID == "" {
+		t.Errorf("the volume КЖ1 is loaded: %+v", ms[0])
+	}
+	if ms[2].Doc != "письмо" || ms[2].State != MatNotFound {
+		t.Errorf("the letter is not there yet: %+v", ms[2])
+	}
+	if got := remarksByKey(f)["30.2"]; got.Get("materials_json") != "" || got.Get("materials_state") != "" {
+		t.Errorf("an answer that names nothing declares nothing: %+v", got.Values)
+	}
+	// the letter comes as a supporting file of the remark
+	f.files["mat-test-letter"] = []byte("not a pdf")
+	f.recs[ModExpertise][rem.ID].Values["materials_files"] = []string{"mat-test-letter"}
+	if _, err := r.CheckObjectRemarks(context.Background(), "ns", object); err != nil {
+		t.Fatal(err)
+	}
+	ms = ParseMaterialsJSON(f.recs[ModExpertise][rem.ID].Get("materials_json"))
+	if len(ms) != 3 || ms[2].State != MatNotFound {
+		// the file is named by its attachment ID in the fake: it says nothing about being a letter
+		t.Errorf("a file whose name says nothing is not the letter: %+v", ms)
+	}
+	f.files["Письмо ГИП №7.pdf"] = []byte("not a pdf")
+	f.recs[ModExpertise][rem.ID].Values["materials_files"] = []string{"Письмо ГИП №7.pdf"}
+	if _, err := r.CheckObjectRemarks(context.Background(), "ns", object); err != nil {
+		t.Fatal(err)
+	}
+	ms = ParseMaterialsJSON(f.recs[ModExpertise][rem.ID].Get("materials_json"))
+	if len(ms) != 3 || ms[2].State != MatFound || ms[2].In != "Письмо ГИП №7.pdf" {
+		t.Errorf("the attached letter is found: %+v", ms)
+	}
+	if f.recs[ModExpertise][rem.ID].Get("materials_state") != MaterialsMissing {
+		t.Errorf("the calculation is still not there: %s", f.recs[ModExpertise][rem.ID].Get("materials_state"))
 	}
 }

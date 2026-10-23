@@ -289,6 +289,31 @@ func (r *Runner) AnalyzeRemarkAI(ctx context.Context, ns, remarkID string) (*AIV
 	if err := b.Update(ns, ModExpertise, remarkID, upd); err != nil {
 		return nil, err
 	}
+	// a remark of several requirements: the model reads each of them on its own (the same limits: only the fragments, verified quotations)
+	if set, _ := ParseRequirementSet(rem.Get("requirements_json")); len(set.Items) >= 2 {
+		for i := range set.Items {
+			q := &set.Items[i]
+			qin := in
+			qin.Text = q.Text
+			qin.Findings = nil
+			for _, fid := range q.FindingIDs {
+				if f, err := b.GetRecord(ns, ModDiscrepancies, fid); err == nil {
+					qin.Findings = append(qin.Findings, cleanDescription(f.Get("description")))
+				}
+			}
+			qin.Passages = RetrievePassages(q.Text+" "+in.Answer+" "+rem.Get("section"), docs, 6)
+			qv, err := r.LLM.Interpret(ctx, qin)
+			if err != nil {
+				q.AIVerdict, q.AINote = "", "ИИ: "+err.Error()
+			} else {
+				q.AIVerdict, q.AINote = qv.Verdict, qv.NoteText()
+			}
+			q.Outcome = CheckOutcome(q.Verdict, q.AIVerdict)
+		}
+		if err := b.Update(ns, ModExpertise, remarkID, idcheck.V("requirements_json", set.JSON())); err != nil {
+			return v, err
+		}
+	}
 	return v, nil
 }
 

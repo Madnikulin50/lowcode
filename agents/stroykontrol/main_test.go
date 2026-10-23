@@ -1024,3 +1024,90 @@ func TestReportIndexListsObjectsAndTheirExports(t *testing.T) {
 		t.Errorf("without a namespace: %d", w.Code)
 	}
 }
+
+func TestRequirementsOfARemark(t *testing.T) {
+	setupFixtures(t)
+	if _, err := os.Stat("fixtures/pack-1/remarks.xlsx"); err != nil {
+		t.Skip("run: go run fixtures/gen_remarks.go")
+	}
+	board := func() map[string]remarkRecord {
+		var out boardOut
+		w := get(handleRemarksBoard, "/api/remarks/board?objectID=pack-1&namespaceID=x")
+		_ = json.Unmarshal(w.Body.Bytes(), &out)
+		m := map[string]remarkRecord{}
+		for _, r := range out.Remarks {
+			m[r.Number] = r
+		}
+		return m
+	}
+	before := board()["30.1"]
+	if len(before.Requirements) < 1 {
+		t.Fatalf("every remark carries its requirements: %+v", before)
+	}
+	save := func(reqs []cmp.RequirementInput) (int, remarkRecord) {
+		w := post(handleRemarkRequirements, "/api/remarks/requirements", map[string]any{"objectID": "pack-1", "id": before.ID, "requirements": reqs})
+		var out remarkRecord
+		_ = json.Unmarshal(w.Body.Bytes(), &out)
+		return w.Code, out
+	}
+	code, got := save([]cmp.RequirementInput{{Text: "Уточнить глубину заложения фундамента по ПД"}, {Text: "Указать класс бетона В25 на листе 1"}})
+	if code != 200 || len(got.Requirements) != 2 || !got.Requirements[0].Manual {
+		t.Fatalf("the specialist's list: %d %+v", code, got.Requirements)
+	}
+	for _, q := range got.Requirements {
+		if q.Outcome == "" || q.Verdict == "" {
+			t.Errorf("a new requirement is checked at once: %+v", q)
+		}
+	}
+	if got.Outcome != cmp.AggregateRequirements(got.Requirements) {
+		t.Errorf("the result of the remark is made of the results of its requirements: %s vs %v", got.Outcome, got.Requirements)
+	}
+	// a decision on a requirement: another result than the system's needs a comment
+	other := cmp.OutcomeFixed
+	if got.Requirements[0].Outcome == cmp.OutcomeFixed {
+		other = cmp.OutcomeNotFixed
+	}
+	reqs := []cmp.RequirementInput{{Text: got.Requirements[0].Text, OutcomeFinal: other}, {Text: got.Requirements[1].Text}}
+	if code, _ := save(reqs); code != 400 {
+		t.Errorf("a decision against the system without a comment: %d", code)
+	}
+	reqs[0].OutcomeComment = "по листу 3 глубина уточнена"
+	code, got = save(reqs)
+	if code != 200 || got.Requirements[0].OutcomeFinal != other || got.Requirements[0].OutcomeBy == "" {
+		t.Fatalf("decision: %d %+v", code, got.Requirements[0])
+	}
+	if got.Outcome != cmp.AggregateRequirements(got.Requirements) {
+		t.Errorf("the decision counts in the result of the remark: %s", got.Outcome)
+	}
+	var hist []remarkHistoryRecord
+	_ = json.Unmarshal(get(handleRemarkHistory, "/api/remarks/history?objectID=pack-1&namespaceID=x&remarkID="+before.ID).Body.Bytes(), &hist)
+	var listEdited, decided bool
+	for _, h := range hist {
+		listEdited = listEdited || h.Kind == cmp.HistRequirement && strings.HasPrefix(h.Source, "список требований изменён")
+		decided = decided || h.Kind == cmp.HistRequirement && strings.HasPrefix(h.Source, "решение по требованию 1") && h.Note == "по листу 3 глубина уточнена"
+	}
+	if !listEdited || !decided {
+		t.Errorf("the edit and the decision are history: %+v", hist)
+	}
+	if again := board()["30.1"]; len(again.Requirements) != 2 || again.Requirements[0].OutcomeFinal != other {
+		t.Errorf("the board returns the list: %+v", again.Requirements)
+	}
+	for _, bad := range [][]cmp.RequirementInput{nil, {{Text: " "}}, {{Text: "ok ok", OutcomeFinal: "bogus", OutcomeComment: "x"}}} {
+		if code, _ := save(bad); code != 400 {
+			t.Errorf("%+v accepted: %d", bad, code)
+		}
+	}
+	// the registry export carries the requirements and counts them
+	w := get(handleRemarksExport, "/api/remarks/export?objectID=pack-1&namespaceID=x&format=xlsx")
+	f, err := excelize.OpenReader(bytes.NewReader(w.Body.Bytes()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := f.GetRows("Требования")
+	if err != nil || len(rows) < 3 {
+		t.Fatalf("a sheet of the requirements: %v %d", err, len(rows))
+	}
+	if sum, _ := f.GetRows("Сводка"); !strings.Contains(fmt.Sprint(sum), "Требований замечаний") {
+		t.Errorf("the summary counts the requirements: %v", sum)
+	}
+}

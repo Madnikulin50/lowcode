@@ -239,6 +239,7 @@ func (f *FixtureStore) Documents(_, recordID string) ([]documentRecord, error) {
 				docs[i].VolumeTitle = vs[0].Title
 				docs[i].Pages = strconv.Itoa(vs[len(vs)-1].To)
 			}
+			docs[i].Sheets, docs[i].Headings = res.Sheets[docs[i].ID], res.Headings[docs[i].ID]
 		}
 	}
 	return docs, nil

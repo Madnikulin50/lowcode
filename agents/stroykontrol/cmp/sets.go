@@ -660,6 +660,7 @@ func (r *Runner) readSetDocs(ctx context.Context, ns, objectID string) error {
 			vs := DetectVolumes(doc)
 			v := idcheck.V("pages", strconv.Itoa(len(pages)), "detected_by", "auto")
 			v["sheet_map"] = []string{FormatSheetMap(SheetMap(pages))}
+			v["headings_json"] = []string{HeadingsJSON(ExtractHeadings(doc))}
 			var infos []VolumeInfo
 			for _, x := range vs {
 				infos = append(infos, volInfo(x))

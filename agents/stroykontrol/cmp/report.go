@@ -48,7 +48,8 @@ type ReportInput struct {
 	Findings            []FindingIn
 	RemarkNo            map[string]string // finding ID → number of the remark it went into
 	Iteration           *ReportIteration
-	Params              []ParamRow // key parameters per volume and element (cross-volume check)
+	Params              []ParamRow    // key parameters per volume and element (cross-volume check)
+	SheetChanges        []SheetChange // the statuses of the sheets of the new edition (versions)
 }
 
 // ReportFinding is a finding as the report shows it.
@@ -86,6 +87,7 @@ type Report struct {
 	Info                                                            []ReportFinding // not released / out of scope
 	Format                                                          []ReportFinding // formatting checks
 	Params                                                          []ParamRow
+	SheetChanges                                                    []SheetChange
 }
 
 // KindLabel is the Russian name of a finding kind.
@@ -111,6 +113,8 @@ func KindLabel(kind string) string {
 		return "Между томами"
 	case KindElement:
 		return "Марки элементов"
+	case KindChangeReg:
+		return "Регистрация изменений"
 	}
 	return kind
 }
@@ -154,7 +158,7 @@ func iterLabel(s string) string {
 // BuildReport arranges the findings of a comparison into a report.
 func BuildReport(in ReportInput) Report {
 	r := Report{Title: in.Title, ObjectName: in.ObjectName, SetsLabel: in.SetsLabel, Status: in.Status, Similarity: in.Similarity,
-		Params: in.Params, Comment: in.Comment, RefName: firstNonEmpty(in.RefName, "ПД"), TargetName: firstNonEmpty(in.TargetName, "РД"), Iteration: in.Iteration}
+		Params: in.Params, SheetChanges: in.SheetChanges, Comment: in.Comment, RefName: firstNonEmpty(in.RefName, "ПД"), TargetName: firstNonEmpty(in.TargetName, "РД"), Iteration: in.Iteration}
 	date := in.Date
 	if date.IsZero() {
 		date = time.Now()
@@ -432,6 +436,21 @@ func ReportXLSX(r Report) ([]byte, error) {
 		}
 		table("Параметры по томам", []string{"Сторона", "Том", "Параметр", "Элемент", "Значения", "Стр."}, rows,
 			map[string]float64{"A": 10, "B": 60, "C": 22, "D": 18, "E": 24, "F": 8})
+	}
+	if len(r.SheetChanges) > 0 {
+		if _, err := f.NewSheet("Изменения листов"); err != nil {
+			return nil, err
+		}
+		var rows [][]any
+		for _, s := range r.SheetChanges {
+			check := "соответствует"
+			if !s.OK {
+				check = "расхождение"
+			}
+			rows = append(rows, []any{s.Volume, s.Sheet, s.Change, SheetStateLabels[s.Fact], SheetStateLabels[s.Declared], SheetStateLabels[s.Stamp], s.Diffs, check, s.Note})
+		}
+		table("Изменения листов", []string{"Том", "Лист", "Изм.", "Фактически", "По таблице регистрации", "По основной надписи", "Расхождений", "Проверка", "Пояснение"}, rows,
+			map[string]float64{"A": 40, "B": 7, "C": 6, "D": 16, "E": 20, "F": 18, "G": 12, "H": 14, "I": 70})
 	}
 	buf, err := f.WriteToBuffer()
 	if err != nil {

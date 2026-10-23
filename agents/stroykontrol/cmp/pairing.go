@@ -54,6 +54,8 @@ type PairsState struct {
 	RefOnly    []VolumeInfoJSON            `json:"refOnly"`
 	TargetOnly []VolumeInfoJSON            `json:"targetOnly"`
 	Params     []ParamRow                  `json:"params,omitempty"` // key parameters per volume and element
+	// the statuses of the sheets of the new edition against its change registration (ТЗ 3.3.7, 3.3.8)
+	SheetChanges []SheetChange `json:"sheetChanges,omitempty"`
 }
 
 // VolumeInfoJSON is VolumeInfo with the field names of the stored/wire form.
@@ -96,6 +98,7 @@ func volsJSON(vs []VolumeInfo) []VolumeInfoJSON {
 func (r *Result) State() PairsState {
 	st := PairsState{Volumes: map[string][]VolumeInfoJSON{}, Pairs: []PairInfoJSON{}, RefOnly: volsJSON(r.RefOnly), TargetOnly: volsJSON(r.TargetOnly)}
 	st.Params = r.Params
+	st.SheetChanges = r.SheetChanges
 	for id, vs := range r.Volumes {
 		st.Volumes[id] = volsJSON(vs)
 	}

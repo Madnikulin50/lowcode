@@ -238,15 +238,40 @@ func CountStatuses(rows []StatusRow, day string) StatusSnapshot {
 
 // Kinds of an entry of the history of a remark.
 const (
-	HistImport     = "import"     // a state read from an export of the expertise
-	HistStatus     = "status"     // the working status changed by hand
-	HistAssignee   = "assignee"   // the remark was assigned (or the assignment was taken back)
-	HistDue        = "due"        // the due date was set or changed
-	HistNote       = "note"       // the specialist's note
-	HistDecision   = "decision"   // the decision on the result of the check
-	HistAuto       = "auto"       // a change the agent made (handover to the control, closing by a comparison)
-	HistComparison = "comparison" // the remark was made from a comparison
+	HistImport      = "import"       // a state read from an export of the expertise
+	HistStatus      = "status"       // the working status changed by hand
+	HistAssignee    = "assignee"     // the remark was assigned (or the assignment was taken back)
+	HistDue         = "due"          // the due date was set or changed
+	HistNote        = "note"         // the specialist's note
+	HistDecision    = "decision"     // the decision on the result of the check
+	HistAuto        = "auto"         // a change the agent made (handover to the control, closing by a comparison)
+	HistComparison  = "comparison"   // the remark was made from a comparison
+	HistRequirement = "requirements" // the list of the requirements was edited, or a decision was made on one
 )
+
+// RequirementChanges lists the history entries an edit of the list of requirements makes: one for the list
+// itself when its texts changed, one for every decision on a requirement that is new or different.
+func RequirementChanges(old, now RequirementSet) []WorkChange {
+	var out []WorkChange
+	same := len(old.Items) == len(now.Items)
+	oldBy := map[string]Requirement{}
+	for i, q := range old.Items {
+		oldBy[strings.ToLower(q.Text)] = q
+		if same && i < len(now.Items) && !strings.EqualFold(q.Text, now.Items[i].Text) {
+			same = false
+		}
+	}
+	if !same {
+		out = append(out, WorkChange{HistRequirement, fmt.Sprintf("список требований изменён: %d → %d", len(old.Items), len(now.Items)), ""})
+	}
+	for _, q := range now.Items {
+		o := oldBy[strings.ToLower(q.Text)]
+		if q.OutcomeFinal != "" && (o.OutcomeFinal != q.OutcomeFinal || o.OutcomeComment != q.OutcomeComment) {
+			out = append(out, WorkChange{HistRequirement, fmt.Sprintf("решение по требованию %d: %s", q.Idx, OutcomeLabels[q.OutcomeFinal]), q.OutcomeComment})
+		}
+	}
+	return out
+}
 
 // WorkChange is one entry the specialist's own fields (assignee, due date, note) add to the history.
 type WorkChange struct {

@@ -46,6 +46,7 @@ func reportFor(ns, recordID string) (cmp.Report, *comparisonRecord, error) {
 	}
 	if p, err := compose.Pairing(ns, recordID); err == nil && p.State != nil {
 		ri.Params = p.State.Params
+		ri.SheetChanges = p.State.SheetChanges
 	}
 	return cmp.BuildReport(ri), rec, nil
 }

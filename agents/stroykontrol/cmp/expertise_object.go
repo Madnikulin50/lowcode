@@ -367,6 +367,8 @@ func (r *Runner) CheckObjectRemarks(ctx context.Context, ns, objectID string) (i
 	}
 	cands := CandidatesFrom(findings)
 	locDocs := locDocsFrom(docRecs, func(string) string { return "" })
+	// where the materials the answers declare are looked for: the loaded volumes and the supporting files of the packages
+	matDocs := append(matDocsFrom(docRecs), r.supportingDocs(ns, r.packageMaterials(ns, objectID))...)
 	foundAt := map[string]FoundAt{} // finding ID → its places
 	for _, f := range findings {
 		foundAt[f.ID] = FoundAt{
@@ -409,6 +411,23 @@ func (r *Runner) CheckObjectRemarks(ctx context.Context, ns, objectID string) (i
 		}
 		links := LocationsJSON(LocateRemark(refs, locDocs, matched))
 		v["links_json"] = []string{links}
+		// the requirements of the remark, each checked on its own against the findings of the linked volumes (ТЗ 3.4.3, 3.6.6)
+		reqs, _ := ParseRequirementSet(rem.Get("requirements_json"))
+		reqs, _ = EnsureRequirements(reqs, rem.Get("text"))
+		for i := range reqs.Items {
+			q := &reqs.Items[i]
+			mq, _ := CheckRemark(Expert{Number: rem.Get("number"), Text: q.Text, Where: rem.Get("section"), Answer: rem.Get("answer")}, refs, docs, cands, docOf)
+			q.Verdict, q.Score, q.Note, q.FindingIDs = mq.Verdict, mq.Score, mq.Note, mq.FindingIDs
+			q.Outcome = CheckOutcome(q.Verdict, q.AIVerdict)
+		}
+		reqJSON := reqs.JSON()
+		v["requirements_json"] = []string{reqJSON}
+		// the materials the answer declares (ТЗ 3.4.9): only whether they are there
+		mats := CheckMaterials(ParseMaterials(rem.Get("answer")), append(matDocs, r.supportingDocs(ns, nonBlank(rem.Values["materials_files"]))...))
+		mv := MaterialValues(mats)
+		for k, x := range mv {
+			v[k] = x
+		}
 		v["claim_mismatch"] = []string{""}
 		if m.ClaimMissing {
 			v["claim_mismatch"] = []string{"да"}
@@ -418,7 +437,7 @@ func (r *Runner) CheckObjectRemarks(ctx context.Context, ns, objectID string) (i
 		if handover {
 			v["status"] = []string{handedTo}
 		}
-		if rem.Get("verdict") == m.Verdict && rem.Get("match_note") == m.Note && rem.Get("links_json") == links && strings.Join(rem.Values["matched_discrepancies"], ",") == strings.Join(m.FindingIDs, ",") &&
+		if rem.Get("verdict") == m.Verdict && rem.Get("match_note") == m.Note && rem.Get("links_json") == links && rem.Get("requirements_json") == reqJSON && rem.Get("materials_json") == mv["materials_json"][0] && strings.Join(rem.Values["matched_discrepancies"], ",") == strings.Join(m.FindingIDs, ",") &&
 			strings.Join(rem.Values["linked_documents"], ",") == strings.Join(linkedIDs, ",") {
 			continue
 		}

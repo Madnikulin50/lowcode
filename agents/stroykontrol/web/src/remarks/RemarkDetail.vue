@@ -4,10 +4,10 @@
 // iterations and the specialist's own fields.
 import { ref, watch, computed } from 'vue'
 import { wordDiffSpans } from '../composables/useTextDiff.js'
-import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, OUTCOME_LABEL, OUTCOME_ORDER, STATUS_NEEDS_REASON, fmtDate } from './labels.js'
+import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, OUTCOME_LABEL, OUTCOME_ORDER, STATUS_NEEDS_REASON, MAT_STATE_LABEL, MATERIALS_LABEL, MAT_KIND_LABEL, fmtDate } from './labels.js'
 
 const props = defineProps({ remark: Object, board: Object, history: Array, busy: Boolean, assignees: Array })
-const emit = defineEmits(['update', 'close', 'ai'])
+const emit = defineEmits(['update', 'close', 'ai', 'requirements'])
 
 const form = ref({ status: '', statusComment: '', assignee: '', dueDate: '', note: '', estimateH: '' })
 watch(() => props.remark, (r) => {
@@ -48,6 +48,22 @@ function clearOutcome () {
   emit('update', props.remark.id, { outcomeFinal: '', outcomeComment: '' })
 }
 
+// Requirements of the remark (ТЗ 3.4.3, 3.6.6): the list the program made, edited by the specialist; each requirement has its own
+// result and its own decision (another result than the system's needs a comment).
+const reqDraft = ref([])
+const reqEditing = ref(false)
+watch(() => props.remark, (r) => {
+  reqDraft.value = (r.requirements || []).map(q => ({ ...q, text: q.text, outcomeFinal: q.outcomeFinal || '', outcomeComment: q.outcomeComment || '' }))
+  reqEditing.value = false
+}, { immediate: true })
+const reqEffective = (q) => q.outcomeFinal || q.outcome || 'check'
+const reqInvalid = computed(() => reqDraft.value.some(q => !q.text.trim() || (q.outcomeFinal && q.outcomeFinal !== (q.outcome || '') && !q.outcomeComment.trim())))
+const reqDirty = computed(() => JSON.stringify(reqDraft.value.map(q => [q.text, q.outcomeFinal, q.outcomeComment])) !==
+  JSON.stringify((props.remark.requirements || []).map(q => [q.text, q.outcomeFinal || '', q.outcomeComment || ''])))
+const addReq = () => { reqDraft.value.push({ text: '', outcomeFinal: '', outcomeComment: '', outcome: '' }); reqEditing.value = true }
+const removeReq = (i) => { reqDraft.value.splice(i, 1); reqEditing.value = true }
+const saveReqs = () => emit('requirements', props.remark.id, reqDraft.value.map(q => ({ text: q.text.trim(), outcomeFinal: q.outcomeFinal, outcomeComment: q.outcomeComment.trim() })))
+
 // answer now vs the previous answer
 const answerDiff = computed(() => {
   const r = props.remark
@@ -65,6 +81,10 @@ const SIDE_LABEL = { ref: 'исходная редакция', target: 'испр
 const placeHref = (l) => l.comparison
   ? `?view=doc&source=comparison_doc&recordID=${encodeURIComponent(l.comparison)}&namespaceID=${ns()}&id=${encodeURIComponent(l.docID)}&page=${l.page || 1}`
   : `?view=doc&source=cmp_document&id=${encodeURIComponent(l.docID)}&namespaceID=${ns()}&page=${l.page || 1}`
+// a declared material found in a loaded volume opens it on that page; a supporting file has no viewer link
+const materialHref = (m) => m.docID && !m.docID.startsWith('att:')
+  ? `?view=doc&source=cmp_document&id=${encodeURIComponent(m.docID)}&namespaceID=${ns()}&page=${m.at || 1}`
+  : ''
 const findingHref = (l) => `?recordID=${encodeURIComponent(l.comparison)}&namespaceID=${ns()}&findingID=${encodeURIComponent(l.findingID)}`
 const sideHref = (l, side) => {
   const doc = side === 'ref' ? l.refDoc : l.targetDoc
@@ -97,6 +117,37 @@ const linkedSet = computed(() => new Set(props.remark.documents))
       <div class="rm-h">Вывод о несоответствии</div>
       <div class="rm-text">{{ remark.text }}</div>
     </div>
+    <div class="rm-block rm-reqs">
+      <div class="rm-h">
+        Требования ({{ reqDraft.length }})
+        <button class="small" :disabled="busy" title="Разбить замечание на требования вручную: каждое проверяется отдельно" @click="addReq">+ требование</button>
+      </div>
+      <div v-if="remark.requirementsStale" class="rm-warn">Текст замечания изменился после того, как вы правили список: проверьте, что требования ему соответствуют.</div>
+      <div v-for="(q, i) in reqDraft" :key="i" class="rm-req">
+        <div class="rm-req-head">
+          <b>{{ i + 1 }}.</b>
+          <span class="tag" :class="'oc-' + reqEffective(q)" :title="q.outcomeFinal ? 'Решение специалиста' : 'Вывод системы'">{{ OUTCOME_LABEL[reqEffective(q)] }}</span>
+          <span v-if="q.manual" class="tag" title="Требование введено или правлено вручную">вручную</span>
+          <span v-if="q.verdict" class="muted" :title="q.note">проверка: {{ VERDICT_LABEL[q.verdict] || q.verdict }}</span>
+          <span v-if="q.aiVerdict" class="tag" :class="'ai-' + q.aiVerdict" :title="q.aiNote">{{ AI_LABEL[q.aiVerdict] }}</span>
+          <button class="small" :disabled="busy" @click="removeReq(i)">убрать</button>
+        </div>
+        <textarea v-model="q.text" rows="2" :placeholder="'Текст требования'"></textarea>
+        <div class="rm-req-decision">
+          <label>Решение
+            <select v-model="q.outcomeFinal">
+              <option value="">— не принято —</option>
+              <option v-for="k in OUTCOME_ORDER" :key="k" :value="k">{{ OUTCOME_LABEL[k] }}</option>
+            </select>
+          </label>
+          <input v-if="q.outcomeFinal" v-model="q.outcomeComment" type="text" :placeholder="q.outcomeFinal !== (q.outcome || '') ? 'Комментарий обязателен: результат отличается от вывода системы' : 'Комментарий'" />
+        </div>
+        <div v-if="q.note" class="muted rm-req-note">{{ q.note }}</div>
+      </div>
+      <button class="primary" :disabled="busy || !reqDirty || reqInvalid" @click="saveReqs">Сохранить требования</button>
+      <div class="muted">Результат замечания складывается из результатов требований: все устранены — «Устранено», часть — «Частично устранено». Список можно править; поправленный агент не перезаписывает.</div>
+    </div>
+
     <div v-if="remark.basis" class="rm-block"><div class="rm-h">Основание</div><div class="rm-text muted">{{ remark.basis }}</div></div>
 
     <div v-if="remark.refs" class="rm-block">
@@ -139,6 +190,23 @@ const linkedSet = computed(() => new Set(props.remark.documents))
         <div v-if="remark.prevAnswer" class="rm-text muted">{{ remark.prevAnswer }}</div>
         <div v-if="remark.prevRejectReason" class="rm-reject"><b>Причина отклонения:</b> {{ remark.prevRejectReason }}</div>
       </details>
+    </div>
+
+    <div v-if="(remark.materials || []).length" class="rm-block rm-materials">
+      <div class="rm-h">Заявленные в ответе материалы
+        <span class="tag" :class="'mat-' + remark.materialsState">{{ MATERIALS_LABEL[remark.materialsState] || '' }}</span>
+      </div>
+      <div class="muted">Проверяется только наличие тома, листа, приложения или документа; правильность содержания оценивает специалист.</div>
+      <div v-for="(m, i) in remark.materials" :key="i" class="rm-link">
+        <span class="tag">{{ MAT_KIND_LABEL[m.kind] || m.kind }}</span>
+        <span>{{ m.label }}</span>
+        <span class="tag" :class="'mat-' + m.state">{{ MAT_STATE_LABEL[m.state] || m.state }}</span>
+        <template v-if="m.state === 'found' && m.in">
+          — <a v-if="materialHref(m)" :href="materialHref(m)" target="_blank" title="Открыть документ на этой странице">{{ m.in }}<span v-if="m.at">, стр. {{ m.at }}</span></a>
+          <span v-else>{{ m.in }}<span v-if="m.at">, стр. {{ m.at }}</span></span>
+        </template>
+        <span v-if="m.note" class="muted"> — {{ m.note }}</span>
+      </div>
     </div>
 
     <div v-if="remark.proposals || remark.expected" class="rm-block">

@@ -47,6 +47,9 @@ type store interface {
 	Pairing(ns, recordID string) (*pairingOut, error)
 	// SetPairing stores the manual pairing (the next run uses it).
 	SetPairing(ns, recordID string, p []cmp.ManualPair) error
+	// SaveRequirements replaces the list of the requirements of a remark with the specialist's (keeping the results of the
+	// requirements whose text did not change) and returns the remark.
+	SaveRequirements(ns, objectID, remarkID string, in []cmp.RequirementInput) (*remarkRecord, error)
 	// SetExclusions stores the areas of pages left out of the comparison (the next run uses them).
 	SetExclusions(ns, recordID string, r []cmp.Region) error
 	// SaveRemark creates (ID == "") or updates a remark card.
@@ -74,6 +77,9 @@ type documentRecord struct {
 	VolumeCode  string `json:"volumeCode"`
 	VolumeTitle string `json:"volumeTitle"`
 	Pages       string `json:"pages"`
+	// read by the comparison (fixtures): the sheet numbers and the headings where declared materials are looked for
+	Sheets   map[int]int      `json:"-"`
+	Headings []cmp.DocHeading `json:"-"`
 }
 
 // discrepancyRecord is the wire/fixture form of a discrepancy. The first
@@ -143,8 +149,15 @@ type remarkRecord struct {
 	AIAt      string `json:"aiAt"`
 	// Result of the check in the four values of ТЗ 3.4.6 (derived from Verdict and AIVerdict) and
 	// the specialist's decision on it; neither changes the working status.
+	// The requirements of the remark, each with its own result (ТЗ 3.4.3, 3.6.6); RequirementsStale: the specialist's list
+	// was made for an older text of the remark.
+	Requirements      []cmp.Requirement `json:"requirements"`
+	RequirementsStale bool              `json:"requirementsStale"`
 	// Where the remark leads: the volumes/sheets/pages its references name and the regions of the findings it was matched to
 	Links []cmp.RemarkLocation `json:"links"`
+	// The materials the answer declares (volumes, sheets, appendices, calculations…) and whether they are there (ТЗ 3.4.9)
+	Materials      []cmp.Material `json:"materials"`
+	MaterialsState string         `json:"materialsState"`
 
 	Outcome         string `json:"outcome"`
 	OutcomeDecision string `json:"outcomeDecision"` // confirmed / changed / ""
@@ -154,8 +167,17 @@ type remarkRecord struct {
 	OutcomeAt       string `json:"outcomeAt"`
 }
 
-// fillOutcome computes the system outcome of a remark.
-func (r *remarkRecord) fillOutcome() { r.Outcome = cmp.CheckOutcome(r.Verdict, r.AIVerdict) }
+// fillOutcome computes the system outcome of a remark: from its check against the documents and the AI
+// reading, and — for a remark of several requirements — from the results of the requirements (the
+// specialist's decision on a requirement counts instead of the system's). A declared material that is not
+// there keeps the system from calling the remark fixed (ТЗ 3.4.10).
+func (r *remarkRecord) fillOutcome() {
+	r.Outcome = cmp.CheckOutcome(r.Verdict, r.AIVerdict)
+	if len(r.Requirements) >= 2 {
+		r.Outcome = cmp.AggregateRequirements(r.Requirements)
+	}
+	r.Outcome = cmp.WithMaterials(r.Outcome, r.MaterialsState)
+}
 
 type remarkHistoryRecord struct {
 	Iteration    int    `json:"iteration"`

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/madnikulin50/lowcode/agents/stroykontrol/cmp"
@@ -23,6 +25,8 @@ import (
 type fxRemark struct {
 	rec     remarkRecord
 	history []remarkHistoryRecord
+	set     cmp.RequirementSet                // the requirements as stored (with the hash of the text)
+	check   func(text string) cmp.RemarkMatch // the check of one requirement against the findings of the case
 }
 
 type fxBoard struct {
@@ -61,9 +65,12 @@ func (f *FixtureStore) loadBoard(caseID string) (*fxBoard, error) {
 		docs, _ := f.Documents("", caseID)
 		var labels []cmp.DocLabel
 		var locDocs []cmp.LocDoc
+		var matDocs []cmp.MatDoc
 		for _, d := range docs {
 			labels = append(labels, cmp.DocLabel{ID: d.ID, Codes: d.VolumeCode, Title: d.VolumeTitle})
 			pg, _ := strconv.Atoi(d.Pages)
+			matDocs = append(matDocs, cmp.MatDoc{ID: d.ID, Name: firstNonEmpty(strings.TrimSpace(d.VolumeCode+" "+d.VolumeTitle), d.Name), Codes: d.VolumeCode, Title: d.VolumeTitle,
+				Pages: pg, Sheets: d.Sheets, Headings: d.Headings})
 			locDocs = append(locDocs, cmp.LocDoc{ID: d.ID, Name: strings.TrimSpace(d.VolumeCode + " " + d.VolumeTitle), Side: d.Side, Codes: d.VolumeCode, Title: d.VolumeTitle, Pages: pg, Comparison: caseID})
 			board.docs[d.ID] = strings.TrimSpace(d.VolumeCode + " " + d.VolumeTitle)
 		}
@@ -114,6 +121,16 @@ func (f *FixtureStore) loadBoard(caseID string) (*fxBoard, error) {
 				if rr.VolumeRefs == nil {
 					rr.VolumeRefs = []cmp.VolumeRef{}
 				}
+				// the requirements, each checked on its own
+				checkText := func(text string) cmp.RemarkMatch {
+					mq, _ := cmp.CheckRemark(cmp.Expert{Number: row.Number, Text: text, Where: row.Section, Answer: row.Answer}, refs, labels, cands, docOf)
+					return mq
+				}
+				reqSet, _ := cmp.EnsureRequirements(cmp.RequirementSet{}, row.Text)
+				fillRequirements(&reqSet, checkText)
+				rr.Requirements = append([]cmp.Requirement{}, reqSet.Items...)
+				rr.Materials = cmp.CheckMaterials(cmp.ParseMaterials(row.Answer), matDocs)
+				rr.MaterialsState = cmp.MaterialsSummary(rr.Materials)
 				rr.fillOutcome()
 				var matched []cmp.FoundAt
 				for _, id := range m.FindingIDs {
@@ -125,7 +142,7 @@ func (f *FixtureStore) loadBoard(caseID string) (*fxBoard, error) {
 				if rr.Links == nil {
 					rr.Links = []cmp.RemarkLocation{}
 				}
-				fr := &fxRemark{rec: rr}
+				fr := &fxRemark{rec: rr, set: reqSet, check: checkText}
 				for _, s := range rec.History {
 					fr.history = append(fr.history, remarkHistoryRecord{Iteration: s.Iteration, Answer: s.Answer, RejectReason: s.RejectReason,
 						Status: s.Status, SourceStatus: s.SourceStatus, At: fmtTime(s.At), Author: "агент", Source: s.Source})
@@ -280,4 +297,104 @@ func (f *FixtureStore) Expertise(_, caseID string) ([]remarkRecord, error) {
 	f.mu.Unlock()
 	sortRemarks(out)
 	return out, nil
+}
+
+// fillRequirements checks the requirements that have no result yet (new or edited ones).
+func fillRequirements(set *cmp.RequirementSet, check func(text string) cmp.RemarkMatch) {
+	for i := range set.Items {
+		q := &set.Items[i]
+		if q.Verdict != "" || q.Outcome != "" {
+			continue
+		}
+		mq := check(q.Text)
+		q.Verdict, q.Score, q.Note, q.FindingIDs = mq.Verdict, mq.Score, mq.Note, mq.FindingIDs
+		q.Outcome = cmp.CheckOutcome(q.Verdict, q.AIVerdict)
+	}
+}
+
+// SaveRequirements implements store: the list is replaced, the new and edited requirements are checked.
+func (f *FixtureStore) SaveRequirements(_, caseID, remarkID string, in []cmp.RequirementInput) (*remarkRecord, error) {
+	b, err := f.loadBoard(caseID)
+	if err != nil {
+		return nil, err
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	r, ok := b.remarks[remarkID]
+	if !ok {
+		return nil, fmt.Errorf("remark %s not found", remarkID)
+	}
+	now := fmtTime(time.Now().UTC())
+	set, err := cmp.ApplyRequirementEdit(r.set, r.rec.Text, in, "специалист ПТО", now)
+	if err != nil {
+		return nil, err
+	}
+	if r.check != nil {
+		fillRequirements(&set, r.check)
+	}
+	for _, wc := range cmp.RequirementChanges(r.set, set) {
+		r.history = append(r.history, remarkHistoryRecord{Iteration: max(r.rec.Iterations, 1), Status: r.rec.Status, SourceStatus: r.rec.SourceStatus,
+			At: now, Author: "специалист ПТО", Source: wc.Source, Note: wc.Note, Kind: wc.Kind})
+	}
+	r.set = set
+	r.rec.Requirements, r.rec.RequirementsStale = append([]cmp.Requirement{}, set.Items...), set.Stale
+	r.rec.fillOutcome()
+	out := r.rec
+	return &out, nil
+}
+
+// fxNotifyRead: the notifications read in --fixtures mode (by id: key|recipient).
+var fxNotifyRead = struct {
+	sync.Mutex
+	m map[string]bool
+}{m: map[string]bool{}}
+
+// Notifications computes the notifications of a case from its registry and history in memory (ТЗ 3.7.5):
+// nothing is stored or sent; the recipients are the assignees by name, and the managers of
+// <case>/recipients.json if there is one (a list of cmp.Recipient).
+func (f *FixtureStore) Notifications(caseID, recipient string) ([]cmp.Notification, error) {
+	b, err := f.loadBoard(caseID)
+	if err != nil {
+		return nil, err
+	}
+	var dir []cmp.Recipient
+	if data, err := os.ReadFile(filepath.Join(f.caseDir(caseID), "recipients.json")); err == nil {
+		if err := json.Unmarshal(data, &dir); err != nil {
+			return nil, fmt.Errorf("recipients.json: %w", err)
+		}
+	}
+	f.mu.Lock()
+	var remarks []cmp.NotifyRemark
+	var hist []cmp.NotifyHist
+	for id, r := range b.remarks {
+		remarks = append(remarks, cmp.NotifyRemark{ID: id, Number: r.rec.Number, Object: caseID, Status: r.rec.Status, Assignee: r.rec.Assignee,
+			DueDate: r.rec.DueDate, Text: r.rec.Text, Archived: r.rec.Archived})
+		for i, h := range r.history {
+			hist = append(hist, cmp.NotifyHist{ID: id + "#" + strconv.Itoa(i), Remark: id, Kind: h.Kind, Status: h.Status, Source: h.Source, Note: h.Note, Author: h.Author, At: h.At})
+		}
+	}
+	f.mu.Unlock()
+	all := cmp.NotifyEvents(caseID, remarks, hist, dir, map[string]bool{}, time.Now(), cmp.NotifyOptions{})
+	who := cmp.NormName(recipient)
+	out := []cmp.Notification{}
+	fxNotifyRead.Lock()
+	defer fxNotifyRead.Unlock()
+	for _, n := range all {
+		if who != "" && cmp.NormName(n.Recipient) != who {
+			continue
+		}
+		n.ID = n.Key + "|" + n.Recipient
+		n.Read = fxNotifyRead.m[n.ID]
+		out = append(out, n)
+	}
+	return out, nil
+}
+
+// MarkNotificationsRead marks notifications of the --fixtures mode as read.
+func (f *FixtureStore) MarkNotificationsRead(ids []string) {
+	fxNotifyRead.Lock()
+	defer fxNotifyRead.Unlock()
+	for _, id := range ids {
+		fxNotifyRead.m[id] = true
+	}
 }

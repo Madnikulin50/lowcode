@@ -45,6 +45,7 @@ Cases:
 | `pack-scan` | ПД as text vs РД as a scan (needs tesseract) |
 | `pack-vor` | ВОР + specification: a +12 % change, an internal ВОР/specification mismatch, aggregated reinforcement (consistent), a new position |
 | `versions-1` | `meta.json` has `"kind":"versions"`: two versions of one КЖ volume (`pd-*` is the earlier one) — sides are named «До»/«После» |
+| `changes-1` | `"kind":"versions"`: КЖ2 edition 0 → «изм. 1» with a table of the change registration and change rows in the title blocks (sheet 3 changed but not declared, sheet 5 declared replaced with no difference); `node fixtures/gen_change_fixtures.mjs` |
 | `pack-2` | one ПД volume with two structures vs a more detailed РД for the first only — must produce no finding above «низкая» |
 
 `pack-1` and `pack-1-v2` also ship `remarks.xlsx` (expertise remarks with answers; `go run fixtures/gen_remarks.go`).

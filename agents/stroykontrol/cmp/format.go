@@ -18,8 +18,9 @@ const maxFormatPerVolume = 6
 var (
 	// the stage letter, the sheet number and (on the first sheet) the total: "П 1 6", "Р 1", "Р 3"
 	sheetRowRe = regexp.MustCompile(`(?:^|\s)(?:П|Р|РП)\s+(\d{1,3})(?:\s+(\d{1,3}))?\s*$`)
-	// the sheet number printed after the column heads of the next sheets: "Изм. Кол.уч Лист № док Подп. Дата 9"
-	sheetDateRe = regexp.MustCompile(`(?i)(?:^|[^\p{L}])дат[а]?\s+(\d{1,3})\s*$`)
+	// the sheet number printed after the column heads of the next sheets: "Изм. Кол.уч Лист № док Подп. Дата 9",
+	// with the шифр between them when the row is read across the whole title block: "… Дата 2024-15-КЖ2 9"
+	sheetDateRe = regexp.MustCompile(`(?i)(?:^|[^\p{L}])дат[а]?\s+(?:\S*\p{L}\S*\s+)?(?:лист\s+)?(\d{1,3})\s*$`)
 	pageRefRe   = regexp.MustCompile(`(?i)^(.*?)\s*стр\.?\s*(\d{1,3})\s*$`)
 )
 

@@ -20,6 +20,7 @@ type remarkFilter struct {
 	Assignee, Verdict, Outcome, Q     string
 	MinIter                           int
 	Overdue, Claim, Archived          bool
+	Materials                         bool   // only the remarks whose declared materials were not found
 	From, To                          string // YYYY-MM-DD, inclusive; "" = open
 }
 
@@ -27,7 +28,7 @@ func filterFromQuery(q url.Values) (remarkFilter, error) {
 	f := remarkFilter{
 		Crit: q.Get("crit"), Expert: q.Get("expert"), Discipline: q.Get("discipline"), Section: q.Get("section"),
 		Assignee: q.Get("assignee"), Verdict: q.Get("verdict"), Outcome: q.Get("outcome"), Q: strings.ToLower(strings.TrimSpace(q.Get("q"))),
-		Overdue: q.Get("overdue") == "1", Claim: q.Get("claim") == "1", Archived: q.Get("archived") == "1",
+		Overdue: q.Get("overdue") == "1", Claim: q.Get("claim") == "1", Materials: q.Get("materials") == "1", Archived: q.Get("archived") == "1",
 		From: q.Get("from"), To: q.Get("to"),
 	}
 	if s := q.Get("status"); s != "" {
@@ -91,6 +92,9 @@ func (f remarkFilter) describe() []string {
 	if f.Claim {
 		out = append(out, "ответ ≠ документы")
 	}
+	if f.Materials {
+		out = append(out, "заявленные материалы не найдены")
+	}
 	if f.Archived {
 		out = append(out, "включая пропавшие из выгрузки")
 	}
@@ -120,6 +124,8 @@ func (f remarkFilter) match(r remarkRecord, today string, history []remarkHistor
 		f.Outcome != "" && firstNonEmpty(r.OutcomeFinal, r.Outcome) != f.Outcome,
 		f.Overdue && !r.overdue(today),
 		f.Claim && !r.ClaimMismatch:
+		return false
+	case f.Materials && r.MaterialsState != cmp.MaterialsMissing:
 		return false
 	}
 	if f.Q != "" && !strings.Contains(strings.ToLower(r.Text+" "+r.Answer+" "+r.Number+" "+r.Refs), f.Q) {
@@ -196,7 +202,9 @@ func registryReportFor(ns, objectID string, f remarkFilter) (cmp.RegistryReport,
 			Outcome: r.Outcome, OutcomeFinal: r.OutcomeFinal, OutcomeComment: r.OutcomeComment, OutcomeBy: r.OutcomeBy,
 			Assignee: r.Assignee, DueDate: dateOnly(r.DueDate), Note: r.Note, ChangedAt: r.ChangedAt, EstimateH: r.EstimateH,
 			Iterations: r.Iterations, Overdue: r.overdue(today),
-			Places: placesText(r.Links, func(id string) string { return board.Documents[id] }),
+			Places:       placesText(r.Links, func(id string) string { return board.Documents[id] }),
+			Requirements: r.Requirements,
+			Materials:    r.Materials,
 		})
 		for _, h := range hist {
 			rep.History = append(rep.History, cmp.RegistryHistory{

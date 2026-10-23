@@ -68,7 +68,7 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 	if opt.MaxFindings <= 0 {
 		opt.MaxFindings = 400
 	}
-	res := &Result{Volumes: map[string][]VolumeInfo{}, Sheets: map[string]map[int]int{}}
+	res := &Result{Volumes: map[string][]VolumeInfo{}, Sheets: map[string]map[int]int{}, Headings: map[string][]DocHeading{}}
 	if len(opt.Exclude) > 0 {
 		var nr, nt int
 		refDocs, nr = withoutRegions(refDocs, SideRef, opt.Exclude)
@@ -82,6 +82,7 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 		for _, d := range docs {
 			pages += len(d.Pages)
 			res.Sheets[d.ID] = SheetMap(d.Pages)
+			res.Headings[d.ID] = ExtractHeadings(d)
 			for _, v := range DetectVolumes(d) {
 				*dst = append(*dst, v)
 				res.Volumes[d.ID] = append(res.Volumes[d.ID], volInfo(v))
@@ -160,6 +161,12 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 		fs = append(fs, compareDrawings(p, docByID, opt.Imager, &res.Stats, opt.Exclude)...)
 		if !opt.NoElements {
 			fs = append(fs, elementFindings(p, docByID)...)
+		}
+		if opt.Mode == ModeVersions {
+			sc, cf, notes := changeRegistration(p, docByID, res.Sheets, fs)
+			res.SheetChanges = append(res.SheetChanges, sc...)
+			res.Notes = append(res.Notes, notes...)
+			fs = append(fs, cf...)
 		}
 		for _, f := range fs {
 			if f.PageRef > 0 {

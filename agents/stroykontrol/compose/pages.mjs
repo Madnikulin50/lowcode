@@ -281,6 +281,10 @@ export function buildPages (m) {
     ['object', 'imported_at', 'file', 'total', 'new_count', 'changed_count', 'status_changes', 'reopened', 'archived_count'], { ...S, hideAddButton: true }))
   add(listPage('Срезы реестра замечаний', 'expertise_snapshots', 64.5, 'fas chart-line', m.expertise_snapshots,
     ['object', 'day', 'total', 'overdue', 'n_awaiting_answer', 'n_being_fixed', 'n_answer_review', 'n_rework', 'n_resolved'], { ...S, hideAddButton: true }))
+  add(listPage('Получатели уведомлений', 'notify_recipients', 64.6, 'fas bell', m.notify_recipients,
+    ['name', 'email', 'role', 'object', 'events', 'active'], S))
+  add(listPage('Уведомления', 'notifications', 64.7, 'fas envelope', m.notifications,
+    ['created_at', 'object', 'number', 'event', 'recipient', 'title', 'delivery', 'read', 'error'], { ...S, hideAddButton: true }))
   add(listPage('Карточки замечаний (по сравнению)', 'remark_cards', 65, 'fas clipboard-list', m.remark_cards,
     ['comparison', 'document_ref', 'sheet', 'final_text', 'status'], S),
   card('Карточка замечания', 'remark_card', m.remark_cards, 66,

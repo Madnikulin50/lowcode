@@ -24,6 +24,8 @@ type RegistryRemark struct {
 	Iterations                                               int
 	Overdue                                                  bool
 	Places                                                   string // where the remark leads in the documents
+	Requirements                                             []Requirement
+	Materials                                                []Material // declared in the answer, with what the check found
 }
 
 // RegistryHistory is one entry of the history of a remark.
@@ -59,7 +61,7 @@ var AILabels = map[string]string{
 // HistKindLabels names the kinds of history entries.
 var HistKindLabels = map[string]string{
 	HistImport: "Выгрузка экспертизы", HistStatus: "Смена статуса", HistAssignee: "Назначение", HistDue: "Срок",
-	HistNote: "Заметка", HistDecision: "Решение по проверке", HistAuto: "Агент", HistComparison: "Из сравнения",
+	HistNote: "Заметка", HistDecision: "Решение по проверке", HistRequirement: "Требования", HistAuto: "Агент", HistComparison: "Из сравнения",
 }
 
 func label(m map[string]string, k string) string {
@@ -153,6 +155,37 @@ func RegistryXLSX(r RegistryReport) ([]byte, error) {
 	for _, code := range []string{OutcomeFixed, OutcomePartial, OutcomeNotFixed, OutcomeCheck} {
 		rows = append(rows, []any{"Результат проверки: " + OutcomeLabels[code], byOutcome[code]})
 	}
+	// the results by requirement (ТЗ 3.9.5): confirmed (fixed), not confirmed (not fixed, partly) and those that need the specialist
+	reqCount, reqRemarks := map[string]int{}, 0
+	for _, x := range r.Remarks {
+		if len(x.Requirements) >= 2 {
+			reqRemarks++
+		}
+		for _, q := range x.Requirements {
+			reqCount[q.Effective()]++
+		}
+	}
+	if n := reqCount[OutcomeFixed] + reqCount[OutcomePartial] + reqCount[OutcomeNotFixed] + reqCount[OutcomeCheck]; n > 0 {
+		rows = append(rows,
+			[]any{"Требований замечаний", n},
+			[]any{"  из них в замечаниях из нескольких требований", reqRemarks},
+			[]any{"  подтверждено устранение", reqCount[OutcomeFixed]},
+			[]any{"  не подтверждено (частично / не устранено)", reqCount[OutcomePartial] + reqCount[OutcomeNotFixed]},
+			[]any{"  требует экспертной оценки", reqCount[OutcomeCheck]})
+	}
+	// the materials the answers declare (ТЗ 3.4.9): only whether they are there
+	matRemarks, matMissing := 0, 0
+	for _, x := range r.Remarks {
+		if len(x.Materials) > 0 {
+			matRemarks++
+		}
+		if MaterialsSummary(x.Materials) == MaterialsMissing {
+			matMissing++
+		}
+	}
+	if matRemarks > 0 {
+		rows = append(rows, []any{"Ответов со ссылками на материалы", matRemarks}, []any{"  из них заявленные материалы не найдены", matMissing})
+	}
 	rows = append(rows, []any{"Примечание", "Статус экспертизы берётся из выгрузки и не меняется по результатам проверки; результат проверки — вывод системы (по документам и разбору ИИ) и решение специалиста — хранится отдельно."})
 	for i, row := range rows {
 		put(sum, i+1, row)
@@ -194,12 +227,51 @@ func RegistryXLSX(r RegistryReport) ([]byte, error) {
 	// Проверка устранения
 	var cr [][]any
 	for _, x := range r.Remarks {
-		cr = append(cr, []any{x.Number, label(VerdictLabels, x.Verdict), x.VerdictNote, label(AILabels, x.AIVerdict), x.AINote, label(OutcomeLabels, x.Outcome),
+		mat := ""
+		if len(x.Materials) > 0 {
+			mat = MaterialsNote(x.Materials)
+		}
+		cr = append(cr, []any{x.Number, label(VerdictLabels, x.Verdict), x.VerdictNote, label(AILabels, x.AIVerdict), x.AINote, mat, label(OutcomeLabels, x.Outcome),
 			label(OutcomeLabels, x.OutcomeFinal), x.OutcomeComment, x.OutcomeBy})
 	}
-	if err := table("Проверка устранения", []string{"№ замечания", "Проверка по документам", "Пояснение проверки", "Разбор ИИ", "Пояснение ИИ (с цитатами)", "Результат (система)", "Результат (специалист)", "Комментарий специалиста", "Решил"}, cr,
-		[]float64{12, 26, 50, 16, 60, 20, 20, 40, 16}); err != nil {
+	if err := table("Проверка устранения", []string{"№ замечания", "Проверка по документам", "Пояснение проверки", "Разбор ИИ", "Пояснение ИИ (с цитатами)", "Заявленные материалы", "Результат (система)", "Результат (специалист)", "Комментарий специалиста", "Решил"}, cr,
+		[]float64{12, 26, 50, 16, 60, 44, 20, 20, 40, 16}); err != nil {
 		return nil, err
+	}
+
+	// Материалы: what each answer declares and whether it is there (ТЗ 3.4.9)
+	var mr [][]any
+	kinds := map[string]string{MatVolume: "Том / лист", MatAppendix: "Приложение", MatDocument: "Документ"}
+	for _, x := range r.Remarks {
+		for _, m := range x.Materials {
+			where := m.In
+			if m.At > 0 {
+				where = fmt.Sprintf("%s, стр. %d", m.In, m.At)
+			}
+			mr = append(mr, []any{x.Number, label(kinds, m.Kind), m.Label, firstNonEmpty(m.Code, m.Tom), label(MatStateLabels, m.State), where, m.Note})
+		}
+	}
+	if len(mr) > 0 {
+		if err := table("Материалы", []string{"№ замечания", "Вид", "Заявлено в ответе", "Том", "Наличие", "Где найдено", "Пояснение"}, mr,
+			[]float64{12, 14, 50, 14, 18, 40, 50}); err != nil {
+			return nil, err
+		}
+	}
+
+	// Требования
+	var qr [][]any
+	for _, x := range r.Remarks {
+		for _, q := range x.Requirements {
+			qr = append(qr, []any{x.Number, q.Idx, q.Text, yesNo(q.Manual), label(VerdictLabels, q.Verdict), q.Note, label(AILabels, q.AIVerdict), q.AINote,
+				label(OutcomeLabels, q.Outcome), label(OutcomeLabels, q.OutcomeFinal), q.OutcomeComment, q.OutcomeBy})
+		}
+	}
+	if len(qr) > 0 {
+		if err := table("Требования", []string{"№ замечания", "№ требования", "Требование", "Правлено вручную", "Проверка по документам", "Пояснение проверки", "Разбор ИИ", "Пояснение ИИ",
+			"Результат (система)", "Результат (специалист)", "Комментарий специалиста", "Решил"}, qr,
+			[]float64{12, 11, 60, 12, 26, 44, 16, 50, 20, 20, 36, 16}); err != nil {
+			return nil, err
+		}
 	}
 
 	// Динамика

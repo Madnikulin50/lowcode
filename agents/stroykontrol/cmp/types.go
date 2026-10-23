@@ -263,12 +263,16 @@ type Result struct {
 	Volumes  map[string][]VolumeInfo // docID → volumes
 	// Sheets: docID → PDF page → the sheet number printed in the title block (only the pages where it was read)
 	Sheets map[string]map[int]int
-	Pairs  []PairInfo
+	// Headings: docID → the appendices and documents (calculations, notes…) set in it, where a declared material may be
+	Headings map[string][]DocHeading
+	Pairs    []PairInfo
 	// RefOnly / TargetOnly are the volumes left without a counterpart
 	RefOnly    []VolumeInfo
 	TargetOnly []VolumeInfo
 	// Params is the table of key parameters per volume and element (the base of the cross-volume check)
 	Params []ParamRow
-	Stats  Stats
-	Notes  []string
+	// SheetChanges: the statuses of the sheets in the new edition against the change registration (versions only)
+	SheetChanges []SheetChange
+	Stats        Stats
+	Notes        []string
 }

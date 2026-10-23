@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -70,6 +71,13 @@ func main() {
 	external := flag.Bool("external", true, "Check legal entities in ЕГРЮЛ (egrul.nalog.ru) and specialists in НРС (nrs.nostroy.ru)")
 	remarkModel := flag.String("remark-model", envOr("REMARK_MODEL", "deepseek-v2:latest"), "Ollama text model that drafts remark-card wording on request (empty disables the button)")
 	staticDir := flag.String("static", "", "Serve the frontend from this directory instead of the embedded web/dist — point at web/dist while running `npx vite build --watch` to see frontend changes without rebuilding this binary")
+	smtpAddr := flag.String("smtp", envOr("SMTP_ADDR", ""), "SMTP server host:port for the notifications by e-mail (empty — the feed only)")
+	smtpUser := flag.String("smtp-user", envOr("SMTP_USER", ""), "SMTP login")
+	smtpFrom := flag.String("smtp-from", envOr("SMTP_FROM", ""), "Sender of the notification letters, e.g. «Стройконтроль <noreply@example.ru>»")
+	smtpTLS := flag.String("smtp-tls", envOr("SMTP_TLS", "starttls"), "SMTP encryption: starttls | tls | none")
+	publicURL := flag.String("public-url", envOr("PUBLIC_URL", ""), "Base URL of this agent's UI as users open it — for the link in a notification letter")
+	notifyEvery := flag.Duration("notify-every", 15*time.Minute, "How often the agent looks for new notifications (0 — only on request and after a hand-made change)")
+	notifySoon := flag.Int("notify-soon-days", 3, "Notify that a due date is near this many days before it")
 	dumpNorms := flag.Bool("dump-norms", false, "Print the built-in regulatory documents catalog (idcheck.DefaultNorms) as JSON and exit — used by compose_id/apply_id.mjs to seed «Нормативные документы»")
 	flag.Parse()
 	if *dumpNorms {
@@ -170,6 +178,17 @@ func main() {
 		}, ext)
 	}
 	defaultNamespaceID = *namespace
+	if cmpRunner != nil {
+		notif = &notifier{b: cmpRunner.Backend, opt: cmp.NotifyOptions{SoonDays: *notifySoon},
+			cfg: smtpConfig{Addr: *smtpAddr, User: *smtpUser, Password: os.Getenv("SMTP_PASSWORD"), From: *smtpFrom, TLS: *smtpTLS, Link: *publicURL}}
+		notif.opt.Channel = notif.cfg.enabled()
+		if notif.cfg.enabled() {
+			log.Printf("notify: e-mail via %s from %s", *smtpAddr, *smtpFrom)
+		} else {
+			log.Printf("notify: no SMTP (--smtp/--smtp-from) — notifications go to the feed only")
+		}
+		go notif.run(defaultNamespaceID, *notifyEvery)
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -198,9 +217,13 @@ func main() {
 		r.Post("/volumes/resolve", handleVolumesResolve)
 		r.Get("/remarks/board", handleRemarksBoard)
 		r.Get("/remarks/history", handleRemarkHistory)
+		r.Get("/notifications", handleNotifications)
+		r.Post("/notifications/read", handleNotificationsRead)
+		r.Post("/notifications/scan", handleNotificationsScan)
 		r.Get("/remarks/export", handleRemarksExport)
 		r.Get("/reports/index", handleReportIndex)
 		r.Post("/remarks/update", handleRemarkUpdate)
+		r.Post("/remarks/requirements", handleRemarkRequirements)
 		r.Post("/remarks/ai", handleRemarkAI)
 		r.Get("/issue/preview", handleIssuePreview)
 		r.Post("/issue/register", handleIssueRegister)

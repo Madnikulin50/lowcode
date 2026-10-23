@@ -8,6 +8,7 @@ import { useViewerState } from './composables/useViewerState.js'
 import { parseBox } from './utils.js'
 import ComparisonHeader from './components/ComparisonHeader.vue'
 import PairingPanel from './components/PairingPanel.vue'
+import SheetChangesPanel from './components/SheetChangesPanel.vue'
 import AssistantPanel from './components/AssistantPanel.vue'
 import Viewer from './components/Viewer.vue'
 import DiscrepancyList from './components/DiscrepancyList.vue'
@@ -150,6 +151,7 @@ watch(() => cmp.comparison?.discrepancies, (list) => {
       </div>
 
       <PairingPanel :qs="qs" :record-id="recordID" :namespace-id="namespaceID" :running="cmp.comparison.running" :status="cmp.comparison.status" @apply="run" />
+      <SheetChangesPanel :qs="qs" :running="cmp.comparison.running" :status="cmp.comparison.status" @jump="jump" />
 
       <AssistantPanel
         ref="assistant"

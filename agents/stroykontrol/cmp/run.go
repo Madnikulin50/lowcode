@@ -384,6 +384,7 @@ func (r *Runner) persistDocuments(ns string, docs []docRef, inputs []Input, res 
 		vs := res.Volumes[d.ID]
 		v := idcheck.V("pages", strconv.Itoa(pages[d.ID]))
 		v["sheet_map"] = []string{FormatSheetMap(res.Sheets[d.ID])}
+		v["headings_json"] = []string{HeadingsJSON(res.Headings[d.ID])}
 		if !d.Manual {
 			existing, _ := r.Backend.GetRecord(ns, ModDocuments, d.ID)
 			for _, in := range inputs {

@@ -5,6 +5,7 @@ import { errText } from '../utils.js'
 import { ref, reactive, computed, onMounted } from 'vue'
 import RemarkDetail from './RemarkDetail.vue'
 import RemarkDynamics from './RemarkDynamics.vue'
+import NotificationsPanel from './NotificationsPanel.vue'
 import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, OUTCOME_LABEL, finalOutcome, fmtDate, isOverdue } from './labels.js'
 
 const params = new URLSearchParams(location.search)
@@ -17,8 +18,9 @@ const selectedID = ref('')
 const history = ref(null)
 const showJournal = ref(false)
 const showDynamics = ref(false)
+const notices = ref(null)
 const period = reactive({ from: '', to: '' })
-const filter = reactive({ q: '', status: '', crit: '', expert: '', discipline: '', section: '', assignee: '', iter: '', verdict: '', outcome: '', claim: false, overdue: false, archived: false })
+const filter = reactive({ q: '', status: '', crit: '', expert: '', discipline: '', section: '', assignee: '', iter: '', verdict: '', outcome: '', claim: false, mat: false, overdue: false, archived: false })
 
 async function api (url, body) {
   const res = await fetch(url, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined)
@@ -32,6 +34,9 @@ async function load () {
     const b = await api(`api/remarks/board?${qs}`)
     b.namespaceID = namespaceID
     state.board = b
+    // a link from a notification letter opens its remark
+    const want = params.get('remark')
+    if (want && !selectedID.value && b.remarks.some(r => r.id === want)) openRemark(want)
   } catch (e) {
     state.error = 'Не удалось загрузить замечания: ' + e.message
   } finally {
@@ -99,6 +104,7 @@ const exportHref = computed(() => {
   if (f.q.trim()) q.set('q', f.q.trim())
   if (f.overdue) q.set('overdue', '1')
   if (f.claim) q.set('claim', '1')
+  if (f.mat) q.set('materials', '1')
   if (f.archived) q.set('archived', '1')
   if (period.from) q.set('from', period.from)
   if (period.to) q.set('to', period.to)
@@ -114,14 +120,22 @@ const assignees = computed(() => uniq('assignee'))
 
 const live = computed(() => remarks.value.filter(r => filter.archived || !r.archived))
 const counts = computed(() => {
-  const c = { total: live.value.length, critOpen: 0, overdue: 0, claim: 0, noDocs: 0 }
+  const c = { total: live.value.length, critOpen: 0, overdue: 0, claim: 0, mat: 0, noDocs: 0, req: 0, reqOk: 0, reqNo: 0, reqCheck: 0 }
   for (const s of STATUS_ORDER) c[s] = 0
   for (const r of live.value) {
     if (c[r.status] != null) c[r.status]++
     if (r.criticality === 'critical' && r.status !== 'resolved') c.critOpen++
     if (isOverdue(r)) c.overdue++
     if (r.claimMismatch) c.claim++
+    if (r.materialsState === 'missing') c.mat++
     if (r.verdict === 'no_documents') c.noDocs++
+    for (const q of r.requirements || []) {
+      const o = q.outcomeFinal || q.outcome || 'check'
+      c.req++
+      if (o === 'fixed') c.reqOk++
+      else if (o === 'check') c.reqCheck++
+      else c.reqNo++
+    }
   }
   return c
 })
@@ -139,6 +153,7 @@ const rows = computed(() => {
     (!filter.verdict || r.verdict === filter.verdict) &&
     (!filter.outcome || finalOutcome(r) === filter.outcome) &&
     (!filter.claim || r.claimMismatch) &&
+    (!filter.mat || r.materialsState === 'missing') &&
     (!filter.overdue || isOverdue(r)) &&
     (!q || (r.text + ' ' + r.answer + ' ' + r.number + ' ' + r.refs).toLowerCase().includes(q)),
   )
@@ -151,16 +166,31 @@ async function select (r) {
   history.value = await act(() => api(`api/remarks/history?${qs}&remarkID=${encodeURIComponent(r.id)}`)) || []
 }
 
+async function saveRequirements (id, requirements) {
+  const saved = await act(() => api('api/remarks/requirements', { objectID, namespaceID, id, requirements }))
+  if (!saved) return
+  const i = state.board.remarks.findIndex(r => r.id === id)
+  if (i >= 0) state.board.remarks[i] = saved
+  history.value = await act(() => api(`api/remarks/history?${qs}&remarkID=${encodeURIComponent(id)}`)) || history.value
+}
+
 async function update (id, patch) {
   const saved = await act(() => api('api/remarks/update', { objectID, namespaceID, id, ...patch }))
   if (!saved) return
   const i = state.board.remarks.findIndex(r => r.id === id)
   if (i >= 0) state.board.remarks[i] = saved
   if (patch.status) history.value = await act(() => api(`api/remarks/history?${qs}&remarkID=${encodeURIComponent(id)}`)) || history.value
+  // the agent looks for the notifications of the change in the background
+  if (patch.status || patch.assignee !== undefined || patch.dueDate !== undefined) setTimeout(() => notices.value?.load(), 1500)
+}
+
+function openRemark (id) {
+  const r = state.board.remarks.find(x => x.id === id)
+  if (r) select(r)
 }
 
 function resetFilters () {
-  Object.assign(filter, { q: '', status: '', crit: '', expert: '', discipline: '', section: '', assignee: '', iter: '', verdict: '', outcome: '', claim: false, overdue: false, archived: false })
+  Object.assign(filter, { q: '', status: '', crit: '', expert: '', discipline: '', section: '', assignee: '', iter: '', verdict: '', outcome: '', claim: false, mat: false, overdue: false, archived: false })
   period.from = ''
   period.to = ''
 }
@@ -178,6 +208,7 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
         <button class="small" :disabled="state.busy" title="Прочитать новые выгрузки, приложенные к объекту" @click="importNow(false)">Загрузить выгрузку</button>
         <button class="small" :disabled="state.busy" title="Заново связать замечания с загруженными томами и проверить ответы" @click="checkNow">Проверить по документам</button>
         <button class="small" :disabled="state.busy" title="Модель прочитает отобранные замечания и фрагменты их томов (не более 25 за раз)" @click="aiMany">ИИ-разбор отобранных</button>
+        <NotificationsPanel ref="notices" :qs="qs" :namespace-id="namespaceID" :assignees="assignees" @open="openRemark" />
         <button class="small" title="Сколько замечаний в каком статусе по дням" @click="showDynamics = !showDynamics">Динамика</button>
         <button class="small" @click="showJournal = !showJournal">Журнал выгрузок ({{ state.board.imports.length }})</button>
       </div>
@@ -207,6 +238,10 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
         </button>
         <button class="kpi warn" :class="{ on: filter.overdue }" @click="filter.overdue = !filter.overdue"><b>{{ counts.overdue }}</b><span>просрочено</span></button>
         <button class="kpi warn" :class="{ on: filter.claim }" @click="filter.claim = !filter.claim"><b>{{ counts.claim }}</b><span>ответ ≠ документы</span></button>
+        <button v-if="counts.mat" class="kpi warn" :class="{ on: filter.mat }" title="Ответ ссылается на том, лист, приложение или расчёт, которых нет в загруженных документах (ТЗ 3.4.9)" @click="filter.mat = !filter.mat"><b>{{ counts.mat }}</b><span>материалы не найдены</span></button>
+        <div class="kpi static" title="Требования замечаний по результату: устранение подтверждено / не подтверждено (частично, не устранено) / требует оценки специалиста">
+          <b>{{ counts.reqOk }} / {{ counts.reqNo }} / {{ counts.reqCheck }}</b><span>требования: подтв. / не подтв. / к оценке</span>
+        </div>
       </div>
 
       <div class="disc-filters rm-filters">
@@ -238,7 +273,7 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
                 <td>{{ r.discipline }}</td>
                 <td class="nowrap">{{ r.expert }}</td>
                 <td>{{ r.iterations }}</td>
-                <td><span v-if="r.verdict" class="tag" :class="'ev-' + r.verdict" :title="r.matchNote">{{ VERDICT_LABEL[r.verdict] }}</span><span v-if="r.claimMismatch" class="tag ev-claim">≠</span><span v-if="r.aiVerdict" class="tag" :class="'ai-' + r.aiVerdict" :title="AI_LABEL[r.aiVerdict]">ИИ</span></td>
+                <td><span v-if="r.verdict" class="tag" :class="'ev-' + r.verdict" :title="r.matchNote">{{ VERDICT_LABEL[r.verdict] }}</span><span v-if="r.claimMismatch" class="tag ev-claim">≠</span><span v-if="r.materialsState === 'missing'" class="tag ev-claim" title="Заявленные в ответе материалы не найдены">мат.</span><span v-if="r.aiVerdict" class="tag" :class="'ai-' + r.aiVerdict" :title="AI_LABEL[r.aiVerdict]">ИИ</span></td>
                 <td><span class="tag" :class="'oc-' + finalOutcome(r)" :title="r.outcomeFinal ? 'Решение специалиста' : 'Вывод системы'">{{ OUTCOME_LABEL[finalOutcome(r)] }}</span></td>
                 <td class="nowrap">{{ r.assignee }}</td>
                 <td class="nowrap" :class="{ overdue: isOverdue(r) }">{{ fmtDate(r.dueDate) }}</td>
@@ -250,7 +285,7 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
         </div>
         <RemarkDetail
           v-if="selected" :remark="selected" :board="state.board" :history="history" :busy="state.busy" :assignees="assignees"
-          @update="update" @close="selectedID = ''" @ai="aiOne"
+          @update="update" @requirements="saveRequirements" @close="selectedID = ''" @ai="aiOne"
         />
       </div>
     </template>

@@ -15,8 +15,10 @@ import (
 // Пакет исправления (ТЗ 3.4.11, 3.6.7): исправленная редакция, которую загрузили в новую итерацию
 // сравнения, вместе с замечаниями, к которым она относится, и результатом проверки. Пакет хранит
 // состав документов, связь с замечаниями и историю проверок (по записи на каждый прогон), так что
-// видно, что и когда проверялось. Отдельные ответы, расчёты и приложения в пакет не собираются: он
-// строится из документов итерации.
+// видно, что и когда проверялось. Ответы, расчёты, пояснительные записки и приложения, пришедшие
+// отдельными файлами, прикладываются к пакету (поле materials_files): они участвуют в поиске материалов,
+// заявленных в ответах (ТЗ 3.4.9); ответы проектировщика по замечаниям пакета на момент прогона и
+// наличие заявленных в них материалов сохраняются в записи прогона.
 
 // ModCorrection is the module of the correction packages.
 const ModCorrection = "correction_packages"
@@ -31,7 +33,19 @@ type PackageRun struct {
 	Persisting int    `json:"persisting"`
 	New        int    `json:"new"`
 	Remarks    int    `json:"remarks"`
+	// the designer's answers to the remarks of the package at the time of the run and their declared materials
+	Answers          []PackageAnswer `json:"answers,omitempty"`
+	MaterialsMissing int             `json:"materialsMissing,omitempty"`
 }
+
+// PackageAnswer is the answer to one remark of a package as it was when the package was checked.
+type PackageAnswer struct {
+	Number    string `json:"number"`
+	Answer    string `json:"answer,omitempty"`
+	Materials string `json:"materials,omitempty"` // summary state of the declared materials
+}
+
+const maxPackageAnswer = 400
 
 // RecordCorrectionPackage creates or refreshes the package of an iteration of a comparison: the
 // corrected files of the iteration, the remarks of the object they concern and the result of the check.
@@ -100,6 +114,10 @@ func (r *Runner) RecordCorrectionPackage(ctx context.Context, ns, comparisonID s
 		}
 		if hit {
 			remarkIDs = append(remarkIDs, rm.ID)
+			run.Answers = append(run.Answers, PackageAnswer{Number: rm.Get("number"), Answer: trunc(rm.Get("answer"), maxPackageAnswer), Materials: rm.Get("materials_state")})
+			if rm.Get("materials_state") == MaterialsMissing {
+				run.MaterialsMissing++
+			}
 		}
 	}
 	run.Remarks = len(remarkIDs)
@@ -145,6 +163,20 @@ func (r *Runner) RecordCorrectionPackage(ctx context.Context, ns, comparisonID s
 
 // PackageSummary is the one line a package shows.
 func PackageSummary(rec idcheck.Record) string {
-	return strings.TrimSpace(fmt.Sprintf("документов: %s, замечаний: %s; устранено %s, осталось %s, новых %s",
-		rec.Get("n_documents"), rec.Get("n_remarks"), rec.Get("resolved"), rec.Get("persisting"), rec.Get("new_findings")))
+	s := fmt.Sprintf("документов: %s, замечаний: %s; устранено %s, осталось %s, новых %s",
+		rec.Get("n_documents"), rec.Get("n_remarks"), rec.Get("resolved"), rec.Get("persisting"), rec.Get("new_findings"))
+	if n := len(nonBlankAll(rec.Values["materials_files"])); n > 0 {
+		s += fmt.Sprintf("; обосновывающих материалов: %d", n)
+	}
+	return strings.TrimSpace(s)
+}
+
+func nonBlankAll(in []string) []string {
+	var out []string
+	for _, s := range in {
+		if s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
 }
