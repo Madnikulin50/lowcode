@@ -8,7 +8,8 @@ import (
 )
 
 // Сквозная согласованность между томами одной стороны: один и тот же параметр (класс бетона,
-// водонепроницаемость, морозостойкость, класс арматуры) для одного и того же конструктивного элемента
+// водонепроницаемость, морозостойкость, класс арматуры и значения словаря value_params.go — толщина,
+// отметки, защитный слой, нагрузки…) для одного и того же конструктивного элемента
 // не должен называться по-разному в разных томах. Параметр привязывается к элементу по словарю
 // конструктивных слов в той же строке или в двух предыдущих; параметры без элемента в находки не
 // попадают (только в таблицу параметров), чтобы не плодить шум. Все находки — «к проверке».
@@ -18,6 +19,7 @@ var elementStems = []struct{ stem, name string }{
 	{"стен", "стена"}, {"плит", "плита"}, {"колонн", "колонна"}, {"балк", "балка"}, {"ригел", "ригель"},
 	{"перекрыт", "перекрытие"}, {"диафрагм", "диафрагма"}, {"опор", "опора"}, {"лестниц", "лестница"},
 	{"подготовк", "подготовка"}, {"стяжк", "стяжка"}, {"приямк", "приямок"}, {"пилон", "пилон"}, {"перемыч", "перемычка"},
+	{"кровл", "кровля"}, {"отмостк", "отмостка"}, {"перегородк", "перегородка"}, {"кладк", "кладка"}, {"покрыт", "покрытие"},
 }
 
 func elementOf(text string) string {
@@ -45,44 +47,8 @@ type paramSeen struct {
 	vals map[string]ParamHit
 }
 
-// volumeParams collects, per (parameter kind, element), the values a volume names.
-func volumeParams(v *Volume) map[[2]string]*paramSeen {
-	out := map[[2]string]*paramSeen{}
-	var ctx []string // the last lines of the current page, for the element of a line without one
-	curPage := -1
-	for _, l := range v.Lines {
-		if l.Page != curPage {
-			curPage, ctx = l.Page, nil
-		}
-		el := elementOf(l.Text)
-		if el == "" {
-			for i := len(ctx) - 1; i >= 0 && el == ""; i-- {
-				el = elementOf(ctx[i])
-			}
-		}
-		ctx = append(ctx, l.Text)
-		if len(ctx) > 2 {
-			ctx = ctx[1:]
-		}
-		if el == "" {
-			continue
-		}
-		for ki, kind := range ExtractParams([]Line{l}) {
-			for val, hit := range kind {
-				key := [2]string{paramKinds[ki].Name, el}
-				ps := out[key]
-				if ps == nil {
-					ps = &paramSeen{vals: map[string]ParamHit{}}
-					out[key] = ps
-				}
-				if _, ok := ps.vals[val]; !ok {
-					ps.vals[val] = hit
-				}
-			}
-		}
-	}
-	return out
-}
+// volumeParams collects, per (parameter kind, element), the values a volume names (value_params.go).
+func volumeParams(v *Volume) map[[2]string]*paramSeen { return paramsOfLines(v.Lines) }
 
 func valueList(ps *paramSeen) []string {
 	var vs []string

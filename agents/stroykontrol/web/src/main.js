@@ -6,6 +6,10 @@ import RemarksApp from './remarks/RemarksApp.vue'
 import ObjectApp from './object/ObjectApp.vue'
 import DocApp from './doc/DocApp.vue'
 import ReportsApp from './reports/ReportsApp.vue'
+import { installPlatformAuth, loadMe } from './platform.js'
+
+installPlatformAuth()
+loadMe()
 
 // ?view=idcheck — in-place findings viewer for the «Проверка ИД (АОСР)»
 // namespace (embedded in the package/act cards); ?view=remarks — the workbench

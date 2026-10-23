@@ -255,7 +255,7 @@ func permittedSheets(d *Document, from, to int) (map[int]bool, int) {
 }
 
 // diffKinds are the findings that mean the content of a sheet changed.
-var diffKinds = map[string]bool{KindText: true, KindTableRow: true, KindParam: true, KindDrawing: true, KindElement: true, KindVOR: true}
+var diffKinds = map[string]bool{KindText: true, KindTableRow: true, KindTableCell: true, KindParam: true, KindDrawing: true, KindElement: true, KindVOR: true}
 
 type volSheets struct {
 	doc   string

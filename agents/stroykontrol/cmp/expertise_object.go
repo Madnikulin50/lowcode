@@ -159,13 +159,7 @@ func (r *Runner) ImportObjectRemarks(ctx context.Context, ns, objectID string, f
 		if err != nil {
 			return nil, fmt.Errorf("загрузка выгрузки: %w", err)
 		}
-		rows, err := ParseExport(data, name)
-		if err == ErrNotExport {
-			var generic []Expert
-			if generic, err = ParseExpertise(data, name); err == nil {
-				rows = ExpertToExport(generic)
-			}
-		}
+		rows, err := ParseRemarksFile(data, name, r.CacheDir)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", name, err)
 		}
@@ -367,6 +361,32 @@ func (r *Runner) CheckObjectRemarks(ctx context.Context, ns, objectID string) (i
 	}
 	cands := CandidatesFrom(findings)
 	locDocs := locDocsFrom(docRecs, func(string) string { return "" })
+	locByID := map[string]LocDoc{}
+	fileOf := map[string]string{}
+	for i, d := range docRecs {
+		locByID[d.ID] = locDocs[i]
+		fileOf[d.ID] = d.Get("file")
+	}
+	// the pages of a linked document, read once per check (the extraction is cached on disk)
+	pagesOf := map[string][]Page{}
+	loadPages := func(id string) []Page {
+		if p, ok := pagesOf[id]; ok {
+			return p
+		}
+		pagesOf[id] = nil
+		if fileOf[id] == "" {
+			return nil
+		}
+		data, _, err := b.Download(ns, fileOf[id])
+		if err != nil || !IsPDF(data) {
+			return nil
+		}
+		pages, _, _, err := ExtractPagesOCR(ctx, id, data, r.CacheDir, r.OCR)
+		if err == nil {
+			pagesOf[id] = pages
+		}
+		return pagesOf[id]
+	}
 	// where the materials the answers declare are looked for: the loaded volumes and the supporting files of the packages
 	matDocs := append(matDocsFrom(docRecs), r.supportingDocs(ns, r.packageMaterials(ns, objectID))...)
 	foundAt := map[string]FoundAt{} // finding ID → its places
@@ -409,7 +429,16 @@ func (r *Runner) CheckObjectRemarks(ctx context.Context, ns, objectID string) (i
 				matched = append(matched, f)
 			}
 		}
-		links := LocationsJSON(LocateRemark(refs, locDocs, matched))
+		// and the fragment its text names, in the linked volumes and the volumes of its findings (ТЗ 3.4.2, 3.5.1)
+		var frag []FragDoc
+		for _, id := range fragmentDocs(linkedIDs, m.FindingIDs, docOf) {
+			if ld, ok := locByID[id]; ok {
+				if pages := loadPages(id); len(pages) > 0 {
+					frag = append(frag, FragDoc{ld, pages})
+				}
+			}
+		}
+		links := LocationsJSON(append(LocateRemark(refs, locDocs, matched), LocateFragments(rem.Get("text"), refs, frag)...))
 		v["links_json"] = []string{links}
 		// the requirements of the remark, each checked on its own against the findings of the linked volumes (ТЗ 3.4.3, 3.6.6)
 		reqs, _ := ParseRequirementSet(rem.Get("requirements_json"))

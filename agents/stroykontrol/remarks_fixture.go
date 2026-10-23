@@ -17,8 +17,8 @@ import (
 // --- remarks in --fixtures mode ------------------------------------------------
 //
 // A fixture case is both the comparison and its "object": the remarks are read
-// from <case>/remarks*.xlsx (the expertise export, or any table with a remark
-// column) on first use, linked to the case's documents and checked against its
+// from <case>/remarks*.xlsx or remarks*.pdf (the expertise export, or any table with a remark
+// column, or numbered remarks of a PDF) on first use, linked to the case's documents and checked against its
 // findings exactly like the registry does. Changes the specialist makes in the
 // workbench live in memory.
 
@@ -56,6 +56,8 @@ func (f *FixtureStore) loadBoard(caseID string) (*fxBoard, error) {
 
 	board := &fxBoard{remarks: map[string]*fxRemark{}, docs: map[string]string{}}
 	files, _ := filepath.Glob(filepath.Join(dir, "remarks*.xlsx"))
+	pdfs, _ := filepath.Glob(filepath.Join(dir, "remarks*.pdf"))
+	files = append(files, pdfs...)
 	sort.Strings(files)
 	if len(files) > 0 {
 		discs, err := f.Discrepancies("", caseID)
@@ -71,7 +73,7 @@ func (f *FixtureStore) loadBoard(caseID string) (*fxBoard, error) {
 			pg, _ := strconv.Atoi(d.Pages)
 			matDocs = append(matDocs, cmp.MatDoc{ID: d.ID, Name: firstNonEmpty(strings.TrimSpace(d.VolumeCode+" "+d.VolumeTitle), d.Name), Codes: d.VolumeCode, Title: d.VolumeTitle,
 				Pages: pg, Sheets: d.Sheets, Headings: d.Headings})
-			locDocs = append(locDocs, cmp.LocDoc{ID: d.ID, Name: strings.TrimSpace(d.VolumeCode + " " + d.VolumeTitle), Side: d.Side, Codes: d.VolumeCode, Title: d.VolumeTitle, Pages: pg, Comparison: caseID})
+			locDocs = append(locDocs, cmp.LocDoc{ID: d.ID, Name: firstNonEmpty(strings.TrimSpace(d.VolumeCode+" "+d.VolumeTitle), d.Name), Side: d.Side, Codes: d.VolumeCode, Title: d.VolumeTitle, Pages: pg, Sheets: d.Sheets, Comparison: caseID})
 			board.docs[d.ID] = strings.TrimSpace(d.VolumeCode + " " + d.VolumeTitle)
 		}
 		var cands []cmp.Candidate
@@ -95,13 +97,7 @@ func (f *FixtureStore) loadBoard(caseID string) (*fxBoard, error) {
 				return nil, err
 			}
 			name := filepath.Base(p)
-			rows, err := cmp.ParseExport(data, name)
-			if err == cmp.ErrNotExport {
-				var generic []cmp.Expert
-				if generic, err = cmp.ParseExpertise(data, name); err == nil {
-					rows = cmp.ExpertToExport(generic)
-				}
-			}
+			rows, err := cmp.ParseRemarksFile(data, name, "")
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", name, err)
 			}
@@ -138,7 +134,7 @@ func (f *FixtureStore) loadBoard(caseID string) (*fxBoard, error) {
 						matched = append(matched, f)
 					}
 				}
-				rr.Links = cmp.LocateRemark(refs, locDocs, matched)
+				rr.Links = append(cmp.LocateRemark(refs, locDocs, matched), cmp.LocateFragments(row.Text, refs, f.fragmentDocs(caseID, locDocs, linked, m.FindingIDs, docOf))...)
 				if rr.Links == nil {
 					rr.Links = []cmp.RemarkLocation{}
 				}
@@ -221,6 +217,9 @@ func (f *FixtureStore) UpdateRemark(_, caseID, remarkID string, p remarkPatch) (
 	if !ok {
 		return nil, fmt.Errorf("remark %s not found", remarkID)
 	}
+	if err := p.check(r.rec.Status, r.rec.Assignee); err != nil {
+		return nil, err
+	}
 	statusComment := ""
 	if p.StatusComment != nil {
 		statusComment = strings.TrimSpace(*p.StatusComment)
@@ -257,19 +256,19 @@ func (f *FixtureStore) UpdateRemark(_, caseID, remarkID string, p remarkPatch) (
 		if final == "" {
 			r.rec.OutcomeBy, r.rec.OutcomeAt = "", ""
 		} else {
-			r.rec.OutcomeBy, r.rec.OutcomeAt = "специалист ПТО", now
+			r.rec.OutcomeBy, r.rec.OutcomeAt = p.Actor.Label(), now
 			r.history = append(r.history, remarkHistoryRecord{Iteration: max(r.rec.Iterations, 1), Status: r.rec.Status, SourceStatus: r.rec.SourceStatus,
-				At: now, Author: "специалист ПТО", Source: "решение по проверке: " + cmp.OutcomeLabels[final], Note: comment, Kind: cmp.HistDecision})
+				At: now, Author: p.Actor.Label(), Source: "решение по проверке: " + cmp.OutcomeLabels[final], Note: comment, Kind: cmp.HistDecision})
 		}
 	}
 	if p.Status != nil && *p.Status != r.rec.Status {
 		r.history = append(r.history, remarkHistoryRecord{Iteration: max(r.rec.Iterations, 1), Answer: r.rec.Answer, RejectReason: r.rec.RejectReason,
-			Status: *p.Status, SourceStatus: r.rec.SourceStatus, At: fmtTime(time.Now().UTC()), Author: "специалист ПТО", Source: "вручную", Note: statusComment, Kind: cmp.HistStatus})
+			Status: *p.Status, SourceStatus: r.rec.SourceStatus, At: fmtTime(time.Now().UTC()), Author: p.Actor.Label(), Source: "вручную", Note: statusComment, Kind: cmp.HistStatus})
 		r.rec.Status = *p.Status
 	}
 	for _, wc := range cmp.WorkChanges(r.rec.Assignee, r.rec.DueDate, r.rec.Note, p.Assignee, p.DueDate, p.Note) {
 		r.history = append(r.history, remarkHistoryRecord{Iteration: max(r.rec.Iterations, 1), Status: valOr(p.Status, r.rec.Status), SourceStatus: r.rec.SourceStatus,
-			At: fmtTime(time.Now().UTC()), Author: "специалист ПТО", Source: wc.Source, Note: wc.Note, Kind: wc.Kind})
+			At: fmtTime(time.Now().UTC()), Author: p.Actor.Label(), Source: wc.Source, Note: wc.Note, Kind: wc.Kind})
 	}
 	if p.Assignee != nil {
 		r.rec.Assignee = strings.TrimSpace(*p.Assignee)
@@ -313,7 +312,7 @@ func fillRequirements(set *cmp.RequirementSet, check func(text string) cmp.Remar
 }
 
 // SaveRequirements implements store: the list is replaced, the new and edited requirements are checked.
-func (f *FixtureStore) SaveRequirements(_, caseID, remarkID string, in []cmp.RequirementInput) (*remarkRecord, error) {
+func (f *FixtureStore) SaveRequirements(_, caseID, remarkID string, in []cmp.RequirementInput, by cmp.Actor) (*remarkRecord, error) {
 	b, err := f.loadBoard(caseID)
 	if err != nil {
 		return nil, err
@@ -324,8 +323,11 @@ func (f *FixtureStore) SaveRequirements(_, caseID, remarkID string, in []cmp.Req
 	if !ok {
 		return nil, fmt.Errorf("remark %s not found", remarkID)
 	}
+	if err := checkRequirementEdit(by, r.set, in, r.rec.Status, r.rec.Assignee); err != nil {
+		return nil, err
+	}
 	now := fmtTime(time.Now().UTC())
-	set, err := cmp.ApplyRequirementEdit(r.set, r.rec.Text, in, "специалист ПТО", now)
+	set, err := cmp.ApplyRequirementEdit(r.set, r.rec.Text, in, by.Label(), now)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +336,7 @@ func (f *FixtureStore) SaveRequirements(_, caseID, remarkID string, in []cmp.Req
 	}
 	for _, wc := range cmp.RequirementChanges(r.set, set) {
 		r.history = append(r.history, remarkHistoryRecord{Iteration: max(r.rec.Iterations, 1), Status: r.rec.Status, SourceStatus: r.rec.SourceStatus,
-			At: now, Author: "специалист ПТО", Source: wc.Source, Note: wc.Note, Kind: wc.Kind})
+			At: now, Author: by.Label(), Source: wc.Source, Note: wc.Note, Kind: wc.Kind})
 	}
 	r.set = set
 	r.rec.Requirements, r.rec.RequirementsStale = append([]cmp.Requirement{}, set.Items...), set.Stale
@@ -397,4 +399,29 @@ func (f *FixtureStore) MarkNotificationsRead(ids []string) {
 	for _, id := range ids {
 		fxNotifyRead.m[id] = true
 	}
+}
+
+// fragmentDocs reads the pages of the documents the fragment of a remark is looked for in.
+func (f *FixtureStore) fragmentDocs(caseID string, docs []cmp.LocDoc, linked, findings []string, docOf map[string][2]string) []cmp.FragDoc {
+	want := map[string]bool{}
+	for _, id := range linked {
+		want[id] = true
+	}
+	for _, id := range findings {
+		want[docOf[id][0]], want[docOf[id][1]] = true, true
+	}
+	var out []cmp.FragDoc
+	for _, d := range docs {
+		if !want[d.ID] {
+			continue
+		}
+		data, _, err := f.FetchDocument("", caseID, d.ID)
+		if err != nil || !cmp.IsPDF(data) {
+			continue
+		}
+		if pages, err := cmp.ExtractPages(d.ID, data, ""); err == nil {
+			out = append(out, cmp.FragDoc{LocDoc: d, Pages: pages})
+		}
+	}
+	return out
 }

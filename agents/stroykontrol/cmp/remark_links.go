@@ -77,7 +77,8 @@ type RemarkLocation struct {
 	Side  string `json:"side,omitempty"` // ref = исходная редакция (ПД), target = исправленная (РД)
 	Page  int    `json:"page,omitempty"` // PDF page (0: unknown, open from the start)
 	Sheet int    `json:"sheet,omitempty"`
-	Note  string `json:"note,omitempty"` // why the place is approximate
+	Note  string `json:"note,omitempty"` // why the place is approximate; for a fragment, how it was found
+	Box   string `json:"box,omitempty"`  // fragment: the region on the page, "[x0,y0,x1,y1]" in page fractions
 	// finding: the comparison, the finding and its places on both sides
 	Comparison string `json:"comparison,omitempty"`
 	FindingID  string `json:"findingID,omitempty"`

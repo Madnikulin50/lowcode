@@ -214,7 +214,7 @@ func TestSetFlagsATitleThatDiffersFromTheStatement(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := od.Sets[0]
-	if len(s.Renamed) != 1 || !strings.HasPrefix(s.Renamed[0], "АР:") || !strings.Contains(s.Note, "наименование не совпадает") {
+	if len(s.Renamed) != 1 || !strings.HasPrefix(s.Renamed[0], "АР:") || !strings.Contains(s.Note, "наименования не согласованы") {
 		t.Fatalf("only АР has a title with no word in common (КЖ1 shares «конструктивные», ПЗ has no title): %+v\n%s", s.Renamed, s.Note)
 	}
 }

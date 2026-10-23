@@ -125,9 +125,21 @@ export function buildPages (m) {
         { prefilter: 'object = ${recordID}', refField: 'object', presort: 'issued_at DESC', perPage: 20 }),
     },
     {
+      title: 'Сооружения',
+      block: recordList('Сооружения и участки объекта', [0, 0, 48, 90], m.structures,
+        ['name', 'code', 'kind', 'location', 'note'],
+        { prefilter: 'object = ${recordID}', refField: 'object', presort: 'name ASC', perPage: 50 }),
+    },
+    {
+      title: 'Журнал загрузок',
+      block: recordList('Журнал загрузок документации', [0, 0, 48, 90], m.upload_log,
+        ['uploaded_at', 'uploaded_by', 'file_name', 'volume_code', 'kind', 'note', 'pages', 'set'],
+        { prefilter: 'object = ${recordID}', refField: 'object', presort: 'uploaded_at DESC', perPage: 50, hideAddButton: true }),
+    },
+    {
       title: 'Ведомость томов',
       block: recordList('Ведомость состава томов', [0, 0, 48, 90], m.object_volumes,
-        ['stage', 'volume_code', 'title', 'required', 'proposed', 'source'],
+        ['stage', 'kind', 'volume_code', 'title', 'parent_code', 'required', 'proposed', 'source'],
         { prefilter: 'object = ${recordID}', refField: 'object', presort: 'volume_code ASC', perPage: 100 }),
     },
     {
@@ -253,8 +265,10 @@ export function buildPages (m) {
   defs.push(group('Справочники', 'refs', 40, 'fas book', 'Нормативные документы, юрлица, специалисты и ведомости состава томов.'))
   const R = { parent: 'refs' }
   add(listPage('Ведомость состава томов', 'object_volumes', 41, 'fas list-ol', m.object_volumes,
-    ['object', 'stage', 'volume_code', 'title', 'required', 'proposed', 'source'], { ...R, perPage: 100, presort: 'volume_code ASC' }),
-  card('Том ведомости', 'object_volume', m.object_volumes, 42, ['object', 'stage', 'volume_code', 'title', 'required', 'proposed', 'source', 'evidence'], { volume_code: 'title' }))
+    ['object', 'stage', 'kind', 'volume_code', 'title', 'parent_code', 'required', 'proposed', 'source'], { ...R, perPage: 100, presort: 'volume_code ASC' }),
+  card('Позиция ведомости', 'object_volume', m.object_volumes, 42, ['object', 'stage', 'kind', 'volume_code', 'title', 'parent_code', 'required', 'proposed', 'source', 'evidence'], { volume_code: 'title' }))
+  add(listPage('Сооружения и участки', 'structures', 42.5, 'fas bridge', m.structures,
+    ['object', 'name', 'code', 'kind', 'location'], { ...R, perPage: 100, presort: 'name ASC' }))
   add(listPage('Нормативные документы', 'norm_docs', 43, 'fas book', m.norm_docs,
     ['code', 'title', 'valid_from', 'valid_to', 'replaced_by', 'work_tags'], { ...R, perPage: 100, presort: 'code ASC' }),
   card('Нормативный документ', 'norm_doc', m.norm_docs, 44, ['code', 'title', 'valid_from', 'valid_to', 'replaced_by', 'work_tags'], { code: 'title' }))
@@ -273,10 +287,12 @@ export function buildPages (m) {
   add(listPage('Демо-данные (объекты)', 'demo_objects', 61, 'fas flask', m.objects,
     ['name', 'code', 'address', 'status', 'data_kind'], { ...S, prefilter: "data_kind = 'demo'" }))
   add(listPage('Документы сравнений', 'cmp_documents', 62, 'fas file-pdf', m.cmp_documents,
-    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'change_no', 'pages', 'detected_by'], S),
+    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'section', 'structure', 'change_no', 'pages', 'detected_by'], S),
   card('Документ', 'cmp_document', m.cmp_documents, 63,
-    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'change_no', 'object_name', 'structure_object', 'subsection', 'part', 'book', 'pages', 'file_hash', 'released', 'detected_by'],
+    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'section', 'structure', 'change_no', 'object_name', 'structure_object', 'subsection', 'part', 'book', 'pages', 'file_hash', 'released', 'detected_by'],
     { file: 'title', side: 'badge' }))
+  add(listPage('Журнал загрузок документации', 'upload_log', 63.5, 'fas file-arrow-up', m.upload_log,
+    ['uploaded_at', 'object', 'uploaded_by', 'file_name', 'volume_code', 'kind', 'note', 'pages'], { ...S, hideAddButton: true, presort: 'uploaded_at DESC' }))
   add(listPage('Журнал выгрузок замечаний', 'expertise_imports', 64, 'fas clock-rotate-left', m.expertise_imports,
     ['object', 'imported_at', 'file', 'total', 'new_count', 'changed_count', 'status_changes', 'reopened', 'archived_count'], { ...S, hideAddButton: true }))
   add(listPage('Срезы реестра замечаний', 'expertise_snapshots', 64.5, 'fas chart-line', m.expertise_snapshots,

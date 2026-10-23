@@ -54,7 +54,7 @@ export const DXF_DEFAULT_STROKE = '#2a2a2a'
 export const DIFF_CONTEXT = 3
 
 export const KIND_LABEL = {
-  text: 'текст', table_row: 'таблица', param: 'ключевой параметр', drawing: 'чертёж', vor: 'ВОР / спецификация',
+  text: 'текст', table_row: 'таблица', table_cell: 'ячейка таблицы', param: 'ключевой параметр', drawing: 'чертёж', vor: 'ВОР / спецификация',
   not_released: 'не выпущено', scope_diff: 'вне объёма', format: 'оформление', cross_volume: 'между томами', element: 'марки элементов',
   change_reg: 'регистрация изменений',
 }

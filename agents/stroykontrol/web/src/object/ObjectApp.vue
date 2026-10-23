@@ -44,6 +44,8 @@ async function check () {
   }
 }
 
+const UNIT = { section: 'раздел', appendix: 'приложение', reference: 'ссылочный' }
+const UPLOAD = { new: 'новый том', edition: 'новая редакция', repeat: 'повтор файла', unparsed: 'шифр не прочитан' }
 const SOURCE_LABEL = { contents: 'из содержания', set: 'из первого комплекта', manual: 'вручную' }
 const proposals = computed(() => (state.data && state.data.proposals) || [])
 const pickedIDs = computed(() => proposals.value.filter(p => picked[p.id]).map(p => p.id))
@@ -203,6 +205,11 @@ const viewerURL = (id) => `?recordID=${encodeURIComponent(id)}&namespaceID=${enc
             </div>
             <div v-if="s.total" class="bar"><div :style="{ width: s.pct + '%', background: barColor(s) }"></div></div>
             <div class="ov-set-line"><b v-if="s.total">{{ s.present }} из {{ s.total }} ({{ s.pct }} %)</b> {{ s.note }}</div>
+            <div v-if="(s.units || []).length" class="ov-units">
+              <span v-for="u in s.units" :key="u.kind + u.code" class="tag" :class="u.present ? 'ok' : (u.required ? 'bad' : '')" :title="u.present ? 'есть: ' + (u.where || '') : (u.required ? 'обязательна, нет в комплекте' : 'нет в комплекте; не обязательна — не нарушение')">
+                {{ UNIT[u.kind] }} {{ u.code }}<template v-if="u.parent"> · {{ u.parent }}</template>
+              </span>
+            </div>
             <ul class="ov-docs">
               <li v-for="d in s.docs" :key="d.id">
                 <a v-if="recordURL('cmp_document', d.id)" :href="recordURL('cmp_document', d.id)" target="_top" title="Открыть документ">{{ docLabel(d) }}</a>
@@ -214,6 +221,37 @@ const viewerURL = (id) => `?recordID=${encodeURIComponent(id)}&namespaceID=${enc
           </div>
         </section>
       </div>
+
+      <h2>Документы по сооружениям и разделам</h2>
+      <div v-if="!(state.data.tree || []).length" class="empty">Файлов в комплектах пока нет.</div>
+      <div v-else class="ov-tree">
+        <details v-for="st in state.data.tree" :key="st.id || '-'" open class="ov-tree-st">
+          <summary><b>{{ st.name }}</b> <span class="muted">{{ st.sections.reduce((n, x) => n + x.volumes.length, 0) }} томов</span></summary>
+          <div v-for="sec in st.sections" :key="sec.name" class="ov-tree-sec">
+            <div class="ov-tree-sec-h">Раздел {{ sec.name }}</div>
+            <div v-for="v in sec.volumes" :key="v.code" class="ov-tree-vol">
+              <span class="code">{{ v.code }}</span> <span class="muted">{{ v.title }}</span>
+              <span v-for="e in v.editions" :key="e.docID" class="tag" :class="{ ok: e.latest }" :title="e.latest ? 'Последний комплект стадии' : 'Более ранний комплект'">
+                <a v-if="recordURL('cmp_document', e.docID)" :href="recordURL('cmp_document', e.docID)" target="_top">{{ e.set }}<template v-if="e.changeNo"> · изм. {{ e.changeNo }}</template></a>
+                <template v-else>{{ e.set }}<template v-if="e.changeNo"> · изм. {{ e.changeNo }}</template></template>
+              </span>
+            </div>
+          </div>
+        </details>
+        <div v-if="!(state.data.structures || []).length" class="muted">Сооружения объекта не заведены: добавьте их на вкладке «Сооружения» — документы привяжутся по наименованию или шифру при следующей проверке комплектности.</div>
+      </div>
+
+      <h2>Журнал загрузок <span class="muted">— последние {{ Math.min(10, (state.data.uploads || []).length) }}</span></h2>
+      <div v-if="!(state.data.uploads || []).length" class="empty">Записей нет: журнал ведётся с первой проверки комплектности после обновления.</div>
+      <table v-else class="ov-table">
+        <thead><tr><th>Когда</th><th>Кто</th><th>Файл</th><th>Шифр</th><th>Что это</th></tr></thead>
+        <tbody>
+          <tr v-for="(u, i) in state.data.uploads.slice(0, 10)" :key="i">
+            <td>{{ (u.at || '').replace('T', ' ').slice(0, 16) }}</td><td>{{ u.by || '—' }}</td><td>{{ u.file }}</td><td>{{ u.codes }}</td>
+            <td><span class="tag" :class="{ warn: u.kind === 'repeat' || u.kind === 'unparsed' }">{{ UPLOAD[u.kind] || u.kind }}</span> <span class="muted">{{ u.note }}</span></td>
+          </tr>
+        </tbody>
+      </table>
 
       <h2>Тома по стадиям</h2>
       <div v-if="!state.data.matrix.length" class="empty">Пока нет ни ведомости томов, ни прочитанных файлов.</div>
@@ -265,6 +303,13 @@ const viewerURL = (id) => `?recordID=${encodeURIComponent(id)}&namespaceID=${enc
 .bar { height: 7px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; margin: 4px 0; }
 .bar > div { height: 100%; }
 .ov-set-line { font-size: 12px; }
+.ov-units { display: flex; gap: 4px; flex-wrap: wrap; margin: 3px 0; }
+.ov-tree { display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.ov-tree-st { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+.ov-tree-sec { margin: 4px 0 4px 12px; }
+.ov-tree-sec-h { font-weight: 600; margin: 4px 0 2px; }
+.ov-tree-vol { margin-left: 12px; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+.ov-tree-vol .code { font-family: var(--mono, monospace); }
 .ov-matrix-wrap { max-height: 60vh; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
 .matrix tr.unexpected td { background: color-mix(in srgb, var(--warn) 8%, transparent); }
 .cell { padding: 1px 8px; border-radius: 4px; font-size: 11.5px; }

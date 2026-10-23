@@ -2,7 +2,9 @@ package cmp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -44,6 +46,15 @@ type SetDoc struct {
 	Title  string   `json:"title"`
 	Pages  int      `json:"pages"`
 	Parsed bool     `json:"parsed"`
+	// the section (from the code or by hand), the structure (structures record) and the edition
+	Section   string `json:"section,omitempty"`
+	Structure string `json:"structure,omitempty"`
+	ChangeNo  string `json:"changeNo,omitempty"`
+	// the appendices of the file and its references to other volumes of the project (ТЗ 3.2.4, 3.2.8)
+	Headings []DocHeading `json:"-"`
+	Refs     []VolRefAt   `json:"refs,omitempty"`
+	// the volumes the file's contents table («Состав проекта») names, with their titles (ТЗ 3.2.5)
+	Contents []ContentsEntry `json:"-"`
 }
 
 // SetInfo is a set with its completeness.
@@ -65,9 +76,13 @@ type SetInfo struct {
 	Duplicates []string `json:"duplicates"`
 	// Renamed: volumes the set has under the right шифр but with a title that shares no words with the
 	// title of the statement of volumes (ТЗ 3.2.5)
-	Renamed  []string `json:"renamed"`
-	Unparsed int      `json:"unparsed"`
-	Note     string   `json:"note"`
+	Renamed []string `json:"renamed"`
+	// sections, appendices and referenced documents of the statement (ТЗ 3.2.1, 3.2.8) and the volumes the
+	// documents refer to that the object does not have (ТЗ 3.2.4: for information)
+	Units       []UnitState `json:"units"`
+	RefsMissing []string    `json:"refsMissing"`
+	Unparsed    int         `json:"unparsed"`
+	Note        string      `json:"note"`
 }
 
 // Label is "ПД v2" / "РД v1".
@@ -142,6 +157,10 @@ type ObjectDocs struct {
 	Matrix     []MatrixRow `json:"matrix"`
 	Pairs      []SetPair   `json:"pairs"`
 	Proposals  []VolumeRow `json:"proposals"` // the statement the agent suggests, to accept or reject
+	// the structures of the object, the documents grouped by them (ТЗ 3.1.2, 3.1.7) and the upload journal (ТЗ 3.1.4)
+	Structures []Structure     `json:"structures"`
+	Tree       []TreeStructure `json:"tree"`
+	Uploads    []Upload        `json:"uploads"`
 	Expected   struct {
 		Ref    int `json:"ref"`
 		Target int `json:"target"`
@@ -151,6 +170,7 @@ type ObjectDocs struct {
 type expectedVolume struct {
 	code, title, stage string // stage: ref | target | "" (both)
 	required           bool
+	kind, parent       string // UnitVolume…; parent: the volume an appendix belongs to
 }
 
 func volumesMatch(a, b string) bool { return sameVolume(a, b) || sameVolume(b, a) }
@@ -163,6 +183,12 @@ func setDocOf(rec idcheck.Record) SetDoc {
 		}
 	}
 	d.Pages, _ = strconv.Atoi(rec.Get("pages"))
+	d.Section, d.Structure = rec.Get("section"), rec.Get("structure")
+	d.Headings, d.Refs = ParseHeadings(rec.Get("headings_json")), parseVolRefs(rec.Get("volume_refs_json"))
+	d.Contents = parseContentsJSON(rec.Get("contents_json"))
+	if ch := rec.Get("change_no"); ch != "0" {
+		d.ChangeNo = ch
+	}
 	d.Parsed = len(d.Codes) > 0 || d.Pages > 0
 	return d
 }
@@ -183,7 +209,7 @@ func LoadObjectDocs(b Backend, ns, objectID string) (*ObjectDocs, error) {
 	if err != nil {
 		return nil, err
 	}
-	var expected []expectedVolume
+	var expected, units []expectedVolume
 	for _, v := range vols {
 		if p := v.Get("proposed"); p != "" && p != "0" {
 			out.Proposals = append(out.Proposals, VolumeRow{ID: v.ID, Stage: v.Get("stage"), Code: v.Get("volume_code"), Title: v.Get("title"), Source: v.Get("source"), Evidence: v.Get("evidence")})
@@ -194,14 +220,26 @@ func LoadObjectDocs(b Backend, ns, objectID string) (*ObjectDocs, error) {
 			if st != SideRef && st != SideTarget {
 				st = ""
 			}
-			expected = append(expected, expectedVolume{code: c, title: v.Get("title"), stage: st, required: v.Get("required") != "0"})
+			e := expectedVolume{code: c, title: v.Get("title"), stage: st, required: v.Get("required") != "0", kind: firstNonEmpty(v.Get("kind"), UnitVolume), parent: v.Get("parent_code")}
+			if e.kind != UnitVolume {
+				units = append(units, e)
+				continue
+			}
+			expected = append(expected, e)
 		}
 	}
 	sort.SliceStable(expected, func(i, j int) bool { return expected[i].code < expected[j].code })
+	unitOrder := map[string]int{UnitSection: 0, UnitAppendix: 1, UnitReference: 2}
+	sort.SliceStable(units, func(i, j int) bool {
+		if units[i].kind != units[j].kind {
+			return unitOrder[units[i].kind] < unitOrder[units[j].kind]
+		}
+		return units[i].code < units[j].code
+	})
 
 	for _, s := range sets {
 		si := SetInfo{ID: s.ID, Stage: s.Get("stage"), Version: s.Get("version"), Status: s.Get("status"), IssuedAt: s.Get("issued_at"), Comment: s.Get("comment"),
-			Docs: []SetDoc{}, Missing: []string{}, Extra: []string{}, Duplicates: []string{}, Renamed: []string{}}
+			Docs: []SetDoc{}, Missing: []string{}, Extra: []string{}, Duplicates: []string{}, Renamed: []string{}, Units: []UnitState{}, RefsMissing: []string{}}
 		if si.Stage != SideRef {
 			si.Stage = SideTarget
 		}
@@ -263,7 +301,13 @@ func LoadObjectDocs(b Backend, ns, objectID string) (*ObjectDocs, error) {
 		}
 	}
 	for i := range out.Sets {
-		completeness(&out.Sets[i], expected)
+		completeness(&out.Sets[i], expected, units)
+	}
+	for i := range out.Sets {
+		if r := missingRefs(&out.Sets[i], out.Sets); len(r) > 0 {
+			out.Sets[i].RefsMissing = r
+			out.Sets[i].Note = setNote(&out.Sets[i])
+		}
 	}
 	out.Matrix = buildMatrix(out.Sets, expected)
 
@@ -321,6 +365,18 @@ func LoadObjectDocs(b Backend, ns, objectID string) (*ObjectDocs, error) {
 		out.Pairs = append(out.Pairs, p)
 	}
 	sort.SliceStable(out.Pairs, func(i, j int) bool { return out.Pairs[i].ID < out.Pairs[j].ID })
+	out.Structures = structuresOf(b, ns, objectID)
+	out.Tree = BuildTree(out.Sets, out.Structures)
+	out.Uploads = Uploads(b, ns, objectID)
+	if out.Structures == nil {
+		out.Structures = []Structure{}
+	}
+	if out.Tree == nil {
+		out.Tree = []TreeStructure{}
+	}
+	if out.Uploads == nil {
+		out.Uploads = []Upload{}
+	}
 	return out, nil
 }
 
@@ -349,7 +405,7 @@ func latestOf(sets []SetInfo, stage string) *SetInfo {
 }
 
 // completeness fills the counters of a set against the statement of volumes of its stage.
-func completeness(s *SetInfo, expected []expectedVolume) {
+func completeness(s *SetInfo, expected, units []expectedVolume) {
 	var codes []string
 	seen := map[string]string{} // normalized code → first file
 	for _, d := range s.Docs {
@@ -398,6 +454,10 @@ func completeness(s *SetInfo, expected []expectedVolume) {
 				s.Extra = append(s.Extra, c)
 			}
 		}
+	}
+	checkUnits(s, units)
+	s.Renamed = append(s.Renamed, namesInSet(s)...)
+	if s.Total > 0 {
 		s.Pct = s.Present * 100 / s.Total
 	}
 	s.Note = setNote(s)
@@ -453,7 +513,7 @@ func setNote(s *SetInfo) string {
 		}
 		parts = append(parts, fmt.Sprintf("ведомость состава не задана; в комплекте файлов: %d, томов: %d", len(s.Docs), vols))
 	} else {
-		parts = append(parts, fmt.Sprintf("%d из %d томов", s.Present, s.Total))
+		parts = append(parts, fmt.Sprintf("%d из %d %s", s.Present, s.Total, map[bool]string{true: "позиций ведомости", false: "томов"}[hasRequiredUnits(s)]))
 		if len(s.Missing) > 0 {
 			parts = append(parts, "нет: "+strings.Join(s.Missing, ", "))
 		}
@@ -465,10 +525,13 @@ func setNote(s *SetInfo) string {
 		parts = append(parts, "дубли: "+strings.Join(s.Duplicates, ", "))
 	}
 	if len(s.Renamed) > 0 {
-		parts = append(parts, "наименование не совпадает с ведомостью — "+strings.Join(s.Renamed, "; "))
+		parts = append(parts, "наименования не согласованы — "+strings.Join(s.Renamed, "; "))
 	}
 	if s.Unparsed > 0 {
 		parts = append(parts, fmt.Sprintf("не прочитано файлов: %d", s.Unparsed))
+	}
+	if len(s.RefsMissing) > 0 {
+		parts = append(parts, "к сведению — ссылки на тома, которых нет у объекта: "+strings.Join(s.RefsMissing, "; "))
 	}
 	return strings.Join(parts, "; ")
 }
@@ -635,13 +698,40 @@ func (r *Runner) readSetDocs(ctx context.Context, ns, objectID string) error {
 	if err != nil {
 		return err
 	}
+	structs := structuresOf(b, ns, objectID)
+	bySet := map[string][]idcheck.Record{}
+	var all []idcheck.Record // every document of the object: a new file is compared with them for the journal
 	for _, s := range sets {
 		docs, err := b.Search(ns, ModDocuments, fmt.Sprintf("set = '%s'", s.ID))
 		if err != nil {
 			return err
 		}
-		for _, d := range docs {
-			if d.Get("file") == "" || d.Get("volume_code") != "" || d.Get("pages") != "" {
+		bySet[s.ID] = docs
+		all = append(all, docs...)
+	}
+	for _, s := range sets {
+		for _, d := range bySet[s.ID] {
+			if d.Get("file") == "" {
+				continue
+			}
+			if d.Get("volume_code") != "" || d.Get("pages") != "" {
+				// read earlier: only what the registry adds later (a structure added to the object) and the
+				// references to other volumes of a file read before they were looked for
+				v := docRegistryValues(d, d.Get("volume_code"), d.Get("volume_title"), structs)
+				if (d.Get("volume_refs_json") == "" || d.Get("contents_json") == "") && d.Get("volume_code") != "" {
+					if data, _, err := b.Download(ns, d.Get("file")); err == nil && IsPDF(data) {
+						if pages, _, _, err := ExtractPagesOCR(ctx, d.ID, data, r.CacheDir, r.OCR); err == nil {
+							codes := splitCodes(d.Get("volume_code"))
+							v["volume_refs_json"] = []string{VolRefsJSON(ExtractVolumeRefs(pages, codes))}
+							v["contents_json"] = []string{contentsJSON(ParseContents(pages, firstOf(codes)))}
+						}
+					}
+				}
+				if len(v) > 0 {
+					if err := b.Update(ns, ModDocuments, d.ID, v); err != nil {
+						return err
+					}
+				}
 				continue
 			}
 			data, name, err := b.Download(ns, d.Get("file"))
@@ -683,10 +773,120 @@ func (r *Runner) readSetDocs(ctx context.Context, ns, objectID string) error {
 				v["volume_code"] = []string{strings.Join(codes, ", ")}
 				v["volume_title"] = []string{fmt.Sprintf("%d томов: %s", len(vs), strings.Join(titles, "; "))}
 			}
+			v["volume_refs_json"] = []string{VolRefsJSON(ExtractVolumeRefs(pages, splitCodes(firstVal(v, "volume_code"))))}
+			v["contents_json"] = []string{contentsJSON(ParseContents(pages, firstOf(splitCodes(firstVal(v, "volume_code")))))}
+			for k, x := range docRegistryValues(d, firstVal(v, "volume_code"), firstVal(v, "volume_title"), structs) {
+				v[k] = x
+			}
 			if err := b.Update(ns, ModDocuments, d.ID, v); err != nil {
 				return err
+			}
+			kind, note := uploadKind(hashKey(data), firstVal(v, "volume_code"), d.ID, all)
+			if err := journalUpload(b, ns, objectID, s.ID, d, name, hashKey(data), len(pages), firstVal(v, "volume_code"), kind, note); err != nil {
+				log.Printf("cmp: upload journal %s: %v", d.ID, err) // an older space has no journal: the reading must not fail
+			}
+			for i := range all { // the next files of this pass see this one as read
+				if all[i].ID == d.ID {
+					for k, x := range v {
+						all[i].Values[k] = x
+					}
+				}
 			}
 		}
 	}
 	return nil
+}
+
+func firstVal(v idcheck.Values, k string) string {
+	if x := v[k]; len(x) > 0 {
+		return x[0]
+	}
+	return ""
+}
+
+func hasRequiredUnits(s *SetInfo) bool {
+	for _, u := range s.Units {
+		if u.Required {
+			return true
+		}
+	}
+	return false
+}
+
+func splitCodes(s string) []string {
+	var out []string
+	for _, c := range strings.Split(s, ",") {
+		if c = strings.TrimSpace(c); c != "" {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+func firstOf(s []string) string {
+	if len(s) > 0 {
+		return s[0]
+	}
+	return ""
+}
+
+func contentsJSON(c []ContentsEntry) string {
+	if len(c) == 0 {
+		return "[]"
+	}
+	b, _ := json.Marshal(c)
+	return string(b)
+}
+
+func parseContentsJSON(s string) []ContentsEntry {
+	var c []ContentsEntry
+	_ = json.Unmarshal([]byte(s), &c)
+	return c
+}
+
+// namesInSet checks the names of the volumes inside a set (ТЗ 3.2.5): the title a contents table of the
+// set gives a volume against the title of the volume's own file, and two files of one volume with
+// different titles. As with the statement, only titles without one shared word are a mismatch.
+func namesInSet(s *SetInfo) []string {
+	var out []string
+	differ := func(a, b string) bool {
+		x, y := stems(a), stems(b)
+		if len(x) == 0 || len(y) == 0 {
+			return false
+		}
+		for w := range x {
+			if y[w] {
+				return false
+			}
+		}
+		return true
+	}
+	seen := map[string]bool{}
+	for _, src := range s.Docs {
+		for _, e := range src.Contents {
+			for _, d := range s.Docs {
+				if d.ID == src.ID || len(d.Codes) != 1 || d.Title == "" || !volumesMatch(d.Codes[0], e.Code) || !differ(e.Title, d.Title) {
+					continue
+				}
+				k := "c|" + NormCode(e.Code)
+				if !seen[k] {
+					seen[k] = true
+					out = append(out, fmt.Sprintf("%s: в составе проекта (%s, стр. %d) «%s», в документе «%s»", e.Code, firstNonEmpty(strings.Join(src.Codes, ", "), src.ID), e.Page, trunc(e.Title, 60), trunc(d.Title, 60)))
+				}
+			}
+		}
+	}
+	for i, a := range s.Docs {
+		for _, b := range s.Docs[i+1:] {
+			if len(a.Codes) != 1 || len(b.Codes) != 1 || !volumesMatch(a.Codes[0], b.Codes[0]) || !differ(a.Title, b.Title) {
+				continue
+			}
+			k := "d|" + NormCode(a.Codes[0])
+			if !seen[k] {
+				seen[k] = true
+				out = append(out, fmt.Sprintf("%s: два файла тома с разными наименованиями — «%s» и «%s»", a.Codes[0], trunc(a.Title, 60), trunc(b.Title, 60)))
+			}
+		}
+	}
+	return out
 }

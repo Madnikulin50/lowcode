@@ -12,6 +12,21 @@ const namespaceID = params.get('namespaceID') || ''
 const recordID = params.get('recordID') || '' // set when the file is opened from a comparison
 const state = reactive({ loading: true, error: '', info: null, page: Math.max(1, Number(params.get('page')) || 1), zoom: 100 })
 const imgFailed = ref(false)
+// a region to show on the opened page (?box=x0,y0,x1,y1 in page fractions): the fragment a remark names or an AI quotation
+const boxPage = state.page
+const hlBox = (() => {
+  const a = (params.get('box') || '').replace(/[[\]]/g, '').split(',').map(Number)
+  return a.length === 4 && a.every(n => Number.isFinite(n)) ? a : null
+})()
+const boxStyle = computed(() => {
+  if (!hlBox || state.page !== boxPage) return null
+  const [x0, y0, x1, y1] = hlBox
+  const pad = 0.006
+  return {
+    left: Math.max(0, x0 - pad) * 100 + '%', top: Math.max(0, y0 - pad) * 100 + '%',
+    width: (Math.min(1, x1 + pad) - Math.max(0, x0 - pad)) * 100 + '%', height: (Math.min(1, y1 + pad) - Math.max(0, y0 - pad)) * 100 + '%',
+  }
+})
 
 const qs = () => `source=${encodeURIComponent(source)}&id=${encodeURIComponent(id)}&namespaceID=${encodeURIComponent(namespaceID)}` + (recordID ? `&recordID=${encodeURIComponent(recordID)}` : '')
 const backHref = recordID ? `?recordID=${encodeURIComponent(recordID)}&namespaceID=${encodeURIComponent(namespaceID)}` : ''
@@ -59,7 +74,10 @@ function gotoSheet (j) { if (j.page) go(j.page); nextTick(() => document.querySe
       </div>
       <div class="doc-layout">
         <div class="doc-stage">
-          <img v-if="!imgFailed" :src="pageSrc" :style="{ width: state.zoom + '%' }" alt="страница" @error="imgFailed = true">
+          <div v-if="!imgFailed" class="doc-page" :style="{ width: state.zoom + '%' }">
+            <img :src="pageSrc" alt="страница" @error="imgFailed = true">
+            <div v-if="boxStyle" class="doc-hl" :style="boxStyle" title="Место из замечания"></div>
+          </div>
           <div v-else class="empty">Для этого типа файла нет изображения страницы. Ассистент всё равно может отвечать по тексту, если он есть.</div>
         </div>
         <AssistantPanel
@@ -77,7 +95,9 @@ function gotoSheet (j) { if (j.page) go(j.page); nextTick(() => document.querySe
 .doc-bar input.pg { width: 56px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 1px 4px; }
 .doc-layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr); gap: 12px; align-items: start; }
 .doc-stage { overflow: auto; max-height: 85vh; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); text-align: center; }
-.doc-stage img { max-width: none; display: block; margin: 0 auto; }
+.doc-page { position: relative; margin: 0 auto; }
+.doc-stage img { max-width: none; width: 100%; display: block; }
+.doc-hl { position: absolute; border: 2px solid #e8590c; background: rgba(232, 89, 12, .12); border-radius: 3px; pointer-events: none; }
 .doc-assistant { margin-top: 0; }
 button.small { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 2px 10px; font-size: 12px; cursor: pointer; }
 button.small:disabled { opacity: .5; cursor: default; }

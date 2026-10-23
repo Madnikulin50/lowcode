@@ -95,6 +95,7 @@ const DETECTED_BY = [
 const DISCREPANCY_KIND = [
   ['text', 'Текст'],
   ['table_row', 'Строка таблицы'],
+  ['table_cell', 'Ячейка таблицы'],
   ['param', 'Ключевой параметр'],
   ['drawing', 'Чертёж'],
   ['vor', 'ВОР / спецификация'],
@@ -127,6 +128,23 @@ const NOTIFY_EVENT = [
   ['overdue', 'Срок нарушен'],
 ]
 
+const VOLUME_UNIT_KIND = [
+  ['volume', 'Том'],
+  ['section', 'Раздел'],
+  ['appendix', 'Приложение'],
+  ['reference', 'Ссылочный документ'],
+]
+const STRUCTURE_KIND = [
+  ['structure', 'Сооружение'],
+  ['section', 'Участок'],
+  ['network', 'Инженерная сеть / переустройство'],
+]
+const UPLOAD_KIND = [
+  ['new', 'Новый том'],
+  ['edition', 'Новая редакция тома'],
+  ['repeat', 'Повтор уже загруженного файла'],
+  ['unparsed', 'Шифр тома не прочитан'],
+]
 const NOTIFY_ROLE = [
   ['assignee', 'Исполнитель'],
   ['manager', 'Руководитель проекта'],
@@ -258,8 +276,22 @@ async function main () {
       field('status', 'Статус', 'Select', { options: selectOptions(OBJECT_STATUS) }),
       textArea('notes', 'Примечания'),
       // выгрузки замечаний экспертизы (Excel): агент читает их и ведёт реестр замечаний объекта
-      fileField('remarks_file', 'Выгрузки замечаний экспертизы (Excel)', { multi: true, images: false }),
+      fileField('remarks_file', 'Выгрузки замечаний экспертизы (Excel или PDF)', { multi: true, images: false }),
       dataKind(),
+    ],
+  })
+
+  // ---- Сооружения и участки объекта (ТЗ 3.1.7): справочник, к которому привязываются документы ----
+  m.structures = await ensureModule(api, nsID, {
+    name: 'Сооружения и участки',
+    handle: 'structures',
+    fields: [
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      field('name', 'Наименование', 'String', { required: true }),
+      field('code', 'Шифр / обозначение', 'String'),
+      field('kind', 'Вид', 'Select', { options: selectOptions(STRUCTURE_KIND) }),
+      field('location', 'Привязка (ПК, км)', 'String'),
+      textArea('note', 'Примечание'),
     ],
   })
 
@@ -294,6 +326,10 @@ async function main () {
       field('volume_code', 'Шифр тома', 'String', { required: true }),
       field('title', 'Наименование', 'String'),
       boolSwitch('required', 'Обязателен'),
+      // кроме томов: обязательный раздел (марка «КЖ»), приложение («Приложение Б», в каком томе — parent_code)
+      // и ссылочный документ; без вида строка — том (ТЗ 3.2.1, 3.2.8)
+      field('kind', 'Вид позиции', 'Select', { options: selectOptions(VOLUME_UNIT_KIND) }),
+      field('parent_code', 'В томе (для приложения)', 'String'),
       // автоматическая ведомость: агент предлагает строки (proposed), человек принимает или отклоняет;
       // на комплектность влияют только принятые
       field('source', 'Источник', 'Select', { options: selectOptions(VOLUME_SOURCE) }),
@@ -370,10 +406,17 @@ async function main () {
       field('sheet_map', 'Листы по основной надписи', 'String'),
       // приложения и документы (расчёты, записки, письма…) с их страницами: здесь ищутся материалы, заявленные в ответах (JSON, считает агент)
       textArea('headings_json', 'Приложения и документы в файле (JSON)'),
+      // ссылки на другие тома проекта из текста (ТЗ 3.2.4) и тома, перечисленные в содержании файла (ТЗ 3.2.5): считает агент
+      textArea('volume_refs_json', 'Ссылки на другие тома (JSON)'),
+      textArea('contents_json', 'Состав по содержанию файла (JSON)'),
       // редакция и классификация: агент читает номер изменения («Изм. 2») с титульного листа или из имени файла,
       // часть/книгу/подраздел — с титульных листов; значения, введённые вручную, не перезаписываются, пока файл тот же
       numberField('change_no', 'Номер изменения (редакция)', { precision: 0 }),
       field('structure_object', 'Сооружение / участок', 'String'),
+      // раздел — марка из шифра тома (пишет агент, ручное значение не перезаписывает); сооружение — запись справочника
+      // (агент связывает по наименованию или шифру сооружения в поле выше и в наименовании тома)
+      field('section', 'Раздел', 'String'),
+      recordRel('structure', 'Сооружение (справочник)', m.structures, 'name', ['name', 'code']),
       field('subsection', 'Подраздел', 'String'),
       field('part', 'Часть', 'String'),
       field('book', 'Книга', 'String'),
@@ -476,6 +519,7 @@ async function main () {
       // разбор ИИ по фрагментам связанных томов: подсказка, рабочий статус не меняет
       field('ai_verdict', 'Разбор ИИ', 'Select', { options: selectOptions(AI_VERDICT) }),
       textArea('ai_note', 'Пояснение ИИ (с цитатами)'),
+      textArea('ai_cites_json', 'Цитаты ИИ: места в томах (JSON)'),
       dateField('ai_at', 'Разбор ИИ: когда', { onlyDate: false }),
       // решение специалиста по результату проверки (вывод системы — ИИ и проверка по документам — рабочий статус не меняет)
       field('outcome_final', 'Результат проверки (решение специалиста)', 'Select', { options: selectOptions(OUTCOME) }),
@@ -562,6 +606,26 @@ async function main () {
       dateField('delivered_at', 'Отправлено', { onlyDate: false }),
       numberField('tries', 'Попыток', { precision: 0 }),
       field('error', 'Ошибка доставки', 'String'),
+    ],
+  })
+
+  // журнал загрузок документации (ТЗ 3.1.4): запись на каждый файл, когда агент впервые его читает
+  m.upload_log = await ensureModule(api, nsID, {
+    name: 'Журнал загрузок документации',
+    handle: 'upload_log',
+    fields: [
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      recordRel('set', 'Комплект', m.document_sets, 'version', ['version', 'stage']),
+      recordRel('document', 'Документ', m.cmp_documents, 'volume_code', ['volume_code', 'volume_title']),
+      field('file_name', 'Файл', 'String'),
+      field('volume_code', 'Шифр тома', 'String'),
+      numberField('pages', 'Страниц', { precision: 0 }),
+      field('file_hash', 'Хэш файла', 'String'),
+      field('kind', 'Что загружено', 'Select', { options: selectOptions(UPLOAD_KIND) }),
+      field('note', 'Пояснение', 'String'),
+      dateField('uploaded_at', 'Загружено', { onlyDate: false }),
+      field('uploaded_by', 'Кто загрузил', 'String'),
+      dateField('read_at', 'Прочитано агентом', { onlyDate: false }),
     ],
   })
 

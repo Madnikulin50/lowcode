@@ -28,14 +28,17 @@ const (
 
 // Passage is a fragment of a volume offered to the model.
 type Passage struct {
-	Ref  string `json:"ref"` // Ф1, Ф2…
-	Doc  string `json:"doc"`
-	Page int    `json:"page"`
-	Text string `json:"text"`
+	Ref   string `json:"ref"` // Ф1, Ф2…
+	DocID string `json:"docID,omitempty"`
+	Doc   string `json:"doc"`
+	Page  int    `json:"page"`
+	Text  string `json:"text"`
+	boxes []Box  // the boxes of the lines of Text, in order (where a quotation is on the page)
 }
 
 // PassageDoc is a document whose pages are searched.
 type PassageDoc struct {
+	ID    string
 	Name  string
 	Pages []Page
 }
@@ -59,9 +62,11 @@ func RetrievePassages(query string, docs []PassageDoc, limit int) []Passage {
 				continue
 			}
 			var lines []string
+			var boxes []Box
 			for _, l := range pg.Lines {
 				if !l.Stamp && !skipLine(l.Key) {
 					lines = append(lines, l.Text)
+					boxes = append(boxes, l.Box)
 				}
 			}
 			best, bi, bj := 0.0, -1, 0
@@ -84,7 +89,7 @@ func RetrievePassages(query string, docs []PassageDoc, limit int) []Passage {
 				continue
 			}
 			text := strings.Join(lines[bi:bj], "\n")
-			all = append(all, cand{Passage{Doc: d.Name, Page: pg.Number, Text: truncate(text, 600)}, best})
+			all = append(all, cand{Passage{DocID: d.ID, Doc: d.Name, Page: pg.Number, Text: truncate(text, 600), boxes: boxes[bi:bj]}, best})
 		}
 	}
 	if len(all) == 0 {
@@ -118,8 +123,10 @@ type RemarkAIInput struct {
 // AICite is a quotation the verdict rests on.
 type AICite struct {
 	Ref   string `json:"ref"`
+	DocID string `json:"docID,omitempty"`
 	Doc   string `json:"doc"`
 	Page  int    `json:"page"`
+	Box   string `json:"box,omitempty"` // the lines of the quotation on the page (ТЗ 3.4.7)
 	Quote string `json:"quote"`
 }
 
@@ -192,7 +199,7 @@ func parseAIVerdict(raw string, passages []Passage) (*AIVerdict, error) {
 			v.Dropped++ // a quotation that is not in the fragment is not evidence
 			continue
 		}
-		kept = append(kept, AICite{Ref: p.Ref, Doc: p.Doc, Page: p.Page, Quote: strings.TrimSpace(c.Quote)})
+		kept = append(kept, AICite{Ref: p.Ref, DocID: p.DocID, Doc: p.Doc, Page: p.Page, Box: p.quoteBox(q), Quote: strings.TrimSpace(c.Quote)})
 	}
 	v.Cited = kept
 	v.Explanation = strings.TrimSpace(v.Explanation)
@@ -201,6 +208,58 @@ func parseAIVerdict(raw string, passages []Passage) (*AIVerdict, error) {
 		v.Verdict = AIUnclear
 	}
 	return &v, nil
+}
+
+// quoteBox is the region of the lines a (normalized) quotation takes: the lines whose text is inside
+// it or holds it; the whole fragment when none is found.
+func (p Passage) quoteBox(q string) string {
+	lines := strings.Split(p.Text, "\n")
+	var box *Box
+	for i, l := range lines {
+		if i >= len(p.boxes) {
+			break
+		}
+		k := NormKey(l)
+		if k == "" || !(strings.Contains(q, k) || strings.Contains(k, q) || overlapEnds(k, q)) {
+			continue
+		}
+		if box == nil {
+			b := p.boxes[i]
+			box = &b
+		} else {
+			u := box.union(p.boxes[i])
+			box = &u
+		}
+	}
+	if box == nil && len(p.boxes) > 0 {
+		b := p.boxes[0]
+		for _, x := range p.boxes[1:] {
+			b = b.union(x)
+		}
+		box = &b
+	}
+	return box.String()
+}
+
+// overlapEnds: a quotation that runs over a line break starts at the end of one line and ends at
+// the start of the next.
+func overlapEnds(line, q string) bool {
+	const n = 12
+	lr, qr := []rune(line), []rune(q)
+	if len(lr) < n || len(qr) < n {
+		return false
+	}
+	return strings.HasPrefix(q, string(lr[len(lr)-n:])) || strings.HasSuffix(q, string(lr[:n])) ||
+		strings.Contains(line, string(qr[:n])) || strings.Contains(line, string(qr[len(qr)-n:]))
+}
+
+// CitesJSON is the value of the field ai_cites_json.
+func CitesJSON(c []AICite) string {
+	if len(c) == 0 {
+		return ""
+	}
+	b, _ := json.Marshal(c)
+	return string(b)
 }
 
 // Interpret asks the model whether the fragments show the remark fixed.
@@ -263,7 +322,7 @@ func (r *Runner) AnalyzeRemarkAI(ctx context.Context, ns, remarkID string) (*AIV
 		if c := d.Get("volume_code"); c != "" {
 			label += " [" + c + "]"
 		}
-		docs = append(docs, PassageDoc{Name: label, Pages: pages})
+		docs = append(docs, PassageDoc{ID: id, Name: label, Pages: pages})
 	}
 	if len(docs) == 0 {
 		return nil, fmt.Errorf("к замечанию не привязано ни одного загруженного тома — сначала «Проверить по документам»")
@@ -285,7 +344,7 @@ func (r *Runner) AnalyzeRemarkAI(ctx context.Context, ns, remarkID string) (*AIV
 	if err != nil {
 		return nil, err
 	}
-	upd := idcheck.V("ai_verdict", v.Verdict, "ai_note", v.NoteText(), "ai_at", time.Now().UTC().Format("2006-01-02T15:04:05Z"))
+	upd := idcheck.V("ai_verdict", v.Verdict, "ai_note", v.NoteText(), "ai_at", time.Now().UTC().Format("2006-01-02T15:04:05Z"), "ai_cites_json", CitesJSON(v.Cited))
 	if err := b.Update(ns, ModExpertise, remarkID, upd); err != nil {
 		return nil, err
 	}

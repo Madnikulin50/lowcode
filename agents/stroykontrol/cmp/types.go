@@ -60,6 +60,7 @@ func Relabel(s, mode string) string {
 const (
 	KindText        = "text"
 	KindTableRow    = "table_row"
+	KindTableCell   = "table_cell" // a cell of a table read by columns (tables.go)
 	KindParam       = "param"
 	KindDrawing     = "drawing"
 	KindElement     = "element" // марки проектных элементов: пропали, появились
@@ -177,9 +178,10 @@ type Volume struct {
 	Title     string
 	FirstPage int
 	LastPage  int
-	Lines     []Line // compared lines (title block, cover and drawing sheets excluded)
-	Drawings  []int  // page numbers of drawing sheets (compared as images)
-	Items     []Item // positions of the ВОР and specification tables (compared as tables)
+	Lines     []Line  // compared lines (title block, cover and drawing sheets excluded)
+	Drawings  []int   // page numbers of drawing sheets (compared as images)
+	Items     []Item  // positions of the ВОР and specification tables (compared as tables)
+	Tables    []Table // other tables of the text pages (compared cell by cell, tables.go)
 	// Edition: the change number of the volume (0 — the original edition) and where it was read from;
 	// the part, book and subsection the title pages name
 	Change       int

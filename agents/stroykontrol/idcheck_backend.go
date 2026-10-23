@@ -7,7 +7,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
+	"sync"
 
+	"github.com/madnikulin50/lowcode/agents/stroykontrol/cmp"
 	"github.com/madnikulin50/lowcode/agents/stroykontrol/idcheck"
 )
 
@@ -23,7 +26,31 @@ func toIDRecord(r record) idcheck.Record {
 		}
 		out.Values[v.Name] = append(out.Values[v.Name], fmt.Sprintf("%v", v.Value))
 	}
+	// who and when created the record (the author and the date of an upload, ТЗ 3.1.4)
+	if r.CreatedAt != "" {
+		out.Values[cmp.SysCreatedAt] = []string{r.CreatedAt}
+	}
+	if r.CreatedBy != "" && r.CreatedBy != "0" {
+		out.Values[cmp.SysCreatedBy] = []string{r.CreatedBy}
+	}
 	return out
+}
+
+var userNames sync.Map // userID → name
+
+// UserName names a user of the platform (cmp.UserNamer), read with the agent's token from the system API.
+func (b composeBackend) UserName(id string) string {
+	if v, ok := userNames.Load(id); ok {
+		return v.(string)
+	}
+	var u platformUser
+	sys := strings.TrimSuffix(b.c.base, "/compose") + "/system"
+	if err := (&identity{systemBase: sys, cc: b.c, http: b.c.http}).systemGet("/users/"+id, &u); err != nil {
+		return ""
+	}
+	name := firstNonEmpty(u.Name, u.Handle, u.Email)
+	userNames.Store(id, name)
+	return name
 }
 
 func (b composeBackend) GetRecord(ns, module, id string) (*idcheck.Record, error) {
@@ -73,6 +100,9 @@ func (b composeBackend) Search(ns, module, filter string) ([]idcheck.Record, err
 func valuesPayload(v map[string][]string) []recordValue {
 	var out []recordValue
 	for name, vals := range v {
+		if name == cmp.SysCreatedAt || name == cmp.SysCreatedBy {
+			continue // the record's metadata, not a field
+		}
 		for _, x := range vals {
 			if x != "" {
 				out = append(out, recordValue{Name: name, Value: x})

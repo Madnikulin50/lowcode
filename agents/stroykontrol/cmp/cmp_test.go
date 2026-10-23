@@ -67,8 +67,8 @@ func TestPack1_PDPackageAgainstTwoRD(t *testing.T) {
 	if d[0].RefDoc != "pd" || d[0].TargetDoc != "rdk" {
 		t.Errorf("docs: %s %s", d[0].RefDoc, d[0].TargetDoc)
 	}
-	// table cell 48 → 52 is a table_row on page 2
-	if r := find(res, func(f Finding) bool { return f.Kind == KindTableRow && contains(f, "48") }); len(r) != 1 || r[0].PageRef != 2 {
+	// table cell 48 → 52: the table is read by columns, one cell finding on page 2 (no duplicate line finding)
+	if r := find(res, func(f Finding) bool { return contains(f, "48") }); len(r) != 1 || r[0].Kind != KindTableCell || r[0].PageRef != 2 || !contains(r[0], "«Ф-2», столбец «Кол-во»") {
 		t.Errorf("table row finding: %+v", r)
 	}
 	// concrete grade: reported once, as the edited line (not duplicated by the param rule)

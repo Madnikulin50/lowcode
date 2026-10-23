@@ -169,8 +169,8 @@ func (r *Runner) SuggestVolumes(ctx context.Context, ns, objectID string) ([]Vol
 	have := map[string][]string{} // stage → codes already in the statement (a row without a stage counts for both)
 	for _, v := range existing {
 		st, c := v.Get("stage"), v.Get("volume_code")
-		if c == "" {
-			continue
+		if c == "" || (v.Get("kind") != "" && v.Get("kind") != UnitVolume) {
+			continue // a section, an appendix or a reference is not a volume
 		}
 		if st == "" {
 			have[SideRef], have[SideTarget] = append(have[SideRef], c), append(have[SideTarget], c)

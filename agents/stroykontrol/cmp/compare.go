@@ -102,6 +102,8 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 		fr, rr := crossVolume(refDocs, refVols, SideRef)
 		ft, rt := crossVolume(tgtDocs, tgtVols, SideTarget)
 		formatFs = append(formatFs, append(fr, ft...)...)
+		formatFs = append(formatFs, drawingTextFindings(refDocs, refVols, SideRef)...)
+		formatFs = append(formatFs, drawingTextFindings(tgtDocs, tgtVols, SideTarget)...)
 		if !opt.NoElements {
 			formatFs = append(formatFs, specDrawingFindings(refDocs, refVols, SideRef)...)
 			formatFs = append(formatFs, specDrawingFindings(tgtDocs, tgtVols, SideTarget)...)
@@ -158,6 +160,7 @@ func Compare(refDocs, tgtDocs []*Document, opt Options) *Result {
 
 		fs := comparePair(p, &res.Stats)
 		fs = append(fs, tableFindings(p, &res.Stats)...)
+		fs = dropCovered(append(fs, cellFindings(p)...))
 		fs = append(fs, compareDrawings(p, docByID, opt.Imager, &res.Stats, opt.Exclude)...)
 		if !opt.NoElements {
 			fs = append(fs, elementFindings(p, docByID)...)

@@ -4,6 +4,7 @@
 // iterations and the specialist's own fields.
 import { ref, watch, computed } from 'vue'
 import { wordDiffSpans } from '../composables/useTextDiff.js'
+import { me, can } from '../platform.js'
 import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, OUTCOME_LABEL, OUTCOME_ORDER, STATUS_NEEDS_REASON, MAT_STATE_LABEL, MATERIALS_LABEL, MAT_KIND_LABEL, fmtDate } from './labels.js'
 
 const props = defineProps({ remark: Object, board: Object, history: Array, busy: Boolean, assignees: Array })
@@ -77,6 +78,12 @@ const docName = (id) => props.board.documents[id] || id
 const ns = () => encodeURIComponent(props.board.namespaceID || '')
 const places = computed(() => (props.remark.links || []).filter(l => l.kind === 'place'))
 const found = computed(() => (props.remark.links || []).filter(l => l.kind === 'finding'))
+// the fragment the text of the remark names, found in the linked volumes (ТЗ 3.4.2, 3.5.1)
+const fragments = computed(() => (props.remark.links || []).filter(l => l.kind === 'fragment'))
+const boxParam = (b) => b ? '&box=' + encodeURIComponent(String(b).replace(/[[\]]/g, '')) : ''
+const fragmentHref = (l) => placeHref(l) + boxParam(l.box)
+// the AI quotations open the volume on their page with the quoted lines framed (ТЗ 3.4.7)
+const citeHref = (c) => c.docID ? `?view=doc&source=cmp_document&id=${encodeURIComponent(c.docID)}&namespaceID=${ns()}&page=${c.page || 1}` + boxParam(c.box) : ''
 const SIDE_LABEL = { ref: 'исходная редакция', target: 'исправленная редакция' }
 const placeHref = (l) => l.comparison
   ? `?view=doc&source=comparison_doc&recordID=${encodeURIComponent(l.comparison)}&namespaceID=${ns()}&id=${encodeURIComponent(l.docID)}&page=${l.page || 1}`
@@ -91,6 +98,11 @@ const sideHref = (l, side) => {
   const page = side === 'ref' ? l.refPage : l.targetPage
   return doc ? `?view=doc&source=comparison_doc&recordID=${encodeURIComponent(l.comparison)}&namespaceID=${ns()}&id=${encodeURIComponent(doc)}&page=${page || 1}` : ''
 }
+// what the person may do (ТЗ 3.8): the agent refuses the rest anyway, the form only does not offer it
+const mayConfirm = computed(() => can('confirm'))
+const mayAssign = computed(() => can('assign'))
+const mayWork = computed(() => can('work'))
+const confirmHint = computed(() => mayConfirm.value ? '' : 'Подтверждать устранение и возвращать на доработку может специалист по контролю качества или руководитель проекта')
 const linkedSet = computed(() => new Set(props.remark.documents))
 </script>
 
@@ -144,7 +156,7 @@ const linkedSet = computed(() => new Set(props.remark.documents))
         </div>
         <div v-if="q.note" class="muted rm-req-note">{{ q.note }}</div>
       </div>
-      <button class="primary" :disabled="busy || !reqDirty || reqInvalid" @click="saveReqs">Сохранить требования</button>
+      <button class="primary" :disabled="busy || !reqDirty || reqInvalid || !mayWork" @click="saveReqs">Сохранить требования</button>
       <div class="muted">Результат замечания складывается из результатов требований: все устранены — «Устранено», часть — «Частично устранено». Список можно править; поправленный агент не перезаписывает.</div>
     </div>
 
@@ -159,13 +171,19 @@ const linkedSet = computed(() => new Set(props.remark.documents))
       </div>
     </div>
 
-    <div v-if="places.length || found.length" class="rm-block rm-links">
+    <div v-if="places.length || found.length || fragments.length" class="rm-block rm-links">
       <div class="rm-h">Где в документах</div>
       <div v-for="(l, i) in places" :key="'p' + i" class="rm-link">
         <span class="tag">{{ SIDE_LABEL[l.side] || 'документ' }}</span>
         <a :href="placeHref(l)" target="_blank" title="Открыть том на этой странице">{{ l.doc || docName(l.docID) }}</a>
         <span v-if="l.page">, стр. {{ l.page }}</span><span v-if="l.sheet"> (лист {{ l.sheet }})</span>
         <span v-if="l.note" class="muted"> — {{ l.note }}</span>
+      </div>
+      <div v-for="(l, i) in fragments" :key="'g' + i" class="rm-link">
+        <span class="tag">фрагмент · {{ SIDE_LABEL[l.side] || 'документ' }}</span>
+        <a :href="fragmentHref(l)" target="_blank" title="Открыть том на этой странице с выделенным фрагментом">{{ l.doc || docName(l.docID) }}, стр. {{ l.page }}<span v-if="l.sheet"> (лист {{ l.sheet }})</span></a>
+        <span class="muted"> — «{{ l.text }}»</span>
+        <span v-if="l.note" class="muted"> ({{ l.note }})</span>
       </div>
       <div v-for="(l, i) in found" :key="'f' + i" class="rm-link">
         <span class="tag">находка сравнения</span>
@@ -242,6 +260,13 @@ const linkedSet = computed(() => new Set(props.remark.documents))
         <span class="tag" :class="'ai-' + remark.aiVerdict">{{ AI_LABEL[remark.aiVerdict] || remark.aiVerdict }}</span>
         <span v-if="remark.aiAt" class="muted"> {{ fmtDate(remark.aiAt) }}</span>
         <div class="rm-text ai-note">{{ remark.aiNote }}</div>
+        <div v-if="(remark.aiCites || []).length" class="rm-cites">
+          <div v-for="(c, i) in remark.aiCites" :key="i" class="rm-link">
+            <a v-if="citeHref(c)" :href="citeHref(c)" target="_blank" title="Открыть том на странице цитаты с выделенными строками">{{ c.doc }}, стр. {{ c.page }}</a>
+            <span v-else>{{ c.doc }}, стр. {{ c.page }}</span>
+            <span class="muted"> — «{{ c.quote }}»</span>
+          </div>
+        </div>
         <div class="muted">Это подсказка по тексту томов: приведены только проверенные цитаты. Решение и статус — за специалистом.</div>
       </div>
       <div v-else class="muted">Не запускался. Нужны привязанные тома (кнопка «Проверить по документам») и модель (REMARK_MODEL).</div>
@@ -266,8 +291,8 @@ const linkedSet = computed(() => new Set(props.remark.documents))
         </label>
       </div>
       <textarea v-model="outcome.comment" rows="2" :placeholder="outcomeChanged ? 'Комментарий обязателен: почему результат отличается от вывода системы' : 'Комментарий (необязательно)'"></textarea>
-      <button class="primary" :disabled="busy || !outcomeDirty || outcomeInvalid" @click="saveOutcome">{{ outcomeChanged ? 'Изменить результат' : 'Подтвердить вывод системы' }}</button>
-      <button v-if="remark.outcomeFinal" class="small" :disabled="busy" @click="clearOutcome">Снять решение</button>
+      <button class="primary" :disabled="busy || !outcomeDirty || outcomeInvalid || !mayConfirm" :title="confirmHint" @click="saveOutcome">{{ outcomeChanged ? 'Изменить результат' : 'Подтвердить вывод системы' }}</button>
+      <button v-if="remark.outcomeFinal" class="small" :disabled="busy || !mayConfirm" @click="clearOutcome">Снять решение</button>
       <div class="muted">Вывод системы получается из проверки по документам и разбора ИИ; статус экспертизы и статус выполнения он не меняет.</div>
     </div>
 
@@ -275,20 +300,21 @@ const linkedSet = computed(() => new Set(props.remark.documents))
       <div class="rm-h">Работа</div>
       <div class="rm-form">
         <label>Статус
-          <select v-model="form.status">
-            <option v-for="s in STATUS_ORDER" :key="s" :value="s">{{ STATUS_LABEL[s] }}</option>
+          <select v-model="form.status" :disabled="!mayWork" :title="confirmHint">
+            <option v-for="s in STATUS_ORDER" :key="s" :value="s" :disabled="!mayConfirm && STATUS_NEEDS_REASON.includes(s) && s !== remark.status">{{ STATUS_LABEL[s] }}</option>
           </select>
         </label>
         <label>Ответственный
-          <input v-model="form.assignee" list="assignees" placeholder="ФИО" />
+          <input v-model="form.assignee" list="assignees" placeholder="ФИО" :disabled="!mayAssign" :title="mayAssign ? '' : 'Назначает руководитель проекта'" />
           <datalist id="assignees"><option v-for="a in assignees" :key="a" :value="a"></option></datalist>
         </label>
-        <label>Срок <input v-model="form.dueDate" type="date" /></label>
+        <label>Срок <input v-model="form.dueDate" type="date" :disabled="!mayAssign" /></label>
         <label>Оценка, ч <input v-model="form.estimateH" type="number" min="0" step="0.5" style="width:80px" /></label>
       </div>
       <textarea v-if="needsReason" v-model="form.statusComment" rows="2" :placeholder="form.status === 'rework' ? 'Что не так и что исправить (обязательно)' : 'Чем подтверждено устранение (обязательно)'"></textarea>
       <textarea v-model="form.note" rows="2" placeholder="Заметка ПТО"></textarea>
-      <button class="primary" :disabled="busy || !dirty || reasonMissing" @click="save">Сохранить</button>
+      <button class="primary" :disabled="busy || !dirty || reasonMissing || !mayWork" @click="save">Сохранить</button>
+      <div v-if="me.checked && !mayWork" class="muted">Только просмотр: роль «{{ me.roleLabels.join(', ') || 'нет роли' }}» не позволяет менять замечания.</div>
     </div>
 
     <div class="rm-block">

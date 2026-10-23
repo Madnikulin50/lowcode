@@ -248,6 +248,7 @@ func buildVolume(d *Document, idx int, rawCode, title string, from, to int, name
 	}
 	items, tablePages := volumeItems(d, from, to)
 	v.Items = items
+	v.Tables = volumeTables(d, from, to, tablePages)
 	for pn := from; pn <= to; pn++ {
 		pg := d.Pages[pn-1]
 		if tablePages[pn] {

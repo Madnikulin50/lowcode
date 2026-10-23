@@ -1,4 +1,5 @@
 <script setup>
+import { me, can } from '../platform.js'
 import { errText } from '../utils.js'
 // Workbench of the expertise remarks of one object: registry with filters, KPIs,
 // quick work on a remark (status, assignee, due date), history, import journal.
@@ -204,10 +205,12 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
     <template v-else>
       <div class="head">
         <h1>Замечания экспертизы — {{ state.board.objectName }}</h1>
+        <span v-if="me.checked && me.label" class="muted rm-me" :title="me.roleLabels.join(', ') || 'нет роли пространства'">{{ me.label }} · {{ me.roleLabels.join(', ') || 'без роли' }}</span>
+        <span v-else-if="me.error" class="err rm-me">{{ me.error }}</span>
         <span class="grow"></span>
-        <button class="small" :disabled="state.busy" title="Прочитать новые выгрузки, приложенные к объекту" @click="importNow(false)">Загрузить выгрузку</button>
-        <button class="small" :disabled="state.busy" title="Заново связать замечания с загруженными томами и проверить ответы" @click="checkNow">Проверить по документам</button>
-        <button class="small" :disabled="state.busy" title="Модель прочитает отобранные замечания и фрагменты их томов (не более 25 за раз)" @click="aiMany">ИИ-разбор отобранных</button>
+        <button class="small" :disabled="state.busy" title="Прочитать новые выгрузки, приложенные к объекту" @click="importNow(false)" v-if="can('upload')">Загрузить выгрузку</button>
+        <button class="small" :disabled="state.busy" title="Заново связать замечания с загруженными томами и проверить ответы" @click="checkNow" v-if="can('upload')">Проверить по документам</button>
+        <button class="small" :disabled="state.busy" title="Модель прочитает отобранные замечания и фрагменты их томов (не более 25 за раз)" @click="aiMany" v-if="can('work')">ИИ-разбор отобранных</button>
         <NotificationsPanel ref="notices" :qs="qs" :namespace-id="namespaceID" :assignees="assignees" @open="openRemark" />
         <button class="small" title="Сколько замечаний в каком статусе по дням" @click="showDynamics = !showDynamics">Динамика</button>
         <button class="small" @click="showJournal = !showJournal">Журнал выгрузок ({{ state.board.imports.length }})</button>

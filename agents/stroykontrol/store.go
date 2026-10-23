@@ -1,6 +1,10 @@
 package main
 
-import "github.com/madnikulin50/lowcode/agents/stroykontrol/cmp"
+import (
+	"strings"
+
+	"github.com/madnikulin50/lowcode/agents/stroykontrol/cmp"
+)
 
 // store abstracts where a comparison record and its files come from.
 // ComposeClient implements it against a live Compose instance (the normal
@@ -49,7 +53,7 @@ type store interface {
 	SetPairing(ns, recordID string, p []cmp.ManualPair) error
 	// SaveRequirements replaces the list of the requirements of a remark with the specialist's (keeping the results of the
 	// requirements whose text did not change) and returns the remark.
-	SaveRequirements(ns, objectID, remarkID string, in []cmp.RequirementInput) (*remarkRecord, error)
+	SaveRequirements(ns, objectID, remarkID string, in []cmp.RequirementInput, by cmp.Actor) (*remarkRecord, error)
 	// SetExclusions stores the areas of pages left out of the comparison (the next run uses them).
 	SetExclusions(ns, recordID string, r []cmp.Region) error
 	// SaveRemark creates (ID == "") or updates a remark card.
@@ -144,9 +148,10 @@ type remarkRecord struct {
 	Archived         bool            `json:"archived"`
 	Origin           string          `json:"origin"` // "comparison": a remark made from a ПД/РД comparison
 	// AI reading of the remark by the fragments of its volumes (never changes the working status)
-	AIVerdict string `json:"aiVerdict"`
-	AINote    string `json:"aiNote"`
-	AIAt      string `json:"aiAt"`
+	AIVerdict string       `json:"aiVerdict"`
+	AINote    string       `json:"aiNote"`
+	AIAt      string       `json:"aiAt"`
+	AICites   []cmp.AICite `json:"aiCites"` // the verified quotations with their places (ТЗ 3.4.7)
 	// Result of the check in the four values of ТЗ 3.4.6 (derived from Verdict and AIVerdict) and
 	// the specialist's decision on it; neither changes the working status.
 	// The requirements of the remark, each with its own result (ТЗ 3.4.3, 3.6.6); RequirementsStale: the specialist's list
@@ -237,7 +242,28 @@ type remarkPatch struct {
 	// with a comment, which is required when the outcome differs from the system's.
 	OutcomeFinal   *string `json:"outcomeFinal"`
 	OutcomeComment *string `json:"outcomeComment"`
+	// Actor is who makes the change (set by the handler, ТЗ 3.8): checked against the roles, signs the history.
+	Actor cmp.Actor `json:"-"`
 }
+
+// check checks the change against the actor's roles: the current status and assignee of the remark.
+func (p remarkPatch) check(status, assignee string) error {
+	c := cmp.RemarkChange{FromStatus: status, Assignee: assignee, AssignOrDue: p.Assignee != nil || p.DueDate != nil,
+		OutcomeDecision: p.OutcomeFinal != nil, WorkFields: p.Note != nil || p.EstimateH != nil}
+	if p.Status != nil {
+		c.ToStatus = *p.Status
+	}
+	if p.Assignee != nil && strings.TrimSpace(*p.Assignee) == assignee {
+		c.AssignOrDue = p.DueDate != nil
+	}
+	if err := p.Actor.CheckRemarkChange(c); err != nil {
+		return forbiddenError{err}
+	}
+	return nil
+}
+
+// forbiddenError is a refusal by the roles: the handlers answer 403.
+type forbiddenError struct{ error }
 
 // reportObject is an object as the «Отчёты» page shows it.
 type reportObject struct {

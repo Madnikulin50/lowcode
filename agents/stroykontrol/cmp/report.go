@@ -97,6 +97,8 @@ func KindLabel(kind string) string {
 		return "Текст"
 	case KindTableRow:
 		return "Строка таблицы"
+	case KindTableCell:
+		return "Ячейка таблицы"
 	case KindParam:
 		return "Ключевой параметр"
 	case KindDrawing:

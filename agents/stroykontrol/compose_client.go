@@ -255,8 +255,10 @@ type recordValue struct {
 }
 
 type record struct {
-	RecordID string        `json:"recordID"`
-	Values   []recordValue `json:"values"`
+	RecordID  string        `json:"recordID"`
+	Values    []recordValue `json:"values"`
+	CreatedAt string        `json:"createdAt,omitempty"`
+	CreatedBy string        `json:"createdBy,omitempty"`
 }
 
 func (r *record) val(name string) string {

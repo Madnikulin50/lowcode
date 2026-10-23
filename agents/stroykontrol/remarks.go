@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -46,6 +47,10 @@ func remarkFromIDRecord(r idcheck.Record) remarkRecord {
 	}
 	rec.fillOutcome()
 	_ = json.Unmarshal([]byte(r.Get("links_json")), &rec.Links)
+	_ = json.Unmarshal([]byte(r.Get("ai_cites_json")), &rec.AICites)
+	if rec.AICites == nil {
+		rec.AICites = []cmp.AICite{}
+	}
 	if rec.Links == nil {
 		rec.Links = []cmp.RemarkLocation{}
 	}
@@ -192,6 +197,10 @@ func (c *ComposeClient) UpdateRemark(ns, objectID, remarkID string, p remarkPatc
 	if cur.val("object") != objectID {
 		return nil, fmt.Errorf("remark %s does not belong to object %s", remarkID, objectID)
 	}
+	if err := p.check(cur.val("status"), cur.val("assignee")); err != nil {
+		return nil, err
+	}
+	by := p.Actor.Label()
 	v := idcheck.Values{}
 	statusComment := ""
 	if p.StatusComment != nil {
@@ -247,8 +256,8 @@ func (c *ComposeClient) UpdateRemark(ns, objectID, remarkID string, p remarkPatc
 		if final == "" {
 			v["outcome_by"], v["outcome_at"] = []string{""}, []string{""}
 		} else {
-			v["outcome_by"], v["outcome_at"] = []string{"специалист ПТО"}, []string{now}
-			hv := idcheck.V("remark", remarkID, "source", "решение по проверке: "+cmp.OutcomeLabels[final], "author", "специалист ПТО",
+			v["outcome_by"], v["outcome_at"] = []string{by}, []string{now}
+			hv := idcheck.V("remark", remarkID, "source", "решение по проверке: "+cmp.OutcomeLabels[final], "author", by,
 				"note", comment, "status", cur.Status, "source_status", cur.SourceStatus, "kind", cmp.HistDecision)
 			it := max(cur.Iterations, 1)
 			hv["iteration"] = []string{strconv.Itoa(it)}
@@ -266,7 +275,7 @@ func (c *ComposeClient) UpdateRemark(ns, objectID, remarkID string, p remarkPatc
 	}
 	// assignments, due dates and notes are history too
 	for _, wc := range cmp.WorkChanges(cur.val("assignee"), cur.val("due_date"), cur.val("pto_note"), p.Assignee, p.DueDate, p.Note) {
-		hv := idcheck.V("remark", remarkID, "status", firstNonEmpty(valOr(p.Status, cur.val("status"))), "source", wc.Source, "author", "специалист ПТО",
+		hv := idcheck.V("remark", remarkID, "status", firstNonEmpty(valOr(p.Status, cur.val("status"))), "source", wc.Source, "author", by,
 			"note", wc.Note, "kind", wc.Kind, "source_status", cur.val("source_status"))
 		it, _ := strconv.Atoi(cur.val("iterations"))
 		hv["iteration"] = []string{strconv.Itoa(max(it, 1))}
@@ -277,7 +286,7 @@ func (c *ComposeClient) UpdateRemark(ns, objectID, remarkID string, p remarkPatc
 	}
 	if p.Status != nil && *p.Status != cur.val("status") {
 		it, _ := strconv.Atoi(cur.val("iterations"))
-		hv := idcheck.V("remark", remarkID, "status", *p.Status, "source", "вручную", "author", "специалист ПТО", "note", statusComment, "kind", cmp.HistStatus,
+		hv := idcheck.V("remark", remarkID, "status", *p.Status, "source", "вручную", "author", by, "note", statusComment, "kind", cmp.HistStatus,
 			"source_status", cur.val("source_status"), "answer", cur.val("answer"), "reject_reason", cur.val("reject_reason"))
 		hv["iteration"] = []string{strconv.Itoa(max(it, 1))}
 		hv["at"] = []string{time.Now().UTC().Format("2006-01-02T15:04:05Z")}
@@ -294,7 +303,7 @@ func (c *ComposeClient) UpdateRemark(ns, objectID, remarkID string, p remarkPatc
 }
 
 // SaveRequirements implements store.
-func (c *ComposeClient) SaveRequirements(ns, objectID, remarkID string, in []cmp.RequirementInput) (*remarkRecord, error) {
+func (c *ComposeClient) SaveRequirements(ns, objectID, remarkID string, in []cmp.RequirementInput, by cmp.Actor) (*remarkRecord, error) {
 	b := composeBackend{c}
 	cur, err := c.getRecord(ns, cmp.ModExpertise, remarkID)
 	if err != nil {
@@ -304,8 +313,11 @@ func (c *ComposeClient) SaveRequirements(ns, objectID, remarkID string, in []cmp
 		return nil, fmt.Errorf("remark %s does not belong to object %s", remarkID, objectID)
 	}
 	old, _ := cmp.ParseRequirementSet(cur.val("requirements_json"))
+	if err := checkRequirementEdit(by, old, in, cur.val("status"), cur.val("assignee")); err != nil {
+		return nil, err
+	}
 	now := time.Now().UTC().Format("2006-01-02T15:04:05Z")
-	set, err := cmp.ApplyRequirementEdit(old, cur.val("text"), in, "специалист ПТО", now)
+	set, err := cmp.ApplyRequirementEdit(old, cur.val("text"), in, by.Label(), now)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +326,7 @@ func (c *ComposeClient) SaveRequirements(ns, objectID, remarkID string, in []cmp
 	}
 	it, _ := strconv.Atoi(cur.val("iterations"))
 	for _, wc := range cmp.RequirementChanges(old, set) {
-		hv := idcheck.V("remark", remarkID, "status", cur.val("status"), "source", wc.Source, "author", "специалист ПТО", "note", wc.Note, "kind", wc.Kind,
+		hv := idcheck.V("remark", remarkID, "status", cur.val("status"), "source", wc.Source, "author", by.Label(), "note", wc.Note, "kind", wc.Kind,
 			"source_status", cur.val("source_status"))
 		hv["iteration"] = []string{strconv.Itoa(max(it, 1))}
 		hv["at"] = []string{now}
@@ -449,6 +461,12 @@ func handleRemarkUpdate(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, fmt.Errorf("objectID and id are required"))
 		return
 	}
+	by, err := actorOf(r)
+	if err != nil {
+		writeErr(w, http.StatusUnauthorized, err)
+		return
+	}
+	body.remarkPatch.Actor = by
 	out, err := compose.UpdateRemark(ns, body.ObjectID, body.ID, body.remarkPatch)
 	if err == nil && cmpRunner != nil && (body.Status != nil || body.DueDate != nil) {
 		_, _ = cmp.RecordSnapshot(cmpRunner.Backend, ns, body.ObjectID, time.Now()) // best effort: the dynamics
@@ -458,7 +476,10 @@ func handleRemarkUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	if err != nil {
 		code := http.StatusBadGateway
-		if strings.Contains(err.Error(), "unknown status") || strings.Contains(err.Error(), "dueDate") ||
+		var fb forbiddenError
+		if errors.As(err, &fb) {
+			code = http.StatusForbidden
+		} else if strings.Contains(err.Error(), "unknown status") || strings.Contains(err.Error(), "dueDate") ||
 			strings.Contains(err.Error(), "outcome") || strings.Contains(err.Error(), "statusComment") || strings.Contains(err.Error(), "estimateH") {
 			code = http.StatusBadRequest
 		}
@@ -486,10 +507,18 @@ func handleRemarkRequirements(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, fmt.Errorf("objectID and id are required"))
 		return
 	}
-	out, err := compose.SaveRequirements(ns, body.ObjectID, body.ID, body.Requirements)
+	by, err := actorOf(r)
+	if err != nil {
+		writeErr(w, http.StatusUnauthorized, err)
+		return
+	}
+	out, err := compose.SaveRequirements(ns, body.ObjectID, body.ID, body.Requirements, by)
 	if err != nil {
 		code := http.StatusBadGateway
-		if strings.Contains(err.Error(), "requirements") || strings.Contains(err.Error(), "outcome") {
+		var fb forbiddenError
+		if errors.As(err, &fb) {
+			code = http.StatusForbidden
+		} else if strings.Contains(err.Error(), "requirements") || strings.Contains(err.Error(), "outcome") {
 			code = http.StatusBadRequest
 		}
 		writeErr(w, code, err)
@@ -616,4 +645,22 @@ func handleRemarkAI(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	writeJSON(w, http.StatusAccepted, map[string]any{"queued": len(ids)})
+}
+
+// checkRequirementEdit: a decision on a requirement is a confirmation (ТЗ 3.8.4); the rest of the list is work.
+func checkRequirementEdit(by cmp.Actor, old cmp.RequirementSet, in []cmp.RequirementInput, status, assignee string) error {
+	prev := map[string]string{}
+	for _, q := range old.Items {
+		prev[strings.TrimSpace(q.Text)] = q.OutcomeFinal
+	}
+	c := cmp.RemarkChange{FromStatus: status, Assignee: assignee, WorkFields: true}
+	for _, q := range in {
+		if q.OutcomeFinal != prev[strings.TrimSpace(q.Text)] {
+			c.OutcomeDecision = true
+		}
+	}
+	if err := by.CheckRemarkChange(c); err != nil {
+		return forbiddenError{err}
+	}
+	return nil
 }
