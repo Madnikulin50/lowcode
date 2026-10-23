@@ -707,6 +707,9 @@ export async function ensurePage (api, nsID, rawDef) {
   // `parent`/`group` are the provisioning script's own keys; `tabbedBlockIDs` are blocks that
   // live only inside a Tabs block (they are in page.blocks but not in the layout)
   const { parent, group, tabbedBlockIDs = [], ...def } = rawDef
+  // the server keeps the weight as an integer: a fractional one (24.5 — between two pages) makes
+  // the create fail silently, so weights are scaled by 10 here and pages.mjs may use one decimal
+  def.weight = Math.round((Number(def.weight) || 0) * 10)
   const list = setOf(await api('GET', `/namespace/${nsID}/page/?handle=${encodeURIComponent(def.handle)}&limit=200`))
   const existing = list.find(p => p.handle === def.handle && !p.deletedAt)
   let page
@@ -720,8 +723,13 @@ export async function ensurePage (api, nsID, rawDef) {
     })
     console.log('updated page', def.handle, existing.pageID)
   }
+  if (!page || !page.pageID || page.pageID === '0') {
+    // without an ID the layout request below would list the layouts of every page of the namespace
+    // and overwrite the first one (that is how «Главная» once lost its layout)
+    throw new Error(`page ${def.handle}: the server returned no pageID: ${JSON.stringify(page).slice(0, 300)}`)
+  }
   const layouts = setOf(await api('GET', `/namespace/${nsID}/page/${page.pageID}/layout/?limit=20`))
-  const primary = layouts.find(l => l.handle === 'primary' && !l.deletedAt)
+  const primary = layouts.find(l => l.handle === 'primary' && !l.deletedAt && String(l.pageID) === String(page.pageID))
   const layoutBody = {
     handle: 'primary',
     meta: { title: def.title },
