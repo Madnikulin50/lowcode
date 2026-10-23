@@ -1,0 +1,877 @@
+namespace: dspm
+modules:
+  connectors:
+    name: Коннекторы
+    fields:
+      name:
+        label: Название
+        kind: String
+        required: true
+      kind:
+        label: Тип
+        kind: Select
+        options:
+          options:
+            - cloud
+            - saas
+            - database
+            - warehouse
+            - lake
+            - fileshare
+            - idp
+      provider:
+        label: Провайдер
+        kind: String
+      environment:
+        label: Среда
+        kind: Select
+        options:
+          options:
+            - prod
+            - stage
+            - dev
+      mode:
+        label: Режим
+        kind: Select
+        options:
+          options:
+            - monitor
+            - enforce
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - pending
+            - connected
+            - error
+            - disabled
+      secret_ref:
+        label: Ссылка на секрет
+        kind: String
+      last_scan:
+        label: Последнее сканирование
+        kind: DateTime
+      notes:
+        label: Заметки
+        kind: String
+
+  scans:
+    name: Задания
+    fields:
+      connector:
+        label: Коннектор
+        kind: Record
+        options:
+          module: connectors
+          labelField: name
+          queryFields:
+            - name
+            - provider
+      kind:
+        label: Тип
+        kind: Select
+        options:
+          options:
+            - discovery
+            - classification
+            - access_sync
+            - score
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - pending
+            - running
+            - completed
+            - failed
+      progress:
+        label: Прогресс
+        kind: Number
+      found:
+        label: Найдено
+        kind: Number
+      started_at:
+        label: Старт
+        kind: DateTime
+      finished_at:
+        label: Финиш
+        kind: DateTime
+      error:
+        label: Ошибка
+        kind: String
+
+  data_stores:
+    name: Хранилища
+    fields:
+      name:
+        label: Название
+        kind: String
+        required: true
+      connector:
+        label: Коннектор
+        kind: Record
+        options:
+          module: connectors
+          labelField: name
+      kind:
+        label: Тип
+        kind: Select
+        options:
+          options:
+            - bucket
+            - database
+            - warehouse
+            - lake
+            - site
+            - mailbox
+            - fileshare
+            - saas_app
+      location:
+        label: Расположение
+        kind: String
+      residency:
+        label: Резидентность
+        kind: String
+      owner:
+        label: Владелец
+        kind: User
+      criticality:
+        label: Критичность
+        kind: Select
+        options:
+          options:
+            - low
+            - medium
+            - high
+            - critical
+      exposure:
+        label: Экспозиция
+        kind: Select
+        options:
+          options:
+            - private
+            - internal
+            - org_wide
+            - public
+      sensitivity:
+        label: Чувствительность
+        kind: Select
+        options:
+          options:
+            - public
+            - internal
+            - confidential
+            - restricted
+      external_id:
+        label: Внешний ID
+        kind: String
+      last_seen:
+        label: Видели
+        kind: DateTime
+
+  datasets:
+    name: Датасеты
+    fields:
+      name:
+        label: Название
+        kind: String
+        required: true
+      data_store:
+        label: Хранилище
+        kind: Record
+        options:
+          module: data_stores
+          labelField: name
+          queryFields:
+            - name
+            - location
+      path:
+        label: Путь
+        kind: String
+      owner:
+        label: Владелец
+        kind: User
+      purpose:
+        label: Назначение
+        kind: Select
+        options:
+          options:
+            - production
+            - analytics
+            - ai
+            - archive
+      criticality:
+        label: Критичность
+        kind: Select
+        options:
+          options:
+            - low
+            - medium
+            - high
+            - critical
+      policy:
+        label: Политика по умолчанию
+        kind: Record
+        options:
+          module: policies
+          labelField: name
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - active
+            - shadow
+            - retired
+
+  data_classes:
+    name: Классы данных
+    fields:
+      code:
+        label: Код
+        kind: String
+        required: true
+      name:
+        label: Название
+        kind: String
+        required: true
+      sensitivity:
+        label: Чувствительность
+        kind: Select
+        options:
+          options:
+            - public
+            - internal
+            - confidential
+            - restricted
+      regulations:
+        label: Регламенты
+        kind: String
+      builtin:
+        label: Встроенный
+        kind: Bool
+      description:
+        label: Описание
+        kind: String
+
+  masking_profiles:
+    name: Профили маскирования
+    fields:
+      name:
+        label: Название
+        kind: String
+        required: true
+      method:
+        label: Метод
+        kind: Select
+        options:
+          options:
+            - redact
+            - partial
+            - hash
+            - nullify
+            - tokenize
+      pattern:
+        label: Шаблон
+        kind: String
+      description:
+        label: Описание
+        kind: String
+
+  row_filters:
+    name: Фильтры строк
+    fields:
+      name:
+        label: Название
+        kind: String
+        required: true
+      expression:
+        label: Выражение
+        kind: String
+      description:
+        label: Описание
+        kind: String
+
+  policies:
+    name: Политики
+    fields:
+      name:
+        label: Название
+        kind: String
+        required: true
+      mode:
+        label: Режим
+        kind: Select
+        options:
+          options:
+            - monitor
+            - alert
+            - mask
+            - block
+            - revoke
+      data_class:
+        label: Класс данных
+        kind: Record
+        options:
+          module: data_classes
+          labelField: name
+          queryFields:
+            - name
+            - code
+      identity_kind:
+        label: Тип идентичности
+        kind: Select
+        options:
+          options:
+            - any
+            - human
+            - service
+            - ai_agent
+      masking_profile:
+        label: Профиль маски
+        kind: Record
+        options:
+          module: masking_profiles
+          labelField: name
+      row_filter:
+        label: Фильтр строк
+        kind: Record
+        options:
+          module: row_filters
+          labelField: name
+      enabled:
+        label: Включена
+        kind: Bool
+      description:
+        label: Описание
+        kind: String
+
+  policy_bindings:
+    name: Привязки политик
+    fields:
+      policy:
+        label: Политика
+        kind: Record
+        options:
+          module: policies
+          labelField: name
+      dataset:
+        label: Датасет
+        kind: Record
+        options:
+          module: datasets
+          labelField: name
+          queryFields:
+            - name
+            - path
+      enabled:
+        label: Включена
+        kind: Bool
+
+  identities:
+    name: Идентичности
+    fields:
+      name:
+        label: Имя
+        kind: String
+        required: true
+      kind:
+        label: Тип
+        kind: Select
+        options:
+          options:
+            - human
+            - service
+            - ai_agent
+      source:
+        label: Источник
+        kind: Select
+        options:
+          options:
+            - idp
+            - directory
+            - local
+            - discovered
+      external_id:
+        label: Внешний ID
+        kind: String
+      email:
+        label: Почта
+        kind: String
+      department:
+        label: Подразделение
+        kind: String
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - active
+            - stale
+            - ghost
+            - disabled
+      last_seen:
+        label: Видели
+        kind: DateTime
+
+  entitlements:
+    name: Права
+    fields:
+      identity:
+        label: Идентичность
+        kind: Record
+        options:
+          module: identities
+          labelField: name
+          queryFields:
+            - name
+            - email
+      dataset:
+        label: Датасет
+        kind: Record
+        options:
+          module: datasets
+          labelField: name
+          queryFields:
+            - name
+            - path
+      access_level:
+        label: Уровень
+        kind: Select
+        options:
+          options:
+            - read
+            - write
+            - admin
+            - share
+      origin:
+        label: Источник права
+        kind: Select
+        options:
+          options:
+            - direct
+            - group
+            - role
+            - link
+      origin_name:
+        label: Имя источника
+        kind: String
+      used:
+        label: Использовалось
+        kind: Bool
+      last_used:
+        label: Последнее использование
+        kind: DateTime
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - active
+            - unused
+            - excessive
+            - revoked
+
+  classifications:
+    name: Классификации
+    fields:
+      dataset:
+        label: Датасет
+        kind: Record
+        options:
+          module: datasets
+          labelField: name
+          queryFields:
+            - name
+            - path
+      data_class:
+        label: Класс
+        kind: Record
+        options:
+          module: data_classes
+          labelField: name
+          queryFields:
+            - name
+            - code
+      confidence:
+        label: Точность
+        kind: Number
+      source:
+        label: Источник
+        kind: Select
+        options:
+          options:
+            - rule
+            - model
+            - manual
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - pending
+            - confirmed
+            - rejected
+      reviewer:
+        label: Проверил
+        kind: User
+      reviewed_at:
+        label: Когда проверили
+        kind: DateTime
+      location_hint:
+        label: Где найдено
+        kind: String
+      masked_sample:
+        label: Маскированный фрагмент
+        kind: String
+
+  access_requests:
+    name: Заявки на доступ
+    fields:
+      requester:
+        label: Заявитель
+        kind: User
+      identity:
+        label: Идентичность
+        kind: Record
+        options:
+          module: identities
+          labelField: name
+      dataset:
+        label: Датасет
+        kind: Record
+        options:
+          module: datasets
+          labelField: name
+          queryFields:
+            - name
+            - path
+      justification:
+        label: Обоснование
+        kind: String
+      starts_at:
+        label: Начало
+        kind: DateTime
+      ends_at:
+        label: Конец
+        kind: DateTime
+      approver:
+        label: Согласующий
+        kind: User
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - draft
+            - pending
+            - approved
+            - rejected
+            - expired
+            - revoked
+      policy:
+        label: Политика
+        kind: Record
+        options:
+          module: policies
+          labelField: name
+
+  findings:
+    name: Находки
+    fields:
+      title:
+        label: Заголовок
+        kind: String
+        required: true
+      kind:
+        label: Тип
+        kind: Select
+        options:
+          options:
+            - public_exposure
+            - excessive_access
+            - misconfig
+            - stale_link
+            - shadow_ai
+            - policy_violation
+            - unused_entitlement
+      severity:
+        label: Серьёзность
+        kind: Select
+        options:
+          options:
+            - critical
+            - high
+            - medium
+            - low
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - open
+            - with_owner
+            - in_progress
+            - closed
+            - accepted
+      data_store:
+        label: Хранилище
+        kind: Record
+        options:
+          module: data_stores
+          labelField: name
+      dataset:
+        label: Датасет
+        kind: Record
+        options:
+          module: datasets
+          labelField: name
+      identity:
+        label: Идентичность
+        kind: Record
+        options:
+          module: identities
+          labelField: name
+      policy:
+        label: Политика
+        kind: Record
+        options:
+          module: policies
+          labelField: name
+      owner:
+        label: Владелец
+        kind: User
+      detected_at:
+        label: Обнаружена
+        kind: DateTime
+      summary:
+        label: Суть
+        kind: String
+
+  remediations:
+    name: Исправления
+    fields:
+      finding:
+        label: Находка
+        kind: Record
+        options:
+          module: findings
+          labelField: title
+          queryFields:
+            - title
+            - kind
+      action:
+        label: Действие
+        kind: Select
+        options:
+          options:
+            - revoke
+            - remove_link
+            - mask
+            - label
+            - delete
+            - ticket
+            - notify_owner
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - proposed
+            - approved
+            - done
+            - failed
+            - rolled_back
+      actor:
+        label: Кто выполнил
+        kind: User
+      reversible:
+        label: Можно откатить
+        kind: Bool
+      result:
+        label: Результат
+        kind: String
+      executed_at:
+        label: Когда
+        kind: DateTime
+
+  activity_events:
+    name: События доступа
+    fields:
+      occurred_at:
+        label: Когда
+        kind: DateTime
+      identity:
+        label: Идентичность
+        kind: Record
+        options:
+          module: identities
+          labelField: name
+      dataset:
+        label: Датасет
+        kind: Record
+        options:
+          module: datasets
+          labelField: name
+      data_class:
+        label: Класс
+        kind: Record
+        options:
+          module: data_classes
+          labelField: name
+      tool:
+        label: Инструмент
+        kind: String
+      policy:
+        label: Политика
+        kind: Record
+        options:
+          module: policies
+          labelField: name
+      outcome:
+        label: Исход
+        kind: Select
+        options:
+          options:
+            - allow
+            - mask
+            - block
+            - alert
+      summary:
+        label: Суть
+        kind: String
+
+  alerts:
+    name: Алерты
+    fields:
+      title:
+        label: Заголовок
+        kind: String
+        required: true
+      severity:
+        label: Серьёзность
+        kind: Select
+        options:
+          options:
+            - critical
+            - high
+            - medium
+            - low
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - open
+            - investigating
+            - closed
+            - false_positive
+      identity:
+        label: Идентичность
+        kind: Record
+        options:
+          module: identities
+          labelField: name
+      dataset:
+        label: Датасет
+        kind: Record
+        options:
+          module: datasets
+          labelField: name
+      activity_event:
+        label: Событие
+        kind: Record
+        options:
+          module: activity_events
+          labelField: summary
+      detected_at:
+        label: Обнаружен
+        kind: DateTime
+      summary:
+        label: Суть
+        kind: String
+
+  ai_assets:
+    name: Активы AI
+    fields:
+      name:
+        label: Название
+        kind: String
+        required: true
+      kind:
+        label: Тип
+        kind: Select
+        options:
+          options:
+            - copilot
+            - agent
+            - model
+            - knowledge_base
+            - public_tool
+      sanctioned:
+        label: Санкционирован
+        kind: Bool
+      identity:
+        label: Идентичность
+        kind: Record
+        options:
+          module: identities
+          labelField: name
+      status:
+        label: Статус
+        kind: Select
+        options:
+          options:
+            - discovered
+            - approved
+            - blocked
+      owner:
+        label: Владелец
+        kind: User
+      notes:
+        label: Заметки
+        kind: String
+
+  compliance_controls:
+    name: Контроли соответствия
+    fields:
+      framework:
+        label: Регламент
+        kind: Select
+        options:
+          options:
+            - 152-fz
+            - gdpr
+            - hipaa
+            - soc2
+            - sox
+            - iso27001
+      name:
+        label: Название
+        kind: String
+        required: true
+      data_class:
+        label: Класс
+        kind: Record
+        options:
+          module: data_classes
+          labelField: name
+      policy:
+        label: Политика
+        kind: Record
+        options:
+          module: policies
+          labelField: name
+      status:
+        label: Покрытие
+        kind: Select
+        options:
+          options:
+            - covered
+            - partial
+            - gap
+      evidence:
+        label: Доказательство
+        kind: String

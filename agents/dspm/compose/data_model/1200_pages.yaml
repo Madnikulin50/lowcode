@@ -1,0 +1,462 @@
+namespace: dspm
+pages:
+  dashboard:
+    title: Сводка
+    handle: dashboard
+    blocks:
+    - title: Сводка
+      kind: Metric
+      xywh: [0, 0, 48, 14]
+    - title: Обнаружение
+      kind: RuleChain
+      xywh: [0, 14, 16, 10]
+      options:
+        chain: dspm-run-discovery
+    - title: Синхронизация доступа
+      kind: RuleChain
+      xywh: [16, 14, 16, 10]
+      options:
+        chain: dspm-sync-access
+    - title: Оценка находок
+      kind: RuleChain
+      xywh: [32, 14, 16, 10]
+      options:
+        chain: dspm-score-findings
+    - title: Находки по серьёзности
+      kind: Chart
+      xywh: [0, 24, 16, 18]
+      options:
+        chart: findings-by-severity
+    - title: Хранилища по экспозиции
+      kind: Chart
+      xywh: [16, 24, 16, 18]
+      options:
+        chart: stores-by-exposure
+    - title: Заявки по статусу
+      kind: Chart
+      xywh: [32, 24, 16, 18]
+      options:
+        chart: requests-by-status
+    - title: Открытые находки
+      kind: RecordList
+      xywh: [0, 42, 24, 22]
+      options:
+        module: findings
+        fields: [title, kind, severity, status, owner]
+    - title: Заявки на согласовании
+      kind: RecordList
+      xywh: [24, 42, 24, 22]
+      options:
+        module: access_requests
+        fields: [requester, dataset, status, ends_at]
+
+  inventory:
+    title: Инвентарь
+    handle: inventory
+    blocks:
+    - title: Хранилища
+      kind: RecordList
+      xywh: [0, 0, 48, 50]
+      options:
+        module: data_stores
+        fields: [name, kind, residency, exposure, sensitivity, owner, last_seen]
+    pages:
+      store:
+        title: Хранилище
+        handle: store
+        module: data_stores
+        blocks:
+        - title: Хранилище
+          kind: Record
+          xywh: [0, 0, 32, 28]
+        - title: Датасеты
+          kind: RecordList
+          xywh: [0, 28, 32, 22]
+          options:
+            module: datasets
+            fields: [name, path, purpose, status, owner]
+        - title: Находки
+          kind: RecordList
+          xywh: [32, 0, 16, 50]
+          options:
+            module: findings
+            fields: [title, severity, status]
+
+  datasets:
+    title: Датасеты
+    handle: datasets
+    blocks:
+    - title: Датасеты
+      kind: RecordList
+      xywh: [0, 0, 48, 50]
+      options:
+        module: datasets
+        fields: [name, data_store, path, purpose, criticality, policy, status]
+    pages:
+      dataset:
+        title: Датасет
+        handle: dataset
+        module: datasets
+        blocks:
+        - title: Датасет
+          kind: Record
+          xywh: [0, 0, 32, 24]
+        - title: Классификация
+          kind: RuleChain
+          xywh: [32, 0, 16, 12]
+          options:
+            chain: dspm-run-classification
+        - title: Подтвердить класс
+          kind: RuleChain
+          xywh: [32, 12, 16, 12]
+          options:
+            chain: dspm-confirm-class
+        - title: Классы
+          kind: RecordList
+          xywh: [0, 24, 24, 22]
+          options:
+            module: classifications
+            fields: [data_class, confidence, source, status]
+        - title: Кто имеет доступ
+          kind: RecordList
+          xywh: [24, 24, 24, 22]
+          options:
+            module: entitlements
+            fields: [identity, access_level, origin, used, status]
+        - title: Политики
+          kind: RecordList
+          xywh: [0, 46, 48, 18]
+          options:
+            module: policy_bindings
+            fields: [policy, enabled]
+
+  classification:
+    title: Классификация
+    handle: classification
+    blocks:
+    - title: На проверке
+      kind: RecordList
+      xywh: [0, 0, 48, 28]
+      options:
+        module: classifications
+        fields: [dataset, data_class, confidence, source, status, reviewer]
+    - title: Классы
+      kind: RecordList
+      xywh: [0, 28, 48, 24]
+      options:
+        module: data_classes
+        fields: [code, name, sensitivity, regulations, builtin]
+    pages:
+      classification-item:
+        title: Классификация
+        handle: classification-item
+        module: classifications
+        blocks:
+        - title: Результат
+          kind: Record
+          xywh: [0, 0, 32, 26]
+        - title: Подтвердить
+          kind: RuleChain
+          xywh: [32, 0, 16, 12]
+          options:
+            chain: dspm-confirm-class
+
+  access:
+    title: Доступ
+    handle: access
+    blocks:
+    - title: Права
+      kind: RecordList
+      xywh: [0, 0, 48, 50]
+      options:
+        module: entitlements
+        fields: [identity, dataset, access_level, origin, used, last_used, status]
+    pages:
+      entitlement:
+        title: Право
+        handle: entitlement
+        module: entitlements
+        blocks:
+        - title: Право
+          kind: Record
+          xywh: [0, 0, 32, 24]
+
+  identities:
+    title: Идентичности
+    handle: identities
+    blocks:
+    - title: Идентичности
+      kind: RecordList
+      xywh: [0, 0, 48, 50]
+      options:
+        module: identities
+        fields: [name, kind, source, department, status, last_seen]
+    pages:
+      identity:
+        title: Идентичность
+        handle: identity
+        module: identities
+        blocks:
+        - title: Идентичность
+          kind: Record
+          xywh: [0, 0, 32, 22]
+        - title: Куда есть доступ
+          kind: RecordList
+          xywh: [0, 22, 48, 24]
+          options:
+            module: entitlements
+            fields: [dataset, access_level, origin, used, status]
+        - title: События
+          kind: RecordList
+          xywh: [0, 46, 48, 20]
+          options:
+            module: activity_events
+            fields: [occurred_at, dataset, tool, outcome]
+
+  policies:
+    title: Политики
+    handle: policies
+    blocks:
+    - title: Политики
+      kind: RecordList
+      xywh: [0, 0, 48, 28]
+      options:
+        module: policies
+        fields: [name, mode, data_class, identity_kind, enabled]
+    - title: Профили маски
+      kind: RecordList
+      xywh: [0, 28, 24, 22]
+      options:
+        module: masking_profiles
+        fields: [name, method]
+    - title: Фильтры строк
+      kind: RecordList
+      xywh: [24, 28, 24, 22]
+      options:
+        module: row_filters
+        fields: [name, expression]
+    pages:
+      policy:
+        title: Политика
+        handle: policy
+        module: policies
+        blocks:
+        - title: Политика
+          kind: Record
+          xywh: [0, 0, 32, 26]
+        - title: Где действует
+          kind: RecordList
+          xywh: [0, 26, 48, 22]
+          options:
+            module: policy_bindings
+            fields: [dataset, enabled]
+
+  requests:
+    title: Заявки
+    handle: requests
+    blocks:
+    - title: Ожидают
+      kind: RecordOrganizer
+      xywh: [0, 0, 16, 28]
+    - title: Согласованы
+      kind: RecordOrganizer
+      xywh: [16, 0, 16, 28]
+    - title: Отклонены
+      kind: RecordOrganizer
+      xywh: [32, 0, 16, 28]
+    - title: Все заявки
+      kind: RecordList
+      xywh: [0, 28, 48, 24]
+      options:
+        module: access_requests
+        fields: [requester, dataset, status, starts_at, ends_at, approver]
+    pages:
+      request:
+        title: Заявка
+        handle: request
+        module: access_requests
+        blocks:
+        - title: Заявка
+          kind: Record
+          xywh: [0, 0, 32, 28]
+        - title: Согласовать
+          kind: RuleChain
+          xywh: [32, 0, 16, 10]
+          options:
+            chain: dspm-approve-request
+        - title: Отклонить
+          kind: RuleChain
+          xywh: [32, 10, 16, 10]
+          options:
+            chain: dspm-reject-request
+        - title: Отозвать
+          kind: RuleChain
+          xywh: [32, 20, 16, 10]
+          options:
+            chain: dspm-revoke-request
+
+  findings:
+    title: Находки
+    handle: findings
+    blocks:
+    - title: Открыты
+      kind: RecordOrganizer
+      xywh: [0, 0, 12, 28]
+    - title: У владельца
+      kind: RecordOrganizer
+      xywh: [12, 0, 12, 28]
+    - title: В работе
+      kind: RecordOrganizer
+      xywh: [24, 0, 12, 28]
+    - title: Закрыты
+      kind: RecordOrganizer
+      xywh: [36, 0, 12, 28]
+    - title: Все находки
+      kind: RecordList
+      xywh: [0, 28, 48, 24]
+      options:
+        module: findings
+        fields: [title, kind, severity, status, dataset, owner, detected_at]
+    pages:
+      finding:
+        title: Находка
+        handle: finding
+        module: findings
+        blocks:
+        - title: Находка
+          kind: Record
+          xywh: [0, 0, 32, 28]
+        - title: Владельцу
+          kind: RuleChain
+          xywh: [32, 0, 16, 10]
+          options:
+            chain: dspm-route-owner
+        - title: Исправить
+          kind: RuleChain
+          xywh: [32, 10, 16, 10]
+          options:
+            chain: dspm-remediate
+        - title: Принять риск
+          kind: RuleChain
+          xywh: [32, 20, 16, 10]
+          options:
+            chain: dspm-accept-risk
+        - title: Действия
+          kind: RecordList
+          xywh: [0, 28, 48, 20]
+          options:
+            module: remediations
+            fields: [action, status, actor, reversible, executed_at]
+
+  activity:
+    title: Активность
+    handle: activity
+    blocks:
+    - title: События
+      kind: RecordList
+      xywh: [0, 0, 48, 28]
+      options:
+        module: activity_events
+        fields: [occurred_at, identity, dataset, tool, policy, outcome]
+    - title: Алерты
+      kind: RecordList
+      xywh: [0, 28, 48, 24]
+      options:
+        module: alerts
+        fields: [title, severity, status, identity, dataset, detected_at]
+    pages:
+      alert:
+        title: Алерт
+        handle: alert
+        module: alerts
+        blocks:
+        - title: Алерт
+          kind: Record
+          xywh: [0, 0, 32, 24]
+
+  ai:
+    title: AI
+    handle: ai
+    blocks:
+    - title: Активы
+      kind: RecordList
+      xywh: [0, 0, 48, 50]
+      options:
+        module: ai_assets
+        fields: [name, kind, sanctioned, identity, status, owner]
+    pages:
+      ai-asset:
+        title: Актив AI
+        handle: ai-asset
+        module: ai_assets
+        blocks:
+        - title: Актив
+          kind: Record
+          xywh: [0, 0, 32, 22]
+        - title: Доступные датасеты
+          kind: RecordList
+          xywh: [0, 22, 48, 24]
+          options:
+            module: entitlements
+            fields: [dataset, access_level, used, status]
+
+  compliance:
+    title: Соответствие
+    handle: compliance
+    blocks:
+    - title: Покрытие по регламентам
+      kind: Chart
+      xywh: [0, 0, 24, 20]
+      options:
+        chart: controls-by-status
+    - title: Контроли
+      kind: RecordList
+      xywh: [0, 20, 48, 32]
+      options:
+        module: compliance_controls
+        fields: [framework, name, data_class, policy, status]
+
+  connectors:
+    title: Подключения
+    handle: connectors
+    blocks:
+    - title: Обнаружение
+      kind: RuleChain
+      xywh: [0, 0, 16, 12]
+      options:
+        chain: dspm-run-discovery
+    - title: Задания в работе
+      kind: Progress
+      xywh: [16, 0, 32, 12]
+    - title: Коннекторы
+      kind: RecordList
+      xywh: [0, 12, 48, 24]
+      options:
+        module: connectors
+        fields: [name, kind, provider, environment, mode, status, last_scan]
+    - title: Задания
+      kind: RecordList
+      xywh: [0, 36, 48, 22]
+      options:
+        module: scans
+        fields: [connector, kind, status, progress, found, started_at]
+    pages:
+      connector:
+        title: Коннектор
+        handle: connector
+        module: connectors
+        blocks:
+        - title: Коннектор
+          kind: Record
+          xywh: [0, 0, 32, 24]
+        - title: Запустить обнаружение
+          kind: RuleChain
+          xywh: [32, 0, 16, 12]
+          options:
+            chain: dspm-run-discovery
+        - title: Задания
+          kind: RecordList
+          xywh: [0, 24, 48, 22]
+          options:
+            module: scans
+            fields: [kind, status, progress, found, started_at, error]
