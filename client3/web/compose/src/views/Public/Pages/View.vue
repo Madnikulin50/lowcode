@@ -383,6 +383,13 @@ function getBreakpoint() {
   return 'xxl'
 }
 
+// A block shown only inside a Tabs block is not part of the layout: it is handed to the grid
+// hidden (so it is not drawn on its own) and rendered by the tab. A copy, so that the page's
+// own block never gets the flag saved.
+function hiddenCopy(block) {
+  return Object.assign(Object.create(Object.getPrototypeOf(block)), block, { meta: { ...block.meta, hidden: true } })
+}
+
 async function prepareBlocks() {
   blocks.value = undefined
   const tempBlocks = []
@@ -408,7 +415,7 @@ async function prepareBlocks() {
 
   pageBlocks.forEach(block => {
     if (tabbedIDs.has(block.blockID)) {
-      tempBlocks.push(block)
+      tempBlocks.push(hiddenCopy(block))
     }
   })
 

@@ -323,6 +323,9 @@ const tempRecord = ref(undefined)
 const inEditing = ref(props.edit)
 const processing = ref(false)
 const processingAction = ref('')
+// the toolbar spins the button of the running action and locks itself while one is set:
+// every path that ends the processing (validation error, failed request) must clear it too
+watch(processing, (v) => { if (!v) processingAction.value = '' })
 
 function userMatchesVisibilityRoles (roles = []) {
   const have = new Set(($auth.user?.roles || []).map(String))
@@ -1321,6 +1324,13 @@ function getBreakpoint() {
   return 'xxl'
 }
 
+// A block shown only inside a Tabs block is not part of the layout: it is handed to the grid
+// hidden (so it is not drawn on its own) and rendered by the tab. A copy, so that the page's
+// own block never gets the flag saved.
+function hiddenCopy(block) {
+  return Object.assign(Object.create(Object.getPrototypeOf(block)), block, { meta: { ...block.meta, hidden: true } })
+}
+
 async function prepareBlocks() {
   blocks.value = undefined
   const tempBlocks = []
@@ -1345,7 +1355,7 @@ async function prepareBlocks() {
   })
 
   pageBlocks.forEach(block => {
-    if (tabbedIDs.has(block.blockID)) tempBlocks.push(block)
+    if (tabbedIDs.has(block.blockID)) tempBlocks.push(hiddenCopy(block))
   })
 
   return evaluateBlocks(tempBlocks)
