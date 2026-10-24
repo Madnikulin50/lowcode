@@ -50,6 +50,14 @@ watch(() => [pdInfo.value?.pageCount, rdInfo.value?.pageCount], ([a, b]) => clam
 
 // A click on a finding: open its pages in both documents and mark the region.
 const activeId = computed(() => viewer.activeId)
+// A finding with no page on one side: that side says so instead of showing the page that was open before.
+function missingNote (d, side) {
+  const here = side === 'ref' ? names.ref : names.target
+  const other = side === 'ref' ? names.target : names.ref
+  if (side === 'target' && (d.type === 'missing_page' || d.kind === 'not_released')) return `Для этого замечания в ${here} нет страницы: лист ${other} остался без пары (возможно, ещё не выпущен).`
+  if (side === 'ref' && (d.type === 'extra_page' || d.kind === 'scope_diff')) return `Для этого замечания в ${here} нет страницы: лист есть только в ${other}.`
+  return `У этого замечания нет страницы в ${here}: оно относится только к ${other}.`
+}
 function jump (d, scroll = true) {
   viewer.activeId = d.id || ''
   if (d.docRef) viewer.pdDoc = d.docRef
@@ -60,6 +68,8 @@ function jump (d, scroll = true) {
   if (pp) viewer.pdPage = pp
   if (rp) viewer.rdPage = rp
   if (!pp && !rp && legacy) { viewer.pdPage = legacy; viewer.rdPage = legacy }
+  viewer.noPd = pp || legacy ? '' : missingNote(d, 'ref')
+  viewer.noRd = rp || legacy ? '' : missingNote(d, 'target')
   viewer.hlPd = parseBox(d.bboxRef)
   viewer.hlRd = parseBox(d.bboxTarget)
   // regions are drawn on the side-by-side pages only
@@ -104,7 +114,7 @@ function assistContext (scope) {
 
 // The dialog sends the user to a sheet it named; a note it wrote can go into the remark card.
 function gotoSheet (j) {
-  if (j.side === 'ref') { viewer.pdDoc = j.doc; viewer.pdPage = j.page } else { viewer.rdDoc = j.doc; viewer.rdPage = j.page }
+  if (j.side === 'ref') { viewer.pdDoc = j.doc; viewer.pdPage = j.page; viewer.noPd = '' } else { viewer.rdDoc = j.doc; viewer.rdPage = j.page; viewer.noRd = '' }
   viewer.hlPd = null
   viewer.hlRd = null
   nextTick(() => {

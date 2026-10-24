@@ -45,6 +45,7 @@ const DISCREPANCY_TYPE = [
   ['missing_page', 'Отсутствует лист'],
   ['extra_page', 'Лишний лист'],
   ['drawing', 'Чертёж/схема'],
+  ['format', 'Оформление'],
 ]
 
 const SEVERITY = [

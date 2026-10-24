@@ -1,12 +1,12 @@
 <script setup>
 // What is shown instead of a page picture that is missing or failed to load.
-defineProps({ label: String, reason: String, retry: Boolean })
+defineProps({ label: String, reason: String, retry: Boolean, title: String })
 const emit = defineEmits(['retry'])
 </script>
 
 <template>
   <div class="page-missing" role="alert">
-    <div class="pm-title"><span v-if="label">{{ label }}: </span>страница недоступна</div>
+    <div class="pm-title"><span v-if="label">{{ label }}: </span>{{ title || 'страница недоступна' }}</div>
     <div class="pm-reason">{{ reason }}</div>
     <button v-if="retry" class="small" @click="emit('retry')">Повторить</button>
   </div>

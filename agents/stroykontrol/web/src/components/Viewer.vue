@@ -5,6 +5,7 @@ import { ZOOM_LEVELS, MODE_META, names, nm } from '../constants.js'
 import { pageSrc } from '../composables/useComparison.js'
 import ModeTabs from './ModeTabs.vue'
 import DocPager from './DocPager.vue'
+import PageMissing from './PageMissing.vue'
 import ZoomControls from './ZoomControls.vue'
 import SideBySideStage from './SideBySideStage.vue'
 import OverlayStage from './OverlayStage.vue'
@@ -40,6 +41,7 @@ function turn (side, page) {
   const other = side === 'pd' ? 'rd' : 'pd'
   const delta = page - v[side + 'Page']
   v[side + 'Page'] = page
+  v[side === 'pd' ? 'noPd' : 'noRd'] = ''
   if (!v.syncPages || !delta) return
   const count = other === 'pd' ? pdCount.value : rdCount.value
   const next = v[other + 'Page'] + delta
@@ -56,8 +58,8 @@ const docHref = (doc, page) => `?view=doc&source=comparison_doc&${props.qs}&id=$
 
     <div class="toolbar-row">
       <div class="doc-pagers">
-        <DocPager :open-href="docHref(viewer.pdDoc, viewer.pdPage)" :label="names.ref" :docs="pdDocs" v-model:doc-id="viewer.pdDoc" :page="viewer.pdPage" @update:page="turn('pd', $event)" :page-count="pdCount" :sheet-no="pdInfo?.sheetNo" />
-        <DocPager :open-href="docHref(viewer.rdDoc, viewer.rdPage)" :label="names.target" :docs="rdDocs" v-model:doc-id="viewer.rdDoc" :page="viewer.rdPage" @update:page="turn('rd', $event)" :page-count="rdCount" :sheet-no="rdInfo?.sheetNo" />
+        <DocPager :open-href="docHref(viewer.pdDoc, viewer.pdPage)" :label="names.ref" :docs="pdDocs" :doc-id="viewer.pdDoc" @update:doc-id="v => { viewer.pdDoc = v; viewer.noPd = '' }" :page="viewer.pdPage" @update:page="turn('pd', $event)" :page-count="pdCount" :sheet-no="pdInfo?.sheetNo" />
+        <DocPager :open-href="docHref(viewer.rdDoc, viewer.rdPage)" :label="names.target" :docs="rdDocs" :doc-id="viewer.rdDoc" @update:doc-id="v => { viewer.rdDoc = v; viewer.noRd = '' }" :page="viewer.rdPage" @update:page="turn('rd', $event)" :page-count="rdCount" :sheet-no="rdInfo?.sheetNo" />
       </div>
       <label class="sync-pages" title="Листать страницы обоих документов вместе: при смене страницы одного второй сдвигается на столько же">
         <input type="checkbox" v-model="viewer.syncPages" /> синхронно
@@ -67,9 +69,14 @@ const docHref = (doc, page) => `?view=doc&source=comparison_doc&${props.qs}&id=$
 
     <SideBySideStage
       v-if="viewer.mode === 'side'"
-      :pd-url="pdUrl" :rd-url="rdUrl" :pd-label="pdLabel" :rd-label="rdLabel" :zoom-pct="zoomPct"
+      :pd-url="pdUrl" :rd-url="rdUrl" :pd-note="viewer.noPd" :rd-note="viewer.noRd" :pd-label="pdLabel" :rd-label="rdLabel" :zoom-pct="zoomPct"
       :hl-pd="viewer.hlPd" :hl-rd="viewer.hlRd"
     />
+    <!-- overlay and difference need both pages: when a side has none for the chosen finding, say so -->
+    <div v-else-if="(viewer.mode === 'overlay' || viewer.mode === 'diff') && (viewer.noPd || viewer.noRd)" class="stage">
+      <PageMissing v-if="viewer.noPd" :label="names.ref" title="нет соответствующей страницы" :reason="viewer.noPd" />
+      <PageMissing v-if="viewer.noRd" :label="names.target" title="нет соответствующей страницы" :reason="viewer.noRd" />
+    </div>
     <OverlayStage v-else-if="viewer.mode === 'overlay'" :pd-url="pdUrl" :rd-url="rdUrl" :zoom-pct="zoomPct" :viewer="viewer" />
     <DiffStage v-else-if="viewer.mode === 'diff'" :pd-url="pdUrl" :rd-url="rdUrl" :zoom-pct="zoomPct" :viewer="viewer" />
     <TextDiffView

@@ -5,7 +5,7 @@ export const SEV_ORDER = { high: 0, medium: 1, low: 2 }
 export const SEV_LABEL = { low: 'низкая', medium: 'средняя', high: 'высокая' }
 export const TYPE_LABEL = {
   content: 'содержание', numbering: 'нумерация', drawing: 'чертёж',
-  missing_page: 'нет страницы', extra_page: 'лишняя страница',
+  missing_page: 'нет страницы', extra_page: 'лишняя страница', format: 'оформление',
 }
 
 // Small currentColor icons for the mode switcher (no icon font/CDN needed

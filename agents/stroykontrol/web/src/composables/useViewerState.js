@@ -18,6 +18,9 @@ export function useViewerState () {
     syncPages: false,
     // Boxes (page fractions) of the discrepancy being looked at, drawn on
     // the page images in the side-by-side mode.
+    // why a side shows no page for the chosen finding (it has none there); '' = show the page
+    noPd: '',
+    noRd: '',
     activeId: '',
     hlPd: null,
     hlRd: null,

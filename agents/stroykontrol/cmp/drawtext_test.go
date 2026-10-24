@@ -2,7 +2,9 @@ package cmp
 
 import "testing"
 
-func labelsPage(ws ...Word) Page { return Page{Number: 1, W: 1000, H: 700, HasText: true, Drawing: true, Labels: ws} }
+func labelsPage(ws ...Word) Page {
+	return Page{Number: 1, W: 1000, H: 700, HasText: true, Drawing: true, Labels: ws}
+}
 
 func TestSheetTextFindings(t *testing.T) {
 	w := func(s string, x, y float64) Word { return Word{s, Box{x, y, x + 0.05, y + 0.01}} }

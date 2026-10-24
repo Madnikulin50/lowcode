@@ -406,10 +406,42 @@ func (c *ComposeClient) Documents(ns, recordID string) ([]documentRecord, error)
 		log.Printf("cmp_documents lookup failed: %v", err)
 		recs = nil
 	}
+	// no files of its own: the comparison reads the document sets it points at (set_pd / set_rd),
+	// the same files the engine takes (cmp.ListDocs)
+	have := map[string]bool{}
+	setSide := map[string]string{}
+	for _, d := range recs {
+		have[d.RecordID] = true
+	}
+	for _, f := range []struct{ field, side string }{{"set_pd", cmp.SideRef}, {"set_rd", cmp.SideTarget}} {
+		setID := cmpRec.val(f.field)
+		if setID == "" {
+			continue
+		}
+		sr, err := c.searchRecords(ns, cmp.ModDocuments, fmt.Sprintf("set = '%s'", setID))
+		if err != nil {
+			log.Printf("cmp_documents of set %s lookup failed: %v", setID, err)
+			continue
+		}
+		for _, d := range sr {
+			if d.val("file") == "" || have[d.RecordID] {
+				continue
+			}
+			have[d.RecordID] = true
+			setSide[d.RecordID] = f.side // the set decides the side, whatever the document says
+			recs = append(recs, d)
+		}
+	}
 	// a later iteration inherits the reference set (ПД) of the previous one
+	sideOf := func(d record) string {
+		if sd := setSide[d.RecordID]; sd != "" {
+			return sd
+		}
+		return d.val("side")
+	}
 	hasRef := false
 	for _, d := range recs {
-		hasRef = hasRef || (d.val("side") == cmp.SideRef && d.val("file") != "")
+		hasRef = hasRef || (sideOf(d) == cmp.SideRef && d.val("file") != "")
 	}
 	if !hasRef {
 		for _, anc := range cmp.Ancestors(composeBackend{c}, ns, recordID)[1:] {
@@ -434,7 +466,7 @@ func (c *ComposeClient) Documents(ns, recordID string) ([]documentRecord, error)
 		if att == "" {
 			continue
 		}
-		side := d.val("side")
+		side := sideOf(d)
 		if side != cmp.SideRef {
 			side = cmp.SideTarget
 		}
@@ -475,7 +507,7 @@ func (c *ComposeClient) FetchDocument(ns, recordID, docID string) ([]byte, strin
 	if err != nil {
 		return nil, "", err
 	}
-	if !c.inChain(ns, recordID, d.val("comparison")) {
+	if !c.inChain(ns, recordID, d.val("comparison")) && !c.inSets(ns, recordID, d.val("set")) {
 		return nil, "", fmt.Errorf("document %s does not belong to comparison %s", docID, recordID)
 	}
 	attID := d.val("file")
@@ -483,6 +515,18 @@ func (c *ComposeClient) FetchDocument(ns, recordID, docID string) ([]byte, strin
 		return nil, "", fmt.Errorf("document %s has no file", docID)
 	}
 	return c.downloadOriginal(ns, attID)
+}
+
+// inSets reports whether setID is one of the document sets the comparison points at.
+func (c *ComposeClient) inSets(ns, recordID, setID string) bool {
+	if setID == "" {
+		return false
+	}
+	rec, err := c.getRecord(ns, comparisonModule, recordID)
+	if err != nil {
+		return false
+	}
+	return rec.val("set_pd") == setID || rec.val("set_rd") == setID
 }
 
 // inChain reports whether owner is the comparison or one of its previous
