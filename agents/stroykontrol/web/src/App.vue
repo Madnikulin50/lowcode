@@ -161,7 +161,7 @@ watch(() => cmp.comparison?.discrepancies, (list) => {
       />
 
       <DiscrepancyList
-        :list="cmp.comparison.discrepancies" :documents="cmp.comparison.documents" :busy="cmp.busy" :active-id="activeId" :error="cmp.actionError"
+        :list="cmp.comparison.discrepancies" :documents="cmp.comparison.documents" :busy="cmp.busy" :active-id="activeId" :error="cmp.actionError" :pd-page="viewer.pdPage" :rd-page="viewer.rdPage"
         @jump="jump" @status="setStatus" @status-many="setStatusMany" @remark="createRemark"
       />
       <IssuePanel

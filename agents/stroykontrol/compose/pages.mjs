@@ -17,6 +17,14 @@ import {
 
 // фильтр «рабочие данные»: демо-записи в списках и метриках скрыты
 export const REAL = "(data_kind != 'demo' OR data_kind IS NULL)"
+// Описание ролей (создаются roles.mjs); участники назначаются в администрировании платформы → Роли.
+const ROLES_HTML = '<p>Доступ к модулям пространства выдаётся ролями платформы (создаются <code>node compose/roles.mjs</code>). ' +
+  'Участников в роли назначает администратор: <b>Администрирование платформы → Роли</b>.</p><ul>' +
+  '<li><b>Наблюдатель</b> (<code>stroykontrol_view</code>) — читает всё, ничего не меняет;</li>' +
+  '<li><b>Проектировщик</b> (<code>stroykontrol_des</code>) — загружает документацию и работает с замечаниями;</li>' +
+  '<li><b>Специалист КК</b> (<code>stroykontrol_qc</code>) — как проектировщик, плюс решения по расхождениям, сравнениям и пакетам исправления;</li>' +
+  '<li><b>Руководитель проекта</b> (<code>stroykontrol_mgr</code>) — пишет во все модули пространства.</li></ul>'
+
 const AGENT = '/gateway/agents/stroykontrol/'
 
 const iframe = (title, xywh, query) => block('IFrame', title, xywh, {
@@ -171,11 +179,18 @@ export function buildPages (m) {
   add(objectsList, objectCard)
 
   // ---- Проверки (сквозные списки по всем объектам) ----
-  defs.push(group('Проверки', 'checks', 20, 'fas clipboard-check', 'Сквозные списки по всем объектам: комплекты, сравнения, замечания, проверка ИД и ВОИСР. Работать удобнее из карточки объекта.'))
+  defs.push(group('Документация', 'docs', 15, 'fas folder-open', 'Комплекты документов, пакеты исправления, ведомость состава томов, сооружения и журнал загрузок.'))
+  defs.push(group('Сравнение', 'compare', 25, 'fas code-compare', 'Сравнения ПД/РД, их расхождения и карточки замечаний по сравнению.'))
+  defs.push(group('Замечания', 'remarks', 30, 'fas comments', 'Реестр замечаний экспертизы, журнал выгрузок, срезы реестра и уведомления. Рабочее место замечаний объекта — в карточке объекта.'))
+  defs.push(group('Проверки', 'checks', 20, 'fas clipboard-check', 'Сквозные списки по исполнительной документации (ИД), сметам и ВОИСР. Работать удобнее из карточки объекта.'))
   const P = { parent: 'checks' }
+  const D = { parent: 'docs' }
+  const C = { parent: 'compare' }
+  const M = { parent: 'remarks' }
+  const A = { parent: 'admin' }
 
   add(listPage('Комплекты документов', 'document_sets', 21, 'fas boxes-stacked', m.document_sets,
-    ['object', 'stage', 'version', 'status', 'issued_at', 'completeness_pct', 'completeness_note'], { ...P, prefilter: REAL }),
+    ['object', 'stage', 'version', 'status', 'issued_at', 'completeness_pct', 'completeness_note'], { ...D, prefilter: REAL }),
   card('Комплект документов', 'document_set', m.document_sets, 22,
     ['object', 'stage', 'version', 'status', 'issued_at', 'comment', 'volumes_present', 'volumes_total', 'completeness_pct', 'completeness_note'],
     { version: 'title', stage: 'badge', status: 'badge', comment: 'body' }, [
@@ -185,7 +200,7 @@ export function buildPages (m) {
     ]))
 
   add(listPage('Сравнения ПД/РД', 'pd_rd_comparisons', 23, 'fas file-invoice', m.pd_rd_comparisons,
-    ['title', 'object', 'kind', 'sets_label', 'iteration_no', 'status', 'similarity_percent', 'differing_pages'], { ...P, prefilter: REAL }),
+    ['title', 'object', 'kind', 'sets_label', 'iteration_no', 'status', 'similarity_percent', 'differing_pages'], { ...C, prefilter: REAL }),
   card('Сравнение ПД/РД', 'pd_rd_comparison', m.pd_rd_comparisons, 24, [
     'title', 'object', 'kind', 'set_pd', 'set_rd', 'sets_label', 'iteration_no', 'parent_comparison', 'status', 'pd_file', 'rd_file', 'similarity_percent',
     'total_pages_pd', 'total_pages_rd', 'matching_pages', 'differing_pages', 'comment',
@@ -212,7 +227,7 @@ export function buildPages (m) {
   ]))
 
   add(listPage('Пакеты исправления', 'correction_packages', 24.5, 'fas box-open', m.correction_packages,
-    ['title', 'object', 'iteration_no', 'n_documents', 'n_remarks', 'resolved', 'persisting', 'new_findings', 'runs', 'last_run'], { ...P, hideAddButton: true, prefilter: REAL, presort: 'last_run DESC' }),
+    ['title', 'object', 'iteration_no', 'n_documents', 'n_remarks', 'resolved', 'persisting', 'new_findings', 'runs', 'last_run'], { ...D, hideAddButton: true, prefilter: REAL, presort: 'last_run DESC' }),
   card('Пакет исправления', 'correction_package', m.correction_packages, 24.6,
     ['title', 'object', 'comparison', 'parent_comparison', 'iteration_no', 'n_documents', 'n_remarks', 'resolved', 'persisting', 'new_findings', 'runs', 'last_run', 'history_json'],
     { title: 'title', history_json: 'body' }, [
@@ -221,14 +236,14 @@ export function buildPages (m) {
     ], 'fas box-open'))
 
   add(listPage('Расхождения ПД/РД', 'pd_rd_discrepancies', 25, 'fas triangle-exclamation', m.pd_rd_discrepancies,
-    ['comparison', 'severity', 'kind', 'status', 'iter_state', 'page_pd', 'page_rd', 'description'], { ...P, prefilter: REAL }),
+    ['comparison', 'severity', 'kind', 'status', 'iter_state', 'page_pd', 'page_rd', 'description'], { ...C, prefilter: REAL }),
   card('Расхождение ПД/РД', 'pd_rd_discrepancy', m.pd_rd_discrepancies, 26,
     ['comparison', 'severity', 'kind', 'status', 'page_pd', 'page_rd', 'description', 'anchor_text', 'evidence'],
     { discrepancy_type: 'title', severity: 'badge', status: 'badge', description: 'body' }))
 
   add(listPage('Замечания экспертизы', 'expertise_remarks', 27, 'fas comments', m.expertise_remarks,
     ['object', 'number', 'origin', 'criticality', 'status', 'discipline', 'expert', 'iterations', 'verdict', 'assignee', 'due_date', 'text'],
-    { ...P, hideAddButton: true, perPage: 50, prefilter: REAL }),
+    { ...M, hideAddButton: true, perPage: 50, prefilter: REAL }),
   card('Замечание экспертизы', 'expertise_remark', m.expertise_remarks, 28, [
     'object', 'number', 'origin', 'source_comparison', 'criticality', 'status', 'assignee', 'due_date', 'discipline', 'expert', 'section', 'iterations', 'source_status',
     'text', 'refs_text', 'basis', 'answer', 'reject_reason', 'prev_answer', 'prev_reject_reason', 'proposals', 'expected_result', 'pto_note', 'estimate_h',
@@ -265,10 +280,10 @@ export function buildPages (m) {
   defs.push(group('Справочники', 'refs', 40, 'fas book', 'Нормативные документы, юрлица, специалисты и ведомости состава томов.'))
   const R = { parent: 'refs' }
   add(listPage('Ведомость состава томов', 'object_volumes', 41, 'fas list-ol', m.object_volumes,
-    ['object', 'stage', 'kind', 'volume_code', 'title', 'parent_code', 'required', 'proposed', 'source'], { ...R, perPage: 100, presort: 'volume_code ASC' }),
+    ['object', 'stage', 'kind', 'volume_code', 'title', 'parent_code', 'required', 'proposed', 'source'], { ...D, perPage: 100, presort: 'volume_code ASC' }),
   card('Позиция ведомости', 'object_volume', m.object_volumes, 42, ['object', 'stage', 'kind', 'volume_code', 'title', 'parent_code', 'required', 'proposed', 'source', 'evidence'], { volume_code: 'title' }))
   add(listPage('Сооружения и участки', 'structures', 42.5, 'fas bridge', m.structures,
-    ['object', 'name', 'code', 'kind', 'location'], { ...R, perPage: 100, presort: 'name ASC' }))
+    ['object', 'name', 'code', 'kind', 'location'], { ...D, perPage: 100, presort: 'name ASC' }))
   add(listPage('Нормативные документы', 'norm_docs', 43, 'fas book', m.norm_docs,
     ['code', 'title', 'valid_from', 'valid_to', 'replaced_by', 'work_tags'], { ...R, perPage: 100, presort: 'code ASC' }),
   card('Нормативный документ', 'norm_doc', m.norm_docs, 44, ['code', 'title', 'valid_from', 'valid_to', 'replaced_by', 'work_tags'], { code: 'title' }))
@@ -282,59 +297,62 @@ export function buildPages (m) {
     ['nrs_id', 'fio', 'status', 'status_text', 'checked_at'], R))
 
   // ---- Служебное ----
-  defs.push(group('Служебное', 'service', 60, 'fas gear', 'Служебные списки: документы сравнений, журналы, строки реестров и смет, демо-данные. Для повседневной работы не нужны.'))
-  const S = { parent: 'service' }
+  defs.push(group('Администрирование', 'admin', 50, 'fas gear', 'Получатели уведомлений, роли и доступ, демо-данные. Для повседневной работы не нужны.'))
+  defs.push({
+    title: 'Роли и доступ', handle: 'roles', visible: true, weight: 60.5, parent: 'admin', config: pageIcon('fas user-shield'),
+    blocks: withBlockIDs([block('Content', 'Роли и доступ', [0, 0, 48, 30], { body: ROLES_HTML })]),
+  })
   add(listPage('Демо-данные (объекты)', 'demo_objects', 61, 'fas flask', m.objects,
-    ['name', 'code', 'address', 'status', 'data_kind'], { ...S, prefilter: "data_kind = 'demo'" }))
+    ['name', 'code', 'address', 'status', 'data_kind'], { ...A, prefilter: "data_kind = 'demo'" }))
   add(listPage('Документы сравнений', 'cmp_documents', 62, 'fas file-pdf', m.cmp_documents,
-    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'section', 'structure', 'change_no', 'pages', 'detected_by'], S),
+    ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'section', 'structure', 'change_no', 'pages', 'detected_by'], D),
   card('Документ', 'cmp_document', m.cmp_documents, 63,
     ['set', 'comparison', 'side', 'file', 'doc_version', 'volume_code', 'volume_title', 'section', 'structure', 'change_no', 'object_name', 'structure_object', 'subsection', 'part', 'book', 'pages', 'file_hash', 'released', 'detected_by'],
     { file: 'title', side: 'badge' }))
   add(listPage('Журнал загрузок документации', 'upload_log', 63.5, 'fas file-arrow-up', m.upload_log,
-    ['uploaded_at', 'object', 'uploaded_by', 'file_name', 'volume_code', 'kind', 'note', 'pages'], { ...S, hideAddButton: true, presort: 'uploaded_at DESC' }))
+    ['uploaded_at', 'object', 'uploaded_by', 'file_name', 'volume_code', 'kind', 'note', 'pages'], { ...D, hideAddButton: true, presort: 'uploaded_at DESC' }))
   add(listPage('Журнал выгрузок замечаний', 'expertise_imports', 64, 'fas clock-rotate-left', m.expertise_imports,
-    ['object', 'imported_at', 'file', 'total', 'new_count', 'changed_count', 'status_changes', 'reopened', 'archived_count'], { ...S, hideAddButton: true }))
+    ['object', 'imported_at', 'file', 'total', 'new_count', 'changed_count', 'status_changes', 'reopened', 'archived_count'], { ...M, hideAddButton: true }))
   add(listPage('Срезы реестра замечаний', 'expertise_snapshots', 64.5, 'fas chart-line', m.expertise_snapshots,
-    ['object', 'day', 'total', 'overdue', 'n_awaiting_answer', 'n_being_fixed', 'n_answer_review', 'n_rework', 'n_resolved'], { ...S, hideAddButton: true }))
+    ['object', 'day', 'total', 'overdue', 'n_awaiting_answer', 'n_being_fixed', 'n_answer_review', 'n_rework', 'n_resolved'], { ...M, hideAddButton: true }))
   add(listPage('Получатели уведомлений', 'notify_recipients', 64.6, 'fas bell', m.notify_recipients,
-    ['name', 'email', 'role', 'object', 'events', 'active'], S))
+    ['name', 'email', 'role', 'object', 'events', 'active'], A))
   add(listPage('Уведомления', 'notifications', 64.7, 'fas envelope', m.notifications,
-    ['created_at', 'object', 'number', 'event', 'recipient', 'title', 'delivery', 'read', 'error'], { ...S, hideAddButton: true }))
+    ['created_at', 'object', 'number', 'event', 'recipient', 'title', 'delivery', 'read', 'error'], { ...M, hideAddButton: true }))
   add(listPage('Карточки замечаний (по сравнению)', 'remark_cards', 65, 'fas clipboard-list', m.remark_cards,
-    ['comparison', 'document_ref', 'sheet', 'final_text', 'status'], S),
+    ['comparison', 'document_ref', 'sheet', 'final_text', 'status'], C),
   card('Карточка замечания', 'remark_card', m.remark_cards, 66,
     ['comparison', 'document_ref', 'sheet', 'what_diverges', 'must_align', 'draft_text', 'final_text', 'status'],
     { document_ref: 'title', status: 'badge', what_diverges: 'body' }))
   add(listPage('Акты ИД', 'acts', 67, 'fas file-signature', m.acts,
-    ['package', 'file_name', 'doc_number', 'doc_date', 'positions', 'ocr_status', 'check_status', 'issues_high', 'issues_medium'], { ...S, hideAddButton: true }),
+    ['package', 'file_name', 'doc_number', 'doc_date', 'positions', 'ocr_status', 'check_status', 'issues_high', 'issues_medium'], { ...P, hideAddButton: true }),
   actCard(m))
   add(listPage('Строки реестра ИД (передача)', 'registry_rows', 69, 'fas table-list', m.registry_rows,
-    ['package', 'row_no', 'kind', 'position', 'doc_number', 'doc_date', 'qty_ks2', 'qty_project', 'qty_fact'], { ...S, hideAddButton: true, perPage: 50 }),
+    ['package', 'row_no', 'kind', 'position', 'doc_number', 'doc_date', 'qty_ks2', 'qty_project', 'qty_fact'], { ...P, hideAddButton: true, perPage: 50 }),
   card('Строка реестра', 'registry_row', m.registry_rows, 70, [
     'package', 'row_no', 'seq', 'kind', 'position', 'work_name', 'doc_name', 'doc_number', 'doc_number_norm',
     'doc_date', 'doc_date_raw', 'unit', 'qty_vrc', 'qty_total', 'qty_ks2', 'qty_project', 'qty_fact',
   ]))
   add(listPage('Сводка по позициям (реестр ↔ КС-2)', 'position_summary', 71, 'fas scale-balanced', m.position_summary,
-    ['package', 'position', 'name', 'unit', 'registry_sum', 'registry_ks2', 'ks2_qty', 'delta', 'status'], { ...S, hideAddButton: true, perPage: 100 }))
+    ['package', 'position', 'name', 'unit', 'registry_sum', 'registry_ks2', 'ks2_qty', 'delta', 'status'], { ...P, hideAddButton: true, perPage: 100 }))
   add(listPage('Реестр ИД (комплектность)', 'id_registry', 72, 'fas list-check', m.id_registry,
-    ['object', 'doc_name', 'doc_number', 'doc_version', 'doc_type', 'is_required'], S),
+    ['object', 'doc_name', 'doc_number', 'doc_version', 'doc_type', 'is_required'], P),
   card('Позиция реестра ИД', 'id_registry_item', m.id_registry, 73,
     ['object', 'doc_name', 'doc_number', 'doc_version', 'doc_type', 'is_required'], { doc_name: 'title', doc_number: 'subtitle', doc_type: 'badge' }))
   add(listPage('Файлы ИД', 'id_files', 74, 'fas file-arrow-up', m.id_files,
-    ['object', 'file', 'recognized_name', 'matched_registry', 'match_status'], S),
+    ['object', 'file', 'recognized_name', 'matched_registry', 'match_status'], P),
   card('Файл ИД', 'id_file', m.id_files, 75, ['object', 'file', 'recognized_name', 'recognized_number', 'recognized_version',
     'matched_registry', 'match_status', 'uploaded_at', 'extracted_text'], { recognized_name: 'title', match_status: 'badge' }))
   add(listPage('Проверки комплектности ИД', 'id_check_runs', 76, 'fas clipboard-check', m.id_check_runs,
-    ['object', 'run_date', 'total_registry_docs', 'uploaded_docs', 'missing_docs', 'mismatched_docs', 'overall_status'], S),
+    ['object', 'run_date', 'total_registry_docs', 'uploaded_docs', 'missing_docs', 'mismatched_docs', 'overall_status'], P),
   card('Проверка комплектности ИД', 'id_check_run', m.id_check_runs, 77, ['object', 'run_date', 'total_registry_docs', 'uploaded_docs', 'missing_docs',
     'mismatched_docs', 'overall_status', 'report_file'], { object: 'title', overall_status: 'badge' }))
   add(listPage('Позиции смет', 'smeta_items', 78, 'fas file-invoice-dollar', m.smeta_items,
-    ['object', 'smeta_number', 'item_number', 'work_name', 'volume', 'unit', 'total_amount'], S),
+    ['object', 'smeta_number', 'item_number', 'work_name', 'volume', 'unit', 'total_amount'], P),
   card('Позиция сметы', 'smeta_item', m.smeta_items, 79,
     ['object', 'smeta_number', 'item_number', 'work_name', 'unit', 'volume', 'unit_price', 'total_amount'], { work_name: 'title', smeta_number: 'subtitle' }))
   add(listPage('Позиции ВОИСР', 'voisr_items', 80, 'fas table-list', m.voisr_items,
-    ['object', 'position_number', 'work_name', 'smeta_ref', 'volume', 'amount'], S),
+    ['object', 'position_number', 'work_name', 'smeta_ref', 'volume', 'amount'], P),
   card('Позиция ВОИСР', 'voisr_item', m.voisr_items, 81, ['object', 'position_number', 'work_name', 'smeta_ref', 'volume', 'amount'],
     { work_name: 'title', position_number: 'subtitle' }, [ruleChain('Проверить ВОИСР', [0, 20, 48, 8], {
       chainID: 'stroykontrol-check-voisr', label: 'Проверить со сметой (агент)', variant: 'primary', icon: 'scale-balanced',

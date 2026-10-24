@@ -146,6 +146,9 @@ type Page struct {
 	Raster bool
 	// Words with their boxes, kept for table pages (not for drawing sheets).
 	Words []Word `json:",omitempty"`
+	// Labels: the words of a drawing sheet's text layer (not of its title block), kept so the
+	// notes and dimensions of paired sheets can be compared as text.
+	Labels []Word `json:",omitempty"`
 }
 
 // Word is one word of a page with its box in page fractions.

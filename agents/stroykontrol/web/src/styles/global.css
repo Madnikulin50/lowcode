@@ -402,3 +402,7 @@ button.small:disabled { opacity: .5; cursor: default; }
 .rm-req-note { margin-top: 3px; }
 .rm-warn { color: var(--warn); font-size: 12px; margin: 4px 0; }
 .kpi.static { cursor: default; }
+
+.sync-pages { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.page-filter { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; white-space: nowrap; }
+.page-filter input { width: 70px; }

@@ -14,6 +14,8 @@ export function useViewerState () {
     rdDoc: '',
     pdPage: 1,
     rdPage: 1,
+    // page turning of one side moves the other by the same step
+    syncPages: false,
     // Boxes (page fractions) of the discrepancy being looked at, drawn on
     // the page images in the side-by-side mode.
     activeId: '',

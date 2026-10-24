@@ -47,7 +47,7 @@ func ExtractPages(docID string, data []byte, cacheDir string) ([]Page, error) {
 	key := hashKey(data)
 	cachePath := ""
 	if cacheDir != "" {
-		cachePath = filepath.Join(cacheDir, "cmp7-"+key+".json")
+		cachePath = filepath.Join(cacheDir, "cmp8-"+key+".json")
 		if b, err := os.ReadFile(cachePath); err == nil {
 			var pages []Page
 			if json.Unmarshal(b, &pages) == nil {
@@ -178,6 +178,14 @@ func buildPage(docID string, number int, w, h float64, words []word) Page {
 		p.Words = make([]Word, len(words))
 		for i, wd := range words {
 			p.Words[i] = Word{wd.text, Box{clamp01(wd.x0 / w), clamp01(wd.y0 / h), clamp01(wd.x1 / w), clamp01(wd.y1 / h)}}
+		}
+	}
+	if p.Drawing && p.HasText {
+		for _, wd := range words {
+			b := Box{clamp01(wd.x0 / w), clamp01(wd.y0 / h), clamp01(wd.x1 / w), clamp01(wd.y1 / h)}
+			if !inTitleBlock(b) {
+				p.Labels = append(p.Labels, Word{wd.text, b})
+			}
 		}
 	}
 	for i := range p.Lines {

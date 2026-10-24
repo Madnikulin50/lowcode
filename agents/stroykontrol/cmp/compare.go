@@ -532,6 +532,12 @@ func compareDrawings(p *Pair, docs map[string]*Document, img Imager, st *Stats, 
 		}
 		out = append(out, visual(fmt.Sprintf("%s не нашлось пары: только в ПД — %s; только в РД — %s", basis, sheetNos(onlyRef), sheetNos(onlyTgt)))...)
 	}
+	for i, pr := range pairs {
+		if i >= maxDrawingPairs {
+			break
+		}
+		out = append(out, sheetTextFindings(pr[0], pr[1], label, by, skip, st)...)
+	}
 	if img == nil {
 		return append(out, visual("сравнение изображений недоступно")...)
 	}

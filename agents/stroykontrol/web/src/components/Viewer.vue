@@ -32,6 +32,19 @@ const pdLabel = computed(() => names.ref + ' — ' + nameOf(props.pdDocs, props.
 const rdLabel = computed(() => names.target + ' — ' + nameOf(props.rdDocs, props.viewer.rdDoc, '') + ` (стр. ${props.viewer.rdPage})`)
 const foldBase = computed(() => `${props.viewer.pdDoc}:${props.viewer.pdPage}|${props.viewer.rdDoc}:${props.viewer.rdPage}`)
 const emit = defineEmits(['assistant'])
+
+// Optional linked paging: turning a page of one document moves the other by
+// the same number of pages (the offset between the two stays as it was).
+function turn (side, page) {
+  const v = props.viewer
+  const other = side === 'pd' ? 'rd' : 'pd'
+  const delta = page - v[side + 'Page']
+  v[side + 'Page'] = page
+  if (!v.syncPages || !delta) return
+  const count = other === 'pd' ? pdCount.value : rdCount.value
+  const next = v[other + 'Page'] + delta
+  v[other + 'Page'] = count > 0 ? Math.min(Math.max(next, 1), count) : Math.max(next, 1)
+}
 // a link to the viewer of one document: the same file, the page on screen, back to this comparison
 const docHref = (doc, page) => `?view=doc&source=comparison_doc&${props.qs}&id=${encodeURIComponent(doc || '')}&page=${page || 1}`
 </script>
@@ -43,9 +56,12 @@ const docHref = (doc, page) => `?view=doc&source=comparison_doc&${props.qs}&id=$
 
     <div class="toolbar-row">
       <div class="doc-pagers">
-        <DocPager :open-href="docHref(viewer.pdDoc, viewer.pdPage)" :label="names.ref" :docs="pdDocs" v-model:doc-id="viewer.pdDoc" v-model:page="viewer.pdPage" :page-count="pdCount" :sheet-no="pdInfo?.sheetNo" />
-        <DocPager :open-href="docHref(viewer.rdDoc, viewer.rdPage)" :label="names.target" :docs="rdDocs" v-model:doc-id="viewer.rdDoc" v-model:page="viewer.rdPage" :page-count="rdCount" :sheet-no="rdInfo?.sheetNo" />
+        <DocPager :open-href="docHref(viewer.pdDoc, viewer.pdPage)" :label="names.ref" :docs="pdDocs" v-model:doc-id="viewer.pdDoc" :page="viewer.pdPage" @update:page="turn('pd', $event)" :page-count="pdCount" :sheet-no="pdInfo?.sheetNo" />
+        <DocPager :open-href="docHref(viewer.rdDoc, viewer.rdPage)" :label="names.target" :docs="rdDocs" v-model:doc-id="viewer.rdDoc" :page="viewer.rdPage" @update:page="turn('rd', $event)" :page-count="rdCount" :sheet-no="rdInfo?.sheetNo" />
       </div>
+      <label class="sync-pages" title="Листать страницы обоих документов вместе: при смене страницы одного второй сдвигается на столько же">
+        <input type="checkbox" v-model="viewer.syncPages" /> синхронно
+      </label>
       <ZoomControls v-if="viewer.mode !== 'text'" :viewer="viewer" />
     </div>
 

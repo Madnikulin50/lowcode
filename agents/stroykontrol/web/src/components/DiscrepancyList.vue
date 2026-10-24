@@ -7,11 +7,11 @@ import { SEV_ORDER, SEV_LABEL, TYPE_LABEL, KIND_LABEL, REVIEW_LABEL, ITER_LABEL,
 import { splitSource } from '../composables/useTextDiff.js'
 import { parseEvidence } from '../utils.js'
 
-const props = defineProps({ list: Array, documents: Array, busy: Boolean, activeId: String, error: String })
+const props = defineProps({ list: Array, documents: Array, busy: Boolean, activeId: String, error: String, pdPage: Number, rdPage: Number })
 const emit = defineEmits(['jump', 'status', 'status-many', 'remark'])
 
 const INFO_KINDS = ['not_released', 'scope_diff']
-const filter = reactive({ severity: '', status: '', kind: '', iter: '', hideInfo: false })
+const filter = reactive({ severity: '', status: '', kind: '', iter: '', hideInfo: false, pagePd: '', pageRd: '' })
 const selected = reactive(new Set())
 const open = reactive(new Set())
 
@@ -30,7 +30,31 @@ const reviewCounts = computed(() => {
 const hasIterations = computed(() => props.list.some(d => d.iterState))
 const kindsPresent = computed(() => [...new Set(props.list.map(d => d.kind).filter(Boolean))])
 
+// "3, 5-7" -> a predicate over page numbers; null: no restriction
+function parsePages (str) {
+  const parts = String(str || '').split(/[,;\s]+/).map(x => x.trim()).filter(Boolean)
+  const ranges = []
+  for (const p of parts) {
+    const m = /^(\d+)(?:\s*[-–]\s*(\d+))?$/.exec(p)
+    if (!m) continue
+    const a = Number(m[1]), b = m[2] ? Number(m[2]) : a
+    ranges.push([Math.min(a, b), Math.max(a, b)])
+  }
+  if (!ranges.length) return null
+  return n => n > 0 && ranges.some(([a, b]) => n >= a && n <= b)
+}
+// a finding without per-side pages (older records) has only pageNumber, which counts for both sides
+const pageOf = (d, side) => Number(side === 'pd' ? d.pageRef : d.pageTarget) || (!d.pageRef && !d.pageTarget ? Number(d.pageNumber) || 0 : 0)
+const pageFilterOn = computed(() => !!(filter.pagePd.trim() || filter.pageRd.trim()))
+const filterOn = computed(() => !!(filter.severity || filter.status || filter.kind || filter.iter || filter.hideInfo || pageFilterOn.value))
+function currentPages () {
+  filter.pagePd = String(props.pdPage || '')
+  filter.pageRd = String(props.rdPage || '')
+}
+function resetPages () { filter.pagePd = ''; filter.pageRd = '' }
+
 const rows = computed(() => {
+  const inPd = parsePages(filter.pagePd), inRd = parsePages(filter.pageRd)
   const sorted = props.list.slice().sort((a, b) => (SEV_ORDER[a.severity] ?? 9) - (SEV_ORDER[b.severity] ?? 9))
   return sorted
     .filter(d => !filter.severity || d.severity === filter.severity)
@@ -38,6 +62,8 @@ const rows = computed(() => {
     .filter(d => !filter.kind || d.kind === filter.kind)
     .filter(d => !filter.iter || d.iterState === filter.iter)
     .filter(d => !(filter.hideInfo && INFO_KINDS.includes(d.kind)))
+    .filter(d => !inPd || inPd(pageOf(d, 'pd')))
+    .filter(d => !inRd || inRd(pageOf(d, 'rd')))
     .map(d => {
       const { source, text } = splitSource(d.description)
       const typeLabel = d.type && TYPE_LABEL[d.type] ? TYPE_LABEL[d.type] : null
@@ -86,7 +112,7 @@ function makeCard () {
 
 <template>
   <div class="discrepancies">
-    <h2>Расхождения ({{ list.length }})</h2>
+    <h2>Расхождения ({{ filterOn ? `${rows.length} из ${list.length}` : list.length }})</h2>
     <div v-if="error" class="err action-err">Не удалось выполнить действие: {{ error }}</div>
 
     <div v-if="!list.length" class="empty">Расхождений не найдено.</div>
@@ -117,6 +143,10 @@ function makeCard () {
           <option value="">любой вид</option>
           <option v-for="k in kindsPresent" :key="k" :value="k">{{ KIND_LABEL[k] || k }}</option>
         </select>
+        <label class="page-filter" title="Номера и диапазоны через запятую: 3, 5-7">стр. ПД <input v-model="filter.pagePd" placeholder="все" /></label>
+        <label class="page-filter" title="Номера и диапазоны через запятую: 3, 5-7">стр. РД <input v-model="filter.pageRd" placeholder="все" /></label>
+        <button class="small" title="Показать расхождения страниц, открытых сейчас в просмотрщике" @click="currentPages">текущие страницы</button>
+        <button v-if="pageFilterOn" class="small" @click="resetPages">все страницы ✕</button>
         <label class="chk"><input type="checkbox" v-model="filter.hideInfo" /> скрыть «не выпущено / вне объёма»</label>
         <span class="grow"></span>
         <button class="small" :disabled="busy || !confirmable.length" title="Подтвердить все нерешённые расхождения выше «низкой» критичности: по подтверждённым формируются замечания" @click="confirmAll">Подтвердить все выше «низкой» ({{ confirmable.length }})</button>
