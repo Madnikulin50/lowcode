@@ -197,6 +197,15 @@ import {
   faFileLines,
   faCodeCompare,
   faShieldHalved,
+  faFolderOpen,
+  faBoxOpen,
+  faBridge,
+  faFilePdf as faFilePdfSolid,
+  faFileSignature,
+  faClipboardList,
+  faIdBadge,
+  faUserShield,
+  faFlask,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -227,6 +236,15 @@ import {
 } from '@fortawesome/free-regular-svg-icons'
 
 library.add(
+  faFolderOpen,
+  faBoxOpen,
+  faBridge,
+  faFilePdfSolid,
+  faFileSignature,
+  faClipboardList,
+  faIdBadge,
+  faUserShield,
+  faFlask,
   faCompressAlt,
   faCrosshairs,
   faLockOpen,

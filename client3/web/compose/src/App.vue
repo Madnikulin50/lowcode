@@ -153,3 +153,18 @@ function textDirectionality(lang) {
   return rtlLanguages.includes(base) ? 'rtl' : 'ltr'
 }
 </script>
+
+<style>
+/* a required field of a record form: the editors put `required` on their root */
+.mb-3.required > div:first-child > .text-primary > span[title]::after {
+  content: " *";
+  color: var(--bs-danger, #dc3545);
+  white-space: pre;
+}
+/* the field the form stopped on */
+.field-focus-error { animation: field-focus-error 1.2s ease-out; }
+@keyframes field-focus-error {
+  0% { box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.35); }
+  100% { box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0); }
+}
+</style>

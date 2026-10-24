@@ -9,7 +9,7 @@
         variant="metric"
       />
       <template v-for="field in fields" :key="`${field.fieldID}-${field.name}`">
-        <div v-if="canDisplay(field)" :class="`field-container ${columnWrapClass}`" :style="fieldWidth">
+        <div v-if="canDisplay(field)" :class="`field-container ${columnWrapClass}`" :style="fieldWidth" :data-field="field.name">
           <FieldEditor
             v-if="isFieldEditable(field)"
             :field="field"

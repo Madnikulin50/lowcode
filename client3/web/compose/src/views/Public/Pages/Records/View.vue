@@ -261,7 +261,7 @@
 
 <script setup>
 defineOptions({ i18nOptions: { namespaces: 'page' } })
-import { ref, shallowRef, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
+import { ref, shallowRef, computed, watch, nextTick, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
 import axios from 'axios'
 import { isEqual, throttle } from 'lodash'
@@ -1143,6 +1143,22 @@ function getModuleByID(id) {
   return moduleStore.getByID(id)
 }
 
+// Puts the cursor into the first field of this record that failed validation (nothing is sent to the server).
+function focusFirstError() {
+  const failed = (errors.value?.set || []).find(e => !e.meta?.isWarning && e.meta?.field && (!e.meta.moduleID || e.meta.moduleID === props.module.moduleID))
+  if (!failed) return
+  nextTick(() => {
+    const box = document.querySelector(`[data-field="${CSS.escape(failed.meta.field)}"]`)
+    if (!box) return
+    box.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    const input = box.querySelector('input:not([type=hidden]):not([disabled]), textarea:not([disabled]), select:not([disabled]), [contenteditable=true], [tabindex]:not([tabindex="-1"])')
+    input?.focus({ preventScroll: true })
+    box.classList.remove('field-focus-error')
+    void box.offsetWidth
+    box.classList.add('field-focus-error')
+  })
+}
+
 async function validateRecord(pairs) {
   const layoutRequiredFields = uiStore.layoutRequiredFields || []
 
@@ -1191,6 +1207,7 @@ async function validateRecord(pairs) {
   await dispatchUiEvent('onFormSubmitError')
   vRunner()
   if (!errors.value.valid()) {
+    focusFirstError()
     throw new Error(proxy.$t('notification.record.validationErrors', { fields: getValidationErrorFields() }))
   }
 }
