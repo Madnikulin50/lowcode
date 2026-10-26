@@ -178,6 +178,13 @@ func registryReportFor(ns, objectID string, f remarkFilter) (cmp.RegistryReport,
 	}
 	now := time.Now()
 	today := now.Format("2006-01-02")
+	var allTasks []cmp.Task
+	tasksOf := map[string]cmp.TaskCount{}
+	if taskB != nil {
+		if ts, err := cmp.ListTasks(taskB, ns, cmp.TaskFilter{Object: objectID}, now); err == nil {
+			allTasks, tasksOf = ts, cmp.CountTasks(ts)
+		}
+	}
 	rep := cmp.RegistryReport{ObjectName: board.ObjectName, Date: now, Filters: f.describe(), Dynamics: board.Dynamics}
 	for _, r := range board.Remarks {
 		needHistory := f.From != "" || f.To != ""
@@ -196,6 +203,7 @@ func registryReportFor(ns, objectID string, f remarkFilter) (cmp.RegistryReport,
 			}
 		}
 		rep.Remarks = append(rep.Remarks, cmp.RegistryRemark{
+			ID: r.ID, TaskCount: tasksOf[r.ID],
 			Number: firstNonEmpty(r.Number, r.Key), Origin: r.Origin, Criticality: r.Criticality, Section: r.Section, Discipline: r.Discipline, Expert: r.Expert,
 			Text: r.Text, Refs: r.Refs, Answer: r.Answer, RejectReason: r.RejectReason, SourceStatus: r.SourceStatus, Status: r.Status,
 			Verdict: r.Verdict, VerdictNote: r.MatchNote, AIVerdict: r.AIVerdict, AINote: r.AINote,
@@ -211,6 +219,16 @@ func registryReportFor(ns, objectID string, f remarkFilter) (cmp.RegistryReport,
 				Number: firstNonEmpty(r.Number, r.Key), At: h.At, Kind: h.Kind, Source: h.Source, Author: h.Author, Status: h.Status,
 				Iteration: h.Iteration, Answer: h.Answer, RejectReason: h.RejectReason, Note: h.Note,
 			})
+		}
+	}
+	// the tasks of the exported remarks and the tasks of the object that belong to no remark
+	chosen := map[string]bool{}
+	for _, x := range rep.Remarks {
+		chosen[x.ID] = true
+	}
+	for _, t := range allTasks {
+		if t.Remark == "" || chosen[t.Remark] {
+			rep.Tasks = append(rep.Tasks, t)
 		}
 	}
 	return rep, nil

@@ -282,7 +282,7 @@ const viewerURL = (id) => `?recordID=${encodeURIComponent(id)}&namespaceID=${enc
 .ov-table th { text-align: left; padding: 5px 6px; background: var(--panel); border-bottom: 1px solid var(--border); white-space: nowrap; }
 .ov-table td { padding: 4px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .pair { white-space: nowrap; }
-.tag { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 11px; border: 1px solid var(--border); background: var(--panel); }
+.tag { display: inline-block; padding: 1px 7px; border-radius: var(--radius-lg); font-size: 11px; border: 1px solid var(--border); background: var(--panel); }
 .tag.ok { color: #fff; background: var(--ok); border-color: var(--ok); }
 .tag.warn { color: #fff; background: var(--warn); border-color: var(--warn); }
 .tag.bad { color: #fff; background: var(--bad); border-color: var(--bad); }
@@ -291,13 +291,13 @@ const viewerURL = (id) => `?recordID=${encodeURIComponent(id)}&namespaceID=${enc
 .ov a:hover { text-decoration: underline; }
 .as-link { margin-left: 6px; font-size: 11px; }
 .add { display: inline-block; margin: 2px 0 6px; }
-.ov-prop { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--panel); margin: 10px 0; }
+.ov-prop { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 6px 10px; background: var(--panel); margin: 10px 0; }
 .ov :deep(button.small.primary) { background: var(--accent); border-color: var(--accent); color: #fff; }
 .ov-prop-acts { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
 .warns { color: var(--warn); font-size: 11.5px; }
 .warns span { display: block; }
 .ov-stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px; }
-.ov-stage { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--panel); }
+.ov-stage { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 8px 10px; background: var(--panel); }
 .ov-set { border-top: 1px solid var(--border); padding: 6px 0; }
 .ov-set-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .bar { height: 7px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; margin: 4px 0; }
@@ -305,12 +305,12 @@ const viewerURL = (id) => `?recordID=${encodeURIComponent(id)}&namespaceID=${enc
 .ov-set-line { font-size: 12px; }
 .ov-units { display: flex; gap: 4px; flex-wrap: wrap; margin: 3px 0; }
 .ov-tree { display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
-.ov-tree-st { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+.ov-tree-st { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 6px 10px; }
 .ov-tree-sec { margin: 4px 0 4px 12px; }
 .ov-tree-sec-h { font-weight: 600; margin: 4px 0 2px; }
 .ov-tree-vol { margin-left: 12px; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
 .ov-tree-vol .code { font-family: var(--mono, monospace); }
-.ov-matrix-wrap { max-height: 60vh; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.ov-matrix-wrap { max-height: 60vh; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); }
 .matrix tr.unexpected td { background: color-mix(in srgb, var(--warn) 8%, transparent); }
 .cell { padding: 1px 8px; border-radius: 4px; font-size: 11.5px; }
 .cell.present { color: var(--ok); font-weight: 600; }

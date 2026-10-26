@@ -4,11 +4,12 @@
 // iterations and the specialist's own fields.
 import { ref, watch, computed } from 'vue'
 import { wordDiffSpans } from '../composables/useTextDiff.js'
+import TasksPanel from './TasksPanel.vue'
 import { me, can } from '../platform.js'
 import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, OUTCOME_LABEL, OUTCOME_ORDER, STATUS_NEEDS_REASON, MAT_STATE_LABEL, MATERIALS_LABEL, MAT_KIND_LABEL, fmtDate } from './labels.js'
 
 const props = defineProps({ remark: Object, board: Object, history: Array, busy: Boolean, assignees: Array })
-const emit = defineEmits(['update', 'close', 'ai', 'requirements'])
+const emit = defineEmits(['update', 'close', 'ai', 'requirements', 'tasks-changed'])
 
 const form = ref({ status: '', statusComment: '', assignee: '', dueDate: '', note: '', estimateH: '' })
 watch(() => props.remark, (r) => {
@@ -158,6 +159,13 @@ const linkedSet = computed(() => new Set(props.remark.documents))
       </div>
       <button class="primary" :disabled="busy || !reqDirty || reqInvalid || !mayWork" @click="saveReqs">Сохранить требования</button>
       <div class="muted">Результат замечания складывается из результатов требований: все устранены — «Устранено», часть — «Частично устранено». Список можно править; поправленный агент не перезаписывает.</div>
+    </div>
+
+    <div class="rm-block">
+      <TasksPanel
+        :qs="''" :object-id="board.objectID" :namespace-id="board.namespaceID || ''" :remark-id="remark.id"
+        :requirements="remark.requirements || []" :assignees="assignees" @changed="emit('tasks-changed')"
+      />
     </div>
 
     <div v-if="remark.basis" class="rm-block"><div class="rm-h">Основание</div><div class="rm-text muted">{{ remark.basis }}</div></div>

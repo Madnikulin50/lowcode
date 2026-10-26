@@ -184,6 +184,7 @@ func main() {
 		}, ext)
 	}
 	defaultNamespaceID = *namespace
+	initTasks()
 	if cmpRunner != nil {
 		notif = &notifier{b: cmpRunner.Backend, opt: cmp.NotifyOptions{SoonDays: *notifySoon},
 			cfg: smtpConfig{Addr: *smtpAddr, User: *smtpUser, Password: os.Getenv("SMTP_PASSWORD"), From: *smtpFrom, TLS: *smtpTLS, Link: *publicURL}}
@@ -227,6 +228,10 @@ func main() {
 		r.Get("/notifications", handleNotifications)
 		r.Post("/notifications/read", guard("", handleNotificationsRead))
 		r.Post("/notifications/scan", guard(cmp.ActWork, handleNotificationsScan))
+		r.Get("/tasks", handleTasks)
+		r.Post("/tasks", guard("", handleTaskCreate))
+		r.Post("/tasks/update", guard("", handleTaskUpdate))
+		r.Get("/tasks/history", handleTaskHistory)
 		r.Get("/remarks/export", handleRemarksExport)
 		r.Get("/reports/index", handleReportIndex)
 		r.Post("/remarks/update", guard("", handleRemarkUpdate))

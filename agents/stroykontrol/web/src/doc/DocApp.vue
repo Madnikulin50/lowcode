@@ -92,14 +92,14 @@ function gotoSheet (j) { if (j.page) go(j.page); nextTick(() => document.querySe
 <style scoped>
 .doc-bar { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 12px; }
 .doc-bar .sep { width: 1px; background: var(--border); align-self: stretch; margin: 0 4px; }
-.doc-bar input.pg { width: 56px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 1px 4px; }
+.doc-bar input.pg { width: 56px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: var(--radius); padding: 1px 4px; }
 .doc-layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr); gap: 12px; align-items: start; }
-.doc-stage { overflow: auto; max-height: 85vh; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); text-align: center; }
+.doc-stage { overflow: auto; max-height: 85vh; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--panel); text-align: center; }
 .doc-page { position: relative; margin: 0 auto; }
 .doc-stage img { max-width: none; width: 100%; display: block; }
 .doc-hl { position: absolute; border: 2px solid #e8590c; background: rgba(232, 89, 12, .12); border-radius: 3px; pointer-events: none; }
 .doc-assistant { margin-top: 0; }
-button.small { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 2px 10px; font-size: 12px; cursor: pointer; }
+button.small { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: var(--radius); padding: 2px 10px; font-size: 12px; cursor: pointer; }
 button.small:disabled { opacity: .5; cursor: default; }
 .muted { color: var(--muted); }
 .back { font-size: 12px; color: var(--accent); text-decoration: none; }

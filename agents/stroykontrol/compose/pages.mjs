@@ -164,6 +164,12 @@ export function buildPages (m) {
     },
     { title: 'Замечания экспертизы', block: iframe('Рабочее место замечаний экспертизы', [0, 0, 48, 90], 'view=remarks&objectID=${recordID}') },
     {
+      title: 'Задачи',
+      block: recordList('Задачи объекта', [0, 0, 48, 90], m.tasks,
+        ['title', 'remark', 'assignee', 'due_date', 'estimate_h', 'status', 'created_by', 'created_at'],
+        { prefilter: 'object = ${recordID}', refField: 'object', presort: 'due_date ASC', perPage: 30 }),
+    },
+    {
       title: 'Исполнительная документация',
       block: recordList('Пакеты проверки ИД', [0, 0, 48, 90], m.packages,
         ['title', 'ks2_number', 'status', 'acts_total', 'acts_with_issues', 'findings_high', 'findings_medium', 'finished_at'],
@@ -315,6 +321,15 @@ export function buildPages (m) {
     ['object', 'imported_at', 'file', 'total', 'new_count', 'changed_count', 'status_changes', 'reopened', 'archived_count'], { ...M, hideAddButton: true }))
   add(listPage('Срезы реестра замечаний', 'expertise_snapshots', 64.5, 'fas chart-line', m.expertise_snapshots,
     ['object', 'day', 'total', 'overdue', 'n_awaiting_answer', 'n_being_fixed', 'n_answer_review', 'n_rework', 'n_resolved'], { ...M, hideAddButton: true }))
+  add(listPage('Задачи', 'tasks', 64.4, 'fas list-check', m.tasks,
+    ['title', 'object', 'remark', 'assignee', 'due_date', 'estimate_h', 'status', 'created_by', 'done_at'], { ...S, prefilter: REAL, presort: 'due_date ASC' }),
+  card('Задача', 'task', m.tasks, 64.41,
+    ['title', 'object', 'remark', 'requirement', 'status', 'assignee', 'due_date', 'estimate_h', 'description', 'comment', 'created_by', 'created_at', 'done_at', 'closed_by'],
+    { title: 'title', status: 'badge', description: 'body', comment: 'body' }, [
+      recordList('История задачи', [0, 28, 48, 20], m.task_history,
+        ['at', 'kind', 'source', 'note', 'author', 'status'],
+        { prefilter: 'task = ${recordID}', presort: 'at ASC', perPage: 20, hideAddButton: true }),
+    ], 'fas list-check'))
   add(listPage('Получатели уведомлений', 'notify_recipients', 64.6, 'fas bell', m.notify_recipients,
     ['name', 'email', 'role', 'object', 'events', 'active'], A))
   add(listPage('Уведомления', 'notifications', 64.7, 'fas envelope', m.notifications,

@@ -103,6 +103,7 @@ type Notification struct {
 	Event     string `json:"event"`
 	Object    string `json:"object"`
 	Remark    string `json:"remark"`
+	Task      string `json:"task,omitempty"` // the task the notification is about (ТЗ 3.7.1); Remark may name its remark
 	Number    string `json:"number"`
 	Recipient string `json:"recipient"`
 	Email     string `json:"email,omitempty"`
@@ -359,7 +360,7 @@ func Recipients(b Backend, ns string) ([]Recipient, error) {
 }
 
 func notificationFrom(r idcheck.Record) Notification {
-	return Notification{ID: r.ID, Key: r.Get("key"), Event: r.Get("event"), Object: r.Get("object"), Remark: r.Get("remark"), Number: r.Get("number"),
+	return Notification{ID: r.ID, Key: r.Get("key"), Event: r.Get("event"), Object: r.Get("object"), Remark: r.Get("remark"), Task: r.Get("task"), Number: r.Get("number"),
 		Recipient: r.Get("recipient"), Email: r.Get("email"), Telegram: r.Get("telegram"), Title: r.Get("title"), Text: r.Get("text"),
 		Created: r.Get("created_at"), Read: r.Get("read") == "1" || r.Get("read") == "true", Delivery: r.Get("delivery"), Error: r.Get("error")}
 }
@@ -393,8 +394,9 @@ func ScanNotifications(b Backend, ns, objectID string, dir []Recipient, now time
 		known[o.Get("key")+"|"+NormName(o.Get("recipient"))] = true
 	}
 	made := NotifyEvents(objectID, remarks, hist, dir, known, now, opt)
+	made = append(made, scanTaskEvents(b, ns, objectID, dir, known, now, opt)...)
 	for i, n := range made {
-		v := idcheck.V("object", objectID, "remark", n.Remark, "number", n.Number, "key", n.Key, "event", n.Event, "recipient", n.Recipient,
+		v := idcheck.V("object", objectID, "remark", n.Remark, "task", n.Task, "number", n.Number, "key", n.Key, "event", n.Event, "recipient", n.Recipient,
 			"email", n.Email, "telegram", n.Telegram, "title", n.Title, "text", n.Text, "created_at", n.Created, "delivery", n.Delivery)
 		v["read"] = []string{"0"}
 		id, err := b.Create(ns, ModNotifications, v)
@@ -475,3 +477,117 @@ func DeliverNotifications(b Backend, ns, objectID string, s Sender, now time.Tim
 }
 
 const maxDeliveryTries = 5
+
+// scanTaskEvents makes the notifications about the tasks of an object. A namespace without the module of tasks has none.
+func scanTaskEvents(b Backend, ns, objectID string, dir []Recipient, known map[string]bool, now time.Time, opt NotifyOptions) []Notification {
+	tasks, err := ListTasks(b, ns, TaskFilter{Object: objectID}, now)
+	if err != nil || len(tasks) == 0 {
+		return nil
+	}
+	var hist []taskHistRec
+	for _, t := range tasks {
+		hs, err := b.Search(ns, ModTaskHistory, fmt.Sprintf("task = '%s'", t.ID))
+		if err != nil {
+			continue
+		}
+		for _, h := range hs {
+			hist = append(hist, taskHistRec{ID: h.ID, Task: t.ID, Kind: h.Get("kind"), Source: h.Get("source"), Note: h.Get("note"), Author: h.Get("author"), Status: h.Get("status"), At: h.Get("at")})
+		}
+	}
+	return NotifyTaskEvents(objectID, tasks, hist, dir, known, now, opt)
+}
+
+type taskHistRec struct {
+	ID, Task, Kind, Source, Note, Author, Status, At string
+}
+
+// NotifyTaskEvents lists the notifications due now for the tasks of an object: the task given to a person, a task handed
+// over for the check (the project managers), a task accepted, sent back or cancelled (its assignee), the due date near or
+// passed (the assignee, and the managers for an overdue one).
+func NotifyTaskEvents(object string, tasks []Task, hist []taskHistRec, dir []Recipient, known map[string]bool, now time.Time, opt NotifyOptions) []Notification {
+	opt = opt.norm()
+	d := newDirectory(dir, object)
+	byID := map[string]Task{}
+	for _, t := range tasks {
+		byID[t.ID] = t
+	}
+	var out []Notification
+	add := func(to Recipient, ev, key string, t Task, title, text string) {
+		k := key + "|" + NormName(to.Name)
+		if known[k] || !to.wants(ev) {
+			return
+		}
+		known[k] = true
+		n := Notification{Key: key, Event: ev, Object: object, Remark: t.Remark, Task: t.ID, Recipient: to.Name, Email: to.Email, Telegram: to.Telegram,
+			Title: title, Text: text, Created: now.UTC().Format(time.RFC3339), Delivery: DeliveryNone}
+		if opt.Channel && (to.Email != "" || to.Telegram != "") {
+			n.Delivery = DeliveryPending
+		}
+		out = append(out, n)
+	}
+	toAssignee := func(t Task, ev, key, title, text string) {
+		if to, ok := d.assignee(t.Assignee); ok {
+			add(to, ev, key, t, title, text)
+		}
+	}
+	toManagers := func(t Task, ev, key, title, text string) {
+		for _, m := range d.managers {
+			add(m, ev, key, t, title, text)
+		}
+	}
+	label := func(t Task) string {
+		s := "Задача: " + t.Title
+		if t.DueDate != "" {
+			s += " (срок " + t.DueDate + ")"
+		}
+		return s
+	}
+	sort.SliceStable(hist, func(i, j int) bool { return hist[i].At < hist[j].At })
+	since := now.Add(-opt.Lookback).UTC().Format(time.RFC3339)
+	for _, h := range hist {
+		t, ok := byID[h.Task]
+		if !ok || h.At < since {
+			continue
+		}
+		key := "task_hist:" + h.ID
+		who := ""
+		if h.Author != "" {
+			who = " (" + h.Author + ")"
+		}
+		switch {
+		case h.Kind == TaskHistAssignee && strings.HasPrefix(h.Source, "назначен: "):
+			if strings.TrimSpace(strings.TrimPrefix(h.Source, "назначен: ")) != strings.TrimSpace(t.Assignee) {
+				continue // given to someone else since
+			}
+			toAssignee(t, EvAssigned, key, "Вам назначена задача: "+t.Title, label(t)+"\nНазначено"+who+".")
+		case h.Kind == TaskHistStatus && h.Status == TaskReview:
+			toManagers(t, EvStatus, key, "Задача на проверке: "+t.Title, label(t)+"\nИсполнитель: "+firstNonEmpty(t.Assignee, "не назначен")+who+".")
+		case h.Kind == TaskHistStatus && (h.Status == TaskDone || h.Status == TaskReturned || h.Status == TaskCancelled):
+			text := label(t) + "\n" + h.Source + who + "."
+			if n := strings.TrimSpace(h.Note); n != "" {
+				text += "\nКомментарий: " + n
+			}
+			toAssignee(t, EvStatus, key, "Задача «"+t.Title+"»: "+strings.ToLower(TaskStatusLabels[h.Status]), text)
+		}
+	}
+	today := now.UTC().Format("2006-01-02")
+	soon := now.UTC().AddDate(0, 0, opt.SoonDays).Format("2006-01-02")
+	for _, t := range tasks {
+		if t.Status == TaskDone || t.Status == TaskCancelled || t.DueDate == "" {
+			continue
+		}
+		switch {
+		case t.DueDate < today:
+			key := "task_overdue:" + t.ID + ":" + t.DueDate
+			text := fmt.Sprintf("%s\nСрок нарушен, статус: %s, исполнитель: %s.", label(t), TaskStatusLabels[t.Status], firstNonEmpty(t.Assignee, "не назначен"))
+			toAssignee(t, EvOverdue, key, "Просрочена задача: "+t.Title, text)
+			toManagers(t, EvOverdue, key, "Просрочена задача: "+t.Title, text)
+		case t.DueDate <= soon:
+			key := "task_due_soon:" + t.ID + ":" + t.DueDate
+			days := daysBetween(today, t.DueDate)
+			text := fmt.Sprintf("%s\nСрок %s, статус: %s.", label(t), dueIn(days), TaskStatusLabels[t.Status])
+			toAssignee(t, EvDueSoon, key, "Срок по задаче «"+t.Title+"» — "+dueIn(days), text)
+		}
+	}
+	return out
+}

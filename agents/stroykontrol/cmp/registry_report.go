@@ -2,6 +2,7 @@ package cmp
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,6 +26,8 @@ type RegistryRemark struct {
 	Overdue                                                  bool
 	Places                                                   string // where the remark leads in the documents
 	Requirements                                             []Requirement
+	ID                                                       string // the record of the remark (the tasks refer to it)
+	TaskCount                                                TaskCount
 	Materials                                                []Material // declared in the answer, with what the check found
 }
 
@@ -43,6 +46,7 @@ type RegistryReport struct {
 	Remarks    []RegistryRemark
 	History    []RegistryHistory
 	Dynamics   []StatusSnapshot
+	Tasks      []Task // the tasks of the selected remarks and those of the object without a remark (ТЗ 3.7.1)
 }
 
 // VerdictLabels names the results of the check against the documents.
@@ -204,13 +208,13 @@ func RegistryXLSX(r RegistryReport) ([]byte, error) {
 			x.SourceStatus, label(RemarkStatusLabels, x.Status),
 			label(VerdictLabels, x.Verdict), label(AILabels, x.AIVerdict), label(OutcomeLabels, x.Outcome),
 			label(OutcomeLabels, x.OutcomeFinal), x.OutcomeComment,
-			x.Assignee, x.DueDate, yesNo(x.Overdue), x.EstimateH, x.Note, x.ChangedAt, x.Places,
+			x.Assignee, x.DueDate, yesNo(x.Overdue), x.EstimateH, x.Note, x.ChangedAt, x.Places, taskCell(x.TaskCount),
 		})
 	}
 	if err := table("Реестр", []string{"№", "Источник", "Критичность", "Раздел", "НД", "Эксперт", "Вывод о несоответствии", "Ссылка на материалы", "Ответ проектировщика", "Причина отклонения", "Итерация",
 		"Статус экспертизы (выгрузка)", "Статус выполнения", "Проверка по документам", "Разбор ИИ", "Результат проверки (система)", "Результат проверки (специалист)", "Комментарий к решению",
-		"Ответственный", "Срок", "Просрочено", "Оценка, ч", "Заметка ПТО", "Изменено в экспертизе", "Где в документах"}, rr,
-		[]float64{10, 14, 13, 24, 8, 18, 60, 36, 50, 36, 9, 24, 22, 24, 16, 20, 20, 36, 18, 12, 11, 9, 36, 18, 44}); err != nil {
+		"Ответственный", "Срок", "Просрочено", "Оценка, ч", "Заметка ПТО", "Изменено в экспертизе", "Где в документах", "Задачи (выполнено / всего)"}, rr,
+		[]float64{10, 14, 13, 24, 8, 18, 60, 36, 50, 36, 9, 24, 22, 24, 16, 20, 20, 36, 18, 12, 11, 9, 36, 18, 44, 16}); err != nil {
 		return nil, err
 	}
 
@@ -274,6 +278,27 @@ func RegistryXLSX(r RegistryReport) ([]byte, error) {
 		}
 	}
 
+	// Задачи
+	if len(r.Tasks) > 0 {
+		numberOf := map[string]string{}
+		for _, x := range r.Remarks {
+			numberOf[x.ID] = x.Number
+		}
+		var tr [][]any
+		for _, t := range r.Tasks {
+			req := ""
+			if t.Requirement > 0 {
+				req = strconv.Itoa(t.Requirement)
+			}
+			tr = append(tr, []any{numberOf[t.Remark], req, t.Title, t.Description, t.Assignee, t.DueDate, t.EstimateH, label(TaskStatusLabels, t.Status), yesNo(t.Overdue),
+				t.Comment, t.CreatedBy, t.CreatedAt, t.DoneAt})
+		}
+		if err := table("Задачи", []string{"№ замечания", "№ требования", "Задача", "Описание", "Исполнитель", "Срок", "Оценка, ч", "Статус", "Просрочена", "Причина решения", "Поставил", "Создана", "Выполнена"}, tr,
+			[]float64{12, 11, 44, 44, 18, 12, 9, 22, 11, 36, 18, 18, 18}); err != nil {
+			return nil, err
+		}
+	}
+
 	// Динамика
 	if len(r.Dynamics) > 0 {
 		var dr [][]any
@@ -297,4 +322,11 @@ func RegistryXLSX(r RegistryReport) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func taskCell(c TaskCount) string {
+	if c.Total == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%d / %d", c.Done, c.Total)
 }

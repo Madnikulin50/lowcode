@@ -412,6 +412,12 @@ func handleRemarksBoard(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadGateway, err)
 		return
 	}
+	out.TaskCounts = map[string]cmp.TaskCount{}
+	if taskB != nil { // a namespace without the module of tasks has none yet
+		if ts, err := cmp.ListTasks(taskB, ns, cmp.TaskFilter{Object: obj}, time.Now()); err == nil {
+			out.TaskCounts = cmp.CountTasks(ts)
+		}
+	}
 	if cmpRunner != nil {
 		if st := cmpRunner.Status("object:" + obj); st != "" {
 			w.Header().Set("X-Import-Status", st)

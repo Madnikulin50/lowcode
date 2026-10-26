@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import 'bootstrap/dist/css/bootstrap.css'
 import './styles/global.css'
 import App from './App.vue'
 import IdCheckApp from './idcheck/IdCheckApp.vue'
@@ -7,8 +8,10 @@ import ObjectApp from './object/ObjectApp.vue'
 import DocApp from './doc/DocApp.vue'
 import ReportsApp from './reports/ReportsApp.vue'
 import { installPlatformAuth, loadMe } from './platform.js'
+import { installPlatformTheme } from './theme.js'
 
 installPlatformAuth()
+installPlatformTheme()
 loadMe()
 
 // ?view=idcheck — in-place findings viewer for the «Проверка ИД (АОСР)»

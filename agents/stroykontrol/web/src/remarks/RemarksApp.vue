@@ -6,6 +6,7 @@ import { errText } from '../utils.js'
 import { ref, reactive, computed, onMounted } from 'vue'
 import RemarkDetail from './RemarkDetail.vue'
 import RemarkDynamics from './RemarkDynamics.vue'
+import TasksPanel from './TasksPanel.vue'
 import NotificationsPanel from './NotificationsPanel.vue'
 import { STATUS_LABEL, STATUS_ORDER, CRIT_LABEL, VERDICT_LABEL, AI_LABEL, OUTCOME_LABEL, finalOutcome, fmtDate, isOverdue } from './labels.js'
 
@@ -19,6 +20,7 @@ const selectedID = ref('')
 const history = ref(null)
 const showJournal = ref(false)
 const showDynamics = ref(false)
+const showTasks = ref(false)
 const notices = ref(null)
 const period = reactive({ from: '', to: '' })
 const filter = reactive({ q: '', status: '', crit: '', expert: '', discipline: '', section: '', assignee: '', iter: '', verdict: '', outcome: '', claim: false, mat: false, overdue: false, archived: false })
@@ -113,6 +115,8 @@ const exportHref = computed(() => {
 })
 
 const remarks = computed(() => state.board ? state.board.remarks : [])
+const remarkNumbers = computed(() => Object.fromEntries(remarks.value.map(r => [r.id, r.number || r.key])))
+const taskCount = (r) => (state.board?.taskCounts || {})[r.id] || { total: 0, done: 0, open: 0, overdue: 0, allDone: false }
 const uniq = (key) => [...new Set(remarks.value.map(r => r[key]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'ru'))
 const experts = computed(() => uniq('expert'))
 const disciplines = computed(() => uniq('discipline'))
@@ -212,6 +216,7 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
         <button class="small" :disabled="state.busy" title="Заново связать замечания с загруженными томами и проверить ответы" @click="checkNow" v-if="can('upload')">Проверить по документам</button>
         <button class="small" :disabled="state.busy" title="Модель прочитает отобранные замечания и фрагменты их томов (не более 25 за раз)" @click="aiMany" v-if="can('work')">ИИ-разбор отобранных</button>
         <NotificationsPanel ref="notices" :qs="qs" :namespace-id="namespaceID" :assignees="assignees" @open="openRemark" />
+        <button class="small" title="Задачи объекта: у замечаний и без замечаний" @click="showTasks = !showTasks">Задачи</button>
         <button class="small" title="Сколько замечаний в каком статусе по дням" @click="showDynamics = !showDynamics">Динамика</button>
         <button class="small" @click="showJournal = !showJournal">Журнал выгрузок ({{ state.board.imports.length }})</button>
       </div>
@@ -219,6 +224,9 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
       <div v-if="state.notice" class="comment">{{ state.notice }}</div>
 
       <RemarkDynamics v-if="showDynamics" :dynamics="state.board.dynamics || []" />
+      <TasksPanel
+        v-if="showTasks" :qs="qs" :object-id="objectID" :namespace-id="namespaceID" :assignees="assignees" :remark-numbers="remarkNumbers" @changed="load"
+      />
 
       <div v-if="showJournal" class="rm-journal">
         <div v-if="!state.board.imports.length" class="empty">Выгрузок ещё не загружали: приложите Excel к объекту и нажмите «Загрузить выгрузку».</div>
@@ -267,7 +275,7 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
       <div class="rm-layout" :class="{ split: selected }">
         <div class="rm-table-wrap">
           <table class="rm-table">
-            <thead><tr><th>№</th><th></th><th>Статус</th><th>НД</th><th>Эксперт</th><th>Ит.</th><th>Проверка</th><th>Результат</th><th>Ответственный</th><th>Срок</th><th>Замечание</th></tr></thead>
+            <thead><tr><th>№</th><th></th><th>Статус</th><th>НД</th><th>Эксперт</th><th>Ит.</th><th>Проверка</th><th>Результат</th><th>Задачи</th><th>Ответственный</th><th>Срок</th><th>Замечание</th></tr></thead>
             <tbody>
               <tr v-for="r in rows" :key="r.id" :class="{ active: r.id === selectedID, archived: r.archived }" @click="select(r)">
                 <td class="num">{{ r.number || '—' }}</td>
@@ -278,17 +286,20 @@ const clip = (s, n = 140) => (s || '').length > n ? s.slice(0, n) + '…' : (s |
                 <td>{{ r.iterations }}</td>
                 <td><span v-if="r.verdict" class="tag" :class="'ev-' + r.verdict" :title="r.matchNote">{{ VERDICT_LABEL[r.verdict] }}</span><span v-if="r.claimMismatch" class="tag ev-claim">≠</span><span v-if="r.materialsState === 'missing'" class="tag ev-claim" title="Заявленные в ответе материалы не найдены">мат.</span><span v-if="r.aiVerdict" class="tag" :class="'ai-' + r.aiVerdict" :title="AI_LABEL[r.aiVerdict]">ИИ</span></td>
                 <td><span class="tag" :class="'oc-' + finalOutcome(r)" :title="r.outcomeFinal ? 'Решение специалиста' : 'Вывод системы'">{{ OUTCOME_LABEL[finalOutcome(r)] }}</span></td>
+                <td class="nowrap" :title="taskCount(r).allDone ? 'Все задачи выполнены' : ''">
+                  <template v-if="taskCount(r).total">{{ taskCount(r).done }} / {{ taskCount(r).total }}<span v-if="taskCount(r).overdue" class="tag bad" title="Просроченные задачи">!</span><span v-if="taskCount(r).allDone" class="tag tks-done">✓</span></template>
+                </td>
                 <td class="nowrap">{{ r.assignee }}</td>
                 <td class="nowrap" :class="{ overdue: isOverdue(r) }">{{ fmtDate(r.dueDate) }}</td>
                 <td class="txt">{{ clip(r.text) }}</td>
               </tr>
-              <tr v-if="!rows.length"><td colspan="11" class="empty">Нет замечаний под выбранный фильтр.</td></tr>
+              <tr v-if="!rows.length"><td colspan="12" class="empty">Нет замечаний под выбранный фильтр.</td></tr>
             </tbody>
           </table>
         </div>
         <RemarkDetail
           v-if="selected" :remark="selected" :board="state.board" :history="history" :busy="state.busy" :assignees="assignees"
-          @update="update" @requirements="saveRequirements" @close="selectedID = ''" @ai="aiOne"
+          @update="update" @requirements="saveRequirements" @tasks-changed="load" @close="selectedID = ''" @ai="aiOne"
         />
       </div>
     </template>

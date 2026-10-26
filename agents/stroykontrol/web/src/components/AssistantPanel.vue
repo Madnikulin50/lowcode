@@ -139,9 +139,9 @@ defineExpose({ openAndFocus () { open.value = true } })
 .caret { width: 12px; display: inline-block; }
 .as-scopes { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; padding: 2px 0 4px; }
 .as-ctx { display: flex; flex-wrap: wrap; gap: 4px; padding: 2px 0 6px; align-items: center; }
-.as-chip { font-size: 11.5px; border: 1px solid var(--border); border-radius: 8px; padding: 1px 8px; background: var(--panel); }
+.as-chip { font-size: 11.5px; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1px 8px; background: var(--panel); }
 .as-chip.sel { border-color: var(--accent); max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.as-log { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; background: var(--panel); }
+.as-log { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 6px 8px; background: var(--panel); }
 .as-msg { padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
 .as-msg:last-child { border-bottom: 0; }
 .as-role { font-size: 11px; color: var(--muted); }
@@ -152,8 +152,8 @@ defineExpose({ openAndFocus () { open.value = true } })
 .as-quick .grow { flex: 1; }
 .as-img { font-size: 11.5px; color: var(--muted); }
 .as-input { display: flex; gap: 6px; align-items: flex-end; }
-.as-input textarea { flex: 1; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 4px 8px; font: inherit; font-size: 12.5px; resize: vertical; }
-button.small { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 2px 10px; font-size: 11.5px; cursor: pointer; }
+.as-input textarea { flex: 1; border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: var(--radius); padding: 4px 8px; font: inherit; font-size: 12.5px; resize: vertical; }
+button.small { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: var(--radius); padding: 2px 10px; font-size: 11.5px; cursor: pointer; }
 button.small:disabled { opacity: .5; cursor: default; }
 button.small.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 </style>

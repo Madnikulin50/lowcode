@@ -74,7 +74,7 @@ tbody tr { cursor: pointer; }
 tbody tr:hover { background: var(--panel); }
 tr.issue td:last-child { color: var(--bad, #c0392b); }
 .bad { color: var(--bad, #c0392b); }
-.tag { display: inline-block; padding: 0 7px; border-radius: 8px; font-size: 11px; border: 1px solid var(--border); background: var(--panel); white-space: nowrap; }
+.tag { display: inline-block; padding: 0 7px; border-radius: var(--radius-lg); font-size: 11px; border: 1px solid var(--border); background: var(--panel); white-space: nowrap; }
 .tag.st-changed, .tag.st-new { border-color: var(--warn); color: var(--warn); }
 .tag.st-annulled { border-color: var(--muted); color: var(--muted); text-decoration: line-through; }
 </style>

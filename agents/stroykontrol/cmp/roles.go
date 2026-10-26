@@ -178,3 +178,32 @@ func (a Actor) isNamed(who string) bool {
 	}
 	return false
 }
+
+// TaskChange is what a change of a task touches.
+type TaskChange struct {
+	Create      bool
+	Assignee    string // the current assignee of the task
+	FromStatus  string
+	ToStatus    string // "" — the status is not changed
+	AssignOrDue bool   // the assignee or the due date is set or changed
+	WorkFields  bool   // the title, the description, the estimate
+}
+
+// CheckTaskChange checks a change of a task against the actor's roles. Accepting a task, sending it back,
+// cancelling or reopening it is the specialist's decision (as for a remark), and the assignee of the task
+// cannot make it about their own task; moving it through «В работе» and «На проверке» is work.
+func (a Actor) CheckTaskChange(c TaskChange) error {
+	decision := c.ToStatus != "" && c.ToStatus != c.FromStatus && taskDecision(c.FromStatus, c.ToStatus)
+	switch {
+	case decision && !a.Can(ActConfirm):
+		return a.Refusal(ActConfirm)
+	case c.AssignOrDue && !a.Can(ActAssign):
+		return a.Refusal(ActAssign)
+	case (c.Create || c.WorkFields || (c.ToStatus != "" && c.ToStatus != c.FromStatus)) && !a.Can(ActWork):
+		return a.Refusal(ActWork)
+	}
+	if decision && a.Known && c.Assignee != "" && a.isNamed(c.Assignee) {
+		return fmt.Errorf("исполнитель задачи не может сам принять её, вернуть на доработку или отменить: это делает другой специалист")
+	}
+	return nil
+}

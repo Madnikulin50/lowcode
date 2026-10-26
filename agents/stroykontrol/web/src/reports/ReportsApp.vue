@@ -115,12 +115,12 @@ async function download (href) {
 
 <style scoped>
 .rp-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0 4px; font-size: 12.5px; }
-.rp-filters input, .rp-filters select { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 3px 7px; font-size: 12.5px; }
-.rp-obj { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin: 12px 0; background: var(--panel); }
+.rp-filters input, .rp-filters select { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: var(--radius); padding: 3px 7px; font-size: 12.5px; }
+.rp-obj { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 8px 12px; margin: 12px 0; background: var(--panel); }
 .rp-head { margin-bottom: 6px; }
 .rp-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 4px 0; border-top: 1px solid var(--border); font-size: 12.5px; }
 .rp-what { min-width: 260px; }
-.rp-btn { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 2px 10px; font-size: 12px; text-decoration: none; }
+.rp-btn { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: var(--radius); padding: 2px 10px; font-size: 12px; text-decoration: none; }
 .rp-btn:hover { border-color: var(--accent); }
 .rp-btn.off { opacity: .45; pointer-events: none; }
 </style>

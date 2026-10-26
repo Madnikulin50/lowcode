@@ -33,6 +33,8 @@ func setupFixtures(t *testing.T) {
 	}
 	compose = fx
 	defaultNamespaceID = "x"
+	taskB = nil
+	initTasks()
 	suggester = cmp.NewSuggester("http://127.0.0.1:1", "")
 }
 
@@ -1109,5 +1111,119 @@ func TestRequirementsOfARemark(t *testing.T) {
 	}
 	if sum, _ := f.GetRows("Сводка"); !strings.Contains(fmt.Sprint(sum), "Требований замечаний") {
 		t.Errorf("the summary counts the requirements: %v", sum)
+	}
+}
+
+func TestTasksOfAnObject(t *testing.T) {
+	setupFixtures(t)
+	if _, err := os.Stat("fixtures/pack-1/remarks.xlsx"); err != nil {
+		t.Skip("run: go run fixtures/gen_remarks.go")
+	}
+	var board boardOut
+	_ = json.Unmarshal(get(handleRemarksBoard, "/api/remarks/board?objectID=pack-1&namespaceID=x").Body.Bytes(), &board)
+	remarkID := ""
+	for _, r := range board.Remarks {
+		if r.Number == "30.1" {
+			remarkID = r.ID
+		}
+	}
+	if remarkID == "" || len(board.TaskCounts) != 0 {
+		t.Fatalf("no tasks yet: %q %v", remarkID, board.TaskCounts)
+	}
+	create := func(body map[string]any) (int, cmp.Task) {
+		body["objectID"], body["namespaceID"] = "pack-1", "x"
+		w := post(handleTaskCreate, "/api/tasks", body)
+		var out cmp.Task
+		_ = json.Unmarshal(w.Body.Bytes(), &out)
+		return w.Code, out
+	}
+	update := func(id string, body map[string]any) (int, cmp.Task) {
+		body["id"], body["objectID"], body["namespaceID"] = id, "pack-1", "x"
+		w := post(handleTaskUpdate, "/api/tasks/update", body)
+		var out cmp.Task
+		_ = json.Unmarshal(w.Body.Bytes(), &out)
+		return w.Code, out
+	}
+	code, t1 := create(map[string]any{"remark": remarkID, "requirement": 1, "title": "Исправить глубину заложения", "assignee": "Петров", "dueDate": "2020-01-01", "estimateH": "3"})
+	if code != 200 || t1.ID == "" || t1.Status != cmp.TaskOpen || !t1.Overdue || t1.Remark != remarkID {
+		t.Fatalf("create: %d %+v", code, t1)
+	}
+	if code, free := create(map[string]any{"title": "Согласовать с ГИПом"}); code != 200 || free.Remark != "" {
+		t.Errorf("a task without a remark: %d %+v", code, free)
+	}
+	for name, bad := range map[string]map[string]any{
+		"no title": {"remark": remarkID}, "foreign remark": {"remark": "ex-nope", "title": "x"}, "bad date": {"title": "x", "dueDate": "1.1.2026"},
+	} {
+		if code, _ := create(bad); code != 400 {
+			t.Errorf("%s: %d", name, code)
+		}
+	}
+	// the flow, with a reason where a decision is made
+	if code, got := update(t1.ID, map[string]any{"status": "in_progress"}); code != 200 || got.Status != cmp.TaskInProgress {
+		t.Fatalf("into work: %d %+v", code, got)
+	}
+	if code, _ := update(t1.ID, map[string]any{"status": "done", "statusComment": "ok"}); code != 400 {
+		t.Errorf("from «В работе» there is no move to «Выполнена»: %d", code)
+	}
+	update(t1.ID, map[string]any{"status": "review"})
+	if code, _ := update(t1.ID, map[string]any{"status": "done"}); code != 400 {
+		t.Errorf("accepting needs a reason: %d", code)
+	}
+	if code, got := update(t1.ID, map[string]any{"status": "done", "statusComment": "проверено по листу 3"}); code != 200 || got.Status != cmp.TaskDone || got.DoneAt == "" || got.Overdue {
+		t.Fatalf("accept: %d %+v", code, got)
+	}
+	// the list, the filters, the counts of the board (a hint, the status of the remark is untouched)
+	var out tasksOut
+	_ = json.Unmarshal(get(handleTasks, "/api/tasks?objectID=pack-1&namespaceID=x").Body.Bytes(), &out)
+	if len(out.Tasks) != 2 || out.Counts[remarkID].Total != 1 || !out.Counts[remarkID].AllDone {
+		t.Errorf("list: %+v", out)
+	}
+	_ = json.Unmarshal(get(handleTasks, "/api/tasks?objectID=pack-1&namespaceID=x&open=1").Body.Bytes(), &out)
+	if len(out.Tasks) != 1 || out.Tasks[0].Remark != "" {
+		t.Errorf("open: %+v", out.Tasks)
+	}
+	if w := get(handleTasks, "/api/tasks?objectID=pack-1&namespaceID=x&status=bogus"); w.Code != 400 {
+		t.Errorf("unknown status filter: %d", w.Code)
+	}
+	var again boardOut
+	_ = json.Unmarshal(get(handleRemarksBoard, "/api/remarks/board?objectID=pack-1&namespaceID=x").Body.Bytes(), &again)
+	if c := again.TaskCounts[remarkID]; c.Total != 1 || c.Done != 1 || !c.AllDone {
+		t.Errorf("the board counts the tasks of the remark: %+v", again.TaskCounts)
+	}
+	for _, r := range again.Remarks {
+		if r.ID == remarkID {
+			for _, b0 := range board.Remarks {
+				if b0.ID == remarkID && b0.Status != r.Status {
+					t.Errorf("tasks never change the status of the remark: %s → %s", b0.Status, r.Status)
+				}
+			}
+		}
+	}
+	var hist []cmp.TaskHist
+	_ = json.Unmarshal(get(handleTaskHistory, "/api/tasks/history?objectID=pack-1&namespaceID=x&id="+t1.ID).Body.Bytes(), &hist)
+	if len(hist) < 5 || hist[0].Kind != cmp.TaskHistCreated || hist[len(hist)-1].Note != "проверено по листу 3" {
+		t.Errorf("history: %+v", hist)
+	}
+	if w := get(handleTaskHistory, "/api/tasks/history?objectID=pack-2&namespaceID=x&id="+t1.ID); w.Code == 200 {
+		t.Error("a task of another object is not reachable")
+	}
+	// the registry export lists the tasks, and counts them in the row of the remark
+	xl, err := excelize.OpenReader(bytes.NewReader(get(handleRemarksExport, "/api/remarks/export?objectID=pack-1&namespaceID=x&format=xlsx").Body.Bytes()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := xl.GetRows("Задачи")
+	if err != nil || len(rows) != 3 {
+		t.Fatalf("a sheet of the tasks: %v %d", err, len(rows))
+	}
+	reg, _ := xl.GetRows("Реестр")
+	found := false
+	for _, row := range reg[1:] {
+		for _, c := range row {
+			found = found || c == "1 / 1"
+		}
+	}
+	if !found {
+		t.Errorf("the row of the remark says 1 / 1 tasks done: %v", reg[1])
 	}
 }

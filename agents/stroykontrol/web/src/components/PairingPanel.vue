@@ -225,17 +225,17 @@ async function apply () {
 .caret { width: 12px; display: inline-block; }
 .pr-row, .pr-rest > div, .pr-doc { font-size: 12px; padding: 3px 0; border-bottom: 1px solid var(--border); }
 .arrow { color: var(--muted); margin: 0 4px; }
-.tag { display: inline-block; padding: 0 7px; border-radius: 8px; font-size: 11px; border: 1px solid var(--border); background: var(--panel); margin-right: 4px; }
+.tag { display: inline-block; padding: 0 7px; border-radius: var(--radius-lg); font-size: 11px; border: 1px solid var(--border); background: var(--panel); margin-right: 4px; }
 .tag.manual { background: var(--accent); border-color: var(--accent); color: #fff; }
 .tag.frag { color: var(--warn); border-color: var(--warn); }
-button.small { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 2px 10px; font-size: 11.5px; cursor: pointer; margin: 2px 4px 2px 0; }
+button.small { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: var(--radius); padding: 2px 10px; font-size: 11.5px; cursor: pointer; margin: 2px 4px 2px 0; }
 button.small:disabled { opacity: .5; cursor: default; }
 button.small.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 button.vol { background: var(--bg); }
-.pr-form { border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--panel); margin: 6px 0; }
+.pr-form { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 8px; background: var(--panel); margin: 6px 0; }
 .pr-slot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px; }
 .pr-slot b { min-width: 110px; }
-.pr-slot select, .pr-slot input { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 2px 6px; font-size: 12px; }
+.pr-slot select, .pr-slot input { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: var(--radius); padding: 2px 6px; font-size: 12px; }
 .pr-slot input { width: 64px; }
 .pr-slot input.wide { width: 220px; }
 .pr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; }

@@ -1,7 +1,6 @@
 /* In-place ИД findings viewer. Severity colours: high = --bad, medium =
    --warn, low = muted blue (recognition doubts, not violations). */
-:root { --low: #3b6fd4; --sel: #2e59d9; }
-@media (prefers-color-scheme: dark) { :root { --low: #7aa2f7; --sel: #7aa2f7; } }
+:root { --low: var(--info, #36b9cc); --sel: var(--accent); }
 
 .ic { padding: 10px 12px; height: 100vh; display: flex; flex-direction: column; gap: 8px; }
 .ic-msg { padding: 24px; color: var(--muted); }
@@ -28,13 +27,13 @@
 }
 
 /* findings list */
-.ic-panel { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+.ic-panel { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--bg); }
 .ic-filters { padding: 8px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
 .ic-sev { display: flex; flex-wrap: wrap; gap: 4px; }
 .ic-row { display: flex; gap: 6px; }
 .ic-row select { flex: 1; min-width: 0; }
 .ic-filters select, .ic-filters input, .ic-act-bar select {
-  font: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px;
+  font: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--panel); color: var(--fg);
 }
 .ic-list { overflow: auto; flex: 1; padding: 4px 0; }
@@ -60,17 +59,17 @@
 .ic-ea i { font-style: normal; color: var(--muted); margin-right: 4px; }
 
 /* stage */
-.ic-stage { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.ic-stage { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
 .ic-tabs { display: flex; gap: 2px; padding: 6px 6px 0; border-bottom: 1px solid var(--border); background: var(--panel); }
 .ic-tabs button { font: inherit; font-size: 12.5px; padding: 6px 12px; border: 1px solid transparent; border-bottom: 0;
-  border-radius: 6px 6px 0 0; background: none; color: var(--muted); cursor: pointer; }
+  border-radius: var(--radius) 6px 0 0; background: none; color: var(--muted); cursor: pointer; }
 .ic-tabs button.active { background: var(--bg); color: var(--fg); border-color: var(--border); margin-bottom: -1px; }
 .ic-tabs button:disabled { opacity: .4; cursor: default; }
 .ic-tabs small { color: var(--bad); margin-left: 4px; }
 
 .ic-act { display: flex; flex-direction: column; min-height: 0; flex: 1; }
 .ic-act-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-.ic-act-bar > button, .zoom button { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 3px 9px; cursor: pointer; }
+.ic-act-bar > button, .zoom button { border: 1px solid var(--border); background: var(--panel); color: var(--fg); border-radius: var(--radius); padding: 3px 9px; cursor: pointer; }
 .ic-act-bar > button:disabled, .zoom button:disabled { opacity: .4; cursor: default; }
 .ic-act-bar select { max-width: 360px; }
 .ic-act-meta { display: flex; align-items: center; gap: 4px; font-size: 11px; min-width: 0; overflow: hidden; }
@@ -81,7 +80,7 @@
 .ic-act-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 92px 1fr; }
 .ic-strip { list-style: none; margin: 0; padding: 6px; overflow: auto; border-right: 1px solid var(--border); background: var(--panel); }
 .ic-strip button { width: 100%; display: grid; grid-template-columns: auto 1fr; gap: 0 4px; text-align: left; font: inherit; font-size: 11px;
-  padding: 4px 6px; margin-bottom: 3px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); cursor: pointer; }
+  padding: 4px 6px; margin-bottom: 3px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--fg); cursor: pointer; }
 .ic-strip button.active { border-color: var(--sel); box-shadow: 0 0 0 1px var(--sel); }
 .ic-strip .n { font-weight: 600; }
 .ic-strip .k { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -102,11 +101,11 @@
 .ic-box.low { border-color: var(--low); border-style: dashed; background: color-mix(in srgb, var(--low) 8%, transparent); }
 .ic-box.is-selected { border-width: 3px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--sel) 35%, transparent); animation: ic-pulse 1.4s ease-out 2; z-index: 2; }
 @keyframes ic-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sel) 60%, transparent); } 100% { box-shadow: 0 0 0 14px transparent; } }
-.ic-box-n { position: absolute; top: -9px; left: -9px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: inherit;
+.ic-box-n { position: absolute; top: -9px; left: -9px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-lg); background: inherit;
   font-size: 10px; line-height: 16px; color: #fff; text-align: center; }
 .ic-box .ic-box-n { background: var(--bad); } .ic-box.medium .ic-box-n { background: var(--warn); } .ic-box.low .ic-box-n { background: var(--low); }
 .ic-callout { position: absolute; right: 14px; bottom: 14px; max-width: min(420px, 70%); padding: 8px 10px; font-size: 12px;
-  background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-left: 4px solid var(--bad); border-radius: 6px;
+  background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-left: 4px solid var(--bad); border-radius: var(--radius);
   box-shadow: 0 4px 14px rgba(0,0,0,.18); }
 .ic-callout.medium { border-left-color: var(--warn); } .ic-callout.low { border-left-color: var(--low); }
 .ic-callout p { margin: 4px 0 0; }

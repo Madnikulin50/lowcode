@@ -178,6 +178,16 @@ const OUTCOME_DECISION = [
   ['changed', 'Результат изменён специалистом'],
 ]
 
+// статусы задачи (ТЗ 3.7.1); переходы и права проверяет агент (cmp/task.go)
+const TASK_STATUS = [
+  ['open', 'Открыта', { backgroundColor: 'secondary', textColor: 'white' }],
+  ['in_progress', 'В работе', { backgroundColor: 'warning', textColor: 'dark' }],
+  ['review', 'На проверке', { backgroundColor: 'info', textColor: 'white' }],
+  ['returned', 'Возвращена на доработку', { backgroundColor: 'danger', textColor: 'white' }],
+  ['done', 'Выполнена', { backgroundColor: 'success', textColor: 'white' }],
+  ['cancelled', 'Отменена', { backgroundColor: 'light', textColor: 'dark' }],
+]
+
 const REMARK_ORIGIN = [
   ['expertise', 'Выгрузка экспертизы'],
   ['comparison', 'Сформировано по сравнению'],
@@ -575,6 +585,44 @@ async function main () {
   })
 
   // уведомления участников (ТЗ 3.7.5): справочник получателей и лента; события находит и пишет агент
+  // задачи (ТЗ 3.7.1): у замечания их несколько, бывают и без замечания; у каждой свой исполнитель, срок, оценка и статус
+  m.tasks = await ensureModule(api, nsID, {
+    name: 'Задачи',
+    handle: 'tasks',
+    fields: [
+      recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
+      recordRel('remark', 'Замечание', m.expertise_remarks, 'number', ['number', 'text']),
+      numberField('requirement', 'Требование замечания (№)', { precision: 0 }),
+      field('title', 'Задача', 'String', { required: true }),
+      textArea('description', 'Описание'),
+      field('assignee', 'Исполнитель', 'String'),
+      dateField('due_date', 'Срок', { onlyDate: true }),
+      numberField('estimate_h', 'Оценка трудоёмкости, ч', { precision: 1 }),
+      field('status', 'Статус', 'Select', { options: selectOptions(TASK_STATUS) }),
+      textArea('comment', 'Причина последнего решения'),
+      field('created_by', 'Поставил', 'String'),
+      dateField('created_at', 'Создана', { onlyDate: false }),
+      dateField('done_at', 'Выполнена', { onlyDate: false }),
+      field('closed_by', 'Закрыл / вернул', 'String'),
+      dataKind(),
+    ],
+  })
+
+  m.task_history = await ensureModule(api, nsID, {
+    name: 'История задач',
+    handle: 'task_history',
+    fields: [
+      recordRel('task', 'Задача', m.tasks, 'title', ['title'], true),
+      // вид записи: created | status | assignee | due | estimate | edit
+      field('kind', 'Вид', 'String'),
+      field('source', 'Что изменилось', 'String'),
+      textArea('note', 'Комментарий'),
+      field('author', 'Кто', 'String'),
+      field('status', 'Статус', 'String'),
+      dateField('at', 'Когда', { onlyDate: false }),
+    ],
+  })
+
   m.notify_recipients = await ensureModule(api, nsID, {
     name: 'Получатели уведомлений',
     handle: 'notify_recipients',
@@ -594,6 +642,7 @@ async function main () {
     fields: [
       recordRel('object', 'Объект', m.objects, 'name', ['name', 'code'], true),
       recordRel('remark', 'Замечание', m.expertise_remarks, 'number', ['number', 'text']),
+      recordRel('task', 'Задача', m.tasks, 'title', ['title']),
       field('number', '№ замечания', 'String'),
       field('event', 'Событие', 'Select', { options: selectOptions(NOTIFY_EVENT) }),
       field('recipient', 'Получатель', 'String'),

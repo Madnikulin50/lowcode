@@ -102,15 +102,15 @@ async function scan () {
 .bell .cnt { display: inline-block; margin-left: 6px; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 11px; text-align: center; }
 .nt-panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100vw); background: var(--bg); border-left: 1px solid var(--border); box-shadow: -4px 0 16px rgba(0,0,0,.12); overflow-y: auto; z-index: 50; padding: 12px; font-size: 12.5px; }
 .nt-head, .nt-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
-.nt-head select { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 2px 6px; font-size: 12px; max-width: 200px; }
+.nt-head select { border: 1px solid var(--border); background: var(--bg); color: var(--fg); border-radius: var(--radius); padding: 2px 6px; font-size: 12px; max-width: 200px; }
 .grow { flex: 1; }
 .muted { color: var(--muted); font-size: 11.5px; }
 .bad { color: var(--bad); }
-.nt-item { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; cursor: pointer; }
+.nt-item { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 6px 8px; margin-bottom: 6px; cursor: pointer; }
 .nt-item.unread { border-left: 3px solid var(--accent); background: var(--panel); }
 .nt-top { display: flex; gap: 6px; align-items: baseline; }
 .nt-text { white-space: pre-line; margin: 3px 0; }
-.tag { display: inline-block; padding: 0 7px; border-radius: 8px; font-size: 11px; border: 1px solid var(--border); white-space: nowrap; }
+.tag { display: inline-block; padding: 0 7px; border-radius: var(--radius-lg); font-size: 11px; border: 1px solid var(--border); white-space: nowrap; }
 .tag.ev-overdue { border-color: var(--bad); color: var(--bad); }
 .tag.ev-due_soon { border-color: var(--warn); color: var(--warn); }
 .empty { color: var(--muted); padding: 8px 0; }

@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bootstrap": "^5.3.8",
     "docx-preview": "^0.3.6",
     "html2canvas": "1.4.1",
     "jszip": "3.10.1",

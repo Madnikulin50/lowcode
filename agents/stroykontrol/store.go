@@ -225,6 +225,8 @@ type boardOut struct {
 	Documents   map[string]string `json:"documents"` // linked document ID → name
 	// Dynamics are the daily snapshots of the registry by working status (ТЗ 3.9.4), oldest first.
 	Dynamics []cmp.StatusSnapshot `json:"dynamics"`
+	// TaskCounts: the tasks of every remark of the object (ТЗ 3.7.1) — how many, how many done; AllDone is a hint, not a status.
+	TaskCounts map[string]cmp.TaskCount `json:"taskCounts"`
 }
 
 // remarkPatch is what the specialist may change by hand; nil = leave.

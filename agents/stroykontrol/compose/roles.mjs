@@ -24,7 +24,7 @@ const DRY = process.env.DRY_RUN === '1'
 
 // module handles each role may write; every role reads all modules of the namespace
 const DOCS = ['document_sets', 'object_volumes', 'pd_rd_comparisons', 'cmp_documents']
-const REMARKS = ['expertise_remarks', 'expertise_remark_history', 'expertise_imports', 'notifications']
+const REMARKS = ['expertise_remarks', 'expertise_remark_history', 'expertise_imports', 'notifications', 'tasks', 'task_history']
 const REVIEW = ['pd_rd_discrepancies', 'remark_cards', 'correction_packages', 'id_check_runs', 'findings']
 
 export const ROLES = [
