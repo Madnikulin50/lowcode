@@ -24,6 +24,15 @@ import {
   faListUl,
   faFileLines,
   faFileCode,
+  faFolderOpen,
+  faBoxOpen,
+  faBridge,
+  faFilePdf,
+  faFileSignature,
+  faClipboardList,
+  faIdBadge,
+  faUserShield,
+  faFlask,
 } from '@fortawesome/free-solid-svg-icons'
 import {
   faQuestionCircle,
@@ -35,6 +44,15 @@ import {
 } from '@fortawesome/free-regular-svg-icons'
 
 library.add(
+  faFolderOpen,
+  faBoxOpen,
+  faBridge,
+  faFilePdf,
+  faFileSignature,
+  faClipboardList,
+  faIdBadge,
+  faUserShield,
+  faFlask,
   faUser,
   faQuestionCircle,
   faGripHorizontal,

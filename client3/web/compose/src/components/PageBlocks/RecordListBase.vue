@@ -2043,13 +2043,13 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
 
 .rl-signal-danger { background: #e74a3b; box-shadow: 0 0 0 3px rgba(231, 74, 59, 0.18); }
 .rl-signal-warning { background: #f6c23e; box-shadow: 0 0 0 3px rgba(246, 194, 62, 0.2); }
-.rl-signal-success { background: #1cc88a; box-shadow: 0 0 0 3px rgba(28, 200, 138, 0.18); }
+.rl-signal-success { background: #0B6B47; box-shadow: 0 0 0 3px rgba(11, 107, 71, 0.18); }
 .rl-signal-info { background: #36b9cc; box-shadow: 0 0 0 3px rgba(54, 185, 204, 0.18); }
 .rl-signal-muted { background: #adb5bd; box-shadow: none; }
 
 .rl-row-danger { background-color: rgba(231, 74, 59, 0.06) !important; }
 .rl-row-warning { background-color: rgba(246, 194, 62, 0.08) !important; }
-.rl-row-success { background-color: rgba(28, 200, 138, 0.05) !important; }
+.rl-row-success { background-color: rgba(11, 107, 71, 0.05) !important; }
 .rl-row-info { background-color: rgba(54, 185, 204, 0.06) !important; }
 
 .rl-group-header td {
@@ -2079,7 +2079,7 @@ tr:hover .inline-actions { opacity: 1; button:hover { color: var(--primary) !imp
   background: var(--bs-primary, #4e73df);
   &.rl-signal-danger { background: #e74a3b; }
   &.rl-signal-warning { background: #f6c23e; }
-  &.rl-signal-success { background: #1cc88a; }
+  &.rl-signal-success { background: #0B6B47; }
   &.rl-signal-info { background: #36b9cc; }
   &.rl-signal-muted { background: #adb5bd; }
 }
