@@ -1132,7 +1132,8 @@ func (ctrl *Record) Export(ctx context.Context, r *request.RecordExport) (interf
 	)
 
 	// Access control
-	if _, err = ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
+	var exportModule *types.Module
+	if exportModule, err = ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
 		return nil, err
 	}
 
@@ -1171,6 +1172,20 @@ func (ctrl *Record) Export(ctx context.Context, r *request.RecordExport) (interf
 			envoySvc.AddEncoder(
 				envoyx.EncodeTypeIo,
 				composeEnvoy.CsvEncoder{},
+			)
+
+		case "xlsx":
+			contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+			envoySvc.AddEncoder(
+				envoyx.EncodeTypeIo,
+				composeEnvoy.XlsxEncoder{},
+			)
+
+		case "pdf":
+			contentType = "application/pdf"
+			envoySvc.AddEncoder(
+				envoyx.EncodeTypeIo,
+				composeEnvoy.PdfEncoder{},
 			)
 
 		default:
@@ -1235,9 +1250,22 @@ func (ctrl *Record) Export(ctx context.Context, r *request.RecordExport) (interf
 		w.Header().Add("Content-Disposition", "attachment"+filename)
 
 		mapping := make([]envoyx.MapEntry, 0, len(r.Fields))
+		useLabels := false
+		switch strings.ToLower(r.Ext) {
+		case "xlsx", "pdf":
+			useLabels = true
+		}
+
 		for _, f := range r.Fields {
+			column := f
+			if useLabels && exportModule != nil {
+				if mf := exportModule.Fields.FindByName(f); mf != nil && mf.Label != "" {
+					column = mf.Label
+				}
+			}
+
 			mapping = append(mapping, envoyx.MapEntry{
-				Column: f,
+				Column: column,
 				Field:  f,
 			})
 		}

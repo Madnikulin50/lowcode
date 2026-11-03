@@ -16,6 +16,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/auth/saml"
 	authSettings "github.com/madnikulin50/lowcode/server/auth/settings"
 	autService "github.com/madnikulin50/lowcode/server/automation/service"
+	composeRest "github.com/madnikulin50/lowcode/server/compose/rest"
 	cmpService "github.com/madnikulin50/lowcode/server/compose/service"
 	cmpEvent "github.com/madnikulin50/lowcode/server/compose/service/event"
 	discoveryService "github.com/madnikulin50/lowcode/server/discovery/service"
@@ -509,6 +510,7 @@ func (app *CortezaApp) Activate(ctx context.Context) (err error) {
 	sysService.Watchers(ctx)
 	autService.Watchers(ctx)
 	cmpService.Watchers(ctx)
+	composeRest.StartPageExportScheduler(ctx)
 
 	if app.Opt.Federation.Enabled {
 		fedService.Watchers(ctx)

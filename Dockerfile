@@ -67,10 +67,18 @@ RUN make DESTDIR=/out install
 # deploy-stage
 FROM ubuntu:22.04 as deploy-stage
 
+# Chrome is used by the server for page export (PDF, XLSX, PPTX).
+# Ubuntu's chromium package is a snap stub and does not work in containers,
+# so Google Chrome is installed from the official package.
 RUN apt-get -y update \
  && apt-get -y install \
     ca-certificates \
     curl \
+    fonts-liberation \
+    fonts-dejavu-core \
+ && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/chrome.deb \
+ && apt-get -y install /tmp/chrome.deb \
+ && rm -f /tmp/chrome.deb \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=libredwg-stage /out/usr/local/bin/dwg2dxf /usr/local/bin/dwg2dxf
@@ -82,6 +90,9 @@ ENV CORREDOR_ADDR="corredor:80"
 ENV HTTP_ADDR="0.0.0.0:80"
 ENV HTTP_WEBAPP_ENABLED="true"
 ENV HTTP_WEBAPP_BASE_DIR="/pnp/webapp"
+ENV EXPORT_CHROME_PATH="/usr/bin/google-chrome-stable"
+# the server opens pages for export through its own address
+ENV EXPORT_BASE_URL="http://127.0.0.1:80"
 ENV PATH="/opt/dart-sass:/pnp/bin:${PATH}"
 
 WORKDIR /pnp

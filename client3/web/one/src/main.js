@@ -4,6 +4,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import './console-splash'
 import './themes'
+import '../../shims/print.css'
 
 if (!window.CortezaAPI) {
   window.CortezaAPI = '/api'

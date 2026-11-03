@@ -138,6 +138,8 @@ navigation:
   page: Страницы
   viewPage: Показать страницу
   editModule: Изменить модуль
+  editPage: Изменить страницу
+  translation: Перевод
 noBlock: Пока нет ни одного блоков
 noPages: Нет страниц
 notVisible: Скрытий

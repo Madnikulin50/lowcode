@@ -305,6 +305,7 @@ general:
 import: Module import
 navigation:
   module: Modules
+  translation: Translation
 noModule: No modules
 noModuleFilter: No module matches your search
 

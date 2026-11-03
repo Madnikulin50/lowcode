@@ -53,6 +53,7 @@ func MountRoutes() func(r chi.Router) {
 			handlers.NewConnector(Connector{}.New()).MountRoutes(r)
 			handlers.NewDatasource(Datasource{}.New()).MountRoutes(r)
 			MountDocumentRoutes(r)
+			MountPageExportRoutes(r)
 			MountRuleChainRoutes(r)
 			MountRuleChainAdminRoutes(r)
 			MountRiskAdminRoutes(r)

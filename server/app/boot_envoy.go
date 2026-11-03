@@ -47,6 +47,8 @@ func (app *CortezaApp) initEnvoy(ctx context.Context, log *zap.Logger) (err erro
 	// - datasource encoders
 	svc.AddEncoder(envoyx.EncodeTypeIo,
 		composeEnvoy.CsvEncoder{},
+		composeEnvoy.XlsxEncoder{},
+		composeEnvoy.PdfEncoder{},
 	)
 
 	return

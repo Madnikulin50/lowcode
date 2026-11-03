@@ -166,16 +166,22 @@ func (r *Runner) SuggestVolumes(ctx context.Context, ns, objectID string) ([]Vol
 	if err != nil {
 		return nil, err
 	}
-	have := map[string][]string{} // stage → codes already in the statement (a row without a stage counts for both)
+	have := map[string][]string{}  // stage → volumes already in the statement (a row without a stage counts for both)
+	known := map[string][]string{} // stage → every code of the statement, sections/appendices/references included: not proposed again
 	for _, v := range existing {
 		st, c := v.Get("stage"), v.Get("volume_code")
-		if c == "" || (v.Get("kind") != "" && v.Get("kind") != UnitVolume) {
-			continue // a section, an appendix or a reference is not a volume
+		if c == "" {
+			continue
 		}
-		if st == "" {
-			have[SideRef], have[SideTarget] = append(have[SideRef], c), append(have[SideTarget], c)
-		} else {
-			have[st] = append(have[st], c)
+		isVolume := v.Get("kind") == "" || v.Get("kind") == UnitVolume
+		for _, s := range []string{SideRef, SideTarget} {
+			if st != "" && st != s {
+				continue
+			}
+			known[s] = append(known[s], c)
+			if isVolume {
+				have[s] = append(have[s], c)
+			}
 		}
 	}
 
@@ -214,10 +220,10 @@ func (r *Runner) SuggestVolumes(ctx context.Context, ns, objectID string) ([]Vol
 
 	var created []VolumeProposal
 	for _, p := range props {
-		if hasVolume(have[p.Stage], p.Code) {
+		if hasVolume(known[p.Stage], p.Code) {
 			continue
 		}
-		have[p.Stage] = append(have[p.Stage], p.Code)
+		known[p.Stage] = append(known[p.Stage], p.Code)
 		v := idcheck.V("object", objectID, "stage", p.Stage, "volume_code", p.Code, "title", p.Title, "source", p.Source, "evidence", p.Evidence, "proposed", "1")
 		if _, err := b.Create(ns, ModVolumes, v); err != nil {
 			return created, err

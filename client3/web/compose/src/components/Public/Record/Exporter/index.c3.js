@@ -6,6 +6,8 @@ import { compose } from 'corteza-lib/js/dist'
 const props = {
   allowJSON: true,
   allowCSV: true,
+  allowXLSX: true,
+  allowPDF: true,
   module: new compose.Module(),
   preselectedFields: [],
   recordCount: 0,

@@ -8,9 +8,10 @@
       {{ $t('label.export') }}
     </button>
 
+    <Teleport to="body">
     <div
       v-if="showExportModal"
-      class="modal d-block"
+      class="modal d-block export-modal"
       tabindex="-1"
       role="dialog"
       @click.self="toggleModal"
@@ -185,14 +186,14 @@
               </div>
             </template>
           </div>
-          <div class="modal-footer d-flex align-items-center justify-content-between">
+          <div class="modal-footer d-flex flex-wrap align-items-center justify-content-between">
             <div>
               <span v-if="processingCount" class="spinner-border spinner-border-sm" />
               <span v-else>
                 {{ $t('recordList.export.recordCount', { count: getExportableCount || 0 }) }}
               </span>
             </div>
-            <div>
+            <div class="d-flex flex-wrap gap-2">
               <c-input-processing
                 v-if="allowJSON"
                 :processing="processing"
@@ -207,16 +208,34 @@
                 :processing="processing"
                 :disabled="exportDisabled"
                 variant="outline-secondary"
-                class="ms-2"
                 @click="doExport('csv')"
               >
                 {{ $t('recordList.export.csv') }}
+              </c-input-processing>
+              <c-input-processing
+                v-if="allowXLSX"
+                :processing="processing"
+                :disabled="exportDisabled"
+                variant="outline-secondary"
+                @click="doExport('xlsx')"
+              >
+                {{ $t('recordList.export.xlsx') }}
+              </c-input-processing>
+              <c-input-processing
+                v-if="allowPDF"
+                :processing="processing"
+                :disabled="exportDisabled"
+                variant="outline-secondary"
+                @click="doExport('pdf')"
+              >
+                {{ $t('recordList.export.pdf') }}
               </c-input-processing>
             </div>
           </div>
         </div>
       </div>
     </div>
+    </Teleport>
   </div>
 </template>
 
@@ -241,6 +260,8 @@ const fmtDate = (d) => d.format('YYYY-MM-DD')
 const props = defineProps({
   allowJSON: { type: Boolean, default: true },
   allowCSV: { type: Boolean, default: true },
+  allowXLSX: { type: Boolean, default: true },
+  allowPDF: { type: Boolean, default: true },
   module: { type: compose.Module, required: true },
   preselectedFields: { type: Array, default: () => [] },
   filter: { type: String, required: false, default: '' },
@@ -529,3 +550,10 @@ function getOptionKey({ tzCode }) {
   return tzCode
 }
 </script>
+
+<style lang="scss" scoped>
+.export-modal {
+  z-index: 1100;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+</style>

@@ -8,30 +8,29 @@
       {{ title }}
     </Teleport>
 
-    <Teleport to="#topbar-tools">
-      <div
-        v-if="isEdit"
-        class="btn-group me-1"
-      >
-        <router-link
-          data-test-id="button-all-records"
-          variant="primary"
-          :to="allRecords"
-          class="btn btn-primary btn-sm d-flex align-items-center"
-        >
-          {{ $t('allRecords.label') }}
-          <font-awesome-icon
-            :icon="['fas', 'columns']"
-            class="ms-2"
-          />
-        </router-link>
+    <Teleport
+      defer
+      to="#topbar-menu-items"
+    >
+      <div style="display: contents;">
+        <template v-if="isEdit">
+          <router-link
+            data-test-id="button-all-records"
+            :to="allRecords"
+            class="dropdown-item"
+          >
+            {{ $t('allRecords.label') }}
+          </router-link>
 
-        <module-translator
-          v-if="module"
-          v-model:module="trModule"
-          button-variant="primary"
-          style="margin-left:2px;"
-        />
+          <module-translator
+            v-if="module"
+            v-model:module="trModule"
+            button-variant="link"
+            button-class="dropdown-item rounded-0 text-dark text-decoration-none justify-content-start"
+          >
+            {{ $t('navigation.translation') }}
+          </module-translator>
+        </template>
       </div>
     </Teleport>
 

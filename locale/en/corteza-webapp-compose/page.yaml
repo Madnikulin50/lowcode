@@ -133,6 +133,8 @@ navigation:
   page: Pages
   viewPage: View Page
   editModule: Edit module
+  editPage: Edit page
+  translation: Translation
 prompt:
   label: AI Prompt
   placeholder: Enter namespace AI prompt

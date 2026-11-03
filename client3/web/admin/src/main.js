@@ -9,6 +9,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import('./config-check')
 import('./console-splash')
 import './themes'
+import '../../shims/print.css'
 
 import { useStore } from './store'
 import routerConfig from './router'

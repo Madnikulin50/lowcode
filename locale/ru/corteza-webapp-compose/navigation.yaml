@@ -19,6 +19,7 @@ page: Страницы
 rulechains: Цепочки правил
 workflows: Процессы
 appMenu: Меню
+appSpaceList: Список пространств
 userSettings:
   changePassword: Изменить пароль
   loggedInAs: Войти как {{user}}

@@ -41,6 +41,16 @@ func (h *AuthHandlers) MountHttpRoutes(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			// all routes protected with CSRF:
 			if h.Opt.CsrfEnabled {
+				// gorilla/csrf >= 1.7.3 считает запрос https, если не указано обратное;
+				// для http (например localhost) Origin иначе не совпадает со схемой
+				r.Use(func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+						if req.TLS == nil && req.Header.Get("X-Forwarded-Proto") != "https" {
+							req = csrf.PlaintextHTTPRequest(req)
+						}
+						next.ServeHTTP(w, req)
+					})
+				})
 				r.Use(csrf.Protect(
 					[]byte(h.Opt.CsrfSecret),
 					csrf.SameSite(csrf.SameSiteStrictMode),

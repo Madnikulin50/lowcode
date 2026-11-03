@@ -83,9 +83,7 @@ func writeHttpPlain(w io.Writer, err error, mask bool) {
 		return
 	}
 
-	write("Error: ")
-	write(err.Error())
-	write("\n")
+	write("Error: %s\n", err.Error())
 
 	if _, is := err.(interface{ Safe() bool }); !is || mask {
 		// do not output any details on un-safe errors or
@@ -94,7 +92,7 @@ func writeHttpPlain(w io.Writer, err error, mask bool) {
 	}
 
 	if err, is := err.(*Error); is {
-		write(dlmt + "\n")
+		write("%s\n", dlmt)
 
 		var (
 			ml, kk = err.meta.StringKeys()
@@ -104,12 +102,12 @@ func writeHttpPlain(w io.Writer, err error, mask bool) {
 
 		for _, key := range kk {
 			write("%s:", key)
-			write(strings.Repeat(" ", ml-len(key)+1))
+			write("%s", strings.Repeat(" ", ml-len(key)+1))
 			write("%v\n", err.meta[key])
 		}
 
 		if len(err.stack) > 0 {
-			write(dlmt + "\n")
+			write("%s\n", dlmt)
 			write("Call stack:\n")
 			for i, f := range err.stack {
 				write("%3d. %s:%d\n     %s()\n", len(err.stack)-i, f.File, f.Line, f.Func)
@@ -117,13 +115,12 @@ func writeHttpPlain(w io.Writer, err error, mask bool) {
 		}
 
 		if we := err.Unwrap(); we != nil {
-			write(dlmt + "\n")
+			write("%s\n", dlmt)
 			write("Wrapped error:\n\n")
 			writeHttpPlain(w, we, mask)
 		}
 	}
-	write(dlmt + "\n")
-
+	write("%s\n", dlmt)
 }
 
 // writeHttpJSON

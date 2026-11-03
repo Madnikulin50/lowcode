@@ -42,14 +42,44 @@
     </div>
 
     <div class="d-flex align-items-center ms-auto gap-1">
-      <a
-        v-if="!hideAppSelector && !settings.hideAppSelector"
-        data-test-id="app-selector"
-        class="btn btn-outline-light text-dark border-0 px-1"
-        :href="appSelectorURL"
-      >
-        {{ labels.appMenu }}
-      </a>
+      <template v-if="!hideAppSelector && !settings.hideAppSelector">
+        <div
+          v-if="menuDropdown"
+          class="dropdown"
+        >
+          <button
+            class="btn btn-outline-light text-dark border-0 px-1 dropdown-toggle"
+            data-bs-toggle="dropdown"
+            data-test-id="app-menu-dropdown"
+            aria-expanded="false"
+          >
+            {{ labels.appMenu }}
+          </button>
+
+          <div class="dropdown-menu dropdown-menu-end topbar-dropdown-menu border-0 shadow-sm text-dark mt-2">
+            <a
+              data-test-id="app-selector"
+              class="dropdown-item"
+              :href="appSelectorURL"
+            >
+              {{ labels.appSpaceList || 'Список пространств' }}
+            </a>
+            <div
+              id="topbar-menu-items"
+              class="d-flex flex-column"
+            />
+          </div>
+        </div>
+
+        <a
+          v-else
+          data-test-id="app-selector"
+          class="btn btn-outline-light text-dark border-0 px-1"
+          :href="appSelectorURL"
+        >
+          {{ labels.appMenu }}
+        </a>
+      </template>
 
       <slot name="right-tools" />
 
@@ -340,6 +370,10 @@ const props = defineProps({
     default: false,
   },
   hideAppSelector: {
+    type: Boolean,
+    default: false,
+  },
+  menuDropdown: {
     type: Boolean,
     default: false,
   },

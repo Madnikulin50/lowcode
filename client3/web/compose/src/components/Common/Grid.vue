@@ -34,8 +34,13 @@
           :y="item.y"
           :min-w="6"
           :min-h="5"
-          :class="{ 'h-100': isStretchable, 'grid-item--compact': isCompactBlock(item.i) }"
-          :style="{ 'touch-action': editable ? 'none' : 'auto', '--order': item.y * 1000 + item.x }"
+          :class="{ 'h-100': isStretchable, 'grid-item--compact': isCompactBlock(item.i), 'grid-item--print-expand': blocks[item.i].kind === 'Metric', 'grid-item--print-page': blocks[item.i].kind === 'IFrame', 'grid-item--no-print': ['RuleChain', 'Automation'].includes(blocks[item.i].kind) }"
+          :style="{
+            'touch-action': editable ? 'none' : 'auto',
+            '--order': item.y * 1000 + item.x,
+            '--print-w': oneBlockLayout ? 100 : Math.min(100, (item.w / 48) * 100),
+            '--print-min-h': (item.h * 10) + 'px',
+          }"
           class="grid-item"
           @move="onGridAction"
           @resize="onGridAction"
@@ -275,6 +280,98 @@ function onGridSettled () {
 // The Page Builder canvas (.editable) is excluded: dragging and resizing need
 // the real desktop geometry regardless of how narrow the window you're
 // editing from happens to be.
+// Print: absolutely positioned blocks have a fixed height and cannot push their
+// neighbours, so a Metric block that grows to show every metric item would
+// overlap the blocks below. Switch to a flow layout (widths stay as authored,
+// order follows the desktop reading order) and let Metric blocks auto-size.
+@media print {
+  .w-100:not(.editable) .vue-grid-layout {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .w-100:not(.editable) .vue-grid-item {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    order: var(--order, 0);
+    box-sizing: border-box;
+    min-width: 0 !important;
+    flex: 0 0 auto;
+    padding-right: 2mm;
+    // Ширина в процентах от листа, а не px экранной сетки.
+    width: calc(var(--print-w, 100) * 1%) !important;
+    max-width: 100%;
+    // Высота определяется содержимым; авторская высота — лишь минимум,
+    // чтобы графики и карты не схлопывались. Блок растёт и сдвигает соседей.
+    height: auto !important;
+    min-height: var(--print-min-h, 0);
+    max-height: none !important;
+    overflow: visible !important;
+    padding-bottom: 3mm;
+    // Крупные блоки (таблицы, списки) могут переноситься между страницами.
+    break-inside: auto;
+
+    > *:not(.vue-resizable-handle) {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box;
+    }
+
+    &.grid-item--print-expand {
+      min-height: 0;
+      break-inside: avoid;
+    }
+
+    &.grid-item--no-print {
+      display: none !important;
+    }
+
+    // iframe занимает ровно одну страницу: отдельный лист до и после, фиксированная высота
+    &.grid-item--print-page {
+      width: 100% !important;
+      height: 215mm !important;
+      min-height: 215mm !important;
+      max-height: 215mm !important;
+      overflow: clip !important;
+      box-sizing: border-box;
+      padding: 0;
+      margin-bottom: 0 !important;
+      break-before: page;
+      break-after: auto;
+      break-inside: avoid;
+
+      // разрыв только если после iframe есть ещё блок, иначе остаётся пустая страница
+      + .grid-item {
+        break-before: page;
+      }
+
+      > *:not(.vue-resizable-handle) {
+        height: 100% !important;
+        overflow: clip !important;
+        box-sizing: border-box;
+        margin: 0 !important;
+        break-inside: avoid;
+      }
+
+      * {
+        box-sizing: border-box;
+        break-inside: avoid;
+      }
+    }
+  }
+}
+
 @media (max-width: 767.98px) {
   .w-100:not(.editable) .vue-grid-layout {
     display: flex !important;

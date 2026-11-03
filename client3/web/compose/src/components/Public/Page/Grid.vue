@@ -23,6 +23,7 @@
         :magnified="magnified"
         :unsaved-blocks="unsavedBlocks"
         class="h-100 p-2"
+        :class="{ 'no-print': noPrintKinds.includes(block.kind) }"
       />
     </template>
   </grid>
@@ -47,6 +48,8 @@ const props = defineProps({
   magnified: { type: Boolean, default: false },
   unsavedBlocks: { type: Set, default: undefined },
 })
+
+const noPrintKinds = ['RuleChain', 'Automation']
 
 function componentFor(block) {
   return GetComponent({ block, mode: props.mode })

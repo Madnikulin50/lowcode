@@ -27,64 +27,49 @@
           @ai-search="handleAiSearch"
         />
 
-        <div
-          v-if="page && isRecordPage && page.canUpdatePage"
-          class="btn-group btn-group-sm me-2"
+      </div>
+    </Teleport>
+
+    <Teleport
+      v-if="viewAlive && page && page.canUpdatePage"
+      defer
+      to="#topbar-menu-items"
+    >
+      <div style="display: contents;">
+        <router-link
+          v-if="isRecordPage"
+          :to="moduleEditor"
+          class="dropdown-item"
+          :class="{ disabled: !moduleEditor }"
         >
-          <router-link
-            :to="moduleEditor"
-            :title="$t('navigation.editModule')"
-            class="btn btn-primary d-flex align-items-center"
-            :class="{ disabled: !moduleEditor }"
-          >
-            <span class="d-none d-md-inline">{{ $t('navigation.editModule') }}</span>
-            <font-awesome-icon
-              :icon="['fas', 'database']"
-              class="ms-md-2"
-            />
-          </router-link>
-        </div>
+          {{ $t('navigation.editModule') }}
+        </router-link>
 
-        <div
-          v-if="page && page.canUpdatePage"
-          class="btn-group btn-group-sm text-nowrap"
+        <router-link
+          data-test-id="button-page-builder"
+          :to="pageBuilder"
+          class="dropdown-item"
         >
-          <router-link
-            data-test-id="button-page-builder"
-            :to="pageBuilder"
-            :title="$t('label.pageBuilder')"
-            class="btn btn-primary d-flex align-items-center"
-          >
-            <span class="d-none d-md-inline">{{ $t('label.pageBuilder') }}</span>
-            <font-awesome-icon
-              :icon="['fas', 'tools']"
-              class="ms-md-2"
-            />
-          </router-link>
+          {{ $t('label.pageBuilder') }}
+        </router-link>
 
-          <router-link
-            data-test-id="button-page-edit"
-            :to="pageEditor"
-            class="btn btn-primary d-flex align-items-center"
-            :title="$t('tooltip.edit.page')"
-            style="margin-left:2px;"
-            data-bs-toggle="tooltip"
-            data-bs-boundary="body"
-          >
-            <font-awesome-icon
-              :icon="['far', 'edit']"
-            />
-          </router-link>
+        <router-link
+          data-test-id="button-page-edit"
+          :to="pageEditor"
+          class="dropdown-item"
+        >
+          {{ $t('navigation.editPage') }}
+        </router-link>
 
-          <page-translator
-            v-if="trPage"
-            data-test-id="button-page-translations"
-            :page="trPage"
-            :page-layout="layout"
-            button-variant="primary"
-            style="margin-left:2px;"
-          />
-        </div>
+        <page-translator
+          data-test-id="button-page-translations"
+          :page="trPage"
+          :page-layout="layout"
+          button-variant="link"
+          button-class="dropdown-item rounded-0 text-dark text-decoration-none justify-content-start"
+        >
+          {{ $t('navigation.translation') }}
+        </page-translator>
       </div>
     </Teleport>
 

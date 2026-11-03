@@ -5,10 +5,12 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/gorilla/sessions"
 	"github.com/madnikulin50/lowcode/server/auth/request"
 	"github.com/madnikulin50/lowcode/server/auth/settings"
 	"github.com/madnikulin50/lowcode/server/system/service"
 	"github.com/madnikulin50/lowcode/server/system/types"
+	"github.com/markbates/goth/gothic"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,6 +31,10 @@ func Test_logoutProc(t *testing.T) {
 
 	service.CurrentSettings = &types.AppSettings{}
 	service.CurrentSettings.Auth.Internal.Enabled = true
+
+	// gorilla/securecookie >= 1.1.2 rejects an empty hash key, which is what the
+	// default gothic store ends up with when SESSION_SECRET is not set
+	gothic.Store = sessions.NewCookieStore([]byte("test-only-session-hash-key-32b!!"))
 
 	authService = &authServiceMocked{}
 	authHandlers = prepareClientAuthHandlers(authService, authSettings)

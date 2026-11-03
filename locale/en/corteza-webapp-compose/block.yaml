@@ -716,10 +716,12 @@ recordList:
     includeQuery: Filter by search query
     json: JSON Export
     limitations: "CSV export limitation: only the first value in the multi value fields will be exported"
+    pdf: PDF Export
     rangeBy: Set range by
     recordCount: "{{count}} records ready for export"
     selectFields: "Select fields you want to export:"
     selection: Selected records
+    xlsx: XLSX Export
     specifyTimezone: Export to timezone
     timezonePlaceholder: Select timezone
     resolveRefs: Include record selector values

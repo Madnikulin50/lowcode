@@ -36,48 +36,58 @@
     </Teleport>
 
     <Teleport
-      v-if="!isRecordPage"
       defer
-      to="#topbar-tools"
+      to="#topbar-menu-items"
     >
-      <div
-        v-if="page && page.canUpdatePage"
-        class="btn-group btn-group-sm text-nowrap"
-      >
-        <router-link
-          data-test-id="button-page-builder"
-          :to="pageBuilder"
-          class="btn btn-primary d-flex align-items-center gap-2"
-          :title="$t('label.pageBuilder')"
+      <div style="display: contents;">
+        <a
+          v-for="format in ['pdf', 'xlsx', 'pptx']"
+          :key="format"
+          href="#"
+          class="dropdown-item"
+          :class="{ disabled: exporting }"
+          :data-test-id="`button-page-export-${format}`"
+          @click.prevent="exportPage(format)"
         >
-          <font-awesome-icon
-            :icon="['fas', 'tools']"
-          />
-          <span class="d-none d-md-inline">{{ $t('label.pageBuilder') }}</span>
-        </router-link>
+          Экспорт в {{ format.toUpperCase() }}
+        </a>
 
-        <router-link
-          data-test-id="button-page-edit"
-          :to="pageEditor"
-          class="btn btn-primary d-flex align-items-center"
-          :title="$t('tooltip.edit.page')"
-          style="margin-left:2px;"
-          data-bs-toggle="tooltip"
-          data-bs-boundary="body"
-        >
-          <font-awesome-icon
-            :icon="['far', 'edit']"
-          />
-        </router-link>
+        <template v-if="!isRecordPage && page.canUpdatePage">
+          <a
+            href="#"
+            class="dropdown-item"
+            data-test-id="button-page-export-schedule"
+            @click.prevent="showExportSchedule = true"
+          >
+            Рассылка по почте
+          </a>
 
-        <page-translator
-          v-if="trPage"
-          data-test-id="button-page-translations"
-          :page="trPage"
-          :page-layout="layout"
-          button-variant="primary"
-          style="margin-left:2px;"
-        />
+          <router-link
+            data-test-id="button-page-builder"
+            :to="pageBuilder"
+            class="dropdown-item"
+          >
+            {{ $t('label.pageBuilder') }}
+          </router-link>
+
+          <router-link
+            data-test-id="button-page-edit"
+            :to="pageEditor"
+            class="dropdown-item"
+          >
+            {{ $t('navigation.editPage') }}
+          </router-link>
+
+          <page-translator
+            data-test-id="button-page-translations"
+            :page="trPage"
+            :page-layout="layout"
+            button-variant="link"
+            button-class="dropdown-item rounded-0 text-dark text-decoration-none justify-content-start"
+          >
+            {{ $t('navigation.translation') }}
+          </page-translator>
+        </template>
       </div>
     </Teleport>
 
@@ -113,6 +123,13 @@
       </div>
     </div>
 
+    <export-schedule-modal
+      v-if="!isRecordPage && page.canUpdatePage"
+      v-model:show="showExportSchedule"
+      :namespace-id="namespace.namespaceID"
+      :page-id="page.pageID"
+    />
+
     <record-modal
       :namespace="namespace"
     />
@@ -147,6 +164,7 @@ import RecordModal from 'corteza-webapp-compose/src/components/Public/Record/Mod
 import MagnificationModal from 'corteza-webapp-compose/src/components/Public/Page/Block/Modal'
 import AiChatModal from 'corteza-webapp-compose/src/components/Public/Page/AiChat/Modal'
 import PageTranslator from 'corteza-webapp-compose/src/components/Admin/Page/PageTranslator'
+import ExportScheduleModal from 'corteza-webapp-compose/src/components/Public/Page/ExportScheduleModal.vue'
 import { useHelp } from '../../../composables/useHelp'
 import { pageHelpDocs, hydratePageDocs } from '../../../help/appDocs'
 import PageHelpBar from '../../../components/Common/PageHelpBar.vue'
@@ -171,6 +189,34 @@ const recordStore = useRecordStore()
 
 const $auth = window.__auth
 const $SystemAPI = window.__systemAPI
+
+const exporting = ref(false)
+const showExportSchedule = ref(false)
+
+// Server renders the page in headless browser with the print rules (see shims/print.css)
+async function exportPage (format) {
+  if (exporting.value) return
+  exporting.value = true
+
+  try {
+    const query = new URLSearchParams({ format, url: window.location.href })
+    const url = `${window.CortezaAPI}/compose/namespace/${props.namespace.namespaceID}/page/${props.page.pageID}/export?${query}`
+    const rsp = await fetch(url, { headers: { Authorization: `Bearer ${$auth.accessTokenFn()}` } })
+    if (!rsp.ok) {
+      throw new Error(await rsp.text())
+    }
+
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(await rsp.blob())
+    link.download = `${pageTitle.value || 'page'}.${format}`
+    link.click()
+    URL.revokeObjectURL(link.href)
+  } catch (e) {
+    toastErrorHandler('Не удалось выполнить экспорт страницы')(e)
+  } finally {
+    exporting.value = false
+  }
+}
 
 const layouts = ref([])
 const layout = ref(undefined)

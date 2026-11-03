@@ -109,11 +109,22 @@ func IsDXF(mimetype string, data []byte) bool {
 	return len(lines) >= 2 && strings.TrimSpace(lines[0]) == "0" && strings.TrimSpace(lines[1]) == "SECTION"
 }
 
-// Pages returns the cache directory holding page-N.jpg files for this PDF's
-// content, rasterizing on first request. Safe for concurrent callers with
-// the same content (de-duplicates via inFlight).
+// Pages returns the default-resolution page images for this PDF.
 func (r *Rasterizer) Pages(data []byte) (dir string, pageCount int, err error) {
+	return r.PagesAtDPI(data, 100)
+}
+
+// PagesAtDPI returns cached page images rendered at one of the supported
+// resolutions. A distinct cache directory prevents low-resolution pages from
+// being reused by the document viewer.
+func (r *Rasterizer) PagesAtDPI(data []byte, dpi int) (dir string, pageCount int, err error) {
+	if dpi != 100 && dpi != 150 {
+		return "", 0, fmt.Errorf("unsupported rasterization DPI %d", dpi)
+	}
 	key := contentKey(data)
+	if dpi != 100 {
+		key = fmt.Sprintf("%s-%d", key, dpi)
+	}
 	dir = filepath.Join(r.cacheDir, key)
 
 	if n := r.countPages(dir); n > 0 {
@@ -144,7 +155,7 @@ func (r *Rasterizer) Pages(data []byte) (dir string, pageCount int, err error) {
 		wg.Done()
 	}()
 
-	if err = r.render(data, dir); err != nil {
+	if err = r.render(data, dir, dpi); err != nil {
 		return dir, 0, err
 	}
 	pageCount = r.countPages(dir)
@@ -154,7 +165,7 @@ func (r *Rasterizer) Pages(data []byte) (dir string, pageCount int, err error) {
 	return dir, pageCount, nil
 }
 
-func (r *Rasterizer) render(data []byte, dir string) error {
+func (r *Rasterizer) render(data []byte, dir string, dpi int) error {
 	tmp, err := os.MkdirTemp("", "stroykontrol-raster-*")
 	if err != nil {
 		return err
@@ -170,10 +181,9 @@ func (r *Rasterizer) render(data []byte, dir string) error {
 		return err
 	}
 
-	// -jpeg -r 100: matches the resolution already used elsewhere in this
-	// project's docx/pdf tooling; good enough to spot real differences
-	// without producing huge images.
-	cmd := exec.Command("pdftoppm", "-jpeg", "-r", "100", pdfPath, filepath.Join(dir, "page"))
+	// Keep the requested DPI in the page raster so the document viewer can
+	// offer sharper large-sheet zoom without changing comparison images.
+	cmd := exec.Command("pdftoppm", "-jpeg", "-r", fmt.Sprint(dpi), pdfPath, filepath.Join(dir, "page"))
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("pdftoppm: %w (%s)", err, strings.TrimSpace(string(out)))

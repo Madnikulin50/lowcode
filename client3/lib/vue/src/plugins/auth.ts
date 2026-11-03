@@ -360,6 +360,13 @@ export class Auth {
   async handleState (): Promise<AuthInfo | null> {
     this.log.info('checking authentication')
 
+    // Server-side page export (headless browser) passes a short-lived token
+    // instead of going through the OAuth2 flow
+    const exportToken = (window as unknown as { __EXPORT_TOKEN__?: string }).__EXPORT_TOKEN__
+    if (!this[accessToken] && typeof exportToken === 'string' && exportToken) {
+      this[accessToken] = exportToken
+    }
+
     if (this[accessToken]) {
       this.log.info('access token found')
 

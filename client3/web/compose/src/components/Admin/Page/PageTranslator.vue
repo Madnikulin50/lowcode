@@ -7,7 +7,13 @@
     :titles="titles"
     :fetcher="fetcher"
     :updater="updater"
-  />
+  >
+    <slot v-if="$slots.default" />
+    <font-awesome-icon
+      v-else
+      :icon="['fas', 'language']"
+    />
+  </c-translator-button>
 </template>
 
 <script setup lang="js">

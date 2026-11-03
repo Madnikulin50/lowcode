@@ -390,6 +390,13 @@
           <tbody v-else-if="showListLoader || showListEmpty">
             <tr>
               <td :colspan="tableColSpan" class="border-0">
+                <div
+                  v-if="showListEmpty && !showListLoader"
+                  class="rl-print-empty text-center py-3"
+                  style="display: none;"
+                >
+                  Записи отсутствуют
+                </div>
                 <div class="rl-empty d-print-none">
                   <div v-if="showListLoader" class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading…</span>
@@ -406,6 +413,9 @@
             </tr>
           </tbody>
         </table>
+        <div v-if="printHiddenCount > 0" class="rl-print-more d-none d-print-block">
+          и еще {{ printHiddenCount }}
+        </div>
         </div>
 
         <div class="rl-cards-wrap flex-grow-1">
@@ -689,6 +699,12 @@ const hasMultiplePages = computed(() => {
   const pp = recordsPerPage.value
   if (pp > 0 && pagination.count > pp) return true
   return !!(filter.nextPage || filter.prevPage)
+})
+const PRINT_ROWS_LIMIT = 7
+// При печати выводятся первые PRINT_ROWS_LIMIT записей (см. print.css), остальные считаются здесь
+const printHiddenCount = computed(() => {
+  const total = Math.max(pagination.count || 0, items.value.length)
+  return Math.max(0, total - Math.min(items.value.length, PRINT_ROWS_LIMIT))
 })
 const showCompactCount = computed(() => !!options.value.showTotalCount)
 const showCompactPager = computed(() => hasMultiplePages.value)

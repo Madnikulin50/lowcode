@@ -51,21 +51,6 @@
         @input="setLayout"
       />
 
-      <router-link
-        v-if="page && isRecordPage"
-        variant="primary"
-        :disabled="!moduleEditor"
-        :to="moduleEditor"
-        class="btn btn-primary btn-sm d-flex align-items-center me-2"
-        style="margin-right:2px;"
-      >
-        {{ $t('navigation.editModule') }}
-        <font-awesome-icon
-          :icon="['far', 'edit']"
-          class="ms-2"
-        />
-      </router-link>
-
       <div
         v-if="page && page.canUpdatePage"
         class="btn-group text-nowrap"
@@ -96,25 +81,42 @@
           <span class="ms-1 d-none d-xl-inline">{{ $t('help.label') }}</span>
         </button>
 
+      </div>
+    </Teleport>
+
+    <Teleport
+      defer
+      to="#topbar-menu-items"
+    >
+      <div style="display: contents;">
         <router-link
-          data-bs-toggle="tooltip"
-          :title="$t('tooltip.edit.page')"
-          variant="primary"
-          :to="pageEditor"
-          class="btn btn-primary d-flex align-items-center"
-          style="margin-left:2px;"
+          v-if="isRecordPage"
+          data-test-id="button-module-edit"
+          :to="moduleEditor"
+          class="dropdown-item"
         >
-          <font-awesome-icon
-            :icon="['far', 'edit']"
-          />
+          {{ $t('navigation.editModule') }}
         </router-link>
 
-        <page-translator
-          v-model:page="trPage"
-          v-model:page-layout="layout"
-          button-variant="primary"
-          style="margin-left:2px;"
-        />
+        <template v-if="page.canUpdatePage">
+          <router-link
+            data-test-id="button-page-edit"
+            :to="pageEditor"
+            class="dropdown-item"
+          >
+            {{ $t('navigation.editPage') }}
+          </router-link>
+
+          <page-translator
+            v-model:page="trPage"
+            v-model:page-layout="layout"
+            data-test-id="button-page-translations"
+            button-variant="link"
+            button-class="dropdown-item rounded-0 text-dark text-decoration-none justify-content-start"
+          >
+            {{ $t('navigation.translation') }}
+          </page-translator>
+        </template>
       </div>
     </Teleport>
 

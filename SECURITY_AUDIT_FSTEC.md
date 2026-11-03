@@ -1,6 +1,6 @@
 # Аудит безопасности — подготовка к сертификации ФСТЭК (КИИ)
 
-Дата: 2026-01-15 (обновлено 2026-10-11) · Ветка: `2026.10.x` · Охват: `server/` (Go), `client3/lib/*` + `client3/web/*` (JS)
+Дата: 2026-01-15 (обновлено 2026-11-01) · Ветка: `2026.10.x` · Охват: `server/` (Go), `client3/lib/*` + `client3/web/*` (JS)
 
 ## 1. Выполненные исправления кода
 
@@ -17,16 +17,14 @@
 | 9 | `server/system/reporting` | Нерабочий (не компилируемый) устаревший пакет, ломал `go build ./...` и `govulncheck ./...` | — | Удалён (не импортировался, типы переехали в `datasources`) |
 | 10 | `server/webconsole` (`package.json`, `yarn.lock`, `tsconfig.json`) | Устаревший lock (axios 0.28, vue 3.2.31, ~30 транзитивных пакетов с CVE) | CWE-1104 | Lock пересобран, `vue` ^3.5.42, `typescript` ~5.4, `vue-tsc` ^2, `resolutions` для транзитивных пакетов; `yarn build` проходит |
 | 11 | `client3/lib/*`, `client3/web/*` (`yarn.lock`) | JS-зависимости: `axios` 1.8–1.19, `lodash`, `picomatch`, `minimatch`, `immutable`, `nanoid`, `postcss`, `handlebars`, `svgo` и др. | CWE-1104 | Lock-файлы пересобраны в рамках текущих semver-диапазонов (без смены major): OSV 507 → 182 вхождения. Побочные правки: `lib/js/src/api-clients/compose.ts` (`params … as KV` под типы axios 1.20) и явный `include` в `rollup.config.js` обоих библиотек (`picomatch` ≥2.3.2 перестал матчить дефолтный `**/*.ts+(|x)` у `rollup-plugin-typescript2`). Сборка `lib/js`, `lib/vue` и всех 7 webapp проходит |
-| 12 | `server/pkg/rand/rand.go`, `server/auth/handlers/handle_mfa_totp.go` | Предсказуемые секреты: `math/rand` с seed по времени генерировал ID сессий, токены сброса/OTP-ссылок, секреты OAuth-клиентов, токены federation; секрет TOTP — тоже `math/rand` (`gosec` G404) | CWE-338 | `pkg/rand` переписан на `crypto/rand` (тот же API `Bytes`/`Password`, равномерный выбор символа, без смещения); TOTP-секрет — `crypto/rand` с обработкой ошибки |
-| 13 | `server/pkg/webapp/serve.go` | Путь из `r.URL.Path` собирался через `path.Join` без привязки к корню — `../` выходил за каталог вебаппа при `os.Stat` (`gosec` G703) | CWE-22 | Путь нормализуется `path.Clean("/"+…)` |
-| 14 | `server/pkg/aiagent/skillfmt.go` | Чтение ресурсов skill из каталога по символьным ссылкам (`gosec` G122) | CWE-367 | Пропускаются не-регулярные файлы (symlink, устройства) |
-| 15 | `server/pkg/api/server/middleware.go` | `panicRecovery`: в логе вместо значения паники писался пустой `err` (`staticcheck` SA9008) | CWE-778 | Значение паники берётся из `recover()` |
-| 16 | `server/pkg/apigw/profiler/hit.go`, `server/store/adapters/rdbms/ddl/goqu.go` | Бесконечная рекурсия в `Hits.Len` и `sqlExpression.IsPrepared` (`staticcheck` SA5007) → переполнение стека | CWE-674 | `len(h)` и `false` |
-| 17 | `server/system/renderer/html.go` | Шаблонная функция `inlineRemote` выполняла `http.Get` по произвольному URL без ограничений (схема, время, размер) (`gosec` G107) | CWE-918 / CWE-400 | Только `http(s)`, таймаут 15 с, лимит ответа 10 МБ. Остаточный риск: обращение к внутренним адресам не блокируется (автор шаблона может запросить внутренний URL) — при необходимости ограничить сетевой политикой |
-| 18 | `server/pkg/api/server/waitfor.go` | Служебный HTTP-сервер без таймаутов (slowloris, `gosec` G114) | CWE-676 | `http.Server{ReadHeaderTimeout: 10s}` |
-| 19 | `server/pkg/api/server/middleware.go` | При панике клиенту возвращался текст паники (пути, SQL) | CWE-209 | Клиенту — «internal server error»; детали только в логе, а в ответе — лишь при заданном `LOG_DEBUG` |
+| 12 | `server/go.mod` + `vendor` (повторный прогон `govulncheck` 2026-11-01) | GO-2026-6860 / GO-2026-6866 в `golang.org/x/net` 0.60.0 — достижимая уязвимость: `webapp.serveConfig` вызывает `html.Parse` (`pkg/webapp/serve.go:185`), квадратичная сложность при слиянии текстовых узлов | CWE-407 | `x/net` → 0.62.0; попутно `x/crypto` 0.58.0, `x/sync` 0.24.0, `x/sys` 0.49.0, `x/term` 0.47.0, `x/text` 0.43.0 |
+| 13 | `server/go.mod` + `vendor` | Новая зависимость `github.com/xuri/excelize/v2` v2.11.0 (нужна экспорту в XLSX, `compose/envoy/xlsx_encode.go`) имела достижимые GO-2026-6688 и GO-2026-6684 и ещё 4 advisory на уровне пакета | CWE-1104 | Зафиксирована pseudo-версия `v2.11.1-0.20261029001137-c5fd73bde8f6` (master с исправлениями); после выхода релиза ≥ v2.11.1 заменить на него. Также добавлен `go-pdf/fpdf` v0.9.0 (экспорт в PDF) |
+| 14 | `server/pkg/errors/http.go` | Текст ошибки (`err.Error()`, может содержать данные запроса) и разделители передавались в `fmt.Fprintf` как строка формата | CWE-134 | Все вызовы `write(...)` переведены на константный формат (`"%s"`); `go vet` по пакету чист |
+| 15 | `server/auth/handlers/handle_logout_test.go`, `server/pkg/envoyx/csv/decoder_test.go` | Тесты не проходили/не компилировались: `Test_logoutProc` падал из-за пустого hash-ключа `gothic.Store` (`gorilla/securecookie` ≥ 1.1.2 его отвергает; в проде `gothic.Store` задаётся в `auth/external/external.go`), `testReader()` возвращал `io.Reader` вместо `io.ReadSeeker` | — | В тесте logout задан `sessions.NewCookieStore` с тестовым ключом; `testReader()` возвращает `io.ReadSeeker`. Код прода не менялся |
 
-Подтверждение сборки: `go build ./...` проходит (2026-10-11); ранее — `go build -mod=vendor` ключевых пакетов (`./pkg/... ./system/service/... ./system/rest/... ./system/types/... ./compose/... ./automation/... ./federation/... ./store/...`) — без ошибок. `get_diagnostics` — чисто.
+Подтверждение сборки: `go build -mod=vendor ./...` проходит (2026-11-01), все тестовые пакеты компилируются (`go test -run XXX_NONE ./...`), `govulncheck ./...` — на уровне символов **No vulnerabilities found**; ранее — `go build -mod=vendor` ключевых пакетов (`./pkg/... ./system/service/... ./system/rest/... ./system/types/... ./compose/... ./automation/... ./federation/... ./store/...`) — без ошибок. `get_diagnostics` — чисто.
+
+Pre-existing падения тестов (проверено на чистом `HEAD` в отдельном worktree — воспроизводятся без моих правок, к безопасности не относятся): `pkg/dal` (`TestAggregator*`, `TestStepAggregate*`), `compose/service` (`TestRecord_boolFieldPermissionIssueKBR`, nil pointer), `compose/service/values` (`Test_sanitizer_Run`).
 
 ## 2. Результаты аудита (изменений кода не потребовалось)
 
@@ -44,7 +42,7 @@
 ## 4. Замечания и рекомендации
 
 1. **Сканеры зависимостей** (запуск 2026-01-15):
-   - **Go** — `osv-scanner` отработал (база `api.osv.dev` доступна): 180 пакетов из `server/go.mod`, реестр в разделе 5. `govulncheck` в январе не отработал (база `vuln.go.dev` недоступна); повторный прогон 2026-10-11 (локальная копия базы, `govulncheck` v1.9.0, Go 1.27.1, `./...` и `-scan package`) — **No vulnerabilities found**.
+   - **Go** — `osv-scanner` отработал (база `api.osv.dev` доступна): 180 пакетов из `server/go.mod`, реестр в разделе 5. `govulncheck` в январе не отработал (база `vuln.go.dev` недоступна); повторный прогон 2026-10-11 (локальная копия базы, `govulncheck` v1.9.0, Go 1.27.1, `./...` и `-scan package`) — **No vulnerabilities found**. Прогон 2026-11-01 (база от 2026-10-27, Go 1.27.3, `GOFLAGS=-mod=vendor govulncheck ./...`) нашёл достижимую GO-2026-6860 (`x/net`) и уязвимости новой зависимости `excelize` — исправлено (раздел 1, п. 12–13); итог на уровне символов — **No vulnerabilities found**.
    - **JS** — `yarn audit` выполнен по всем пакетам `client3/lib/*` и `client3/web/*` (prod-зависимости); `osv-scanner` дополнительно выявил устаревший `server/webconsole/yarn.lock` (vite 2.9.13, rollup 2.67.2, axios 0.28.0) — раздел 5.
    - **`trivy`** (Docker-образы) — не запускался: инструмент не установлен, образы локально не собраны.
    - Команды: `osv-scanner scan -r server`, `govulncheck -mode=source ./...`, `trivy image <образ>`.
@@ -105,27 +103,15 @@ Dev-зависимости сборки исключены (`--groups dependenci
 
 Рекомендации: обновить `@tiptap/*`/`prosemirror-*` до ≥1.42.3; заменить/обновить `xlsx` (SheetJS — официальных патчей нет); обновить `axios`/`form-data` (≥4.0.4) и `lodash` (≥4.17.23).
 
-## 5a. Статический анализ (gosec, staticcheck) — 2026-10-12
-
-Анализатор Svace на стенде отсутствует; вместо него прогнаны открытые анализаторы (`gosec` v2.26.1: `-exclude-dir=vendor -exclude-generated -severity medium -confidence medium`; `staticcheck` `./...`). Сертификационной силы они не имеют.
-
-**gosec** — 277 срабатываний на 1474 файлах: G120 (118, `ParseForm` без `MaxBytesReader`), G115 (86, преобразования целых), G304 (25, `os.Open` по пути), G204 (7), G703 (5), G404 (4), G401/G501/G505 (4/3/1, MD5/SHA-1 для идентификаторов), G122 (3), G118 (3), прочие по 1–5. Исправлены реальные: G404 (п. 12), G703 (п. 13), G122 (п. 14), G107 (п. 17), G114 (п. 18). Повторный прогон после правок: 272 срабатывания (G120 118, G115 86, G304 25, G204 7, G306 5, G401 4, G117 4, G703 4, G404 2 — оба принятые; остальные по 1–3).
-
-Принятые/ложные срабатывания: `pkg/riskengine/attribution.go` (G404, `rand` с фиксированным seed 42 намеренно — воспроизводимое объяснение Шепли); `pkg/http/default.go` (G402, `InsecureSkipVerify` только при явном `SYSTEM_HTTP_CLIENT_TSL_INSECURE=1`); G204 в `pkg/gonec`, `pkg/rag` (запуск внешних процессов с аргументами из конфигурации/админа; для `gonec` см. раздел 2); G401/G501/G505 — хэши для идентификаторов/ключей кеша (`compose/types/module.go`, `pkg/jsenv/vm.go`, `auth/handlers/handle_sessions.go`, `pkg/options/auth.go`), не для защиты секретов — рекомендуется заменить на SHA-256 при ближайшей правке; G114 (`pkg/api/server/waitfor.go`, служебный сервер ожидания без таймаутов); G704 (`pkg/apigw/filter/proxy`, `pkg/http/client.go` — целевые адреса из конфигурации маршрутов); G705 (`automation/rest/skills.go`, заголовок через `mime.FormatMediaType`). Рекомендация (не сделано): ограничить тела запросов (`http.MaxBytesReader`, G120) на маршрутах с формами — глобальный лимит ломает загрузку вложений, поэтому нужен точечный middleware для `auth/`-форм. Замена MD5/SHA-1 (G401/G501/G505) не делалась: хэши входят в сохранённые идентификаторы (`compose/types/module.go`), смена алгоритма изменит имена в БД.
-
-**staticcheck** — 1278 замечаний, из них стиль и мёртвый код (`U1000` 555, `S10xx`, `ST1xxx`) не затрагивались; по корректности исправлены `SA9008`, `SA5007` (п. 15–16). Не исправлялись (не уязвимости, часть в сгенерированном коде): `SA4017` (`strings.ToLower` без присвоения в `*yaml_decode.gen.go` — требует правки шаблонов кодогенерации), `SA4023`, `SA1019` (65 устаревших API), `SA1029` (строковые ключи `context.WithValue`), `SA5008` (теги `json:",string"`), `SA1012` (nil context в тестах).
-
-Проверка: `go build ./...` проходит; тесты `pkg/api`, `pkg/apigw`, `store/adapters/rdbms/ddl`, `pkg/aiagent`, `pkg/webapp` — ok. `auth/handlers` `Test_logoutProc` падает (`Could not delete user session`) — не связан с этими правками (в изменённых файлах не используется), на чистой ветке отдельно не проверялся.
-
 ## 6. Осталось (вне рамок текущей итерации)
 
-Статус 2026-10-11 (повторный прогон):
+Статус 2026-11-01 (повторный прогон):
 
-- **`govulncheck`** (`-db` — локальная копия `vuln.go.dev`, `govulncheck` v1.9.0 на Go 1.27.1, `./...`) — **No vulnerabilities found**; режим `-scan package` — тоже чисто. Закрыто.
+- **`govulncheck`** (`govulncheck` v1.9.0, Go 1.27.3, база `vuln.go.dev` от 2026-10-27, `GOFLAGS=-mod=vendor`, `./...`) — на уровне символов **No vulnerabilities found** (достижимых уязвимостей нет). Не вызываются кодом, исправления у upstream нет — оставлены под наблюдение: `GO-2025-3884` (`gorilla/csrf` 1.7.3), `GO-2024-2631` (`gopkg.in/square/go-jose.v2` 2.3.1, тянется из `crusttech/go-oidc`; решение — заменить OIDC-клиент на `go-oidc/v3` + `go-jose/v4`), `GO-2026-5932` (`x/crypto` 0.58.0, уровень модуля). Перепроверять после каждого обновления зависимостей и при выходе новых версий.
+- **`excelize`** — зафиксирована pseudo-версия master (`v2.11.1-0.20261029…`), так как релиз с исправлениями GO-2026-6684/6685/6687/6688/6689/6695 на 2026-11-01 не опубликован; после публикации релиза перейти на него (`go get github.com/xuri/excelize/v2@vX.Y.Z && go mod tidy && go mod vendor`).
 - **`system/reporting`** — удалён (пакет не импортировался, типы переехали в `datasources`); `go build ./...` проходит. Закрыто.
 - **Go (`osv-scanner`)** — остались 2 записи без исправления: `disintegration/imaging` 1.6.2 (GHSA-q7pp-wcgr-pffx / CVE-2023-36308, LOW — panic на crafted TIFF; используется в `system/service/attachment.go` и `compose/service/attachment.go`, рекомендуется ограничить типы изображений или заменить библиотеку) и `go-chi/chi` v3 (GO-2026-4316, только тестовая зависимость `go-chi/jwtauth`, в runtime не линкуется). `go-jose.v2`, `gorilla/csrf`, `x/crypto` в отчёте больше не фигурируют.
 - **`server/webconsole`** — `yarn.lock` обновлён (был рассинхронизирован с `package.json`: axios 0.28 → 1.x), `vue` ^3.5.42, `typescript` ~5.4, `vue-tsc` ^2, `resolutions` для транзитивных пакетов; `yarn build` проходит. Остаток — только dev-инструменты, фиксящиеся лишь сменой major: `vite` 2.9.x, `vitest` 0.2.x, `esbuild` 0.14, `tinypool`, `braces`, `postcss-selector-parser` (в `dist` не попадают).
 - JS `client3/*`: безопасные обновления в рамках semver выполнены (п. 11, OSV: 96 пакетов / 182 вхождения). Остаток требует смены major или замены библиотек: `xlsx` (SheetJS, патча нет — рассмотреть `exceljs`), `echarts` 5→6, `vitest` 3→4 / `tinypool` / `uuid` 10→11 / `moment`, `mxgraph` (патча нет), `braces` (патча нет), `@vue/server-renderer`.
 - Не сделано: запуск `trivy` по собранным Docker-образам.
-- Модель угроз, поверхность атаки и категорирование КИИ оформлены в `docs/security/`: [threat-model.md](docs/security/threat-model.md), [attack-surface.md](docs/security/attack-surface.md), [kii-categorization.md](docs/security/kii-categorization.md) (методика, рабочий лист оператора, профиль безопасной конфигурации, финальный чеклист). Категорию значимости присваивает оператор — по его процессам; в документе она не назначена.
-- Новые открытые находки из анализа поверхности атаки (подробности — в `docs/security/attack-surface.md`): у HTTP-API агентов нет входящей аутентификации и стоит `CORS: *` (A-1, A-2); `/agents/enroll` выдаёт токен на 365 дней без ограничения частоты (A-3); агенты работают под одним `corteza-service` (A-4); саморегистрация включена в стандартном provision; MCP SSE без аутентификации на транспорте.
+- Не сделано: уточнить модель угроз/категорию значимости КИИ для финального чеклиста.

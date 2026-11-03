@@ -722,10 +722,12 @@ recordList:
     includeQuery: Фильтр для поискового запроса
     json: JSON Экспорт
     limitations: "CSV export limitation: only the first value in the multi value fields will be exported"
+    pdf: PDF Экспорт
     rangeBy: Диапазон по
     recordCount: "{{count}} строк готово к экспорту"
     selectFields: "Выберите поля для экспорта:"
     selection: Выбранные записи
+    xlsx: XLSX Экспорт
     specifyTimezone: Экспорт to timezone
     timezonePlaceholder: Select timezone
     resolveRefs: Include record selector values

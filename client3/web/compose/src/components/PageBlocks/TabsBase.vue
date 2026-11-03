@@ -15,7 +15,7 @@
       :fill="styleOpts.justify === 'justify'"
       :align="styleOpts.alignment"
       no-fade
-      lazy
+      :lazy="!printing && !preloaded"
       :content-class="contentClass"
       class="h-100"
       :class="{ 'd-flex flex-column': styleOpts.orientation !== 'vertical' }"
@@ -159,7 +159,7 @@ function onTabActivated({ newTabIndex }) {
 }
 
 function shouldRenderTab({ lazy = true }, index) {
-  if (!lazy) return true
+  if (!lazy || printing.value) return true
   return !!visitedTabs.value[index]
 }
 
@@ -203,7 +203,36 @@ function errorTriangleClass(index) {
   return undefined
 }
 
-onMounted(() => { refreshBlock(() => {}) })
+const printing = ref(false)
+const preloaded = ref(false)
+const onBeforePrint = () => { printing.value = true }
+const onAfterPrint = () => { printing.value = false }
+
+let printQuery = null
+let preloadTimer = null
+const onPrintQueryChange = e => { printing.value = e.matches }
+
+onMounted(() => {
+  window.addEventListener('beforeprint', onBeforePrint)
+  window.addEventListener('afterprint', onAfterPrint)
+  printQuery = window.matchMedia ? window.matchMedia('print') : null
+  printQuery?.addEventListener?.('change', onPrintQueryChange)
+  refreshBlock(() => {})
+
+  // Данные ленивых вкладок грузятся асинхронно, поэтому к моменту печати их нужно
+  // отрисовать заранее: после старта страницы фоном прогружаем все вкладки.
+  preloadTimer = setTimeout(() => {
+    tabbedBlocks.value.forEach((_, index) => { visitedTabs.value[index] = true })
+    preloaded.value = true
+  }, 1500)
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(preloadTimer)
+  window.removeEventListener('beforeprint', onBeforePrint)
+  window.removeEventListener('afterprint', onAfterPrint)
+  printQuery?.removeEventListener?.('change', onPrintQueryChange)
+})
 </script>
 <style lang="scss">
 .tabs-base-block-container {

@@ -317,6 +317,7 @@ general:
 import: Импорт модуля
 navigation:
   module: Модули
+  translation: Перевод
 noModule: Модули отсутствуют
 noModuleFilter: Нет модулей удовлетваряющих условию поиска
 

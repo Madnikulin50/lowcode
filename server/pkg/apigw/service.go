@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/madnikulin50/lowcode/server/pkg/apigw/filter"
@@ -31,6 +32,7 @@ type (
 		reg    *registry.Registry
 		routes []*route
 		mx     *chi.Mux
+		muMx   sync.RWMutex
 		pr     *profiler.Profiler
 		storer storer
 
@@ -78,7 +80,11 @@ func New(cfg types.Config, logger *zap.Logger, storer storer) *apigw {
 //
 // When reloading routes, make sure to replace the original mux
 func (s *apigw) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if s.mx == nil {
+	s.muMx.RLock()
+	mx := s.mx
+	s.muMx.RUnlock()
+
+	if mx == nil {
 		http.Error(w, "Integration Gateway not initialized", http.StatusInternalServerError)
 		return
 	}
@@ -95,7 +101,7 @@ func (s *apigw) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, nil))
 
 	// Handle api-gw request
-	s.mx.ServeHTTP(w, r)
+	mx.ServeHTTP(w, r)
 }
 
 // Reload reloads all routes and their filters
@@ -111,12 +117,13 @@ func (s *apigw) Reload(ctx context.Context) (err error) {
 
 	s.Init(ctx, routes...)
 
-	// Rebuild the mux
-	s.mx = chi.NewMux()
+	// Build the new mux fully before publishing it, so concurrent requests
+	// never see (or mutate) a half-configured router
+	mx := chi.NewMux()
 
 	for _, r := range s.routes {
 		// Register route handler on endpoint & method
-		s.mx.Method(r.method, r.endpoint, r)
+		mx.Method(r.method, r.endpoint, r)
 	}
 
 	// handling missed hits
@@ -127,9 +134,13 @@ func (s *apigw) Reload(ctx context.Context) (err error) {
 			defaultResponse       = helperDefaultResponse(s.cfg, s.pr, s.log)
 		)
 
-		s.mx.NotFound(defaultResponse)
-		s.mx.MethodNotAllowed(defaultMethodResponse)
+		mx.NotFound(defaultResponse)
+		mx.MethodNotAllowed(defaultMethodResponse)
 	}
+
+	s.muMx.Lock()
+	s.mx = mx
+	s.muMx.Unlock()
 
 	return nil
 }

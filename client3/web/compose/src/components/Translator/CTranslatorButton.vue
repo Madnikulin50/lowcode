@@ -1,7 +1,7 @@
 <template>
   <button
-    class="btn d-flex align-items-center justify-content-center"
-    :class="[`btn-${buttonVariant}`, sizeClass, buttonClass]"
+    class="btn d-flex align-items-center"
+    :class="[`btn-${buttonVariant}`, sizeClass, buttonClass, hasCustomJustify ? '' : 'justify-content-center']"
     :disabled="disabled"
     @click="onClick"
   >
@@ -39,6 +39,8 @@ const props = defineProps({
 // tightly to their icon rather than a text line box), and `align-items:
 // stretch` on the group then dragged those siblings back up to match it.
 const sizeClass = computed(() => props.size === 'sm' ? 'btn-sm' : props.size === 'lg' ? 'btn-lg' : '')
+
+const hasCustomJustify = computed(() => /justify-content-/.test(props.buttonClass))
 
 function onClick() {
   window.dispatchEvent(new CustomEvent('c-translator', {

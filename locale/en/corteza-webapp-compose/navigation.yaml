@@ -19,6 +19,7 @@ page: Pages
 rulechains: Rule chains
 workflows: Workflows
 appMenu: Menu
+appSpaceList: Namespace list
 userSettings:
   changePassword: Change password
   loggedInAs: Logged in as {{user}}

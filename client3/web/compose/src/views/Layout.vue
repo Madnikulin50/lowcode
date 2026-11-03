@@ -34,9 +34,11 @@
       <c-topbar
         :expanded="expanded"
         :show-menu-toggle="!isSidebarDisabledRoute"
+        menu-dropdown
         :settings="settings.get('ui.topbar', {})"
         :labels="{
           appMenu: $t('appMenu'),
+          appSpaceList: $t('appSpaceList', 'Список пространств'),
           helpForum: $t('help.forum'),
           helpDocumentation: $t('help.documentation'),
           helpUserDocs: $t('help.userDocs'),
