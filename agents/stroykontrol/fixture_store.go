@@ -60,7 +60,7 @@ func (f *FixtureStore) caseDir(caseID string) string {
 	return filepath.Join(f.dir, filepath.Base(caseID))
 }
 
-var docExts = map[string]bool{".pdf": true, ".docx": true, ".xlsx": true, ".dxf": true}
+var docExts = map[string]bool{".pdf": true, ".docx": true, ".xlsx": true, ".dxf": true, ".dwg": true}
 
 // caseFiles lists the document files of a case with their side.
 func (f *FixtureStore) caseFiles(dir string) []documentRecord {
@@ -91,6 +91,8 @@ func mimetypeFor(path string) string {
 		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 	case ".xlsx":
 		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case ".dwg":
+		return "image/vnd.dwg"
 	default:
 		return "application/octet-stream"
 	}
@@ -129,6 +131,7 @@ func (f *FixtureStore) analysis(recordID, dir string) *cmp.Result {
 		if err != nil {
 			continue
 		}
+		data, _ = normalizeDoc(data, mimetypeFor(d.ID))
 		inputs = append(inputs, cmp.Input{ID: d.ID, Name: d.Name, Side: d.Side, Data: data})
 	}
 	mode := cmp.ModeStages
@@ -274,7 +277,8 @@ func (f *FixtureStore) FetchDocument(_, recordID, docID string) ([]byte, string,
 	if err != nil || docID == "" {
 		return nil, "", fmt.Errorf("fixture case %q has no document %q", recordID, docID)
 	}
-	return data, mimetypeFor(path), nil
+	data, mimetype := normalizeDoc(data, mimetypeFor(path))
+	return data, mimetype, nil
 }
 
 func (f *FixtureStore) SetDiscrepancyStatus(_, recordID, discrepancyID, status, comment string) error {

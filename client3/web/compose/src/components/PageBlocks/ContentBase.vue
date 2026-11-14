@@ -15,6 +15,7 @@ import { computed, inject } from 'vue'
 import { NoID } from 'corteza-lib/js/dist'
 import { evaluatePrefilter } from 'corteza-webapp-compose/src/lib/record-filter'
 import { useI18n } from 'vue-i18n'
+import Wrap from './Wrap'
 
 const props = defineProps({
   blockIndex: { type: Number, default: -1 },

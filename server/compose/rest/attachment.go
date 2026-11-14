@@ -1,18 +1,23 @@
 package rest
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"github.com/madnikulin50/lowcode/server/pkg/errors"
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
+	"sync"
+
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
 
 	"github.com/madnikulin50/lowcode/server/compose/rest/request"
 	"github.com/madnikulin50/lowcode/server/compose/service"
 	"github.com/madnikulin50/lowcode/server/compose/types"
 	"github.com/madnikulin50/lowcode/server/pkg/api"
 	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/rag"
 )
 
 type (
@@ -138,6 +143,10 @@ func (ctrl Attachment) serve(ctx context.Context, namespaceID, attachmentID uint
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		if fh == nil {
+			http.Error(w, "attachment has no file", http.StatusNotFound)
+			return
+		}
 
 		defer fh.Close()
 
@@ -150,8 +159,59 @@ func (ctrl Attachment) serve(ctx context.Context, namespaceID, attachmentID uint
 			w.Header().Add("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
 		}
 
+		// The browser cannot parse DWG. Preview asks for ASCII DXF (?as=dxf)
+		// and draws it with the same viewer as a native DXF file. Download
+		// still returns the original.
+		if !preview && !download && req.URL.Query().Get("as") == "dxf" && isDWGAttachment(att) {
+			serveDWGAsDXF(w, req, att, fh)
+			return
+		}
+
 		http.ServeContent(w, req, name, att.CreatedAt, fh)
 	}, nil
+}
+
+const dwgPreviewMaxBytes = 50 << 20
+
+var dwgDXFCache sync.Map
+
+func isDWGAttachment(att *types.Attachment) bool {
+	name := strings.ToLower(att.Name)
+	if strings.HasSuffix(name, ".dwg") {
+		return true
+	}
+	ext := strings.ToLower(strings.TrimPrefix(att.Meta.Original.Extension, "."))
+	if ext == "dwg" {
+		return true
+	}
+	mt := strings.ToLower(att.Meta.Original.Mimetype)
+	return strings.Contains(mt, "dwg") || strings.Contains(mt, "acad")
+}
+
+func serveDWGAsDXF(w http.ResponseWriter, req *http.Request, att *types.Attachment, fh io.ReadSeekCloser) {
+	data, err := io.ReadAll(io.LimitReader(fh, dwgPreviewMaxBytes+1))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if len(data) > dwgPreviewMaxBytes {
+		http.Error(w, "чертёж слишком большой для просмотра", http.StatusRequestEntityTooLarge)
+		return
+	}
+	key := fmt.Sprintf("%d:%d", att.ID, len(data))
+	var dxf []byte
+	if cached, ok := dwgDXFCache.Load(key); ok {
+		dxf = cached.([]byte)
+	} else {
+		dxf, err = rag.ConvertDWGToDXF(req.Context(), data, att.Name)
+		if err != nil {
+			http.Error(w, "Не удалось подготовить просмотр DWG: "+err.Error(), http.StatusUnprocessableEntity)
+			return
+		}
+		dwgDXFCache.Store(key, dxf)
+	}
+	w.Header().Set("Content-Type", "application/dxf")
+	http.ServeContent(w, req, "preview.dxf", att.CreatedAt, bytes.NewReader(dxf))
 }
 
 func (ctrl Attachment) makeFilterPayload(ctx context.Context, aa types.AttachmentSet, f types.AttachmentFilter, err error) (*attachmentSetPayload, error) {

@@ -27,3 +27,11 @@ export { useToast } from './composables/useToast'
 export { applyColorMode } from './libs/theme'
 export { CortezaAPI } from './plugins'
 export { toasts, pushToast, removeToast, toastSuccess, toastDanger, toastErrorHandler } from './libs/toasts'
+
+export {
+  CPreviewInline,
+  CPreviewLightbox,
+  canPreview,
+  getExtensionIconType,
+  getFileExt,
+} from './components/filePreview'

@@ -1,6 +1,15 @@
 <template>
+  <dwg-preview
+    v-if="show && isDwg"
+    :src="(attachment || {}).document || (attachment || {}).src"
+    :name="(attachment || {}).name"
+    :download="(attachment || {}).download"
+    :meta="(attachment || {}).meta"
+    @close="attachment=undefined"
+  />
+
   <c-preview-lightbox
-    v-if="show"
+    v-else-if="show"
     :src="(attachment || {}).document || (attachment || {}).src"
     :name="(attachment || {}).name"
     :alt="(attachment || {}).name"
@@ -30,10 +39,9 @@
 defineOptions({ i18nOptions: { namespaces: 'preview' } })
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { components } from 'corteza-lib/vue/dist'
+import { CPreviewLightbox } from 'corteza-lib/vue/dist'
+import DwgPreview from './DwgPreview.vue'
 import { registerAssistantDocument, parseAttachmentURL } from 'corteza-webapp-compose/src/composables/useAssistantContext'
-
-const { CPreviewLightbox } = components
 const { t: $t } = useI18n({ useScope: 'global' })
 
 const attachment = ref(undefined)
@@ -59,6 +67,13 @@ watch(attachment, (a) => {
 const attachmentMime = computed(() => {
   const meta = (attachment.value || {}).meta || {}
   return (meta.original || meta.preview || {}).mimetype
+})
+
+const isDwg = computed(() => {
+  const name = String((attachment.value || {}).name || '')
+  const src = String((attachment.value || {}).src || (attachment.value || {}).document || '')
+  const mime = String(attachmentMime.value || '')
+  return /\.dwg($|\?)/i.test(name) || /\.dwg($|\?)/i.test(src) || /dwg|acad/i.test(mime)
 })
 
 const previewLabels = computed(() => ({

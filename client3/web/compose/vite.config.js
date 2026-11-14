@@ -70,6 +70,14 @@ export default defineConfig({
         }
       },
     },
+    {
+      name: 'fix-loglevel-default',
+      enforce: 'pre',
+      load (id) {
+        if (!id.includes('loglevel/lib/loglevel.js')) return
+        return readFileSync(resolve(__dirname, 'src/shims/loglevel-default.js'), 'utf8')
+      },
+    },
   ],
   optimizeDeps: {
     include: [
@@ -115,6 +123,10 @@ export default defineConfig({
       // only has named exports. Match the bare specifier only so the shim can
       // import the real file via opentype.js/dist/opentype.mjs.
       { find: /^opentype\.js$/, replacement: resolve(__dirname, 'src/shims/opentype-default.js') },
+      // Same failure mode as opentype: lib/vue resolves its own loglevel CJS
+      // file, which has no `export default`.
+      { find: /^loglevel$/, replacement: resolve(__dirname, 'src/shims/loglevel-default.js') },
+      { find: /^loglevel\/lib\/loglevel\.js$/, replacement: resolve(__dirname, 'src/shims/loglevel-default.js') },
     ],
     // corteza-lib/vue/dist is aliased to a file physically living under
     // client3/lib/vue, so plain Node resolution finds its own

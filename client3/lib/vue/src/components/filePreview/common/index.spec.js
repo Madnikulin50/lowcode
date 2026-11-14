@@ -8,7 +8,7 @@ describe('filePreview registry', () => {
     expect(getComponent({ name: 'a.xlsx' })).toBe('XLSX')
     expect(getComponent({ name: 'a.pptx' })).toBe('PPTX')
     expect(getComponent({ name: 'a.dxf' })).toBe('CAD')
-    expect(getComponent({ name: 'a.dwg' })).toBe('Hint')
+    expect(getComponent({ name: 'a.dwg' })).toBe('CAD')
     expect(getComponent({ name: 'a.ifc' })).toBe('BIM')
     expect(getComponent({ name: 'a.frag' })).toBe('BIM')
     expect(getComponent({ name: 'a.pln' })).toBe('Hint')
@@ -18,7 +18,7 @@ describe('filePreview registry', () => {
 
   it('does not treat DXF/DWG as images despite image/vnd MIME', () => {
     expect(getComponent({ type: 'image/vnd.dxf', name: 'x.dxf' })).toBe('CAD')
-    expect(getComponent({ type: 'image/vnd.dwg', name: 'x.dwg' })).toBe('Hint')
+    expect(getComponent({ type: 'image/vnd.dwg', name: 'x.dwg' })).toBe('CAD')
     expect(getComponent({ type: 'image/png', name: 'x.png' })).toBe('IMG')
   })
 

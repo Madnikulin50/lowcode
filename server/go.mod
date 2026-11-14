@@ -17,6 +17,8 @@ require (
 	github.com/bep/godartsass/v2 v2.0.0
 	github.com/brianvoe/gofakeit/v6 v6.16.0
 	github.com/cespare/xxhash/v2 v2.3.0
+	github.com/chromedp/cdproto v0.157.8
+	github.com/chromedp/chromedp v0.21.0
 	github.com/cloudwego/eino v0.9.12
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.9
 	github.com/crewjam/saml v0.4.14
@@ -78,6 +80,7 @@ require (
 	github.com/steinfletcher/apitest-jsonpath v1.7.1
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/btree v1.3.1
+	github.com/unitedrhino/go-cad v0.0.0-20261001090957-ddd91eea9618
 	github.com/valyala/fastjson v1.6.3
 	github.com/xuri/excelize/v2 v2.11.1-0.20261029001137-c5fd73bde8f6
 	go.etcd.io/bbolt v1.5.0
@@ -111,8 +114,6 @@ require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect
-	github.com/chromedp/cdproto v0.157.8 // indirect
-	github.com/chromedp/chromedp v0.21.0 // indirect
 	github.com/cli/safeexec v1.0.1 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/crewjam/httperr v0.2.0 // indirect

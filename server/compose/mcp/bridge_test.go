@@ -168,7 +168,7 @@ func TestBridge_ChainImportExport(t *testing.T) {
 }
 
 func TestBackupRuleChainsUseComponents(t *testing.T) {
-	chains := backupRuleChains(1, 2, 3, "http://localhost:8087/api")
+	chains := backupRuleChains(1, 2, 3, 4, 5, "http://localhost:8087/api")
 	want := map[string]string{
 		"backup-run-source":     "backup/run",
 		"backup-run-policy":     "backup/run",
@@ -177,6 +177,10 @@ func TestBackupRuleChainsUseComponents(t *testing.T) {
 		"backup-prune":          "backup/prune",
 		"backup-ingest-job":     "crud",
 		"backup-ingest-restore": "crud",
+		"backup-vault":          "backup/vault",
+		"backup-vault-due":      "backup/vault",
+		"backup-verify":         "backup/verify",
+		"backup-verify-due":     "backup/verify",
 	}
 	found := map[string]bool{}
 	for _, c := range chains {

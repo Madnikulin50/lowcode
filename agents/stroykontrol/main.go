@@ -65,6 +65,7 @@ func main() {
 	visionModel := flag.String("vision-model", envOr("IDCHECK_VISION_MODEL", "deepseek-v2"), "Multimodal Ollama model used to read scanned acts (empty disables scan recognition)")
 	tesseractBin := flag.String("tesseract", "tesseract", "tesseract binary for OCR of scanned acts (optional: without it pages are classified by the vision model)")
 	ocrLang := flag.String("ocr-lang", "rus", "tesseract language")
+	dwgCmd := flag.String("dwg-converter", envOr("DWG_CONVERTER", "stroykontrol-dwg2pdf {in} {out}"), "Command that converts a DWG ({in}) to PDF ({out}); DWG sheets then go through the same pipeline as PDF. Empty disables DWG support (see dwg2pdf.sh)")
 	idcheckCache := flag.String("idcheck-cache", "var/idcheck-cache", "Directory for ИД check page images / OCR / model reply cache")
 	maxAttached := flag.Int("max-attached", 6, "Attached quality-document pages per act sent to the vision model (-1 = all)")
 	classifyPages := flag.Bool("classify-pages", false, "Without tesseract, classify every scanned page with the vision model (slow on CPU; default uses layout rules)")
@@ -144,6 +145,9 @@ func main() {
 	}
 	raster = NewRasterizer(*cacheDir)
 	cmpCacheDir = *cacheDir
+	if dwgConv = NewDWGConverter(*dwgCmd, *cacheDir); dwgConv != nil && !dwgConv.available() {
+		log.Printf("dwg: converter %q not found — DWG drawings will be shown as unsupported", strings.Fields(*dwgCmd)[0])
+	}
 	cmpOCR = cmp.NewOCR(*tesseractBin, *ocrLang, *cacheDir)
 	if !cmpOCR.Enabled() {
 		log.Printf("cmp: tesseract (%s) not found — scanned pages of ПД/РД are compared as images only", *tesseractBin)

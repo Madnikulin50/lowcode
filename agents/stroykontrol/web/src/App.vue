@@ -155,7 +155,7 @@ watch(() => cmp.comparison?.discrepancies, (list) => {
         :qs="qs" :viewer="viewer" :expand-fold="expandFold" @assistant="openAssistant"
       />
       <div v-else class="unsupported">
-        <div><b>Страницы не показаны.</b> Визуальное постраничное сравнение доступно для PDF, DOCX, XLSX и DXF.</div>
+        <div><b>Страницы не показаны.</b> Визуальное постраничное сравнение доступно для PDF, DWG, DOCX, XLSX и DXF.</div>
         <div class="unsupported-why">{{ unsupportedReason }}</div>
         <div>Список расхождений ниже работает; файл можно скачать или открыть в «↗ документ».</div>
       </div>

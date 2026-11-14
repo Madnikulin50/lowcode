@@ -73,6 +73,16 @@ the IFrame block always sends it explicitly). Rasterized PDF pages are
 cached on disk under `--cache` (default `var/stroykontrol-raster-cache`),
 keyed by file content hash — same PDF is never re-rasterized.
 
+**DWG** (`dwg.go`) is converted to PDF once, at download time (cached by content
+hash under `<cache>/dwg`), and is then handled exactly like a PDF everywhere:
+page images, text layer, sheet numbers from the title block, deterministic
+comparison, OCR, the assistant. The converter is the command given by
+`--dwg-converter` / `DWG_CONVERTER` (`{in}` = DWG, `{out}` = PDF); the default,
+`dwg2pdf.sh`, uses LibreDWG `dwg2SVG` + `rsvg-convert` (both are installed by the
+Dockerfile). Empty value disables DWG; a file that fails to convert is logged and
+shown as unsupported, it does not fail the comparison. Limits of the default
+converter: model space only (no paper-space layouts), no 3D.
+
 Needs `pdftoppm` (poppler-utils) on PATH for PDF pages. DOCX pages don't need
 it: there's no LibreOffice on this host to convert DOCX→PDF server-side, so
 DOCX is instead rendered **client-side** — the browser fetches the raw file

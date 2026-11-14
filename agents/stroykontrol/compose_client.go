@@ -225,7 +225,11 @@ func (c *ComposeClient) downloadOriginal(namespaceID, attachmentID string) ([]by
 	if isExpiredToken(err) && c.refreshToken(tok) {
 		data, mimetype, err = c.doDownload(u, attachmentID, c.getToken())
 	}
-	return data, mimetype, err
+	if err != nil {
+		return data, mimetype, err
+	}
+	data, mimetype = normalizeDoc(data, mimetype)
+	return data, mimetype, nil
 }
 
 func (c *ComposeClient) doDownload(u, attachmentID, token string) ([]byte, string, error) {
@@ -798,5 +802,9 @@ func (c *ComposeClient) downloadDocument(ns, documentID string) ([]byte, string,
 	if isExpiredToken(err) && c.refreshToken(tok) {
 		data, mimetype, err = c.doDownload(u, documentID, c.getToken())
 	}
-	return data, mimetype, err
+	if err != nil {
+		return data, mimetype, err
+	}
+	data, mimetype = normalizeDoc(data, mimetype)
+	return data, mimetype, nil
 }

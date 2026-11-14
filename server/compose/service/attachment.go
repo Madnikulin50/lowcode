@@ -1027,6 +1027,17 @@ func (svc attachment) extractMimetypeS(file io.ReadSeeker) (mType string, err er
 	return aux.String(), nil
 }
 
+// rasterImageExt reports whether the extension is a bitmap the previewer can decode.
+// CAD files such as DWG are sniffed as image/vnd.dwg and must not go through it.
+func rasterImageExt(ext string) bool {
+	switch strings.ToLower(strings.TrimPrefix(ext, ".")) {
+	case "jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "ico":
+		return true
+	default:
+		return false
+	}
+}
+
 func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment) (err error) {
 	if !strings.HasPrefix(att.Meta.Original.Mimetype, "image/") {
 		// Only supporting previews from images (for now)
@@ -1035,6 +1046,12 @@ func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment
 
 	if att.Meta.Original.Mimetype == "image/svg+xml" {
 		// SVG is a vector format, skip raster image processing/preview generation
+		return
+	}
+
+	// DWG is detected as image/vnd.dwg. It is not a bitmap: a failed preview
+	// must not reject the upload, or the file never appears in the list.
+	if !rasterImageExt(att.Meta.Original.Extension) {
 		return
 	}
 
@@ -1071,7 +1088,8 @@ func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment
 		}
 	} else {
 		if format, err = imaging.FormatFromExtension(att.Meta.Original.Extension); err != nil {
-			return errors.Internal("could not get format from extension '%s'", att.Meta.Original.Extension).Wrap(err)
+			// Unknown image/* (CAD drawings and the like): keep the file, skip the preview.
+			return nil
 		}
 
 		previewFormat = format

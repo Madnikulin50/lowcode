@@ -396,10 +396,17 @@ async function main () {
     })
   }
 
-  // Комплект документов сравнения: любое число PDF с каждой стороны
-  // (один PDF на стадию, пачка против пачки, пачка против одного файла).
+  // Комплект документов сравнения: любое число PDF/DWG/DXF с каждой стороны
+  // (один файл на стадию, пачка против пачки, пачка против одного файла).
   // Том/шифр определяются агентом по основной надписи; поля можно поправить
   // вручную (detected_by = manual — агент их больше не перезаписывает).
+  // .dwg обязателен в списке: клиентский загрузчик не знает MIME DWG, а сервер
+  // сверяет расширение, даже если файл определился как application/octet-stream.
+  const drawingMimes = [
+    'application/pdf', '.pdf',
+    '.dwg', 'image/vnd.dwg', 'application/acad', 'application/x-dwg', 'application/dwg',
+    '.dxf', 'image/vnd.dxf', 'application/dxf', 'application/x-dxf',
+  ].join(',')
   m.cmp_documents = await ensureModule(api, nsID, {
     name: 'Документы сравнения',
     handle: 'cmp_documents',
@@ -407,7 +414,7 @@ async function main () {
       recordRel('set', 'Комплект', m.document_sets, 'version', ['version', 'stage']),
       recordRel('comparison', 'Сравнение (если файл приложен прямо к нему)', m.pd_rd_comparisons, 'title', ['title']),
       field('side', 'Стадия', 'Select', { required: true, options: selectOptions(CMP_SIDE) }),
-      fileField('file', 'Файл PDF', { documents: true, images: false, mimetypes: 'application/pdf' }),
+      fileField('file', 'Файл PDF или DWG', { documents: true, images: false, mimetypes: drawingMimes }),
       field('doc_version', 'Версия (изм.)', 'String'),
       field('volume_code', 'Шифр тома', 'String'),
       field('volume_title', 'Наименование тома', 'String'),

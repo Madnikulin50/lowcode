@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/madnikulin50/lowcode/server/pkg/rag/dwg"
 )
 
 func parseDXF(data []byte) (*ParsedDocument, error) {
@@ -224,6 +226,12 @@ func parseArchiCAD(data []byte, kind string) (*ParsedDocument, error) {
 	return doc, nil
 }
 
+// ConvertDWGToDXF turns a DWG (or binary DXF) into ASCII DXF using pure-Go go-cad.
+// No external binaries (dwg2dxf/libredwg) required.
+func ConvertDWGToDXF(ctx context.Context, data []byte, filename string) ([]byte, error) {
+	return dwg.Dwg2Dxf(ctx, data)
+}
+
 func convertDWGToDXF(ctx context.Context, data []byte, filename string) ([]byte, error) {
 	bin := dwgConverterBin()
 	if bin == "" {
@@ -253,9 +261,11 @@ func convertDWGToDXF(ctx context.Context, data []byte, filename string) ([]byte,
 	}
 
 	cmd := exec.CommandContext(cctx, bin, "-o", outPath, inPath)
+	cmd.Env = dwgConverterEnv(bin)
 	if _, err := cmd.CombinedOutput(); err != nil {
 		cmd = exec.CommandContext(cctx, bin, inPath)
 		cmd.Dir = dir
+		cmd.Env = dwgConverterEnv(bin)
 		if _, err2 := cmd.CombinedOutput(); err2 != nil {
 			return nil, err
 		}
@@ -277,7 +287,29 @@ func dwgConverterBin() string {
 	if p, err := exec.LookPath("dwg2dxf"); err == nil {
 		return p
 	}
+	for _, p := range []string{"/usr/local/bin/dwg2dxf", "/opt/libredwg/bin/dwg2dxf"} {
+		if st, err := os.Stat(p); err == nil && !st.IsDir() {
+			return p
+		}
+	}
 	return ""
+}
+
+// dwgConverterEnv lets a side-by-side libredwg build find its shared library.
+func dwgConverterEnv(bin string) []string {
+	env := os.Environ()
+	libDir := filepath.Join(filepath.Dir(bin), "..", "lib")
+	if st, err := os.Stat(libDir); err != nil || !st.IsDir() {
+		return env
+	}
+	prefix := "LD_LIBRARY_PATH="
+	for i, e := range env {
+		if strings.HasPrefix(e, prefix) {
+			env[i] = prefix + libDir + ":" + strings.TrimPrefix(e, prefix)
+			return env
+		}
+	}
+	return append(env, prefix+libDir)
 }
 
 func uniqueNonEmpty(in []string) []string {

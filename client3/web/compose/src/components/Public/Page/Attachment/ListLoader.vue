@@ -136,9 +136,7 @@ import moment from 'moment'
 import { compose, shared } from 'corteza-lib/js/dist'
 import AttachmentLink from './Link.vue'
 import draggable from 'vuedraggable'
-import { url, components } from 'corteza-lib/vue/dist'
-
-const { CPreviewInline, canPreview, getExtensionIconType } = components
+import { url, CPreviewInline, canPreview, getExtensionIconType } from 'corteza-lib/vue/dist'
 const { t: $t } = useI18n({ useScope: 'global' })
 const $ComposeAPI = inject('$ComposeAPI', typeof window !== 'undefined' ? window.__composeAPI : undefined)
 

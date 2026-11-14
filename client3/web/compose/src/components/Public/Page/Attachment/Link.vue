@@ -28,10 +28,8 @@
 
 <script setup>
 import { computed } from 'vue'
-import { components } from 'corteza-lib/vue/dist'
+import { canPreview as canPreviewCheck } from 'corteza-lib/vue/dist'
 import { openAssistant, parseAttachmentURL } from 'corteza-webapp-compose/src/composables/useAssistantContext'
-
-const { canPreview: canPreviewCheck } = components
 
 const props = defineProps({
   attachment: { type: Object, required: true },

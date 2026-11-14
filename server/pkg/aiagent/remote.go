@@ -93,6 +93,31 @@ func knownRemoteFallbacks() []RemoteService {
 					{Key: "retentionDays", Label: "Retention days"},
 				}},
 				{Type: "backup/due", Label: "Run due backups", Description: "Run policies whose cron matches now", Service: "backup", Operation: "due"},
+				{Type: "backup/vault", Label: "Scan and vault snapshot", Description: "Сканировать снапшот и скопировать в WORM-сейф", Service: "backup", Operation: "vault", Async: true, Fields: []RemoteField{
+					{Key: "snapshotID", Label: "Snapshot ID", Required: true},
+					{Key: "retentionDays", Label: "Retention days (overrides policy)"},
+				}},
+				{Type: "backup/scan", Label: "Scan snapshot", Description: "Сканировать снапшот без копии в сейф", Service: "backup", Operation: "scan", Async: true, Fields: []RemoteField{
+					{Key: "snapshotID", Label: "Snapshot ID", Required: true},
+				}},
+				{Type: "backup/clean-point", Label: "Clean restore point", Description: "Последняя чистая точка восстановления (после атаки шифровальщика)", Service: "backup", Operation: "clean-point", Fields: []RemoteField{
+					{Key: "sourceID", Label: "Source ID (optional)"},
+				}},
+				{Type: "backup/verify", Label: "Verify restore", Description: "Поднять снапшот в изолированной песочнице и проверить восстановление", Service: "backup", Operation: "verify", Async: true, Fields: []RemoteField{
+					{Key: "snapshotID", Label: "Snapshot ID"},
+					{Key: "policyID", Label: "Policy ID (verifies latest snapshot)"},
+					{Key: "verifyLevel", Label: "Level: l1 (integrity) | l2 (+ docker boot)"},
+				}},
+				{Type: "backup/verify-due", Label: "List verify-due policies", Description: "Политики, у которых по расписанию пора верификация", Service: "backup", Operation: "verify-due"},
+				{Type: "backup/browse", Label: "Browse snapshot", Description: "Показать, что лежит внутри снапшота (файлы, письма, объекты)", Service: "backup", Operation: "browse", Fields: []RemoteField{
+					{Key: "snapshotID", Label: "Snapshot ID", Required: true},
+					{Key: "path", Label: "Префикс пути (optional)"},
+				}},
+				{Type: "backup/extract", Label: "Extract file", Description: "Извлечь один файл/папку из снапшота (без полного восстановления)", Service: "backup", Operation: "extract", Async: true, Fields: []RemoteField{
+					{Key: "snapshotID", Label: "Snapshot ID", Required: true},
+					{Key: "path", Label: "Путь внутри снапшота", Required: true},
+					{Key: "extractTo", Label: "Куда писать (пусто = вернуть текст)"},
+				}},
 			},
 		},
 		{

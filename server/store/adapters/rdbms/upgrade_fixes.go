@@ -62,6 +62,7 @@ var (
 		fix_2024_09_05_addUserGroupReferenceToUser,
 		fix_2026_10_00_extendAutomationPromptVersionsForSkills,
 		fix_2026_10_01_extendComposeAttachmentsForVersions,
+		fix_2026_11_03_extendComposePageForPrompt,
 	}
 )
 
@@ -1383,5 +1384,15 @@ func fix_2026_10_01_extendComposeAttachmentsForVersions(ctx context.Context, s *
 		Ident: "Version",
 		Type:  &dal.TypeNumber{HasDefault: true, DefaultValue: 0, Precision: -1, Scale: -1, Meta: map[string]interface{}{"rdbms:type": "integer"}},
 		Store: &dal.CodecAlias{Ident: "version"},
+	})
+}
+
+// Pages carry a per-page default prompt for the AI chat/Ask feature. Older
+// databases predate the column; existing rows get an empty prompt.
+func fix_2026_11_03_extendComposePageForPrompt(ctx context.Context, s *Store) (err error) {
+	return addColumn(ctx, s, "compose_page", &dal.Attribute{
+		Ident: "Prompt",
+		Type:  &dal.TypeText{HasDefault: true, DefaultValue: ""},
+		Store: &dal.CodecAlias{Ident: "prompt"},
 	})
 }

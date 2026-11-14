@@ -7,6 +7,15 @@ import (
 	"github.com/madnikulin50/lowcode/server/compose/types"
 )
 
+func TestRasterImageExt(t *testing.T) {
+	if rasterImageExt("dwg") || rasterImageExt(".dxf") || rasterImageExt("svg") {
+		t.Fatal("CAD and vector files must not be treated as previewable bitmaps")
+	}
+	if !rasterImageExt("png") || !rasterImageExt(".JPEG") || !rasterImageExt("ico") {
+		t.Fatal("common bitmap extensions must stay previewable")
+	}
+}
+
 func TestFieldAllowedAttachmentTypes(t *testing.T) {
 	fallback := []string{"image/png"}
 

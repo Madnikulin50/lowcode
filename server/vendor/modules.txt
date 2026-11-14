@@ -822,6 +822,17 @@ github.com/twitchyliquid64/golang-asm/objabi
 github.com/twitchyliquid64/golang-asm/src
 github.com/twitchyliquid64/golang-asm/sys
 github.com/twitchyliquid64/golang-asm/unsafeheader
+# github.com/unitedrhino/go-cad v0.0.0-20261001090957-ddd91eea9618
+## explicit; go 1.25
+github.com/unitedrhino/go-cad
+github.com/unitedrhino/go-cad/internal/bitstream
+github.com/unitedrhino/go-cad/internal/container
+github.com/unitedrhino/go-cad/internal/drawing
+github.com/unitedrhino/go-cad/internal/entity
+github.com/unitedrhino/go-cad/internal/object
+github.com/unitedrhino/go-cad/internal/objrec
+github.com/unitedrhino/go-cad/internal/render
+github.com/unitedrhino/go-cad/internal/writer
 # github.com/valyala/fasthttp v1.70.0
 ## explicit; go 1.24.0
 # github.com/valyala/fastjson v1.6.3
@@ -920,11 +931,14 @@ golang.org/x/image/font
 golang.org/x/image/font/basicfont
 golang.org/x/image/font/gofont/gobold
 golang.org/x/image/font/gofont/goregular
+golang.org/x/image/font/opentype
+golang.org/x/image/font/sfnt
 golang.org/x/image/internal/safemath
 golang.org/x/image/math/f64
 golang.org/x/image/math/fixed
 golang.org/x/image/tiff
 golang.org/x/image/tiff/lzw
+golang.org/x/image/vector
 # golang.org/x/net v0.62.0
 ## explicit; go 1.26.0
 golang.org/x/net/html

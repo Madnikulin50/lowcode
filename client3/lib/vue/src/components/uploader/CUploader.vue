@@ -193,17 +193,20 @@ function validateFileType(_name: string, types: string[]) {
     if (t.includes('/')) {
       const [category] = t.split('/')
       if (category === '*') return true
-      const mimeMap: Record<string, string> = {
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'png': 'image/png',
-        'gif': 'image/gif',
-        'pdf': 'application/pdf',
-        'csv': 'text/csv',
-        'xls': 'application/vnd.ms-excel',
-        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      const mimeMap: Record<string, string[]> = {
+        'jpg': ['image/jpeg'],
+        'jpeg': ['image/jpeg'],
+        'png': ['image/png'],
+        'gif': ['image/gif'],
+        'pdf': ['application/pdf'],
+        'csv': ['text/csv'],
+        'xls': ['application/vnd.ms-excel'],
+        'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        'dwg': ['image/vnd.dwg', 'application/acad', 'application/x-dwg', 'application/dwg', 'image/x-dwg'],
+        'dxf': ['image/vnd.dxf', 'application/dxf', 'application/x-dxf'],
       }
-      return mimeMap[ext || '']?.startsWith(category) ?? false
+      const known = mimeMap[ext || ''] || []
+      return known.some(mime => mime === t || mime.startsWith(category + '/'))
     }
     return ext === t.toLowerCase().replace('.', '')
   })

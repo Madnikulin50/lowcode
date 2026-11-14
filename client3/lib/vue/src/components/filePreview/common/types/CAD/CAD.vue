@@ -23,6 +23,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, useAttrs } from 'vue'
 import PreviewStatus from '../PreviewStatus.vue'
 import { CAD_MAX_BYTES, assertPreviewSize } from '../../binary.js'
+import { getFileExt } from '../../index.js'
 
 defineOptions({ inheritAttrs: false })
 
@@ -41,7 +42,14 @@ const loading = ref(true)
 const loadError = ref<Error | null>(null)
 let viewer: { Load?: (opts: any) => Promise<unknown>, Destroy?: () => void, GetBounds?: () => any, FitView?: (...args: number[]) => void } | null = null
 
-const src = computed(() => (attrs as any).src)
+function dwgPreviewSrc (src, name, meta) {
+  if (!src || getFileExt({ src, name, meta }) !== 'dwg') return src
+  const raw = String(src)
+  if (raw.includes('as=dxf')) return raw
+  return raw + (raw.includes('?') ? '&' : '?') + 'as=dxf'
+}
+
+const src = computed(() => dwgPreviewSrc((attrs as any).src, (attrs as any).name, (attrs as any).meta))
 const labels = computed(() => (attrs as any).labels || {})
 const previewStyle = computed(() => (attrs as any).previewStyle || {})
 const inline = computed(() => (attrs as any).inline ?? props.inline)
