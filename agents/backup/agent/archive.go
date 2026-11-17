@@ -122,6 +122,13 @@ func UnpackTarGz(ctx context.Context, r io.Reader, dest string) (files int, err 
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return files, err
 			}
+			// Существующий read-only файл (например git pack 0444) нельзя
+			// перезаписать даже владельцу — убираем его и создаём заново.
+			if fi, statErr := os.Lstat(target); statErr == nil && fi.Mode().IsRegular() && fi.Mode().Perm()&0o200 == 0 {
+				if rmErr := os.Remove(target); rmErr != nil {
+					return files, fmt.Errorf("remove read-only %s: %w", target, rmErr)
+				}
+			}
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, fs.FileMode(hdr.Mode))
 			if err != nil {
 				return files, err

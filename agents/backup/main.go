@@ -33,6 +33,12 @@ func main() {
 	minioSecure := flag.Bool("minio-secure", env("MINIO_SECURE", "") == "true", "HTTPS to MinIO")
 	minioRegion := flag.String("minio-region", env("MINIO_REGION", ""), "MinIO region")
 	resticPassword := flag.String("restic-password", env("RESTIC_PASSWORD", env("BACKUP_RESTIC_PASSWORD", "")), "Restic repo password")
+	vaultBucket := flag.String("vault-bucket", env("VAULT_BUCKET", "vault"), "WORM vault bucket (object lock)")
+	vaultMode := flag.String("vault-mode", env("VAULT_MODE", "compliance"), "Retention mode: compliance | governance")
+	vaultRetentionDays := flag.Int("vault-retention-days", 0, "Default per-object retention in vault (0 = policy value or 30)")
+	clamavAddr := flag.String("clamav", env("CLAMAV_ADDR", ""), "ClamAV clamd address host:3310 or unix:///sock (empty = heuristics)")
+	scanMaxMB := flag.Int64("scan-max-mb", 2048, "Total bytes budget (MB) for scanning one archive")
+	dockerHost := flag.String("docker-host", env("DOCKER_HOST", ""), "Docker endpoint for verify level l2 (default: local docker CLI)")
 	flag.Parse()
 
 	if *token == "" {
@@ -48,6 +54,14 @@ func main() {
 		PollInterval:   *poll,
 		ResticPassword: *resticPassword,
 		Concurrency:    2,
+		ClamAVAddr:     *clamavAddr,
+		ScanMaxMB:      *scanMaxMB,
+		DockerHost:     *dockerHost,
+		Vault: agent.VaultConfig{
+			Bucket:        *vaultBucket,
+			Mode:          *vaultMode,
+			RetentionDays: *vaultRetentionDays,
+		},
 		Minio: agent.MinioConfig{
 			Endpoint: *minioEndpoint,
 			Access:   *minioAccess,
@@ -62,6 +76,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("minio: %v", err)
 	}
+	vault := agent.NewVaultStore(cfg.Vault)
 	cz := agent.NewCorteza(cfg.CortezaAPI, cfg.Token, cfg.NamespaceID)
 	if err := cz.Discover(context.Background()); err != nil {
 		log.Printf("corteza API discover: %v (will retry on first request)", err)
@@ -75,7 +90,14 @@ func main() {
 	} else {
 		log.Printf("minio ok %s bucket=%s", cfg.Minio.Endpoint, cfg.Minio.Bucket)
 	}
-	ag := agent.New(cfg, store, cz)
+	if vault.Bind(cfg.Minio) == nil {
+		if err := vault.Ensure(context.Background()); err != nil {
+			log.Printf("vault: %v (vault disabled)", err)
+		} else {
+			log.Printf("vault ok bucket=%s mode=%s", vault.Bucket(), cfg.Vault.Mode)
+		}
+	}
+	ag := agent.NewWithVault(cfg, store, vault, cz)
 
 	svc := sdk.New(sdk.Config{
 		Handle:      "backup",
@@ -92,10 +114,21 @@ func main() {
 	svc.Register(agent.Components()...)
 	svc.Alias(http.MethodPost, "/restore", "restore")
 	svc.Alias(http.MethodPost, "/prune", "prune")
+	svc.Alias(http.MethodPost, "/vault", "vault")
+	svc.Alias(http.MethodPost, "/scan", "scan")
+	svc.Alias(http.MethodPost, "/verify", "verify")
+	svc.Alias(http.MethodPost, "/extract", "extract")
+	svc.Alias(http.MethodPost, "/manifest", "manifest")
+	svc.Alias(http.MethodPost, "/destroy", "destroy")
 	svc.Alias(http.MethodPost, "/jobs/due", "due")
 	svc.Alias(http.MethodPost, "/jobs/reconcile", "reconcile")
 	svc.Sync("due")
 	svc.Sync("reconcile")
+	svc.Sync("clean-point")
+	svc.Sync("verify-due")
+	svc.Sync("browse")
+	svc.Sync("compliance")
+	svc.Sync("dest-test")
 	svc.MountRoot(func(r chi.Router) {
 		r.Handle("/metrics", promhttp.Handler())
 	})

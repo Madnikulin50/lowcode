@@ -5,6 +5,14 @@ defaultValue: Default value
 required-field: This field is required
 not-configurable: Cannot change settings that affect data storage
 kind:
+  secret:
+    label: Secret (encrypted)
+    placeholder: Enter new secret
+    show: Show
+    hide: Hide
+    reveal: Load current value
+    unchangedHint: Value unchanged (empty input keeps the current secret)
+    empty: (not set)
   bool:
     checkedValueLabel: Value when checked
     checkedValuePlaceholder: Yes

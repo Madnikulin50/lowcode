@@ -206,6 +206,9 @@ import {
   faIdBadge,
   faUserShield,
   faFlask,
+  faWarehouse,
+  faVial,
+  faFileContract,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -467,4 +470,7 @@ library.add(
   faLanguage,
   faExpandAlt,
   faFileRegular,
+  faWarehouse,
+  faVial,
+  faFileContract,
 )

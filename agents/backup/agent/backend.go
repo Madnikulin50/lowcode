@@ -20,7 +20,7 @@ func (st *JobStatus) Envelope(kind sdk.EventKind) *sdk.Envelope {
 	if st.NamespaceID > 0 {
 		ns = strconv.FormatUint(st.NamespaceID, 10)
 	}
-	return &sdk.Envelope{
+	env := &sdk.Envelope{
 		Schema:      sdk.SchemaV1,
 		Service:     "backup",
 		Operation:   op,
@@ -36,20 +36,28 @@ func (st *JobStatus) Envelope(kind sdk.EventKind) *sdk.Envelope {
 		StartedAt:   st.StartedAt,
 		FinishedAt:  st.FinishedAt,
 		Result: map[string]any{
-			"bytesRead":    st.BytesRead,
-			"bytesWritten": st.BytesWritten,
-			"files":        st.Files,
-			"sourceID":     st.SourceID,
-			"policyID":     st.PolicyID,
-			"s3Bucket":     st.S3Bucket,
-			"s3Key":        st.S3Key,
-			"checksum":     st.Checksum,
-			"engine":       st.Engine,
-			"resticID":     st.ResticID,
-			"snapshotID":   st.SnapshotID,
-			"kind":         st.Kind,
+			"bytesRead":     st.BytesRead,
+			"bytesWritten":  st.BytesWritten,
+			"files":         st.Files,
+			"sourceID":      st.SourceID,
+			"policyID":      st.PolicyID,
+			"s3Endpoint":    st.S3Endpoint,
+			"s3Bucket":      st.S3Bucket,
+			"s3Key":         st.S3Key,
+			"checksum":      st.Checksum,
+			"engine":        st.Engine,
+			"resticID":      st.ResticID,
+			"snapshotID":    st.SnapshotID,
+			"kind":          st.Kind,
+			"extractInline": st.ExtractInline,
 		},
 	}
+	for k, v := range st.Summary {
+		if _, ok := env.Result[k]; !ok {
+			env.Result[k] = v
+		}
+	}
+	return env
 }
 
 func jobRequestFrom(req sdk.StartRequest) JobRequest {
@@ -63,10 +71,16 @@ func jobRequestFrom(req sdk.StartRequest) JobRequest {
 		NamespaceID:   req.NamespaceID.String(),
 		Token:         req.Token,
 		CallbackURL:   req.CallbackURL,
-		DestPath:      req.Param("destPath"),
+		DestPath:      firstNonEmpty(req.Param("destPath"), req.Param("path")),
 		DestType:      req.Param("destType"),
 		Kind:          firstNonEmpty(req.Operation, req.Param("kind")),
 		RetentionDays: int(req.ParamID("retentionDays")),
+		VerifyLevel:   firstNonEmpty(req.Param("verifyLevel"), req.Param("level")),
+		Namespaces:    req.Param("namespaces"),
+		ExtractTo:     req.Param("extractTo"),
+		Basis:         req.Param("basis"),
+		DestinationID: firstNonEmpty(req.Param("destinationID"), req.Param("destination")),
+		ScopeID:       req.Param("scopeID"),
 	}
 }
 
@@ -82,6 +96,18 @@ func (a *Agent) StartJob(ctx context.Context, req sdk.StartRequest) (*sdk.Envelo
 		st, err = a.StartRestore(ctx, jr)
 	case "prune":
 		st, err = a.StartPrune(ctx, jr)
+	case "vault":
+		st, err = a.StartVault(ctx, jr)
+	case "scan":
+		st, err = a.StartScan(ctx, jr)
+	case "verify":
+		st, err = a.StartVerify(ctx, jr)
+	case "extract":
+		st, err = a.StartExtract(ctx, jr)
+	case "manifest":
+		st, err = a.StartArchiveManifest(ctx, jr)
+	case "destroy":
+		st, err = a.StartDestroy(ctx, jr)
 	case "due":
 		// "due" only lists due policies now — see Agent.DuePolicies — so it
 		// doesn't fit the single-job Envelope shape StartJob returns.
@@ -98,6 +124,14 @@ func (a *Agent) StartJob(ctx context.Context, req sdk.StartRequest) (*sdk.Envelo
 			Kind:      sdk.KindComplete,
 			Result:    map[string]any{"due": list},
 		}, nil
+	case "audit":
+		// Фоновый прогон: обход областей пишет находки в audit_findings,
+		// сводка — в JobStatus.Summary (видна по GET /api/jobs/{id}).
+		st, err := a.StartAudit(ctx, jr)
+		if err != nil {
+			return nil, err
+		}
+		return st.Envelope(sdk.KindProgress), nil
 	default:
 		st, err = a.StartBackup(ctx, jr)
 	}
@@ -129,6 +163,18 @@ func (a *Agent) Call(ctx context.Context, operation string, req sdk.StartRequest
 	switch operation {
 	case "due":
 		return a.DuePolicies(ctx, jr)
+	case "clean-point":
+		return a.CleanPoint(ctx, jr)
+	case "browse":
+		return a.Browse(ctx, jr)
+	case "audit":
+		return a.Audit(ctx, jr)
+	case "compliance":
+		return a.Compliance(ctx, jr)
+	case "verify-due":
+		return a.VerifyDue(ctx, jr)
+	case "dest-test":
+		return a.DestTest(ctx, jr)
 	case "reconcile":
 		// On-demand cleanup for "jobs"/"restores" records stuck "running"
 		// from an earlier process — see ReconcileStaleJobs. Uses the

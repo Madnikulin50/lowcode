@@ -64,6 +64,32 @@ func BypassRoles() types.RoleSet {
 	return bypassRoles
 }
 
+// HasBypassRole reports whether the given identity is a member of any of the
+// bypass roles (eg. super-admin) and thus acts with system-level access.
+//
+// System users (provisioner, service, federation) are assigned the bypass
+// role on load, so this also covers internal/service-to-service calls.
+func HasBypassRole(i Identifiable) bool {
+	if i == nil {
+		return false
+	}
+
+	bypass := make(map[uint64]bool, len(bypassRoles))
+	for _, r := range bypassRoles {
+		if r != nil {
+			bypass[r.ID] = true
+		}
+	}
+
+	for _, roleID := range i.Roles() {
+		if bypass[roleID] {
+			return true
+		}
+	}
+
+	return false
+}
+
 // AuthenticatedRoles returns all authenticated Roles
 func AuthenticatedRoles() types.RoleSet {
 	return authenticatedRoles

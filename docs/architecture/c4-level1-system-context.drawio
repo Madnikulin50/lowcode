@@ -1,0 +1,67 @@
+<mxfile host="app.diagrams.net" type="device" version="24.0.0">
+  <diagram id="c4-l1" name="C1 - System Context">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1680" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="C1. System Context — Платформа low-code" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="760" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="Уровень системного контекста по модели C4. Синий — разрабатываемая система, серый — внешние системы." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="900" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="p1" value="Пользователь&lt;br&gt;приложений" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#08427b;strokeColor=#073b6f;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="110" y="170" width="60" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" value="Администратор&lt;br&gt;платформы" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#08427b;strokeColor=#073b6f;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="110" y="400" width="60" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" value="Разработчик /&lt;br&gt;интегратор" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#08427b;strokeColor=#073b6f;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="110" y="630" width="60" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="sys" value="&lt;b&gt;Платформа low-code&lt;/b&gt;&lt;br&gt;[собственная разработка]&lt;br&gt;&lt;br&gt;Корпоративная low-code платформа: приложения Compose, workflow, rule chains, вычислительные агенты, AI-чат и MCP-сервер.&lt;br&gt;&lt;br&gt;Внутри: веб-приложения Vue 3, монолитный сервер на Go, агенты (backup, cmdb, invest, стройконтроль), поисковый сервис." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438dd5;strokeColor=#3c7fc3;fontColor=#ffffff;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="620" y="330" width="460" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="&lt;b&gt;Ollama&lt;/b&gt;&lt;br&gt;[LLM runtime]&lt;br&gt;&lt;br&gt;Локальные модели (deepseek-v2, qwen3:8b); HTTP API для генерации и tool calling." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#8a8a8a;fontColor=#ffffff;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="140" width="340" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="&lt;b&gt;SMTP-сервер&lt;/b&gt;&lt;br&gt;[email]&lt;br&gt;&lt;br&gt;Исходящая почта: уведомления workflow, сброс паролей." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#8a8a8a;fontColor=#ffffff;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="300" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="&lt;b&gt;Внешние бизнес-системы&lt;/b&gt;&lt;br&gt;[1С, REST/SOAP API]&lt;br&gt;&lt;br&gt;Интеграции через Integration Gateway и узлы rule chains (HTTP, 1С/gonec)." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#8a8a8a;fontColor=#ffffff;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="450" width="340" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="&lt;b&gt;Внешний IdP&lt;/b&gt;&lt;br&gt;[SAML / OIDC]&lt;br&gt;&lt;br&gt;Корпоративный провайдер идентичности для SSO (опционально)." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#8a8a8a;fontColor=#ffffff;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="620" width="340" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="&lt;b&gt;Внешний MCP-клиент&lt;/b&gt;&lt;br&gt;[LLM-ассистент]&lt;br&gt;&lt;br&gt;Claude Desktop, IDE и другие MCP-клиенты, управляющие платформой через tools." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#8a8a8a;fontColor=#ffffff;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="770" width="340" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" value="HTTPS · SPA в браузере&lt;br&gt;(REST + WebSocket)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=11;" edge="1" parent="1" source="p1" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" value="HTTPS · Admin SPA&lt;br&gt;(настройки, RBAC, DAL)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=11;" edge="1" parent="1" source="p2" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r3" value="HTTPS · Builder, apply.mjs&lt;br&gt;(модули, страницы, цепочки)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=11;" edge="1" parent="1" source="p3" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" value="MCP (STDIO / SSE)&lt;br&gt;tools: CRUD Compose" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=11;" edge="1" parent="1" source="e5" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r5" value="HTTP · генерация и tool calling (eino-ext)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=11;" edge="1" parent="1" source="sys" target="e1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r6" value="SMTP · почта" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=11;" edge="1" parent="1" source="sys" target="e2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r7" value="HTTP / 1С · Integration Gateway,&lt;br&gt;узлы rule chains" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=11;" edge="1" parent="1" source="sys" target="e3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r8" value="SAML / OIDC · SSO (опц.)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=11;" edge="1" parent="1" source="e4" target="sys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -23,8 +23,44 @@ func (h *Handler) Mount(r chi.Router) {
 	r.Get("/jobs/{jobID}", h.getJob)
 	r.Post("/restore", h.restore)
 	r.Post("/prune", h.prune)
+	r.Post("/vault", h.vault)
+	r.Post("/scan", h.scan)
+	r.Post("/verify", h.verify)
 	r.Post("/register", h.register)
 	r.Get("/health", h.health)
+}
+
+func (h *Handler) vault(w http.ResponseWriter, r *http.Request) {
+	var req agent.JobRequest
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	st, err := h.ag.StartVault(r.Context(), req)
+	if err != nil {
+		jsonError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	jsonResp(w, st)
+}
+
+func (h *Handler) scan(w http.ResponseWriter, r *http.Request) {
+	var req agent.JobRequest
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	st, err := h.ag.StartScan(r.Context(), req)
+	if err != nil {
+		jsonError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	jsonResp(w, st)
+}
+
+func (h *Handler) verify(w http.ResponseWriter, r *http.Request) {
+	var req agent.JobRequest
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	st, err := h.ag.StartVerify(r.Context(), req)
+	if err != nil {
+		jsonError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	jsonResp(w, st)
 }
 
 func (h *Handler) startJob(w http.ResponseWriter, r *http.Request) {

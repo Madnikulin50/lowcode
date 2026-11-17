@@ -191,4 +191,8 @@ library.add(
   faFileImport,
   faFileExport,
   faExclamationCircle,
+  faRadar,
+  faWarehouse,
+  faVial,
+  faFileContract,
 )

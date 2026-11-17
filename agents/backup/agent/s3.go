@@ -11,7 +11,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-func CopyS3(ctx context.Context, src Source, access, secret string, dest *ObjectStore, destKeyPrefix string, onObj func(key string, n int64)) (BackupResult, error) {
+func CopyS3(ctx context.Context, src Source, access, secret string, dest Storage, destKeyPrefix string, onObj func(key string, n int64)) (BackupResult, error) {
 	var res BackupResult
 	res.Engine = "s3copy"
 	res.Kind = KindFull
@@ -68,9 +68,12 @@ func CopyS3(ctx context.Context, src Source, access, secret string, dest *Object
 	return res, nil
 }
 
-func RestoreS3Copy(ctx context.Context, dest *ObjectStore, srcPrefix, destEndpoint, destBucket, destAccess, destSecret, destPrefix string, secure bool, region string) (int, error) {
+func RestoreS3Copy(ctx context.Context, dest Storage, srcBucket, srcPrefix, destEndpoint, destBucket, destAccess, destSecret, destPrefix string, secure bool, region string) (int, error) {
 	if destEndpoint == "" || destBucket == "" {
 		return 0, fmt.Errorf("restore s3 destination endpoint and bucket are required")
+	}
+	if srcBucket == "" {
+		srcBucket = dest.Bucket()
 	}
 	cl, err := minio.New(destEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(destAccess, destSecret, ""),
@@ -80,13 +83,13 @@ func RestoreS3Copy(ctx context.Context, dest *ObjectStore, srcPrefix, destEndpoi
 	if err != nil {
 		return 0, err
 	}
-	keys, err := dest.List(ctx, srcPrefix)
+	keys, err := dest.ListBucket(ctx, srcBucket, srcPrefix)
 	if err != nil {
 		return 0, err
 	}
 	n := 0
 	for _, key := range keys {
-		rc, err := dest.Get(ctx, key)
+		rc, err := dest.GetBucket(ctx, srcBucket, key)
 		if err != nil {
 			return n, err
 		}

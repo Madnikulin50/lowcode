@@ -68,6 +68,9 @@ type (
 
 		RecordRevisions ModuleConfigRecordRevisions `json:"recordRevisions"`
 
+		// Records general record behaviour settings
+		Records ModuleConfigRecords `json:"records"`
+
 		// RecordDeDup value duplicate detection settings
 		RecordDeDup ModuleConfigRecordDeDup `json:"recordDeDup"`
 
@@ -141,6 +144,17 @@ type (
 
 		// where are record revisions stored
 		Ident string `json:"ident"`
+	}
+
+	ModuleConfigRecords struct {
+		// records of this module can not be updated
+		ReadOnly bool `json:"readOnly"`
+
+		// records of this module can not be created
+		NoCreate bool `json:"noCreate"`
+
+		// records of this module can not be deleted
+		NoDelete bool `json:"noDelete"`
 	}
 
 	ModuleConfigDataPrivacy struct {

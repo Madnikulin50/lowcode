@@ -24,5 +24,12 @@ services:
       timeout: 3s
       retries: 12
 
+  clamav:
+    image: clamav/clamav:1.3
+    container_name: backup-clamav
+    environment:
+      CLAMAV_NO_FRESHCLAM: "false"
+    restart: unless-stopped
+
 volumes:
   backup-minio-data:

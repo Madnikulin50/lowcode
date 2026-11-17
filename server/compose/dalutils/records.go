@@ -82,6 +82,7 @@ func ComposeRecordsFind(ctx context.Context, l lookuper, mod *types.Module, reco
 		return
 	}
 
+	decryptRecordSecrets(mod, out)
 	return
 }
 
@@ -108,23 +109,43 @@ func ComposeRecordsCountWithTimeout(ctx context.Context, c counter, mod *types.M
 }
 
 func ComposeRecordCreate(ctx context.Context, c creator, mod *types.Module, records ...*types.Record) (err error) {
-	return c.Create(ctx, mod.ModelRef(), recCreateOperations(mod), recToGetters(records...)...)
+	gg, err := recToGetters(mod, records...)
+	if err != nil {
+		return err
+	}
+	return c.Create(ctx, mod.ModelRef(), recCreateOperations(mod), gg...)
 }
 
 func ComposeRecordUpdate(ctx context.Context, u updater, mod *types.Module, records ...*types.Record) (err error) {
-	return u.Update(ctx, mod.ModelRef(), recUpdateOperations(mod), recToGetters(records...)...)
+	gg, err := recToGetters(mod, records...)
+	if err != nil {
+		return err
+	}
+	return u.Update(ctx, mod.ModelRef(), recUpdateOperations(mod), gg...)
 }
 
 func ComposeRecordSoftDelete(ctx context.Context, u updater, mod *types.Module, records ...*types.Record) (err error) {
-	return u.Update(ctx, mod.ModelRef(), recUpdateOperations(mod), recToGetters(records...)...)
+	gg, err := recToGetters(mod, records...)
+	if err != nil {
+		return err
+	}
+	return u.Update(ctx, mod.ModelRef(), recUpdateOperations(mod), gg...)
 }
 
 func ComposeRecordUndelete(ctx context.Context, u updater, mod *types.Module, records ...*types.Record) (err error) {
-	return u.Update(ctx, mod.ModelRef(), recUpdateOperations(mod), recToGetters(records...)...)
+	gg, err := recToGetters(mod, records...)
+	if err != nil {
+		return err
+	}
+	return u.Update(ctx, mod.ModelRef(), recUpdateOperations(mod), gg...)
 }
 
 func ComposeRecordDelete(ctx context.Context, d deleter, mod *types.Module, records ...*types.Record) (err error) {
-	return d.Delete(ctx, mod.ModelRef(), recDeleteOperations(mod), recToGetters(records...)...)
+	gg, err := recToGetters(mod, records...)
+	if err != nil {
+		return err
+	}
+	return d.Delete(ctx, mod.ModelRef(), recDeleteOperations(mod), gg...)
 }
 
 func WalkIterator(ctx context.Context, iter dal.Iterator, mod *types.Module, f func(r *types.Record) error) (err error) {
@@ -133,6 +154,7 @@ func WalkIterator(ctx context.Context, iter dal.Iterator, mod *types.Module, f f
 		if err = iter.Scan(r); err != nil {
 			return
 		}
+		decryptRecordSecrets(mod, r)
 
 		if len(r.Values) < len(mod.Fields) {
 			values.Expression(ctx, mod, r, nil, nil)
@@ -796,9 +818,14 @@ func prepareRecordTarget(module *types.Module) *types.Record {
 	return r
 }
 
-func recToGetters(rr ...*types.Record) (out []dal.ValueGetter) {
-	out = make([]dal.ValueGetter, len(rr))
+func recToGetters(mod *types.Module, rr ...*types.Record) (out []dal.ValueGetter, err error) {
+	for i := range rr {
+		if err = encryptRecordSecrets(mod, rr[i]); err != nil {
+			return nil, err
+		}
+	}
 
+	out = make([]dal.ValueGetter, len(rr))
 	for i := range rr {
 		out[i] = rr[i]
 	}

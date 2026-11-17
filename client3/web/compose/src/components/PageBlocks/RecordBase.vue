@@ -284,6 +284,7 @@ import { composables } from 'corteza-lib/vue/dist'
 import { compose } from 'corteza-lib/js/dist'
 import axios from 'axios'
 import { usePageBlockBase } from './usePageBlockBase'
+import { useFieldConditions } from 'corteza-webapp-compose/src/composables/useFieldConditions'
 import { useModuleStore } from 'corteza-webapp-compose/src/store/module'
 import Wrap from './Wrap/index.js'
 import BlockHelpButton from './Shared/BlockHelpButton.vue'
@@ -424,13 +425,16 @@ const fieldModule = computed(() => options.value.referenceField ? referenceModul
 
 const fieldRecord = computed(() => options.value.referenceField ? referenceRecord.value : props.record)
 
+const { canDisplay } = useFieldConditions({
+  block: () => props.block,
+  record: fieldRecord,
+  module: fieldModule,
+})
+
 const isProcessing = computed(() => props.loadingRecord || !fieldRecord.value || evaluating.value)
 
-function canDisplay (field) {
-  return field?.canReadRecordValue !== false
-}
-
 function isFieldEditable (field) {
+  if (options.value.readOnly || (options.value.readOnlyFields || []).includes(field?.name)) return false
   return field?.canUpdateRecordValue !== false
 }
 

@@ -66,6 +66,14 @@ func agentNodeTypes() []nodeTypeDef {
 			Label:       "Backup: run due",
 			Description: "Run policies whose cron matches now",
 		},
+		{
+			Type:        "backup/dest-test",
+			Label:       "Backup: проверить назначение",
+			Description: "Проверить endpoint/учётки/бакет назначения и записать результат (last_check*) в запись",
+			ConfigFields: []nodeTypeField{
+				nf("destinationID", "string", "Destination ID", req, tmpl),
+			},
+		},
 	}
 }
 

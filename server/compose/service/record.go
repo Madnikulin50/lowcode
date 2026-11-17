@@ -33,6 +33,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
 	"github.com/madnikulin50/lowcode/server/pkg/errors"
 	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/secrets"
 	"github.com/madnikulin50/lowcode/server/store"
 	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 )
@@ -502,6 +503,10 @@ func (svc record) enhance(ctx context.Context, ff []*datasources.Frame) (err err
 }
 
 func (svc record) invalidateModuleReportCache(moduleID uint64) {
+	// Тесты собирают сервис литералом без reportCache — не падаем.
+	if svc.reportCache == nil {
+		return
+	}
 	svc.reportCache.DeleteBy(func(k reportCacheKey) bool {
 		return k.ModuleID == moduleID
 	})
@@ -1591,6 +1596,10 @@ func (svc record) create(ctx context.Context, new *types.Record) (rec *types.Rec
 		return nil, dd, RecordErrNotAllowedToCreate()
 	}
 
+	if m.Config.Records.NoCreate && !auth.HasBypassRole(auth.GetIdentityFromContext(ctx)) {
+		return nil, dd, RecordErrNotAllowedToCreate()
+	}
+
 	if err = RecordValueSanitization(m, new.Values); err != nil {
 		return
 	}
@@ -1912,6 +1921,10 @@ func (svc record) update(ctx context.Context, upd *types.Record) (rec *types.Rec
 		return nil, dd, RecordErrNotAllowedToUpdate()
 	}
 
+	if m.Config.Records.ReadOnly && !auth.HasBypassRole(auth.GetIdentityFromContext(ctx)) {
+		return nil, dd, RecordErrNotAllowedToUpdate()
+	}
+
 	// Test if stale (update has an older version of data)
 	if isStale(upd.UpdatedAt, old.UpdatedAt, old.CreatedAt) {
 		return nil, dd, RecordErrStaleData()
@@ -2185,6 +2198,21 @@ func (svc record) procUpdate(ctx context.Context, invokerID uint64, m *types.Mod
 		return
 	}
 
+	// Secret-поля: маска от клиента («не менять») заменяется старым
+	// значением, чтобы Merge и последующее шифрование оставили его как есть.
+	for _, f := range m.Fields {
+		if f.Kind != "Secret" {
+			continue
+		}
+		for _, uv := range upd.Values {
+			if uv.Name == f.Name && uv.Value == secrets.Mask {
+				if ov := old.Values.Get(f.Name, 0); ov != nil {
+					uv.Value = ov.Value
+				}
+			}
+		}
+	}
+
 	upd.Values = old.Values.Merge(m.Fields, upd.Values, func(f *types.ModuleField) bool {
 		return svc.ac.CanUpdateRecordValueOnModuleField(ctx, m.Fields.FindByName(f.Name))
 	})
@@ -2232,6 +2260,10 @@ func (svc record) processDelete(ctx context.Context, del *types.Record, namespac
 	)
 
 	if !svc.ac.CanDeleteRecord(ctx, del) {
+		return nil, RecordErrNotAllowedToDelete()
+	}
+
+	if module.Config.Records.NoDelete && !auth.HasBypassRole(auth.GetIdentityFromContext(ctx)) {
 		return nil, RecordErrNotAllowedToDelete()
 	}
 
@@ -2502,6 +2534,10 @@ func (svc record) Organize(ctx context.Context, namespaceID, moduleID, recordID 
 			return RecordErrNotAllowedToUpdate()
 		}
 
+		if m.Config.Records.ReadOnly && !auth.HasBypassRole(auth.GetIdentityFromContext(ctx)) {
+			return RecordErrNotAllowedToUpdate()
+		}
+
 		old := r.Clone()
 
 		// Dispatch beforeOrganize event
@@ -2756,13 +2792,25 @@ func (svc record) Iterator(ctx context.Context, f types.RecordFilter, fn eventbu
 					return RecordErrNotAllowedToCreate()
 				}
 
+				if m.Config.Records.NoCreate && !auth.HasBypassRole(auth.GetIdentityFromContext(ctx)) {
+					return RecordErrNotAllowedToCreate()
+				}
+
 			case "update":
 				if !svc.ac.CanUpdateRecord(ctx, rec) {
 					return RecordErrNotAllowedToUpdate()
 				}
 
+				if m.Config.Records.ReadOnly && !auth.HasBypassRole(auth.GetIdentityFromContext(ctx)) {
+					return RecordErrNotAllowedToUpdate()
+				}
+
 			case "delete":
 				if !svc.ac.CanDeleteRecord(ctx, rec) {
+					return RecordErrNotAllowedToDelete()
+				}
+
+				if m.Config.Records.NoDelete && !auth.HasBypassRole(auth.GetIdentityFromContext(ctx)) {
 					return RecordErrNotAllowedToDelete()
 				}
 			case "undelete":

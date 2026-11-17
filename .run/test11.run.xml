@@ -6,6 +6,7 @@
     <envs>
       <env name="DB_DSN" value="postgres://postgres:Zse45rdx@127.0.0.1:5432/test11?sslmode=disable" />
       <env name="ENVIRONMENT" value="dev" />
+      <env name="EXPORT_ALLOWED_HOSTS" value="localhost:8081" />
       <env name="HTTP_ADDR" value=":3333" />
       <env name="HTTP_API_ENABLED" value="true" />
       <env name="HTTP_WEBAPP_ENABLED" value="false" />
@@ -17,7 +18,7 @@
       <env name="OLLAMA_HOST" value="localhost:11434" />
       <env name="PREFERRED_LANGUAGE" value="ru" />
       <env name="STORAGE_PATH" value="../data" />
-      <env name="EXPORT_ALLOWED_HOSTS" value="localhost:8081" />
+      <env name="DWG2DXF" value="/tmp/ldwg/inst/bin/dwg2dxf" />
     </envs>
     <kind value="FILE" />
     <directory value="$PROJECT_DIR$" />

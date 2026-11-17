@@ -72,6 +72,12 @@ interface Config {
     ident: string;
   };
 
+  records: {
+    readOnly: boolean;
+    noCreate: boolean;
+    noDelete: boolean;
+  };
+
   recordDeDup: {
     rules: RecordDeDupRule[];
   };
@@ -187,6 +193,12 @@ export class Module {
     recordRevisions: {
       enabled: false,
       ident: '',
+    },
+
+    records: {
+      readOnly: false,
+      noCreate: false,
+      noDelete: false,
     },
 
     recordDeDup: {

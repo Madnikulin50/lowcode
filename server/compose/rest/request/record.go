@@ -115,6 +115,11 @@ type (
 		//
 		// Sort items
 		Sort string
+
+		// ExposeSecrets GET parameter
+		//
+		// Return full values of Secret module fields (requires record update right)
+		ExposeSecrets bool
 	}
 
 	RecordImportInit struct {
@@ -305,6 +310,11 @@ type (
 		// Record ID
 		RecordID     uint64 `json:",string"`
 		RecordFilter string `json:",string"`
+
+		// ExposeSecrets GET parameter
+		//
+		// Return full values of Secret module fields (requires record update right)
+		ExposeSecrets bool
 	}
 
 	RecordUpdate struct {
@@ -852,6 +862,12 @@ func (r *RecordList) Fill(req *http.Request) (err error) {
 		}
 		if val, ok := tmp["sort"]; ok && len(val) > 0 {
 			r.Sort, err = val[0], nil
+			if err != nil {
+				return err
+			}
+		}
+		if val, ok := tmp["exposeSecrets"]; ok && len(val) > 0 {
+			r.ExposeSecrets, err = payload.ParseBool(val[0]), nil
 			if err != nil {
 				return err
 			}
@@ -1633,6 +1649,10 @@ func (r *RecordRead) Fill(req *http.Request) (err error) {
 			if len(val) > 0 {
 				r.RecordFilter = val
 			}
+		}
+
+		if v := req.URL.Query().Get("exposeSecrets"); v != "" {
+			r.ExposeSecrets = payload.ParseBool(v)
 		}
 
 	}

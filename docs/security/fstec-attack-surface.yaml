@@ -1,0 +1,120 @@
+# Поверхность атаки платформы lowcode
+# Машиночитаемое представление документа docs/security/attack-surface.md.
+# ID точек входа совпадают с attack-surface.md (N*, D*, A-*).
+
+meta:
+  title: Поверхность атаки платформы lowcode
+  version: "2026-11-14"
+  branch: "2026.10.x"
+  source_doc: docs/security/attack-surface.md
+  machine_doc: docs/security/fstec-attack-surface.yaml
+  related:
+    - docs/security/threat-model.md
+    - docs/security/fstec-threat-model.yaml
+    - docs/security/fstec-tables.md
+  auth_legend:
+    none: "запрос принимается без проверки"
+    jwt: "Bearer-токен платформы"
+    session: "cookie auth-сервера"
+    secret: "общий секрет в заголовке"
+    network: "защита только сетевым периметром"
+    basic: "HTTP Basic Auth"
+
+network_services:
+  - {id: N1,  name: "Сервер платформы (REST, auth, WebSocket, SPA)", port: "HTTP_ADDR (в контейнере 80)", protocol: HTTP/HTTPS, reach: "пользователи, интеграции, интернет при публикации", auth: "см. http_routes", default_enabled: true}
+  - {id: N2,  name: MCP SSE, port: "MCP_SSE_ADDR (:9090)", protocol: "HTTP/SSE", reach: "LLM-клиенты", auth: "none на уровне listener; личность определяет withAuth(ctx)", default_enabled: false}
+  - {id: N3,  name: MCP STDIO, port: "локальный процесс", protocol: stdio, reach: "локальный пользователь", auth: "локальный процесс; допускается fallback на сервисного пользователя", default_enabled: false}
+  - {id: N4,  name: "Агенты (backup, cmdb, invest, stroykontrol, calc-evm, scan-cidr)", port: "8085–8100 (test9/test11)", protocol: HTTP, reach: "платформа; при открытом порте — любой в сети", auth: none, default_enabled: "при запуске агента", findings: [A-1, A-2, A-5]}
+  - {id: N5,  name: "MCP агента cmdb", port: ":9091", protocol: "HTTP/stdio", reach: "LLM-клиенты", auth: none, default_enabled: false}
+  - {id: N6,  name: "Corredor (JS-рантайм)", port: CORREDOR_ADDR, protocol: gRPC, reach: "сервер платформы", auth: network, default_enabled: false}
+  - {id: N7,  name: "Ollama (LLM)", port: "11434", protocol: HTTP, reach: "сервер платформы, агенты", auth: none, default_enabled: "внешняя зависимость"}
+  - {id: N8,  name: "СУБД (PostgreSQL/MySQL/SQLite/MSSQL/ClickHouse)", port: "по драйверу", protocol: TCP, reach: "сервер платформы", auth: "учётная запись СУБД", default_enabled: true}
+  - {id: N9,  name: "Объектное хранилище MinIO/S3", port: "MINIO_*", protocol: HTTP, reach: "сервер, агент backup", auth: "ключи доступа", default_enabled: "по настройке"}
+  - {id: N10, name: "Elasticsearch (server-discovery)", port: "9200", protocol: HTTP, reach: "сервис discovery", auth: "по настройке", default_enabled: false}
+  - {id: N11, name: "Брокеры (Kafka/RabbitMQ)", port: "по настройке", protocol: TCP, reach: "сервер, MCP-bridge", auth: "по настройке", default_enabled: false}
+  - {id: N12, name: SMTP, port: "SMTP_*", protocol: SMTP, reach: "сервер (исходящее)", auth: "учётная запись", default_enabled: "по настройке"}
+  - {id: N13, name: "Метрики Prometheus", port: "на HTTP-сервере", protocol: HTTP, reach: мониторинг, auth: "basic (MetricsUsername/Password)", default_enabled: "по настройке"}
+  - {id: N14, name: "Отладочные маршруты /debug/pprof, /__routes, /__eventbus", port: "на HTTP-сервере", protocol: HTTP, reach: "кто достигает сервер", auth: none, default_enabled: false, note: "в промышленной среде не включать (EnableDebugRoute)"}
+
+http_routes:
+  mount: "server/app/servers.go, server/pkg/api/server/handlers.go"
+  unauthenticated:
+    - {route: "/healthcheck, /version", purpose: "состояние и версия", risk: "раскрытие версии", measures: "закрыть на периметре", threats: [T-18]}
+    - {route: "/auth/* (логин, регистрация, сброс пароля, OAuth2, SAML)", purpose: "вход пользователей", risk: "перебор, перечисление пользователей, фишинг", measures: "rate-limit токенов, политика паролей, CSRF SameSite=Strict, HttpOnly cookie, MFA TOTP/Email OTP", threats: [T-01, T-03, T-05, T-06]}
+    - {route: "/auth регистрация", purpose: саморегистрация, risk: "создание учётных записей посторонними", measures: "в provision включена по умолчанию; подтверждение email при SMTP; в промышленной среде отключить", threats: [T-03]}
+    - {route: "/.well-known/openid-configuration", purpose: "метаданные OIDC", risk: "-", measures: "-", threats: []}
+    - {route: "/api/docs, /api/manual, /api/architecture", purpose: "встроенная документация (монтируется всегда)", risk: "раскрытие устройства системы", measures: "закрыть на периметре", threats: [T-18]}
+    - {route: "/sink/*", purpose: "вход для внешних вызовов, запускает workflow", risk: "вызов workflow анонимом", measures: "подпись URL (HMAC-SHA256), срок опционален, выполнение от run-as", threats: [T-25]}
+    - {route: "/agents/enroll", purpose: "выдача токена агенту", risk: "подбор секрета, токен на 365 дней", measures: "маршрут только при заданном AGENT_SHARED_SECRET, сравнение за постоянное время; нет ограничения частоты и срока (A-3)", threats: [T-04]}
+    - {route: "/assets/*, /webapp/*", purpose: "статические файлы", risk: "обход каталога", measures: "нормализация путей (path.Clean)", threats: [T-17]}
+    - {route: "/scim/*", purpose: "провижининг пользователей", risk: "подмена учётных записей", measures: "флаг SCIM.Enabled; без SCIM.Secret не монтируется", threats: [T-07]}
+  authenticated:
+    - {group: System, prefix: "/api/system/*", accepts: "пользователи, роли, настройки, DAL-соединения, APIGW, шаблоны отчётов, SCIM"}
+    - {group: Compose, prefix: "/api/compose/*", accepts: "модули, записи, страницы, графики, чат, RAG, цепочки правил"}
+    - {group: Automation, prefix: "/api/automation/*", accepts: "workflow, триггеры, сессии, промпты, навыки, тесты AI-шагов"}
+    - {group: WebSocket, prefix: "/api/websocket/*", accepts: "подписки на события"}
+    - {group: "Discovery / Federation", prefix: "/api/discovery/*, /api/federation/*", accepts: "включаются флагами"}
+    - {group: Gateway, prefix: "/api/gateway/*", accepts: "настраиваемые маршруты прокси к внешним сервисам (APIGW)"}
+  pipeline: "JWT middleware → rest/request (разбор) → service (RBAC + логика) → store/DAL; права проверяются в сервисном слое (svc.ac.Can…)"
+
+agents:
+  contract: lowcode.agent.v1
+  sdk: agents/sdk/service.go
+  routes: ["GET /health", "GET /api/meta", "GET /api/skills/{handle}", "POST /api/register", "POST /api/jobs", "GET /api/jobs", "GET /api/jobs/{id}", "GET /api/jobs/{id}/items", "POST /api/call/{op}", "алиасы операций"]
+  findings:
+    - {id: A-1, finding: "SDK не проверяет входящую аутентификацию (только Recoverer и CORS)", impact: "любой, кто достигает порт, запускает операции: сканирование, бэкап/restore, расчёты", recommendation: "общий секрет или проверка JWT платформы в middleware SDK; до этого — закрыть порты сетью", threats: [T-22]}
+    - {id: A-2, finding: "Access-Control-Allow-Origin: * на всех маршрутах агента", impact: "страница в браузере администратора (или DNS-rebinding) вызывает агента на localhost/внутреннем адресе", recommendation: "ограничить Origin списком из конфигурации", threats: [T-22]}
+    - {id: A-3, finding: "/agents/enroll выдаёт токен на 365 дней по общему секрету, без ограничения частоты", impact: "утечка секрета = долгоживущий токен; перебор не ограничен", recommendation: "ограничить частоту, сократить срок, добавить отзыв, привязать токен к агенту", threats: [T-04]}
+    - {id: A-4, finding: "агенты ходят в платформу под identity corteza-service", impact: "компрометация одного агента даёт права сервисного пользователя на весь Compose", recommendation: "отдельный пользователь и роль с минимальными правами на каждый агент", threats: [T-23]}
+    - {id: A-5, finding: "нет ReadHeaderTimeout у HTTP-серверов агентов", impact: "медленные соединения занимают ресурсы", recommendation: "http.Server{ReadHeaderTimeout} в SDK", threats: [T-16]}
+  high_risk_operations:
+    - "сканирование сетей (scan-cidr, cmdb)"
+    - "запуск внешних процессов (pkg/rag — разбор PDF/CAD, gonec)"
+    - "чтение и запись файловых шар и БД (backup)"
+    - "растеризация PDF (stroykontrol)"
+
+data_channels:
+  - {id: D1,  channel: "Загрузка файлов (вложения, версии)", format: "multipart, произвольные файлы", parser: "compose/service/attachment.go, system/service/attachment.go", risks: "вредоносное содержимое, зипбомба, полиглоты, DoS при обработке изображений", measures: "проверка типов, подписанные URL, версионирование; imaging — остаточный риск (CVE-2023-36308)", threats: [T-15, T-20, T-05]}
+  - {id: D2,  channel: "Импорт записей (CSV/JSON/XLSX), Envoy YAML", format: файлы, parser: "pkg/envoyx, compose/envoy", risks: "тяжёлые данные, формульные инъекции, prototype pollution (xlsx)", measures: "лимиты, RBAC на импорт", threats: [T-15, T-33]}
+  - {id: D3,  channel: "Тела REST-запросов (формы, JSON)", format: "JSON, form", parser: "*/rest/request", risks: "ParseForm без лимита (G120), массовые параметры", measures: "точечный лимит не введён (в плане)", threats: [T-16, T-12, T-13]}
+  - {id: D4,  channel: WebSocket, format: JSON, parser: pkg/websocket, risks: "недоверенные клиенты, DoS", measures: "токен, ограничение по identity", threats: [T-16]}
+  - {id: D5,  channel: "Sink / webhooks", format: "произвольный HTTP", parser: system/service/sink.go, risks: "анонимный запуск workflow", measures: "настройки sink, run-as", threats: [T-25]}
+  - {id: D6,  channel: "Шаблоны отчётов и писем", format: "Go-templates, HTML", parser: system/renderer, risks: "SSRF через inlineRemote, SSTI", measures: "только http(s), таймаут 15 с, лимит 10 МБ; внутренние адреса не блокируются (остаточный риск)", threats: [T-14]}
+  - {id: D7,  channel: "Промпты и AI-ввод (чат, AI-шаги workflow/цепочек, MCP)", format: текст, parser: "compose/service/chat*.go, pkg/aiagent", risks: "prompt injection, исполнение инструментов, утечка данных в LLM", measures: "подтверждение мутаций, бюджет вызовов, область инструментов, трассировка", threats: [T-27, T-28, T-29, T-30]}
+  - {id: D8,  channel: "Навыки (skills) и библиотека промптов", format: "Markdown/zip", parser: "pkg/aiagent/skills*.go, automation/service/skill.go", risks: "вредоносные инструкции, чтение вне каталога", measures: "лимиты (50 файлов, 100 КБ/файл), без исполнения скриптов, не-регулярные файлы пропускаются", threats: [T-21, T-31]}
+  - {id: D9,  channel: "Импорт OpenAPI / настройки APIGW", format: конфигурация, parser: "system/service/apigw*.go", risks: "прокси к внутренним адресам (SSRF)", measures: "настраивается администратором", threats: [T-14]}
+  - {id: D10, channel: "Входящая почта / внешние провайдеры (OAuth2, SAML)", format: "XML/JSON", parser: "auth/saml, auth/external", risks: "XML-подпись (XSW), подмена IdP", measures: "goxmldsig 1.6.0, проверка подписи", threats: [T-06]}
+
+code_execution:
+  - {mechanism: "Скрипты Corredor (JS)", where: "внешний процесс по gRPC", who: "роль с правом на скрипты", isolation: "отдельный процесс", status: "оценить сетевую изоляцию CORREDOR_ADDR", threats: [T-19]}
+  - {mechanism: "gonec (1С-подобный интерпретатор)", where: pkg/gonec, who: "MCP-инструмент gonec_run (MCP_ENABLE_SCRIPTS, выключен по умолчанию)", isolation: "белый список импортов, внешние процессы", status: "в промышленной среде не включать либо изолировать на уровне ОС (gVisor/контейнер)", threats: [T-19]}
+  - {mechanism: "Rule chains (rulesgo)", where: pkg/rulesgo, who: "роль на цепочки; валидация ValidateChain", isolation: "интерпретатор узлов", status: "узел gonec без runner = no-op", threats: [T-22, T-25]}
+  - {mechanism: "Workflow (BPMN, функции http, aiAsk, …)", where: automation/, who: "роль на workflow; запуск от run-as", isolation: "права run-as", status: "события с обязательным run-as", threats: [T-08, T-14]}
+  - {mechanism: "JS-выражения (pkg/jsenv)", where: pkg/jsenv, who: "редакторы блоков", isolation: VM, status: "-", threats: []}
+
+code_execution_notes: "Запуск внешних процессов (G204): pkg/gonec/engine.go, pkg/rag/parser*.go — рекомендуется отдельная непривилегированная учётная запись, seccomp, read-only корень"
+
+outbound:
+  - {target: "LLM (Ollama и др.)", module: "pkg/chat, pkg/aiagent", address_control: "администратор (OLLAMA_URL)", risk: "утечка данных записей в модель; подмена модели", threats: [T-29, T-31]}
+  - {target: "Внешние HTTP из workflow и APIGW", module: "automation/, pkg/apigw", address_control: "автор workflow / администратор", risk: "SSRF, утечка данных", threats: [T-14]}
+  - {target: "IdP (OIDC/SAML)", module: auth/external, address_control: администратор, risk: "подмена IdP", threats: [T-06]}
+  - {target: SMTP, module: system/service/mail, address_control: администратор, risk: "рассылка от имени платформы", threats: []}
+  - {target: "MinIO/S3, СУБД клиента (DAL)", module: "pkg/objstore, pkg/dal", address_control: администратор, risk: "доступ к чужим данным при ошибке в DSN", threats: [T-35]}
+  - {target: "http.DefaultClient с InsecureSkipVerify", module: pkg/http/default.go, address_control: "только при SYSTEM_HTTP_CLIENT_TSL_INSECURE=1", risk: "отключение проверки TLS", threats: [T-37]}
+
+supply_chain:
+  go_deps: {area: "server/go.mod, server/vendor (~180 модулей)", controls: "govulncheck, osv-scanner", residual: "imaging (LOW, без патча), chi v3 (тестовая зависимость)"}
+  js_deps: {area: "client3/lib/*, client3/web/*, server/webconsole", controls: "osv-scanner, yarn audit", residual: "xlsx, echarts, vitest, mxgraph (требуют смены major или замены)"}
+  images: {area: "pnp-lowcode, pnp-backup, … (FROM ubuntu:22.04)", controls: "—", residual: "не сканировались (trivy), базовые образы не закреплены по digest"}
+  build: {area: "make, Docker, Vite, rollup", controls: "scripts/verify-ai.sh (AI guard)", residual: "воспроизводимость сборки и подпись артефактов не оформлены"}
+  ai_extensions: {area: "модели Ollama, навыки (AI_SKILLS_DIR, remote skills из /api/meta агентов)", controls: "источники навыков перечислены в SetSkillSource", residual: "удалённые навыки приходят от агентов — доверять только своим"}
+
+priorities:
+  - {priority: высокий, item: "аутентификация и CORS в SDK агентов; сетевая изоляция агентов", ref: [A-1, A-2]}
+  - {priority: высокий, item: "MCP_ENABLE_SCRIPTS выключен; MCP_SSE_ADDR — только во внутренней сети", ref: [N2]}
+  - {priority: высокий, item: "секрет /agents/enroll: длина, ротация, ограничение частоты", ref: [A-3]}
+  - {priority: средний, item: "лимиты тел запросов на формах (G120)", ref: [D3]}
+  - {priority: средний, item: "блокировка внутренних адресов в inlineRemote и APIGW", ref: [D6, D9]}
+  - {priority: высокий, item: "отключить саморегистрацию и не включать EnableDebugRoute в промышленной среде", ref: []}
+  - {priority: средний, item: "закрыть /api/docs, /api/manual, /api/architecture, /version, /healthcheck на периметре", ref: []}
+  - {priority: низкий, item: "замена xlsx, обновление echarts/vitest, сканирование образов", ref: []}

@@ -192,8 +192,8 @@ func (ctrl Module) makePayload(ctx context.Context, m *types.Module, err error) 
 		CanUpdateModule: ctrl.ac.CanUpdateModule(ctx, m),
 		CanDeleteModule: ctrl.ac.CanDeleteModule(ctx, m),
 
-		CanCreateRecord:      m.Config.Type != "datasource" && m.Config.Type != "connector" && ctrl.ac.CanCreateRecordOnModule(ctx, m),
-		CanCreateOwnedRecord: m.Config.Type != "datasource" && m.Config.Type != "connector" && ctrl.ac.CanCreateOwnedRecordOnModule(ctx, m),
+		CanCreateRecord:      m.Config.Type != "datasource" && m.Config.Type != "connector" && !m.Config.Records.NoCreate && ctrl.ac.CanCreateRecordOnModule(ctx, m),
+		CanCreateOwnedRecord: m.Config.Type != "datasource" && m.Config.Type != "connector" && !m.Config.Records.NoCreate && ctrl.ac.CanCreateOwnedRecordOnModule(ctx, m),
 	}, nil
 }
 
@@ -205,7 +205,7 @@ func (ctrl Module) makeFieldsPayload(ctx context.Context, m *types.Module) (out 
 			ModuleField: f,
 
 			CanReadRecordValue:   ctrl.ac.CanReadRecordValueOnModuleField(ctx, f),
-			CanUpdateRecordValue: ctrl.ac.CanUpdateRecordValueOnModuleField(ctx, f),
+			CanUpdateRecordValue: ctrl.ac.CanUpdateRecordValueOnModuleField(ctx, f) && !m.Config.Records.ReadOnly,
 		}
 	}
 

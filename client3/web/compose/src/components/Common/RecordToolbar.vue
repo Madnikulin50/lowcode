@@ -165,7 +165,7 @@
       </button>
 
       <button
-        v-if="!inEditing && module.canCreateRecord && !(hideNew || settings.hideNew)"
+        v-if="!inEditing && module.canCreateRecord && !recordsNoCreate && !(hideNew || settings.hideNew)"
         type="button"
         data-test-id="button-add-new"
         :title="addNewLabel"
@@ -319,6 +319,10 @@ const canManageRecord = computed(() => {
 
 const canCreateRecord = computed(() => !!props.module?.canCreateRecord)
 
+// Records-creation ban set on the module (config.records.noCreate) hides
+// create/copy UI outright, regardless of RBAC-driven canCreateRecord.
+const recordsNoCreate = computed(() => !!props.module?.config?.records?.noCreate)
+
 const showEditOnView = computed(() => {
   if (props.inEditing || !(props.isCreated || props.isDraft)) return false
   if (props.forceShowEdit) return true
@@ -333,6 +337,7 @@ const showView = computed(() => {
 
 const showClone = computed(() => {
   if (!(props.isCreated || props.isDraft)) return false
+  if (recordsNoCreate.value) return false
   if (props.forceShowClone) return true
   return canCreateRecord.value && !(props.hideClone || settings.value.hideClone)
 })

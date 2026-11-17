@@ -5,10 +5,10 @@ import { Apply, CortezaID, NoID } from '../../../cast'
 
 export const FieldNameValidator = /^[A-Za-z][0-9A-Za-z_-]*[A-Za-z0-9]$/
 
-const unsortableFieldKinds = ['File', 'Geometry']
+const unsortableFieldKinds = ['File', 'Geometry', 'Secret']
 const unsortableSysFields = ['recordID']
 
-const unfilterableFieldKinds = ['File', 'Geometry']
+const unfilterableFieldKinds = ['File', 'Geometry', 'Secret']
 const nonQueryableFieldKinds = ['Number', 'Record', 'User', 'Bool', 'DateTime', 'File', 'Geometry']
 const nonQueryableFieldNames = ['recordID']
 

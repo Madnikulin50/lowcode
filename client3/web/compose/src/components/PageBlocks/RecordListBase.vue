@@ -132,7 +132,7 @@
 
         <div v-else class="d-flex align-items-center justify-content-between gap-1">
           <div class="d-flex align-items-center flex-grow-1 flex-wrap flex-fill-child gap-1">
-            <template v-if="recordListModule.canCreateRecord">
+            <template v-if="recordListModule.canCreateRecord && !moduleNoCreate">
               <template v-if="inlineEditing">
                 <button v-if="!options.hideAddButton" data-test-id="button-add-record" class="btn btn-primary" @click="addInlineRecord()">+ {{ $t('recordList.addRecord') }}</button>
               </template>
@@ -684,13 +684,14 @@ const stayOnPage = ref(undefined)
 const getModuleByID = computed(() => store.module.getByID)
 const pages = computed(() => store.page.set)
 const recordListModule = computed(() => options.value.moduleID ? getModuleByID.value(options.value.moduleID) : undefined)
+const moduleNoCreate = computed(() => !!recordListModule.value?.config?.records?.noCreate)
 const isFederated = computed(() => Object.keys(recordListModule.value?.labels || {}).includes('federation'))
 const compactChrome = computed(() => options.value.compactChrome !== false)
 const showAddButton = computed(() => {
-  if (!recordListModule.value?.canCreateRecord || options.value.hideAddButton) return false
+  if (moduleNoCreate.value || !recordListModule.value?.canCreateRecord || options.value.hideAddButton) return false
   return inlineEditing.value || !!recordPageID.value || options.value.allRecords
 })
-const canImport = computed(() => !!(recordListModule.value?.canCreateRecord && !options.value.hideImportButton && !inlineEditing.value && (recordPageID.value || options.value.allRecords)))
+const canImport = computed(() => !!(recordListModule.value?.canCreateRecord && !moduleNoCreate.value && !options.value.hideImportButton && !inlineEditing.value && (recordPageID.value || options.value.allRecords)))
 const canExport = computed(() => !!(options.value.allowExport && !inlineEditing.value))
 const canConfigureFields = computed(() => options.value.hideConfigureFieldsButton === false)
 const canShowDeletedRecords = computed(() => !!options.value.showDeletedRecordsOption)
@@ -819,7 +820,7 @@ const groupedItems = computed(() => {
 const canDeleteSelectedRecords = computed(() => items.value.filter(({ id, r }) => selected.value.includes(id) && r.canDeleteRecord).length > 0)
 const canUpdateSelectedRecords = computed(() => items.value.filter(({ id, r }) => selected.value.includes(id) && r.canUpdateRecord).length > 0)
 const canRestoreSelectedRecords = computed(() => items.value.filter(({ id, r }) => selected.value.includes(id) && r.canUndeleteRecord).length > 0)
-const isCloneRecordActionVisible = computed(() => !options.value.hideRecordCloneButton && recordListModule.value?.canCreateRecord && (options.value.rowCreateUrl || recordPageID.value || inlineEditing.value))
+const isCloneRecordActionVisible = computed(() => !options.value.hideRecordCloneButton && recordListModule.value?.canCreateRecord && !moduleNoCreate.value && (options.value.rowCreateUrl || recordPageID.value || inlineEditing.value))
 const isReminderActionVisible = computed(() => !options.value.hideRecordReminderButton)
 const filterPresets = computed(() => {
   const presets = Array.isArray(options.value.filterPresets) ? options.value.filterPresets : []

@@ -1666,6 +1666,18 @@ func moduleFieldToAttribute(f *types.ModuleField) (out *dal.Attribute, err error
 		out.Filterable = false
 		out.Sortable = false
 
+	case "secret":
+		// Secret — серверно-шифруемое строковое поле: хранится шифротекстом
+		// в общем values-JSON, поиск/сортировка недопустимы (шифротекст не
+		// сравнивается). Шифрование — в dalutils (encryptSecretValues),
+		// расшифровка — при чтении, маскирование — в REST.
+		at := &dal.TypeText{
+			Nullable: !f.Required,
+		}
+		out = dal.FullAttribute(f.Name, at, codec)
+		out.Filterable = false
+		out.Sortable = false
+
 	default:
 		at := &dal.TypeText{
 			Nullable: !f.Required,

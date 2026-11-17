@@ -1,0 +1,349 @@
+/* Общие стили печати для всех webapp (admin, compose, discovery, one, privacy, reporter, workflow). */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body,
+  #app {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  /* Ширина по листу: экранные min-width/width/margin корневых контейнеров
+     (под сайдбар и т.п.) иначе обрезают содержимое справа */
+  html,
+  body,
+  #app {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  #app .w-100,
+  #app .flex-grow-1,
+  #app .container,
+  #app .container-fluid,
+  #app main,
+  #app [class*='content'] {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: visible !important;
+  }
+
+  #app .d-flex,
+  #app .d-flex > * {
+    min-width: 0;
+  }
+
+  /* Кнопки и элементы управления, бессмысленные на бумаге */
+  button,
+  .btn,
+  .btn-group,
+  [role='button'],
+  input[type='button'],
+  input[type='submit'],
+  input[type='reset'],
+  .dropdown-menu,
+  .pagination,
+  .toast,
+  .toast-container,
+  .modal-backdrop,
+  #toolbar,
+  .toolbar,
+  .toolbox,
+  .toolbox-button,
+  .navbar,
+  .sidebar,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Вкладки: показываем содержимое всех панелей одну за другой */
+  .tab-content {
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .tab-content > .tab-pane,
+  .tab-content > .tab-pane:not(.active) {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    break-inside: auto;
+  }
+
+  /* Блок закладок (flex-column + h-100 + flex-fill) сжимал панели по высоте
+     и обрезал содержимое снизу: переводим в обычный поток */
+  .tabs-base-block-container .tabs,
+  .tabs-base-block-container .tabs.d-flex,
+  .tabs-base-block-container .tab-content,
+  .tabs-base-block-container .tab-content.flex-fill {
+    display: block !important;
+    flex: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .tabs-base-block-container .tab-pane > *,
+  .tabs-base-block-container .tab-pane .card,
+  .tabs-base-block-container .tab-pane .card-body {
+    flex: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Каждая закладка, кроме первой, начинается с новой страницы */
+  .tab-content > .tab-pane ~ .tab-pane {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  /* Весь блок закладок (заголовки + первая закладка) начинается с новой страницы,
+     чтобы заголовки не оставались отдельной пустой рамкой */
+  .tabs-base-block-container {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .tabs-base-block-container .tab-content > .tab-pane:first-child {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+  }
+
+  /* Закладка занимает почти страницу (A4 минус поля и строка заголовков) */
+  .tabs-base-block-container .tab-content > .tab-pane {
+    min-height: 235mm !important;
+    box-sizing: border-box;
+  }
+
+  /* Вкладка с iframe: страницу задаёт сам iframe-блок, минимум и лишние разрывы дают пустой лист */
+  .tabs-base-block-container .tab-content > .tab-pane:has(.grid-item--print-page) {
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .tab-pane .grid-item--print-page {
+    break-before: auto !important;
+    page-break-before: auto !important;
+    height: 225mm !important;
+    min-height: 225mm !important;
+    max-height: 225mm !important;
+  }
+
+  .tab-pane .grid-item--print-page + .grid-item {
+    break-before: auto !important;
+  }
+
+  /* Прокрутка при печати не нужна */
+  * {
+    scrollbar-width: none !important;
+  }
+
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* Блоки с прокруткой и фиксированной высотой не должны обрезать содержимое */
+  .overflow-auto,
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-y-scroll,
+  .h-100,
+  .vh-100,
+  .mh-100,
+  .tabs-base-block-container,
+  .card,
+  .card-body,
+  .modal-dialog,
+  .modal-content {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Сворачиваемые секции (accordion/collapse) раскрываем */
+  .collapse:not(.show),
+  .collapsing {
+    display: block !important;
+    height: auto !important;
+  }
+
+  .accordion-collapse {
+    display: block !important;
+  }
+
+  details > *:not(summary) {
+    display: block !important;
+  }
+
+  /* RecordList: таблица целиком по ширине листа, без прокрутки и обрезки */
+  .rl-root .rl-table-wrap.table-responsive {
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .rl-root .rl-cards-wrap {
+    display: none !important;
+  }
+
+  /* Корень списка (flex + h-100 + overflow-hidden) сжимал таблицу по высоте */
+  .rl-root {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .rl-root .record-list-table tbody tr,
+  .rl-root .record-list-table tbody td {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  /* В печати выводятся первые 7 записей, остальные заменяет надпись «и еще N» */
+  .rl-root .record-list-table tbody tr:nth-child(n + 8) {
+    display: none !important;
+  }
+
+  .rl-root .rl-print-empty {
+    display: block !important;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 9pt;
+    font-style: italic;
+    color: #555;
+  }
+
+  .rl-root .rl-print-more {
+    display: block !important;
+    padding: 4px 5px;
+    font-size: 9pt;
+    font-style: italic;
+    color: #555;
+    border: 1px solid #ccc;
+    border-top: 0;
+  }
+
+  .rl-root .record-list-table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: auto;
+    border-collapse: collapse !important;
+    font-size: 9pt;
+  }
+
+  .rl-root .record-list-table thead.rl-sticky-head,
+  .rl-root .record-list-table td.actions {
+    position: static !important;
+  }
+
+  .rl-root .record-list-table th,
+  .rl-root .record-list-table td {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    padding: 3px 5px !important;
+    font-size: inherit !important;
+    text-transform: none !important;
+    border: 1px solid #ccc !important;
+    background: #fff !important;
+  }
+
+  .rl-root .record-list-table th {
+    background: #f2f2f2 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* inline min-width у редакторов и значений растягивал таблицу за пределы листа */
+  .rl-root .record-list-table td *,
+  .rl-root .record-list-table th * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .rl-root .record-list-table td.actions,
+  .rl-root .record-list-table .inline-actions,
+  .rl-root .record-list-table .rl-check-col {
+    display: none !important;
+  }
+
+  .rl-root .record-list-table tbody tr td:nth-last-child(2) {
+    padding-right: 5px !important;
+  }
+
+  /* iframe-блоки: высоту раньше давал h-100, после сброса он схлопывался до 150px.
+     Содержимое iframe - отдельный документ, поэтому задаём высоту под страницу */
+  #app iframe {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 225mm !important;
+    min-height: 225mm !important;
+    max-height: 225mm !important;
+    border: 0 !important;
+  }
+
+  /* iframe на своей странице: родители - flex-колонка, iframe забирает всю оставшуюся высоту */
+  .grid-item--print-page div:has(iframe) {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .grid-item--print-page #app iframe,
+  #app .grid-item--print-page iframe {
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  tr,
+  img {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+}

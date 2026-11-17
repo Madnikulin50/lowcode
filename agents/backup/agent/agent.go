@@ -17,28 +17,54 @@ import (
 )
 
 type Agent struct {
-	cfg   Config
-	cz    *Corteza
-	store *ObjectStore
-	mu    sync.RWMutex
-	jobs  map[string]*JobStatus
-	sem   chan struct{}
-	cb    *sdk.Callback
+	cfg     Config
+	cz      *Corteza
+	store   Storage
+	vault   *VaultStore
+	mu      sync.RWMutex
+	jobs    map[string]*JobStatus
+	sem     chan struct{}
+	cb      *sdk.Callback
+	stores  map[string]Storage
+	storesM sync.Mutex
 }
 
-func New(cfg Config, store *ObjectStore, cz *Corteza) *Agent {
+func New(cfg Config, store Storage, cz *Corteza) *Agent {
+	return NewWithVault(cfg, store, nil, cz)
+}
+
+func NewWithVault(cfg Config, store Storage, vault *VaultStore, cz *Corteza) *Agent {
 	n := cfg.Concurrency
 	if n <= 0 {
 		n = 2
 	}
 	return &Agent{
-		cfg:   cfg,
-		cz:    cz,
-		store: store,
-		jobs:  map[string]*JobStatus{},
-		sem:   make(chan struct{}, n),
-		cb:    sdk.NewCallback(),
+		cfg:    cfg,
+		cz:     cz,
+		store:  store,
+		vault:  vault,
+		jobs:   map[string]*JobStatus{},
+		sem:    make(chan struct{}, n),
+		cb:     sdk.NewCallback(),
+		stores: map[string]Storage{},
 	}
+}
+
+// keyFor собирает ключ объекта с учётом префикса: dest_prefix политики
+// побеждает, иначе — префикс назначения по умолчанию.
+func keyFor(pol *Policy, dest *Destination, handle, jobTag, filename string) string {
+	key := ObjectKey(handle, jobTag, filename)
+	prefix := ""
+	if pol != nil {
+		prefix = strings.TrimSpace(pol.DestPrefix)
+	}
+	if prefix == "" && dest != nil {
+		prefix = strings.TrimSpace(dest.Prefix)
+	}
+	if prefix != "" {
+		key = path.Join(strings.Trim(prefix, "/"), key)
+	}
+	return key
 }
 
 func (a *Agent) Corteza(req JobRequest) *Corteza {
@@ -172,6 +198,9 @@ func (a *Agent) Heartbeat(ctx context.Context) {
 	if resticAvailable() {
 		caps += ",restic"
 	}
+	if kopiaAvailable() {
+		caps += ",kopia"
+	}
 	if err := a.cz.UpsertAgent(ctx, "backup-agent", a.cfg.PublicURL, hostname(), caps); err != nil {
 		log.Printf("heartbeat: %v", err)
 	}
@@ -224,6 +253,31 @@ func (a *Agent) DuePolicies(ctx context.Context, req JobRequest) ([]DuePolicy, e
 	return due, nil
 }
 
+// enforceDataClass — правила раздельного хранения (152-ФЗ, интервью п.3):
+// ПДн спецкатегорий: для fs — только шифрованный kopia; для остальных типов
+// (БД, SMB, SaaS, k8s) — обязательна WORM-копия в сейфе. Конфиденциальные —
+// сейф обязателен для всех типов.
+func enforceDataClass(pol *Policy, src *Source) error {
+	switch src.DataClass {
+	case "personal_special":
+		if src.Type == SourceFS {
+			if strings.ToLower(strings.TrimSpace(pol.Engine)) != "kopia" {
+				return fmt.Errorf("data_class=personal_special (fs) requires engine=kopia (client-side encryption); set it on policy %q", pol.Name)
+			}
+		} else if !pol.Vault {
+			return fmt.Errorf("data_class=personal_special requires vault=true (WORM copy); set it on policy %q", pol.Name)
+		}
+	case "confidential":
+		if !pol.Vault {
+			return fmt.Errorf("data_class=confidential requires vault=true (WORM copy); set it on policy %q", pol.Name)
+		}
+	}
+	if pol.Archive && !pol.VaultLegalHold {
+		log.Printf("policy %q: archive mode without vault legal hold — long-term legal validity is at risk", pol.Name)
+	}
+	return nil
+}
+
 func (a *Agent) StartBackup(ctx context.Context, req JobRequest) (*JobStatus, error) {
 	if a.store == nil {
 		return nil, fmt.Errorf("minio is not configured")
@@ -255,6 +309,9 @@ func (a *Agent) StartBackup(ctx context.Context, req JobRequest) (*JobStatus, er
 	src, err := cz.LoadSource(ctx, srcID)
 	if err != nil {
 		return nil, fmt.Errorf("source %d: %w", srcID, err)
+	}
+	if err := enforceDataClass(pol, src); err != nil {
+		return nil, err
 	}
 	cred, err := cz.LoadCredential(ctx, src.CredID)
 	if err != nil {
@@ -294,7 +351,7 @@ func (a *Agent) StartBackup(ctx context.Context, req JobRequest) (*JobStatus, er
 	a.jobs[id] = st
 	a.mu.Unlock()
 
-	go a.runBackup(context.Background(), st, src, pol, cred, cz)
+	go a.runBackup(context.Background(), st, src, pol, cred, cz, req)
 	return st, nil
 }
 
@@ -337,7 +394,7 @@ func (a *Agent) StartRestore(ctx context.Context, req JobRequest) (*JobStatus, e
 	a.mu.Lock()
 	a.jobs[id] = st
 	a.mu.Unlock()
-	go a.runRestore(context.Background(), st, src, snap, cred, req)
+	go a.runRestore(context.Background(), st, src, snap, cred, req, cz)
 	return st, nil
 }
 
@@ -365,7 +422,7 @@ func (a *Agent) StartPrune(ctx context.Context, req JobRequest) (*JobStatus, err
 	return st, nil
 }
 
-func (a *Agent) runBackup(ctx context.Context, st *JobStatus, src *Source, pol *Policy, cred *Credential, cz *Corteza) {
+func (a *Agent) runBackup(ctx context.Context, st *JobStatus, src *Source, pol *Policy, cred *Credential, cz *Corteza, jr JobRequest) {
 	a.sem <- struct{}{}
 	defer func() { <-a.sem }()
 	label := string(src.Type)
@@ -377,6 +434,7 @@ func (a *Agent) runBackup(ctx context.Context, st *JobStatus, src *Source, pol *
 	defer metricInProgress.WithLabelValues(handle).Set(0)
 	start := time.Now()
 
+	var dest *Destination
 	finish := func(status JobStatusName, errMsg string, res *BackupResult) {
 		now := time.Now()
 		st.Status = status
@@ -405,16 +463,29 @@ func (a *Agent) runBackup(ctx context.Context, st *JobStatus, src *Source, pol *
 				metricBytesRead.WithLabelValues(label).Add(float64(res.BytesRead))
 				metricBytesWritten.WithLabelValues(label).Add(float64(res.BytesWritten))
 			}
+			// SaaS: фиксируем курсор инкремента после успешной выгрузки.
+			if src.Type == SourceSaaS && cz.HasToken() {
+				if err := cz.UpdateSourceLastSync(ctx, src.ID, now); err != nil {
+					log.Printf("last_sync source %d: %v", src.ID, err)
+				}
+			}
 		}
 		metricDuration.WithLabelValues(label).Observe(time.Since(start).Seconds())
-		a.recordSnapshot(ctx, cz, st, pol, res)
+		a.recordSnapshot(ctx, cz, st, src, pol, dest, res)
 		a.notifyCallback(st, kind)
 	}
 
-	if err := a.store.EnsureBucket(ctx); err != nil {
+	dest, err := a.resolveDestination(ctx, cz, jr, pol)
+	if err != nil {
 		finish(StatusFailed, err.Error(), nil)
 		return
 	}
+	store, err := a.StoreForDestination(ctx, dest)
+	if err != nil {
+		finish(StatusFailed, err.Error(), nil)
+		return
+	}
+	st.S3Endpoint = store.Location()
 
 	secret := ResolveSecret(cred.Handle)
 	username := cred.Username
@@ -422,7 +493,7 @@ func (a *Agent) runBackup(ctx context.Context, st *JobStatus, src *Source, pol *
 	if cred != nil {
 		extra = cred.Extra
 	}
-	res, err := a.backupSource(ctx, st, src, pol, username, secret, extra, handle)
+	res, err := a.backupSource(ctx, st, store, src, pol, dest, cred, username, secret, extra, handle)
 	if err != nil {
 		finish(StatusFailed, err.Error(), res)
 		return
@@ -430,16 +501,48 @@ func (a *Agent) runBackup(ctx context.Context, st *JobStatus, src *Source, pol *
 	finish(StatusCompleted, "", res)
 }
 
-func (a *Agent) backupSource(ctx context.Context, st *JobStatus, src *Source, pol *Policy, username, secret, extra, handle string) (*BackupResult, error) {
-	useRestic := pol.Incremental && resticAvailable() && src.Type == SourceFS
-	if useRestic {
+func (a *Agent) backupSource(ctx context.Context, st *JobStatus, store Storage, src *Source, pol *Policy, dest *Destination, cred *Credential, username, secret, extra, handle string) (*BackupResult, error) {
+	// Движки restic/kopia строят репозиторий по назначению (engineRepoFor /
+	// kopiaConnectArgs) — тип назначения решает, какая схема repo будет.
+	engine := strings.ToLower(strings.TrimSpace(pol.Engine))
+	if engine == "" {
+		// auto: прежнее поведение — restic-инкремент для fs при флаге incremental.
+		engine = "restic"
+	}
+	excludes := parseExclude(pol.Exclude)
+	switch {
+	case engine == "kopia":
+		if !kopiaAvailable() {
+			return nil, fmt.Errorf("kopia engine requested but kopia binary is not installed")
+		}
+		if src.Type != SourceFS {
+			return nil, fmt.Errorf("kopia engine supports fs sources only (got %s)", src.Type)
+		}
+		st.Message = "kopia snapshot create"
+		id, err := kopiaSnapshotCreate(ctx, a.cfg, dest, handle, src.Path, excludes, a.cfg.ResticPassword)
+		if err != nil {
+			return nil, err
+		}
+		return &BackupResult{
+			Bucket:   store.Bucket(),
+			Key:      kopiaKeyHint(handle, id),
+			Engine:   "kopia",
+			Kind:     KindIncremental,
+			ResticID: id,
+		}, nil
+	case engine == "restic" && pol.Incremental && resticAvailable() && src.Type == SourceFS:
 		st.Message = "restic backup"
-		id, err := resticBackupPath(ctx, a.cfg, handle, src.Path, a.cfg.ResticPassword)
+		spec, err := a.engineRepoFor(ctx, dest, handle)
+		if err != nil {
+			return nil, err
+		}
+		defer spec.close()
+		id, err := resticBackupPath(ctx, spec, src.Path, excludes, a.cfg.ResticPassword)
 		if err != nil {
 			return nil, err
 		}
 		res := &BackupResult{
-			Bucket:   a.store.Bucket(),
+			Bucket:   store.Bucket(),
 			Key:      resticKeyHint(handle, id),
 			Engine:   "restic",
 			Kind:     KindIncremental,
@@ -455,7 +558,7 @@ func (a *Agent) backupSource(ctx context.Context, st *JobStatus, src *Source, po
 		if err != nil {
 			return nil, err
 		}
-		return a.packToMinio(ctx, st, walker, handle, jobTag, "archive.tar.gz")
+		return a.packToMinio(ctx, st, store, newExcludeWalker(walker, pol.Exclude), keyFor(pol, dest, handle, jobTag, "archive.tar.gz"))
 	case SourceSMB:
 		host, share, root, err := ParseUNC(src.Path, src.Host, src.Share, src.SMBPath)
 		if err != nil {
@@ -466,26 +569,36 @@ func (a *Agent) backupSource(ctx context.Context, st *JobStatus, src *Source, po
 			return nil, err
 		}
 		defer smb.Close()
-		return a.packToMinio(ctx, st, smb, handle, jobTag, "archive.tar.gz")
+		return a.packToMinio(ctx, st, store, newExcludeWalker(smb, pol.Exclude), keyFor(pol, dest, handle, jobTag, "archive.tar.gz"))
 	case SourceDatabase:
-		return a.dumpToMinio(ctx, st, src, username, secret, handle, jobTag)
+		return a.dumpToMinio(ctx, st, store, src, username, secret, keyFor(pol, dest, handle, jobTag, "dump."+dumpExt(src)))
 	case SourceS3:
-		prefix := ObjectKey(handle, jobTag, "s3")
+		prefix := keyFor(pol, dest, handle, jobTag, "s3")
 		on := func(_ string, n int64) {
 			st.BytesWritten += n
 			st.Files++
 			st.Progress = 50
 			a.notifyCallback(st, "progress")
 		}
-		res, err := CopyS3(ctx, *src, username, secret, a.store, prefix, on)
+		res, err := CopyS3(ctx, *src, username, secret, store, prefix, on)
 		return &res, err
+	case SourceSaaS:
+		return a.saasToMinio(ctx, st, store, src, cred, keyFor(pol, dest, handle, jobTag, "saas.tar.gz"))
+	case SourceK8s:
+		return a.k8sToMinio(ctx, st, store, src, cred, keyFor(pol, dest, handle, jobTag, "k8s.tar.gz"))
 	default:
 		return nil, fmt.Errorf("unknown source type %q", src.Type)
 	}
 }
 
-func (a *Agent) packToMinio(ctx context.Context, st *JobStatus, walker FileWalker, handle, jobTag, filename string) (*BackupResult, error) {
-	key := ObjectKey(handle, jobTag, filename)
+func dumpExt(src *Source) string {
+	if strings.HasPrefix(strings.ToLower(src.DBEngine), "mysql") {
+		return "sql"
+	}
+	return "pgdump"
+}
+
+func (a *Agent) packToMinio(ctx context.Context, st *JobStatus, store Storage, walker FileWalker, key string) (*BackupResult, error) {
 	pr, pw := io.Pipe()
 	ch := newCountingHasher(pw)
 	var packErr error
@@ -506,7 +619,7 @@ func (a *Agent) packToMinio(ctx context.Context, st *JobStatus, walker FileWalke
 		}
 		pw.Close()
 	}()
-	written, err := a.store.Put(ctx, key, pr, -1, "application/gzip")
+	written, err := store.Put(ctx, key, pr, -1, "application/gzip")
 	if err != nil {
 		return nil, err
 	}
@@ -514,7 +627,7 @@ func (a *Agent) packToMinio(ctx context.Context, st *JobStatus, walker FileWalke
 		return nil, packErr
 	}
 	return &BackupResult{
-		Bucket:       a.store.Bucket(),
+		Bucket:       store.Bucket(),
 		Key:          key,
 		BytesRead:    bytesRead,
 		BytesWritten: written,
@@ -525,14 +638,7 @@ func (a *Agent) packToMinio(ctx context.Context, st *JobStatus, walker FileWalke
 	}, nil
 }
 
-func (a *Agent) dumpToMinio(ctx context.Context, st *JobStatus, src *Source, username, secret, handle, jobTag string) (*BackupResult, error) {
-	ext := "dump"
-	if strings.HasPrefix(strings.ToLower(src.DBEngine), "mysql") {
-		ext = "sql"
-	} else {
-		ext = "pgdump"
-	}
-	key := ObjectKey(handle, jobTag, "dump."+ext)
+func (a *Agent) dumpToMinio(ctx context.Context, st *JobStatus, store Storage, src *Source, username, secret, key string) (*BackupResult, error) {
 	pr, pw := io.Pipe()
 	ch := newCountingHasher(pw)
 	var dumpErr error
@@ -546,7 +652,7 @@ func (a *Agent) dumpToMinio(ctx context.Context, st *JobStatus, src *Source, use
 		pw.Close()
 	}()
 	st.Message = "dumping database"
-	written, err := a.store.Put(ctx, key, pr, -1, "application/octet-stream")
+	written, err := store.Put(ctx, key, pr, -1, "application/octet-stream")
 	if err != nil {
 		return nil, err
 	}
@@ -554,7 +660,7 @@ func (a *Agent) dumpToMinio(ctx context.Context, st *JobStatus, src *Source, use
 		return nil, dumpErr
 	}
 	return &BackupResult{
-		Bucket:       a.store.Bucket(),
+		Bucket:       store.Bucket(),
 		Key:          key,
 		BytesRead:    ch.Bytes(),
 		BytesWritten: written,
@@ -565,7 +671,7 @@ func (a *Agent) dumpToMinio(ctx context.Context, st *JobStatus, src *Source, use
 	}, nil
 }
 
-func (a *Agent) runRestore(ctx context.Context, st *JobStatus, src *Source, snap *Snapshot, cred *Credential, req JobRequest) {
+func (a *Agent) runRestore(ctx context.Context, st *JobStatus, src *Source, snap *Snapshot, cred *Credential, req JobRequest, cz *Corteza) {
 	a.sem <- struct{}{}
 	defer func() { <-a.sem }()
 	secret := ""
@@ -574,19 +680,55 @@ func (a *Agent) runRestore(ctx context.Context, st *JobStatus, src *Source, snap
 		secret = ResolveSecret(cred.Handle)
 		username = cred.Username
 	}
+	store, err := a.storeForSnapshot(ctx, cz, snap)
+	if err != nil {
+		st.Status = StatusFailed
+		st.Error = err.Error()
+		a.notifyCallback(st, "failed")
+		return
+	}
+	destRec, derr := a.destinationForSnapshot(ctx, cz, snap)
+	if derr != nil {
+		st.Status = StatusFailed
+		st.Error = derr.Error()
+		a.notifyCallback(st, "failed")
+		return
+	}
 	destType := firstNonEmpty(req.DestType, "path")
 	dest := req.DestPath
-	var err error
 	switch destType {
 	case "download":
 		st.Message = snap.S3Key
+	case "cluster":
+		st.Message = "kubectl apply to cluster"
+	case "vault":
+		if dest == "" {
+			dest = path.Join(os.TempDir(), "backup-restore-vault", fmtUint(snap.ID)+"-"+st.ID[:8])
+		}
+		st.Message = "restore from vault → " + dest
 	case "original":
-		err = a.restoreOriginal(ctx, src, snap, username, secret)
+		st.Message = "restore to original location"
 	default:
 		if dest == "" {
-			dest = path.Join(os.TempDir(), "backup-restore", fmtUint(snap.ID))
+			// Каталог уникален на прогон: повторное восстановление не натыкается
+			// на файлы/права прошлого прогона.
+			dest = path.Join(os.TempDir(), "backup-restore", fmtUint(snap.ID)+"-"+st.ID[:8])
 		}
-		err = a.restoreToPath(ctx, src, snap, dest, username, secret)
+		st.Message = "restore to " + dest
+	}
+	switch destType {
+	case "download":
+		// только ключ, ничего не пишем
+	case "cluster":
+		// K8s: применить манифесты снапшота к кластеру (kubeconfig источника).
+		err = a.restoreToCluster(ctx, src, snap, cred, store)
+	case "vault":
+		// Восстановление из WORM-сейфа — гарантированно чистая копия.
+		err = a.restoreFromVault(ctx, src, snap, dest, username, secret, store, destRec)
+	case "original":
+		err = a.restoreOriginal(ctx, src, snap, username, secret, store, destRec)
+	default:
+		err = a.restoreToPath(ctx, src, snap, dest, username, secret, store, destRec)
 	}
 	now := time.Now()
 	st.FinishedAt = &now
@@ -607,38 +749,87 @@ func (a *Agent) runRestore(ctx context.Context, st *JobStatus, src *Source, snap
 	// doesn't write Compose directly (see StartScheduler's doc comment).
 }
 
-func (a *Agent) restoreOriginal(ctx context.Context, src *Source, snap *Snapshot, username, secret string) error {
+// restoreFromVault восстанавливает из WORM-копии: для архивных движков —
+// потоковое чтение объекта из vault-бакета, для restic — restore из
+// vault-репозитория. kopia-снапшоты в сейф не копировались — честный отказ.
+// store — стор рабочего снапшота (s3copy-кейс читает из него).
+func (a *Agent) restoreFromVault(ctx context.Context, src *Source, snap *Snapshot, dest, username, secret string, store Storage, destRec *Destination) error {
+	if a.vault == nil || !a.vault.Enabled() {
+		return fmt.Errorf("vault is not enabled")
+	}
+	cfg := a.cfg
+	cfg.Minio = store.Config()
+	handle := sanitizeKey(firstNonEmpty(src.Name, fmtUint(src.ID)))
+	if dest == "" {
+		dest = path.Join(os.TempDir(), "backup-restore-vault", fmtUint(snap.ID))
+	}
+	switch {
+	case snap.Engine == "kopia":
+		return fmt.Errorf("kopia snapshots are not copied to vault (encrypted repo)")
+	case strings.HasPrefix(snap.Engine, "restic"):
+		return resticRestoreFromVault(ctx, cfg, handle, snap.ResticID, dest, a.cfg.ResticPassword)
+	case snap.Engine == "s3copy":
+		if snap.VaultKey == "" {
+			return fmt.Errorf("snapshot has no vault copy")
+		}
+		// Источник — копия в vault-бакете (endpoint агента), а не рабочий снапшот.
+		_, err := RestoreS3Copy(ctx, a.store, a.vault.Bucket(), strings.TrimSuffix(snap.VaultKey, "/"), src.Host, src.S3Bucket, username, secret, dest, src.S3Secure, src.S3Region)
+		return err
+	default:
+		if snap.VaultKey == "" {
+			return fmt.Errorf("snapshot has no vault copy")
+		}
+		rc, err := a.vault.Get(ctx, snap.VaultKey)
+		if err != nil {
+			return err
+		}
+		defer rc.Close()
+		_, err = UnpackTarGz(ctx, rc, dest)
+		return err
+	}
+}
+
+func (a *Agent) restoreOriginal(ctx context.Context, src *Source, snap *Snapshot, username, secret string, store Storage, destRec *Destination) error {
 	switch src.Type {
 	case SourceFS:
-		return a.restoreToPath(ctx, src, snap, src.Path, username, secret)
+		return a.restoreToPath(ctx, src, snap, src.Path, username, secret, store, destRec)
 	case SourceDatabase:
-		rc, err := a.store.Get(ctx, snap.S3Key)
+		rc, err := store.GetBucket(ctx, snap.S3Bucket, snap.S3Key)
 		if err != nil {
 			return err
 		}
 		defer rc.Close()
 		return RestoreDatabase(ctx, *src, username, secret, rc, snap.Engine)
 	case SourceS3:
-		_, err := RestoreS3Copy(ctx, a.store, strings.TrimSuffix(snap.S3Key, "/"), src.Host, src.S3Bucket, username, secret, src.S3Prefix, src.S3Secure, src.S3Region)
+		_, err := RestoreS3Copy(ctx, store, snap.S3Bucket, strings.TrimSuffix(snap.S3Key, "/"), src.Host, src.S3Bucket, username, secret, src.S3Prefix, src.S3Secure, src.S3Region)
 		return err
 	case SourceSMB:
 		tmp := path.Join(os.TempDir(), "backup-restore-smb", fmtUint(snap.ID))
-		return a.restoreToPath(ctx, src, snap, tmp, username, secret)
+		return a.restoreToPath(ctx, src, snap, tmp, username, secret, store, destRec)
 	default:
 		return fmt.Errorf("restore original not supported for %s", src.Type)
 	}
 }
 
-func (a *Agent) restoreToPath(ctx context.Context, src *Source, snap *Snapshot, dest, username, secret string) error {
+func (a *Agent) restoreToPath(ctx context.Context, src *Source, snap *Snapshot, dest, username, secret string, store Storage, destRec *Destination) error {
+	if snap.Engine == "kopia" {
+		handle := sanitizeKey(firstNonEmpty(src.Name, fmtUint(src.ID)))
+		return kopiaSnapshotRestore(ctx, a.cfg, destRec, handle, snap.ResticID, dest, "", a.cfg.ResticPassword)
+	}
 	if snap.Engine == "restic" {
 		handle := sanitizeKey(firstNonEmpty(src.Name, fmtUint(src.ID)))
-		return resticRestore(ctx, a.cfg, handle, snap.ResticID, dest, a.cfg.ResticPassword)
+		spec, err := a.engineRepoFor(ctx, destRec, handle)
+		if err != nil {
+			return err
+		}
+		defer spec.close()
+		return resticRestore(ctx, spec, snap.ResticID, dest, a.cfg.ResticPassword)
 	}
 	if snap.Engine == "s3copy" {
-		_, err := RestoreS3Copy(ctx, a.store, strings.TrimSuffix(snap.S3Key, "/"), src.Host, src.S3Bucket, username, secret, dest, src.S3Secure, src.S3Region)
+		_, err := RestoreS3Copy(ctx, store, snap.S3Bucket, strings.TrimSuffix(snap.S3Key, "/"), src.Host, src.S3Bucket, username, secret, dest, src.S3Secure, src.S3Region)
 		return err
 	}
-	rc, err := a.store.Get(ctx, snap.S3Key)
+	rc, err := store.GetBucket(ctx, snap.S3Bucket, snap.S3Key)
 	if err != nil {
 		return err
 	}
@@ -698,24 +889,43 @@ func (a *Agent) runPrune(ctx context.Context, st *JobStatus, req JobRequest, cz 
 		if !expired {
 			continue
 		}
+		snap := &Snapshot{ID: snaps[i].ID, DestID: ParseUint(m["destination"]), DestType: m["dest_type"], S3Endpoint: m["s3_endpoint"], S3Bucket: m["s3_bucket"]}
+		store, serr := a.storeForSnapshot(ctx, cz, snap)
+		if serr != nil {
+			log.Printf("prune snapshot %d: %v", snaps[i].ID, serr)
+			continue
+		}
 		key := m["s3_key"]
-		if key != "" && !strings.HasPrefix(m["engine"], "restic") {
+		if key != "" && !strings.HasPrefix(m["engine"], "restic") && m["engine"] != "kopia" {
+			bucket := firstNonEmpty(m["s3_bucket"], store.Bucket())
 			if strings.HasSuffix(key, "/") {
-				keys, _ := a.store.List(ctx, key)
+				keys, _ := store.ListBucket(ctx, bucket, key)
 				for _, k := range keys {
-					if a.store.Remove(ctx, k) == nil {
+					if store.RemoveBucket(ctx, bucket, k) == nil {
 						deleted++
 					}
 				}
-			} else if a.store.Remove(ctx, key) == nil {
+			} else if store.RemoveBucket(ctx, bucket, key) == nil {
 				deleted++
 			}
 		}
-		if m["engine"] == "restic" {
+		if m["engine"] == "restic" || m["engine"] == "kopia" {
 			src, err := cz.LoadSource(ctx, ParseUint(m["source"]))
 			if err == nil {
 				handle := sanitizeKey(firstNonEmpty(src.Name, m["source"]))
-				_ = resticForget(ctx, a.cfg, handle, retention, a.cfg.ResticPassword)
+				destRec, derr := a.destinationForSnapshot(ctx, cz, snap)
+				if derr != nil {
+					log.Printf("prune snapshot %d: %v", snaps[i].ID, derr)
+				} else if m["engine"] == "restic" {
+					if spec, rerr := a.engineRepoFor(ctx, destRec, handle); rerr == nil {
+						_ = resticForget(ctx, spec, retention, a.cfg.ResticPassword)
+						spec.close()
+					} else {
+						log.Printf("prune snapshot %d: %v", snaps[i].ID, rerr)
+					}
+				} else {
+					_ = kopiaExpire(ctx, a.cfg, destRec, handle, retention, a.cfg.ResticPassword)
+				}
 			}
 		}
 		_ = cz.UpdateValues(ctx, "snapshots", snaps[i].ID, map[string]string{"restorable": "0"})
@@ -737,7 +947,7 @@ func (a *Agent) runPrune(ctx context.Context, st *JobStatus, req JobRequest, cz 
 // kept here unlike the "jobs"/"restores" status writes this agent used to
 // also do (see StartScheduler's doc comment for why those moved to the
 // server-side poll/ingest chains instead).
-func (a *Agent) recordSnapshot(ctx context.Context, cz *Corteza, st *JobStatus, pol *Policy, res *BackupResult) {
+func (a *Agent) recordSnapshot(ctx context.Context, cz *Corteza, st *JobStatus, src *Source, pol *Policy, dest *Destination, res *BackupResult) {
 	if cz == nil || res == nil || st.Status != StatusCompleted {
 		return
 	}
@@ -745,10 +955,11 @@ func (a *Agent) recordSnapshot(ctx context.Context, cz *Corteza, st *JobStatus, 
 	if pol != nil && pol.RetentionDays > 0 {
 		exp = time.Now().Add(time.Duration(pol.RetentionDays) * 24 * time.Hour).UTC().Format(time.RFC3339)
 	}
-	sid, err := cz.CreateValues(ctx, "snapshots", map[string]string{
+	vals := map[string]string{
 		"job":         st.JobRecordID,
 		"source":      st.SourceID,
 		"policy":      st.PolicyID,
+		"s3_endpoint": st.S3Endpoint,
 		"s3_bucket":   res.Bucket,
 		"s3_key":      res.Key,
 		"size_bytes":  fmtInt(res.BytesWritten),
@@ -760,7 +971,15 @@ func (a *Agent) recordSnapshot(ctx context.Context, cz *Corteza, st *JobStatus, 
 		"expires_at":  exp,
 		"restorable":  "1",
 		"verified":    "0",
-	})
+		"data_class":  src.DataClass,
+	}
+	if dest.IsRecord() {
+		vals["destination"] = fmtUint(dest.ID)
+	}
+	if kind := StoreKind(dest); kind != "" && kind != "minio" {
+		vals["dest_type"] = kind
+	}
+	sid, err := cz.CreateValues(ctx, "snapshots", vals)
 	if err != nil {
 		log.Printf("record snapshot for job %s: %v", st.ID, err)
 		return

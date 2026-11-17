@@ -52,11 +52,26 @@ func (s *ObjectStore) EnsureBucket(ctx context.Context) error {
 
 func (s *ObjectStore) Bucket() string { return s.cfg.Bucket }
 
+// Config — конфигурация, на которой построен клиент (endpoint/учётки/регион).
+// Нужна, чтобы restic/kopia работали с тем же назначением, что и объектный стор.
+func (s *ObjectStore) Config() MinioConfig { return s.cfg }
+
+// Location — endpoint S3 для записи в снапшот (переподключение при restore).
+func (s *ObjectStore) Location() string { return s.cfg.Endpoint }
+
+// Close — соединение минio stateless; no-op.
+func (s *ObjectStore) Close() error { return nil }
+
 func (s *ObjectStore) Put(ctx context.Context, key string, r io.Reader, size int64, contentType string) (int64, error) {
+	return s.PutBucket(ctx, s.cfg.Bucket, key, r, size, contentType)
+}
+
+// PutBucket пишет объект в явно указанный бакет.
+func (s *ObjectStore) PutBucket(ctx context.Context, bucket, key string, r io.Reader, size int64, contentType string) (int64, error) {
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
-	info, err := s.client.PutObject(ctx, s.cfg.Bucket, key, r, size, minio.PutObjectOptions{
+	info, err := s.client.PutObject(ctx, bucket, key, r, size, minio.PutObjectOptions{
 		ContentType: contentType,
 	})
 	if err != nil {
@@ -66,22 +81,36 @@ func (s *ObjectStore) Put(ctx context.Context, key string, r io.Reader, size int
 }
 
 func (s *ObjectStore) Get(ctx context.Context, key string) (io.ReadCloser, error) {
-	return s.client.GetObject(ctx, s.cfg.Bucket, key, minio.GetObjectOptions{})
+	return s.GetBucket(ctx, s.cfg.Bucket, key)
 }
 
-func (s *ObjectStore) Remove(ctx context.Context, key string) error {
-	return s.client.RemoveObject(ctx, s.cfg.Bucket, key, minio.RemoveObjectOptions{})
+// GetBucket читает объект из явно указанного бакета — нужно для снапшотов,
+// записанных политикой с переопределённым назначением (P4).
+func (s *ObjectStore) GetBucket(ctx context.Context, bucket, key string) (io.ReadCloser, error) {
+	return s.client.GetObject(ctx, bucket, key, minio.GetObjectOptions{})
 }
 
-func (s *ObjectStore) List(ctx context.Context, prefix string) ([]string, error) {
+func (s *ObjectStore) ListBucket(ctx context.Context, bucket, prefix string) ([]string, error) {
 	var out []string
-	for obj := range s.client.ListObjects(ctx, s.cfg.Bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true}) {
+	for obj := range s.client.ListObjects(ctx, bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true}) {
 		if obj.Err != nil {
 			return nil, obj.Err
 		}
 		out = append(out, obj.Key)
 	}
 	return out, nil
+}
+
+func (s *ObjectStore) RemoveBucket(ctx context.Context, bucket, key string) error {
+	return s.client.RemoveObject(ctx, bucket, key, minio.RemoveObjectOptions{})
+}
+
+func (s *ObjectStore) Remove(ctx context.Context, key string) error {
+	return s.RemoveBucket(ctx, s.cfg.Bucket, key)
+}
+
+func (s *ObjectStore) List(ctx context.Context, prefix string) ([]string, error) {
+	return s.ListBucket(ctx, s.cfg.Bucket, prefix)
 }
 
 func (s *ObjectStore) Ping(ctx context.Context) error {

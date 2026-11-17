@@ -6,9 +6,12 @@ RUN apt-get -y update \
     ca-certificates \
     curl \
     restic \
+    rclone \
     postgresql-client \
     mariadb-client \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ && curl -sSL https://github.com/kopia/kopia/releases/download/v0.19.0/kopia-0.19.0-linux-x64.tar.gz \
+    | tar -xz -C /usr/local/bin --strip-components=1 kopia-0.19.0-linux-x64/kopia
 
 WORKDIR /app
 

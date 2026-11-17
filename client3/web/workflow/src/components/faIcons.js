@@ -63,6 +63,10 @@ import {
   faIdBadge,
   faUserShield,
   faFlask,
+  faRadar,
+  faWarehouse,
+  faVial,
+  faFileContract,
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -146,4 +150,8 @@ library.add(
   faEnvelopeOpen,
   faFilter,
   faProjectDiagram,
+  faRadar,
+  faWarehouse,
+  faVial,
+  faFileContract,
 )

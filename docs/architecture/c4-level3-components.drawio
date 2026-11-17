@@ -1,0 +1,358 @@
+<mxfile host="app.diagrams.net" type="device" version="24.0.0">
+  <diagram id="c4-l3-srv" name="C3.1 Server">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1760" pageHeight="1240" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="C3. Components — Corteza Server [Go монолит]" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="860" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="Компоненты контейнера «Corteza Server»: HTTP-слой → доменные сервисы → платформенные пакеты." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="1000" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="band1" value="Слой HTTP — chi router, middleware (server/app/servers.go)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#777777;dashed=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="280" y="100" width="1400" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="router" value="&lt;b&gt;Router + middleware&lt;/b&gt;&lt;br&gt;[chi]&lt;br&gt;&lt;br&gt;JWT token validator,&lt;br&gt;identity в ctx,&lt;br&gt;CORS, лимиты" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="160" width="250" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="rs1" value="&lt;b&gt;system/rest&lt;/b&gt;&lt;br&gt;[/api/system]&lt;br&gt;users, roles, settings,&lt;br&gt;DAL connections, SCIM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="600" y="160" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="rs2" value="&lt;b&gt;compose/rest&lt;/b&gt;&lt;br&gt;[/api/compose]&lt;br&gt;namespaces, modules, records,&lt;br&gt;pages, charts, chat, rule chains" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="160" width="280" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="rs3" value="&lt;b&gt;automation/rest&lt;/b&gt;&lt;br&gt;[/api/automation]&lt;br&gt;workflows, triggers,&lt;br&gt;sessions, prompts, skills" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="160" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="rs4" value="&lt;b&gt;auth&lt;/b&gt;&lt;br&gt;[/auth]&lt;br&gt;OAuth2, SAML,&lt;br&gt;сессии, HTML UI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="160" width="150" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="band2" value="Доменные сервисы (бизнес-логика + RBAC)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#777777;dashed=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="280" y="320" width="1400" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="svc1" value="&lt;b&gt;System services&lt;/b&gt;&lt;br&gt;[system/service]&lt;br&gt;&lt;br&gt;Users · Roles · Settings ·&lt;br&gt;DAL connections · Templates ·&lt;br&gt;SCIM · Data privacy ·&lt;br&gt;Auth clients / sessions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="380" width="380" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="svc2" value="&lt;b&gt;Compose services&lt;/b&gt;&lt;br&gt;[compose/service]&lt;br&gt;&lt;br&gt;Namespace · Module · Record ·&lt;br&gt;Page / PageLayout · Chart ·&lt;br&gt;Attachment · Chat (tools) · RAG ·&lt;br&gt;ETL · RuleChain · ResourceVersions ·&lt;br&gt;Record drafts / revisions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="740" y="380" width="470" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="svc3" value="&lt;b&gt;Automation services&lt;/b&gt;&lt;br&gt;[automation/service]&lt;br&gt;&lt;br&gt;Workflow (кэш графов) ·&lt;br&gt;Trigger (eventbus) · Session (очередь,&lt;br&gt;WS-промпты, persist) ·&lt;br&gt;Prompt library · Skills ·&lt;br&gt;AI-шаблоны (templates)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="380" width="390" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="band3" value="Платформенные пакеты — server/pkg/" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#777777;dashed=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="280" y="640" width="1400" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg1" value="&lt;b&gt;Доступ и безопасность&lt;/b&gt;&lt;br&gt;&lt;br&gt;auth (JWT HS256/RS256)&lt;br&gt;rbac (правила в БД)&lt;br&gt;vault · actionlog&lt;br&gt;xss · filter" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="700" width="300" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg2" value="&lt;b&gt;Данные&lt;/b&gt;&lt;br&gt;&lt;br&gt;store (кодоген-интерфейс)&lt;br&gt;dal (runtime-модели,&lt;br&gt;своя таблица на модуль)&lt;br&gt;objstore (FS/MinIO/S3)&lt;br&gt;ql · datasources" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="660" y="700" width="300" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg3" value="&lt;b&gt;События и автоматизация&lt;/b&gt;&lt;br&gt;&lt;br&gt;eventbus · scheduler&lt;br&gt;wfexec (движок workflow)&lt;br&gt;rulesgo (rule chains)&lt;br&gt;corredor (gRPC-клиент)&lt;br&gt;apigw (Integration Gateway)&lt;br&gt;messagebus" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="700" width="300" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg4" value="&lt;b&gt;AI и чат&lt;/b&gt;&lt;br&gt;&lt;br&gt;chat (eino-ext → Ollama)&lt;br&gt;aiagent (реестр агентов,&lt;br&gt;skills, budget, CallTrace)&lt;br&gt;rag · riskengine · riskstore&lt;br&gt;wfevent (события ИИ-правил)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1340" y="700" width="300" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="misc" value="Прочее (сквозное): websocket · monitor · sentry · locale · sass · mail · geolocation · id · expr/gval (формулы полей) · envoy (импорт/экспорт) · provision · codegen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="950" width="1320" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="router" target="rs1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="router" target="rs2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="router" target="rs3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="router" target="rs4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="handlers → service" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="rs1" target="svc1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="handlers → service" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="rs2" target="svc2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="handlers → service" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="rs3" target="svc3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="RBAC Can* / access_control.gen.go" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="svc1" target="pkg1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="store + DAL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="svc2" target="pkg2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" value="eventbus: события записей" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="svc2" target="svc3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="триггеры" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="svc3" target="pkg3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="chat / RAG / risk" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="svc2" target="pkg4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="aiAsk / aiExtract / aiTool" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="svc3" target="pkg4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="c4-l3-spa" name="C3.2 SPA Compose">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="C3. Components — SPA compose [Vue 3]" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="860" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="Компоненты контейнера «compose» — крупнейшего из 7 SPA (client3/web/compose)." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="1000" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="bandL" value="Общие библиотеки (client3/lib)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#777777;dashed=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="380" height="860" as="geometry" />
+        </mxCell>
+        <mxCell id="libjs" value="&lt;b&gt;lib/js&lt;/b&gt;&lt;br&gt;[TypeScript]&lt;br&gt;&lt;br&gt;Доменные типы: Page, Module,&lt;br&gt;Namespace, PageBlock&lt;br&gt;Валидаторы&lt;br&gt;API-клиенты axios&lt;br&gt;(сгенерированы из OpenAPI rest.yaml)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="190" width="340" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="libvue" value="&lt;b&gt;lib/vue&lt;/b&gt;&lt;br&gt;[Vue 3 + Pinia]&lt;br&gt;&lt;br&gt;Плагины: Auth (OAuth2 code +&lt;br&gt;refresh, токены в localStorage),&lt;br&gt;CortezaAPI ($ComposeAPI…),&lt;br&gt;Settings, EventBus (window)&lt;br&gt;80+ общих компонентов&lt;br&gt;Pinia-сторы: rbac, notifications,&lt;br&gt;drafts, wf-prompts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="440" width="340" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="libsass" value="&lt;b&gt;Темы и стили&lt;/b&gt;&lt;br&gt;Bootstrap 5 + scss,&lt;br&gt;vue-i18n 10 (en/ru)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="760" width="340" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="bandA" value="Приложение compose (client3/web/compose/src)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#777777;dashed=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="460" y="120" width="780" height="860" as="geometry" />
+        </mxCell>
+        <mxCell id="router" value="&lt;b&gt;Router&lt;/b&gt; [Vue Router 4]&lt;br&gt;маршруты /ns/{slug}/…, guards" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="490" y="180" width="320" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="stores" value="&lt;b&gt;Pinia stores&lt;/b&gt; (src/store)&lt;br&gt;useStore-фасад dispatch/getters:&lt;br&gt;namespace, page, record, module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="830" y="180" width="380" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="views" value="&lt;b&gt;Views&lt;/b&gt;&lt;br&gt;&lt;br&gt;Public: Pages/View → Public/Page/Grid (публичный просмотр страницы)&lt;br&gt;Namespace: выбор приложения&lt;br&gt;Admin: Pages/Builder, Modules, ETL, RuleChains, Workflows,&lt;br&gt;Charts, Risk, Anomaly, Configuration, Docs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="490" y="300" width="720" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="pblocks" value="&lt;b&gt;PageBlocks&lt;/b&gt; — 24 вида блоков&lt;br&gt;&lt;br&gt;Record · RecordList · RecordEditor · RecordRevisions · Chart · Metric ·&lt;br&gt;Calendar · Geometry · Content · File · IFrame · Image · Navigation · Tabs ·&lt;br&gt;Automation · AiChat · RuleChain · Risk · Report · Progress · Comment ·&lt;br&gt;SocialFeed · Variables · RecordOrganizer&lt;br&gt;&lt;br&gt;Реестр: типы в lib/js + Vue-компоненты Base/Configurator/Editor,&lt;br&gt;оболочка Wrap (Card/Plain), composable usePageBlockBase" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="490" y="510" width="720" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="pubc" value="&lt;b&gt;Public-компоненты&lt;/b&gt;&lt;br&gt;&lt;br&gt;Record Modal, Importer,&lt;br&gt;Exporter, BulkEdit,&lt;br&gt;Attachment, AiChat, Grid,&lt;br&gt;Scenarios" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="490" y="750" width="350" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="admc" value="&lt;b&gt;Admin-компоненты&lt;/b&gt;&lt;br&gt;&lt;br&gt;Builder, ModuleFields,&lt;br&gt;Configurators, Drafts,&lt;br&gt;Translator, CVersionHistory,&lt;br&gt;Prompts, Skills (частично в admin SPA)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="860" y="750" width="350" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="srv" value="&lt;b&gt;Corteza Server&lt;/b&gt;&lt;br&gt;[REST + WebSocket]&lt;br&gt;&lt;br&gt;внешний контейнер&lt;br&gt;(см. C3.1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#8a8a8a;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="430" width="260" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="router" target="views">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="views" target="pblocks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="views" target="pubc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="views" target="admc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" value="загрузка данных" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="pblocks" target="stores">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="pubc" target="libvue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="admc" target="libvue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="stores" target="libvue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="libvue" target="libjs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a10" value="REST (Bearer JWT)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="libjs" target="srv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a11" value="WebSocket / события" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="libvue" target="srv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="c4-l3-agent" name="C3.3 Агент">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="C3. Components — агент на SDK (backup / cmdb / стройконтроль)" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="900" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="Компоненты типового продуктового агента на пакете agents/sdk (контракт lowcode.agent.v1)." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="1000" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="rc" value="&lt;b&gt;Узел rule chain&lt;/b&gt;&lt;br&gt;(backup/run, service.call, HTTP)&lt;br&gt;server/pkg/rulesgo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#8a8a8a;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="520" y="130" width="560" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="sdk" value="&lt;b&gt;sdk.Service&lt;/b&gt; [chi]&lt;br&gt;&lt;br&gt;GET /health · GET /api/meta (дескрипторы операций → палитра rule chains)&lt;br&gt;POST /api/jobs · GET /api/jobs/{id}[/items] · POST /api/call/{op} · POST /api/register" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="520" y="290" width="560" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="backend" value="&lt;b&gt;Backend&lt;/b&gt;&lt;br&gt;&lt;br&gt;UseSync — чистая функция,&lt;br&gt;ответ сразу&lt;br&gt;UseAsync — горутина,&lt;br&gt;SetProgress / SetItems&lt;br&gt;custom Backend (backup:&lt;br&gt;состояние джоб в домене)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="140" y="560" width="380" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="domain" value="&lt;b&gt;Домен агента&lt;/b&gt;&lt;br&gt;&lt;br&gt;сканер сети · движок бэкапа (restic/kopia, SMB/БД/S3) ·&lt;br&gt;растеризация PDF (стройконтроль) ·&lt;br&gt;LLM-классификация (cmdb)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="140" y="780" width="380" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="job" value="&lt;b&gt;Job&lt;/b&gt;&lt;br&gt;&lt;br&gt;Envelope lowcode.agent.v1: status/kind,&lt;br&gt;progress (троттлинг 2 с), items, result;&lt;br&gt;финальный complete/failed →&lt;br&gt;callbackUrl (timeout 90 с)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="620" y="560" width="440" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="auth" value="&lt;b&gt;SelfToken&lt;/b&gt;&lt;br&gt;&lt;br&gt;TOKEN из env · иначе&lt;br&gt;AGENT_SHARED_SECRET →&lt;br&gt;POST /agents/enroll (X-Agent-Secret)&lt;br&gt;→ JWT corteza-service, 365 дней" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="290" width="320" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="client" value="&lt;b&gt;sdk.Client&lt;/b&gt; (Compose REST)&lt;br&gt;&lt;br&gt;ModuleByHandle · ListRecords · GetRecord ·&lt;br&gt;CreateValues / UpdateValues / DeleteRecord ·&lt;br&gt;Heartbeat → модуль agents" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="560" width="320" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="srv" value="&lt;b&gt;Corteza Server&lt;/b&gt;&lt;br&gt;&lt;br&gt;/agents/enroll · ingest-цепочки&lt;br&gt;(callbackUrl) · Compose REST" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#8a8a8a;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="800" width="320" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="g1" value="POST /api/jobs · /api/call/{op}" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="rc" target="sdk">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g2" value="маршрутизация по operation" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="sdk" target="backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="backend" target="domain">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g4" value="SetProgress / SetItems / SetResult" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="backend" target="job">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g5" value="Envelope (progress → complete/failed)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="job" target="srv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g6" value="enroll" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="auth" target="srv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g7" value="CRUD записей / heartbeat (JWT)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="backend" target="client">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g8" value="HTTPS REST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="client" target="srv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="g9" value="старт: токен" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="auth" target="sdk">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="c4-l3-auto" name="C3.4 Автоматизация и AI">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="C3. Components — автоматизация и AI" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="860" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="Два контура автоматизации (workflow и rule chains) и общий AI-контур pkg/aiagent." style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="1000" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="band1" value="Automation — server/automation + pkg/wfexec" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#777777;dashed=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="520" height="920" as="geometry" />
+        </mxCell>
+        <mxCell id="trg" value="&lt;b&gt;Trigger&lt;/b&gt;&lt;br&gt;подписки на eventbus: события записей,&lt;br&gt;интервалы, системные события, webhook sink" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="190" width="460" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="wf" value="&lt;b&gt;Workflow&lt;/b&gt;&lt;br&gt;граф шагов, кэш скомпилированных графов;&lt;br&gt;BPMN → граф (bpmn_compile)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="320" width="460" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ss" value="&lt;b&gt;Session&lt;/b&gt;&lt;br&gt;экземпляр исполнения, очередь, WebSocket-промпты;&lt;br&gt;persist/restore через automation_states" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="450" width="460" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ex" value="&lt;b&gt;wfexec — движок&lt;/b&gt;&lt;br&gt;шлюзы, итераторы, fork;&lt;br&gt;обработчики шагов: HTTP, email, jsenv,&lt;br&gt;corredor, queue, OAuth2, compose records" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="580" width="460" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="aist" value="&lt;b&gt;AI-функции шагов&lt;/b&gt;&lt;br&gt;aiAsk · aiExtract · aiClassify · aiTool ·&lt;br&gt;aiRagSearch · aiRunCalls;&lt;br&gt;@prompt: библиотека промптов, skills,&lt;br&gt;бюджет токенов, CallTrace" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="740" width="460" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="band2" value="Rule chains — server/pkg/rulesgo" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#777777;dashed=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="600" y="120" width="520" height="920" as="geometry" />
+        </mxCell>
+        <mxCell id="persist" value="&lt;b&gt;Persistence&lt;/b&gt;&lt;br&gt;compose_rule_chain (LoadChains/SaveChain);&lt;br&gt;версии в compose_resource_versions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="630" y="190" width="460" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="engine" value="&lt;b&gt;Engine&lt;/b&gt;&lt;br&gt;исполнение узлов, корреляция с automation;&lt;br&gt;мост: compose.runRuleChain" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="630" y="320" width="460" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="nodes" value="&lt;b&gt;Типы узлов&lt;/b&gt;&lt;br&gt;&lt;br&gt;crud (Compose create/update/search) · http ·&lt;br&gt;condition · foreach · kafka · rabbitmq ·&lt;br&gt;gonec (1С) · convert · webhook ·&lt;br&gt;ai / ai.operation ·&lt;br&gt;агенты: service.call, backup/run|restore,&lt;br&gt;cmdb/scan (дескрипторы с /api/meta)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="630" y="450" width="460" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="rctrig" value="&lt;b&gt;Record triggers&lt;/b&gt;&lt;br&gt;StartRuleChainRecordTriggers — запуск по&lt;br&gt;событиям записей (onCreate/onUpdate/…)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="630" y="740" width="460" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="bridge" value="&lt;b&gt;Мосты&lt;/b&gt;&lt;br&gt;wfexec → compose.runRuleChain;&lt;br&gt;узел workflow → ExecWorkflowByRef" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="630" y="870" width="460" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="band3" value="AI — pkg/aiagent + pkg/chat" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#777777;dashed=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="120" width="520" height="920" as="geometry" />
+        </mxCell>
+        <mxCell id="chat" value="&lt;b&gt;Chat service&lt;/b&gt; (compose/service/chat.go)&lt;br&gt;стрим, tool calling, guardrails&lt;br&gt;(подтверждение мутаций «да»)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="190" width="460" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="mcp" value="&lt;b&gt;MCP handlers&lt;/b&gt;&lt;br&gt;namespaces, modules, records, pages, charts,&lt;br&gt;rules, agents, skills, prompts (STDIO/SSE)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="330" width="460" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="reg" value="&lt;b&gt;aiagent — реестр&lt;/b&gt;&lt;br&gt;агенты (YAML-спеки), универсальный assistant;&lt;br&gt;tools: 18 статических + динамические на&lt;br&gt;каждый модуль; skills (prompt library);&lt;br&gt;remote skills; бюджет токенов/вызовов;&lt;br&gt;CallTrace (трассировка)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="470" width="460" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="llm" value="&lt;b&gt;LLM client&lt;/b&gt; (pkg/chat)&lt;br&gt;Ollama через eino-ext; роли моделей:&lt;br&gt;compose.chat, mcp.agent, automation.chat, rulesgo.ai" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85bbf0;strokeColor=#5d82b8;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="680" width="460" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="ollama" value="&lt;b&gt;Ollama&lt;/b&gt; [внешний]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#999999;strokeColor=#8a8a8a;fontColor=#ffffff;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="830" width="460" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="c1" value="событие" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="trg" target="wf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" value="старт" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="wf" target="ss">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" value="исполнение" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="ss" target="ex">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" value="AI-шаги" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="ex" target="aist">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" value="цепочка из БД" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="persist" target="engine">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" value="исполнение узлов" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="engine" target="nodes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" value="запуск" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="rctrig" target="engine">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" value="ai.operation" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="nodes" target="reg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="chat" target="reg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c10" value="tools / skills / prompts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="mcp" target="reg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c11" value="Run / RunStructured" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="reg" target="llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c12" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;" edge="1" parent="1" source="llm" target="ollama">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c13" value="aiAsk/…" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;labelBackgroundColor=#ffffff;fontSize=10;dashed=1;" edge="1" parent="1" source="aist" target="reg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

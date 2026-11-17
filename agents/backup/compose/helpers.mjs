@@ -203,6 +203,7 @@ export function recordList (title, xywh, moduleID, fields, extra = {}) {
     allowExport: true,
     perPage: extra.perPage ?? 20,
     recordDisplayOption: 'sameTab',
+    magnifyOption: extra.magnifyOption || '',
     selectable: true,
     selectMode: 'multi',
     showTotalCount: true,
@@ -217,7 +218,10 @@ export function recordList (title, xywh, moduleID, fields, extra = {}) {
 export function recordBlock (title, xywh, fields, extra = {}) {
   return block('Record', title, xywh, {
     fields: fields.map(name => ({ name })),
-    fieldConditions: [],
+    fieldConditions: extra.fieldConditions || [],
+    clearConditionalFieldsOnHide: extra.clearConditionalFieldsOnHide ?? false,
+    readOnly: extra.readOnly || false,
+    readOnlyFields: extra.readOnlyFields || [],
     density: extra.density || 'comfortable',
     hideEmptyFields: extra.hideEmptyFields ?? false,
     showEmptyPlaceholder: true,

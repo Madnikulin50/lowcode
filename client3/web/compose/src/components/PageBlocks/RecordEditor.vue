@@ -46,6 +46,7 @@ import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { debounce } from 'lodash'
 import { usePageBlockBase } from './usePageBlockBase'
+import { useFieldConditions } from 'corteza-webapp-compose/src/composables/useFieldConditions'
 import Wrap from './Wrap/index.js'
 import BlockHelpButton from './Shared/BlockHelpButton.vue'
 import FieldEditor from 'corteza-webapp-compose/src/components/ModuleFields/Editor'
@@ -73,6 +74,12 @@ const props = defineProps({
 const emit = defineEmits(['errors'])
 const { isProcessing, options, fieldErrors } = usePageBlockBase(props, emit)
 const busy = computed(() => isProcessing.value || !props.record)
+
+const { canDisplay } = useFieldConditions({
+  block: () => props.block,
+  record: () => props.record,
+  module: () => props.module,
+})
 
 const fields = computed(() => {
   if (!props.module) return []
@@ -104,7 +111,6 @@ const fieldWidth = computed(() => {
 
 const horizontal = computed(() => props.block.options.horizontalFieldLayoutEnabled && props.block.options.recordFieldLayoutOption !== 'noWrap')
 
-function canDisplay(field) { return field?.canReadRecordValue !== false }
 function isFieldEditable(field) {
   if (options.value.readOnly || (options.value.readOnlyFields || []).includes(field?.name)) return false
   return field?.canUpdateRecordValue !== false

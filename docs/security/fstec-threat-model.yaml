@@ -1,0 +1,663 @@
+# Модель угроз безопасности информации платформы lowcode
+# Машиночитаемое представление документа docs/security/threat-model.md.
+# Форма — исходные данные для модели угроз оператора (Методика оценки угроз
+# ФСТЭК 05.02.2021, приказы ФСТЭК № 17, № 21, № 239, БДУ ФСТЭК).
+# Кодировка: UTF-8. Поля, которые должен заполнить оператор, помечены "operator_fill".
+
+meta:
+  title: Модель угроз безопасности информации платформы lowcode
+  version: "2026-11-14"
+  branch: "2026.10.x"
+  source_doc: docs/security/threat-model.md
+  machine_doc: docs/security/fstec-threat-model.yaml
+  related:
+    - docs/security/attack-surface.md
+    - docs/security/fstec-attack-surface.yaml
+    - docs/security/fstec-tables.md
+    - docs/security/kii-categorization.md
+    - SECURITY_AUDIT_FSTEC.md
+  methodology:
+    - Методика оценки угроз безопасности информации ФСТЭК России (05.02.2021)
+    - Приказ ФСТЭК России от 18.02.2013 № 21
+    - Приказ ФСТЭК России от 11.02.2013 № 17
+    - Приказ ФСТЭК России от 25.12.2017 № 239
+    - Банк данных угроз (БДУ) ФСТЭК
+    - STRIDE / CWE (систематизация технических угроз)
+
+# Классификация объекта — заполняется оператором при внедрении
+classification:
+  object_type: null            # ИСПДн / ГИС / КИИ / АСУ ТП (operator_fill)
+  protection_class: null       # для ИСПДн: 1З..3З, 1УЗ..3УЗ (operator_fill)
+  significance_category: null  # для КИИ: 1 / 2 / 3 категория (operator_fill)
+  category_basis: null         # обоснование категории/класса (operator_fill)
+
+system:
+  name: Платформа lowcode
+  vendor: Собственная разработка (форк Corteza)
+  purpose: >
+    Low-code платформа для сборки бизнес-приложений без отдельного бэкенда:
+    Compose-приложения (модули, страницы, графики), workflow, rule chains,
+    вычислительные агенты (backup, cmdb, invest, стройконтроль), AI-чат,
+    MCP-сервер для внешних LLM-клиентов.
+  scope_in:
+    - server/ (монолитный бэкенд Go)
+    - client3/ (7 SPA на Vue 3)
+    - agents/ (продуктовые агенты и скиллы)
+    - docker-conf/ (конфигурация развёртывания, переменные окружения)
+    - Интеграции LLM (Ollama), MCP, IdP (SAML/OIDC), СУБД, объектные хранилища
+  scope_out:
+    - Инфраструктура оператора (сеть, ОС, гипервизор, СЗИ периметра)
+    - Организационные процессы, физическая защита
+    - Приложения заказчика, собранные на платформе (модули, страницы, workflow)
+  deployment_assumptions:
+    - Сервер публикуется только через обратный прокси/шлюз с TLS; прямого доступа к портам агентов, MCP, Corredor, СУБД, MinIO, Ollama из недоверенных сетей нет
+    - Администраторы платформы и ОС доверенные; доступ к .env и секретам ограничен
+    - Резервные копии шифруются и хранятся отдельно
+    - LLM работает в контуре оператора (локальный Ollama), данные не уходят в публичные облака без отдельного согласования
+
+assets:
+  - {id: AS1,  name: Данные записей Compose (бизнес-данные, ПДн), properties: [К, Ц, Д], storage: "СУБД (DAL), хранилище файлов"}
+  - {id: AS2,  name: "Учётные данные и секреты (пароли bcrypt, TOTP, токены, AUTH_SECRET, AGENT_SHARED_SECRET, ключи MinIO/SMTP/LLM)", properties: [К, Ц], storage: "СУБД, окружение, .env"}
+  - {id: AS3,  name: Токены доступа и сессии (JWT, cookie), подписанные URL, properties: [К, Ц], storage: "клиент, сервер"}
+  - {id: AS4,  name: "Конфигурация приложений (модули, страницы, workflow, цепочки, промпты, навыки, скрипты)", properties: [Ц, Д], storage: СУБД}
+  - {id: AS5,  name: Права доступа (RBAC-правила, роли), properties: [Ц], storage: СУБД}
+  - {id: AS6,  name: "Журналы аудита (actionlog), трассировка AI-шагов", properties: [Ц, Д], storage: "СУБД, файлы"}
+  - {id: AS7,  name: Вложения и резервные копии, properties: [К, Ц, Д], storage: "FS, MinIO/S3"}
+  - {id: AS8,  name: Сервис платформы (доступность API, workflow, агенты), properties: [Д], storage: процессы}
+  - {id: AS9,  name: Исполняемая среда (ОС, контейнеры, зависимости, образы), properties: [Ц], storage: "хост, реестр образов"}
+  - {id: AS10, name: Модели и промпты LLM, properties: [Ц], storage: "Ollama, СУБД"}
+
+trust_boundaries:
+  - {id: TB1, boundary: "Интернет/сеть пользователей → сервер", crosses: "запросы, файлы, учётные данные", controls: "TLS на прокси, аутентификация, CSRF, rate-limit токенов"}
+  - {id: TB2, boundary: "Внешние системы → сервер", crosses: "вызовы sink, REST интеграций, SCIM", controls: "подпись URL sink, секрет SCIM, OAuth2-клиенты"}
+  - {id: TB3, boundary: "LLM-клиент → MCP", crosses: "вызовы инструментов", controls: "нет аутентификации на транспорте SSE (находка T-32)"}
+  - {id: TB4, boundary: "Сервер → агент", crosses: "команды запуска операций", controls: "нет аутентификации у агента, CORS * (находки A-1, A-2)"}
+  - {id: TB5, boundary: "Агент → сервер", crosses: "чтение/запись записей", controls: "JWT identity corteza-service (365 дней)"}
+  - {id: TB6, boundary: "Сервер → Corredor", crosses: скрипты, controls: сеть}
+  - {id: TB7, boundary: "Сервер → LLM", crosses: "контекст, содержимое записей", controls: сеть}
+  - {id: TB8, boundary: "Сервер → СУБД", crosses: SQL, controls: "учётная запись СУБД"}
+  - {id: TB9, boundary: "Сервер → файловые хранилища", crosses: файлы, controls: "ключи S3"}
+
+violators:
+  - {id: V1, name: Внешний анонимный пользователь, type: внешний, potential: базовый, motivation: "несанкционированный доступ, порча данных, шантаж", capabilities: "доступ к публичным маршрутам, подбор паролей, фишинг, сканирование"}
+  - {id: V2, name: Зарегистрированный пользователь с низкими правами, type: внутренний, potential: "базовый повышенный", motivation: "доступ к чужим данным, повышение привилегий", capabilities: "вызовы API в рамках ролей, загрузка файлов, составление запросов"}
+  - {id: V3, name: Пользователь-разработчик приложений, type: внутренний, potential: "базовый повышенный", motivation: "получение доступа к данным/инфраструктуре, упрощение работы в обход регламента", capabilities: "workflow, цепочки, шаблоны, скрипты, вызов HTTP, настройка прав на своих объектах"}
+  - {id: V4, name: Администратор платформы, type: внутренний, potential: средний, motivation: "злоупотребление полномочиями, отрицание действий", capabilities: "полный доступ к настройкам и данным"}
+  - {id: V5, name: Администратор инфраструктуры/СУБД, type: внутренний, potential: средний, motivation: "доступ к секретам и копиям, злоупотребление", capabilities: "доступ к хостам, секретам, резервным копиям"}
+  - {id: V6, name: Скомпрометированный агент или внутренний хост, type: "внешний/внутренний", potential: "базовый повышенный", motivation: "развитие компрометации внутри контура", capabilities: "токен сервисного пользователя, доступ в сеть агентов"}
+  - {id: V7, name: Поставщик ПО/зависимостей (supply chain), type: внешний, potential: "средний-высокий", motivation: "внедрение вредоносного кода, шпионаж", capabilities: "вредоносные обновления, подмена образов"}
+  - {id: V8, name: Злоумышленник через AI (инъекция в данные, которые читает LLM), type: внешний, potential: базовый, motivation: "управление поведением LLM, кража данных через агента", capabilities: "вредоносный текст в записях, файлах, письмах"}
+  - {id: V9, name: Целенаправленная группировка (APT), type: внешний, potential: высокий, motivation: "длительное присутствие, кража данных, саботаж", capabilities: "цепочки эксплойтов, 0-day, социальная инженерия"}
+
+violators_notes: >
+  Для значимого объекта КИИ 1–2 категории оператору следует рассматривать
+  нарушителей V7 и V9; для 3 категории — как минимум V1–V6 и V8.
+
+threats:
+  - id: T-01
+    name: Подбор паролей / credential stuffing
+    stride: Spoofing
+    violators: [V1]
+    violated_properties: [К, Ц]
+    surface: [N1]
+    scenario: "Многократные попытки входа на /auth с подобранными/утёкшими учётными данными"
+    existing_measures: [bcrypt, политика паролей, "rate-limit токенов (checkTokenRate)", "MFA (TOTP, Email OTP)", запрет повторного пароля]
+    residual_risk: С
+    recommendation: "обязательный MFA для администраторов; блокировка учётной записи по числу неудачных попыток"
+    relevance: актуальна
+    bdu: []  # operator_fill
+
+  - id: T-02
+    name: Предсказание секретов, токенов и ID сессий
+    stride: Spoofing
+    violators: [V1]
+    violated_properties: [К, Ц]
+    surface: [N1]
+    scenario: "Подбор токенов сессий/секретов при слабом ГПСЧ"
+    existing_measures: ["исправлено: pkg/rand и секрет TOTP на crypto/rand"]
+    residual_risk: Н
+    recommendation: "ротировать токены, выпущенные до исправления"
+    relevance: "не актуальна (закрыта полностью)"
+    bdu: []
+
+  - id: T-03
+    name: Самостоятельная регистрация посторонних учётных записей
+    stride: Spoofing
+    violators: [V1]
+    violated_properties: [К, Ц, Д]
+    surface: [N1]
+    scenario: "Открытая регистрация /auth (в стандартном provision включена) позволяет создать учётную запись без участия администратора"
+    existing_measures: ["подтверждение email (включается при корректных SMTP-настройках)"]
+    residual_risk: "В (если регистрация открыта)"
+    recommendation: "отключить auth.internal.signup.enabled в промышленной среде"
+    relevance: условно-актуальна
+    relevance_condition: "актуальна, если саморегистрация включена (значение по умолчанию)"
+    bdu: []
+
+  - id: T-04
+    name: "Получение токена сервисного пользователя через /agents/enroll"
+    stride: Elevation
+    violators: [V6]
+    violated_properties: [К, Ц]
+    surface: [N1]
+    scenario: "Кража/подбор AGENT_SHARED_SECRET → токен corteza-service на 365 дней"
+    existing_measures: ["сравнение секрета за постоянное время", "маршрут монтируется только при заданном секрете"]
+    residual_risk: В
+    recommendation: "ограничить частоту, сократить срок токена, добавить отзыв, раздельные секреты/пользователи на агента, ротация"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-05
+    name: Кража JWT/cookie (XSS, перехват трафика)
+    stride: Spoofing
+    violators: [V2]
+    violated_properties: [К, Ц]
+    surface: [N1, D1, D3]
+    scenario: "Похищение токена доступа через XSS или перехват незашифрованного трафика"
+    existing_measures: ["cookie HttpOnly/Secure", "CSRF SameSite=Strict", "v-html → v-text в CPrompt*", "HMAC-SHA256 для подписанных URL"]
+    residual_risk: С
+    recommendation: "CSP, ограничение времени жизни токенов, отзыв токенов"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-06
+    name: Подмена IdP / подделка подписи SAML
+    stride: Spoofing
+    violators: [V9]
+    violated_properties: [К, Ц]
+    surface: [N1, D10]
+    scenario: "Атаки на XML-подпись (XSW) при внешнем входе SAML"
+    existing_measures: ["goxmldsig 1.6.0", проверка подписи]
+    residual_risk: С
+    recommendation: "регулярное обновление зависимости, тесты XSW"
+    relevance: условно-актуальна
+    relevance_condition: "актуальна, если используется внешний SAML-вход"
+    bdu: []
+
+  - id: T-07
+    name: Обход RBAC через менее проверяемый путь (MCP, чат, агенты, workflow)
+    stride: Elevation
+    violators: [V2]
+    violated_properties: [К, Ц]
+    surface: [N1, N2, N3, D7]
+    scenario: "Вызов мутации через MCP/чат/агента в обход привычных проверок REST"
+    existing_measures: ["проверки в сервисном слое", "withAuth не подставляет привилегированного пользователя", "run-as для событий"]
+    residual_risk: С
+    recommendation: "регулярный тест «одно действие — все пути» для каждой мутации"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-08
+    name: "Workflow с run-as повышенного пользователя выполняет чужие данные"
+    stride: Tampering
+    violators: [V3]
+    violated_properties: [Ц, К]
+    surface: [N1]
+    scenario: "Автор workflow запускает шаги от имени привилегированного пользователя"
+    existing_measures: ["run-as задаётся явно", "события AI требуют run-as"]
+    residual_risk: С
+    recommendation: "ограничить круг лиц, которым разрешён run-as"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-09
+    name: Чтение чужих записей через экспорт, поиск, RAG, чат
+    stride: "Information disclosure"
+    violators: [V2]
+    violated_properties: [К]
+    surface: [N1, N2, D7]
+    scenario: "Получение записей сверх прав через каналы поиска/AI"
+    existing_measures: ["RBAC на модулях и полях", "инструменты чата вызывают те же сервисы с проверкой прав"]
+    residual_risk: С
+    recommendation: "тесты, что RAG, discovery и чат не отдают записи сверх прав пользователя"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-10
+    name: Отрицание действий администратора
+    stride: Repudiation
+    violators: [V4]
+    violated_properties: [Ц]
+    surface: []
+    scenario: "Удаление/изменение данных без следов при отсутствии аудита"
+    existing_measures: ["actionlog: аутентификация, пользователи, роли, вложения, federation, automation"]
+    residual_risk: Н
+    recommendation: "вынос журнала во внешнее неизменяемое хранилище (SIEM), синхронизация времени"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-11
+    name: Подмена конфигурации приложений без следа
+    stride: Tampering
+    violators: [V3, V4]
+    violated_properties: [Ц, Д]
+    surface: [N1]
+    scenario: "Изменение страниц/модулей/цепочек без возможности отката"
+    existing_measures: ["версионирование страниц, модулей, графиков, цепочек, workflow, промптов, навыков"]
+    residual_risk: Н
+    recommendation: "включить ревизии записей для критичных модулей"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-12
+    name: SQL-инъекция
+    stride: Injection
+    violators: [V2]
+    violated_properties: [К, Ц, Д]
+    surface: [N1, D3]
+    scenario: "Внедрение SQL через параметры запросов"
+    existing_measures: ["goqu с параметризацией", "единственный Sprintf — миграции"]
+    residual_risk: Н
+    recommendation: "перевести upgrade_fixes.go:234 на плейсхолдеры"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-13
+    name: "XSS (stored/DOM) через значения полей, комментарии, v-html"
+    stride: XSS
+    violators: [V2]
+    violated_properties: [К, Ц]
+    surface: [D1, D3]
+    scenario: "Внедрение скрипта в данные, отображаемые другим пользователям"
+    existing_measures: ["исправлены CPrompt*.vue", "шаблоны html/template"]
+    residual_risk: С
+    recommendation: "CSP; аудит оставшихся v-html в client3"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-14
+    name: "SSRF (inlineRemote в шаблонах, http в workflow, APIGW)"
+    stride: Tampering
+    violators: [V3]
+    violated_properties: [К]
+    surface: [D6, D9, N1]
+    scenario: "Исходящий запрос на внутренний адрес (loopback, приватные сети) из шаблона/workflow/APIGW"
+    existing_measures: ["только http(s)", "таймаут 15 с", "лимит 10 МБ", "gotenbergPDF не принимает URL от пользователя"]
+    residual_risk: "В (для V3)"
+    recommendation: "блокировать приватные диапазоны/loopback для исходящих запросов по умолчанию"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-15
+    name: "Загрузка вредоносных файлов, зипбомба, полиглот"
+    stride: Tampering
+    violators: [V2]
+    violated_properties: [Ц, Д, К]
+    surface: [D1, D2]
+    scenario: "Вложение с вредоносным содержимым, обработка которого вредит серверу/клиентам"
+    existing_measures: ["проверка типов", "подписанные URL", "версионирование", "библиотека imaging с известным DoS (остаточный риск)"]
+    residual_risk: С
+    recommendation: "антивирусная проверка, лимиты размеров, Content-Disposition: attachment для неизвестных типов"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-16
+    name: "DoS: тела запросов без лимита, медленные клиенты, тяжёлые запросы"
+    stride: "Denial of service"
+    violators: [V1]
+    violated_properties: [Д]
+    surface: [N1, D3, N4]
+    scenario: "Исчерпание ресурсов сервера неограниченными телами запросов/соединениями"
+    existing_measures: ["ReadHeaderTimeout для служебных серверов"]
+    residual_risk: С
+    recommendation: "лимиты тел на маршрутах форм, ограничение частоты на периметре, ReadHeaderTimeout в SDK агентов"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-17
+    name: Path traversal (../ в путях SPA и ресурсов)
+    stride: Tampering
+    violators: [V1]
+    violated_properties: [К, Ц]
+    surface: [N1]
+    scenario: "Чтение файлов вне корня через не нормализованные пути"
+    existing_measures: ["нормализация путей (path.Clean)"]
+    residual_risk: Н
+    recommendation: "-"
+    relevance: "не актуальна (закрыта полностью)"
+    bdu: []
+
+  - id: T-18
+    name: Раскрытие информации через тексты ошибок, версию, встроенную документацию
+    stride: "Information disclosure"
+    violators: [V1]
+    violated_properties: [К]
+    surface: [N1, N14]
+    scenario: "Паники/стектрейсы, /version, /api/docs, /__routes, /debug на периметре"
+    existing_measures: ["клиенту — internal server error"]
+    residual_risk: С
+    recommendation: "закрыть /version, /api/docs, /__routes, /debug на периметре; EnableDebugRoute не включать"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-19
+    name: "Выход скриптов (gonec/Corredor/MCP scripts) из песочницы, RCE"
+    stride: "Elevation/RCE"
+    violators: [V3]
+    violated_properties: [Ц, К, Д]
+    surface: [D7, N2, N3]
+    scenario: "Исполнение произвольного кода через скриптовые механизмы"
+    existing_measures: ["MCP_ENABLE_SCRIPTS выключен по умолчанию", "белый список импортов", "узел gonec в rulesgo без runner"]
+    residual_risk: "С (при выключенных скриптах — Н)"
+    recommendation: "OS-изоляция (gVisor/контейнер, seccomp) при необходимости скриптов"
+    relevance: условно-актуальна
+    relevance_condition: "актуальна при включении MCP_ENABLE_SCRIPTS или Corredor без сетевой изоляции"
+    bdu: []
+
+  - id: T-20
+    name: RCE через разбор файлов внешними процессами (pkg/rag PDF/CAD)
+    stride: RCE
+    violators: [V2]
+    violated_properties: [Ц, К, Д]
+    surface: [D1]
+    scenario: "Эксплуатация уязвимости парсера PDF/CAD на файле пользователя"
+    existing_measures: ["аргументы без shell"]
+    residual_risk: С
+    recommendation: "запуск под отдельной непривилегированной учётной записью, ограничение ресурсов"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-21
+    name: Вредоносный навык (skill) или промпт из библиотеки
+    stride: Tampering
+    violators: [V3, V7]
+    violated_properties: [Ц, К]
+    surface: [D8]
+    scenario: "Инструкции навыка меняют поведение AI-агента (exfiltration через LLM)"
+    existing_measures: ["версии неизменяемы", "активация/откат", "лимиты размера", "навыки не расширяют права", "символьные ссылки пропускаются"]
+    residual_risk: Н
+    recommendation: "подписывать и проверять удалённые навыки; доверять только своим агентам"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-22
+    name: "Прямой вызов операций агента (POST /api/jobs, /api/call/{op})"
+    stride: "Elevation/DoS"
+    violators: [V1, V6]
+    violated_properties: [Ц, Д, К]
+    surface: [N4, N5]
+    scenario: "Запуск сканирования сети, бэкапа, перезаписи данных у агента без аутентификации (A-1), в т.ч. через браузер администратора (CORS *, A-2)"
+    existing_measures: ["сетевая изоляция (допущение развёртывания)"]
+    residual_risk: В
+    recommendation: "аутентификация в SDK (общий секрет или JWT платформы), убрать CORS *, раздельные токены"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-23
+    name: "Скомпрометированный агент пишет в Compose под corteza-service"
+    stride: Tampering
+    violators: [V6]
+    violated_properties: [Ц, К]
+    surface: [N4, TB5]
+    scenario: "Компрометация одного агента даёт права сервисного пользователя на весь Compose (A-4)"
+    existing_measures: []
+    residual_risk: В
+    recommendation: "отдельный пользователь и роль с минимальными правами на каждый агент"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-24
+    name: "Утечка топологии сети из CMDB"
+    stride: "Information disclosure"
+    violators: [V6]
+    violated_properties: [К]
+    surface: [N4]
+    scenario: "Данные инвентаризации устройств/сервисов/уязвимостей доступны без защиты"
+    existing_measures: []
+    residual_risk: С
+    recommendation: "шифрование и права на модули CMDB; аутентификация агента"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-25
+    name: Вызов цепочек/workflow из недоверенных систем через sink
+    stride: Tampering
+    violators: [V2]
+    violated_properties: [Ц, Д]
+    surface: [N1, D5]
+    scenario: "Анонимный запуск workflow через подписанный sink-URL"
+    existing_measures: ["подпись URL (HMAC-SHA256)", "срок действия опционален"]
+    residual_risk: С
+    recommendation: "включать срок действия подписи по умолчанию"
+    relevance: условно-актуальна
+    relevance_condition: "актуальна, если sink-URL распространяются без ограничения срока"
+    bdu: []
+
+  - id: T-26
+    name: Утечка резервных копий
+    stride: "Information disclosure"
+    violators: [V5]
+    violated_properties: [К, Ц]
+    surface: [N9]
+    scenario: "Доступ к копиям данных организации вне контура платформы"
+    existing_measures: ["backup через restic (шифрование)"]
+    residual_risk: С
+    recommendation: "управление ключами restic, раздельное хранение ключей и копий"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-27
+    name: "Prompt injection (непрямая) через записи, файлы, письма"
+    stride: "AI: prompt injection"
+    violators: [V8]
+    violated_properties: [Ц, К]
+    surface: [D7, N2, N3]
+    scenario: "Вредоносный текст в данных заставляет LLM-агента вызвать инструмент или раскрыть данные"
+    existing_measures: ["подтверждение мутирующих действий («да»)", "Mutating-флаг", "deferConfirm и approval-flow", "область инструментов агента", "бюджет вызовов"]
+    residual_risk: С
+    recommendation: "показывать подтверждающему реальные параметры вызова; не давать LLM инструменты вне задачи"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-28
+    name: "Excessive agency: агент с широкими инструментами меняет/удаляет данные"
+    stride: "AI: excessive agency"
+    violators: [V8, V3]
+    violated_properties: [Ц, К, Д]
+    surface: [D7, N2, N3]
+    scenario: "LLM-агент выполняет разрушительные действия доступными ему инструментами"
+    existing_measures: ["create_/delete_ требуют подтверждения", "навыки не расширяют права"]
+    residual_risk: С
+    recommendation: "минимизировать набор инструментов по умолчанию, раздельные роли агентов"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-29
+    name: Утечка содержимого записей в модель/логи/трассировку
+    stride: "Information disclosure"
+    violators: [V8]
+    violated_properties: [К]
+    surface: [D7, N7]
+    scenario: "Персональные/конфиденциальные данные уходят в LLM или оседают в трассах"
+    existing_measures: ["локальный Ollama", "трасса усечена TracePreviewLimit"]
+    residual_risk: С
+    recommendation: "политики допуска модулей к RAG/чату, маскирование ПДн"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-30
+    name: "DoS / затраты: цикл вызовов модели, большие контексты"
+    stride: "AI: resource exhaustion"
+    violators: [V2]
+    violated_properties: [Д]
+    surface: [D7]
+    scenario: "Исчерпание ресурсов LLM/платформы бесконечными вызовами"
+    existing_measures: ["Budget (токены, вызовы)", "дедлайн шага", "таймауты"]
+    residual_risk: Н
+    recommendation: "-"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-31
+    name: Подмена модели Ollama или удалённых навыков агента
+    stride: Tampering
+    violators: [V7]
+    violated_properties: [Ц, К]
+    surface: [D8, N7]
+    scenario: "Вредоносное изменение модели/навыков на удалённом агенте"
+    existing_measures: ["приоритет источников навыков: db → file → remote (первый побеждает)"]
+    residual_risk: С
+    recommendation: "закрепить модель по digest; запретить remote-навыки вне доверенных агентов"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-32
+    name: "MCP SSE без аутентификации принимает вызовы инструментов"
+    stride: Spoofing
+    violators: [V1]
+    violated_properties: [К, Ц, Д]
+    surface: [N2]
+    scenario: "Любой, кто достиг порт :9090, вызывает tools от анонимной личности"
+    existing_measures: ["идентичность из контекста", "withAuth не подставляет привилегированного пользователя для SSE"]
+    residual_risk: С
+    recommendation: "не публиковать MCP_SSE_ADDR вне доверенной сети; аутентификация на транспорте"
+    relevance: условно-актуальна
+    relevance_condition: "актуальна, если MCP SSE публикуется за пределами доверенной сети"
+    bdu: []
+
+  - id: T-33
+    name: Уязвимая или подменённая зависимость (supply chain)
+    stride: "Supply chain"
+    violators: [V7]
+    violated_properties: [Ц, К, Д]
+    surface: []
+    scenario: "Эксплуатация известной уязвимости в зависимости Go/JS"
+    existing_measures: ["govulncheck", "osv-scanner", "yarn audit", vendor]
+    residual_risk: С
+    recommendation: "политика обновлений, SBOM, подпись артефактов"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-34
+    name: Уязвимый/подменённый базовый образ контейнера
+    stride: "Supply chain"
+    violators: [V7]
+    violated_properties: [Ц, К, Д]
+    surface: []
+    scenario: "Образы не сканировались, базовые образы не закреплены по digest"
+    existing_measures: []
+    residual_risk: С
+    recommendation: "trivy, закрепление по digest, непривилегированный пользователь в контейнере"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-35
+    name: Секреты в .env, переменных окружения, логах
+    stride: "Information disclosure"
+    violators: [V5]
+    violated_properties: [К]
+    surface: []
+    scenario: "Незащищённое хранение и случайное логирование секретов"
+    existing_measures: []
+    residual_risk: С
+    recommendation: "менеджер секретов, права 0600, не логировать значения"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-36
+    name: Вредоносная правка кода репозитория
+    stride: Tampering
+    violators: [V9]
+    violated_properties: [Ц, К, Д]
+    surface: []
+    scenario: "Несанкционированное изменение исходников в цепочке разработки"
+    existing_measures: ["ревью", "scripts/verify-ai.sh (AI guard)"]
+    residual_risk: С
+    recommendation: "подписанные коммиты, защита веток, воспроизводимая сборка"
+    relevance: актуальна
+    bdu: []
+
+  - id: T-37
+    name: Отключена проверка TLS исходящих соединений
+    stride: "Information disclosure"
+    violators: [V5]
+    violated_properties: [К, Ц]
+    surface: []
+    scenario: "SYSTEM_HTTP_CLIENT_TSL_INSECURE=1 отключает верификацию сертификатов"
+    existing_measures: ["по умолчанию выключено"]
+    residual_risk: Н
+    recommendation: "запретить в промышленной среде политикой"
+    relevance: условно-актуальна
+    relevance_condition: "актуальна, если флаг включён администратором"
+    bdu: []
+
+measures:
+  # Группы мер по приказу ФСТЭК № 239; статус: implemented / partial / operator
+  - {id: ИАФ, name: "Идентификация и аутентификация", platform: "bcrypt, MFA TOTP/Email OTP, политика паролей, запрет повторного пароля, SAML/OIDC, rate-limit токенов, отзыв токенов/сессий, enroll агентов", status: partial, operator: "политика учётных записей, интеграция с IdP, отключение саморегистрации, аутентификация агентов (A-1) и MCP SSE (T-32)"}
+  - {id: УПД, name: "Управление доступом", platform: "RBAC на всех ресурсах, проверки в сервисном слое, run-as, разграничение по полям, чувствительность DAL", status: partial, operator: "ролевая модель организации, пересмотр прав, минимальные права сервисных пользователей агентов"}
+  - {id: ОПС, name: "Ограничение программной среды", platform: "белый список импортов gonec, выключенные скрипты по умолчанию, отключённые debug-маршруты", status: operator, operator: "ограничение программной среды на хостах, политики запуска"}
+  - {id: ЗНИ, name: "Защита носителей информации", platform: "—", status: operator, operator: "учёт и защита носителей и резервных копий, управление ключами restic"}
+  - {id: АУД, name: "Аудит безопасности", platform: "actionlog (аутентификация, пользователи, роли, вложения, federation, automation), трассировка AI-шагов, версионирование конфигурации", status: partial, operator: "централизованный сбор и хранение (SIEM), анализ, синхронизация времени"}
+  - {id: АВЗ, name: "Антивирусная защита", platform: "govulncheck, osv-scanner, gosec, staticcheck в разработке", status: operator, operator: "антивирусная защита на хостах и файловых потоках"}
+  - {id: ОЦЛ, name: "Обеспечение целостности", platform: "версионирование ресурсов, ревизии записей, HMAC-подписи URL, контроль зависимостей", status: partial, operator: "контроль целостности ПО и конфигурации на хостах"}
+  - {id: ОДТ, name: "Обеспечение доступности", platform: "таймауты, бюджеты AI, перезапуск сессий workflow, persist сессий", status: operator, operator: "резервирование, мониторинг, план восстановления (RTO/RPO)"}
+  - {id: ЗСВ, name: "Защита среды виртуализации", platform: "—", status: operator, operator: "изоляция виртуальной/контейнерной среды (gVisor/seccomp для скриптов)"}
+  - {id: ЗТС, name: "Защита технологических систем", platform: "—", status: operator, operator: "физическая защита"}
+  - {id: ИНЦ, name: "Реагирование на инциденты", platform: "журналы, трассировка", status: operator, operator: "процесс реагирования на инциденты ИБ"}
+  - {id: УКФ, name: "Управление конфигурацией", platform: "пиннинг части зависимостей, vendor", status: partial, operator: "управление конфигурацией, версиями, закрепление образов по digest, SBOM"}
+  - {id: ЗИС, name: "Защита информационной системы", platform: "TLS-терминирование на прокси, CSRF SameSite, HttpOnly/Secure cookie, нормализация путей, лимиты шаблонов", status: partial, operator: "сегментация сети, МЭ, WAF, закрытие портов агентов и MCP, CSP, блокировка приватных адресов для SSRF"}
+  - {id: НДВ, name: "Недекларированные возможности", platform: "vendor, ревизия зависимостей, статический анализ", status: operator, operator: "процедура контроля НДВ, сертификационные испытания (в т.ч. Svace)"}
+
+threat_measure_map:
+  - {threat: T-01,  measures: [ИАФ, АУД]}
+  - {threat: T-02,  measures: [ИАФ]}
+  - {threat: T-03,  measures: [ИАФ, УПД]}
+  - {threat: T-04,  measures: [ИАФ, АУД]}
+  - {threat: T-05,  measures: [ИАФ, ЗИС]}
+  - {threat: T-06,  measures: [ИАФ, НДВ]}
+  - {threat: T-07,  measures: [УПД, АУД]}
+  - {threat: T-08,  measures: [УПД]}
+  - {threat: T-09,  measures: [УПД, ОПС]}
+  - {threat: T-10,  measures: [АУД, ОЦЛ]}
+  - {threat: T-11,  measures: [ОЦЛ, АУД]}
+  - {threat: T-12,  measures: [ОПС, НДВ, УКФ]}
+  - {threat: T-13,  measures: [ЗИС, ОПС, УКФ]}
+  - {threat: T-14,  measures: [ЗИС, УПД]}
+  - {threat: T-15,  measures: [АВЗ, ЗИС]}
+  - {threat: T-16,  measures: [ЗИС, ОДТ]}
+  - {threat: T-17,  measures: [ОПС, ЗИС]}
+  - {threat: T-18,  measures: [ОПС, ЗИС]}
+  - {threat: T-19,  measures: [ОПС, ЗСВ]}
+  - {threat: T-20,  measures: [ОПС, ЗСВ]}
+  - {threat: T-21,  measures: [ОЦЛ, УПД]}
+  - {threat: T-22,  measures: [ИАФ, ЗИС]}
+  - {threat: T-23,  measures: [УПД, ИАФ, АУД]}
+  - {threat: T-24,  measures: [УПД, ЗИС]}
+  - {threat: T-25,  measures: [ИАФ, ЗИС]}
+  - {threat: T-26,  measures: [ЗНИ, ОЦЛ]}
+  - {threat: T-27,  measures: [УПД, ЗИС, АУД]}
+  - {threat: T-28,  measures: [УПД, АУД]}
+  - {threat: T-29,  measures: [ЗИС, ОПС, ЗНИ]}
+  - {threat: T-30,  measures: [ОДТ, ЗИС]}
+  - {threat: T-31,  measures: [ОЦЛ, УКФ]}
+  - {threat: T-32,  measures: [ИАФ, ЗИС]}
+  - {threat: T-33,  measures: [УКФ, НДВ, АВЗ]}
+  - {threat: T-34,  measures: [УКФ, ОЦЛ]}
+  - {threat: T-35,  measures: [ЗНИ, ОПС]}
+  - {threat: T-36,  measures: [УКФ, ОЦЛ, АУД]}
+  - {threat: T-37,  measures: [ЗИС, ОПС]}
+
+critical_scenarios:
+  - id: CS-1
+    name: "Внешний → внутренний через агент"
+    chain: "Вредоносная страница → браузер администратора шлёт POST /api/jobs на агент (CORS *, без auth) → запуск сканирования/бэкапа"
+    closes: [T-22, "A-1", "A-2"]
+  - id: CS-2
+    name: "Открытая регистрация → AI"
+    chain: "Регистрация постороннего (T-03) → prompt injection в поле записи (T-27) → мутации агентом с широкими инструментами"
+    closes: [T-03, T-27, T-28]
+  - id: CS-3
+    name: "Автор шаблона → внутренняя сеть"
+    chain: "inlineRemote/http на внутренний адрес (T-14) → чтение данных внутренних систем"
+    closes: [T-14]
+  - id: CS-4
+    name: "Кража общего секрета агентов"
+    chain: "Утечка AGENT_SHARED_SECRET (T-04) → год работы токена сервисного пользователя (T-23)"
+    closes: [T-04, T-23]
+
+operator_next_steps:
+  - Определить объект оценки и класс/категорию защищённости (classification)
+  - Для каждой угрозы сопоставить записи БДУ ФСТЭК (поле bdu) и оценить негативные последствия для своих процессов
+  - Исключить неактуальные угрозы с обоснованием, утвердить перечень актуальных угроз
+  - Адаптировать меры приказа № 239 (или профиль ИСПДн/ГИС), назначить компенсирующие меры по рекомендациям угроз
+  - Переоценивать модель при изменении архитектуры, подключении новых агентов или версий

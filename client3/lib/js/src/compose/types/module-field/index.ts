@@ -10,6 +10,7 @@ export { ModuleFieldString } from './string'
 export { ModuleFieldUrl } from './url'
 export { ModuleFieldUser } from './user'
 export { ModuleFieldGeometry } from './geometry'
+export { ModuleFieldSecret } from './secret'
 
 export function ModuleFieldMaker (i: { kind?: string }): ModuleField {
   if (!i.kind) {

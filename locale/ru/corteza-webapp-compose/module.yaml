@@ -260,6 +260,18 @@ edit:
         placeholder: compose_record_revisions
         description: 'Имя of the database table or collection where revisions records can be accessed and stored. Supports partitioning placeholders: {{module}} for module handle and {{namespace}} for namespace handle'
 
+    records:
+      title: Записи
+      read-only:
+        label: Запретить редактирование записей
+        description: Если включено, записи этого модуля нельзя изменять — кнопка «Изменить» скрывается, а запросы на обновление отклоняются.
+      no-create:
+        label: Запретить создание записей
+        description: Если включено, записи этого модуля нельзя создавать из интерфейса — запросы пользователей на создание отклоняются.
+      no-delete:
+        label: Запретить удаление записей
+        description: Если включено, записи этого модуля нельзя удалять из интерфейса — запросы пользователей на удаление отклоняются.
+
     validation:
       title: Проверка
 

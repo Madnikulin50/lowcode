@@ -207,25 +207,25 @@
                     {{ $t('edit.config.record-revisions.title') }}
                   </a>
                 </li>
-                <li class="nav-item">
+                <li
+                  v-if="isBasic"
+                  class="nav-item"
+                >
                   <a
                     class="nav-link"
                     :class="{ active: activeTab === 5 }"
                     @click.prevent="activeTab = 5"
                   >
-                    {{ $t('edit.config.privacy.title') }}
+                    {{ $t('edit.config.records.title') }}
                   </a>
                 </li>
-                <li
-                  v-if="isEdit"
-                  class="nav-item"
-                >
+                <li class="nav-item">
                   <a
                     class="nav-link"
                     :class="{ active: activeTab === 6 }"
                     @click.prevent="activeTab = 6"
                   >
-                    ETL
+                    {{ $t('edit.config.privacy.title') }}
                   </a>
                 </li>
                 <li
@@ -237,6 +237,18 @@
                     :class="{ active: activeTab === 7 }"
                     @click.prevent="activeTab = 7"
                   >
+                    ETL
+                  </a>
+                </li>
+                <li
+                  v-if="isEdit"
+                  class="nav-item"
+                >
+                  <a
+                    class="nav-link"
+                    :class="{ active: activeTab === 8 }"
+                    @click.prevent="activeTab = 8"
+                  >
                     {{ $t('edit.anomalySettings.title') }}
                   </a>
                 </li>
@@ -246,8 +258,8 @@
                 >
                   <a
                     class="nav-link"
-                    :class="{ active: activeTab === 8 }"
-                    @click.prevent="activeTab = 8"
+                    :class="{ active: activeTab === 9 }"
+                    @click.prevent="activeTab = 9"
                   >
                     {{ $t('connector.title') }}
                   </a>
@@ -258,8 +270,8 @@
                 >
                   <a
                     class="nav-link text-danger"
-                    :class="{ active: activeTab === 9 }"
-                    @click.prevent="activeTab = 9; checkAlterations()"
+                    :class="{ active: activeTab === 10 }"
+                    @click.prevent="activeTab = 10; checkAlterations()"
                   >
                     {{ $t('edit.issues.label', { count: module.issues.length }) }}
                   </a>
@@ -580,8 +592,17 @@
                   />
                 </div>
                 <div
+                  v-if="isBasic"
                   class="tab-pane"
                   :class="{ active: activeTab === 5 }"
+                >
+                  <records-settings
+                    :module="module"
+                  />
+                </div>
+                <div
+                  class="tab-pane"
+                  :class="{ active: activeTab === 6 }"
                 >
                   <data-privacy-settings
                     v-if="connection"
@@ -604,10 +625,10 @@
                 <div
                   v-if="isEdit"
                   class="tab-pane"
-                  :class="{ active: activeTab === 6 }"
+                  :class="{ active: activeTab === 7 }"
                 >
                   <etl-settings
-                    v-if="activeTab === 6"
+                    v-if="activeTab === 7"
                     :namespace="namespace"
                     :module="module"
                   />
@@ -615,10 +636,10 @@
                 <div
                   v-if="isEdit"
                   class="tab-pane"
-                  :class="{ active: activeTab === 7 }"
+                  :class="{ active: activeTab === 8 }"
                 >
                   <anomaly-settings
-                    v-if="activeTab === 7"
+                    v-if="activeTab === 8"
                     :namespace="namespace"
                     :module="module"
                   />
@@ -626,17 +647,17 @@
                 <div
                   v-if="isConnector"
                   class="tab-pane"
-                  :class="{ active: activeTab === 8 }"
+                  :class="{ active: activeTab === 9 }"
                 >
                   <connector-settings
-                    v-if="activeTab === 8"
+                    v-if="activeTab === 9"
                     :module="module"
                   />
                 </div>
                 <div
                   v-if="module && module.issues.length > 0"
                   class="tab-pane"
-                  :class="{ active: activeTab === 9 }"
+                  :class="{ active: activeTab === 10 }"
                 >
                   <div
                     v-for="(issue, index) in module.issues"
@@ -761,6 +782,7 @@ import AnomalySettings from 'corteza-webapp-compose/src/components/Admin/Module/
 import DalSettings from 'corteza-webapp-compose/src/components/Admin/Module/DalSettings'
 import DataSourceSettings from 'corteza-webapp-compose/src/components/Admin/Module/DataSourceSettings'
 import RecordRevisionsSettings from 'corteza-webapp-compose/src/components/Admin/Module/RecordRevisionsSettings'
+import RecordsSettings from 'corteza-webapp-compose/src/components/Admin/Module/RecordsSettings'
 import DataPrivacySettings from 'corteza-webapp-compose/src/components/Admin/Module/DataPrivacySettings'
 import ModuleTranslator from 'corteza-webapp-compose/src/components/Admin/Module/ModuleTranslator'
 import UniqueValues from 'corteza-webapp-compose/src/components/Admin/Module/UniqueValues'

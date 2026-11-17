@@ -24,6 +24,7 @@ import (
 	"github.com/madnikulin50/lowcode/server/pkg/filter"
 	"github.com/madnikulin50/lowcode/server/pkg/id"
 	"github.com/madnikulin50/lowcode/server/pkg/revisions"
+	"github.com/madnikulin50/lowcode/server/pkg/secrets"
 	"github.com/madnikulin50/lowcode/server/store"
 	systemEnvoy "github.com/madnikulin50/lowcode/server/system/envoy"
 	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
@@ -348,6 +349,10 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 		return nil, err
 	}
 
+	if r.ExposeSecrets {
+		ctx = withExposeSecrets(ctx)
+	}
+
 	if m, err = ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
 		return nil, err
 	}
@@ -520,6 +525,11 @@ func (ctrl *Record) Read(ctx context.Context, r *request.RecordRead) (interface{
 	if m, err = ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
 		return nil, err
 	}
+
+	if r.ExposeSecrets {
+		ctx = withExposeSecrets(ctx)
+	}
+
 	var record *types.Record
 	var dd *types.RecordValueErrorSet
 
@@ -1233,6 +1243,28 @@ func (ctrl *Record) Export(ctx context.Context, r *request.RecordExport) (interf
 			return
 		}
 
+		// Secret-поля в экспорте всегда закрыты маской — файл не должен
+		// нести секреты (в store они шифротекст, клиенту отдаём маску).
+		for _, n := range nodes {
+			if n == nil || n.ResourceType != composeEnvoy.ComposeRecordDatasourceAuxType {
+				continue
+			}
+			for _, f := range exportModule.Fields {
+				if f.Kind != "Secret" {
+					continue
+				}
+				for pos := uint(0); ; pos++ {
+					v, gerr := n.Resource.GetValue(f.Name, pos)
+					if gerr != nil || v == nil {
+						break
+					}
+					if s, _ := v.(string); s != "" {
+						_ = n.Resource.SetValue(f.Name, pos, secrets.Mask)
+					}
+				}
+			}
+		}
+
 		var gg *envoyx.DepGraph
 		gg, err = envoySvc.Bake(ctx, envoyx.EncodeParams{
 			Type: envoyx.EncodeTypeStore,
@@ -1368,6 +1400,11 @@ func (ctrl *Record) Revisions(ctx context.Context, r *request.RecordRevisions) (
 		return nil, err
 	}
 
+	// Secret-поля в истории закрываются маской.
+	if m, mErr := ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); mErr == nil && m != nil {
+		iter = &revisionsMaskIterator{inner: iter, mod: m}
+	}
+
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -1399,9 +1436,9 @@ func (ctrl Record) makeBulkPayload(ctx context.Context, m *types.Module, dd *typ
 		RecordValueErrors: dd,
 
 		CanManageOwnerOnRecord: ctrl.ac.CanManageOwnerOnRecord(ctx, rr[0]),
-		CanUpdateRecord:        ctrl.ac.CanUpdateRecord(ctx, rr[0]),
+		CanUpdateRecord:        ctrl.ac.CanUpdateRecord(ctx, rr[0]) && !m.Config.Records.ReadOnly,
 		CanReadRecord:          ctrl.ac.CanReadRecord(ctx, rr[0]),
-		CanDeleteRecord:        ctrl.ac.CanDeleteRecord(ctx, rr[0]),
+		CanDeleteRecord:        ctrl.ac.CanDeleteRecord(ctx, rr[0]) && !m.Config.Records.NoDelete,
 		CanUndeleteRecord:      ctrl.ac.CanUndeleteRecord(ctx, rr[0]),
 		CanSearchRevisions:     ctrl.ac.CanSearchRevisionsOnRecord(ctx, rr[0]),
 	}, nil
@@ -1434,6 +1471,10 @@ func (ctrl Record) makePayload(ctx context.Context, m *types.Module, r *types.Re
 		return nil, err
 	}
 
+	if !ctrl.exposeSecretsAllowed(ctx, r) {
+		maskRecordSecretValues(m, r)
+	}
+
 	return &recordPayload{
 		Record:            r,
 		RecordValueErrors: dd,
@@ -1441,9 +1482,9 @@ func (ctrl Record) makePayload(ctx context.Context, m *types.Module, r *types.Re
 		CanGrant: ctrl.ac.CanGrant(ctx),
 
 		CanManageOwnerOnRecord: ctrl.ac.CanManageOwnerOnRecord(ctx, r),
-		CanUpdateRecord:        ctrl.ac.CanUpdateRecord(ctx, r),
+		CanUpdateRecord:        ctrl.ac.CanUpdateRecord(ctx, r) && !m.Config.Records.ReadOnly,
 		CanReadRecord:          ctrl.ac.CanReadRecord(ctx, r),
-		CanDeleteRecord:        ctrl.ac.CanDeleteRecord(ctx, r),
+		CanDeleteRecord:        ctrl.ac.CanDeleteRecord(ctx, r) && !m.Config.Records.NoDelete,
 		CanUndeleteRecord:      ctrl.ac.CanUndeleteRecord(ctx, r),
 		CanSearchRevisions:     ctrl.ac.CanSearchRevisionsOnRecord(ctx, r),
 	}, nil
@@ -1487,4 +1528,53 @@ func (ctrl Record) handleValidationError(rve *types.RecordValueErrorSet) interfa
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(rval)
 	}
+}
+
+// revisionsMaskIterator закрывает маской значения Secret-полей в
+// revision-снапшотах (в store они шифротекстом — до клиента маска).
+type revisionsMaskIterator struct {
+	inner dal.Iterator
+	mod   *types.Module
+}
+
+func (it *revisionsMaskIterator) Next(ctx context.Context) bool { return it.inner.Next(ctx) }
+func (it *revisionsMaskIterator) More(limit uint, vg dal.ValueGetter) error {
+	return it.inner.More(limit, vg)
+}
+func (it *revisionsMaskIterator) Err() error   { return it.inner.Err() }
+func (it *revisionsMaskIterator) Close() error { return it.inner.Close() }
+func (it *revisionsMaskIterator) BackCursor(vg dal.ValueGetter) (*filter.PagingCursor, error) {
+	return it.inner.BackCursor(vg)
+}
+func (it *revisionsMaskIterator) ForwardCursor(vg dal.ValueGetter) (*filter.PagingCursor, error) {
+	return it.inner.ForwardCursor(vg)
+}
+
+func (it *revisionsMaskIterator) Scan(dst dal.ValueSetter) error {
+	if err := it.inner.Scan(dst); err != nil {
+		return err
+	}
+	rev, ok := dst.(*revisions.Revision)
+	if !ok {
+		return nil
+	}
+	sec := map[string]bool{}
+	for _, f := range it.mod.Fields {
+		if f.Kind == "Secret" {
+			sec[f.Name] = true
+		}
+	}
+	for _, ch := range rev.Changes {
+		if ch == nil || !sec[ch.Key] {
+			continue
+		}
+		for _, side := range []*[]any{&ch.Old, &ch.New} {
+			for i, v := range *side {
+				if s, _ := v.(string); s != "" && s != secrets.Mask {
+					(*side)[i] = secrets.Mask
+				}
+			}
+		}
+	}
+	return nil
 }

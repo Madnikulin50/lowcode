@@ -118,6 +118,15 @@ func knownRemoteFallbacks() []RemoteService {
 					{Key: "path", Label: "Путь внутри снапшота", Required: true},
 					{Key: "extractTo", Label: "Куда писать (пусто = вернуть текст)"},
 				}},
+				{Type: "backup/audit", Label: "Audit unprotected data", Description: "Найти данные, которые не покрыты ни одним источником бэкапа", Service: "backup", Operation: "audit"},
+				{Type: "backup/compliance", Label: "Compliance summary", Description: "Сводка фактического состояния для плана резервирования (Приказ №117)", Service: "backup", Operation: "compliance"},
+				{Type: "backup/archive-manifest", Label: "Archive manifest", Description: "Подписанный перечень файлов с SHA-256 (юридическая значимость архива)", Service: "backup", Operation: "manifest", Async: true, Fields: []RemoteField{
+					{Key: "snapshotID", Label: "Snapshot ID", Required: true},
+				}},
+				{Type: "backup/destroy", Label: "Destroy snapshot", Description: "Уничтожение по истечении срока хранения (legal hold блокирует)", Service: "backup", Operation: "destroy", Async: true, Fields: []RemoteField{
+					{Key: "snapshotID", Label: "Snapshot ID", Required: true},
+					{Key: "basis", Label: "Основание (срок хранения / приказ)", Required: true},
+				}},
 			},
 		},
 		{

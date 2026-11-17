@@ -133,5 +133,20 @@ func RemoteCatalog() []RemoteSpec {
 		{Type: "backup/restore", Service: "backup", Operation: "restore", Async: true, Ingest: "backup-ingest-restore"},
 		{Type: "backup/prune", Service: "backup", Operation: "prune", Async: true, Ingest: "backup-ingest-job"},
 		{Type: "backup/due", Service: "backup", Operation: "due", Async: false},
+		// Остальные операции backup-агента (по дескрипторам agents/backup/agent/descriptors.go).
+		// Async без Ingest: агент сам пишет результаты в Compose (snapshots/destruction_acts),
+		// поллер не нужен — как и в цепочках agents/backup/compose/chains.mjs.
+		{Type: "backup/vault", Service: "backup", Operation: "vault", Async: true},
+		{Type: "backup/scan", Service: "backup", Operation: "scan", Async: true},
+		{Type: "backup/clean-point", Service: "backup", Operation: "clean-point", Async: false},
+		{Type: "backup/verify", Service: "backup", Operation: "verify", Async: true},
+		{Type: "backup/verify-due", Service: "backup", Operation: "verify-due", Async: false},
+		{Type: "backup/browse", Service: "backup", Operation: "browse", Async: false},
+		{Type: "backup/extract", Service: "backup", Operation: "extract", Async: true},
+		{Type: "backup/audit", Service: "backup", Operation: "audit", Async: false},
+		{Type: "backup/compliance", Service: "backup", Operation: "compliance", Async: false},
+		{Type: "backup/archive-manifest", Service: "backup", Operation: "manifest", Async: true},
+		{Type: "backup/destroy", Service: "backup", Operation: "destroy", Async: true},
+		{Type: "backup/dest-test", Service: "backup", Operation: "dest-test", Async: false},
 	}
 }

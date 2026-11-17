@@ -149,6 +149,8 @@ reminder:
 tooltip:
   dragAndDrop: Переместите для изменения порядка
 fieldKinds:
+  Secret:
+    label: Секрет (шифруется)
   Bool:
     label: Флажок (Да-Нет)
   DateTime:

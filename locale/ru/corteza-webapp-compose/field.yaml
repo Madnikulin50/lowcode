@@ -5,6 +5,14 @@ defaultValue: Значение по-умолчанию
 required-field: Обязательное поле
 not-configurable: Cannot change settings that affect data storage
 kind:
+  secret:
+    label: Секрет (шифруется)
+    placeholder: Введите новый секрет
+    show: Показать
+    hide: Скрыть
+    reveal: Подгрузить текущее значение
+    unchangedHint: Значение не изменится (пустой ввод сохранит текущий секрет)
+    empty: (не задан)
   bool:
     checkedValueLabel: Значение когда включено
     checkedValuePlaceholder: Да

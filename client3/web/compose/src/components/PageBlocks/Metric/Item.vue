@@ -405,7 +405,11 @@ const balloonStyle = computed(() => {
 
   const ratio = Math.min(1, Math.max(0, Number(props.barRatio) || 0))
   const fullWidth = props.metric.balloonFullWidth === true
-  const widthPct = fullWidth ? 100 : (42 + 58 * ratio)
+  // Width is proportional to the value relative to the largest balloon on the
+  // block, but a zero/smallest value must not collapse the pill into a truncated
+  // chip — keep a practical floor so the label stays readable in any slot.
+  const effectiveRatio = Math.max(ratio, 0.35)
+  const widthPct = fullWidth ? 100 : (42 + 58 * effectiveRatio)
   return {
     backgroundColor: bg,
     color: '#fff',

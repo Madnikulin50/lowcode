@@ -389,8 +389,15 @@ func (c *Corteza) UpdateValues(ctx context.Context, handle string, recordID uint
 	if err != nil {
 		return err
 	}
-	payload := make([]composeRecordValue, 0, len(values))
+	// Сервер не мерджит частичное обновление: обязательные поля, не
+	// присланные в запросе, падают валидацией «empty». Поэтому шлём полный
+	// набор значений — текущие + наложенные обновления.
+	merged := recMap(*rec)
 	for k, v := range values {
+		merged[k] = v
+	}
+	payload := make([]composeRecordValue, 0, len(merged))
+	for k, v := range merged {
 		payload = append(payload, composeRecordValue{Name: k, Value: v})
 	}
 	body := map[string]interface{}{"values": payload}
@@ -441,6 +448,29 @@ func (c *Corteza) LoadPolicy(ctx context.Context, id uint64) (*Policy, error) {
 	return policyFrom(rec), nil
 }
 
+func (c *Corteza) LoadDestination(ctx context.Context, id uint64) (*Destination, error) {
+	rec, err := c.GetRecord(ctx, "destinations", id)
+	if err != nil {
+		return nil, err
+	}
+	return destinationFrom(rec), nil
+}
+
+// DefaultDestination — включённое назначение с флагом default. Не находит —
+// nil без ошибки (дефолт тогда берётся из env агента).
+func (c *Corteza) DefaultDestination(ctx context.Context) (*Destination, error) {
+	set, err := c.ListRecords(ctx, "destinations", "default = '1'")
+	if err != nil {
+		return nil, err
+	}
+	for i := range set {
+		if d := destinationFrom(&set[i]); d.Enabled {
+			return d, nil
+		}
+	}
+	return nil, nil
+}
+
 func (c *Corteza) LoadCredential(ctx context.Context, id uint64) (*Credential, error) {
 	if id == 0 {
 		return &Credential{}, nil
@@ -467,21 +497,37 @@ func (c *Corteza) LoadSnapshot(ctx context.Context, id uint64) (*Snapshot, error
 	}
 	m := recMap(*rec)
 	exp, _ := time.Parse(time.RFC3339, m["expires_at"])
+	locked, _ := time.Parse(time.RFC3339, m["vault_locked_until"])
+	scannedAt, _ := time.Parse(time.RFC3339, m["scanned_at"])
+	verifiedAt, _ := time.Parse(time.RFC3339, m["verified_at"])
 	return &Snapshot{
-		ID:         rec.ID,
-		JobID:      ParseUint(m["job"]),
-		SourceID:   ParseUint(m["source"]),
-		PolicyID:   ParseUint(m["policy"]),
-		S3Bucket:   m["s3_bucket"],
-		S3Key:      m["s3_key"],
-		SizeBytes:  int64(ParseUint(m["size_bytes"])),
-		Checksum:   m["checksum"],
-		Files:      int(ParseUint(m["files_count"])),
-		Kind:       m["kind"],
-		Engine:     m["engine"],
-		ResticID:   m["restic_id"],
-		ExpiresAt:  exp,
-		Restorable: ParseBool(m["restorable"]),
+		ID:                rec.ID,
+		JobID:             ParseUint(m["job"]),
+		SourceID:          ParseUint(m["source"]),
+		PolicyID:          ParseUint(m["policy"]),
+		DestID:            ParseUint(m["destination"]),
+		DestType:          m["dest_type"],
+		S3Endpoint:        m["s3_endpoint"],
+		S3Bucket:          m["s3_bucket"],
+		S3Key:             m["s3_key"],
+		SizeBytes:         int64(ParseUint(m["size_bytes"])),
+		Checksum:          m["checksum"],
+		Files:             int(ParseUint(m["files_count"])),
+		Kind:              m["kind"],
+		Engine:            m["engine"],
+		ResticID:          m["restic_id"],
+		ExpiresAt:         exp,
+		Restorable:        ParseBool(m["restorable"]),
+		VaultKey:          m["vault_key"],
+		VaultLockedUntil:  locked,
+		ScanStatus:        ScanStatus(m["scan_status"]),
+		ScannedAt:         scannedAt,
+		ScanLog:           m["scan_log"],
+		VerifiedAt:        verifiedAt,
+		VerifyDurationSec: int64(ParseUint(m["verify_duration_sec"])),
+		VerifyError:       m["verify_error"],
+		ManifestKey:       m["manifest_key"],
+		ManifestSHA:       m["manifest_sha"],
 	}, nil
 }
 
@@ -517,27 +563,45 @@ func (c *Corteza) FindPolicyForSource(ctx context.Context, sourceID uint64) (*Po
 	return nil, fmt.Errorf("no policy for source %d", sourceID)
 }
 
+// UpdateSourceLastSync фиксирует курсор инкрементальной SaaS-синхронизации.
+func (c *Corteza) UpdateSourceLastSync(ctx context.Context, sourceID uint64, t time.Time) error {
+	if sourceID == 0 {
+		return nil
+	}
+	return c.UpdateValues(ctx, "sources", sourceID, map[string]string{
+		"last_sync": t.UTC().Format(time.RFC3339),
+	})
+}
+
 func sourceFrom(rec *composeRecord) *Source {
 	m := recMap(*rec)
+	lastSync, _ := time.Parse(time.RFC3339, m["last_sync"])
 	return &Source{
-		ID:       rec.ID,
-		Name:     m["name"],
-		Type:     SourceType(m["type"]),
-		AgentID:  ParseUint(m["agent"]),
-		CredID:   ParseUint(m["credential"]),
-		Path:     m["path"],
-		Host:     m["host"],
-		Share:    m["share"],
-		SMBPath:  m["smb_path"],
-		DBEngine: m["db_engine"],
-		DBName:   m["db_name"],
-		DBPort:   ParseInt(m["db_port"]),
-		S3Bucket: m["s3_bucket"],
-		S3Prefix: m["s3_prefix"],
-		S3Region: m["s3_region"],
-		S3Secure: ParseBool(m["s3_secure"]),
-		Enabled:  ParseBool(m["enabled"]),
-		Notes:    m["notes"],
+		ID:         rec.ID,
+		Name:       m["name"],
+		Type:       SourceType(m["type"]),
+		AgentID:    ParseUint(m["agent"]),
+		CredID:     ParseUint(m["credential"]),
+		Path:       m["path"],
+		Host:       m["host"],
+		Share:      m["share"],
+		SMBPath:    m["smb_path"],
+		DBEngine:   m["db_engine"],
+		DBName:     m["db_name"],
+		DBPort:     ParseInt(m["db_port"]),
+		S3Bucket:   m["s3_bucket"],
+		S3Prefix:   m["s3_prefix"],
+		S3Region:   m["s3_region"],
+		S3Secure:   ParseBool(m["s3_secure"]),
+		Provider:   m["provider"],
+		BaseURL:    m["base_url"],
+		Account:    m["account"],
+		Namespaces: m["namespaces"],
+		IncludePV:  ParseBool(m["include_pv"]),
+		DataClass:  strings.ToLower(strings.TrimSpace(m["data_class"])),
+		LastSync:   lastSync,
+		Enabled:    ParseBool(m["enabled"]),
+		Notes:      m["notes"],
 	}
 }
 
@@ -546,15 +610,53 @@ func policyFrom(rec *composeRecord) *Policy {
 	last, _ := time.Parse(time.RFC3339, m["last_run"])
 	ret := ParseInt(m["retention_days"])
 	return &Policy{
-		ID:            rec.ID,
-		Name:          m["name"],
-		SourceID:      ParseUint(m["source"]),
-		Cron:          firstNonEmpty(m["cron"], "0 2 * * *"),
-		RetentionDays: ret,
-		Incremental:   ParseBool(m["incremental"]),
-		DestPrefix:    m["dest_prefix"],
-		Enabled:       m["enabled"] == "" || ParseBool(m["enabled"]),
-		LastRun:       last,
+		ID:                 rec.ID,
+		Name:               m["name"],
+		SourceID:           ParseUint(m["source"]),
+		Cron:               firstNonEmpty(m["cron"], "0 2 * * *"),
+		RetentionDays:      ret,
+		Incremental:        ParseBool(m["incremental"]),
+		DestPrefix:         m["dest_prefix"],
+		DestinationID:      ParseUint(m["destination"]),
+		Vault:              ParseBool(m["vault"]),
+		VaultRetentionDays: ParseInt(m["vault_retention_days"]),
+		VaultLegalHold:     ParseBool(m["vault_legal_hold"]),
+		Verify:             ParseBool(m["verify"]),
+		VerifyCron:         m["verify_cron"],
+		VerifyLevel:        firstNonEmpty(m["verify_level"], "l1"),
+		Engine:             strings.ToLower(strings.TrimSpace(m["engine"])),
+		Exclude:            m["exclude"],
+		DestBucket:         strings.TrimSpace(m["dest_bucket"]),
+		Archive:            ParseBool(m["archive"]),
+		KeepYears:          ParseInt(m["keep_years"]),
+		Enabled:            m["enabled"] == "" || ParseBool(m["enabled"]),
+		LastRun:            last,
+	}
+}
+
+func destinationFrom(rec *composeRecord) *Destination {
+	m := recMap(*rec)
+	return &Destination{
+		ID:       rec.ID,
+		Name:     m["name"],
+		Handle:   m["handle"],
+		Type:     m["type"],
+		Endpoint: m["endpoint"],
+		Port:     ParseInt(m["port"]),
+		Bucket:   m["bucket"],
+		Prefix:   m["prefix"],
+		Path:     m["path"],
+		Share:    m["share"],
+		Remote:   m["remote"],
+		Options:  m["options"],
+		Region:   m["region"],
+		Secure:   ParseBool(m["secure"]),
+		CredID:   ParseUint(m["credential"]),
+		Username: m["username"],
+		Password: m["password"],
+		Default:  ParseBool(m["default"]),
+		Enabled:  m["enabled"] == "" || ParseBool(m["enabled"]),
+		Notes:    m["notes"],
 	}
 }
 

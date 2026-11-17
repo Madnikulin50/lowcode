@@ -4,6 +4,8 @@
 
 Исходный модуль сервера: `github.com/madnikulin50/lowcode/server` (Go 1.26). Клиентские приложения собраны в `client3/` на Vue 3.
 
+C4-диаграммы (draw.io): [architecture/](architecture/README.md) — уровни System Context, Containers, Components.
+
 ---
 
 ## 1. Назначение
