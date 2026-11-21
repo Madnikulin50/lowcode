@@ -3,9 +3,9 @@ package external
 import (
 	"net/http"
 
-	"github.com/cortezaproject/corteza/server/auth/saml"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/crewjam/saml/samlsp"
+	"github.com/madnikulin50/lowcode/server/auth/saml"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/markbates/goth/gothic"
 )
 

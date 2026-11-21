@@ -1,0 +1,43 @@
+namespace: cmdb
+charts:
+  devices-by-type:
+    name: Devices by type
+    config:
+      reports:
+      - dimensions:
+        - field: device_type
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: devices
+      colorScheme: tableau.Tableau10
+
+  devices-by-status:
+    name: Devices by status
+    config:
+      reports:
+      - dimensions:
+        - field: status
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: devices
+      colorScheme: tableau.Tableau10
+
+  vulns-by-severity:
+    name: Vulnerabilities by severity
+    config:
+      reports:
+      - dimensions:
+        - field: severity
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: vulnerabilities
+      colorScheme: tableau.Tableau10

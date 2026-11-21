@@ -4,15 +4,15 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/corredor"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/flag"
-	"github.com/cortezaproject/corteza/server/system/rest/request"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/service/event"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/corredor"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/flag"
+	"github.com/madnikulin50/lowcode/server/system/rest/request"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/service/event"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
@@ -87,8 +87,8 @@ func (ctrl *Application) List(ctx context.Context, r *request.ApplicationList) (
 		return nil, err
 	}
 
-	set, filter, err := ctrl.application.Search(ctx, f)
-	return ctrl.makeFilterPayload(ctx, set, filter, err)
+	set, flt, err := ctrl.application.Search(ctx, f)
+	return ctrl.makeFilterPayload(ctx, set, flt, err)
 }
 
 func (ctrl *Application) Create(ctx context.Context, r *request.ApplicationCreate) (interface{}, error) {

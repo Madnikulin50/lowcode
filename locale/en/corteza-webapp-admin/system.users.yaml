@@ -1,4 +1,8 @@
 editor:
+  badges:
+    deleted: Deleted
+    suspended: Suspended
+    emailUnconfirmed: Email unconfirmed
   external-auth-providers:
     label: Label
     title: Manage external auth providers

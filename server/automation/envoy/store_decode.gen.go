@@ -1,9 +1,9 @@
 package envoy
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
@@ -11,11 +11,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/pkg/errors"
 )
 
@@ -153,6 +153,7 @@ func (d StoreDecoder) decodeWorkflow(ctx context.Context, s store.Storer, dl dal
 
 func WorkflowToEnvoyNode(r *types.Workflow) (node *envoyx.Node, err error) {
 	// Identifiers
+
 	ii := envoyx.MakeIdentifiers(
 		r.Handle,
 		r.ID,

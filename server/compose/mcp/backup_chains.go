@@ -1,0 +1,528 @@
+package mcp
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+	"strings"
+
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/pkg/rulesgo"
+	"github.com/madnikulin50/lowcode/server/store"
+)
+
+func registerBackupChains(engine *rulesgo.EngineWithPersistence) {
+	if engine == nil || engine.Engine == nil {
+		return
+	}
+	ctx := context.Background()
+	if service.DefaultStore == nil {
+		log.Printf("[bridge] skip Backup chains: store not ready")
+		return
+	}
+	ns, err := store.LookupComposeNamespaceBySlug(ctx, service.DefaultStore, "backup")
+	if err != nil || ns == nil {
+		log.Printf("[bridge] skip Backup chains: namespace backup not found: %v", err)
+		return
+	}
+	mod := func(handle string) uint64 {
+		m, err := store.LookupComposeModuleByNamespaceIDHandle(ctx, service.DefaultStore, ns.ID, handle)
+		if err != nil || m == nil {
+			log.Printf("[bridge] Backup module %s: %v", handle, err)
+			return 0
+		}
+		return m.ID
+	}
+	jobs := mod("jobs")
+	restores := mod("restores")
+	snapshots := mod("snapshots")
+	verifyReports := mod("verify_reports")
+	sources := mod("sources")
+	policies := mod("policies")
+	requests := mod("backup_requests")
+	acts := mod("destruction_acts")
+	agentURL := strings.TrimRight(os.Getenv("BACKUP_AGENT_URL"), "/")
+	if agentURL == "" {
+		agentURL = "http://localhost:8087/api"
+	}
+	for _, c := range backupRuleChains(ns.ID, jobs, restores, snapshots, verifyReports, sources, policies, requests, acts, agentURL) {
+		engine.RegisterChain(c)
+		log.Printf("[bridge] registered Backup chain: %s", c.ID)
+	}
+}
+
+func backupComponentConfig(agentURL string, fields map[string]string) json.RawMessage {
+	m := map[string]string{}
+	for k, v := range fields {
+		if strings.TrimSpace(v) != "" {
+			m[k] = v
+		}
+	}
+	if agentURL != "" {
+		m["url"] = agentURL
+	}
+	b, _ := json.Marshal(m)
+	return b
+}
+
+func backupRuleChains(nsID, jobs, restores, snapshots, verifyReports, sources, policies, requests, acts uint64, agentURL string) []*rulesgo.Chain {
+	ns := fmt.Sprintf("%d", nsID)
+	return []*rulesgo.Chain{
+		{
+			ID:          "backup-run-source",
+			NamespaceID: nsID,
+			Name:        "Backup: запуск с источника",
+			Description: "Create jobs row and call backup/run on the agent.",
+			EntryNode:   "record",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "record",
+					Type:   "crud",
+					Label:  "Create job",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"create","namespaceID":"%s","moduleID":"%d","moduleHandle":"jobs","fields":{"source":"{{recordID}}","status":"running","progress":"0","kind":"full"}}`, ns, jobs)),
+				},
+				{
+					ID:    "run",
+					Type:  "backup/run",
+					Label: "Start backup",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"sourceID": "{{sourceID}}",
+						"source":   "{{recordID}}",
+						"jobID":    "{{createdRecordID}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{{From: "record", To: "run"}},
+		},
+		{
+			ID:          "backup-run-policy",
+			NamespaceID: nsID,
+			Name:        "Backup: запуск по политике",
+			Description: "Create jobs row and call backup/run with policyID.",
+			EntryNode:   "record",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "record",
+					Type:   "crud",
+					Label:  "Create job",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"create","namespaceID":"%s","moduleID":"%d","moduleHandle":"jobs","fields":{"policy":"{{recordID}}","source":"{{source}}","status":"running","progress":"0"}}`, ns, jobs)),
+				},
+				{
+					ID:    "run",
+					Type:  "backup/run",
+					Label: "Start backup",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"policyID": "{{policyID}}",
+						"sourceID": "{{source}}",
+						"jobID":    "{{createdRecordID}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{{From: "record", To: "run"}},
+		},
+		{
+			ID:          "backup-run-due",
+			NamespaceID: nsID,
+			Name:        "Backup: запустить due-политики",
+			Description: "Периодически запускайте эту цепочку (cron/systemd timer/Corteza Automation) с {\"token\":\"...\"} в теле. " +
+				"backup/due только читает у агента список политик, чей cron сейчас подошёл и у которых нет активного running-джоба " +
+				"— сам агент ничего не пишет в Compose. Для каждой due-политики цепочка сама создаёт запись jobs (как backup-run-policy) " +
+				"и запускает backup/run — дальше статус ведёт тот же поллер/ingest, что и у ручного запуска, так что упавший между " +
+				"перезапусками агент-процесс не оставляет джобы висеть в running.",
+			EntryNode: "due",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "due",
+					Type:   "backup/due",
+					Label:  "List due policies",
+					Config: backupComponentConfig(agentURL, nil),
+				},
+				{
+					ID:     "loop",
+					Type:   "foreach",
+					Label:  "For each due policy",
+					Config: jsonRaw(`{"items":"due","itemVar":"policy"}`),
+				},
+				{
+					ID:     "record",
+					Type:   "crud",
+					Label:  "Create job",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"create","namespaceID":"%s","moduleID":"%d","moduleHandle":"jobs","fields":{"policy":"{{policy.id}}","source":"{{policy.sourceID}}","status":"running","progress":"0"}}`, ns, jobs)),
+				},
+				{
+					ID:    "run",
+					Type:  "backup/run",
+					Label: "Start backup",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"policyID": "{{policy.id}}",
+						"sourceID": "{{policy.sourceID}}",
+						"jobID":    "{{createdRecordID}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{
+				{From: "due", To: "loop"},
+				{From: "loop", To: "record"},
+				{From: "loop", To: "run"},
+			},
+		},
+		{
+			ID:          "backup-dest-test",
+			Name:        "Backup: проверить назначение",
+			Description: "Со страницы назначения: backup/dest-test — endpoint/учётки/бакет, результат (last_check*) пишет сам агент.",
+			EntryNode:   "run",
+			NamespaceID: nsID,
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:    "run",
+					Type:  "backup/dest-test",
+					Label: "Проверить",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"destinationID": "{{destinationID}}",
+					}),
+				},
+			},
+		},
+		{
+			ID:          "backup-restore",
+			NamespaceID: nsID,
+			Name:        "Backup: восстановить снапшот",
+			Description: "Create restores row and call backup/restore. Restore to original is destructive: security gets notified when securityEmail is set; the restore starts regardless (notify is a side branch and cannot block it).",
+			EntryNode:   "record",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "record",
+					Type:   "crud",
+					Label:  "Create restore",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"create","namespaceID":"%s","moduleID":"%d","moduleHandle":"restores","fields":{"snapshot":"{{recordID}}","dest_type":"{{destType}}","dest_path":"{{destPath}}","status":"running","progress":"0"}}`, ns, restores)),
+				},
+				{ID: "check", Type: "condition", Label: "Restore to original?", Config: jsonRaw(`{"field":"destType","operator":"eq","value":"original"}`)},
+				{ID: "email", Type: "condition", Label: "securityEmail set?", Config: jsonRaw(`{"field":"securityEmail","operator":"notEmpty"}`)},
+				{ID: "notify", Type: "mail", Label: "Notify security", Config: jsonRaw(`{"to":"{{securityEmail}}","subject":"[Backup] деструктивное восстановление snapshot {{snapshotID}}","body":"<p>Восстановление в исходное место.</p><p>snapshotID={{snapshotID}} destPath={{destPath}}</p>","contentType":"html"}`)},
+				{
+					ID:    "run",
+					Type:  "backup/restore",
+					Label: "Restore",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"snapshotID": "{{snapshotID}}",
+						"restoreID":  "{{createdRecordID}}",
+						"destType":   "{{destType}}",
+						"destPath":   "{{destPath}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{
+				{From: "record", To: "run"},
+				{From: "record", To: "check"},
+				{From: "check", To: "email", Condition: "check_result"},
+				{From: "email", To: "notify", Condition: "email_result"},
+			},
+		},
+		{
+			ID:          "backup-restore-run",
+			NamespaceID: nsID,
+			Name:        "Backup: запустить восстановление из записи",
+			Description: "From a restores record: takes snapshot/dest_type/dest_path from the record itself and calls backup/restore.",
+			EntryNode:   "mark",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "mark",
+					Type:   "crud",
+					Label:  "Mark running",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"update","namespaceID":"%s","moduleID":"%d","moduleHandle":"restores","recordID":"{{recordID}}","omitEmpty":true,"fields":{"status":"running"}}`, ns, restores)),
+				},
+				{
+					ID:    "run",
+					Type:  "backup/restore",
+					Label: "Restore",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"snapshotID": "{{snapshot}}",
+						"restoreID":  "{{recordID}}",
+						"destType":   "{{dest_type}}",
+						"destPath":   "{{dest_path}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{{From: "mark", To: "run"}},
+		},
+		{
+			ID:          "backup-prune",
+			NamespaceID: nsID,
+			Name:        "Backup: prune по retention",
+			Description: "backup/prune. Из политики передаёт policyID.",
+			EntryNode:   "run",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:    "run",
+					Type:  "backup/prune",
+					Label: "Prune",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"policyID": "{{policyID}}",
+					}),
+				},
+			},
+		},
+		{
+			ID:          "backup-ingest-job",
+			NamespaceID: nsID,
+			Name:        "Backup: ingest статуса джоба",
+			Description: "Callback/poll updates the jobs row.",
+			EntryNode:   "update_job",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "update_job",
+					Type:   "crud",
+					Label:  "Update job",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"update","namespaceID":"%s","moduleID":"%d","moduleHandle":"jobs","recordID":"{{createdRecordID}}","omitEmpty":true,"continueOnError":true,"fields":{"status":"{{status}}","progress":"{{progress}}","bytes_read":"{{bytesRead}}","bytes_written":"{{bytesWritten}}","files_count":"{{files}}","error":"{{error}}","message":"{{message}}","engine":"{{engine}}"}}`, ns, jobs)),
+				},
+			},
+		},
+		{
+			ID:          "backup-ingest-restore",
+			NamespaceID: nsID,
+			Name:        "Backup: ingest статуса restore",
+			Description: "Callback/poll updates the restores row.",
+			EntryNode:   "update_restore",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "update_restore",
+					Type:   "crud",
+					Label:  "Update restore",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"update","namespaceID":"%s","moduleID":"%d","moduleHandle":"restores","recordID":"{{createdRecordID}}","omitEmpty":true,"continueOnError":true,"fields":{"status":"{{status}}","progress":"{{progress}}","error":"{{error}}","message":"{{message}}"}}`, ns, restores)),
+				},
+			},
+		},
+		{
+			ID:          "backup-failed-alert",
+			NamespaceID: nsID,
+			Name:        "Backup: письмо при ошибке",
+			Description: "Mail when a job status is failed.",
+			EntryNode:   "check",
+			Nodes: []rulesgo.ChainNode{
+				{ID: "check", Type: "condition", Label: "Failed?", Config: jsonRaw(`{"field":"status","operator":"eq","value":"failed"}`)},
+				{ID: "mail", Type: "mail", Label: "Notify", Config: jsonRaw(`{"to":"{{to}}","subject":"[Backup] failed {{source}}","body":"<p>{{error}}</p><p>{{message}}</p>","contentType":"html"}`)},
+			},
+			Edges: []rulesgo.ChainEdge{{From: "check", To: "mail", Condition: "check_result"}},
+		},
+		{
+			ID:          "backup-vault",
+			NamespaceID: nsID,
+			Name:        "Backup: в сейф (скан + WORM-копия)",
+			Description: "Со страницы снапшота: сканирование и копия в vault. Агент сам обновляет scan_status/scanned_at/vault_key у снапшота.",
+			EntryNode:   "mark",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "mark",
+					Type:   "crud",
+					Label:  "Mark queued",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"update","namespaceID":"%s","moduleID":"%d","moduleHandle":"snapshots","recordID":"{{recordID}}","fields":{"scan_status":"queued"}}`, ns, snapshots)),
+				},
+				{
+					ID:    "run",
+					Type:  "backup/vault",
+					Label: "Скан + сейф",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"snapshotID": "{{recordID}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{{From: "mark", To: "run"}},
+		},
+		{
+			ID:          "backup-vault-due",
+			NamespaceID: nsID,
+			Name:        "Backup: отправить новые снапшоты в сейф",
+			Description: "Периодически запускайте по расписанию. Ищет restorable-снапшоты без vault_key и для каждого вызывает backup/vault.",
+			EntryNode:   "search",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "search",
+					Type:   "crud",
+					Label:  "Find unvaulted",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"search","namespaceID":"%s","moduleID":"%d","moduleHandle":"snapshots","query":"restorable = '1' AND vault_key = ''","limit":50}`, ns, snapshots)),
+				},
+				{
+					ID:     "loop",
+					Type:   "foreach",
+					Label:  "For each snapshot",
+					Config: jsonRaw(`{"items":"set","itemVar":"snap"}`),
+				},
+				{
+					ID:     "mark",
+					Type:   "crud",
+					Label:  "Mark queued",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"update","namespaceID":"%s","moduleID":"%d","moduleHandle":"snapshots","recordID":"{{snap.recordID}}","fields":{"scan_status":"queued"}}`, ns, snapshots)),
+				},
+				{
+					ID:    "run",
+					Type:  "backup/vault",
+					Label: "Скан + сейф",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"snapshotID": "{{snap.recordID}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{
+				{From: "search", To: "loop"},
+				{From: "loop", To: "mark"},
+				{From: "loop", To: "run"},
+			},
+		},
+		{
+			ID:          "backup-verify",
+			NamespaceID: nsID,
+			Name:        "Backup: верификация восстановления",
+			Description: "Со страницы политики: создаёт verify_reports и вызывает backup/verify. Агент сам пишет verified_at/verify_duration_sec в снапшот.",
+			EntryNode:   "report",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "report",
+					Type:   "crud",
+					Label:  "Create report",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"create","namespaceID":"%s","moduleID":"%d","moduleHandle":"verify_reports","fields":{"policy":"{{recordID}}","status":"running","level":"{{verifyLevel}}"}}`, ns, verifyReports)),
+				},
+				{
+					ID:    "run",
+					Type:  "backup/verify",
+					Label: "Verify",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"policyID":    "{{recordID}}",
+						"verifyLevel": "{{verifyLevel}}",
+						"jobID":       "{{createdRecordID}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{{From: "report", To: "run"}},
+		},
+		{
+			ID:          "backup-verify-due",
+			NamespaceID: nsID,
+			Name:        "Backup: верификация по расписанию",
+			Description: "Периодически запускайте (cron). backup/verify-due возвращает политики, у которых подошёл verify_cron; для каждой создаётся отчёт и запускается backup/verify.",
+			EntryNode:   "due",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "due",
+					Type:   "backup/verify-due",
+					Label:  "List verify-due",
+					Config: backupComponentConfig(agentURL, nil),
+				},
+				{
+					ID:     "loop",
+					Type:   "foreach",
+					Label:  "For each",
+					Config: jsonRaw(`{"items":"due","itemVar":"v"}`),
+				},
+				{
+					ID:     "report",
+					Type:   "crud",
+					Label:  "Create report",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"create","namespaceID":"%s","moduleID":"%d","moduleHandle":"verify_reports","fields":{"snapshot":"{{v.snapshotID}}","source":"{{v.sourceID}}","level":"{{v.level}}","status":"running"}}`, ns, verifyReports)),
+				},
+				{
+					ID:    "run",
+					Type:  "backup/verify",
+					Label: "Verify",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"snapshotID":  "{{v.snapshotID}}",
+						"verifyLevel": "{{v.level}}",
+						"jobID":       "{{createdRecordID}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{
+				{From: "due", To: "loop"},
+				{From: "loop", To: "report"},
+				{From: "loop", To: "run"},
+			},
+		},
+		{
+			ID:          "backup-request-approve",
+			NamespaceID: nsID,
+			Name:        "Backup: одобрить заявку на резервирование",
+			Description: "From a request record: creates fs source + policy (vault=1, engine from context), marks request approved.",
+			EntryNode:   "source",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "source",
+					Type:   "crud",
+					Label:  "Create source",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"create","namespaceID":"%s","moduleID":"%d","moduleHandle":"sources","fields":{"name":"{{name}}","type":"fs","path":"{{path}}","data_class":"{{dataClass}}","enabled":"1","notes":"Заявка {{recordID}} от {{owner}}"}}`, ns, sources)),
+				},
+				{
+					ID:     "policy",
+					Type:   "crud",
+					Label:  "Create policy",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"create","namespaceID":"%s","moduleID":"%d","moduleHandle":"policies","fields":{"name":"{{name}}","source":"{{createdRecordID}}","cron":"{{cron}}","retention_days":"{{retentionDays}}","vault":"1","engine":"{{engine}}","enabled":"1"}}`, ns, policies)),
+				},
+				{
+					ID:     "mark",
+					Type:   "crud",
+					Label:  "Approve request",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"update","namespaceID":"%s","moduleID":"%d","moduleHandle":"backup_requests","recordID":"{{recordID}}","fields":{"status":"approved","comment":"Источник+политика созданы"}}`, ns, requests)),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{{From: "source", To: "policy"}, {From: "policy", To: "mark"}},
+		},
+		{
+			ID:          "backup-audit-due",
+			NamespaceID: nsID,
+			Name:        "Backup: аудит незабэкапленных данных",
+			Description: "Runs backup/audit over enabled audit_scopes. Findings land in audit_findings.",
+			EntryNode:   "run",
+			Nodes: []rulesgo.ChainNode{
+				{ID: "run", Type: "backup/audit", Label: "Аудит", Config: backupComponentConfig(agentURL, nil)},
+			},
+		},
+		{
+			ID:          "backup-manifest",
+			NamespaceID: nsID,
+			Name:        "Backup: манифест архива",
+			Description: "From a snapshot record: signed file manifest with SHA-256.",
+			EntryNode:   "run",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:    "run",
+					Type:  "backup/archive-manifest",
+					Label: "Манифест",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"snapshotID": "{{recordID}}",
+					}),
+				},
+			},
+		},
+		{
+			ID:          "backup-destroy",
+			NamespaceID: nsID,
+			Name:        "Backup: уничтожение по сроку хранения",
+			Description: "From a destruction act record: marks it registered and calls backup/destroy. Legal hold blocks deletion — act becomes blocked.",
+			EntryNode:   "act",
+			Nodes: []rulesgo.ChainNode{
+				{
+					ID:     "act",
+					Type:   "crud",
+					Label:  "Mark act registered",
+					Config: jsonRaw(fmt.Sprintf(`{"operation":"update","namespaceID":"%s","moduleID":"%d","moduleHandle":"destruction_acts","recordID":"{{recordID}}","omitEmpty":true,"fields":{"status":"registered"}}`, ns, acts)),
+				},
+				{
+					ID:    "run",
+					Type:  "backup/destroy",
+					Label: "Уничтожить",
+					Config: backupComponentConfig(agentURL, map[string]string{
+						"snapshotID": "{{snapshot}}",
+						"basis":      "{{basis}}",
+						"jobID":      "{{recordID}}",
+					}),
+				},
+			},
+			Edges: []rulesgo.ChainEdge{{From: "act", To: "run"}},
+		},
+	}
+}
+
+var snapshotsID = func() func(uint64) uint64 {
+	var id uint64
+	return func(nsID uint64) uint64 { return id }
+}()

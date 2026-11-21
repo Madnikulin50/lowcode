@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/PaesslerAG/gval"
+	"github.com/PaesslerAG/jsonpath"
 )
 
 type (
@@ -43,6 +44,7 @@ func Init(ext ...func() []gval.Language) {
 	for _, e := range ext {
 		aux = append(aux, e()...)
 	}
+	aux = append(aux, jsonpath.Language())
 
 	initialized = true
 	parser = gval.Full(aux...)

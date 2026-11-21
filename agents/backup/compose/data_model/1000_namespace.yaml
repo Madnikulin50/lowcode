@@ -1,0 +1,7 @@
+namespaces:
+  backup:
+    name: Backup
+    enabled: true
+    meta:
+      subtitle: Резервное копирование во внутренний MinIO
+      description: SMB, локальные папки, базы данных и внешний S3.

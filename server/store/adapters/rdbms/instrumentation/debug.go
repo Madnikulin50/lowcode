@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
 	"github.com/ngrok/sqlmw"
 	"go.uber.org/zap"
 )

@@ -1,0 +1,26 @@
+namespace: backup
+pages:
+  dashboard:
+    title: Дашборд
+    handle: dashboard
+  sources:
+    title: Источники
+    handle: sources
+  policies:
+    title: Политики
+    handle: policies
+  jobs:
+    title: Джобы
+    handle: jobs
+  snapshots:
+    title: Снапшоты
+    handle: snapshots
+  restores:
+    title: Восстановления
+    handle: restores
+  agents:
+    title: Агенты
+    handle: agents
+  credentials:
+    title: Секреты
+    handle: credentials

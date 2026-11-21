@@ -3,8 +3,8 @@ package rdbms
 import (
 	"context"
 
-	systemType "github.com/cortezaproject/corteza/server/system/types"
 	"github.com/doug-martin/goqu/v9"
+	systemType "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 func (s Store) RoleMetrics(ctx context.Context) (m *systemType.RoleMetrics, err error) {

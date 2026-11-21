@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	automationTypes "github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/compose/types"
+	automationTypes "github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/compose/types"
 )
 
 type (
@@ -94,6 +94,41 @@ func NewComposePage(pg *types.Page, nsRef, modRef, parentRef *Ref) *ComposePage 
 				fOpts, _ := (feed["options"]).(map[string]interface{})
 
 				ref = r.pbCalendar(fOpts)
+				if ref != nil {
+					r.addRef(ref)
+					r.BlockRefs[i] = append(r.BlockRefs[i], ref)
+					r.ModRefs = append(r.ModRefs, ref)
+				}
+			}
+
+		case "RecordGraph":
+			mm, _ := b.Options["excludeModules"].([]interface{})
+			for _, m := range mm {
+				id, _ := m.(string)
+				ref = r.pbModuleID(id)
+				if ref != nil {
+					r.addRef(ref)
+					r.BlockRefs[i] = append(r.BlockRefs[i], ref)
+					r.ModRefs = append(r.ModRefs, ref)
+				}
+			}
+
+			ll, _ := b.Options["labels"].([]interface{})
+			for _, l := range ll {
+				lopts, _ := l.(map[string]interface{})
+				ref = r.pbRelatedRecords(lopts)
+				if ref != nil {
+					r.addRef(ref)
+					r.BlockRefs[i] = append(r.BlockRefs[i], ref)
+					r.ModRefs = append(r.ModRefs, ref)
+				}
+			}
+
+		case "RelatedRecords":
+			rr, _ := b.Options["relations"].([]interface{})
+			for _, rel := range rr {
+				ropts, _ := rel.(map[string]interface{})
+				ref = r.pbRelatedRecords(ropts)
 				if ref != nil {
 					r.addRef(ref)
 					r.BlockRefs[i] = append(r.BlockRefs[i], ref)
@@ -319,6 +354,25 @@ func (r *ComposePage) pbChart(opt map[string]interface{}) (out *Ref) {
 	}
 
 	return MakeRef(types.ChartResourceType, MakeIdentifiers(id)).Constraint(r.RefNs)
+}
+
+// pbModuleID: a module named by an id or a handle, as a list option holds it
+func (r *ComposePage) pbModuleID(id string) (out *Ref) {
+	if id == "" || id == "0" {
+		return
+	}
+
+	return MakeRef(types.ModuleResourceType, MakeIdentifiers(id)).Constraint(r.RefNs)
+}
+
+// pbRelatedRecords: a relation of a RelatedRecords block refers to a module
+func (r *ComposePage) pbRelatedRecords(opt map[string]interface{}) (out *Ref) {
+	id := r.optString(opt, "module", "moduleID")
+	if id == "" || id == "0" {
+		return
+	}
+
+	return MakeRef(types.ModuleResourceType, MakeIdentifiers(id)).Constraint(r.RefNs)
 }
 
 func (r *ComposePage) pbCalendar(opt map[string]interface{}) (out *Ref) {

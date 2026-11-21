@@ -1,0 +1,12 @@
+from: От
+to: До
+resource: Ресурс
+action: Действие
+actor: Пользователь
+search: Поиск
+searchQuery: Поисковый запрос
+incScriptsWithErrors: Включая скрипты с ошибками ({{count}})
+incScriptsWithTriggers: Включая скрипты с триггерами ({{count}})
+incScriptsWithIterator: Включая скрипты с итератором ({{count}})
+incScriptsWithSecurity: Включая скрипты с безопасностью ({{count}})
+absoluteTime: Абсолютное время

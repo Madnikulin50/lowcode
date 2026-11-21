@@ -3,12 +3,12 @@ package rest
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/system/rest/request"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/system/rest/request"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
@@ -80,8 +80,8 @@ func (ctrl *AuthClient) List(ctx context.Context, r *request.AuthClientList) (in
 		return nil, err
 	}
 
-	set, filter, err := ctrl.authClient.Search(ctx, f)
-	return ctrl.makeFilterPayload(ctx, set, filter, err)
+	set, flt, err := ctrl.authClient.Search(ctx, f)
+	return ctrl.makeFilterPayload(ctx, set, flt, err)
 }
 
 func (ctrl *AuthClient) Create(ctx context.Context, r *request.AuthClientCreate) (interface{}, error) {

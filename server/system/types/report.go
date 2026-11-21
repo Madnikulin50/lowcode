@@ -5,12 +5,13 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 	"github.com/spf13/cast"
 )
 
@@ -87,6 +88,7 @@ type (
 		Source     string                 `json:"source"`
 		Definition map[string]interface{} `json:"definition"`
 		Filter     *ReportFilterExpr      `json:"filter,omitempty"`
+
 	}
 
 	ReportStepJoin struct {
@@ -314,4 +316,54 @@ func (step *ReportStep) Name() string {
 		// this should never happen
 		panic(fmt.Errorf("unknown step type: %v", step.Kind))
 	}
+}
+
+func (step *ReportStep) ResetName(name string) {
+	switch {
+	case step.Load != nil:
+		step.Load.Name = name
+
+	case step.Aggregate != nil:
+
+		step.Aggregate.Name = name
+	case step.Join != nil:
+		step.Join.Name = name
+	case step.Link != nil:
+		step.Link.Name = name
+
+	default:
+		// this should never happen
+		panic(fmt.Errorf("unknown step type: %v", step.Kind))
+	}
+}
+
+func (step *ReportStep) SetSourcePrefix(prefix string) {
+	switch {
+	case step.Load != nil:
+		step.Load.Source = prefix + "/" + step.Load.Source
+
+	case step.Aggregate != nil:
+
+		step.Aggregate.Source = prefix + "/" + step.Aggregate.Source
+	case step.Join != nil:
+		step.Join.LocalSource = prefix + "/" + step.Join.LocalSource
+		step.Join.ForeignSource = prefix + "/" + step.Join.ForeignSource
+	case step.Link != nil:
+		step.Link.LocalSource = prefix + "/" + step.Link.LocalSource
+		step.Link.ForeignSource = prefix + "/" + step.Link.ForeignSource
+
+	default:
+		// this should never happen
+		panic(fmt.Errorf("unknown step type: %v", step.Kind))
+	}
+}
+
+func (r *ReportStep) SetValue(name string, pos uint, value any) (err error) {
+	switch name {
+	case "moduleID", "ModuleID":
+		r.Load.Definition["moduleID"] = strconv.FormatUint(cast.ToUint64(value), 10)
+	case "namespaceID", "NamespaceID":
+		r.Load.Definition["namespaceID"] = strconv.FormatUint(cast.ToUint64(value), 10)
+	}
+	return
 }

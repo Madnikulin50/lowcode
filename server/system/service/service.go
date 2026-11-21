@@ -3,28 +3,31 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/bep/godartsass/v2"
 
-	automationService "github.com/cortezaproject/corteza/server/automation/service"
-	discoveryService "github.com/cortezaproject/corteza/server/discovery/service"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/healthcheck"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/label"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/objstore"
-	"github.com/cortezaproject/corteza/server/pkg/objstore/minio"
-	"github.com/cortezaproject/corteza/server/pkg/objstore/plain"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/pkg/valuestore"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/automation"
-	"github.com/cortezaproject/corteza/server/system/types"
+	automationService "github.com/madnikulin50/lowcode/server/automation/service"
+	discoveryService "github.com/madnikulin50/lowcode/server/discovery/service"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/aiagent"
+	"github.com/madnikulin50/lowcode/server/pkg/chat"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/healthcheck"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/label"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore/minio"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore/plain"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/pkg/valuestore"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/automation"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 )
 
@@ -85,7 +88,7 @@ var (
 	DefaultCredentials         *credentials
 	DefaultDalConnection       *dalConnection
 	DefaultDalSensitivityLevel *dalSensitivityLevel
-	DefaultDalSchemaAlteration *dalSchemaAlteration
+	DefaultDalSchemaAlteration *DalSchemaAlteration
 	DefaultRole                *role
 	DefaultUserGroup           *userGroup
 	DefaultApplication         *application
@@ -162,15 +165,18 @@ func Initialize(ctx context.Context, log *zap.Logger, s store.Storer, ws websock
 	sassTranspiler := dartSassTranspiler(log)
 
 	DefaultAccessControl = AccessControl(s)
-
+	CurrentSettings.Auth.Internal.Enabled = true
+	CurrentSettings.Auth.Internal.Signup.Enabled = true
+	CurrentSettings.AI.Enabled = true
 	DefaultSettings = Settings(ctx, DefaultStore, DefaultLogger, DefaultAccessControl, DefaultActionlog, CurrentSettings, c.Webapps)
+	wireChatAIConfig()
 	DefaultStylesheet = Stylesheet(sassTranspiler, log)
 
 	DefaultDalConnection = Connection(ctx, dal.Service(), c.DB)
 
 	DefaultDalSensitivityLevel = SensitivityLevel(ctx, dal.Service())
 
-	DefaultDalSchemaAlteration = DalSchemaAlteration(dal.Service())
+	DefaultDalSchemaAlteration = NewDalSchemaAlteration(dal.Service())
 
 	if DefaultObjectStore == nil {
 		var (
@@ -420,4 +426,102 @@ func dartSassTranspiler(log *zap.Logger) *godartsass.Transpiler {
 	}
 
 	return transpiler
+}
+
+func wireChatAIConfig() {
+	chat.SetConfigProvider(func() chat.Config {
+		s := CurrentSettings.AI
+		cfg := chat.Config{
+			Enabled:   s.Enabled,
+			OllamaURL: s.OllamaURL,
+			Roles: chat.RoleModels{
+				ComposeChat:    s.Roles.ComposeChat,
+				MCPAgent:       s.Roles.MCPAgent,
+				AutomationChat: s.Roles.AutomationChat,
+				RulesgoAI:      s.Roles.RulesgoAI,
+			},
+		}
+		if len(s.Catalog) > 0 {
+			cfg.Catalog = make([]chat.CatalogEntry, 0, len(s.Catalog))
+			for _, e := range s.Catalog {
+				cfg.Catalog = append(cfg.Catalog, chat.CatalogEntry{
+					Name:    e.Name,
+					Enabled: e.Enabled,
+					Label:   e.Label,
+					Note:    e.Note,
+				})
+			}
+		}
+		return cfg
+	})
+
+	aiagent.SetExtrasProvider(func() []aiagent.AgentSpec {
+		return agentSpecsFromSettings(CurrentSettings.AI.Agents)
+	})
+	aiagent.SetConnectorsProvider(func() []aiagent.Connector {
+		return toolkitConnectorsFromSettings(CurrentSettings.AI.Toolkits)
+	})
+	if DefaultSettings != nil {
+		DefaultSettings.Register("ai.", func(ctx context.Context, current interface{}, _ types.SettingValueSet) {
+			if cat := aiagent.DefaultCatalog(); cat != nil {
+				cat.RefreshRemotesNow(ctx)
+			}
+			if reg := aiagent.DefaultRegistry(); reg != nil {
+				reg.Reload(nil)
+			}
+		})
+	}
+}
+
+func toolkitConnectorsFromSettings(entries []types.AIToolkitEntry) []aiagent.Connector {
+	if len(entries) == 0 {
+		return nil
+	}
+	out := make([]aiagent.Connector, 0, len(entries))
+	for _, e := range entries {
+		c := aiagent.Connector{
+			Handle: strings.TrimSpace(e.Handle),
+			URL:    strings.TrimSpace(e.URL),
+			Token:  strings.TrimSpace(e.Token),
+			Source: "settings",
+		}
+		if e.Enabled != nil {
+			v := *e.Enabled
+			c.Enabled = &v
+		}
+		if c.Handle == "" || aiagent.ReservedKitName(c.Handle) {
+			continue
+		}
+		out = append(out, c)
+	}
+	return out
+}
+
+func agentSpecsFromSettings(entries []types.AIAgentEntry) []aiagent.AgentSpec {
+	if len(entries) == 0 {
+		return nil
+	}
+	out := make([]aiagent.AgentSpec, 0, len(entries))
+	for _, e := range entries {
+		s := aiagent.AgentSpec{
+			Handle:      strings.TrimSpace(e.Handle),
+			Description: e.Description,
+			Prompt:      e.Prompt,
+			Model:       e.Model,
+			Toolkits:    append([]string(nil), e.Toolkits...),
+			Skills:      append([]string(nil), e.Skills...),
+			MaxSteps:    e.MaxSteps,
+			Confirm:     e.Confirm,
+			Source:      "settings",
+		}
+		if e.Enabled != nil {
+			v := *e.Enabled
+			s.Enabled = &v
+		}
+		if s.Handle == "" {
+			continue
+		}
+		out = append(out, s)
+	}
+	return out
 }

@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/wfexec"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/wfexec"
 )
 
 type (
@@ -24,29 +24,29 @@ type (
 
 	// Instance of single workflow execution
 	Session struct {
-		ID         uint64 `json:"sessionID,string"`
-		WorkflowID uint64 `json:"workflowID,string"`
+		ID         uint64 `json:"sessionID,string" schema:"col=id,dal=id,unique"`
+		WorkflowID uint64 `json:"workflowID,string" schema:"col=workflow_id,store=rel_workflow,dal=ref:corteza::automation:workflow,sortable"`
 
-		Status SessionStatus `json:"status,string"`
+		Status SessionStatus `json:"status,string" schema:"col=status,dal=number:default0,sortable,omit"`
 
-		EventType    string `json:"eventType"`
-		ResourceType string `json:"resourceType"`
+		EventType    string `json:"eventType" schema:"col=event_type,dal=text:32,sortable"`
+		ResourceType string `json:"resourceType" schema:"col=resource_type,dal=text:64,sortable"`
 
-		Input  *expr.Vars `json:"input"`
-		Output *expr.Vars `json:"output"`
+		Input  *expr.Vars `json:"input" schema:"col=input,dal=json:empty,omit"`
+		Output *expr.Vars `json:"output" schema:"col=output,dal=json:empty,omit"`
 
 		// Stacktrace that gets stored (if/when configured)
-		Stacktrace Stacktrace `json:"stacktrace"`
+		Stacktrace Stacktrace `json:"stacktrace" schema:"col=stacktrace,dal=json:empty,omit"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		CreatedBy uint64     `json:"createdBy,string"`
-		PurgeAt   *time.Time `json:"purgeAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		CreatedBy uint64     `json:"createdBy,string" schema:"col=created_by,dal=userref"`
+		PurgeAt   *time.Time `json:"purgeAt,omitempty" schema:"col=purge_at,dal=timestamp:nil,sortable"`
 
 		// here we join suspended & prompted state;
 		// we treat both states as suspended
-		SuspendedAt *time.Time `json:"suspendedAt,omitempty"`
-		CompletedAt *time.Time `json:"completedAt,omitempty"`
-		Error       string     `json:"error,omitempty"`
+		SuspendedAt *time.Time `json:"suspendedAt,omitempty" schema:"col=suspended_at,dal=timestamp:nil,sortable"`
+		CompletedAt *time.Time `json:"completedAt,omitempty" schema:"col=completed_at,dal=timestamp:nil,sortable"`
+		Error       string     `json:"error,omitempty" schema:"col=error,dal"`
 
 		session *wfexec.Session
 
@@ -153,6 +153,15 @@ func (s *Session) PendingPrompts(ownerId uint64) []*wfexec.PendingPrompt {
 	return s.session.UserPendingPrompts(ownerId)
 }
 
+// AllPendingPrompts returns every pending prompt on this session regardless
+// of owner - used by system-level resolvers (e.g. message-correlation, see
+// automation/service/correlation.go) that aren't acting as a specific end
+// user, unlike PendingPrompts which is scoped to one owner for the
+// interactive "my tasks" case.
+func (s *Session) AllPendingPrompts() []*wfexec.PendingPrompt {
+	return s.session.AllPendingPrompts()
+}
+
 func (s *Session) GC() bool {
 	s.l.RLock()
 	defer s.l.RUnlock()
@@ -164,14 +173,20 @@ func (s *Session) GC() bool {
 
 // WaitResults wait blocks until workflow session is completed or fails (or context is canceled) and returns resuts
 func (s *Session) WaitResults(ctx context.Context) (*expr.Vars, wfexec.SessionStatus, Stacktrace, error) {
-	s.l.RLock()
-	defer s.l.RUnlock()
+	// Do not hold the lock while waiting: the session's state change handler
+	// needs it to store the stacktrace, and the wait ends only when the
+	// session does.
+	err := s.session.WaitUntil(ctx, wfexec.SessionFailed, wfexec.SessionCompleted)
 
-	if err := s.session.WaitUntil(ctx, wfexec.SessionFailed, wfexec.SessionCompleted); err != nil {
-		return nil, -1, s.Stacktrace, err
+	s.l.RLock()
+	stacktrace := s.Stacktrace
+	s.l.RUnlock()
+
+	if err != nil {
+		return nil, -1, stacktrace, err
 	}
 
-	return s.session.Result(), s.session.Status(), s.Stacktrace, nil
+	return s.session.Result(), s.session.Status(), stacktrace, nil
 }
 
 func (s *Session) Apply(ssp SessionStartParams) {
@@ -261,8 +276,8 @@ func (s *Session) hasDuplicate(stepID uint64) bool {
 }
 
 func (s *Session) CopyRuntimeStacktrace() {
-	s.l.RLock()
-	defer s.l.RUnlock()
+	s.l.Lock()
+	defer s.l.Unlock()
 
 	if s.Stacktrace != nil || s.Error != "" {
 		// Save stacktrace when we know we're tracing workflows OR whenever there is an error...

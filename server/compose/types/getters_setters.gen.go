@@ -1,13 +1,13 @@
 package types
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/cast2"
+	"github.com/madnikulin50/lowcode/server/pkg/cast2"
 )
 
 func (r Attachment) GetID() uint64 { return r.ID }
@@ -38,6 +38,10 @@ func (r *Attachment) GetValue(name string, pos uint) (any, error) {
 		return r.UpdatedAt, nil
 	case "url", "Url":
 		return r.Url, nil
+	case "version", "Version":
+		return r.Version, nil
+	case "versionGroup", "VersionGroup":
+		return r.VersionGroup, nil
 
 	}
 	return nil, nil
@@ -69,6 +73,10 @@ func (r *Attachment) SetValue(name string, pos uint, value any) (err error) {
 		return cast2.TimePtr(value, &r.UpdatedAt)
 	case "url", "Url":
 		return cast2.String(value, &r.Url)
+	case "version", "Version":
+		return cast2.Int(value, &r.Version)
+	case "versionGroup", "VersionGroup":
+		return cast2.Uint64(value, &r.VersionGroup)
 
 	}
 	return nil
@@ -126,7 +134,6 @@ func (r *Chart) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r Module) GetID() uint64 { return r.ID }
@@ -177,8 +184,10 @@ func (r *Module) SetValue(name string, pos uint, value any) (err error) {
 	case "updatedAt", "UpdatedAt":
 		return cast2.TimePtr(value, &r.UpdatedAt)
 
+	default:
+		return r.setValue(name, pos, value)
+
 	}
-	return nil
 }
 
 func (r ModuleField) GetID() uint64 { return r.ID }
@@ -249,7 +258,6 @@ func (r *ModuleField) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r Namespace) GetID() uint64 { return r.ID }
@@ -326,6 +334,8 @@ func (r *Page) GetValue(name string, pos uint) (any, error) {
 		return r.ModuleID, nil
 	case "namespaceID", "NamespaceID":
 		return r.NamespaceID, nil
+	case "prompt", "Prompt":
+		return r.Prompt, nil
 	case "selfID", "SelfID":
 		return r.SelfID, nil
 	case "title", "Title":
@@ -361,6 +371,8 @@ func (r *Page) SetValue(name string, pos uint, value any) (err error) {
 		return cast2.Uint64(value, &r.ModuleID)
 	case "namespaceID", "NamespaceID":
 		return cast2.Uint64(value, &r.NamespaceID)
+	case "prompt", "Prompt":
+		return cast2.String(value, &r.Prompt)
 	case "selfID", "SelfID":
 		return cast2.Uint64(value, &r.SelfID)
 	case "title", "Title":
@@ -376,7 +388,6 @@ func (r *Page) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r PageLayout) GetID() uint64 { return r.ID }
@@ -412,7 +423,6 @@ func (r *PageLayout) GetValue(name string, pos uint) (any, error) {
 		return r.getValue(name, pos)
 
 	}
-	return nil, nil
 }
 
 func (r *PageLayout) SetValue(name string, pos uint, value any) (err error) {
@@ -446,7 +456,6 @@ func (r *PageLayout) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }
 
 func (r Record) GetID() uint64 { return r.ID }
@@ -486,7 +495,6 @@ func (r *Record) GetValue(name string, pos uint) (any, error) {
 		return r.getValue(name, pos)
 
 	}
-	return nil, nil
 }
 
 func (r *Record) SetValue(name string, pos uint, value any) (err error) {
@@ -524,5 +532,4 @@ func (r *Record) SetValue(name string, pos uint, value any) (err error) {
 		return r.setValue(name, pos, value)
 
 	}
-	return nil
 }

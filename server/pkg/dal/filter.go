@@ -3,8 +3,8 @@ package dal
 import (
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 )
 
 type (
@@ -34,6 +34,10 @@ func (f internalFilter) ExpressionParsed() *ql.ASTNode             { return f.ex
 func (f internalFilter) OrderBy() filter.SortExprSet               { return f.orderBy }
 func (f internalFilter) Limit() uint                               { return f.limit }
 func (f internalFilter) Cursor() *filter.PagingCursor              { return f.cursor }
+
+func (f internalFilter) IsEmpty() bool {
+	return f.limit == 0 && f.cursor == nil && f.orderBy == nil && f.expParsed == nil && f.expression == "" && len(f.stateConstraints) == 0 && len(f.metaConstraints) == 0 && len(f.constraints) == 0
+}
 
 // toInternalFilter converts filter.Filter to internalFilter for easier manipulation
 //

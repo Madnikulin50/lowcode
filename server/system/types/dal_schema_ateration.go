@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 )
 
 type (
@@ -45,6 +45,8 @@ type (
 		AttributeReEncode *dal.AttributeReEncode `json:"attributeReEncode,omitempty"`
 		ModelAdd          *dal.ModelAdd          `json:"modelAdd,omitempty"`
 		ModelDelete       *dal.ModelDelete       `json:"modelDelete,omitempty"`
+		IndexAdd          *dal.IndexAdd          `json:"indexAdd,omitempty"`
+		IndexDelete       *dal.IndexDelete       `json:"indexDelete,omitempty"`
 	}
 
 	DalSchemaAlterationFilter struct {

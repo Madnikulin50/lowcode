@@ -1,0 +1,544 @@
+# Ресурсы и события
+
+## compose
+
+### Events
+
+.On events:
+- `on('manual')`
+- `on('interval')`
+- `on('timestamp')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## compose:module
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+
+.On events:
+- `on('manual')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `module`
+| `*types.Module`
+| yes
+
+| `oldModule`
+| `*types.Module`
+| no
+
+| `namespace`
+| `*types.Namespace`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## compose:namespace
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+
+.On events:
+- `on('manual')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `namespace`
+| `*types.Namespace`
+| yes
+
+| `oldNamespace`
+| `*types.Namespace`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## compose:page
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+
+.On events:
+- `on('manual')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `page`
+| `*types.Page`
+| yes
+
+| `oldPage`
+| `*types.Page`
+| no
+
+| `namespace`
+| `*types.Namespace`
+| no
+
+| `selected`
+| `[]interface{}`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## compose:page-layout
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+
+.On events:
+- `on('manual')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `pageLayout`
+| `*types.PageLayout`
+| yes
+
+| `oldPageLayout`
+| `*types.PageLayout`
+| no
+
+| `namespace`
+| `*types.Namespace`
+| no
+
+| `selected`
+| `[]interface{}`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## compose:record
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `before('undelete')`
+- `before('organize')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+- `after('undelete')`
+- `after('organize')`
+
+.On events:
+- `on('manual')`
+- `on('iteration')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `record`
+| `*types.Record`
+| yes
+
+| `oldRecord`
+| `*types.Record`
+| no
+
+| `module`
+| `*types.Module`
+| no
+
+| `namespace`
+| `*types.Namespace`
+| no
+
+| `recordValueErrors`
+| `*types.RecordValueErrorSet`
+| yes
+
+| `selected`
+| `[]interface{}`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system
+
+### Events
+
+.On events:
+- `on('manual')`
+- `on('interval')`
+- `on('timestamp')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:application
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+
+.On events:
+- `on('manual')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `application`
+| `*types.Application`
+| yes
+
+| `oldApplication`
+| `*types.Application`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:auth
+
+### Events
+.Before/after events:
+- `before('login')`
+- `before('signup')`
+- `after('login')`
+- `after('signup')`
+
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `user`
+| `*types.User`
+| yes
+
+| `provider`
+| `*types.AuthProvider`
+| yes
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:auth-client
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+
+.On events:
+- `on('manual')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `authClient`
+| `*types.AuthClient`
+| yes
+
+| `oldAuthClient`
+| `*types.AuthClient`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:data-privacy-request
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+
+.On events:
+- `on('manual')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `dataPrivacyRequest`
+| `*types.DataPrivacyRequest`
+| yes
+
+| `oldDataPrivacyRequest`
+| `*types.DataPrivacyRequest`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:mail
+
+### Events
+
+.On events:
+- `on('manual')`
+- `on('receive')`
+- `on('send')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `message`
+| `*types.MailMessage`
+| yes
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:queue
+
+### Events
+
+.On events:
+- `on('message')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `payload`
+| `*types.QueueMessage`
+| yes
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:role
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+
+.On events:
+- `on('manual')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `role`
+| `*types.Role`
+| yes
+
+| `oldRole`
+| `*types.Role`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:role:member
+
+### Events
+.Before/after events:
+- `before('add')`
+- `before('remove')`
+- `after('add')`
+- `after('remove')`
+
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `user`
+| `*types.User`
+| yes
+
+| `role`
+| `*types.Role`
+| yes
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:sink
+
+### Events
+
+.On events:
+- `on('request')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `response`
+| `*types.SinkResponse`
+| yes
+
+| `request`
+| `*types.SinkRequest`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===
+
+## system:user
+
+### Events
+.Before/after events:
+- `before('create')`
+- `before('update')`
+- `before('delete')`
+- `before('suspend')`
+- `after('create')`
+- `after('update')`
+- `after('delete')`
+- `after('suspend')`
+
+.On events:
+- `on('manual')`
+
+### Exec arguments
+
+.Argument properties:
+[%header, cols=3*]
+|===
+|Name|Type|Mutable
+| `user`
+| `*types.User`
+| yes
+
+| `oldUser`
+| `*types.User`
+| no
+
+| `invoker`
+| `auth.Identifiable`
+| yes
+|===

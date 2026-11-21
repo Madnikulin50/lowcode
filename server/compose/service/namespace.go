@@ -3,27 +3,30 @@ package service
 import (
 	"archive/zip"
 	"context"
+	"io"
 	"mime/multipart"
+	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
-	automationService "github.com/cortezaproject/corteza/server/automation/service"
-	"github.com/cortezaproject/corteza/server/compose/service/event"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
-	"github.com/cortezaproject/corteza/server/pkg/label"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/store"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
 	"github.com/gabriel-vasile/mimetype"
+	automationService "github.com/madnikulin50/lowcode/server/automation/service"
+	"github.com/madnikulin50/lowcode/server/compose/service/event"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
+	"github.com/madnikulin50/lowcode/server/pkg/label"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
@@ -51,6 +54,10 @@ type (
 		UpdatedAt time.Time `json:"updatedAt"`
 
 		Nodes envoyx.NodeSet `json:"-"`
+		Store *zip.Reader    `json:"-"`
+
+		archive     *zip.ReadCloser `json:"-"`
+		archivePath string          `json:"-"`
 	}
 
 	namespaceAccessController interface {
@@ -74,7 +81,7 @@ type (
 		Update(ctx context.Context, namespace *types.Namespace) (*types.Namespace, error)
 		Clone(ctx context.Context, namespaceID uint64, dup *types.Namespace, decoder func() (envoyx.NodeSet, error)) (ns *types.Namespace, err error)
 		ImportInit(ctx context.Context, f multipart.File, size int64) (namespaceImportSession, error)
-		ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace) (ns *types.Namespace, err error)
+		ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace, connectionID uint64) (ns *types.Namespace, archive *zip.Reader, cleanup func(), err error)
 		DeleteByID(ctx context.Context, namespaceID uint64) error
 	}
 
@@ -312,7 +319,7 @@ func (svc namespace) Clone(ctx context.Context, namespaceID uint64, dup *types.N
 			}
 
 			aProps.setNamespace(dup)
-			dup, err = svc.envoyRun(ctx, s, nn, targetNs, dup)
+			dup, err = svc.envoyRun(ctx, s, nn, targetNs, dup, 0)
 			if err != nil {
 				return err
 			}
@@ -372,30 +379,59 @@ func (svc namespace) ImportInit(ctx context.Context, f multipart.File, size int6
 			return err
 		}
 
-		// un-archive
-		archive, err := zip.NewReader(f, size)
+		tmp, err := os.CreateTemp("", "ns-import-*.zip")
 		if err != nil {
 			return err
 		}
+		tmpPath := tmp.Name()
+		cleanupTmp := func() {
+			_ = tmp.Close()
+			_ = os.Remove(tmpPath)
+		}
+		if _, err = io.Copy(tmp, f); err != nil {
+			cleanupTmp()
+			return err
+		}
+		if err = tmp.Close(); err != nil {
+			_ = os.Remove(tmpPath)
+			return err
+		}
+
+		archive, err := zip.OpenReader(tmpPath)
+		if err != nil {
+			_ = os.Remove(tmpPath)
+			return err
+		}
+		keepArchive := false
+		defer func() {
+			if !keepArchive {
+				_ = archive.Close()
+				_ = os.Remove(tmpPath)
+			}
+		}()
 
 		for _, zf := range archive.File {
 			if zf.FileInfo().IsDir() {
 				continue
 			}
+			name := zf.FileHeader.Name
+			if !strings.HasSuffix(name, ".yaml") {
+				continue
+			}
 
-			f, err := zf.Open()
+			rf, err := zf.Open()
 			if err != nil {
 				return err
 			}
-			defer f.Close()
 
 			nn, _, err = esvc.Decode(ctx, envoyx.DecodeParams{
 				Type: envoyx.DecodeTypeIO,
 				Params: map[string]any{
-					"reader": f,
+					"reader": rf,
 					"mime":   "text/yaml",
 				},
 			})
+			_ = rf.Close()
 			if err != nil {
 				return err
 			}
@@ -408,8 +444,11 @@ func (svc namespace) ImportInit(ctx context.Context, f multipart.File, size int6
 			SessionID: nextID(),
 			UserID:    auth.GetIdentityFromContext(ctx).Identity(),
 
-			CreatedAt: *now(),
-			Nodes:     nodes,
+			CreatedAt:   *now(),
+			Nodes:       nodes,
+			Store:       &archive.Reader,
+			archive:     archive,
+			archivePath: tmpPath,
 		}
 
 		// find the ns node
@@ -427,6 +466,7 @@ func (svc namespace) ImportInit(ctx context.Context, f multipart.File, size int6
 		session.Name = ns.Name
 		session.Slug = ns.Slug
 		namespaceSessionStore[session.SessionID] = session
+		keepArchive = true
 
 		aProps.setNamespace(ns)
 		return nil
@@ -435,10 +475,21 @@ func (svc namespace) ImportInit(ctx context.Context, f multipart.File, size int6
 	return session, svc.recordAction(ctx, aProps, NamespaceActionImportInit, err)
 }
 
-func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace) (ns *types.Namespace, err error) {
+func closeImportSession(session namespaceImportSession) {
+	if session.archive != nil {
+		_ = session.archive.Close()
+	}
+	if session.archivePath != "" {
+		_ = os.Remove(session.archivePath)
+	}
+}
+
+func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types.Namespace, connectionID uint64) (ns *types.Namespace, dataStore *zip.Reader, cleanup func(), err error) {
 	var (
 		aProps = &namespaceActionProps{namespace: dup}
 	)
+
+	cleanup = func() {}
 
 	err = func() error {
 		var (
@@ -474,13 +525,17 @@ func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types
 			if session, ok = namespaceSessionStore[sessionID]; !ok {
 				return NamespaceErrImportSessionNotFound()
 			}
-			defer func() {
-				delete(namespaceSessionStore, sessionID)
-			}()
+			delete(namespaceSessionStore, sessionID)
+			cleanup = func() {
+				closeImportSession(session)
+			}
 
 			aProps.setNamespace(dup)
 
-			newNS, err = svc.envoyRun(ctx, s, session.Nodes, &types.Namespace{ID: session.NamespaceID, Slug: session.Slug, Name: session.Name}, dup)
+			newNS, err = svc.envoyRun(ctx,
+				s,
+				session.Nodes,
+				&types.Namespace{ID: session.NamespaceID, Slug: session.Slug, Name: session.Name}, dup, connectionID)
 			if err != nil {
 				return err
 			}
@@ -491,9 +546,15 @@ func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types
 			}
 
 			aProps.setNamespace(newNS)
+
+			if session.Store != nil {
+				dataStore = session.Store
+			}
 			return nil
 		})
 		if err != nil {
+			cleanup()
+			cleanup = func() {}
 			return err
 		}
 
@@ -502,7 +563,7 @@ func (svc namespace) ImportRun(ctx context.Context, sessionID uint64, dup *types
 		return err
 	}()
 
-	return dup, svc.recordAction(ctx, aProps, NamespaceActionImportRun, err)
+	return dup, dataStore, cleanup, svc.recordAction(ctx, aProps, NamespaceActionImportRun, err)
 }
 
 func (svc namespace) DeleteByID(ctx context.Context, namespaceID uint64) error {
@@ -754,7 +815,9 @@ func (svc namespace) canImport(ctx context.Context) error {
 	return nil
 }
 
-func (svc namespace) envoyRun(ctx context.Context, s store.Storer, nodes envoyx.NodeSet, oldNS, newNS *types.Namespace) (ns *types.Namespace, err error) {
+func (svc namespace) envoyRun(ctx context.Context, s store.Storer, nodes envoyx.NodeSet,
+	oldNS, newNS *types.Namespace,
+	connectionID uint64) (ns *types.Namespace, err error) {
 	// Get the NS node
 	oldRef := envoyx.Ref{
 		ResourceType: types.NamespaceResourceType,
@@ -781,6 +844,13 @@ func (svc namespace) envoyRun(ctx context.Context, s store.Storer, nodes envoyx.
 
 	// - all the child refs
 	for _, n := range nodes {
+		if connectionID > 0 && n.ResourceType == types.ModuleResourceType {
+			m, ok := n.Resource.(*types.Module)
+			if !ok {
+				continue
+			}
+			m.Config.DAL.ConnectionID = connectionID
+		}
 		nr := make(map[string]envoyx.Ref)
 		for k, r := range n.References {
 			if r.ResourceType == types.NamespaceResourceType {

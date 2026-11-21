@@ -1,4 +1,6 @@
 types:
+  ResourceVersion: {}
+  RecordDraft: {}
   Namespace:
     labelResourceType: compose:namespace
   Attachment: {}

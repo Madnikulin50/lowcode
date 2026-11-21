@@ -1,0 +1,35 @@
+title: Документация
+newMarkdown: Новый markdown
+newPdf: Загрузить PDF
+empty: Документов пока нет
+hidden: Скрыт
+edit: Редактировать
+delete: Удалить
+deleteConfirm: Удалить этот документ?
+save: Сохранить
+cancel: Отмена
+preview: Просмотр
+noFile: PDF ещё не загружен
+toc: Оглавление
+previous: Назад
+next: Дальше
+add: Добавить
+searchPlaceholder: Поиск по названию
+kind:
+  markdown: Markdown
+  pdf: PDF
+columns:
+  title: Название
+  kind: Тип
+  handle: Идентификатор
+  visible: В оглавлении
+notification:
+  deleted: Документ удалён
+  deleteFailed: Не удалось удалить документ
+  listFailed: Не удалось загрузить документы
+field:
+  title: Название
+  handle: Идентификатор
+  visible: Показывать в сайдбаре
+  body: Markdown
+  file: PDF-файл

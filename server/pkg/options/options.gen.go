@@ -1,15 +1,16 @@
 package options
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/rand"
-	"github.com/cortezaproject/corteza/server/pkg/version"
 	"time"
+
+	"github.com/madnikulin50/lowcode/server/pkg/rand"
+	"github.com/madnikulin50/lowcode/server/pkg/version"
 )
 
 type (
@@ -195,7 +196,15 @@ type (
 	}
 
 	ObjectStoreOpt struct {
-		Path            string `env:"STORAGE_PATH"`
+		Path string `env:"STORAGE_PATH"`
+		// Driver selects the default attachment storage backend when a
+		// module field (or system default setting) does not specify its
+		// own: "plain" (disk, default), "minio", or "db" (store file
+		// content directly in the database).
+		Driver string `env:"STORAGE_DRIVER"`
+		// DSN for the "db" driver — reuses the main app DB connection
+		// string, no separate configuration needed.
+		DSN             string `env:"DB_DSN"`
 		MinioEndpoint   string `env:"MINIO_ENDPOINT"`
 		MinioSecure     bool   `env:"MINIO_SECURE"`
 		MinioAccessKey  string `env:"MINIO_ACCESS_KEY"`
@@ -278,6 +287,14 @@ type (
 
 	WebappOpt struct {
 		ScssDirPath string `env:"WEBAPP_SCSS_DIR_PATH"`
+	}
+
+	ImageSearchOpt struct {
+		Enabled bool `env:"IMAGE_SEARCH_ENABLED"`
+	}
+
+	CacheOpt struct {
+		ReportTTL time.Duration `env:"CACHE_REPORT_TTL"`
 	}
 )
 
@@ -668,7 +685,7 @@ func Eventbus() (o *EventbusOpt) {
 func Federation() (o *FederationOpt) {
 	o = &FederationOpt{
 		Label:                    "federated",
-		Host:                     "local.cortezaproject.org",
+		Host:                     "local.lowcode.tld",
 		StructureMonitorInterval: time.Minute * 2,
 		StructurePageSize:        1,
 		DataMonitorInterval:      time.Minute,
@@ -1094,7 +1111,7 @@ func Discovery() (o *DiscoveryOpt) {
 func Attachment() (o *AttachmentOpt) {
 	o = &AttachmentOpt{
 		AvatarMaxFileSize:             1000000,
-		AvatarInitialsFontPath:        "fonts/Poppins-Regular.ttf",
+		AvatarInitialsFontPath:        "fonts/Montserrat-Regular.ttf",
 		AvatarInitialsBackgroundColor: "#F3F3F3",
 		AvatarInitialsColor:           "#0B344E",
 	}
@@ -1123,6 +1140,60 @@ func Attachment() (o *AttachmentOpt) {
 // This function is auto-generated
 func Webapp() (o *WebappOpt) {
 	o = &WebappOpt{}
+
+	// Custom defaults
+	func(o interface{}) {
+		if def, ok := o.(interface{ Defaults() }); ok {
+			def.Defaults()
+		}
+	}(o)
+
+	fill(o)
+
+	// Custom cleanup
+	func(o interface{}) {
+		if def, ok := o.(interface{ Cleanup() }); ok {
+			def.Cleanup()
+		}
+	}(o)
+
+	return
+}
+
+// ImageSearch initializes and returns a ImageSearchOpt with default values
+//
+// This function is auto-generated
+func ImageSearch() (o *ImageSearchOpt) {
+	o = &ImageSearchOpt{
+		Enabled: true,
+	}
+
+	// Custom defaults
+	func(o interface{}) {
+		if def, ok := o.(interface{ Defaults() }); ok {
+			def.Defaults()
+		}
+	}(o)
+
+	fill(o)
+
+	// Custom cleanup
+	func(o interface{}) {
+		if def, ok := o.(interface{ Cleanup() }); ok {
+			def.Cleanup()
+		}
+	}(o)
+
+	return
+}
+
+// Cache initializes and returns a CacheOpt with default values
+//
+// This function is auto-generated
+func Cache() (o *CacheOpt) {
+	o = &CacheOpt{
+		ReportTTL: 5 * time.Minute,
+	}
 
 	// Custom defaults
 	func(o interface{}) {

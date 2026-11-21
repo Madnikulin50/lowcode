@@ -2,7 +2,7 @@ list:
   title: Sensitive Модули
   columns:
     module: Модуль
-    namespace: Namespace
+    namespace: Пространство
     connection: Connection
     location: Location
     ownership:  Ownership

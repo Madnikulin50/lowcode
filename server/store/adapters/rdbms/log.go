@@ -3,7 +3,7 @@ package rdbms
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
 	"go.uber.org/zap"
 )
 

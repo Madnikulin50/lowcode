@@ -4,12 +4,12 @@ import (
 	"context"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/automation/types"
-	"github.com/cortezaproject/corteza/server/pkg/envoy"
-	"github.com/cortezaproject/corteza/server/pkg/envoy/resource"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/automation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy"
+	"github.com/madnikulin50/lowcode/server/pkg/envoy/resource"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/store"
 )
 
 type (
@@ -125,19 +125,19 @@ func (df *DecodeFilter) automationFromResource(rr ...string) *DecodeFilter {
 			continue
 		}
 
-		id := ""
+		queryId := ""
 		if strings.Count(r, ":") == 2 && !strings.HasSuffix(r, "*") {
 			// There is an identifier
 			aux := strings.Split(r, ":")
 
-			id = aux[len(aux)-1]
+			queryId = aux[len(aux)-1]
 			r = strings.Join(aux[:len(aux)-1], ":")
 		}
 
 		switch strings.ToLower(r) {
 		case "automation:workflow":
 			df = df.AutomationWorkflows(&types.WorkflowFilter{
-				Query:    id,
+				Query:    queryId,
 				Disabled: filter.StateInclusive,
 			})
 		}

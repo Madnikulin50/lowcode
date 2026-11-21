@@ -1,15 +1,15 @@
 package handlers
 
 import (
+	crand "crypto/rand"
 	"encoding/base32"
 	"fmt"
-	"math/rand"
 	"net/url"
 
-	"github.com/cortezaproject/corteza/server/auth/request"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/auth/request"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 	"rsc.io/qr"
 )
@@ -37,7 +37,9 @@ func (h *AuthHandlers) mfaTotpConfigForm(req *request.AuthReq) (err error) {
 		// there's no explicit request to change it
 		secret = s.(string)
 	} else {
-		rand.Read(rawSecret[:])
+		if _, err = crand.Read(rawSecret[:]); err != nil {
+			return err
+		}
 		secret = base32.StdEncoding.EncodeToString(rawSecret[:])
 		req.Session.Values[totpSecretKey] = secret
 	}
@@ -120,7 +122,7 @@ func (h *AuthHandlers) mfaTotpConfigQR(req *request.AuthReq) (err error) {
 	}
 
 	if len(issuer) == 0 {
-		issuer = "Corteza"
+		issuer = "LowCoooode"
 	}
 
 	account := req.AuthUser.User.Email

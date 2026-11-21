@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
-	"github.com/cortezaproject/corteza/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 	"go.uber.org/zap"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
@@ -55,6 +57,13 @@ type (
 
 		// default language
 		def *Language
+
+		// Fingerprint of LOCALE_PATH files from the last successful ReloadStatic.
+		// DevelopmentMode reloads on every request; skip the YAML parse when
+		// nothing on disk changed (this is the bulk of per-request latency in
+		// GoLand debug, not COUNT(*) on compose_record).
+		staticLoaded bool
+		staticSig    string
 	}
 )
 
@@ -126,6 +135,33 @@ func (svc *service) SupportedLang(tag language.Tag) bool {
 	return svc.set[tag] != nil
 }
 
+// staticSourcesSignature is a cheap mtime/size fingerprint of YAML under LOCALE_PATH.
+func (svc *service) staticSourcesSignature() string {
+	var b strings.Builder
+	for _, p := range svc.src {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		_ = filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			name := d.Name()
+			if !strings.HasSuffix(name, ".yaml") && !strings.HasSuffix(name, ".yml") {
+				return nil
+			}
+			info, err := d.Info()
+			if err != nil {
+				return nil
+			}
+			fmt.Fprintf(&b, "%s:%d:%d\n", path, info.ModTime().UnixNano(), info.Size())
+			return nil
+		})
+	}
+	return b.String()
+}
+
 // ReloadStatic all language configurations (as configured via path options) and
 // all translation files
 func (svc *service) ReloadStatic() (err error) {
@@ -133,10 +169,22 @@ func (svc *service) ReloadStatic() (err error) {
 		ll, aux []*Language
 
 		logFields = make([]zap.Field, 0)
+		sig       = svc.staticSourcesSignature()
 	)
+
+	svc.l.RLock()
+	skip := svc.staticLoaded && svc.staticSig == sig && len(svc.set) > 0
+	svc.l.RUnlock()
+	if skip {
+		return nil
+	}
 
 	svc.l.Lock()
 	defer svc.l.Unlock()
+
+	if svc.staticLoaded && svc.staticSig == sig && len(svc.set) > 0 {
+		return nil
+	}
 
 	if len(svc.tags) == 0 {
 		return fmt.Errorf("no supported languages (LOCALE_LANGUAGES is empty)")
@@ -174,7 +222,7 @@ func (svc *service) ReloadStatic() (err error) {
 
 		if len(aux) == 0 {
 			svc.log.Warn(
-				"no languages found in path, future versions of Corteza will require at least one language to be present",
+				"no languages found in path, future versions of lowcode will require at least one language to be present",
 				zap.String("path", p),
 			)
 		}
@@ -264,6 +312,8 @@ func (svc *service) ReloadStatic() (err error) {
 		svc.def = svc.set[first]
 	}
 
+	svc.staticSig = sig
+	svc.staticLoaded = true
 	return nil
 }
 
@@ -443,7 +493,9 @@ func (svc *service) TResourceFor(tag language.Tag, ns, key string, rr ...string)
 // The response is indexed by translation key for nicer lookups.
 func (svc *service) ResourceTranslations(tag language.Tag, resource string) ResourceTranslationIndex {
 	out := make(ResourceTranslationIndex)
-
+	if os.Getenv("LOCALE_RESOURCE_TRANSLATIONS_ENABLED") == "" {
+		return out
+	}
 	svc.l.Lock()
 	defer svc.l.Unlock()
 

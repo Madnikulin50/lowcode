@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/system/rest/request"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/system/rest/request"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
@@ -74,7 +74,7 @@ func (ctrl Attachment) Preview(ctx context.Context, r *request.AttachmentPreview
 }
 
 func (ctrl Attachment) isAccessible(kind string, attachmentID, userID uint64, signature string) error {
-	if kind == types.AttachmentKindSettings || kind == types.AttachmentKindAvatar {
+	if kind == types.AttachmentKindSettings || kind == types.AttachmentKindAvatar || kind == types.AttachmentKindAvatarInitials {
 		// Attachments on settings are public
 		return nil
 	}
@@ -107,6 +107,11 @@ func (ctrl Attachment) serve(ctx context.Context, attachmentID uint64, preview, 
 			return
 		}
 
+		if att, err = ctrl.attachment.RefreshStaleAvatarInitials(ctx, att); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		var fh io.ReadSeekCloser
 
 		if preview {
@@ -131,7 +136,15 @@ func (ctrl Attachment) serve(ctx context.Context, attachmentID uint64, preview, 
 			w.Header().Add("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
 		}
 
-		http.ServeContent(w, req, name, att.CreatedAt, fh)
+		if att.Kind == types.AttachmentKindAvatarInitials || (att.Meta.Labels != nil && att.Meta.Labels["key"] == types.AttachmentKindAvatarInitials) {
+			w.Header().Set("Cache-Control", "no-cache")
+		}
+
+		mod := att.CreatedAt
+		if att.UpdatedAt != nil {
+			mod = *att.UpdatedAt
+		}
+		http.ServeContent(w, req, name, mod, fh)
 	}, nil
 }
 

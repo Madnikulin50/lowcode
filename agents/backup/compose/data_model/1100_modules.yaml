@@ -1,0 +1,215 @@
+namespace: backup
+modules:
+  agents:
+    name: Агенты
+    fields:
+      name: { label: Имя, kind: String, required: true }
+      url: { label: URL, kind: String }
+      hostname: { label: Hostname, kind: String }
+      capabilities: { label: Возможности, kind: String }
+      last_seen: { label: Последний контакт, kind: DateTime }
+      status: { label: Статус, kind: Select, options: { options: [online, offline] } }
+  credentials:
+    name: Секреты
+    fields:
+      name: { label: Имя, kind: String, required: true }
+      handle: { label: Handle секрета, kind: String, required: true }
+      kind: { label: Тип, kind: Select, options: { options: [smb, postgres, mysql, s3, restic, saas, kubeconfig] } }
+      username: { label: Username, kind: String }
+      extra: { label: Extra JSON, kind: String }
+  sources:
+    name: Источники
+    fields:
+      name: { label: Название, kind: String, required: true }
+      type: { label: Тип, kind: Select, required: true, options: { options: [fs, smb, database, s3] } }
+      agent: { label: Агент, kind: Record, options: { module: agents } }
+      credential: { label: Учётные данные, kind: Record, options: { module: credentials } }
+      path: { label: Путь / UNC, kind: String }
+      host: { label: Хост / S3 endpoint, kind: String }
+      share: { label: SMB share, kind: String }
+      smb_path: { label: Путь внутри шары, kind: String }
+      db_engine: { label: СУБД, kind: Select, options: { options: [postgres, mysql] } }
+      db_name: { label: Имя БД, kind: String }
+      db_port: { label: Порт БД, kind: Number }
+      s3_bucket: { label: S3 bucket, kind: String }
+      s3_prefix: { label: S3 prefix, kind: String }
+      s3_region: { label: S3 region, kind: String }
+      s3_secure: { label: S3 HTTPS, kind: Bool }
+      provider: { label: SaaS провайдер, kind: Select, options: { options: [bitrix24, imap, caldav] } }
+      base_url: { label: Базовый URL / endpoint, kind: String }
+      account: { label: Аккаунт / ящик, kind: String }
+      namespaces: { label: K8s namespaces (csv), kind: String }
+      include_pv: { label: K8s: PV-манифесты, kind: Bool }
+      data_class: { label: Класс данных, kind: Select, options: { options: [public, internal, confidential, personal_special] } }
+      last_sync: { label: SaaS: последняя синхронизация, kind: DateTime }
+      enabled: { label: Включён, kind: Bool }
+      notes: { label: Заметки, kind: String }
+  destinations:
+    name: Назначения
+    fields:
+      name: { label: Название, kind: String, required: true }
+      handle: { label: Handle, kind: String, required: true }
+      type: { label: Тип, kind: Select, required: true, options: { options: [minio, local, nfs, sftp, smb, rclone, webdav] } }
+      endpoint: { label: Endpoint / хост / URL, kind: String }
+      port: { label: Порт (sftp), kind: Number }
+      bucket: { label: Бакет (minio), kind: String }
+      path: { label: Путь / mountpoint / base dir, kind: String }
+      share: { label: SMB share, kind: String }
+      remote: { label: rclone remote, kind: String }
+      prefix: { label: Префикс по умолчанию, kind: String }
+      options: { label: Опции (nfs opts / smb JSON), kind: String }
+      region: { label: Region, kind: String }
+      secure: { label: HTTPS, kind: Bool }
+      credential: { label: Учётные данные, kind: Record, options: { module: credentials } }
+      username: { label: Логин (вместо credentials), kind: String }
+      password: { label: Пароль / PEM-ключ (открыто!), kind: String }
+      default: { label: Назначение по умолчанию, kind: Bool }
+      enabled: { label: Включено, kind: Bool }
+      notes: { label: Заметки, kind: String }
+      last_check: { label: Проверено, kind: DateTime }
+      last_check_status: { label: Проверка, kind: Select, options: { options: [ok, failed] } }
+      last_check_error: { label: Ошибка проверки, kind: String }
+  policies:
+    name: Политики
+    fields:
+      name: { label: Название, kind: String, required: true }
+      source: { label: Источник, kind: Record, options: { module: sources } }
+      destination: { label: Назначение, kind: Record, options: { module: destinations } }
+      cron: { label: Cron, kind: String, required: true }
+      retention_days: { label: Хранить дней, kind: Number }
+      incremental: { label: Инкремент, kind: Bool }
+      dest_prefix: { label: Prefix MinIO, kind: String }
+      compression: { label: Сжатие, kind: Select, options: { options: [gzip, none] } }
+      vault: { label: Сейф (WORM), kind: Bool }
+      vault_retention_days: { label: Сейф: хранить дней, kind: Number }
+      vault_legal_hold: { label: Сейф: legal hold на чистые, kind: Bool }
+      verify: { label: Верификация восстановления, kind: Bool }
+      verify_cron: { label: Верификация: cron, kind: String }
+      verify_level: { label: Верификация: уровень, kind: Select, options: { options: [l1, l2] } }
+      engine: { label: Движок (fs), kind: Select, options: { options: ['', archive, restic, kopia] } }
+      exclude: { label: Исключения (glob, через запятую), kind: String }
+      dest_bucket: { label: 'Бакет назначения (legacy, пусто = default)', kind: String }
+      archive: { label: Юрзначимый архив, kind: Bool }
+      keep_years: { label: Архив: хранить лет, kind: Number }
+      enabled: { label: Включена, kind: Bool }
+      last_run: { label: Последний запуск, kind: DateTime }
+      notes: { label: Заметки, kind: String }
+  jobs:
+    name: Джобы
+    fields:
+      policy: { label: Политика, kind: Record, options: { module: policies } }
+      source: { label: Источник, kind: Record, options: { module: sources } }
+      status: { label: Статус, kind: Select, options: { options: [pending, running, completed, failed] } }
+      progress: { label: Прогресс, kind: Number }
+      bytes_read: { label: Прочитано, kind: Number }
+      bytes_written: { label: Записано, kind: Number }
+      files_count: { label: Файлов, kind: Number }
+      kind: { label: Вид, kind: Select, options: { options: [full, incremental, restore, prune] } }
+      engine: { label: Движок, kind: String }
+      error: { label: Ошибка, kind: String }
+      message: { label: Сообщение, kind: String }
+      started_at: { label: Начало, kind: DateTime }
+      finished_at: { label: Конец, kind: DateTime }
+  snapshots:
+    name: Снапшоты
+    fields:
+      job: { label: Джоб, kind: Record, options: { module: jobs } }
+      source: { label: Источник, kind: Record, options: { module: sources } }
+      policy: { label: Политика, kind: Record, options: { module: policies } }
+      destination: { label: Назначение, kind: Record, options: { module: destinations } }
+      dest_type: { label: Тип назначения, kind: String }
+      s3_endpoint: { label: Endpoint / локатор, kind: String }
+      s3_bucket: { label: Bucket / корень, kind: String }
+      s3_key: { label: Ключ, kind: String }
+      size_bytes: { label: Размер, kind: Number }
+      checksum: { label: SHA-256, kind: String }
+      files_count: { label: Файлов, kind: Number }
+      kind: { label: Вид, kind: Select, options: { options: [full, incremental] } }
+      engine: { label: Движок, kind: String }
+      restic_id: { label: Restic snapshot, kind: String }
+      expires_at: { label: Истекает, kind: DateTime }
+      restorable: { label: Можно восстановить, kind: Bool }
+      verified: { label: Проверен, kind: Bool }
+      verified_at: { label: Верифицирован, kind: DateTime }
+      verify_duration_sec: { label: Верификация, сек, kind: Number }
+      verify_error: { label: Ошибка верификации, kind: String }
+      vault_key: { label: Ключ в сейфе, kind: String }
+      vault_locked_until: { label: Сейф: заблокировано до, kind: DateTime }
+      scan_status: { label: Скан, kind: Select, options: { options: [queued, clean, infected, unknown] } }
+      scanned_at: { label: Сканирован, kind: DateTime }
+      scan_log: { label: Лог скана, kind: String }
+      data_class: { label: Класс данных, kind: Select, options: { options: [public, internal, confidential, personal_special] } }
+      manifest_key: { label: Манифест архива, kind: String }
+      manifest_sha: { label: SHA манифеста, kind: String }
+  restores:
+    name: Восстановления
+    fields:
+      snapshot: { label: Снапшот, kind: Record, options: { module: snapshots } }
+      dest_type: { label: Куда, kind: Select, options: { options: [original, path, download, cluster, vault] } }
+      dest_path: { label: Путь, kind: String }
+      status: { label: Статус, kind: Select, options: { options: [pending, running, completed, failed] } }
+      progress: { label: Прогресс, kind: Number }
+      error: { label: Ошибка, kind: String }
+      message: { label: Сообщение, kind: String }
+      started_at: { label: Начало, kind: DateTime }
+      finished_at: { label: Конец, kind: DateTime }
+  verify_reports:
+    name: Верификации
+    fields:
+      snapshot: { label: Снапшот, kind: Record, options: { module: snapshots } }
+      source: { label: Источник, kind: Record, options: { module: sources } }
+      level: { label: Уровень, kind: Select, options: { options: [l1, l2] } }
+      status: { label: Статус, kind: Select, options: { options: [running, clean, failed] } }
+      rto_sec: { label: RTO, сек, kind: Number }
+      log: { label: Лог, kind: String }
+      created_at: { label: Создан, kind: DateTime }
+  backup_requests:
+    name: Заявки на резервирование
+    fields:
+      name: { label: Название, kind: String, required: true }
+      owner: { label: Владелец данных, kind: String, required: true }
+      path: { label: Путь к данным, kind: String, required: true }
+      data_class: { label: Класс данных, kind: Select, options: { options: [public, internal, confidential, personal_special] } }
+      cron: { label: Периодичность (cron), kind: String }
+      retention_days: { label: Хранить, дней, kind: Number }
+      status: { label: Статус, kind: Select, options: { options: [new, approved, rejected] } }
+      comment: { label: Комментарий, kind: String }
+      created_at: { label: Создана, kind: DateTime }
+  audit_scopes:
+    name: Аудит: области
+    fields:
+      name: { label: Название, kind: String, required: true }
+      type: { label: Тип, kind: Select, options: { options: [fs, smb] } }
+      path: { label: Путь / UNC, kind: String, required: true }
+      host: { label: Хост / endpoint, kind: String }
+      share: { label: SMB share, kind: String }
+      smb_path: { label: Путь внутри шары, kind: String }
+      credential: { label: Учётные данные, kind: Record, options: { module: credentials } }
+      masks: { label: Маски файлов, kind: String }
+      min_size_mb: { label: Мин. размер, МБ, kind: Number }
+      content_scan: { label: Сканировать содержимое (ПДн), kind: Bool }
+      agent: { label: Агент, kind: Record, options: { module: agents } }
+      enabled: { label: Включён, kind: Bool }
+  audit_findings:
+    name: Аудит: находки
+    fields:
+      scope: { label: Область, kind: Record, options: { module: audit_scopes } }
+      path: { label: Путь, kind: String }
+      size_bytes: { label: Размер, kind: Number }
+      mod_time: { label: Изменён, kind: DateTime }
+      guessed_class: { label: Класс данных, kind: Select, options: { options: [public, internal, confidential, personal_special] } }
+      criticality: { label: Критичность, kind: Select, options: { options: [low, medium, high, critical] } }
+      reasons: { label: Основания оценки, kind: String }
+      reason: { label: Причина, kind: String }
+      status: { label: Статус, kind: Select, options: { options: [open, acknowledged, resolved] } }
+      created_at: { label: Создана, kind: DateTime }
+  destruction_acts:
+    name: Акты уничтожения
+    fields:
+      snapshot: { label: Снапшот, kind: Record, options: { module: snapshots } }
+      manifest_sha: { label: SHA манифеста, kind: String }
+      files_count: { label: Файлов, kind: Number }
+      basis: { label: Основание (срок хранения / приказ), kind: String, required: true }
+      destroyed_by: { label: Кто уничтожил, kind: String }
+      status: { label: Статус, kind: Select, options: { options: [registered, executed, blocked] } }
+      created_at: { label: Создан, kind: DateTime }

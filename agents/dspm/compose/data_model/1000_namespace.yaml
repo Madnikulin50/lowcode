@@ -1,0 +1,17 @@
+  namespaces:
+  dspm:
+    name: Data Security Platform
+    enabled: true
+    meta:
+      subtitle: Управление безопасностью данных
+      description: Инвентарь, классификация, эффективный доступ, политики, заявки, находки и аудит. Исполнение на источнике делает агент.
+      prompt: |
+        Пространство управления data security platform.
+        Модули: connectors, scans, data_stores, datasets, data_classes, classifications,
+        identities, entitlements, masking_profiles, row_filters, policies, policy_bindings,
+        access_requests, findings, remediations, activity_events, alerts, ai_assets,
+        compliance_controls.
+        Секреты коннекторов и сырые чувствительные значения не записывай: только secret_ref и masked_sample.
+        Доступ читай из entitlements (эффективный), не выдумывай права.
+        Автоисправление не предлагай, пока политика в режиме monitor и класс не confirmed.
+        Исполнение (скан, маска, блок запроса) — агент; здесь фиксируй намерение, статус и доказательство.

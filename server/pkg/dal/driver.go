@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/ql"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 	"go.uber.org/zap"
 )
 

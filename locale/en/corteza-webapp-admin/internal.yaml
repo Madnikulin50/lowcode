@@ -1,0 +1,39 @@
+title: Internal
+enabled: Internal authentication enabled
+password-reset:
+  enabled: Password reset enabled
+password-constraints:
+  title: Password constraints
+  ignored-security: The system is configured to ignore password security constraints
+    which is insecure on production deployments. If this is a production deployment,
+    please contact your administrator to update the system configuration (the AUTH_PASSWORD_SECURITY
+    .env variable).
+  min-length: Minimum length
+  min-length-description: Must be at least 8 characters
+  min-num-count: Minimum number of digits
+  min-num-count-description: The password must include the specified number of digits
+    (disabled if set to 0)
+  min-special-count: Minimum number of special characters
+  min-special-count-description: The password must include the specified number of
+    special characters (disabled if set to 0)
+  min-upper-case-length: Minimum number of upper case characters
+  min-upper-case-description: The password must include the specified number of upper
+    case characters (disabled if set to 0)
+  min-lower-case-length: Minimum number of lower case characters
+  min-lower-case-description: The password must include the specified number of lower
+    case characters (disabled if set to 0)
+signup:
+  enabled: Signup enabled
+  email-confirmation-required: Signup email confirmation required
+  split-credentials-check:
+    label: Enable split-credentials check
+profile-avatar:
+  enabled: Profile avatar enabled
+send-user-invite-email:
+  enabled: Send invite email on user creation
+  title: Invite email
+  description: When enabled, this configuration sends an invite email to a newly created
+    user via the CLI
+  expires:
+    label: Valid for
+    description: How long will the invite token be valid before it expires

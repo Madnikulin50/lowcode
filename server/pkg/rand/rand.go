@@ -1,42 +1,35 @@
 package rand
 
 import (
-	"math/rand"
-	"sync"
-	"time"
+	crand "crypto/rand"
+	"math/big"
 )
 
-// credits: https://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang
+// Random strings here end up in session IDs, reset tokens and client secrets,
+// so they come from crypto/rand (never a time-seeded math/rand source).
 
 const (
 	letterSpecials = "~=+%^*/()[]{}/!@#$?|"
 	letterDigits   = "0123456789"
 	letterBytes    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" + letterDigits
-	letterIdxBits  = 6                    // 6 bits to represent a letter index
-	letterIdxMask  = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax   = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
-var randSrc = rand.NewSource(time.Now().UnixNano())
-var mu sync.Mutex
+// intn returns a uniform random number in [0, n)
+func intn(n int) int {
+	v, err := crand.Int(crand.Reader, big.NewInt(int64(n)))
+	if err != nil {
+		// the system entropy source is unusable; never fall back to something predictable
+		panic("crypto/rand: " + err.Error())
+	}
 
+	return int(v.Int64())
+}
+
+// Bytes generates a random alphanumeric string of n characters
 func Bytes(n int) []byte {
-	mu.Lock()
-	defer mu.Unlock()
-
 	b := make([]byte, n)
-
-	// A randSrc.Int63() generates 63 random bits, enough for letterIdxMax characters!
-	for i, cache, remain := n-1, randSrc.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = randSrc.Int63(), letterIdxMax
-		}
-		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
-			b[i] = letterBytes[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
+	for i := range b {
+		b[i] = letterBytes[intn(len(letterBytes))]
 	}
 
 	return b
@@ -44,9 +37,6 @@ func Bytes(n int) []byte {
 
 // Password generates a random ASCII string with at least one digit and one special character
 func Password(n int) string {
-	mu.Lock()
-	defer mu.Unlock()
-
 	b := make([]byte, n)
 
 	for i := 0; i < n; i++ {
@@ -58,10 +48,13 @@ func Password(n int) string {
 		} else {
 			s = letterBytes
 		}
-		b[i] = s[rand.Intn(len(s))]
+		b[i] = s[intn(len(s))]
 	}
-	rand.Shuffle(len(b), func(i, j int) {
+
+	for i := len(b) - 1; i > 0; i-- {
+		j := intn(i + 1)
 		b[i], b[j] = b[j], b[i]
-	})
+	}
+
 	return string(b) // E.g. "3i[g0|)z"
 }

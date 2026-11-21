@@ -1,0 +1,137 @@
+// Branding exposes --black, not --dark. Select badges and many leftovers
+// still use var(--dark); without this alias Bootstrap 5 .badge stays white
+// and draft/status pills become white-on-white against --extra-light.
+:root,
+[data-color-mode='light'],
+[data-color-mode='dark'] {
+  --dark: var(--black);
+}
+
+$btn-colors: (
+  primary: --primary,
+  secondary: --secondary,
+  success: --success,
+  info: --info,
+  warning: --warning,
+  danger: --danger,
+  light: --light,
+  dark: --dark,
+);
+
+@each $name, $var in $btn-colors {
+  .btn-#{$name} {
+    --bs-btn-bg: var(#{$var});
+    --bs-btn-border-color: var(#{$var});
+    --bs-btn-hover-bg: var(#{$var});
+    --bs-btn-hover-border-color: var(#{$var});
+    --bs-btn-active-bg: var(#{$var});
+    --bs-btn-active-border-color: var(#{$var});
+    --bs-btn-disabled-bg: var(#{$var});
+    --bs-btn-disabled-border-color: var(#{$var});
+  }
+
+  .btn-outline-#{$name} {
+    --bs-btn-color: var(#{$var});
+    --bs-btn-border-color: var(#{$var});
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(#{$var});
+    --bs-btn-hover-border-color: var(#{$var});
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(#{$var});
+    --bs-btn-active-border-color: var(#{$var});
+  }
+
+  .text-#{$name} {
+    color: var(#{$var}) !important;
+  }
+}
+
+.text-black {
+  color: var(--black) !important;
+}
+
+// Styles for field viewers and editors, they're here since they're used in multiple places
+.field-container {
+  .form-row {
+    margin: 0;
+
+    [class*="col-"] {
+      padding: 0;
+    }
+  }
+
+  .value {
+    min-height: 1.2rem;
+  }
+
+  .inline-actions {
+    opacity: 0;
+    transition: opacity 0.25s;
+
+    button:hover {
+      color: var(--primary) !important;
+    }
+  }
+
+  &:hover {
+    .inline-actions {
+      opacity: 1;
+    }
+  }
+}
+
+.card-header-tabs {
+  margin-left: 0;
+}
+
+.card-header-tabs ~ .tab-content {
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+}
+
+.value-only {
+  .col-form-label {
+    padding-bottom: 0 !important;
+  }
+}
+
+#admin-toolbar,
+#toolbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1030;
+}
+
+.vs__dropdown-toggle {
+  cursor: default;
+}
+
+.form-control::placeholder,
+.c-input-search ::placeholder {
+  color: var(--secondary);
+  opacity: 1;
+}
+
+.ace-editor-wrapper {
+  width: 100%;
+}
+
+.ace-editor-wrapper .ace_editor,
+.ace_editor.ace-chrome {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100%;
+  line-height: normal;
+}
+
+.ace_editor * {
+  box-sizing: content-box !important;
+  line-height: inherit;
+}
+
+.ace_editor .ace_placeholder {
+  font-style: italic;
+  margin: 0;
+  padding: 0 8px !important;
+  transform: none !important;
+}

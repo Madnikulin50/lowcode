@@ -107,7 +107,7 @@ export class DisplayElementTable extends DisplayElement {
 
         if (relatedDefinition.filter && relatedDefinition.filter?.ref) {
           // If element and scenario have filter AND them together
-          if (filter && filter.ref) {
+          if (filter && filter?.ref) {
             df.filter = {
               ref: 'and',
               args: [

@@ -30,10 +30,7 @@ func (r *Record) GetValues(name string) ([]any, error) {
 		return []any{r.UpdatedAt}, nil
 	case "updatedBy", "UpdatedBy", "updated_by":
 		return []any{r.UpdatedBy}, nil
-
-	default:
-		return r.getValues(name)
-
 	}
-	return nil, nil
+
+	return r.getValues(name)
 }

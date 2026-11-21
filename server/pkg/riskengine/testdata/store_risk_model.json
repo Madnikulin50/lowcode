@@ -1,0 +1,24 @@
+{
+  "modelID": "1",
+  "namespaceID": "1",
+  "handle": "store-operational-risk",
+  "name": "Операционный риск магазина",
+  "description": "Пилот: усадка, инциденты, давность аудита, влияние на выручку → residual score/level.",
+  "version": 1,
+  "status": "published",
+  "strategy": "weighted",
+  "config": {},
+  "nodes": [
+    { "id": "shrink", "factorID": "1", "role": "evidence", "x": 40, "y": 160 },
+    { "id": "incidents", "factorID": "2", "role": "evidence", "x": 40, "y": 240 },
+    { "id": "audit", "factorID": "3", "role": "evidence", "x": 40, "y": 320 },
+    { "id": "revenue", "factorID": "4", "role": "evidence", "x": 40, "y": 400 },
+    { "id": "out", "factorID": "0", "role": "output", "x": 320, "y": 280 }
+  ],
+  "edges": [
+    { "from": "shrink", "to": "out", "weight": 0.35 },
+    { "from": "incidents", "to": "out", "weight": 0.25 },
+    { "from": "audit", "to": "out", "weight": 0.15 },
+    { "from": "revenue", "to": "out", "weight": 0.25 }
+  ]
+}

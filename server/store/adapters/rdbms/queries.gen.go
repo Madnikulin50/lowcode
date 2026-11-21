@@ -1,25 +1,27 @@
 package rdbms
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	automationType "github.com/cortezaproject/corteza/server/automation/types"
-	composeType "github.com/cortezaproject/corteza/server/compose/types"
-	discoveryType "github.com/cortezaproject/corteza/server/discovery/types"
-	federationType "github.com/cortezaproject/corteza/server/federation/types"
-	actionlogType "github.com/cortezaproject/corteza/server/pkg/actionlog"
-	flagType "github.com/cortezaproject/corteza/server/pkg/flag/types"
-	labelsType "github.com/cortezaproject/corteza/server/pkg/label/types"
-	rbacType "github.com/cortezaproject/corteza/server/pkg/rbac"
-	systemType "github.com/cortezaproject/corteza/server/system/types"
 	"github.com/doug-martin/goqu/v9"
+	anomalyType "github.com/madnikulin50/lowcode/server/anomaly/types"
+	automationType "github.com/madnikulin50/lowcode/server/automation/types"
+	composeType "github.com/madnikulin50/lowcode/server/compose/types"
+	discoveryType "github.com/madnikulin50/lowcode/server/discovery/types"
+	federationType "github.com/madnikulin50/lowcode/server/federation/types"
+	actionlogType "github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	flagType "github.com/madnikulin50/lowcode/server/pkg/flag/types"
+	labelsType "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	rbacType "github.com/madnikulin50/lowcode/server/pkg/rbac"
+	systemType "github.com/madnikulin50/lowcode/server/system/types"
 )
 
 var (
+
 	// actionlogTable represents actionlogs store table
 	//
 	// This value is auto-generated
@@ -131,6 +133,346 @@ var (
 	//
 	// This function is auto-generated
 	actionlogPrimaryKeys = func(res *actionlogType.Action) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// anomalyBaselineTable represents anomalyBaselines store table
+	//
+	// This value is auto-generated
+	anomalyBaselineTable = goqu.T("anomaly_baselines")
+
+	// anomalyBaselineSelectQuery assembles select query for fetching anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_namespace",
+			"rel_module",
+			"rel_rule",
+			"field",
+			"count",
+			"state",
+			"updated_at",
+		).From(anomalyBaselineTable)
+	}
+
+	// anomalyBaselineInsertQuery assembles query inserting anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineInsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Baseline) *goqu.InsertDataset {
+		return d.Insert(anomalyBaselineTable).
+			Rows(goqu.Record{
+				"id":            res.ID,
+				"rel_namespace": res.NamespaceID,
+				"rel_module":    res.ModuleID,
+				"rel_rule":      res.RuleID,
+				"field":         res.Field,
+				"count":         res.Count,
+				"state":         res.State,
+				"updated_at":    res.UpdatedAt,
+			})
+	}
+
+	// anomalyBaselineUpsertQuery assembles (insert+on-conflict) query for replacing anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineUpsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Baseline) *goqu.InsertDataset {
+		var target = `,id`
+
+		return anomalyBaselineInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_namespace": res.NamespaceID,
+						"rel_module":    res.ModuleID,
+						"rel_rule":      res.RuleID,
+						"field":         res.Field,
+						"count":         res.Count,
+						"state":         res.State,
+						"updated_at":    res.UpdatedAt,
+					},
+				),
+			)
+	}
+
+	// anomalyBaselineUpdateQuery assembles query for updating anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineUpdateQuery = func(d goqu.DialectWrapper, res *anomalyType.Baseline) *goqu.UpdateDataset {
+		return d.Update(anomalyBaselineTable).
+			Set(goqu.Record{
+				"rel_namespace": res.NamespaceID,
+				"rel_module":    res.ModuleID,
+				"rel_rule":      res.RuleID,
+				"field":         res.Field,
+				"count":         res.Count,
+				"state":         res.State,
+				"updated_at":    res.UpdatedAt,
+			}).
+			Where(anomalyBaselinePrimaryKeys(res))
+	}
+
+	// anomalyBaselineDeleteQuery assembles delete query for removing anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(anomalyBaselineTable).Where(ee...)
+	}
+
+	// anomalyBaselineDeleteQuery assembles delete query for removing anomalyBaselines
+	//
+	// This function is auto-generated
+	anomalyBaselineTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(anomalyBaselineTable)
+	}
+
+	// anomalyBaselinePrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	anomalyBaselinePrimaryKeys = func(res *anomalyType.Baseline) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// anomalyFindingTable represents anomalyFindings store table
+	//
+	// This value is auto-generated
+	anomalyFindingTable = goqu.T("anomaly_findings")
+
+	// anomalyFindingSelectQuery assembles select query for fetching anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_namespace",
+			"rel_module",
+			"rel_record",
+			"rel_rule",
+			"score",
+			"severity",
+			"status",
+			"explanation",
+			"created_at",
+			"updated_at",
+		).From(anomalyFindingTable)
+	}
+
+	// anomalyFindingInsertQuery assembles query inserting anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingInsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Finding) *goqu.InsertDataset {
+		return d.Insert(anomalyFindingTable).
+			Rows(goqu.Record{
+				"id":            res.ID,
+				"rel_namespace": res.NamespaceID,
+				"rel_module":    res.ModuleID,
+				"rel_record":    res.RecordID,
+				"rel_rule":      res.RuleID,
+				"score":         res.Score,
+				"severity":      res.Severity,
+				"status":        res.Status,
+				"explanation":   res.Explanation,
+				"created_at":    res.CreatedAt,
+				"updated_at":    res.UpdatedAt,
+			})
+	}
+
+	// anomalyFindingUpsertQuery assembles (insert+on-conflict) query for replacing anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingUpsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Finding) *goqu.InsertDataset {
+		var target = `,id`
+
+		return anomalyFindingInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_namespace": res.NamespaceID,
+						"rel_module":    res.ModuleID,
+						"rel_record":    res.RecordID,
+						"rel_rule":      res.RuleID,
+						"score":         res.Score,
+						"severity":      res.Severity,
+						"status":        res.Status,
+						"explanation":   res.Explanation,
+						"created_at":    res.CreatedAt,
+						"updated_at":    res.UpdatedAt,
+					},
+				),
+			)
+	}
+
+	// anomalyFindingUpdateQuery assembles query for updating anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingUpdateQuery = func(d goqu.DialectWrapper, res *anomalyType.Finding) *goqu.UpdateDataset {
+		return d.Update(anomalyFindingTable).
+			Set(goqu.Record{
+				"rel_namespace": res.NamespaceID,
+				"rel_module":    res.ModuleID,
+				"rel_record":    res.RecordID,
+				"rel_rule":      res.RuleID,
+				"score":         res.Score,
+				"severity":      res.Severity,
+				"status":        res.Status,
+				"explanation":   res.Explanation,
+				"created_at":    res.CreatedAt,
+				"updated_at":    res.UpdatedAt,
+			}).
+			Where(anomalyFindingPrimaryKeys(res))
+	}
+
+	// anomalyFindingDeleteQuery assembles delete query for removing anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(anomalyFindingTable).Where(ee...)
+	}
+
+	// anomalyFindingDeleteQuery assembles delete query for removing anomalyFindings
+	//
+	// This function is auto-generated
+	anomalyFindingTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(anomalyFindingTable)
+	}
+
+	// anomalyFindingPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	anomalyFindingPrimaryKeys = func(res *anomalyType.Finding) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// anomalyRuleTable represents anomalyRules store table
+	//
+	// This value is auto-generated
+	anomalyRuleTable = goqu.T("anomaly_rules")
+
+	// anomalyRuleSelectQuery assembles select query for fetching anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_namespace",
+			"rel_module",
+			"field",
+			"detector",
+			"threshold",
+			"enabled",
+			"params",
+			"last_scanned_at",
+			"created_at",
+			"created_by",
+			"updated_at",
+			"updated_by",
+			"deleted_at",
+			"deleted_by",
+		).From(anomalyRuleTable)
+	}
+
+	// anomalyRuleInsertQuery assembles query inserting anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleInsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Rule) *goqu.InsertDataset {
+		return d.Insert(anomalyRuleTable).
+			Rows(goqu.Record{
+				"id":              res.ID,
+				"rel_namespace":   res.NamespaceID,
+				"rel_module":      res.ModuleID,
+				"field":           res.Field,
+				"detector":        res.Detector,
+				"threshold":       res.Threshold,
+				"enabled":         res.Enabled,
+				"params":          res.Params,
+				"last_scanned_at": res.LastScannedAt,
+				"created_at":      res.CreatedAt,
+				"created_by":      res.CreatedBy,
+				"updated_at":      res.UpdatedAt,
+				"updated_by":      res.UpdatedBy,
+				"deleted_at":      res.DeletedAt,
+				"deleted_by":      res.DeletedBy,
+			})
+	}
+
+	// anomalyRuleUpsertQuery assembles (insert+on-conflict) query for replacing anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleUpsertQuery = func(d goqu.DialectWrapper, res *anomalyType.Rule) *goqu.InsertDataset {
+		var target = `,id`
+
+		return anomalyRuleInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_namespace":   res.NamespaceID,
+						"rel_module":      res.ModuleID,
+						"field":           res.Field,
+						"detector":        res.Detector,
+						"threshold":       res.Threshold,
+						"enabled":         res.Enabled,
+						"params":          res.Params,
+						"last_scanned_at": res.LastScannedAt,
+						"created_at":      res.CreatedAt,
+						"created_by":      res.CreatedBy,
+						"updated_at":      res.UpdatedAt,
+						"updated_by":      res.UpdatedBy,
+						"deleted_at":      res.DeletedAt,
+						"deleted_by":      res.DeletedBy,
+					},
+				),
+			)
+	}
+
+	// anomalyRuleUpdateQuery assembles query for updating anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleUpdateQuery = func(d goqu.DialectWrapper, res *anomalyType.Rule) *goqu.UpdateDataset {
+		return d.Update(anomalyRuleTable).
+			Set(goqu.Record{
+				"rel_namespace":   res.NamespaceID,
+				"rel_module":      res.ModuleID,
+				"field":           res.Field,
+				"detector":        res.Detector,
+				"threshold":       res.Threshold,
+				"enabled":         res.Enabled,
+				"params":          res.Params,
+				"last_scanned_at": res.LastScannedAt,
+				"created_at":      res.CreatedAt,
+				"created_by":      res.CreatedBy,
+				"updated_at":      res.UpdatedAt,
+				"updated_by":      res.UpdatedBy,
+				"deleted_at":      res.DeletedAt,
+				"deleted_by":      res.DeletedBy,
+			}).
+			Where(anomalyRulePrimaryKeys(res))
+	}
+
+	// anomalyRuleDeleteQuery assembles delete query for removing anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(anomalyRuleTable).Where(ee...)
+	}
+
+	// anomalyRuleDeleteQuery assembles delete query for removing anomalyRules
+	//
+	// This function is auto-generated
+	anomalyRuleTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(anomalyRuleTable)
+	}
+
+	// anomalyRulePrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	anomalyRulePrimaryKeys = func(res *anomalyType.Rule) goqu.Ex {
 		return goqu.Ex{
 			"id": res.ID,
 		}
@@ -1015,6 +1357,126 @@ var (
 		}
 	}
 
+	// automationPromptVersionTable represents automationPromptVersions store table
+	//
+	// This value is auto-generated
+	automationPromptVersionTable = goqu.T("automation_prompt_versions")
+
+	// automationPromptVersionSelectQuery assembles select query for fetching automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"handle",
+			"version",
+			"description",
+			"text",
+			"note",
+			"active",
+			"kind",
+			"requires",
+			"resources",
+			"cases",
+			"created_at",
+			"created_by",
+		).From(automationPromptVersionTable)
+	}
+
+	// automationPromptVersionInsertQuery assembles query inserting automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionInsertQuery = func(d goqu.DialectWrapper, res *automationType.PromptVersion) *goqu.InsertDataset {
+		return d.Insert(automationPromptVersionTable).
+			Rows(goqu.Record{
+				"id":          res.ID,
+				"handle":      res.Handle,
+				"version":     res.Version,
+				"description": res.Description,
+				"text":        res.Text,
+				"note":        res.Note,
+				"active":      res.Active,
+				"kind":        res.Kind,
+				"requires":    res.Requires,
+				"resources":   res.Resources,
+				"cases":       res.Cases,
+				"created_at":  res.CreatedAt,
+				"created_by":  res.CreatedBy,
+			})
+	}
+
+	// automationPromptVersionUpsertQuery assembles (insert+on-conflict) query for replacing automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionUpsertQuery = func(d goqu.DialectWrapper, res *automationType.PromptVersion) *goqu.InsertDataset {
+		var target = `,id`
+
+		return automationPromptVersionInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"handle":      res.Handle,
+						"version":     res.Version,
+						"description": res.Description,
+						"text":        res.Text,
+						"note":        res.Note,
+						"active":      res.Active,
+						"kind":        res.Kind,
+						"requires":    res.Requires,
+						"resources":   res.Resources,
+						"cases":       res.Cases,
+						"created_at":  res.CreatedAt,
+						"created_by":  res.CreatedBy,
+					},
+				),
+			)
+	}
+
+	// automationPromptVersionUpdateQuery assembles query for updating automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionUpdateQuery = func(d goqu.DialectWrapper, res *automationType.PromptVersion) *goqu.UpdateDataset {
+		return d.Update(automationPromptVersionTable).
+			Set(goqu.Record{
+				"handle":      res.Handle,
+				"version":     res.Version,
+				"description": res.Description,
+				"text":        res.Text,
+				"note":        res.Note,
+				"active":      res.Active,
+				"kind":        res.Kind,
+				"requires":    res.Requires,
+				"resources":   res.Resources,
+				"cases":       res.Cases,
+				"created_at":  res.CreatedAt,
+				"created_by":  res.CreatedBy,
+			}).
+			Where(automationPromptVersionPrimaryKeys(res))
+	}
+
+	// automationPromptVersionDeleteQuery assembles delete query for removing automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(automationPromptVersionTable).Where(ee...)
+	}
+
+	// automationPromptVersionDeleteQuery assembles delete query for removing automationPromptVersions
+	//
+	// This function is auto-generated
+	automationPromptVersionTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(automationPromptVersionTable)
+	}
+
+	// automationPromptVersionPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	automationPromptVersionPrimaryKeys = func(res *automationType.PromptVersion) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
 	// automationSessionTable represents automationSessions store table
 	//
 	// This value is auto-generated
@@ -1033,8 +1495,8 @@ var (
 			"input",
 			"output",
 			"stacktrace",
-			"created_by",
 			"created_at",
+			"created_by",
 			"purge_at",
 			"suspended_at",
 			"completed_at",
@@ -1056,8 +1518,8 @@ var (
 				"input":         res.Input,
 				"output":        res.Output,
 				"stacktrace":    res.Stacktrace,
-				"created_by":    res.CreatedBy,
 				"created_at":    res.CreatedAt,
+				"created_by":    res.CreatedBy,
 				"purge_at":      res.PurgeAt,
 				"suspended_at":  res.SuspendedAt,
 				"completed_at":  res.CompletedAt,
@@ -1082,8 +1544,8 @@ var (
 						"input":         res.Input,
 						"output":        res.Output,
 						"stacktrace":    res.Stacktrace,
-						"created_by":    res.CreatedBy,
 						"created_at":    res.CreatedAt,
+						"created_by":    res.CreatedBy,
 						"purge_at":      res.PurgeAt,
 						"suspended_at":  res.SuspendedAt,
 						"completed_at":  res.CompletedAt,
@@ -1106,8 +1568,8 @@ var (
 				"input":         res.Input,
 				"output":        res.Output,
 				"stacktrace":    res.Stacktrace,
-				"created_by":    res.CreatedBy,
 				"created_at":    res.CreatedAt,
+				"created_by":    res.CreatedBy,
 				"purge_at":      res.PurgeAt,
 				"suspended_at":  res.SuspendedAt,
 				"completed_at":  res.CompletedAt,
@@ -1139,6 +1601,102 @@ var (
 		}
 	}
 
+	// automationStateTable represents automationStates store table
+	//
+	// This value is auto-generated
+	automationStateTable = goqu.T("automation_states")
+
+	// automationStateSelectQuery assembles select query for fetching automationStates
+	//
+	// This function is auto-generated
+	automationStateSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"session_id",
+			"workflow_id",
+			"kind",
+			"resume_at",
+			"created_at",
+			"snapshot",
+		).From(automationStateTable)
+	}
+
+	// automationStateInsertQuery assembles query inserting automationStates
+	//
+	// This function is auto-generated
+	automationStateInsertQuery = func(d goqu.DialectWrapper, res *automationType.State) *goqu.InsertDataset {
+		return d.Insert(automationStateTable).
+			Rows(goqu.Record{
+				"id":          res.ID,
+				"session_id":  res.SessionID,
+				"workflow_id": res.WorkflowID,
+				"kind":        res.Kind,
+				"resume_at":   res.ResumeAt,
+				"created_at":  res.CreatedAt,
+				"snapshot":    res.Snapshot,
+			})
+	}
+
+	// automationStateUpsertQuery assembles (insert+on-conflict) query for replacing automationStates
+	//
+	// This function is auto-generated
+	automationStateUpsertQuery = func(d goqu.DialectWrapper, res *automationType.State) *goqu.InsertDataset {
+		var target = `,id`
+
+		return automationStateInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"session_id":  res.SessionID,
+						"workflow_id": res.WorkflowID,
+						"kind":        res.Kind,
+						"resume_at":   res.ResumeAt,
+						"created_at":  res.CreatedAt,
+						"snapshot":    res.Snapshot,
+					},
+				),
+			)
+	}
+
+	// automationStateUpdateQuery assembles query for updating automationStates
+	//
+	// This function is auto-generated
+	automationStateUpdateQuery = func(d goqu.DialectWrapper, res *automationType.State) *goqu.UpdateDataset {
+		return d.Update(automationStateTable).
+			Set(goqu.Record{
+				"session_id":  res.SessionID,
+				"workflow_id": res.WorkflowID,
+				"kind":        res.Kind,
+				"resume_at":   res.ResumeAt,
+				"created_at":  res.CreatedAt,
+				"snapshot":    res.Snapshot,
+			}).
+			Where(automationStatePrimaryKeys(res))
+	}
+
+	// automationStateDeleteQuery assembles delete query for removing automationStates
+	//
+	// This function is auto-generated
+	automationStateDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(automationStateTable).Where(ee...)
+	}
+
+	// automationStateDeleteQuery assembles delete query for removing automationStates
+	//
+	// This function is auto-generated
+	automationStateTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(automationStateTable)
+	}
+
+	// automationStatePrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	automationStatePrimaryKeys = func(res *automationType.State) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
 	// automationTriggerTable represents automationTriggers store table
 	//
 	// This value is auto-generated
@@ -1150,20 +1708,20 @@ var (
 	automationTriggerSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
 		return d.Select(
 			"id",
+			"enabled",
 			"rel_workflow",
 			"rel_step",
-			"enabled",
-			"meta",
 			"resource_type",
 			"event_type",
 			"constraints",
 			"input",
+			"meta",
 			"owned_by",
 			"created_at",
-			"updated_at",
-			"deleted_at",
 			"created_by",
+			"updated_at",
 			"updated_by",
+			"deleted_at",
 			"deleted_by",
 		).From(automationTriggerTable)
 	}
@@ -1175,20 +1733,20 @@ var (
 		return d.Insert(automationTriggerTable).
 			Rows(goqu.Record{
 				"id":            res.ID,
+				"enabled":       res.Enabled,
 				"rel_workflow":  res.WorkflowID,
 				"rel_step":      res.StepID,
-				"enabled":       res.Enabled,
-				"meta":          res.Meta,
 				"resource_type": res.ResourceType,
 				"event_type":    res.EventType,
 				"constraints":   res.Constraints,
 				"input":         res.Input,
+				"meta":          res.Meta,
 				"owned_by":      res.OwnedBy,
 				"created_at":    res.CreatedAt,
-				"updated_at":    res.UpdatedAt,
-				"deleted_at":    res.DeletedAt,
 				"created_by":    res.CreatedBy,
+				"updated_at":    res.UpdatedAt,
 				"updated_by":    res.UpdatedBy,
+				"deleted_at":    res.DeletedAt,
 				"deleted_by":    res.DeletedBy,
 			})
 	}
@@ -1203,20 +1761,20 @@ var (
 			OnConflict(
 				goqu.DoUpdate(target[1:],
 					goqu.Record{
+						"enabled":       res.Enabled,
 						"rel_workflow":  res.WorkflowID,
 						"rel_step":      res.StepID,
-						"enabled":       res.Enabled,
-						"meta":          res.Meta,
 						"resource_type": res.ResourceType,
 						"event_type":    res.EventType,
 						"constraints":   res.Constraints,
 						"input":         res.Input,
+						"meta":          res.Meta,
 						"owned_by":      res.OwnedBy,
 						"created_at":    res.CreatedAt,
-						"updated_at":    res.UpdatedAt,
-						"deleted_at":    res.DeletedAt,
 						"created_by":    res.CreatedBy,
+						"updated_at":    res.UpdatedAt,
 						"updated_by":    res.UpdatedBy,
+						"deleted_at":    res.DeletedAt,
 						"deleted_by":    res.DeletedBy,
 					},
 				),
@@ -1229,20 +1787,20 @@ var (
 	automationTriggerUpdateQuery = func(d goqu.DialectWrapper, res *automationType.Trigger) *goqu.UpdateDataset {
 		return d.Update(automationTriggerTable).
 			Set(goqu.Record{
+				"enabled":       res.Enabled,
 				"rel_workflow":  res.WorkflowID,
 				"rel_step":      res.StepID,
-				"enabled":       res.Enabled,
-				"meta":          res.Meta,
 				"resource_type": res.ResourceType,
 				"event_type":    res.EventType,
 				"constraints":   res.Constraints,
 				"input":         res.Input,
+				"meta":          res.Meta,
 				"owned_by":      res.OwnedBy,
 				"created_at":    res.CreatedAt,
-				"updated_at":    res.UpdatedAt,
-				"deleted_at":    res.DeletedAt,
 				"created_by":    res.CreatedBy,
+				"updated_at":    res.UpdatedAt,
 				"updated_by":    res.UpdatedBy,
+				"deleted_at":    res.DeletedAt,
 				"deleted_by":    res.DeletedBy,
 			}).
 			Where(automationTriggerPrimaryKeys(res))
@@ -1294,10 +1852,10 @@ var (
 			"run_as",
 			"owned_by",
 			"created_at",
-			"updated_at",
-			"deleted_at",
 			"created_by",
+			"updated_at",
 			"updated_by",
+			"deleted_at",
 			"deleted_by",
 		).From(automationWorkflowTable)
 	}
@@ -1321,10 +1879,10 @@ var (
 				"run_as":        res.RunAs,
 				"owned_by":      res.OwnedBy,
 				"created_at":    res.CreatedAt,
-				"updated_at":    res.UpdatedAt,
-				"deleted_at":    res.DeletedAt,
 				"created_by":    res.CreatedBy,
+				"updated_at":    res.UpdatedAt,
 				"updated_by":    res.UpdatedBy,
+				"deleted_at":    res.DeletedAt,
 				"deleted_by":    res.DeletedBy,
 			})
 	}
@@ -1351,10 +1909,10 @@ var (
 						"run_as":        res.RunAs,
 						"owned_by":      res.OwnedBy,
 						"created_at":    res.CreatedAt,
-						"updated_at":    res.UpdatedAt,
-						"deleted_at":    res.DeletedAt,
 						"created_by":    res.CreatedBy,
+						"updated_at":    res.UpdatedAt,
 						"updated_by":    res.UpdatedBy,
+						"deleted_at":    res.DeletedAt,
 						"deleted_by":    res.DeletedBy,
 					},
 				),
@@ -1379,10 +1937,10 @@ var (
 				"run_as":        res.RunAs,
 				"owned_by":      res.OwnedBy,
 				"created_at":    res.CreatedAt,
-				"updated_at":    res.UpdatedAt,
-				"deleted_at":    res.DeletedAt,
 				"created_by":    res.CreatedBy,
+				"updated_at":    res.UpdatedAt,
 				"updated_by":    res.UpdatedBy,
+				"deleted_at":    res.DeletedAt,
 				"deleted_by":    res.DeletedBy,
 			}).
 			Where(automationWorkflowPrimaryKeys(res))
@@ -1411,6 +1969,102 @@ var (
 		}
 	}
 
+	// automationWorkflowVersionTable represents automationWorkflowVersions store table
+	//
+	// This value is auto-generated
+	automationWorkflowVersionTable = goqu.T("automation_workflow_versions")
+
+	// automationWorkflowVersionSelectQuery assembles select query for fetching automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"workflow_id",
+			"version",
+			"snapshot",
+			"note",
+			"created_at",
+			"created_by",
+		).From(automationWorkflowVersionTable)
+	}
+
+	// automationWorkflowVersionInsertQuery assembles query inserting automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionInsertQuery = func(d goqu.DialectWrapper, res *automationType.WorkflowVersion) *goqu.InsertDataset {
+		return d.Insert(automationWorkflowVersionTable).
+			Rows(goqu.Record{
+				"id":          res.ID,
+				"workflow_id": res.WorkflowID,
+				"version":     res.Version,
+				"snapshot":    res.Snapshot,
+				"note":        res.Note,
+				"created_at":  res.CreatedAt,
+				"created_by":  res.CreatedBy,
+			})
+	}
+
+	// automationWorkflowVersionUpsertQuery assembles (insert+on-conflict) query for replacing automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionUpsertQuery = func(d goqu.DialectWrapper, res *automationType.WorkflowVersion) *goqu.InsertDataset {
+		var target = `,id`
+
+		return automationWorkflowVersionInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"workflow_id": res.WorkflowID,
+						"version":     res.Version,
+						"snapshot":    res.Snapshot,
+						"note":        res.Note,
+						"created_at":  res.CreatedAt,
+						"created_by":  res.CreatedBy,
+					},
+				),
+			)
+	}
+
+	// automationWorkflowVersionUpdateQuery assembles query for updating automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionUpdateQuery = func(d goqu.DialectWrapper, res *automationType.WorkflowVersion) *goqu.UpdateDataset {
+		return d.Update(automationWorkflowVersionTable).
+			Set(goqu.Record{
+				"workflow_id": res.WorkflowID,
+				"version":     res.Version,
+				"snapshot":    res.Snapshot,
+				"note":        res.Note,
+				"created_at":  res.CreatedAt,
+				"created_by":  res.CreatedBy,
+			}).
+			Where(automationWorkflowVersionPrimaryKeys(res))
+	}
+
+	// automationWorkflowVersionDeleteQuery assembles delete query for removing automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(automationWorkflowVersionTable).Where(ee...)
+	}
+
+	// automationWorkflowVersionDeleteQuery assembles delete query for removing automationWorkflowVersions
+	//
+	// This function is auto-generated
+	automationWorkflowVersionTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(automationWorkflowVersionTable)
+	}
+
+	// automationWorkflowVersionPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	automationWorkflowVersionPrimaryKeys = func(res *automationType.WorkflowVersion) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
 	// composeAttachmentTable represents composeAttachments store table
 	//
 	// This value is auto-generated
@@ -1422,13 +2076,15 @@ var (
 	composeAttachmentSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
 		return d.Select(
 			"id",
-			"rel_namespace",
 			"rel_owner",
 			"kind",
 			"url",
 			"preview_url",
 			"name",
 			"meta",
+			"rel_namespace",
+			"version_group",
+			"version",
 			"created_at",
 			"updated_at",
 			"deleted_at",
@@ -1442,13 +2098,15 @@ var (
 		return d.Insert(composeAttachmentTable).
 			Rows(goqu.Record{
 				"id":            res.ID,
-				"rel_namespace": res.NamespaceID,
 				"rel_owner":     res.OwnerID,
 				"kind":          res.Kind,
 				"url":           res.Url,
 				"preview_url":   res.PreviewUrl,
 				"name":          res.Name,
 				"meta":          res.Meta,
+				"rel_namespace": res.NamespaceID,
+				"version_group": res.VersionGroup,
+				"version":       res.Version,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
@@ -1465,13 +2123,15 @@ var (
 			OnConflict(
 				goqu.DoUpdate(target[1:],
 					goqu.Record{
-						"rel_namespace": res.NamespaceID,
 						"rel_owner":     res.OwnerID,
 						"kind":          res.Kind,
 						"url":           res.Url,
 						"preview_url":   res.PreviewUrl,
 						"name":          res.Name,
 						"meta":          res.Meta,
+						"rel_namespace": res.NamespaceID,
+						"version_group": res.VersionGroup,
+						"version":       res.Version,
 						"created_at":    res.CreatedAt,
 						"updated_at":    res.UpdatedAt,
 						"deleted_at":    res.DeletedAt,
@@ -1486,13 +2146,15 @@ var (
 	composeAttachmentUpdateQuery = func(d goqu.DialectWrapper, res *composeType.Attachment) *goqu.UpdateDataset {
 		return d.Update(composeAttachmentTable).
 			Set(goqu.Record{
-				"rel_namespace": res.NamespaceID,
 				"rel_owner":     res.OwnerID,
 				"kind":          res.Kind,
 				"url":           res.Url,
 				"preview_url":   res.PreviewUrl,
 				"name":          res.Name,
 				"meta":          res.Meta,
+				"rel_namespace": res.NamespaceID,
+				"version_group": res.VersionGroup,
+				"version":       res.Version,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
@@ -1535,9 +2197,9 @@ var (
 		return d.Select(
 			"id",
 			"handle",
-			"rel_namespace",
 			"name",
 			"config",
+			"rel_namespace",
 			"created_at",
 			"updated_at",
 			"deleted_at",
@@ -1552,9 +2214,9 @@ var (
 			Rows(goqu.Record{
 				"id":            res.ID,
 				"handle":        res.Handle,
-				"rel_namespace": res.NamespaceID,
 				"name":          res.Name,
 				"config":        res.Config,
+				"rel_namespace": res.NamespaceID,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
@@ -1572,9 +2234,9 @@ var (
 				goqu.DoUpdate(target[1:],
 					goqu.Record{
 						"handle":        res.Handle,
-						"rel_namespace": res.NamespaceID,
 						"name":          res.Name,
 						"config":        res.Config,
+						"rel_namespace": res.NamespaceID,
 						"created_at":    res.CreatedAt,
 						"updated_at":    res.UpdatedAt,
 						"deleted_at":    res.DeletedAt,
@@ -1590,9 +2252,9 @@ var (
 		return d.Update(composeChartTable).
 			Set(goqu.Record{
 				"handle":        res.Handle,
-				"rel_namespace": res.NamespaceID,
 				"name":          res.Name,
 				"config":        res.Config,
+				"rel_namespace": res.NamespaceID,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
@@ -1634,14 +2296,14 @@ var (
 	composeModuleSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
 		return d.Select(
 			"id",
-			"rel_namespace",
 			"handle",
-			"name",
-			"meta",
 			"config",
+			"meta",
+			"rel_namespace",
 			"created_at",
 			"updated_at",
 			"deleted_at",
+			"name",
 		).From(composeModuleTable)
 	}
 
@@ -1652,14 +2314,14 @@ var (
 		return d.Insert(composeModuleTable).
 			Rows(goqu.Record{
 				"id":            res.ID,
-				"rel_namespace": res.NamespaceID,
 				"handle":        res.Handle,
-				"name":          res.Name,
-				"meta":          res.Meta,
 				"config":        res.Config,
+				"meta":          res.Meta,
+				"rel_namespace": res.NamespaceID,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
+				"name":          res.Name,
 			})
 	}
 
@@ -1673,14 +2335,14 @@ var (
 			OnConflict(
 				goqu.DoUpdate(target[1:],
 					goqu.Record{
-						"rel_namespace": res.NamespaceID,
 						"handle":        res.Handle,
-						"name":          res.Name,
-						"meta":          res.Meta,
 						"config":        res.Config,
+						"meta":          res.Meta,
+						"rel_namespace": res.NamespaceID,
 						"created_at":    res.CreatedAt,
 						"updated_at":    res.UpdatedAt,
 						"deleted_at":    res.DeletedAt,
+						"name":          res.Name,
 					},
 				),
 			)
@@ -1692,14 +2354,14 @@ var (
 	composeModuleUpdateQuery = func(d goqu.DialectWrapper, res *composeType.Module) *goqu.UpdateDataset {
 		return d.Update(composeModuleTable).
 			Set(goqu.Record{
-				"rel_namespace": res.NamespaceID,
 				"handle":        res.Handle,
-				"name":          res.Name,
-				"meta":          res.Meta,
 				"config":        res.Config,
+				"meta":          res.Meta,
+				"rel_namespace": res.NamespaceID,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
+				"name":          res.Name,
 			}).
 			Where(composeModulePrimaryKeys(res))
 	}
@@ -1741,9 +2403,8 @@ var (
 			"rel_module",
 			"place",
 			"kind",
-			"options",
 			"name",
-			"label",
+			"options",
 			"config",
 			"is_required",
 			"is_multi",
@@ -1752,6 +2413,7 @@ var (
 			"created_at",
 			"updated_at",
 			"deleted_at",
+			"label",
 		).From(composeModuleFieldTable)
 	}
 
@@ -1765,9 +2427,8 @@ var (
 				"rel_module":    res.ModuleID,
 				"place":         res.Place,
 				"kind":          res.Kind,
-				"options":       res.Options,
 				"name":          res.Name,
-				"label":         res.Label,
+				"options":       res.Options,
 				"config":        res.Config,
 				"is_required":   res.Required,
 				"is_multi":      res.Multi,
@@ -1776,6 +2437,7 @@ var (
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
+				"label":         res.Label,
 			})
 	}
 
@@ -1792,9 +2454,8 @@ var (
 						"rel_module":    res.ModuleID,
 						"place":         res.Place,
 						"kind":          res.Kind,
-						"options":       res.Options,
 						"name":          res.Name,
-						"label":         res.Label,
+						"options":       res.Options,
 						"config":        res.Config,
 						"is_required":   res.Required,
 						"is_multi":      res.Multi,
@@ -1803,6 +2464,7 @@ var (
 						"created_at":    res.CreatedAt,
 						"updated_at":    res.UpdatedAt,
 						"deleted_at":    res.DeletedAt,
+						"label":         res.Label,
 					},
 				),
 			)
@@ -1817,9 +2479,8 @@ var (
 				"rel_module":    res.ModuleID,
 				"place":         res.Place,
 				"kind":          res.Kind,
-				"options":       res.Options,
 				"name":          res.Name,
-				"label":         res.Label,
+				"options":       res.Options,
 				"config":        res.Config,
 				"is_required":   res.Required,
 				"is_multi":      res.Multi,
@@ -1828,6 +2489,7 @@ var (
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
+				"label":         res.Label,
 			}).
 			Where(composeModuleFieldPrimaryKeys(res))
 	}
@@ -1869,10 +2531,10 @@ var (
 			"slug",
 			"enabled",
 			"meta",
-			"name",
 			"created_at",
 			"updated_at",
 			"deleted_at",
+			"name",
 		).From(composeNamespaceTable)
 	}
 
@@ -1886,10 +2548,10 @@ var (
 				"slug":       res.Slug,
 				"enabled":    res.Enabled,
 				"meta":       res.Meta,
-				"name":       res.Name,
 				"created_at": res.CreatedAt,
 				"updated_at": res.UpdatedAt,
 				"deleted_at": res.DeletedAt,
+				"name":       res.Name,
 			})
 	}
 
@@ -1906,10 +2568,10 @@ var (
 						"slug":       res.Slug,
 						"enabled":    res.Enabled,
 						"meta":       res.Meta,
-						"name":       res.Name,
 						"created_at": res.CreatedAt,
 						"updated_at": res.UpdatedAt,
 						"deleted_at": res.DeletedAt,
+						"name":       res.Name,
 					},
 				),
 			)
@@ -1924,10 +2586,10 @@ var (
 				"slug":       res.Slug,
 				"enabled":    res.Enabled,
 				"meta":       res.Meta,
-				"name":       res.Name,
 				"created_at": res.CreatedAt,
 				"updated_at": res.UpdatedAt,
 				"deleted_at": res.DeletedAt,
+				"name":       res.Name,
 			}).
 			Where(composeNamespacePrimaryKeys(res))
 	}
@@ -1966,20 +2628,21 @@ var (
 	composePageSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
 		return d.Select(
 			"id",
-			"title",
-			"handle",
 			"self_id",
-			"rel_module",
 			"rel_namespace",
-			"meta",
+			"rel_module",
+			"handle",
 			"config",
 			"blocks",
+			"meta",
 			"visible",
 			"weight",
-			"description",
 			"created_at",
 			"updated_at",
 			"deleted_at",
+			"title",
+			"prompt",
+			"description",
 		).From(composePageTable)
 	}
 
@@ -1990,20 +2653,21 @@ var (
 		return d.Insert(composePageTable).
 			Rows(goqu.Record{
 				"id":            res.ID,
-				"title":         res.Title,
-				"handle":        res.Handle,
 				"self_id":       res.SelfID,
-				"rel_module":    res.ModuleID,
 				"rel_namespace": res.NamespaceID,
-				"meta":          res.Meta,
+				"rel_module":    res.ModuleID,
+				"handle":        res.Handle,
 				"config":        res.Config,
 				"blocks":        res.Blocks,
+				"meta":          res.Meta,
 				"visible":       res.Visible,
 				"weight":        res.Weight,
-				"description":   res.Description,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
+				"title":         res.Title,
+				"prompt":        res.Prompt,
+				"description":   res.Description,
 			})
 	}
 
@@ -2017,20 +2681,21 @@ var (
 			OnConflict(
 				goqu.DoUpdate(target[1:],
 					goqu.Record{
-						"title":         res.Title,
-						"handle":        res.Handle,
 						"self_id":       res.SelfID,
-						"rel_module":    res.ModuleID,
 						"rel_namespace": res.NamespaceID,
-						"meta":          res.Meta,
+						"rel_module":    res.ModuleID,
+						"handle":        res.Handle,
 						"config":        res.Config,
 						"blocks":        res.Blocks,
+						"meta":          res.Meta,
 						"visible":       res.Visible,
 						"weight":        res.Weight,
-						"description":   res.Description,
 						"created_at":    res.CreatedAt,
 						"updated_at":    res.UpdatedAt,
 						"deleted_at":    res.DeletedAt,
+						"title":         res.Title,
+						"prompt":        res.Prompt,
+						"description":   res.Description,
 					},
 				),
 			)
@@ -2042,20 +2707,21 @@ var (
 	composePageUpdateQuery = func(d goqu.DialectWrapper, res *composeType.Page) *goqu.UpdateDataset {
 		return d.Update(composePageTable).
 			Set(goqu.Record{
-				"title":         res.Title,
-				"handle":        res.Handle,
 				"self_id":       res.SelfID,
-				"rel_module":    res.ModuleID,
 				"rel_namespace": res.NamespaceID,
-				"meta":          res.Meta,
+				"rel_module":    res.ModuleID,
+				"handle":        res.Handle,
 				"config":        res.Config,
 				"blocks":        res.Blocks,
+				"meta":          res.Meta,
 				"visible":       res.Visible,
 				"weight":        res.Weight,
-				"description":   res.Description,
 				"created_at":    res.CreatedAt,
 				"updated_at":    res.UpdatedAt,
 				"deleted_at":    res.DeletedAt,
+				"title":         res.Title,
+				"prompt":        res.Prompt,
+				"description":   res.Description,
 			}).
 			Where(composePagePrimaryKeys(res))
 	}
@@ -2094,10 +2760,10 @@ var (
 	composePageLayoutSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
 		return d.Select(
 			"id",
-			"handle",
+			"rel_namespace",
 			"page_id",
 			"parent_id",
-			"rel_namespace",
+			"handle",
 			"weight",
 			"meta",
 			"config",
@@ -2116,10 +2782,10 @@ var (
 		return d.Insert(composePageLayoutTable).
 			Rows(goqu.Record{
 				"id":            res.ID,
-				"handle":        res.Handle,
+				"rel_namespace": res.NamespaceID,
 				"page_id":       res.PageID,
 				"parent_id":     res.ParentID,
-				"rel_namespace": res.NamespaceID,
+				"handle":        res.Handle,
 				"weight":        res.Weight,
 				"meta":          res.Meta,
 				"config":        res.Config,
@@ -2141,10 +2807,10 @@ var (
 			OnConflict(
 				goqu.DoUpdate(target[1:],
 					goqu.Record{
-						"handle":        res.Handle,
+						"rel_namespace": res.NamespaceID,
 						"page_id":       res.PageID,
 						"parent_id":     res.ParentID,
-						"rel_namespace": res.NamespaceID,
+						"handle":        res.Handle,
 						"weight":        res.Weight,
 						"meta":          res.Meta,
 						"config":        res.Config,
@@ -2164,10 +2830,10 @@ var (
 	composePageLayoutUpdateQuery = func(d goqu.DialectWrapper, res *composeType.PageLayout) *goqu.UpdateDataset {
 		return d.Update(composePageLayoutTable).
 			Set(goqu.Record{
-				"handle":        res.Handle,
+				"rel_namespace": res.NamespaceID,
 				"page_id":       res.PageID,
 				"parent_id":     res.ParentID,
-				"rel_namespace": res.NamespaceID,
+				"handle":        res.Handle,
 				"weight":        res.Weight,
 				"meta":          res.Meta,
 				"config":        res.Config,
@@ -2198,6 +2864,214 @@ var (
 	//
 	// This function is auto-generated
 	composePageLayoutPrimaryKeys = func(res *composeType.PageLayout) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// composeRecordDraftTable represents composeRecordDrafts store table
+	//
+	// This value is auto-generated
+	composeRecordDraftTable = goqu.T("compose_record_drafts")
+
+	// composeRecordDraftSelectQuery assembles select query for fetching composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_user",
+			"change_id",
+			"rel_namespace",
+			"module_id",
+			"record_id",
+			"payload",
+			"created_at",
+			"updated_at",
+		).From(composeRecordDraftTable)
+	}
+
+	// composeRecordDraftInsertQuery assembles query inserting composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftInsertQuery = func(d goqu.DialectWrapper, res *composeType.RecordDraft) *goqu.InsertDataset {
+		return d.Insert(composeRecordDraftTable).
+			Rows(goqu.Record{
+				"id":            res.ID,
+				"rel_user":      res.UserID,
+				"change_id":     res.ChangeID,
+				"rel_namespace": res.NamespaceID,
+				"module_id":     res.ModuleID,
+				"record_id":     res.RecordID,
+				"payload":       res.Payload,
+				"created_at":    res.CreatedAt,
+				"updated_at":    res.UpdatedAt,
+			})
+	}
+
+	// composeRecordDraftUpsertQuery assembles (insert+on-conflict) query for replacing composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftUpsertQuery = func(d goqu.DialectWrapper, res *composeType.RecordDraft) *goqu.InsertDataset {
+		var target = `,id`
+
+		return composeRecordDraftInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_user":      res.UserID,
+						"change_id":     res.ChangeID,
+						"rel_namespace": res.NamespaceID,
+						"module_id":     res.ModuleID,
+						"record_id":     res.RecordID,
+						"payload":       res.Payload,
+						"created_at":    res.CreatedAt,
+						"updated_at":    res.UpdatedAt,
+					},
+				),
+			)
+	}
+
+	// composeRecordDraftUpdateQuery assembles query for updating composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftUpdateQuery = func(d goqu.DialectWrapper, res *composeType.RecordDraft) *goqu.UpdateDataset {
+		return d.Update(composeRecordDraftTable).
+			Set(goqu.Record{
+				"rel_user":      res.UserID,
+				"change_id":     res.ChangeID,
+				"rel_namespace": res.NamespaceID,
+				"module_id":     res.ModuleID,
+				"record_id":     res.RecordID,
+				"payload":       res.Payload,
+				"created_at":    res.CreatedAt,
+				"updated_at":    res.UpdatedAt,
+			}).
+			Where(composeRecordDraftPrimaryKeys(res))
+	}
+
+	// composeRecordDraftDeleteQuery assembles delete query for removing composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(composeRecordDraftTable).Where(ee...)
+	}
+
+	// composeRecordDraftDeleteQuery assembles delete query for removing composeRecordDrafts
+	//
+	// This function is auto-generated
+	composeRecordDraftTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(composeRecordDraftTable)
+	}
+
+	// composeRecordDraftPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	composeRecordDraftPrimaryKeys = func(res *composeType.RecordDraft) goqu.Ex {
+		return goqu.Ex{
+			"id": res.ID,
+		}
+	}
+
+	// composeResourceVersionTable represents composeResourceVersions store table
+	//
+	// This value is auto-generated
+	composeResourceVersionTable = goqu.T("compose_resource_versions")
+
+	// composeResourceVersionSelectQuery assembles select query for fetching composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
+		return d.Select(
+			"id",
+			"rel_namespace",
+			"resource_type",
+			"resource_id",
+			"version",
+			"snapshot",
+			"note",
+			"created_at",
+			"created_by",
+		).From(composeResourceVersionTable)
+	}
+
+	// composeResourceVersionInsertQuery assembles query inserting composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionInsertQuery = func(d goqu.DialectWrapper, res *composeType.ResourceVersion) *goqu.InsertDataset {
+		return d.Insert(composeResourceVersionTable).
+			Rows(goqu.Record{
+				"id":            res.ID,
+				"rel_namespace": res.NamespaceID,
+				"resource_type": res.ResourceType,
+				"resource_id":   res.ResourceID,
+				"version":       res.Version,
+				"snapshot":      res.Snapshot,
+				"note":          res.Note,
+				"created_at":    res.CreatedAt,
+				"created_by":    res.CreatedBy,
+			})
+	}
+
+	// composeResourceVersionUpsertQuery assembles (insert+on-conflict) query for replacing composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionUpsertQuery = func(d goqu.DialectWrapper, res *composeType.ResourceVersion) *goqu.InsertDataset {
+		var target = `,id`
+
+		return composeResourceVersionInsertQuery(d, res).
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"rel_namespace": res.NamespaceID,
+						"resource_type": res.ResourceType,
+						"resource_id":   res.ResourceID,
+						"version":       res.Version,
+						"snapshot":      res.Snapshot,
+						"note":          res.Note,
+						"created_at":    res.CreatedAt,
+						"created_by":    res.CreatedBy,
+					},
+				),
+			)
+	}
+
+	// composeResourceVersionUpdateQuery assembles query for updating composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionUpdateQuery = func(d goqu.DialectWrapper, res *composeType.ResourceVersion) *goqu.UpdateDataset {
+		return d.Update(composeResourceVersionTable).
+			Set(goqu.Record{
+				"rel_namespace": res.NamespaceID,
+				"resource_type": res.ResourceType,
+				"resource_id":   res.ResourceID,
+				"version":       res.Version,
+				"snapshot":      res.Snapshot,
+				"note":          res.Note,
+				"created_at":    res.CreatedAt,
+				"created_by":    res.CreatedBy,
+			}).
+			Where(composeResourceVersionPrimaryKeys(res))
+	}
+
+	// composeResourceVersionDeleteQuery assembles delete query for removing composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionDeleteQuery = func(d goqu.DialectWrapper, ee ...goqu.Expression) *goqu.DeleteDataset {
+		return d.Delete(composeResourceVersionTable).Where(ee...)
+	}
+
+	// composeResourceVersionDeleteQuery assembles delete query for removing composeResourceVersions
+	//
+	// This function is auto-generated
+	composeResourceVersionTruncateQuery = func(d goqu.DialectWrapper) *goqu.TruncateDataset {
+		return d.Truncate(composeResourceVersionTable)
+	}
+
+	// composeResourceVersionPrimaryKeys assembles set of conditions for all primary keys
+	//
+	// This function is auto-generated
+	composeResourceVersionPrimaryKeys = func(res *composeType.ResourceVersion) goqu.Ex {
 		return goqu.Ex{
 			"id": res.ID,
 		}
@@ -2918,17 +3792,17 @@ var (
 	federationExposedModuleSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
 		return d.Select(
 			"id",
-			"handle",
-			"name",
 			"rel_node",
 			"rel_compose_module",
 			"rel_compose_namespace",
+			"handle",
+			"name",
 			"fields",
 			"created_at",
-			"updated_at",
-			"deleted_at",
 			"created_by",
+			"updated_at",
 			"updated_by",
+			"deleted_at",
 			"deleted_by",
 		).From(federationExposedModuleTable)
 	}
@@ -2940,17 +3814,17 @@ var (
 		return d.Insert(federationExposedModuleTable).
 			Rows(goqu.Record{
 				"id":                    res.ID,
-				"handle":                res.Handle,
-				"name":                  res.Name,
 				"rel_node":              res.NodeID,
 				"rel_compose_module":    res.ComposeModuleID,
 				"rel_compose_namespace": res.ComposeNamespaceID,
+				"handle":                res.Handle,
+				"name":                  res.Name,
 				"fields":                res.Fields,
 				"created_at":            res.CreatedAt,
-				"updated_at":            res.UpdatedAt,
-				"deleted_at":            res.DeletedAt,
 				"created_by":            res.CreatedBy,
+				"updated_at":            res.UpdatedAt,
 				"updated_by":            res.UpdatedBy,
+				"deleted_at":            res.DeletedAt,
 				"deleted_by":            res.DeletedBy,
 			})
 	}
@@ -2965,17 +3839,17 @@ var (
 			OnConflict(
 				goqu.DoUpdate(target[1:],
 					goqu.Record{
-						"handle":                res.Handle,
-						"name":                  res.Name,
 						"rel_node":              res.NodeID,
 						"rel_compose_module":    res.ComposeModuleID,
 						"rel_compose_namespace": res.ComposeNamespaceID,
+						"handle":                res.Handle,
+						"name":                  res.Name,
 						"fields":                res.Fields,
 						"created_at":            res.CreatedAt,
-						"updated_at":            res.UpdatedAt,
-						"deleted_at":            res.DeletedAt,
 						"created_by":            res.CreatedBy,
+						"updated_at":            res.UpdatedAt,
 						"updated_by":            res.UpdatedBy,
+						"deleted_at":            res.DeletedAt,
 						"deleted_by":            res.DeletedBy,
 					},
 				),
@@ -2988,17 +3862,17 @@ var (
 	federationExposedModuleUpdateQuery = func(d goqu.DialectWrapper, res *federationType.ExposedModule) *goqu.UpdateDataset {
 		return d.Update(federationExposedModuleTable).
 			Set(goqu.Record{
-				"handle":                res.Handle,
-				"name":                  res.Name,
 				"rel_node":              res.NodeID,
 				"rel_compose_module":    res.ComposeModuleID,
 				"rel_compose_namespace": res.ComposeNamespaceID,
+				"handle":                res.Handle,
+				"name":                  res.Name,
 				"fields":                res.Fields,
 				"created_at":            res.CreatedAt,
-				"updated_at":            res.UpdatedAt,
-				"deleted_at":            res.DeletedAt,
 				"created_by":            res.CreatedBy,
+				"updated_at":            res.UpdatedAt,
 				"updated_by":            res.UpdatedBy,
+				"deleted_at":            res.DeletedAt,
 				"deleted_by":            res.DeletedBy,
 			}).
 			Where(federationExposedModulePrimaryKeys(res))
@@ -3126,18 +4000,18 @@ var (
 	federationNodeSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
 		return d.Select(
 			"id",
-			"shared_node_id",
 			"name",
-			"base_url",
 			"status",
+			"base_url",
 			"contact",
+			"shared_node_id",
 			"pair_token",
 			"auth_token",
 			"created_at",
-			"updated_at",
-			"deleted_at",
 			"created_by",
+			"updated_at",
 			"updated_by",
+			"deleted_at",
 			"deleted_by",
 		).From(federationNodeTable)
 	}
@@ -3149,18 +4023,18 @@ var (
 		return d.Insert(federationNodeTable).
 			Rows(goqu.Record{
 				"id":             res.ID,
-				"shared_node_id": res.SharedNodeID,
 				"name":           res.Name,
-				"base_url":       res.BaseURL,
 				"status":         res.Status,
+				"base_url":       res.BaseURL,
 				"contact":        res.Contact,
+				"shared_node_id": res.SharedNodeID,
 				"pair_token":     res.PairToken,
 				"auth_token":     res.AuthToken,
 				"created_at":     res.CreatedAt,
-				"updated_at":     res.UpdatedAt,
-				"deleted_at":     res.DeletedAt,
 				"created_by":     res.CreatedBy,
+				"updated_at":     res.UpdatedAt,
 				"updated_by":     res.UpdatedBy,
+				"deleted_at":     res.DeletedAt,
 				"deleted_by":     res.DeletedBy,
 			})
 	}
@@ -3175,18 +4049,18 @@ var (
 			OnConflict(
 				goqu.DoUpdate(target[1:],
 					goqu.Record{
-						"shared_node_id": res.SharedNodeID,
 						"name":           res.Name,
-						"base_url":       res.BaseURL,
 						"status":         res.Status,
+						"base_url":       res.BaseURL,
 						"contact":        res.Contact,
+						"shared_node_id": res.SharedNodeID,
 						"pair_token":     res.PairToken,
 						"auth_token":     res.AuthToken,
 						"created_at":     res.CreatedAt,
-						"updated_at":     res.UpdatedAt,
-						"deleted_at":     res.DeletedAt,
 						"created_by":     res.CreatedBy,
+						"updated_at":     res.UpdatedAt,
 						"updated_by":     res.UpdatedBy,
+						"deleted_at":     res.DeletedAt,
 						"deleted_by":     res.DeletedBy,
 					},
 				),
@@ -3199,18 +4073,18 @@ var (
 	federationNodeUpdateQuery = func(d goqu.DialectWrapper, res *federationType.Node) *goqu.UpdateDataset {
 		return d.Update(federationNodeTable).
 			Set(goqu.Record{
-				"shared_node_id": res.SharedNodeID,
 				"name":           res.Name,
-				"base_url":       res.BaseURL,
 				"status":         res.Status,
+				"base_url":       res.BaseURL,
 				"contact":        res.Contact,
+				"shared_node_id": res.SharedNodeID,
 				"pair_token":     res.PairToken,
 				"auth_token":     res.AuthToken,
 				"created_at":     res.CreatedAt,
-				"updated_at":     res.UpdatedAt,
-				"deleted_at":     res.DeletedAt,
 				"created_by":     res.CreatedBy,
+				"updated_at":     res.UpdatedAt,
 				"updated_by":     res.UpdatedBy,
+				"deleted_at":     res.DeletedAt,
 				"deleted_by":     res.DeletedBy,
 			}).
 			Where(federationNodePrimaryKeys(res))
@@ -3251,8 +4125,8 @@ var (
 		return d.Select(
 			"rel_node",
 			"rel_compose_module",
-			"sync_type",
 			"sync_status",
+			"sync_type",
 			"time_of_action",
 		).From(federationNodeSyncTable)
 	}
@@ -3265,8 +4139,8 @@ var (
 			Rows(goqu.Record{
 				"rel_node":           res.NodeID,
 				"rel_compose_module": res.ModuleID,
-				"sync_type":          res.SyncType,
 				"sync_status":        res.SyncStatus,
+				"sync_type":          res.SyncType,
 				"time_of_action":     res.TimeOfAction,
 			})
 	}
@@ -3283,8 +4157,8 @@ var (
 					goqu.Record{
 						"rel_node":           res.NodeID,
 						"rel_compose_module": res.ModuleID,
-						"sync_type":          res.SyncType,
 						"sync_status":        res.SyncStatus,
+						"sync_type":          res.SyncType,
 						"time_of_action":     res.TimeOfAction,
 					},
 				),
@@ -3299,8 +4173,8 @@ var (
 			Set(goqu.Record{
 				"rel_node":           res.NodeID,
 				"rel_compose_module": res.ModuleID,
-				"sync_type":          res.SyncType,
 				"sync_status":        res.SyncStatus,
+				"sync_type":          res.SyncType,
 				"time_of_action":     res.TimeOfAction,
 			}).
 			Where(federationNodeSyncPrimaryKeys(res))
@@ -3338,16 +4212,16 @@ var (
 	federationSharedModuleSelectQuery = func(d goqu.DialectWrapper) *goqu.SelectDataset {
 		return d.Select(
 			"id",
-			"handle",
 			"rel_node",
+			"handle",
 			"name",
 			"xref_module",
 			"fields",
 			"created_at",
-			"updated_at",
-			"deleted_at",
 			"created_by",
+			"updated_at",
 			"updated_by",
+			"deleted_at",
 			"deleted_by",
 		).From(federationSharedModuleTable)
 	}
@@ -3359,16 +4233,16 @@ var (
 		return d.Insert(federationSharedModuleTable).
 			Rows(goqu.Record{
 				"id":          res.ID,
-				"handle":      res.Handle,
 				"rel_node":    res.NodeID,
+				"handle":      res.Handle,
 				"name":        res.Name,
 				"xref_module": res.ExternalFederationModuleID,
 				"fields":      res.Fields,
 				"created_at":  res.CreatedAt,
-				"updated_at":  res.UpdatedAt,
-				"deleted_at":  res.DeletedAt,
 				"created_by":  res.CreatedBy,
+				"updated_at":  res.UpdatedAt,
 				"updated_by":  res.UpdatedBy,
+				"deleted_at":  res.DeletedAt,
 				"deleted_by":  res.DeletedBy,
 			})
 	}
@@ -3383,16 +4257,16 @@ var (
 			OnConflict(
 				goqu.DoUpdate(target[1:],
 					goqu.Record{
-						"handle":      res.Handle,
 						"rel_node":    res.NodeID,
+						"handle":      res.Handle,
 						"name":        res.Name,
 						"xref_module": res.ExternalFederationModuleID,
 						"fields":      res.Fields,
 						"created_at":  res.CreatedAt,
-						"updated_at":  res.UpdatedAt,
-						"deleted_at":  res.DeletedAt,
 						"created_by":  res.CreatedBy,
+						"updated_at":  res.UpdatedAt,
 						"updated_by":  res.UpdatedBy,
+						"deleted_at":  res.DeletedAt,
 						"deleted_by":  res.DeletedBy,
 					},
 				),
@@ -3405,16 +4279,16 @@ var (
 	federationSharedModuleUpdateQuery = func(d goqu.DialectWrapper, res *federationType.SharedModule) *goqu.UpdateDataset {
 		return d.Update(federationSharedModuleTable).
 			Set(goqu.Record{
-				"handle":      res.Handle,
 				"rel_node":    res.NodeID,
+				"handle":      res.Handle,
 				"name":        res.Name,
 				"xref_module": res.ExternalFederationModuleID,
 				"fields":      res.Fields,
 				"created_at":  res.CreatedAt,
-				"updated_at":  res.UpdatedAt,
-				"deleted_at":  res.DeletedAt,
 				"created_by":  res.CreatedBy,
+				"updated_at":  res.UpdatedAt,
 				"updated_by":  res.UpdatedBy,
+				"deleted_at":  res.DeletedAt,
 				"deleted_by":  res.DeletedBy,
 			}).
 			Where(federationSharedModulePrimaryKeys(res))
@@ -4374,27 +5248,26 @@ var (
 	//
 	// This function is auto-generated
 	resourceTranslationUpsertQuery = func(d goqu.DialectWrapper, res *systemType.ResourceTranslation) *goqu.InsertDataset {
-		//var target = `,id`
+		var target = `,id`
 
 		return resourceTranslationInsertQuery(d, res).
-			OnConflict(goqu.DoNothing())
-		/*OnConflict(
-			goqu.DoUpdate(target[1:],
-				goqu.Record{
-					"lang":       res.Lang,
-					"resource":   res.Resource,
-					"k":          res.K,
-					"message":    res.Message,
-					"created_at": res.CreatedAt,
-					"updated_at": res.UpdatedAt,
-					"deleted_at": res.DeletedAt,
-					"owned_by":   res.OwnedBy,
-					"created_by": res.CreatedBy,
-					"updated_by": res.UpdatedBy,
-					"deleted_by": res.DeletedBy,
-				},
-			),
-		)*/
+			OnConflict(
+				goqu.DoUpdate(target[1:],
+					goqu.Record{
+						"lang":       res.Lang,
+						"resource":   res.Resource,
+						"k":          res.K,
+						"message":    res.Message,
+						"created_at": res.CreatedAt,
+						"updated_at": res.UpdatedAt,
+						"deleted_at": res.DeletedAt,
+						"owned_by":   res.OwnedBy,
+						"created_by": res.CreatedBy,
+						"updated_by": res.UpdatedBy,
+						"deleted_by": res.DeletedBy,
+					},
+				),
+			)
 	}
 
 	// resourceTranslationUpdateQuery assembles query for updating resourceTranslations

@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
-	. "github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/wfexec"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	. "github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/wfexec"
 )
 
 type (
@@ -121,7 +121,11 @@ func (h recordsHandler) search(ctx context.Context, args *recordsSearchArgs) (re
 
 	var auxf types.RecordFilter
 	results.Records, auxf, err = h.rec.Find(ctx, f)
-	results.Total = uint64(auxf.Total)
+	if auxf.Total < 0 {
+		results.Total = 0
+	} else {
+		results.Total = uint64(auxf.Total)
+	}
 	if auxf.NextPage != nil {
 		results.NextPage = auxf.NextPage.Encode()
 	}

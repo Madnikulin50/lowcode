@@ -3,8 +3,8 @@ package eventbus
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/sentry"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/sentry"
 )
 
 type (

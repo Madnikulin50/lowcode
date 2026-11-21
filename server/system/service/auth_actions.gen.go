@@ -8,10 +8,10 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"strings"
 	"time"
 )
@@ -1746,7 +1746,7 @@ func AuthErrMaxUserLimitReached(mm ...*authActionProps) *errors.Error {
 	var e = errors.New(
 		errors.KindInternal,
 
-		p.Format("you have reached your user limit, contact your Corteza administrator", nil),
+		p.Format("you have reached your user limit, contact your LowCoooode administrator", nil),
 
 		errors.Meta("type", "maxUserLimitReached"),
 		errors.Meta("resource", "system:auth"),

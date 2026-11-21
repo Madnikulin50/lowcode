@@ -3,9 +3,9 @@ package main
 import (
 	"sync"
 
-	"github.com/cortezaproject/corteza/extra/server-discovery/app"
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/api/server"
-	"github.com/cortezaproject/corteza/server/pkg/cli"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/app"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/api/server"
+	"github.com/madnikulin50/lowcode/server/pkg/cli"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/elastic/go-elasticsearch/v7/esutil"
 	"github.com/joho/godotenv"

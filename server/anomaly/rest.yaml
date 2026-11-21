@@ -1,0 +1,177 @@
+---
+endpoints:
+  - title: Anomaly rules
+    description: Which module fields are watched by the anomaly scanner
+    entrypoint: rule
+    path: "/namespace/{namespaceID}/anomaly/rule"
+    apis:
+      - name: search
+        method: GET
+        title: Search anomaly rules
+        path: "/"
+        parameters:
+          path:
+            - name: namespaceID
+              type: uint64
+              required: true
+              title: Namespace ID
+          get:
+            - name: moduleID
+              type: uint64
+              title: Filter by module
+            - name: query
+              type: string
+              title: Filter by field name
+            - name: enabled
+              type: bool
+              title: Filter by enabled state
+            - type: uint
+              name: limit
+              title: Limit
+            - type: string
+              name: pageCursor
+              title: Page cursor
+            - type: string
+              name: sort
+              title: Sort items
+
+      - name: create
+        method: POST
+        title: Start watching a module field for anomalies
+        path: "/"
+        parameters:
+          path:
+            - name: namespaceID
+              type: uint64
+              required: true
+              title: Namespace ID
+          post:
+            - name: moduleID
+              type: uint64
+              required: true
+              title: Module ID
+            - name: field
+              type: string
+              required: true
+              title: Module field to watch
+            - name: detector
+              type: string
+              required: true
+              title: Detector to use (e.g. zscore)
+            - name: threshold
+              type: float64
+              required: true
+              title: Detector threshold
+            - name: enabled
+              type: bool
+              required: false
+              title: Whether the rule is active
+            - name: params
+              type: string
+              required: false
+              title: Detector-specific parameters as a JSON object (e.g. {"min":0,"max":100} for the range detector)
+
+      - name: update
+        method: POST
+        title: Update an anomaly rule
+        path: "/{ruleID}"
+        parameters:
+          path:
+            - name: namespaceID
+              type: uint64
+              required: true
+              title: Namespace ID
+            - name: ruleID
+              type: uint64
+              required: true
+              title: Rule ID
+          post:
+            - name: detector
+              type: string
+              required: false
+              title: Detector to use (e.g. zscore)
+            - name: threshold
+              type: float64
+              required: false
+              title: Detector threshold
+            - name: enabled
+              type: bool
+              required: false
+              title: Whether the rule is active
+            - name: params
+              type: string
+              required: false
+              title: Detector-specific parameters as a JSON object (e.g. {"min":0,"max":100} for the range detector)
+
+      - name: delete
+        method: DELETE
+        title: Stop watching a module field
+        path: "/{ruleID}"
+        parameters:
+          path:
+            - name: namespaceID
+              type: uint64
+              required: true
+              title: Namespace ID
+            - name: ruleID
+              type: uint64
+              required: true
+              title: Rule ID
+
+  - title: Anomaly findings
+    description: Anomalies flagged by the scanner
+    entrypoint: finding
+    path: "/namespace/{namespaceID}/anomaly"
+    apis:
+      - name: search
+        method: GET
+        title: Search anomaly findings
+        path: "/"
+        parameters:
+          path:
+            - name: namespaceID
+              type: uint64
+              required: true
+              title: Namespace ID
+          get:
+            - name: moduleID
+              type: uint64
+              title: Filter by module
+            - name: recordID
+              type: uint64
+              title: Filter by record
+            - name: status
+              type: string
+              title: Filter by status
+            - name: severity
+              type: string
+              title: Filter by severity
+            - type: uint
+              name: limit
+              title: Limit
+            - type: string
+              name: pageCursor
+              title: Page cursor
+            - type: string
+              name: sort
+              title: Sort items
+
+      - name: updateStatus
+        method: PATCH
+        title: Acknowledge, resolve or dismiss a finding
+        path: "/{findingID}/status"
+        parameters:
+          path:
+            - name: namespaceID
+              type: uint64
+              required: true
+              title: Namespace ID
+            - name: findingID
+              type: uint64
+              required: true
+              title: Finding ID
+          post:
+            - name: status
+              type: string
+              required: true
+              title: New status (acknowledged, resolved, false_positive)

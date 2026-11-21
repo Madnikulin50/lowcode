@@ -2,10 +2,10 @@ label:
   add: Add
   and: And
   all: Все
-  ascending: Ascending
+  ascending: По возрастанию
   back: Назад
   clear: Clear
-  cancel: Cancel
+  cancel: Отменить
   delete: Delete
   descending: Descending
   loading: Загрузка...
@@ -13,21 +13,21 @@ label:
   none: Отсутствует
   now: Now
   ok: Ok
-  or: Or
+  or: ИЛИ
   openLinkInNewTab: Open link in a new tab
   save: Сохранить
-  saveAndClose: Сохранить and close
+  saveAndClose: Сохранить и закрыть
   clone: Сохранить копию
   today: Сегодня
   urlPlaceholder: https://example.tld
   default: Default
   report:
     single: Отчет
-    plural: Reports
+    plural: Отчеты
 
 resourceList:
-  notFound: Not found
-  noItems: No items to show
+  notFound: Не найдено
+  noItems: Нет записей для отображения
   pagination:
     next: Следующая
     prev: Предыдущая
@@ -35,7 +35,7 @@ resourceList:
     single_one: 'Один {{data}}'
     single_other: '{{count}} {{data}}'
     recordsPerPage: На странице
-  clone: Clone
+  clone: Клонировать
 
 themes:
   labels:
@@ -47,4 +47,4 @@ cloneSuffix: copy
 extendSession:
   labels:
     extend: Extend Session
-    warning: You will be logged out in {{ countdownTime }} seconds
+    warning: You will be logged out in {{ countdownTime }} секунд

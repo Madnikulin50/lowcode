@@ -8,8 +8,8 @@ package expr
 import (
 	"context"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/http"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/http"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 	"io"
 	"net/url"
 	"sync"

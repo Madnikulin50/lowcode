@@ -62,10 +62,20 @@ type (
 	// This type is auto-generated.
 	RecordSet []*Record
 
+	// RecordDraftSet slice of RecordDraft
+	//
+	// This type is auto-generated.
+	RecordDraftSet []*RecordDraft
+
 	// RecordValueSet slice of RecordValue
 	//
 	// This type is auto-generated.
 	RecordValueSet []*RecordValue
+
+	// ResourceVersionSet slice of ResourceVersion
+	//
+	// This type is auto-generated.
+	ResourceVersionSet []*ResourceVersion
 )
 
 // Walk iterates through every slice item and calls w(Attachment) err
@@ -606,6 +616,62 @@ func (set RecordSet) IDs() (IDs []uint64) {
 	return
 }
 
+// Walk iterates through every slice item and calls w(RecordDraft) err
+//
+// This function is auto-generated.
+func (set RecordDraftSet) Walk(w func(*RecordDraft) error) (err error) {
+	for i := range set {
+		if err = w(set[i]); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+// Filter iterates through every slice item, calls f(RecordDraft) (bool, err) and return filtered slice
+//
+// This function is auto-generated.
+func (set RecordDraftSet) Filter(f func(*RecordDraft) (bool, error)) (out RecordDraftSet, err error) {
+	var ok bool
+	out = RecordDraftSet{}
+	for i := range set {
+		if ok, err = f(set[i]); err != nil {
+			return
+		} else if ok {
+			out = append(out, set[i])
+		}
+	}
+
+	return
+}
+
+// FindByID finds items from slice by its ID property
+//
+// This function is auto-generated.
+func (set RecordDraftSet) FindByID(ID uint64) *RecordDraft {
+	for i := range set {
+		if set[i].ID == ID {
+			return set[i]
+		}
+	}
+
+	return nil
+}
+
+// IDs returns a slice of uint64s from all items in the set
+//
+// This function is auto-generated.
+func (set RecordDraftSet) IDs() (IDs []uint64) {
+	IDs = make([]uint64, len(set))
+
+	for i := range set {
+		IDs[i] = set[i].ID
+	}
+
+	return
+}
+
 // Walk iterates through every slice item and calls w(RecordValue) err
 //
 // This function is auto-generated.
@@ -631,6 +697,62 @@ func (set RecordValueSet) Filter(f func(*RecordValue) (bool, error)) (out Record
 		} else if ok {
 			out = append(out, set[i])
 		}
+	}
+
+	return
+}
+
+// Walk iterates through every slice item and calls w(ResourceVersion) err
+//
+// This function is auto-generated.
+func (set ResourceVersionSet) Walk(w func(*ResourceVersion) error) (err error) {
+	for i := range set {
+		if err = w(set[i]); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+// Filter iterates through every slice item, calls f(ResourceVersion) (bool, err) and return filtered slice
+//
+// This function is auto-generated.
+func (set ResourceVersionSet) Filter(f func(*ResourceVersion) (bool, error)) (out ResourceVersionSet, err error) {
+	var ok bool
+	out = ResourceVersionSet{}
+	for i := range set {
+		if ok, err = f(set[i]); err != nil {
+			return
+		} else if ok {
+			out = append(out, set[i])
+		}
+	}
+
+	return
+}
+
+// FindByID finds items from slice by its ID property
+//
+// This function is auto-generated.
+func (set ResourceVersionSet) FindByID(ID uint64) *ResourceVersion {
+	for i := range set {
+		if set[i].ID == ID {
+			return set[i]
+		}
+	}
+
+	return nil
+}
+
+// IDs returns a slice of uint64s from all items in the set
+//
+// This function is auto-generated.
+func (set ResourceVersionSet) IDs() (IDs []uint64) {
+	IDs = make([]uint64, len(set))
+
+	for i := range set {
+		IDs[i] = set[i].ID
 	}
 
 	return

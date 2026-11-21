@@ -3,8 +3,8 @@
 #  - inline permission table (admin interface only)
 #  - modal permission table (common perm. interface)
 ui:
-  save: Сохранить changes
-  cancel: Cancel
+  save: Сохранить изменения
+  cancel: Отменить
   set-for: Установить права доступа для {{target}}
   loading: Загрузка прав доступа
 
@@ -59,8 +59,8 @@ ui:
     federation: Federation permissions
 
   clone:
-    clone: Clone
-    label: Clone permissions
+    clone: Клонировать
+    label: Клонировать permissions
     pick-role: Start typing to search for roles
     title: Apply permissions to
     description: This will clone all the permissions of the current role and apply them  to the selected
@@ -84,7 +84,7 @@ resources:
           title: Manage resource translations
 
     workflow:
-      label: Workflows
+      label: Процессы
       all: all workflows
       specific: workflow "{{target}}"
       operations:
@@ -251,7 +251,7 @@ resources:
           title: Update any client
 
     dal-connection:
-      label: Connections
+      label: Соединения
       all: all connections
       specific: connection "{{target}}"
       operations:
@@ -346,7 +346,7 @@ resources:
 
 
     report:
-      label: Reports
+      label: Отчеты
       all: all reports
       specific: report "{{target}}"
       operations:
@@ -382,12 +382,12 @@ resources:
           title: Delete any user
         email.unmask:
           description: 'Default: deny'
-          specific: Show email details for {{target}}
-          title: Show email details for any user
+          specific: Показывать email details for {{target}}
+          title: Показывать email details for any user
         name.unmask:
           description: 'Default: deny'
-          specific: Show name details for {{target}}
-          title: Show name details for any user
+          specific: Показывать name details for {{target}}
+          title: Показывать name details for any user
         impersonate:
           description: 'Default: deny'
           specific: Impersonate this user {{target}}

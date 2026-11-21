@@ -10,6 +10,10 @@ import:
   uploadFilePlaceholder: Click or drop file here to upload (.zip format)
   back: Back
   import: Import
+  connection:
+    label: Connection
+  importData:
+    label: Import data
   slug:
     label: Short name *
 description:
@@ -50,6 +54,13 @@ slug:
 subtitle:
   label: Subtitle
   placeholder: Enter namespace subtitle
+prompt:
+  label: AI Prompt
+  placeholder: Enter namespace AI prompt
+help:
+  label: Help
+  description: Optional Markdown shown when users open the help icon
+  placeholder: Explain what this namespace is for
 title: Namespaces
 tooltip:
   translations: Namespace translations

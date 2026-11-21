@@ -147,6 +147,8 @@ reminder:
 tooltip:
   dragAndDrop: Drag and drop to change order
 fieldKinds:
+  Secret:
+    label: Secret (encrypted)
   Bool:
     label: Checkbox (Y/N)
   DateTime:

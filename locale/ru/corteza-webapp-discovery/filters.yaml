@@ -1,8 +1,8 @@
-title: Filter
+title: Фильтр
 
 types:
   title: Types
-  namespace: Namespace
+  namespace: Пространство
   module: Модуль
   user: User
   record: Record
@@ -11,4 +11,4 @@ aggregation-groups:
   modules: Модули
   namespaces: Пространства
 
-reset: Reset
+reset: Сбросить

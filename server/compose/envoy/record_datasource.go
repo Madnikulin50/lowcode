@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/compose/dalutils"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx/datasource"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/compose/dalutils"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx/datasource"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/modern-go/reflect2"
 	"github.com/spf13/cast"
 )
@@ -307,7 +307,7 @@ func (ip *iteratorProvider) nextResolved(ctx context.Context, out datasource.Raw
 
 		// pull chunk
 		ip.rows = make([]datasource.RawRecord, 0)
-
+		ip.buffIndex = 0
 		for i := 0; i < bufferPullChunkSize; i++ {
 			rowCache := make(datasource.RawRecord)
 			if !ip.iter.Next(ctx) {
@@ -333,6 +333,15 @@ func (ip *iteratorProvider) nextResolved(ctx context.Context, out datasource.Raw
 		err = ip.resolveReferences(ctx, ip.dal)
 		if err != nil {
 			return
+		}
+	}
+	if ip.done {
+		if ip.buffIndex >= len(ip.rows) {
+			return false, nil
+		}
+	} else {
+		if ip.buffIndex >= len(ip.rows) {
+			return false, nil
 		}
 	}
 

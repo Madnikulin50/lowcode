@@ -2,11 +2,11 @@ package rest
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza/server/federation/rest/request"
-	"github.com/cortezaproject/corteza/server/federation/service"
-	"github.com/cortezaproject/corteza/server/federation/types"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/federation/rest/request"
+	"github.com/madnikulin50/lowcode/server/federation/service"
+	"github.com/madnikulin50/lowcode/server/federation/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
 )
 
 type (

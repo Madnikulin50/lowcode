@@ -7,46 +7,73 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/cast2"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/cast2"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 )
 
 type (
 	PageLayout struct {
-		ID          uint64 `json:"pageLayoutID,string"`
-		NamespaceID uint64 `json:"namespaceID,string"`
-		PageID      uint64 `json:"pageID,string"`
-		ParentID    uint64 `json:"parentID,string"`
-		Handle      string `json:"handle"`
-		Primary     bool   `json:"primary"`
+		ID          uint64 `json:"pageLayoutID,string" schema:"col=id,dal=id,unique"`
+		NamespaceID uint64 `json:"namespaceID,string" schema:"col=namespace_id,store=rel_namespace,dal=ref:corteza::compose:namespace"`
+		PageID      uint64 `json:"pageID,string" schema:"col=page_id,dal=ref:corteza::compose:page,sortable"`
+		ParentID    uint64 `json:"parentID,string" schema:"col=parent_id,dal=ref:corteza::compose:page-layout,sortable"`
+		Handle      string `json:"handle" schema:"col=handle,dal=text:64,unique,ignoreCase"`
+		// Primary is not part of compose_page_layout's own schema (no
+		// persisted column - computed), so it's intentionally left
+		// without a `schema` tag.
+		Primary bool `json:"primary"`
 
-		Weight int `json:"weight"`
+		Weight int `json:"weight" schema:"col=weight,dal=number:default0,sortable"`
 
-		Meta PageLayoutMeta `json:"meta,omitempty"`
+		Meta PageLayoutMeta `json:"meta,omitempty" schema:"col=meta,dal=json:empty,omit"`
 
-		Config PageLayoutConfig `json:"config"`
-		Blocks PageLayoutBlocks `json:"blocks,omitempty"`
+		Config PageLayoutConfig `json:"config" schema:"col=config,dal=json:empty,omit"`
+		Blocks PageLayoutBlocks `json:"blocks,omitempty" schema:"col=blocks,dal=json:empty,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
-		OwnedBy uint64 `json:"ownedBy,string"`
+		OwnedBy uint64 `json:"ownedBy,string" schema:"col=owned_by,dal=userref"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 	}
 
 	PageLayoutBlocks []PageLayoutBlock
 
+	// Mirrors PageBlock (page.go) field-for-field: this type existed with only
+	// BlockID/XYWH/Meta, so Kind/Title/Description/Prompt/Options/Style were
+	// silently dropped by encoding/json on every read AND write through this
+	// API path (json.Unmarshal ignores unknown fields, and Value()'s
+	// json.Marshal only emits what the struct declares) — corrupting stored
+	// page_layout.blocks the moment anything round-tripped through it, even
+	// though the JSON payload the frontend (PageBlock in
+	// client3/lib/js/src/compose/types/page-block/base.ts) actually sends
+	// always carried the full shape.
 	PageLayoutBlock struct {
 		BlockID uint64         `json:"blockID,string,omitempty" yaml:"blockID"`
 		XYWH    [4]int         `json:"xywh" yaml:"xywh"`
 		Meta    map[string]any `json:"meta,omitempty"`
+
+		Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty"`
+		Style   PageBlockStyle         `json:"style,omitempty" yaml:"style,omitempty"`
+		Kind    string                 `json:"kind" yaml:"kind"`
+
+		// Warning: value of this field is now handled via resource-translation facility
+		//          struct field is kept for the convenience for now since it allows us
+		//          easy encoding/decoding of the outgoing/incoming values
+		Title string `json:"title,omitempty" yaml:"title,omitempty"`
+
+		// Warning: value of this field is now handled via resource-translation facility
+		//          struct field is kept for the convenience for now since it allows us
+		//          easy encoding/decoding of the outgoing/incoming values
+		Description string `json:"description,omitempty" yaml:"description,omitempty"`
+
+		Prompt string `json:"prompt,omitempty" yaml:"prompt,omitempty"`
 	}
 
 	PageLayoutMeta struct {
@@ -135,7 +162,7 @@ type (
 		Name         string   `json:"name"`
 		Query        string   `json:"query"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		Deleted filter.State `json:"deleted"`

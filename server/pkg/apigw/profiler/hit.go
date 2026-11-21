@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	h "github.com/cortezaproject/corteza/server/pkg/http"
+	h "github.com/madnikulin50/lowcode/server/pkg/http"
 )
 
 type (
@@ -45,7 +45,7 @@ func (s Hits) Filter(fn func(k string, v *Hit) bool) Hits {
 }
 
 func (h Hits) Len() int {
-	return h.Len()
+	return len(h)
 }
 
 func (h Hits) Less(i, j int) bool {

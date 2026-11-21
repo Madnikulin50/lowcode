@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/revisions"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/revisions"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -60,4 +60,27 @@ func TestRecordRevisions(t *testing.T) {
 
 	req.NoError(svc.created(ctx, rec))
 	req.Equal(3, changes, "expecting ownedBy, rev1 and rev2")
+}
+
+func TestRecordRevisions_hardDeleted(t *testing.T) {
+	var (
+		req     = require.New(t)
+		mod     = &types.Module{ID: 1, Name: "test"}
+		rec     = &types.Record{ID: 2, ModuleID: 1, Revision: 4}
+		dalMock = &mockRecordRevisionsDAL{}
+		svc     = &recordRevisions{r: dalMock}
+		got     *revisions.Revision
+	)
+
+	rec.SetModule(mod)
+	dalMock.create = func(ctx context.Context, mf dal.ModelRef, r *revisions.Revision) error {
+		got = r
+		return nil
+	}
+
+	req.NoError(svc.hardDeleted(context.Background(), rec))
+	req.Equal(revisions.HardDeleted, got.Operation)
+	req.Equal(4, got.Revision)
+	req.Equal(uint64(2), got.ResourceID)
+	req.Empty(got.Changes)
 }

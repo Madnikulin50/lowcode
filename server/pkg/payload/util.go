@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
 	"github.com/jmoiron/sqlx/types"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
 	"github.com/spf13/cast"
 )
 
@@ -43,6 +43,15 @@ func ParseUint64s(ss []string) []uint64 {
 	}
 
 	return uu
+}
+
+// ParseFloat64 parses a string to float64
+func ParseFloat64(s string) float64 {
+	if s == "" {
+		return 0
+	}
+	f, _ := strconv.ParseFloat(s, 64)
+	return f
 }
 
 func ParseJSONTextWithErr(s string) (types.JSONText, error) {

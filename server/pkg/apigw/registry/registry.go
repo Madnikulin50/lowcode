@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cortezaproject/corteza/server/automation/service"
-	"github.com/cortezaproject/corteza/server/pkg/apigw/filter"
-	"github.com/cortezaproject/corteza/server/pkg/apigw/filter/proxy"
-	"github.com/cortezaproject/corteza/server/pkg/apigw/types"
+	"github.com/madnikulin50/lowcode/server/automation/service"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/filter/proxy"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/types"
 )
 
 type (

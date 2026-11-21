@@ -10,22 +10,24 @@ import (
 	"strings"
 	"time"
 
-	automationEnvoy "github.com/cortezaproject/corteza/server/automation/envoy"
-	"github.com/cortezaproject/corteza/server/compose/dalutils"
-	composeEnvoy "github.com/cortezaproject/corteza/server/compose/envoy"
-	"github.com/cortezaproject/corteza/server/compose/rest/request"
-	"github.com/cortezaproject/corteza/server/compose/service"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/corredor"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/datasources"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/revisions"
-	"github.com/cortezaproject/corteza/server/store"
-	systemEnvoy "github.com/cortezaproject/corteza/server/system/envoy"
+	automationEnvoy "github.com/madnikulin50/lowcode/server/automation/envoy"
+	"github.com/madnikulin50/lowcode/server/compose/dalutils"
+	composeEnvoy "github.com/madnikulin50/lowcode/server/compose/envoy"
+	"github.com/madnikulin50/lowcode/server/compose/rest/request"
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/corredor"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/datasources"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/revisions"
+	"github.com/madnikulin50/lowcode/server/pkg/secrets"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemEnvoy "github.com/madnikulin50/lowcode/server/system/envoy"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/spf13/cast"
 )
 
@@ -211,6 +213,115 @@ func makeRecordSet(m *types.Module, frm *datasources.Frame) (res *types.RecordSe
 	return &result
 }
 
+func (ctrl *Record) prepareStep(ctx context.Context, r *systemTypes.ReportStep, moduleStack []uint64) (out systemTypes.ReportStepSet, err error) {
+	if r.Load != nil {
+		moduleID, ok := r.Load.Definition["moduleID"].(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse moduleID")
+		}
+		mid, _ := strconv.ParseInt(moduleID, 10, 64)
+		namespaceID, ok := r.Load.Definition["namespaceID"].(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to parse namespaceID")
+		}
+		nid, _ := strconv.ParseInt(namespaceID, 10, 64)
+		loadModel, err := ctrl.module.FindByID(ctx, uint64(nid), uint64(mid))
+		if err != nil {
+			return nil, fmt.Errorf("failed to find module with id %d: %w", mid, err)
+		}
+		for _, m := range moduleStack {
+			if m == uint64(mid) {
+				return nil, fmt.Errorf("failed by recursion of model %v", loadModel.Name)
+			}
+		}
+
+		if loadModel.Config.Type != "datasource" {
+			return nil, nil
+		}
+
+		ss := loadModel.Config.Datasource.Items.ReportSteps()
+		ss = loadModel.UpdateReportsSteps(ss)
+		for _, s := range ss {
+			s.ResetName(fmt.Sprintf("%v/%v", moduleID, s.Name()))
+			s.SetSourcePrefix(moduleID)
+		}
+		for {
+			changed := false
+			for i, s := range ss {
+				cur, err := ctrl.prepareStep(ctx, s, append(moduleStack, loadModel.ID))
+				if err != nil {
+					return nil, err
+				}
+				if cur == nil {
+					continue
+				}
+				changed = true
+				last := cur[len(cur)-1]
+				last.ResetName(s.Name())
+				n := make(systemTypes.ReportStepSet, 0)
+				n = append(n, ss[:i]...)
+				suffix := ss[i+1:]
+				n = append(n, cur...)
+
+				if len(suffix) != 0 {
+					n = append(n, suffix...)
+				}
+				ss = n
+				break
+			}
+			if !changed {
+				break
+			}
+		}
+		var last *systemTypes.ReportStep
+		if len(ss) > 0 {
+			last = ss[len(ss)-1]
+			last.ResetName(r.Name())
+		} else {
+			ss = nil
+		}
+		if r.Load != nil {
+			if r.Load.Filter != nil && r.Load.Filter.ASTNode != nil {
+				if last != nil {
+					if last.Load != nil {
+						last.Load.Filter = r.Load.Filter
+					}
+					if last.Aggregate != nil {
+						finalStep := systemTypes.ReportStep{}
+						prevName := last.Name()
+						last.ResetName(prevName + "_inner")
+						finalStep.Aggregate = &systemTypes.ReportStepAggregate{
+							Name:    prevName,
+							Source:  last.Name(),
+							Columns: last.Aggregate.Columns,
+							Keys:    last.Aggregate.Keys,
+							Filter:  r.Load.Filter,
+						}
+						n := make(systemTypes.ReportStepSet, len(ss)+1)
+						for i, v := range ss {
+							n[i] = v
+						}
+						n[len(ss)] = &finalStep
+						ss = n
+						last = ss[len(ss)-1]
+					}
+					if last.Join != nil {
+						last.Join.Filter = r.Load.Filter
+					}
+					if last.Link != nil {
+						last.Link.Filter = r.Load.Filter
+					}
+				}
+			}
+		}
+
+		return ss, nil
+
+	}
+
+	return nil, nil
+}
+
 func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{}, error) {
 	var (
 		m   *types.Module
@@ -238,6 +349,10 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 		return nil, err
 	}
 
+	if r.ExposeSecrets {
+		ctx = withExposeSecrets(ctx)
+	}
+
 	if m, err = ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
 		return nil, err
 	}
@@ -256,11 +371,49 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 			ff   []*datasources.Frame
 			out  = make([]*datasources.Frame, 0, 4)
 		)
-
+		flt := types.RecordFilter{
+			ModuleID:    m.ID,
+			NamespaceID: m.NamespaceID,
+		}
+		flt.Limit = r.Limit
+		flt.IncTotal = r.IncTotal
+		flt.IncPageNavigation = true
+		flt.Paging = filter.Paging{Limit: r.Limit}
+		flt.Sorting, _ = filter.NewSorting(r.Sort)
 		err = func() (err error) {
 
 			// Get all of the steps
 			ss := m.Config.Datasource.Items.ReportSteps()
+			if len(ss) == 0 {
+				return fmt.Errorf("no report steps found for %v", m.Name)
+			}
+			ss = m.UpdateReportsSteps(ss)
+			for {
+				changed := false
+				for i, s := range ss {
+					cur, err := ctrl.prepareStep(ctx, s, []uint64{m.ID})
+					if err != nil {
+						return err
+					}
+					if cur == nil {
+						continue
+					}
+					changed = true
+					n := make(systemTypes.ReportStepSet, 0)
+					n = append(n, ss[:i]...)
+					suffix := ss[i+1:]
+					n = append(n, cur...)
+
+					if len(suffix) != 0 {
+						n = append(n, suffix...)
+					}
+					ss = n
+					break
+				}
+				if !changed {
+					break
+				}
+			}
 			//ss = append(ss, r.Blocks.ReportSteps()...)
 			runner := dal.Service()
 			var dd datasources.FrameDefinitionSet
@@ -269,12 +422,19 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 				def := datasources.FrameDefinition{Source: lastStep.Name()}
 				def.Columns = datasources.FrameColumnSet{}
 				for _, f := range m.Fields {
-					def.Columns = append(def.Columns, datasources.FrameColumn{
+					col := datasources.FrameColumn{
 						Name:  f.Name,
 						Label: f.Name,
 						Kind:  f.Kind,
-					})
+					}
+					def.Columns = append(def.Columns, col)
 				}
+
+				paging, _ := filter.NewPaging(r.Limit, r.PageCursor)
+				def.Paging = &paging
+				def.Paging.IncTotal = r.IncTotal
+				def.Paging.IncPageNavigation = r.IncPageNavigation
+				def.Sort = flt.Sort
 				dd = append(dd, &def)
 			}
 
@@ -299,17 +459,22 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 						return
 					}
 
+					for _, f := range ff {
+						flt.Paging = *f.Paging
+					}
 					err = ctrl.enhance(ctx, ff)
 					if err != nil {
 						return
 					}
-
 					out = append(out, ff...)
 					return
 				}()
 
 				if err != nil {
 					return
+				}
+				if len(out) > int(r.Limit) {
+					break
 				}
 			}
 
@@ -319,15 +484,8 @@ func (ctrl *Record) List(ctx context.Context, r *request.RecordList) (interface{
 			return nil, err
 		}
 		rr := makeRecordSet(m, out[len(out)-1])
-		f = types.RecordFilter{
-			ModuleID:    m.ID,
-			NamespaceID: m.NamespaceID,
-		}
-		f.Limit = 2
-		f.IncPageNavigation = true
-		f.IncTotal = true
 
-		return ctrl.makeFilterPayloadN(ctx, m, *rr, nil, &f, err)
+		return ctrl.makeFilterPayloadN(ctx, m, *rr, nil, &flt, err)
 	default:
 		if r.Query != "" {
 			// Query param takes preference
@@ -368,7 +526,28 @@ func (ctrl *Record) Read(ctx context.Context, r *request.RecordRead) (interface{
 		return nil, err
 	}
 
-	record, dd, err := ctrl.record.FindByID(ctx, r.NamespaceID, r.ModuleID, r.RecordID)
+	if r.ExposeSecrets {
+		ctx = withExposeSecrets(ctx)
+	}
+
+	var record *types.Record
+	var dd *types.RecordValueErrorSet
+
+	if len(r.RecordFilter) > 0 {
+		var set types.RecordSet
+		recordFilter := types.RecordFilter{}
+		recordFilter.ModuleID = r.ModuleID
+		recordFilter.NamespaceID = r.NamespaceID
+		recordFilter.Query = r.RecordFilter
+		recordFilter.Limit = 1
+		set, _, err = ctrl.record.Find(ctx, recordFilter)
+		if err == nil {
+			record = set[0]
+		}
+	} else {
+		record, dd, err = ctrl.record.FindByID(ctx, r.NamespaceID, r.ModuleID, r.RecordID)
+
+	}
 
 	// Temp workaround until we do proper by-module filtering for record findByID
 	if record != nil && record.ModuleID != r.ModuleID {
@@ -585,6 +764,53 @@ func (ctrl *Record) Upload(ctx context.Context, r *request.RecordUpload) (interf
 	)
 
 	return makeAttachmentPayload(ctx, a, err)
+}
+
+func (ctrl *Record) UploadVersion(ctx context.Context, r *request.RecordUploadVersion) (interface{}, error) {
+	file, err := r.Upload.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	a, err := ctrl.attachment.CreateRecordAttachmentVersion(
+		ctx,
+		r.NamespaceID,
+		r.Upload.Filename,
+		r.Upload.Size,
+		file,
+		r.ModuleID,
+		r.RecordID,
+		r.FieldName,
+		r.AttachmentID,
+	)
+
+	return makeAttachmentPayload(ctx, a, err)
+}
+
+func (ctrl *Record) AttachmentVersions(ctx context.Context, r *request.RecordAttachmentVersions) (interface{}, error) {
+	vv, err := ctrl.attachment.ListVersions(ctx, r.NamespaceID, r.ModuleID, r.RecordID, r.FieldName, r.AttachmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	out := struct {
+		Set     []*attachmentPayload `json:"set"`
+		Current []string             `json:"current"`
+	}{
+		Set:     make([]*attachmentPayload, len(vv.Set)),
+		Current: make([]string, len(vv.Current)),
+	}
+
+	for i, a := range vv.Set {
+		out.Set[i], _ = makeAttachmentPayload(ctx, a, nil)
+	}
+	for i, id := range vv.Current {
+		out.Current[i] = strconv.FormatUint(id, 10)
+	}
+
+	return out, nil
 }
 
 func (ctrl *Record) ImportInit(ctx context.Context, r *request.RecordImportInit) (interface{}, error) {
@@ -875,6 +1101,13 @@ func (ctrl *Record) ImportRun(ctx context.Context, r *request.RecordImportRun) (
 			importSession.Progress.FinishedAt = &now
 			if err != nil {
 				importSession.Progress.FailReason = err.Error()
+				importSession.Progress.Failed = 1
+				importSession.Progress.FailLog = &service.FailLog{
+					Errors: service.ErrorIndex{
+						err.Error(): 1,
+					},
+				}
+
 				return
 			}
 			return
@@ -909,7 +1142,8 @@ func (ctrl *Record) Export(ctx context.Context, r *request.RecordExport) (interf
 	)
 
 	// Access control
-	if _, err = ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
+	var exportModule *types.Module
+	if exportModule, err = ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); err != nil {
 		return nil, err
 	}
 
@@ -948,6 +1182,20 @@ func (ctrl *Record) Export(ctx context.Context, r *request.RecordExport) (interf
 			envoySvc.AddEncoder(
 				envoyx.EncodeTypeIo,
 				composeEnvoy.CsvEncoder{},
+			)
+
+		case "xlsx":
+			contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+			envoySvc.AddEncoder(
+				envoyx.EncodeTypeIo,
+				composeEnvoy.XlsxEncoder{},
+			)
+
+		case "pdf":
+			contentType = "application/pdf"
+			envoySvc.AddEncoder(
+				envoyx.EncodeTypeIo,
+				composeEnvoy.PdfEncoder{},
 			)
 
 		default:
@@ -995,6 +1243,28 @@ func (ctrl *Record) Export(ctx context.Context, r *request.RecordExport) (interf
 			return
 		}
 
+		// Secret-поля в экспорте всегда закрыты маской — файл не должен
+		// нести секреты (в store они шифротекст, клиенту отдаём маску).
+		for _, n := range nodes {
+			if n == nil || n.ResourceType != composeEnvoy.ComposeRecordDatasourceAuxType {
+				continue
+			}
+			for _, f := range exportModule.Fields {
+				if f.Kind != "Secret" {
+					continue
+				}
+				for pos := uint(0); ; pos++ {
+					v, gerr := n.Resource.GetValue(f.Name, pos)
+					if gerr != nil || v == nil {
+						break
+					}
+					if s, _ := v.(string); s != "" {
+						_ = n.Resource.SetValue(f.Name, pos, secrets.Mask)
+					}
+				}
+			}
+		}
+
 		var gg *envoyx.DepGraph
 		gg, err = envoySvc.Bake(ctx, envoyx.EncodeParams{
 			Type: envoyx.EncodeTypeStore,
@@ -1012,9 +1282,22 @@ func (ctrl *Record) Export(ctx context.Context, r *request.RecordExport) (interf
 		w.Header().Add("Content-Disposition", "attachment"+filename)
 
 		mapping := make([]envoyx.MapEntry, 0, len(r.Fields))
+		useLabels := false
+		switch strings.ToLower(r.Ext) {
+		case "xlsx", "pdf":
+			useLabels = true
+		}
+
 		for _, f := range r.Fields {
+			column := f
+			if useLabels && exportModule != nil {
+				if mf := exportModule.Fields.FindByName(f); mf != nil && mf.Label != "" {
+					column = mf.Label
+				}
+			}
+
 			mapping = append(mapping, envoyx.MapEntry{
-				Column: f,
+				Column: column,
 				Field:  f,
 			})
 		}
@@ -1087,6 +1370,20 @@ func (ctrl *Record) TriggerScriptOnList(ctx context.Context, r *request.RecordTr
 	return api.OK(), err
 }
 
+func (ctrl *Record) RestoreRevision(ctx context.Context, r *request.RecordRestoreRevision) (interface{}, error) {
+	m, err := ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID)
+	if err != nil {
+		return nil, err
+	}
+
+	rec, dd, err := ctrl.record.RestoreRevision(ctx, r.NamespaceID, r.ModuleID, r.RecordID, r.Revision)
+	if rve := types.IsRecordValueErrorSet(err); rve != nil {
+		return ctrl.handleValidationError(rve), nil
+	}
+
+	return ctrl.makePayload(ctx, m, rec, dd, err)
+}
+
 func (ctrl *Record) Revisions(ctx context.Context, r *request.RecordRevisions) (interface{}, error) {
 	var (
 		makeRev = func() dal.ValueSetter { return &revisions.Revision{} }
@@ -1101,6 +1398,11 @@ func (ctrl *Record) Revisions(ctx context.Context, r *request.RecordRevisions) (
 	iter, err := ctrl.record.SearchRevisions(ctx, r.NamespaceID, r.ModuleID, r.RecordID, sorting)
 	if err != nil {
 		return nil, err
+	}
+
+	// Secret-поля в истории закрываются маской.
+	if m, mErr := ctrl.module.FindByID(ctx, r.NamespaceID, r.ModuleID); mErr == nil && m != nil {
+		iter = &revisionsMaskIterator{inner: iter, mod: m}
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -1134,9 +1436,9 @@ func (ctrl Record) makeBulkPayload(ctx context.Context, m *types.Module, dd *typ
 		RecordValueErrors: dd,
 
 		CanManageOwnerOnRecord: ctrl.ac.CanManageOwnerOnRecord(ctx, rr[0]),
-		CanUpdateRecord:        ctrl.ac.CanUpdateRecord(ctx, rr[0]),
+		CanUpdateRecord:        ctrl.ac.CanUpdateRecord(ctx, rr[0]) && !m.Config.Records.ReadOnly,
 		CanReadRecord:          ctrl.ac.CanReadRecord(ctx, rr[0]),
-		CanDeleteRecord:        ctrl.ac.CanDeleteRecord(ctx, rr[0]),
+		CanDeleteRecord:        ctrl.ac.CanDeleteRecord(ctx, rr[0]) && !m.Config.Records.NoDelete,
 		CanUndeleteRecord:      ctrl.ac.CanUndeleteRecord(ctx, rr[0]),
 		CanSearchRevisions:     ctrl.ac.CanSearchRevisionsOnRecord(ctx, rr[0]),
 	}, nil
@@ -1169,6 +1471,10 @@ func (ctrl Record) makePayload(ctx context.Context, m *types.Module, r *types.Re
 		return nil, err
 	}
 
+	if !ctrl.exposeSecretsAllowed(ctx, r) {
+		maskRecordSecretValues(m, r)
+	}
+
 	return &recordPayload{
 		Record:            r,
 		RecordValueErrors: dd,
@@ -1176,15 +1482,20 @@ func (ctrl Record) makePayload(ctx context.Context, m *types.Module, r *types.Re
 		CanGrant: ctrl.ac.CanGrant(ctx),
 
 		CanManageOwnerOnRecord: ctrl.ac.CanManageOwnerOnRecord(ctx, r),
-		CanUpdateRecord:        ctrl.ac.CanUpdateRecord(ctx, r),
+		CanUpdateRecord:        ctrl.ac.CanUpdateRecord(ctx, r) && !m.Config.Records.ReadOnly,
 		CanReadRecord:          ctrl.ac.CanReadRecord(ctx, r),
-		CanDeleteRecord:        ctrl.ac.CanDeleteRecord(ctx, r),
+		CanDeleteRecord:        ctrl.ac.CanDeleteRecord(ctx, r) && !m.Config.Records.NoDelete,
 		CanUndeleteRecord:      ctrl.ac.CanUndeleteRecord(ctx, r),
 		CanSearchRevisions:     ctrl.ac.CanSearchRevisionsOnRecord(ctx, r),
 	}, nil
 }
 
-func (ctrl Record) makeFilterPayloadN(ctx context.Context, m *types.Module, rr types.RecordSet, smr map[string]types.RecordSummary, f *types.RecordFilter, err error) (*recordSetPayload, error) {
+func (ctrl Record) makeFilterPayloadN(ctx context.Context,
+	m *types.Module,
+	rr types.RecordSet,
+	smr map[string]types.RecordSummary,
+	f *types.RecordFilter,
+	err error) (*recordSetPayload, error) {
 	if err != nil {
 		return nil, err
 	}
@@ -1217,4 +1528,53 @@ func (ctrl Record) handleValidationError(rve *types.RecordValueErrorSet) interfa
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(rval)
 	}
+}
+
+// revisionsMaskIterator закрывает маской значения Secret-полей в
+// revision-снапшотах (в store они шифротекстом — до клиента маска).
+type revisionsMaskIterator struct {
+	inner dal.Iterator
+	mod   *types.Module
+}
+
+func (it *revisionsMaskIterator) Next(ctx context.Context) bool { return it.inner.Next(ctx) }
+func (it *revisionsMaskIterator) More(limit uint, vg dal.ValueGetter) error {
+	return it.inner.More(limit, vg)
+}
+func (it *revisionsMaskIterator) Err() error   { return it.inner.Err() }
+func (it *revisionsMaskIterator) Close() error { return it.inner.Close() }
+func (it *revisionsMaskIterator) BackCursor(vg dal.ValueGetter) (*filter.PagingCursor, error) {
+	return it.inner.BackCursor(vg)
+}
+func (it *revisionsMaskIterator) ForwardCursor(vg dal.ValueGetter) (*filter.PagingCursor, error) {
+	return it.inner.ForwardCursor(vg)
+}
+
+func (it *revisionsMaskIterator) Scan(dst dal.ValueSetter) error {
+	if err := it.inner.Scan(dst); err != nil {
+		return err
+	}
+	rev, ok := dst.(*revisions.Revision)
+	if !ok {
+		return nil
+	}
+	sec := map[string]bool{}
+	for _, f := range it.mod.Fields {
+		if f.Kind == "Secret" {
+			sec[f.Name] = true
+		}
+	}
+	for _, ch := range rev.Changes {
+		if ch == nil || !sec[ch.Key] {
+			continue
+		}
+		for _, side := range []*[]any{&ch.Old, &ch.New} {
+			for i, v := range *side {
+				if s, _ := v.(string); s != "" && s != secrets.Mask {
+					(*side)[i] = secrets.Mask
+				}
+			}
+		}
+	}
+	return nil
 }

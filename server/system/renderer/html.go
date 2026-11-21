@@ -2,11 +2,20 @@ package renderer
 
 import (
 	"encoding/base64"
+	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
+	neturl "net/url"
+	"time"
 
 	"github.com/Masterminds/sprig"
+)
+
+const (
+	inlineRemoteTimeout  = 15 * time.Second
+	inlineRemoteMaxBytes = 10 << 20
 )
 
 func preprocHTMLTemplate(pl *driverPayload) (*template.Template, error) {
@@ -35,16 +44,24 @@ func preprocHTMLTemplate(pl *driverPayload) (*template.Template, error) {
 			// },
 
 			"inlineRemote": func(url string) (template.URL, error) {
-				rsp, err := http.Get(url)
+				if u, err := neturl.Parse(url); err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+					return "", fmt.Errorf("inlineRemote: only http(s) URLs are allowed")
+				}
+
+				rsp, err := (&http.Client{Timeout: inlineRemoteTimeout}).Get(url)
 				if err != nil {
 					return "", err
 				}
 
 				defer rsp.Body.Close()
 
-				bb, err := ioutil.ReadAll(rsp.Body)
+				bb, err := ioutil.ReadAll(io.LimitReader(rsp.Body, inlineRemoteMaxBytes+1))
 				if err != nil {
 					return "", err
+				}
+
+				if len(bb) > inlineRemoteMaxBytes {
+					return "", fmt.Errorf("inlineRemote: resource is larger than %d bytes", inlineRemoteMaxBytes)
 				}
 
 				raw := base64.RawStdEncoding.EncodeToString(bb)

@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Москва · Тверская",
+    "city": "Москва",
+    "shrinkPct": 2.1,
+    "incidents90d": 1,
+    "daysSinceAudit": 45,
+    "revenueImpact": 4,
+    "controlEffectiveness": 0.7,
+    "likelihood": 2,
+    "impact": 4
+  },
+  {
+    "name": "Москва · Авиапарк",
+    "city": "Москва",
+    "shrinkPct": 5.8,
+    "incidents90d": 8,
+    "daysSinceAudit": 210,
+    "revenueImpact": 5,
+    "controlEffectiveness": 0.3,
+    "likelihood": 4,
+    "impact": 5
+  },
+  {
+    "name": "Новосибирск · Галерея",
+    "city": "Новосибирск",
+    "shrinkPct": 6.2,
+    "incidents90d": 12,
+    "daysSinceAudit": 300,
+    "revenueImpact": 4,
+    "controlEffectiveness": 0.1,
+    "likelihood": 5,
+    "impact": 4
+  }
+]

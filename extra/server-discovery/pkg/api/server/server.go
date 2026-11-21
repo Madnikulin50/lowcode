@@ -5,7 +5,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/options"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/options"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )

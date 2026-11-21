@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/discovery/service"
-	"github.com/cortezaproject/corteza/server/discovery/types"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/discovery/service"
+	"github.com/madnikulin50/lowcode/server/discovery/types"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
 )
 
 type (

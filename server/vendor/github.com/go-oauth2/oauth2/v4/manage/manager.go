@@ -2,6 +2,7 @@ package manage
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/go-oauth2/oauth2/v4"
@@ -34,6 +35,7 @@ type Manager struct {
 	gtcfg             map[oauth2.GrantType]*Config
 	rcfg              *RefreshingConfig
 	validateURI       ValidateURIHandler
+	extractExtension  ExtractExtensionHandler
 	authorizeGenerate oauth2.AuthorizeGenerate
 	accessGenerate    oauth2.AccessGenerate
 	tokenStore        oauth2.TokenStore
@@ -54,6 +56,8 @@ func (m *Manager) grantConfig(gt oauth2.GrantType) *Config {
 		return DefaultPasswordTokenCfg
 	case oauth2.ClientCredentials:
 		return DefaultClientTokenCfg
+	case oauth2.JWTBearer:
+		return DefaultJWTBearerTokenCfg
 	}
 	return &Config{}
 }
@@ -91,6 +95,11 @@ func (m *Manager) SetRefreshTokenCfg(cfg *RefreshingConfig) {
 // SetValidateURIHandler set the validates that RedirectURI is contained in baseURI
 func (m *Manager) SetValidateURIHandler(handler ValidateURIHandler) {
 	m.validateURI = handler
+}
+
+// SetExtractExtensionHandler set the token extension extractor
+func (m *Manager) SetExtractExtensionHandler(handler ExtractExtensionHandler) {
+	m.extractExtension = handler
 }
 
 // MapAuthorizeGenerate mapping the authorize code generate interface
@@ -152,6 +161,9 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 	}
 
 	ti := models.NewToken()
+	if m.extractExtension != nil {
+		m.extractExtension(tgr, ti)
+	}
 	ti.SetClientID(tgr.ClientID)
 	ti.SetUserID(tgr.UserID)
 	ti.SetRedirectURI(tgr.RedirectURI)
@@ -218,7 +230,7 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 	}
 	return ti, nil
 }
- 
+
 // get authorization code data
 func (m *Manager) getAuthorizationCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	ti, err := m.tokenStore.GetByCode(ctx, code)
@@ -296,6 +308,12 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 		}
 	}
 
+	if gt == oauth2.ClientCredentials && cli.IsPublic() == true {
+		return nil, errors.ErrInvalidClient
+	}
+
+	var extension url.Values
+
 	if gt == oauth2.AuthorizationCode {
 		ti, err := m.getAndDelAuthorizationCode(ctx, tgr)
 		if err != nil {
@@ -309,9 +327,16 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 		if exp := ti.GetAccessExpiresIn(); exp > 0 {
 			tgr.AccessTokenExp = exp
 		}
+		if eti, ok := ti.(oauth2.ExtendableTokenInfo); ok {
+			extension = eti.GetExtension()
+		}
 	}
 
 	ti := models.NewToken()
+	ti.SetExtension(extension)
+	if m.extractExtension != nil {
+		m.extractExtension(tgr, ti)
+	}
 	ti.SetClientID(tgr.ClientID)
 	ti.SetUserID(tgr.UserID)
 	ti.SetRedirectURI(tgr.RedirectURI)
@@ -493,4 +518,8 @@ func (m *Manager) LoadRefreshToken(ctx context.Context, refresh string) (oauth2.
 		return nil, errors.ErrExpiredRefreshToken
 	}
 	return ti, nil
+}
+
+func (m *Manager) SetGrantTypeCfg(gt oauth2.GrantType, cfg *Config) {
+	m.gtcfg[gt] = cfg
 }

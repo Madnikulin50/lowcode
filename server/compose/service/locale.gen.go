@@ -1,22 +1,23 @@
 package service
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	intAuth "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
-	systemTypes "github.com/cortezaproject/corteza/server/system/types"
+
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	intAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemTypes "github.com/madnikulin50/lowcode/server/system/types"
 	"golang.org/x/text/language"
 )
 
@@ -162,6 +163,25 @@ func (svc resourceTranslationsManager) Chart(ctx context.Context, namespaceID ui
 		return nil, err
 	}
 
+	var k types.LocaleKey
+	for _, tag := range svc.locale.Tags() {
+		k = types.LocaleKeyChartConfigDescription
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+
+		k = types.LocaleKeyChartConfigHelp
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+	}
+
 	tmp, err := svc.chartExtended(ctx, res)
 	return append(out, tmp...), err
 }
@@ -232,6 +252,22 @@ func (svc resourceTranslationsManager) Namespace(ctx context.Context, id uint64)
 			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
 		})
 
+		k = types.LocaleKeyNamespaceMetaPrompt
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+
+		k = types.LocaleKeyNamespaceMetaHelp
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+
 	}
 
 	return out, nil
@@ -260,6 +296,14 @@ func (svc resourceTranslationsManager) Page(ctx context.Context, namespaceID uin
 		})
 
 		k = types.LocaleKeyPageDescription
+		out = append(out, &locale.ResourceTranslation{
+			Resource: res.ResourceTranslation(),
+			Lang:     tag.String(),
+			Key:      k.Path,
+			Msg:      svc.locale.TResourceFor(tag, res.ResourceTranslation(), k.Path),
+		})
+
+		k = types.LocaleKeyPageConfigHelp
 		out = append(out, &locale.ResourceTranslation{
 			Resource: res.ResourceTranslation(),
 			Lang:     tag.String(),

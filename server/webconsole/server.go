@@ -4,8 +4,8 @@ import (
 	"embed"
 	"io/fs"
 
-	"github.com/cortezaproject/corteza/server/pkg/http"
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/pkg/http"
 )
 
 var (

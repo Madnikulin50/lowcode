@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }} — Lowcode Docs</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a href="{{ url_for('index') }}" class="logo">📖 Lowcode Documentation</a>
+    <span class="header-lang">RU</span>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <ul>
+    {% for rel, key, is_dir, label, kids, active, has_active in tree recursive %}
+      <li class="{% if is_dir %}dir{% endif %} {% if active %}active{% endif %} {% if has_active %}expanded{% endif %}">
+        {% if is_dir %}
+          <span class="dir-label">{{ label }}</span>
+          {% if kids %}
+            <ul>{{ loop(kids) }}</ul>
+          {% endif %}
+        {% else %}
+          <a href="{{ url_for('show_page', req_path=rel.replace('.md', '.html')) }}">{{ label }}</a>
+        {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  </nav>
+  <main class="content">
+    <article>
+      {{ content | safe }}
+    </article>
+  </main>
+</div>
+<script>
+// Expand active/has_active dirs
+document.querySelectorAll('.sidebar li.expanded > ul, .sidebar li.active > ul').forEach(el => el.style.display = 'block');
+// Toggle dirs on click
+document.querySelectorAll('.sidebar .dir-label').forEach(el => {
+  el.addEventListener('click', function() {
+    const ul = this.nextElementSibling;
+    if (ul) ul.style.display = ul.style.display === 'none' ? 'block' : 'none';
+  });
+});
+</script>
+</body>
+</html>

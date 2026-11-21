@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	automationModels "github.com/cortezaproject/corteza/server/automation/model"
-	composeModels "github.com/cortezaproject/corteza/server/compose/model"
-	federationModels "github.com/cortezaproject/corteza/server/federation/model"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ddl"
-	systemModels "github.com/cortezaproject/corteza/server/system/model"
+	anomalyModels "github.com/madnikulin50/lowcode/server/anomaly/model"
+	automationModels "github.com/madnikulin50/lowcode/server/automation/model"
+	composeModels "github.com/madnikulin50/lowcode/server/compose/model"
+	federationModels "github.com/madnikulin50/lowcode/server/federation/model"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
+	systemModels "github.com/madnikulin50/lowcode/server/system/model"
 	"go.uber.org/zap"
 )
 
@@ -29,6 +30,7 @@ func (s *Store) Upgrade(ctx context.Context) (err error) {
 		composeModels.Models(),
 		automationModels.Models(),
 		federationModels.Models(),
+		anomalyModels.Models(),
 	)
 
 	if err != nil {
@@ -200,6 +202,7 @@ func tableNames() (tnames []string) {
 	cortezaModels := append(systemModels.Models(), composeModels.Models()...)
 	cortezaModels = append(cortezaModels, automationModels.Models()...)
 	cortezaModels = append(cortezaModels, federationModels.Models()...)
+	cortezaModels = append(cortezaModels, anomalyModels.Models()...)
 
 	for _, m := range cortezaModels {
 		tnames = append(tnames, m.Ident)

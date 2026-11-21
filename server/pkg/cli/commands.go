@@ -1,14 +1,14 @@
 package cli
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/version"
+	"github.com/madnikulin50/lowcode/server/pkg/version"
 	"github.com/spf13/cobra"
 )
 
 var (
 	rootCommand = &cobra.Command{
-		Use:              "corteza-server",
-		Aliases:          []string{"corteza", "server"},
+		Use:              "lowcode-server",
+		Aliases:          []string{"lowcode", "server"},
 		TraverseChildren: true,
 	}
 

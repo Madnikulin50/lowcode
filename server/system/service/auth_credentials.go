@@ -7,16 +7,18 @@ package service
 
 import (
 	"context"
+	crand "crypto/rand"
 	"fmt"
-	internalAuth "github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/rand"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"math/big"
+
 	"github.com/dgryski/dgoogauth"
+	internalAuth "github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/rand"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"golang.org/x/crypto/bcrypt"
-	rand2 "math/rand"
 	"regexp"
 	"sort"
 	"strconv"
@@ -172,6 +174,17 @@ func (svc *auth) loadUserFromToken(ctx context.Context, token, kind string) (u *
 	})
 }
 
+// secureRandomOTP returns a cryptographically secure 6-digit numeric code
+// (e.g. "042913") suitable for one-time passwords. Unlike math/rand, the
+// value is drawn from crypto/rand and is uniformly distributed.
+func secureRandomOTP() (string, error) {
+	n, err := crand.Int(crand.Reader, big.NewInt(1000000))
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%06d", n), nil
+}
+
 // Generates & stores user token
 // it returns combined value of token + token ID to help with the lookups
 func (svc *auth) createUserToken(ctx context.Context, u *types.User, kind string) (token string, err error) {
@@ -221,8 +234,10 @@ func (svc *auth) createUserToken(ctx context.Context, u *types.User, kind string
 
 			expiresAt = now().Add(time.Second * time.Duration(expSec))
 
-			// random number, 6 chars
-			token = fmt.Sprintf("%06d", rand2.Int())[0:6]
+			// cryptographically secure random number, 6 digits
+			if token, err = secureRandomOTP(); err != nil {
+				return
+			}
 		case credentialsTypeCreatePasswordToken:
 			expSec := svc.settings.Auth.Internal.PasswordCreate.Expires
 			if expSec == 0 {

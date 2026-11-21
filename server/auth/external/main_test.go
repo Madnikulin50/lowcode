@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
 )
 
 func TestMain(m *testing.M) {

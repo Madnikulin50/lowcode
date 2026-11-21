@@ -1,0 +1,129 @@
+label:
+  single: Rule chain
+  plural: Rule chains
+searchPlaceholder: Search rule chains
+add: Add workflow
+noItems: No rule chains found
+columns:
+  name: Name
+  description: Description
+  nodes: Nodes
+  edges: Connections
+  actions: Actions
+edit:
+  title: Rule chain
+  createTitle: New rule chain
+  generalSettings: General settings
+  name:
+    label: Name
+    placeholder: Rule chain name (e.g. "Approval workflow")
+  description:
+    label: Description
+    placeholder: Short description of what this chain does
+  aiBudget:
+    label: AI budget per run
+    description: Stops the AI nodes of one run once they have used this much of the model. Leave empty for no limit. Models that do not report token use can only be limited by the number of calls.
+    calls: Model calls
+    tokens: Tokens
+    unlimited: No limit
+  entryNode:
+    label: Entry node
+    placeholder: Select the node where execution starts
+  delete: Delete rule chain
+  nodes:
+    label: Nodes
+    placeholder: Node label
+    add: Add node
+    delete: Delete node
+    type:
+      label: Type
+      placeholder: Select node type
+    config:
+      label: Configuration
+      placeholder: "{'{}'}"
+      invalid: Configuration must be valid JSON
+      form: Form
+      json: JSON
+      invalidJson: Invalid JSON
+      required: Required
+      noType: Select a node type to edit its configuration
+      noFields: This node type has no configuration fields
+      addField: Add field
+      addEntry: Add
+      remove: Remove
+      key: Key
+      value: Value
+  edges:
+    label: Connections
+    placeholder: Connection label
+    add: Add connection
+    delete: Delete connection
+    from:
+      label: From node
+      placeholder: Select node
+    to:
+      label: To node
+      placeholder: Select node
+    condition:
+      label: Condition
+      placeholder: Condition expression
+test:
+  title: Test rule chain
+  run: Run test
+  running: Running...
+  input:
+      label: Input
+      placeholder: "{'{}'}"
+      invalid: Input must be valid JSON
+  output:
+    label: Result
+  modal:
+    title: Test result
+    success: Success
+    failed: Failed
+runs:
+  title: Execution history
+  refresh: Refresh
+  empty: No runs yet
+  selectHint: Select a run on the left to see its step-by-step trace
+  trace: Step-by-step trace
+  noTrace: No step data for this run
+  output: Result
+  columns:
+    trigger: Trigger
+    startedAt: Started
+    duration: Duration
+  loadFailed: Rule chain runs could not be loaded
+  detailFailed: Run trace could not be loaded
+notification:
+  created: Rule chain created
+  updated: Rule chain updated
+  deleted: Rule chain deleted
+  createFailed: Rule chain could not be created
+  updateFailed: Rule chain could not be updated
+  deleteFailed: Rule chain could not be deleted
+  loadFailed: Rule chain could not be loaded
+  listFailed: Rule chains could not be loaded
+  testFailed: Test could not be executed
+trace:
+  title: AI trace
+  agent: Agent
+  model: Model
+  tokens: tokens
+  tokensHint: Prompt / completion tokens
+  attempts: attempts
+  failed: failed
+  tools: Tools
+  rejected: Rejected answers
+  prompt: Prompt
+  response: Response
+nodeTest:
+  title: Try this node
+  inputPlaceholder: Sample input as JSON - its fields fill the variables used in the prompt
+  run: Run with the real model
+  hint: Nothing is saved; data changes by the agent are switched off.
+  stop: Stop
+  working: Waiting for the model...
+  warming: The model is loading...
+  usingTools: The agent is using tools...
+  attemptN: Attempt {n} - the previous answer was rejected

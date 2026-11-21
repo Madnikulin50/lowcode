@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ddl"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ql"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ql"
 	"github.com/spf13/cast"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/expr"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/dialect/mysql"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/doug-martin/goqu/v9/sqlgen"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/expr"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers"
 )
 
 type (
@@ -233,6 +233,9 @@ func (mysqlDialect) AttributeToColumn(attr *dal.Attribute) (col *ddl.Column, err
 	case *TypeTime:
 		col.Type.Name = "TIME"
 		col.Default = ddl.DefaultValueCurrentTimestamp(t.DefaultCurrentTimestamp)
+	case *dal.TypeTime:
+		col.Type.Name = "TIME"
+		col.Default = ddl.DefaultValueCurrentTimestamp(t.DefaultCurrentTimestamp)
 
 	case *dal.TypeDate:
 		col.Type.Name = "DATE"
@@ -397,6 +400,12 @@ func (mysqlDialect) ColumnFits(target, assert *ddl.Column) bool {
 
 func (d mysqlDialect) ExprHandler(n *ql.ASTNode, args ...exp.Expression) (expr exp.Expression, err error) {
 	switch ref := strings.ToLower(n.Ref); ref {
+	case "eq":
+		return drivers.OpHandlerEq(d, n, args...)
+
+	case "ne":
+		return drivers.OpHandlerNe(d, n, args...)
+
 	case "in":
 		return drivers.OpHandlerIn(d, n, args...)
 

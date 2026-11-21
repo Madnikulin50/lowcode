@@ -10,7 +10,7 @@ template:
       placeholder: Your full name
     handle:
       label: Дескриптор
-      placeholder: Short name, nickname or дескриптор
+      placeholder: Короткое имя, nickname or дескриптор
     avatar:
       label: Avatar
       delete: Delete

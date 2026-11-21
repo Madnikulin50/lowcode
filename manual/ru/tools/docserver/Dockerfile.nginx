@@ -1,0 +1,10 @@
+from nginx:alpine
+
+RUN apk add --no-cache python3
+
+COPY build-html.py app.py /app/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD sh -c "python3 /app/build-html.py && nginx -g 'daemon off;'"

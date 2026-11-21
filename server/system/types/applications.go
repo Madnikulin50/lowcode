@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 )
 
 type (
@@ -23,7 +22,7 @@ type (
 		Unify *ApplicationUnify `json:"unify,omitempty"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
-		Flags  []string          `json:"flags,omitempty"`
+		Flags  []string                         `json:"flags,omitempty"`
 
 		CreatedAt time.Time  `json:"createdAt,omitempty"`
 		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
@@ -49,7 +48,7 @@ type (
 		Name          string   `json:"name"`
 		Query         string   `json:"query"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		FlaggedIDs []uint64 `json:"-"`

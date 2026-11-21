@@ -3,7 +3,7 @@ package registry
 import (
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/pkg/apigw/types"
+	"github.com/madnikulin50/lowcode/server/pkg/apigw/types"
 	"github.com/stretchr/testify/require"
 )
 

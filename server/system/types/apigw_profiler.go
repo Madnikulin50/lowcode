@@ -3,8 +3,8 @@ package types
 import (
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	h "github.com/cortezaproject/corteza/server/pkg/http"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	h "github.com/madnikulin50/lowcode/server/pkg/http"
 )
 
 type (
@@ -209,9 +209,7 @@ func (h ByTimeMin) Swap(i, j int) {
 	return
 }
 
-//
 // Sorting hits
-//
 func (h BySTime) Len() int {
 	return len(h)
 }

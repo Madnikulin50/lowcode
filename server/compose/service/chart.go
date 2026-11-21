@@ -5,14 +5,14 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/label"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/label"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/store"
 )
 
 type (
@@ -194,11 +194,19 @@ func (svc chart) Create(ctx context.Context, new *types.Chart) (*types.Chart, er
 		return nil
 	})
 
+	if err == nil {
+		recordResourceVersion(ctx, svc.store, types.ResourceVersionChart, new.NamespaceID, new.ID)
+	}
+
 	return new, svc.recordAction(ctx, aProps, ChartActionCreate, err)
 }
 
 func (svc chart) Update(ctx context.Context, upd *types.Chart) (c *types.Chart, err error) {
-	return svc.updater(ctx, upd.NamespaceID, upd.ID, ChartActionUpdate, svc.handleUpdate(ctx, upd))
+	if c, err = svc.updater(ctx, upd.NamespaceID, upd.ID, ChartActionUpdate, svc.handleUpdate(ctx, upd)); err == nil && c != nil {
+		recordResourceVersion(ctx, svc.store, types.ResourceVersionChart, c.NamespaceID, c.ID)
+	}
+
+	return
 }
 
 func (svc chart) DeleteByID(ctx context.Context, namespaceID, chartID uint64) error {

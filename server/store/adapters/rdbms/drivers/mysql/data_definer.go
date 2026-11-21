@@ -3,9 +3,9 @@ package mysql
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ddl"
 	"github.com/jmoiron/sqlx"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
 )
 
 type (
@@ -55,6 +55,10 @@ func (dd *dataDefiner) ConvertModel(m *dal.Model) (tbl *ddl.Table, err error) {
 
 func (dd *dataDefiner) ConvertAttribute(attr *dal.Attribute) (*ddl.Column, error) {
 	return ddl.ConvertAttribute(attr, dd.d)
+}
+
+func (dd *dataDefiner) ConvertIndex(idx *dal.Index, aa dal.AttributeSet, table string) (*ddl.Index, error) {
+	return ddl.ConvertIndex(idx, aa, table, dd.d)
 }
 
 func (dd *dataDefiner) TableCreate(ctx context.Context, t *ddl.Table) error {

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/options"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/options"
 	"github.com/elastic/go-elasticsearch/v7"
 )
 

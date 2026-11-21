@@ -3,8 +3,8 @@ package rdbms
 import (
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
 	"github.com/doug-martin/goqu/v9"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 	"github.com/stretchr/testify/require"
 )
 

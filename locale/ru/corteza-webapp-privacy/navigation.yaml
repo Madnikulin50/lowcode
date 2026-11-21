@@ -1,6 +1,9 @@
 appMenu: Меню
 help:
   documentation: Документация
+  userDocs: Документация пользователя
+  apiDocs: Документация API
+  architecture: Архитектура
   feedback: Send feedback
   forum: Справка
   version: 'Version:'

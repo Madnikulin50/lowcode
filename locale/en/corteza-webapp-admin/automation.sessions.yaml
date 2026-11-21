@@ -1,4 +1,13 @@
 editor:
+  aiSteps:
+    title: AI steps
+    step: Step
+    tokens: tokens
+    attempts: attempts
+    tools: Tools
+    rejected: Rejected answers
+    prompt: Prompt
+    response: Response
   info:
     completedAt: Completed at
     createdAt: Created at

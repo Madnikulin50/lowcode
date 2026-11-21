@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
 	"go.uber.org/zap"
 )
 

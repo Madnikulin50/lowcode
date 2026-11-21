@@ -1,11 +1,11 @@
 package server
 
 import (
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/auth"
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/healthcheck"
-	"github.com/cortezaproject/corteza/extra/server-discovery/pkg/options"
-	"github.com/cortezaproject/corteza/server/pkg/api"
-	"github.com/cortezaproject/corteza/server/pkg/version"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/auth"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/healthcheck"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/api"
+	"github.com/madnikulin50/lowcode/server/pkg/version"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 	"net/http"

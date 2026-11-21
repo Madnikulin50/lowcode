@@ -73,6 +73,8 @@ automation:
 general:
   resource-list:
     no-items: No matches for your search
+    empty-title: Nothing here yet
+    empty-text: Create a new item or adjust the filters.
   notFound: 'Not found'
   loading: Loading
   label:
@@ -96,6 +98,9 @@ navigation:
   configuration: Configuration
   help:
     documentation: Documentation
+    userDocs: User guide
+    apiDocs: API reference
+    architecture: Architecture
     feedback: Send feedback
     forum: Help
     version: 'Version:'

@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
 
-	envoyCsv "github.com/cortezaproject/corteza/server/pkg/envoyx/csv"
-	envoyJson "github.com/cortezaproject/corteza/server/pkg/envoyx/json"
+	envoyCsv "github.com/madnikulin50/lowcode/server/pkg/envoyx/csv"
+	envoyJson "github.com/madnikulin50/lowcode/server/pkg/envoyx/json"
 )
 
 type (

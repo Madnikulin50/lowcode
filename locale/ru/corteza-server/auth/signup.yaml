@@ -11,8 +11,8 @@ template:
       label: Полное имя
       placeholder: Your full name
     nickname:
-      label: Short name, nickname or дескриптор
-      placeholder: Short name, nickname or дескриптор
+      label: Короткое имя, nickname or дескриптор
+      placeholder: Короткое имя, nickname or дескриптор
     button:
       sign-up: Подтвердить
   log-in: Already have an account? <a data-test-id="link-login" href="{{link}}">Log in</a>

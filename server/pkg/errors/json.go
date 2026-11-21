@@ -3,7 +3,7 @@ package errors
 import (
 	"encoding/json"
 
-	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 )
 
 func (e Error) MarshalJSON() ([]byte, error) {

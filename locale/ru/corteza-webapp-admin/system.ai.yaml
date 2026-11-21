@@ -1,0 +1,93 @@
+list:
+  title: AI-модели, toolkits и агенты
+
+editor:
+  title: Модели Ollama
+  sync: Синхронизировать с Ollama
+  enabled: Включить AI
+  enabledHelp: Если выключено, пикеры моделей будут пустыми. Назначения ролей на сервере продолжают действовать, пока их не очистить.
+  ollamaURL: URL Ollama
+  ollamaURLPlaceholder: http://127.0.0.1:11434
+  ollamaURLHelp: Пусто = OLLAMA_URL, затем OLLAMA_HOST, затем localhost.
+  ollamaURLEffective: "Сейчас используется {url} (из {source})"
+  save: Сохранить
+  saved: Сохранено
+  roles:
+    title: Модель по назначению
+    help: У каждого назначения свой default. Пусто = CHAT_MODEL или встроенный default (qwen3:8b).
+    fallback: (env / встроенный default)
+    composeChat: Compose chat
+    composeChatHelp: AI-чат на страницах compose и warmup по умолчанию.
+    mcpAgent: MCP-агенты
+    mcpAgentHelp: Модель по умолчанию для агентов каталога (crud-agent, assistant, …), если у агента не задана своя.
+    automationChat: Automation chat
+    automationChatHelp: Чат ассистента workflow.
+    rulesgoAi: Rulesgo AI
+    rulesgoAiHelp: AI-ноды в цепочках правил.
+  catalog:
+    title: Каталог моделей
+    help: Пустой каталог = без фильтра (все chat-модели Ollama). После sync/добавления в пикерах только включённые.
+    empty: Каталог пуст (без фильтра). Модели подтягиваются из Ollama автоматически; или нажмите «Синхронизировать».
+    loading: Загрузка моделей из Ollama…
+    discoverEmpty: Ollama не вернула chat-модели. Проверьте OLLAMA_HOST / URL и что модели скачаны (ollama pull).
+    add: Добавить
+    remove: Удалить
+    warmup: Warmup
+    notePlaceholder: Заметка (необязательно)
+    pickerOnly: Доступна в пикере
+    toolsYes: tools
+    toolsNo: нет tools
+    columns:
+      name: Модель
+      enabled: Вкл
+      tools: Tools
+      usedAs: Используется как
+  agents:
+    title: Агенты
+    help: Встроенные агенты приходят с сервером. Сохранение пишет в БД только этот handle (оверлей). «Сбросить» убирает оверлей и возвращает встроенного. YAML из AI_AGENTS_DIR сильнее БД и здесь не редактируется.
+    empty: Нет агентов.
+    add: Добавить агента
+    edit: Изменить
+    reset: Сбросить
+    remove: Удалить
+    cancel: Отмена
+    handle: Handle
+    description: Описание
+    model: Модель
+    maxSteps: Шагов
+    enabled: Вкл
+    toolkits: Toolkits
+    skills: Skills
+    allSkills: Все skills
+    skillsHelp: 'Skills, которые агент может подгружать по требованию: он видит названия и когда они применимы, а инструкции загружает, только если задача их требует.'
+    confirm: Спрашивать подтверждение (create/delete/restore/prune)
+    confirmHelp: У MCP agent_call нет шага «да» — для агентов из MCP и цепочек правил оставляйте выключенным.
+    prompt: Системный промпт
+    source: Источник
+    sourceBuiltin: встроенный
+    sourceSettings: БД
+    sourceFile: файл
+  toolkits:
+    title: Внешние toolkits
+    help: HTTP-агенты, которые открываются через GET {url}/meta. Встроенные compose.* нельзя перезаписать. Пустой оверлей в БД = CMDB/BACKUP/INVEST_AGENT_URL и опционально AI_TOOLKITS. Сохранение пишет только ai.toolkits.
+    empty: Нет внешних toolkit’ов.
+    add: Добавить toolkit
+    edit: Изменить
+    reset: Сбросить
+    remove: Удалить
+    cancel: Отмена
+    handle: Handle
+    handleHelp: Короткое имя (cmdb, backup, …). Имена с префиксом compose. зарезервированы.
+    url: URL
+    urlHelp: Базовый URL API агента (http или https), без слэша в конце.
+    urlInvalid: URL должен быть http или https с хостом.
+    token: Токен
+    tokenHelp: Необязательный Bearer-токен для /meta и /jobs.
+    enabled: Вкл
+    test: Проверить
+    testEmpty: Соединение есть, но /meta не вернул tools.
+    reserved: Handle не может начинаться с compose.
+    source: Источник
+    sourceEnv: env
+    sourceSettings: БД
+

@@ -1,6 +1,6 @@
 package mapping
 
-import "github.com/cortezaproject/corteza/server/pkg/options"
+import "github.com/madnikulin50/lowcode/server/pkg/options"
 
 type (
 	Mapping struct {

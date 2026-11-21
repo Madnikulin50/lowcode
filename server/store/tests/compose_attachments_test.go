@@ -2,10 +2,10 @@ package tests
 
 import (
 	"context"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/store"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
@@ -90,5 +90,33 @@ func testComposeAttachments(t *testing.T, s store.ComposeAttachments) {
 
 	t.Run("ordered search", func(t *testing.T) {
 		t.Skip("not implemented")
+	})
+
+	t.Run("versions of one file are found by their group", func(t *testing.T) {
+		req := require.New(t)
+		req.NoError(s.TruncateComposeAttachments(ctx))
+
+		first := makeNew("v1")
+		first.VersionGroup, first.Version = first.ID, 1
+		second := makeNew("v2")
+		second.VersionGroup, second.Version = first.ID, 2
+		other := makeNew("other")
+		for _, a := range []*types.Attachment{first, second, other} {
+			req.NoError(s.CreateComposeAttachment(ctx, a))
+		}
+
+		set, _, err := s.SearchComposeAttachments(ctx, types.AttachmentFilter{VersionGroup: first.ID})
+		req.NoError(err)
+		req.Len(set, 2)
+
+		got, err := s.LookupComposeAttachmentByID(ctx, second.ID)
+		req.NoError(err)
+		req.Equal(first.ID, got.VersionGroup)
+		req.Equal(2, got.Version)
+
+		got, err = s.LookupComposeAttachmentByID(ctx, other.ID)
+		req.NoError(err)
+		req.Zero(got.VersionGroup)
+		req.Zero(got.Version)
 	})
 }

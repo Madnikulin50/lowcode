@@ -1,0 +1,9 @@
+datasource: Datasource
+label: Метка
+none: Отсутствует
+prefilter: Предварительный фильтр
+scenario-name: 'Scenario Name...'
+scenarios:
+  label: Scenarios
+  save: Save Scenarios
+pick-scenario: Pick a scenario

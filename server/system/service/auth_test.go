@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/eventbus"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/drivers/sqlite"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/eventbus"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/drivers/sqlite"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/markbates/goth"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -359,9 +359,9 @@ func TestAuth_multiCreateUserTokenForPasswordReset(t *testing.T) {
 
 		// load credentials from token
 		t2c = func(token string) *types.Credential {
-			id, _ := validateToken(token)
-			req.NotZero(id)
-			c, err := store.LookupCredentialByID(ctx, svc.store, id)
+			tokenID, _ := validateToken(token)
+			req.NotZero(tokenID)
+			c, err := store.LookupCredentialByID(ctx, svc.store, tokenID)
 			req.NoError(err)
 			return c
 		}

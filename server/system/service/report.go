@@ -6,16 +6,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/datasources"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/label"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/datasources"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/label"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/modern-go/reflect2"
 	"github.com/spf13/cast"
 )
@@ -303,9 +303,9 @@ func (svc *report) Undelete(ctx context.Context, ID uint64) (err error) {
 }
 
 // @todo actionlog?
-func (svc *report) Describe(ctx context.Context, src types.ReportDataSourceSet, st types.ReportStepSet, sources ...string) (out []*datasources.FrameDescription, err error) {
+func (svc *report) Describe(ctx context.Context, src types.ReportDataSourceSet, st types.ReportStepSet, sources ...string) (out []*datasources.FrameDescription, warnings []error, err error) {
 	out = make([]*datasources.FrameDescription, 0, len(sources)*2)
-
+	warnings = make([]error, 0)
 	err = func() (err error) {
 		if !svc.ac.CanCreateReport(ctx) {
 			return ReportErrNotAllowedToCreate()
@@ -314,11 +314,11 @@ func (svc *report) Describe(ctx context.Context, src types.ReportDataSourceSet, 
 		ss := src.ReportSteps()
 		ss = append(ss, st...)
 
-		out, err = datasources.Describe(ctx, svc.pipelineRunner, ss, sources)
+		out, warnings, err = datasources.Describe(ctx, svc.pipelineRunner, ss, sources)
 		return err
 	}()
 
-	return out, err
+	return out, warnings, err
 }
 
 func (svc *report) Run(ctx context.Context, reportID uint64, dd datasources.FrameDefinitionSet) (_ []*datasources.Frame, err error) {
@@ -355,7 +355,7 @@ func (svc *report) Run(ctx context.Context, reportID uint64, dd datasources.Fram
 		// Run the reports and produce the frames
 		// @todo this can be ran in paralel
 		for _, run := range runs {
-			err = func() (err error) {
+			err = func(run datasources.Run) (err error) {
 				iter, err = svc.pipelineRunner.Run(ctx, run.Pipeline)
 				if err != nil {
 					return
@@ -374,7 +374,7 @@ func (svc *report) Run(ctx context.Context, reportID uint64, dd datasources.Fram
 
 				out = append(out, ff...)
 				return
-			}()
+			}(run)
 
 			if err != nil {
 				return

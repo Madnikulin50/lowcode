@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/sass"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/sass"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 )
 
@@ -19,19 +19,19 @@ func SystemUsers(ctx context.Context, log *zap.Logger, s store.Users) (uu []*typ
 	uu = types.UserSet{
 		&types.User{
 			Email:  "provision@corteza.local",
-			Name:   "Corteza Provisioner",
+			Name:   "LowCoooode Provisioner",
 			Handle: auth.ProvisionUserHandle,
 			Kind:   types.SystemUser,
 		},
 		&types.User{
 			Email:  "service@corteza.local",
-			Name:   "Corteza Service",
+			Name:   "LowCoooode Service",
 			Handle: auth.ServiceUserHandle,
 			Kind:   types.SystemUser,
 		},
 		&types.User{
 			Email:  "federation@corteza.local",
-			Name:   "Corteza Federation",
+			Name:   "LowCoooode Federation",
 			Handle: auth.FederationUserHandle,
 			Kind:   types.SystemUser,
 		},
@@ -49,7 +49,7 @@ func SystemUsers(ctx context.Context, log *zap.Logger, s store.Users) (uu []*typ
 			u.ID = id.Next()
 			u.CreatedAt = *now()
 
-			if err := store.UpsertUser(ctx, s, u); err != nil {
+			if err := store.CreateUser(ctx, s, u); err != nil {
 				return nil, fmt.Errorf("failed to provision system user %s: %w", u.Handle, err)
 			}
 
@@ -73,7 +73,7 @@ func SystemUsers(ctx context.Context, log *zap.Logger, s store.Users) (uu []*typ
 			u.SuspendedAt = nil
 			u.DeletedAt = nil
 
-			if err := store.UpsertUser(ctx, s, u); err != nil {
+			if err := store.UpdateUser(ctx, s, u); err != nil {
 				return nil, fmt.Errorf("failed to provision system user %s: %w", u.Handle, err)
 			}
 

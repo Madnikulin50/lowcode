@@ -8,16 +8,16 @@ import (
 	"net/http/httptest"
 	"net/url"
 
-	"github.com/cortezaproject/corteza/server/auth/request"
-	"github.com/cortezaproject/corteza/server/auth/settings"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/gorilla/sessions"
+	"github.com/madnikulin50/lowcode/server/auth/request"
+	"github.com/madnikulin50/lowcode/server/auth/settings"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (
@@ -56,7 +56,7 @@ type (
 		getAccessToken             func(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error)
 		getTokenData               func(ti oauth2.TokenInfo) map[string]interface{}
 		handleTokenRequest         func(w http.ResponseWriter, r *http.Request) error
-		getErrorData               func(err error) (map[string]interface{}, int, http.Header)
+		getErrorData               func(ctx context.Context, err error) (map[string]interface{}, int, http.Header)
 		bearerAuth                 func(r *http.Request) (string, bool)
 		validationBearerToken      func(r *http.Request) (oauth2.TokenInfo, error)
 	}
@@ -262,8 +262,8 @@ func (s *oauth2ServiceMocked) HandleTokenRequest(w http.ResponseWriter, r *http.
 	return s.handleTokenRequest(w, r)
 }
 
-func (s *oauth2ServiceMocked) GetErrorData(err error) (map[string]interface{}, int, http.Header) {
-	return s.getErrorData(err)
+func (s *oauth2ServiceMocked) GetErrorData(ctx context.Context, err error) (map[string]interface{}, int, http.Header) {
+	return s.getErrorData(ctx, err)
 }
 
 func (s *oauth2ServiceMocked) BearerAuth(r *http.Request) (string, bool) {

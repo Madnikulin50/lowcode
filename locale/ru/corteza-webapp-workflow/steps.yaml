@@ -44,8 +44,8 @@ function:
     constant: Constant
     expression: Выражение
     name: Имя
-    option-select: Select an option
-    result: Result
+    option-select: Выберите опцию
+    result: Результат
     results: Results
     target: Target
     add-result: + Add result
@@ -53,28 +53,46 @@ function:
     select-function: Select function
     type: Type
     type*: Type*
-  label: Function
-  short: Function
+    test:
+      button: Проверить шаг
+      title: Проверка шага
+      hint: Выполняет этот шаг один раз на реальной модели с аргументами ниже. Ничего не сохраняется; изменение данных агентом отключено.
+      arguments: Аргументы (JSON)
+      expressions: Эти аргументы заданы выражениями, для проверки нужны примеры значений
+      run: Выполнить
+      results: Результаты
+      trace: Трейс ИИ
+      tokens: токенов
+      attempts: попытки
+      rejected: Отклонённые ответы
+      prompt: Запрос
+      stop: Остановить
+      working: Ожидание ответа модели...
+      warming: Модель загружается...
+      usingTools: Агент использует инструменты...
+      attemptN: Попытка {n} - предыдущий ответ отклонён
+  label: Функция
+  short: Функция
   tooltip: Execute the chosen predefined function
 exec-workflow:
-  label: Execute Workflow
-  short: Workflow
+  label: Execute Процесс
+  short: Процесс
   tooltip: Execute a workflow and map variables from its scope to the current one
 gatewayExclusive:
   label: Gateway (Exclusive)
   short: Gateway
-  tooltip: Workflow execution can continue on first path that fits condition
+  tooltip: Процесс execution can continue on first path that fits condition
 gatewayInclusive:
   label: Gateway (Inclusive)
   short: Gateway
-  tooltip: Workflow execution can continue on all paths that fit condition
+  tooltip: Процесс execution can continue on all paths that fit condition
 gatewayParallel:
   label: Gateway (Fork/Join)
   short: Gateway
   tooltip: Splits workflow execution into two parallel paths or merges multiple paths into one
 gateway:
   configurator:
-    condition: Condition
+    condition: Условие
     two-paths: Gateway must be source of at least two paths
 iterator:
   label: Iterator

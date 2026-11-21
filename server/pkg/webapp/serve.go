@@ -14,11 +14,11 @@ import (
 
 	"golang.org/x/net/html"
 
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/system/service"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/go-chi/chi/v5"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/system/service"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 )
 
@@ -103,7 +103,8 @@ func serveIndex(opt options.HttpServerOpt, indexHTML []byte, serve http.Handler)
 		requestedFile := path.Join(
 			// could be relative path
 			opt.WebappBaseDir,
-			strings.TrimPrefix(r.URL.Path, opt.BaseUrl),
+			// rooted + cleaned so "../" can not climb out of the webapp dir
+			path.Clean("/"+strings.TrimPrefix(r.URL.Path, opt.BaseUrl)),
 		)
 
 		f, err := os.Stat(requestedFile)
@@ -133,7 +134,7 @@ func serveIndex(opt options.HttpServerOpt, indexHTML []byte, serve http.Handler)
 }
 
 func serveConfig(r chi.Router, config webappConfig) {
-	r.Get(options.CleanBase(config.appUrl, "config.js"), func(w http.ResponseWriter, r *http.Request) {
+	configFn := func(w http.ResponseWriter, r *http.Request) {
 
 		// Assure the content-type
 		// The presence of the X-Content-Type-Options: nosniff header breaks web applications
@@ -149,9 +150,18 @@ func serveConfig(r chi.Router, config webappConfig) {
 		if len(config.sentryUrl) > 0 {
 			_, _ = fmt.Fprintf(w, line, "SentryDSN", config.sentryUrl)
 		}
-	})
+	}
+	r.Get(options.CleanBase(config.appUrl, "config.js"), configFn)
+	r.Get(options.CleanBase(config.webappBaseUrl, "config.js"), configFn)
 
 	r.Get(options.CleanBase(config.appUrl, "custom.css"), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/css")
+
+		stylesheet := service.FetchCSS()
+
+		_, _ = fmt.Fprint(w, stylesheet)
+	})
+	r.Get(options.CleanBase(config.webappBaseUrl, "custom.css"), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/css")
 
 		stylesheet := service.FetchCSS()
@@ -167,9 +177,9 @@ func serveConfig(r chi.Router, config webappConfig) {
 
 		snippetScripts := ""
 		for _, snippet := range codeSnippets {
-            if snippet.Enabled {
-                snippetScripts += snippet.Script
-            }
+			if snippet.Enabled {
+				snippetScripts += snippet.Script
+			}
 		}
 
 		doc, err := html.Parse(strings.NewReader(snippetScripts))

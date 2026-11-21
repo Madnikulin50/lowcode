@@ -3,8 +3,8 @@ package mysql
 import (
 	"context"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	rdbmsdal "github.com/cortezaproject/corteza/server/store/adapters/rdbms/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	rdbmsdal "github.com/madnikulin50/lowcode/server/store/adapters/rdbms/dal"
 )
 
 func init() {

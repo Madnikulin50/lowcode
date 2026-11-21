@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	sqlx "github.com/jmoiron/sqlx/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
 )
 
 // A temporary alias for old type that was used handle JSON encoded data
@@ -86,7 +86,6 @@ func (s Store) dailyMetrics(ctx context.Context, tbl exp.IdentifierExpression, e
 }
 
 // Assembles select expression that calculates total + each given ts field + valid
-//
 func timestampStatExpr(fields ...string) []interface{} {
 	var (
 		valid = []goqu.Expression{}

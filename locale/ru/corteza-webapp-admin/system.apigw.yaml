@@ -9,38 +9,38 @@ list:
   loading: Loading routes
   filterForm:
     query:
-      label: Filter route list
-      placeholder: Filter routes by name
+      label: Фильтр route list
+      placeholder: Фильтр routes by name
     excluded:
       label: Without
     inclusive:
-      label: Including
+      label: Включая
     exclusive:
       label: Only
     deleted:
       label: deleted routes
     handle:
-      placeholder: Filter endpoints by path
+      placeholder: Фильтр endpoints by path
   delete: Delete
   undelete: Undelete
 
   columns:
     endpoint: Endpoint
     createdAt: Создано
-    enabled: Enabled
+    enabled: Включено
     method: Method
     actions: ''
     state: State
   rows:
     filters:
-      deleted: Deleted
+      deleted: Удаленные
 
 settings:
-  title: Settings
+  title: Настройки
   profiler:
     label: Profiler
-    enabled: Enabled
-    global: Enabled globally
+    enabled: Включено
+    global: Включено globally
   proxy:
     label: Proxy
     follow: Follow redirects
@@ -57,7 +57,7 @@ editor:
     endpoint: Endpoint
     method: Method
     description: Описание
-    enabled: Enabled
+    enabled: Включено
 
     delete: Delete
     undelete: Undelete
@@ -75,14 +75,14 @@ editor:
       invalidCharacters: Endpoint contains invalid characters
 
   filters:
-    title: Filter list
-    enabled: Enabled
-    disabled: Disabled
+    title: Фильтр list
+    enabled: Включено
+    disabled: Отключено
     add: Add
     addFilter: Add filter
     addHeader: Add header
     params: Params
-    filterListEmpty: Filter list is empty!
+    filterListEmpty: Фильтр list is empty!
 
     modal:
       title: Query parameters verifier
@@ -96,7 +96,7 @@ editor:
     list:
       remove: Remove
       filters: Фильтры
-      status: Status
+      status: Статус
       actions: Actions
       active: Active
       noFilters: No filters
@@ -104,16 +104,16 @@ editor:
     labels:
       expr: Выражение
       location: URL
-      workflow: Workflow
-      status: HTTP Status
-      jsfunc: Function
+      workflow: Процесс
+      status: HTTP Статус
+      jsfunc: Функция
       input: Input
       header: Headers
       name: Имя
       value: Значение
 
     httpStatus:
-      none: No Status
+      none: No Статус
       '300': 300 - Multiple Choices
       '301': 301 - Moved Permanently
       '302': 302 - Found
@@ -149,7 +149,7 @@ profiler:
       route: Request Route
       URL: Request URL
       method: Request Method
-      statusCode: Status Code
+      statusCode: Статус Code
       headers: Request Headers
       remoteAddress: Remote Address
       duration: Duration
@@ -167,7 +167,7 @@ profiler:
     count: Количество
     content_length: Content Length
     http_method: Method
-    http_status_code: Status Code
+    http_status_code: Статус Code
     size_min: Size (min)
     size_max: Size (max)
     size_avg: Size (avg)

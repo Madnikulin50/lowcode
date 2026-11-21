@@ -1,4 +1,13 @@
 editor:
+  aiSteps:
+    title: Шаги ИИ
+    step: Шаг
+    tokens: токенов
+    attempts: попытки
+    tools: Инструменты
+    rejected: Отклонённые ответы
+    prompt: Запрос
+    response: Ответ
   info:
     completedAt: Completed at
     createdAt: Время создания
@@ -6,16 +15,16 @@ editor:
     createdByUserName: Создал - Name
     delete: Delete
     deletedAt: Время удаления
-    suspendedAt: Suspended at
+    suspendedAt: Отключенные at
     error: Ошибка
     eventType: Event type
     id: ID
     resourceType: Resource type
-    status: Status
+    status: Статус
     title: Basic information
     workflowID: WorkflowID
     openWorkflow: Open workflow
-    cancel: Cancel session
+    cancel: Отменить session
   title: Session
 list:
   columns:
@@ -24,7 +33,7 @@ list:
     eventType: Event type
     sessionID: SessionID
     state: State
-    status: Status
+    status: Статус
     workflowID: WorkflowID
   filterForm:
     all:
@@ -40,7 +49,7 @@ list:
     inProgress:
       label: completed sessions
     inclusive:
-      label: Including
+      label: Включая
     prompted:
       label: Prompted
     sessions:
@@ -48,7 +57,7 @@ list:
     started:
       label: Started
     suspended:
-      label: Suspended
+      label: Отключенные
     canceled:
       label: Canceled
   loading: Loading sessions

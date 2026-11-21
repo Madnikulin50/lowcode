@@ -7,14 +7,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
 	"github.com/spf13/cast"
 
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/options"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -256,7 +256,7 @@ func (svc *settings) BulkSet(ctx context.Context, vv types.SettingValueSet) (err
 				compStyles = current.FindByName("ui.studio.themes")
 			}
 
-            DefaultStylesheet.updateCSS(v, current.FindByName(v.Name), compStyles, v.Name, svc.webappsConf.ScssDirPath, svc.logger)
+			DefaultStylesheet.updateCSS(v, current.FindByName(v.Name), compStyles, v.Name, svc.webappsConf.ScssDirPath, svc.logger)
 		}
 
 		svc.logChange(ctx, v)

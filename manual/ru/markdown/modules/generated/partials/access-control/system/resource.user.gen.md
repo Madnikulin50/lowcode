@@ -1,0 +1,53 @@
+# user
+
+[cols="1s,5a,5a"]
+|===
+| Operation| Description | Default
+
+
+| [#rbac-user-read]#[rbac-user-read,read](#rbac-user-read,read)#
+| Read user
+| Deny
+
+
+| [#rbac-user-update]#[rbac-user-update,update](#rbac-user-update,update)#
+| Update user
+| Deny
+
+
+| [#rbac-user-delete]#[rbac-user-delete,delete](#rbac-user-delete,delete)#
+| Delete user
+| Deny
+
+
+| [#rbac-user-suspend]#[rbac-user-suspend,suspend](#rbac-user-suspend,suspend)#
+| Suspend user
+| Deny
+
+
+| [#rbac-user-unsuspend]#[rbac-user-unsuspend,unsuspend](#rbac-user-unsuspend,unsuspend)#
+| Unsuspend user
+| Deny
+
+
+| [#rbac-user-email.unmask]#[rbac-user-email.unmask,email.unmask](#rbac-user-email.unmask,email.unmask)#
+| Unmask email
+| Deny
+
+
+| [#rbac-user-name.unmask]#[rbac-user-name.unmask,name.unmask](#rbac-user-name.unmask,name.unmask)#
+| Unmask name
+| Deny
+
+
+| [#rbac-user-impersonate]#[rbac-user-impersonate,impersonate](#rbac-user-impersonate,impersonate)#
+| Impersonate user
+| Deny
+
+
+| [#rbac-user-credentials.manage]#[rbac-user-credentials.manage,credentials.manage](#rbac-user-credentials.manage,credentials.manage)#
+| Manage user's credentials
+| Deny
+
+
+|===

@@ -3,13 +3,13 @@ package datasources
 import (
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 // convStepJoin converts ReportStepJoin to dal.Join
-func convStepJoin(step types.ReportStepJoin, defs FrameDefinitionSet) (out *dal.Join, err error) {
+func convStepJoin(step types.ReportStepJoin, pp dal.Pipeline, defs FrameDefinitionSet) (out *dal.Join, err error) {
 	// Validation
 	if len(defs) > 1 {
 		err = fmt.Errorf("cannot convert join step: expecting at most one definition, got %d", len(defs))
@@ -28,6 +28,16 @@ func convStepJoin(step types.ReportStepJoin, defs FrameDefinitionSet) (out *dal.
 		return
 	}
 
+	if len(step.LocalColumn) == 0 {
+		if len(step.ForeignColumn) != 0 {
+			step.LocalColumn = step.ForeignColumn
+		}
+	}
+	if len(step.ForeignColumn) == 0 {
+		if len(step.LocalColumn) != 0 {
+			step.ForeignColumn = step.LocalColumn
+		}
+	}
 	// Make pipeline step
 	out = &dal.Join{
 		Ident:    step.Name,
@@ -45,7 +55,7 @@ func convStepJoin(step types.ReportStepJoin, defs FrameDefinitionSet) (out *dal.
 }
 
 // convStepLink converts ReportStepLink to dal.Link
-func convStepLink(step types.ReportStepLink, defs FrameDefinitionSet) (out *dal.Link, err error) {
+func convStepLink(step types.ReportStepLink, pp dal.Pipeline, defs FrameDefinitionSet) (out *dal.Link, err error) {
 	// Validation
 	if len(defs) > 2 {
 		err = fmt.Errorf("cannot convert join step: expecting at most two definitions, got %d", len(defs))

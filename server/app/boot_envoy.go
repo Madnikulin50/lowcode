@@ -3,10 +3,10 @@ package app
 import (
 	"context"
 
-	automationEnvoy "github.com/cortezaproject/corteza/server/automation/envoy"
-	composeEnvoy "github.com/cortezaproject/corteza/server/compose/envoy"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	systemEnvoy "github.com/cortezaproject/corteza/server/system/envoy"
+	automationEnvoy "github.com/madnikulin50/lowcode/server/automation/envoy"
+	composeEnvoy "github.com/madnikulin50/lowcode/server/compose/envoy"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	systemEnvoy "github.com/madnikulin50/lowcode/server/system/envoy"
 	"go.uber.org/zap"
 )
 
@@ -47,6 +47,8 @@ func (app *CortezaApp) initEnvoy(ctx context.Context, log *zap.Logger) (err erro
 	// - datasource encoders
 	svc.AddEncoder(envoyx.EncodeTypeIo,
 		composeEnvoy.CsvEncoder{},
+		composeEnvoy.XlsxEncoder{},
+		composeEnvoy.PdfEncoder{},
 	)
 
 	return

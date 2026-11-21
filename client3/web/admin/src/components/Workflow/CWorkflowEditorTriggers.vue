@@ -1,0 +1,52 @@
+<template>
+  <div class="card shadow-sm mt-3 overflow-hidden">
+    <div class="card-header border-bottom">
+      <h4 class="ae-section-title">{{ $t('automation.workflows.editor.triggers.title') }}</h4>
+    </div>
+
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>{{ $t('automation.workflows.editor.triggers.columns.resourceType') }}</th>
+            <th>{{ $t('automation.workflows.editor.triggers.columns.eventType') }}</th>
+            <th>{{ $t('automation.workflows.editor.triggers.columns.constraints') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="trigger in triggers" :key="trigger.ID">
+            <td>{{ formatResourceType(trigger.resourceType) }}</td>
+            <td>{{ trigger.eventType }}</td>
+            <td>
+              <samp v-for="(c, index) in trigger.constraints" :key="index">
+                <template v-if="c.name">
+                  {{ c.name[0].toUpperCase() + c.name.slice(1).toLowerCase() }} {{ c.op }} "{{ c.values.join(' or ') }}"
+                </template>
+                <code v-if="index < trigger.constraints.length - 1">{{ $t('automation.workflows.editor.triggers.and') }}</code>
+              </samp>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<script setup>
+defineOptions({ i18nOptions: { namespaces: 'automation.workflows', keyPrefix: 'editor.triggers' } })
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
+defineProps({
+  triggers: { type: Array, required: true },
+  processing: { type: Boolean, value: false },
+  success: { type: Boolean, value: false },
+})
+
+function formatResourceType(rt) {
+  return rt.split(':').map(s => {
+    return s[0].toUpperCase() + s.slice(1).toLowerCase()
+  }).join(' ')
+}
+</script>

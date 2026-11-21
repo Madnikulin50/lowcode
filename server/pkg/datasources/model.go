@@ -3,8 +3,8 @@ package datasources
 import (
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/system/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/system/types"
 	"github.com/spf13/cast"
 )
 
@@ -75,6 +75,11 @@ func getModelAttrs(pr ModelFinder, mfr dal.ModelRef) (attrs dal.AttributeSet, er
 	m := pr.FindModel(mfr)
 	if m == nil {
 		return nil, fmt.Errorf("model not found: %v", mfr)
+	}
+	for _, attr := range m.Attributes {
+		if attr.Type == nil {
+			return nil, fmt.Errorf("model does not have attribute type: %v", mfr)
+		}
 	}
 
 	return m.Attributes, nil

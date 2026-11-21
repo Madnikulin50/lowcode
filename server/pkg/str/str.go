@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/cortezaproject/corteza/server/pkg/handle"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
 	"strings"
 )
 

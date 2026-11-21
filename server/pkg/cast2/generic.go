@@ -1,7 +1,7 @@
 package cast2
 
 import (
-	"github.com/cortezaproject/corteza/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
 	"github.com/spf13/cast"
 )
 

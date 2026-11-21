@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сравнение ПД/РД</title>
+</head>
+<body>
+<!-- Referenced by .diff-stage.colorized (filter: url(#diffRedTint) / #diffGreenTint)
+     for the red/green diff overlay — feColorMatrix keeps the input's own
+     value (our page images are effectively grayscale ink-on-white) as the
+     G+B channels while forcing R to full, or vice versa: white stays white,
+     dark ink becomes pure red or pure green. Combined via mix-blend-mode:
+     multiply in CSS, overlapping ink (present on both sides) multiplies to
+     black instead of staying colored. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="diffRedTint" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="0 0 0 0 1  1 0 0 0 0  1 0 0 0 0  0 0 0 1 0" />
+  </filter>
+  <filter id="diffGreenTint" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 1  1 0 0 0 0  0 0 0 1 0" />
+  </filter>
+</svg>
+<div id="app"></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

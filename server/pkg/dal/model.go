@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/handle"
+	"github.com/madnikulin50/lowcode/server/pkg/handle"
 	"github.com/modern-go/reflect2"
 )
 
@@ -42,6 +42,7 @@ type (
 
 		Constraints map[string][]any `json:"constraints"`
 		Indexes     IndexSet         `json:"indexes"`
+		Static      bool             `json:"static"`
 	}
 
 	ModelSet []*Model
@@ -144,20 +145,20 @@ type (
 	AttributeSet []*Attribute
 
 	Index struct {
-		Ident  string
-		Type   string
-		Unique bool
+		Ident  string `json:"ident"`
+		Type   string `json:"type"`
+		Unique bool   `json:"unique"`
 
-		Fields []*IndexField
+		Fields []*IndexField `json:"fields"`
 
-		Predicate string
+		Predicate string `json:"predicate,omitempty"`
 	}
 
 	IndexField struct {
-		AttributeIdent string
-		Modifiers      []IndexFieldModifier
-		Sort           IndexFieldSort
-		Nulls          IndexFieldNulls
+		AttributeIdent string               `json:"attributeIdent"`
+		Modifiers      []IndexFieldModifier `json:"modifiers,omitempty"`
+		Sort           IndexFieldSort       `json:"sort"`
+		Nulls          IndexFieldNulls      `json:"nulls"`
 	}
 
 	IndexSet []*Index

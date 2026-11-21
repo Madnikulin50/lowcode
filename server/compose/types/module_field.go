@@ -8,48 +8,51 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/locale"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/locale"
 	"github.com/spf13/cast"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
 )
 
 type (
 	// Modules - CRM module definitions
 	ModuleField struct {
-		ID          uint64 `json:"fieldID,string"`
+		ID uint64 `json:"fieldID,string" schema:"col=id,dal=id,unique"`
+		// NamespaceID is not part of compose_module_field's own schema
+		// (no column for it - populated by joins/lookups), so it's
+		// intentionally left without a `schema` tag.
 		NamespaceID uint64 `json:"namespaceID,string"`
-		ModuleID    uint64 `json:"moduleID,string"`
-		Place       int    `json:"-"`
+		ModuleID    uint64 `json:"moduleID,string" schema:"col=module_id,store=rel_module,dal=ref:corteza::compose:module"`
+		Place       int    `json:"-" schema:"col=place,dal=number,sortable"`
 
-		Kind string `json:"kind"`
-		Name string `json:"name"`
+		Kind string `json:"kind" schema:"col=kind,dal,sortable"`
+		Name string `json:"name" schema:"col=name,dal,sortable"`
 
 		// Options relevant to field type
-		Options ModuleFieldOptions `json:"options"`
+		Options ModuleFieldOptions `json:"options" schema:"col=options,dal=json:empty,omit"`
 
 		// Configuration - how sub-services and sub-systems like DAL and record revisions
 		// are configured to work with this field
-		Config ModuleFieldConfig `json:"config"`
+		Config ModuleFieldConfig `json:"config" schema:"col=config,dal=json:empty,omit"`
 
-		Required     bool           `json:"isRequired"`
-		Multi        bool           `json:"isMulti"`
-		DefaultValue RecordValueSet `json:"defaultValue"`
+		Required     bool           `json:"isRequired" schema:"col=required,store=is_required,dal=bool"`
+		Multi        bool           `json:"isMulti" schema:"col=multi,store=is_multi,dal=bool"`
+		DefaultValue RecordValueSet `json:"defaultValue" schema:"col=default_value,dal=json:empty,omit"`
 
-		Expressions ModuleFieldExpr `json:"expressions"`
+		Expressions ModuleFieldExpr `json:"expressions" schema:"col=expressions,dal=json:empty,omit"`
 
 		Labels map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
-		CreatedAt time.Time  `json:"createdAt,omitempty"`
-		UpdatedAt *time.Time `json:"updatedAt,omitempty"`
-		DeletedAt *time.Time `json:"deletedAt,omitempty"`
+		CreatedAt time.Time  `json:"createdAt,omitempty" schema:"col=created_at,dal=timestamp:now,sortable"`
+		UpdatedAt *time.Time `json:"updatedAt,omitempty" schema:"col=updated_at,dal=timestamp:nil,sortable"`
+		DeletedAt *time.Time `json:"deletedAt,omitempty" schema:"col=deleted_at,dal=timestamp:nil,sortable"`
 
 		// Warning: value of this field is now handled via resource-translation facility
 		//          struct field is kept for the convenience for now since it allows us
 		//          easy encoding/decoding of the outgoing/incoming values
-		Label string `json:"label"`
+		Label string `json:"label" schema:"col=label,dal,sortable"`
 	}
 
 	ModuleFieldConfig struct {
@@ -108,9 +111,6 @@ type (
 	// EncodingStrategy is used by both: Module (for system fields) and ModuleField
 	//
 	EncodingStrategy struct {
-		//Type       string         `json:"type"`
-		//TypeParams map[string]any `json:"typeParams"`
-
 		Omit bool `json:"omit,omitempty"`
 
 		*EncodingStrategyAlias `json:"alias,omitempty"`
@@ -126,7 +126,9 @@ type (
 		Ident string `json:"ident"`
 	}
 
-	EncodingStrategyPlain struct{}
+	EncodingStrategyPlain struct {
+		Ident string `json:"ident"`
+	}
 
 	ModuleFieldFilter struct {
 		ModuleID []uint64
@@ -222,6 +224,22 @@ func (f *ModuleField) decodeTranslationsMetaHintView(tt locale.ResourceTranslati
 	}
 }
 
+func (f *ModuleField) decodeTranslationsMetaPrefix(tt locale.ResourceTranslationIndex) {
+	var aux *locale.ResourceTranslation
+
+	if aux = tt.FindByKey(LocaleKeyModuleFieldMetaPrefix.Path); aux != nil {
+		f.setOptionKey(aux.Msg, "prefix")
+	}
+}
+
+func (f *ModuleField) decodeTranslationsMetaSuffix(tt locale.ResourceTranslationIndex) {
+	var aux *locale.ResourceTranslation
+
+	if aux = tt.FindByKey(LocaleKeyModuleFieldMetaSuffix.Path); aux != nil {
+		f.setOptionKey(aux.Msg, "suffix")
+	}
+}
+
 func (f *ModuleField) decodeTranslationsMetaHintEdit(tt locale.ResourceTranslationIndex) {
 	var aux *locale.ResourceTranslation
 
@@ -284,8 +302,11 @@ func (f *ModuleField) decodeTranslationsMetaOptionsValueText(tt locale.ResourceT
 		// and update the option (effectively overwriting
 		// the original text value (in case of map option)
 		trKey := strings.NewReplacer("{{value}}", outOpt["value"].(string)).Replace(LocaleKeyModuleFieldMetaOptionsValueText.Path)
-		if tr = tt.FindByKey(trKey); tr != nil {
+		if tr = tt.FindByKey(trKey); tr != nil && strings.TrimSpace(tr.Msg) != "" {
 			outOpt["text"] = tr.Msg
+		}
+		if s, _ := outOpt["text"].(string); strings.TrimSpace(s) == "" {
+			outOpt["text"] = outOpt["value"]
 		}
 
 		// Update slice item with translated option
@@ -361,6 +382,32 @@ func (f *ModuleField) encodeTranslationsMetaHintView() (out locale.ResourceTrans
 		Key:      LocaleKeyModuleFieldMetaHintView.Path,
 	}
 	if v := f.getOptionKey("hint", "view"); v != nil {
+		t.Msg = cast.ToString(v)
+	}
+	out = append(out, t)
+	return out
+}
+
+func (f *ModuleField) encodeTranslationsMetaPrefix() (out locale.ResourceTranslationSet) {
+	out = locale.ResourceTranslationSet{}
+	t := &locale.ResourceTranslation{
+		Resource: f.ResourceTranslation(),
+		Key:      LocaleKeyModuleFieldMetaPrefix.Path,
+	}
+	if v := f.getOptionKey("prefix"); v != nil {
+		t.Msg = cast.ToString(v)
+	}
+	out = append(out, t)
+	return out
+}
+
+func (f *ModuleField) encodeTranslationsMetaSuffix() (out locale.ResourceTranslationSet) {
+	out = locale.ResourceTranslationSet{}
+	t := &locale.ResourceTranslation{
+		Resource: f.ResourceTranslation(),
+		Key:      LocaleKeyModuleFieldMetaSuffix.Path,
+	}
+	if v := f.getOptionKey("suffix"); v != nil {
 		t.Msg = cast.ToString(v)
 	}
 	out = append(out, t)
@@ -587,7 +634,6 @@ func (f ModuleField) IsSensitive() bool {
 
 func (f *ModuleField) setValue(name string, pos uint, value any) (err error) {
 	switch name {
-	// @todo consider moving this to the .cue definition; figure out why it wasn't yet
 	case "NamespaceID", "namespaceID":
 		f.NamespaceID = cast.ToUint64(value)
 	case "Options.ModuleID":

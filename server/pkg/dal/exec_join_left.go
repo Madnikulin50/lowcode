@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 	"github.com/tidwall/btree"
 )
 
@@ -108,6 +108,10 @@ func (xs *joinLeft) Scan(s ValueSetter) (err error) {
 			err = s.SetValue(k, i, v)
 			if err != nil {
 				return
+			}
+			short := shortAttrFromLong(k)
+			if short != k {
+				err = s.SetValue(short, i, v)
 			}
 		}
 	}
@@ -245,6 +249,10 @@ func (xs *joinLeft) pullEntireRightSource(ctx context.Context) (err error) {
 		if err != nil {
 			return
 		}
+		if len(xs.def.On.Right) == 0 {
+			r.counters[""] = 1
+			r.values[""] = []any{""}
+		}
 
 		err = xs.indexRightRow(r)
 		if err != nil {
@@ -267,6 +275,10 @@ func (xs *joinLeft) pullEntireLeftSource(ctx context.Context) (err error) {
 		if err != nil {
 			return
 		}
+		if len(xs.def.On.Left) == 0 {
+			l.counters[""] = 1
+			l.values[""] = []any{""}
+		}
 
 		err = xs.joinRight(ctx, l)
 		if err != nil {
@@ -279,7 +291,8 @@ func (xs *joinLeft) pullEntireLeftSource(ctx context.Context) (err error) {
 // joinRight finds related right rows for the given left row and matches them up
 //
 // @note for sorting, we use a b-tree as it's self sorting.
-//			 Benchmarking shows that using a slice is negligibly faster if faster at all.
+//
+//	Benchmarking shows that using a slice is negligibly faster if faster at all.
 func (xs *joinLeft) joinRight(ctx context.Context, left *Row) (err error) {
 	bb, ok, err := xs.getRelatedBuffers(left)
 	if err != nil || !ok {
@@ -289,10 +302,11 @@ func (xs *joinLeft) joinRight(ctx context.Context, left *Row) (err error) {
 	for _, b := range bb {
 		for _, right := range b.rows {
 			// Merge the two
-			xs.mergeRows(xs.def.OutAttributes, right, left, right)
+			row := right.DeepCopy()
+			xs.mergeRows(xs.def.OutAttributes, row, left, right)
 
 			// Assert if we want to keep
-			k, err := xs.keep(ctx, right)
+			k, err := xs.keep(ctx, row)
 			if err != nil {
 				return err
 			}
@@ -300,7 +314,7 @@ func (xs *joinLeft) joinRight(ctx context.Context, left *Row) (err error) {
 				continue
 			}
 
-			xs.outSorted.Set(right)
+			xs.outSorted.Set(row)
 		}
 	}
 
@@ -310,14 +324,21 @@ func (xs *joinLeft) joinRight(ctx context.Context, left *Row) (err error) {
 // getRelatedBuffers returns all of the right rows corresponding to the given left row
 func (xs *joinLeft) getRelatedBuffers(l *Row) (out []*relIndexBuffer, ok bool, err error) {
 	var aux *relIndexBuffer
-	for c := uint(0); c < l.CountValues()[xs.def.On.Left]; c++ {
-		// @note internal Row struct never errors
-		v, _ := l.GetValue(xs.def.On.Left, c)
-		aux, ok = xs.relIndex.Get(v)
-		if !ok {
-			continue
+	if xs.def.On.Left == "" {
+		aux, ok = xs.relIndex.Get("")
+		if ok {
+			out = append(out, aux)
 		}
-		out = append(out, aux)
+	} else {
+		for c := uint(0); c < l.CountValues()[xs.def.On.Left]; c++ {
+			// @note internal Row struct never errors
+			v, _ := l.GetValue(xs.def.On.Left, c)
+			aux, ok = xs.relIndex.Get(v)
+			if !ok {
+				continue
+			}
+			out = append(out, aux)
+		}
 	}
 
 	return
@@ -353,7 +374,8 @@ func (xs *joinLeft) keep(ctx context.Context, r *Row) (bool, error) {
 // since that is what always uniquely identifies a joined row.
 //
 // @todo consider applying PK candidates and filter out some of these. I don't
-//       think it'll provide much of a performance boost but worth a shot later on.
+//
+//	think it'll provide much of a performance boost but worth a shot later on.
 func (xs *joinLeft) collectPrimaryAttributes(mm []AttributeMapping) (out []string) {
 	out = make([]string, 0, 2)
 	for _, m := range mm {
@@ -394,6 +416,7 @@ func (xs *joinLeft) mergeValuesFrom(inIdent, outIdent string, out *Row, sources 
 		for c := uint(0); c < src.CountValues()[inIdent]; c++ {
 			aux, _ = src.GetValue(inIdent, c)
 			out.SetValue(outIdent, c, aux)
+			out.SetValue(inIdent, c, aux)
 		}
 	}
 }
@@ -402,7 +425,8 @@ func (xs *joinLeft) mergeValuesFrom(inIdent, outIdent string, out *Row, sources 
 // to the right side, and 0 if it's either.
 //
 // @todo consider adding an additional flag to identify what side it is on.
-//       For now, this should be fine.
+//
+//	For now, this should be fine.
 func (xs *joinLeft) identSide(ident string) int {
 	pp := strings.Split(ident, attributeNestingSeparator)
 	if len(pp) > 1 {

@@ -9,18 +9,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/compose/model"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	discovery "github.com/cortezaproject/corteza/server/discovery/types"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelsType "github.com/cortezaproject/corteza/server/pkg/label/types"
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/store"
-	"github.com/cortezaproject/corteza/server/store/adapters/rdbms/ddl"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
+	"github.com/madnikulin50/lowcode/server/compose/model"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	discovery "github.com/madnikulin50/lowcode/server/discovery/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelsType "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/store"
+	"github.com/madnikulin50/lowcode/server/store/adapters/rdbms/ddl"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
 )
@@ -48,7 +48,7 @@ var (
 		fix_2022_09_00_addMissingNodeIdOnFederationMapping,
 		fix_2023_03_00_migrateComposeModuleConfigForRecordDeDup,
 		fix_2022_09_07_changePostgresIdColumnsDatatype,
-		fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings,
+		//fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings,
 		fix_2023_03_00_migrateComposePageMeta,
 		fix_2024_09_03_dropFederationNodeSyncPrimaryKey,
 		fix_2024_09_03_renameFederationNodeSyncNodeID,
@@ -60,6 +60,9 @@ var (
 	fixesPost = []func(context.Context, *Store) error{
 		fix_2024_09_05_addRelResourceRoleMembershipColumn,
 		fix_2024_09_05_addUserGroupReferenceToUser,
+		fix_2026_10_00_extendAutomationPromptVersionsForSkills,
+		fix_2026_10_01_extendComposeAttachmentsForVersions,
+		fix_2026_11_03_extendComposePageForPrompt,
 	}
 )
 
@@ -76,7 +79,7 @@ func fix_2022_09_00_migrateComposeModuleDiscoveryConfigSettings(ctx context.Cont
 			Privacy         interface{} `json:"privacy"`
 			RecordRevisions interface{} `json:"recordRevisions"`
 			RecordDeDup     interface{} `json:"recordDeDup"`
-			DataSource      interface{} `json:"dataSource"`
+			DataSource      interface{} `json:"datasource"`
 		}
 
 		result struct {
@@ -1329,4 +1332,67 @@ func count(ctx context.Context, s *Store, table string, ee ...goqu.Expression) (
 	}
 
 	return
+}
+
+// Skills live in the prompt library: a version gets a kind, the toolkits it
+// requires and the files it ships with. The table already has rows, so kind
+// defaults to empty (a plain prompt) and the JSON columns to an empty list.
+func fix_2026_10_00_extendAutomationPromptVersionsForSkills(ctx context.Context, s *Store) (err error) {
+	const table = "automation_prompt_versions"
+
+	err = addColumn(ctx, s, table, &dal.Attribute{
+		Ident: "Kind",
+		Type:  &dal.TypeText{Length: 16, HasDefault: true, DefaultValue: ""},
+		Store: &dal.CodecAlias{Ident: "kind"},
+	})
+	if err != nil {
+		return
+	}
+
+	// existing rows get an empty list, not the model's "{}" default
+	for _, ident := range []string{"Requires", "Resources"} {
+		err = addColumn(ctx, s, table, &dal.Attribute{
+			Ident: ident,
+			Type:  &dal.TypeJSON{DefaultValue: "[]"},
+			Store: &dal.CodecAlias{Ident: strings.ToLower(ident)},
+		})
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+// File versioning: attachments of a file that has versions share a version
+// group and are numbered. The table already has rows; both columns default to
+// 0, which means "not versioned".
+func fix_2026_10_01_extendComposeAttachmentsForVersions(ctx context.Context, s *Store) (err error) {
+	const table = "compose_attachment"
+
+	err = addColumn(ctx, s, table, &dal.Attribute{
+		Ident: "VersionGroup",
+		// an ID column cannot be added with a default (no dialect writes one),
+		// so existing rows get 0 through a bigint number column
+		Type:  &dal.TypeNumber{HasDefault: true, DefaultValue: 0, Precision: -1, Scale: -1, Meta: map[string]interface{}{"rdbms:type": "bigint"}},
+		Store: &dal.CodecAlias{Ident: "version_group"},
+	})
+	if err != nil {
+		return
+	}
+
+	return addColumn(ctx, s, table, &dal.Attribute{
+		Ident: "Version",
+		Type:  &dal.TypeNumber{HasDefault: true, DefaultValue: 0, Precision: -1, Scale: -1, Meta: map[string]interface{}{"rdbms:type": "integer"}},
+		Store: &dal.CodecAlias{Ident: "version"},
+	})
+}
+
+// Pages carry a per-page default prompt for the AI chat/Ask feature. Older
+// databases predate the column; existing rows get an empty prompt.
+func fix_2026_11_03_extendComposePageForPrompt(ctx context.Context, s *Store) (err error) {
+	return addColumn(ctx, s, "compose_page", &dal.Attribute{
+		Ident: "Prompt",
+		Type:  &dal.TypeText{HasDefault: true, DefaultValue: ""},
+		Store: &dal.CodecAlias{Ident: "prompt"},
+	})
 }

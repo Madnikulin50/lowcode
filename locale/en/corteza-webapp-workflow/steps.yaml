@@ -53,6 +53,24 @@ function:
     select-function: Select function
     type: Type
     type*: Type*
+    test:
+      button: Test step
+      title: Test step
+      hint: Runs this step once against the real model with the arguments below. Nothing is saved; data changes by the agent are switched off.
+      arguments: Arguments (JSON)
+      expressions: These arguments are expressions and need a sample value
+      run: Run
+      results: Results
+      trace: AI trace
+      tokens: tokens
+      attempts: attempts
+      rejected: Rejected answers
+      prompt: Prompt
+      stop: Stop
+      working: Waiting for the model...
+      warming: The model is loading...
+      usingTools: The agent is using tools...
+      attemptN: Attempt {n} - the previous answer was rejected
   label: Function
   short: Function
   tooltip: Execute the chosen predefined function

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cortezaproject/corteza/extra/server-discovery/searcher"
-	"github.com/cortezaproject/corteza/extra/server-discovery/searcher/rest/request"
-	types2 "github.com/cortezaproject/corteza/server/compose/types"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/searcher"
+	"github.com/madnikulin50/lowcode/extra/server-discovery/searcher/rest/request"
+	types2 "github.com/madnikulin50/lowcode/server/compose/types"
 )
 
 type (

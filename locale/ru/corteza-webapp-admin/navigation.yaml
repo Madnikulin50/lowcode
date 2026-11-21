@@ -1,4 +1,22 @@
 dashboard: Dashboard
+openApiDocs: Открыть отдельно
+search: Поиск
+noResults: Нет совпадений
+
+help:
+  documentation: Документация
+  userDocs: Документация пользователя
+  apiDocs: Документация API
+  architecture: Архитектура
+  feedback: Обратная связь
+  forum: Справка
+  version: "Версия:"
+
+groups:
+  userManagement: Управление пользователями
+  access: Доступ
+  platform: Платформа
+  integrations: Интеграции
 
 system:
   group: System
@@ -9,15 +27,17 @@ system:
     apigw: Integration Gateway
     applications: Приложения
     authclients: Auth Clients
-    connections: Connections
+    connections: Соединения
     code-snippets: Code Snippets
+    ai: ИИ
+    apidocs: Документация API
     sensitivityLevel: Sensitivity Levels
     permissions: Права доступа
     queues: Messaging QueuesF
     roles: Роли
-    settings: Auth Settings
+    settings: Auth Настройки
     email: Почтовый адрес settings
-    stats: Stats
+    stats: Статистика
     templates: Templates
 
 compose:
@@ -25,7 +45,7 @@ compose:
   items:
     automation: Автоматизация
     permissions: Права доступа
-    settings: Settings
+    settings: Настройки
 
 automation:
   group: Автоматизация
@@ -33,7 +53,10 @@ automation:
     permissions: Права доступа
     scripts: Corredor Scripts
     sessions: Sessions
-    workflows: Workflows
+    workflows: Процессы
+    ruleChains: Цепочки правил
+    prompts: Промпты
+    skills: Skills
 
 federation:
   group: Federation

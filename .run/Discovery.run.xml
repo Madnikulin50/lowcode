@@ -1,0 +1,20 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Discovery" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="lowcode" />
+    <working_directory value="$PROJECT_DIR$/bin" />
+    <parameters value="serve-api" />
+    <envs>
+      <env name="DB_DSN" value="postgres://corteza:corteza@127.0.0.1:5432/corteza?sslmode=disable" />
+      <env name="ENVIRONMENT" value="dev" />
+      <env name="HTTP_ADDR" value=":3334" />
+      <env name="HTTP_API_ENABLED" value="true" />
+      <env name="HTTP_WEBAPP_ENABLED" value="false" />
+      <env name="LOCALE_DEVELOPMENT_MODE" value="true" />
+    </envs>
+    <kind value="FILE" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/extra/server-discovery/main.go" />
+    <output_directory value="$PROJECT_DIR$/bin" />
+    <method v="2" />
+  </configuration>
+</component>

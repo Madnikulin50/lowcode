@@ -1,0 +1,21 @@
+action: Action
+actor: Actor
+appListName: App List Name
+consumer: Consumer
+createdAt: Created
+description: Description
+email: Email
+enabled: Enabled
+handle: Handle
+level: Level
+meta:
+  name: Name
+  short: Short Name
+name: Name
+queue: Queue
+requestOrigin: Origin
+resource: Resource
+sessionID: Session ID
+state: State
+timestamp: Timestamp
+workflowID: Workflow ID

@@ -1,0 +1,4 @@
+/bin/
+var/
+web/dist/
+compose/load_pd_rd.state.json

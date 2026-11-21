@@ -21,7 +21,6 @@ PROTOGEN_GRPC = $(GOPATH)/bin/protoc-gen-go-grpc
 GIN           = $(GOPATH)/bin/gin
 STATIK        = $(GOPATH)/bin/statik
 MODOUTDATED   = $(GOPATH)/bin/go-mod-outdated
-CUE           = $(GOPATH)/bin/cue
 CODEGEN       = $(GOPATH)/bin/corteza-codegen
 JSONTPLEXEC   = $(GOPATH)/bin/corteza-json-tpl-exec
 
@@ -63,9 +62,6 @@ $(STATIK):
 
 $(MODOUTDATED):
 	$(GOINSTALL) github.com/psampaz/go-mod-outdated@latest
-
-$(CUE):
-	$(GOINSTALL) cuelang.org/go/cmd/cue@v0.4.2
 
 $(CODEGEN):
 	$(GO) build -o $@ $(ROOT_DIR)/cmd/codegen/main.go

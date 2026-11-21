@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/ql"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
+	"github.com/madnikulin50/lowcode/server/pkg/ql"
 )
 
 type (
@@ -104,6 +104,11 @@ var (
 		"sub": {
 			Handler: func(args ...exp.Expression) exp.Expression {
 				return exp.NewLiteralExpression("? - ?", args[0], args[1])
+			},
+		},
+		"uniquecount": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewLiteralExpression("count(distinct ?)", args[0])
 			},
 		},
 		"mult": {
@@ -273,6 +278,16 @@ var (
 				return exp.NewSQLFunctionExpression("COUNT", arg)
 			},
 		},
+		"dcount": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				var arg exp.Expression = exp.NewLiteralExpression("*")
+				if len(args) > 0 {
+					arg = args[0]
+				}
+
+				return exp.NewSQLFunctionExpression("COUNT", "DISTINCT "+fmt.Sprintf("%v", arg))
+			},
+		},
 		"sum": {
 			Handler: func(args ...exp.Expression) exp.Expression {
 				return exp.NewSQLFunctionExpression("SUM", args[0])
@@ -295,6 +310,11 @@ var (
 		},
 
 		"std": {
+			Handler: func(args ...exp.Expression) exp.Expression {
+				return exp.NewSQLFunctionExpression("stddev", args[0])
+			},
+		},
+		"stddev": {
 			Handler: func(args ...exp.Expression) exp.Expression {
 				return exp.NewSQLFunctionExpression("stddev", args[0])
 			},

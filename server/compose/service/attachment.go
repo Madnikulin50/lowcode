@@ -8,19 +8,20 @@ import (
 	"io"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/compose/dalutils"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/auth"
-	"github.com/cortezaproject/corteza/server/pkg/errors"
-	"github.com/cortezaproject/corteza/server/pkg/objstore"
-	"github.com/cortezaproject/corteza/server/store"
-	systemService "github.com/cortezaproject/corteza/server/system/service"
 	"github.com/disintegration/imaging"
 	"github.com/edwvee/exiffix"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/madnikulin50/lowcode/server/compose/dalutils"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/auth"
+	"github.com/madnikulin50/lowcode/server/pkg/errors"
+	"github.com/madnikulin50/lowcode/server/pkg/objstore"
+	"github.com/madnikulin50/lowcode/server/store"
+	systemService "github.com/madnikulin50/lowcode/server/system/service"
 	"github.com/mat/besticon/ico"
 )
 
@@ -39,14 +40,25 @@ var (
 type (
 	attachment struct {
 		actionlog actionlog.Recorder
-		objects   objstore.Store
-		ac        attachmentAccessController
-		store     store.Storer
-		dal       dalDater
+		// objects holds every configured storage backend, keyed by driver
+		// name ("plain", "minio" if configured, "db"). Which one a given
+		// attachment actually uses is resolved per-attachment — see
+		// storeFor/driverForNewAttachment/driverForExistingAttachment.
+		objects map[string]objstore.Store
+		// legacyDriver is whichever single backend ("plain" or "minio") was
+		// configured before per-field/per-attachment storage selection
+		// existed — the fallback for attachments with no recorded
+		// Meta.StorageDriver (they were physically saved there, not to
+		// whatever the current default happens to be).
+		legacyDriver string
+		ac           attachmentAccessController
+		store        store.Storer
+		dal          dalDater
 	}
 
 	attachmentAccessController interface {
 		CanReadNamespace(context.Context, *types.Namespace) bool
+		CanUpdateNamespace(context.Context, *types.Namespace) bool
 		CanCreateNamespace(context.Context) bool
 		CanReadModule(context.Context, *types.Module) bool
 		CanReadPage(context.Context, *types.Page) bool
@@ -62,20 +74,68 @@ type (
 		CreatePageAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, pageID uint64) (*types.Attachment, error)
 		CreateIconAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
 		CreateRecordAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string) (*types.Attachment, error)
+		CreateRecordAttachmentVersion(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string, attachmentID uint64) (*types.Attachment, error)
+		ListVersions(ctx context.Context, namespaceID, moduleID, recordID uint64, fieldName string, attachmentID uint64) (*AttachmentVersions, error)
 		CreateNamespaceAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
+		CreateDocumentAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker) (*types.Attachment, error)
+		CreateImported(ctx context.Context, namespaceID uint64, kind, name string, meta types.AttachmentMeta, original io.ReadSeeker, originalSize int64, preview io.ReadSeeker) (*types.Attachment, error)
 		OpenOriginal(att *types.Attachment) (io.ReadSeekCloser, error)
 		OpenPreview(att *types.Attachment) (io.ReadSeekCloser, error)
 		DeleteByID(ctx context.Context, namespaceID, attachmentID uint64) error
 	}
 )
 
-func Attachment(store objstore.Store, dal dalDater) *attachment {
+func Attachment(stores map[string]objstore.Store, legacyDriver string, dal dalDater) *attachment {
 	return &attachment{
-		objects: store,
-		ac:      DefaultAccessControl,
-		store:   DefaultStore,
-		dal:     dal,
+		objects:      stores,
+		legacyDriver: legacyDriver,
+		ac:           DefaultAccessControl,
+		store:        DefaultStore,
+		dal:          dal,
 	}
+}
+
+// storeFor resolves a driver name to its backend, falling back to whatever
+// is actually configured if the requested one isn't (e.g. "minio" requested
+// but MINIO_ENDPOINT was never set).
+func (svc attachment) storeFor(driver string) objstore.Store {
+	if driver != "" {
+		if s, ok := svc.objects[driver]; ok {
+			return s
+		}
+	}
+	if s, ok := svc.objects[svc.legacyDriver]; ok {
+		return s
+	}
+	for _, s := range svc.objects {
+		return s
+	}
+	return nil
+}
+
+// driverForNewAttachment resolves which backend a brand-new attachment
+// should be saved to: the module field's own "storageDriver" option
+// (fieldDriver) if it set one, else the system-wide default setting
+// (Compose.Attachments.DefaultDriver, "db" if that's unset too).
+func (svc attachment) driverForNewAttachment(fieldDriver string) string {
+	if fieldDriver != "" {
+		return fieldDriver
+	}
+	if d := strings.TrimSpace(systemService.CurrentSettings.Compose.Attachments.DefaultDriver); d != "" {
+		return d
+	}
+	return "db"
+}
+
+// driverForExistingAttachment resolves which backend an already-stored
+// attachment lives on: its own frozen Meta.StorageDriver, or — for
+// attachments created before this feature existed — the single legacy
+// backend that was in effect back then.
+func (svc attachment) driverForExistingAttachment(att *types.Attachment) string {
+	if att != nil && att.Meta.StorageDriver != "" {
+		return att.Meta.StorageDriver
+	}
+	return svc.legacyDriver
 }
 
 func (svc attachment) Find(ctx context.Context, filter types.AttachmentFilter) (set types.AttachmentSet, f types.AttachmentFilter, err error) {
@@ -238,7 +298,12 @@ func (svc attachment) OpenOriginal(att *types.Attachment) (io.ReadSeekCloser, er
 		return nil, nil
 	}
 
-	return svc.objects.Open(att.Url)
+	objects := svc.storeFor(svc.driverForExistingAttachment(att))
+	if objects == nil {
+		return nil, errors.Internal("cannot open attachment: store handler not set")
+	}
+
+	return objects.Open(att.Url)
 }
 
 func (svc attachment) OpenPreview(att *types.Attachment) (io.ReadSeekCloser, error) {
@@ -246,7 +311,12 @@ func (svc attachment) OpenPreview(att *types.Attachment) (io.ReadSeekCloser, err
 		return nil, nil
 	}
 
-	return svc.objects.Open(att.PreviewUrl)
+	objects := svc.storeFor(svc.driverForExistingAttachment(att))
+	if objects == nil {
+		return nil, errors.Internal("cannot open attachment: store handler not set")
+	}
+
+	return objects.Open(att.PreviewUrl)
 }
 
 func (svc attachment) CreatePageAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, pageID uint64) (att *types.Attachment, err error) {
@@ -285,7 +355,7 @@ func (svc attachment) CreatePageAttachment(ctx context.Context, namespaceID uint
 				allowedTypes = systemService.CurrentSettings.Compose.Page.Attachments.Mimetypes
 			)
 
-			if err = svc.verifySizeAndMimetype(fh, size, maxSize, allowedTypes); err != nil {
+			if err = svc.verifySizeAndMimetype(fh, name, size, maxSize, allowedTypes); err != nil {
 				return err
 			}
 		}
@@ -321,7 +391,7 @@ func (svc attachment) CreateIconAttachment(ctx context.Context, name string, siz
 				allowedTypes = systemService.CurrentSettings.Compose.Icon.Attachments.Mimetypes
 			)
 
-			if err = svc.verifySizeAndMimetype(fh, size, maxSize, allowedTypes); err != nil {
+			if err = svc.verifySizeAndMimetype(fh, name, size, maxSize, allowedTypes); err != nil {
 				return err
 			}
 		}
@@ -337,7 +407,7 @@ func (svc attachment) CreateIconAttachment(ctx context.Context, name string, siz
 	return att, svc.recordAction(ctx, aProps, AttachmentActionCreate, err)
 }
 
-func (svc attachment) verifySizeAndMimetype(fh io.ReadSeeker, size, maxSize int64, allowedTypes []string) (err error) {
+func (svc attachment) verifySizeAndMimetype(fh io.ReadSeeker, filename string, size, maxSize int64, allowedTypes []string) (err error) {
 	// Verify size and type of the uploaded page attachment
 	// Max size & allowed mime-types are pulled from the current settings
 	var (
@@ -353,7 +423,7 @@ func (svc attachment) verifySizeAndMimetype(fh io.ReadSeeker, size, maxSize int6
 
 	if mimeType, err = svc.extractMimetype(fh); err != nil {
 		return err
-	} else if !svc.checkMimeType(mimeType, allowedTypes...) {
+	} else if !svc.checkMimeType(mimeType, filename, allowedTypes...) {
 		return AttachmentErrNotAllowedToUploadThisType()
 	}
 
@@ -361,10 +431,29 @@ func (svc attachment) verifySizeAndMimetype(fh io.ReadSeeker, size, maxSize int6
 }
 
 func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string) (att *types.Attachment, err error) {
+	return svc.createRecordAttachment(ctx, namespaceID, name, size, fh, moduleID, recordID, fieldName, 0)
+}
+
+// CreateRecordAttachmentVersion uploads a new version of a file that is one of
+// the values of a File field with versioning enabled. The file keeps its place
+// in the version chain; making the new version the field's value is up to the
+// caller (the record is saved with the new attachment ID).
+func (svc attachment) CreateRecordAttachmentVersion(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string, attachmentID uint64) (att *types.Attachment, err error) {
+	if attachmentID == 0 {
+		return nil, AttachmentErrNotFound()
+	}
+	return svc.createRecordAttachment(ctx, namespaceID, name, size, fh, moduleID, recordID, fieldName, attachmentID)
+}
+
+func (svc attachment) createRecordAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker, moduleID, recordID uint64, fieldName string, versionOf uint64) (att *types.Attachment, err error) {
 	var (
 		ns *types.Namespace
 		m  *types.Module
 		r  *types.Record
+
+		// files dropped by the version limit; their bytes are removed once
+		// the transaction is through
+		dropped types.AttachmentSet
 
 		aProps = &attachmentActionProps{
 			namespace: &types.Namespace{ID: namespaceID},
@@ -412,6 +501,8 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 			}
 		}
 
+		var fieldStorageDriver string
+
 		{
 			// Verify size and type of the uploaded record attachment
 			// Max size & allowed mime-types are pulled from the current settings
@@ -431,9 +522,8 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 			if aux := f.Options.Int64("maxSize"); aux > 0 {
 				maxSize = aux * megabyte
 			}
-			if aux := f.Options.String("mimetypes"); len(aux) > 0 {
-				allowedTypes = strings.Split(aux, ",")
-			}
+			allowedTypes = fieldAllowedAttachmentTypes(f, allowedTypes)
+			fieldStorageDriver = f.Options.String("storageDriver")
 
 			if maxSize > 0 && maxSize < size {
 				return AttachmentErrTooLarge().Apply(
@@ -444,7 +534,7 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 
 			if mimeType, err = svc.extractMimetype(fh); err != nil {
 				return err
-			} else if !svc.checkMimeType(mimeType, allowedTypes...) {
+			} else if !svc.checkMimeType(mimeType, name, allowedTypes...) {
 				return AttachmentErrNotAllowedToUploadThisType().Apply(errors.Meta("mimetype", mimeType))
 			}
 		}
@@ -453,12 +543,249 @@ func (svc attachment) CreateRecordAttachment(ctx context.Context, namespaceID ui
 			NamespaceID: namespaceID,
 			Name:        strings.TrimSpace(name),
 			Kind:        types.RecordAttachment,
+			Meta:        types.AttachmentMeta{StorageDriver: fieldStorageDriver},
+		}
+
+		if versionOf > 0 {
+			if dropped, err = svc.prepareVersion(ctx, s, m, r, fieldName, versionOf, att); err != nil {
+				return err
+			}
 		}
 
 		return svc.create(ctx, s, name, size, fh, att)
 	})
 
+	if err == nil {
+		svc.removeFiles(dropped)
+	}
+
 	return att, svc.recordAction(ctx, aProps, AttachmentActionCreate, err)
+}
+
+// prepareVersion links a new attachment into the version chain of the file
+// versionOf and applies the version limit of the field.
+//
+// The file must be one of the values of the field in the (existing) record
+// and the field must have versioning enabled. A file that has no versions yet
+// becomes version 1. Versions beyond the field's "maxVersions" option are
+// deleted, oldest first, but never one the record currently points to.
+// Returns the deleted attachments so the caller can remove their bytes.
+func (svc attachment) prepareVersion(ctx context.Context, s store.Storer, m *types.Module, r *types.Record, fieldName string, versionOf uint64, att *types.Attachment) (dropped types.AttachmentSet, err error) {
+	f := m.Fields.FindByName(fieldName)
+	if f == nil || !f.Options.Bool("versioning") {
+		return nil, AttachmentErrVersioningDisabled()
+	}
+
+	if r == nil {
+		return nil, AttachmentErrNotAllowedToUpdateRecord()
+	}
+
+	base, err := store.LookupComposeAttachmentByID(ctx, s, versionOf)
+	if errors.IsNotFound(err) {
+		return nil, AttachmentErrNotFound()
+	} else if err != nil {
+		return nil, err
+	}
+
+	current, err := svc.currentFiles(ctx, s, r, fieldName, base)
+	if err != nil {
+		return nil, err
+	}
+
+	if !current.belongs {
+		return nil, AttachmentErrNotAFileOfTheField()
+	}
+
+	group := base.VersionGroup
+	if group == 0 {
+		// the first version: start the chain with the existing file
+		group = base.ID
+		base.VersionGroup, base.Version = group, 1
+		if err = store.UpdateComposeAttachment(ctx, s, base); err != nil {
+			return nil, err
+		}
+	}
+
+	chain, _, err := store.SearchComposeAttachments(ctx, s, types.AttachmentFilter{VersionGroup: group})
+	if err != nil {
+		return nil, err
+	}
+
+	next := 0
+	for _, v := range chain {
+		if v.Version > next {
+			next = v.Version
+		}
+	}
+
+	att.VersionGroup, att.Version = group, next+1
+
+	// the version being added counts towards the limit
+	if limit := int(f.Options.Int64("maxVersions")); limit > 0 {
+		sort.Slice(chain, func(i, j int) bool { return chain[i].Version < chain[j].Version })
+
+		for len(chain)+1 > limit {
+			idx := -1
+			for i, v := range chain {
+				if !current.ids[v.ID] {
+					idx = i
+					break
+				}
+			}
+			if idx < 0 {
+				break
+			}
+
+			if err = store.DeleteComposeAttachmentByID(ctx, s, chain[idx].ID); err != nil {
+				return nil, err
+			}
+			dropped = append(dropped, chain[idx])
+			chain = append(chain[:idx], chain[idx+1:]...)
+		}
+	}
+
+	return dropped, nil
+}
+
+// fieldFiles tells which attachments a record holds in a field
+type fieldFiles struct {
+	// ids of the attachments that are values of the field
+	ids map[uint64]bool
+
+	// belongs: the file asked about is one of the values or another version
+	// of one of them
+	belongs bool
+}
+
+func (svc attachment) currentFiles(ctx context.Context, s store.Storer, r *types.Record, fieldName string, file *types.Attachment) (out fieldFiles, err error) {
+	out.ids = make(map[uint64]bool)
+
+	for _, v := range r.Values {
+		if v.Name != fieldName || v.Ref == 0 || (v.DeletedAt != nil && !v.DeletedAt.IsZero()) {
+			continue
+		}
+
+		out.ids[v.Ref] = true
+
+		if v.Ref == file.ID {
+			out.belongs = true
+			continue
+		}
+
+		if file.VersionGroup == 0 {
+			continue
+		}
+
+		var other *types.Attachment
+		if other, err = store.LookupComposeAttachmentByID(ctx, s, v.Ref); errors.IsNotFound(err) {
+			err = nil
+			continue
+		} else if err != nil {
+			return
+		}
+
+		if other.VersionGroup == file.VersionGroup {
+			out.belongs = true
+		}
+	}
+
+	return
+}
+
+// removeFiles deletes the stored bytes (original and preview) of attachments
+// whose rows are already gone. Failures are only ignored: a leftover file
+// costs space but must not fail the upload that triggered the cleanup.
+func (svc attachment) removeFiles(set types.AttachmentSet) {
+	for _, a := range set {
+		objects := svc.storeFor(svc.driverForExistingAttachment(a))
+		if objects == nil {
+			continue
+		}
+
+		for _, name := range []string{a.Url, a.PreviewUrl} {
+			if name != "" {
+				_ = objects.Remove(name)
+			}
+		}
+	}
+}
+
+// AttachmentVersions are the versions of one file of a record
+type AttachmentVersions struct {
+	// Set holds the versions, newest first
+	Set types.AttachmentSet
+
+	// Current: IDs the record's field points to
+	Current []uint64
+}
+
+// ListVersions returns the versions of a file in a File field of a record,
+// newest first. The caller needs read access to the record, and the file has
+// to belong to the field of that record (an ID alone gives no access).
+func (svc attachment) ListVersions(ctx context.Context, namespaceID, moduleID, recordID uint64, fieldName string, attachmentID uint64) (out *AttachmentVersions, err error) {
+	var (
+		aProps = &attachmentActionProps{
+			namespace: &types.Namespace{ID: namespaceID},
+			module:    &types.Module{ID: moduleID},
+			record:    &types.Record{ID: recordID},
+		}
+	)
+
+	err = func() (err error) {
+		ns, m, err := loadModuleCombo(ctx, svc.store, namespaceID, moduleID)
+		if err != nil {
+			return err
+		}
+		aProps.setNamespace(ns)
+		aProps.setModule(m)
+
+		f := m.Fields.FindByName(fieldName)
+		if f == nil || f.Kind != "File" {
+			return AttachmentErrInvalidModuleField().Apply(errors.Meta("fieldName", fieldName))
+		}
+
+		r, err := dalutils.ComposeRecordsFind(ctx, svc.dal, m, recordID)
+		if err != nil {
+			return err
+		}
+		aProps.setRecord(r)
+
+		if !svc.ac.CanReadRecord(ctx, r) {
+			return AttachmentErrNotAllowedToReadRecord()
+		}
+
+		base, err := store.LookupComposeAttachmentByID(ctx, svc.store, attachmentID)
+		if errors.IsNotFound(err) {
+			return AttachmentErrNotFound()
+		} else if err != nil {
+			return err
+		}
+
+		current, err := svc.currentFiles(ctx, svc.store, r, fieldName, base)
+		if err != nil {
+			return err
+		}
+		if !current.belongs {
+			return AttachmentErrNotAFileOfTheField()
+		}
+
+		out = &AttachmentVersions{Set: types.AttachmentSet{base}}
+		if base.VersionGroup > 0 {
+			if out.Set, _, err = store.SearchComposeAttachments(ctx, svc.store, types.AttachmentFilter{VersionGroup: base.VersionGroup}); err != nil {
+				return err
+			}
+		}
+		sort.Slice(out.Set, func(i, j int) bool { return out.Set[i].Version > out.Set[j].Version })
+
+		for id := range current.ids {
+			out.Current = append(out.Current, id)
+		}
+		sort.Slice(out.Current, func(i, j int) bool { return out.Current[i] < out.Current[j] })
+
+		return nil
+	}()
+
+	return out, svc.recordAction(ctx, aProps, AttachmentActionLookup, err)
 }
 
 func (svc attachment) CreateNamespaceAttachment(ctx context.Context, name string, size int64, fh io.ReadSeeker) (att *types.Attachment, err error) {
@@ -482,7 +809,7 @@ func (svc attachment) CreateNamespaceAttachment(ctx context.Context, name string
 				allowedTypes = systemService.CurrentSettings.Compose.Namespace.Attachments.Mimetypes
 			)
 
-			if err = svc.verifySizeAndMimetype(fh, size, maxSize, allowedTypes); err != nil {
+			if err = svc.verifySizeAndMimetype(fh, name, size, maxSize, allowedTypes); err != nil {
 				return err
 			}
 		}
@@ -494,6 +821,49 @@ func (svc attachment) CreateNamespaceAttachment(ctx context.Context, name string
 
 		// @todo limit upload on image/* only!
 
+		return svc.create(ctx, s, name, size, fh, att)
+	})
+
+	return att, svc.recordAction(ctx, aProps, AttachmentActionCreate, err)
+}
+
+func (svc attachment) CreateDocumentAttachment(ctx context.Context, namespaceID uint64, name string, size int64, fh io.ReadSeeker) (att *types.Attachment, err error) {
+	var (
+		ns     *types.Namespace
+		aProps = &attachmentActionProps{namespace: &types.Namespace{ID: namespaceID}}
+	)
+
+	err = store.Tx(ctx, svc.store, func(ctx context.Context, s store.Storer) (err error) {
+		if size == 0 {
+			return AttachmentErrNotAllowedToCreateEmptyAttachment()
+		}
+		if namespaceID == 0 {
+			return AttachmentErrInvalidNamespaceID()
+		}
+
+		ns, err = loadNamespace(ctx, s, namespaceID)
+		if err != nil {
+			return err
+		}
+		aProps.setNamespace(ns)
+
+		if !svc.ac.CanUpdateNamespace(ctx, ns) {
+			return AttachmentErrNotAllowedToUpdateNamespace()
+		}
+
+		maxSize := int64(systemService.CurrentSettings.Compose.Page.Attachments.MaxSize) * megabyte
+		if maxSize <= 0 {
+			maxSize = 32 * megabyte
+		}
+		if err = svc.verifySizeAndMimetype(fh, name, size, maxSize, []string{"application/pdf", ".pdf"}); err != nil {
+			return err
+		}
+
+		att = &types.Attachment{
+			NamespaceID: namespaceID,
+			Name:        strings.TrimSpace(name),
+			Kind:        types.DocumentAttachment,
+		}
 		return svc.create(ctx, s, name, size, fh, att)
 	})
 
@@ -513,7 +883,12 @@ func (svc attachment) create(ctx context.Context, s store.ComposeAttachments, na
 		att.OwnerID = auth.GetIdentityFromContext(ctx).Identity()
 	}
 
-	if svc.objects == nil {
+	// Field (or system default) may have already set Meta.StorageDriver
+	// (see CreateRecordAttachment); freeze the resolved choice either way
+	// so later config changes never orphan this specific file.
+	att.Meta.StorageDriver = svc.driverForNewAttachment(att.Meta.StorageDriver)
+	objects := svc.storeFor(att.Meta.StorageDriver)
+	if objects == nil {
 		return errors.Internal("cannot create attachment: store handler not set")
 	}
 
@@ -532,10 +907,10 @@ func (svc attachment) create(ctx context.Context, s store.ComposeAttachments, na
 		return AttachmentErrFailedToExtractMimeType(aProps).Wrap(err)
 	}
 
-	att.Url = svc.objects.Original(att.ID, att.Meta.Original.Extension)
+	att.Url = objects.Original(att.ID, att.Meta.Original.Extension)
 	aProps.setUrl(att.Url)
 
-	if err = svc.objects.Save(att.Url, fh); err != nil {
+	if err = objects.Save(att.Url, fh); err != nil {
 		return AttachmentErrFailedToStoreFile(aProps).Wrap(err)
 	}
 
@@ -550,6 +925,80 @@ func (svc attachment) create(ctx context.Context, s store.ComposeAttachments, na
 	}
 
 	return nil
+}
+
+func (svc attachment) CreateImported(ctx context.Context, namespaceID uint64, kind, name string, meta types.AttachmentMeta, original io.ReadSeeker, originalSize int64, preview io.ReadSeeker) (att *types.Attachment, err error) {
+	var (
+		aProps = &attachmentActionProps{}
+	)
+
+	err = store.Tx(ctx, svc.store, func(ctx context.Context, s store.Storer) (err error) {
+		if originalSize == 0 {
+			return AttachmentErrNotAllowedToCreateEmptyAttachment()
+		}
+
+		if !svc.ac.CanCreateNamespace(ctx) {
+			return AttachmentErrNotAllowedToUpdateNamespace()
+		}
+
+		att = &types.Attachment{
+			NamespaceID: namespaceID,
+			Name:        strings.TrimSpace(name),
+			Kind:        kind,
+			Meta:        meta,
+		}
+		if kind == types.IconAttachment {
+			att.NamespaceID = 0
+		}
+
+		att.Meta.StorageDriver = svc.driverForNewAttachment(att.Meta.StorageDriver)
+		objects := svc.storeFor(att.Meta.StorageDriver)
+		if objects == nil {
+			return errors.Internal("cannot create attachment: store handler not set")
+		}
+
+		att.ID = nextID()
+		att.CreatedAt = *now()
+		if att.OwnerID == 0 {
+			att.OwnerID = auth.GetIdentityFromContext(ctx).Identity()
+		}
+
+		att.Meta.Original.Extension = strings.Trim(path.Ext(strings.Trim(name, ".")), ".")
+		if att.Meta.Original.Extension == "" && meta.Original.Extension != "" {
+			att.Meta.Original.Extension = meta.Original.Extension
+		}
+		att.Meta.Original.Size = originalSize
+		if att.Meta.Original.Mimetype, err = svc.extractMimetypeS(original); err != nil {
+			return AttachmentErrFailedToExtractMimeType(aProps).Wrap(err)
+		}
+
+		att.Url = objects.Original(att.ID, att.Meta.Original.Extension)
+		if _, err = original.Seek(0, 0); err != nil {
+			return err
+		}
+		if err = objects.Save(att.Url, original); err != nil {
+			return AttachmentErrFailedToStoreFile(aProps).Wrap(err)
+		}
+
+		if preview != nil && att.Meta.Preview != nil && att.Meta.Preview.Extension != "" {
+			att.PreviewUrl = objects.Preview(att.ID, att.Meta.Preview.Extension)
+			if _, err = preview.Seek(0, 0); err != nil {
+				return err
+			}
+			if err = objects.Save(att.PreviewUrl, preview); err != nil {
+				return AttachmentErrFailedToStoreFile(aProps).Wrap(err)
+			}
+		} else {
+			att.Meta.Preview = meta.Preview
+			if err = svc.processImage(original, att); err != nil {
+				return AttachmentErrFailedToProcessImage(aProps).Wrap(err)
+			}
+		}
+
+		return store.CreateComposeAttachment(ctx, s, att)
+	})
+
+	return att, svc.recordAction(ctx, aProps, AttachmentActionCreate, err)
 }
 
 func (svc attachment) extractMimetype(file io.ReadSeeker) (mType *mimetype.MIME, err error) {
@@ -578,6 +1027,17 @@ func (svc attachment) extractMimetypeS(file io.ReadSeeker) (mType string, err er
 	return aux.String(), nil
 }
 
+// rasterImageExt reports whether the extension is a bitmap the previewer can decode.
+// CAD files such as DWG are sniffed as image/vnd.dwg and must not go through it.
+func rasterImageExt(ext string) bool {
+	switch strings.ToLower(strings.TrimPrefix(ext, ".")) {
+	case "jpg", "jpeg", "png", "gif", "webp", "bmp", "tif", "tiff", "ico":
+		return true
+	default:
+		return false
+	}
+}
+
 func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment) (err error) {
 	if !strings.HasPrefix(att.Meta.Original.Mimetype, "image/") {
 		// Only supporting previews from images (for now)
@@ -586,6 +1046,12 @@ func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment
 
 	if att.Meta.Original.Mimetype == "image/svg+xml" {
 		// SVG is a vector format, skip raster image processing/preview generation
+		return
+	}
+
+	// DWG is detected as image/vnd.dwg. It is not a bitmap: a failed preview
+	// must not reject the upload, or the file never appears in the list.
+	if !rasterImageExt(att.Meta.Original.Extension) {
 		return
 	}
 
@@ -622,7 +1088,8 @@ func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment
 		}
 	} else {
 		if format, err = imaging.FormatFromExtension(att.Meta.Original.Extension); err != nil {
-			return errors.Internal("could not get format from extension '%s'", att.Meta.Original.Extension).Wrap(err)
+			// Unknown image/* (CAD drawings and the like): keep the file, skip the preview.
+			return nil
 		}
 
 		previewFormat = format
@@ -694,24 +1161,112 @@ func (svc attachment) processImage(original io.ReadSeeker, att *types.Attachment
 	}
 
 	// Can and how we make a preview of this attachment?
-	att.PreviewUrl = svc.objects.Preview(att.ID, meta.Extension)
+	// att.Meta.StorageDriver is already resolved by the caller (create /
+	// CreateImported) by the time processImage runs.
+	objects := svc.storeFor(att.Meta.StorageDriver)
 
-	return svc.objects.Save(att.PreviewUrl, buf)
+	att.PreviewUrl = objects.Preview(att.ID, meta.Extension)
+
+	return objects.Save(att.PreviewUrl, buf)
 }
 
-func (attachment) checkMimeType(test *mimetype.MIME, vv ...string) bool {
+func (attachment) checkMimeType(test *mimetype.MIME, filename string, vv ...string) bool {
 	if len(vv) == 0 {
 		// return true if there are no type constraints to check against
 		return true
 	}
 
+	fileExt := strings.ToLower(path.Ext(filename))
+
 	for _, v := range vv {
+		v = strings.TrimSpace(v)
+		if v == "" || v == "*/*" || v == "*" {
+			return true
+		}
+		if strings.HasPrefix(v, ".") {
+			if strings.EqualFold(test.Extension(), v) || strings.EqualFold("."+test.Extension(), v) || strings.EqualFold(fileExt, v) {
+				return true
+			}
+			continue
+		}
+		if strings.HasSuffix(v, "/*") {
+			if strings.HasPrefix(test.String(), strings.TrimSuffix(v, "*")) {
+				return true
+			}
+			continue
+		}
 		if test.Is(v) {
 			return true
 		}
 	}
 
 	return false
+}
+
+// fieldAllowedAttachmentTypes prefers the field's mimetypes list, then
+// allowImages/allowDocuments flags. Both flags true (or a mix that covers
+// everything) clears the constraint so PDFs/Office files are not blocked by
+// a global image-only compose.Record.Attachments.Mimetypes setting.
+func fieldAllowedAttachmentTypes(f *types.ModuleField, fallback []string) []string {
+	if f == nil {
+		return fallback
+	}
+	if aux := f.Options.String("mimetypes"); len(strings.TrimSpace(aux)) > 0 {
+		parts := strings.Split(aux, ",")
+		out := make([]string, 0, len(parts))
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				out = append(out, p)
+			}
+		}
+		return out
+	}
+
+	allowImg := f.Options.Bool("allowImages")
+	allowDoc := f.Options.Bool("allowDocuments")
+	if !allowImg && !allowDoc {
+		return fallback
+	}
+	if allowImg && allowDoc {
+		return nil
+	}
+	if allowImg {
+		return []string{"image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/bmp"}
+	}
+	return []string{
+		"application/pdf",
+		"application/msword",
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		"application/vnd.ms-excel",
+		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		"application/vnd.ms-powerpoint",
+		"application/vnd.openxmlformats-officedocument.presentationml.presentation",
+		"application/vnd.oasis.opendocument.text",
+		"application/rtf",
+		"text/plain",
+		"application/zip",
+		"image/vnd.dxf",
+		"application/dxf",
+		"application/x-dxf",
+		".dxf",
+		"image/vnd.dwg",
+		"application/acad",
+		"application/x-dwg",
+		"application/dwg",
+		".dwg",
+		"application/ifc",
+		"application/x-ifc",
+		"model/ifc",
+		"application/x-step",
+		"application/ifczip",
+		".ifc",
+		".ifczip",
+		".frag",
+		".pln",
+		".pla",
+		".bimx",
+	}
 }
 
 var _ AttachmentService = &attachment{}

@@ -1,0 +1,14 @@
+[
+  {
+    "type": "content",
+    "severity": "high",
+    "description": "[детерм.] П.4.2: глубина заложения фундамента ПД 2.4 м, РД 2.6 м",
+    "pageNumber": "1"
+  },
+  {
+    "type": "extra_page",
+    "severity": "medium",
+    "description": "[детерм.] П.7.0 присутствует в РД, но отсутствует в ПД: добавлен слой гидроизоляции",
+    "pageNumber": "1"
+  }
+]

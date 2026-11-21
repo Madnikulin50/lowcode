@@ -113,3 +113,20 @@ editor:
       apiKey:
         label: API Key
         placeholder: Enter your API key
+    map:
+      title: Map
+      help: Tile source and zoom limits for maps in compose and other apps.
+      tileSource:
+        label: Tile source
+        description: Use online tiles or a local/offline tile server
+      tileURL:
+        label: Tile URL
+        description: Template URL for map tiles, e.g. https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+      minZoom:
+        label: Minimum zoom
+      maxZoom:
+        label: Maximum zoom
+      attribution:
+        label: Attribution
+        description: Copyright notice shown on the map
+        placeholder: © OpenStreetMap contributors

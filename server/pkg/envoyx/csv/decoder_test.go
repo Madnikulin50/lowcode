@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/pkg/envoyx/datasource"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx/datasource"
 	"github.com/stretchr/testify/require"
 )
 
@@ -118,7 +118,7 @@ func TestParseComplexCSVCell(t *testing.T) {
 	})
 }
 
-func testReader() io.Reader {
+func testReader() io.ReadSeeker {
 	src := `f1,f2,f3
 r1f1,r1f2,r1f3
 r2f1,r2f2,r2f3

@@ -1,4 +1,5 @@
 import { PageBlock, Registry } from './base'
+import { PageBlockRuleChain } from './rule-chain'
 export { PageBlockAutomation } from './automation'
 export { PageBlockChart } from './chart'
 export { PageBlockContent } from './content'
@@ -17,9 +18,13 @@ export { PageBlockProgress } from './progress'
 export { PageBlockNavigation } from './navigation'
 export { PageBlockTab } from './tabs'
 export { PageBlockGeometry } from './geometry'
+export { PageBlockRuleChain }
 
 export function PageBlockMaker<T extends PageBlock> (i: { kind: string }): T {
-  const PageBlockTemp = Registry.get(i.kind)
+  // Computed lookup keeps RuleChain in the bundle; Registry.set() is otherwise
+  // dropped when nothing instantiates compose.PageBlockRuleChain by name.
+  const extra = { RuleChain: PageBlockRuleChain }
+  const PageBlockTemp = Registry.get(i.kind) ?? extra[i.kind as keyof typeof extra]
   if (PageBlockTemp === undefined) {
     throw new Error(`unknown block kind '${i.kind}'`)
   }

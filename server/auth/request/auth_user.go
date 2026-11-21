@@ -3,9 +3,9 @@ package request
 import (
 	"encoding/gob"
 
-	"github.com/cortezaproject/corteza/server/auth/settings"
-	"github.com/cortezaproject/corteza/server/system/types"
 	"github.com/gorilla/sessions"
+	"github.com/madnikulin50/lowcode/server/auth/settings"
+	"github.com/madnikulin50/lowcode/server/system/types"
 )
 
 type (

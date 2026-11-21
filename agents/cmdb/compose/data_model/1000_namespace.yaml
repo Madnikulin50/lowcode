@@ -1,0 +1,7 @@
+namespaces:
+  cmdb:
+    name: CMDB
+    enabled: true
+    meta:
+      subtitle: Configuration management database
+      description: Network inventory, discovered devices, services, vulnerabilities and scan history.

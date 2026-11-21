@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cortezaproject/corteza/server/compose/dalutils"
-	"github.com/cortezaproject/corteza/server/compose/service"
-	"github.com/cortezaproject/corteza/server/compose/types"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	"github.com/cortezaproject/corteza/server/pkg/envoyx"
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	"github.com/cortezaproject/corteza/server/pkg/id"
-	"github.com/cortezaproject/corteza/server/pkg/rbac"
-	"github.com/cortezaproject/corteza/server/store"
+	"github.com/madnikulin50/lowcode/server/compose/dalutils"
+	"github.com/madnikulin50/lowcode/server/compose/service"
+	"github.com/madnikulin50/lowcode/server/compose/types"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	"github.com/madnikulin50/lowcode/server/pkg/envoyx"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	"github.com/madnikulin50/lowcode/server/pkg/id"
+	"github.com/madnikulin50/lowcode/server/pkg/rbac"
+	"github.com/madnikulin50/lowcode/server/store"
 	"github.com/spf13/cast"
 )
 
@@ -116,7 +116,39 @@ func (d StoreDecoder) extendedModuleDecoder(ctx context.Context, s store.Storer,
 			mod.Fields = append(mod.Fields, f.Resource.(*types.ModuleField))
 		}
 
+		/*  if mod.Config.Datasource.Items != nil {
+		    f.References = envoyx.MergeRefs(f.References, b.References, map[string]envoyx.Ref{
+		        "ModuleID": b.ToRef(),
+		    })
+		    for k, ref := range f.References {
+		        ref.Scope = b.Scope
+		        f.References[k] = ref
+		    }
+		}*/
 		out = append(out, ff...)
+	}
+
+	return
+}
+
+func decodeModuleRefs(c *types.Module) (refs map[string]envoyx.Ref) {
+	refs = make(map[string]envoyx.Ref, len(c.Config.Datasource.Items))
+
+	for i, r := range c.Config.Datasource.Items {
+		if r.Step.Load == nil {
+			continue
+		}
+		moduleId := r.Step.Load.Definition["moduleID"]
+		nsID := r.Step.Load.Definition["namespaceID"]
+
+		refs[fmt.Sprintf("Config.Datasource.%d.ModuleID", i)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(moduleId),
+		}
+		refs[fmt.Sprintf("Config.Datasource.%d.NamespaceID", i)] = envoyx.Ref{
+			ResourceType: types.ModuleResourceType,
+			Identifiers:  envoyx.MakeIdentifiers(nsID),
+		}
 	}
 
 	return
@@ -179,6 +211,12 @@ func decodePageRefs(p *types.Page) (refs map[string]envoyx.Ref) {
 
 		case "Calendar":
 			refs = envoyx.MergeRefs(refs, getPageBlockCalendarRefs(b, index))
+
+		case "RelatedRecords":
+			refs = envoyx.MergeRefs(refs, getPageBlockRelatedRecordsRefs(b, index))
+
+		case "RecordGraph":
+			refs = envoyx.MergeRefs(refs, getPageBlockRecordGraphRefs(b, index))
 
 		case "Metric":
 			refs = envoyx.MergeRefs(refs, getPageBlockMetricRefs(b, index))
@@ -265,9 +303,10 @@ func (d StoreDecoder) decodeRecordDatasource(ctx context.Context, s store.Storer
 		},
 	}
 
-	// Get access controller to enforce field-level read permissions
+	// Get access controller to enforce field-level read permissions.
+	// Namespace ZIP export is a full snapshot: skip field ACL so File IDs are present for remapping on import.
 	ac := service.AccessControl(s)
-	if rbac.Global() == nil {
+	if rbac.Global() == nil || cast.ToBool(p.Params["skipAccessControl"]) {
 		ac = nil
 	}
 

@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cortezaproject/corteza/server/pkg/sql"
+	"github.com/madnikulin50/lowcode/server/pkg/sql"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
-	labelTypes "github.com/cortezaproject/corteza/server/pkg/label/types"
-
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
+	labelTypes "github.com/madnikulin50/lowcode/server/pkg/label/types"
 )
 
 type (
@@ -49,6 +48,8 @@ type (
 		// User's avatar initial text and background color
 		AvatarColor   string `json:"avatarColor,omitempty"`
 		AvatarBgColor string `json:"avatarBgColor,omitempty"`
+		// Font path used to rasterize initials; empty means a legacy image that may lack glyphs
+		AvatarFont string `json:"avatarFont,omitempty"`
 
 		PreferredLanguage string `json:"preferredLanguage"`
 		Theme             string `json:"theme"`
@@ -85,7 +86,7 @@ type (
 		// Set to true if you want to get all kinds/types of users
 		AllKinds bool `json:"anyKind"`
 
-		LabeledIDs []uint64          `json:"-"`
+		LabeledIDs []uint64                         `json:"-"`
 		Labels     map[string]labelTypes.LabelValue `json:"labels,omitempty"`
 
 		Deleted   filter.State `json:"deleted"`

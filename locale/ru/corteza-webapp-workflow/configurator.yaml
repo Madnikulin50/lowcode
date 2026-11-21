@@ -6,7 +6,7 @@ labels:
   label: Labels
 name:
   label: Имя *
-  placeholder: Workflow name
+  placeholder: Процесс name
 handle:
   label: Дескриптор
   placeholder: дескриптор (a - z, 0 - 9, underscore, dash)
@@ -29,3 +29,9 @@ delay:
   duration:
     label: Duration
     description: 'Enter duration format (e.g., "5s", "10m", "1h30m") or an expression'
+ai-budget:
+  label: ИИ-бюджет одного запуска
+  description: Останавливает ИИ-шаги одного запуска этого workflow, когда они израсходуют столько модели. Пусто - без ограничений. Модели, не сообщающие расход токенов, можно ограничить только числом обращений.
+  calls: Обращения к модели
+  tokens: Токены
+  unlimited: Без ограничений

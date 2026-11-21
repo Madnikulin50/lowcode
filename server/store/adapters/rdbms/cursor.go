@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/cortezaproject/corteza/server/pkg/filter"
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
+	"github.com/madnikulin50/lowcode/server/pkg/filter"
 )
 
 type (
@@ -353,6 +353,9 @@ func CursorExpression(
 				),
 			)
 		}
+	}
+	if curCond == nil {
+		return nil, nil
 	}
 
 	return curCond.Expression(), nil

@@ -1,0 +1,57 @@
+namespace: dspm
+charts:
+  findings-by-severity:
+    name: Находки по серьёзности
+    config:
+      reports:
+      - dimensions:
+        - field: severity
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: findings
+      colorScheme: tableau.Tableau10
+
+  stores-by-exposure:
+    name: Хранилища по экспозиции
+    config:
+      reports:
+      - dimensions:
+        - field: exposure
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: data_stores
+      colorScheme: tableau.Tableau10
+
+  requests-by-status:
+    name: Заявки по статусу
+    config:
+      reports:
+      - dimensions:
+        - field: status
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: access_requests
+      colorScheme: tableau.Tableau10
+
+  controls-by-status:
+    name: Контроли по покрытию
+    config:
+      reports:
+      - dimensions:
+        - field: status
+          modifier: (no grouping / buckets)
+        filter: ""
+        metrics:
+        - field: count
+          type: doughnut
+        module: compliance_controls
+      colorScheme: tableau.Tableau10

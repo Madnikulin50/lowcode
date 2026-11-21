@@ -1,0 +1,25 @@
+{
+  "namespaceID": "510742463423447041",
+  "slug": "faris",
+  "api": "http://localhost:3333/compose",
+  "modules": {
+    "subsidiaries": "510742463423971329",
+    "spend_categories": "510742463428034561",
+    "erp_vendors": "510742463430000641",
+    "erp_budgets": "510742463435309057",
+    "vendors": "510742463440814081",
+    "purchase_requests": "510742463454642177",
+    "approval_log": "510742463467487233"
+  },
+  "charts": {
+    "prBySubsidiary": "510742463473778689",
+    "spendByCategory": "510742463474368513",
+    "vendorsByStatus": "510742463474958337",
+    "spendBySubsidiary": "510742463475548161",
+    "prByStatus": "510742463476137985"
+  },
+  "urls": {
+    "namespace": "/ns/faris",
+    "dashboard": "/ns/faris/pages"
+  }
+}

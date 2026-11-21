@@ -3,8 +3,8 @@ package tests
 import (
 	"testing"
 
-	"github.com/cortezaproject/corteza/server/store"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/madnikulin50/lowcode/server/store"
 )
 
 func testUserGroups(t *testing.T, s store.UserGroups) {}

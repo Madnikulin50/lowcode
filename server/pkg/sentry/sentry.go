@@ -3,8 +3,8 @@ package sentry
 import (
 	"github.com/getsentry/sentry-go"
 
-	"github.com/cortezaproject/corteza/server/pkg/logger"
-	"github.com/cortezaproject/corteza/server/pkg/options"
+	"github.com/madnikulin50/lowcode/server/pkg/logger"
+	"github.com/madnikulin50/lowcode/server/pkg/options"
 )
 
 func Init(sentryOpt options.SentryOpt) error {

@@ -1,18 +1,18 @@
 package model
 
-// This file is auto-generated.
+// This file is auto-generated version 2.
 //
 // Changes to this file may cause incorrect behavior and will be lost if
-// the code is regenerated.
+// the code is regenerated from <no value>
 //
 
 import (
-	discoverytype "github.com/cortezaproject/corteza/server/discovery/types"
-	actionlogtype "github.com/cortezaproject/corteza/server/pkg/actionlog"
-	"github.com/cortezaproject/corteza/server/pkg/dal"
-	flagtype "github.com/cortezaproject/corteza/server/pkg/flag/types"
-	labelstype "github.com/cortezaproject/corteza/server/pkg/label/types"
-	rbactype "github.com/cortezaproject/corteza/server/pkg/rbac"
+	discoverytype "github.com/madnikulin50/lowcode/server/discovery/types"
+	actionlogtype "github.com/madnikulin50/lowcode/server/pkg/actionlog"
+	"github.com/madnikulin50/lowcode/server/pkg/dal"
+	flagtype "github.com/madnikulin50/lowcode/server/pkg/flag/types"
+	labelstype "github.com/madnikulin50/lowcode/server/pkg/label/types"
+	rbactype "github.com/madnikulin50/lowcode/server/pkg/rbac"
 )
 
 var Action = &dal.Model{

@@ -1,0 +1,15 @@
+namespaces:
+  invest:
+    name: Инвестпроекты
+    enabled: true
+    meta:
+      subtitle: Сопровождение инвестиционных проектов
+      description: Единое пространство PMO — документы, WBS, договоры, бюджет, EVM, RFC и ИИ-советчики.
+      prompt: |
+        Это пространство сопровождения инвестиционных проектов (единый источник правды).
+        Модули: projects, wbs_items, documents, document_versions, approvals, contracts,
+        risks, change_requests, change_log, budget_lines, cashflow_items, progress_facts,
+        project_members, document_types, counterparties, materials, labor_norms, ai_advisors.
+        ИИ работает только как советчик (human-in-the-loop): рекомендации пиши в комментарий,
+        решение утверждает человек кнопками согласования. Не выдумывай цифры — читай записи.
+        Юрист: договоры и документы, риски формулировок. Финконтролёр: бюджет, EVM (PV/EV/AC/SPI/CPI/EAC), отклонения.

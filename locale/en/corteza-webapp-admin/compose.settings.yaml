@@ -10,6 +10,14 @@ editor:
       type:
         description: 'MIME types, separated with ",". Example: "text/plain,text/csv"'
         whitelist: File type whitelist
+      storage:
+        title: Attachment storage
+        default-driver: Default storage
+        default-driver-description: Used for uploads whose module field doesn't set its own storage location
+        driver:
+          db: Database
+          plain: Local disk
+          minio: S3 (Minio)
     title: Basic
   ui:
     title: User interface

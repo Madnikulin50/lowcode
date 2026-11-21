@@ -1,0 +1,205 @@
+package rest
+
+import (
+	"encoding/json"
+	"fmt"
+	"testing"
+)
+
+func TestJSONIDUnmarshal(t *testing.T) {
+	type wrap struct {
+		PageID      jsonID `json:"pageID"`
+		ModuleID    jsonID `json:"moduleID"`
+		NamespaceID jsonID `json:"namespaceID"`
+	}
+
+	var w wrap
+	raw := []byte(`{"pageID":"496258658610774017","moduleID":"495727984904044545","namespaceID":"495727984893558785"}`)
+	if err := json.Unmarshal(raw, &w); err != nil {
+		t.Fatal(err)
+	}
+	if uint64(w.PageID) != 496258658610774017 {
+		t.Fatalf("pageID=%d", w.PageID)
+	}
+
+	if err := json.Unmarshal([]byte(`{"pageID":42}`), &w); err != nil {
+		t.Fatal(err)
+	}
+	if w.PageID != 42 {
+		t.Fatalf("numeric pageID=%d", w.PageID)
+	}
+
+	if err := json.Unmarshal([]byte(`{"pageID":""}`), &w); err != nil {
+		t.Fatal(err)
+	}
+	if w.PageID != 0 {
+		t.Fatalf("empty pageID=%d", w.PageID)
+	}
+}
+
+func TestFlattenValuesRawArray(t *testing.T) {
+	ctx := map[string]interface{}{}
+	flattenValues(ctx, []interface{}{
+		map[string]interface{}{"name": "store_id", "value": "34"},
+		map[string]interface{}{"name": "store_name", "value": "МСК-01"},
+	})
+	if ctx["store_id"] != "34" {
+		t.Fatalf("store_id=%v", ctx["store_id"])
+	}
+	if ctx["store_name"] != "МСК-01" {
+		t.Fatalf("store_name=%v", ctx["store_name"])
+	}
+
+	ctx = map[string]interface{}{}
+	flattenValues(ctx, map[string]interface{}{"store_id": "7", "store_name": "X"})
+	if ctx["store_id"] != "7" {
+		t.Fatalf("map store_id=%v", ctx["store_id"])
+	}
+}
+
+func TestInjectAgentCallbackURL(t *testing.T) {
+	t.Setenv("CORTEZA_API", "")
+	t.Setenv("HTTP_API_BASE_URL", "")
+	t.Setenv("HTTP_BASE_URL", "")
+	t.Setenv("HTTP_ADDR", "")
+
+	bag := map[string]interface{}{}
+	injectAgentCallback(nil, "", bag)
+	got := fmt.Sprintf("%v", bag["callbackUrl"])
+	want := "http://localhost:3333/compose/rulechain/cmdb-ingest-scan/run"
+	if got != want {
+		t.Fatalf("default callback %q want %q", got, want)
+	}
+
+	t.Setenv("CORTEZA_API", "http://localhost:3333/api")
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, "", bag)
+	got = fmt.Sprintf("%v", bag["callbackUrl"])
+	if got != want {
+		t.Fatalf("stripped /api callback %q want %q", got, want)
+	}
+
+	t.Setenv("CORTEZA_API", "")
+	t.Setenv("HTTP_API_BASE_URL", "/api")
+	t.Setenv("HTTP_ADDR", ":3333")
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, "", bag)
+	got = fmt.Sprintf("%v", bag["callbackUrl"])
+	wantAPI := "http://localhost:3333/api/compose/rulechain/cmdb-ingest-scan/run"
+	if got != wantAPI {
+		t.Fatalf("HTTP_API_BASE_URL=/api callback %q want %q", got, wantAPI)
+	}
+
+	bag = map[string]interface{}{"callbackUrl": "http://example/custom"}
+	injectAgentCallback(nil, "", bag)
+	if bag["callbackUrl"] != "http://example/custom" {
+		t.Fatalf("explicit callback overwritten: %v", bag["callbackUrl"])
+	}
+
+	t.Setenv("CORTEZA_API", "")
+	t.Setenv("HTTP_API_BASE_URL", "/")
+	t.Setenv("HTTP_BASE_URL", "")
+	t.Setenv("HTTP_ADDR", ":3333")
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, "", bag)
+	got = fmt.Sprintf("%v", bag["callbackUrl"])
+	if got != want {
+		t.Fatalf("HTTP_API_BASE_URL=/ callback %q want %q", got, want)
+	}
+}
+
+func TestInjectAgentCallbackBackupAndInvest(t *testing.T) {
+	t.Setenv("CORTEZA_API", "")
+	t.Setenv("HTTP_API_BASE_URL", "")
+	t.Setenv("HTTP_ADDR", "")
+	t.Setenv("BACKUP_AGENT_URL", "")
+	t.Setenv("INVEST_AGENT_URL", "")
+	t.Setenv("CMDB_AGENT_URL", "")
+
+	bag := map[string]interface{}{}
+	injectAgentCallback(nil, "backup-run-source", bag)
+	if bag["agentUrl"] != "http://localhost:8087/api" {
+		t.Fatalf("backup agentUrl=%v", bag["agentUrl"])
+	}
+	if bag["ingestChainID"] != "backup-ingest-job" {
+		t.Fatalf("backup ingest=%v", bag["ingestChainID"])
+	}
+	if fmt.Sprintf("%v", bag["callbackUrl"]) != "http://localhost:3333/compose/rulechain/backup-ingest-job/run" {
+		t.Fatalf("backup callback=%v", bag["callbackUrl"])
+	}
+
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, "backup-restore", bag)
+	if bag["ingestChainID"] != "backup-ingest-restore" {
+		t.Fatalf("restore ingest=%v", bag["ingestChainID"])
+	}
+
+	bag = map[string]interface{}{}
+	injectAgentCallback(nil, "invest-recalculate-evm", bag)
+	if bag["agentUrl"] != "http://localhost:8086/api" {
+		t.Fatalf("invest agentUrl=%v", bag["agentUrl"])
+	}
+	if _, ok := bag["ingestChainID"]; ok {
+		t.Fatalf("invest should not default ingest: %v", bag["ingestChainID"])
+	}
+	if _, ok := bag["callbackUrl"]; ok {
+		t.Fatalf("invest should not default callback: %v", bag["callbackUrl"])
+	}
+}
+
+func TestAliasTriggerRecordIDs(t *testing.T) {
+	bag := map[string]interface{}{"sourceID": "${recordID}"}
+	flattenTriggerContext(bag, &triggerRequest{RecordID: "510291663494250497"})
+	if bag["recordID"] != "510291663494250497" {
+		t.Fatalf("recordID=%v", bag["recordID"])
+	}
+	if bag["sourceID"] != "510291663494250497" {
+		t.Fatalf("sourceID=%v (placeholder should yield to recordID)", bag["sourceID"])
+	}
+
+	bag = map[string]interface{}{"projectID": "${recordID}"}
+	flattenTriggerContext(bag, &triggerRequest{RecordID: "510291663494250497"})
+	if bag["recordID"] != "510291663494250497" {
+		t.Fatalf("recordID=%v", bag["recordID"])
+	}
+	if bag["projectID"] != "510291663494250497" {
+		t.Fatalf("projectID=%v (placeholder should yield to recordID)", bag["projectID"])
+	}
+
+	bag = map[string]interface{}{"policyID": "99"}
+	flattenTriggerContext(bag, &triggerRequest{})
+	if bag["recordID"] != "99" {
+		t.Fatalf("policy alias recordID=%v", bag["recordID"])
+	}
+	if bag["sourceID"] != nil && bag["sourceID"] != "" {
+		t.Fatalf("must not copy policy id into sourceID: %v", bag["sourceID"])
+	}
+
+	// Document card: project field present — do not use projectID as recordID.
+	bag = map[string]interface{}{"projectID": "111", "project": "111"}
+	flattenTriggerContext(bag, &triggerRequest{})
+	if bag["recordID"] != nil && bag["recordID"] != "" {
+		t.Fatalf("must not alias projectID when project field exists: recordID=%v", bag["recordID"])
+	}
+
+	bag = map[string]interface{}{"projectID": "111", "project": "111", "documentID": "222"}
+	flattenTriggerContext(bag, &triggerRequest{RecordID: "222"})
+	if bag["recordID"] != "222" {
+		t.Fatalf("document recordID=%v", bag["recordID"])
+	}
+	if bag["documentID"] != "222" {
+		t.Fatalf("documentID=%v", bag["documentID"])
+	}
+
+	// Nested record.recordID when the top-level field was omitted / blank.
+	bag = map[string]interface{}{"project": "111", "recordID": ""}
+	flattenTriggerContext(bag, &triggerRequest{
+		Record: map[string]interface{}{"recordID": "333", "values": map[string]interface{}{"project": "111"}},
+	})
+	if bag["recordID"] != "333" {
+		t.Fatalf("nested recordID=%v", bag["recordID"])
+	}
+	if bag["documentID"] != "333" {
+		t.Fatalf("nested documentID=%v", bag["documentID"])
+	}
+}

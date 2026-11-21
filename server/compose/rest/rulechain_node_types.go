@@ -1,0 +1,416 @@
+package rest
+
+import "github.com/madnikulin50/lowcode/server/pkg/chat"
+
+type nodeTypeDef struct {
+	Type         string          `json:"type"`
+	Label        string          `json:"label"`
+	Description  string          `json:"description"`
+	ConfigFields []nodeTypeField `json:"configFields"`
+}
+
+type nodeTypeField struct {
+	Key         string      `json:"key"`
+	Widget      string      `json:"widget"`
+	Label       string      `json:"label"`
+	Help        string      `json:"help,omitempty"`
+	Required    bool        `json:"required,omitempty"`
+	Template    bool        `json:"template,omitempty"`
+	Placeholder string      `json:"placeholder,omitempty"`
+	Default     interface{} `json:"default,omitempty"`
+	Options     []string    `json:"options,omitempty"`
+	// OptionLabels gives an option a human description, shown next to it
+	OptionLabels map[string]string `json:"optionLabels,omitempty"`
+	// Suggestions are offered for a free-text field without restricting it
+	Suggestions []string `json:"suggestions,omitempty"`
+	// ValueOptions turns the value side of a keymap into a choice
+	ValueOptions []string            `json:"valueOptions,omitempty"`
+	Rows         int                 `json:"rows,omitempty"`
+	Lang         string              `json:"lang,omitempty"`
+	VisibleIf    map[string][]string `json:"visibleIf,omitempty"`
+	ItemFields   []nodeTypeField     `json:"itemFields,omitempty"`
+}
+
+func nf(key, widget, label string, extra ...func(*nodeTypeField)) nodeTypeField {
+	f := nodeTypeField{Key: key, Widget: widget, Label: label}
+	for _, fn := range extra {
+		fn(&f)
+	}
+	return f
+}
+
+func req(f *nodeTypeField)  { f.Required = true }
+func tmpl(f *nodeTypeField) { f.Template = true }
+
+func def(v interface{}) func(*nodeTypeField) {
+	return func(f *nodeTypeField) { f.Default = v }
+}
+func opts(o ...string) func(*nodeTypeField) {
+	return func(f *nodeTypeField) { f.Options = o }
+}
+func help(s string) func(*nodeTypeField) {
+	return func(f *nodeTypeField) { f.Help = s }
+}
+func rows(n int) func(*nodeTypeField) {
+	return func(f *nodeTypeField) { f.Rows = n }
+}
+func lang(s string) func(*nodeTypeField) {
+	return func(f *nodeTypeField) { f.Lang = s }
+}
+func visIf(key string, vals ...string) func(*nodeTypeField) {
+	return func(f *nodeTypeField) { f.VisibleIf = map[string][]string{key: vals} }
+}
+func items(fields ...nodeTypeField) func(*nodeTypeField) {
+	return func(f *nodeTypeField) { f.ItemFields = fields }
+}
+
+func nodeTypes() []nodeTypeDef {
+	out := builtinNodeTypes()
+	seen := make(map[string]int, len(out))
+	for i, n := range out {
+		seen[n.Type] = i
+	}
+	merge := func(extra []nodeTypeDef) {
+		for _, n := range extra {
+			if i, ok := seen[n.Type]; ok {
+				out[i] = n
+				continue
+			}
+			seen[n.Type] = len(out)
+			out = append(out, n)
+		}
+	}
+	merge(agentNodeTypes())
+	merge(fetchLiveAgentNodeTypes())
+	return enrichAINodes(out, liveAgentChoices(), chat.ModelChoices(), liveSkillHandles()...)
+}
+
+func builtinNodeTypes() []nodeTypeDef {
+	return []nodeTypeDef{
+		{
+			Type:        "condition",
+			Label:       "Condition",
+			Description: "Evaluate a condition (eq, neq, gt, lt, contains, empty, notEmpty)",
+			ConfigFields: []nodeTypeField{
+				nf("field", "string", "Field", req, tmpl, help("Variable or field name in the execution context")),
+				nf("operator", "enum", "Operator", req, opts("eq", "neq", "gt", "lt", "gte", "lte", "contains", "empty", "notEmpty")),
+				nf("value", "string", "Value", tmpl, visIf("operator", "eq", "neq", "gt", "lt", "gte", "lte", "contains")),
+			},
+		},
+		{
+			Type:        "crud",
+			Label:       "CRUD Record",
+			Description: "Create, update, delete, or search records in a module",
+			ConfigFields: []nodeTypeField{
+				nf("operation", "enum", "Operation", req, def("create"), opts("create", "update", "delete", "search")),
+				nf("moduleHandle", "string", "Module handle", tmpl, help("Preferred over module ID")),
+				nf("moduleID", "string", "Module ID"),
+				nf("namespaceID", "string", "Namespace ID"),
+				nf("recordID", "string", "Record ID", tmpl, visIf("operation", "update", "delete")),
+				nf("fields", "keymap", "Fields", visIf("operation", "create", "update"), help("Field name → value; supports {{templates}}")),
+				nf("query", "string", "Query", tmpl, visIf("operation", "search")),
+				nf("limit", "number", "Limit", visIf("operation", "search")),
+				nf("omitEmpty", "bool", "Omit empty fields", visIf("operation", "update")),
+				nf("continueOnError", "bool", "Continue on error", visIf("operation", "update")),
+			},
+		},
+		{
+			Type:        "crud.upsert",
+			Label:       "Upsert Record",
+			Description: "Find a record by matchBy fields and update it, or create it",
+			ConfigFields: []nodeTypeField{
+				nf("moduleHandle", "string", "Module handle", tmpl, help("Preferred over module ID")),
+				nf("moduleID", "string", "Module ID"),
+				nf("namespaceID", "string", "Namespace ID"),
+				nf("matchBy", "stringlist", "Match by", help("Ordered fields used to find an existing record")),
+				nf("matchAll", "bool", "Require all match fields"),
+				nf("fields", "keymap", "Fields", help("Field templates, {{item.ip}} inside foreach")),
+				nf("omitEmpty", "bool", "Omit empty fields"),
+				nf("continueOnError", "bool", "Continue on error"),
+				nf("resultVar", "string", "Result variable", help("Context key for the resulting record ID")),
+			},
+		},
+		{
+			Type:        "foreach",
+			Label:       "For Each Item",
+			Description: "Loop body nodes once per item in an array (items / devices)",
+			ConfigFields: []nodeTypeField{
+				nf("items", "string", "Items variable", def("items"), help("Context variable holding the array")),
+				nf("itemVar", "string", "Item prefix", def("item")),
+				nf("maxItems", "number", "Max items"),
+				nf("failFast", "bool", "Stop on first error"),
+			},
+		},
+		{
+			Type:        "detach",
+			Label:       "Detach (poll)",
+			Description: "Start a background poller that feeds the ingest chain; does not block Run",
+			ConfigFields: []nodeTypeField{
+				nf("kind", "enum", "Kind", def("poll"), opts("poll")),
+				nf("ingestChainID", "string", "Ingest chain ID", req),
+				nf("statusUrl", "string", "Status URL", tmpl),
+				nf("itemsUrl", "string", "Items URL", tmpl),
+				nf("interval", "number", "Interval (seconds)", def(2)),
+				nf("timeout", "number", "Timeout (seconds)", def(900)),
+				nf("until", "string", "Stop statuses", help("Comma-separated statuses that stop polling")),
+			},
+		},
+		{
+			Type:        "mail",
+			Label:       "Send Email",
+			Description: "Send an email notification",
+			ConfigFields: []nodeTypeField{
+				nf("to", "string", "To", req, tmpl),
+				nf("subject", "string", "Subject", req, tmpl),
+				nf("body", "textarea", "Body", req, tmpl, rows(6), help("HTML supported")),
+				nf("cc", "string", "CC", tmpl),
+				nf("contentType", "enum", "Content type", def("html"), opts("html", "plain")),
+			},
+		},
+		{
+			Type:        "http",
+			Label:       "HTTP Request",
+			Description: "Make an HTTP request to an external API",
+			ConfigFields: []nodeTypeField{
+				nf("url", "string", "URL", req, tmpl),
+				nf("method", "enum", "Method", def("GET"), opts("GET", "POST", "PUT", "PATCH", "DELETE")),
+				nf("headers", "keymap", "Headers"),
+				nf("body", "textarea", "Body", tmpl, rows(6)),
+				nf("timeout", "number", "Timeout (seconds)", def(30)),
+			},
+		},
+		{
+			Type:        "kafka.produce",
+			Label:       "Kafka: Produce",
+			Description: "Publish one message to a Kafka topic",
+			ConfigFields: []nodeTypeField{
+				nf("brokers", "string", "Brokers", req, tmpl, help("Comma-separated host:port list")),
+				nf("topic", "string", "Topic", req, tmpl),
+				nf("key", "string", "Key", tmpl),
+				nf("value", "textarea", "Value", req, tmpl, rows(6)),
+			},
+		},
+		{
+			Type:        "kafka.consume",
+			Label:       "Kafka: Consume",
+			Description: "Fetch a batch of messages from a Kafka topic (up to maxMessages, or until timeoutSeconds elapses)",
+			ConfigFields: []nodeTypeField{
+				nf("brokers", "string", "Brokers", req, tmpl, help("Comma-separated host:port list")),
+				nf("topic", "string", "Topic", req, tmpl),
+				nf("groupId", "string", "Consumer group", tmpl, def("lowcode-rulechain")),
+				nf("maxMessages", "number", "Max messages", def(10)),
+				nf("timeoutSeconds", "number", "Timeout (seconds)", def(5)),
+			},
+		},
+		{
+			Type:        "kafka.subscribe",
+			Label:       "Kafka: Subscribe (trigger)",
+			Description: "Start a background consumer that runs another chain for every message received (does not block)",
+			ConfigFields: []nodeTypeField{
+				nf("brokers", "string", "Brokers", req, tmpl, help("Comma-separated host:port list")),
+				nf("topic", "string", "Topic", req, tmpl),
+				nf("groupId", "string", "Consumer group", tmpl, def("lowcode-rulechain")),
+				nf("ingestChainID", "string", "Ingest chain ID", req, tmpl, help("Chain run for every message: topic/key/value/partition/offset in context")),
+			},
+		},
+		{
+			Type:        "rabbitmq.publish",
+			Label:       "RabbitMQ: Publish",
+			Description: "Publish one message to a RabbitMQ exchange/queue",
+			ConfigFields: []nodeTypeField{
+				nf("url", "string", "AMQP URL", tmpl, help("e.g. amqp://user:pass@host:5672/ - leave empty if using Vault URL secret ref below")),
+				nf("urlSecretRef", "string", "AMQP URL secret ref (Vault)", tmpl, help("[mount:]path#key, e.g. compose/connectors/1#url - overrides AMQP URL when set")),
+				nf("exchange", "string", "Exchange", tmpl, help("Leave empty to use the default exchange")),
+				nf("routingKey", "string", "Routing key", tmpl, help("Falls back to Queue if empty")),
+				nf("queue", "string", "Queue", tmpl),
+				nf("body", "textarea", "Body", req, tmpl, rows(6)),
+			},
+		},
+		{
+			Type:        "rabbitmq.consume",
+			Label:       "RabbitMQ: Consume",
+			Description: "Fetch a batch of messages from a RabbitMQ queue (up to maxMessages, or until timeoutSeconds elapses)",
+			ConfigFields: []nodeTypeField{
+				nf("url", "string", "AMQP URL", tmpl, help("e.g. amqp://user:pass@host:5672/ - leave empty if using Vault URL secret ref below")),
+				nf("urlSecretRef", "string", "AMQP URL secret ref (Vault)", tmpl, help("[mount:]path#key, e.g. compose/connectors/1#url - overrides AMQP URL when set")),
+				nf("queue", "string", "Queue", req, tmpl),
+				nf("maxMessages", "number", "Max messages", def(10)),
+				nf("timeoutSeconds", "number", "Timeout (seconds)", def(5)),
+			},
+		},
+		{
+			Type:        "rabbitmq.subscribe",
+			Label:       "RabbitMQ: Subscribe (trigger)",
+			Description: "Start a background consumer that runs another chain for every message received (does not block)",
+			ConfigFields: []nodeTypeField{
+				nf("url", "string", "AMQP URL", tmpl, help("e.g. amqp://user:pass@host:5672/ - leave empty if using Vault URL secret ref below")),
+				nf("urlSecretRef", "string", "AMQP URL secret ref (Vault)", tmpl, help("[mount:]path#key, e.g. compose/connectors/1#url - overrides AMQP URL when set")),
+				nf("queue", "string", "Queue", req, tmpl),
+				nf("ingestChainID", "string", "Ingest chain ID", req, tmpl, help("Chain run for every message: queue/routingKey/body in context")),
+			},
+		},
+		{
+			Type:        "1c.sync",
+			Label:       "1C: Sync record",
+			Description: "Find a record in a 1C OData catalog/document by business key (matchBy) and update it, or create it if not found",
+			ConfigFields: []nodeTypeField{
+				nf("url", "string", "OData service URL", req, tmpl, help("Service root, e.g. http://host/base/odata/standard.odata")),
+				nf("entity", "string", "Entity", req, tmpl, help("e.g. Catalog_Номенклатура, Catalog_Контрагенты")),
+				nf("username", "string", "Username", tmpl),
+				nf("password", "string", "Password", tmpl),
+				nf("passwordSecretRef", "string", "Password secret ref (Vault)", tmpl, help("[mount:]path#key - overrides Password when set")),
+				nf("matchBy", "keymap", "Match by (1C field → value)", req, help("Business key used to find an existing record, e.g. {\"Код\": \"{{code}}\"}")),
+				nf("fields", "keymap", "Fields (1C field → value)", help("Written on both create and update; supports {{templates}}")),
+				nf("timeoutSeconds", "number", "Timeout (seconds)", def(20)),
+			},
+		},
+		{
+			Type:        "automation.correlate",
+			Label:       "Resume BPMN process",
+			Description: "Resume a suspended automation/BPMN process waiting on a correlation key (message intermediate catch event) - typically the last step in an ingest chain fed by kafka.subscribe/rabbitmq.subscribe",
+			ConfigFields: []nodeTypeField{
+				nf("key", "string", "Correlation key", req, tmpl, help("Matched against the waiting process's correlationKey, e.g. {{value}} or {{key}}")),
+				nf("input", "keymap", "Resume input", help("Named value → template forwarded to the resumed process; leave empty to forward the whole ingest envelope")),
+			},
+		},
+		{
+			Type:        "format.convert",
+			Label:       "Convert format",
+			Description: "Convert data between JSON, XML, CSV and XLSX (parses input to records, re-serializes to the target format)",
+			ConfigFields: []nodeTypeField{
+				nf("input", "textarea", "Input", req, tmpl, rows(6), help("Raw data to convert, or {{template}} referencing a variable")),
+				nf("inputFormat", "enum", "Input format", req, opts("json", "xml", "csv", "xlsx")),
+				nf("outputFormat", "enum", "Output format", req, opts("json", "xml", "csv", "xlsx")),
+				nf("inputBase64", "bool", "Input is base64", help("Enable for binary xlsx input (e.g. from an HTTP response body or file attachment)")),
+				nf("delimiter", "string", "CSV delimiter", def(","), help("Used when reading or writing CSV")),
+				nf("rootTag", "string", "XML root tag", def("root"), help("Used when writing XML")),
+				nf("recordTag", "string", "XML record tag", def("item"), help("Used when reading or writing XML")),
+				nf("sheetName", "string", "XLSX sheet name", def("Sheet1"), help("Used when reading or writing XLSX")),
+			},
+		},
+		{
+			Type:        "ai",
+			Label:       "AI Agent",
+			Description: "Call an AI agent (crud-agent, assistant) with a prompt",
+			ConfigFields: []nodeTypeField{
+				nf("agent", "enum", "Agent", req, opts("crud-agent", "assistant")),
+				nf("prompt", "textarea", "Prompt", req, tmpl, rows(6), help("Supports {{variable}} templates")),
+				nf("model", "string", "Model", help("Default: qwen3:8b / CHAT_MODEL")),
+				nf("skill", "string", "Skill", help("A skill for the agent to follow: its handle, or handle@3 for a fixed version")),
+				nf("maxTokens", "number", "Max tokens"),
+				nf("allowMutating", "bool", "Allow mutating actions", help("Off by default: a create/update/delete tool call the agent attempts is blocked instead of executed unconfirmed")),
+			},
+		},
+		{
+			Type:        "ai.operation",
+			Label:       "AI Operation",
+			Description: "Call an AI agent as a function: named input parameters in, a validated JSON object out (not free text)",
+			ConfigFields: []nodeTypeField{
+				nf("agent", "enum", "Agent", req, opts("crud-agent", "assistant")),
+				nf("prompt", "textarea", "Instruction", req, tmpl, rows(6), help("What the agent should do with the inputs below")),
+				nf("model", "string", "Model", help("Default: qwen3:8b / CHAT_MODEL")),
+				nf("skill", "string", "Skill", help("A skill for the agent to follow: its handle, or handle@3 for a fixed version")),
+				nf("inputs", "keymap", "Input parameters", help("Named values passed to the agent, e.g. {\"customerName\": \"{{name}}\"}")),
+				nf("outputSchema", "keymap", "Output schema", help("Required response fields → type (string/number/boolean/array/object), e.g. {\"risk\": \"number\"}")),
+				nf("allowMutating", "bool", "Allow mutating actions", help("Off by default: a create/update/delete tool call the agent attempts is blocked instead of executed unconfirmed")),
+				nf("maxRetries", "number", "Max retries", def(1), help("Re-asks the agent if its answer isn't valid JSON matching the output schema; 0 = fail on the first bad answer")),
+			},
+		},
+		{
+			Type:        "script",
+			Label:       "JavaScript",
+			Description: "Execute JavaScript code with lowcode runtime API",
+			ConfigFields: []nodeTypeField{
+				nf("code", "code", "Code", req, lang("javascript"), rows(12), help("runtime.mcp, runtime.mail, runtime.http, runtime.log")),
+			},
+		},
+		{
+			Type:        "gonec",
+			Label:       "Go Code",
+			Description: "Compile and execute Go code in a sandbox",
+			ConfigFields: []nodeTypeField{
+				nf("code", "code", "Code", req, lang("golang"), rows(12)),
+				nf("timeout", "number", "Timeout (seconds)"),
+			},
+		},
+		{
+			Type:        "workflow",
+			Label:       "Trigger Workflow",
+			Description: "Run an automation workflow (BPMN / AI steps) and return its results - the workflow's output variables are available under \"results\"",
+			ConfigFields: []nodeTypeField{
+				nf("workflowID", "string", "Workflow ID or handle", req, tmpl),
+				nf("payload", "textarea", "Payload", rows(4), tmpl, help("JSON object used as the workflow input")),
+				nf("input", "keymap", "Input variables", help("Named value → template, merged over the payload")),
+				nf("async", "bool", "Don't wait", help("Start the workflow and continue immediately; useful for long-running workflows with approval or delay steps")),
+			},
+		},
+		{
+			Type:        "fork",
+			Label:       "Fork",
+			Description: "Split execution into multiple parallel branches",
+			ConfigFields: []nodeTypeField{
+				nf("branches", "number", "Branches", def(2), help("Minimum 2")),
+			},
+		},
+		{
+			Type:        "document.extract",
+			Label:       "Extract document text",
+			Description: "Read a File-field attachment (docx, xlsx, pdf, dxf, dwg, ifc, ArchiCAD) and put text into the chain context",
+			ConfigFields: []nodeTypeField{
+				nf("attachmentField", "string", "File field", def("file"), help("Record field holding attachment IDs")),
+				nf("maxChars", "number", "Max characters", def(64000)),
+				nf("outText", "string", "Text variable", def("extracted_text")),
+			},
+		},
+		{
+			Type:        "score.matrix",
+			Label:       "Risk Matrix",
+			Description: "5×5 (or NxN) likelihood × impact → score",
+			ConfigFields: []nodeTypeField{
+				nf("likelihoodField", "string", "Likelihood field", def("likelihood")),
+				nf("impactField", "string", "Impact field", def("impact")),
+				nf("likelihood", "string", "Likelihood value", tmpl, help("Literal or {{template}}; overrides the field when set")),
+				nf("impact", "string", "Impact value", tmpl),
+				nf("scale", "number", "Scale", def(5), help("Clamp 1..scale")),
+				nf("formula", "enum", "Formula", def("product"), opts("product", "sum"), help("Ignored if a custom matrix is set")),
+				nf("matrix", "json", "Custom matrix", help("Optional NxN number array [L-1][I-1]")),
+				nf("outScore", "string", "Score variable", def("score")),
+				nf("outX", "string", "Likelihood output"),
+				nf("outY", "string", "Impact output"),
+			},
+		},
+		{
+			Type:        "score.weighted",
+			Label:       "Weighted Score",
+			Description: "Σ weightᵢ · normalize(fieldᵢ / maxᵢ) → score 0..100",
+			ConfigFields: []nodeTypeField{
+				nf("factors", "objectlist", "Factors", req, items(
+					nf("field", "string", "Field", req),
+					nf("weight", "number", "Weight"),
+					nf("max", "number", "Max"),
+					nf("invert", "bool", "Invert"),
+				)),
+				nf("normalize", "bool", "Normalize", def(true), help("Scale to 0..scaleMax")),
+				nf("scaleMax", "number", "Scale max", def(100)),
+				nf("outScore", "string", "Score variable", def("score")),
+			},
+		},
+		{
+			Type:        "risk.band",
+			Label:       "Risk Band",
+			Description: "Map score → level; optional residual = score × (1 − control)",
+			ConfigFields: []nodeTypeField{
+				nf("scoreField", "string", "Score field", def("score")),
+				nf("controlField", "string", "Control field", help("0..1 control effectiveness")),
+				nf("bands", "objectlist", "Bands", items(
+					nf("name", "string", "Name", req),
+					nf("max", "number", "Max", help("Inclusive upper bound")),
+				)),
+				nf("criticalLevels", "stringlist", "Critical levels", help("Levels that set is_critical")),
+				nf("outLevel", "string", "Level variable", def("level")),
+				nf("outResidual", "string", "Residual variable", def("residualScore")),
+				nf("outCriticalFlag", "string", "Critical flag variable", def("is_critical")),
+			},
+		},
+	}
+}
